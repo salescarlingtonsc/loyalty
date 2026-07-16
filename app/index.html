@@ -100,17 +100,18 @@ const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 const INDUSTRIES={
-  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','loyalty','retention','referrals']},
-  salon:{em:'💇',label:'Hair Salon',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']},
-  facial:{em:'✨',label:'Facial / Spa',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']},
-  massage:{em:'💆',label:'Massage',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']},
-  fitness:{em:'🏋️',label:'Fitness',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']},
-  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','loyalty','retention','referrals']},
-  other:{em:'🏪',label:'Other',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']}
+  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','loyalty','retention','referrals','giftcards']},
+  salon:{em:'💇',label:'Hair Salon',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']},
+  facial:{em:'✨',label:'Facial / Spa',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']},
+  massage:{em:'💆',label:'Massage',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']},
+  fitness:{em:'🏋️',label:'Fitness',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']},
+  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','loyalty','retention','referrals','giftcards']},
+  other:{em:'🏪',label:'Other',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']}
 };
 const MODULES={dashboard:['📊','Dashboard'],clients:['👥','Customers'],sales:['🧾','Sales'],
   services:['🛠️','Services'],bookings:['📅','Bookings'],loyalty:['🎁','Loyalty'],
-  retention:['🔁','Retention'],referrals:['🤝','Referrals'],settings:['⚙️','Settings']};
+  retention:['🔁','Retention'],referrals:['🤝','Referrals'],memberships:['💎','Memberships'],
+  giftcards:['🎟️','Gift cards'],settings:['⚙️','Settings']};
 
 let S={user:null,biz:null,charts:[]};
 const $=(id)=>document.getElementById(id);
@@ -202,11 +203,8 @@ function renderOnboard(){
       $('mk').disabled=true;
       try{
         const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Math.random().toString(36).slice(2,6);
-        const {data:b,error:e1}=await sb.from('businesses').insert({name,slug,industry:sel,enabled_modules:INDUSTRIES[sel].mods}).select().single();
+        const {data:b,error:e1}=await sb.rpc('create_business',{p_name:name,p_slug:slug,p_industry:sel,p_modules:INDUSTRIES[sel].mods});
         if(e1) throw e1;
-        const {error:e2}=await sb.from('staff').insert({business_id:b.id,user_id:S.user.id,role:'owner',full_name:S.user.email});
-        if(e2) throw e2;
-        await sb.from('loyalty_programs').insert({business_id:b.id,kind:'points',earn_points_per_dollar:1,redeem_points:800,reward_credit_cents:2000,active:true});
         S.biz=b;toast('Workspace ready 🎉');nav('#/dashboard');
       }catch(e){$('oberr').innerHTML=`<div class="err">${esc(e.message)}</div>`;$('mk').disabled=false}
     };
@@ -228,7 +226,8 @@ function renderShell(page){
     <main class="main" id="main"></main></div>`;
   $('so').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[]};nav('#/')};
   const P={dashboard,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
-    bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,settings:settingsPage};
+    bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,
+    memberships:membershipsPage,giftcards:giftcardsPage,settings:settingsPage};
   (P[page[0]]||dashboard)(page[1]);
 }
 const M=()=> $('main');
@@ -627,6 +626,111 @@ async function referralsPage(){
     <td>${r.status==='rewarded'?money(r.reward_cents):'—'}</td>
     <td>${r.qualified_at?r.qualified_at.slice(0,10):'—'}</td></tr>`).join('')}</table>`
     :`<div class="empty"><div class="big">🤝</div>No referrals yet.<br>Link one via "Referred by" when adding a new customer.</div>`;
+}
+
+/* ---------- memberships ---------- */
+async function membershipsPage(){
+  const [{data:plans},{data:cl}]=await Promise.all([
+    sb.from('membership_plans').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false}),
+    sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name')]);
+  M().innerHTML=`<div class="topbar"><div><h1>Memberships</h1><p class="muted small">Recurring plans: a monthly/annual price that drops spendable credit every period. Renewals run themselves daily.</p></div></div>
+    <div class="split">
+    <div class="card"><b>Create a plan</b>
+      <label>Plan name</label><input id="mn" placeholder="e.g. Glow Monthly">
+      <div class="split"><div><label>Price (${S.biz.currency||'SGD'})</label><input id="mp" type="number" min="0" step="0.01" value="80"></div>
+      <div><label>Billing</label><select id="mc"><option value="monthly">Monthly</option><option value="annual">Annual</option></select></div></div>
+      <label>Credit dropped each period (${S.biz.currency||'SGD'})</label><input id="mcr" type="number" min="0" step="0.01" value="60">
+      <p class="muted small" style="margin-top:8px">Billing is collect-in-person for now (renewal books the charge as a sale). Credits land on the member's account and roll over. Membership charges never earn loyalty points.</p>
+      <div style="margin-top:16px"><button class="btn" id="madd">Create plan</button></div>
+      <div id="plist" style="margin-top:18px"></div></div>
+    <div class="card"><b>Enroll a member</b>
+      <label>Customer</label><select id="ec">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
+      <label>Plan</label><select id="ep">${(plans||[]).filter(p=>p.active).map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.price_cents)}/${p.cadence==='annual'?'yr':'mo'}</option>`).join('')||'<option value="">— create a plan first —</option>'}</select>
+      <div style="margin-top:16px"><button class="btn" id="ego">Enroll — charge first period now</button></div>
+      <div id="mlist" style="margin-top:18px"><p class="muted small">Loading members…</p></div></div></div>`;
+  $('madd').onclick=async()=>{
+    const name=$('mn').value.trim();
+    if(name.length<2) return toast('Name the plan');
+    const {error}=await sb.from('membership_plans').insert({business_id:S.biz.id,name,
+      price_cents:Math.round(parseFloat($('mp').value||'0')*100),cadence:$('mc').value,
+      credit_cents:Math.round(parseFloat($('mcr').value||'0')*100)});
+    if(error) return fail(error);
+    toast('Plan created');membershipsPage();
+  };
+  $('ego').onclick=async()=>{
+    if(!$('ec').value||!$('ep').value) return toast('Pick a customer and a plan');
+    $('ego').disabled=true;
+    const {error}=await sb.rpc('enroll_membership',{p_business:S.biz.id,p_client:$('ec').value,p_plan:$('ep').value});
+    if(error){fail(error);$('ego').disabled=false;return}
+    toast('Enrolled — first charge booked, credits dropped 🎉');membershipsPage();
+  };
+  $('plist').innerHTML=(plans&&plans.length)?plans.map(p=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">
+    <div><b>${esc(p.name)}</b><div class="muted small">${money(p.price_cents)}/${p.cadence==='annual'?'yr':'mo'} → ${money(p.credit_cents)} credit each period</div></div>
+    <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'off'}</span>
+    <button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Disable':'Enable'}</button></div>`).join('')
+    :'<p class="muted small" style="margin-top:10px">No plans yet.</p>';
+  window.togglePlan=async(id,to)=>{await sb.from('membership_plans').update({active:to}).eq('id',id);membershipsPage()};
+  const {data:ms}=await sb.from('memberships')
+    .select('*, clients(full_name), membership_plans(name,price_cents,cadence)')
+    .eq('business_id',S.biz.id).order('created_at',{ascending:false});
+  $('mlist').innerHTML=(ms&&ms.length)?`<table><tr><th>Member</th><th>Plan</th><th>Status</th><th>Renews</th><th></th></tr>
+    ${ms.map(m=>`<tr><td><b>${esc(m.clients?.full_name||'—')}</b></td><td>${esc(m.membership_plans?.name||'—')}</td>
+    <td><span class="pill ${m.status==='active'?'on':m.status==='cancelled'?'no':'off'}">${m.status.replace(/_/g,' ')}</span></td>
+    <td>${m.current_period_end.slice(0,10)}</td>
+    <td>${m.status==='active'?`<button class="btn ghost sm" onclick="setMs('${m.id}','paused')">Pause</button>
+      <button class="btn ghost sm" onclick="setMs('${m.id}','cancel_at_period_end')">Cancel@end</button>`
+      :m.status==='paused'?`<button class="btn ghost sm" onclick="setMs('${m.id}','active')">Resume</button>`:''}</td></tr>`).join('')}</table>`
+    :'<p class="muted small">No members yet — enroll your first above.</p>';
+  window.setMs=async(id,status)=>{const {error}=await sb.from('memberships').update({status}).eq('id',id);if(error)return fail(error);toast('Membership '+status.replace(/_/g,' '));membershipsPage()};
+}
+
+/* ---------- gift cards ---------- */
+async function giftcardsPage(){
+  const {data:cl}=await sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name');
+  M().innerHTML=`<div class="topbar"><div><h1>Gift cards</h1><p class="muted small">Sell a card, then redeem it onto any customer's account as spendable credit — one ledger, no side balances.</p></div></div>
+    <div class="split">
+    <div class="card"><b>Sell a gift card</b>
+      <label>Amount (${S.biz.currency||'SGD'})</label><input id="ga" type="number" min="1" step="0.01" value="50">
+      <label>Purchaser (optional — earns loyalty on the purchase)</label>
+      <select id="gp"><option value="">Walk-in</option>${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')}</select>
+      <label>Recipient email (optional)</label><input id="gr" type="email" placeholder="friend@email.com">
+      <div style="margin-top:16px"><button class="btn" id="gsell">Sell card — generate code</button></div>
+      <div id="gcode"></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
+      <b>Redeem a card</b>
+      <label>Code</label><input id="gc" placeholder="GC-XXXXXXXX" style="text-transform:uppercase">
+      <label>Load onto customer</label><select id="gcl">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
+      <div style="margin-top:16px"><button class="btn ghost" id="gredeem">Redeem full balance → customer credit</button></div></div>
+    <div class="card"><b>Cards on the books</b><div id="glist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+  $('gsell').onclick=async()=>{
+    const amt=Math.round(parseFloat($('ga').value||'0')*100);
+    if(!(amt>0)) return toast('Enter an amount');
+    $('gsell').disabled=true;
+    const {data,error}=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:amt,
+      p_purchaser:$('gp').value||null,p_recipient_email:$('gr').value||null});
+    $('gsell').disabled=false;
+    if(error) return fail(error);
+    $('gcode').innerHTML=`<div class="err" style="background:#E7F6EE;color:#2FA36B"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. Give this code to the buyer.</div>`;
+    loadCards();
+  };
+  $('gredeem').onclick=async()=>{
+    if(!$('gc').value.trim()||!$('gcl').value) return toast('Enter a code and pick a customer');
+    $('gredeem').disabled=true;
+    const {data,error}=await sb.rpc('redeem_gift_card',{p_business:S.biz.id,p_code:$('gc').value,
+      p_client:$('gcl').value,p_amount:null});
+    $('gredeem').disabled=false;
+    if(error) return fail(error);
+    toast(`${money(data.loaded_cents)} loaded onto account 🎉`);$('gc').value='';loadCards();
+  };
+  async function loadCards(){
+    const {data:gcs}=await sb.from('gift_cards').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false});
+    $('glist').innerHTML=(gcs&&gcs.length)?`<table><tr><th>Code</th><th>Value</th><th>Balance</th><th>Status</th><th>Issued</th></tr>
+      ${gcs.map(g=>`<tr><td><b>${esc(g.code)}</b></td><td>${money(g.initial_cents)}</td><td>${money(g.balance_cents)}</td>
+      <td><span class="pill ${g.status==='active'?'on':g.status==='redeemed'?'ok':'no'}">${g.status}</span></td>
+      <td>${g.created_at.slice(0,10)}</td></tr>`).join('')}</table>`
+      :`<div class="empty"><div class="big">🎟️</div>No gift cards yet. Sell the first one on the left.</div>`;
+  }
+  loadCards();
 }
 
 /* ---------- settings ---------- */
