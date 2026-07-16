@@ -100,17 +100,17 @@ const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 const INDUSTRIES={
-  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','loyalty','retention']},
-  salon:{em:'💇',label:'Hair Salon',mods:['dashboard','clients','sales','services','bookings','loyalty','retention']},
-  facial:{em:'✨',label:'Facial / Spa',mods:['dashboard','clients','sales','services','bookings','loyalty','retention']},
-  massage:{em:'💆',label:'Massage',mods:['dashboard','clients','sales','services','bookings','loyalty','retention']},
-  fitness:{em:'🏋️',label:'Fitness',mods:['dashboard','clients','sales','services','bookings','loyalty','retention']},
-  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','loyalty','retention']},
-  other:{em:'🏪',label:'Other',mods:['dashboard','clients','sales','services','bookings','loyalty','retention']}
+  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','loyalty','retention','referrals']},
+  salon:{em:'💇',label:'Hair Salon',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']},
+  facial:{em:'✨',label:'Facial / Spa',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']},
+  massage:{em:'💆',label:'Massage',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']},
+  fitness:{em:'🏋️',label:'Fitness',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']},
+  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','loyalty','retention','referrals']},
+  other:{em:'🏪',label:'Other',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals']}
 };
 const MODULES={dashboard:['📊','Dashboard'],clients:['👥','Customers'],sales:['🧾','Sales'],
   services:['🛠️','Services'],bookings:['📅','Bookings'],loyalty:['🎁','Loyalty'],
-  retention:['🔁','Retention'],settings:['⚙️','Settings']};
+  retention:['🔁','Retention'],referrals:['🤝','Referrals'],settings:['⚙️','Settings']};
 
 let S={user:null,biz:null,charts:[]};
 const $=(id)=>document.getElementById(id);
@@ -228,7 +228,7 @@ function renderShell(page){
     <main class="main" id="main"></main></div>`;
   $('so').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[]};nav('#/')};
   const P={dashboard,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
-    bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,settings:settingsPage};
+    bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,settings:settingsPage};
   (P[page[0]]||dashboard)(page[1]);
 }
 const M=()=> $('main');
@@ -306,17 +306,31 @@ async function clientsPage(){
       <div class="split"><div><label>Email</label><input id="ce" type="email"></div><div><label>Birth date</label><input id="cb" type="date"></div></div>
       <div class="split"><div><label>Gender</label><select id="cg"><option value="">Not set</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></div>
       <div><label>Marketing consent (PDPA)</label><select id="cc"><option value="false">No</option><option value="true">Yes — consented</option></select></div></div>
+      <label>Referred by (friend's code, optional)</label><input id="cr" placeholder="e.g. 4F7K2A" style="text-transform:uppercase">
       <div class="row" style="margin-top:16px"><button class="btn" id="save">Save customer</button>
       <button class="btn ghost sm" id="cancel">Cancel</button></div>`;
     $('cancel').onclick=()=>$('form').style.display='none';
     $('save').onclick=async()=>{
       const full_name=$('cn').value.trim();
       if(full_name.length<2) return toast('Name required');
-      const {error}=await sb.from('clients').insert({business_id:S.biz.id,full_name,
+      const consent=$('cc').value==='true';
+      const {data:created,error}=await sb.from('clients').insert({business_id:S.biz.id,full_name,
         phone:$('cp').value||null,email:$('ce').value||null,birth_date:$('cb').value||null,
-        gender:$('cg').value||null,marketing_consent:$('cc').value==='true'});
+        gender:$('cg').value||null,marketing_consent:consent}).select().single();
       if(error) return fail(error);
-      toast('Customer added');$('form').style.display='none';load();
+      if(consent) await sb.from('consents').insert({business_id:S.biz.id,client_id:created.id,
+        channel:'marketing',action:'granted',source:'admin add-customer',actor:S.user.id});
+      const code=$('cr').value.trim().toUpperCase();
+      if(code){
+        const {data:ref}=await sb.from('clients').select('id').eq('business_id',S.biz.id).eq('referral_code',code).limit(1);
+        if(ref&&ref.length&&ref[0].id!==created.id){
+          const {error:re}=await sb.from('referrals').insert({business_id:S.biz.id,
+            referrer_client_id:ref[0].id,referred_client_id:created.id,status:'pending'});
+          if(re) toast('Customer saved, but referral not linked: '+re.message);
+          else toast('Customer added + referral linked — reward fires on their first qualifying sale');
+        } else toast('Customer added — referral code not found, skipped');
+      } else toast('Customer added');
+      $('form').style.display='none';load();
     };
   };
   async function load(){
@@ -338,15 +352,17 @@ async function clientsPage(){
 }
 
 async function clientDetail(id){
-  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp}]=await Promise.all([
+  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb}]=await Promise.all([
     sb.from('clients').select('*').eq('id',id).single(),
     sb.from('client_points_balance').select('points').eq('client_id',id),
     sb.from('client_credit_balance').select('balance_cents').eq('client_id',id),
     sb.from('sales').select('*').eq('client_id',id).order('occurred_at',{ascending:false}).limit(10),
     sb.from('reward_grants').select('*, retention_programs(name)').eq('client_id',id).order('granted_at',{ascending:false}),
-    sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1)]);
+    sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
+    sb.from('points_batches').select('remaining,expires_at').eq('client_id',id).gt('remaining',0).not('expires_at','is',null).order('expires_at').limit(1)]);
   if(error) return fail(error);
   const pts=pb?.[0]?.points||0,cred=cb?.[0]?.balance_cents||0,prog=lp?.[0];
+  const nextExp=xb?.[0];
   M().innerHTML=`<div class="topbar"><div><h1>${esc(c.full_name)}</h1>
       <p class="muted small">${esc(c.phone||'')} ${esc(c.email||'')} · ${esc(c.gender||'gender not set')} ${c.birth_date?'· born '+c.birth_date:''}</p></div>
     <a class="btn ghost sm" href="#/clients">← All customers</a></div>
@@ -359,8 +375,18 @@ async function clientDetail(id){
       <div class="card"><b>Loyalty</b>
         ${prog&&prog.active?`<p class="muted small" style="margin:6px 0 14px">Earns ${prog.earn_points_per_dollar} pt/$ · Redeem ${prog.redeem_points} pts → ${money(prog.reward_credit_cents)} credit</p>
         <button class="btn sm" id="redeem" ${pts<prog.redeem_points?'disabled':''}>Redeem ${prog.redeem_points} pts → ${money(prog.reward_credit_cents)}</button>
-        ${pts<prog.redeem_points?`<p class="muted small" style="margin-top:8px">${prog.redeem_points-pts} more points to unlock</p>`:''}`
+        ${pts<prog.redeem_points?`<p class="muted small" style="margin-top:8px">${prog.redeem_points-pts} more points to unlock</p>`:''}
+        ${nextExp?`<p class="muted small" style="margin-top:8px">⏳ ${nextExp.remaining} pts expire ${nextExp.expires_at.slice(0,10)}</p>`:''}
+        <div class="row" style="margin-top:14px"><input id="adjV" type="number" placeholder="+/- points" style="max-width:120px">
+        <input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>`
         :'<p class="muted small" style="margin-top:6px">No active loyalty program. Configure it in Loyalty.</p>'}
+      </div>
+      <div class="card"><b>Referral & consent</b>
+        <p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
+        <div class="row"><b style="font-size:1.3rem;letter-spacing:.15em">${esc(c.referral_code||'—')}</b>
+        <button class="btn ghost sm" id="copyRef">Copy</button></div>
+        <p class="muted small" style="margin:14px 0 6px">Marketing consent (PDPA) — every change is recorded:</p>
+        <button class="btn ghost sm" id="consentBtn">${c.marketing_consent?'✓ Consented — withdraw':'Record consent'}</button>
       </div>
       <div class="card"><b>Retention rewards earned</b>
         ${(rg&&rg.length)?rg.map(g=>`<div class="row" style="margin-top:10px"><span>🏆 ${esc(g.retention_programs?.name||'Program')}</span><span class="spacer"></span>
@@ -377,6 +403,24 @@ async function clientDetail(id){
     const {data,error}=await sb.rpc('redeem_points',{p_business:S.biz.id,p_client:id});
     if(error){fail(error);rd.disabled=false;return}
     toast(`Redeemed → ${money(data.credit_cents)} credit added 🎉`);clientDetail(id);
+  };
+  const aj=$('adjGo');
+  if(aj) aj.onclick=async()=>{
+    const v=parseInt($('adjV').value||'0');
+    if(!v) return toast('Enter +/- points');
+    const {data,error}=await sb.rpc('adjust_points',{p_business:S.biz.id,p_client:id,
+      p_points:v,p_reason:$('adjR').value||null});
+    if(error) return fail(error);
+    toast(`Adjusted — new balance ${data} pts (audited)`);clientDetail(id);
+  };
+  $('copyRef').onclick=()=>{navigator.clipboard.writeText(c.referral_code||'');toast('Code copied')};
+  $('consentBtn').onclick=async()=>{
+    const to=!c.marketing_consent;
+    const {error:e1}=await sb.from('clients').update({marketing_consent:to}).eq('id',id);
+    if(e1) return fail(e1);
+    await sb.from('consents').insert({business_id:S.biz.id,client_id:id,channel:'marketing',
+      action:to?'granted':'withdrawn',source:'admin client page',actor:S.user.id});
+    toast(to?'Consent recorded':'Consent withdrawn — recorded');clientDetail(id);
   };
 }
 
@@ -477,6 +521,12 @@ async function loyaltyPage(){
       <label>Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}">
       <label>Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}">
       <label>Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}">
+      <label>Points expiry</label><select id="lx">
+        <option value="none" ${(p?.expiry_mode??'none')==='none'?'selected':''}>Never expire</option>
+        <option value="inactivity" ${p?.expiry_mode==='inactivity'?'selected':''}>Expire after inactivity (clock resets on every earn)</option>
+        <option value="fixed" ${p?.expiry_mode==='fixed'?'selected':''}>Fixed shelf life from earn (oldest expire first)</option></select>
+      <label>Expiry window (days)</label><input id="lxd" type="number" min="1" value="${p?.expiry_days??365}">
+      <p class="muted small" style="margin-top:8px">A daily sweep clears expired points automatically, so balances are never inflated.</p>
       <div style="margin-top:16px"><button class="btn" id="lsave">Save program</button></div></div>
     <div class="card"><b>How it works</b>
       <p class="muted" style="margin-top:8px;line-height:1.7">Every sale you record for a customer earns points instantly — nothing for staff to do. When they hit ${p?.redeem_points??800} points, one tap converts them into ${money(p?.reward_credit_cents??2000)} of real in-store credit they can spend on anything. Credit, not vanity points — that's what brings people back.</p>
@@ -484,7 +534,8 @@ async function loyaltyPage(){
   $('lsave').onclick=async()=>{
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',
       earn_points_per_dollar:parseFloat($('le').value||'1'),redeem_points:parseInt($('lr').value||'800'),
-      reward_credit_cents:Math.round(parseFloat($('lc').value||'20')*100)};
+      reward_credit_cents:Math.round(parseFloat($('lc').value||'20')*100),
+      expiry_mode:$('lx').value,expiry_days:parseInt($('lxd').value||'365')};
     const q=p?sb.from('loyalty_programs').update(row).eq('id',p.id):sb.from('loyalty_programs').insert(row);
     const {error}=await q;if(error)return fail(error);toast('Loyalty program saved');
   };
@@ -542,6 +593,40 @@ async function retentionPage(){
   }
   window.toggleRp=async(id,to)=>{await sb.from('retention_programs').update({active:to}).eq('id',id);load()};
   load();
+}
+
+/* ---------- referrals ---------- */
+async function referralsPage(){
+  const {data:rp}=await sb.from('referral_programs').select('*').eq('business_id',S.biz.id).limit(1);
+  const p=rp?.[0];
+  M().innerHTML=`<div class="topbar"><div><h1>Referrals</h1><p class="muted small">Every customer has a personal code — the reward only pays after their friend's first qualifying sale</p></div></div>
+    <div class="split"><div class="card"><b>Program settings</b>
+      <label>Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>Enabled</option><option value="false" ${!p||!p.enabled?'selected':''}>Off</option></select>
+      <label>Reward to referrer (${S.biz.currency||'SGD'} store credit)</label><input id="fr" type="number" min="0" step="0.01" value="${((p?.reward_cents??1000)/100).toFixed(2)}">
+      <label>Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">
+      <p class="muted small" style="margin-top:8px">Self-funding by design: nothing pays out until the new customer has actually come in and spent above your floor. One reward per referred customer, ever.</p>
+      <div style="margin-top:16px"><button class="btn" id="fsave">Save program</button></div></div>
+    <div class="card"><b>How to use it</b>
+      <p class="muted" style="margin-top:8px;line-height:1.7">1. Each customer's code is on their profile (Customers → open → copy).<br>
+      2. When a new customer joins, type the friend's code into <b>"Referred by"</b> on the add-customer form.<br>
+      3. The moment the new customer's first sale clears your minimum, ${money(p?.reward_cents??1000)} lands on the referrer's account automatically — audited, once only.</p></div></div>
+    <div class="card" style="margin-top:16px"><b>Referral activity</b><div id="flist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div>`;
+  $('fsave').onclick=async()=>{
+    const row={business_id:S.biz.id,enabled:$('fe').value==='true',
+      reward_cents:Math.round(parseFloat($('fr').value||'10')*100),
+      min_spend_cents:Math.round(parseFloat($('fm').value||'0')*100)};
+    const q=p?sb.from('referral_programs').update(row).eq('id',p.id):sb.from('referral_programs').insert(row);
+    const {error}=await q;if(error)return fail(error);toast('Referral program saved');
+  };
+  const {data:refs}=await sb.from('referrals')
+    .select('*, referrer:clients!referrals_referrer_client_id_fkey(full_name), referred:clients!referrals_referred_client_id_fkey(full_name)')
+    .eq('business_id',S.biz.id).order('created_at',{ascending:false});
+  $('flist').innerHTML=(refs&&refs.length)?`<table><tr><th>Referrer</th><th>Brought in</th><th>Status</th><th>Reward</th><th>Qualified</th></tr>
+    ${refs.map(r=>`<tr><td><b>${esc(r.referrer?.full_name||'—')}</b></td><td>${esc(r.referred?.full_name||'—')}</td>
+    <td><span class="pill ${r.status==='rewarded'?'ok':r.status==='pending'?'new':'off'}">${r.status}</span></td>
+    <td>${r.status==='rewarded'?money(r.reward_cents):'—'}</td>
+    <td>${r.qualified_at?r.qualified_at.slice(0,10):'—'}</td></tr>`).join('')}</table>`
+    :`<div class="empty"><div class="big">🤝</div>No referrals yet.<br>Link one via "Referred by" when adding a new customer.</div>`;
 }
 
 /* ---------- settings ---------- */
