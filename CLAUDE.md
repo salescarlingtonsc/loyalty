@@ -58,9 +58,16 @@ Salon-specific surface (calendar, booking, inventory, POS, packages) — Avocado
 only. Don't clone Flowesce branding, copy, or code.
 
 ## Current phase
-**Phase 0 (discovery) — complete.** Benchmark docs in `docs/benchmark/`. No app code yet.
-Next: confirm `OPEN_QUESTIONS.md`, then Phase 1 schema v2 (`sales`, `points_ledger`,
-`points_batches`, `consents`, `audit_log`) + EarnService/RedeemService/ExpiryJob.
+**Phase 1 MVP — shipped.** Canonical product name: **Frenly** (owner confirmed; "Avocado"
+in older docs = same product). App: `app/index.html`, deployed at
+https://frenly-app.vercel.app (Vercel project `frenly-app`; marketing site stays on
+project `loyalty`). Schema v2 applied (migration `frenly_v2_saas`): `salons`→`businesses`
+(+industry, +enabled_modules), `sales`, `points_ledger`, `retention_programs`,
+`reward_grants`, `booking_requests`; DB triggers auto-earn points + fire retention
+rewards on every sale (verified); RPCs `redeem_points`, `get_business_public`,
+`request_booking`. Repo git-initialized (commit 347e391).
+Next: points expiry job, consents/audit_log tables, referrals UI, WhatsApp/SMS,
+Supabase Auth Site URL config, custom domain.
 
 ## Key unresolved risks
 Ledger/points-calc correctness; double earn/redeem; loyalty-liability accuracy; PDPA ⚖️;
