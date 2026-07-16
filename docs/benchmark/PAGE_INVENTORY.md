@@ -22,3 +22,28 @@ component lists reflect structure, not populated data.
 ## Not yet inventoried (locked or empty) — see OPEN_QUESTIONS
 Clients detail view, Calendar, Appointments, Inventory, Quick Sale flow, Reports/Analytics,
 Integrations, Text & WhatsApp, Payments, Data & privacy, Import, Loyalty/Membership admin config.
+
+## Live click-through (2026-07-16, second pass — every reachable page opened)
+| Page | Observed live | Relationship confirmed | Frenly status |
+|---|---|---|---|
+| Dashboard | greeting banner, booked-today/revenue-week, KPIs incl. low-stock + unpaid deposits, today-at-a-glance strip, schedule panel, revenue chart | dashboard reads sales+appointments+stock | ✅ equiv (no deposits — deliberate, no payments processor) |
+| Calendar | Day/Week/Month grid, staff filter, colour-by status/staff, Add | appointments render on grid | ⚠️ Frenly has Week only, no staff filter |
+| Appointments | list w/ search, status/staff/branch/time filters, Print schedule, CSV import/export | list ↔ calendar same data | ⚠️ Frenly list simpler; no print/CSV |
+| **Requests** | **client-initiated CANCEL + RESCHEDULE approvals, auto-approve toggle, recent decisions** | portal client → change request → approval executes change | ❌ different: Frenly "Bookings" = new-booking requests only; no cancel/reschedule flow |
+| Waitlist | TWO queues: walk-in (manual seat) + **online (from booking page, auto-email on matching slot)** | portal → waitlist; slot-open → notification | ⚠️ Frenly waitlist is staff-entered only, no auto-email |
+| Clients | search, filters, sort, **CSV import AND export**; "public bookings create client records automatically" | booking → auto client record | ⚠️ Frenly: import ✅ (Settings), export ❌; auto-create on convert (not on request) ✅ |
+| Inventory | categories, branch filter, active+archived, expiry filter, low-stock-only, **bulk adjust**, CSV in/out; copy: "linking items to services auto-deducts stock on completion" | **service→product consumption map; completion deducts** | ⚠️ Frenly deducts on retail sale w/ product (FEFO ✅); no service-linked consumption |
+| Services | duration, price, **deposit**, staff/branch assignment, CSV in/out | service ↔ staff ↔ branch ↔ deposit | ⚠️ Frenly: no deposit, no staff assignment |
+| Bundles/Packages/Memberships/Loyalty | routes 404/paywalled on Solo trial (Growth-gated) | — | Frenly versions built from feature-page mechanics ✅ |
+| All features | exits to marketing site; headline confirms composite: "finishing an appointment deducts stock used, books commission, posts to P&L" | completion → stock + commission + P&L | Frenly: completion→sale→loyalty ✅; stock-on-completion + commission ❌ |
+| Top bar | global search ⌘K, Quick sale, New appointment, Waitlist buttons | shortcuts everywhere | ❌ Frenly has no global topbar shortcuts |
+
+### Not copied on purpose
+Unpaid deposits (needs card processor — deferred with Stripe), drag-drop calendar (their bug), commission/payroll (out of scope per owner).
+
+### Recommended next build slice (from this pass)
+1. Cancel/reschedule request flow on portal + Requests-style approvals (their strongest ops relationship we lack)
+2. Service→product consumption links + deduct-on-completion
+3. Clients CSV export; appointments print/CSV
+4. Staff assignment on services + calendar staff filter; deposits (needs payments, deferred)
+5. Waitlist online signup + notify (needs email/SMS — deferred with comms)

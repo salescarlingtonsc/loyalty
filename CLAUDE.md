@@ -75,10 +75,14 @@ Flowesce): appointments (+completion trigger -> sale -> loyalty; idempotent),
 waitlist, inventory (product_stock view, FEFO auto-deduct on retail sales),
 packages (sell/use-session RPCs; session = $0 visit for retention), bundles +
 resources tables, convert_booking_request RPC (portal request -> client +
-appointment). All engines verified via rolled-back SQL chain tests. App v1.3 has
-15 modules, industry-mapped. Next: WhatsApp/SMS comms, Stripe SG auto-charge +
-dunning, member-facing portal balance, CSV import, bundles/resources UI, Supabase
-Auth Site URL config, custom domain.
+appointment). v7 (final Flowesce parity): staff_invites + create_invite/
+accept_invite RPCs (5 roles, code-based join at onboarding), Settings team roster
++ CSV customer import, appointments Week calendar view, bundles/resources UI,
+businesses.brand_color + booking_policy (portal-themed). All engines verified via
+rolled-back SQL chain tests. App v1.4, 15 modules, industry-mapped.
+Deferred by owner decision: Stripe SG auto-charge + WhatsApp/SMS comms.
+Next candidates: member-facing portal balance, Supabase Auth Site URL config,
+custom domain, role-scoped UI permissions.
 
 ## Key unresolved risks
 Ledger/points-calc correctness; double earn/redeem; loyalty-liability accuracy; PDPA ⚖️;

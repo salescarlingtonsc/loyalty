@@ -310,9 +310,24 @@ async function dashboard(){
 /* ---------- customers ---------- */
 async function clientsPage(){
   M().innerHTML=`<div class="topbar"><div><h1>Customers</h1><p class="muted small">Your member base</p></div>
-    <button class="btn" id="add">+ Add customer</button></div>
+    <div class="row"><button class="btn ghost sm" id="exp">Export CSV</button><button class="btn" id="add">+ Add customer</button></div></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list"><div class="empty">Loading…</div></div>`;
+  $('exp').onclick=async()=>{
+    const [{data:cl,error},{data:pb},{data:cb}]=await Promise.all([
+      sb.from('clients').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false}),
+      sb.from('client_points_balance').select('*').eq('business_id',S.biz.id),
+      sb.from('client_credit_balance').select('*').eq('business_id',S.biz.id)]);
+    if(error) return fail(error);
+    const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
+          C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
+    const rows=[['name','phone','email','gender','birth_date','consent','points','credit'],
+      ...(cl||[]).map(c=>[c.full_name,c.phone||'',c.email||'',c.gender||'',c.birth_date||'',
+        c.marketing_consent?'yes':'no',P[c.id]||0,((C[c.id]||0)/100).toFixed(2)])];
+    const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-customers.csv';a.click();
+    toast('CSV downloaded');
+  };
   $('add').onclick=()=>{
     $('form').style.display='block';
     $('form').innerHTML=`<b>New customer</b>
@@ -542,6 +557,41 @@ async function servicesPage(){
     toast('Resource added');$('rnm').value='';loadBR();
   };
   loadBR();
+  /* products used per service */
+  M().insertAdjacentHTML('beforeend',`<div class="card" style="margin-top:16px"><b>Products used per service</b>
+    <p class="muted small" style="margin:6px 0 10px">Completing an appointment with this service auto-deducts these products (FEFO).</p>
+    <div class="row"><select id="lsvc"></select><select id="lprod"></select>
+    <input id="lqty" type="number" min="1" value="1" style="max-width:90px"><button class="btn sm" id="ladd">Add</button></div>
+    <div id="llist" style="margin-top:12px"></div></div>`);
+  async function loadSP(){
+    const [{data:sv3},{data:pr3}]=await Promise.all([
+      sb.from('services').select('id,name').eq('business_id',S.biz.id).order('name'),
+      sb.from('products').select('id,name').eq('business_id',S.biz.id).order('name')]);
+    $('lsvc').innerHTML=(sv3&&sv3.length)?sv3.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(''):'<option value="">— add a service first —</option>';
+    $('lprod').innerHTML=(pr3&&pr3.length)?pr3.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''):'<option value="">— add a product first —</option>';
+    const ids=(sv3||[]).map(s=>s.id);
+    let links=[];
+    if(ids.length){
+      const {data:sp}=await sb.from('service_products').select('service_id, product_id, qty, services(name), products(name)').in('service_id',ids);
+      links=sp||[];
+    }
+    $('llist').innerHTML=links.length?links.map(l=>`<div class="row small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+      <span><b>${esc(l.services?.name||'—')}</b> ← ${l.qty} × ${esc(l.products?.name||'—')}</span>
+      <span class="spacer"></span><button class="btn ghost sm" onclick="rmSP('${l.service_id}','${l.product_id}')">Remove</button></div>`).join('')
+      :'<p class="muted small">No product links yet.</p>';
+  }
+  $('ladd').onclick=async()=>{
+    if(!$('lsvc').value||!$('lprod').value) return toast('Pick a service and a product');
+    const {error}=await sb.from('service_products').upsert({service_id:$('lsvc').value,product_id:$('lprod').value,qty:parseInt($('lqty').value||'1')});
+    if(error) return fail(error);
+    toast('Linked');loadSP();
+  };
+  window.rmSP=async(sid,pid)=>{
+    const {error}=await sb.from('service_products').delete().eq('service_id',sid).eq('product_id',pid);
+    if(error) return fail(error);
+    toast('Removed');loadSP();
+  };
+  loadSP();
 }
 
 /* ---------- bookings ---------- */
@@ -552,8 +602,20 @@ async function bookingsPage(){
     <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
       <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
       <p class="small" style="margin-top:8px;word-break:break-all"><a href="${portal}" target="_blank" style="color:#D06A2E">${portal}</a></p></div>
+    <div class="card" style="margin-bottom:16px"><b>Change requests</b>
+      <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
+      <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        <input type="checkbox" id="aac" style="width:auto" ${S.biz.auto_approve_changes?'checked':''}> Auto-approve reschedule/cancel requests</label>
+      <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
     <div class="card" id="blist"><div class="empty">Loading…</div></div>`;
   $('cp').onclick=()=>{navigator.clipboard.writeText(portal);toast('Portal link copied')};
+  $('aac').onchange=async()=>{
+    const to=$('aac').checked;
+    const {error}=await sb.from('businesses').update({auto_approve_changes:to}).eq('id',S.biz.id);
+    if(error){$('aac').checked=!to;return fail(error)}
+    Object.assign(S.biz,{auto_approve_changes:to});
+    toast(to?'Auto-approve turned on':'Auto-approve turned off');
+  };
   async function load(){
     const {data:br,error}=await sb.from('booking_requests').select('*, services(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
     if(error) return fail(error);
@@ -566,13 +628,32 @@ async function bookingsPage(){
       <button class="btn ghost sm" onclick="setBr('${b.id}','declined')">Decline</button>`:''}</td></tr>`).join('')}</table>`
       :`<div class="empty"><div class="big">📅</div>No booking requests yet.<br>Share your portal link above — requests land here instantly.</div>`;
   }
+  async function loadCr(){
+    const {data:cr,error}=await sb.from('change_requests').select('*, appointments(starts_at, clients(full_name))')
+      .eq('business_id',S.biz.id).eq('status','pending').order('created_at');
+    if(error) return fail(error);
+    $('crlist').innerHTML=(cr&&cr.length)?`<table><tr><th>Requested</th><th>Customer</th><th>Kind</th><th>Current time</th><th>Proposed</th><th>Note</th><th></th></tr>
+      ${cr.map(c=>`<tr><td>${c.created_at.slice(0,16).replace('T',' ')}</td><td><b>${esc(c.appointments?.clients?.full_name||'—')}</b></td>
+      <td><span class="pill ${c.kind==='cancel'?'no':'new'}">${c.kind}</span></td>
+      <td>${c.appointments?.starts_at?c.appointments.starts_at.slice(0,16).replace('T',' '):'—'}</td>
+      <td>${c.proposed_at?c.proposed_at.slice(0,16).replace('T',' '):'—'}</td>
+      <td class="small">${esc(c.note||'—')}</td>
+      <td><button class="btn sm" onclick="decideCr('${c.id}',true)">Approve</button>
+      <button class="btn ghost sm" onclick="decideCr('${c.id}',false)">Decline</button></td></tr>`).join('')}</table>`
+      :`<div class="empty small">No pending change requests.</div>`;
+  }
   window.setBr=async(id,status)=>{const {error}=await sb.from('booking_requests').update({status}).eq('id',id);if(error)return fail(error);toast('Booking '+status);load()};
   window.convBr=async(id)=>{
     const {error}=await sb.rpc('convert_booking_request',{p_request:id});
     if(error) return fail(error);
     toast('Converted — customer created/matched + appointment booked ✓');load();
   };
-  load();
+  window.decideCr=async(id,approve)=>{
+    const {data,error}=await sb.rpc('decide_change',{p_request:id,p_approve:approve});
+    if(error) return fail(error);
+    toast(`Request ${data.status}`);loadCr();
+  };
+  load();loadCr();
 }
 
 /* ---------- loyalty config ---------- */
@@ -815,7 +896,8 @@ async function appointmentsPage(){
       <div style="margin-top:16px"><button class="btn" id="ago">Book appointment</button></div></div>
     <div class="card"><div class="row"><b>Schedule</b><span class="spacer"></span>
       <button class="qbtn act" id="vList">List</button><button class="qbtn" id="vWeek">Week</button>
-      <button class="qbtn" id="wkPrev" style="display:none">←</button><button class="qbtn" id="wkNext" style="display:none">→</button></div>
+      <button class="qbtn" id="wkPrev" style="display:none">←</button><button class="qbtn" id="wkNext" style="display:none">→</button>
+      <button class="qbtn" id="apPrint">Print</button><button class="qbtn" id="apCsv">CSV</button></div>
       <div id="alist" style="margin-top:10px"><p class="muted small">Loading…</p></div></div></div>`;
   let view='list',wkOff=0;
   $('ago').onclick=async()=>{
@@ -834,6 +916,17 @@ async function appointmentsPage(){
     $('wkPrev').style.display=$('wkNext').style.display='inline-block';loadAppts()};
   $('wkPrev').onclick=()=>{wkOff--;loadAppts()};
   $('wkNext').onclick=()=>{wkOff++;loadAppts()};
+  $('apPrint').onclick=()=>window.print();
+  $('apCsv').onclick=async()=>{
+    const {data:ap,error}=await sb.from('appointments').select('*, clients(full_name), services(name,price_cents)')
+      .eq('business_id',S.biz.id).order('starts_at',{ascending:false}).limit(25);
+    if(error) return fail(error);
+    const rows=[['when','customer','service','status'],
+      ...(ap||[]).map(a=>[a.starts_at,a.clients?.full_name||'',a.services?.name||'',a.status])];
+    const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
+    const a2=document.createElement('a');a2.href=URL.createObjectURL(blob);a2.download='frenly-appointments.csv';a2.click();
+    toast('CSV downloaded');
+  };
   async function loadAppts(){
     if(view==='week') return loadWeek();
     const {data:ap}=await sb.from('appointments').select('*, clients(full_name), services(name,price_cents)')
@@ -1190,6 +1283,12 @@ async function renderPortal(slug){
         <div style="margin-top:18px"><button class="btn" id="psend" style="width:100%">Request booking</button></div>
         ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
         <p class="muted small" style="margin-top:12px;text-align:center">The team confirms your request personally — you'll hear back soon.</p>
+      </div>
+      <div class="card" style="margin-top:16px"><b>Manage an existing booking</b>
+        <p class="muted small" style="margin:6px 0 10px">Enter the phone number you booked with to find your appointments.</p>
+        <div class="row"><input id="mphone" placeholder="+65"><button class="btn ghost sm" id="mfind">Find my bookings</button></div>
+        <div id="merr"></div>
+        <div id="mlist" style="margin-top:12px"></div>
       </div></div>`;
     document.querySelectorAll('.svc').forEach(el=>el.onclick=()=>{selSvc=el.dataset.s||null;draw()});
     $('psend').onclick=async()=>{
@@ -1201,6 +1300,38 @@ async function renderPortal(slug){
       root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">🎉</div><h2 style="margin-bottom:8px">Request sent!</h2>
         <p class="muted">${esc(biz.name)} has your booking request and will confirm shortly.</p></div>`;
     };
+    $('mfind').onclick=async()=>{
+      const phone=$('mphone').value.trim();
+      if(!phone){$('merr').innerHTML='<div class="err">Enter your phone number</div>';return}
+      $('merr').innerHTML='';$('mfind').disabled=true;
+      const {data,error}=await sb.rpc('list_my_appointments',{p_slug:slug,p_phone:phone});
+      $('mfind').disabled=false;
+      if(error){$('merr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      $('mlist').innerHTML=(data&&data.length)?`<label>New preferred time (for reschedule requests)</label><input type="datetime-local" id="mdt">
+        ${data.map(a=>`<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)">
+          <div><b>${new Date(a.starts_at).toLocaleString()}</b><div class="muted small">${esc(a.service_name||'general visit')} · ${esc(a.status)}</div></div>
+          <span class="spacer"></span>
+          <button class="btn ghost sm" onclick="mCancel('${a.id}')">Cancel</button>
+          <button class="btn sm" onclick="mReschedule('${a.id}')">Request reschedule</button></div>`).join('')}`
+        :'<p class="muted small">No upcoming bookings found for that number.</p>';
+    };
+  };
+  window.mCancel=async(apId)=>{
+    const phone=$('mphone').value.trim();
+    if(!phone) return toast('Enter your phone number first');
+    if(!confirm('Cancel this booking?')) return;
+    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:phone,p_kind:'cancel',p_proposed:null,p_note:null});
+    if(error) return fail(error);
+    toast(data&&data.status==='approved'?'Done — auto-approved':'Request sent — the team will confirm');
+  };
+  window.mReschedule=async(apId)=>{
+    const phone=$('mphone').value.trim();
+    if(!phone) return toast('Enter your phone number first');
+    const val=$('mdt')?.value;
+    if(!val) return toast('Pick a new date & time first');
+    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:phone,p_kind:'reschedule',p_proposed:new Date(val).toISOString(),p_note:null});
+    if(error) return fail(error);
+    toast(data&&data.status==='approved'?'Done — auto-approved':'Request sent — the team will confirm');
   };
   draw();
 }
