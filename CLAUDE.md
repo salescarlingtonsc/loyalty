@@ -66,8 +66,19 @@ project `loyalty`). Schema v2 applied (migration `frenly_v2_saas`): `salons`→`
 `reward_grants`, `booking_requests`; DB triggers auto-earn points + fire retention
 rewards on every sale (verified); RPCs `redeem_points`, `get_business_public`,
 `request_booking`. Repo git-initialized (commit 347e391).
-Next: points expiry job, consents/audit_log tables, referrals UI, WhatsApp/SMS,
-Supabase Auth Site URL config, custom domain.
+v3 added: points expiry (3 modes, batches, daily pg_cron sweep), referrals
+(codes + qualify-on-first-sale), consents, audit_log. v4: create_business onboarding
+RPC (fixes INSERT..RETURNING vs SELECT-policy chicken-and-egg). v5: memberships
+(plans, enroll, daily renewal job, pause/cancel) + gift cards (issue/redeem RPCs).
+Membership sales never earn points/retention/referral. v6 (ops parity with
+Flowesce): appointments (+completion trigger -> sale -> loyalty; idempotent),
+waitlist, inventory (product_stock view, FEFO auto-deduct on retail sales),
+packages (sell/use-session RPCs; session = $0 visit for retention), bundles +
+resources tables, convert_booking_request RPC (portal request -> client +
+appointment). All engines verified via rolled-back SQL chain tests. App v1.3 has
+15 modules, industry-mapped. Next: WhatsApp/SMS comms, Stripe SG auto-charge +
+dunning, member-facing portal balance, CSV import, bundles/resources UI, Supabase
+Auth Site URL config, custom domain.
 
 ## Key unresolved risks
 Ledger/points-calc correctness; double earn/redeem; loyalty-liability accuracy; PDPA ⚖️;

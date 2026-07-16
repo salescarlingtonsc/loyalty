@@ -99,19 +99,21 @@ const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
 const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
+const ALLMODS=['dashboard','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports'];
 const INDUSTRIES={
-  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','loyalty','retention','referrals','giftcards']},
-  salon:{em:'💇',label:'Hair Salon',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']},
-  facial:{em:'✨',label:'Facial / Spa',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']},
-  massage:{em:'💆',label:'Massage',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']},
-  fitness:{em:'🏋️',label:'Fitness',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']},
-  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','loyalty','retention','referrals','giftcards']},
-  other:{em:'🏪',label:'Other',mods:['dashboard','clients','sales','services','bookings','loyalty','retention','referrals','memberships','giftcards']}
+  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports']},
+  salon:{em:'💇',label:'Hair Salon',mods:ALLMODS},
+  facial:{em:'✨',label:'Facial / Spa',mods:ALLMODS},
+  massage:{em:'💆',label:'Massage',mods:ALLMODS},
+  fitness:{em:'🏋️',label:'Fitness',mods:ALLMODS},
+  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports']},
+  other:{em:'🏪',label:'Other',mods:ALLMODS}
 };
-const MODULES={dashboard:['📊','Dashboard'],clients:['👥','Customers'],sales:['🧾','Sales'],
-  services:['🛠️','Services'],bookings:['📅','Bookings'],loyalty:['🎁','Loyalty'],
+const MODULES={dashboard:['📊','Dashboard'],clients:['👥','Customers'],appointments:['🗓️','Appointments'],
+  sales:['🧾','Sales'],services:['🛠️','Services'],bookings:['📅','Bookings'],waitlist:['⏳','Waitlist'],
+  inventory:['📦','Inventory'],packages:['🎫','Packages'],loyalty:['🎁','Loyalty'],
   retention:['🔁','Retention'],referrals:['🤝','Referrals'],memberships:['💎','Memberships'],
-  giftcards:['🎟️','Gift cards'],settings:['⚙️','Settings']};
+  giftcards:['🎟️','Gift cards'],reports:['📈','Reports'],settings:['⚙️','Settings']};
 
 let S={user:null,biz:null,charts:[]};
 const $=(id)=>document.getElementById(id);
@@ -194,9 +196,20 @@ function renderOnboard(){
       <div id="oberr"></div>
       <div class="row" style="margin-top:20px"><button class="btn" id="mk">Create my workspace</button>
       <span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px">
+      <b>Joining a team instead?</b>
+      <div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px">
+      <button class="btn ghost" id="join">Join team</button></div>
     </div></div>`;
     document.querySelectorAll('.ind').forEach(el=>el.onclick=()=>{sel=el.dataset.k;const n=$('bn').value;draw();$('bn').value=n});
     $('out').onclick=async()=>{await sb.auth.signOut();S.biz=null;route()};
+    $('join').onclick=async()=>{
+      if(!$('ic').value.trim()) return toast('Enter your invite code');
+      $('join').disabled=true;
+      const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});
+      if(error){$('oberr').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('join').disabled=false;return}
+      S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard');
+    };
     $('mk').onclick=async()=>{
       const name=$('bn').value.trim();
       if(name.length<2){$('oberr').innerHTML='<div class="err">Give your business a name.</div>';return}
@@ -227,7 +240,9 @@ function renderShell(page){
   $('so').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[]};nav('#/')};
   const P={dashboard,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
     bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,
-    memberships:membershipsPage,giftcards:giftcardsPage,settings:settingsPage};
+    memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
+    waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,
+    settings:settingsPage};
   (P[page[0]]||dashboard)(page[1]);
 }
 const M=()=> $('main');
@@ -482,6 +497,51 @@ async function servicesPage(){
   }
   window.toggleSvc=async(id,to)=>{await sb.from('services').update({active:to}).eq('id',id);load()};
   load();
+  /* bundles + resources */
+  M().insertAdjacentHTML('beforeend',`<div class="split" style="margin-top:16px">
+    <div class="card"><b>Bundles</b><p class="muted small" style="margin:6px 0 10px">Several services at one price.</p>
+      <label>Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
+      <label>Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
+      <label>Included services</label><div id="bsv" class="small"></div>
+      <div style="margin-top:12px"><button class="btn sm" id="badd3">Create bundle</button></div>
+      <div id="blist3" style="margin-top:12px"></div></div>
+    <div class="card"><b>Resources</b><p class="muted small" style="margin:6px 0 10px">Rooms, chairs, equipment you can assign to appointments.</p>
+      <div class="row"><input id="rnm" placeholder="e.g. Room 2"><button class="btn sm" id="radd3">Add</button></div>
+      <div id="rlist3" style="margin-top:12px"></div></div></div>`);
+  async function loadBR(){
+    const [{data:sv2},{data:bu},{data:rs}]=await Promise.all([
+      sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+      sb.from('bundles').select('*, bundle_items(service_id, services(name))').eq('business_id',S.biz.id).order('name'),
+      sb.from('resources').select('*').eq('business_id',S.biz.id).order('name')]);
+    $('bsv').innerHTML=(sv2||[]).map(s=>`<label style="display:inline-flex;gap:6px;margin:4px 10px 0 0;cursor:pointer;color:var(--ink)">
+      <input type="checkbox" style="width:auto" data-bs="${s.id}">${esc(s.name)}</label>`).join('')||'<span class="muted">add services first</span>';
+    $('blist3').innerHTML=(bu&&bu.length)?bu.map(b=>`<div class="row small" style="padding:5px 0;border-bottom:1px solid var(--line)">
+      <b>${esc(b.name)}</b><span class="muted">${money(b.price_cents)} · ${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</span>
+      <span class="spacer"></span><span class="pill ${b.active?'on':'off'}">${b.active?'active':'off'}</span></div>`).join('')
+      :'<p class="muted small">No bundles yet.</p>';
+    $('rlist3').innerHTML=(rs&&rs.length)?rs.map(r=>`<div class="row small" style="padding:5px 0;border-bottom:1px solid var(--line)">
+      <b>${esc(r.name)}</b><span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'active':'off'}</span></div>`).join('')
+      :'<p class="muted small">No resources yet.</p>';
+  }
+  $('badd3').onclick=async()=>{
+    const name=$('bnm').value.trim();
+    const picked=[...document.querySelectorAll('[data-bs]')].filter(x=>x.checked).map(x=>x.dataset.bs);
+    if(name.length<2) return toast('Name the bundle');
+    if(picked.length<2) return toast('Pick at least 2 services');
+    const {data:b,error}=await sb.from('bundles').insert({business_id:S.biz.id,name,
+      price_cents:Math.round(parseFloat($('bpr').value||'0')*100)}).select().single();
+    if(error) return fail(error);
+    const {error:e2}=await sb.from('bundle_items').insert(picked.map(sid=>({bundle_id:b.id,service_id:sid})));
+    if(e2) return fail(e2);
+    toast('Bundle created');$('bnm').value='';loadBR();
+  };
+  $('radd3').onclick=async()=>{
+    if($('rnm').value.trim().length<2) return toast('Name it');
+    const {error}=await sb.from('resources').insert({business_id:S.biz.id,name:$('rnm').value.trim()});
+    if(error) return fail(error);
+    toast('Resource added');$('rnm').value='';loadBR();
+  };
+  loadBR();
 }
 
 /* ---------- bookings ---------- */
@@ -502,11 +562,16 @@ async function bookingsPage(){
       <td class="small">${esc(b.phone||b.email||'—')}</td><td>${esc(b.services?.name||'—')}</td>
       <td>${b.preferred_at?b.preferred_at.slice(0,16).replace('T',' '):'—'}</td><td>${b.party_size||'—'}</td>
       <td><span class="pill ${b.status==='new'?'new':b.status==='confirmed'?'ok':'no'}">${b.status}</span></td>
-      <td>${b.status==='new'?`<button class="btn sm" onclick="setBr('${b.id}','confirmed')">Confirm</button>
+      <td>${b.status==='new'?`<button class="btn sm" onclick="convBr('${b.id}')">→ Appointment</button>
       <button class="btn ghost sm" onclick="setBr('${b.id}','declined')">Decline</button>`:''}</td></tr>`).join('')}</table>`
       :`<div class="empty"><div class="big">📅</div>No booking requests yet.<br>Share your portal link above — requests land here instantly.</div>`;
   }
   window.setBr=async(id,status)=>{const {error}=await sb.from('booking_requests').update({status}).eq('id',id);if(error)return fail(error);toast('Booking '+status);load()};
+  window.convBr=async(id)=>{
+    const {error}=await sb.rpc('convert_booking_request',{p_request:id});
+    if(error) return fail(error);
+    toast('Converted — customer created/matched + appointment booked ✓');load();
+  };
   load();
 }
 
@@ -733,13 +798,275 @@ async function giftcardsPage(){
   loadCards();
 }
 
+/* ---------- appointments ---------- */
+async function appointmentsPage(){
+  const [{data:cl},{data:sv}]=await Promise.all([
+    sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
+    sb.from('services').select('id,name,price_cents,duration_min').eq('business_id',S.biz.id).eq('active',true).order('name')]);
+  M().innerHTML=`<div class="topbar"><div><h1>Appointments</h1><p class="muted small">Completing an appointment books the sale and fires loyalty automatically — nothing to remember at the desk.</p></div></div>
+    <div class="split">
+    <div class="card"><b>New appointment</b>
+      <label>Customer</label><select id="ac">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
+      <label>Service (optional)</label><select id="as"><option value="">— none / general visit —</option>
+        ${(sv||[]).map(s=>`<option value="${s.id}" data-d="${s.duration_min}">${esc(s.name)} — ${money(s.price_cents)}</option>`).join('')}</select>
+      <div class="split"><div><label>Date</label><input id="ad" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div><label>Time</label><input id="at" type="time" value="10:00"></div></div>
+      <label>Note</label><input id="an" placeholder="optional">
+      <div style="margin-top:16px"><button class="btn" id="ago">Book appointment</button></div></div>
+    <div class="card"><div class="row"><b>Schedule</b><span class="spacer"></span>
+      <button class="qbtn act" id="vList">List</button><button class="qbtn" id="vWeek">Week</button>
+      <button class="qbtn" id="wkPrev" style="display:none">←</button><button class="qbtn" id="wkNext" style="display:none">→</button></div>
+      <div id="alist" style="margin-top:10px"><p class="muted small">Loading…</p></div></div></div>`;
+  let view='list',wkOff=0;
+  $('ago').onclick=async()=>{
+    if(!$('ac').value) return toast('Pick a customer');
+    const opt=$('as').selectedOptions[0],dur=parseInt(opt?.dataset?.d||'60');
+    const starts=new Date($('ad').value+'T'+$('at').value);
+    const {error}=await sb.from('appointments').insert({business_id:S.biz.id,client_id:$('ac').value,
+      service_id:$('as').value||null,starts_at:starts.toISOString(),
+      ends_at:new Date(starts.getTime()+dur*60000).toISOString(),note:$('an').value||null});
+    if(error) return fail(error);
+    toast('Appointment booked');loadAppts();
+  };
+  $('vList').onclick=()=>{view='list';$('vList').classList.add('act');$('vWeek').classList.remove('act');
+    $('wkPrev').style.display=$('wkNext').style.display='none';loadAppts()};
+  $('vWeek').onclick=()=>{view='week';$('vWeek').classList.add('act');$('vList').classList.remove('act');
+    $('wkPrev').style.display=$('wkNext').style.display='inline-block';loadAppts()};
+  $('wkPrev').onclick=()=>{wkOff--;loadAppts()};
+  $('wkNext').onclick=()=>{wkOff++;loadAppts()};
+  async function loadAppts(){
+    if(view==='week') return loadWeek();
+    const {data:ap}=await sb.from('appointments').select('*, clients(full_name), services(name,price_cents)')
+      .eq('business_id',S.biz.id).order('starts_at',{ascending:false}).limit(25);
+    $('alist').innerHTML=(ap&&ap.length)?`<table><tr><th>When</th><th>Customer</th><th>Service</th><th>Status</th><th></th></tr>
+      ${ap.map(a=>`<tr><td>${a.starts_at.slice(0,16).replace('T',' ')}</td><td><b>${esc(a.clients?.full_name||'—')}</b></td>
+      <td>${esc(a.services?.name||'—')}</td>
+      <td><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'no'}">${a.status.replace('_',' ')}</span></td>
+      <td>${a.status==='booked'?`<button class="btn sm" onclick="setAp('${a.id}','completed')">✓ Complete</button>
+      <button class="btn ghost sm" onclick="setAp('${a.id}','no_show')">No-show</button>
+      <button class="btn ghost sm" onclick="setAp('${a.id}','cancelled')">Cancel</button>`:''}</td></tr>`).join('')}</table>`
+      :`<div class="empty"><div class="big">🗓️</div>No appointments yet. Book one on the left, or convert a booking request.</div>`;
+  }
+  async function loadWeek(){
+    const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7)+wkOff*7);mon.setHours(0,0,0,0);
+    const end=new Date(mon.getTime()+7*864e5);
+    const {data:ap}=await sb.from('appointments').select('*, clients(full_name), services(name)')
+      .eq('business_id',S.biz.id).gte('starts_at',mon.toISOString()).lt('starts_at',end.toISOString());
+    const days=[...Array(7)].map((_,i)=>new Date(mon.getTime()+i*864e5));
+    const cell={};(ap||[]).forEach(a=>{const d=new Date(a.starts_at);const k=d.toISOString().slice(0,10)+'-'+d.getHours();(cell[k]=cell[k]||[]).push(a)});
+    $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${mon.toISOString().slice(0,10)} → ${new Date(end-1).toISOString().slice(0,10)}</p>
+      <div style="overflow-x:auto"><table style="min-width:720px"><tr><th style="width:52px"></th>
+      ${days.map(d=>`<th>${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][(d.getDay()+6)%7]} ${d.getDate()}</th>`).join('')}</tr>
+      ${[...Array(11)].map((_,h)=>{const hr=h+9;return `<tr><td class="small muted">${String(hr).padStart(2,'0')}:00</td>
+        ${days.map(d=>{const k=d.toISOString().slice(0,10)+'-'+hr;const items=cell[k]||[];
+          return `<td style="min-height:36px;padding:6px">${items.map(a=>
+            `<div onclick="apAct('${a.id}','${a.status}')" style="cursor:pointer;background:${a.status==='completed'?'#E7F6EE':a.status==='booked'?'#FFF1E8':'#F3F1EC'};border-radius:8px;padding:4px 8px;font-size:11.5px;margin-bottom:3px">
+            <b>${esc((a.clients?.full_name||'—').split(' ')[0])}</b> ${esc(a.services?.name||'')}</div>`).join('')}</td>`}).join('')}</tr>`}).join('')}</table></div>
+      <p class="muted small" style="margin-top:8px">Click a booked (orange) slot to complete it — the sale and loyalty fire automatically.</p>`;
+  }
+  window.apAct=async(id,status)=>{
+    if(status!=='booked') return;
+    if(!confirm('Mark this appointment completed? The sale will be booked and loyalty fires.')) return;
+    await window.setAp(id,'completed');
+  };
+  window.setAp=async(id,status)=>{
+    const {error}=await sb.from('appointments').update({status}).eq('id',id);
+    if(error) return fail(error);
+    toast(status==='completed'?'Completed — sale booked, loyalty fired 🎉':'Appointment '+status.replace('_',' '));
+    loadAppts();
+  };
+  loadAppts();
+}
+
+/* ---------- waitlist ---------- */
+async function waitlistPage(){
+  const {data:sv}=await sb.from('services').select('id,name').eq('business_id',S.biz.id).order('name');
+  M().innerHTML=`<div class="topbar"><div><h1>Waitlist</h1><p class="muted small">Catch demand you can't seat now — recover it when a slot frees up.</p></div></div>
+    <div class="split">
+    <div class="card"><b>Add to waitlist</b>
+      <label>Name</label><input id="wn"><label>Phone</label><input id="wp" placeholder="+65">
+      <label>Service (optional)</label><select id="ws"><option value="">—</option>${(sv||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
+      <label>Preferred window</label><input id="ww" placeholder="e.g. weekday evenings">
+      <label>Notes</label><input id="wo" placeholder="optional">
+      <div style="margin-top:16px"><button class="btn" id="wgo">Add</button></div></div>
+    <div class="card"><b>Waiting</b><div id="wlist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+  $('wgo').onclick=async()=>{
+    if($('wn').value.trim().length<2) return toast('Name required');
+    const {error}=await sb.from('waitlist').insert({business_id:S.biz.id,name:$('wn').value.trim(),
+      phone:$('wp').value||null,service_id:$('ws').value||null,preferred:$('ww').value||null,notes:$('wo').value||null});
+    if(error) return fail(error);
+    toast('Added to waitlist');$('wn').value='';loadWl();
+  };
+  async function loadWl(){
+    const {data:wl}=await sb.from('waitlist').select('*, services(name)').eq('business_id',S.biz.id)
+      .neq('status','removed').order('created_at',{ascending:false});
+    $('wlist').innerHTML=(wl&&wl.length)?`<table><tr><th>Name</th><th>Contact</th><th>Wants</th><th>When</th><th>Status</th><th></th></tr>
+      ${wl.map(w=>`<tr><td><b>${esc(w.name)}</b></td><td class="small">${esc(w.phone||'—')}</td>
+      <td>${esc(w.services?.name||'—')}</td><td class="small">${esc(w.preferred||'—')}</td>
+      <td><span class="pill ${w.status==='waiting'?'new':w.status==='booked'?'ok':'off'}">${w.status}</span></td>
+      <td>${w.status!=='booked'?`<button class="btn ghost sm" onclick="setWl('${w.id}','contacted')">Contacted</button>
+      <button class="btn sm" onclick="setWl('${w.id}','booked')">Booked</button>`:''}
+      <button class="btn ghost sm" onclick="setWl('${w.id}','removed')">✕</button></td></tr>`).join('')}</table>`
+      :`<div class="empty"><div class="big">⏳</div>Nobody waiting. Add someone when you're fully booked.</div>`;
+  }
+  window.setWl=async(id,status)=>{await sb.from('waitlist').update({status}).eq('id',id);toast('Updated');loadWl()};
+  loadWl();
+}
+
+/* ---------- inventory ---------- */
+async function inventoryPage(){
+  M().innerHTML=`<div class="topbar"><div><h1>Inventory</h1><p class="muted small">Stock in batches with expiry — retail sales auto-deduct earliest-expiring first (FEFO).</p></div></div>
+    <div class="split">
+    <div class="card"><b>Add product</b>
+      <label>Name</label><input id="pn2"><label>SKU (optional)</label><input id="ps2">
+      <label>Retail price (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01">
+      <div style="margin-top:14px"><button class="btn" id="padd2">Add product</button></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
+      <b>Receive stock</b>
+      <label>Product</label><select id="bp2"></select>
+      <div class="split"><div><label>Quantity</label><input id="bq2" type="number" min="1" value="10"></div>
+      <div><label>Expiry (optional)</label><input id="be2" type="date"></div></div>
+      <div style="margin-top:14px"><button class="btn ghost" id="badd2">Receive batch</button></div></div>
+    <div class="card"><b>Stock on hand</b><div id="ilist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+  async function loadInv(){
+    const [{data:pr},{data:st}]=await Promise.all([
+      sb.from('products').select('*').eq('business_id',S.biz.id).order('name'),
+      sb.from('product_stock').select('*').eq('business_id',S.biz.id)]);
+    const SM=Object.fromEntries((st||[]).map(x=>[x.product_id,x.stock]));
+    $('bp2').innerHTML=(pr||[]).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">— add a product first —</option>';
+    $('ilist').innerHTML=(pr&&pr.length)?`<table><tr><th>Product</th><th>SKU</th><th>Price</th><th>Stock</th></tr>
+      ${pr.map(p=>{const s=SM[p.id]||0;return `<tr><td><b>${esc(p.name)}</b></td><td class="small">${esc(p.sku||'—')}</td>
+      <td>${money(p.retail_price_cents)}</td><td>${s} ${s<5?'<span class="pill no">low</span>':''}</td></tr>`}).join('')}</table>`
+      :`<div class="empty"><div class="big">📦</div>No products yet.</div>`;
+  }
+  $('padd2').onclick=async()=>{
+    if($('pn2').value.trim().length<2) return toast('Name required');
+    const {error}=await sb.from('products').insert({business_id:S.biz.id,name:$('pn2').value.trim(),
+      sku:$('ps2').value||null,retail_price_cents:Math.round(parseFloat($('pp2').value||'0')*100)});
+    if(error) return fail(error);toast('Product added');$('pn2').value='';loadInv();
+  };
+  $('badd2').onclick=async()=>{
+    if(!$('bp2').value) return toast('Pick a product');
+    const {error}=await sb.from('stock_batches').insert({product_id:$('bp2').value,
+      qty:parseInt($('bq2').value||'1'),expires_on:$('be2').value||null});
+    if(error) return fail(error);toast('Stock received');loadInv();
+  };
+  loadInv();
+}
+
+/* ---------- packages ---------- */
+async function packagesPage(){
+  const [{data:plans},{data:cl},{data:sv}]=await Promise.all([
+    sb.from('package_plans').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false}),
+    sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
+    sb.from('services').select('id,name').eq('business_id',S.biz.id).order('name')]);
+  M().innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div>
+    <div class="split">
+    <div class="card"><b>Create a package</b>
+      <label>Name</label><input id="kn" placeholder="e.g. 5x Facial">
+      <div class="split"><div><label>Price (${S.biz.currency||'SGD'})</label><input id="kp" type="number" min="0" step="0.01" value="400"></div>
+      <div><label>Sessions</label><input id="ks" type="number" min="1" value="5"></div></div>
+      <label>Service (optional)</label><select id="kv"><option value="">— any —</option>${(sv||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
+      <div style="margin-top:14px"><button class="btn" id="kadd">Create</button></div>
+      <div id="kplist" style="margin-top:16px">${(plans||[]).map(p=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
+        <div><b>${esc(p.name)}</b> <span class="muted small">${money(p.price_cents)} · ${p.sessions} sessions</span></div>
+        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'off'}</span></div>`).join('')||''}</div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
+      <b>Sell a package</b>
+      <label>Customer</label><select id="kc">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">—</option>'}</select>
+      <label>Package</label><select id="kk">${(plans||[]).filter(p=>p.active).map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.price_cents)}</option>`).join('')||'<option value="">—</option>'}</select>
+      <div style="margin-top:14px"><button class="btn" id="ksell">Sell — charge now</button></div></div>
+    <div class="card"><b>Customer packages</b><div id="klist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+  $('kadd').onclick=async()=>{
+    if($('kn').value.trim().length<2) return toast('Name it');
+    const {error}=await sb.from('package_plans').insert({business_id:S.biz.id,name:$('kn').value.trim(),
+      price_cents:Math.round(parseFloat($('kp').value||'0')*100),sessions:parseInt($('ks').value||'1'),
+      service_id:$('kv').value||null});
+    if(error) return fail(error);toast('Package created');packagesPage();
+  };
+  $('ksell').onclick=async()=>{
+    if(!$('kc').value||!$('kk').value) return toast('Pick customer + package');
+    const {error}=await sb.rpc('sell_package',{p_business:S.biz.id,p_client:$('kc').value,p_plan:$('kk').value});
+    if(error) return fail(error);
+    toast('Package sold — revenue booked, loyalty earned 🎉');packagesPage();
+  };
+  const {data:cps}=await sb.from('client_packages')
+    .select('*, clients(full_name), package_plans(name,sessions)')
+    .eq('business_id',S.biz.id).order('purchased_at',{ascending:false});
+  $('klist').innerHTML=(cps&&cps.length)?`<table><tr><th>Customer</th><th>Package</th><th>Left</th><th>Status</th><th></th></tr>
+    ${cps.map(k=>`<tr><td><b>${esc(k.clients?.full_name||'—')}</b></td><td>${esc(k.package_plans?.name||'—')}</td>
+    <td>${k.remaining}/${k.package_plans?.sessions||'?'}</td>
+    <td><span class="pill ${k.status==='active'?'on':'off'}">${k.status.replace('_',' ')}</span></td>
+    <td>${k.remaining>0?`<button class="btn sm" onclick="usePkg('${k.id}')">Use session</button>`:''}</td></tr>`).join('')}</table>`
+    :`<div class="empty"><div class="big">🎫</div>No packages sold yet.</div>`;
+  window.usePkg=async(id)=>{
+    const {data,error}=await sb.rpc('use_package_session',{p_business:S.biz.id,p_cp:id});
+    if(error) return fail(error);
+    toast(`Session used — ${data} left. Visit counted for retention ✓`);packagesPage();
+  };
+}
+
+/* ---------- reports ---------- */
+async function reportsPage(){
+  const iso=d=>d.toISOString().slice(0,10);
+  M().innerHTML=`<div class="topbar"><div><h1>Reports</h1><p class="muted small">Money and loyalty, in numbers your accountant can read.</p></div>
+    <div class="range"><input type="date" id="rf" value="${iso(new Date(Date.now()-29*864e5))}"> <span class="muted">→</span>
+    <input type="date" id="rt2" value="${iso(new Date())}"> <button class="btn sm" id="rgo">Run</button>
+    <button class="btn ghost sm" id="rcsv">Export sales CSV</button></div></div>
+    <div class="grid" id="rbody" style="grid-template-columns:1fr 1fr"><div class="card"><div class="empty">Pick a range and Run.</div></div></div>`;
+  let lastSales=[];
+  async function run(){
+    const from=$('rf').value,to=$('rt2').value+'T23:59:59';
+    const [{data:sl},{data:pl},{data:cb},{data:gc},{data:ms}]=await Promise.all([
+      sb.from('sales').select('*, clients(full_name)').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at'),
+      sb.from('points_ledger').select('entry_type,points').eq('business_id',S.biz.id).gte('created_at',from).lte('created_at',to),
+      sb.from('client_credit_balance').select('balance_cents').eq('business_id',S.biz.id),
+      sb.from('gift_cards').select('balance_cents,status').eq('business_id',S.biz.id),
+      sb.from('memberships').select('status').eq('business_id',S.biz.id)]);
+    lastSales=sl||[];
+    const byKind={};(sl||[]).forEach(s=>{byKind[s.kind]=(byKind[s.kind]||0)+s.amount_cents});
+    const pt={};(pl||[]).forEach(p=>{pt[p.entry_type]=(pt[p.entry_type]||0)+p.points});
+    const liab=(cb||[]).reduce((a,c)=>a+Math.max(c.balance_cents,0),0);
+    const gcOut=(gc||[]).filter(g=>g.status==='active').reduce((a,g)=>a+g.balance_cents,0);
+    const actMs=(ms||[]).filter(m=>m.status==='active').length;
+    $('rbody').innerHTML=`
+      <div class="card"><b>Revenue by type</b><table style="margin-top:8px">
+        ${Object.entries(byKind).map(([k,v])=>`<tr><td>${k.replace('_',' ')}</td><td style="text-align:right"><b>${money(v)}</b></td></tr>`).join('')||'<tr><td class="muted">No sales in range</td></tr>'}
+        <tr><td><b>Total</b></td><td style="text-align:right"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table></div>
+      <div class="card"><b>Loyalty flow (in range)</b><table style="margin-top:8px">
+        <tr><td>Points earned</td><td style="text-align:right"><b>${pt.earn||0}</b></td></tr>
+        <tr><td>Points redeemed</td><td style="text-align:right"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
+        <tr><td>Points expired</td><td style="text-align:right"><b>${Math.abs(pt.expire||0)}</b></td></tr>
+        <tr><td>Manual adjustments</td><td style="text-align:right"><b>${pt.adjust||0}</b></td></tr></table></div>
+      <div class="card"><b>Liabilities (now)</b><table style="margin-top:8px">
+        <tr><td>Customer credit outstanding</td><td style="text-align:right"><b>${money(liab)}</b></td></tr>
+        <tr><td>Gift cards unredeemed</td><td style="text-align:right"><b>${money(gcOut)}</b></td></tr></table>
+        <p class="muted small" style="margin-top:8px">Credit is money you owe customers — the daily expiry sweep keeps it honest.</p></div>
+      <div class="card"><b>Memberships</b><table style="margin-top:8px">
+        <tr><td>Active members</td><td style="text-align:right"><b>${actMs}</b></td></tr>
+        <tr><td>Membership revenue (range)</td><td style="text-align:right"><b>${money(byKind.membership||0)}</b></td></tr></table></div>`;
+  }
+  $('rgo').onclick=run;
+  $('rcsv').onclick=()=>{
+    if(!lastSales.length) return toast('Run a report first');
+    const rows=[['occurred_at','customer','kind','amount','note'],
+      ...lastSales.map(s=>[s.occurred_at,s.clients?.full_name||'',s.kind,(s.amount_cents/100).toFixed(2),(s.note||'').replace(/,/g,';')])];
+    const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-sales.csv';a.click();
+    toast('CSV downloaded');
+  };
+  run();
+}
+
 /* ---------- settings ---------- */
 async function settingsPage(){
   const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard');
-  M().innerHTML=`<div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace & modules</p></div></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
     <div class="split"><div class="card"><b>Business</b>
       <label>Name</label><input id="bn" value="${esc(S.biz.name)}">
       <label>Industry</label><select id="bi">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
+      <label>Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
+      <label>Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
       <label>Portal link (share with customers)</label>
       <p class="small" style="word-break:break-all;margin-top:4px"><a style="color:#D06A2E" target="_blank" href="${location.origin}${location.pathname}#/b/${S.biz.slug}">${location.origin}${location.pathname}#/b/${S.biz.slug}</a></p>
       <div style="margin-top:16px"><button class="btn" id="bsave">Save</button></div></div>
@@ -747,16 +1074,94 @@ async function settingsPage(){
       ${mods.map(m=>`<label style="display:flex;align-items:center;gap:10px;margin-top:12px;cursor:pointer;font-size:14px;color:var(--ink);font-weight:500">
         <input type="checkbox" style="width:auto" data-m="${m}" ${S.biz.enabled_modules.includes(m)?'checked':''}> ${MODULES[m][0]} ${MODULES[m][1]}</label>`).join('')}
       <div style="margin-top:16px"><button class="btn" id="msave">Save modules</button></div></div></div>
+    <div class="split" style="margin-top:16px">
+    <div class="card"><b>Team</b><p class="muted small" style="margin:6px 0 10px">Five roles: owner · manager · receptionist · bookkeeper · staff. Invite by code — teammate signs up, enters the code, and lands in this workspace.</p>
+      <div id="team"><p class="muted small">Loading…</p></div>
+      <div class="row" style="margin-top:14px"><select id="ir" style="max-width:150px">
+        <option value="manager">Manager</option><option value="receptionist">Receptionist</option>
+        <option value="bookkeeper">Bookkeeper</option><option value="staff">Staff</option></select>
+      <input id="ie" type="email" placeholder="email (optional, for your records)">
+      <button class="btn sm" id="igo">Create invite</button></div>
+      <div id="invites" style="margin-top:10px"></div></div>
+    <div class="card"><b>Import customers (CSV)</b>
+      <p class="muted small" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, gender, birth_date (YYYY-MM-DD).</p>
+      <input type="file" id="csvf" accept=".csv,text/csv">
+      <div id="csvprev" style="margin-top:12px"></div></div></div>
     <div class="card" style="margin-top:16px"><b>Tenant isolation</b>
       <p class="muted small" style="margin-top:6px;line-height:1.7">Every business on Frenly has its own isolated data space. Row-level security is enforced by the database on every table — your customers, sales, and programs are invisible to every other business, and theirs to you. Your team only ever sees this workspace.</p></div>`;
   $('bsave').onclick=async()=>{
-    const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),industry:$('bi').value}).eq('id',S.biz.id);
-    if(error)return fail(error);S.biz.name=$('bn').value.trim();S.biz.industry=$('bi').value;toast('Saved');route();
+    const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),industry:$('bi').value,
+      brand_color:$('bc').value,booking_policy:$('bp').value||null}).eq('id',S.biz.id);
+    if(error)return fail(error);
+    Object.assign(S.biz,{name:$('bn').value.trim(),industry:$('bi').value,brand_color:$('bc').value,booking_policy:$('bp').value||null});
+    toast('Saved');route();
   };
   $('msave').onclick=async()=>{
     const on=['dashboard',...[...document.querySelectorAll('[data-m]')].filter(x=>x.checked).map(x=>x.dataset.m)];
     const {error}=await sb.from('businesses').update({enabled_modules:on}).eq('id',S.biz.id);
     if(error)return fail(error);S.biz.enabled_modules=on;toast('Modules updated');route();
+  };
+  /* team */
+  async function loadTeam(){
+    const [{data:st},{data:inv}]=await Promise.all([
+      sb.from('staff').select('*').eq('business_id',S.biz.id).order('created_at'),
+      sb.from('staff_invites').select('*').eq('business_id',S.biz.id).eq('status','pending').order('created_at',{ascending:false})]);
+    $('team').innerHTML=(st||[]).map(s=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)">
+      <b>${esc(s.full_name||'Member')}</b><span class="pill ${s.role==='owner'?'ok':'off'}">${s.role}</span><span class="spacer"></span>
+      ${s.role!=='owner'?`<select onchange="chRole('${s.id}',this.value)" style="max-width:140px;padding:6px 10px">
+        ${['manager','receptionist','bookkeeper','staff'].map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>
+      <button class="btn ghost sm" onclick="rmStaff('${s.id}')">Remove</button>`:''}</div>`).join('');
+    $('invites').innerHTML=(inv&&inv.length)?inv.map(i=>`<div class="row small" style="padding:5px 0">
+      <span>🎟️ <b style="letter-spacing:.1em">${esc(i.code)}</b> · ${i.role} ${i.email?'· '+esc(i.email):''}</span><span class="spacer"></span>
+      <button class="btn ghost sm" onclick="cpInv('${i.code}')">Copy</button>
+      <button class="btn ghost sm" onclick="rvInv('${i.id}')">Revoke</button></div>`).join('')
+      :'<p class="muted small">No pending invites.</p>';
+  }
+  window.chRole=async(id,role)=>{const {error}=await sb.from('staff').update({role}).eq('id',id);if(error)return fail(error);toast('Role updated');};
+  window.rmStaff=async(id)=>{const {error}=await sb.from('staff').delete().eq('id',id);if(error)return fail(error);toast('Removed');loadTeam();};
+  window.cpInv=(c)=>{navigator.clipboard.writeText(c);toast('Code copied — send it to your teammate')};
+  window.rvInv=async(id)=>{await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);toast('Invite revoked');loadTeam();};
+  $('igo').onclick=async()=>{
+    const {data,error}=await sb.rpc('create_invite',{p_business:S.biz.id,p_role:$('ir').value,p_email:$('ie').value||null});
+    if(error) return fail(error);
+    toast(`Invite created: ${data.code} — copied`);navigator.clipboard.writeText(data.code);loadTeam();
+  };
+  loadTeam();
+  /* CSV import */
+  $('csvf').onchange=async(ev)=>{
+    const file=ev.target.files[0];if(!file)return;
+    const text=await file.text();
+    const rows=[];let cur=[''],q=false,ri=0;
+    for(const ch of text){
+      if(q){ if(ch==='"'){q=false} else cur[cur.length-1]+=ch; }
+      else if(ch==='"'){q=true}
+      else if(ch===','){cur.push('')}
+      else if(ch==='\n'||ch==='\r'){ if(cur.length>1||cur[0]!==''){rows.push(cur);cur=[''];} }
+      else cur[cur.length-1]+=ch;
+    }
+    if(cur.length>1||cur[0]!=='')rows.push(cur);
+    if(rows.length<2) return toast('CSV needs a header row + data');
+    const hdr=rows[0].map(h=>h.trim().toLowerCase());
+    const col=n=>hdr.findIndex(h=>h.includes(n));
+    const iN=col('name'),iP=col('phone'),iE=col('email'),iG=col('gender'),iB=col('birth');
+    if(iN<0) return toast('No "name" column found');
+    const recs=rows.slice(1).filter(r=>r[iN]&&r[iN].trim().length>1).map(r=>({
+      business_id:S.biz.id,full_name:r[iN].trim(),
+      phone:iP>=0?(r[iP]||null):null,email:iE>=0?(r[iE]||null):null,
+      gender:iG>=0&&['female','male','other'].includes((r[iG]||'').toLowerCase())?r[iG].toLowerCase():null,
+      birth_date:iB>=0&&/^\d{4}-\d{2}-\d{2}$/.test(r[iB]||'')?r[iB]:null}));
+    $('csvprev').innerHTML=`<p class="small"><b>${recs.length}</b> customers ready (of ${rows.length-1} rows).
+      First: ${esc(recs[0]?.full_name||'—')}${recs[1]?', '+esc(recs[1].full_name):''}…</p>
+      <button class="btn sm" id="csvgo" style="margin-top:8px">Import ${recs.length} customers</button>`;
+    $('csvgo').onclick=async()=>{
+      $('csvgo').disabled=true;let done=0;
+      for(let i=0;i<recs.length;i+=100){
+        const {error}=await sb.from('clients').insert(recs.slice(i,i+100));
+        if(error){toast(`Imported ${done}, then failed: ${error.message}`);return}
+        done+=Math.min(100,recs.length-i);
+      }
+      toast(`Imported ${done} customers 🎉`);$('csvprev').innerHTML=`<p class="small">✓ ${done} imported.</p>`;
+    };
   };
 }
 
@@ -766,8 +1171,9 @@ async function renderPortal(slug){
   const {data,error}=await sb.rpc('get_business_public',{p_slug:slug});
   if(error||!data){root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">🤔</div>Business not found.</div>`;return}
   const biz=data;let selSvc=null;
+  const bc=/^#[0-9A-Fa-f]{6}$/.test(biz.brand_color||'')?biz.brand_color:'#FF6B5E';
   const draw=()=>{
-    root.innerHTML=`<div class="portal">
+    root.innerHTML=`<div class="portal" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)">
       <div class="head"><h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
       <div class="card">
         ${(biz.services&&biz.services.length)?`<b>Choose a service</b>
@@ -782,6 +1188,7 @@ async function renderPortal(slug){
         <label>Notes</label><textarea id="pnotes" rows="2" placeholder="anything we should know?"></textarea>
         <div id="perr"></div>
         <div style="margin-top:18px"><button class="btn" id="psend" style="width:100%">Request booking</button></div>
+        ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
         <p class="muted small" style="margin-top:12px;text-align:center">The team confirms your request personally — you'll hear back soon.</p>
       </div></div>`;
     document.querySelectorAll('.svc').forEach(el=>el.onclick=()=>{selSvc=el.dataset.s||null;draw()});
