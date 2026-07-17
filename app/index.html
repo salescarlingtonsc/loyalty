@@ -97,6 +97,13 @@ tr.click{cursor:pointer} tr.click:hover td{background:#FBFAF7}
 .portal .head{text-align:center;margin-bottom:26px}
 .svc{display:flex;justify-content:space-between;padding:13px 16px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer;background:#fff}
 .svc.sel{border-color:var(--coral);background:#FFF7F0}
+.strike{text-decoration:line-through;opacity:.55}
+@media print{
+  .side,.no-print{display:none !important}
+  .shell{display:block}
+  .main{padding:0;max-width:100%}
+  body{background:#fff}
+}
 </style>
 </head>
 <body>
@@ -111,14 +118,14 @@ const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
 const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
-const ALLMODS=['dashboard','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','staffperf'];
+const ALLMODS=['dashboard','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','staffperf','dailyreport','pnl','expenses'];
 const INDUSTRIES={
-  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','staffperf']},
+  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
   salon:{em:'💇',label:'Hair Salon',mods:ALLMODS},
   facial:{em:'✨',label:'Facial / Spa',mods:ALLMODS},
   massage:{em:'💆',label:'Massage',mods:ALLMODS},
   fitness:{em:'🏋️',label:'Fitness',mods:ALLMODS},
-  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','staffperf']},
+  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
   other:{em:'🏪',label:'Other',mods:ALLMODS}
 };
 const MODULES={dashboard:['📊','Dashboard'],clients:['👥','Customers'],appointments:['🗓️','Appointments'],
@@ -126,6 +133,7 @@ const MODULES={dashboard:['📊','Dashboard'],clients:['👥','Customers'],appoi
   inventory:['📦','Inventory'],packages:['🎫','Packages'],loyalty:['🎁','Loyalty'],
   retention:['🔁','Retention'],referrals:['🤝','Referrals'],memberships:['💎','Memberships'],
   giftcards:['🎟️','Gift cards'],reports:['📈','Reports'],staffperf:['🧑‍💼','Staff performance'],
+  dailyreport:['📋','Daily report'],pnl:['📉','P&L'],expenses:['💸','Expenses'],
   settings:['⚙️','Settings'],setup:['✅','Get started']};
 
 /* Sidebar grouping (owner's "Cubbly" 4-header direction): flat modules are grouped under
@@ -137,7 +145,7 @@ const NAVGROUPS=[
   {key:'customers',icon:'👥',label:'Customers',items:['clients']},
   {key:'operations',icon:'🛠️',label:'Operations',items:['appointments','bookings','waitlist','sales','services','inventory','packages']},
   {key:'growth',icon:'🎁',label:'Growth',items:['loyalty','retention','referrals','memberships','giftcards']},
-  {key:'insights',icon:'📈',label:'Insights',items:['reports','staffperf']}
+  {key:'insights',icon:'📈',label:'Insights',items:['reports','staffperf','dailyreport','pnl','expenses']}
 ];
 let navOpen={};
 let profileOpen=false;
@@ -322,7 +330,8 @@ function renderShell(page){
     bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,
-    staffperf:staffPerfPage,setup:setupPage,settings:settingsPage};
+    staffperf:staffPerfPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
+    setup:setupPage,settings:settingsPage};
   (P[page[0]]||dashboard)(page[1]);
 }
 const M=()=> $('main');
@@ -469,15 +478,28 @@ async function clientsPage(){
 }
 
 async function clientDetail(id){
-  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb}]=await Promise.all([
+  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb},{data:allSl},{data:allAp},{data:stAll}]=await Promise.all([
     sb.from('clients').select('*').eq('id',id).single(),
     sb.from('client_points_balance').select('points').eq('client_id',id),
     sb.from('client_credit_balance').select('balance_cents').eq('client_id',id),
     sb.from('sales').select('*').eq('client_id',id).order('occurred_at',{ascending:false}).limit(10),
     sb.from('reward_grants').select('*, retention_programs(name)').eq('client_id',id).order('granted_at',{ascending:false}),
     sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
-    sb.from('points_batches').select('remaining,expires_at').eq('client_id',id).gt('remaining',0).not('expires_at','is',null).order('expires_at').limit(1)]);
+    sb.from('points_batches').select('remaining,expires_at').eq('client_id',id).gt('remaining',0).not('expires_at','is',null).order('expires_at').limit(1),
+    /* Full history (Feature 2) — separate, unlimited fetches so the existing 10-row KPI/list
+       logic above stays untouched exactly as it was ("fix nothing else"). */
+    sb.from('sales').select('*').eq('client_id',id).order('occurred_at',{ascending:false}),
+    sb.from('appointments').select('*, services!appointments_service_id_fkey(name)').eq('client_id',id).order('starts_at',{ascending:false}),
+    sb.from('staff').select('id,full_name').eq('business_id',S.biz.id)]);
   if(error) return fail(error);
+  const staffName=Object.fromEntries((stAll||[]).map(s=>[s.id,s.full_name||'Team member']));
+  /* Merge sales + appointments into one reverse-chronological timeline. Each entry keeps its
+     own date field for sorting (sale.occurred_at / appointment.starts_at) and is rendered
+     from its own shape — these are two different tables, not a union query. */
+  const histSales=(allSl||[]).map(s=>({t:s.occurred_at,kind:'sale',saleKind:s.kind,amount:s.amount_cents,note:s.note,staff:staffName[s.staff_id]||null}));
+  const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:a.services?.name,status:a.status}));
+  const history=[...histSales,...histAppts].sort((a,b)=>(b.t||'').localeCompare(a.t||''));
+  let histShown=50;
   const pts=pb?.[0]?.points||0,cred=cb?.[0]?.balance_cents||0,prog=lp?.[0];
   const nextExp=xb?.[0];
   /* "Visits on record" must read each sale's own immutable counts_as_visit snapshot, not
@@ -516,10 +538,10 @@ async function clientDetail(id){
           <span class="muted small">${g.reward_type==='credit'?money(g.reward_value):g.reward_type==='discount_pct'?g.reward_value+'% off':esc(g.reward_item||'free item')} · ${g.granted_at.slice(0,10)}</span></div>`).join('')
         :'<p class="muted small" style="margin-top:6px">None yet — rewards land here automatically when visit goals are hit.</p>'}
       </div></div>
-    <div class="card" style="margin-top:16px"><b>Recent sales</b>
-      ${(sl&&sl.length)?`<table style="margin-top:8px"><tr><th>Date</th><th>Kind</th><th>Amount</th><th>Note</th></tr>
-        ${sl.map(s=>`<tr><td>${s.occurred_at.slice(0,10)}</td><td>${s.kind.replace('_',' ')}</td><td>${money(s.amount_cents)}</td><td class="muted">${esc(s.note||'')}</td></tr>`).join('')}</table>`
-      :'<p class="muted small" style="margin-top:6px">No sales yet.</p>'}</div>`;
+    <div class="card" style="margin-top:16px"><b>Full history</b><p class="muted small" style="margin:4px 0 8px">Every service and sale, ever — newest first.</p>
+      <div id="histBody">${renderHistPage(history,histShown)}</div>
+      ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
+    </div>`;
   const rd=$('redeem');
   if(rd) rd.onclick=async()=>{
     rd.disabled=true;
@@ -545,6 +567,27 @@ async function clientDetail(id){
       action:to?'granted':'withdrawn',source:'admin client page',actor:S.user.id});
     toast(to?'Consent recorded':'Consent withdrawn — recorded');clientDetail(id);
   };
+  const histMore=$('histMore');
+  if(histMore) histMore.onclick=()=>{
+    histShown+=50;
+    $('histBody').innerHTML=renderHistPage(history,histShown);
+    if(histShown>=history.length) histMore.parentElement.style.display='none';
+  };
+}
+/* Renders the first n entries of a merged sale+appointment timeline (Feature 2). Each row
+   shape differs by kind.kind (sale vs appointment) since they come from different tables. */
+function renderHistPage(history,n){
+  const rows=history.slice(0,n);
+  if(!rows.length) return '<p class="muted small" style="margin-top:6px">No history yet.</p>';
+  return `<table><tr><th>Date</th><th>Type</th><th>Details</th><th>Amount</th><th>Served by</th></tr>
+    ${rows.map(h=>{
+      if(h.kind==='sale'){
+        return `<tr><td>${sgt(h.t)||''}</td><td>Sale</td><td>${esc((h.saleKind||'').replace('_',' '))}${h.note?' — '+esc(h.note):''}</td>
+          <td>${money(h.amount)}</td><td class="muted">${esc(h.staff||'—')}</td></tr>`;
+      }
+      return `<tr><td>${sgt(h.t)||''}</td><td>Appointment</td><td>${esc(h.service||'general visit')}</td>
+        <td class="muted">—</td><td><span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span></td></tr>`;
+    }).join('')}</table>`;
 }
 
 /* ---------- sales ---------- */
@@ -1328,10 +1371,11 @@ async function setupPage(){
 }
 
 /* ---------- staff performance ---------- */
-async function staffPerfPage(){
+async function staffPerfPage(drillId){
+  if(drillId) return staffPerfDrill(drillId);
   const today=new Date(),d30=new Date(Date.now()-29*864e5);
   const iso=d=>d.toISOString().slice(0,10);
-  M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Sales, revenue and commission per staff member</p></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Sales, revenue and commission per staff member — click a row to see the individual sales behind it</p></div>
     <div class="range">
       <button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
       <input type="date" id="pf" value="${iso(d30)}"> <span class="muted">→</span> <input type="date" id="pt" value="${iso(today)}">
@@ -1350,7 +1394,12 @@ async function staffPerfPage(){
       sb.from('sale_commission').select('*').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to),
       sb.from('staff').select('id,full_name').eq('business_id',S.biz.id).order('full_name')
     ]);
-    if(error) return fail(error);
+    if(error){
+      if(String(error.message||'').toLowerCase().includes('permission')){
+        $('pbody').innerHTML=`<div class="empty"><div class="big">🔒</div>Ask the owner for finance access to see staff performance.</div>`;return
+      }
+      return fail(error);
+    }
     const names=Object.fromEntries((st||[]).map(s=>[s.id,s.full_name||'Team member']));
     const agg={};
     (st||[]).forEach(s=>{agg[s.id]={count:0,revenue:0,commission:0}});
@@ -1366,9 +1415,247 @@ async function staffPerfPage(){
     if(!keys.length){$('pbody').innerHTML=`<div class="empty"><div class="big">🧑‍💼</div>No staff or sales in this range yet.</div>`;return}
     const totals=keys.reduce((t,k)=>({count:t.count+agg[k].count,revenue:t.revenue+agg[k].revenue,commission:t.commission+agg[k].commission}),{count:0,revenue:0,commission:0});
     $('pbody').innerHTML=`<table><tr><th>Staff</th><th>Sales</th><th>Revenue attributed</th><th>Commission earned</th></tr>
-      ${keys.map(k=>`<tr><td><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></td>
+      ${keys.map(k=>`<tr class="click" onclick="location.hash='#/staffperf/${k==='__unattributed'?'unattributed':k}'"><td><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></td>
         <td>${agg[k].count}</td><td>${money(agg[k].revenue)}</td><td>${money(agg[k].commission)}</td></tr>`).join('')}
       <tr><td><b>Total</b></td><td><b>${totals.count}</b></td><td><b>${money(totals.revenue)}</b></td><td><b>${money(totals.commission)}</b></td></tr></table>`;
+  }
+  load();
+}
+
+/* Drill-down: one staff member's individual sales — customer clickable to their profile.
+   Money + frozen rate come from sale_commission (per-sale snapshot, never today's rates);
+   client_id isn't on that view, so a second sales fetch supplies it, joined client-side to
+   a clients fetch for names ("Walk-in" for null client_id, matching the list page). */
+async function staffPerfDrill(idParam){
+  const isUnattr=idParam==='unattributed';
+  const today=new Date(),d30=new Date(Date.now()-29*864e5);
+  const iso=d=>d.toISOString().slice(0,10);
+  let staffName='Unattributed';
+  if(!isUnattr){
+    const {data:s}=await sb.from('staff').select('full_name').eq('id',idParam).limit(1);
+    staffName=s?.[0]?.full_name||'Team member';
+  }
+  M().innerHTML=`<div class="topbar"><div><h1>${esc(staffName)}</h1><p class="muted small">Individual sales in range</p></div>
+    <a class="btn ghost sm" href="#/staffperf">← Staff performance</a></div>
+    <div class="range">
+      <button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
+      <input type="date" id="df" value="${iso(d30)}"> <span class="muted">→</span> <input type="date" id="dt" value="${iso(today)}">
+      <button class="btn sm" id="dapply">Apply</button>
+    </div>
+    <div class="card" style="margin-top:14px" id="dbody"><div class="empty">Loading…</div></div>`;
+  document.querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.qbtn').forEach(x=>x.classList.remove('act'));b.classList.add('act');
+    $('df').value=iso(new Date(Date.now()-(b.dataset.d-1)*864e5));$('dt').value=iso(new Date());load();
+  });
+  $('dapply').onclick=()=>load();
+  async function load(){
+    const from=$('df').value,to=$('dt').value+'T23:59:59';
+    let q=sb.from('sale_commission').select('*').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to);
+    q=isUnattr?q.is('staff_id',null):q.eq('staff_id',idParam);
+    const {data:sc,error}=await q;
+    if(error){
+      if(String(error.message||'').toLowerCase().includes('permission')){
+        $('dbody').innerHTML=`<div class="empty"><div class="big">🔒</div>Ask the owner for finance access to see this.</div>`;return
+      }
+      return fail(error);
+    }
+    if(!sc||!sc.length){$('dbody').innerHTML=`<div class="empty"><div class="big">🧾</div>No sales for this staff member in range.</div>`;return}
+    const ids=sc.map(r=>r.sale_id);
+    const {data:sl}=await sb.from('sales').select('id,client_id').in('id',ids);
+    const clientBySale=Object.fromEntries((sl||[]).map(s=>[s.id,s.client_id]));
+    const clientIds=[...new Set((sl||[]).map(s=>s.client_id).filter(Boolean))];
+    let clientName={};
+    if(clientIds.length){
+      const {data:cl}=await sb.from('clients').select('id,full_name').in('id',clientIds);
+      clientName=Object.fromEntries((cl||[]).map(c=>[c.id,c.full_name]));
+    }
+    const rows=[...sc].sort((a,b)=>b.occurred_at.localeCompare(a.occurred_at));
+    $('dbody').innerHTML=`<table><tr><th>Date</th><th>Customer</th><th>Kind</th><th>Amount</th><th>Commission</th></tr>
+      ${rows.map(r=>{
+        const cid=clientBySale[r.sale_id];
+        const cust=cid?`<a href="#/client/${cid}" style="color:#D06A2E"><b>${esc(clientName[cid]||'Customer')}</b></a>`:'<span class="muted">Walk-in</span>';
+        return `<tr><td>${sgt(r.occurred_at)}</td><td>${cust}</td><td>${esc((r.kind||'').replace('_',' '))}</td><td>${money(r.amount_cents)}</td><td>${money(r.commission_cents||0)}</td></tr>`;
+      }).join('')}</table>`;
+  }
+  load();
+}
+
+/* ---------- daily report ---------- */
+async function dailyReportPage(){
+  const todayIso=(()=>{const d=new Date(new Date().getTime()+8*3600000);return d.toISOString().slice(0,10)})();
+  M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Everyone served today — particulars, service, revenue, staff — in one view</p></div>
+    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
+    <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
+    <div id="drBody"><div class="card"><div class="empty">Pick a date and Generate.</div></div></div>`;
+  $('drPrint').onclick=()=>window.print();
+  let lastRows=[];
+  $('drGo').onclick=load;
+  $('drCsv').onclick=()=>{
+    if(!lastRows.length) return toast('Generate a report first');
+    const rows=[['time','customer','phone','service_or_kind','amount','staff'],
+      ...lastRows.map(r=>[sgt(r.occurred_at),r.custName,r.custPhone,r.label,(r.amount_cents/100).toFixed(2),r.staffName])];
+    const blob=new Blob([rows.map(r=>r.map(v=>String(v??'').replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-daily-report-'+$('drDate').value+'.csv';a.click();
+    toast('CSV downloaded');
+  };
+  async function load(){
+    const day=$('drDate').value;
+    const from=new Date(day+'T00:00:00+08:00').toISOString(), to=new Date(day+'T23:59:59+08:00').toISOString();
+    const {data:sl,error}=await sb.from('sales')
+      .select('*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name))')
+      .eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at');
+    if(error) return fail(error);
+    const rows=(sl||[]).map(s=>({
+      occurred_at:s.occurred_at,
+      custName:s.clients?.full_name||'Walk-in',custPhone:s.clients?.phone||'',
+      label:s.appointments?.services?.name||(s.kind||'').replace('_',' '),
+      amount_cents:s.amount_cents,staffName:s.staff?.full_name||'Unattributed',
+      kind:s.kind,counts_as_revenue:s.counts_as_revenue,counts_as_visit:s.counts_as_visit,client_id:s.client_id}));
+    lastRows=rows;
+    const revenue=rows.filter(r=>r.counts_as_revenue).reduce((a,r)=>a+r.amount_cents,0);
+    const visits=rows.filter(r=>r.counts_as_visit).length;
+    const uniq=new Set(rows.filter(r=>r.client_id).map(r=>r.client_id)).size;
+    const giftCash=rows.filter(r=>r.kind==='gift_card').reduce((a,r)=>a+r.amount_cents,0);
+    $('drBody').innerHTML=`<div class="kpis">
+        <div class="card kpi"><div class="l">Revenue</div><div class="v">${money(revenue)}</div></div>
+        <div class="card kpi"><div class="l">Visits</div><div class="v">${visits}</div></div>
+        <div class="card kpi"><div class="l">Unique customers</div><div class="v">${uniq}</div></div>
+        <div class="card kpi"><div class="l">Gift card cash collected</div><div class="v">${money(giftCash)}</div></div>
+      </div>
+      <div class="charts"><div class="card"><b>Revenue by staff</b><canvas id="drC1"></canvas></div>
+        <div class="card"><b>Revenue by kind</b><canvas id="drC2"></canvas></div></div>
+      <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b>
+        ${rows.length?`<table style="margin-top:8px"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Amount</th><th>Staff</th></tr>
+          ${rows.map(r=>`<tr><td>${sgt(r.occurred_at).slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
+            <td>${esc(r.label)}</td><td>${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table>`
+        :`<div class="empty"><div class="big">📋</div>No sales recorded on this day.</div>`}</div>`;
+    if(!rows.length) return;
+    const byStaff={};rows.filter(r=>r.counts_as_revenue).forEach(r=>{byStaff[r.staffName]=(byStaff[r.staffName]||0)+r.amount_cents});
+    const byKind={};rows.filter(r=>r.counts_as_revenue).forEach(r=>{byKind[r.kind]=(byKind[r.kind]||0)+r.amount_cents});
+    const coral='#FF6B5E',amber='#FFB86B';
+    const C=(id,cfg)=>S.charts.push(new Chart($(id),cfg));
+    C('drC1',{type:'bar',data:{labels:Object.keys(byStaff),datasets:[{data:Object.values(byStaff).map(v=>v/100),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
+    C('drC2',{type:'doughnut',data:{labels:Object.keys(byKind).map(k=>k.replace('_',' ')),datasets:[{data:Object.values(byKind).map(v=>v/100),backgroundColor:[coral,amber,'#8B7BC7','#2FA36B','#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});
+  }
+  load();
+}
+
+/* ---------- expenses ---------- */
+async function expensesPage(){
+  M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+    <div class="card" id="expGate"><div class="empty">Loading…</div></div>`;
+  /* expenses RLS (expenses_all) and get_revenue_summary both gate on the same view_finance
+     permission — probe with get_revenue_summary (cheap, today only) since a plain SELECT on
+     expenses fails silently under RLS (returns zero rows, not an error) and can't tell
+     "no expenses yet" apart from "no permission". */
+  const todayIso=new Date().toISOString().slice(0,10);
+  const {error:permErr}=await sb.rpc('get_revenue_summary',{p_business:S.biz.id,p_from:todayIso,p_to:todayIso,p_branch:null});
+  if(permErr){
+    $('expGate').innerHTML=`<div class="empty"><div class="big">🔒</div>Ask the owner for finance access to see expenses.</div>`;return;
+  }
+  M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+    <div class="split"><div class="card"><b>Add expense</b>
+      <label>Category</label><input id="exCat" placeholder="e.g. Supplies, Rent, Utilities">
+      <label>Supplier (optional)</label><input id="exSup">
+      <label>Description</label><input id="exDesc">
+      <label>Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
+      <label>Date</label><input id="exDate" type="date" value="${todayIso}">
+      <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>
+    <div class="card"><b>Recent expenses</b><div id="exList" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+  $('exAdd').onclick=async()=>{
+    const category=$('exCat').value.trim(),amt=Math.round(parseFloat($('exAmt').value||'0')*100);
+    if(category.length<2) return toast('Category required');
+    if(!(amt>0)) return toast('Enter an amount');
+    const {error}=await sb.from('expenses').insert({business_id:S.biz.id,category,
+      supplier:$('exSup').value||null,description:$('exDesc').value||null,
+      amount_cents:amt,currency:'SGD',occurred_on:$('exDate').value||todayIso});
+    if(error) return fail(error);
+    toast('Expense added');$('exCat').value='';$('exSup').value='';$('exDesc').value='';$('exAmt').value='';load();
+  };
+  async function load(){
+    const {data:ex,error}=await sb.from('expenses').select('*').eq('business_id',S.biz.id).order('occurred_on',{ascending:false}).limit(200);
+    if(error) return fail(error);
+    $('exList').innerHTML=(ex&&ex.length)?`<table><tr><th>Date</th><th>Category</th><th>Supplier</th><th>Description</th><th>Amount</th><th>Status</th><th></th></tr>
+      ${ex.map(e=>`<tr class="${e.voided_at?'strike':''}"><td>${e.occurred_on}</td><td>${esc(e.category)}</td>
+        <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
+        <td>${money(e.amount_cents)}</td><td>${e.voided_at?'<span class="pill no">voided</span>':'<span class="pill ok">active</span>'}</td>
+        <td>${e.voided_at?'':`<button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`}</td></tr>`).join('')}</table>`
+      :`<div class="empty"><div class="big">💸</div>No expenses recorded yet.</div>`;
+  }
+  window.voidExp=async(id)=>{
+    if(!confirm('Void this expense? It stays on record, struck through, and drops out of the P&L.')) return;
+    const {error}=await sb.rpc('set_expense_void',{p_business:S.biz.id,p_expense:id,p_void:true});
+    if(error) return fail(error);
+    toast('Expense voided');load();
+  };
+  load();
+}
+
+/* ---------- P&L ---------- */
+async function pnlPage(){
+  const iso=d=>d.toISOString().slice(0,10);
+  const d30=new Date(Date.now()-29*864e5),today=new Date();
+  M().innerHTML=`<div class="topbar"><div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div>
+    <div class="range no-print"><input type="date" id="plFrom" value="${iso(d30)}"> <span class="muted">→</span>
+      <input type="date" id="plTo" value="${iso(today)}"> <button class="btn sm" id="plGo">Run</button>
+      <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div></div>
+    <div id="plBody"><div class="card"><div class="empty">Pick a range and Run.</div></div></div>`;
+  $('plPrint').onclick=()=>window.print();
+  let lastCat={},lastMonthly={};
+  $('plGo').onclick=load;
+  $('plCsv').onclick=()=>{
+    if(!Object.keys(lastCat).length&&!Object.keys(lastMonthly).length) return toast('Run a report first');
+    const rows=[['section','key','amount'],
+      ...Object.entries(lastCat).map(([k,v])=>['expenses_by_category',k,(v/100).toFixed(2)]),
+      ...Object.entries(lastMonthly).map(([k,v])=>['monthly',k,JSON.stringify(v)])];
+    const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-pnl.csv';a.click();
+    toast('CSV downloaded');
+  };
+  async function load(){
+    const from=$('plFrom').value,to=$('plTo').value;
+    const {data:sum,error}=await sb.rpc('get_revenue_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:null});
+    if(error){
+      if(String(error.message||'').toLowerCase().includes('permission')){
+        $('plBody').innerHTML=`<div class="card"><div class="empty"><div class="big">🔒</div>Ask the owner for finance access to see the P&L.</div></div>`;return
+      }
+      return fail(error);
+    }
+    const {data:ex,error:e2}=await sb.from('expenses').select('*').eq('business_id',S.biz.id)
+      .is('voided_at',null).gte('occurred_on',from).lte('occurred_on',to);
+    if(e2) return fail(e2);
+    const cash=sum.revenue_cash_cents||0, accrual=sum.revenue_accrual_cents||0, expTotal=sum.expenses_cents||0;
+    const net=cash-expTotal;
+    const byCat={};(ex||[]).forEach(e=>{byCat[e.category]=(byCat[e.category]||0)+e.amount_cents});
+    lastCat=byCat;
+    /* month-by-month only when the range spans >1 calendar month, per the brief */
+    const spanMonths=(new Date(to).getFullYear()-new Date(from).getFullYear())*12+(new Date(to).getMonth()-new Date(from).getMonth());
+    let monthly={};
+    if(spanMonths>=1){
+      const {data:sl}=await sb.from('sales').select('amount_cents,occurred_at,counts_as_revenue').eq('business_id',S.biz.id)
+        .eq('counts_as_revenue',true).gte('occurred_at',from).lte('occurred_at',to+'T23:59:59');
+      (sl||[]).forEach(s=>{const k=s.occurred_at.slice(0,7);(monthly[k]=monthly[k]||{rev:0,exp:0}).rev+=s.amount_cents});
+      (ex||[]).forEach(e=>{const k=e.occurred_on.slice(0,7);(monthly[k]=monthly[k]||{rev:0,exp:0}).exp+=e.amount_cents});
+    }
+    lastMonthly=monthly;
+    const mk=Object.keys(monthly).sort();
+    $('plBody').innerHTML=`<div class="kpis">
+        <div class="card kpi"><div class="l">Revenue (money collected)</div><div class="v">${money(cash)}</div></div>
+        <div class="card kpi"><div class="l">Revenue (accrual — earned incl. unpaid)</div><div class="v">${money(accrual)}</div></div>
+        <div class="card kpi"><div class="l">Total expenses</div><div class="v">${money(expTotal)}</div></div>
+        <div class="card kpi"><div class="l">Net</div><div class="v" style="color:${net>=0?'#2FA36B':'#C0392B'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div></div>
+      </div>
+      <p class="muted small" style="margin:12px 0">Gift card sales are cash collected, not revenue — they appear when redeemed and spent.</p>
+      <div class="charts"><div class="card"><b>Expenses by category</b><canvas id="plC1"></canvas></div>
+        <div class="card"><b>${mk.length?'Revenue vs expenses by month':'Add a wider range to see month-by-month'}</b>${mk.length?'<canvas id="plC2"></canvas>':''}</div></div>`;
+    const coral='#FF6B5E',amber='#FFB86B',green='#2FA36B';
+    const C=(id,cfg)=>S.charts.push(new Chart($(id),cfg));
+    const catKeys=Object.keys(byCat);
+    if(catKeys.length) C('plC1',{type:'doughnut',data:{labels:catKeys,datasets:[{data:catKeys.map(k=>byCat[k]/100),backgroundColor:[coral,amber,'#8B7BC7',green,'#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});
+    if(mk.length) C('plC2',{type:'bar',data:{labels:mk,datasets:[
+      {label:'Revenue',data:mk.map(k=>monthly[k].rev/100),backgroundColor:green,borderRadius:6},
+      {label:'Expenses',data:mk.map(k=>monthly[k].exp/100),backgroundColor:coral,borderRadius:6}]},
+      options:{plugins:{legend:{position:'bottom'}}}});
   }
   load();
 }
