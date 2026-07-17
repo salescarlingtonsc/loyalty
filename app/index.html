@@ -275,7 +275,8 @@ async function dashboard(){
     killCharts();
     const from=$('df').value,to=$('dt').value+'T23:59:59';
     const [sales,clients,pts,credit]=await Promise.all([
-      sb.from('sales').select('id,client_id,amount_cents,occurred_at,kind,counts_as_revenue,counts_as_visit,reversal_of').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at'),
+      // refund/reversal state deferred to a future migration; no reversal rows exist yet
+      sb.from('sales').select('id,client_id,amount_cents,occurred_at,kind,counts_as_revenue,counts_as_visit').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at'),
       sb.from('clients').select('id,gender,birth_date,created_at').eq('business_id',S.biz.id),
       sb.from('points_ledger').select('points,entry_type,created_at').eq('business_id',S.biz.id).gte('created_at',from).lte('created_at',to),
       sb.from('client_credit_balance').select('balance_cents').eq('business_id',S.biz.id)
@@ -285,11 +286,10 @@ async function dashboard(){
     /* Revenue and visits are read off each sale's own immutable policy snapshot
        (counts_as_revenue / counts_as_visit) — never re-derived from today's sale_policies.
        That live join was the v10.1 defect: a settings change would retroactively rewrite
-       completed history. Reversal rows inherit their original sale's flags and carry a
-       negative amount, so they net out of revenue on their own; excluding !s.reversal_of
-       from the visit count means a refund is never counted as a second visit. */
+       completed history. refund/reversal state deferred to a future migration; no reversal
+       rows exist yet, so there is nothing to exclude from the visit count here. */
     const rev=sl.filter(s=>s.counts_as_revenue);
-    const visits=sl.filter(s=>s.counts_as_visit&&!s.reversal_of);
+    const visits=sl.filter(s=>s.counts_as_visit);
     const revenue=rev.reduce((a,s)=>a+s.amount_cents,0);
     const uniq=new Set(sl.filter(s=>s.client_id).map(s=>s.client_id)).size;
     const newC=cl.filter(c=>c.created_at>=from&&c.created_at<=to).length;
@@ -411,8 +411,9 @@ async function clientDetail(id){
   /* "Visits on record" must read each sale's own immutable counts_as_visit snapshot, not
      just count every row — otherwise gift-card and (pre-v10.1) membership rows inflate it.
      This list is also capped at the 10 most recent sales (see the query above), so the
-     '+' suffix already meant "at least this many" before this fix and still does. */
-  const visitSales=(sl||[]).filter(s=>s.counts_as_visit&&!s.reversal_of);
+     '+' suffix already meant "at least this many" before this fix and still does.
+     refund/reversal state deferred to a future migration; no reversal rows exist yet. */
+  const visitSales=(sl||[]).filter(s=>s.counts_as_visit);
   M().innerHTML=`<div class="topbar"><div><h1>${esc(c.full_name)}</h1>
       <p class="muted small">${esc(c.phone||'')} ${esc(c.email||'')} · ${esc(c.gender||'gender not set')} ${c.birth_date?'· born '+c.birth_date:''}</p></div>
     <a class="btn ghost sm" href="#/clients">← All customers</a></div>
@@ -1174,9 +1175,10 @@ async function reportsPage(){
     if(!lastSales.length) return toast('Run a report first');
     /* counts_as_revenue/counts_as_visit are each sale's own immutable snapshot at record
        time — included so this export stays byte-identical if the business's sale policy
-       changes later, instead of quietly reflecting whatever policy is live on export day. */
-    const rows=[['occurred_at','customer','kind','amount','note','counts_as_revenue','counts_as_visit','reversal_of'],
-      ...lastSales.map(s=>[s.occurred_at,s.clients?.full_name||'',s.kind,(s.amount_cents/100).toFixed(2),(s.note||'').replace(/,/g,';'),s.counts_as_revenue,s.counts_as_visit,s.reversal_of||''])];
+       changes later, instead of quietly reflecting whatever policy is live on export day.
+       refund/reversal state deferred to a future migration; no reversal rows exist yet. */
+    const rows=[['occurred_at','customer','kind','amount','note','counts_as_revenue','counts_as_visit'],
+      ...lastSales.map(s=>[s.occurred_at,s.clients?.full_name||'',s.kind,(s.amount_cents/100).toFixed(2),(s.note||'').replace(/,/g,';'),s.counts_as_revenue,s.counts_as_visit])];
     const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-sales.csv';a.click();
     toast('CSV downloaded');
