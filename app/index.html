@@ -112,29 +112,33 @@ tr.click{cursor:pointer} tr.click:hover td{background:#FBFAF7}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 /* ============ Frenly app ============ */
 const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
 const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
-const ALLMODS=['dashboard','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','staffperf','dailyreport','pnl','expenses'];
+const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','staffperf','dailyreport','pnl','expenses'];
 const INDUSTRIES={
-  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
+  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
   salon:{em:'💇',label:'Hair Salon',mods:ALLMODS},
   facial:{em:'✨',label:'Facial / Spa',mods:ALLMODS},
   massage:{em:'💆',label:'Massage',mods:ALLMODS},
   fitness:{em:'🏋️',label:'Fitness',mods:ALLMODS},
-  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
+  retail:{em:'🛍️',label:'Retail',mods:['dashboard','till','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
   other:{em:'🏪',label:'Other',mods:ALLMODS}
 };
-const MODULES={dashboard:['📊','Dashboard'],clients:['👥','Customers'],appointments:['🗓️','Appointments'],
+const MODULES={dashboard:['📊','Dashboard'],till:['💵','Till'],clients:['👥','Customers'],appointments:['🗓️','Appointments'],
   sales:['🧾','Sales'],services:['🛠️','Services'],bookings:['📅','Bookings'],waitlist:['⏳','Waitlist'],
   inventory:['📦','Inventory'],packages:['🎫','Packages'],loyalty:['🎁','Loyalty'],
   retention:['🔁','Retention'],referrals:['🤝','Referrals'],memberships:['💎','Memberships'],
   giftcards:['🎟️','Gift cards'],reports:['📈','Reports'],staffperf:['🧑‍💼','Staff performance'],
   dailyreport:['📋','Daily report'],pnl:['📉','P&L'],expenses:['💸','Expenses'],
   settings:['⚙️','Settings'],setup:['✅','Get started']};
+/* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
+   frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
+const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
 
 /* Sidebar grouping (owner's "Cubbly" 4-header direction): flat modules are grouped under
    collapsible headers. Settings moves to the Profile menu, out of main nav. Group-open state
@@ -143,14 +147,14 @@ const MODULES={dashboard:['📊','Dashboard'],clients:['👥','Customers'],appoi
 const NAVGROUPS=[
   {key:'home',icon:'🏠',label:null,items:['dashboard']},
   {key:'customers',icon:'👥',label:'Customers',items:['clients']},
-  {key:'operations',icon:'🛠️',label:'Operations',items:['appointments','bookings','waitlist','sales','services','inventory','packages']},
+  {key:'operations',icon:'🛠️',label:'Operations',items:['till','appointments','bookings','waitlist','sales','services','inventory','packages']},
   {key:'growth',icon:'🎁',label:'Growth',items:['loyalty','retention','referrals','memberships','giftcards']},
   {key:'insights',icon:'📈',label:'Insights',items:['reports','staffperf','dailyreport','pnl','expenses']}
 ];
 let navOpen={};
 let profileOpen=false;
 
-let S={user:null,biz:null,charts:[]};
+let S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false};
 const $=(id)=>document.getElementById(id);
 const root=$('root');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -185,7 +189,45 @@ async function route(){
     }
   }
   if(!S.biz) return renderOnboard();
+  /* Effective module permissions (v14): staff.modules===null means "inherit — sees
+     everything the firm enabled"; an explicit array is an allowlist. Owners always
+     bypass server-side. Fetched once per session, then cached on S until a Team edit
+     resets it back to null (see settingsPage's per-staff module panel). */
+  if(S.myModules===null){
+    const {data:mm,error:mmErr}=await sb.rpc('get_my_modules',{p_business:S.biz.id});
+    if(mmErr||!mm){
+      /* Fallback must still resolve the ROLE, not just the modules: myRole drives the
+         Settings gate below, so leaving it null on a transient RPC blip would lock the
+         real owner out of their own Settings. Read it straight off the staff row (RLS
+         already scopes that select to this workspace). */
+      S.myModules=S.biz.enabled_modules||[];S.isSA=false;
+      const {data:me}=await sb.from('staff').select('role,modules')
+        .eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
+      S.myRole=me&&me.length?me[0].role:null;
+      if(me&&me.length&&me[0].modules&&S.myRole!=='owner'){
+        S.myModules=(S.biz.enabled_modules||[]).filter(m=>me[0].modules.includes(m));
+      }
+    }else{
+      S.myModules=mm.modules||S.biz.enabled_modules||[];S.myRole=mm.role||null;S.isSA=!!mm.is_super_admin;
+    }
+  }
   const page=(h.replace('#/','')||'dashboard').split('/');
+  /* Route guard: a restricted employee must not reach a page by typing the URL, not
+     just by it being hidden from nav. 'client' maps to the 'clients' module key, same
+     as activeGroupKey() does for the sidebar. dashboard/setup are always reachable. */
+  const pageKey=page[0]==='client'?'clients':page[0];
+  /* Settings is owner-only. Hiding the nav link is not a guard — anyone can type the
+     hash. The DB is the real boundary (every write in here is RLS/RPC owner-gated), but
+     the page also surfaces billing, the team roster and the sign-up QR, so don't render
+     it to staff at all. */
+  if(pageKey==='settings'&&S.myRole!=='owner'){
+    toast('Only the owner can open Settings.');
+    return nav('#/dashboard');
+  }
+  if(MODULES[pageKey]&&pageKey!=='settings'&&pageKey!=='setup'&&pageKey!=='dashboard'&&!S.myModules.includes(pageKey)){
+    toast('You don\'t have access to that.');
+    return nav('#/dashboard');
+  }
   renderShell(page);
 }
 
@@ -275,7 +317,7 @@ function activeGroupKey(pageKey){
   return g?g.key:null;
 }
 function navHtml(page){
-  const enabled=S.biz.enabled_modules||[];
+  const enabled=S.myModules||S.biz.enabled_modules||[];
   const activeKey=page[0]==='client'?'clients':page[0];
   const activeGrp=activeGroupKey(page[0]);
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(m=>m==='dashboard'||enabled.includes(m))})).filter(g=>g.items.length);
@@ -308,7 +350,7 @@ function renderShell(page){
       <div class="profile" id="profwrap">
         ${profileOpen?`<div class="menu" id="profmenu">
           <a href="#/setup" id="pmSetup">✅ Get started</a>
-          <a href="#/settings" id="pmSettings">⚙️ Settings</a>
+          ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">⚙️ Settings</a>`:''}
           <a href="#" id="pmSignout" style="color:#FF9C92">↪ Sign out</a>
         </div>`:''}
         <div class="who" id="profWho">
@@ -322,11 +364,11 @@ function renderShell(page){
   wireNav();
   $('profWho').onclick=()=>{profileOpen=!profileOpen;renderShell(page);};
   if(profileOpen){
-    $('pmSignout').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[]};profileOpen=false;nav('#/')};
+    $('pmSignout').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false};profileOpen=false;nav('#/')};
     $('pmSetup').onclick=()=>{profileOpen=false};
-    $('pmSettings').onclick=()=>{profileOpen=false};
+    const pmS=$('pmSettings');if(pmS) pmS.onclick=()=>{profileOpen=false};
   }
-  const P={dashboard,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
+  const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
     bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,
@@ -588,6 +630,179 @@ function renderHistPage(history,n){
       return `<tr><td>${sgt(h.t)||''}</td><td>Appointment</td><td>${esc(h.service||'general visit')}</td>
         <td class="muted">—</td><td><span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span></td></tr>`;
     }).join('')}</table>`;
+}
+
+/* ---------- till (8-digit phone lookup + confirm sale — the counter POS flow) ----------
+   Story: customer pays, staff types the 8-digit phone number, system shows the customer,
+   staff presses Confirm. Built as a big, dumb, 3-step screen for low-literacy staff on a
+   tablet till: Step 1 number entry (with on-screen keypad), Step 2 customer card + amount,
+   Step 3 done. All UI state is local to this closure — nothing persisted, resets on reload
+   (no localStorage in this stack) and resets itself on "Next customer". */
+async function tillPage(){
+  let step=1;             // 1=enter number, 2=customer card / new customer / invalid, 3=done
+  let phone='';           // digits typed so far in step 1
+  let cust=null;          // lookup_client_by_phone result once status==='found'
+  let notFoundPhone=null; // normalised 8-digit phone when status==='not_found'
+  let invalidMsg=null;    // message when status==='invalid'
+  let saleIdem=null;      // idempotency key for the CURRENT sale attempt — one fresh
+                           // crypto.randomUUID() per sale, reused across retries of that
+                           // same sale so a double-tap can never earn points twice; a new
+                           // key is only minted when a new sale starts (resetToStart / back).
+  let busy=false;         // guards Find/Confirm while a request is in flight
+  let doneInfo=null;      // {name, pointsEarned, pointsTotal, duplicate} for step 3
+
+  function resetToStart(){
+    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;busy=false;doneInfo=null;draw();
+  }
+  function draw(){
+    if(step===1) return drawStep1();
+    if(step===2) return drawStep2();
+    return drawStep3();
+  }
+
+  function drawStep1(){
+    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1><p class="muted small">Type the customer's phone number, then press Find</p></div></div>
+      <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
+        <input id="tPhone" inputmode="numeric" maxlength="8" placeholder="8186 3833"
+          style="font-size:34px;text-align:center;height:64px;letter-spacing:.04em" value="${esc(phone)}">
+        <div id="tErr"></div>
+        <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:16px">🔎 Find</button>
+        <div class="grid" id="tKeys" style="grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px">
+          ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" style="height:60px;font-size:22px;font-weight:700">${k}</button>`).join('')}
+        </div>
+        <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
+      </div>`;
+    const inp=$('tPhone');
+    inp.focus();
+    inp.oninput=()=>{phone=inp.value.replace(/\D/g,'').slice(0,8);inp.value=phone};
+    inp.onkeydown=(e)=>{if(e.key==='Enter') doFind();};
+    $('tFind').onclick=doFind;
+    document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.k;
+      if(k==='⌫') phone=phone.slice(0,-1);
+      else if(k==='✕') phone='';
+      else if(phone.length<8) phone+=k;
+      inp.value=phone;inp.focus();
+    });
+  }
+  async function doFind(){
+    if(busy) return;
+    if(!phone){$('tErr').innerHTML='<div class="err">Enter a phone number</div>';return}
+    busy=true;$('tFind').disabled=true;$('tFind').textContent='Looking…';
+    const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:phone});
+    busy=false;$('tFind').disabled=false;$('tFind').textContent='🔎 Find';
+    if(error) return fail(error);
+    if(data.status==='found'){cust=data;notFoundPhone=null;invalidMsg=null;step=2;draw();return}
+    if(data.status==='not_found'){cust=null;notFoundPhone=data.phone;invalidMsg=null;step=2;draw();return}
+    if(data.status==='invalid'){invalidMsg=data.message||'Enter a valid Singapore number';step=2;draw();return}
+  }
+
+  function drawStep2(){
+    if(invalidMsg) return drawInvalid();
+    if(!cust) return drawNewCustomer();
+    return drawCustomerCard();
+  }
+  function drawInvalid(){
+    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1></div></div>
+      <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
+        <div style="font-size:40px">⚠️</div>
+        <div class="err" style="margin-top:10px">${esc(invalidMsg)}</div>
+        <button class="btn ghost sm" id="tBack" style="margin-top:14px">← Try another number</button>
+      </div>`;
+    $('tBack').onclick=()=>{invalidMsg=null;step=1;draw()};
+  }
+  function drawNewCustomer(){
+    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1></div></div>
+      <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
+        <div style="font-size:40px">🙋</div>
+        <h2 style="margin:8px 0 2px">New customer</h2>
+        <p class="muted small">${esc(notFoundPhone||phone)} isn't in your system yet</p>
+        <div style="text-align:left"><label>Name</label><input id="tName" placeholder="Customer's name">
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="tConsent" style="width:auto"> Marketing consent given</label></div>
+        <div id="tErr2"></div>
+        <button class="btn" id="tAdd" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Add & continue</button>
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">← Different number</button>
+      </div>`;
+    $('tBack').onclick=()=>{step=1;draw()};
+    $('tAdd').onclick=async()=>{
+      if(busy) return;
+      const name=$('tName').value.trim();
+      if(name.length<2){$('tErr2').innerHTML='<div class="err">Enter a name</div>';return}
+      busy=true;$('tAdd').disabled=true;
+      const {data,error}=await sb.rpc('quick_add_client',{p_business:S.biz.id,p_phone:notFoundPhone||phone,p_name:name,p_consent:$('tConsent').checked});
+      if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      const {data:lk,error:lkErr}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:notFoundPhone||phone});
+      busy=false;
+      if(lkErr||!lk||lk.status!=='found'){$('tAdd').disabled=false;fail(lkErr||new Error('Customer added, but could not load their card — press Find again'));return}
+      toast(data.status==='created'?'Customer added ✓':'Customer found ✓');
+      cust=lk;step=2;draw();
+    };
+  }
+  function drawCustomerCard(){
+    const toNext=(cust.points_to_next!=null)?cust.points_to_next:null;
+    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1></div></div>
+      <div class="card" style="max-width:460px;margin:0 auto">
+        <div style="text-align:center">
+          <div style="font-size:1.9rem;font-family:'Fraunces',serif;font-weight:600">${esc(cust.full_name)}</div>
+          <p class="muted small">${esc(cust.phone||'')}${cust.member_since?' · member since '+esc(String(cust.member_since).slice(0,10)):''}</p>
+        </div>
+        <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(3,1fr)">
+          <div class="card kpi"><div class="l">Points</div><div class="v">${cust.points??0}</div></div>
+          <div class="card kpi"><div class="l">Credit</div><div class="v">${money(cust.credit_cents||0)}</div></div>
+          <div class="card kpi"><div class="l">Visits</div><div class="v">${cust.visits??0}</div></div>
+        </div>
+        ${toNext!=null?`<p class="muted small" style="text-align:center;margin-top:10px">⏳ ${toNext} points to next reward</p>`:''}
+        ${cust.can_redeem?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="tRedeem">🎁 Redeem reward</button></div>`:''}
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+        <label>Amount (${S.biz.currency||'SGD'})</label>
+        <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
+        <div id="tErr3"></div>
+        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px;background:var(--green)">✓ Confirm</button>
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">← Different number</button>
+      </div>`;
+    $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;draw()};
+    $('tAmt').focus();
+    const rd=$('tRedeem');
+    if(rd) rd.onclick=async()=>{
+      rd.disabled=true;
+      const {data,error}=await sb.rpc('redeem_points',{p_business:S.biz.id,p_client:cust.client_id});
+      if(error){fail(error);rd.disabled=false;return}
+      toast(`Redeemed → ${money(data.credit_cents)} credit added 🎉`);
+      const {data:lk}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone});
+      if(lk&&lk.status==='found') cust=lk;
+      draw();
+    };
+    $('tConfirm').onclick=async()=>{
+      if(busy) return;
+      const amt=Math.round(parseFloat($('tAmt').value||'0')*100);
+      if(!(amt>0)){$('tErr3').innerHTML='<div class="err">Enter an amount</div>';return}
+      if(!saleIdem) saleIdem=crypto.randomUUID(); // fresh key for this sale; reused on retry
+      busy=true;$('tConfirm').disabled=true;$('tConfirm').textContent='Recording…';
+      const {data,error}=await sb.rpc('record_sale_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone,
+        p_amount_cents:amt,p_kind:'quick_sale',p_note:null,p_staff:null,p_idem:saleIdem});
+      busy=false;
+      if(error){$('tConfirm').disabled=false;$('tConfirm').textContent='✓ Confirm';return fail(error)}
+      doneInfo=(data.status==='duplicate_ignored')
+        ?{name:data.full_name,pointsEarned:0,pointsTotal:data.points,duplicate:true}
+        :{name:data.full_name,pointsEarned:data.points_earned||0,pointsTotal:data.points,duplicate:false};
+      step=3;draw();
+    };
+  }
+  function drawStep3(){
+    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1></div></div>
+      <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
+        <div style="font-size:56px">✅</div>
+        <h2 style="margin:8px 0 4px">${doneInfo.duplicate?'Already recorded':'Done'}</h2>
+        ${doneInfo.duplicate?`<p class="muted">This sale was already recorded — no extra points added.</p>`
+          :`<p style="font-size:1.5rem;font-family:'Fraunces',serif;font-weight:600;color:var(--green);margin-top:4px">+${doneInfo.pointsEarned} points</p>`}
+        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · now ${doneInfo.pointsTotal} points total</p>
+        <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer →</button>
+      </div>`;
+    $('tNext').onclick=resetToStart;
+  }
+
+  draw();
 }
 
 /* ---------- sales ---------- */
@@ -1677,14 +1892,22 @@ async function settingsPage(){
         <input type="checkbox" style="width:auto" data-m="${m}" ${S.biz.enabled_modules.includes(m)?'checked':''}> ${MODULES[m][0]} ${MODULES[m][1]}</label>`).join('')}
       <div style="margin-top:16px"><button class="btn" id="msave">Save modules</button></div></div></div>
     <div class="split" style="margin-top:16px">
-    <div class="card"><b>Team</b><p class="muted small" style="margin:6px 0 10px">Five roles: owner · manager · receptionist · bookkeeper · staff. Invite by code — teammate signs up, enters the code, and lands in this workspace.</p>
+      <div class="card" id="billingWrap"><div class="empty">Loading…</div></div>
+      <div class="card" id="signupWrap"><div class="empty">Loading…</div></div>
+    </div>
+    <div class="split" style="margin-top:16px">
+    <div class="card"><b>Team</b><p class="muted small" style="margin:6px 0 10px">Five roles: owner · manager · staff · front desk · bookkeeper. Invite by code — teammate signs up, enters the code, and lands in this workspace. The owner always sees every module and can't be restricted.</p>
       <div id="team"><p class="muted small">Loading…</p></div>
       <div class="row" style="margin-top:14px"><select id="ir" style="max-width:150px">
-        <option value="manager">Manager</option><option value="receptionist">Receptionist</option>
-        <option value="bookkeeper">Bookkeeper</option><option value="staff">Staff</option></select>
+        ${['manager','staff','frontdesk','bookkeeper'].map(r=>`<option value="${r}">${ROLE_LABELS[r]}</option>`).join('')}</select>
       <input id="ie" type="email" placeholder="email (optional, for your records)">
       <button class="btn sm" id="igo">Create invite</button></div>
-      <div id="invites" style="margin-top:10px"></div></div>
+      <div id="invites" style="margin-top:10px"></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
+      <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Module templates</b>
+      <p class="muted small" style="margin:4px 0 8px">Reusable module sets — save one from a staff member's "Modules" panel below, then apply it to others. Example: Staff A → Dashboard + Customers. Staff B → Inventory only.</p>
+      <div id="tplList"><p class="muted small">Loading…</p></div>
+    </div>
     <div class="card"><b>Import customers (CSV)</b>
       <p class="muted small" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, gender, birth_date (YYYY-MM-DD).</p>
       <input type="file" id="csvf" accept=".csv,text/csv">
@@ -1704,31 +1927,135 @@ async function settingsPage(){
     const {error}=await sb.from('businesses').update({enabled_modules:on}).eq('id',S.biz.id);
     if(error)return fail(error);S.biz.enabled_modules=on;toast('Modules updated');route();
   };
-  /* team */
+  /* team + per-staff module permissions (v14) */
+  let openModId=null;   // staff.id whose "Modules" panel is expanded, or null
+  const panelSel={};    // staff.id -> {mode:'all'|'selected', mods:string[]} — in-progress
+                         // panel edits kept in JS state (not read back from the DOM) so they
+                         // survive the loadTeam() redraws other actions trigger.
+  let templates=[];     // module_templates rows for this business
+  let myStaffId=null;   // this signed-in user's own staff.id
+
+  async function loadTemplates(){
+    const {data,error}=await sb.from('module_templates').select('*').eq('business_id',S.biz.id).order('name');
+    if(error) return fail(error);
+    templates=data||[];
+  }
+  function templateOptionsHtml(){
+    return templates.length?templates.map(t=>`<option value="${t.id}">${esc(t.name)} (${(t.modules||[]).length})</option>`).join('')
+      :'<option value="">— no templates saved —</option>';
+  }
+  function initPanelSel(s){
+    if(!panelSel[s.id]) panelSel[s.id]=(s.modules===null)?{mode:'all',mods:[]}:{mode:'selected',mods:[...s.modules]};
+  }
+  function modChecklistHtml(staffId,sel){
+    const avail=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='setup'&&(S.biz.enabled_modules||[]).includes(m));
+    if(!avail.length) return '<p class="muted small">No modules enabled for this business yet.</p>';
+    return avail.map(m=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;color:var(--ink);font-size:13.5px">
+      <input type="checkbox" style="width:auto" ${sel.mods.includes(m)?'checked':''} onchange="toggleModCheck('${staffId}','${m}',this.checked)"> ${MODULES[m][0]} ${MODULES[m][1]}</label>`).join('');
+  }
+  function modPanelHtml(s){
+    initPanelSel(s);
+    const sel=panelSel[s.id];
+    return `<div class="card" style="margin-top:8px;background:#FBFAF7">
+      <p class="muted small" style="margin-bottom:8px">What can <b style="color:var(--ink)">${esc(s.full_name||'this teammate')}</b> see?</p>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--ink);font-size:13.5px;margin-bottom:6px">
+        <input type="radio" name="modmode-${s.id}" style="width:auto" ${sel.mode==='all'?'checked':''} onchange="setModMode('${s.id}','all')"> Sees everything (default)</label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--ink);font-size:13.5px">
+        <input type="radio" name="modmode-${s.id}" style="width:auto" ${sel.mode==='selected'?'checked':''} onchange="setModMode('${s.id}','selected')"> Only selected</label>
+      <div id="modgrid-${s.id}" style="display:${sel.mode==='selected'?'grid':'none'};grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px;margin:10px 0;padding:10px;background:#fff;border:1px solid var(--line);border-radius:10px">
+        ${modChecklistHtml(s.id,sel)}
+      </div>
+      <div class="row" style="margin-top:6px"><button class="btn sm" onclick="saveStaffModules('${s.id}')">Save</button>
+      <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Close</button></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
+      <p class="muted small" style="margin-bottom:6px">Save this set as a reusable template:</p>
+      <div class="row"><input id="tplName-${s.id}" placeholder="e.g. Barista" style="max-width:160px">
+        <button class="btn ghost sm" onclick="saveModTemplate('${s.id}')">Save as template</button></div>
+      <p class="muted small" style="margin:12px 0 6px">Or apply a saved template to ${esc((s.full_name||'them').split(' ')[0])}:</p>
+      <div class="row"><select id="tplPick-${s.id}" style="max-width:200px">${templateOptionsHtml()}</select>
+        <button class="btn ghost sm" onclick="applyModTemplate('${s.id}')">Apply</button></div>
+    </div>`;
+  }
   async function loadTeam(){
     const [{data:st},{data:inv}]=await Promise.all([
       sb.from('staff').select('*').eq('business_id',S.biz.id).order('created_at'),
       sb.from('staff_invites').select('*').eq('business_id',S.biz.id).eq('status','pending').order('created_at',{ascending:false})]);
-    $('team').innerHTML=(st||[]).map(s=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)">
-      <b>${esc(s.full_name||'Member')}</b><span class="pill ${s.role==='owner'?'ok':'off'}">${s.role}</span><span class="spacer"></span>
-      ${s.role!=='owner'?`<select onchange="chRole('${s.id}',this.value)" style="max-width:140px;padding:6px 10px">
-        ${['manager','receptionist','bookkeeper','staff'].map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>
-      <button class="btn ghost sm" onclick="rmStaff('${s.id}')">Remove</button>`:''}</div>`).join('');
+    myStaffId=(st||[]).find(x=>x.user_id===S.user?.id)?.id||null;
+    $('team').innerHTML=(st&&st.length)?st.map(s=>{
+      const modPill=s.role==='owner'?'':(s.modules===null?'<span class="pill on">All modules</span>':`<span class="pill off">${s.modules.length} module${s.modules.length===1?'':'s'}</span>`);
+      return `<div style="padding:6px 0;border-bottom:1px solid var(--line)">
+        <div class="row">
+          <b>${esc(s.full_name||'Member')}</b><span class="pill ${s.role==='owner'?'ok':'off'}">${esc(ROLE_LABELS[s.role]||s.role)}</span>
+          ${modPill}<span class="spacer"></span>
+          ${s.role!=='owner'?`<button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
+          <select onchange="chRole('${s.id}',this.value)" style="max-width:140px;padding:6px 10px">
+            ${['manager','staff','frontdesk','bookkeeper'].map(r=>`<option value="${r}" ${s.role===r?'selected':''}>${ROLE_LABELS[r]}</option>`).join('')}</select>
+          <button class="btn ghost sm" onclick="rmStaff('${s.id}')">Remove</button>`:`<span class="muted small">Always sees everything — can't be restricted</span>`}
+        </div>
+        ${(s.role!=='owner'&&openModId===s.id)?modPanelHtml(s):''}
+      </div>`;
+    }).join(''):'<p class="muted small">No teammates yet — invite one below.</p>';
     $('invites').innerHTML=(inv&&inv.length)?inv.map(i=>`<div class="row small" style="padding:5px 0">
-      <span>🎟️ <b style="letter-spacing:.1em">${esc(i.code)}</b> · ${i.role} ${i.email?'· '+esc(i.email):''}</span><span class="spacer"></span>
+      <span>🎟️ <b style="letter-spacing:.1em">${esc(i.code)}</b> · ${esc(ROLE_LABELS[i.role]||i.role)} ${i.email?'· '+esc(i.email):''}</span><span class="spacer"></span>
       <button class="btn ghost sm" onclick="cpInv('${i.code}')">Copy</button>
       <button class="btn ghost sm" onclick="rvInv('${i.id}')">Revoke</button></div>`).join('')
       :'<p class="muted small">No pending invites.</p>';
+    $('tplList').innerHTML=templates.length?templates.map(t=>`<div class="row small" style="padding:4px 0">
+      <span>📋 <b>${esc(t.name)}</b></span><span class="spacer"></span><span class="muted small">${(t.modules||[]).length} module${(t.modules||[]).length===1?'':'s'}</span></div>`).join('')
+      :'<p class="muted small">No templates saved yet.</p>';
   }
   window.chRole=async(id,role)=>{const {error}=await sb.from('staff').update({role}).eq('id',id);if(error)return fail(error);toast('Role updated');};
   window.rmStaff=async(id)=>{const {error}=await sb.from('staff').delete().eq('id',id);if(error)return fail(error);toast('Removed');loadTeam();};
   window.cpInv=(c)=>{navigator.clipboard.writeText(c);toast('Code copied — send it to your teammate')};
   window.rvInv=async(id)=>{await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);toast('Invite revoked');loadTeam();};
+  window.toggleModPanel=(staffId)=>{openModId=(openModId===staffId)?null:staffId;loadTeam();};
+  window.toggleModCheck=(staffId,mod,checked)=>{
+    const sel=panelSel[staffId];if(!sel)return;
+    sel.mods=checked?[...new Set([...sel.mods,mod])]:sel.mods.filter(x=>x!==mod);
+  };
+  window.setModMode=(staffId,mode)=>{
+    const sel=panelSel[staffId];if(!sel)return;
+    sel.mode=mode;
+    const grid=document.getElementById(`modgrid-${staffId}`);
+    if(grid) grid.style.display=(mode==='selected')?'grid':'none';
+  };
+  window.saveStaffModules=async(staffId)=>{
+    const sel=panelSel[staffId];if(!sel)return;
+    if(sel.mode==='selected'&&!sel.mods.length) return toast('Pick at least one module, or choose "Sees everything"');
+    const {error}=await sb.rpc('set_staff_modules',{p_staff:staffId,p_modules:sel.mode==='all'?null:sel.mods});
+    if(error) return fail(error);
+    toast('Modules updated');
+    delete panelSel[staffId];openModId=null;
+    await loadTeam();
+    if(staffId===myStaffId){S.myModules=null;route();}
+  };
+  window.saveModTemplate=async(staffId)=>{
+    const sel=panelSel[staffId];if(!sel)return;
+    const nameInput=document.getElementById(`tplName-${staffId}`);
+    const name=(nameInput?.value||'').trim();
+    if(name.length<2) return toast('Name the template');
+    if(!sel.mods.length) return toast('Tick at least one module first');
+    const {error}=await sb.rpc('save_module_template',{p_business:S.biz.id,p_name:name,p_modules:sel.mods});
+    if(error) return fail(error);
+    toast('Template saved');
+    await loadTemplates();loadTeam();
+  };
+  window.applyModTemplate=async(staffId)=>{
+    const pick=document.getElementById(`tplPick-${staffId}`);
+    if(!pick||!pick.value) return toast('Pick a template first');
+    const {error}=await sb.rpc('apply_module_template',{p_staff:staffId,p_template:pick.value});
+    if(error) return fail(error);
+    toast('Template applied');
+    delete panelSel[staffId];openModId=staffId;
+    await loadTeam();
+    if(staffId===myStaffId){S.myModules=null;route();}
+  };
   $('igo').onclick=async()=>{
     const {data,error}=await sb.rpc('create_invite',{p_business:S.biz.id,p_role:$('ir').value,p_email:$('ie').value||null});
     if(error) return fail(error);
     toast(`Invite created: ${data.code} — copied`);navigator.clipboard.writeText(data.code);loadTeam();
   };
+  await loadTemplates();
   loadTeam();
   /* CSV import */
   $('csvf').onchange=async(ev)=>{
@@ -1768,6 +2095,52 @@ async function settingsPage(){
   };
   /* commission config — owner only, % only (flat-amount commission is not built yet) */
   loadCommissionConfig();
+  /* billing (read-only) + customer sign-up QR — independent async loads, own cards */
+  loadBillingConfig();
+  loadSignupConfig();
+}
+/* ---------- billing (read-only) ---------- */
+async function loadBillingConfig(){
+  const {data:b,error}=await sb.from('v_business_billing').select('*').eq('business_id',S.biz.id).single();
+  if(error){$('billingWrap').innerHTML=`<b>Billing</b><div class="empty small">Could not load billing — ${esc(error.message)}</div>`;return}
+  const seats=b.billable_seats??0,extra=b.extra_seats??0,base=b.base_price_cents??0,perSeat=b.per_seat_price_cents??0,incl=b.included_seats??1;
+  const statusPill=b.status==='active'?'ok':b.status==='trialing'?'new':'off';
+  $('billingWrap').innerHTML=`<b>Billing</b>
+    <div class="row" style="margin-top:8px"><span class="pill ${statusPill}">${esc(b.status||'—')}</span>
+    <span class="spacer"></span><span class="muted small">Logins in use: <b style="color:var(--ink)">${seats}</b></span></div>
+    <p class="muted small" style="margin-top:12px;line-height:1.6">${money(base)} base (${incl} login${incl===1?'':'s'} included)${extra>0?` + ${extra} extra × ${money(perSeat)}`:''} = <b style="color:var(--ink)">${money(b.monthly_total_cents||0)}</b>/month</p>
+    <div style="font-family:'Fraunces',serif;font-size:1.9rem;margin-top:6px">${money(b.monthly_total_cents||0)}<span class="muted small" style="font-family:'Inter',sans-serif"> /month</span></div>
+    ${b.status==='trialing'&&b.trial_ends_at?`<p class="muted small" style="margin-top:8px">Free trial until ${esc(sgt(b.trial_ends_at))}</p>`:''}
+    <p class="muted small" style="margin-top:12px">Payment isn't collected in-app yet.</p>`;
+}
+/* ---------- customer sign-up QR ---------- */
+async function loadSignupConfig(){
+  const url=`${location.origin}${location.pathname.replace(/[^/]*$/,'')}join.html?s=${S.biz.slug}`;
+  $('signupWrap').innerHTML=`<b>Customer sign-up</b>
+    <p class="muted small" style="margin:6px 0 10px">Print this QR for your counter. Customers scan it to join your loyalty programme.</p>
+    <div id="joinQr" style="width:180px;height:180px;margin:0 auto"></div>
+    <p class="small" style="word-break:break-all;margin-top:12px"><a target="_blank" style="color:#D06A2E" href="${esc(url)}">${esc(url)}</a></p>
+    <div class="row" style="margin-top:10px"><button class="btn ghost sm" id="cpJoin">Copy link</button>
+    <button class="btn ghost sm" id="dlQr">Download QR</button></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+      <input type="checkbox" id="joinEnabled" style="width:auto" ${S.biz.join_enabled!==false?'checked':''}> Accept new sign-ups</label>`;
+  const qrEl=$('joinQr');qrEl.innerHTML='';
+  new QRCode(qrEl,{text:url,width:180,height:180});
+  $('cpJoin').onclick=()=>{navigator.clipboard.writeText(url);toast('Sign-up link copied')};
+  $('dlQr').onclick=()=>{
+    const img=qrEl.querySelector('img')||qrEl.querySelector('canvas');
+    if(!img) return toast('QR still rendering — try again');
+    const a=document.createElement('a');
+    a.href=img.tagName==='CANVAS'?img.toDataURL('image/png'):img.src;
+    a.download=`frenly-signup-qr-${S.biz.slug}.png`;a.click();
+  };
+  $('joinEnabled').onchange=async()=>{
+    const to=$('joinEnabled').checked;
+    const {error}=await sb.from('businesses').update({join_enabled:to}).eq('id',S.biz.id);
+    if(error){$('joinEnabled').checked=!to;return fail(error)}
+    Object.assign(S.biz,{join_enabled:to});
+    toast(to?'Accepting new sign-ups':'New sign-ups paused');
+  };
 }
 async function loadCommissionConfig(){
   const {data:me}=await sb.from('staff').select('role').eq('user_id',S.user.id).eq('business_id',S.biz.id).limit(1);

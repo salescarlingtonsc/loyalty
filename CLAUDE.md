@@ -159,6 +159,45 @@ v11b adds the payments ledger + completion≠payment split (loyalty stays firing
 completion per CLAUDE.md's own first principle; revenue reported twice as
 `revenue_accrual` and `revenue_cash`, the delta being A/R), cash drawer, expenses.
 Neither is verified yet — both need rolled-back chain tests before applying.
+v14 (`frenly_v14a/b/c/d`, applied + verified 2026-07-18, 25/25 rolled-back assertions,
+security advisor 0 ERROR — see `db/migrations/20260718_frenly_v14_*.note.md` for the
+full rationale). Five things:
+(1) **Super admin** = `leechuanseng.biz@gmail.com` (owner ruling). Scope = **read every
+tenant, write platform tables only**. `public.super_admins` + `app.is_super_admin()` +
+46 SELECT-only `<t>_sa_read` policies. `super_admins` has NO write policy at all — it is
+API-unwritable by anyone incl. a super admin (service role/SQL only), so a stolen owner
+session cannot self-promote. SA can write `subscriptions`; SA insert into a tenant's
+`clients`/`credit_ledger` → 42501. Verified both directions.
+(2) **ROLE BUG FIXED (was live since v7):** `staff_invites` allowed
+`manager|receptionist|bookkeeper|staff` but `staff` allowed `owner|manager|stylist|
+frontdesk`, and `accept_invite` inserts the invite role straight into `staff` — so
+**every invite except 'manager' threw a check violation.** Employee onboarding was broken
+for 3 of 4 roles. Canonical set now `owner|manager|staff|frontdesk|bookkeeper`
+(`stylist`→`staff`, `receptionist`→`frontdesk`, backfilled). `owner` is not invitable.
+(3) **Seat billing:** `subscriptions` + `v_business_billing`. $25/mo covers firm + 1
+login; each extra ACTIVE login +$10/mo. **A seat = `staff.user_id IS NOT NULL AND
+active`** — v11a rota-only staff are FREE; deactivating frees the seat. Only a super
+admin can write it (a firm cannot price itself — verified 0 rows). **No Stripe, no hard
+seat cap** (blocking invites with no way to pay would brick the pilot).
+(4) **Per-staff module permissions:** `staff.modules text[]` (NULL = inherit, array =
+allowlist, owner always bypasses) + `module_templates` + `app.can_module()` /
+`get_my_modules`. **Enforced in RLS on `clients`/`appointments`/`products`/
+`stock_batches`** — an inventory-only employee hitting `/rest/v1/clients` gets 0 rows,
+not the customer list. `can_module()` deliberately ignores `enabled_modules` (turning a
+module off in Settings must not strand rows). Other modules remain UI-level only.
+(5) **Customer self-signup + phone till:** `join_program`/`get_join_page` (anon) behind
+`app/join.html?s=<slug>` + QR in Settings; `businesses.join_enabled`. `join_program`
+returns a UNIFORM `{status:'ok'}` for new AND existing numbers — differing would make it
+an oracle for "is 8xxxxxxx your customer" (PDPA). `app.norm_phone()` folds
+`+65 8186 3833`→`81863833`; `clients.phone_norm` GENERATED + partial unique
+`(business_id, phone_norm)`. Till: `lookup_client_by_phone` → `record_sale_by_phone`
+with `sales.idem_key` (double-tap → `duplicate_ignored`, one sale). The till writes ONE
+`sales` row and no ledger — v10 triggers still own earning.
+**⚖️ Open risks from v14:** `join_program` is anon with NO rate limiting (mass-junk-insert
+vector; needs captcha/edge limit before scale). Pre-existing, NOT fixed:
+`businesses.salons_insert` is `WITH CHECK (true)` (any authed user can create an orphan
+business, bypassing `create_business` → no owner row, no subscription = billing evasion);
+Supabase leaked-password protection is OFF.
 Next candidates: verify+apply v11a/v11b; wire UI to `get_sale_policy` (revenue KPI
 still hardcodes `!== 'gift_card'`); Pass 2/3 of the parity audit; member-facing portal
 balance, Supabase Auth Site URL config, custom domain, role-scoped UI permissions.

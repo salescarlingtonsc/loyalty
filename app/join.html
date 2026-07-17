@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Join — Frenly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==== copied from app/index.html (:root + base + .card/.btn/.muted/.small system) ==== */
+:root{
+  --bg:#F7F5F1; --card:#FFFFFF; --ink:#1C1A22; --muted:#75717E;
+  --line:#E8E4DD; --coral:#FF6B5E; --amber:#FFB86B; --green:#2FA36B;
+  --grad:linear-gradient(100deg,#FF6B5E,#FFB86B);
+  --r:14px; --shadow:0 1px 3px rgba(28,26,34,.06),0 8px 24px rgba(28,26,34,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.01em}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;font-size:16px}
+input{font-family:inherit;font-size:16px;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%;min-height:48px}
+input:focus{outline:2px solid rgba(255,107,94,.35);border-color:var(--coral)}
+label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:16px 0 6px}
+.btn{background:var(--grad);color:#fff;font-weight:700;padding:14px 22px;border-radius:100px;transition:transform .15s, box-shadow .15s;font-size:16px;min-height:48px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(255,107,94,.35)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:26px 22px}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+.err{background:#FBEAE7;color:#C0392B;padding:12px 14px;border-radius:10px;font-size:14px;margin-top:14px}
+.empty{text-align:center;padding:38px 10px;color:var(--muted)}
+.empty .big{font-size:42px;margin-bottom:12px;line-height:1}
+/* ==== page-specific: public join page, no login, mobile-first, capped ~440px on desktop ==== */
+.wrap{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:36px 16px}
+.join{width:440px;max-width:100%}
+.jhead{text-align:center;margin-bottom:18px}
+.logo{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600;color:var(--muted);margin-bottom:16px}
+.logo span{color:var(--coral)}
+.jhead h1{font-size:1.6rem;color:var(--coral);margin-bottom:4px}
+.help{font-size:12.5px;color:var(--muted);margin-top:6px}
+/* consent row: whole row is one big tap target (PDPA — checkbox starts unticked, never pre-checked) */
+.checkrow{display:flex;align-items:center;gap:12px;margin-top:20px;padding:13px 14px;background:#FBFAF7;border-radius:10px;border:1px solid var(--line);cursor:pointer;min-height:48px}
+.checkrow input[type=checkbox]{width:22px;height:22px;min-height:0;flex-shrink:0;accent-color:var(--coral)}
+.checkrow span{font-size:14px;font-weight:500;color:var(--ink)}
+@media(max-width:400px){.join{width:100%}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* ============ Frenly — public customer join page (QR / link, NO login) ============ */
+const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
+const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+const $=(id)=>document.getElementById(id);
+const root=$('root');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* slug: ?s=<slug> is primary (QR codes encode this); #/<slug> is a fallback for shared links */
+function getSlug(){
+  const qs=new URLSearchParams(location.search);
+  const fromQuery=(qs.get('s')||'').trim();
+  if(fromQuery) return fromQuery;
+  const h=location.hash||'';
+  if(h.startsWith('#/')){
+    const fromHash=h.slice(2).split('?')[0].trim();
+    if(fromHash) return fromHash;
+  }
+  return null;
+}
+
+function shellOpen(inner){
+  root.innerHTML=`<div class="wrap"><div class="join">
+    <div class="jhead"><div class="logo">frenly<span>.</span></div></div>
+    ${inner}
+  </div></div>`;
+}
+
+/* ---- state: loading ---- */
+function renderLoading(){
+  shellOpen(`<div class="card"><div class="empty">Loading…</div></div>`);
+}
+
+/* ---- state: empty / invalid link (unknown or disabled slug) ---- */
+function renderInvalidLink(){
+  shellOpen(`<div class="card"><div class="empty">
+    <div class="big">🔗</div>
+    <h2 style="margin-bottom:8px">This link isn't active</h2>
+    <p class="muted">Please check with the shop for the correct QR code or link.</p>
+  </div></div>`);
+}
+
+/* ---- state: error (page failed to load — distinct from an invalid link) ---- */
+function renderLoadError(){
+  shellOpen(`<div class="card"><div class="empty">
+    <div class="big">⚠️</div>
+    <h2 style="margin-bottom:8px">Something went wrong</h2>
+    <p class="muted" style="margin-bottom:18px">Please check your connection and try again.</p>
+    <button class="btn" id="retryBtn" style="width:auto;padding:12px 26px">Try again</button>
+  </div></div>`);
+  $('retryBtn').onclick=init;
+}
+
+/* ---- state: success ---- */
+function renderSuccess(bizName){
+  const cardEl=document.querySelector('.join .card');
+  if(!cardEl) return;
+  cardEl.innerHTML=`<div class="empty">
+    <div class="big">✅</div>
+    <h2 style="margin-bottom:10px">You're in!</h2>
+    <p style="margin-bottom:6px;font-size:16px;color:var(--ink)"><b>${esc(bizName)}</b></p>
+    <p class="muted">Show your mobile number at the counter to collect points.</p>
+  </div>`;
+}
+
+/* ---- state: form (page loaded, ready for input) ---- */
+function renderForm(page, slug){
+  const bc=/^#[0-9A-Fa-f]{6}$/.test(page.brand_color||'')?page.brand_color:'#FF6B5E';
+  document.title=(page.name||'Join')+' — Frenly';
+  root.innerHTML=`<div class="wrap" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)"><div class="join">
+    <div class="jhead">
+      <div class="logo">frenly<span>.</span></div>
+      <h1>${esc(page.name)}</h1>
+      <p class="muted">Join free and start earning rewards 🎁</p>
+    </div>
+    <div class="card">
+      <form id="joinForm" novalidate>
+        <label for="f_name">🙂 Name</label>
+        <input id="f_name" placeholder="Your name" autocomplete="name">
+
+        <label for="f_phone">📱 Mobile number</label>
+        <input id="f_phone" inputmode="numeric" maxlength="8" placeholder="8123 4567" autocomplete="tel" enterkeyhint="next">
+        <p class="help">Your 8-digit Singapore number.</p>
+
+        <label for="f_email">✉️ Email <span class="muted small">(optional)</span></label>
+        <input id="f_email" type="email" placeholder="you@example.com" autocomplete="email" enterkeyhint="done">
+
+        <!-- PDPA: consent checkbox must never be pre-ticked -->
+        <label class="checkrow">
+          <input type="checkbox" id="f_consent">
+          <span>🔔 Send me offers and rewards</span>
+        </label>
+
+        <div id="formErr"></div>
+        <div style="margin-top:20px"><button class="btn" id="submitBtn" type="submit" disabled style="width:100%">✅ Join now</button></div>
+      </form>
+    </div>
+  </div></div>`;
+
+  const nameEl=$('f_name'), phoneEl=$('f_phone'), emailEl=$('f_email'), consentEl=$('f_consent');
+  const btn=$('submitBtn'), errBox=$('formErr');
+
+  function cleanPhone(){ return phoneEl.value.replace(/\D/g,'').slice(0,8); }
+  function formValid(){ return nameEl.value.trim().length>=2 && /^[3689]\d{7}$/.test(cleanPhone()); }
+  function refreshBtn(){ btn.disabled=!formValid(); }
+
+  nameEl.addEventListener('input', refreshBtn);
+  phoneEl.addEventListener('input', ()=>{
+    const cleaned=cleanPhone();
+    if(phoneEl.value!==cleaned) phoneEl.value=cleaned;
+    refreshBtn();
+  });
+
+  function setBusy(busy){
+    nameEl.disabled=busy; phoneEl.disabled=busy; emailEl.disabled=busy; consentEl.disabled=busy;
+    btn.disabled=busy?true:!formValid();
+    btn.textContent=busy?'Joining…':'✅ Join now';
+  }
+
+  $('joinForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(!formValid()) return;
+    errBox.innerHTML='';
+    setBusy(true);
+    try{
+      const {data,error}=await sb.rpc('join_program',{
+        p_slug:slug,
+        p_name:nameEl.value.trim(),
+        p_phone:cleanPhone(),
+        p_email:emailEl.value.trim()||null,
+        p_consent:consentEl.checked
+      });
+      if(error) throw error;
+      renderSuccess((data&&data.business_name)||page.name);
+    }catch(err){
+      console.error(err);
+      errBox.innerHTML=`<div class="err">${esc(err.message||'Something went wrong. Please try again.')}</div>`;
+      setBusy(false);
+    }
+  });
+}
+
+/* ---- boot ---- */
+async function init(){
+  renderLoading();
+  const slug=getSlug();
+  if(!slug){ renderInvalidLink(); return; }
+  let data, error;
+  try{
+    ({data,error}=await sb.rpc('get_join_page',{p_slug:slug}));
+  }catch(e){
+    error=e;
+  }
+  if(error){ console.error(error); renderLoadError(); return; }
+  if(!data){ renderInvalidLink(); return; }
+  renderForm(data, slug);
+}
+
+init();
+</script>
+</body>
+</html>
