@@ -53,9 +53,36 @@ Multi-tenant schema + RLS; append-only credit ledger + balance view; core entiti
 (clients, services, appointments, products, gift_cards, referrals skeleton, leads);
 Supabase auth. The **Frenly marketing site** (deployed on Vercel).
 
-## Should NOT be duplicated / out of scope
-Salon-specific surface (calendar, booking, inventory, POS, packages) — Avocado is loyalty-
-only. Don't clone Flowesce branding, copy, or code.
+## Scope — SUPERSEDED 2026-07-17 by the Full-Coverage Parity Protocol
+> **The old line here ("Avocado is loyalty-only; don't clone the salon OS surface") is DEAD.**
+> Owner directive 2026-07-17: **complete functional and behavioural parity with Flowesce for
+> every accessible feature**, built with Frenly's own code. "Do not decide that a module is
+> unimportant." Default decision for every confirmed accessible feature = **include in parity
+> scope**. Omissions require explicit written owner approval and live in the Unapproved
+> Omissions register (`docs/parity/FLOWESCE_TO_AVOCADO_PARITY_MATRIX.md` §4).
+>
+> Still binding (protocol §15, and unchanged): **do NOT copy Flowesce source code, trademarks,
+> logos, proprietary copy, or distinctive visual assets.** Reproduce capabilities, workflows,
+> calculations, data relationships, automations, validations, permissions — using our own
+> branding, wording, components, code and DB implementation.
+>
+> Owner rulings 2026-07-17 (recorded so they don't get re-litigated):
+> - **Payroll/commission is IN scope** (UO-1 lifted). Prior "out of scope" was partly based on
+>   a false 404 report — `/reports/payroll` is real, complete, and SG-localised (Talenox CSV
+>   export). Build the data foundation first (staff commission rates + assignment).
+> - Stripe SG auto-charge and WhatsApp/SMS remain deferred, but note this now BLOCKS
+>   Transactions / Cash drawer / Deposits / the checkout split. Email campaigns are a separate
+>   capability the comms deferral arguably doesn't cover — unresolved.
+> - QA Test Cafe tenant: kept, not deleted; its mis-classified package row was backfilled in v10.
+
+## Audit discipline (learned the hard way, 2026-07-17)
+**Never report a 404 without proving the route came from the app's own `href`, not a guessed
+URL pattern.** Four modules (Payroll, Store orders, Review feedback, Journeys) were wrongly
+reported as "dead nav links Flowesce never shipped." All four are real and working; the 404s
+were self-inflicted by guessing `/payroll`, `/store-orders`, `/reviews`, `/journeys` instead of
+reading the sidebar's actual routes (`/reports/payroll`, `/storefront/orders`,
+`/marketing/feedback`, `/marketing/journeys`). Distinguish 404 (route absent) from paywall
+(route exists, plan-gated) — both exist here. Capture routes via accessibility-tree dump.
 
 ## Current phase
 **Phase 1 MVP — shipped.** Canonical product name: **Frenly** (owner confirmed; "Avocado"
@@ -101,8 +128,40 @@ as a retention visit at purchase; then each `use_package_session` inserts a $0
 upfront may be deliberate (the UI copy says "revenue upfront"), but the
 purchase-time retention visit looks unintentional. Not changed — see
 `docs/benchmark/LIVE_DATA_WALKTHROUGH.md`.
-Next candidates: member-facing portal balance, Supabase Auth Site URL config,
-custom domain, role-scoped UI permissions.
+v10 (`frenly_v10_sale_policy`, applied + verified 2026-07-17, 14/14 rolled-back
+assertions): **sale accounting semantics are now per-business policy, not hardcoded.**
+New `sales.kind='package'` (`sell_package` writes it; the QA-era 'retail' row was
+backfilled). `public.sale_policies` (business_id, kind) holds three orthogonal
+nullable flags — `counts_as_revenue` / `counts_as_visit` / `earns_points`; NULL =
+inherit product default. `app.sale_policy_defaults()` is the single source of truth;
+`app.sale_policy_set()` resolves defaults LEFT JOIN overrides; no backfill needed —
+a business with zero rows resolves to defaults. `app.on_sale_recorded()` now ASKS
+instead of assuming, incl. the retention visit-count window, which judges each
+HISTORICAL row by its own kind's current policy (flip a policy, history is re-judged —
+verified). RPCs `get_sale_policy` / `set_sale_policy`. Defaults reproduce live
+behaviour except **package visit=false**, killing the 11-visits-per-10-session bug.
+Referral qualification is deliberately bound to `counts_as_visit`.
+App v1.6 (deployed 2026-07-17): fixed two production blockers — (1) appointments
+list/week permanently empty via `PGRST201` ambiguous embed (3 sites now pinned to
+`services!appointments_service_id_fkey`); (2) portal booking dates corrupted — two
+stacked timezone bugs (write side treated `datetime-local` as ambient browser zone,
+read side printed raw UTC as local). Added `sgt()` / `sgIso()` helpers anchoring to
++08:00. Round-trip verified. **Known residual:** Week-view bucketing still uses
+browser-local time — works on an SGT browser, architecturally fragile.
+**WRITTEN BUT NOT APPLIED:** `20260717_frenly_v11a_branches_staff_services.sql` and
+`20260717_frenly_v11b_money.sql`. Apply order v10 → v11a → v11b. v11a adds branches
+(+ auto-created default branch per business, `branch_id` nullable + BEFORE INSERT
+trigger so the 5 unmodified `sales` writers keep working), staff schedules/branch+
+service assignment/two-rate commission, service deposits/buffers/processing time.
+**v11a makes `staff.user_id` NULLABLE** — today it's NOT NULL → auth.users, so a
+rota-only staff member (no login) is impossible; this blocks FL-STAFF parity.
+v11b adds the payments ledger + completion≠payment split (loyalty stays firing at
+completion per CLAUDE.md's own first principle; revenue reported twice as
+`revenue_accrual` and `revenue_cash`, the delta being A/R), cash drawer, expenses.
+Neither is verified yet — both need rolled-back chain tests before applying.
+Next candidates: verify+apply v11a/v11b; wire UI to `get_sale_policy` (revenue KPI
+still hardcodes `!== 'gift_card'`); Pass 2/3 of the parity audit; member-facing portal
+balance, Supabase Auth Site URL config, custom domain, role-scoped UI permissions.
 
 ## Key unresolved risks
 Ledger/points-calc correctness; double earn/redeem; loyalty-liability accuracy; PDPA ⚖️;

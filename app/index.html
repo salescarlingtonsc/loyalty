@@ -122,6 +122,14 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=c=>(S.biz?.currency||'SGD')+' '+((c||0)/100).toFixed(2);
 const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)};
 const fail=e=>{console.error(e);toast('⚠️ '+(e.message||e))};
+/* Singapore-fixed-offset (UTC+8) display helper: shows a stored UTC instant as SGT wall-clock
+   text, regardless of the viewer's own browser/system timezone. Frenly is SG-first — bookings
+   are always shown in SGT so "what the customer picked is what staff see". */
+const sgt=iso=>{if(!iso) return null;const d=new Date(new Date(iso).getTime()+8*3600000);return d.toISOString().slice(0,16).replace('T',' ')};
+/* Turn a <input type=datetime-local> value (always "YYYY-MM-DDTHH:mm", locale-free) into a
+   UTC ISO string by anchoring it explicitly to Singapore time (+08:00) instead of relying on
+   the browser's ambient system timezone — avoids the local-vs-UTC mismatch bug. */
+const sgIso=v=>v?new Date(v+':00+08:00').toISOString():null;
 function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
 function nav(h){location.hash=h}
 window.addEventListener('hashchange',route);
@@ -623,7 +631,7 @@ async function bookingsPage(){
     $('blist').innerHTML=(br&&br.length)?`<table><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr>
       ${br.map(b=>`<tr><td>${b.created_at.slice(0,16).replace('T',' ')}</td><td><b>${esc(b.name)}</b></td>
       <td class="small">${esc(b.phone||b.email||'—')}</td><td>${esc(b.services?.name||'—')}</td>
-      <td>${b.preferred_at?b.preferred_at.slice(0,16).replace('T',' '):'—'}</td><td>${b.party_size||'—'}</td>
+      <td>${sgt(b.preferred_at)||'—'}</td><td>${b.party_size||'—'}</td>
       <td><span class="pill ${b.status==='new'?'new':b.status==='confirmed'?'ok':'no'}">${b.status}</span></td>
       <td>${b.status==='new'?`<button class="btn sm" onclick="convBr('${b.id}')">→ Appointment</button>
       <button class="btn ghost sm" onclick="setBr('${b.id}','declined')">Decline</button>`:''}</td></tr>`).join('')}</table>`
@@ -919,7 +927,7 @@ async function appointmentsPage(){
   $('wkNext').onclick=()=>{wkOff++;loadAppts()};
   $('apPrint').onclick=()=>window.print();
   $('apCsv').onclick=async()=>{
-    const {data:ap,error}=await sb.from('appointments').select('*, clients(full_name), services(name,price_cents)')
+    const {data:ap,error}=await sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name,price_cents)')
       .eq('business_id',S.biz.id).order('starts_at',{ascending:false}).limit(25);
     if(error) return fail(error);
     const rows=[['when','customer','service','status'],
@@ -930,10 +938,10 @@ async function appointmentsPage(){
   };
   async function loadAppts(){
     if(view==='week') return loadWeek();
-    const {data:ap}=await sb.from('appointments').select('*, clients(full_name), services(name,price_cents)')
+    const {data:ap}=await sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name,price_cents)')
       .eq('business_id',S.biz.id).order('starts_at',{ascending:false}).limit(25);
     $('alist').innerHTML=(ap&&ap.length)?`<table><tr><th>When</th><th>Customer</th><th>Service</th><th>Status</th><th></th></tr>
-      ${ap.map(a=>`<tr><td>${a.starts_at.slice(0,16).replace('T',' ')}</td><td><b>${esc(a.clients?.full_name||'—')}</b></td>
+      ${ap.map(a=>`<tr><td>${sgt(a.starts_at)}</td><td><b>${esc(a.clients?.full_name||'—')}</b></td>
       <td>${esc(a.services?.name||'—')}</td>
       <td><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'no'}">${a.status.replace('_',' ')}</span></td>
       <td>${a.status==='booked'?`<button class="btn sm" onclick="setAp('${a.id}','completed')">✓ Complete</button>
@@ -944,7 +952,7 @@ async function appointmentsPage(){
   async function loadWeek(){
     const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7)+wkOff*7);mon.setHours(0,0,0,0);
     const end=new Date(mon.getTime()+7*864e5);
-    const {data:ap}=await sb.from('appointments').select('*, clients(full_name), services(name)')
+    const {data:ap}=await sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name)')
       .eq('business_id',S.biz.id).gte('starts_at',mon.toISOString()).lt('starts_at',end.toISOString());
     const days=[...Array(7)].map((_,i)=>new Date(mon.getTime()+i*864e5));
     const cell={};(ap||[]).forEach(a=>{const d=new Date(a.starts_at);const k=d.toISOString().slice(0,10)+'-'+d.getHours();(cell[k]=cell[k]||[]).push(a)});
@@ -1298,7 +1306,7 @@ async function renderPortal(slug){
       $('psend').disabled=true;
       const {error}=await sb.rpc('request_booking',{p_slug:slug,p_name:$('pn').value,p_email:$('pe').value||null,
         p_phone:$('pp').value||null,p_service:selSvc,p_party:parseInt($('ps').value||'1'),
-        p_preferred:$('pt').value?new Date($('pt').value).toISOString():null,p_notes:$('pnotes').value||null});
+        p_preferred:sgIso($('pt').value),p_notes:$('pnotes').value||null});
       if(error){$('perr').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('psend').disabled=false;return}
       root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">🎉</div><h2 style="margin-bottom:8px">Request sent!</h2>
         <p class="muted">${esc(biz.name)} has your booking request and will confirm shortly.</p></div>`;
@@ -1332,7 +1340,7 @@ async function renderPortal(slug){
     if(!phone) return toast('Enter your phone number first');
     const val=$('mdt')?.value;
     if(!val) return toast('Pick a new date & time first');
-    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:phone,p_kind:'reschedule',p_proposed:new Date(val).toISOString(),p_note:null});
+    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:phone,p_kind:'reschedule',p_proposed:sgIso(val),p_note:null});
     if(error) return fail(error);
     toast(data&&data.status==='approved'?'Done — auto-approved':'Request sent — the team will confirm');
   };
