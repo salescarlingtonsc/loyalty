@@ -1,11 +1,19 @@
 -- FRENLY v11a — the entity foundation: BRANCHES, STAFF, SERVICES.
 -- (target Supabase project kyzovonwnscrzmkvocid; migration name `frenly_v11a_branches_staff_services`)
 --
--- APPLY ORDER:  v10_sale_policy  ->  v11a (this file)  ->  v11b_money.
--- v11a does NOT touch app.on_sale_recorded(). It lands cleanly on top of v10's rewrite of
--- that function without re-declaring it — see "WHY THIS FILE NEVER TOUCHES THE LOYALTY
--- TRIGGER" below. If v10 has not been applied, this file still applies (nothing here depends
--- on sale_policies), but v11b DOES depend on v10.
+-- APPLY ORDER:  v10_sale_policy  ->  v10_1_policy_snapshot  ->  v11a (this file)  ->  v11b_money.
+-- **v10.1 IS A HARD PREREQUISITE OF THIS FILE.** It was not, in the original draft — v11a §1.7
+-- issued a bare `update public.sales` and v10.1 makes `sales` append-only via
+-- trg_sales_immutable_guard. That is not a theoretical clash; it was measured (rolled back):
+--     ERROR: sales is append-only: UPDATE is not permitted (sale fc041326-06f4-497a-b91e-…).
+--     -> 6 of 6 sales still branch_id IS NULL; the whole migration aborted.
+-- §1.7 now wraps the backfill in v10.1's audited escape (app.begin_sales_backfill /
+-- app.end_sales_backfill). Those functions do not exist before v10.1, so this file will now
+-- fail loudly at §1.7 if v10.1 is skipped, rather than silently leaving branch_id null.
+--
+-- v11a does NOT touch app.on_sale_recorded(). It lands cleanly on top of v10/v10.1's rewrite
+-- of that function without re-declaring it — see "WHY THIS FILE NEVER TOUCHES THE LOYALTY
+-- TRIGGER" below.
 --
 -- SCOPE: protocol §12 foundation positions 1 (branches), 5 (staff), 6 (services).
 -- Money — transactions/checkout/drawer/expenses (position 9) — is v11b.
@@ -167,7 +175,78 @@
 -- RLS on every table. app.audit() dereferences BOTH new.id AND new.business_id, so every
 -- audited table below carries both.
 
+-- ====================================================================================
+-- TENANT INTEGRITY — WHY COMPOSITE FOREIGN KEYS (the P0 this file previously shipped)
+-- ====================================================================================
+-- The first draft validated `business_id` on every new row and then never checked that the
+-- row it POINTED AT belonged to the same tenant. Measured, rolled back, all five ACCEPTED:
+--     staff_branches   A.staff  -> B.branch    ACCEPTED
+--     staff_services   A.staff  -> B.service   ACCEPTED
+--     service_branches A.service-> B.branch    ACCEPTED
+--     sales.branch_id  A.sale   -> B.branch    ACCEPTED   <- becomes money in v11b
+--     sales.staff_id   A.sale   -> B.staff     ACCEPTED   <- becomes a commission payout
+-- A single-column FK only asks "does this id exist?" — never "does it exist IN MY TENANT?".
+-- RLS does not save us either: the owner of A legitimately passes `is_salon_owner(A)`, and the
+-- `with check` on a join table tests only ONE side of the join. And RLS is not enforced for
+-- the table owner or service_role at all, which is exactly who runs migrations and cron.
+--
+-- THE FIX: carry business_id and let the ENGINE enforce the pairing.
+--   * Every parent gets a redundant-looking `unique (id, business_id)`. `id` is already the
+--     PK so this adds no new uniqueness — its ONLY job is to be a legal FK TARGET, because
+--     Postgres requires a unique constraint over the exact referenced column list.
+--   * Every reference then FKs the PAIR: (branch_id, business_id) -> branches(id, business_id).
+--     A row can only point at a branch whose business_id equals its own. Mismatch is rejected
+--     by the engine, in every role, from every code path, forever — no policy to get subtly
+--     wrong, no trigger to forget, no RLS to bypass.
+--   * Join tables therefore DO carry business_id now. The original comment said carrying it
+--     "would be denormalised and could disagree with the parent". That reasoning is inverted:
+--     it is precisely the composite FK to BOTH parents that makes disagreement IMPOSSIBLE.
+--     The column is not a cached copy; it is the join key that proves the two sides match.
+--
+-- **v11a OWNS THE FIVE COMPOSITE UNIQUE KEYS BELOW. v11b CONSUMES THEM — do not redeclare.**
+--
+-- WHY NOT A TRIGGER for sales.branch_id / sales.staff_id: a trigger is code that runs, so it
+-- can be disabled, can be skipped by `alter table ... disable trigger`, has to be re-derived
+-- by every reader, and (on `sales`) would have to coexist with v10.1's immutability guard and
+-- v11a's own branch-defaulting trigger in name order. The FK is declarative, is enforced
+-- during backfills and restores, shows up in the schema diagram, and costs one index.
+--
+-- ⚠️ POSTGREST NOTE (learned from the v1.6 PGRST201 outage): a composite FK is a SECOND
+--    foreign key between the same pair of tables if a single-column one already exists.
+--    PostgREST then cannot resolve `select=...,staff(*)` and returns PGRST201 — the exact bug
+--    app v1.6 had to hot-fix. Every FK added below REPLACES rather than supplements, so no
+--    table pair ends up with two. This is also why appointments.staff_id / .service_id are NOT
+--    hardened here even though they have the same defect — see the report.
+-- ====================================================================================
+
 begin;
+
+-- ====================================================================================
+-- 0. THE COMPOSITE UNIQUE KEYS (FK targets). v11a owns these; v11b consumes them.
+--    Redundant for uniqueness (id is already the PK), load-bearing as FK targets.
+-- ====================================================================================
+alter table public.sales        add constraint sales_id_business_uk    unique (id, business_id);
+alter table public.appointments add constraint appts_id_business_uk    unique (id, business_id);
+alter table public.services     add constraint services_id_business_uk unique (id, business_id);
+alter table public.staff        add constraint staff_id_business_uk    unique (id, business_id);
+alter table public.clients      add constraint clients_id_business_uk  unique (id, business_id);
+-- branches is created in §1.2 and carries its own uk inline (branches_id_business_uk).
+--
+-- NOTE (added by reviewer, 2026-07-17): `clients` was MISSING from this list and the omission
+-- was a hard blocker, found only by running the literal three-file chain. v11b §2 declares
+--   payments_client_same_tenant foreign key (client_id, business_id)
+--     references public.clients(id, business_id)
+-- and a composite FK requires a unique constraint over the exact referenced column list, so
+-- v11b aborted with:
+--   ERROR: there is no unique constraint matching given keys for referenced table "clients"
+-- Neither author caught it: v11a's contract said "five keys" and v11b was reworked against a
+-- SCAFFOLD of v11a rather than this file, because the two were written in parallel. The lesson
+-- is recorded here rather than in a report: a contract between two migrations is not verified
+-- until the real files are applied back-to-back in one transaction. Scaffolds agree with
+-- whatever the author believed.
+--
+-- ⚠️ Adding this key means SIX composite unique keys, not five. Any future migration adding a
+--    (x_id, business_id) FK must confirm its target is on THIS list first.
 
 -- ====================================================================================
 -- 1. BRANCHES
@@ -196,7 +275,9 @@ create table public.branches (
   -- Exactly one per business (unique partial index below). The backfilled home location.
   is_default   boolean not null default false,
   created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
+  updated_at   timestamptz not null default now(),
+  -- FK target for every (x_id, business_id) reference to a branch. See TENANT INTEGRITY.
+  constraint branches_id_business_uk unique (id, business_id)
 );
 
 create unique index one_default_branch_per_business
@@ -215,6 +296,22 @@ grant select, insert, update, delete on public.branches to authenticated;
 create trigger trg_branches_audit
   after insert or update or delete on public.branches
   for each row execute function app.audit();
+
+-- branches.updated_at defaults at INSERT and would then be frozen forever — the column would
+-- claim "last changed" while meaning "created". No touch_updated_at helper existed in this
+-- schema (verified live: no such function in app or public), so v11a adds the generic one.
+-- Written to be reusable and idempotent: any future table with an updated_at column can hang
+-- this same trigger off it.
+create or replace function app.touch_updated_at()
+returns trigger language plpgsql set search_path = public as $$
+begin
+  new.updated_at := now();
+  return new;
+end $$;
+
+create trigger trg_branches_touch
+  before update on public.branches
+  for each row execute function app.touch_updated_at();
 
 -- 1.3 Per-day opening hours. Weekday follows JS Date.getDay(): 0=Sunday .. 6=Saturday.
 --     A day with NO ROW is CLOSED. That is the whole model — there is no `closed` boolean,
@@ -288,31 +385,77 @@ $$;
 
 -- 1.6 BACKFILL: one default branch per existing business. This is THE backward-compatibility
 --     move for the 2 live businesses. Named for what it is so the owner can rename it.
+--     THE GUARD KEYS ON is_default, NOT ON MERE EXISTENCE. `where not exists (… x.business_id
+--     = b.id)` reads as "has a default branch" and actually means "has ANY branch". A business
+--     holding only a NON-default branch would be skipped, would never get a default, and
+--     app.default_branch() would return NULL for it forever. §1.8's trigger is deliberately
+--     fail-soft, so the failure is SILENT: every subsequent sale lands with branch_id = NULL
+--     and is unattributed — no error, no log line, and in v11b no cash drawer. Measured with
+--     the old predicate (rolled back): default_branch(C) = NULL, and a new sale for C came out
+--     branch_id = NULL. With `and x.is_default` both are correct.
+--     It is also what makes this statement idempotent and safe to re-run.
 insert into public.branches (business_id, name, is_default, active)
 select b.id, b.name, true, true
 from public.businesses b
-where not exists (select 1 from public.branches x where x.business_id = b.id);
+where not exists (select 1 from public.branches x
+                   where x.business_id = b.id and x.is_default);
 
 -- 1.7 Wire the transactional tables to a branch. NULLABLE + trigger-defaulted, never NOT NULL
 --     (see the header: five unmodified writers of `sales` depend on this).
-alter table public.appointments
-  add column branch_id uuid references public.branches(id) on delete set null;
-alter table public.sales
-  add column branch_id uuid references public.branches(id) on delete set null;
+--     ON DELETE: **restrict, NOT set null.** `set null` means deleting a branch silently
+--     un-attributes every historical sale and appointment it ever hosted — the revenue is
+--     still counted but belongs to nobody, and in v11b the branch's cash drawer detaches from
+--     its own takings. That is history destruction dressed up as referential tidiness, and it
+--     happens on a single click with no warning. There is already a correct retire path:
+--     `branches.active = false` ("no longer accepting bookings"), which keeps every historical
+--     row attributed. So a branch with history must not be deletable, and restrict says so.
+--     Same argument, same severity for sales.staff_id: deleting a staff member must not erase
+--     who earned the commission. `staff.active = false` (added in §2.1) is that retire path.
+--
+--     ⚠️ RESTRICT vs NO ACTION — a real interaction, tested rather than assumed. Both `sales`
+--     and `branches` cascade-delete from `businesses`. RESTRICT is checked IMMEDIATELY and
+--     cannot see that the referencing sales rows are about to be cascade-deleted in the same
+--     statement, so `delete from businesses` would fail. NO ACTION defers the check to the end
+--     of the statement, by which time the cascade has removed the children, so tenant deletion
+--     still works while a bare `delete from branches` is still refused. NO ACTION is therefore
+--     strictly better here and gives the identical protection. Verified both ways — see the
+--     test scenarios. (Note `references` with no action clause = NO ACTION; it is spelled out
+--     below so nobody reads the absence as an oversight.)
+alter table public.appointments add column branch_id uuid;
+alter table public.appointments add constraint appointments_branch_fk
+  foreign key (branch_id, business_id) references public.branches(id, business_id)
+  on delete no action;
+alter table public.sales add column branch_id uuid;
+alter table public.sales add constraint sales_branch_fk
+  foreign key (branch_id, business_id) references public.branches(id, business_id)
+  on delete no action;
 -- Commission + "which staff rang this up" attribution. sales had no staff link at all.
-alter table public.sales
-  add column staff_id uuid references public.staff(id) on delete set null;
+alter table public.sales add column staff_id uuid;
+alter table public.sales add constraint sales_staff_fk
+  foreign key (staff_id, business_id) references public.staff(id, business_id)
+  on delete no action;
 
 create index appointments_branch on public.appointments (branch_id, starts_at);
 create index sales_branch on public.sales (branch_id, occurred_at);
 create index sales_staff on public.sales (staff_id, occurred_at);
 
+-- appointments has no immutability guard, so this one needs no window. Verified.
 update public.appointments a
    set branch_id = app.default_branch(a.business_id)
  where a.branch_id is null;
+
+--     `sales` IS append-only as of v10.1, so this backfill MUST run inside v10.1's named,
+--     audited window. Without it the statement raises 'sales is append-only: UPDATE is not
+--     permitted' and the migration aborts — measured, not assumed. The window permits ONLY
+--     columns that did not exist in v10.1 to move; amount_cents, kind and the whole policy
+--     snapshot stay frozen even while it is open, and it is transaction-local so it cannot
+--     outlive this migration even if end_sales_backfill() is never reached.
+select app.begin_sales_backfill('frenly_v11a_branches_staff_services',
+         'populate the new sales.branch_id column on pre-branch historical rows');
 update public.sales s
    set branch_id = app.default_branch(s.business_id)
  where s.branch_id is null;
+select app.end_sales_backfill();
 
 -- 1.8 The compatibility trigger. Any INSERT that omits branch_id lands on the default branch.
 --     BEFORE INSERT, so it cannot interact with the AFTER INSERT loyalty trigger
@@ -341,7 +484,7 @@ create trigger trg_appointments_default_branch
 --     on that shape.
 create or replace function public.create_business(p_name text, p_slug text, p_industry text, p_modules text[])
 returns json language plpgsql security definer set search_path = public as $$
-declare v_uid uuid; rec businesses;
+declare v_uid uuid; rec businesses; v_staff uuid; v_branch uuid;
 begin
   v_uid := auth.uid();
   if v_uid is null then raise exception 'sign in required'; end if;
@@ -351,12 +494,20 @@ begin
           coalesce(p_modules, array['dashboard','clients','sales','loyalty','retention','referrals']))
   returning * into rec;
   insert into staff (business_id, user_id, role, full_name)
-  values (rec.id, v_uid, 'owner', coalesce(auth.jwt()->>'email','Owner'));
+  values (rec.id, v_uid, 'owner', coalesce(auth.jwt()->>'email','Owner'))
+  returning id into v_staff;
   -- v11a: every business owns exactly one default branch from birth. Without this, the
   -- BEFORE INSERT branch trigger would resolve to null for every new tenant and the cash
   -- drawer (v11b, per-branch) would have nothing to attach to.
   insert into branches (business_id, name, is_default, active)
-  values (rec.id, trim(p_name), true, true);
+  values (rec.id, trim(p_name), true, true)
+  returning id into v_branch;
+  -- ...and the founding owner works at it. §2.6 backfills exactly this for every EXISTING
+  -- staff row; without the same line here, tenants created after v11a would be the only ones
+  -- whose owner is assigned to no branch — a difference that would surface later as an empty
+  -- rota for new signups only, which is a miserable bug to find.
+  insert into staff_branches (business_id, staff_id, branch_id)
+  values (rec.id, v_staff, v_branch);
   insert into loyalty_programs (business_id, kind, earn_points_per_dollar,
                                 redeem_points, reward_credit_cents, active)
   values (rec.id, 'points', 1, 800, 2000, true);
@@ -404,36 +555,45 @@ create trigger trg_staff_audit
   for each row execute function app.audit();
 
 -- 2.2 Staff <-> branch. Many-to-many: the competitor's Branches tab is a checkbox LIST.
+-- business_id is present and NOT NULL, and BOTH sides are pinned to it by composite FK. The
+-- staff member and the branch must therefore belong to the same tenant as this row — the
+-- engine rejects any other combination. See TENANT INTEGRITY in the header for why the
+-- original "join tables carry no business_id" reasoning was backwards.
+-- Still no audit trigger: app.audit() dereferences new.id, which a composite-PK join table
+-- does not have. (business_id now exists, so that half of the old objection is gone.)
 create table public.staff_branches (
-  staff_id  uuid not null references public.staff(id) on delete cascade,
-  branch_id uuid not null references public.branches(id) on delete cascade,
-  primary key (staff_id, branch_id)
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  staff_id    uuid not null,
+  branch_id   uuid not null,
+  primary key (staff_id, branch_id),
+  foreign key (staff_id,  business_id) references public.staff(id, business_id)    on delete cascade,
+  foreign key (branch_id, business_id) references public.branches(id, business_id) on delete cascade
 );
+create index staff_branches_business on public.staff_branches (business_id);
 alter table public.staff_branches enable row level security;
--- Join tables carry no business_id (it would be denormalised and could disagree with the
--- parent). Tenant scope is derived through staff. No audit trigger for the same reason:
--- app.audit() dereferences new.business_id, which does not exist here.
+-- Now a direct business_id test instead of a subquery through one side of the join. Defence in
+-- depth only — the composite FKs above are what actually make cross-tenant rows impossible.
 create policy staff_branches_all on public.staff_branches for all to authenticated
-  using (exists (select 1 from public.staff s
-                 where s.id = staff_id and app.is_salon_member(s.business_id)))
-  with check (exists (select 1 from public.staff s
-                      where s.id = staff_id and app.is_salon_owner(s.business_id)));
+  using (app.is_salon_member(business_id))
+  with check (app.is_salon_owner(business_id));
 revoke all on public.staff_branches from anon;
 grant select, insert, update, delete on public.staff_branches to authenticated;
 
 -- 2.3 Staff <-> service ("Staff who perform this" / the Services tab).
 --     This is the table that makes a service bookable (see service_bookable, §3.3).
 create table public.staff_services (
-  staff_id   uuid not null references public.staff(id) on delete cascade,
-  service_id uuid not null references public.services(id) on delete cascade,
-  primary key (staff_id, service_id)
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  staff_id    uuid not null,
+  service_id  uuid not null,
+  primary key (staff_id, service_id),
+  foreign key (staff_id,   business_id) references public.staff(id, business_id)    on delete cascade,
+  foreign key (service_id, business_id) references public.services(id, business_id) on delete cascade
 );
+create index staff_services_business on public.staff_services (business_id);
 alter table public.staff_services enable row level security;
 create policy staff_services_all on public.staff_services for all to authenticated
-  using (exists (select 1 from public.staff s
-                 where s.id = staff_id and app.is_salon_member(s.business_id)))
-  with check (exists (select 1 from public.staff s
-                      where s.id = staff_id and app.is_salon_owner(s.business_id)));
+  using (app.is_salon_member(business_id))
+  with check (app.is_salon_owner(business_id));
 revoke all on public.staff_services from anon;
 grant select, insert, update, delete on public.staff_services to authenticated;
 
@@ -471,6 +631,17 @@ create table public.staff_off_days (
   check (ends_on >= starts_on)
 );
 create index staff_off_days_staff on public.staff_off_days (staff_id, starts_on, ends_on);
+-- NOTE: overlapping off-day ranges for the same staff member are NOT prevented — the same
+-- deliberate omission as branch_breaks above, documented here because it was previously
+-- silent. Preventing it needs an exclusion constraint over (staff_id, daterange) with
+-- btree_gist. DELIBERATELY DEFERRED, and the reason is stronger here than for breaks:
+-- overlapping leave is not even wrong. "MC 3-5 Aug" overlapping "Annual leave 1-10 Aug" is a
+-- normal way to record two real, separately-cancellable facts about the same days. The
+-- consumer is a UNION ("is this staff member off on date D?" = `exists (… starts_on <= D and
+-- ends_on >= D)`), which is already overlap-correct and idempotent. Overlap only matters if a
+-- future leave-BALANCE report double-counts days — that report does not exist (timesheets and
+-- payroll are out of v11a; see WHAT v11a DELIBERATELY LEAVES OUT) and whoever builds it must
+-- count distinct DAYS, not sum range lengths. Flagged there rather than constrained here.
 alter table public.staff_off_days enable row level security;
 create policy staff_off_days_select on public.staff_off_days for select to authenticated
   using (app.is_salon_member(business_id));
@@ -484,8 +655,8 @@ create trigger trg_staff_off_days_audit
   for each row execute function app.audit();
 
 -- 2.6 BACKFILL: existing staff belong to their business's default branch.
-insert into public.staff_branches (staff_id, branch_id)
-select s.id, app.default_branch(s.business_id)
+insert into public.staff_branches (business_id, staff_id, branch_id)
+select s.business_id, s.id, app.default_branch(s.business_id)
 from public.staff s
 where app.default_branch(s.business_id) is not null
 on conflict do nothing;
@@ -514,22 +685,44 @@ create index services_business_active on public.services (business_id, active);
 
 -- 3.1 Service <-> branch ("Offered at branches", defaulted to "All branches").
 create table public.service_branches (
-  service_id uuid not null references public.services(id) on delete cascade,
-  branch_id  uuid not null references public.branches(id) on delete cascade,
-  primary key (service_id, branch_id)
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  service_id  uuid not null,
+  branch_id   uuid not null,
+  primary key (service_id, branch_id),
+  foreign key (service_id, business_id) references public.services(id, business_id) on delete cascade,
+  foreign key (branch_id,  business_id) references public.branches(id, business_id) on delete cascade
 );
+create index service_branches_business on public.service_branches (business_id);
 alter table public.service_branches enable row level security;
+-- WRITE IS NOW is_salon_owner, NOT is_salon_member. The original used `member` on the with
+-- check while every sibling policy in this file (branches_write, branch_hours_write,
+-- staff_branches, staff_services, staff_hours_write, staff_off_days_write) used `owner`. That
+-- was a copy-paste slip with teeth: any stylist could rewire which branches offer which
+-- services — i.e. silently take a service off sale at a location, or put it on sale at one
+-- that cannot deliver it. Read stays `member`: everyone needs to see the catalog.
+--
+-- WHY is_salon_owner AND NOT app.has_perm() — the one place I did not follow the pinned shape:
+-- v10.1's permission vocabulary is deliberately SALES-only (view_sales, create_sales,
+-- refund_sales, reclassify_sales, view_finance, manage_sale_policy). None of the six describes
+-- "may rewire the service catalog", so has_perm() cannot express this gate without a SEVENTH
+-- permission (`manage_catalog`) — and adding one means v11a issuing a CREATE OR REPLACE over
+-- app.role_perms(), an object v10.1 owns. That fork is the worse bug: v11a's copy would
+-- silently win on apply order, so any later edit to v10.1's list would be reverted by
+-- re-running v11a, with no error. v11a must not own v10.1's permission model.
+-- So: is_salon_owner, which is exactly what every sibling uses and is what has_perm('owner')
+-- would resolve to today anyway (all live staff are role='owner'; verified). If Fable wants
+-- the permission model extended, the right move is `manage_catalog` added to role_perms in
+-- v10.1, and then these three catalog policies become a one-line swap to
+-- app.has_perm(business_id, 'manage_catalog'). Flagged in the report, not done here.
 create policy service_branches_all on public.service_branches for all to authenticated
-  using (exists (select 1 from public.services s
-                 where s.id = service_id and app.is_salon_member(s.business_id)))
-  with check (exists (select 1 from public.services s
-                      where s.id = service_id and app.is_salon_member(s.business_id)));
+  using (app.is_salon_member(business_id))
+  with check (app.is_salon_owner(business_id));
 revoke all on public.service_branches from anon;
 grant select, insert, update, delete on public.service_branches to authenticated;
 
 -- 3.2 BACKFILL: existing services are offered at the default branch.
-insert into public.service_branches (service_id, branch_id)
-select s.id, app.default_branch(s.business_id)
+insert into public.service_branches (business_id, service_id, branch_id)
+select s.business_id, s.id, app.default_branch(s.business_id)
 from public.services s
 where app.default_branch(s.business_id) is not null
 on conflict do nothing;
@@ -538,18 +731,39 @@ on conflict do nothing;
 --     Derived, not enforced — see the header for why (the 1 live service has no staff and a
 --     constraint would either fail this migration or force me to invent an assignment).
 --     security_invoker so the caller's RLS applies rather than the view owner's.
+--
+--     TWO BUGS FIXED HERE, both measured:
+--
+--     (1) CARTESIAN FAN-OUT. staff_services and service_branches are two INDEPENDENT one-to-
+--         many joins off the same row, so they MULTIPLY: 2 staff x 2 branches produced
+--         staff_count = 4 and branch_count = 4, not 2 and 2. (In the actual repro it read 6
+--         and 6, because a cross-tenant service_branches row — D1.3 — was in the mix too.)
+--         `count(distinct ...)` collapses the duplicate rows the join manufactures. The
+--         `bookable` flag survived by luck alone: 4 > 0 and 2 > 0 are both true. The COUNTS
+--         are what the UI renders ("2 staff assigned"), and they were simply wrong.
+--
+--     (2) staff.active WAS IGNORED. v11a adds the column and then never reads it, so a
+--         service whose only assigned staff had all been deactivated still reported
+--         bookable = true and the booking page would offer a slot nobody can work. Joining
+--         `staff` and counting only active rows fixes it: an inactive staff member yields a
+--         NULL st.id, and count(distinct st.id) does not count NULLs.
+--
+--     NOTE ON SEMANTICS: staff_count now means ACTIVE assigned staff, which is the number the
+--     warning banner is actually about. A service with 3 assigned stylists, all deactivated,
+--     reads staff_count = 0, bookable = false — correct, and the UI needs no extra logic.
 create view public.service_bookable
 with (security_invoker = on) as
-select s.id                              as service_id,
+select s.id                                as service_id,
        s.business_id,
        s.active,
        s.show_on_booking_page,
-       count(ss.staff_id)                as staff_count,
-       count(sb.branch_id)               as branch_count,
+       count(distinct st.id)               as staff_count,
+       count(distinct sb.branch_id)        as branch_count,
        (s.active
-        and count(ss.staff_id) > 0)      as bookable
+        and count(distinct st.id) > 0)     as bookable
 from public.services s
 left join public.staff_services  ss on ss.service_id = s.id
+left join public.staff           st on st.id = ss.staff_id and st.active
 left join public.service_branches sb on sb.service_id = s.id
 group by s.id, s.business_id, s.active, s.show_on_booking_page;
 
@@ -577,6 +791,37 @@ commit;
 --    §3 list, and Variants in particular changes the price model.
 --  * Deposit CHARGING (UO-2, owner-deferred processor).
 --  * Any payroll/commission REPORT. Rates only.
+--  * Hardening of the PRE-EXISTING appointments.staff_id / appointments.service_id /
+--    sales.appointment_id / sales.product_id single-column FKs. They have EXACTLY the D1
+--    cross-tenant defect this file fixes elsewhere, and the composite unique keys in §0 now
+--    make the fix a two-line change. NOT DONE HERE, deliberately, for one concrete reason:
+--    adding `foreign key (staff_id, business_id) references staff(id, business_id)` alongside
+--    the existing `appointments_staff_id_fkey` gives that table pair TWO foreign keys, and
+--    PostgREST then cannot resolve an embed — PGRST201, the exact production blocker app v1.6
+--    had to hot-fix on `appointments -> services`. Doing it safely means DROPPING the old FK
+--    and re-pinning every `select=…` embed in app/index.html in the same change. That is a
+--    coordinated schema+UI change, not a v11a foundation edit, and this file is forbidden from
+--    touching the UI. Live data is currently clean (0 cross-tenant rows on all three;
+--    verified), so this is a latent hole, not an active one. REPORTED for its own slice.
+-- ------------------------------------------------------------------------------------
+
+-- ------------------------------------------------------------------------------------
+-- FOUND WHILE FIXING THIS FILE — NOT v11a's TO FIX, RECORDED SO IT IS NOT LOST
+-- ------------------------------------------------------------------------------------
+--  ⚖️ TENANT DELETION IS NOW IMPOSSIBLE FOR ANY TENANT THAT HAS EVER RUNG UP A SALE.
+--     `delete from businesses where id = <tenant with sales>` fails with
+--         ERROR: sales is append-only: DELETE is not permitted (sale d48fa119-…)
+--     Measured, rolled back. This is v10.1's immutability guard refusing the ON DELETE CASCADE
+--     from businesses -> sales; it has nothing to do with v11a's foreign keys (a tenant with
+--     NO sales still deletes cleanly under them — asserted). v10.1 reasoned about a user
+--     DELETEing a sale directly and correctly forbade it; it did not consider that the same
+--     trigger also blocks a cascade the schema has always allowed.
+--     Why it matters beyond tidiness: PDPA erasure. "Delete my business and all its data" is
+--     a request an SME can legitimately make, and today the only paths are to drop the guard
+--     or to leave the tenant's rows in place. Neither is a decision for this file.
+--     Whoever owns it (v10.1 or v11b) needs an explicit, audited tenant-purge path — the same
+--     shape as begin_sales_backfill(): a named, reasoned, transaction-local window. Flagged
+--     under the production-write approval gate; NOT actioned here. ⚖️ counsel for the PDPA half.
 -- ------------------------------------------------------------------------------------
 
 -- ------------------------------------------------------------------------------------
@@ -647,11 +892,21 @@ commit;
 -- Scenario E — service_bookable mirrors the live warning banner:
 --   1. The existing service (no staff assigned) -> bookable = false, staff_count = 0.
 --      This is the pre-state that made a CHECK constraint impossible.
---   2. insert into staff_services (staff_id, service_id) values ('<staff>','<svc>');
+--   2. insert into staff_services (business_id, staff_id, service_id) values (…);
 --      -> bookable = true, staff_count = 1. Flips immediately, matching "the warning
 --         disappeared the instant a staff member was checked".
 --   3. update services set active = false -> bookable = false even with staff assigned.
 --   4. delete from staff_services ... -> bookable = false again.
+--   5. NO CARTESIAN FAN-OUT (D2). Assign 2 staff AND 2 branches to one service:
+--      -> staff_count = 2 and branch_count = 2. Before count(distinct …) this read 4 and 4.
+--         The pre-fix numbers are the PRODUCT of the two joins, so the bug only appears once
+--         BOTH sides have >1 row — a single-staff, single-branch test passes either way and
+--         proves nothing. This assertion must use 2 x 2 or it is worthless.
+--   6. staff.active IS READ (D3). One service, one assigned staff, then:
+--      update staff set active = false where id = '<the only assigned staff>';
+--      -> staff_count = 0, bookable = false. Before, this reported bookable = true and the
+--         booking page would sell a slot that nobody is employed to work.
+--   7. Re-activate -> bookable = true again (the flag is read live, not cached).
 --
 -- Scenario F — Hours + off-days constraints:
 --   1. insert branch_hours (branch, weekday 0, 09:00, 17:00)              -> accepted.
@@ -670,8 +925,53 @@ commit;
 --   2. As a member of business X: select from branches -> only X's branches.
 --   3. As anon (publishable key): select from branches / branch_hours / staff_branches /
 --      service_branches / service_bookable -> permission denied on all.
---   4. Owner of X inserting a staff_branches row pointing at Y's branch: the with_check
---      only tests the STAFF side. Assert what actually happens and decide if it matters:
---      today it is accepted, and the FK does not prevent it. It is a real (if low-severity,
---      owner-only, cross-tenant) hole — see the report's risk section.
+--   4. service_branches write is is_salon_owner, not is_salon_member (D4). As role='stylist':
+--      insert into service_branches -> denied. Under the original policy this SUCCEEDED.
+--
+-- Scenario H — TENANT INTEGRITY IS ENFORCED BY THE ENGINE (D1). Every one of these was
+--              ACCEPTED before the composite FKs and must now RAISE
+--              'insert or update on table "…" violates foreign key constraint'. Run them as
+--              the TABLE OWNER / service_role, not as `authenticated` — that is the whole
+--              point. RLS does not apply to those roles, so a test that passes only under RLS
+--              proves nothing about migrations, cron, or the SQL editor:
+--   1. insert into staff_branches (business_id, staff_id, branch_id)
+--        values (A, A_staff, B_branch);                                   -> FK violation.
+--   2. insert into staff_services (business_id, staff_id, service_id)
+--        values (A, A_staff, B_service);                                  -> FK violation.
+--   3. insert into service_branches (business_id, service_id, branch_id)
+--        values (A, A_service, B_branch);                                 -> FK violation.
+--   4. insert into sales (business_id, kind, amount_cents, branch_id)
+--        values (A, 'quick_sale', 500, B_branch);                         -> FK violation.
+--   5. insert into sales (business_id, kind, amount_cents, staff_id)
+--        values (A, 'quick_sale', 500, B_staff);                          -> FK violation.
+--   6. The SAME-tenant versions of all five must still be ACCEPTED — a constraint that
+--      rejects everything is not tenant isolation, it is an outage.
+--   7. NULL branch_id / staff_id must remain legal (MATCH SIMPLE: any NULL in the FK column
+--      list skips the check). This is what keeps the five unmodified `sales` writers working.
+--
+-- Scenario I — HISTORY SURVIVES A BRANCH RETIREMENT (D5):
+--   1. delete from branches where id = <a branch with sales>  -> FK violation, refused.
+--      Under `on delete set null` this SUCCEEDED and silently orphaned the revenue.
+--   2. update branches set active = false                     -> accepted (the retire path),
+--      and every historical sale keeps its branch_id.
+--   3. delete from businesses where id = <a tenant with NO sales> -> STILL WORKS. This is the
+--      assertion that justifies `no action` over `restrict`: the cascade removes appointments
+--      and branches in one statement, and only `no action` defers the check long enough to see
+--      it. Under `restrict` this raises and tenant deletion is dead.
+--   4. delete from businesses where id = <a tenant WITH sales> -> blocked, but NOT by anything
+--      in this file: 'sales is append-only: DELETE is not permitted'. v10.1's guard refuses the
+--      cascade. Verified. So tenant deletion is already impossible for any tenant that has ever
+--      rung up a sale, regardless of v11a's FK choice. ⚖️ That is a PDPA erasure problem and it
+--      belongs to v10.1/v11b, not here — REPORTED, not fixed. Noted so the next reader does not
+--      "fix" it by weakening these FKs, which would not help.
+--
+-- Scenario J — branches.updated_at is maintained:
+--   1. update branches set updated_at = '2000-01-01' where id = <branch>;
+--      -> reading it back gives now(), NOT 2000: the trigger overrides the caller.
+--      ⚠️ DO NOT assert `updated_at > created_at` inside a single transaction — that test
+--      CANNOT PASS and does not mean the trigger is broken. now() is the TRANSACTION
+--      timestamp, so a row inserted and updated in one txn has updated_at = created_at
+--      exactly, and pg_sleep() does not advance it. (This bit me while writing these tests:
+--      the first run reported 'FROZEN' against a trigger that was firing perfectly.) Use the
+--      poison-value assertion above, or clock_timestamp(), or two transactions.
 -- ------------------------------------------------------------------------------------

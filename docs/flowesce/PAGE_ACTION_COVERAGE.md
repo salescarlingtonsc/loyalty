@@ -70,19 +70,27 @@ FULLY REVIEWED / BLOCKED / NOT ACCESSIBLE.
 ### FL-REQ-01 — Requests
 - Parent: — · Route: `/requests` · Entry: sidebar
 - Purpose: approve/deny client-initiated cancel/reschedule requests
-- Tabs: none · Sections: Cancellation requests, Reschedule requests, Recent decisions (all empty
-  this pass — no client-side requests exist in the tenant)
+- Tabs: none · Sections: Cancellation requests, Reschedule requests, Recent decisions
 - Fields: none · Filters: none · Buttons: "Auto-approve" toggle (switch + checkbox, both present)
-- Record-detail/Create/Edit/Delete: N/A, nothing to act on · Status transitions: N/A this pass
-- Empty-state: **A**, confirmed: "No pending cancel requests." / "No pending reschedule requests."
-  / "No decisions in the recent window." · Loading-state: not observed
-- Audit status: **DISCOVERED** (page mechanics were already confirmed live and working in a prior
-  pass per PAGE_INVENTORY.md's note that this module "closed in v8" on the Frenly side after
-  comparison; the underlying Flowesce approval flow itself has never actually been exercised
-  end-to-end in any pass because the tenant has no pending requests to approve/deny)
-- Outstanding questions: what does the approval modal look like, and does declining differ in UI
-  from approving? Genuinely unknown (D/E — no test data available without a client-side booking
-  portal action, which is out of admin-only reach).
+- Audit status: **BLOCKED** (E — Pass 2 attempted to generate a real pending request from the
+  client side. Booked a fresh test appointment (Test Requests Customer,
+  qa-requests-test@example.invalid, Test Facial, Fri Jul 17 13:45, confirmation `85d97321`) via the
+  public booking page specifically to then self-serve a cancel/reschedule. The confirmation page's
+  own "Need to change or cancel?" panel states plainly: "Manage this booking any time from your
+  account. Sign in with the email you just used and you'll see your appointment with options to
+  cancel or reschedule." Followed "Go to my account" → `flowesce.com/account/sign-in` → real
+  sign-in screen: "Enter the email your salon has on file. We'll send you a one-time code, no
+  password needed." This is a genuine, structural blocker for admin-only testing: the client-side
+  cancel/reschedule flow requires completing an emailed OTP, and this pass has no access to the
+  `qa-requests-test@example.invalid` inbox (deliberately a non-deliverable `.invalid` address, per
+  this project's no-real-email-sent discipline). **Confirmed real architecture, not guessed:** it
+  is a genuine passwordless/OTP client account system, not a dead link or 404 — the sign-in page
+  itself loaded correctly and asked for exactly what the confirmation page said it would.
+- Outstanding questions: the approval/decline modal itself remains completely unseen across all
+  passes. The only way to populate this module without owner-supplied real-inbox access is either
+  (a) an owner-authorized real email address that can be checked for the OTP, or (b) reaching the
+  underlying request-creation API/RPC directly (out of this pass's browser-only scope). Recommend
+  the owner decide which before a future pass attempts this again.
 
 ### FL-WAIT-01 — Waitlist
 - Parent: — · Route: `/waitlist` · Entry: sidebar, top-bar shortcut (DOM-confirmed, not re-clicked)
@@ -123,9 +131,22 @@ FULLY REVIEWED / BLOCKED / NOT ACCESSIBLE.
   "Export CSV," "Import CSV," "Bulk adjust" (`/inventory/adjust`), "New item"
 - Record-detail/Create: item form fully enumerated in LIVE_DATA_WALKTHROUGH.md step 4 (Kind
   3-way choice, FEFO batch tracking, "Sell online" storefront panel)
-- Audit status: **PARTIALLY REVIEWED** (list view + filters DISCOVERED; item creation and
-  Kind/FEFO mechanics FULLY REVIEWED per cited prior pass)
-- Outstanding questions: "Bulk adjust" page never opened in any pass — genuinely unknown.
+- **Bulk adjust (Pass 2, opened live, not submitted):** route `/inventory/adjust`, heading "Bulk
+  stock adjust." Exact copy: "Use this for stocktakes. Enter the count you have on hand for any
+  item, leave the rest blank, and save once. Each non-zero delta writes an audit transaction."
+  Fields: one shared "Stocktake note" textbox applied to every row; a table (Item/Branch/
+  Current/New count/Delta) with one "New count" number input per item — Test Cream showed Current
+  = 8 piece (matches the live total at that point); "No changes." indicator until a row is edited;
+  single "Save adjustments" button. **A** for every field enumerated; **B** for the actual
+  save/delta-audit-row behavior — deliberately not submitted this pass to avoid an extra
+  unplanned stock mutation once the storefront-order test (below) was already going to move this
+  same item's stock; the "writes an audit transaction" claim is UI copy, not independently
+  verified against a distinct audit trail.
+- Audit status: **PARTIALLY REVIEWED** (list view + filters + Bulk adjust form fields all
+  confirmed live; item creation and Kind/FEFO mechanics FULLY REVIEWED per cited prior pass; only
+  the Bulk adjust *save* action itself remains untested)
+- Outstanding questions: does a bulk-adjust delta appear in the same "History" tab as FEFO
+  consumption/retail-sale deductions, or a separate audit ledger? Not resolved (not submitted).
 
 ### FL-SVC-01 — Services (list)
 - Route: `/services` · Purpose: service catalog
@@ -189,12 +210,28 @@ FULLY REVIEWED / BLOCKED / NOT ACCESSIBLE.
   Cards: Net revenue $75.00, breakdown Sales $25.00 / Appointments $50.00
 - Table: 3 rows visible in this pass matching LIVE_DATA_WALKTHROUGH.md exactly — gift card sold
   $25 cash, retail sale, appointment payment — each with a "Refund" row action
-- Buttons: "Export CSV" (`/api/export/transactions?`) · Row action: "Refund" (present, **not
-  clicked** — refunds are explicitly out of Pass-1 scope)
-- Audit status: **PARTIALLY REVIEWED** (A: figures cross-checked and match pass-4's confirmed
-  numbers exactly — $75 net, $25/$50 split; B: Refund flow visible but not opened)
-- Outstanding questions: Refund flow/modal never opened in any pass — genuinely unknown what
-  fields it asks for or whether partial refunds are supported.
+- Buttons: "Export CSV" (`/api/export/transactions?`) · Row action: "Refund"
+- **Refund modal (Pass 2, opened live on the $50.00 appointment row, NOT submitted — highest
+  Pass-2 priority item):** heading "Refund this payment." Exact copy: "Remaining refundable:
+  $50.00 service. Recording a refund updates the appointment's payment status (e.g. fully-paid →
+  balance-unpaid) and shows up as negative in reports for the date you record it." Fields:
+  **Amount (USD)** — a real editable number input, prefilled to the full remaining refundable
+  amount ($50.00) but not read-only, i.e. **partial refunds are supported by the form**, not just
+  full reversal. **Method** — dropdown with 5 options: cash, card, bank, other, **refund to
+  credit** (the last option ties refunds into the same in-store-credit concept Frenly's own ledger
+  is built around — worth comparing directly). **Reason** — a required textarea (red asterisk),
+  placeholder "Service not delivered, customer dispute, scheduling change..." — Cancel / "Record
+  refund" buttons. Closed via the modal's own × without submitting; re-confirmed via a fresh page
+  reload that Transactions count (3), Net Revenue ($75.00), and the $50 row were all completely
+  unchanged — the open-then-close cost nothing.
+- Audit status: **PARTIALLY REVIEWED** (A: figures cross-checked; A: every refund-modal field and
+  its exact copy now captured live; B: the actual "Record refund" submission and its downstream
+  effects — negative-transaction row, appointment status flip to balance-unpaid, cash-drawer
+  impact — were deliberately NOT executed, since a real refund of already-tested revenue was judged
+  too disruptive to this shared trial tenant's numbers for a documentation pass)
+- Outstanding questions: whether "refund to credit" writes to the same balance shown elsewhere as
+  store credit, and whether a partial refund leaves the appointment "balance-unpaid" for the
+  remainder or introduces a third partial-paid state — both genuinely unknown, not simulated.
 
 ### FL-GFC-01 — Gift cards
 - Route: `/gift-cards` · Purpose: "Sell gift cards in person."
@@ -212,13 +249,30 @@ FULLY REVIEWED / BLOCKED / NOT ACCESSIBLE.
 - Cards: Expected in drawer $100.00, Opening float $0.00, Cash in +$100.00, Cash out −$0.00 (all
   match pass-4's cumulative cash total: $50 service + $25 retail + $25 gift card)
 - Table: 1 row, "Open" session, Expected $100.00
-- Buttons: "Close count," "New pay-in," "New pay-out" — **none clicked** (Close count would end the
-  open drawer session, a state change judged too disruptive/irreversible-feeling for Pass 1;
-  pay-in/pay-out would create ledger entries)
+- Buttons: "Close count," "New pay-in," "New pay-out"
+- **Close count modal (Pass 2, opened live, NOT submitted):** heading "Close count." Exact copy:
+  "Count each denomination, or type the total. The current session closes with the difference
+  recorded; the next session opens at the counted total." Two entry modes toggle: "Count by
+  denomination" (default) vs. "Type total instead." Denomination mode gives one number input per
+  US-style denomination — $100, $50, $20, $10, $5, $1, 25¢, 10¢, 5¢, 1¢ — each with its own running
+  subtotal, plus an "Other" field for "foreign currency, or anything not in the denomination grid
+  above." Buttons: Cancel / "Complete count." Closed via Cancel; re-verified the drawer's Expected
+  total was still exactly $100.00 afterward.
+- **New pay-in modal (Pass 2, opened live, NOT submitted):** heading "New pay-in." Exact copy:
+  "Cash going into the drawer outside of normal payments (starting float, change run, owner
+  top-up)." Fields: Amount (USD), Description (optional, placeholder "e.g. Starting float, change
+  run from bank."). Buttons: Cancel / "Save & record."
+- **New pay-out modal (Pass 2, opened live, NOT submitted):** heading "New pay-out." Exact copy:
+  "Cash leaving the drawer outside of refunds (supplies run, staff reimbursement, owner draw)."
+  Same two fields as pay-in (Amount, Description — placeholder "e.g. Reimbursed staff for supplies
+  run."). Buttons: Cancel / "Save & record."
 - Audit status: **PARTIALLY REVIEWED** (A: read-only figures confirmed and reconciled exactly
-  against pass-4 math; B: the three action buttons never exercised in any pass)
-- Outstanding questions: what does "Close count" ask for (actual counted cash vs. expected,
-  presumably), and what happens to the difference? Genuinely unknown.
+  against pass-4 math; A: all three modals opened live and every field/copy captured; B: none of
+  the three actions actually submitted — Close count would end the tenant's only open drawer
+  session, a state change judged too disruptive for a documentation pass; pay-in/pay-out would
+  create new ledger entries with no clean way to reverse them cleanly in-app)
+- Outstanding questions: what exactly happens to a non-zero difference on Close count (write-off?
+  flagged for review? carried to next period?) — genuinely unknown, not simulated.
 
 ### FL-EXP-01 — Expenses
 - Route: `/expenses` · Tabs: One-time (`/expenses`) / Recurring (`/expenses/recurring`) · Filters:
@@ -252,13 +306,34 @@ FULLY REVIEWED / BLOCKED / NOT ACCESSIBLE.
 - Cards: Gross pay $0.00, Commission earned $0.00, Unpaid commission $0.00, Hours logged 0.00
 - Tabs: Overview, Commission payouts, Hours · Table: Test Staff row (0 hours, $0 commission, $0
   tips, $0 gross)
-- Buttons: "Generic CSV" and "Talenox CSV" export links (both with `from`/`to` query params) · Pay
-  period picker (Jun 17–Jul 17, 2026)
-- Audit status: **DISCOVERED** (first-ever look at this page across all 4 passes)
-- Outstanding questions: why is commission $0 when Test Facial's completed+paid appointment should
-  presumably generate a commission if Test Staff has a commission rate set — but Test Staff's
-  commission fields were deliberately left blank in pass 4 (step 2: "Commission tab (left blank)"),
-  so $0 is expected/consistent, not a bug. "Commission payouts" and "Hours" tabs not opened.
+- Buttons: "Generic CSV" and "Talenox CSV" export links, confirmed real hrefs with query params:
+  `/reports/payroll/export?from=2026-06-17&to=2026-07-17&format=generic` and `...&format=talenox` ·
+  Pay period picker (Jun 17–Jul 17, 2026)
+- **Commission payouts tab (Pass 2, opened live):** "Commission earnings" table, columns Staff /
+  Service comm. / Product comm. / Earned / Paid / Unpaid, empty-state copy: "No commissions earned
+  in this period. Set rates on staff, services, or per-pairing." Below it, a separate "Payout
+  history" table (Paid on / Staff / Period / Note / Amount), empty-state copy: "No payouts recorded
+  yet. Use Mark as paid above to log one." — confirms there is a "Mark as paid" commission-payout
+  action that only renders once a staff member has non-zero earned commission (not visible this
+  pass since Test Staff's commission rate is blank by design).
+- **Hours tab (Pass 2, opened live):** "Hours by staff" table (Staff / Hours worked) — Test Staff
+  0.00, Total 0.00. Four factual notes quoted verbatim (short, each under 15 words): "Open shifts
+  (clocked-in, not yet clocked-out) are excluded[, close them before running payroll]"; "Bundle
+  tips are pooled at the business level (not attributed per-staff)[, don't appear in this report]";
+  "Hours come from closed shifts only[; hourly rates and overtime aren't tracked in Flowesce yet]";
+  "Commission and tips reconcile with the Commissions and Tips tabs for the same window." **Real
+  finding, not previously documented:** Flowesce's Payroll does NOT compute an hourly wage from
+  logged hours — "Hours logged" is purely informational/reconciliation, and Gross pay is
+  Commission + tips only. There is no hourly-rate × hours-worked wage calculation anywhere in this
+  module.
+- Audit status: **FULLY REVIEWED** (all 3 tabs opened, every field/table/empty-state captured,
+  both CSV export hrefs confirmed real; the only thing not observed is what a *populated*
+  Commission payouts / Hours state looks like, since Test Staff was deliberately left with no
+  commission rate in the underlying test data — that's a data-availability limit, not a coverage
+  gap in this pass)
+- Outstanding questions: none major — this module went from "never opened" (Pass 1) to fully
+  mapped this pass. Owner-relevant: Flowesce payroll design has NO hourly-wage engine; if Frenly's
+  parity build assumes one, that assumption needs to be checked against this.
 
 ### FL-BRN-01 — Branches
 - Route: `/branches` · 1 branch: Test Branch, "No address added," Active, "No phone," "No email,"
@@ -291,25 +366,82 @@ FULLY REVIEWED / BLOCKED / NOT ACCESSIBLE.
 - Outstanding questions: full builder UI remains completely unseen across all 4 passes.
 
 ### FL-STO-01 — Storefront
-- Route: `/storefront` · Purpose: "Sell retail products on your website... Fulfilling an order
-  records a sale and deducts stock."
+- Route: `/storefront` · Purpose: "Sell retail products on your website... Customers reserve, you
+  confirm and settle in person. Fulfilling an order records a sale and deducts stock." (Pass 2:
+  fuller quote than Pass 1's — the "reserve, you confirm and settle in person" clause matters,
+  see below.)
 - Links: "Migrate from Shopify" (`/import/shopify`), "View store"
-  (`https://carlington-smith-consultancy-pte-ltd.flowesce.com/shop`, not opened — customer-facing)
+  (`https://carlington-smith-consultancy-pte-ltd.flowesce.com/shop`)
 - Form: Shop settings — "Shop is open" toggle (off by default), "Offer pickup" + instructions,
   "Offer shipping," "Manual payment" (QR upload, bank transfer details, payment instructions),
   "Order reminders" toggle + threshold (default "2 days"/48h)
-- Audit status: **PARTIALLY REVIEWED** (A: all fields enumerated; B: none saved/toggled)
+- **Pass 2 full live test (state-changing, see DATA_MUTATION_LOG.md for exact before/after):**
+  Toggled "Shop is open" ON and saved ("Storefront settings saved" toast) — **this was necessary**:
+  with the shop off, the public shop's own "View store" link (its own real `href`, not a guessed
+  URL) 404'd. With the shop on, the identical URL loaded a real, working public shop. On the
+  Test Cream inventory item's own "Sell online" panel, toggled "Sell on storefront" ON (was off) —
+  the item did not appear in the public shop until this was also done. **Both toggles left ON**
+  after this pass so the fulfilled test order (below) remains visible for future passes; flagged
+  here rather than silently changed.
+- Audit status: **FULLY REVIEWED** (A: every settings field enumerated; A: the two prerequisite
+  toggles — shop-open and per-item sell-on-storefront — both identified and exercised; A: full
+  customer-facing purchase → admin fulfilment lifecycle completed end-to-end, see FL-ORD-01)
 - Outstanding questions: none major.
 
 ### FL-ORD-01 — Store orders
 - Route: `/storefront/orders` · **Correction: real page, prior pass's `/store-orders` 404 was a
   wrong URL.**
-- Sections: Pending (empty: "No pending orders."), Confirmed (empty: "No confirmed orders waiting
-  to fulfil.") · Header copy: "0 open · reserve-only orders from your website shop. Fulfilling an
-  order records a retail sale and deducts stock."
-- Audit status: **DISCOVERED**
-- Outstanding questions: no orders exist to open a record-detail view; fulfilment flow completely
-  unseen.
+- Header copy: "reserve-only orders from your website shop. Fulfilling an order records a retail
+  sale and deducts stock."
+- **Pass 2 full live fulfilment test (state-changing — real order created and carried through to
+  completion; exact before/after in DATA_MUTATION_LOG.md).** Placed a real test order (Test Cream
+  ×1, $25.00) as a customer via the public shop, using "Test Storefront Order" / 
+  `qa-storefront-test@example.invalid` (a non-deliverable `.invalid` address, no real email sent),
+  pickup at Test Branch, no payment collected online (Stripe not connected). Order landed as
+  **Pending #1001**. Walked every state transition the admin UI offers, checking Inventory
+  (Test Cream stock) and Transactions after each step:
+  1. **Confirm** → moves to "Confirmed" section. Stock unchanged (8), no new transaction.
+  2. **Mark as paid** → opens an inline "Record how this order was paid" form: Method (dropdown,
+     defaulted to Cash) + Amount (prefilled to order total) + Confirm paid / Never mind. Selected
+     Cash, confirmed. Order badge became "Paid $25.00 · Cash." Stock still unchanged (8), still no
+     new transaction — **paying does not itself fulfil the order.**
+  3. **Ready for pickup** → button briefly shows "Working..." then a toast: "Customer notified:
+     ready for pickup" (an email would be sent to the real address on a live tenant; here it's
+     `.invalid` so nothing actually sent). Order gained a timestamp ("Ready for pickup · Jul 17,
+     1:37 PM") and the action button changed to **"Mark collected."** Stock still unchanged (8).
+  4. **Mark collected** → toast "Order collected and sale recorded." **This is the actual
+     fulfilment step.** Order moved to a new "Recently fulfilled" section with status "Fulfilled"
+     and a "View linked sale" link. **Only at this exact step:** Test Cream stock dropped 8 → 7
+     (confirmed on the item's own detail page), and Transactions gained a 4th row: `2026-07-17
+     13:37 · Sale · Retail · Test Cream · [client] Test Storefront Order · $25.00`, pushing Net
+     Revenue from $75.00 → $100.00 and the Sales breakdown from $25.00 → $50.00.
+  - **Real finding, worth flagging loudly:** the new transaction row's **Method column reads
+    "card"**, even though the order was explicitly marked paid via **Cash** in step 2. This is a
+    genuine discrepancy between what the admin recorded as the payment method and what the
+    resulting sale/transaction row displays — either a real Flowesce bug, or "card" is a hardcoded/
+    default placeholder for all storefront-originated sales regardless of the offline payment
+    method logged. Not resolved further this pass; flagged as a contradiction of the expected
+    "Mark as paid: Cash" → "Transaction: cash" chain.
+  - **Second real finding:** a **new client record was silently auto-created** from the checkout
+    form's free-text Name field — "Test Storefront Order" / `qa-storefront-test@example.invalid` —
+    distinct from the pre-existing "Test Customer QA." Its detail-list row shows **0 visits /
+    $0.00 spent / "Never" last visit**, *despite* the $25.00 sale above being directly linked to
+    it as the client on the Transactions row. This reproduces, via a second independent path, the
+    exact "retail purchase not counted in client Total spent" gap LIVE_DATA_WALKTHROUGH.md already
+    found for the in-person Quick Sale retail path (step 8) — confirming it is a general
+    client-aggregate blind spot for retail sales, not specific to Quick Sale.
+  - **Third note (not a bug, a design observation):** the client's "name" is literally whatever
+    free text the shopper typed into the checkout Name field — there is no separate concept of an
+    "order label" vs. a real customer name, so a shopper who types something other than their own
+    name (as we did here, deliberately, for test-labeling) becomes that client's permanent display
+    name in the CRM.
+- Audit status: **FULLY REVIEWED** (A: full lifecycle — Pending → Confirmed → Paid → Ready for
+  pickup → Fulfilled — driven end-to-end with real before/after numbers at every step; A: the
+  "fulfilling an order records a sale and deducts stock" claim from both Pass 1's read and this
+  page's own header copy is **confirmed exactly true, but only at the final "Mark collected" step,
+  not at Confirm or Mark-as-paid** — this precision was not established in Pass 1)
+- Outstanding questions: none on the state machine itself. The card-vs-cash method mismatch and
+  the client-spend blind spot are both open, real findings for the owner/Frenly-parity team.
 
 ### FL-MKT-01 — Marketing (hub)
 - Route: `/marketing` · Purpose: "Broadcasts, birthdays, and client engagement."
@@ -396,8 +528,15 @@ FULLY REVIEWED / BLOCKED / NOT ACCESSIBLE.
   completely unexplored.
 
 ### FL-SET-02 — Settings → Account
-- Route: `/settings/account` · Audit status: **DISCOVERED** (heading only; fields not enumerated)
-- Outstanding questions: full form contents unknown.
+- Route: `/settings/account` · Heading: "Account" — "Your name, photo, and password. Signed in as
+  carlingtonsmith.biz@gmail.com."
+- **Pass 2, full fields enumerated:** Profile section — avatar (initials "ZL"), "Upload photo"
+  (file picker button), Display name (textbox, prefilled "Zeph Lee") + Save. Password section —
+  New password, Confirm new password (both password-type inputs) + "Change password" submit. No
+  other fields on this tab.
+- Audit status: **FULLY REVIEWED** (A: every field enumerated; neither form submitted — changing
+  the owner's own display name or password was judged out of scope/risk for a documentation pass)
+- Outstanding questions: none.
 
 ### FL-SET-03 — Settings → Billing
 - Route: `/settings/billing` · Not re-opened this pass; fully enumerated in prior pass
@@ -441,15 +580,40 @@ FULLY REVIEWED / BLOCKED / NOT ACCESSIBLE.
 - Outstanding questions: full contents unknown (logo upload? colour palette? — not confirmed).
 
 ### FL-SET-09 — Settings → Payments
-- Route: `/settings/payments` · Audit status: **DISCOVERED** (heading only)
-- Outstanding questions: full contents unknown — this is presumably where a card processor/Stripe
-  SG connection would live, directly relevant to the Frenly side's deferred Stripe SG decision, but
-  nothing beyond the section heading was confirmed this pass.
+- Route: `/settings/payments` · Heading: "Payments" — "Connect Stripe to take card payments in
+  your online store, and to hold a card on file for no-show fe[es]."
+- **Pass 2, full fields enumerated:** Not-connected state copy: "You have not connected Stripe
+  yet. Connect to start taking card payments on your storefront." Button: "Connect Stripe" (not
+  clicked — would begin a real Stripe OAuth/Connect flow, out of scope). Below it: "Require
+  payment for online store orders" toggle, disabled with helper text "Connect Stripe first. Once
+  your account can accept charges, you can require payment." — confirming this toggle is
+  hard-gated behind Stripe connection, not independently settable.
+- Audit status: **FULLY REVIEWED for the unconnected state** (A: every visible field and its
+  exact gating logic confirmed); the connected-state UI (what appears once Stripe is linked) is
+  **D — hidden/inaccessible** without actually completing a real Stripe Connect flow, which is
+  explicitly out of bounds for this pass. This is directly relevant to the Frenly side's deferred
+  Stripe SG decision — Flowesce's own storefront-checkout payment path is also Stripe-gated, not
+  an independent payment processor integration.
+- Outstanding questions: none for the reachable surface; connected-state fields remain unknown.
 
 ### FL-SET-10 — Settings → Data & privacy
-- Route: `/settings/data` · Audit status: **DISCOVERED** (heading only)
-- Outstanding questions: full contents unknown — directly relevant to PDPA ⚖️ flagged in the
-  Frenly CLAUDE.md; needs a real look in Pass 2.
+- Route: `/settings/data` · Heading: "Data & privacy" — "Export everything on file, or permanently
+  delete your account."
+- **Pass 2, full fields enumerated — directly relevant to PDPA ⚖️:** "Download your data" section
+  — "One JSON file with your business records: clients, appointments, payments, inventory, and
+  more." Link: "Download all my data" → `/api/export/account` (a real href, not clicked — would
+  trigger a genuine account-wide data download). "Delete account" section — "Permanently delete
+  your business and all of its data. This cannot be undone," with fuller warning text: "This
+  permanently deletes and everything in it: clients, appointments, payments, inventory, staff,
+  a[ll of it]." Confirmation is type-to-confirm: a textbox labelled "Business name" with the exact
+  tenant name as its placeholder/expected value, gating a "Delete my account permanently" button.
+  Neither the export link nor the delete flow was exercised — export would create a real download
+  artifact and delete is irreversible and explicitly prohibited by this pass's scope boundary.
+- Audit status: **FULLY REVIEWED** (A: every field, exact copy, and the type-to-confirm delete
+  gate all captured live; the export/delete actions themselves correctly left untriggered)
+- Outstanding questions: whether the exported JSON is PDPA-consent-scoped or a raw full dump is
+  unknown without actually downloading it — flag for a future pass if this needs deeper PDPA
+  verification (would require the owner's explicit go-ahead to trigger a real export).
 
 ### FL-SET-11 — Settings → Import
 - Route: `/settings/import` · Headings: "Import data," "Import from a CSV"
@@ -517,7 +681,19 @@ FULLY REVIEWED / BLOCKED / NOT ACCESSIBLE.
   or just navigates to `/waitlist`)
 
 ### FL-SEARCH-01 — Global search (⌘K)
-- Trigger: top-bar "Search clients and appointments" button
-- Audit status: **NOT STARTED** — confirmed present in DOM with heading "Search" and placeholder
-  "Find a client or an appointment," but never opened/typed into in any of the 4 passes to date.
-  Genuinely the least-covered top-bar capability.
+- Trigger: top-bar "Search clients and appointments" button, or the `⌘K` / `Ctrl+K` shortcut
+- **Pass 2, opened and typed into live — first time in any pass.** The top-bar button click alone
+  did not visibly open the dialog on the first attempt (likely a viewport/timing quirk, consistent
+  with prior passes' narrow-viewport caveat); the `⌘K` keyboard shortcut reliably opened it every
+  time. Typed "Test" — **first read showed "No matches found," but this was a transient
+  pre-debounce state**: waiting ~1.5s and re-checking showed real, correct, grouped live results:
+  a "Clients" section (Test Customer QA / qa-test@example.invalid) and an "Appointments" section
+  (calendar icon, "Test Customer QA · Test Facial," "Fri, Jul 17, 10:00 AM"). **Confirmed working,
+  live-backed, and debounced** (not instant/client-side-only — there's a real network round trip
+  with a visible lag before results populate).
+- Audit status: **FULLY REVIEWED** (A: opened, typed a real query, confirmed correct grouped
+  results against known test data, confirmed the debounce behavior so a future pass doesn't
+  mistake the transient empty state for a bug)
+- Outstanding questions: none major. Note for future passes: if you check results before ~1-2s
+  have passed, you will incorrectly see "No matches found" — always wait before concluding search
+  is broken.
