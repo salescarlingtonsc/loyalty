@@ -63,7 +63,19 @@ tr.click{cursor:pointer} tr.click:hover td{background:#FBFAF7}
 .nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14px;margin-bottom:2px;color:#B9B3C4}
 .nav a:hover{background:#201d27;color:#fff}
 .nav a.act{background:var(--grad);color:#fff;font-weight:600}
+.navhead{display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8A8494;cursor:pointer;margin-top:6px}
+.navhead:hover{background:#201d27;color:#fff}
+.navhead.act{color:#fff}
+.navhead .chev{margin-left:auto;font-size:11px}
+.navbody a{padding-left:22px}
 .side .foot{margin-top:auto;padding:10px;font-size:12.5px;color:#8A8494}
+.profile{border-top:1px solid #2A2732;padding-top:12px;margin-top:8px;position:relative}
+.profile .who{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer}
+.profile .who:hover{background:#201d27}
+.profile .avatar{width:32px;height:32px;border-radius:100px;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.profile .menu{position:absolute;bottom:calc(100% + 6px);left:0;right:0;background:#201d27;border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.profile .menu a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#CFCAD6;font-size:13.5px}
+.profile .menu a:hover{background:#2A2732;color:#fff}
 .main{padding:28px 34px;max-width:1200px;width:100%}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
 .topbar h1{font-size:1.7rem}
@@ -99,21 +111,36 @@ const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
 const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
-const ALLMODS=['dashboard','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports'];
+const ALLMODS=['dashboard','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','staffperf'];
 const INDUSTRIES={
-  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports']},
+  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','staffperf']},
   salon:{em:'💇',label:'Hair Salon',mods:ALLMODS},
   facial:{em:'✨',label:'Facial / Spa',mods:ALLMODS},
   massage:{em:'💆',label:'Massage',mods:ALLMODS},
   fitness:{em:'🏋️',label:'Fitness',mods:ALLMODS},
-  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports']},
+  retail:{em:'🛍️',label:'Retail',mods:['dashboard','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','staffperf']},
   other:{em:'🏪',label:'Other',mods:ALLMODS}
 };
 const MODULES={dashboard:['📊','Dashboard'],clients:['👥','Customers'],appointments:['🗓️','Appointments'],
   sales:['🧾','Sales'],services:['🛠️','Services'],bookings:['📅','Bookings'],waitlist:['⏳','Waitlist'],
   inventory:['📦','Inventory'],packages:['🎫','Packages'],loyalty:['🎁','Loyalty'],
   retention:['🔁','Retention'],referrals:['🤝','Referrals'],memberships:['💎','Memberships'],
-  giftcards:['🎟️','Gift cards'],reports:['📈','Reports'],settings:['⚙️','Settings']};
+  giftcards:['🎟️','Gift cards'],reports:['📈','Reports'],staffperf:['🧑‍💼','Staff performance'],
+  settings:['⚙️','Settings'],setup:['✅','Get started']};
+
+/* Sidebar grouping (owner's "Cubbly" 4-header direction): flat modules are grouped under
+   collapsible headers. Settings moves to the Profile menu, out of main nav. Group-open state
+   lives in this plain JS object (NOT localStorage — prohibited in this stack) so it resets
+   each full page load but persists across in-session route changes. */
+const NAVGROUPS=[
+  {key:'home',icon:'🏠',label:null,items:['dashboard']},
+  {key:'customers',icon:'👥',label:'Customers',items:['clients']},
+  {key:'operations',icon:'🛠️',label:'Operations',items:['appointments','bookings','waitlist','sales','services','inventory','packages']},
+  {key:'growth',icon:'🎁',label:'Growth',items:['loyalty','retention','referrals','memberships','giftcards']},
+  {key:'insights',icon:'📈',label:'Insights',items:['reports','staffperf']}
+];
+let navOpen={};
+let profileOpen=false;
 
 let S={user:null,biz:null,charts:[]};
 const $=(id)=>document.getElementById(id);
@@ -226,7 +253,7 @@ function renderOnboard(){
         const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Math.random().toString(36).slice(2,6);
         const {data:b,error:e1}=await sb.rpc('create_business',{p_name:name,p_slug:slug,p_industry:sel,p_modules:INDUSTRIES[sel].mods});
         if(e1) throw e1;
-        S.biz=b;toast('Workspace ready 🎉');nav('#/dashboard');
+        S.biz=b;toast('Workspace ready 🎉');nav('#/setup');
       }catch(e){$('oberr').innerHTML=`<div class="err">${esc(e.message)}</div>`;$('mk').disabled=false}
     };
   };
@@ -234,23 +261,68 @@ function renderOnboard(){
 }
 
 /* ---------- shell ---------- */
+function activeGroupKey(pageKey){
+  const k=pageKey==='client'?'clients':pageKey;
+  const g=NAVGROUPS.find(g=>g.items.includes(k));
+  return g?g.key:null;
+}
+function navHtml(page){
+  const enabled=S.biz.enabled_modules||[];
+  const activeKey=page[0]==='client'?'clients':page[0];
+  const activeGrp=activeGroupKey(page[0]);
+  const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(m=>m==='dashboard'||enabled.includes(m))})).filter(g=>g.items.length);
+  return visGroups.map(g=>{
+    if(g.key==='home'){
+      return `<a href="#/dashboard" class="${activeKey==='dashboard'?'act':''}">🏠 Home</a>`;
+    }
+    if(!(g.key in navOpen)) navOpen[g.key]=(g.key===activeGrp);
+    const isOpen=navOpen[g.key]||g.key===activeGrp;
+    return `<div class="navgroup">
+      <div class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}">${g.icon} ${g.label}<span class="chev">${isOpen?'▾':'▸'}</span></div>
+      <div class="navbody" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
+        ${g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}">${MODULES[m][0]} ${MODULES[m][1]}</a>`).join('')}
+      </div></div>`;
+  }).join('');
+}
+function wireNav(){
+  document.querySelectorAll('.navhead').forEach(el=>el.onclick=()=>{
+    const k=el.dataset.grp;navOpen[k]=!navOpen[k];
+    const body=document.querySelector(`[data-body="${k}"]`);
+    body.style.display=navOpen[k]?'block':'none';
+    el.querySelector('.chev').textContent=navOpen[k]?'▾':'▸';
+  });
+}
 function renderShell(page){
-  const mods=[...(S.biz.enabled_modules||[]),'settings'];
   root.innerHTML=`<div class="shell">
     <aside class="side">
       <div class="logo">frenly<span>.</span></div>
-      <nav class="nav">${mods.filter(m=>MODULES[m]).map(m=>
-        `<a href="#/${m}" class="${page[0]===m||(m==='clients'&&page[0]==='client')?'act':''}">${MODULES[m][0]} ${MODULES[m][1]}</a>`).join('')}</nav>
-      <div class="foot">${esc(S.biz.name)}<br><span style="opacity:.7">${INDUSTRIES[S.biz.industry]?.label||S.biz.industry}</span><br><br>
-      <a href="#" id="so" style="color:#FF9C92">Sign out →</a></div>
+      <nav class="nav" id="navwrap">${navHtml(page)}</nav>
+      <div class="profile" id="profwrap">
+        ${profileOpen?`<div class="menu" id="profmenu">
+          <a href="#/setup" id="pmSetup">✅ Get started</a>
+          <a href="#/settings" id="pmSettings">⚙️ Settings</a>
+          <a href="#" id="pmSignout" style="color:#FF9C92">↪ Sign out</a>
+        </div>`:''}
+        <div class="who" id="profWho">
+          <div class="avatar">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
+          <div><b style="color:#fff;font-size:13.5px">${esc(S.biz.name)}</b>
+          <div class="small" style="opacity:.7">${INDUSTRIES[S.biz.industry]?.label||esc(S.biz.industry)}</div></div>
+        </div>
+      </div>
     </aside>
     <main class="main" id="main"></main></div>`;
-  $('so').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[]};nav('#/')};
+  wireNav();
+  $('profWho').onclick=()=>{profileOpen=!profileOpen;renderShell(page);};
+  if(profileOpen){
+    $('pmSignout').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[]};profileOpen=false;nav('#/')};
+    $('pmSetup').onclick=()=>{profileOpen=false};
+    $('pmSettings').onclick=()=>{profileOpen=false};
+  }
   const P={dashboard,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
     bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,
-    settings:settingsPage};
+    staffperf:staffPerfPage,setup:setupPage,settings:settingsPage};
   (P[page[0]]||dashboard)(page[1]);
 }
 const M=()=> $('main');
@@ -1186,9 +1258,124 @@ async function reportsPage(){
   run();
 }
 
+/* ---------- get started (first-run setup guide) ---------- */
+let setupTeamSkipped=false; /* in-memory only — no localStorage in this stack; resets on reload */
+async function setupPage(){
+  M().innerHTML=`<div class="topbar"><div><h1>Get started</h1><p class="muted small">A few things to set up before you open for business — do them in any order.</p></div></div>
+    <div class="card" id="sp_progress" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
+    <div id="sp_steps" class="grid"></div>`;
+  const bid=S.biz.id;
+  const [{data:sv,error:e1},{data:pr,error:e2},{data:lp,error:e3},{data:st,error:e4},{data:cl,error:e5}]=await Promise.all([
+    sb.from('services').select('id').eq('business_id',bid),
+    sb.from('products').select('id').eq('business_id',bid),
+    sb.from('loyalty_programs').select('id').eq('business_id',bid).eq('active',true).limit(1),
+    sb.from('staff').select('id').eq('business_id',bid),
+    sb.from('clients').select('id').eq('business_id',bid).limit(1)
+  ]);
+  const err=e1||e2||e3||e4||e5; if(err) return fail(err);
+  let spCount=0;
+  if(sv&&sv.length&&pr&&pr.length){
+    const ids=sv.map(s=>s.id);
+    const {data:sp}=await sb.from('service_products').select('service_id').in('service_id',ids);
+    spCount=(sp||[]).length;
+  }
+  const portal=`${location.origin}${location.pathname}#/b/${S.biz.slug}`;
+  const usesInventory=(S.biz.enabled_modules||[]).includes('inventory');
+  const steps=[
+    {id:'services',em:'🛠️',title:usesInventory?'Add your services':'Add your services or products',
+      why:'This is what customers see and book — nothing else works until there\'s at least one.',
+      done:(sv||[]).length>0,link:'#/services',cta:'Add a service →'},
+    {id:'products',em:'📦',title:'Add a product with stock',
+      why:'Each sale takes from the oldest-expiry batch first — nothing to do, it\'s automatic (FEFO).',
+      done:(pr||[]).length>0,link:'#/inventory',cta:'Add a product →',hide:!usesInventory},
+    {id:'link',em:'🔗',title:'Link products to services',
+      why:'When a service is completed, linked items deduct automatically — no manual stock counting.',
+      done:spCount>0,link:'#/services',cta:'Link a product →',hide:!usesInventory},
+    {id:'loyalty',em:'🎁',title:'Set up loyalty',
+      why:'Points per dollar and a redeem threshold — set once, then every sale earns automatically.',
+      done:(lp||[]).length>0,link:'#/loyalty',cta:'Set up loyalty →'},
+    {id:'team',em:'👥',title:'Add your team',
+      why:'Staff logins let you track who\'s on shift and (if you use it) commission per person.',
+      done:(st||[]).length>1||setupTeamSkipped,link:'#/settings',cta:'Add a teammate →',skippable:(st||[]).length<=1},
+    {id:'customer',em:'🙋',title:'Add your first customer',
+      why:'Every sale you record for a customer earns loyalty automatically — try it on one person first.',
+      done:(cl||[]).length>0,link:'#/clients',cta:'Add a customer →'},
+    {id:'share',em:'🔗',title:'Share your booking page',
+      why:'Customers book or reserve here — put it in your bio, WhatsApp, or a QR code on the counter.',
+      done:true,link:null,cta:null}
+  ].filter(s=>!s.hide);
+  const doneCount=steps.filter(s=>s.done).length;
+  $('sp_progress').innerHTML=`<div class="row"><b>${doneCount} of ${steps.length} done</b><span class="spacer"></span>
+    <button class="btn ghost sm" id="sp_hide">Hide this guide</button></div>
+    <div style="background:var(--line);border-radius:100px;height:10px;margin-top:12px;overflow:hidden">
+      <div style="background:var(--grad);height:100%;width:${Math.round(doneCount/steps.length*100)}%"></div></div>`;
+  $('sp_hide').onclick=()=>nav('#/dashboard');
+  $('sp_steps').innerHTML=steps.map(s=>`<div class="card" style="display:flex;gap:14px;align-items:flex-start">
+    <div style="font-size:22px">${s.done?'✅':s.em}</div>
+    <div style="flex:1">
+      <b>${esc(s.title)}</b>
+      <p class="muted small" style="margin-top:4px">${esc(s.why)}</p>
+      ${s.id==='share'?`<div class="row" style="margin-top:10px"><input readonly value="${esc(portal)}" style="max-width:360px"><button class="btn ghost sm" id="sp_copy">Copy link</button></div>`:''}
+      <div class="row" style="margin-top:10px">
+        ${s.link&&!s.done?`<a class="btn sm" href="${s.link}">${esc(s.cta)}</a>`:''}
+        ${s.link&&s.done?`<a class="btn ghost sm" href="${s.link}">Review →</a>`:''}
+        ${s.skippable&&!s.done?`<button class="btn ghost sm" data-skip="${s.id}">Just me for now</button>`:''}
+      </div>
+    </div></div>`).join('');
+  const copyBtn=$('sp_copy');
+  if(copyBtn) copyBtn.onclick=()=>{navigator.clipboard.writeText(portal);toast('Portal link copied')};
+  document.querySelectorAll('[data-skip]').forEach(b=>b.onclick=()=>{setupTeamSkipped=true;setupPage()});
+}
+
+/* ---------- staff performance ---------- */
+async function staffPerfPage(){
+  const today=new Date(),d30=new Date(Date.now()-29*864e5);
+  const iso=d=>d.toISOString().slice(0,10);
+  M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Sales, revenue and commission per staff member</p></div>
+    <div class="range">
+      <button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
+      <input type="date" id="pf" value="${iso(d30)}"> <span class="muted">→</span> <input type="date" id="pt" value="${iso(today)}">
+      <button class="btn sm" id="papply">Apply</button>
+    </div></div>
+    <p class="muted small" style="margin:-8px 0 14px">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
+    <div class="card" id="pbody"><div class="empty">Loading…</div></div>`;
+  document.querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.qbtn').forEach(x=>x.classList.remove('act'));b.classList.add('act');
+    $('pf').value=iso(new Date(Date.now()-(b.dataset.d-1)*864e5));$('pt').value=iso(new Date());load();
+  });
+  $('papply').onclick=()=>load();
+  async function load(){
+    const from=$('pf').value,to=$('pt').value+'T23:59:59';
+    const [{data:sc,error},{data:st}]=await Promise.all([
+      sb.from('sale_commission').select('*').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to),
+      sb.from('staff').select('id,full_name').eq('business_id',S.biz.id).order('full_name')
+    ]);
+    if(error) return fail(error);
+    const names=Object.fromEntries((st||[]).map(s=>[s.id,s.full_name||'Team member']));
+    const agg={};
+    (st||[]).forEach(s=>{agg[s.id]={count:0,revenue:0,commission:0}});
+    (sc||[]).forEach(r=>{
+      const key=r.staff_id||'__unattributed';
+      if(!agg[key]) agg[key]={count:0,revenue:0,commission:0};
+      agg[key].count++;agg[key].revenue+=r.amount_cents;agg[key].commission+=(r.commission_cents||0);
+    });
+    const keys=Object.keys(agg).sort((a,b)=>{
+      if(a==='__unattributed') return 1; if(b==='__unattributed') return -1;
+      return (names[a]||'').localeCompare(names[b]||'');
+    });
+    if(!keys.length){$('pbody').innerHTML=`<div class="empty"><div class="big">🧑‍💼</div>No staff or sales in this range yet.</div>`;return}
+    const totals=keys.reduce((t,k)=>({count:t.count+agg[k].count,revenue:t.revenue+agg[k].revenue,commission:t.commission+agg[k].commission}),{count:0,revenue:0,commission:0});
+    $('pbody').innerHTML=`<table><tr><th>Staff</th><th>Sales</th><th>Revenue attributed</th><th>Commission earned</th></tr>
+      ${keys.map(k=>`<tr><td><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></td>
+        <td>${agg[k].count}</td><td>${money(agg[k].revenue)}</td><td>${money(agg[k].commission)}</td></tr>`).join('')}
+      <tr><td><b>Total</b></td><td><b>${totals.count}</b></td><td><b>${money(totals.revenue)}</b></td><td><b>${money(totals.commission)}</b></td></tr></table>`;
+  }
+  load();
+}
+
 /* ---------- settings ---------- */
 async function settingsPage(){
-  const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard');
+  const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard'&&m!=='setup');
   M().innerHTML=`<div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
     <div class="split"><div class="card"><b>Business</b>
       <label>Name</label><input id="bn" value="${esc(S.biz.name)}">
@@ -1216,7 +1403,8 @@ async function settingsPage(){
       <input type="file" id="csvf" accept=".csv,text/csv">
       <div id="csvprev" style="margin-top:12px"></div></div></div>
     <div class="card" style="margin-top:16px"><b>Tenant isolation</b>
-      <p class="muted small" style="margin-top:6px;line-height:1.7">Every business on Frenly has its own isolated data space. Row-level security is enforced by the database on every table — your customers, sales, and programs are invisible to every other business, and theirs to you. Your team only ever sees this workspace.</p></div>`;
+      <p class="muted small" style="margin-top:6px;line-height:1.7">Every business on Frenly has its own isolated data space. Row-level security is enforced by the database on every table — your customers, sales, and programs are invisible to every other business, and theirs to you. Your team only ever sees this workspace.</p></div>
+    <div id="commissionWrap"></div>`;
   $('bsave').onclick=async()=>{
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),industry:$('bi').value,
       brand_color:$('bc').value,booking_policy:$('bp').value||null}).eq('id',S.biz.id);
@@ -1291,6 +1479,49 @@ async function settingsPage(){
       toast(`Imported ${done} customers 🎉`);$('csvprev').innerHTML=`<p class="small">✓ ${done} imported.</p>`;
     };
   };
+  /* commission config — owner only, % only (flat-amount commission is not built yet) */
+  loadCommissionConfig();
+}
+async function loadCommissionConfig(){
+  const {data:me}=await sb.from('staff').select('role').eq('user_id',S.user.id).eq('business_id',S.biz.id).limit(1);
+  if(!me||!me.length||me[0].role!=='owner') return; /* owner-only config */
+  const pct=bps=>bps==null?'':(bps/100).toString();
+  const toBps=v=>{const t=(v||'').trim();return t===''?null:Math.round(parseFloat(t)*100)};
+  const [{data:staffList,error:e1},{data:svcList,error:e2}]=await Promise.all([
+    sb.from('staff').select('id,full_name,commission_service_bps,commission_product_bps').eq('business_id',S.biz.id).order('full_name'),
+    sb.from('services').select('id,name,commission_bps').eq('business_id',S.biz.id).order('name')
+  ]);
+  if(e1||e2) return fail(e1||e2);
+  $('commissionWrap').innerHTML=`<div class="split" style="margin-top:16px">
+    <div class="card"><b>Staff commission %</b>
+      <p class="muted small" style="margin:6px 0 10px">Per-staff default commission on services and on products/retail sales. Leave blank if this firm doesn't use commission — 0% is a real setting (means "no commission"), different from blank ("not decided yet"). % only.</p>
+      ${(staffList&&staffList.length)?`<table><tr><th>Staff</th><th>Service %</th><th>Product %</th><th></th></tr>
+        ${staffList.map(s=>`<tr><td>${esc(s.full_name||'Team member')}</td>
+          <td><input data-cs="${s.id}" type="number" min="0" step="0.1" placeholder="blank = not set" value="${pct(s.commission_service_bps)}" style="max-width:110px"></td>
+          <td><input data-cp="${s.id}" type="number" min="0" step="0.1" placeholder="blank = not set" value="${pct(s.commission_product_bps)}" style="max-width:110px"></td>
+          <td><button class="btn ghost sm" data-savestaff="${s.id}">Save</button></td></tr>`).join('')}</table>`
+        :'<p class="muted small">No staff yet — add your team first.</p>'}</div>
+    <div class="card"><b>Service commission override %</b>
+      <p class="muted small" style="margin:6px 0 10px">Overrides the staff default for this one service. Blank = inherit staff default; 0% = explicitly no commission on this service.</p>
+      ${(svcList&&svcList.length)?`<table><tr><th>Service</th><th>Override %</th><th></th></tr>
+        ${svcList.map(s=>`<tr><td>${esc(s.name)}</td>
+          <td><input data-cv="${s.id}" type="number" min="0" step="0.1" placeholder="blank = inherit" value="${pct(s.commission_bps)}" style="max-width:110px"></td>
+          <td><button class="btn ghost sm" data-savesvc="${s.id}">Save</button></td></tr>`).join('')}</table>`
+        :'<p class="muted small">No services yet.</p>'}</div></div>`;
+  document.querySelectorAll('[data-savestaff]').forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.savestaff;
+    const cs=document.querySelector(`[data-cs="${id}"]`).value,cp=document.querySelector(`[data-cp="${id}"]`).value;
+    const {error}=await sb.from('staff').update({commission_service_bps:toBps(cs),commission_product_bps:toBps(cp)}).eq('id',id);
+    if(error) return fail(error);
+    toast('Staff commission saved');
+  });
+  document.querySelectorAll('[data-savesvc]').forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.savesvc;
+    const cv=document.querySelector(`[data-cv="${id}"]`).value;
+    const {error}=await sb.from('services').update({commission_bps:toBps(cv)}).eq('id',id);
+    if(error) return fail(error);
+    toast('Service override saved');
+  });
 }
 
 /* ---------- public customer portal ---------- */

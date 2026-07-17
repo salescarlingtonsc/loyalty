@@ -181,9 +181,23 @@ Fable pins the API contract before parallel delegation, reviews both outputs,
 fixes gaps, runs the rolled-back SQL verification tests itself, and owns the
 final merge + report (exact files touched, what changed and why).
 
-## Design direction (owner-confirmed)
-- **Grouped navigation:** left panel must not be crowded — main modules with
-  sub-modules (Flowesce pattern: Workday / Catalog / Money / Engagement / Workspace).
+## Design direction (owner-confirmed; updated 2026-07-18 post-launch)
+- **Grouped navigation (Cubbly reference, owner screenshot 2026-07-18):** a handful of
+  top-level headers, NOT a long flat rail. Owner's words: "too many modules… modules will
+  be inside these main headers — won't look messy." Admin/settings live under the Profile
+  menu, not the nav. Target shape: Home (dashboard) · Customers · Operations (workday:
+  appointments, bookings, waitlist, sales, services, inventory, packages) · Growth
+  (loyalty, retention, referrals, memberships, gift cards) · Insights (reports, staff
+  performance) · Profile menu → Settings/admin.
+- **Guided setup:** a step-by-step first-run guide before operations — set products/
+  services, understand sale→inventory deduction, set up loyalty, etc. Wizard, not docs.
+- **Staff performance & commission (owner ruling 2026-07-18):** platform provides the
+  MECHANISM, never the numbers — each firm sets its own commission as a % of sales OR a
+  fixed amount per selected service. "We don't need to set any pricing or % right now."
+  Engine already supports %: staff.commission_service_bps/product_bps + services.
+  commission_bps override + v12 per-sale rate snapshot. Fixed-amount-per-service is an
+  owner-requested addition. Finance modules (payments/drawer/expenses) exist in DB,
+  deliberately have no UI yet (pilot-disabled), NOT skipped — sequenced after pilot.
 - **Low-literacy-first UX:** staff may be WPass/SPass workers from Thailand,
   Vietnam, Myanmar etc. Pictogram-first, ≤3-word labels, step-by-step wizards,
   big tap targets, colour semantics, numbers over words, illustrations for every
