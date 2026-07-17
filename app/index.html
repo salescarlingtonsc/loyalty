@@ -274,12 +274,13 @@ async function dashboard(){
     ]);
     if(sales.error) return fail(sales.error);
     const sl=sales.data||[],cl=clients.data||[],pl=pts.data||[];
-    const revenue=sl.reduce((a,s)=>a+s.amount_cents,0);
+    const rs=sl.filter(s=>s.kind!=='gift_card');
+    const revenue=rs.reduce((a,s)=>a+s.amount_cents,0);
     const uniq=new Set(sl.filter(s=>s.client_id).map(s=>s.client_id)).size;
     const newC=cl.filter(c=>c.created_at>=from&&c.created_at<=to).length;
     const earned=pl.filter(p=>p.entry_type==='earn').reduce((a,p)=>a+p.points,0);
     const liab=(credit.data||[]).reduce((a,c)=>a+Math.max(c.balance_cents,0),0);
-    $('kpis').innerHTML=[['Visits (sales)',sl.length],['Revenue',money(revenue)],['Unique customers',uniq],
+    $('kpis').innerHTML=[['Visits (sales)',rs.length],['Revenue',money(revenue)],['Unique customers',uniq],
       ['New customers',newC],['Points issued',earned],['Credit liability',money(liab)]]
       .map(([l,v])=>`<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
     $('charts').innerHTML=`
@@ -288,8 +289,8 @@ async function dashboard(){
       <div class="card"><b>Customer gender</b><p class="muted small">All customers on file</p><canvas id="c3"></canvas></div>
       <div class="card"><b>Age groups</b><p class="muted small">From birth dates on file</p><canvas id="c4"></canvas></div>`;
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],wd=[0,0,0,0,0,0,0];
-    sl.forEach(s=>{wd[(new Date(s.occurred_at).getDay()+6)%7]++});
-    const byDay={};sl.forEach(s=>{const k=s.occurred_at.slice(0,10);byDay[k]=(byDay[k]||0)+s.amount_cents});
+    rs.forEach(s=>{wd[(new Date(s.occurred_at).getDay()+6)%7]++});
+    const byDay={};rs.forEach(s=>{const k=s.occurred_at.slice(0,10);byDay[k]=(byDay[k]||0)+s.amount_cents});
     const dk=Object.keys(byDay).sort();
     const g={female:0,male:0,other:0,unknown:0};
     cl.forEach(c=>g[c.gender||'unknown']++);
@@ -424,7 +425,7 @@ async function clientDetail(id){
       </div></div>
     <div class="card" style="margin-top:16px"><b>Recent sales</b>
       ${(sl&&sl.length)?`<table style="margin-top:8px"><tr><th>Date</th><th>Kind</th><th>Amount</th><th>Note</th></tr>
-        ${sl.map(s=>`<tr><td>${s.occurred_at.slice(0,10)}</td><td>${s.kind}</td><td>${money(s.amount_cents)}</td><td class="muted">${esc(s.note||'')}</td></tr>`).join('')}</table>`
+        ${sl.map(s=>`<tr><td>${s.occurred_at.slice(0,10)}</td><td>${s.kind.replace('_',' ')}</td><td>${money(s.amount_cents)}</td><td class="muted">${esc(s.note||'')}</td></tr>`).join('')}</table>`
       :'<p class="muted small" style="margin-top:6px">No sales yet.</p>'}</div>`;
   const rd=$('redeem');
   if(rd) rd.onclick=async()=>{
@@ -1117,7 +1118,8 @@ async function reportsPage(){
       sb.from('gift_cards').select('balance_cents,status').eq('business_id',S.biz.id),
       sb.from('memberships').select('status').eq('business_id',S.biz.id)]);
     lastSales=sl||[];
-    const byKind={};(sl||[]).forEach(s=>{byKind[s.kind]=(byKind[s.kind]||0)+s.amount_cents});
+    const byKind={};(sl||[]).forEach(s=>{if(s.kind==='gift_card')return;byKind[s.kind]=(byKind[s.kind]||0)+s.amount_cents});
+    const gcSold=(sl||[]).filter(s=>s.kind==='gift_card').reduce((a,s)=>a+s.amount_cents,0);
     const pt={};(pl||[]).forEach(p=>{pt[p.entry_type]=(pt[p.entry_type]||0)+p.points});
     const liab=(cb||[]).reduce((a,c)=>a+Math.max(c.balance_cents,0),0);
     const gcOut=(gc||[]).filter(g=>g.status==='active').reduce((a,g)=>a+g.balance_cents,0);
@@ -1125,7 +1127,8 @@ async function reportsPage(){
     $('rbody').innerHTML=`
       <div class="card"><b>Revenue by type</b><table style="margin-top:8px">
         ${Object.entries(byKind).map(([k,v])=>`<tr><td>${k.replace('_',' ')}</td><td style="text-align:right"><b>${money(v)}</b></td></tr>`).join('')||'<tr><td class="muted">No sales in range</td></tr>'}
-        <tr><td><b>Total</b></td><td style="text-align:right"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table></div>
+        <tr><td><b>Total</b></td><td style="text-align:right"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table>
+        <p class="muted small" style="margin-top:8px">Gift cards sold: <b>${money(gcSold)}</b> — cash collected, not revenue until a customer redeems it.</p></div>
       <div class="card"><b>Loyalty flow (in range)</b><table style="margin-top:8px">
         <tr><td>Points earned</td><td style="text-align:right"><b>${pt.earn||0}</b></td></tr>
         <tr><td>Points redeemed</td><td style="text-align:right"><b>${Math.abs(pt.redeem||0)}</b></td></tr>

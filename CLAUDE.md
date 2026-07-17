@@ -80,7 +80,27 @@ accept_invite RPCs (5 roles, code-based join at onboarding), Settings team roste
 + CSV customer import, appointments Week calendar view, bundles/resources UI,
 businesses.brand_color + booking_policy (portal-themed). All engines verified via
 rolled-back SQL chain tests. App v1.4, 15 modules, industry-mapped.
+v9 (`frenly_v9_giftcard_revenue`, applied + deployed 2026-07-17): **gift card
+sales are cash collected, NOT revenue.** New `sales.kind = 'gift_card'`;
+`issue_gift_card` now writes that kind (was wrongly `'retail'`);
+`app.on_sale_recorded()` treats `'gift_card'` exactly like `'membership'` —
+no points, no points batch, no retention visit, no referral qualification —
+in both the early-return guard and the retention visit-count window.
+`redeem_gift_card` deliberately does NOT insert a sale: it loads
+`credit_ledger`, and the later real sale when that credit is spent IS the
+revenue (inserting at redemption would double-count). UI (`app/index.html`)
+excludes `gift_card` from dashboard Revenue + Visits KPIs and both charts, and
+Reports shows it as a separate "cash collected, not revenue" line outside the
+revenue total. Verified by 16-assertion rolled-back chain test before applying.
 Deferred by owner decision: Stripe SG auto-charge + WhatsApp/SMS comms.
+**Open, needs owner decision (found during v9 review):** `sell_package` has the
+same accounting shape as the gift-card bug — it books `kind='retail'` revenue
+upfront for prepaid sessions, earns points on the full package price, AND counts
+as a retention visit at purchase; then each `use_package_session` inserts a $0
+`kind='service'` sale, so a 10-session package registers 11 visits. Revenue-
+upfront may be deliberate (the UI copy says "revenue upfront"), but the
+purchase-time retention visit looks unintentional. Not changed — see
+`docs/benchmark/LIVE_DATA_WALKTHROUGH.md`.
 Next candidates: member-facing portal balance, Supabase Auth Site URL config,
 custom domain, role-scoped UI permissions.
 
@@ -93,6 +113,22 @@ WhatsApp/SMS onboarding ⚖️; tenant isolation; scope creep into a full salon 
 MODULE_RELATIONSHIP_MAP, DATA_ENTITY_MAP, EFFICIENCY_AUTOMATION_AUDIT,
 ROLE_PERMISSION_MATRIX, AVOCADO_GAP_ANALYSIS, AVOCADO_REUSE_MATRIX,
 SINGAPORE_PRODUCT_STRATEGY, IMPLEMENTATION_ROADMAP, OPEN_QUESTIONS.
+
+## Working method (standing instruction from owner)
+**Fable 5 is the reviewer & orchestrator.** Delegate implementation via subagents:
+**Opus** = complex logic (schema, triggers, RPCs, architecture, tricky flows);
+**Sonnet** = standard coding/execution (UI edits, browsing/documentation, deploys).
+Fable pins the API contract before parallel delegation, reviews both outputs,
+fixes gaps, runs the rolled-back SQL verification tests itself, and owns the
+final merge + report (exact files touched, what changed and why).
+
+## Design direction (owner-confirmed)
+- **Grouped navigation:** left panel must not be crowded — main modules with
+  sub-modules (Flowesce pattern: Workday / Catalog / Money / Engagement / Workspace).
+- **Low-literacy-first UX:** staff may be WPass/SPass workers from Thailand,
+  Vietnam, Myanmar etc. Pictogram-first, ≤3-word labels, step-by-step wizards,
+  big tap targets, colour semantics, numbers over words, illustrations for every
+  workflow. See docs/benchmark/UX_SIMPLIFICATION_PLAN.md.
 
 ## Do not put in this file
 Passwords, tokens, personal customer data, or confidential benchmark-tenant data.
