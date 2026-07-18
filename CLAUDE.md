@@ -86,9 +86,15 @@ reading the sidebar's actual routes (`/reports/payroll`, `/storefront/orders`,
 
 ## Current phase
 **Phase 1 MVP — shipped.** Canonical product name: **Frenly** (owner confirmed; "Avocado"
-in older docs = same product). App: `app/index.html`, deployed at
-https://frenly-app.vercel.app (Vercel project `frenly-app`; marketing site stays on
-project `loyalty`). Schema v2 applied (migration `frenly_v2_saas`): `salons`→`businesses`
+in older docs = same product). App: `app/index.html`. **DEPLOYMENT (corrected 2026-07-18):**
+the LIVE, current app is the **git-connected `loyalty` Vercel project**, auto-deploying
+`github.com/salescarlingtonsc/loyalty` (branch that the push targets) on every push —
+currently served at `https://loyalty-pi-seven.vercel.app`. The old separate
+`frenly-app` project is **being retired** (it was a manual, non-git deploy that drifted to
+v14 while `loyalty` moved to v16 — a stale frontend against the shared DB). Do NOT treat
+`frenly-app.vercel.app` as canonical; if the name is reclaimed, it will be by renaming the
+`loyalty` project. One deployment, git-connected, is the rule.
+Schema v2 applied (migration `frenly_v2_saas`): `salons`→`businesses`
 (+industry, +enabled_modules), `sales`, `points_ledger`, `retention_programs`,
 `reward_grants`, `booking_requests`; DB triggers auto-earn points + fire retention
 rewards on every sale (verified); RPCs `redeem_points`, `get_business_public`,
