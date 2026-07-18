@@ -473,34 +473,29 @@ function wireNav(){
 /* Owner ruling 2026-07-18: the firm profile lives TOP-RIGHT, not bottom-left.
    It now sits in a sticky frosted .appbar in the right-hand column, so it stays put
    while the page scrolls (native-app behaviour) and its menu drops downward. */
-function renderShell(page){
-  root.innerHTML=`<div class="shell">
-    <aside class="side">
-      <div class="logo">frenly<span>.</span></div>
-      <nav class="nav" id="navwrap">${navHtml(page)}</nav>
-    </aside>
-    <div class="col">
-      <header class="appbar">
-        <div class="profile" id="profwrap">
-          <div class="who" id="profWho">
-            <div class="avatar">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
-            <div style="min-width:0">
-              <b style="font-size:13.5px;display:block;line-height:1.25;letter-spacing:-.012em">${esc(S.biz.name)}</b>
-              <div class="small muted" style="line-height:1.25">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</div>
-            </div>
-            <span class="chev">▾</span>
-          </div>
-          ${profileOpen?`<div class="menu" id="profmenu">
-            <a href="#/setup" id="pmSetup">✅ Get started</a>
-            ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">⚙️ Settings</a>`:''}
-            <a href="#" id="pmSignout" style="color:#C0392B">↪ Sign out</a>
-          </div>`:''}
+function profileHtml(){
+  return `<div class="profile" id="profwrap">
+      <div class="who" id="profWho">
+        <div class="avatar">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
+        <div style="min-width:0">
+          <b style="font-size:13.5px;display:block;line-height:1.25;letter-spacing:-.012em">${esc(S.biz.name)}</b>
+          <div class="small muted" style="line-height:1.25">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</div>
         </div>
-      </header>
-      <main class="main" id="main"></main>
-    </div></div>`;
-  wireNav();
-  $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;renderShell(page);};
+        <span class="chev">▾</span>
+      </div>
+      ${profileOpen?`<div class="menu" id="profmenu">
+        <a href="#/setup" id="pmSetup">✅ Get started</a>
+        ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">⚙️ Settings</a>`:''}
+        <a href="#" id="pmSignout" style="color:#C0392B">↪ Sign out</a>
+      </div>`:''}
+    </div>`;
+}
+/* Opening/closing the profile menu must NOT touch #main or #navwrap — it used to call
+   renderShell(page), which also re-invokes the current page's render function (full
+   Supabase refetch, chart re-animation, any custom date range reset). This widget now
+   re-renders only itself. */
+function wireProfile(page){
+  $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;renderProfile(page);};
   if(profileOpen){
     $('pmSignout').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false};profileOpen=false;nav('#/')};
     $('pmSetup').onclick=()=>{profileOpen=false};
@@ -510,10 +505,31 @@ function renderShell(page){
        each open, so it can't stack up across renders. */
     setTimeout(()=>document.addEventListener('click',function away(ev){
       const w=$('profwrap');
-      if(w&&!w.contains(ev.target)){profileOpen=false;document.removeEventListener('click',away);renderShell(page);}
+      if(w&&!w.contains(ev.target)){profileOpen=false;document.removeEventListener('click',away);renderProfile(page);}
       else if(!w){document.removeEventListener('click',away);}
     }),0);
   }
+}
+function renderProfile(page){
+  const wrap=$('profwrap');
+  if(!wrap) return;
+  wrap.outerHTML=profileHtml();
+  wireProfile(page);
+}
+function renderShell(page){
+  root.innerHTML=`<div class="shell">
+    <aside class="side">
+      <div class="logo">frenly<span>.</span></div>
+      <nav class="nav" id="navwrap">${navHtml(page)}</nav>
+    </aside>
+    <div class="col">
+      <header class="appbar">
+        ${profileHtml()}
+      </header>
+      <main class="main" id="main"></main>
+    </div></div>`;
+  wireNav();
+  wireProfile(page);
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
     bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
