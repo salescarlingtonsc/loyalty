@@ -240,8 +240,11 @@ if(window.Chart){
   Chart.defaults.scale.grid.drawTicks=false;
   Chart.defaults.scale.border.display=false;
   Chart.defaults.scale.ticks.padding=8;
-  /* x-axis: a vertical grid adds noise and no information on our chart types */
-  Chart.defaults.scales.category.grid.display=false;
+  /* x-axis: a vertical grid adds noise and no information on our chart types.
+     Chart.js 4 does not pre-populate a `grid` object on per-type scale defaults
+     (unlike the shared Chart.defaults.scale), so mutating .grid.display on it
+     threw "Cannot set properties of undefined" and blocked the entire app boot. */
+  Chart.defaults.scales.category.grid={display:false};
 }
 
 const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','staffperf','dailyreport','pnl','expenses'];
