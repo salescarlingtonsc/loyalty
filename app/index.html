@@ -7,91 +7,180 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* ============================================================================
+   Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
+   Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
+   borders instead of heavy strokes · layered low-opacity shadows (never one big
+   blur) · frosted glass on floating surfaces · springy motion on interaction.
+   Fraunces is now reserved for the wordmark ONLY — headings run on the system
+   (SF on Apple) stack, which is what makes it read as a native app rather than a
+   generic web dashboard.
+   ============================================================================ */
 :root{
-  --bg:#F7F5F1; --card:#FFFFFF; --ink:#1C1A22; --muted:#75717E;
-  --line:#E8E4DD; --coral:#FF6B5E; --amber:#FFB86B; --green:#2FA36B;
-  --grad:linear-gradient(100deg,#FF6B5E,#FFB86B);
-  --r:14px; --shadow:0 1px 3px rgba(28,26,34,.06),0 8px 24px rgba(28,26,34,.05);
+  --bg:#F4F2EE; --card:#FFFFFF; --ink:#17161A; --ink2:#3D3B44; --muted:#8B8794;
+  --line:#EAE6DF; --hair:rgba(23,22,26,.06);
+  --coral:#FF6B5E; --amber:#FFB86B; --green:#2FA36B;
+  --grad:linear-gradient(135deg,#FF7A6B,#FFB86B);
+  --tint:#FFF2ED;            /* coral wash for selected/active surfaces */
+  /* iOS uses generous, continuous corner radii */
+  --r:18px; --r-sm:12px; --r-lg:24px;
+  /* Depth = several cheap shadows stacked, not one expensive one */
+  --shadow:0 1px 2px rgba(23,22,26,.04),0 4px 12px rgba(23,22,26,.045);
+  --shadow-lg:0 2px 6px rgba(23,22,26,.05),0 18px 44px rgba(23,22,26,.10);
+  --spring:cubic-bezier(.34,1.4,.64,1);
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --sf:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14.5px;-webkit-font-smoothing:antialiased}
-h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.01em}
+body{background:var(--bg);color:var(--ink);font-family:var(--sf);font-size:14.5px;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  font-feature-settings:'kern' 1,'liga' 1,'cv11' 1;letter-spacing:-.005em}
+h1,h2,h3{font-family:var(--sf);font-weight:650;letter-spacing:-.022em;color:var(--ink)}
+h1{letter-spacing:-.03em}
 a{color:inherit;text-decoration:none}
-button{font-family:inherit;cursor:pointer;border:none;font-size:14px}
-input,select,textarea{font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%}
-input:focus,select:focus,textarea:focus{outline:2px solid rgba(255,107,94,.35);border-color:var(--coral)}
-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:14px 0 6px}
-.btn{background:var(--grad);color:#fff;font-weight:600;padding:11px 20px;border-radius:100px;transition:transform .15s, box-shadow .15s}
-.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(255,107,94,.35)}
-.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button{font-family:inherit;cursor:pointer;border:none;font-size:14px;letter-spacing:-.01em}
+input,select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--line);
+  border-radius:var(--r-sm);background:#fff;color:var(--ink);width:100%;
+  transition:border-color .18s var(--ease),box-shadow .18s var(--ease)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--coral);
+  box-shadow:0 0 0 3.5px rgba(255,107,94,.16)}
+label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
+/* Buttons: press-down on :active is the single strongest "native app" tell */
+.btn{background:var(--grad);color:#fff;font-weight:600;padding:11px 20px;border-radius:100px;
+  box-shadow:0 1px 2px rgba(255,107,94,.2),0 6px 16px rgba(255,107,94,.22);
+  transition:transform .22s var(--spring),box-shadow .22s var(--ease),opacity .15s}
+.btn:hover{transform:translateY(-1.5px);box-shadow:0 2px 4px rgba(255,107,94,.22),0 10px 26px rgba(255,107,94,.3)}
+.btn:active{transform:scale(.965) translateY(0);transition-duration:.06s}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow)}
+.btn.ghost:hover{border-color:#DDD7CD;box-shadow:var(--shadow-lg)}
 .btn.sm{padding:7px 14px;font-size:13px}
-.btn.danger{background:#fff;color:#C0392B;border:1px solid #F0C4BE}
-.btn[disabled]{opacity:.5;pointer-events:none}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:22px}
+.btn.danger{background:#fff;color:#C0392B;border:1px solid #F0C4BE;box-shadow:none}
+.btn[disabled]{opacity:.42;pointer-events:none;box-shadow:none}
+.card{background:var(--card);border:1px solid var(--hair);border-radius:var(--r);
+  box-shadow:var(--shadow);padding:22px}
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
-.pill{display:inline-block;padding:3px 10px;border-radius:100px;font-size:11.5px;font-weight:600}
-.pill.on{background:#E7F6EE;color:var(--green)} .pill.off{background:#F3F1EC;color:var(--muted)}
-.pill.new{background:#FFF1E8;color:#D06A2E} .pill.ok{background:#E7F6EE;color:var(--green)} .pill.no{background:#FBEAE7;color:#C0392B}
+.pill{display:inline-block;padding:3.5px 10px;border-radius:100px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
+.pill.on{background:#E7F6EE;color:var(--green)} .pill.off{background:#F1EEE9;color:var(--muted)}
+.pill.new{background:var(--tint);color:#D0562E} .pill.ok{background:#E7F6EE;color:var(--green)} .pill.no{background:#FBEAE7;color:#C0392B}
 table{width:100%;border-collapse:collapse}
-th{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
-td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
+  text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:13px 12px;border-bottom:1px solid var(--hair);vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr.click{cursor:pointer} tr.click:hover td{background:#FBFAF7}
-.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+tr.click{cursor:pointer;transition:background .14s var(--ease)}
+tr.click:hover td{background:#FBFAF8}
+.empty{text-align:center;padding:52px 20px;color:var(--muted)}
 .empty .big{font-size:34px;margin-bottom:10px}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:100px;font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:99;opacity:0;transition:opacity .3s}
-.toast.show{opacity:1}
-.err{background:#FBEAE7;color:#C0392B;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:12px}
+/* Toast: frosted, springs up from the bottom like a native banner */
+.toast{position:fixed;bottom:26px;left:50%;background:rgba(23,22,26,.9);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+  color:#fff;padding:12px 22px;border-radius:100px;font-size:13.5px;font-weight:500;
+  box-shadow:0 12px 40px rgba(0,0,0,.3);z-index:99;opacity:0;pointer-events:none;
+  transform:translateX(-50%) translateY(12px) scale(.96);
+  transition:opacity .26s var(--ease),transform .32s var(--spring)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+.err{background:#FBEAE7;color:#C0392B;padding:10px 14px;border-radius:var(--r-sm);font-size:13px;margin-top:12px}
 /* auth + onboard */
 .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.auth-card{width:420px;max-width:100%}
-.logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600}
+.auth-card{width:420px;max-width:100%;border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:30px}
+.logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;letter-spacing:-.02em}
 .logo span{color:var(--coral)}
 .ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:8px}
-.ind{border:1.5px solid var(--line);border-radius:12px;padding:14px;text-align:center;cursor:pointer;background:#fff;transition:border-color .15s}
-.ind:hover{border-color:var(--amber)}
-.ind.sel{border-color:var(--coral);background:#FFF7F0}
+.ind{border:1.5px solid var(--line);border-radius:var(--r-sm);padding:14px;text-align:center;cursor:pointer;
+  background:#fff;transition:border-color .18s var(--ease),transform .22s var(--spring),box-shadow .2s}
+.ind:hover{border-color:#E3C9A8;transform:translateY(-2px);box-shadow:var(--shadow)}
+.ind:active{transform:scale(.97)}
+.ind.sel{border-color:var(--coral);background:var(--tint);box-shadow:0 0 0 3.5px rgba(255,107,94,.13)}
 .ind .em{font-size:22px;display:block;margin-bottom:6px}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.chip{background:#F3F1EC;border-radius:100px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--muted)}
-.chip.on{background:#FFF1E8;color:#D06A2E}
-/* shell */
-.shell{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
-.side{background:#141218;color:#CFCAD6;padding:22px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
-.side .logo{color:#fff;padding:0 10px 18px}
-.nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14px;margin-bottom:2px;color:#B9B3C4}
-.nav a:hover{background:#201d27;color:#fff}
-.nav a.act{background:var(--grad);color:#fff;font-weight:600}
-.navhead{display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8A8494;cursor:pointer;margin-top:6px}
-.navhead:hover{background:#201d27;color:#fff}
-.navhead.act{color:#fff}
-.navhead .chev{margin-left:auto;font-size:11px}
+.chip{background:#F1EEE9;border-radius:100px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--muted)}
+.chip.on{background:var(--tint);color:#D0562E}
+/* ---------- shell: light rail (mockup) + frosted top bar, profile TOP-RIGHT ---------- */
+.shell{display:grid;grid-template-columns:246px 1fr;min-height:100vh}
+.side{background:#FCFBF9;border-right:1px solid var(--line);color:var(--ink2);
+  padding:22px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side .logo{color:var(--ink);padding:0 10px 22px}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:14px;
+  font-weight:500;margin-bottom:1px;color:var(--ink2);transition:background .14s var(--ease),color .14s}
+.nav a:hover{background:#F2EFEA;color:var(--ink)}
+.nav a.act{background:var(--tint);color:#D0562E;font-weight:600}
+/* Icons get their own fixed-width box so every label starts on the same optical
+   column, and so flex `gap` actually applies — an emoji sitting in the same text
+   node as its label is one flex item, so gap silently does nothing and the icon
+   ends up jammed against the word. This is the difference between "looks bought"
+   and "looks generated". */
+.nav .ic{width:18px;font-size:14.5px;display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;line-height:1}
+.navhead{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:11px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#A8A3B0;cursor:pointer;
+  margin-top:12px;transition:color .14s}
+.navhead:hover{color:var(--ink2)}
+.navhead.act{color:var(--ink2)}
+.navhead .chev{margin-left:auto;font-size:10.5px;opacity:.9;transition:transform .22s var(--spring)}
 .navbody a{padding-left:22px}
-.side .foot{margin-top:auto;padding:10px;font-size:12.5px;color:#8A8494}
-.profile{border-top:1px solid #2A2732;padding-top:12px;margin-top:8px;position:relative}
-.profile .who{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer}
-.profile .who:hover{background:#201d27}
-.profile .avatar{width:32px;height:32px;border-radius:100px;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
-.profile .menu{position:absolute;bottom:calc(100% + 6px);left:0;right:0;background:#201d27;border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
-.profile .menu a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#CFCAD6;font-size:13.5px}
-.profile .menu a:hover{background:#2A2732;color:#fff}
-.main{padding:28px 34px;max-width:1200px;width:100%}
+.side .foot{margin-top:auto;padding:10px;font-size:12.5px;color:var(--muted)}
+/* the right-hand column: sticky frosted app bar above the scrolling page */
+.col{display:flex;flex-direction:column;min-width:0}
+.appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;
+  gap:10px;padding:12px 34px;border-bottom:1px solid var(--hair);
+  background:rgba(244,242,238,.72);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
+.profile{position:relative}
+.profile .who{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:100px;
+  cursor:pointer;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
+  transition:transform .2s var(--spring),box-shadow .2s var(--ease)}
+.profile .who:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.profile .who:active{transform:scale(.975)}
+.profile .who .chev{font-size:9px;color:var(--muted);margin-left:2px}
+.profile .avatar{width:30px;height:30px;border-radius:100px;background:var(--grad);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;flex-shrink:0;
+  box-shadow:0 2px 6px rgba(255,107,94,.3)}
+/* menu now drops DOWN from the top-right chip (was: up from the bottom-left rail) */
+.profile .menu{position:absolute;top:calc(100% + 8px);right:0;min-width:212px;
+  background:rgba(255,255,255,.86);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
+  border:1px solid var(--hair);border-radius:var(--r-sm);padding:6px;box-shadow:var(--shadow-lg);
+  transform-origin:top right;animation:pop .2s var(--spring)}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(-6px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.profile .menu a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
+  color:var(--ink2);font-size:13.5px;font-weight:500;white-space:nowrap}
+.profile .menu a:hover{background:#F2EFEA;color:var(--ink)}
+.main{padding:26px 34px 46px;max-width:1240px;width:100%}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
-.topbar h1{font-size:1.7rem}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
-.kpi .v{font-family:'Fraunces',serif;font-size:1.9rem;margin-top:2px}
-.kpi .l{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.topbar h1{font-size:1.85rem;font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:14px}
+.kpi{transition:transform .24s var(--spring),box-shadow .24s var(--ease)}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+/* Tabular figures stop KPI numbers from jittering as they update */
+.kpi .v{font-family:var(--sf);font-size:1.75rem;font-weight:680;margin-top:3px;
+  letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
 .charts .card{min-height:280px}
 .range{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .range input{width:auto}
-.qbtn{background:#fff;border:1px solid var(--line);border-radius:100px;padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--muted)}
+/* segmented control, iOS-style */
+.qbtn{background:#fff;border:1px solid var(--hair);border-radius:100px;padding:7px 14px;font-size:12.5px;
+  font-weight:600;color:var(--muted);box-shadow:var(--shadow);
+  transition:transform .18s var(--spring),color .14s,background .14s}
+.qbtn:hover{color:var(--ink)}
+.qbtn:active{transform:scale(.94)}
 .qbtn.act{background:var(--ink);color:#fff;border-color:var(--ink)}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .row{display:flex;gap:10px;align-items:center}
 .spacer{flex:1}
-@media(max-width:960px){.shell{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto}.side .foot,.side .logo{display:none}.nav{display:flex}.charts,.split{grid-template-columns:1fr}.main{padding:18px}}
+@media(max-width:960px){
+  .shell{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto;
+    border-right:none;border-bottom:1px solid var(--line)}
+  .side .foot,.side .logo{display:none}
+  .nav{display:flex}
+  .appbar{padding:10px 18px}
+  .charts,.split{grid-template-columns:1fr}
+  .main{padding:18px 18px 40px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none !important;transition-duration:.01ms !important}}
 /* portal */
 .portal{max-width:640px;margin:0 auto;padding:40px 20px}
 .portal .head{text-align:center;margin-bottom:26px}
@@ -118,6 +207,42 @@ tr.click{cursor:pointer} tr.click:hover td{background:#FBFAF7}
 const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
 const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+/* Chart.js global defaults (design system v2). Chart.js out of the box is the single
+   biggest "generic AI dashboard" tell — grey 1px grids on both axes, boxed legends,
+   black tooltips. Strip it back: no vertical grid, hairline horizontal grid only, no
+   axis borders, dot legends, and a frosted dark tooltip that matches our toast. */
+if(window.Chart){
+  const CS=getComputedStyle(document.documentElement);
+  const gv=n=>CS.getPropertyValue(n).trim();
+  Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif";
+  Chart.defaults.font.size=11.5;
+  Chart.defaults.font.weight=500;
+  Chart.defaults.color=gv('--muted')||'#8B8794';
+  Chart.defaults.maintainAspectRatio=false;
+  Chart.defaults.animation.duration=520;
+  Chart.defaults.animation.easing='easeOutQuart';
+  Chart.defaults.elements.bar.borderRadius=8;
+  Chart.defaults.elements.bar.borderSkipped=false;
+  Chart.defaults.elements.line.borderWidth=2.5;
+  Chart.defaults.elements.point.radius=0;
+  Chart.defaults.elements.point.hoverRadius=5;
+  Chart.defaults.elements.point.hitRadius=14;
+  Chart.defaults.elements.arc.borderWidth=0;
+  Chart.defaults.plugins.legend.labels.usePointStyle=true;
+  Chart.defaults.plugins.legend.labels.pointStyle='circle';
+  Chart.defaults.plugins.legend.labels.boxWidth=7;
+  Chart.defaults.plugins.legend.labels.padding=16;
+  Object.assign(Chart.defaults.plugins.tooltip,{
+    backgroundColor:'rgba(23,22,26,.92)',padding:11,cornerRadius:10,displayColors:false,
+    titleFont:{size:11,weight:'600'},bodyFont:{size:13,weight:'600'},caretSize:5});
+  Chart.defaults.scale.grid.color=gv('--hair')||'rgba(23,22,26,.06)';
+  Chart.defaults.scale.grid.drawTicks=false;
+  Chart.defaults.scale.border.display=false;
+  Chart.defaults.scale.ticks.padding=8;
+  /* x-axis: a vertical grid adds noise and no information on our chart types */
+  Chart.defaults.scales.category.grid.display=false;
+}
 
 const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','staffperf','dailyreport','pnl','expenses'];
 const INDUSTRIES={
@@ -323,14 +448,14 @@ function navHtml(page){
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(m=>m==='dashboard'||enabled.includes(m))})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.key==='home'){
-      return `<a href="#/dashboard" class="${activeKey==='dashboard'?'act':''}">🏠 Home</a>`;
+      return `<a href="#/dashboard" class="${activeKey==='dashboard'?'act':''}"><span class="ic">🏠</span>Home</a>`;
     }
     if(!(g.key in navOpen)) navOpen[g.key]=(g.key===activeGrp);
     const isOpen=navOpen[g.key]||g.key===activeGrp;
     return `<div class="navgroup">
-      <div class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}">${g.icon} ${g.label}<span class="chev">${isOpen?'▾':'▸'}</span></div>
+      <div class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}"><span class="ic">${g.icon}</span>${g.label}<span class="chev">${isOpen?'▾':'▸'}</span></div>
       <div class="navbody" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
-        ${g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}">${MODULES[m][0]} ${MODULES[m][1]}</a>`).join('')}
+        ${g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"><span class="ic">${MODULES[m][0]}</span>${MODULES[m][1]}</a>`).join('')}
       </div></div>`;
   }).join('');
 }
@@ -342,31 +467,49 @@ function wireNav(){
     el.querySelector('.chev').textContent=navOpen[k]?'▾':'▸';
   });
 }
+/* Owner ruling 2026-07-18: the firm profile lives TOP-RIGHT, not bottom-left.
+   It now sits in a sticky frosted .appbar in the right-hand column, so it stays put
+   while the page scrolls (native-app behaviour) and its menu drops downward. */
 function renderShell(page){
   root.innerHTML=`<div class="shell">
     <aside class="side">
       <div class="logo">frenly<span>.</span></div>
       <nav class="nav" id="navwrap">${navHtml(page)}</nav>
-      <div class="profile" id="profwrap">
-        ${profileOpen?`<div class="menu" id="profmenu">
-          <a href="#/setup" id="pmSetup">✅ Get started</a>
-          ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">⚙️ Settings</a>`:''}
-          <a href="#" id="pmSignout" style="color:#FF9C92">↪ Sign out</a>
-        </div>`:''}
-        <div class="who" id="profWho">
-          <div class="avatar">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
-          <div><b style="color:#fff;font-size:13.5px">${esc(S.biz.name)}</b>
-          <div class="small" style="opacity:.7">${INDUSTRIES[S.biz.industry]?.label||esc(S.biz.industry)}</div></div>
-        </div>
-      </div>
     </aside>
-    <main class="main" id="main"></main></div>`;
+    <div class="col">
+      <header class="appbar">
+        <div class="profile" id="profwrap">
+          <div class="who" id="profWho">
+            <div class="avatar">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
+            <div style="min-width:0">
+              <b style="font-size:13.5px;display:block;line-height:1.25;letter-spacing:-.012em">${esc(S.biz.name)}</b>
+              <div class="small muted" style="line-height:1.25">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</div>
+            </div>
+            <span class="chev">▾</span>
+          </div>
+          ${profileOpen?`<div class="menu" id="profmenu">
+            <a href="#/setup" id="pmSetup">✅ Get started</a>
+            ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">⚙️ Settings</a>`:''}
+            <a href="#" id="pmSignout" style="color:#C0392B">↪ Sign out</a>
+          </div>`:''}
+        </div>
+      </header>
+      <main class="main" id="main"></main>
+    </div></div>`;
   wireNav();
-  $('profWho').onclick=()=>{profileOpen=!profileOpen;renderShell(page);};
+  $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;renderShell(page);};
   if(profileOpen){
     $('pmSignout').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false};profileOpen=false;nav('#/')};
     $('pmSetup').onclick=()=>{profileOpen=false};
     const pmS=$('pmSettings');if(pmS) pmS.onclick=()=>{profileOpen=false};
+    /* click-away to dismiss — expected of a native popover, and without it the menu
+       could only be closed by re-clicking the chip. One-shot listener, re-armed on
+       each open, so it can't stack up across renders. */
+    setTimeout(()=>document.addEventListener('click',function away(ev){
+      const w=$('profwrap');
+      if(w&&!w.contains(ev.target)){profileOpen=false;document.removeEventListener('click',away);renderShell(page);}
+      else if(!w){document.removeEventListener('click',away);}
+    }),0);
   }
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
     bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,
@@ -744,7 +887,7 @@ async function tillPage(){
     M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1></div></div>
       <div class="card" style="max-width:460px;margin:0 auto">
         <div style="text-align:center">
-          <div style="font-size:1.9rem;font-family:'Fraunces',serif;font-weight:600">${esc(cust.full_name)}</div>
+          <div style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em">${esc(cust.full_name)}</div>
           <p class="muted small">${esc(cust.phone||'')}${cust.member_since?' · member since '+esc(String(cust.member_since).slice(0,10)):''}</p>
         </div>
         <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(3,1fr)">
@@ -795,7 +938,7 @@ async function tillPage(){
         <div style="font-size:56px">✅</div>
         <h2 style="margin:8px 0 4px">${doneInfo.duplicate?'Already recorded':'Done'}</h2>
         ${doneInfo.duplicate?`<p class="muted">This sale was already recorded — no extra points added.</p>`
-          :`<p style="font-size:1.5rem;font-family:'Fraunces',serif;font-weight:600;color:var(--green);margin-top:4px">+${doneInfo.pointsEarned} points</p>`}
+          :`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">+${doneInfo.pointsEarned} points</p>`}
         <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · now ${doneInfo.pointsTotal} points total</p>
         <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer →</button>
       </div>`;
@@ -2109,7 +2252,7 @@ async function loadBillingConfig(){
     <div class="row" style="margin-top:8px"><span class="pill ${statusPill}">${esc(b.status||'—')}</span>
     <span class="spacer"></span><span class="muted small">Logins in use: <b style="color:var(--ink)">${seats}</b></span></div>
     <p class="muted small" style="margin-top:12px;line-height:1.6">${money(base)} base (${incl} login${incl===1?'':'s'} included)${extra>0?` + ${extra} extra × ${money(perSeat)}`:''} = <b style="color:var(--ink)">${money(b.monthly_total_cents||0)}</b>/month</p>
-    <div style="font-family:'Fraunces',serif;font-size:1.9rem;margin-top:6px">${money(b.monthly_total_cents||0)}<span class="muted small" style="font-family:'Inter',sans-serif"> /month</span></div>
+    <div style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em;margin-top:6px;font-variant-numeric:tabular-nums">${money(b.monthly_total_cents||0)}<span class="muted small" style="font-weight:500;letter-spacing:-.005em"> /month</span></div>
     ${b.status==='trialing'&&b.trial_ends_at?`<p class="muted small" style="margin-top:8px">Free trial until ${esc(sgt(b.trial_ends_at))}</p>`:''}
     <p class="muted small" style="margin-top:12px">Payment isn't collected in-app yet.</p>`;
 }
