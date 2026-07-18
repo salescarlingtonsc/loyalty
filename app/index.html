@@ -305,7 +305,7 @@ const INDUSTRIES={
 };
 const MODULES={dashboard:['📊','Dashboard'],till:['💵','Till'],clients:['👥','Customers'],appointments:['🗓️','Appointments'],
   sales:['🧾','Sales'],services:['🛠️','Services'],bookings:['📅','Bookings'],waitlist:['⏳','Waitlist'],
-  inventory:['📦','Inventory'],packages:['🎫','Packages'],loyalty:['🎁','Loyalty'],
+  inventory:['📦','Inventory'],packages:['🎫','Packages'],branches:['🏢','Branches'],loyalty:['🎁','Loyalty'],
   retention:['🔁','Retention'],referrals:['🤝','Referrals'],memberships:['💎','Memberships'],
   giftcards:['🎟️','Gift cards'],reports:['📈','Reports'],staffperf:['🧑‍💼','Staff performance'],
   dailyreport:['📋','Daily report'],pnl:['📉','P&L'],expenses:['💸','Expenses'],
@@ -321,7 +321,7 @@ const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Fron
 const NAVGROUPS=[
   {key:'home',icon:'🏠',label:null,items:['dashboard']},
   {key:'customers',icon:'👥',label:'Customers',items:['clients','loyalty','retention','referrals','memberships','giftcards']},
-  {key:'operations',icon:'🛠️',label:'Operations',items:['till','appointments','bookings','waitlist','sales','services','inventory','packages']},
+  {key:'operations',icon:'🛠️',label:'Operations',items:['till','appointments','bookings','waitlist','sales','services','inventory','packages','branches']},
   {key:'insights',icon:'📈',label:'Insights',items:['reports','staffperf','dailyreport','pnl','expenses']}
 ];
 let navOpen={};
@@ -337,8 +337,12 @@ let rtChannel=null;       // the single realtime channel for this session
 let rtChannelBizId=null;  // which business it's currently subscribed to
 let muteAlerts=false;     // in-session-only pop-up mute for non-owners (can't persist — the
                            // notify_new_bookings write is owner-gated by set_booking_settings)
+/* Branch filter (dashboard/daily report/P&L/reports) — consolidated vs one branch. Plain
+   JS variable only (no localStorage, per this stack's rule); shared across those pages so
+   moving between them keeps the same scope selected; reset on sign-out below. */
+let selectedBranchId=null; // null = consolidated
 
-let S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false};
+let S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false,saChecked:false};
 const $=(id)=>document.getElementById(id);
 const root=$('root');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -399,6 +403,16 @@ async function route(){
         S.myModules=mm.modules||S.biz.enabled_modules||[];S.myRole=mm.role||null;S.isSA=!!mm.is_super_admin;
       }
     }
+    /* Super-admin detection (Platform feature): gated on one live call to the exact RPC the
+       Platform page itself depends on — no client-side email/role list, so nothing here can
+       drift out of sync with the database's super_admins table. get_my_modules above already
+       surfaces is_super_admin too (same app.is_super_admin() underneath), but this explicit
+       probe is the authoritative one and overwrites it. Checked once per session (not on
+       every route()), since a success also writes an audit_log row server-side. */
+    if(!S.saChecked){
+      const {error:saErr}=await sb.rpc('super_admin_list_businesses');
+      S.isSA=!saErr;S.saChecked=true;
+    }
     const page=(h.replace('#/','')||'dashboard').split('/');
     /* Route guard: a restricted employee must not reach a page by typing the URL, not
        just by it being hidden from nav. 'client' maps to the 'clients' module key, same
@@ -410,6 +424,14 @@ async function route(){
        it to staff at all. */
     if(pageKey==='settings'&&S.myRole!=='owner'){
       toast('Only the owner can open Settings.');
+      return nav('#/dashboard');
+    }
+    if(pageKey==='branches'&&S.myRole!=='owner'){
+      toast('Only the owner can manage branches.');
+      return nav('#/dashboard');
+    }
+    if(pageKey==='platform'&&!S.isSA){
+      toast('Not authorized.');
       return nav('#/dashboard');
     }
     if(MODULES[pageKey]&&pageKey!=='settings'&&pageKey!=='setup'&&pageKey!=='dashboard'&&!S.myModules.includes(pageKey)){
@@ -685,7 +707,7 @@ function navHtml(page){
   const enabled=S.myModules||S.biz.enabled_modules||[];
   const activeKey=page[0]==='client'?'clients':page[0];
   const activeGrp=activeGroupKey(page[0]);
-  const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(m=>m==='dashboard'||enabled.includes(m))})).filter(g=>g.items.length);
+  const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(m=>m==='dashboard'||(enabled.includes(m)&&(m!=='branches'||S.myRole==='owner')))})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.key==='home'){
       return `<a href="#/dashboard" class="${activeKey==='dashboard'?'act':''}"><span class="ic">🏠</span>Home</a>`;
@@ -723,6 +745,7 @@ function profileHtml(){
       ${profileOpen?`<div class="menu" id="profmenu">
         <a href="#/setup" id="pmSetup">✅ Get started</a>
         ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">⚙️ Settings</a>`:''}
+        ${S.isSA?`<a href="#/platform" id="pmPlatform">🛡️ Platform</a>`:''}
         <a href="#" id="pmSignout" style="color:#C0392B">↪ Sign out</a>
       </div>`:''}
     </div>`;
@@ -734,9 +757,10 @@ function profileHtml(){
 function wireProfile(page){
   $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen){bellOpen=false;renderBell(page);}renderProfile(page);};
   if(profileOpen){
-    $('pmSignout').onclick=async(e)=>{e.preventDefault();killChannels();await sb.auth.signOut();S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false};profileOpen=false;nav('#/')};
+    $('pmSignout').onclick=async(e)=>{e.preventDefault();killChannels();await sb.auth.signOut();S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false,saChecked:false};selectedBranchId=null;profileOpen=false;nav('#/')};
     $('pmSetup').onclick=()=>{profileOpen=false};
     const pmS=$('pmSettings');if(pmS) pmS.onclick=()=>{profileOpen=false};
+    const pmP=$('pmPlatform');if(pmP) pmP.onclick=()=>{profileOpen=false};
     /* click-away to dismiss — expected of a native popover, and without it the menu
        could only be closed by re-clicking the chip. One-shot listener, re-armed on
        each open, so it can't stack up across renders. */
@@ -914,11 +938,60 @@ function renderShell(page){
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,
     staffperf:staffPerfPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
-    setup:setupPage,settings:settingsPage};
+    setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage};
   (P[page[0]]||dashboard)(page[1]);
   initNotifications(); // fire-and-forget, like the page fn above — loads badge + (re)uses the realtime channel
 }
 const M=()=> $('main');
+
+/* ---------- branch filter (shared: dashboard, daily report, P&L, reports) ----------
+   One picker implementation reused by all four analytics pages. Owner/manager ("admin"
+   role_class) get every branch plus "All branches (consolidated)"; an employee only ever
+   sees branches they're actually assigned to via staff_branches — consolidated is never
+   offered to them, matching app.can_see_branch()'s server-side rule (p_branch=null is
+   ALWAYS denied for a non-admin, even one assigned to every branch individually). The
+   branches table itself is readable business-wide by any staff member (v17 deliberately
+   left it unscoped so the picker has names to show) — the allow-list built here is what
+   the *picker offers*, not the security boundary; the real boundary is server-side
+   RLS/RPC, which every consumer of this filter still applies on its own query. */
+async function refreshBranchFilter(onChange){
+  const wrap=$('branchWrap');
+  if(!wrap){ onChange(); return; }
+  const isAdmin=S.myRole==='owner'||S.myRole==='manager';
+  let branches=[];
+  try{
+    if(isAdmin){
+      const {data,error}=await sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name');
+      if(error) throw error;
+      branches=data||[];
+    }else{
+      const {data:me}=await sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
+      if(me&&me.length){
+        const {data,error}=await sb.from('staff_branches').select('branches(id,name,active)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
+        if(error) throw error;
+        branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+      }
+    }
+  }catch(e){ console.error(e); }
+  if(!isAdmin&&(!selectedBranchId||!branches.some(b=>b.id===selectedBranchId))){
+    /* Employees can't request consolidated (the server raises branch_visibility on
+       p_branch=null for them) — default to their first assigned branch so the page loads
+       clean instead of surfacing that error on first paint. */
+    selectedBranchId=branches.length?branches[0].id:null;
+  }
+  wrap.innerHTML=(branches.length||isAdmin)
+    ? `<select id="branchSel" class="qbtn" style="padding-right:22px">
+        ${isAdmin?`<option value="">All branches (consolidated)</option>`:''}
+        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}${b.active===false?' (inactive)':''}</option>`).join('')}
+      </select>`
+    : `<span class="muted small">No branch assigned — ask the owner</span>`;
+  const sel=$('branchSel');
+  if(sel){
+    sel.value=selectedBranchId||'';
+    sel.onchange=()=>{selectedBranchId=sel.value||null;onChange()};
+  }
+  onChange();
+}
 
 /* ---------- dashboard ---------- */
 async function dashboard(){
@@ -928,20 +1001,23 @@ async function dashboard(){
     <div class="range">
       <button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
       <input type="date" id="df" value="${iso(d30)}"> <span class="muted">→</span> <input type="date" id="dt" value="${iso(today)}">
+      <span id="branchWrap"></span>
       <button class="btn sm" id="apply">Apply</button>
     </div></div>
     <div class="kpis" id="kpis"></div><div class="charts" id="charts"></div>`;
-  document.querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{
-    document.querySelectorAll('.qbtn').forEach(x=>x.classList.remove('act'));b.classList.add('act');
+  document.querySelectorAll('.qbtn[data-d]').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
     $('df').value=iso(new Date(Date.now()-(b.dataset.d-1)*864e5));$('dt').value=iso(new Date());load();
   });
   $('apply').onclick=()=>load();
   async function load(){
     killCharts();
     const from=$('df').value,to=$('dt').value+'T23:59:59';
+    let salesQ=sb.from('sales').select('id,client_id,amount_cents,occurred_at,kind,counts_as_revenue,counts_as_visit').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at');
+    if(selectedBranchId) salesQ=salesQ.eq('branch_id',selectedBranchId);
     const [sales,clients,pts,credit]=await Promise.all([
       // refund/reversal state deferred to a future migration; no reversal rows exist yet
-      sb.from('sales').select('id,client_id,amount_cents,occurred_at,kind,counts_as_revenue,counts_as_visit').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at'),
+      salesQ,
       sb.from('clients').select('id,gender,birth_date,created_at').eq('business_id',S.biz.id),
       sb.from('points_ledger').select('points,entry_type,created_at').eq('business_id',S.biz.id).gte('created_at',from).lte('created_at',to),
       sb.from('client_credit_balance').select('balance_cents').eq('business_id',S.biz.id)
@@ -985,7 +1061,7 @@ async function dashboard(){
     C('c3',{type:'doughnut',data:{labels:['Female','Male','Other','Not set'],datasets:[{data:[g.female,g.male,g.other,g.unknown],backgroundColor:[coral,amber,'#8B7BC7','#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});
     C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
   }
-  load();
+  refreshBranchFilter(load);
 }
 
 /* ---------- customers ---------- */
@@ -2153,19 +2229,108 @@ async function packagesPage(){
   };
 }
 
+/* ---------- branches (owner-only) ----------
+   v17 shipped branch RLS live; this is the management UI for it. Name+contact+active only —
+   hours/breaks editing is out of scope here (not asked for, and branches has no such columns
+   live yet). is_default is shown as a read-only badge, never editable from this page: which
+   branch is "default" is wired into the v11a BEFORE INSERT trigger that backfills
+   sales.branch_id for the 5 unmodified sales writers, so flipping it isn't a cosmetic choice. */
+async function branchesPage(){
+  M().innerHTML=`<div class="topbar"><div><h1>Branches</h1><p class="muted small">Manage your locations. Staff assigned to a branch see only that branch's data — owners and managers always see every branch.</p></div>
+    <button class="btn" id="addBr">+ Add branch</button></div>
+    <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
+    <div id="brList"><div class="card"><div class="empty">Loading…</div></div></div>`;
+  let branchList=[],staffList=[],openAssignId=null,editId=null;
+  $('addBr').onclick=()=>openForm(null);
+  function openForm(b){
+    editId=b?b.id:null;
+    $('brForm').style.display='block';
+    $('brForm').innerHTML=`<b>${b?'Edit branch':'New branch'}</b>
+      <div class="split"><div><label>Name *</label><input id="brName" value="${b?esc(b.name):''}"></div>
+      <div><label>Phone</label><input id="brPhone" value="${b?esc(b.phone||''):''}"></div></div>
+      <div class="split"><div><label>Email</label><input id="brEmail" type="email" value="${b?esc(b.email||''):''}"></div>
+      <div><label>Address</label><input id="brAddr" value="${b?esc(b.address||''):''}"></div></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        <input type="checkbox" id="brActive" style="width:auto" ${(!b||b.active)?'checked':''}> Active</label>
+      <div class="row" style="margin-top:16px"><button class="btn" id="brSave">${b?'Save changes':'Create branch'}</button>
+      <button class="btn ghost sm" id="brCancel">Cancel</button></div>`;
+    $('brCancel').onclick=()=>{$('brForm').style.display='none';};
+    $('brSave').onclick=async()=>{
+      const name=$('brName').value.trim();
+      if(name.length<2) return toast('Branch name required');
+      const payload={name,phone:$('brPhone').value.trim()||null,email:$('brEmail').value.trim()||null,
+        address:$('brAddr').value.trim()||null,active:$('brActive').checked};
+      $('brSave').disabled=true;
+      const {error}=editId
+        ? await sb.from('branches').update(payload).eq('id',editId).eq('business_id',S.biz.id)
+        : await sb.from('branches').insert({...payload,business_id:S.biz.id});
+      if(error){fail(error);$('brSave').disabled=false;return}
+      toast(editId?'Branch updated':'Branch created');
+      $('brForm').style.display='none';
+      load();
+    };
+  }
+  async function load(){
+    const [{data:br,error},{data:st}]=await Promise.all([
+      sb.from('branches').select('*').eq('business_id',S.biz.id).order('is_default',{ascending:false}).order('name'),
+      sb.from('staff').select('id,full_name,role,active').eq('business_id',S.biz.id).eq('active',true).order('full_name')
+    ]);
+    if(error) return fail(error);
+    branchList=br||[];staffList=st||[];
+    if(!branchList.length){$('brList').innerHTML=`<div class="card"><div class="empty"><div class="big">🏢</div>No branches yet — add your first one.</div></div>`;return}
+    const {data:sbRows,error:sbErr}=await sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id);
+    if(sbErr) return fail(sbErr);
+    const assigned={};(sbRows||[]).forEach(r=>{(assigned[r.branch_id]=assigned[r.branch_id]||new Set()).add(r.staff_id)});
+    $('brList').innerHTML=branchList.map(b=>{
+      const aset=assigned[b.id]||new Set();
+      return `<div class="card" style="margin-bottom:12px">
+        <div class="row" style="flex-wrap:wrap">
+          <div><b>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${b.active?'Active':'Inactive'}</span>
+          <div class="muted small" style="margin-top:4px">${esc(b.address||'No address set')}${b.phone?' · '+esc(b.phone):''}${b.email?' · '+esc(b.email):''}</div></div>
+          <span class="spacer"></span>
+          <button class="btn ghost sm" onclick="editBranch('${b.id}')">Edit</button>
+          <button class="btn ghost sm" onclick="toggleAssign('${b.id}')">Staff (${aset.size})</button>
+        </div>
+        ${openAssignId===b.id?`<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <p class="muted small" style="margin-bottom:8px">Tick who works here. Staff assigned here see only this branch's data — owners & managers see every branch regardless of assignment.</p>
+          ${staffList.length?staffList.map(s=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;color:var(--ink);font-size:13.5px">
+            <input type="checkbox" style="width:auto" ${aset.has(s.id)?'checked':''} onchange="toggleStaffBranch('${b.id}','${s.id}',this.checked)"> ${esc(s.full_name||'Team member')} <span class="muted small">(${esc(ROLE_LABELS[s.role]||s.role)})</span></label>`).join(''):'<p class="muted small">No active staff on your team yet.</p>'}
+        </div>`:''}
+      </div>`;
+    }).join('');
+  }
+  window.editBranch=(id)=>{const b=branchList.find(x=>x.id===id);if(b) openForm(b);};
+  window.toggleAssign=(id)=>{openAssignId=openAssignId===id?null:id;load();};
+  window.toggleStaffBranch=async(branchId,staffId,checked)=>{
+    if(checked){
+      const {error}=await sb.from('staff_branches').insert({business_id:S.biz.id,staff_id:staffId,branch_id:branchId});
+      if(error) return fail(error);
+      toast('Staff assigned to branch');
+    }else{
+      const {error}=await sb.from('staff_branches').delete().eq('business_id',S.biz.id).eq('staff_id',staffId).eq('branch_id',branchId);
+      if(error) return fail(error);
+      toast('Staff unassigned from branch');
+    }
+    load();
+  };
+  load();
+}
+
 /* ---------- reports ---------- */
 async function reportsPage(){
   const iso=d=>d.toISOString().slice(0,10);
   M().innerHTML=`<div class="topbar"><div><h1>Reports</h1><p class="muted small">Money and loyalty, in numbers your accountant can read.</p></div>
     <div class="range"><input type="date" id="rf" value="${iso(new Date(Date.now()-29*864e5))}"> <span class="muted">→</span>
-    <input type="date" id="rt2" value="${iso(new Date())}"> <button class="btn sm" id="rgo">Run</button>
+    <input type="date" id="rt2" value="${iso(new Date())}"> <span id="branchWrap"></span><button class="btn sm" id="rgo">Run</button>
     <button class="btn ghost sm" id="rcsv">Export sales CSV</button></div></div>
     <div class="grid" id="rbody" style="grid-template-columns:1fr 1fr"><div class="card"><div class="empty">Pick a range and Run.</div></div></div>`;
   let lastSales=[];
   async function run(){
     const from=$('rf').value,to=$('rt2').value+'T23:59:59';
+    let salesQ=sb.from('sales').select('*, clients(full_name)').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at');
+    if(selectedBranchId) salesQ=salesQ.eq('branch_id',selectedBranchId);
     const [{data:sl},{data:pl},{data:cb},{data:gc},{data:ms}]=await Promise.all([
-      sb.from('sales').select('*, clients(full_name)').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at'),
+      salesQ,
       sb.from('points_ledger').select('entry_type,points').eq('business_id',S.biz.id).gte('created_at',from).lte('created_at',to),
       sb.from('client_credit_balance').select('balance_cents').eq('business_id',S.biz.id),
       sb.from('gift_cards').select('balance_cents,status').eq('business_id',S.biz.id),
@@ -2215,7 +2380,7 @@ async function reportsPage(){
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-sales.csv';a.click();
     toast('CSV downloaded');
   };
-  run();
+  refreshBranchFilter(run);
 }
 
 /* ---------- get started (first-run setup guide) ---------- */
@@ -2401,7 +2566,7 @@ async function staffPerfDrill(idParam){
 async function dailyReportPage(){
   const todayIso=(()=>{const d=new Date(new Date().getTime()+8*3600000);return d.toISOString().slice(0,10)})();
   M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Everyone served today — particulars, service, revenue, staff — in one view</p></div>
-    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
+    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><span id="branchWrap"></span><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div id="drBody"><div class="card"><div class="empty">Pick a date and Generate.</div></div></div>`;
   $('drPrint').onclick=()=>window.print();
@@ -2418,9 +2583,11 @@ async function dailyReportPage(){
   async function load(){
     const day=$('drDate').value;
     const from=new Date(day+'T00:00:00+08:00').toISOString(), to=new Date(day+'T23:59:59+08:00').toISOString();
-    const {data:sl,error}=await sb.from('sales')
+    let q=sb.from('sales')
       .select('*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name))')
       .eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at');
+    if(selectedBranchId) q=q.eq('branch_id',selectedBranchId);
+    const {data:sl,error}=await q;
     if(error) return fail(error);
     const rows=(sl||[]).map(s=>({
       occurred_at:s.occurred_at,
@@ -2454,7 +2621,7 @@ async function dailyReportPage(){
     C('drC1',{type:'bar',data:{labels:Object.keys(byStaff),datasets:[{data:Object.values(byStaff).map(v=>v/100),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     C('drC2',{type:'doughnut',data:{labels:Object.keys(byKind).map(k=>k.replace('_',' ')),datasets:[{data:Object.values(byKind).map(v=>v/100),backgroundColor:[coral,amber,'#8B7BC7','#2FA36B','#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});
   }
-  load();
+  refreshBranchFilter(load);
 }
 
 /* ---------- expenses ---------- */
@@ -2514,7 +2681,7 @@ async function pnlPage(){
   const d30=new Date(Date.now()-29*864e5),today=new Date();
   M().innerHTML=`<div class="topbar"><div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div>
     <div class="range no-print"><input type="date" id="plFrom" value="${iso(d30)}"> <span class="muted">→</span>
-      <input type="date" id="plTo" value="${iso(today)}"> <button class="btn sm" id="plGo">Run</button>
+      <input type="date" id="plTo" value="${iso(today)}"> <span id="branchWrap"></span><button class="btn sm" id="plGo">Run</button>
       <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div></div>
     <div id="plBody"><div class="card"><div class="empty">Pick a range and Run.</div></div></div>`;
   $('plPrint').onclick=()=>window.print();
@@ -2531,15 +2698,20 @@ async function pnlPage(){
   };
   async function load(){
     const from=$('plFrom').value,to=$('plTo').value;
-    const {data:sum,error}=await sb.rpc('get_revenue_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:null});
+    const {data:sum,error}=await sb.rpc('get_revenue_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:selectedBranchId});
     if(error){
+      if(error.code==='42501'||String(error.message||'').includes('branch_visibility')){
+        $('plBody').innerHTML=`<div class="card"><div class="empty"><div class="big">🔒</div>You can only view branches assigned to you.</div></div>`;return
+      }
       if(String(error.message||'').toLowerCase().includes('permission')){
         $('plBody').innerHTML=`<div class="card"><div class="empty"><div class="big">🔒</div>Ask the owner for finance access to see the P&L.</div></div>`;return
       }
       return fail(error);
     }
-    const {data:ex,error:e2}=await sb.from('expenses').select('*').eq('business_id',S.biz.id)
+    let exQ=sb.from('expenses').select('*').eq('business_id',S.biz.id)
       .is('voided_at',null).gte('occurred_on',from).lte('occurred_on',to);
+    if(selectedBranchId) exQ=exQ.eq('branch_id',selectedBranchId);
+    const {data:ex,error:e2}=await exQ;
     if(e2) return fail(e2);
     const cash=sum.revenue_cash_cents||0, accrual=sum.revenue_accrual_cents||0, expTotal=sum.expenses_cents||0;
     const net=cash-expTotal;
@@ -2549,8 +2721,10 @@ async function pnlPage(){
     const spanMonths=(new Date(to).getFullYear()-new Date(from).getFullYear())*12+(new Date(to).getMonth()-new Date(from).getMonth());
     let monthly={};
     if(spanMonths>=1){
-      const {data:sl}=await sb.from('sales').select('amount_cents,occurred_at,counts_as_revenue').eq('business_id',S.biz.id)
+      let slQ=sb.from('sales').select('amount_cents,occurred_at,counts_as_revenue').eq('business_id',S.biz.id)
         .eq('counts_as_revenue',true).gte('occurred_at',from).lte('occurred_at',to+'T23:59:59');
+      if(selectedBranchId) slQ=slQ.eq('branch_id',selectedBranchId);
+      const {data:sl}=await slQ;
       (sl||[]).forEach(s=>{const k=s.occurred_at.slice(0,7);(monthly[k]=monthly[k]||{rev:0,exp:0}).rev+=s.amount_cents});
       (ex||[]).forEach(e=>{const k=e.occurred_on.slice(0,7);(monthly[k]=monthly[k]||{rev:0,exp:0}).exp+=e.amount_cents});
     }
@@ -2574,7 +2748,7 @@ async function pnlPage(){
       {label:'Expenses',data:mk.map(k=>monthly[k].exp/100),backgroundColor:coral,borderRadius:6}]},
       options:{plugins:{legend:{position:'bottom'}}}});
   }
-  load();
+  refreshBranchFilter(load);
 }
 
 /* ---------- settings ---------- */
@@ -2907,6 +3081,33 @@ function buildPhone(ccId,phoneId){
   const ccDigits=cc.replace('+','');
   if(digits.startsWith(ccDigits)) digits=digits.slice(ccDigits.length);
   return cc+digits;
+}
+
+/* ---------- platform (super-admin only) ----------
+   Reachable only via the Profile-menu link that route() + profileHtml() already gate on
+   S.isSA (checked once per session against the live super_admins table — see route()).
+   This page does its own fresh, authoritative check anyway by simply calling the RPC and
+   reading whether it raised: if S.isSA were ever stale (revoked mid-session), the RPC call
+   below still enforces the real boundary and this renders "Not authorized" instead of a
+   broken table — the same call is both the permission check and the data source, so there
+   is no separate flag here that could drift out of sync with the database. Read-only: no
+   write path to another tenant exists in this page, and the DB enforces that regardless. */
+async function platformPage(){
+  M().innerHTML=`<div class="topbar"><div><h1>Platform</h1><p class="muted small">Every company on Frenly — read-only, super-admin view.</p></div></div>
+    <div class="card" id="platBody"><div class="empty">Loading…</div></div>`;
+  const {data,error}=await sb.rpc('super_admin_list_businesses');
+  if(error){
+    $('platBody').innerHTML=`<div class="empty"><div class="big">🔒</div>Not authorized.</div>`;return;
+  }
+  const rows=data||[];
+  if(!rows.length){$('platBody').innerHTML=`<div class="empty"><div class="big">🏢</div>No companies yet.</div>`;return}
+  const totals=rows.reduce((t,r)=>({companies:t.companies+1,monthly:t.monthly+(r.est_monthly_cents||0)}),{companies:0,monthly:0});
+  $('platBody').innerHTML=`<table><tr><th>Company</th><th>Industry</th><th>Branches</th><th>Staff</th><th>Customers</th><th>Billable seats</th><th>Subscription</th><th>Est. monthly</th></tr>
+    ${rows.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="small">${esc(INDUSTRIES[r.industry]?.label||r.industry||'—')}</td>
+      <td>${r.branch_count}</td><td>${r.staff_count}</td><td>${r.client_count}</td><td>${r.billable_seats}</td>
+      <td><span class="pill ${r.subscription_status==='active'?'ok':r.subscription_status==='trialing'?'new':'off'}">${esc(r.subscription_status||'—')}</span></td>
+      <td>${money(r.est_monthly_cents||0)}</td></tr>`).join('')}
+    <tr><td><b>Total — ${totals.companies} compan${totals.companies===1?'y':'ies'}</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td><b>${money(totals.monthly)}</b></td></tr></table>`;
 }
 
 /* ---------- public customer portal ---------- */
