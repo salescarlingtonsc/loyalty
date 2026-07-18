@@ -146,6 +146,34 @@ tr.click:hover td{background:#FBFAF8}
 .profile .menu a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
   color:var(--ink2);font-size:13.5px;font-weight:500;white-space:nowrap}
 .profile .menu a:hover{background:#F2EFEA;color:var(--ink)}
+/* notification bell — sits left of the profile chip, same frosted-popover language */
+.bellwrap{position:relative}
+.bellbtn{position:relative;width:38px;height:38px;border-radius:100px;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
+  font-size:16px;transition:transform .2s var(--spring),box-shadow .2s var(--ease)}
+.bellbtn:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.bellbtn:active{transform:scale(.94)}
+.bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:100px;
+  min-width:16px;height:16px;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  padding:0 3px;box-shadow:0 0 0 2px #fff}
+.notif-menu{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-width:calc(100vw - 40px);
+  background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
+  border:1px solid var(--hair);border-radius:var(--r-sm);padding:8px;box-shadow:var(--shadow-lg);
+  transform-origin:top right;animation:pop .2s var(--spring);max-height:420px;overflow-y:auto;z-index:41}
+.notif-item{display:block;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .14s var(--ease)}
+.notif-item:hover{background:#F2EFEA}
+.notif-item.unread{background:var(--tint)}
+.notif-item .t{font-size:13px;font-weight:600;color:var(--ink)}
+.notif-item .b{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+.notif-item .ago{font-size:10.5px;color:var(--muted);margin-top:4px}
+.notif-empty{text-align:center;padding:24px 12px;color:var(--muted);font-size:13px}
+.switchrow{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 4px;font-size:12.5px;color:var(--ink2)}
+.tglsw{position:relative;width:36px;height:21px;border-radius:100px;background:var(--line);cursor:pointer;
+  transition:background .18s var(--ease);flex-shrink:0}
+.tglsw.on{background:var(--green)}
+.tglsw::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:100px;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s var(--spring)}
+.tglsw.on::after{transform:translateX(15px)}
 .main{padding:26px 34px 46px;max-width:1240px;width:100%}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
 .topbar h1{font-size:1.85rem;font-weight:700}
@@ -206,7 +234,12 @@ tr.click:hover td{background:#FBFAF8}
 /* ============ Frenly app ============ */
 const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
 const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
-const sb=window.supabase.createClient(SB_URL,SB_KEY);
+/* detectSessionInUrl:false — with it left at its (true) default, supabase-js inspects
+   window.location.hash on load and can history.replaceState the hash away on a hash-routed
+   SPA, which is why a browser refresh was silently losing the current route ("refresh does
+   nothing unless I retype the URL"). We don't use Supabase's own hash-based OAuth redirect
+   flow here, so it's safe to turn off. */
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 
 /* Chart.js global defaults (design system v2). Chart.js out of the box is the single
    biggest "generic AI dashboard" tell — grey 1px grids on both axes, boxed legends,
@@ -274,13 +307,23 @@ const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Fron
    each full page load but persists across in-session route changes. */
 const NAVGROUPS=[
   {key:'home',icon:'🏠',label:null,items:['dashboard']},
-  {key:'customers',icon:'👥',label:'Customers',items:['clients']},
+  {key:'customers',icon:'👥',label:'Customers',items:['clients','loyalty','retention','referrals','memberships','giftcards']},
   {key:'operations',icon:'🛠️',label:'Operations',items:['till','appointments','bookings','waitlist','sales','services','inventory','packages']},
-  {key:'growth',icon:'🎁',label:'Growth',items:['loyalty','retention','referrals','memberships','giftcards']},
   {key:'insights',icon:'📈',label:'Insights',items:['reports','staffperf','dailyreport','pnl','expenses']}
 ];
 let navOpen={};
 let profileOpen=false;
+/* realtime notifications (bell) — module-level, plain JS vars only (no localStorage) */
+let currentPage=['dashboard']; // set by renderShell(); read by the realtime handlers to
+                                // decide whether to auto-refresh the page currently on screen
+let bellOpen=false;
+let notifState={unread:0,items:[]};
+let notifLoaded=false;
+let notifError=null;
+let rtChannel=null;       // the single realtime channel for this session
+let rtChannelBizId=null;  // which business it's currently subscribed to
+let muteAlerts=false;     // in-session-only pop-up mute for non-owners (can't persist — the
+                           // notify_new_bookings write is owner-gated by set_booking_settings)
 
 let S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false};
 const $=(id)=>document.getElementById(id);
@@ -303,60 +346,75 @@ window.addEventListener('hashchange',route);
 
 /* ---------- routing ---------- */
 async function route(){
-  killCharts();
-  const h=location.hash||'#/';
-  if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
-  const {data:{session}}=await sb.auth.getSession();
-  S.user=session?.user||null;
-  if(!S.user) return renderAuth();
-  if(!S.biz){
-    const {data:st}=await sb.from('staff').select('business_id').eq('user_id',S.user.id).limit(1);
-    if(st&&st.length){
-      const {data:b}=await sb.from('businesses').select('*').eq('id',st[0].business_id).single();
-      S.biz=b;
-    }
-  }
-  if(!S.biz) return renderOnboard();
-  /* Effective module permissions (v14): staff.modules===null means "inherit — sees
-     everything the firm enabled"; an explicit array is an allowlist. Owners always
-     bypass server-side. Fetched once per session, then cached on S until a Team edit
-     resets it back to null (see settingsPage's per-staff module panel). */
-  if(S.myModules===null){
-    const {data:mm,error:mmErr}=await sb.rpc('get_my_modules',{p_business:S.biz.id});
-    if(mmErr||!mm){
-      /* Fallback must still resolve the ROLE, not just the modules: myRole drives the
-         Settings gate below, so leaving it null on a transient RPC blip would lock the
-         real owner out of their own Settings. Read it straight off the staff row (RLS
-         already scopes that select to this workspace). */
-      S.myModules=S.biz.enabled_modules||[];S.isSA=false;
-      const {data:me}=await sb.from('staff').select('role,modules')
-        .eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
-      S.myRole=me&&me.length?me[0].role:null;
-      if(me&&me.length&&me[0].modules&&S.myRole!=='owner'){
-        S.myModules=(S.biz.enabled_modules||[]).filter(m=>me[0].modules.includes(m));
+  /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
+     hiccup used to throw straight out of this async function with nothing rendered, which
+     read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
+  try{
+    killCharts();
+    const h=location.hash||'#/';
+    if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
+    const {data:{session}}=await sb.auth.getSession();
+    S.user=session?.user||null;
+    if(!S.user) return renderAuth();
+    if(!S.biz){
+      const {data:st}=await sb.from('staff').select('business_id').eq('user_id',S.user.id).limit(1);
+      if(st&&st.length){
+        const {data:b}=await sb.from('businesses').select('*').eq('id',st[0].business_id).single();
+        S.biz=b;
       }
-    }else{
-      S.myModules=mm.modules||S.biz.enabled_modules||[];S.myRole=mm.role||null;S.isSA=!!mm.is_super_admin;
     }
+    if(!S.biz) return renderOnboard();
+    /* Effective module permissions (v14): staff.modules===null means "inherit — sees
+       everything the firm enabled"; an explicit array is an allowlist. Owners always
+       bypass server-side. Fetched once per session, then cached on S until a Team edit
+       resets it back to null (see settingsPage's per-staff module panel). */
+    if(S.myModules===null){
+      const {data:mm,error:mmErr}=await sb.rpc('get_my_modules',{p_business:S.biz.id});
+      if(mmErr||!mm){
+        /* Fallback must still resolve the ROLE, not just the modules: myRole drives the
+           Settings gate below, so leaving it null on a transient RPC blip would lock the
+           real owner out of their own Settings. Read it straight off the staff row (RLS
+           already scopes that select to this workspace). */
+        S.myModules=S.biz.enabled_modules||[];S.isSA=false;
+        const {data:me}=await sb.from('staff').select('role,modules')
+          .eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
+        S.myRole=me&&me.length?me[0].role:null;
+        if(me&&me.length&&me[0].modules&&S.myRole!=='owner'){
+          S.myModules=(S.biz.enabled_modules||[]).filter(m=>me[0].modules.includes(m));
+        }
+      }else{
+        S.myModules=mm.modules||S.biz.enabled_modules||[];S.myRole=mm.role||null;S.isSA=!!mm.is_super_admin;
+      }
+    }
+    const page=(h.replace('#/','')||'dashboard').split('/');
+    /* Route guard: a restricted employee must not reach a page by typing the URL, not
+       just by it being hidden from nav. 'client' maps to the 'clients' module key, same
+       as activeGroupKey() does for the sidebar. dashboard/setup are always reachable. */
+    const pageKey=page[0]==='client'?'clients':page[0];
+    /* Settings is owner-only. Hiding the nav link is not a guard — anyone can type the
+       hash. The DB is the real boundary (every write in here is RLS/RPC owner-gated), but
+       the page also surfaces billing, the team roster and the sign-up QR, so don't render
+       it to staff at all. */
+    if(pageKey==='settings'&&S.myRole!=='owner'){
+      toast('Only the owner can open Settings.');
+      return nav('#/dashboard');
+    }
+    if(MODULES[pageKey]&&pageKey!=='settings'&&pageKey!=='setup'&&pageKey!=='dashboard'&&!S.myModules.includes(pageKey)){
+      toast('You don\'t have access to that.');
+      return nav('#/dashboard');
+    }
+    renderShell(page);
+  }catch(e){
+    console.error(e);
+    root.innerHTML=`<div class="center-wrap"><div class="card" style="width:400px;max-width:100%;text-align:center">
+      <div style="font-size:40px">⚠️</div>
+      <h2 style="margin:12px 0 4px">Something went wrong</h2>
+      <p class="muted small">${esc(e&&e.message||String(e))}</p>
+      <button class="btn" id="routeReload" style="margin-top:18px">Reload</button>
+      </div></div>`;
+    const rb=$('routeReload');
+    if(rb) rb.onclick=()=>location.reload();
   }
-  const page=(h.replace('#/','')||'dashboard').split('/');
-  /* Route guard: a restricted employee must not reach a page by typing the URL, not
-     just by it being hidden from nav. 'client' maps to the 'clients' module key, same
-     as activeGroupKey() does for the sidebar. dashboard/setup are always reachable. */
-  const pageKey=page[0]==='client'?'clients':page[0];
-  /* Settings is owner-only. Hiding the nav link is not a guard — anyone can type the
-     hash. The DB is the real boundary (every write in here is RLS/RPC owner-gated), but
-     the page also surfaces billing, the team roster and the sign-up QR, so don't render
-     it to staff at all. */
-  if(pageKey==='settings'&&S.myRole!=='owner'){
-    toast('Only the owner can open Settings.');
-    return nav('#/dashboard');
-  }
-  if(MODULES[pageKey]&&pageKey!=='settings'&&pageKey!=='setup'&&pageKey!=='dashboard'&&!S.myModules.includes(pageKey)){
-    toast('You don\'t have access to that.');
-    return nav('#/dashboard');
-  }
-  renderShell(page);
 }
 
 /* ---------- auth ---------- */
@@ -415,7 +473,7 @@ function renderOnboard(){
       <button class="btn ghost" id="join">Join team</button></div>
     </div></div>`;
     document.querySelectorAll('.ind').forEach(el=>el.onclick=()=>{sel=el.dataset.k;const n=$('bn').value;draw();$('bn').value=n});
-    $('out').onclick=async()=>{await sb.auth.signOut();S.biz=null;route()};
+    $('out').onclick=async()=>{killChannels();await sb.auth.signOut();S.biz=null;route()};
     $('join').onclick=async()=>{
       if(!$('ic').value.trim()) return toast('Enter your invite code');
       $('join').disabled=true;
@@ -495,9 +553,9 @@ function profileHtml(){
    Supabase refetch, chart re-animation, any custom date range reset). This widget now
    re-renders only itself. */
 function wireProfile(page){
-  $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;renderProfile(page);};
+  $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen){bellOpen=false;renderBell(page);}renderProfile(page);};
   if(profileOpen){
-    $('pmSignout').onclick=async(e)=>{e.preventDefault();await sb.auth.signOut();S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false};profileOpen=false;nav('#/')};
+    $('pmSignout').onclick=async(e)=>{e.preventDefault();killChannels();await sb.auth.signOut();S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false};profileOpen=false;nav('#/')};
     $('pmSetup').onclick=()=>{profileOpen=false};
     const pmS=$('pmSettings');if(pmS) pmS.onclick=()=>{profileOpen=false};
     /* click-away to dismiss — expected of a native popover, and without it the menu
@@ -516,19 +574,161 @@ function renderProfile(page){
   wrap.outerHTML=profileHtml();
   wireProfile(page);
 }
+
+/* ---------- realtime notifications (bell, left of the profile chip) ----------
+   One realtime channel per signed-in session, built once against the current S.biz and
+   reused across every route change (route() -> renderShell() -> initNotifications() runs
+   on every navigation, but ensureRealtimeChannel() is a no-op once a channel for this
+   business already exists — tearing it down and rebuilding on every route change would be
+   wasteful and could miss events landing in the gap). killChannels() is the only thing that
+   removes it, called on sign-out (mirrors killCharts()). */
+function timeAgo(iso){
+  if(!iso) return '';
+  const s=Math.max(0,(Date.now()-new Date(iso).getTime())/1000);
+  if(s<60) return 'just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+/* Every notification kind we currently emit routes to the same place — booking requests,
+   waitlist and change-request activity are all triaged from the Bookings page. Kept as an
+   explicit map (not a blanket default) so a future new kind is a deliberate decision, not
+   an accident. */
+const NOTIF_ROUTE={booking_new:'#/bookings',booking_waitlisted:'#/bookings',change_request:'#/bookings',
+  booking_expired:'#/bookings',waitlist_ready:'#/bookings'};
+async function loadNotifications(){
+  const {data,error}=await sb.rpc('get_notifications',{p_business:S.biz.id,p_limit:30});
+  if(error){notifError=error.message||'Could not load notifications';return}
+  notifError=null;notifLoaded=true;notifState={unread:data.unread||0,items:data.items||[]};
+}
+function bellHtml(){
+  const n=notifState.unread||0;
+  return `<div class="bellwrap" id="bellwrap">
+      <div class="bellbtn" id="bellBtn" title="Notifications">🔔${n>0?`<span class="dot">${n>99?'99+':n}</span>`:''}</div>
+      ${bellOpen?notifMenuHtml():''}
+    </div>`;
+}
+function notifMenuHtml(){
+  const items=notifState.items||[];
+  const isOwner=S.myRole==='owner';
+  return `<div class="notif-menu" id="notifmenu">
+    <div class="row" style="padding:4px 8px 8px"><b class="small">Notifications</b><span class="spacer"></span>
+      ${notifState.unread>0?`<button class="btn ghost sm" id="markAll" style="padding:4px 10px;font-size:11.5px">Mark all read</button>`:''}</div>
+    ${notifError?`<div class="err" style="margin:0 6px 8px">${esc(notifError)}</div>`:''}
+    ${!notifLoaded?`<div class="notif-empty">Loading…</div>`
+      :items.length?items.map(it=>`<div class="notif-item ${it.read_at?'':'unread'}" data-nid="${esc(it.id)}" data-ref="${esc(it.kind)}">
+          <div class="t">${esc(it.title||'')}</div>
+          ${it.body?`<div class="b">${esc(it.body)}</div>`:''}
+          <div class="ago">${timeAgo(it.created_at)}</div></div>`).join('')
+      :`<div class="notif-empty">No notifications yet.</div>`}
+    <hr style="border:none;border-top:1px solid var(--hair);margin:6px 0">
+    ${isOwner?`<div class="switchrow"><span>Pop-up alerts</span>
+        <div class="tglsw ${S.biz.notify_new_bookings?'on':''}" id="notifToggle"></div></div>`
+      :`<div class="switchrow"><span>Pop-up alerts (this session)</span>
+        <div class="tglsw ${muteAlerts?'':'on'}" id="notifToggle"></div></div>`}
+    </div>`;
+}
+function wireBell(page){
+  $('bellBtn').onclick=(e)=>{e.stopPropagation();bellOpen=!bellOpen;if(bellOpen){profileOpen=false;renderProfile(page);}renderBell(page);};
+  if(!bellOpen) return;
+  const markAll=$('markAll');
+  if(markAll) markAll.onclick=async(e)=>{
+    e.stopPropagation();markAll.disabled=true;
+    const {error}=await sb.rpc('mark_all_notifications_read',{p_business:S.biz.id});
+    if(error){fail(error);markAll.disabled=false;return}
+    notifState.items=(notifState.items||[]).map(it=>({...it,read_at:it.read_at||new Date().toISOString()}));
+    notifState.unread=0;
+    renderBell(page);
+  };
+  document.querySelectorAll('.notif-item').forEach(el=>el.onclick=async()=>{
+    const id=el.dataset.nid,kind=el.dataset.ref;
+    const {error}=await sb.rpc('mark_notification_read',{p_id:id});
+    if(!error){
+      const item=(notifState.items||[]).find(i=>i.id===id);
+      if(item&&!item.read_at){item.read_at=new Date().toISOString();notifState.unread=Math.max(0,notifState.unread-1);}
+    }
+    bellOpen=false;
+    nav(NOTIF_ROUTE[kind]||'#/bookings');
+  });
+  const tgl=$('notifToggle');
+  if(tgl) tgl.onclick=async(e)=>{
+    e.stopPropagation();
+    if(S.myRole==='owner'){
+      const to=!S.biz.notify_new_bookings;
+      tgl.style.pointerEvents='none';
+      const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,
+        p_hold_minutes:S.biz.booking_hold_minutes,p_overflow:S.biz.booking_overflow,
+        p_notify:to,p_auto_confirm:S.biz.booking_auto_confirm});
+      if(error){fail(error);tgl.style.pointerEvents='';return}
+      S.biz.notify_new_bookings=to;
+    }else{
+      muteAlerts=!muteAlerts;
+    }
+    renderBell(page);
+  };
+  /* click-away, same one-shot pattern as the profile menu */
+  setTimeout(()=>document.addEventListener('click',function away(ev){
+    const w=$('bellwrap');
+    if(w&&!w.contains(ev.target)){bellOpen=false;document.removeEventListener('click',away);renderBell(page);}
+    else if(!w){document.removeEventListener('click',away);}
+  }),0);
+}
+function renderBell(page){
+  const wrap=$('bellwrap');
+  if(!wrap) return;
+  wrap.outerHTML=bellHtml();
+  wireBell(page);
+}
+/* Re-runs the currently-open page's own render fn (no hash change) so new booking activity
+   shows up without the owner having to manually refresh — the #1 complaint this feature set
+   is meant to fix. Only wired for the pages where booking/waitlist activity is visible. */
+function autoRefreshIfRelevant(){
+  const key=(currentPage&&currentPage[0])||'';
+  const P={bookings:bookingsPage,appointments:appointmentsPage,waitlist:waitlistPage};
+  if(P[key]) P[key](currentPage[1]);
+}
+function ensureRealtimeChannel(){
+  if(rtChannel&&rtChannelBizId===S.biz.id) return; // already live for this business — reuse it
+  if(rtChannel){ try{sb.removeChannel(rtChannel);}catch(e){} rtChannel=null; }
+  rtChannel=sb.channel('rt-'+S.biz.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'business_id=eq.'+S.biz.id},payload=>{
+      notifState.unread=(notifState.unread||0)+1;
+      notifState.items=[payload.new,...(notifState.items||[])].slice(0,30);
+      renderBell(currentPage);
+      if(S.biz.notify_new_bookings&&!muteAlerts) toast('🔔 '+(payload.new?.title||'New notification'));
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'booking_requests',filter:'business_id=eq.'+S.biz.id},()=>autoRefreshIfRelevant())
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'appointments',filter:'business_id=eq.'+S.biz.id},()=>autoRefreshIfRelevant())
+    .subscribe();
+  rtChannelBizId=S.biz.id;
+}
+function killChannels(){
+  if(rtChannel){ try{sb.removeChannel(rtChannel);}catch(e){} }
+  rtChannel=null;rtChannelBizId=null;
+}
+async function initNotifications(){
+  if(!S.biz) return;
+  await loadNotifications();
+  renderBell(currentPage);
+  ensureRealtimeChannel();
+}
+
 function renderShell(page){
+  currentPage=page; // used by the realtime handlers below to know what to auto-refresh
   root.innerHTML=`<div class="shell">
     <aside class="side">
-      <div class="logo">frenly<span>.</span></div>
+      <a href="#/dashboard" class="logo" style="display:block">frenly<span>.</span></a>
       <nav class="nav" id="navwrap">${navHtml(page)}</nav>
     </aside>
     <div class="col">
       <header class="appbar">
+        ${bellHtml()}
         ${profileHtml()}
       </header>
       <main class="main" id="main"></main>
     </div></div>`;
   wireNav();
+  wireBell(page);
   wireProfile(page);
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
     bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,
@@ -537,6 +737,7 @@ function renderShell(page){
     staffperf:staffPerfPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage};
   (P[page[0]]||dashboard)(page[1]);
+  initNotifications(); // fire-and-forget, like the page fn above — loads badge + (re)uses the realtime channel
 }
 const M=()=> $('main');
 
@@ -1111,6 +1312,7 @@ async function servicesPage(){
 /* ---------- bookings ---------- */
 async function bookingsPage(){
   const portal=`${location.origin}${location.pathname}#/b/${S.biz.slug}`;
+  const isOwner=S.myRole==='owner';
   M().innerHTML=`<div class="topbar"><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
@@ -1121,7 +1323,34 @@ async function bookingsPage(){
       <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="aac" style="width:auto" ${S.biz.auto_approve_changes?'checked':''}> Auto-approve reschedule/cancel requests</label>
       <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
-    <div class="card" id="blist"><div class="empty">Loading…</div></div>`;
+    <div class="card" id="blist" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
+    ${isOwner?`<div class="split" style="margin-bottom:16px">
+      <div class="card"><b>Tables / capacity</b>
+        <p class="muted small" style="margin:6px 0 10px">Owner only. Add your table types so customers can reserve them on your portal.</p>
+        <div class="row"><input id="tblName" placeholder="e.g. Small (2-seater)">
+          <input id="tblPax" type="number" min="1" placeholder="Pax" style="max-width:76px">
+          <input id="tblQty" type="number" min="1" value="1" placeholder="Qty" style="max-width:76px">
+          <button class="btn sm" id="tblAdd">Add</button></div>
+        <div id="capBody" style="margin-top:14px"><div class="empty">Loading…</div></div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+        <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
+        <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
+        <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
+        <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes; your waitlist is then flagged so you know to fill the gap.</p>
+        <label>When you're full</label><select id="setOverflow">
+          <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
+          <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>
+        <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
+        <div id="setErr"></div>
+      </div>
+      <div class="card"><b>Import existing bookings (CSV)</b>
+        <p class="muted small" style="margin:6px 0 10px">Columns recognised: <b>name</b> (required), phone, email, party_size, preferred_at, notes, table_type. Bookings import as pending for you to review.</p>
+        <input type="file" id="bkCsvf" accept=".csv,text/csv">
+        <div id="bkCsvPrev" style="margin-top:12px"></div>
+      </div>
+    </div>`:''}`;
   $('cp').onclick=()=>{navigator.clipboard.writeText(portal);toast('Portal link copied')};
   $('aac').onchange=async()=>{
     const to=$('aac').checked;
@@ -1168,6 +1397,106 @@ async function bookingsPage(){
     toast(`Request ${data.status}`);loadCr();
   };
   load();loadCr();
+
+  if(!isOwner) return;
+
+  /* ---- Tables / capacity (owner only) ---- */
+  async function loadCapacity(){
+    const [{data:tbl,error:e1},{data:avail,error:e2}]=await Promise.all([
+      sb.from('booking_tables').select('*').eq('business_id',S.biz.id).order('sort'),
+      sb.from('v_table_availability').select('*').eq('business_id',S.biz.id)]);
+    if(e1||e2){$('capBody').innerHTML=`<div class="err">${esc((e1||e2).message)}</div>`;return}
+    const availByType=Object.fromEntries((avail||[]).map(a=>[a.table_type_id,a]));
+    $('capBody').innerHTML=(tbl&&tbl.length)?`<table><tr><th>Name</th><th>Pax</th><th>Qty</th><th>Live</th><th>Status</th><th></th></tr>
+      ${tbl.map(t=>{const a=availByType[t.id];
+        return `<tr><td><b>${esc(t.name)}</b></td><td>${t.pax??'—'}</td><td>${t.quantity}</td>
+        <td class="small">${a?`${a.held} held · ${a.available} free`:'—'}</td>
+        <td><span class="pill ${t.active?'on':'off'}">${t.active?'active':'off'}</span></td>
+        <td><button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Disable':'Enable'}</button>
+        <button class="btn ghost sm" onclick="rmTable('${t.id}')">Remove</button></td></tr>`;
+      }).join('')}</table>`
+      :`<div class="empty"><div class="big">🪑</div>Add your tables so customers can reserve them.</div>`;
+  }
+  $('tblAdd').onclick=async()=>{
+    const name=$('tblName').value.trim();
+    if(name.length<2) return toast('Name the table type');
+    const {error}=await sb.from('booking_tables').insert({business_id:S.biz.id,name,
+      pax:$('tblPax').value?parseInt($('tblPax').value):null,quantity:parseInt($('tblQty').value||'1')});
+    if(error) return fail(error);
+    toast('Table type added');$('tblName').value='';$('tblPax').value='';$('tblQty').value='1';loadCapacity();
+  };
+  window.toggleTable=async(id,to)=>{
+    const {error}=await sb.from('booking_tables').update({active:to}).eq('id',id);
+    if(error) return fail(error);
+    toast('Updated');loadCapacity();
+  };
+  window.rmTable=async(id)=>{
+    if(!confirm('Remove this table type? Existing bookings against it are unaffected.')) return;
+    const {error}=await sb.from('booking_tables').delete().eq('id',id);
+    if(error) return fail(error);
+    toast('Removed');loadCapacity();
+  };
+  loadCapacity();
+
+  /* ---- Booking rules: hold timer / overflow / auto-confirm (owner only) ---- */
+  $('setSave').onclick=async()=>{
+    const hold=parseInt($('setHold').value||'0'),overflow=$('setOverflow').value,autoConfirm=$('setAutoConfirm').checked;
+    $('setSave').disabled=true;
+    const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,p_hold_minutes:hold,
+      p_overflow:overflow,p_notify:S.biz.notify_new_bookings,p_auto_confirm:autoConfirm});
+    $('setSave').disabled=false;
+    if(error){$('setErr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+    $('setErr').innerHTML='';
+    Object.assign(S.biz,{booking_hold_minutes:hold,booking_overflow:overflow,booking_auto_confirm:autoConfirm});
+    toast('Booking rules saved');
+  };
+
+  /* ---- CSV import of existing bookings (owner only) ---- */
+  $('bkCsvf').onchange=async(ev)=>{
+    const file=ev.target.files[0];if(!file)return;
+    const text=await file.text();
+    const rows=[];let cur=[''],q=false;
+    for(const ch of text){
+      if(q){ if(ch==='"'){q=false} else cur[cur.length-1]+=ch; }
+      else if(ch==='"'){q=true}
+      else if(ch===','){cur.push('')}
+      else if(ch==='\n'||ch==='\r'){ if(cur.length>1||cur[0]!==''){rows.push(cur);cur=[''];} }
+      else cur[cur.length-1]+=ch;
+    }
+    if(cur.length>1||cur[0]!=='')rows.push(cur);
+    if(rows.length<2){$('bkCsvPrev').innerHTML=`<div class="err">CSV needs a header row + data</div>`;return}
+    const hdr=rows[0].map(h=>h.trim().toLowerCase());
+    const col=n=>hdr.findIndex(h=>h.includes(n));
+    const iN=col('name'),iP=col('phone'),iE=col('email'),iPs=col('party'),iAt=col('preferred'),iNo=col('notes');
+    const iTtId=hdr.findIndex(h=>h.includes('table_type_id'));
+    const iTt=hdr.findIndex((h,idx)=>idx!==iTtId&&h.includes('table'));
+    if(iN<0){$('bkCsvPrev').innerHTML=`<div class="err">No "name" column found</div>`;return}
+    const recs=rows.slice(1).filter(r=>r[iN]&&r[iN].trim().length>1).map(r=>{
+      const rec={name:r[iN].trim()};
+      if(iP>=0&&r[iP]) rec.phone=r[iP].trim();
+      if(iE>=0&&r[iE]) rec.email=r[iE].trim();
+      if(iPs>=0&&r[iPs]) rec.party_size=parseInt(r[iPs]);
+      if(iAt>=0&&r[iAt]) rec.preferred_at=r[iAt].trim();
+      if(iNo>=0&&r[iNo]) rec.notes=r[iNo].trim();
+      if(iTtId>=0&&r[iTtId]) rec.table_type_id=r[iTtId].trim();
+      else if(iTt>=0&&r[iTt]) rec.table_type=r[iTt].trim();
+      return rec;
+    });
+    $('bkCsvPrev').innerHTML=`<p class="small"><b>${recs.length}</b> bookings ready (of ${rows.length-1} rows).
+      First: ${esc(recs[0]?.name||'—')}${recs[1]?', '+esc(recs[1].name):''}…</p>
+      <button class="btn sm" id="bkCsvGo" style="margin-top:8px">Import ${recs.length} bookings</button>`;
+    $('bkCsvGo').onclick=async()=>{
+      $('bkCsvGo').disabled=true;
+      const {data,error}=await sb.rpc('import_bookings',{p_business:S.biz.id,p_rows:recs});
+      $('bkCsvGo').disabled=false;
+      if(error){$('bkCsvPrev').innerHTML+=`<div class="err">${esc(error.message)}</div>`;return}
+      const errs=(data.errors||[]).slice(0,5);
+      $('bkCsvPrev').innerHTML=`<p class="small">✓ Imported <b>${data.inserted}</b>, skipped <b>${data.skipped}</b>.</p>
+        ${errs.length?`<div class="err" style="margin-top:8px">First ${errs.length} error${errs.length===1?'':'s'}:<br>${errs.map(e=>`Row ${esc(String(e.row))}: ${esc(e.error)}`).join('<br>')}</div>`:''}`;
+      toast(`Imported ${data.inserted} bookings — review them above as pending`);
+      load();
+    };
+  };
 }
 
 /* ---------- loyalty config ---------- */
@@ -2346,12 +2675,35 @@ async function loadCommissionConfig(){
   });
 }
 
+/* ---------- phone country-code picker (portal only: booking form + manage-booking) ----------
+   Singapore first/default since Frenly is SG-first; a handful of the other common corridors
+   for this customer base. */
+const COUNTRY_CODES=[['+65','🇸🇬'],['+60','🇲🇾'],['+62','🇮🇩'],['+852','🇭🇰'],['+61','🇦🇺'],
+  ['+44','🇬🇧'],['+1','🇺🇸'],['+91','🇮🇳'],['+86','🇨🇳'],['+63','🇵🇭'],['+66','🇹🇭'],['+84','🇻🇳']];
+function ccSelectHtml(id){
+  return `<select id="${id}" style="max-width:110px">${COUNTRY_CODES.map(([c,f])=>
+    `<option value="${c}" ${c==='+65'?'selected':''}>${f} ${c}</option>`).join('')}</select>`;
+}
+/* Combines a country-code <select> with a free-typed number input into one E.164-ish string,
+   stripping spaces/dashes. Forgiving of a customer who types their own leading '+' (trusted
+   as-is, so we never double-prefix) or who re-types the selected country's digits at the
+   front of the number field. */
+function buildPhone(ccId,phoneId){
+  const cc=$(ccId).value;
+  let digits=($(phoneId).value||'').trim().replace(/[\s\-]/g,'');
+  if(!digits) return '';
+  if(digits.startsWith('+')) return digits;
+  const ccDigits=cc.replace('+','');
+  if(digits.startsWith(ccDigits)) digits=digits.slice(ccDigits.length);
+  return cc+digits;
+}
+
 /* ---------- public customer portal ---------- */
 async function renderPortal(slug){
   root.innerHTML=`<div class="portal"><div class="head"><div class="logo">frenly<span>.</span></div><p class="muted small">powered booking</p></div><div class="card"><div class="empty">Loading…</div></div></div>`;
   const {data,error}=await sb.rpc('get_business_public',{p_slug:slug});
   if(error||!data){root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">🤔</div>Business not found.</div>`;return}
-  const biz=data;let selSvc=null;
+  const biz=data;let selSvc=null,selTable=null;
   const bc=/^#[0-9A-Fa-f]{6}$/.test(biz.brand_color||'')?biz.brand_color:'#FF6B5E';
   const draw=()=>{
     root.innerHTML=`<div class="portal" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)">
@@ -2363,36 +2715,66 @@ async function renderPortal(slug){
             <b>${biz.currency||'SGD'} ${(s.price_cents/100).toFixed(2)}</b></div>`).join('')}
           <div class="svc ${selSvc===null?'sel':''}" data-s=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></div></div>`
         :`<b>Make a reservation</b>`}
-        <div class="split"><div><label>Your name *</label><input id="pn"></div><div><label>Phone</label><input id="pp" placeholder="+65"></div></div>
+        ${biz.uses_tables?`<div style="margin-top:16px"><b>Choose a table</b>
+          <div style="margin:10px 0 4px">${(biz.tables&&biz.tables.length)?biz.tables.map(t=>{
+            const full=t.available<=0;
+            return `<div class="svc ${selTable===t.table_type_id?'sel':''}" ${full?'':`data-tbl="${t.table_type_id}"`}
+              style="${full?'opacity:.45;cursor:not-allowed':''}">
+              <span><b>${esc(t.name)}</b>${t.pax?` <span class="muted small">· seats ${t.pax}</span>`:''}</span>
+              <span class="muted small">${full?'Fully booked':t.available+' available'}</span></div>`;
+          }).join(''):'<p class="muted small">No tables set up yet — request a general reservation below.</p>'}</div></div>`:''}
+        <div class="split"><div><label>Your name *</label><input id="pn"></div>
+          <div><label>Phone</label><div class="row">${ccSelectHtml('ppcc')}<input id="pp" placeholder="9123 4567"></div></div></div>
         <div class="split"><div><label>Email</label><input id="pe" type="email"></div><div><label>Party size</label><input id="ps" type="number" min="1" value="2"></div></div>
         <label>Preferred date & time</label><input id="pt" type="datetime-local">
         <label>Notes</label><textarea id="pnotes" rows="2" placeholder="anything we should know?"></textarea>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="pconsent" style="width:auto"> 📩 Send me offers & updates</label>
+        <p class="muted small" style="margin-top:2px">Occasional news and offers from ${esc(biz.name)} — you can opt out anytime.</p>
         <div id="perr"></div>
         <div style="margin-top:18px"><button class="btn" id="psend" style="width:100%">Request booking</button></div>
         ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
         <p class="muted small" style="margin-top:12px;text-align:center">The team confirms your request personally — you'll hear back soon.</p>
       </div>
       <div class="card" style="margin-top:16px"><b>Manage an existing booking</b>
-        <p class="muted small" style="margin:6px 0 10px">Enter the phone number you booked with to find your appointments.</p>
-        <div class="row"><input id="mphone" placeholder="+65"><button class="btn ghost sm" id="mfind">Find my bookings</button></div>
+        <p class="muted small" style="margin:6px 0 10px">Pick your country code and enter your number — no need to type the code twice.</p>
+        <div class="row">${ccSelectHtml('mphonecc')}<input id="mphone" placeholder="Your number"><button class="btn ghost sm" id="mfind">Find my bookings</button></div>
         <div id="merr"></div>
         <div id="mlist" style="margin-top:12px"></div>
       </div></div>`;
-    document.querySelectorAll('.svc').forEach(el=>el.onclick=()=>{selSvc=el.dataset.s||null;draw()});
+    document.querySelectorAll('[data-s]').forEach(el=>el.onclick=()=>{selSvc=el.dataset.s||null;draw()});
+    document.querySelectorAll('[data-tbl]').forEach(el=>el.onclick=()=>{selTable=el.dataset.tbl||null;draw()});
     $('psend').onclick=async()=>{
       $('psend').disabled=true;
-      const {error}=await sb.rpc('request_booking',{p_slug:slug,p_name:$('pn').value,p_email:$('pe').value||null,
-        p_phone:$('pp').value||null,p_service:selSvc,p_party:parseInt($('ps').value||'1'),
-        p_preferred:sgIso($('pt').value),p_notes:$('pnotes').value||null});
+      const rawPhone=($('pp').value||'').trim();
+      const {data:bookRes,error}=await sb.rpc('request_booking',{
+        p_slug:slug,
+        p_name:$('pn').value,
+        p_email:$('pe').value||null,
+        p_phone:rawPhone?buildPhone('ppcc','pp'):null,
+        p_service:selSvc,
+        p_party:parseInt($('ps').value||'1'),
+        p_preferred:sgIso($('pt').value),
+        p_notes:$('pnotes').value||null,
+        p_table_type:biz.uses_tables?selTable:null,
+        p_consent:$('pconsent').checked
+      });
       if(error){$('perr').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('psend').disabled=false;return}
-      root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">🎉</div><h2 style="margin-bottom:8px">Request sent!</h2>
-        <p class="muted">${esc(biz.name)} has your booking request and will confirm shortly.</p></div>`;
+      const msgs={
+        confirmed:{em:'🎉',title:"You're booked!",body:`${esc(biz.name)} has confirmed your booking.`},
+        pending:{em:'🎉',title:'Request sent!',body:`${esc(biz.name)} has your booking request and will confirm shortly.`},
+        waitlisted:{em:'⏳',title:"You're on the waitlist",body:`${esc(biz.name)} is fully booked for that time — we'll be in touch as soon as a spot opens up.`},
+        rejected:{em:'😔',title:'Fully booked',body:`Sorry, ${esc(biz.name)} is fully booked for that — try another table or time.`}
+      };
+      const m=msgs[bookRes&&bookRes.status]||msgs.pending;
+      root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 style="margin-bottom:8px">${esc(m.title)}</h2>
+        <p class="muted">${m.body}</p></div>`;
     };
     $('mfind').onclick=async()=>{
-      const phone=$('mphone').value.trim();
-      if(!phone){$('merr').innerHTML='<div class="err">Enter your phone number</div>';return}
+      const raw=($('mphone').value||'').trim();
+      if(!raw){$('merr').innerHTML='<div class="err">Enter your phone number</div>';return}
       $('merr').innerHTML='';$('mfind').disabled=true;
-      const {data,error}=await sb.rpc('list_my_appointments',{p_slug:slug,p_phone:phone});
+      const {data,error}=await sb.rpc('list_my_appointments',{p_slug:slug,p_phone:buildPhone('mphonecc','mphone')});
       $('mfind').disabled=false;
       if(error){$('merr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
       $('mlist').innerHTML=(data&&data.length)?`<label>New preferred time (for reschedule requests)</label><input type="datetime-local" id="mdt">
@@ -2405,19 +2787,19 @@ async function renderPortal(slug){
     };
   };
   window.mCancel=async(apId)=>{
-    const phone=$('mphone').value.trim();
-    if(!phone) return toast('Enter your phone number first');
+    const raw=($('mphone').value||'').trim();
+    if(!raw) return toast('Enter your phone number first');
     if(!confirm('Cancel this booking?')) return;
-    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:phone,p_kind:'cancel',p_proposed:null,p_note:null});
+    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:buildPhone('mphonecc','mphone'),p_kind:'cancel',p_proposed:null,p_note:null});
     if(error) return fail(error);
     toast(data&&data.status==='approved'?'Done — auto-approved':'Request sent — the team will confirm');
   };
   window.mReschedule=async(apId)=>{
-    const phone=$('mphone').value.trim();
-    if(!phone) return toast('Enter your phone number first');
+    const raw=($('mphone').value||'').trim();
+    if(!raw) return toast('Enter your phone number first');
     const val=$('mdt')?.value;
     if(!val) return toast('Pick a new date & time first');
-    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:phone,p_kind:'reschedule',p_proposed:sgIso(val),p_note:null});
+    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:buildPhone('mphonecc','mphone'),p_kind:'reschedule',p_proposed:sgIso(val),p_note:null});
     if(error) return fail(error);
     toast(data&&data.status==='approved'?'Done — auto-approved':'Request sent — the team will confirm');
   };
