@@ -174,6 +174,18 @@ tr.click:hover td{background:#FBFAF8}
 .tglsw::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:100px;
   background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s var(--spring)}
 .tglsw.on::after{transform:translateX(15px)}
+/* universal importer modal */
+.modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:rgba(23,22,26,.4);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:fade .18s var(--ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal-card{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);width:640px;max-width:100%;
+  max-height:88vh;overflow-y:auto;padding:26px;animation:pop .22s var(--spring);transform-origin:center}
+.seg{display:inline-flex;gap:4px;background:#F1EEE9;border-radius:100px;padding:3px}
+.seg button{background:transparent;border-radius:100px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.seg button.act{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+.imp-prev{border:1px solid var(--hair);border-radius:var(--r-sm);overflow:hidden;margin-top:14px}
+.imp-prev table{font-size:12px}.imp-prev th,.imp-prev td{padding:7px 10px}
+.imp-note{background:var(--tint);color:#8a4a2e;border-radius:var(--r-sm);padding:9px 12px;font-size:12px;margin-top:12px}
 .main{padding:26px 34px 46px;max-width:1240px;width:100%}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
 .topbar h1{font-size:1.85rem;font-weight:700}
@@ -230,6 +242,7 @@ tr.click:hover td{background:#FBFAF8}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 /* ============ Frenly app ============ */
 const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
@@ -495,6 +508,172 @@ function renderOnboard(){
   };
   draw();
 }
+
+/* ============================================================================
+   Universal importer — paste-from-Excel (TSV), CSV, or .xlsx upload → any module.
+   One engine, per-module config. Excel "copy cells" pastes tab-separated, so paste
+   and file share the same row/column pipeline. Inserts row-by-row (chunked) so one
+   bad/duplicate row is skipped, never failing the whole batch.
+   ============================================================================ */
+const IMPORT_CONFIGS={
+  customers:{title:'Customers',table:'clients',
+    hint:'Columns we recognise: name (required), phone, email, gender, birthday (YYYY-MM-DD), notes. Duplicates (same phone) are skipped.',
+    fields:[
+      {key:'full_name',aliases:['name','full name','fullname','customer','client'],required:true},
+      {key:'phone',aliases:['phone','mobile','contact','hp','number','tel']},
+      {key:'email',aliases:['email','e-mail','mail']},
+      {key:'gender',aliases:['gender','sex'],transform:v=>['female','male','other'].includes(v.toLowerCase())?v.toLowerCase():null},
+      {key:'birth_date',aliases:['birthday','birth date','birth','dob'],transform:v=>/^\d{4}-\d{2}-\d{2}$/.test(v.trim())?v.trim():null},
+      {key:'notes',aliases:['notes','note','remark','remarks']}],
+    build:o=>({business_id:S.biz.id,...o})},
+  services:{title:'Services',table:'services',
+    hint:'Columns: name (required), price (in dollars), duration/mins, category, description.',
+    fields:[
+      {key:'name',aliases:['name','service'],required:true},
+      {key:'price_cents',aliases:['price','price (sgd)','amount','cost'],money:true},
+      {key:'duration_min',aliases:['duration','mins','minutes','time','duration (minutes)'],int:true,def:60},
+      {key:'category',aliases:['category','type','group']},
+      {key:'description',aliases:['description','desc','details']}],
+    build:o=>({business_id:S.biz.id,active:true,...o})},
+  inventory:{title:'Products',table:'products',
+    hint:'Columns: name (required), sku, price/retail (in dollars), and optionally qty/stock for an opening batch.',
+    fields:[
+      {key:'name',aliases:['name','product','item'],required:true},
+      {key:'sku',aliases:['sku','code','barcode','ref']},
+      {key:'retail_price_cents',aliases:['price','retail','retail price','price (sgd)','amount','cost'],money:true},
+      {key:'__qty',aliases:['qty','quantity','stock','on hand','opening stock','count'],int:true,stripField:true}],
+    build:o=>{const q=o.__qty;delete o.__qty;return {business_id:S.biz.id,...o};},
+    postInsert:async(inserted,mapped)=>{
+      const q=parseInt(mapped.__qty||'0');
+      if(q>0) await sb.from('stock_batches').insert({product_id:inserted.id,qty:q});
+    }},
+};
+/* Parse pasted/file text into array-of-arrays. Auto-detects tab (Excel paste) vs comma (CSV),
+   honours quoted fields + embedded newlines. */
+function parseDelimited(text){
+  const head=(text.split(/\r?\n/)[0]||'');
+  const delim=(head.split('\t').length>head.split(',').length)?'\t':',';
+  const rows=[];let cur=[''],q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cur[cur.length-1]+='"';i++} else q=false } else cur[cur.length-1]+=ch; }
+    else if(ch==='"')q=true;
+    else if(ch===delim)cur.push('');
+    else if(ch==='\n'||ch==='\r'){ if(ch==='\r'&&text[i+1]==='\n')i++; if(cur.length>1||cur[0]!==''){rows.push(cur);cur=['']} }
+    else cur[cur.length-1]+=ch;
+  }
+  if(cur.length>1||cur[0]!=='')rows.push(cur);
+  return rows;
+}
+/* rows(array-of-arrays) + config → {recs:[{payload,mapped}], skipped, total, missing} */
+function mapRows(rows,cfg){
+  if(!rows||rows.length<2) return {recs:[],skipped:0,total:0,missing:null};
+  const hdr=rows[0].map(h=>String(h||'').trim().toLowerCase());
+  const idx={};let missingReq=null;
+  for(const f of cfg.fields){
+    let i=hdr.findIndex(h=>f.aliases.includes(h));
+    if(i<0) i=hdr.findIndex(h=>h&&f.aliases.some(a=>h.includes(a)));
+    idx[f.key]=i;
+    if(f.required&&i<0) missingReq=f.aliases[0];
+  }
+  if(missingReq) return {recs:[],skipped:0,total:rows.length-1,missing:missingReq};
+  const recs=[];let skipped=0;
+  for(const r of rows.slice(1)){
+    if(r.every(c=>!String(c||'').trim())) continue; // blank line
+    const mapped={};let ok=true;
+    for(const f of cfg.fields){
+      const i=idx[f.key];let raw=i>=0?String(r[i]??'').trim():'';
+      let val=raw;
+      if(f.money) val=raw?Math.round(parseFloat(raw.replace(/[^0-9.\-]/g,''))*100):0;
+      else if(f.int) val=raw?parseInt(raw.replace(/[^0-9\-]/g,'')):(f.def??null);
+      else if(f.transform) val=raw?f.transform(raw):null;
+      else val=raw||null;
+      if(f.required&&(!val||String(val).length<2)){ok=false;break}
+      if(val!==null&&val!==undefined&&val!=='') mapped[f.key]=val;
+      else if(f.def!==undefined) mapped[f.key]=f.def;
+    }
+    if(!ok){skipped++;continue}
+    recs.push({payload:cfg.build({...mapped}),mapped});
+  }
+  return {recs,skipped,total:rows.length-1,missing:null};
+}
+async function runImport(recs,cfg,onProgress){
+  let inserted=0,failed=0;const errs=[];
+  for(let i=0;i<recs.length;i+=20){
+    const chunk=recs.slice(i,i+20);
+    const res=await Promise.allSettled(chunk.map(async rec=>{
+      const {data,error}=await sb.from(cfg.table).insert(rec.payload).select().single();
+      if(error) throw error;
+      if(cfg.postInsert) await cfg.postInsert(data,rec.mapped);
+      return data;
+    }));
+    res.forEach(x=>{ if(x.status==='fulfilled')inserted++; else {failed++; if(errs.length<4)errs.push(x.reason?.message||'row failed')} });
+    if(onProgress) onProgress(inserted+failed,recs.length);
+  }
+  return {inserted,failed,errs};
+}
+/* The modal. moduleKey ∈ customers|services|inventory. onDone() re-renders the caller. */
+window.openImport=function(moduleKey,onDone){
+  const cfg=IMPORT_CONFIGS[moduleKey];if(!cfg)return;
+  let mode='paste',parsed=null;
+  const wrap=document.createElement('div');wrap.className='modal';wrap.id='impModal';
+  document.body.appendChild(wrap);
+  const close=()=>wrap.remove();
+  function render(){
+    wrap.innerHTML=`<div class="modal-card">
+      <div class="row"><h2 style="font-size:1.3rem">⬆️ Import ${cfg.title}</h2><span class="spacer"></span>
+        <button class="btn ghost sm" id="impX">Close</button></div>
+      <div class="imp-note">${esc(cfg.hint)}</div>
+      <div style="margin:16px 0 6px"><div class="seg">
+        <button class="${mode==='paste'?'act':''}" data-m="paste">📋 Paste from Excel</button>
+        <button class="${mode==='file'?'act':''}" data-m="file">📁 Upload file</button></div></div>
+      ${mode==='paste'
+        ? `<label>Copy the cells in Excel/Sheets (including the header row) and paste here</label>
+           <textarea id="impText" rows="7" placeholder="name&#9;phone&#9;email&#10;Jane Tan&#9;9123 4567&#9;jane@mail.com" style="font-family:ui-monospace,monospace;font-size:12.5px"></textarea>
+           <div style="margin-top:12px"><button class="btn sm" id="impParse">Preview</button></div>`
+        : `<label>Choose a .csv or .xlsx file (first row = headers)</label>
+           <input type="file" id="impFile" accept=".csv,.tsv,.xlsx,.xls,text/csv">`}
+      <div id="impResult"></div>
+    </div>`;
+    $('impX').onclick=close;
+    wrap.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;parsed=null;render()});
+    if(mode==='paste'){
+      $('impParse').onclick=()=>{ const t=$('impText').value; if(!t.trim())return toast('Paste some rows first'); preview(parseDelimited(t)); };
+    }else{
+      $('impFile').onchange=async ev=>{
+        const f=ev.target.files[0];if(!f)return;
+        try{
+          if(/\.x(lsx|ls)$/i.test(f.name)){
+            const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});
+            const sheet=wb.Sheets[wb.SheetNames[0]];
+            preview(XLSX.utils.sheet_to_json(sheet,{header:1,blankrows:false,raw:false}));
+          }else{ preview(parseDelimited(await f.text())); }
+        }catch(e){fail(e)}
+      };
+    }
+  }
+  function preview(rows){
+    parsed=mapRows(rows,cfg);
+    const R=$('impResult');
+    if(parsed.missing){R.innerHTML=`<div class="err">Couldn't find a <b>${esc(parsed.missing)}</b> column. Make sure your first row has headers.</div>`;return}
+    if(!parsed.recs.length){R.innerHTML=`<div class="err">No valid rows found${parsed.skipped?` (${parsed.skipped} skipped — missing a name)`:''}.</div>`;return}
+    const cols=cfg.fields.filter(f=>!f.stripField).map(f=>f.key);
+    const show=parsed.recs.slice(0,4);
+    R.innerHTML=`<div class="imp-prev"><table><tr>${cols.map(c=>`<th>${esc(c.replace('_cents','').replace('_',' '))}</th>`).join('')}</tr>
+      ${show.map(rec=>`<tr>${cols.map(c=>{let v=rec.payload[c];if(c.endsWith('_cents'))v=v!=null?money(v):'';return `<td>${esc(v??'')}</td>`}).join('')}</tr>`).join('')}</table></div>
+      <p class="small muted" style="margin-top:8px"><b>${parsed.recs.length}</b> ready to import${parsed.skipped?` · ${parsed.skipped} skipped (no name)`:''}. Showing first ${show.length}.</p>
+      <div style="margin-top:12px"><button class="btn" id="impGo">Import ${parsed.recs.length} ${cfg.title.toLowerCase()}</button></div>`;
+    $('impGo').onclick=async()=>{
+      $('impGo').disabled=true;$('impGo').textContent='Importing…';
+      const {inserted,failed,errs}=await runImport(parsed.recs,cfg,(d,t)=>{$('impGo').textContent=`Importing… ${d}/${t}`});
+      R.innerHTML=`<div class="imp-note" style="background:#E7F6EE;color:#1f7a4d">✓ Imported <b>${inserted}</b> ${cfg.title.toLowerCase()}${failed?` · ${failed} skipped (duplicates or invalid)`:''}.</div>
+        ${errs.length?`<p class="small muted" style="margin-top:8px">First issues: ${errs.map(e=>esc(e)).join('; ')}</p>`:''}
+        <div style="margin-top:14px"><button class="btn sm" id="impDone">Done</button></div>`;
+      $('impDone').onclick=()=>{close();if(onDone)onDone()};
+    };
+  }
+  render();
+};
+function importBtn(moduleKey){return `<button class="btn ghost sm" onclick="openImport('${moduleKey}',()=>route())">⬆️ Import</button>`;}
 
 /* ---------- shell ---------- */
 function activeGroupKey(pageKey){
@@ -812,7 +991,7 @@ async function dashboard(){
 /* ---------- customers ---------- */
 async function clientsPage(){
   M().innerHTML=`<div class="topbar"><div><h1>Customers</h1><p class="muted small">Your member base</p></div>
-    <div class="row"><button class="btn ghost sm" id="exp">Export CSV</button><button class="btn" id="add">+ Add customer</button></div></div>
+    <div class="row"><button class="btn ghost sm" id="exp">Export CSV</button>${importBtn('customers')}<button class="btn" id="add">+ Add customer</button></div></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list"><div class="empty">Loading…</div></div>`;
   $('exp').onclick=async()=>{
@@ -1203,29 +1382,44 @@ async function salesPage(){
 
 /* ---------- services ---------- */
 async function servicesPage(){
-  M().innerHTML=`<div class="topbar"><div><h1>Services</h1><p class="muted small">What customers can book on your portal</p></div></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Services</h1><p class="muted small">What customers can book on your portal</p></div>
+    <div class="row">${importBtn('services')}</div></div>
     <div class="split"><div class="card"><b>Add service</b>
       <label>Name</label><input id="sn" placeholder="e.g. Signature Facial">
       <label>Price (${S.biz.currency||'SGD'})</label><input id="sp" type="number" min="0" step="0.01">
       <label>Duration (minutes)</label><input id="sd" type="number" min="5" step="5" value="60">
       <div style="margin-top:16px"><button class="btn" id="sadd">Add service</button></div></div>
     <div class="card"><b>Your services</b><div id="slist" style="margin-top:8px"></div></div></div>`;
-  $('sadd').onclick=async()=>{
-    const name=$('sn').value.trim(),price=Math.round(parseFloat($('sp').value||'0')*100),dur=parseInt($('sd').value||'60');
-    if(name.length<2) return toast('Name required');
-    const {error}=await sb.from('services').insert({business_id:S.biz.id,name,price_cents:price,duration_min:dur});
-    if(error) return fail(error);
-    toast('Service added');$('sn').value='';$('sp').value='';load();
-  };
-  async function load(){
-    const {data:sv}=await sb.from('services').select('*').eq('business_id',S.biz.id).order('name');
+  /* Keep the list in memory so an add reflects INSTANTLY (one insert round-trip that
+     returns the row, then local splice + re-render) instead of a second full re-fetch. */
+  let svCache=[];
+  function renderSvc(){
+    const sv=svCache;
     $('slist').innerHTML=(sv&&sv.length)?`<table><tr><th>Service</th><th>Price</th><th>Mins</th><th>Status</th><th></th></tr>
       ${sv.map(s=>`<tr><td><b>${esc(s.name)}</b></td><td>${money(s.price_cents)}</td><td>${s.duration_min}</td>
       <td><span class="pill ${s.active?'on':'off'}">${s.active?'active':'off'}</span></td>
       <td><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button></td></tr>`).join('')}</table>`
       :`<div class="empty"><div class="big">🛠️</div>No services yet.</div>`;
   }
-  window.toggleSvc=async(id,to)=>{await sb.from('services').update({active:to}).eq('id',id);load()};
+  $('sadd').onclick=async()=>{
+    const name=$('sn').value.trim(),price=Math.round(parseFloat($('sp').value||'0')*100),dur=parseInt($('sd').value||'60');
+    if(name.length<2) return toast('Name required');
+    const btn=$('sadd');btn.disabled=true;btn.textContent='Adding…';
+    const {data,error}=await sb.from('services').insert({business_id:S.biz.id,name,price_cents:price,duration_min:dur}).select().single();
+    btn.disabled=false;btn.textContent='Add service';
+    if(error) return fail(error);
+    svCache=[...svCache,data].sort((a,b)=>a.name.localeCompare(b.name));
+    renderSvc();
+    toast('Service added');$('sn').value='';$('sp').value='';$('sn').focus();
+  };
+  window.toggleSvc=async(id,to)=>{
+    await sb.from('services').update({active:to}).eq('id',id);
+    const s=svCache.find(x=>x.id===id);if(s)s.active=to;renderSvc();
+  };
+  async function load(){
+    const {data:sv}=await sb.from('services').select('*').eq('business_id',S.biz.id).order('name');
+    svCache=sv||[];renderSvc();
+  }
   load();
   /* bundles + resources */
   M().insertAdjacentHTML('beforeend',`<div class="split" style="margin-top:16px">
@@ -1724,31 +1918,45 @@ async function giftcardsPage(){
 
 /* ---------- appointments ---------- */
 async function appointmentsPage(){
-  const [{data:cl},{data:sv}]=await Promise.all([
+  const [{data:cl},{data:sv},{data:stf}]=await Promise.all([
     sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
-    sb.from('services').select('id,name,price_cents,duration_min').eq('business_id',S.biz.id).eq('active',true).order('name')]);
+    sb.from('services').select('id,name,price_cents,duration_min').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name')]);
+  const staff=stf||[];
+  const staffName=Object.fromEntries(staff.map(s=>[s.id,s.full_name||'Staff']));
+  const myStaff=staff.find(s=>s.user_id===S.user.id);
+  /* Owner/manager see everyone's schedule; a staff member defaults to their own
+     (they can still switch — hard per-staff lockdown would be an RLS follow-up). */
+  const canSeeAll=S.myRole==='owner'||S.myRole==='manager';
+  let staffFilter=canSeeAll?'all':(myStaff?myStaff.id:'all');
+  const staffOpts=sel=>`<option value="all" ${sel==='all'?'selected':''}>All staff</option>`+
+    staff.map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(s.full_name||'Staff')}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
   M().innerHTML=`<div class="topbar"><div><h1>Appointments</h1><p class="muted small">Completing an appointment books the sale and fires loyalty automatically — nothing to remember at the desk.</p></div></div>
     <div class="split">
     <div class="card"><b>New appointment</b>
       <label>Customer</label><select id="ac">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
       <label>Service (optional)</label><select id="as"><option value="">— none / general visit —</option>
         ${(sv||[]).map(s=>`<option value="${s.id}" data-d="${s.duration_min}">${esc(s.name)} — ${money(s.price_cents)}</option>`).join('')}</select>
+      <label>Staff${staff.length?'':' (add staff in Settings first)'}</label><select id="astf"><option value="">— unassigned —</option>
+        ${staff.map(s=>`<option value="${s.id}" ${myStaff&&myStaff.id===s.id?'selected':''}>${esc(s.full_name||'Staff')}</option>`).join('')}</select>
       <div class="split"><div><label>Date</label><input id="ad" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
       <div><label>Time</label><input id="at" type="time" value="10:00"></div></div>
       <label>Note</label><input id="an" placeholder="optional">
       <div style="margin-top:16px"><button class="btn" id="ago">Book appointment</button></div></div>
-    <div class="card"><div class="row"><b>Schedule</b><span class="spacer"></span>
+    <div class="card"><div class="row" style="flex-wrap:wrap"><b>Schedule</b><span class="spacer"></span>
+      <select id="stfFilter" class="qbtn" style="padding-right:24px">${staffOpts(staffFilter)}</select>
       <button class="qbtn act" id="vList">List</button><button class="qbtn" id="vWeek">Week</button>
       <button class="qbtn" id="wkPrev" style="display:none">←</button><button class="qbtn" id="wkNext" style="display:none">→</button>
       <button class="qbtn" id="apPrint">Print</button><button class="qbtn" id="apCsv">CSV</button></div>
       <div id="alist" style="margin-top:10px"><p class="muted small">Loading…</p></div></div></div>`;
   let view='list',wkOff=0;
+  $('stfFilter').onchange=()=>{staffFilter=$('stfFilter').value;view==='week'?loadWeek():loadAppts()};
   $('ago').onclick=async()=>{
     if(!$('ac').value) return toast('Pick a customer');
     const opt=$('as').selectedOptions[0],dur=parseInt(opt?.dataset?.d||'60');
     const starts=new Date($('ad').value+'T'+$('at').value);
     const {error}=await sb.from('appointments').insert({business_id:S.biz.id,client_id:$('ac').value,
-      service_id:$('as').value||null,starts_at:starts.toISOString(),
+      service_id:$('as').value||null,staff_id:$('astf').value||null,starts_at:starts.toISOString(),
       ends_at:new Date(starts.getTime()+dur*60000).toISOString(),note:$('an').value||null});
     if(error) return fail(error);
     toast('Appointment booked');loadAppts();
@@ -1760,44 +1968,46 @@ async function appointmentsPage(){
   $('wkPrev').onclick=()=>{wkOff--;loadAppts()};
   $('wkNext').onclick=()=>{wkOff++;loadAppts()};
   $('apPrint').onclick=()=>window.print();
+  const staffQ=q=>staffFilter&&staffFilter!=='all'?q.eq('staff_id',staffFilter):q;
   $('apCsv').onclick=async()=>{
-    const {data:ap,error}=await sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name,price_cents)')
-      .eq('business_id',S.biz.id).order('starts_at',{ascending:false}).limit(25);
+    const {data:ap,error}=await staffQ(sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name,price_cents)')
+      .eq('business_id',S.biz.id)).order('starts_at',{ascending:false}).limit(25);
     if(error) return fail(error);
-    const rows=[['when','customer','service','status'],
-      ...(ap||[]).map(a=>[a.starts_at,a.clients?.full_name||'',a.services?.name||'',a.status])];
+    const rows=[['when','customer','service','staff','status'],
+      ...(ap||[]).map(a=>[a.starts_at,a.clients?.full_name||'',a.services?.name||'',staffName[a.staff_id]||'',a.status])];
     const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
     const a2=document.createElement('a');a2.href=URL.createObjectURL(blob);a2.download='frenly-appointments.csv';a2.click();
     toast('CSV downloaded');
   };
   async function loadAppts(){
     if(view==='week') return loadWeek();
-    const {data:ap}=await sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name,price_cents)')
-      .eq('business_id',S.biz.id).order('starts_at',{ascending:false}).limit(25);
-    $('alist').innerHTML=(ap&&ap.length)?`<table><tr><th>When</th><th>Customer</th><th>Service</th><th>Status</th><th></th></tr>
+    const {data:ap}=await staffQ(sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name,price_cents)')
+      .eq('business_id',S.biz.id)).order('starts_at',{ascending:false}).limit(25);
+    $('alist').innerHTML=(ap&&ap.length)?`<table><tr><th>When</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th></th></tr>
       ${ap.map(a=>`<tr><td>${sgt(a.starts_at)}</td><td><b>${esc(a.clients?.full_name||'—')}</b></td>
       <td>${esc(a.services?.name||'—')}</td>
+      <td class="small">${esc(staffName[a.staff_id]||'—')}</td>
       <td><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'no'}">${a.status.replace('_',' ')}</span></td>
       <td>${a.status==='booked'?`<button class="btn sm" onclick="setAp('${a.id}','completed')">✓ Complete</button>
       <button class="btn ghost sm" onclick="setAp('${a.id}','no_show')">No-show</button>
       <button class="btn ghost sm" onclick="setAp('${a.id}','cancelled')">Cancel</button>`:''}</td></tr>`).join('')}</table>`
-      :`<div class="empty"><div class="big">🗓️</div>No appointments yet. Book one on the left, or convert a booking request.</div>`;
+      :`<div class="empty"><div class="big">🗓️</div>${staffFilter!=='all'?'No appointments for this staff member yet.':'No appointments yet. Book one on the left, or convert a booking request.'}</div>`;
   }
   async function loadWeek(){
     const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7)+wkOff*7);mon.setHours(0,0,0,0);
     const end=new Date(mon.getTime()+7*864e5);
-    const {data:ap}=await sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name)')
-      .eq('business_id',S.biz.id).gte('starts_at',mon.toISOString()).lt('starts_at',end.toISOString());
+    const {data:ap}=await staffQ(sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name)')
+      .eq('business_id',S.biz.id)).gte('starts_at',mon.toISOString()).lt('starts_at',end.toISOString());
     const days=[...Array(7)].map((_,i)=>new Date(mon.getTime()+i*864e5));
     const cell={};(ap||[]).forEach(a=>{const d=new Date(a.starts_at);const k=d.toISOString().slice(0,10)+'-'+d.getHours();(cell[k]=cell[k]||[]).push(a)});
-    $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${mon.toISOString().slice(0,10)} → ${new Date(end-1).toISOString().slice(0,10)}</p>
+    $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${mon.toISOString().slice(0,10)} → ${new Date(end-1).toISOString().slice(0,10)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''}</p>
       <div style="overflow-x:auto"><table style="min-width:720px"><tr><th style="width:52px"></th>
       ${days.map(d=>`<th>${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][(d.getDay()+6)%7]} ${d.getDate()}</th>`).join('')}</tr>
       ${[...Array(11)].map((_,h)=>{const hr=h+9;return `<tr><td class="small muted">${String(hr).padStart(2,'0')}:00</td>
         ${days.map(d=>{const k=d.toISOString().slice(0,10)+'-'+hr;const items=cell[k]||[];
           return `<td style="min-height:36px;padding:6px">${items.map(a=>
             `<div onclick="apAct('${a.id}','${a.status}')" style="cursor:pointer;background:${a.status==='completed'?'#E7F6EE':a.status==='booked'?'#FFF1E8':'#F3F1EC'};border-radius:8px;padding:4px 8px;font-size:11.5px;margin-bottom:3px">
-            <b>${esc((a.clients?.full_name||'—').split(' ')[0])}</b> ${esc(a.services?.name||'')}</div>`).join('')}</td>`}).join('')}</tr>`}).join('')}</table></div>
+            <b>${esc((a.clients?.full_name||'—').split(' ')[0])}</b> ${esc(a.services?.name||'')}${staffFilter==='all'&&a.staff_id?` <span class="muted">· ${esc((staffName[a.staff_id]||'').split(' ')[0])}</span>`:''}</div>`).join('')}</td>`}).join('')}</tr>`}).join('')}</table></div>
       <p class="muted small" style="margin-top:8px">Click a booked (orange) slot to complete it — the sale and loyalty fire automatically.</p>`;
   }
   window.apAct=async(id,status)=>{
@@ -1851,7 +2061,8 @@ async function waitlistPage(){
 
 /* ---------- inventory ---------- */
 async function inventoryPage(){
-  M().innerHTML=`<div class="topbar"><div><h1>Inventory</h1><p class="muted small">Stock in batches with expiry — retail sales auto-deduct earliest-expiring first (FEFO).</p></div></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Inventory</h1><p class="muted small">Stock in batches with expiry — retail sales auto-deduct earliest-expiring first (FEFO).</p></div>
+    <div class="row">${importBtn('inventory')}</div></div>
     <div class="split">
     <div class="card"><b>Add product</b>
       <label>Name</label><input id="pn2"><label>SKU (optional)</label><input id="ps2">
