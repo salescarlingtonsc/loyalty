@@ -44,6 +44,15 @@ begin
   end if;
 end $$;
 
+-- v22b revoked the built-in PUBLIC-EXECUTE default on functions created by postgres, so these
+-- session-local helpers are born owner-only — but the suite calls them while running under
+-- `set local role authenticated/anon`. Grant them back explicitly (pg_temp, rolled back with
+-- the transaction; no production surface).
+grant execute on function pg_temp.as_user(uuid) to public;
+grant execute on function pg_temp.as_anon() to public;
+grant execute on function pg_temp.assert_true(boolean, text) to public;
+grant execute on function pg_temp.assert_eq(anyelement, anyelement, text) to public;
+
 do $$
 declare
   owner_a uuid := gen_random_uuid();
