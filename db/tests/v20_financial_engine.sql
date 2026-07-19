@@ -157,24 +157,37 @@ begin
         and table_name = 'sale_commission'),
     array[
       'sale_id', 'business_id', 'branch_id', 'staff_id', 'kind', 'occurred_at',
-      'amount_cents', 'rate_bps', 'commission_cents'
+      'amount_cents', 'rate_bps', 'commission_cents', 'flat_cents'
     ]::text[],
-    'sale_commission preserves v12 percentage-only columns'
+    'sale_commission preserves v12 percentage columns plus the v13-rebased trailing flat_cents'
   );
 
+  -- v22 reconciliation: v20's original tombstone ('all flat commission artifacts are absent')
+  -- is formally superseded — flat commission is the approved owner model, reinstated by the
+  -- REBASED v13 and hardened by v22. The contract now asserted is: both flat columns exist,
+  -- the resolver exists as SECURITY DEFINER, and it carries the v21-standard owner-only ACL
+  -- (not executable by anon, PUBLIC or authenticated — its only caller is the SECURITY
+  -- DEFINER snapshot trigger).
   perform pg_temp.assert_true(
-    not exists (
-      select 1 from information_schema.columns
-       where table_schema = 'public'
-         and table_name in ('sales', 'services')
-         and column_name = 'commission_flat_cents'
-    ) and not exists (
+    (select count(*) = 2 from information_schema.columns
+      where table_schema = 'public'
+        and table_name in ('sales', 'services')
+        and column_name = 'commission_flat_cents')
+    and exists (
       select 1
         from pg_catalog.pg_proc p
         join pg_catalog.pg_namespace n on n.oid = p.pronamespace
        where n.nspname = 'app' and p.proname = 'commission_flat_cents'
+         and p.prosecdef
+         and not has_function_privilege('anon', p.oid, 'execute')
+         and not has_function_privilege('authenticated', p.oid, 'execute')
+         and not exists (
+           select 1
+             from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+            where acl.grantee = 0 and acl.privilege_type = 'EXECUTE'
+         )
     ),
-    'v13 is tombstoned and all flat commission artifacts are absent'
+    'v22 reconciled flat commission: artifacts present with owner-only resolver ACL (supersedes the v20 tombstone)'
   );
 
   foreach acl_table in array array[
