@@ -200,8 +200,13 @@ export async function checkStaticEntryFiles(root = repoRoot) {
     assert.ok(info.size > 0, `Static entry is empty: ${entry}`);
   }
 
-  const vercelConfig = JSON.parse(await readText(root, 'vercel.json'));
-  assert.equal(vercelConfig.outputDirectory, 'app', 'vercel.json must deploy the app directory.');
+  // Vercel Root Directory is `app`; the effective config must live at app/vercel.json and must
+  // not re-point outputDirectory (a repo-root vercel.json is outside the project root and ignored).
+  assert.ok(!existsSync(path.join(root, 'vercel.json')),
+    'vercel.json must not exist at the repo root: the Vercel Root Directory is app, so a root file is silently ignored.');
+  const vercelConfig = JSON.parse(await readText(root, 'app/vercel.json'));
+  assert.equal(vercelConfig.outputDirectory, undefined,
+    'app/vercel.json must not set outputDirectory: the Vercel Root Directory is already app.');
 }
 
 export async function checkSupabaseProjectReferences(
@@ -403,7 +408,7 @@ export async function checkMigrationFilenameSanity(root = repoRoot) {
 }
 
 export async function checkVercelSecurityHeaders(root = repoRoot) {
-  const vercelConfig = JSON.parse(await readText(root, 'vercel.json'));
+  const vercelConfig = JSON.parse(await readText(root, 'app/vercel.json'));
   const headers = headerMap(vercelConfig);
 
   const csp = headers.get('content-security-policy');

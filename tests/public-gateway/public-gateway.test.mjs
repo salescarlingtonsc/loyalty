@@ -353,7 +353,7 @@ test('public frontends contain no insecure gateway RPC calls', async () => {
 
 test('public write forms render and reset explicit Turnstile widgets under exact CSP origins', async () => {
   const [app, joinPage, vercel, docs] = await Promise.all([
-    read('app/index.html'), read('app/join.html'), read('vercel.json'), read('supabase/functions/README.md'),
+    read('app/index.html'), read('app/join.html'), read('app/vercel.json'), read('supabase/functions/README.md'),
   ]);
   for (const page of [app, joinPage]) {
     assert.match(page, /https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);

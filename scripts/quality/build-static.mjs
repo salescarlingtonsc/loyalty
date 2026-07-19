@@ -23,11 +23,15 @@ export function assertStaticHtmlArtifacts(entries) {
 }
 
 export async function validateStaticBuild(root = repoRoot) {
-  const vercelConfig = JSON.parse(await readFile(path.join(root, 'vercel.json'), 'utf8'));
-  const outputDirectory = path.join(root, vercelConfig.outputDirectory || '');
+  // The Vercel project's Root Directory is `app`, so the effective config is app/vercel.json
+  // and the deployed output is the app directory itself (no outputDirectory override).
+  const vercelConfig = JSON.parse(await readFile(path.join(root, 'app', 'vercel.json'), 'utf8'));
+  assert.equal(vercelConfig.outputDirectory, undefined,
+    'app/vercel.json must not set outputDirectory: the Vercel Root Directory is already app.');
+  const outputDirectory = path.join(root, 'app');
   const outputInfo = await stat(outputDirectory);
 
-  assert.ok(outputInfo.isDirectory(), `Vercel outputDirectory does not exist: ${vercelConfig.outputDirectory}`);
+  assert.ok(outputInfo.isDirectory(), 'Vercel root directory app/ does not exist.');
   await checkStaticEntryFiles(root);
   await checkVercelSecurityHeaders(root);
 
