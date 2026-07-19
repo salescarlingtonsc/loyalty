@@ -68,6 +68,7 @@ declare
     'reclassify_sale_policy',
     'redeem_gift_card',
     'redeem_points',
+    'redeem_reward',  -- registry addition 2026-07-20 (v23/v24 catalog+stamps redemption); ACL applied by its own migrations
     'refund_sale',
     'reverse_sale',
     'save_module_template',

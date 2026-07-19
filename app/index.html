@@ -1327,7 +1327,7 @@ async function clientsPage(){
 }
 
 async function clientDetail(id){
-  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb},{data:allSl},{data:allAp},{data:stAll}]=await Promise.all([
+  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll}]=await Promise.all([
     sb.from('clients').select('*').eq('id',id).single(),
     sb.from('client_points_balance').select('points').eq('client_id',id),
     sb.from('client_credit_balance').select('balance_cents').eq('client_id',id),
@@ -1335,6 +1335,7 @@ async function clientDetail(id){
     sb.from('reward_grants').select('*, retention_programs(name)').eq('client_id',id).order('granted_at',{ascending:false}),
     sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
     sb.from('points_batches').select('remaining,expires_at').eq('client_id',id).gt('remaining',0).not('expires_at','is',null).order('expires_at').limit(1),
+    sb.from('loyalty_rewards').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort').order('created_at'),
     /* Full history (Feature 2) — separate, unlimited fetches so the existing 10-row KPI/list
        logic above stays untouched exactly as it was ("fix nothing else"). */
     sb.from('sales').select('*').eq('client_id',id).order('occurred_at',{ascending:false}),
@@ -1367,12 +1368,23 @@ async function clientDetail(id){
     </div>
     <div class="split" style="margin-top:16px">
       <div class="card"><b>Loyalty</b>
-        ${prog&&prog.active?`<p class="muted small" style="margin:6px 0 14px">Earns ${prog.earn_points_per_dollar} pt/$ · Redeem ${prog.redeem_points} pts → ${money(prog.reward_credit_cents)} credit</p>
+        ${prog&&prog.active?(prog.loyalty_model&&prog.loyalty_model!=='classic'
+        ?`<p class="muted small" style="margin:6px 0 10px">${prog.loyalty_model==='stamps'
+            ?`Stamp card — 1 stamp per ${money(prog.stamp_per_cents||500)} spent · balance <b>${pts} stamps</b>`
+            :`Earns ${prog.earn_points_per_dollar} pt/$ · balance <b>${pts} points</b>`}</p>
+          ${(rwList&&rwList.length)?rwList.map(r=>`<div class="row" style="margin-top:8px"><span>${esc(r.name)}</span><span class="spacer"></span>
+            <button class="btn sm rewardGo" data-r="${r.id}" data-n="${esc(r.name)}" data-c="${r.credit_cents}" ${pts<r.cost_points?'disabled':''}>
+              ${r.cost_points} ${prog.loyalty_model==='stamps'?'stamps':'pts'}${r.credit_cents>0?' → '+money(r.credit_cents):' → claim'}</button></div>`).join('')
+            :`<p class="muted small" style="margin-top:6px">No ${prog.loyalty_model==='stamps'?'milestones':'rewards'} defined yet — add them in Loyalty.</p>`}
+          ${nextExp?`<p class="muted small" style="margin-top:8px">⏳ ${nextExp.remaining} expire ${nextExp.expires_at.slice(0,10)}</p>`:''}
+          <div class="row" style="margin-top:14px"><input id="adjV" type="number" placeholder="+/- ${prog.loyalty_model==='stamps'?'stamps':'points'}" style="max-width:120px">
+          <input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>`
+        :`<p class="muted small" style="margin:6px 0 14px">Earns ${prog.earn_points_per_dollar} pt/$ · Redeem ${prog.redeem_points} pts → ${money(prog.reward_credit_cents)} credit</p>
         <button class="btn sm" id="redeem" ${pts<prog.redeem_points?'disabled':''}>Redeem ${prog.redeem_points} pts → ${money(prog.reward_credit_cents)}</button>
         ${pts<prog.redeem_points?`<p class="muted small" style="margin-top:8px">${prog.redeem_points-pts} more points to unlock</p>`:''}
         ${nextExp?`<p class="muted small" style="margin-top:8px">⏳ ${nextExp.remaining} pts expire ${nextExp.expires_at.slice(0,10)}</p>`:''}
         <div class="row" style="margin-top:14px"><input id="adjV" type="number" placeholder="+/- points" style="max-width:120px">
-        <input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>`
+        <input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>`)
         :'<p class="muted small" style="margin-top:6px">No active loyalty program. Configure it in Loyalty.</p>'}
       </div>
       <div class="card"><b>Referral & consent</b>
@@ -1398,6 +1410,16 @@ async function clientDetail(id){
     if(error){fail(error);rd.disabled=false;return}
     toast(`Redeemed → ${money(data.credit_cents)} credit added 🎉`);clientDetail(id);
   };
+  /* catalog / milestone redemption (points_tiers + stamps models) */
+  document.querySelectorAll('.rewardGo').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    const {data,error}=await sb.rpc('redeem_reward',{p_business:S.biz.id,p_client:id,p_reward:b.dataset.r});
+    if(error){fail(error);b.disabled=false;return}
+    toast(Number(b.dataset.c)>0
+      ?`Redeemed "${b.dataset.n}" → ${money(Number(b.dataset.c))} credit added 🎉`
+      :`"${b.dataset.n}" claimed — hand it over! 🎉`);
+    clientDetail(id);
+  });
   const aj=$('adjGo');
   if(aj) aj.onclick=async()=>{
     const v=parseInt($('adjV').value||'0');
@@ -1446,6 +1468,10 @@ function renderHistPage(history,n){
    Step 3 done. All UI state is local to this closure — nothing persisted, resets on reload
    (no localStorage in this stack) and resets itself on "Next customer". */
 async function tillPage(){
+  /* v24: the one-tap classic redeem only applies to the classic model — catalog/stamp firms
+     redeem from the customer page where the reward list lives. */
+  const {data:tillLp}=await sb.from('loyalty_programs').select('loyalty_model').eq('business_id',S.biz.id).limit(1);
+  const tillClassic=!tillLp?.[0]?.loyalty_model||tillLp[0].loyalty_model==='classic';
   let step=1;             // 1=enter number, 2=customer card / new customer / invalid, 3=done
   let phone='';           // digits typed so far in step 1
   let cust=null;          // lookup_client_by_phone result once status==='found'
@@ -1559,8 +1585,9 @@ async function tillPage(){
           <div class="card kpi"><div class="l">Credit</div><div class="v">${money(cust.credit_cents||0)}</div></div>
           <div class="card kpi"><div class="l">Visits</div><div class="v">${cust.visits??0}</div></div>
         </div>
-        ${toNext!=null?`<p class="muted small" style="text-align:center;margin-top:10px">⏳ ${toNext} points to next reward</p>`:''}
-        ${cust.can_redeem?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="tRedeem">🎁 Redeem reward</button></div>`:''}
+        ${tillClassic&&toNext!=null?`<p class="muted small" style="text-align:center;margin-top:10px">⏳ ${toNext} points to next reward</p>`:''}
+        ${tillClassic&&cust.can_redeem?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="tRedeem">🎁 Redeem reward</button></div>`:''}
+        ${!tillClassic?`<p class="muted small" style="text-align:center;margin-top:10px">🎁 Rewards are redeemed from the customer's page</p>`:''}
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
         <label>Amount (${S.biz.currency||'SGD'})</label>
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
@@ -1958,34 +1985,113 @@ async function bookingsPage(){
   };
 }
 
-/* ---------- loyalty config ---------- */
-async function loyaltyPage(){
-  const {data:lp}=await sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1);
-  const p=lp?.[0];
-  M().innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Points that become real spendable credit — earned automatically on every sale</p></div></div>
+/* ---------- loyalty config ----------
+   The firm picks ONE model and tunes every number itself (nothing hardcoded):
+   classic      — fixed: N points -> $X credit (the original one-tap redeem).
+   points_tiers — points + owner-defined reward catalog + tiers (multipliers by visits/spend/points).
+   stamps       — every $Y spent = 1 stamp; owner-defined milestones ("4 stamps -> free bowl").
+   Rewards/milestones live in loyalty_rewards (cost_points = points or stamps; credit_cents = 0
+   means a free-item claim staff fulfil, >0 mints store credit). Tiers in loyalty_tiers. */
+async function loyaltyPage(modelOverride){
+  const [{data:lp},{data:rw},{data:tr}]=await Promise.all([
+    sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
+    sb.from('loyalty_rewards').select('*').eq('business_id',S.biz.id).order('sort').order('created_at'),
+    sb.from('loyalty_tiers').select('*').eq('business_id',S.biz.id).order('threshold')]);
+  const p=lp?.[0],rewards=rw||[],tiers=tr||[];
+  const model=modelOverride||p?.loyalty_model||'classic';
+  const unit=model==='stamps'?'stamps':'points';
+  const rewardRows=(label)=>`
+    <b style="display:block;margin-top:18px">${label}</b>
+    ${rewards.length?rewards.map(r=>`<div class="row" style="margin-top:8px">
+      <span>${r.active?'':'⏸ '}${esc(r.name)}</span><span class="spacer"></span>
+      <span class="muted small">${r.cost_points} ${unit}${r.credit_cents>0?' → '+money(r.credit_cents)+' credit':' → free item / benefit'}</span>
+      <button class="btn ghost sm rwDel" data-id="${r.id}">✕</button></div>`).join('')
+      :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}
+    <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+      <input id="rwName" placeholder="${model==='stamps'?'e.g. Free bowl of noodles':'e.g. $3 off'}" style="flex:2;min-width:150px">
+      <input id="rwCost" type="number" min="1" placeholder="${unit}" style="max-width:90px">
+      <input id="rwCred" type="number" min="0" step="0.01" placeholder="credit $ (0 = free item)" style="max-width:150px">
+      <button class="btn sm" id="rwAdd">Add</button></div>`;
+  const tierRows=()=>`
+    <b style="display:block;margin-top:18px">Tiers (optional)</b>
+    <label>Tier level is earned by</label><select id="ltb">
+      <option value="visits" ${(p?.tier_basis??'visits')==='visits'?'selected':''}>Number of visits (recommended)</option>
+      <option value="spend" ${p?.tier_basis==='spend'?'selected':''}>Lifetime spend ($)</option>
+      <option value="points_earned" ${p?.tier_basis==='points_earned'?'selected':''}>Lifetime points earned</option></select>
+    ${tiers.length?tiers.map(t=>`<div class="row" style="margin-top:8px">
+      <span>${esc(t.name)}</span><span class="spacer"></span>
+      <span class="muted small">from ${t.threshold} · ${t.points_multiplier}× ${unit}${t.perk_note?' · '+esc(t.perk_note):''}</span>
+      <button class="btn ghost sm trDel" data-id="${t.id}">✕</button></div>`).join('')
+      :`<p class="muted small" style="margin-top:6px">No tiers yet — customers all earn at 1×.</p>`}
+    <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+      <input id="trName" placeholder="e.g. Gold" style="flex:1;min-width:100px">
+      <input id="trTh" type="number" min="0" placeholder="from" style="max-width:80px">
+      <input id="trMul" type="number" min="1" step="0.5" placeholder="× earn" style="max-width:90px">
+      <input id="trPerk" placeholder="perk note (optional)" style="flex:1;min-width:120px">
+      <button class="btn sm" id="trAdd">Add</button></div>`;
+  M().innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Pick the model that fits your business — every number below is yours to change</p></div></div>
     <div class="split"><div class="card"><b>Program settings</b>
-      <label>Status</label><select id="la"><option value="true" ${p?.active?'selected':''}>Active</option><option value="false" ${p&&!p.active?'selected':''}>Paused</option></select>
-      <label>Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}">
-      <label>Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}">
-      <label>Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}">
-      <label>Points expiry</label><select id="lx">
+      <label>Status</label><select id="la"><option value="true" ${p?.active!==false?'selected':''}>Active</option><option value="false" ${p&&!p.active?'selected':''}>Paused</option></select>
+      <label>Loyalty model</label><select id="lm">
+        <option value="classic" ${model==='classic'?'selected':''}>Simple points — fixed redeem into credit</option>
+        <option value="points_tiers" ${model==='points_tiers'?'selected':''}>Points + reward catalog + tiers</option>
+        <option value="stamps" ${model==='stamps'?'selected':''}>Stamp card — $ per stamp, milestone rewards</option></select>
+      ${model==='stamps'
+        ?`<label>Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}">
+          <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>`
+        :`<label>Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}">`}
+      ${model==='classic'
+        ?`<label>Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}">
+          <label>Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}">`:''}
+      <label>${model==='stamps'?'Stamp':'Points'} expiry</label><select id="lx">
         <option value="none" ${(p?.expiry_mode??'none')==='none'?'selected':''}>Never expire</option>
         <option value="inactivity" ${p?.expiry_mode==='inactivity'?'selected':''}>Expire after inactivity (clock resets on every earn)</option>
         <option value="fixed" ${p?.expiry_mode==='fixed'?'selected':''}>Fixed shelf life from earn (oldest expire first)</option></select>
       <label>Expiry window (days)</label><input id="lxd" type="number" min="1" value="${p?.expiry_days??365}">
-      <p class="muted small" style="margin-top:8px">A daily sweep clears expired points automatically, so balances are never inflated.</p>
       <div style="margin-top:16px"><button class="btn" id="lsave">Save program</button></div></div>
-    <div class="card"><b>How it works</b>
-      <p class="muted" style="margin-top:8px;line-height:1.7">Every sale you record for a customer earns points instantly — nothing for staff to do. When they hit ${p?.redeem_points??800} points, one tap converts them into ${money(p?.reward_credit_cents??2000)} of real in-store credit they can spend on anything. Credit, not vanity points — that's what brings people back.</p>
-      <p class="muted small" style="margin-top:10px">Want visit-frequency promos ("come twice a week, get a free drink")? That's the <a href="#/retention" style="color:#D06A2E"><b>Retention</b></a> module.</p></div></div>`;
+    <div class="card">
+      ${model==='classic'
+        ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">Every sale earns points automatically. At ${p?.redeem_points??800} points, one tap converts them into ${money(p?.reward_credit_cents??2000)} of real in-store credit. Switch models above any time — balances carry over.</p>`
+        :model==='stamps'
+        ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.</p>${rewardRows('Your milestones')}`
+        :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
+    </div></div>`;
+  $('lm').onchange=()=>loyaltyPage($('lm').value);
   $('lsave').onclick=async()=>{
-    const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',
-      earn_points_per_dollar:parseFloat($('le').value||'1'),redeem_points:parseInt($('lr').value||'800'),
-      reward_credit_cents:Math.round(parseFloat($('lc').value||'20')*100),
+    const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       expiry_mode:$('lx').value,expiry_days:parseInt($('lxd').value||'365')};
+    if(model==='stamps') row.stamp_per_cents=Math.round(parseFloat($('lsp').value||'5')*100);
+    else row.earn_points_per_dollar=parseFloat($('le').value||'1');
+    if(model==='classic'){row.redeem_points=parseInt($('lr').value||'800');
+      row.reward_credit_cents=Math.round(parseFloat($('lc').value||'20')*100)}
+    if(model==='points_tiers'&&$('ltb')) row.tier_basis=$('ltb').value;
     const q=p?sb.from('loyalty_programs').update(row).eq('id',p.id):sb.from('loyalty_programs').insert(row);
-    const {error}=await q;if(error)return fail(error);toast('Loyalty program saved');
+    const {error}=await q;if(error)return fail(error);toast('Loyalty program saved');loyaltyPage();
   };
+  const ra=$('rwAdd');
+  if(ra) ra.onclick=async()=>{
+    const name=$('rwName').value.trim(),cost=parseInt($('rwCost').value||'0'),
+      cred=Math.round(parseFloat($('rwCred').value||'0')*100);
+    if(!name||!(cost>0)) return toast('Give the reward a name and a positive cost');
+    const {error}=await sb.from('loyalty_rewards').insert({business_id:S.biz.id,name,cost_points:cost,credit_cents:cred});
+    if(error)return fail(error);loyaltyPage(model);
+  };
+  const ta=$('trAdd');
+  if(ta) ta.onclick=async()=>{
+    const name=$('trName').value.trim(),th=parseInt($('trTh').value||'0'),mul=parseFloat($('trMul').value||'1');
+    if(!name) return toast('Give the tier a name');
+    const {error}=await sb.from('loyalty_tiers').insert({business_id:S.biz.id,name,threshold:th,
+      points_multiplier:Math.max(1,mul),perk_note:$('trPerk').value.trim()||null});
+    if(error)return fail(error);loyaltyPage(model);
+  };
+  document.querySelectorAll('.rwDel').forEach(b=>b.onclick=async()=>{
+    const {error}=await sb.from('loyalty_rewards').delete().eq('id',b.dataset.id);
+    if(error)return fail(error);loyaltyPage(model);
+  });
+  document.querySelectorAll('.trDel').forEach(b=>b.onclick=async()=>{
+    const {error}=await sb.from('loyalty_tiers').delete().eq('id',b.dataset.id);
+    if(error)return fail(error);loyaltyPage(model);
+  });
 }
 
 /* ---------- retention programs ---------- */

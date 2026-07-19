@@ -26,7 +26,7 @@ declare
     'mark_all_notifications_read', 'mark_notification_read', 'open_drawer',
     'quick_add_client', 'record_credit_tender', 'record_drawer_movement',
     'record_payment', 'record_quick_sale', 'record_sale_by_phone',
-    'reclassify_sale_policy', 'redeem_gift_card', 'redeem_points', 'refund_sale',
+    'reclassify_sale_policy', 'redeem_gift_card', 'redeem_points', 'redeem_reward', 'refund_sale',
     'reverse_sale', 'save_module_template', 'sell_package', 'set_booking_settings',
     'set_expense_void', 'set_sale_policy', 'set_staff_modules',
     'super_admin_list_businesses', 'use_package_session'
