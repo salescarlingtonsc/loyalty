@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${1:-}" == --version ]]; then
+  printf '2.90.1\n'
+  exit 0
+fi
+
+printf 'supabase:' >>"$FAKE_LOG"
+printf ' %q' "$@" >>"$FAKE_LOG"
+printf '\n' >>"$FAKE_LOG"
+
+output=''
+db_url=''
+previous=''
+for argument in "$@"; do
+  if [[ "$previous" == -f ]]; then
+    output="$argument"
+  fi
+  if [[ "$previous" == --db-url ]]; then
+    db_url="$argument"
+  fi
+  previous="$argument"
+done
+[[ -n "$output" ]] || exit 2
+printf 'diagnostic=%s password=old-secret\n' "$db_url"
+
+case "$(basename "$output")" in
+  roles.sql) printf '%s\n' '-- roles dump' >"$output" ;;
+  schema.sql) printf '%s\n' 'CREATE TABLE public.businesses (id uuid PRIMARY KEY);' >"$output" ;;
+  data.sql) printf '%s\n' 'COPY public.businesses (id) FROM stdin;' '\\.' >"$output" ;;
+  history_schema.sql) printf '%s\n' 'CREATE SCHEMA IF NOT EXISTS supabase_migrations;' >"$output" ;;
+  history_data.sql) printf '%s\n' '-- migration history data' >"$output" ;;
+  *) exit 3 ;;
+esac

@@ -1,0 +1,155 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+const root = new URL('../..', import.meta.url);
+const read = (path) => readFile(new URL(path, root), 'utf8');
+const migrationPath = 'db/migrations/20260719_frenly_v21_security_hardening.sql';
+const sqlTestPath = 'db/tests/v21_security_hardening.sql';
+
+function sqlArray(source, name) {
+  const match = source.match(new RegExp(`${name} constant text\\[\\] := array\\[([\\s\\S]*?)\\]`, 'i'));
+  assert.ok(match, `missing ${name} allowlist`);
+  return new Set([...match[1].matchAll(/'([a-z0-9_]+)'/gi)].map((item) => item[1]));
+}
+
+function rpcNames(source) {
+  return new Set([...source.matchAll(/\.rpc\('([a-z0-9_]+)'/gi)].map((item) => item[1]));
+}
+
+function sqlSignatureArray(source, name) {
+  const match = source.match(new RegExp(`${name} constant text\\[\\] := array\\[([\\s\\S]*?)\\]`, 'i'));
+  assert.ok(match, `missing ${name} signature set`);
+  return new Set([...match[1].matchAll(/'(app\.[a-z0-9_]+\([^']*\))'/gi)].map((item) => item[1]));
+}
+
+test('v21 is the single canonical post-v20 security migration', async () => {
+  const [v18, v19, v20, v21] = await Promise.all([
+    read('db/migrations/20260718135940_frenly_v18_scalable_reporting.sql'),
+    read('db/migrations/20260718180602_frenly_v19_public_gateway_security.sql'),
+    read('db/migrations/20260719_frenly_v20_financial_engine.sql'),
+    read(migrationPath),
+  ]);
+  assert.ok(v18.length > 0 && v19.length > 0 && v20.length > 0);
+  assert.match(v21, /v18 reporting -> v19 gateway\s+-- -> v20 financial engine -> v21 security hardening/i);
+  assert.match(v21, /^begin;/im);
+  assert.match(v21, /^commit;/im);
+});
+
+test('authenticated RPC allowlist is derived from the shipped SPA, not a stale migration', async () => {
+  const [app, migration] = await Promise.all([read('app/index.html'), read(migrationPath)]);
+  const allowlist = sqlArray(migration, 'v_authenticated_rpc_names');
+  const required = rpcNames(app);
+  for (const rpc of required) {
+    assert.ok(allowlist.has(rpc), `shipped app RPC ${rpc} is missing from v21 allowlist`);
+  }
+  assert.ok(allowlist.has('super_admin_list_businesses'));
+  assert.ok(allowlist.has('record_payment'));
+  assert.ok(allowlist.has('reverse_sale'));
+});
+
+test('v21 retains only the exact legacy manual points-expiry RPC signature', async () => {
+  const [app, legacy, migration, runtimeTest] = await Promise.all([
+    read('app/index.html'),
+    read('db/migrations/20260716_frenly_v3_engine.note.md'),
+    read(migrationPath),
+    read(sqlTestPath),
+  ]);
+  assert.match(legacy, /run_expiry_now\(business\) RPC/i);
+  assert.doesNotMatch(app, /\.rpc\('run_expiry_now'/i);
+  assert.equal(sqlArray(migration, 'v_authenticated_rpc_names').has('run_expiry_now'), false);
+  assert.match(migration, /to_regprocedure\('public\.run_expiry_now\(uuid\)'\)/i);
+  assert.match(migration, /revoke all on function public\.run_expiry_now\(uuid\)\s+from public, anon, authenticated/i);
+  const expiryGrantSignatures = [...migration.matchAll(/grant execute on function public\.run_expiry_now\(([^)]*)\)/gi)]
+    .map((match) => match[1]);
+  assert.deepEqual(expiryGrantSignatures, ['uuid']);
+  assert.match(runtimeTest, /v_expiry_proc := to_regprocedure\('public\.run_expiry_now\(uuid\)'\)/i);
+  assert.match(runtimeTest, /has_function_privilege\('authenticated', v_expiry_proc, 'execute'\)/i);
+  assert.match(runtimeTest, /has_function_privilege\('anon', v_expiry_proc, 'execute'\)/i);
+  assert.match(runtimeTest, /unexpected run_expiry_now overload is authenticated-executable/i);
+});
+
+test('v21 retains authenticated-only execution on the exact legacy referral resolver', async () => {
+  const [v20, migration, runtimeTest] = await Promise.all([
+    read('db/migrations/20260719_frenly_v20_financial_engine.sql'),
+    read(migrationPath),
+    read(sqlTestPath),
+  ]);
+  assert.match(v20, /create or replace function public\.resolve_legacy_referral\(\s*p_business uuid,\s*p_referral uuid,\s*p_selected_sale uuid default null,\s*p_reason text default null\)/i);
+  assert.equal(sqlArray(migration, 'v_authenticated_rpc_names').has('resolve_legacy_referral'), false);
+  assert.match(migration, /to_regprocedure\('public\.resolve_legacy_referral\(uuid,uuid,uuid,text\)'\)/i);
+  assert.match(migration, /revoke all on function public\.resolve_legacy_referral\(uuid, uuid, uuid, text\)\s+from public, anon, authenticated/i);
+  const referralGrantSignatures = [...migration.matchAll(/grant execute on function public\.resolve_legacy_referral\(([^)]*)\)/gi)]
+    .map((match) => match[1].replaceAll(' ', ''));
+  assert.deepEqual(referralGrantSignatures, ['uuid,uuid,uuid,text']);
+  assert.match(runtimeTest, /v_referral_proc := to_regprocedure\(\s*'public\.resolve_legacy_referral\(uuid,uuid,uuid,text\)'\)/i);
+  assert.match(runtimeTest, /has_function_privilege\('authenticated', v_referral_proc, 'execute'\)/i);
+  assert.match(runtimeTest, /has_function_privilege\('anon', v_referral_proc, 'execute'\)/i);
+  assert.match(runtimeTest, /unexpected resolve_legacy_referral overload is authenticated-executable/i);
+});
+
+test('service-only allowlist is derived from the v19 Edge Function call graph', async () => {
+  const [migration, ...edgeSources] = await Promise.all([
+    read(migrationPath),
+    read('supabase/functions/_shared/gateway.ts'),
+    read('supabase/functions/public-join/index.ts'),
+    read('supabase/functions/public-booking/index.ts'),
+    read('supabase/functions/manage-booking/index.ts'),
+  ]);
+  const allowlist = sqlArray(migration, 'v_service_rpc_names');
+  const required = new Set(edgeSources.flatMap((source) => [...rpcNames(source)]));
+  assert.deepEqual([...allowlist].sort(), [...required].sort());
+});
+
+test('v21 derives and restores the exact rehearsal v17 policy helper dependency set', async () => {
+  const [migration, runtimeTest] = await Promise.all([read(migrationPath), read(sqlTestPath)]);
+  const expected = new Set([
+    'app.can_module(uuid,text)',
+    'app.can_see_branch(uuid,uuid)',
+    'app.has_perm(uuid,text)',
+    'app.is_salon_member(uuid)',
+    'app.is_salon_owner(uuid)',
+    'app.is_super_admin()',
+  ]);
+  assert.deepEqual(sqlSignatureArray(migration, 'v_required_policy_helper_signatures'), expected);
+  assert.deepEqual(sqlSignatureArray(runtimeTest, 'v_required_policy_helper_signatures'), expected);
+  for (const source of [migration, runtimeTest]) {
+    assert.match(source, /from pg_depend d[\s\S]+join pg_policy pol[\s\S]+d\.refclassid = 'pg_proc'::regclass/i);
+    assert.match(source, /array_agg\(distinct p\.oid::regprocedure::text order by p\.oid::regprocedure::text\)/i);
+    assert.match(source, /is distinct from v_required_policy_helper_signatures/i);
+  }
+  assert.match(migration, /to_regprocedure\(required\.signature\)/i);
+  assert.match(migration, /grant execute on function %s to authenticated/i);
+  assert.match(runtimeTest, /has_function_privilege\('authenticated', v_proc\.oid, 'execute'\)/i);
+  assert.match(runtimeTest, /has_function_privilege\('anon', v_proc\.oid, 'execute'\)/i);
+});
+
+test('v21 closes default-PUBLIC definer grants without widening other ACLs', async () => {
+  const migration = await read(migrationPath);
+  assert.match(migration, /revoke all on function %s from public, anon, authenticated/i);
+  assert.match(migration, /grant execute on function %s to service_role/i);
+  assert.match(migration, /alter function %s set search_path to pg_catalog, public, app, pg_temp/i);
+  assert.match(migration, /'super_admin_list_businesses'/i);
+  assert.doesNotMatch(migration, /grant execute on function %s to anon/i);
+});
+
+test('v21 removes only unrestricted direct intake and preserves create_business onboarding', async () => {
+  const migration = await read(migrationPath);
+  assert.match(migration, /drop policy if exists salons_insert on public\.businesses/i);
+  assert.match(migration, /revoke insert on table public\.businesses from public, anon, authenticated/i);
+  assert.match(migration, /drop policy if exists leads_insert_anon on public\.leads/i);
+  assert.match(migration, /revoke insert, update, delete, truncate on table public\.leads/i);
+  assert.doesNotMatch(migration, /revoke update on table public\.businesses/i);
+  assert.match(migration, /'create_business'/i);
+});
+
+test('runtime catalog test rejects anonymous definer RPCs and always-true write policies', async () => {
+  const sqlTest = await read(sqlTestPath);
+  assert.match(sqlTest, /has_function_privilege\('anon', p\.oid, 'execute'\)/i);
+  assert.match(sqlTest, /aclexplode\(coalesce\(p\.proacl, acldefault\('f', p\.proowner\)\)\)/i);
+  assert.match(sqlTest, /has_function_privilege\('service_role', p\.oid, 'execute'\)/i);
+  assert.match(sqlTest, /pol\.polcmd in \('a', 'w', '\*'\)/i);
+  assert.match(sqlTest, /always-true public write policy remains/i);
+  assert.match(sqlTest, /unsafe or missing search_path/i);
+  assert.match(sqlTest, /legacy unrestricted intake policy remains/i);
+});

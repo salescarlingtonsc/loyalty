@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf 'psql PGDATABASE=%s:' "${PGDATABASE:+<set>}" >>"$FAKE_LOG"
+printf ' %q' "$@" >>"$FAKE_LOG"
+printf '\n' >>"$FAKE_LOG"
+
+if [[ "${1:-}" == --version ]]; then
+  printf '%s\n' "${FAKE_PSQL_VERSION_OUTPUT:-psql (PostgreSQL) 17.10 (Homebrew)}"
+  exit 0
+fi
+
+all="$*"
+if [[ "$all" == *server_version_num* ]]; then
+  printf '170006\n'
+elif [[ "$all" == *'select count(*) from storage.objects'* ]]; then
+  if [[ "${PGDATABASE:-}" == *kyzovonwnscrzmkvocid* ]]; then
+    printf '%s\n' "${FAKE_SOURCE_STORAGE_OBJECTS:-0}"
+  else
+    printf '0\n'
+  fi
+elif [[ "$all" == *'select count(*) from auth.users'* ]]; then
+  if [[ "${PGDATABASE:-}" == *kyzovonwnscrzmkvocid* ]]; then
+    printf '%s\n' "${FAKE_SOURCE_AUTH_USERS:-1}"
+  else
+    printf '0\n'
+  fi
+elif [[ "$all" == *"select count(*)"* || "$all" == *"select case when"* ]]; then
+  printf '0\n'
+elif [[ "$all" == *cron-enable.sql* ]]; then
+  printf "%s\n" "SELECT cron.schedule('nightly', '0 19 * * *', convert_from(decode('U0VMRUNUIDE7', 'base64'), 'UTF8'));"
+elif [[ "$all" == *cron-inventory.sql* ]]; then
+  printf '1\tnightly\t0 19 * * *\tpostgres\tpostgres\tt\tU0VMRUNUIDE7\n'
+elif [[ "$all" == *row-counts.sql* ]]; then
+  printf 'auth.users\t1\npublic.businesses\t3\n'
+elif [[ "$all" == *inventory.sql* ]]; then
+  printf 'server_version_num=170006\nextension=pg_cron:1.6\nschema=public\n'
+else
+  printf 'restore-ok\n'
+fi

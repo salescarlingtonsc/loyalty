@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="How Frenly and participating merchants handle personal data.">
+<title>Privacy Notice | Frenly</title>
+<style>
+:root{
+  --bg:#F4F2EE;--surface:#FFFFFF;--ink:#17161A;--ink2:#3D3B44;--muted:#716D79;
+  --line:#E6E1D9;--coral:#E95549;--coral-dark:#B93831;--tint:#FFF2ED;
+  --green:#237A50;--shadow:0 1px 2px rgba(23,22,26,.04),0 8px 24px rgba(23,22,26,.06);
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65}
+a{color:var(--coral-dark);text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+a:focus-visible,button:focus-visible{outline:3px solid rgba(233,85,73,.3);outline-offset:3px;border-radius:4px}
+.skip{position:absolute;left:12px;top:-60px;background:var(--ink);color:#fff;padding:10px 14px;z-index:10}
+.skip:focus{top:12px}
+.site-header{background:rgba(255,255,255,.94);border-bottom:1px solid var(--line)}
+.nav{max-width:1080px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{font-family:Georgia,serif;font-size:1.45rem;font-weight:700;color:var(--ink);text-decoration:none}
+.brand span{color:var(--coral)}
+.nav-links{display:flex;gap:18px;flex-wrap:wrap;justify-content:flex-end}
+.nav-links a{color:var(--ink2);font-size:.9rem;font-weight:650;text-decoration:none}
+.nav-links a[aria-current="page"]{color:var(--coral-dark)}
+.hero{border-bottom:1px solid var(--line);background:var(--surface)}
+.hero-inner{max-width:1080px;margin:auto;padding:58px 24px 50px}
+.eyebrow{color:var(--coral-dark);font-size:.78rem;font-weight:750;text-transform:uppercase;letter-spacing:.08em}
+h1{font-size:clamp(2.25rem,6vw,4rem);line-height:1.08;letter-spacing:0;margin:12px 0 14px;max-width:760px}
+.lede{font-size:1.12rem;color:var(--ink2);max-width:760px;margin:0}
+.updated{color:var(--muted);font-size:.88rem;margin-top:18px}
+.layout{max-width:1080px;margin:auto;padding:38px 24px 68px;display:grid;grid-template-columns:250px minmax(0,1fr);gap:52px;align-items:start}
+.toc{position:sticky;top:22px;border-left:3px solid var(--coral);padding:4px 0 4px 18px}
+.toc strong{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.toc a{display:block;color:var(--ink2);font-size:.87rem;padding:4px 0;text-decoration:none}
+.content{min-width:0}
+.notice{background:var(--tint);border-left:4px solid var(--coral);padding:18px 20px;margin:0 0 34px}
+.notice strong{display:block;margin-bottom:3px}
+section{scroll-margin-top:24px;padding-bottom:30px;margin-bottom:30px;border-bottom:1px solid var(--line)}
+section:last-child{border-bottom:0;margin-bottom:0}
+h2{font-size:1.55rem;line-height:1.25;letter-spacing:0;margin:0 0 12px}
+h3{font-size:1.05rem;line-height:1.35;margin:22px 0 7px}
+p{margin:0 0 13px}
+ul{margin:8px 0 14px;padding-left:22px}
+li{margin:7px 0}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{text-align:left;vertical-align:top;padding:13px 14px;border-bottom:1px solid var(--line)}
+th{background:#F9F7F3;font-size:.82rem;text-transform:uppercase;letter-spacing:.05em}
+tr:last-child td{border-bottom:0}
+.contact{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px}
+.label{color:var(--muted);font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.site-footer{border-top:1px solid var(--line);background:#FCFBF9}
+.footer-inner{max-width:1080px;margin:auto;padding:24px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;color:var(--muted);font-size:.87rem}
+.footer-links{display:flex;gap:16px;flex-wrap:wrap}
+@media(max-width:780px){
+  .nav{align-items:flex-start}.nav-links{gap:10px 14px}.hero-inner{padding-top:42px}
+  .layout{grid-template-columns:1fr;gap:28px}.toc{position:static}.content{width:100%}
+}
+@media(max-width:480px){.nav{padding:14px 18px}.nav-links{font-size:.85rem}.hero-inner,.layout{padding-left:18px;padding-right:18px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Policy navigation">
+    <a class="brand" href="index.html" aria-label="Frenly home">frenly<span>.</span></a>
+    <div class="nav-links">
+      <a href="privacy.html" aria-current="page">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="data-request.html">Data requests</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Privacy at Frenly</div>
+      <h1>Privacy Notice</h1>
+      <p class="lede">This notice explains how personal data is handled when businesses use Frenly to manage customers, appointments, sales, loyalty programmes, staff and related operations.</p>
+      <p class="updated">Last updated: 19 July 2026</p>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="toc" aria-label="On this page">
+      <strong>On this page</strong>
+      <a href="#roles">Who is responsible</a>
+      <a href="#data">Data we handle</a>
+      <a href="#purposes">Why we use it</a>
+      <a href="#sharing">Vendors and transfers</a>
+      <a href="#marketing">Marketing choices</a>
+      <a href="#rights">Your requests</a>
+      <a href="#retention">Retention</a>
+      <a href="#security">Security and breaches</a>
+      <a href="#children">Children</a>
+      <a href="#contact">Contact</a>
+    </aside>
+
+    <article class="content">
+      <div class="notice">
+        <strong>A shared responsibility</strong>
+        The business you deal with decides many of the reasons its customer and staff data is used. Contact that business first for questions about its loyalty programme, purchases, appointments or marketing. Frenly will support the business and handle requests for data that Frenly controls directly.
+      </div>
+
+      <section id="roles">
+        <h2>1. Who is responsible for your data</h2>
+        <h3>Participating businesses</h3>
+        <p>Each shop, clinic, studio, restaurant or other SME using Frenly (a <strong>merchant</strong>) is responsible for deciding why it collects and uses personal data for its customer relationships, staff administration, appointments, rewards, sales records and communications. The merchant must provide its own notices where required and must use Frenly lawfully.</p>
+        <h3>Frenly</h3>
+        <p>Frenly generally processes merchant customer and staff data on the merchant's behalf and instructions. For that activity, Frenly acts as the merchant's data intermediary. Frenly is separately responsible for personal data used for merchant account administration, platform security, abuse prevention, support, service operation, subscription administration and compliance with law.</p>
+        <p>Because responsibilities depend on the activity, we may refer a request to the relevant merchant or work with that merchant to respond.</p>
+      </section>
+
+      <section id="data">
+        <h2>2. Personal data we handle</h2>
+        <div class="table-wrap" role="region" aria-label="Personal data categories" tabindex="0">
+          <table>
+            <thead><tr><th>Category</th><th>Examples</th></tr></thead>
+            <tbody>
+              <tr><td>Merchant and user accounts</td><td>Name, work email, authentication identifiers, role, branch access, business contact details and support correspondence.</td></tr>
+              <tr><td>Customer profile</td><td>Name, Singapore mobile number, email, birthday, gender, notes, consent choices and merchant-specific customer identifiers. Fields vary by merchant.</td></tr>
+              <tr><td>Bookings and service activity</td><td>Appointment or booking details, requested service, preferred time, party size, table type, waitlist status and related notes.</td></tr>
+              <tr><td>Transactions and loyalty</td><td>Sales records, recorded tender type, points activity, store credit, rewards, gift cards, memberships, referrals, redemptions and adjustments. Frenly is not intended to store payment-card details.</td></tr>
+              <tr><td>Staff and operations</td><td>Staff name, job role, permissions, shifts, commissions, attendance or leave information, inventory activity and audit records entered by a merchant.</td></tr>
+              <tr><td>Technical and security data</td><td>IP or network information, browser and device information, timestamps, session and diagnostic events, security logs, and records used to prevent misuse. Where a rate-limit design permits, IP addresses may be transformed before storage.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>We do not need national identity numbers, copies of identity documents, payment-card numbers, passwords for other services, medical records or other highly sensitive data for ordinary use of Frenly. Please do not place such information in free-text notes.</p>
+      </section>
+
+      <section id="purposes">
+        <h2>3. Why personal data is used</h2>
+        <p>Depending on your relationship with a merchant or with Frenly, personal data may be used to:</p>
+        <ul>
+          <li>create and administer merchant, staff or customer records;</li>
+          <li>provide bookings, waitlists, sales records, loyalty points, rewards, memberships, gift cards, referrals and customer service;</li>
+          <li>let merchants understand business performance, customer engagement and programme liabilities;</li>
+          <li>record consent, communication preferences and access activity;</li>
+          <li>authenticate users, manage permissions, secure the service, prevent fraud or abuse, diagnose faults and maintain continuity;</li>
+          <li>respond to support, privacy and legal requests; and</li>
+          <li>administer the merchant's Frenly subscription or service relationship.</li>
+        </ul>
+        <p>We rely on consent where the PDPA requires it. Certain necessary operational, security, legal or business activities may be carried out without consent where an applicable PDPA exception permits and its conditions are met. This is not a blanket basis for direct marketing. We limit collection, use and disclosure to purposes a reasonable person would consider appropriate in the circumstances.</p>
+      </section>
+
+      <section id="sharing">
+        <h2>4. Vendors, disclosures and overseas transfers</h2>
+        <p>Frenly uses service providers for functions such as database and authentication services, web hosting, content delivery, software libraries and fonts, monitoring, backups, email or support tools if enabled, and professional advice. These providers process only the data needed for their function and are expected to be governed by appropriate contractual and security controls.</p>
+        <p>The production service's primary application database is configured for hosting in Singapore. Web hosting, content delivery, support, security and other providers may operate systems or personnel outside Singapore. Personal data may therefore be accessed or transferred outside Singapore where necessary. We take steps designed to require a standard of protection comparable to the PDPA, subject to applicable exceptions.</p>
+        <p>We may also disclose data to:</p>
+        <ul>
+          <li>the merchant and its authorised staff;</li>
+          <li>a successor in a genuine business reorganisation, with appropriate safeguards;</li>
+          <li>regulators, courts, law-enforcement bodies or advisers where required or permitted by law; or</li>
+          <li>another party where you have requested or authorised the disclosure.</li>
+        </ul>
+        <p>We do not sell personal data or allow a merchant's customer list to be used by another merchant.</p>
+      </section>
+
+      <section id="marketing">
+        <h2>5. Marketing and your choices</h2>
+        <p>A merchant may ask whether you want its offers and rewards. Marketing consent should be optional and separate from information needed to provide the service. The merchant is responsible for the content, recipients and legal basis of its messages, including compliance with Singapore's Do Not Call requirements where applicable.</p>
+        <p>You may opt out through the method in a message, by asking the merchant, or by contacting us. Service messages needed for an appointment, transaction, security matter or privacy request are not marketing. Withdrawing marketing consent does not cancel a purchase, loyalty balance or appointment, but withdrawing other processing consent may affect services that need the relevant data.</p>
+      </section>
+
+      <section id="rights">
+        <h2>6. Access, correction, withdrawal and deletion requests</h2>
+        <p>Subject to the PDPA and any applicable exceptions, you may ask for access to personal data in an organisation's possession or control and information about its use or disclosure, ask for an error or omission to be corrected, or withdraw consent with reasonable notice. You may also ask for deletion or account closure; whether data can be deleted depends on continuing legal or business needs.</p>
+        <p>For merchant-controlled records, contact the merchant first. You can also use our <a href="data-request.html">data request process</a>. We will verify identity proportionately before releasing or changing data and may need to coordinate with the merchant. We will explain material consequences of a consent withdrawal before acting on it.</p>
+      </section>
+
+      <section id="retention">
+        <h2>7. Retention and deletion</h2>
+        <p>We retain personal data only while it serves the purpose for which it was collected, while the merchant account remains active and needs the record, or while retention is required for legitimate legal or business purposes such as security, disputes, audits, financial records and recovery from backups.</p>
+        <p>When data is no longer required, we or the merchant will take reasonable steps to delete it, de-identify it or remove the means of associating it with an individual. Backup copies may remain inaccessible until they expire through the provider's normal protected backup cycle. Retention decisions can differ by record type and merchant instruction; we do not publish a single period that would be inaccurate for all records.</p>
+      </section>
+
+      <section id="security">
+        <h2>8. Security, incidents and complaints</h2>
+        <p>We use administrative, technical and organisational safeguards designed for the nature of the data and risks involved. These include tenant and role-based access controls, authentication controls, database access policies, activity records, secure configuration, controlled changes, backups and incident handling. No online service can promise absolute security.</p>
+        <p>If we become aware of a suspected data incident, we investigate, contain it, preserve relevant records and assess notification duties. Where a breach is notifiable, the responsible organisation will notify the Personal Data Protection Commission and affected individuals as required by the PDPA.</p>
+        <p>Please report suspected misuse or a complaint promptly to the Privacy Contact below. We will review the issue and may coordinate with the relevant merchant. You may also seek guidance from or make a complaint to Singapore's Personal Data Protection Commission.</p>
+      </section>
+
+      <section id="children">
+        <h2>9. Children's personal data</h2>
+        <p>Frenly is a business operations service and is not designed for children to administer merchant accounts independently. A merchant whose services are likely to be used by children must use age-appropriate notices, collect only what is needed, and obtain parent or guardian involvement where appropriate.</p>
+        <p>If you believe a child provided personal data without an appropriate understanding or safeguard, contact the merchant or our Privacy Contact. We will assess the request with the merchant and avoid asking for unnecessary identity documents.</p>
+      </section>
+
+      <section id="updates">
+        <h2>10. Changes to this notice</h2>
+        <p>We may update this notice when the service, vendors or legal requirements change. The date at the top shows the latest revision. We will use a proportionate notice method for material changes, such as an in-service message or merchant communication where appropriate.</p>
+      </section>
+
+      <section id="contact">
+        <h2>11. Contact</h2>
+        <div class="contact">
+          <div class="label">Interim Privacy Contact</div>
+          <p><strong>Frenly Privacy</strong><br><a href="mailto:leechuanseng.biz@gmail.com?subject=Frenly%20privacy%20enquiry">leechuanseng.biz@gmail.com</a></p>
+          <p>This is the current public contact for privacy questions and requests. It is not a statement that the named contact has been formally appointed as Frenly's Data Protection Officer.</p>
+          <p><a href="data-request.html">How to make a data request</a></p>
+        </div>
+      </section>
+    </article>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>&copy; 2026 Frenly</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="data-request.html">Data requests</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

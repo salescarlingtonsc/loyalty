@@ -1,0 +1,36 @@
+name: Production Baseline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  static-production-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Quality checks
+        run: npm run quality
+
+      - name: Tests
+        run: npm test
+
+      - name: Build validation
+        run: npm run build

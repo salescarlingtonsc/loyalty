@@ -1,6 +1,29 @@
 # Refund / Void / Partial-Refund Architecture — design proposal
 
-**Status:** DESIGN ONLY. No migration is written by this document; nothing has been applied.
+## v20 launch contract (2026-07-19)
+
+The historical options below are not the launch implementation. v20 deliberately supports
+only one full append-only reversal for original `service`, `retail`, and `quick_sale` rows.
+Partial refunds, un-refunds, `gift_card`/`package`/`membership` reversals, automatic restock,
+and provider-settled refunds are rejected rather than guessed.
+
+At launch, cash is refundable and store credit is refundable only when each credit payment has
+an exact `credit_tenders` row plus its linked negative `credit_ledger` spend. Card, PayNow,
+bank-transfer, gift-card, and other tender refunds remain disabled until an immutable provider
+settlement/consumption reference exists.
+
+Points clawback is also disabled. A sale earn can already have been redeemed into credit, while
+the current schema has no immutable redemption-to-earn provenance or tenant policy defining
+which downstream value must be recovered. v20 records the observed earned points in reversal
+audit evidence but does not append a points adjustment or mutate `points_batches`. Enabling
+clawback requires both provenance and an explicit policy migration; it is not a configuration
+toggle in v20.
+
+v13 flat commission is tombstoned and is not in the apply chain. v20 requires and preserves the
+v12 percentage-only commission snapshot contract.
+
+**Historical body status:** DESIGN ONLY. The v20 launch contract above supersedes conflicting
+recommendations in the original proposal; repository migration remains unapplied by this work.
 **Target implementation:** v11b (per the reviewer's ruling that `reverse_sale()` must not ship in v10.1).
 **Author context:** live schema read from Supabase project `kyzovonwnscrzmkvocid` on 2026-07-17 (read-only `execute_sql` / `pg_get_functiondef`). The repo is stale; every schema claim below is from the database, not from the migration files on disk.
 **Date:** 2026-07-17

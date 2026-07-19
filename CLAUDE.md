@@ -36,8 +36,10 @@ QR member identity, EN/ZH/MS/TA. Do not claim legal compliance — flag ⚖️ i
   automated tests for all loyalty calculations; no mock data in prod.
 
 ## Confirmed architecture decisions
-- Backend: **Supabase** project `kyzovonwnscrzmkvocid`. Publishable key
-  `sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7` (use this, not legacy anon).
+- Backend: **Supabase** project `gadpooereceldfpfxsod` (migrated 2026-07-18 from the
+  original `kyzovonwnscrzmkvocid` — full schema+data+auth port, 26 migrations replayed,
+  owner login preserved). Publishable key `sb_publishable_wDf8p9RghbpM2t7_PfBWKQ_YhYhNEAI`
+  (use this, not legacy anon). The old project `kyzovonwnscrzmkvocid` is retired.
 - Migration `frenly_init` applied: 13 tables, **RLS on every table**, append-only
   `credit_ledger` + `client_credit_balance` view, salon-membership-scoped policies.
 - Schema currently lives at `marketing-content/frenly-site/db/` — **should move into this

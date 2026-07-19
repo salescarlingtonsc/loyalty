@@ -84,6 +84,11 @@ tr.click:hover td{background:#FBFAF8}
 /* auth + onboard */
 .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
 .auth-card{width:420px;max-width:100%;border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:30px}
+.legal-links{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 14px;margin-top:18px;
+  color:var(--muted);font-size:11.5px}
+.legal-links a{text-decoration:underline;text-underline-offset:2px}
+.challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+.challenge-retry{background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
 .logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;letter-spacing:-.02em}
 .logo span{color:var(--coral)}
 .ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:8px}
@@ -239,20 +244,67 @@ tr.click:hover td{background:#FBFAF8}
 <div id="root"></div>
 <div id="toast" class="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 <script>
 /* ============ Frenly app ============ */
-const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
-const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
+const SB_URL='https://gadpooereceldfpfxsod.supabase.co';
+const SB_KEY='sb_publishable_wDf8p9RghbpM2t7_PfBWKQ_YhYhNEAI';
 /* detectSessionInUrl:false — with it left at its (true) default, supabase-js inspects
    window.location.hash on load and can history.replaceState the hash away on a hash-routed
    SPA, which is why a browser refresh was silently losing the current route ("refresh does
    nothing unless I retype the URL"). We don't use Supabase's own hash-based OAuth redirect
    flow here, so it's safe to turn off. */
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit'}});
+const legalLinks=()=>`<div class="legal-links"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/data-request.html">Data request</a></div>`;
+const publicFunctionUrl=(name,query='')=>`${SB_URL}/functions/v1/${name}${query}`;
+async function publicGateway(name,{method='POST',body=null,query=''}={}){
+  const response=await fetch(publicFunctionUrl(name,query),{
+    method,headers:body?{'content-type':'application/json'}:undefined,
+    body:body?JSON.stringify(body):undefined,credentials:'omit'});
+  let payload=null;
+  try{payload=await response.json()}catch{}
+  if(!response.ok) throw new Error(payload?.error||'We could not process that request.');
+  return payload;
+}
+let turnstileLoader;
+function loadTurnstile(){
+  if(window.turnstile) return Promise.resolve(window.turnstile);
+  if(turnstileLoader) return turnstileLoader;
+  turnstileLoader=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async=true;script.defer=true;
+    script.onload=()=>window.turnstile?resolve(window.turnstile):reject(new Error('Security check unavailable.'));
+    script.onerror=()=>{turnstileLoader=null;script.remove();reject(new Error('Security check unavailable.'))};
+    document.head.appendChild(script);
+  });
+  return turnstileLoader;
+}
+async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
+  const statusEl=$(status),retryEl=$(retry);let api,widgetId;
+  const message=(text,isError=false)=>{statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  const clear=(text,isError=false)=>{onToken('');message(text,isError)};
+  const render=async()=>{
+    message('Loading security check…');retryEl.hidden=true;
+    try{
+      api=await loadTurnstile();
+      if(!document.getElementById(container)) return;
+      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,
+        callback:(token)=>{onToken(token);message('Security check complete.');retryEl.hidden=true},
+        'expired-callback':()=>{clear('Security check expired. Please try again.',true);retryEl.hidden=false},
+        'timeout-callback':()=>{clear('Security check timed out. Please try again.',true);retryEl.hidden=false},
+        'error-callback':()=>{clear('Security check could not load. Please try again.',true);retryEl.hidden=false;return true}});
+    }catch{clear('Security check could not load. Check your connection and try again.',true);retryEl.hidden=false}
+  };
+  const reset=()=>{clear('Complete the security check to continue.');retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  retryEl.onclick=reset;
+  await render();
+  return {reset};
+}
+let passwordRecoveryActive=false,passwordRecoveryError=false;
 
 /* Chart.js global defaults (design system v2). Chart.js out of the box is the single
    biggest "generic AI dashboard" tell — grey 1px grids on both axes, boxed legends,
@@ -357,6 +409,26 @@ const sgt=iso=>{if(!iso) return null;const d=new Date(new Date(iso).getTime()+8*
    UTC ISO string by anchoring it explicitly to Singapore time (+08:00) instead of relying on
    the browser's ambient system timezone — avoids the local-vs-UTC mismatch bug. */
 const sgIso=v=>v?new Date(v+':00+08:00').toISOString():null;
+/* reporting-scale:start — keep raw exports complete despite the Data API row cap. */
+const DATA_API_PAGE_SIZE=1000;
+const sgDateBoundary=(date,dayOffset=0)=>{
+  if(!date) return null;
+  const start=new Date(date+'T00:00:00+08:00');
+  return new Date(start.getTime()+dayOffset*864e5).toISOString();
+};
+async function fetchAllRows(makeQuery,pageSize=DATA_API_PAGE_SIZE){
+  const rows=[];
+  let from=0,total=null;
+  for(;;){
+    const {data,error,count}=await makeQuery().range(from,from+pageSize-1);
+    if(error) throw error;
+    if(Number.isInteger(count)) total=count;
+    rows.push(...(data||[]));
+    if(!data||!data.length||(total!==null&&rows.length>=total)||(total===null&&data.length<pageSize)) return rows;
+    from=rows.length;
+  }
+}
+/* reporting-scale:end */
 function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
 function nav(h){location.hash=h}
 window.addEventListener('hashchange',route);
@@ -368,6 +440,8 @@ async function route(){
      read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
   try{
     killCharts();
+    if(passwordRecoveryError) return renderRecoveryInvalid();
+    if(passwordRecoveryActive) return renderPasswordUpdate();
     const h=location.hash||'#/';
     if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
     const {data:{session}}=await sb.auth.getSession();
@@ -454,6 +528,30 @@ async function route(){
 
 /* ---------- auth ---------- */
 function renderAuth(mode='in'){
+  if(mode==='forgot'){
+    root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
+      <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
+      <h2 style="margin:14px 0 2px">Reset your password</h2>
+      <p class="muted small" style="margin-top:6px">Enter your account email and we will send a secure reset link.</p>
+      <label>Email</label><input id="em" type="email" autocomplete="email" placeholder="you@business.com">
+      <div id="autherr"></div>
+      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest">Send reset link</button>
+      <span class="spacer"></span><button class="btn ghost sm" id="backSignIn">Back to sign in</button></div>
+      ${legalLinks()}</div></div>`;
+    $('backSignIn').onclick=()=>renderAuth('in');
+    $('resetRequest').onclick=async()=>{
+      const email=$('em').value.trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        $('autherr').innerHTML='<div class="err">Enter a valid email address.</div>';return;
+      }
+      $('resetRequest').disabled=true;
+      const redirect=new URL(location.pathname,location.origin);
+      redirect.searchParams.set('recovery','1');
+      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString()})}catch{}
+      $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
+    };
+    return;
+  }
   root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
     <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
     <p class="muted" style="margin-bottom:8px">Loyalty & retention for every business — real rewards, not vanity points.</p>
@@ -461,12 +559,14 @@ function renderAuth(mode='in'){
     <label>Email</label><input id="em" type="email" placeholder="you@business.com">
     <label>Password</label><input id="pw" type="password" placeholder="••••••••">
     <div id="autherr"></div>
+    ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
     <div class="row" style="margin-top:18px">
       <button class="btn" id="go">${mode==='in'?'Sign in':'Sign up'}</button>
       <span class="spacer"></span>
       <button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>
-    </div></div></div>`;
+    </div>${legalLinks()}</div></div>`;
   $('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
+  if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot');
   $('go').onclick=async()=>{
     const email=$('em').value.trim(),password=$('pw').value;
     $('go').disabled=true;
@@ -482,6 +582,68 @@ function renderAuth(mode='in'){
       S.biz=null;route();
     }catch(e){$('autherr').innerHTML=`<div class="err">${esc(e.message)}</div>`;$('go').disabled=false}
   };
+}
+
+function validNewPassword(password){
+  return password.length>=12 && /[a-z]/.test(password) && /[A-Z]/.test(password)
+    && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password);
+}
+function renderPasswordUpdate(){
+  root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
+    <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
+    <h2 style="margin:14px 0 2px">Choose a new password</h2>
+    <p class="muted small" style="margin-top:6px">Use at least 12 characters with upper and lowercase letters, a number and a symbol.</p>
+    <label>New password</label><input id="newPw" type="password" autocomplete="new-password">
+    <label>Confirm new password</label><input id="confirmPw" type="password" autocomplete="new-password">
+    <div id="autherr"></div><button class="btn" id="savePw" style="width:100%;margin-top:18px">Update password</button>
+    ${legalLinks()}</div></div>`;
+  $('savePw').onclick=async()=>{
+    const password=$('newPw').value;
+    if(!validNewPassword(password)){
+      $('autherr').innerHTML='<div class="err">Use at least 12 characters with upper and lowercase letters, a number and a symbol.</div>';return;
+    }
+    if(password!==$('confirmPw').value){$('autherr').innerHTML='<div class="err">Passwords do not match.</div>';return}
+    $('savePw').disabled=true;
+    const {error}=await sb.auth.updateUser({password});
+    if(error){$('autherr').innerHTML='<div class="err">This reset link is invalid or expired. Request a new one.</div>';$('savePw').disabled=false;return}
+    await sb.auth.signOut();passwordRecoveryActive=false;
+    history.replaceState(null,'',location.pathname+'#/');
+    renderAuth('in');
+    $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Password updated. Sign in with your new password.</div>';
+  };
+}
+
+function renderRecoveryInvalid(){
+  root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
+    <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
+    <h2 style="margin:14px 0 2px">Reset link unavailable</h2>
+    <p class="muted small" style="margin-top:6px">This password reset link is invalid or expired. Request a new link to continue.</p>
+    <button class="btn" id="requestAnotherReset" style="width:100%;margin-top:18px">Request a new reset link</button>
+    ${legalLinks()}</div></div>`;
+  $('requestAnotherReset').onclick=()=>{passwordRecoveryError=false;renderAuth('forgot')};
+}
+
+sb.auth.onAuthStateChange((event)=>{
+  if(event==='PASSWORD_RECOVERY'){
+    passwordRecoveryError=false;passwordRecoveryActive=true;
+    setTimeout(()=>renderPasswordUpdate(),0);
+  }
+});
+
+async function consumePasswordRecoveryRedirect(){
+  const search=new URLSearchParams(location.search);
+  const hash=new URLSearchParams((location.hash||'').replace(/^#/,''));
+  if(hash.get('type')==='recovery'&&hash.get('access_token')&&hash.get('refresh_token')){
+    const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token');
+    history.replaceState(null,'',location.pathname+'?recovery=1#/recover');
+    try{
+      const {error}=await sb.auth.setSession({access_token:accessToken,refresh_token:refreshToken});
+      passwordRecoveryError=!!error;passwordRecoveryActive=!error;
+    }catch{passwordRecoveryError=true;passwordRecoveryActive=false}
+  }else if(search.get('recovery')==='1'){
+    const {data:{session}}=await sb.auth.getSession();
+    passwordRecoveryActive=!!session;passwordRecoveryError=!session;
+  }
 }
 
 /* ---------- onboarding ---------- */
@@ -1012,52 +1174,28 @@ async function dashboard(){
   $('apply').onclick=()=>load();
   async function load(){
     killCharts();
-    const from=$('df').value,to=$('dt').value+'T23:59:59';
-    let salesQ=sb.from('sales').select('id,client_id,amount_cents,occurred_at,kind,counts_as_revenue,counts_as_visit').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at');
-    if(selectedBranchId) salesQ=salesQ.eq('branch_id',selectedBranchId);
-    const [sales,clients,pts,credit]=await Promise.all([
-      // refund/reversal state deferred to a future migration; no reversal rows exist yet
-      salesQ,
-      sb.from('clients').select('id,gender,birth_date,created_at').eq('business_id',S.biz.id),
-      sb.from('points_ledger').select('points,entry_type,created_at').eq('business_id',S.biz.id).gte('created_at',from).lte('created_at',to),
-      sb.from('client_credit_balance').select('balance_cents').eq('business_id',S.biz.id)
-    ]);
-    if(sales.error) return fail(sales.error);
-    const sl=sales.data||[],cl=clients.data||[],pl=pts.data||[];
-    /* Revenue and visits are read off each sale's own immutable policy snapshot
-       (counts_as_revenue / counts_as_visit) — never re-derived from today's sale_policies.
-       That live join was the v10.1 defect: a settings change would retroactively rewrite
-       completed history. refund/reversal state deferred to a future migration; no reversal
-       rows exist yet, so there is nothing to exclude from the visit count here. */
-    const rev=sl.filter(s=>s.counts_as_revenue);
-    const visits=sl.filter(s=>s.counts_as_visit);
-    const revenue=rev.reduce((a,s)=>a+s.amount_cents,0);
-    const uniq=new Set(sl.filter(s=>s.client_id).map(s=>s.client_id)).size;
-    const newC=cl.filter(c=>c.created_at>=from&&c.created_at<=to).length;
-    const earned=pl.filter(p=>p.entry_type==='earn').reduce((a,p)=>a+p.points,0);
-    const liab=(credit.data||[]).reduce((a,c)=>a+Math.max(c.balance_cents,0),0);
-    $('kpis').innerHTML=[['Visits (sales)',visits.length],['Revenue',money(revenue)],['Unique customers',uniq],
-      ['New customers',newC],['Points issued',earned],['Credit liability',money(liab)]]
+    const {data,error}=await sb.rpc('get_dashboard_summary',{
+      p_business:S.biz.id,p_from:$('df').value,p_to:$('dt').value,p_branch:selectedBranchId||null});
+    if(error) return fail(error);
+    const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
+    $('kpis').innerHTML=[['Visits (sales)',d.visits||0],['Revenue',money(d.revenue_cents||0)],['Unique customers',d.unique_customers||0],
+      ['New customers',d.new_customers||0],['Points issued',d.points_issued||0],['Credit liability',money(d.credit_liability_cents||0)]]
       .map(([l,v])=>`<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
     $('charts').innerHTML=`
       <div class="card"><b>Busiest days</b><p class="muted small">Visits by day of week</p><canvas id="c1"></canvas></div>
       <div class="card"><b>Revenue over time</b><p class="muted small">Daily total in range</p><canvas id="c2"></canvas></div>
       <div class="card"><b>Customer gender</b><p class="muted small">All customers on file</p><canvas id="c3"></canvas></div>
       <div class="card"><b>Age groups</b><p class="muted small">From birth dates on file</p><canvas id="c4"></canvas></div>`;
-    const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],wd=[0,0,0,0,0,0,0];
-    visits.forEach(s=>{wd[(new Date(s.occurred_at).getDay()+6)%7]++});
-    const byDay={};rev.forEach(s=>{const k=s.occurred_at.slice(0,10);byDay[k]=(byDay[k]||0)+s.amount_cents});
-    const dk=Object.keys(byDay).sort();
-    const g={female:0,male:0,other:0,unknown:0};
-    cl.forEach(c=>g[c.gender||'unknown']++);
-    const ages={'<25':0,'25–34':0,'35–44':0,'45–54':0,'55+':0,'—':0};
-    cl.forEach(c=>{if(!c.birth_date){ages['—']++;return}
-      const a=(Date.now()-new Date(c.birth_date))/3.156e10;
-      ages[a<25?'<25':a<35?'25–34':a<45?'35–44':a<55?'45–54':'55+']++});
+    const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const revenueDays=d.revenue_by_day||[],dk=revenueDays.map(x=>x.day);
+    const g={female:0,male:0,other:0,unknown:0,...(d.gender_counts||{})};
+    const ac=d.age_counts||{};
+    const ages={'<25':ac.under_25||0,'25–34':ac.age_25_34||0,'35–44':ac.age_35_44||0,
+      '45–54':ac.age_45_54||0,'55+':ac.age_55_plus||0,'—':ac.unknown||0};
     const C=(id,cfg)=>S.charts.push(new Chart($(id),cfg));
     const coral='#FF6B5E',amber='#FFB86B',ink='#1C1A22';
     C('c1',{type:'bar',data:{labels:days,datasets:[{data:wd,backgroundColor:days.map((_,i)=>wd[i]===Math.max(...wd)&&wd[i]>0?coral:amber),borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
-    C('c2',{type:'line',data:{labels:dk,datasets:[{data:dk.map(k=>byDay[k]/100),borderColor:coral,backgroundColor:'rgba(255,107,94,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false}}}});
+    C('c2',{type:'line',data:{labels:dk,datasets:[{data:revenueDays.map(x=>x.amount_cents/100),borderColor:coral,backgroundColor:'rgba(255,107,94,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false}}}});
     C('c3',{type:'doughnut',data:{labels:['Female','Male','Other','Not set'],datasets:[{data:[g.female,g.male,g.other,g.unknown],backgroundColor:[coral,amber,'#8B7BC7','#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});
     C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
   }
@@ -1070,12 +1208,18 @@ async function clientsPage(){
     <div class="row"><button class="btn ghost sm" id="exp">Export CSV</button>${importBtn('customers')}<button class="btn" id="add">+ Add customer</button></div></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list"><div class="empty">Loading…</div></div>`;
+  const CLIENT_PAGE_SIZE=100;
+  let clientPage=0;
   $('exp').onclick=async()=>{
-    const [{data:cl,error},{data:pb},{data:cb}]=await Promise.all([
-      sb.from('clients').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false}),
-      sb.from('client_points_balance').select('*').eq('business_id',S.biz.id),
-      sb.from('client_credit_balance').select('*').eq('business_id',S.biz.id)]);
-    if(error) return fail(error);
+    $('exp').disabled=true;
+    let cl,pb,cb;
+    try{
+      [cl,pb,cb]=await Promise.all([
+        fetchAllRows(()=>sb.from('clients').select('*',{count:'exact'}).eq('business_id',S.biz.id)
+          .order('created_at',{ascending:false}).order('id')),
+        fetchAllRows(()=>sb.from('client_points_balance').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('client_id')),
+        fetchAllRows(()=>sb.from('client_credit_balance').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('client_id'))]);
+    }catch(error){$('exp').disabled=false;return fail(error)}
     const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
           C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
     const rows=[['name','phone','email','gender','birth_date','consent','points','credit'],
@@ -1083,6 +1227,7 @@ async function clientsPage(){
         c.marketing_consent?'yes':'no',P[c.id]||0,((C[c.id]||0)/100).toFixed(2)])];
     const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-customers.csv';a.click();
+    $('exp').disabled=false;
     toast('CSV downloaded');
   };
   $('add').onclick=()=>{
@@ -1120,19 +1265,30 @@ async function clientsPage(){
     };
   };
   async function load(){
-    const [{data:cl,error},{data:pb},{data:cb}]=await Promise.all([
-      sb.from('clients').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false}),
-      sb.from('client_points_balance').select('*').eq('business_id',S.biz.id),
-      sb.from('client_credit_balance').select('*').eq('business_id',S.biz.id)]);
+    const from=clientPage*CLIENT_PAGE_SIZE;
+    const {data:cl,error,count}=await sb.from('clients').select('*',{count:'exact'})
+      .eq('business_id',S.biz.id).order('created_at',{ascending:false}).order('id')
+      .range(from,from+CLIENT_PAGE_SIZE-1);
     if(error) return fail(error);
     if(!cl.length){$('list').innerHTML=`<div class="empty"><div class="big">👥</div>No customers yet.<br>Add your first customer — every sale you record for them earns loyalty automatically.</div>`;return}
+    const ids=cl.map(c=>c.id);
+    const [{data:pb,error:pe},{data:cb,error:ce}]=await Promise.all([
+      sb.from('client_points_balance').select('client_id,points').eq('business_id',S.biz.id).in('client_id',ids),
+      sb.from('client_credit_balance').select('client_id,balance_cents').eq('business_id',S.biz.id).in('client_id',ids)]);
+    if(pe||ce) return fail(pe||ce);
     const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
           C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
+    const total=count||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     $('list').innerHTML=`<table><tr><th>Name</th><th>Phone</th><th>Gender</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
       ${cl.map(c=>`<tr class="click" onclick="location.hash='#/client/${c.id}'">
         <td><b>${esc(c.full_name)}</b></td><td>${esc(c.phone||'—')}</td><td>${esc(c.gender||'—')}</td>
         <td>${P[c.id]||0} pts</td><td>${money(C[c.id]||0)}</td>
-        <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table>`;
+        <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table>
+      <div class="row" style="margin-top:14px"><span class="muted small">${total} customers · page ${clientPage+1} of ${pages}</span><span class="spacer"></span>
+        <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
+        <button class="btn ghost sm" id="clNext" ${clientPage+1>=pages?'disabled':''}>Next</button></div>`;
+    $('clPrev').onclick=()=>{if(clientPage>0){clientPage--;load()}};
+    $('clNext').onclick=()=>{if(clientPage+1<pages){clientPage++;load()}};
   }
   load();
 }
@@ -2324,31 +2480,15 @@ async function reportsPage(){
     <input type="date" id="rt2" value="${iso(new Date())}"> <span id="branchWrap"></span><button class="btn sm" id="rgo">Run</button>
     <button class="btn ghost sm" id="rcsv">Export sales CSV</button></div></div>
     <div class="grid" id="rbody" style="grid-template-columns:1fr 1fr"><div class="card"><div class="empty">Pick a range and Run.</div></div></div>`;
-  let lastSales=[];
+  let lastScope=null;
   async function run(){
-    const from=$('rf').value,to=$('rt2').value+'T23:59:59';
-    let salesQ=sb.from('sales').select('*, clients(full_name)').eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at');
-    if(selectedBranchId) salesQ=salesQ.eq('branch_id',selectedBranchId);
-    const [{data:sl},{data:pl},{data:cb},{data:gc},{data:ms}]=await Promise.all([
-      salesQ,
-      sb.from('points_ledger').select('entry_type,points').eq('business_id',S.biz.id).gte('created_at',from).lte('created_at',to),
-      sb.from('client_credit_balance').select('balance_cents').eq('business_id',S.biz.id),
-      sb.from('gift_cards').select('balance_cents,status').eq('business_id',S.biz.id),
-      sb.from('memberships').select('status').eq('business_id',S.biz.id)]);
-    lastSales=sl||[];
-    /* Revenue rollup reads each sale's own immutable counts_as_revenue snapshot — never a
-       hardcoded kind list, and never today's sale_policies joined against past rows (that
-       join is the v10.1 defect). Reversal rows carry the original's inherited flag and a
-       negative amount, so they fall into the same kind bucket and net out on their own. */
-    const byKind={};(sl||[]).forEach(s=>{if(!s.counts_as_revenue)return;byKind[s.kind]=(byKind[s.kind]||0)+s.amount_cents});
-    /* "Cash collected, not revenue": any kind whose snapshot says counts_as_revenue=false —
-       today that's gift cards by default, but a business that later defers package revenue
-       (or anything else) lands here too, driven by the row's own flag rather than a name. */
-    const nonRevByKind={};(sl||[]).forEach(s=>{if(s.counts_as_revenue)return;nonRevByKind[s.kind]=(nonRevByKind[s.kind]||0)+s.amount_cents});
-    const pt={};(pl||[]).forEach(p=>{pt[p.entry_type]=(pt[p.entry_type]||0)+p.points});
-    const liab=(cb||[]).reduce((a,c)=>a+Math.max(c.balance_cents,0),0);
-    const gcOut=(gc||[]).filter(g=>g.status==='active').reduce((a,g)=>a+g.balance_cents,0);
-    const actMs=(ms||[]).filter(m=>m.status==='active').length;
+    const from=$('rf').value,to=$('rt2').value;
+    const {data,error}=await sb.rpc('get_reports_summary',{
+      p_business:S.biz.id,p_from:from,p_to:to,p_branch:selectedBranchId||null});
+    if(error) return fail(error);
+    lastScope={from:sgDateBoundary(from),toExclusive:sgDateBoundary(to,1),branchId:selectedBranchId||null};
+    const d=data||{},byKind=d.revenue_by_kind||{},nonRevByKind=d.non_revenue_by_kind||{},pt=d.points_by_type||{};
+    const liab=d.credit_liability_cents||0,gcOut=d.gift_card_liability_cents||0,actMs=d.active_memberships||0;
     $('rbody').innerHTML=`
       <div class="card"><b>Revenue by type</b><table style="margin-top:8px">
         ${Object.entries(byKind).map(([k,v])=>`<tr><td>${k.replace('_',' ')}</td><td style="text-align:right"><b>${money(v)}</b></td></tr>`).join('')||'<tr><td class="muted">No sales in range</td></tr>'}
@@ -2368,8 +2508,20 @@ async function reportsPage(){
         <tr><td>Membership revenue (range)</td><td style="text-align:right"><b>${money(byKind.membership||0)}</b></td></tr></table></div>`;
   }
   $('rgo').onclick=run;
-  $('rcsv').onclick=()=>{
-    if(!lastSales.length) return toast('Run a report first');
+  $('rcsv').onclick=async()=>{
+    if(!lastScope) return toast('Run a report first');
+    $('rcsv').disabled=true;
+    let lastSales;
+    try{
+      lastSales=await fetchAllRows(()=>{
+        let q=sb.from('sales').select('*, clients(full_name)',{count:'exact'}).eq('business_id',S.biz.id)
+          .gte('occurred_at',lastScope.from).lt('occurred_at',lastScope.toExclusive)
+          .order('occurred_at').order('id');
+        if(lastScope.branchId) q=q.eq('branch_id',lastScope.branchId);
+        return q;
+      });
+    }catch(error){$('rcsv').disabled=false;return fail(error)}
+    if(!lastSales.length){$('rcsv').disabled=false;return toast('No sales in this report range')}
     /* counts_as_revenue/counts_as_visit are each sale's own immutable snapshot at record
        time — included so this export stays byte-identical if the business's sale policy
        changes later, instead of quietly reflecting whatever policy is live on export day.
@@ -2378,6 +2530,7 @@ async function reportsPage(){
       ...lastSales.map(s=>[s.occurred_at,s.clients?.full_name||'',s.kind,(s.amount_cents/100).toFixed(2),(s.note||'').replace(/,/g,';'),s.counts_as_revenue,s.counts_as_visit])];
     const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-sales.csv';a.click();
+    $('rcsv').disabled=false;
     toast('CSV downloaded');
   };
   refreshBranchFilter(run);
@@ -3060,7 +3213,7 @@ async function loadCommissionConfig(){
   });
 }
 
-/* ---------- phone country-code picker (portal only: booking form + manage-booking) ----------
+/* ---------- phone country-code picker (portal booking form only) ----------
    Singapore first/default since Frenly is SG-first; a handful of the other common corridors
    for this customer base. */
 const COUNTRY_CODES=[['+65','🇸🇬'],['+60','🇲🇾'],['+62','🇮🇩'],['+852','🇭🇰'],['+61','🇦🇺'],
@@ -3112,12 +3265,23 @@ async function platformPage(){
 
 /* ---------- public customer portal ---------- */
 async function renderPortal(slug){
+  const incomingParams=new URLSearchParams((location.hash.split('?')[1]||''));
+  let manageToken=incomingParams.get('manage')||'';
+  if(manageToken){
+    history.replaceState(null,'',`${location.pathname}${location.search}#/b/${encodeURIComponent(slug)}`);
+  }
   root.innerHTML=`<div class="portal"><div class="head"><div class="logo">frenly<span>.</span></div><p class="muted small">powered booking</p></div><div class="card"><div class="empty">Loading…</div></div></div>`;
-  const {data,error}=await sb.rpc('get_business_public',{p_slug:slug});
-  if(error||!data){root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">🤔</div>Business not found.</div>`;return}
-  const biz=data;let selSvc=null,selTable=null;
+  let biz;
+  try{biz=await publicGateway('public-booking',{method:'GET',query:`?slug=${encodeURIComponent(slug)}`})}
+  catch{root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">🤔</div>Business not found.</div>`;return}
+  let selSvc=null,selTable=null,bookingSubmissionId=null,bookingSubmissionKey='';
+  let bookingTurnstileToken='',bookingTurnstileControl=null;
+  let bookingChallengeGeneration=0;
+  let changeAttempt=null;
   const bc=/^#[0-9A-Fa-f]{6}$/.test(biz.brand_color||'')?biz.brand_color:'#FF6B5E';
   const draw=()=>{
+    const challengeGeneration=++bookingChallengeGeneration;
+    bookingTurnstileToken='';bookingTurnstileControl=null;
     root.innerHTML=`<div class="portal" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)">
       <div class="head"><h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
       <div class="card">
@@ -3143,35 +3307,44 @@ async function renderPortal(slug){
         <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
           <input type="checkbox" id="pconsent" style="width:auto"> 📩 Send me offers & updates</label>
         <p class="muted small" style="margin-top:2px">Occasional news and offers from ${esc(biz.name)} — you can opt out anytime.</p>
+        <div class="challenge"><div id="bookingTurnstile"></div>
+          <p class="challenge-status" id="bookingTurnstileStatus" role="status" aria-live="polite">Loading security check…</p>
+          <button class="challenge-retry" id="bookingTurnstileRetry" type="button" hidden>Retry security check</button>
+        </div>
         <div id="perr"></div>
-        <div style="margin-top:18px"><button class="btn" id="psend" style="width:100%">Request booking</button></div>
+        <div style="margin-top:18px"><button class="btn" id="psend" disabled style="width:100%">Request booking</button></div>
         ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
         <p class="muted small" style="margin-top:12px;text-align:center">The team confirms your request personally — you'll hear back soon.</p>
       </div>
       <div class="card" style="margin-top:16px"><b>Manage an existing booking</b>
-        <p class="muted small" style="margin:6px 0 10px">Pick your country code and enter your number — no need to type the code twice.</p>
-        <div class="row">${ccSelectHtml('mphonecc')}<input id="mphone" placeholder="Your number"><button class="btn ghost sm" id="mfind">Find my bookings</button></div>
+        <p class="muted small" style="margin:6px 0 10px">Use the private management code issued with your booking. Your phone number is never used as a password.</p>
+        <div class="row"><input id="mtoken" autocomplete="off" placeholder="Booking management code" value="${esc(manageToken)}"><button class="btn ghost sm" id="mfind">Open booking</button></div>
         <div id="merr"></div>
         <div id="mlist" style="margin-top:12px"></div>
-      </div></div>`;
+      </div>${legalLinks()}</div>`;
     document.querySelectorAll('[data-s]').forEach(el=>el.onclick=()=>{selSvc=el.dataset.s||null;draw()});
     document.querySelectorAll('[data-tbl]').forEach(el=>el.onclick=()=>{selTable=el.dataset.tbl||null;draw()});
+    mountTurnstile(biz.turnstile_site_key,{container:'bookingTurnstile',status:'bookingTurnstileStatus',retry:'bookingTurnstileRetry',action:'public_booking',
+      onToken:(token)=>{if(challengeGeneration!==bookingChallengeGeneration)return;bookingTurnstileToken=token;if($('psend'))$('psend').disabled=!token}})
+      .then(control=>{if(challengeGeneration===bookingChallengeGeneration)bookingTurnstileControl=control});
     $('psend').onclick=async()=>{
+      if(!bookingTurnstileToken) return;
       $('psend').disabled=true;
       const rawPhone=($('pp').value||'').trim();
-      const {data:bookRes,error}=await sb.rpc('request_booking',{
-        p_slug:slug,
-        p_name:$('pn').value,
-        p_email:$('pe').value||null,
-        p_phone:rawPhone?buildPhone('ppcc','pp'):null,
-        p_service:selSvc,
-        p_party:parseInt($('ps').value||'1'),
-        p_preferred:sgIso($('pt').value),
-        p_notes:$('pnotes').value||null,
-        p_table_type:biz.uses_tables?selTable:null,
-        p_consent:$('pconsent').checked
-      });
-      if(error){$('perr').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('psend').disabled=false;return}
+      const bookingPayload={
+        slug,name:$('pn').value,email:$('pe').value||null,
+        phone:rawPhone?buildPhone('ppcc','pp'):null,service:selSvc,
+        party:parseInt($('ps').value||'1'),preferred:sgIso($('pt').value),
+        notes:$('pnotes').value||null,table_type:biz.uses_tables?selTable:null,
+        consent:$('pconsent').checked};
+      const nextBookingKey=JSON.stringify(bookingPayload);
+      if(!bookingSubmissionId||bookingSubmissionKey!==nextBookingKey){
+        bookingSubmissionId=crypto.randomUUID();bookingSubmissionKey=nextBookingKey;
+      }
+      let bookRes;
+      try{bookRes=await publicGateway('public-booking',{body:{...bookingPayload,submission_id:bookingSubmissionId,
+        turnstile_token:bookingTurnstileToken}})}
+      catch(error){$('perr').innerHTML=`<div class="err">${esc(error.message)}</div>`;bookingTurnstileControl?.reset();return}
       const msgs={
         confirmed:{em:'🎉',title:"You're booked!",body:`${esc(biz.name)} has confirmed your booking.`},
         pending:{em:'🎉',title:'Request sent!',body:`${esc(biz.name)} has your booking request and will confirm shortly.`},
@@ -3179,46 +3352,64 @@ async function renderPortal(slug){
         rejected:{em:'😔',title:'Fully booked',body:`Sorry, ${esc(biz.name)} is fully booked for that — try another table or time.`}
       };
       const m=msgs[bookRes&&bookRes.status]||msgs.pending;
+      manageToken=bookRes.manage_token||'';
+      const manageUrl=`${location.origin}${location.pathname}#/b/${encodeURIComponent(slug)}?manage=${encodeURIComponent(manageToken)}`;
       root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 style="margin-bottom:8px">${esc(m.title)}</h2>
-        <p class="muted">${m.body}</p></div>`;
+        <p class="muted">${m.body}</p>${manageToken?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>
+        <p class="small" style="margin-top:6px;word-break:break-all"><a href="${esc(manageUrl)}" style="color:#D06A2E;text-decoration:underline">${esc(manageUrl)}</a></p>
+        <button class="btn ghost sm" id="copyManage" style="margin-top:12px">Copy private link</button>`:''}</div>`;
+      if($('copyManage')) $('copyManage').onclick=async()=>{await navigator.clipboard.writeText(manageUrl);toast('Private link copied')};
     };
     $('mfind').onclick=async()=>{
-      const raw=($('mphone').value||'').trim();
-      if(!raw){$('merr').innerHTML='<div class="err">Enter your phone number</div>';return}
+      manageToken=($('mtoken').value||'').trim();
+      if(!manageToken){$('merr').innerHTML='<div class="err">Enter your booking management code.</div>';return}
       $('merr').innerHTML='';$('mfind').disabled=true;
-      const {data,error}=await sb.rpc('list_my_appointments',{p_slug:slug,p_phone:buildPhone('mphonecc','mphone')});
+      let data;
+      try{data=await publicGateway('manage-booking',{body:{action:'lookup',token:manageToken}})}
+      catch(error){$('merr').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('mfind').disabled=false;return}
       $('mfind').disabled=false;
-      if(error){$('merr').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
-      $('mlist').innerHTML=(data&&data.length)?`<label>New preferred time (for reschedule requests)</label><input type="datetime-local" id="mdt">
-        ${data.map(a=>`<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)">
-          <div><b>${new Date(a.starts_at).toLocaleString()}</b><div class="muted small">${esc(a.service_name||'general visit')} · ${esc(a.status)}</div></div>
-          <span class="spacer"></span>
-          <button class="btn ghost sm" onclick="mCancel('${a.id}')">Cancel</button>
-          <button class="btn sm" onclick="mReschedule('${a.id}')">Request reschedule</button></div>`).join('')}`
-        :'<p class="muted small">No upcoming bookings found for that number.</p>';
+      const when=data.starts_at||data.preferred_at;
+      $('mlist').innerHTML=`<div style="padding:10px 0"><b>${when?new Date(when).toLocaleString():'Time pending'}</b>
+        <div class="muted small">${esc(data.service_name||'general visit')} · ${esc(data.status||'pending')}</div></div>
+        ${data.can_change?`<label>New preferred time</label><input type="datetime-local" id="mdt">
+        <div class="row" style="margin-top:10px"><button class="btn ghost sm" onclick="mCancel()">Cancel booking</button>
+        <button class="btn sm" onclick="mReschedule()">Request reschedule</button></div>`:'<p class="muted small">Changes are not available for this booking.</p>'}`;
     };
+    if(manageToken) setTimeout(()=>$('mfind')?.click(),0);
   };
-  window.mCancel=async(apId)=>{
-    const raw=($('mphone').value||'').trim();
-    if(!raw) return toast('Enter your phone number first');
+  window.mCancel=async()=>{
+    manageToken=($('mtoken')?.value||manageToken).trim();
+    if(!manageToken) return toast('Enter your booking management code');
     if(!confirm('Cancel this booking?')) return;
-    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:buildPhone('mphonecc','mphone'),p_kind:'cancel',p_proposed:null,p_note:null});
-    if(error) return fail(error);
+    const key=JSON.stringify({kind:'cancel',proposed:null,note:null});
+    if(!changeAttempt||changeAttempt.key!==key)changeAttempt={key,id:crypto.randomUUID()};
+    let data;
+    try{data=await publicGateway('manage-booking',{body:{action:'change',token:manageToken,submission_id:changeAttempt.id,kind:'cancel',proposed:null,note:null}})}
+    catch(error){return toast(error.message)}
+    changeAttempt=null;
     toast(data&&data.status==='approved'?'Done — auto-approved':'Request sent — the team will confirm');
   };
-  window.mReschedule=async(apId)=>{
-    const raw=($('mphone').value||'').trim();
-    if(!raw) return toast('Enter your phone number first');
+  window.mReschedule=async()=>{
+    manageToken=($('mtoken')?.value||manageToken).trim();
+    if(!manageToken) return toast('Enter your booking management code');
     const val=$('mdt')?.value;
     if(!val) return toast('Pick a new date & time first');
-    const {data,error}=await sb.rpc('request_change',{p_slug:slug,p_appointment:apId,p_phone:buildPhone('mphonecc','mphone'),p_kind:'reschedule',p_proposed:sgIso(val),p_note:null});
-    if(error) return fail(error);
+    const proposed=sgIso(val),key=JSON.stringify({kind:'reschedule',proposed,note:null});
+    if(!changeAttempt||changeAttempt.key!==key)changeAttempt={key,id:crypto.randomUUID()};
+    let data;
+    try{data=await publicGateway('manage-booking',{body:{action:'change',token:manageToken,submission_id:changeAttempt.id,kind:'reschedule',proposed,note:null}})}
+    catch(error){return toast(error.message)}
+    changeAttempt=null;
     toast(data&&data.status==='approved'?'Done — auto-approved':'Request sent — the team will confirm');
   };
   draw();
 }
 
-route();
+async function boot(){
+  try{await consumePasswordRecoveryRedirect()}catch{}
+  route();
+}
+boot();
 </script>
 </body>
 </html>

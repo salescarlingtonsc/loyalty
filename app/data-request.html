@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Request access, correction, consent withdrawal, deletion or closure for personal data handled through Frenly.">
+<title>Make a Data Request | Frenly</title>
+<style>
+:root{--bg:#F4F2EE;--surface:#FFF;--ink:#17161A;--ink2:#3D3B44;--muted:#716D79;--line:#E6E1D9;--coral:#E95549;--coral-dark:#B93831;--tint:#FFF2ED;--green:#237A50;--green-tint:#EAF7F0;--shadow:0 1px 2px rgba(23,22,26,.04),0 8px 24px rgba(23,22,26,.06);--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65}a{color:var(--coral-dark);text-underline-offset:3px}a:hover{text-decoration-thickness:2px}a:focus-visible{outline:3px solid rgba(233,85,73,.3);outline-offset:3px;border-radius:4px}
+.skip{position:absolute;left:12px;top:-60px;background:var(--ink);color:#fff;padding:10px 14px;z-index:10}.skip:focus{top:12px}.site-header{background:rgba(255,255,255,.94);border-bottom:1px solid var(--line)}.nav{max-width:980px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-family:Georgia,serif;font-size:1.45rem;font-weight:700;color:var(--ink);text-decoration:none}.brand span{color:var(--coral)}.nav-links{display:flex;gap:18px;flex-wrap:wrap;justify-content:flex-end}.nav-links a{color:var(--ink2);font-size:.9rem;font-weight:650;text-decoration:none}.nav-links a[aria-current="page"]{color:var(--coral-dark)}
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}.hero-inner{max-width:980px;margin:auto;padding:56px 24px 48px}.eyebrow{color:var(--coral-dark);font-size:.78rem;font-weight:750;text-transform:uppercase;letter-spacing:.08em}h1{font-size:clamp(2.2rem,6vw,3.8rem);line-height:1.08;letter-spacing:0;margin:12px 0 14px;max-width:780px}.lede{font-size:1.12rem;color:var(--ink2);max-width:750px;margin:0}.updated{color:var(--muted);font-size:.88rem;margin-top:18px}
+.main{max-width:980px;margin:auto;padding:38px 24px 68px}.intro{background:var(--tint);border-left:4px solid var(--coral);padding:18px 20px;margin-bottom:30px}.intro strong{display:block;margin-bottom:3px}h2{font-size:1.5rem;line-height:1.25;letter-spacing:0;margin:0 0 12px}h3{font-size:1.05rem;margin:0 0 6px}p{margin:0 0 13px}ul,ol{padding-left:22px;margin:8px 0 14px}li{margin:7px 0}
+.request-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0 38px}.request-card{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);padding:20px}.request-card h3{font-size:1rem}.request-card p{color:var(--ink2);font-size:.92rem;margin:0}
+.steps{display:grid;gap:14px;margin:16px 0 38px;counter-reset:step}.step{position:relative;background:var(--surface);border:1px solid var(--line);padding:20px 20px 20px 70px;min-height:76px}.step:before{counter-increment:step;content:counter(step);position:absolute;left:20px;top:20px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:#fff;font-weight:750}.step p{margin:0;color:var(--ink2)}
+.email-box{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;margin:16px 0 38px}.button{display:inline-block;background:linear-gradient(135deg,#E95549,#E99449);color:#fff;font-weight:750;text-decoration:none;padding:12px 19px;border-radius:999px;margin:5px 0 15px}.button:hover{text-decoration:none;filter:brightness(.96)}.template{background:#F8F6F2;border:1px solid var(--line);padding:16px;white-space:pre-line;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86rem;line-height:1.55;overflow-wrap:anywhere}
+.warning{background:#FFF7E7;border-left:4px solid #C67A12;padding:17px 19px;margin:16px 0 38px}.status{background:var(--green-tint);border-left:4px solid var(--green);padding:18px 20px;margin:16px 0 38px}.section{padding-top:4px;margin-bottom:38px}.site-footer{border-top:1px solid var(--line);background:#FCFBF9}.footer-inner{max-width:980px;margin:auto;padding:24px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;color:var(--muted);font-size:.87rem}.footer-links{display:flex;gap:16px;flex-wrap:wrap}
+@media(max-width:680px){.nav{align-items:flex-start}.nav-links{gap:10px 14px}.hero-inner{padding-top:42px}.request-grid{grid-template-columns:1fr}.step{padding-left:62px}.step:before{left:16px}}
+@media(max-width:480px){.nav,.hero-inner,.main{padding-left:18px;padding-right:18px}.email-box{padding:19px}.button{display:block;text-align:center}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Policy navigation">
+    <a class="brand" href="index.html" aria-label="Frenly home">frenly<span>.</span></a>
+    <div class="nav-links">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="data-request.html" aria-current="page">Data requests</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Your personal data</div>
+      <h1>Make a data request</h1>
+      <p class="lede">Use this process to request access, correction, consent withdrawal, deletion or closure for personal data handled through Frenly.</p>
+      <p class="updated">Last updated: 19 July 2026</p>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="intro">
+      <strong>Start with the business you know</strong>
+      If your request concerns a purchase, appointment, reward, membership or marketing message, the merchant normally controls that record. Contacting the merchant first is usually fastest. You may still contact Frenly and we will route or support the request appropriately.
+    </div>
+
+    <section class="section" aria-labelledby="request-types">
+      <h2 id="request-types">What you can request</h2>
+      <div class="request-grid">
+        <div class="request-card"><h3>Access</h3><p>Ask what personal data an organisation holds about you and, where applicable, how it was used or disclosed.</p></div>
+        <div class="request-card"><h3>Correction</h3><p>Ask for an error or omission in your personal data to be corrected.</p></div>
+        <div class="request-card"><h3>Withdraw consent</h3><p>Withdraw consent with reasonable notice. We will explain likely service consequences before acting.</p></div>
+        <div class="request-card"><h3>Deletion or closure</h3><p>Ask for data deletion or account closure. Some records may need to remain for legal, security or legitimate business purposes.</p></div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="process">
+      <h2 id="process">How the process works</h2>
+      <div class="steps">
+        <div class="step"><h3>Tell us what you need</h3><p>Email the Privacy Contact using the details below. Be specific about the merchant, record and request type so we do not disclose or change the wrong information.</p></div>
+        <div class="step"><h3>We acknowledge and triage it</h3><p>We will acknowledge receipt, identify whether Frenly or the merchant is responsible, and explain the next step. We may ask the merchant to participate.</p></div>
+        <div class="step"><h3>We verify identity proportionately</h3><p>Before releasing or changing data, we match limited information against the relevant record or use an existing authenticated channel. We will not ask for more identity data than reasonably needed.</p></div>
+        <div class="step"><h3>We assess and respond</h3><p>We search relevant systems, consider applicable exceptions and third-party rights, and provide the outcome through a suitable channel. Access requests are handled within applicable PDPA timeframes; if more time is needed, we will notify you as required.</p></div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="send-request">
+      <h2 id="send-request">Send your request</h2>
+      <div class="email-box">
+        <p><strong>Interim Privacy Contact</strong><br><a href="mailto:leechuanseng.biz@gmail.com">leechuanseng.biz@gmail.com</a></p>
+        <a class="button" href="mailto:leechuanseng.biz@gmail.com?subject=Frenly%20data%20request&body=Request%20type%3A%20%0AMerchant%20name%3A%20%0AName%20used%20with%20merchant%3A%20%0APhone%20or%20email%20used%3A%20%0ADetails%20of%20request%3A%20">Start request by email</a>
+        <p>Include only:</p>
+        <ul>
+          <li>request type: access, correction, consent withdrawal, deletion or account closure;</li>
+          <li>the merchant or business name concerned;</li>
+          <li>your name and the phone number or email used with that merchant;</li>
+          <li>enough detail to locate the record and understand the request;</li>
+          <li>the correction you believe is accurate, if applicable; and</li>
+          <li>whether you are making the request for yourself or as an authorised representative.</li>
+        </ul>
+        <div class="template">Subject: Frenly data request
+
+Request type:
+Merchant name:
+Name used with merchant:
+Phone or email used:
+Details of request:</div>
+      </div>
+    </section>
+
+    <div class="warning">
+      <strong>Do not email sensitive identity or payment information.</strong>
+      <p>Do not send your password, one-time code, full payment-card number, bank login, Singpass credentials, NRIC image, passport image or medical records. If stronger verification is genuinely necessary, we will explain a safer and proportionate method.</p>
+    </div>
+
+    <section class="section" aria-labelledby="special-cases">
+      <h2 id="special-cases">Representatives, children and urgent security issues</h2>
+      <p>An authorised representative should identify the person represented, describe their authority and provide a way for us to confirm that authority without disclosing unnecessary data. A parent or guardian may make a request concerning a child; we will use age-appropriate and proportionate verification.</p>
+      <p>For suspected account takeover, exposed booking links, unauthorised access or another urgent security issue, put <strong>Urgent security issue</strong> in the subject line and describe what happened without including passwords or codes.</p>
+    </section>
+
+    <section class="section" aria-labelledby="outcomes">
+      <h2 id="outcomes">Possible outcomes</h2>
+      <div class="status">
+        <p>We may fulfil the request, ask for clarification, coordinate with the merchant, provide access in a protected format, correct a record, stop consent-based processing, close an account, or explain why an exception or continuing legal or business need applies.</p>
+        <p>A consent withdrawal does not operate retrospectively. It may affect a feature that cannot work without the relevant data. Deletion is not always immediate or complete where records must be preserved for security, disputes, financial obligations, legal requirements or protected backup cycles.</p>
+      </div>
+      <p>If you are dissatisfied, reply to the Privacy Contact so the concern can be reviewed. You may also seek guidance from or make a complaint to Singapore's Personal Data Protection Commission. See the <a href="privacy.html">Privacy Notice</a> for more about roles, purposes, retention and complaints.</p>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>&copy; 2026 Frenly</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="data-request.html">Data requests</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

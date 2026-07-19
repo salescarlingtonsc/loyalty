@@ -1,0 +1,373 @@
+{
+  "schemaVersion": "launch_readiness_manifest_v1",
+  "target": {
+    "projectRef": "gadpooereceldfpfxsod",
+    "market": "Singapore",
+    "environment": "production"
+  },
+  "policy": {
+    "p0ClosureStatus": "VERIFIED_PRODUCTION",
+    "evidenceRoot": "docs/launch/.evidence",
+    "evidenceKind": "launch_readiness_evidence_v1"
+  },
+  "blockers": [
+    {
+      "id": "P0-CUTOVER-PARITY-001",
+      "severity": "P0",
+      "title": "Source-to-target schema, data, auth, storage, and configuration parity is unproven",
+      "status": "BLOCKED",
+      "owner": "Release engineering",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Run the strict cutover comparator against the frozen source and final target, then complete the Dashboard configuration parity attestation.",
+        "successCriteria": [
+          "Comparator reports zero P0 and P1 findings for gadpooereceldfpfxsod.",
+          "Auth user count, storage byte copy, migrations, RLS, grants, functions, cron, Realtime, and tenant financial aggregates reconcile.",
+          "Every approved database migration is present in one declared canonical migration sequence; no required migration remains only in an ungoverned parallel directory.",
+          "Manual configuration parity confirms extensions, Edge Functions, secrets, SMTP, CAPTCHA, network controls, and backups."
+        ],
+        "evidenceRequirements": [
+          "Redacted strict comparator result with target reference and zero findings.",
+          "Redacted storage byte verification and configuration parity attestation hashes."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-PUBLIC-ABUSE-002",
+      "severity": "P0",
+      "title": "Public join and booking paths lack production proof of abuse resistance",
+      "status": "BLOCKED",
+      "owner": "Application security",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Deploy the public gateway controls and test anonymous request throttling, validation, replay handling, and denied direct RPC access on the final target.",
+        "successCriteria": [
+          "Public write paths use a controlled server-side gateway with strict origin rules and no PII in logs.",
+          "Rate limits are keyed by a privacy-preserving identifier and reject bursts without creating duplicate customers, bookings, or consents.",
+          "Direct anonymous PostgREST and RPC paths cannot bypass gateway validation."
+        ],
+        "evidenceRequirements": [
+          "Redacted anonymous smoke and negative-test result.",
+          "Redacted grant and function exposure inventory after deployment."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-BOOKING-TOKEN-003",
+      "severity": "P0",
+      "title": "Customer booking lookup and change requests are not proven to require a scoped token",
+      "status": "BLOCKED",
+      "owner": "Application security",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Exercise booking management using a single-use or expiring opaque token and run token-missing, token-replay, cross-booking, and phone-only negative tests.",
+        "successCriteria": [
+          "A phone number alone cannot list or modify appointments.",
+          "Only a hashed management token is stored, and a token is limited to its booking and allowed action window.",
+          "Legacy phone-only public RPC grants are revoked or are inaccessible from anonymous traffic."
+        ],
+        "evidenceRequirements": [
+          "Redacted booking-management positive and negative test report.",
+          "Redacted function-grant inventory proving legacy exposure is absent."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-RLS-GRANTS-004",
+      "severity": "P0",
+      "title": "Final target RLS, function grants, and tenant isolation have not been adversarially verified",
+      "status": "BLOCKED",
+      "owner": "Database security",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Run a rolled-back multi-tenant adversarial test as owner, staff, anonymous, and unaffiliated principals after all target migrations and functions are deployed.",
+        "successCriteria": [
+          "Cross-tenant reads, writes, function calls, and direct financial access fail closed.",
+          "Only explicit public gateway functions have anonymous execute rights.",
+          "Security-definer functions have safe search paths and enforce tenant ownership."
+        ],
+        "evidenceRequirements": [
+          "Redacted RLS adversarial test summary with real-principal controls.",
+          "Redacted function grants and policy inventory."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-FINANCE-REVERSAL-005",
+      "severity": "P0",
+      "title": "Sale reversal, refund, and store-credit tender integrity are not production-verified",
+      "status": "BLOCKED",
+      "owner": "Financial systems",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Apply v20, then execute rolled-back full refund, partial-refund rejection, over-refund, retry, store-credit tender, and cross-tenant test cases.",
+        "successCriteria": [
+          "Corrections are append-only, atomic, idempotent, role-gated, and auditable.",
+          "Revenue, receivables, payments, cash, points, credit, referral, inventory, and commission effects reconcile after each supported correction.",
+          "Unsupported partial or value-redemption cases are rejected explicitly and are absent from the user interface."
+        ],
+        "evidenceRequirements": [
+          "Redacted transaction rollback test report and ledger reconciliation summary.",
+          "Redacted role and direct-insert denial report."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-REPORTING-SCALE-006",
+      "severity": "P0",
+      "title": "Reporting pagination, exports, and Singapore time boundaries are not verified at production scale",
+      "status": "BLOCKED",
+      "owner": "Data engineering",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Run reporting RPC and export tests against representative staging and production-safe fixture volumes, including a Singapore month boundary and records beyond the API default page size.",
+        "successCriteria": [
+          "No dashboard or export path silently truncates data at default API limits.",
+          "Report totals agree with ledger and sale snapshots across SGT day and month boundaries.",
+          "Long-running report queries meet the agreed operational limit without exposing another tenant's data."
+        ],
+        "evidenceRequirements": [
+          "Redacted pagination and reconciliation report.",
+          "Redacted performance sample with query identifiers and durations only."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-PDPA-OPERATIONS-007",
+      "severity": "P0",
+      "title": "PDPA public notices, consent operations, and data-subject handling are not production-proven",
+      "status": "BLOCKED",
+      "owner": "Privacy operations",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Publish and smoke-test the privacy, terms, and data-request pages, then rehearse access, correction, withdrawal, retention, and incident escalation procedures with synthetic data only.",
+        "successCriteria": [
+          "Public notices state the relevant purposes, marketing consent, processors, Singapore hosting, retention, security measures, and contact route without unsupported compliance claims.",
+          "Consent is opt-in and an operator can fulfill access, correction, withdrawal, and deletion decisions using the documented procedure.",
+          "The incident process assigns an owner, decision log, containment, and notification assessment."
+        ],
+        "evidenceRequirements": [
+          "Redacted policy-page smoke report with release commit.",
+          "Redacted synthetic-data operations rehearsal record."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-AUTH-EMAIL-008",
+      "severity": "P0",
+      "title": "Password reset, email confirmation, SMTP, and anti-automation settings are not production-verified",
+      "status": "BLOCKED",
+      "owner": "Identity engineering",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Validate final Supabase Auth settings and run synthetic sign-up, confirmation, reset, expiry, redirect-allowlist, and brute-force resistance tests through the deployed URL.",
+        "successCriteria": [
+          "Email confirmation, leaked-password protection, password policy, CAPTCHA or equivalent control, and intended redirect URLs are enabled.",
+          "A production SMTP provider delivers confirmation and reset messages with no development sender or test recipient dependency.",
+          "Authentication failures are rate-limited and observable without logging credentials or tokens."
+        ],
+        "evidenceRequirements": [
+          "Redacted Auth configuration checklist and synthetic mailbox test results.",
+          "Redacted login, confirmation, and recovery smoke report."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-NOTIFICATIONS-009",
+      "severity": "P0",
+      "title": "Customer and staff notification behavior is not operationally defined and proven",
+      "status": "BLOCKED",
+      "owner": "Product operations",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Configure the chosen notification provider or explicitly disable outbound promises, then test booking, change, reminder, failure, retry, unsubscribe, and staff-alert flows with synthetic recipients.",
+        "successCriteria": [
+          "Every customer-facing promise maps to a delivered, retried, and observable communication or is removed from the product.",
+          "Marketing and transactional messages have separate consent and opt-out behavior.",
+          "Provider failures cannot duplicate bookings, sales, loyalty credits, or appointment changes."
+        ],
+        "evidenceRequirements": [
+          "Redacted provider configuration and synthetic-delivery result.",
+          "Redacted retry, opt-out, and failure-handling test report."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-PAYMENTS-SUBSCRIPTIONS-010",
+      "severity": "P0",
+      "title": "Payment collection and SaaS subscription behavior are not truthful and production-proven",
+      "status": "BLOCKED",
+      "owner": "Commercial systems",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Test the actual payment and subscription operating model, including webhook verification and failed-payment handling, or verify that collection is manual and no unsupported automation is advertised or exposed.",
+        "successCriteria": [
+          "The product makes no claim that conflicts with its real payment collection, refunds, subscription, tax, or invoicing capability.",
+          "Where an online provider is enabled, webhook signatures, idempotency, reconciliation, cancellation, and failure states are tested.",
+          "Where collection is manual, the responsible operator, invoice process, and access-control consequence are documented and tested."
+        ],
+        "evidenceRequirements": [
+          "Redacted commercial-flow test report or manual-collection operating attestation.",
+          "Redacted reconciliation result for a synthetic payment lifecycle."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-BACKUP-ROLLBACK-011",
+      "severity": "P0",
+      "title": "Backups, PITR, migration rollback, and post-cutover rollback are not proven",
+      "status": "BLOCKED",
+      "owner": "Platform operations",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Confirm paid-project backup and PITR settings, rehearse restore on an isolated branch, and approve the no-split-brain rollback plan before new target writes begin.",
+        "successCriteria": [
+          "A named restore point, retention policy, and restore owner exist for the target project.",
+          "Migration and Edge Function rollback instructions identify the prior artifact and validation command.",
+          "After target writes begin, rollback requires reconciliation rather than blindly pointing traffic back to the source."
+        ],
+        "evidenceRequirements": [
+          "Redacted backup and PITR configuration attestation.",
+          "Redacted isolated restore rehearsal and rollback decision record."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-OBSERVABILITY-012",
+      "severity": "P0",
+      "title": "Production error capture, security monitoring, and owner alerting are not proven",
+      "status": "BLOCKED",
+      "owner": "Platform operations",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Configure Vercel and Supabase log retention, error capture, release tagging, health checks, alert routes, and a synthetic error drill without sending customer data to logs.",
+        "successCriteria": [
+          "Client, Edge Function, database, Auth, and deployment failures have an observable route and release correlation.",
+          "Alerts reach a named operational role for elevated authentication failures, public abuse blocks, failed notifications, job failures, and data errors.",
+          "Log redaction prevents credentials, booking tokens, customer contact details, and raw request bodies from becoming observability data."
+        ],
+        "evidenceRequirements": [
+          "Redacted synthetic error drill and alert receipt record.",
+          "Redacted observability configuration inventory."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-SGT-TIMEZONE-013",
+      "severity": "P0",
+      "title": "SGT business-date behavior is not verified across browser, database, reporting, and scheduled jobs",
+      "status": "BLOCKED",
+      "owner": "Application engineering",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Run synthetic booking, sale, report, retention, and scheduled-job cases immediately before and after SGT midnight from SGT and non-SGT browser time zones.",
+        "successCriteria": [
+          "A Singapore business day renders, stores, reports, and schedules consistently at boundary times.",
+          "Browser-local time does not move a booking, report bucket, commission period, retention window, or reminder into the wrong SGT day.",
+          "The operating model documents the current Singapore-only timezone decision and the path to per-business timezones before regional expansion."
+        ],
+        "evidenceRequirements": [
+          "Redacted two-timezone boundary test report.",
+          "Redacted job-schedule verification using SGT timestamps only."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-TARGET-RUNTIME-014",
+      "severity": "P0",
+      "title": "The deployed application is not proven to use only the Singapore target URL, key, and CSP origin set",
+      "status": "BLOCKED",
+      "owner": "Release engineering",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Deploy the approved release, inspect served HTML and headers, then run an authenticated browser smoke test that records the target project reference without recording credentials.",
+        "successCriteria": [
+          "The app contains one approved target project reference and no source-project endpoint.",
+          "CSP connect sources match the target and required CDN origins only.",
+          "The canonical production URL, redirect settings, and frontend build all reach the same target project."
+        ],
+        "evidenceRequirements": [
+          "Redacted served-header and build-reference check.",
+          "Redacted owner and staff browser smoke result."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-TEST-CREDENTIALS-015",
+      "severity": "P0",
+      "title": "Test accounts, known credentials, API keys, and migration access have not been removed or rotated",
+      "status": "BLOCKED",
+      "owner": "Security operations",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Inventory production identities and secrets, remove test users and fixtures, rotate any credential disclosed during development or migration, and verify least-privilege access afterwards.",
+        "successCriteria": [
+          "No documented test login, shared password, development API key, source database credential, or migration credential remains valid for production access.",
+          "Operator and service access use named roles with least privilege and recovery owners.",
+          "Synthetic smoke accounts are isolated, labeled, and excluded from merchant reporting or removed after verification."
+        ],
+        "evidenceRequirements": [
+          "Redacted credential-rotation and access-review attestation.",
+          "Redacted test-account removal or isolation verification."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-POST-CUTOVER-SMOKE-016",
+      "severity": "P0",
+      "title": "End-to-end SME workflows and the first production monitoring window are not verified",
+      "status": "BLOCKED",
+      "owner": "Release engineering",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Run the final smoke matrix after URL and key cutover, retain the source read-only, then review the first production monitoring window before declaring the release stable.",
+        "successCriteria": [
+          "Owner, staff, customer join, booking, booking management, sale, loyalty, credit, referral, reporting, export, and authorization-denial workflows pass with synthetic data.",
+          "No unexplained Vercel, Edge Function, Auth, database, or notification error trend appears during the monitoring window.",
+          "Rollback readiness remains intact and the source is not writable after traffic has cut over."
+        ],
+        "evidenceRequirements": [
+          "Redacted end-to-end smoke matrix.",
+          "Redacted monitoring-window review and rollback-readiness confirmation."
+        ]
+      },
+      "evidence": []
+    },
+    {
+      "id": "P0-RELEASE-BUILD-017",
+      "severity": "P0",
+      "title": "The static deployment artifact and its public routes are not proven to build together",
+      "status": "BLOCKED",
+      "owner": "Release engineering",
+      "verification": {
+        "stage": "PRODUCTION",
+        "method": "Run the repository build and inspect the deployed static artifact after all required public pages, policy pages, and gateway routes are included in the intended release surface.",
+        "successCriteria": [
+          "The production build passes without excluding a required public page or including an unintended static artifact.",
+          "Privacy, terms, and data-request links resolve from the public join, portal, authentication, and direct-route entry points.",
+          "The deployed artifact matches the reviewed route allowlist and security headers."
+        ],
+        "evidenceRequirements": [
+          "Redacted successful build and route-manifest result.",
+          "Redacted deployed public-route smoke report."
+        ]
+      },
+      "evidence": []
+    }
+  ]
+}

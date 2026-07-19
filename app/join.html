@@ -38,6 +38,11 @@ label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:16px 
 .logo span{color:var(--coral)}
 .jhead h1{font-size:1.6rem;color:var(--coral);margin-bottom:4px}
 .help{font-size:12.5px;color:var(--muted);margin-top:6px}
+.legal-links{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 14px;margin-top:18px;color:var(--muted);font-size:11.5px}
+.legal-links a{text-decoration:underline;text-underline-offset:2px}
+.challenge{margin-top:18px;min-height:82px}
+.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+.challenge-retry{background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
 /* consent row: whole row is one big tap target (PDPA — checkbox starts unticked, never pre-checked) */
 .checkrow{display:flex;align-items:center;gap:12px;margin-top:20px;padding:13px 14px;background:#FBFAF7;border-radius:10px;border:1px solid var(--line);cursor:pointer;min-height:48px}
 .checkrow input[type=checkbox]{width:22px;height:22px;min-height:0;flex-shrink:0;accent-color:var(--coral)}
@@ -48,12 +53,59 @@ label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:16px 
 <body>
 <div id="root"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <script>
 /* ============ Frenly — public customer join page (QR / link, NO login) ============ */
-const SB_URL='https://kyzovonwnscrzmkvocid.supabase.co';
-const SB_KEY='sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
+const SB_URL='https://gadpooereceldfpfxsod.supabase.co';
+const SB_KEY='sb_publishable_wDf8p9RghbpM2t7_PfBWKQ_YhYhNEAI';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
+const legalLinks=()=>`<div class="legal-links"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/data-request.html">Data request</a></div>`;
+let turnstileLoader;
+function loadTurnstile(){
+  if(window.turnstile) return Promise.resolve(window.turnstile);
+  if(turnstileLoader) return turnstileLoader;
+  turnstileLoader=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async=true;script.defer=true;
+    script.onload=()=>window.turnstile?resolve(window.turnstile):reject(new Error('Security check unavailable.'));
+    script.onerror=()=>{turnstileLoader=null;script.remove();reject(new Error('Security check unavailable.'))};
+    document.head.appendChild(script);
+  });
+  return turnstileLoader;
+}
+async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
+  const statusEl=$(status),retryEl=$(retry);
+  let api,widgetId;
+  const message=(text,isError=false)=>{statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  const clear=(text,isError=false)=>{onToken('');message(text,isError)};
+  const render=async()=>{
+    message('Loading security check…');retryEl.hidden=true;
+    try{
+      api=await loadTurnstile();
+      if(!document.getElementById(container)) return;
+      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,
+        callback:(token)=>{onToken(token);message('Security check complete.');retryEl.hidden=true},
+        'expired-callback':()=>{clear('Security check expired. Please try again.',true);retryEl.hidden=false},
+        'timeout-callback':()=>{clear('Security check timed out. Please try again.',true);retryEl.hidden=false},
+        'error-callback':()=>{clear('Security check could not load. Please try again.',true);retryEl.hidden=false;return true}});
+    }catch{clear('Security check could not load. Check your connection and try again.',true);retryEl.hidden=false}
+  };
+  const reset=()=>{clear('Complete the security check to continue.');retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  retryEl.onclick=reset;
+  await render();
+  return {reset};
+}
+async function publicJoin({method='POST',body=null,slug=null}={}){
+  const query=slug?`?slug=${encodeURIComponent(slug)}`:'';
+  const response=await fetch(`${SB_URL}/functions/v1/public-join${query}`,{
+    method,headers:body?{'content-type':'application/json'}:undefined,
+    body:body?JSON.stringify(body):undefined,credentials:'omit'});
+  let payload=null;
+  try{payload=await response.json()}catch{}
+  if(!response.ok) throw new Error(payload?.error||'We could not process that request.');
+  return payload;
+}
 
 const $=(id)=>document.getElementById(id);
 const root=$('root');
@@ -75,7 +127,7 @@ function getSlug(){
 function shellOpen(inner){
   root.innerHTML=`<div class="wrap"><div class="join">
     <div class="jhead"><div class="logo">frenly<span>.</span></div></div>
-    ${inner}
+    ${inner}${legalLinks()}
   </div></div>`;
 }
 
@@ -144,18 +196,24 @@ function renderForm(page, slug){
           <span>🔔 Send me offers and rewards</span>
         </label>
 
+        <div class="challenge"><div id="turnstileWidget"></div>
+          <p class="challenge-status" id="turnstileStatus" role="status" aria-live="polite">Loading security check…</p>
+          <button class="challenge-retry" id="turnstileRetry" type="button" hidden>Retry security check</button>
+        </div>
+
         <div id="formErr"></div>
         <div style="margin-top:20px"><button class="btn" id="submitBtn" type="submit" disabled style="width:100%">✅ Join now</button></div>
       </form>
-    </div>
+    </div>${legalLinks()}
   </div></div>`;
 
   const nameEl=$('f_name'), phoneEl=$('f_phone'), emailEl=$('f_email'), consentEl=$('f_consent');
   const btn=$('submitBtn'), errBox=$('formErr');
+  let turnstileToken='',turnstileControl=null;
 
   function cleanPhone(){ return phoneEl.value.replace(/\D/g,'').slice(0,8); }
   function formValid(){ return nameEl.value.trim().length>=2 && /^[3689]\d{7}$/.test(cleanPhone()); }
-  function refreshBtn(){ btn.disabled=!formValid(); }
+  function refreshBtn(){ btn.disabled=!formValid()||!turnstileToken; }
 
   nameEl.addEventListener('input', refreshBtn);
   phoneEl.addEventListener('input', ()=>{
@@ -166,7 +224,7 @@ function renderForm(page, slug){
 
   function setBusy(busy){
     nameEl.disabled=busy; phoneEl.disabled=busy; emailEl.disabled=busy; consentEl.disabled=busy;
-    btn.disabled=busy?true:!formValid();
+    btn.disabled=busy?true:!formValid()||!turnstileToken;
     btn.textContent=busy?'Joining…':'✅ Join now';
   }
 
@@ -176,21 +234,18 @@ function renderForm(page, slug){
     errBox.innerHTML='';
     setBusy(true);
     try{
-      const {data,error}=await sb.rpc('join_program',{
-        p_slug:slug,
-        p_name:nameEl.value.trim(),
-        p_phone:cleanPhone(),
-        p_email:emailEl.value.trim()||null,
-        p_consent:consentEl.checked
-      });
-      if(error) throw error;
+      const data=await publicJoin({body:{slug,name:nameEl.value.trim(),phone:cleanPhone(),
+        email:emailEl.value.trim()||null,consent:consentEl.checked,
+        turnstile_token:turnstileToken}});
       renderSuccess((data&&data.business_name)||page.name);
     }catch(err){
-      console.error(err);
       errBox.innerHTML=`<div class="err">${esc(err.message||'Something went wrong. Please try again.')}</div>`;
+      turnstileControl?.reset();
       setBusy(false);
     }
   });
+  mountTurnstile(page.turnstile_site_key,{container:'turnstileWidget',status:'turnstileStatus',retry:'turnstileRetry',action:'public_join',
+    onToken:(token)=>{turnstileToken=token;refreshBtn()}}).then(control=>{turnstileControl=control});
 }
 
 /* ---- boot ---- */
@@ -198,13 +253,10 @@ async function init(){
   renderLoading();
   const slug=getSlug();
   if(!slug){ renderInvalidLink(); return; }
-  let data, error;
+  let data;
   try{
-    ({data,error}=await sb.rpc('get_join_page',{p_slug:slug}));
-  }catch(e){
-    error=e;
-  }
-  if(error){ console.error(error); renderLoadError(); return; }
+    data=await publicJoin({method:'GET',slug});
+  }catch{renderLoadError();return}
   if(!data){ renderInvalidLink(); return; }
   renderForm(data, slug);
 }

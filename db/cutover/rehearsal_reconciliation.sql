@@ -1,0 +1,9 @@
+\set ON_ERROR_STOP on
+\set QUIET on
+\pset tuples_only on
+\pset format unaligned
+\pset footer off
+\pset pager off
+\set gate_scope 'rehearsal'
+\set gate_project_ref 'wtegnefsgnyxhflzizcu'
+\ir _reconciliation_core.sql

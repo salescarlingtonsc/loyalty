@@ -1,0 +1,15 @@
+{
+  "name": "frenly-static-production-baseline",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Production-safety checks for the Frenly static app.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "quality": "node scripts/quality/static-baseline.mjs",
+    "test": "node --test",
+    "build": "node scripts/quality/build-static.mjs",
+    "validate": "npm run quality && npm test && npm run build"
+  }
+}

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf 'docker:' >>"$FAKE_LOG"
+printf ' %q' "$@" >>"$FAKE_LOG"
+printf '\n' >>"$FAKE_LOG"
+exit 0

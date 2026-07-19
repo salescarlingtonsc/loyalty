@@ -4,3 +4,5 @@ node_modules/
 .env*
 .claude/settings.local.json
 .vercel
+.local/supabase-sync/
+supabase/.temp/
