@@ -304,6 +304,16 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
   await render();
   return {reset};
 }
+/* Supabase Auth has CAPTCHA protection enabled (Cloudflare Turnstile), so every
+   signUp / signInWithPassword / resetPasswordForEmail call must carry a captchaToken.
+   The site key is public by design (the join/booking pages already expose the same
+   widget's key); the secret lives only in Supabase Auth settings. */
+const AUTH_TURNSTILE_SITE_KEY='0x4AAAAAAD4_7rnuzB3ug-NF';
+function authChallengeHtml(){
+  return `<div class="challenge"><div id="authTurnstile"></div>
+    <p class="challenge-status" id="authTurnstileStatus" role="status" aria-live="polite">Loading security check…</p>
+    <button class="challenge-retry" id="authTurnstileRetry" type="button" hidden>Retry security check</button></div>`;
+}
 let passwordRecoveryActive=false,passwordRecoveryError=false;
 
 /* Chart.js global defaults (design system v2). Chart.js out of the box is the single
@@ -535,19 +545,28 @@ function renderAuth(mode='in'){
       <p class="muted small" style="margin-top:6px">Enter your account email and we will send a secure reset link.</p>
       <label>Email</label><input id="em" type="email" autocomplete="email" placeholder="you@business.com">
       <div id="autherr"></div>
-      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest">Send reset link</button>
+      ${authChallengeHtml()}
+      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest" disabled>Send reset link</button>
       <span class="spacer"></span><button class="btn ghost sm" id="backSignIn">Back to sign in</button></div>
       ${legalLinks()}</div></div>`;
+    let authToken='',authControl=null;
+    mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+      retry:'authTurnstileRetry',action:'frenly_auth',
+      onToken:(token)=>{authToken=token;$('resetRequest').disabled=!token}})
+      .then(control=>authControl=control);
     $('backSignIn').onclick=()=>renderAuth('in');
     $('resetRequest').onclick=async()=>{
       const email=$('em').value.trim();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
         $('autherr').innerHTML='<div class="err">Enter a valid email address.</div>';return;
       }
+      if(!authToken) return;
       $('resetRequest').disabled=true;
       const redirect=new URL(location.pathname,location.origin);
       redirect.searchParams.set('recovery','1');
-      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString()})}catch{}
+      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString(),captchaToken:authToken})}catch{}
+      /* Turnstile tokens are single-use: clear and reset so a retry gets a fresh challenge. */
+      authToken='';if(authControl)authControl.reset();
       $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
     };
     return;
@@ -560,27 +579,41 @@ function renderAuth(mode='in'){
     <label>Password</label><input id="pw" type="password" placeholder="••••••••">
     <div id="autherr"></div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
+    ${authChallengeHtml()}
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="go">${mode==='in'?'Sign in':'Sign up'}</button>
+      <button class="btn" id="go" disabled>${mode==='in'?'Sign in':'Sign up'}</button>
       <span class="spacer"></span>
       <button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>
     </div>${legalLinks()}</div></div>`;
+  let authToken='',authControl=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+    retry:'authTurnstileRetry',action:'frenly_auth',
+    onToken:(token)=>{authToken=token;$('go').disabled=!token}})
+    .then(control=>authControl=control);
   $('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot');
   $('go').onclick=async()=>{
     const email=$('em').value.trim(),password=$('pw').value;
+    if(!authToken) return;
     $('go').disabled=true;
+    /* Tokens are single-use: consume, then reset the widget for any follow-up attempt. */
+    const captchaToken=authToken;authToken='';
     try{
       if(mode==='up'){
-        const {data,error}=await sb.auth.signUp({email,password});
+        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken}});
         if(error) throw error;
-        if(!data.session){$('autherr').innerHTML='<div class="err">Check your email to confirm your account, then sign in.</div>';$('go').disabled=false;return}
+        if(!data.session){
+          if(authControl)authControl.reset();
+          $('autherr').innerHTML='<div class="err">Check your email to confirm your account, then sign in.</div>';return}
       }else{
-        const {error}=await sb.auth.signInWithPassword({email,password});
+        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
         if(error) throw error;
       }
       S.biz=null;route();
-    }catch(e){$('autherr').innerHTML=`<div class="err">${esc(e.message)}</div>`;$('go').disabled=false}
+    }catch(e){
+      if(authControl)authControl.reset();
+      $('autherr').innerHTML=`<div class="err">${esc(e.message)}</div>`;
+    }
   };
 }
 
