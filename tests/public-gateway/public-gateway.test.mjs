@@ -389,7 +389,11 @@ test('booking capabilities are scrubbed from current history and change retries 
 
 test('password recovery is complete and non-enumerating', async () => {
   const app = await read('app/index.html');
-  assert.match(app, /resetPasswordForEmail\(email,\{redirectTo:redirect\.toString\(\)\}\)/);
+  // Supabase Auth CAPTCHA is enabled in production: every recovery request must carry a
+  // single-use Turnstile captchaToken alongside the redirect (and reset the widget after use).
+  assert.match(app, /resetPasswordForEmail\(email,\{redirectTo:redirect\.toString\(\),captchaToken:authToken\}\)/);
+  assert.match(app, /signUp\(\{email,password,options:\{captchaToken\}\}\)/);
+  assert.match(app, /signInWithPassword\(\{email,password,options:\{captchaToken\}\}\)/);
   assert.match(app, /event==='PASSWORD_RECOVERY'/);
   assert.match(app, /hash\.get\('type'\)==='recovery'/);
   assert.match(app, /flowType:'implicit'/);
