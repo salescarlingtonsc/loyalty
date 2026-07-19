@@ -2989,6 +2989,15 @@ async function settingsPage(){
     const {error}=await sb.from('businesses').update({enabled_modules:on}).eq('id',S.biz.id);
     if(error)return fail(error);S.biz.enabled_modules=on;toast('Modules updated');route();
   };
+  /* Changing the industry re-applies that industry's preset modules (same rules as onboarding),
+     so the owner starts from a sensible set instead of an empty/stale one. It only ticks the
+     checkboxes — nothing is saved until "Save modules" — so the selection stays fully optional
+     and editable. (Bug fix: previously the preset only ran at signup, never on an industry change.) */
+  $('bi').onchange=()=>{
+    const ind=$('bi').value, preset=(INDUSTRIES[ind]&&INDUSTRIES[ind].mods)||[];
+    document.querySelectorAll('[data-m]').forEach(x=>{ x.checked=preset.includes(x.dataset.m); });
+    toast(`Modules preset for ${INDUSTRIES[ind]?.label||ind} — adjust if needed, then Save modules`);
+  };
   /* team + per-staff module permissions (v14) */
   let openModId=null;   // staff.id whose "Modules" panel is expanded, or null
   const panelSel={};    // staff.id -> {mode:'all'|'selected', mods:string[]} — in-progress
