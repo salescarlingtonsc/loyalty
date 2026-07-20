@@ -221,12 +221,17 @@ ROLE_PERMISSION_MATRIX, AVOCADO_GAP_ANALYSIS, AVOCADO_REUSE_MATRIX,
 SINGAPORE_PRODUCT_STRATEGY, IMPLEMENTATION_ROADMAP, OPEN_QUESTIONS.
 
 ## Working method (standing instruction from owner)
-**Fable 5 is the reviewer & orchestrator.** Delegate implementation via subagents:
-**Opus** = complex logic (schema, triggers, RPCs, architecture, tricky flows);
-**Sonnet** = standard coding/execution (UI edits, browsing/documentation, deploys).
-Fable pins the API contract before parallel delegation, reviews both outputs,
-fixes gaps, runs the rolled-back SQL verification tests itself, and owns the
-final merge + report (exact files touched, what changed and why).
+**GPT-5.6 Sol is the reviewer and orchestrator.** Delegate bounded implementation and
+verification work to **GPT-5.6 Terra** and **GPT-5.6 Luna** with disjoint scopes. Sol pins the
+API and migration contracts before parallel delegation, reviews both outputs, closes gaps,
+runs the rolled-back SQL verification chain, and owns the final integration report (exact files
+touched, what changed, why, and verification evidence).
+
+**Hard release gate (owner, 2026-07-20):** do not push `main`, deploy Vercel or Edge Functions,
+or apply production migrations until the owner writes the exact phrase `RELEASE APPROVED`.
+Design work and rolled-back verification are permitted. The corrected Part C customer design
+must receive a reviewer `PASS` before v25-v34 implementation begins. Production is only
+`gadpooereceldfpfxsod`; never use the retired project `kyzovonwnscrzmkvocid`.
 
 ## Design direction (owner-confirmed; updated 2026-07-18 post-launch)
 - **Grouped navigation (Cubbly reference, owner screenshot 2026-07-18):** a handful of

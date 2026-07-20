@@ -1,0 +1,88 @@
+{
+  "kind": "design_baseline_evidence_v1",
+  "targetRef": "gadpooereceldfpfxsod",
+  "capturedAt": "2026-07-19T20:31:56Z",
+  "method": "Read-only production catalog and aggregate SQL audit; no rows or schema changed.",
+  "migrationHistory": [
+    "frenly_v23_loyalty_points_tiers",
+    "frenly_v23a_redeem_reward_anon_revoke",
+    "frenly_v23b_redeem_reward_perm_fix",
+    "frenly_v23c_redeem_reward_column_fix",
+    "frenly_v23d_restore_loyalty_programs",
+    "frenly_v23e_redeem_reward_ledger_routes",
+    "frenly_v23f_restore_expiry_columns",
+    "frenly_v23g_loyalty_model_consolidation",
+    "frenly_v24_stamps_model"
+  ],
+  "tables": {
+    "loyalty_programs": {
+      "rows": 3,
+      "rlsEnabled": true,
+      "policyCount": 3
+    },
+    "loyalty_rewards": {
+      "rows": 1,
+      "rlsEnabled": true,
+      "policyCount": 3
+    },
+    "loyalty_tiers": {
+      "rows": 0,
+      "rlsEnabled": true,
+      "policyCount": 3
+    }
+  },
+  "loyaltyProgramColumns": [
+    "id",
+    "business_id",
+    "kind",
+    "stamp_target",
+    "reward_credit_cents",
+    "active",
+    "earn_points_per_dollar",
+    "redeem_points",
+    "tier_basis",
+    "loyalty_model",
+    "expiry_mode",
+    "expiry_days",
+    "stamp_per_cents"
+  ],
+  "tableGrantInventory": {
+    "roles": [
+      "anon",
+      "authenticated",
+      "postgres",
+      "service_role"
+    ],
+    "privilegesPresentOnEachLoyaltyTable": [
+      "DELETE",
+      "INSERT",
+      "REFERENCES",
+      "SELECT",
+      "TRIGGER",
+      "TRUNCATE",
+      "UPDATE"
+    ],
+    "interpretation": "Supabase table ACLs are broad; RLS policies and the standing security suite remain mandatory authorization controls."
+  },
+  "functionsReferencingLoyaltyPrograms": [
+    "app.loyalty_tier_for(uuid,uuid)",
+    "app.on_sale_recorded()",
+    "app.run_points_expiry()",
+    "app.run_points_expiry_for_business(uuid)",
+    "public.adjust_points(uuid,uuid,integer,text)",
+    "public.create_business(text,text,text,text[])",
+    "public.lookup_client_by_phone(uuid,text)",
+    "public.redeem_points(uuid,uuid)",
+    "public.redeem_reward(uuid,uuid,uuid,text)"
+  ],
+  "integrity": {
+    "orphanRewards": 0,
+    "orphanTiers": 0,
+    "businessesWithDuplicatePrograms": 0,
+    "pointsLedgerSum": 345,
+    "pointsBatchesRemainingSum": 345,
+    "clientBalanceMismatches": 0
+  },
+  "result": "PASS",
+  "limitations": "This proves the current v23g/v24 production catalog and aggregate state is internally reconciled. It does not approve the historical DROP CASCADE pattern and is not launch-gate evidence."
+}
