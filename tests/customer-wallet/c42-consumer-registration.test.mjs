@@ -118,7 +118,12 @@ test('customer registration UI is a mobile phone OTP path with an explicit fail-
   assert.match(customerRoute, /customerCapabilities\.customer_whatsapp_otp===true/);
   assert.match(customerRoute, /signInWithOtp\(\{phone,options\}\)/);
   assert.match(customerRoute, /verifyOtp\(\{phone,token,type:'sms'\}\)/);
-  assert.match(customerRoute, /WhatsApp \$\{whatsappAvailable\?'':'— unavailable until configured'\}/);
+  assert.match(customerRoute, /WhatsApp \$\{whatsappAvailable\?'':'— coming soon'\}/);
+  assert.match(customerRoute, /Mobile sign-up is not available right now\. Please try again later\./);
+  assert.match(customerRoute, /id="customerOtpSend" type="button" disabled/,
+    'the primary OTP action must start disabled in both available and unavailable states');
+  assert.doesNotMatch(customerRoute, /id="customerOtpSend"[^>]*\$\{smsAvailable\?'disabled':''\}/,
+    'an unavailable SMS provider must not render an enabled button without a handler');
   assert.match(customerRoute, /id="customerDob" type="date"/);
   assert.match(customerRoute, /id="customerTerms" type="checkbox"/);
   assert.match(customerRoute, /id="customerPrivacy" type="checkbox"/);

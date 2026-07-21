@@ -928,11 +928,11 @@ async function renderCustomerRegistration(){
     <p id="customerPhoneHelp" class="muted small" style="margin-top:6px">We’ll format this as +65. Your number is used for verification, not marketing consent.</p>
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">How should we send your code?</legend>
       <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS (recommended)</span></label>
-      <label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" ${whatsappAvailable?'':'disabled'} style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp ${whatsappAvailable?'':'— unavailable until configured'}</span></label>
+      <label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" ${whatsappAvailable?'':'disabled'} style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp ${whatsappAvailable?'':'— coming soon'}</span></label>
     </fieldset>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
-    ${smsAvailable?`<div style="margin-top:14px">${authChallengeHtml()}</div>`:`<p class="err" role="status" style="margin-top:16px">Customer mobile verification is not configured in this environment.</p>`}
-    <button class="btn" id="customerOtpSend" type="button" ${smsAvailable?'disabled':''} style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Send verification code</span></button>
+    ${smsAvailable?`<div style="margin-top:14px">${authChallengeHtml()}</div>`:`<p class="err" role="status" style="margin-top:16px">Mobile sign-up is not available right now. Please try again later.</p>`}
+    <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Send verification code</span></button>
     <p class="muted small" style="margin-top:12px">Already have a business account? Use Business sign in above.</p>
   </section>`);
   if(!smsAvailable)return;
