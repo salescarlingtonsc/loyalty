@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "environment": "test",
+  "projectRef": "local",
+  "supabaseUrl": "http://127.0.0.1:54321",
+  "supabasePublishableKey": "sb_publishable_replace_with_test_environment_key"
+}

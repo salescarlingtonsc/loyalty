@@ -53,11 +53,17 @@ label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:16px 
 <body>
 <div id="root"></div>
 
+<script src="/runtime-config.js"></script>
+<script src="/runtime-config-loader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <script>
 /* ============ Frenly — public customer join page (QR / link, NO login) ============ */
-const SB_URL='https://gadpooereceldfpfxsod.supabase.co';
-const SB_KEY='sb_publishable_wDf8p9RghbpM2t7_PfBWKQ_YhYhNEAI';
+const RUNTIME_CONFIG=(()=>{try{return window.FrenlyRuntimeConfig.require(window)}catch{
+  window.FrenlyRuntimeConfig?.renderFailure(document.getElementById('root'));
+  throw new Error('Frenly runtime configuration is unavailable.');
+}})();
+const SB_URL=RUNTIME_CONFIG.supabaseUrl;
+const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 const legalLinks=()=>`<div class="legal-links"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/data-request.html">Data request</a></div>`;
 let turnstileLoader;

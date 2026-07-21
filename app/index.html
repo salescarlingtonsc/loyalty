@@ -191,6 +191,25 @@ tr.click:hover td{background:#FBFAF8}
 .imp-prev{border:1px solid var(--hair);border-radius:var(--r-sm);overflow:hidden;margin-top:14px}
 .imp-prev table{font-size:12px}.imp-prev th,.imp-prev td{padding:7px 10px}
 .imp-note{background:var(--tint);color:#8a4a2e;border-radius:var(--r-sm);padding:9px 12px;font-size:12px;margin-top:12px}
+.reward-list{display:grid;gap:10px;margin-top:12px}
+.reward-item{border:1px solid var(--line);border-radius:var(--r-sm);padding:13px 14px;background:#fff}
+.reward-item .meta{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.reward-editor{margin-top:12px;padding-top:14px;border-top:1px solid var(--line)}
+.reward-editor .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+.reward-editor .field-grid .full{grid-column:1/-1}
+.reward-editor details{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.reward-editor summary{cursor:pointer;font-weight:650;color:var(--ink2);list-style:none}
+.reward-editor summary::-webkit-details-marker{display:none}
+.reward-editor summary::after{content:'+';float:right;color:var(--muted);font-size:18px;line-height:1}
+.reward-editor details[open] summary::after{content:'−'}
+.eligibility-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:10px}
+.eligibility-group{background:#FBFAF8;border:1px solid var(--hair);border-radius:var(--r-sm);padding:10px}
+.eligibility-group label{display:flex;align-items:center;gap:7px;margin:7px 0 0;color:var(--ink2);font-size:13px;font-weight:500;cursor:pointer}
+.eligibility-group input[type=checkbox]{width:auto;margin:0}
+.reward-editor .help{margin-top:5px;line-height:1.45}
+.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
+.reward-context{width:auto;min-width:110px;max-width:160px;margin:0;padding:7px 28px 7px 9px;font-size:12px}
+@media(max-width:700px){.field-grid,.reward-editor .field-grid,.eligibility-grid{grid-template-columns:1fr}}
 .main{padding:26px 34px 46px;max-width:1240px;width:100%}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
 .topbar h1{font-size:1.85rem;font-weight:700}
@@ -231,6 +250,32 @@ tr.click:hover td{background:#FBFAF8}
 .portal .head{text-align:center;margin-bottom:26px}
 .svc{display:flex;justify-content:space-between;padding:13px 16px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer;background:#fff}
 .svc.sel{border-color:var(--coral);background:#FFF7F0}
+.wallet-shell{min-height:100vh;background:var(--bg);padding:28px 18px 56px}
+.wallet-inner{width:min(760px,100%);margin:0 auto}
+.wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.wallet-firms{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}
+.wallet-firm{width:100%;text-align:left;border:1px solid var(--line);background:#fff;padding:18px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.wallet-firm:hover{border-color:var(--coral)}
+.wallet-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.wallet-metric{background:var(--bg);padding:12px;border-radius:6px;min-width:0}
+.wallet-metric b{display:block;font-size:20px;margin-top:3px;overflow-wrap:anywhere}
+.wallet-sections{display:grid;gap:14px;margin-top:22px}
+.wallet-section{padding:18px;overflow:hidden}
+.wallet-section h2{font-size:18px;margin-bottom:4px}
+.wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.wallet-rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
+.wallet-reward{border:1px solid var(--hair);border-radius:7px;padding:14px;background:#fff;min-width:0}
+.wallet-reward img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:5px;margin-bottom:10px;background:var(--bg)}
+.wallet-line{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--hair)}
+.wallet-line:last-child{border-bottom:0}
+.wallet-delta{font-weight:700;white-space:nowrap}
+.wallet-delta.plus{color:var(--green)}
+.wallet-delta.minus{color:var(--red)}
+.wallet-history{margin:9px 0 0 14px;padding-left:14px;border-left:2px solid var(--hair)}
+.wallet-skeleton{height:58px;border-radius:6px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite}
+@keyframes wallet-loading{to{background-position:-200% 0}}
+.wallet-appt{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--hair)}
+@media(max-width:560px){.wallet-shell{padding:20px 14px 44px}.wallet-head{align-items:flex-start;flex-wrap:wrap}.wallet-metrics{grid-template-columns:1fr}.wallet-section{padding:15px}.wallet-line,.wallet-appt{flex-wrap:wrap}.walletChange{width:100%}}
 .strike{text-decoration:line-through;opacity:.55}
 @media print{
   .side,.no-print{display:none !important}
@@ -244,14 +289,20 @@ tr.click:hover td{background:#FBFAF8}
 <div id="root"></div>
 <div id="toast" class="toast"></div>
 
+<script src="/runtime-config.js"></script>
+<script src="/runtime-config-loader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 <script>
 /* ============ Frenly app ============ */
-const SB_URL='https://gadpooereceldfpfxsod.supabase.co';
-const SB_KEY='sb_publishable_wDf8p9RghbpM2t7_PfBWKQ_YhYhNEAI';
+const RUNTIME_CONFIG=(()=>{try{return window.FrenlyRuntimeConfig.require(window)}catch{
+  window.FrenlyRuntimeConfig?.renderFailure(document.getElementById('root'));
+  throw new Error('Frenly runtime configuration is unavailable.');
+}})();
+const SB_URL=RUNTIME_CONFIG.supabaseUrl;
+const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
 /* detectSessionInUrl:false — with it left at its (true) default, supabase-js inspects
    window.location.hash on load and can history.replaceState the hash away on a hash-routed
    SPA, which is why a browser refresh was silently losing the current route ("refresh does
@@ -309,6 +360,10 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
    The site key is public by design (the join/booking pages already expose the same
    widget's key); the secret lives only in Supabase Auth settings. */
 const AUTH_TURNSTILE_SITE_KEY='0x4AAAAAAD4_7rnuzB3ug-NF';
+/* The private database flags are the normal release authority. This build-time
+   switch exists only for an emergency fail-closed build; it must never enable a
+   server-disabled feature. */
+const CUSTOMER_FEATURES_EMERGENCY_DISABLED=false;
 function authChallengeHtml(){
   return `<div class="challenge"><div id="authTurnstile"></div>
     <p class="challenge-status" id="authTurnstileStatus" role="status" aria-live="polite">Loading security check…</p>
@@ -404,7 +459,14 @@ let muteAlerts=false;     // in-session-only pop-up mute for non-owners (can't p
    moving between them keeps the same scope selected; reset on sign-out below. */
 let selectedBranchId=null; // null = consolidated
 
-let S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false,saChecked:false};
+let S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
+let customerFeatureCapabilities=null;
+let pendingCustomerInvitationToken='';
+function resetClientSessionState({preserveInvitation=false}={}){
+  const invitation=preserveInvitation?pendingCustomerInvitationToken:'';
+  S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
+  customerFeatureCapabilities=null;pendingCustomerInvitationToken=invitation;selectedBranchId=null;profileOpen=false;
+}
 const $=(id)=>document.getElementById(id);
 const root=$('root');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -438,10 +500,26 @@ async function fetchAllRows(makeQuery,pageSize=DATA_API_PAGE_SIZE){
     from=rows.length;
   }
 }
+function csvField(value){
+  const text=String(value??'');
+  return /[",\r\n]/.test(text)?`"${text.replace(/"/g,'""')}"`:text;
+}
+function csvRows(rows){return rows.map(row=>row.map(csvField).join(',')).join('\r\n')+'\r\n'}
 /* reporting-scale:end */
 function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
 function nav(h){location.hash=h}
 window.addEventListener('hashchange',route);
+
+const unavailableCustomerCapabilities=()=>({customer_identity:false,customer_claims:false,
+  customer_wallet:false,customer_actions:false,customer_notifications:false,customer_email_otp:false});
+async function loadCustomerFeatureCapabilities({refresh=false}={}){
+  if(CUSTOMER_FEATURES_EMERGENCY_DISABLED) return unavailableCustomerCapabilities();
+  if(customerFeatureCapabilities&&!refresh) return customerFeatureCapabilities;
+  const {data,error}=await sb.rpc('get_customer_feature_capabilities');
+  customerFeatureCapabilities=error?unavailableCustomerCapabilities():{
+    ...unavailableCustomerCapabilities(),...(data||{})};
+  return customerFeatureCapabilities;
+}
 
 /* ---------- routing ---------- */
 async function route(){
@@ -452,11 +530,46 @@ async function route(){
     killCharts();
     if(passwordRecoveryError) return renderRecoveryInvalid();
     if(passwordRecoveryActive) return renderPasswordUpdate();
-    const h=location.hash||'#/';
-    if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
+    let h=location.hash||'#/';
+    if(h.startsWith('#/claim?')){
+      const invite=new URLSearchParams(h.split('?')[1]||'').get('invite')||'';
+      if(invite){
+        pendingCustomerInvitationToken=invite;
+        history.replaceState(null,'',`${location.pathname}${location.search}#/claim`);
+        h='#/claim';
+      }
+    }
     const {data:{session}}=await sb.auth.getSession();
     S.user=session?.user||null;
+    if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
     if(!S.user) return renderAuth();
+    if(h==='#/claim'||h.startsWith('#/claim?')) return renderCustomerClaim();
+    if(h==='#/wallet'||h.startsWith('#/wallet/')){
+      const customerCapabilities=await loadCustomerFeatureCapabilities();
+      if(!customerCapabilities.customer_wallet) return renderCustomerWalletUnavailable();
+      return renderCustomerWallet(h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null);
+    }
+    let workspacePage=null,workspaceStaffPersona=null;
+    if(h.startsWith('#/workspace/')){
+      const workspaceParts=h.slice(12).split('/');
+      const workspaceSlug=decodeURIComponent(workspaceParts[0]||'');
+      const requestedModule=decodeURIComponent(workspaceParts[1]||'dashboard');
+      const {data:personas,error:personaError}=await sb.rpc('get_my_personas');
+      workspaceStaffPersona=!personaError&&(personas?.staff||[]).find(p=>p.business_slug===workspaceSlug);
+      if(!workspaceStaffPersona){
+        root.innerHTML=`<div class="center-wrap"><div class="card" style="width:420px;max-width:100%;text-align:center"><h2>Workspace unavailable</h2><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p><button class="btn" id="workspaceHome" style="margin-top:16px">Continue</button></div></div>`;
+        $('workspaceHome').onclick=()=>nav(personas?.default_route||'#/');return;
+      }
+      const {data:workspace,error:workspaceError}=await sb.from('businesses').select('*').eq('slug',workspaceSlug).single();
+      if(workspaceError||!workspace){
+        root.innerHTML=`<div class="center-wrap"><div class="card" style="width:420px;max-width:100%;text-align:center"><h2>Workspace unavailable</h2><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p></div></div>`;return;
+      }
+      if(S.biz?.id!==workspace.id){
+        S.biz=workspace;S.myModules=null;S.myRole=null;S.isSA=false;S.saChecked=false;S.hasCustomerPersona=null;
+      }
+      S.hasCustomerPersona=(personas?.customer||[]).length>0;
+      workspacePage=requestedModule;
+    }
     if(!S.biz){
       const {data:st}=await sb.from('staff').select('business_id').eq('user_id',S.user.id).limit(1);
       if(st&&st.length){
@@ -472,20 +585,33 @@ async function route(){
     if(S.myModules===null){
       const {data:mm,error:mmErr}=await sb.rpc('get_my_modules',{p_business:S.biz.id});
       if(mmErr||!mm){
-        /* Fallback must still resolve the ROLE, not just the modules: myRole drives the
-           Settings gate below, so leaving it null on a transient RPC blip would lock the
-           real owner out of their own Settings. Read it straight off the staff row (RLS
-           already scopes that select to this workspace). */
-        S.myModules=S.biz.enabled_modules||[];S.isSA=false;
-        const {data:me}=await sb.from('staff').select('role,modules')
-          .eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
-        S.myRole=me&&me.length?me[0].role:null;
-        if(me&&me.length&&me[0].modules&&S.myRole!=='owner'){
-          S.myModules=(S.biz.enabled_modules||[]).filter(m=>me[0].modules.includes(m));
+        /* A transient resolver failure must stay fail closed. A workspace route
+           already has the effective module list from get_my_personas; legacy
+           routes recompute the same v14 precedence from the caller's RLS-scoped
+           staff row and never broaden to every firm module by default. */
+        const enabled=S.biz.enabled_modules||[];S.isSA=false;
+        if(workspaceStaffPersona){
+          S.myRole=workspaceStaffPersona.role||null;
+          S.myModules=Array.isArray(workspaceStaffPersona.modules)?workspaceStaffPersona.modules:[];
+        }else{
+          const {data:me}=await sb.from('staff').select('role,modules,module_perms')
+            .eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
+          const staffRow=me&&me.length?me[0]:null;
+          S.myRole=staffRow?.role||null;
+          if(!staffRow)S.myModules=[];
+          else if(staffRow.role==='owner')S.myModules=enabled;
+          else if(staffRow.module_perms!==null)S.myModules=enabled.filter(m=>Object.hasOwn(staffRow.module_perms||{},m));
+          else if(staffRow.modules===null)S.myModules=enabled;
+          else S.myModules=enabled.filter(m=>(staffRow.modules||[]).includes(m));
         }
       }else{
-        S.myModules=mm.modules||S.biz.enabled_modules||[];S.myRole=mm.role||null;S.isSA=!!mm.is_super_admin;
+        S.myModules=Array.isArray(mm.modules)?mm.modules:[];S.myRole=mm.role||null;S.isSA=!!mm.is_super_admin;
       }
+    }
+    if(S.hasCustomerPersona===null){
+      const {data:personas}=await sb.rpc('get_my_personas');
+      S.hasCustomerPersona=!!((personas?.staff||[]).some(p=>p.business_slug===S.biz.slug)
+        &&(personas?.customer||[]).length);
     }
     /* Super-admin detection (Platform feature): gated on one live call to the exact RPC the
        Platform page itself depends on — no client-side email/role list, so nothing here can
@@ -497,7 +623,7 @@ async function route(){
       const {error:saErr}=await sb.rpc('super_admin_list_businesses');
       S.isSA=!saErr;S.saChecked=true;
     }
-    const page=(h.replace('#/','')||'dashboard').split('/');
+    const page=workspacePage?[workspacePage]:(h.replace('#/','')||'dashboard').split('/');
     /* Route guard: a restricted employee must not reach a page by typing the URL, not
        just by it being hidden from nav. 'client' maps to the 'clients' module key, same
        as activeGroupKey() does for the sidebar. dashboard/setup are always reachable. */
@@ -534,6 +660,312 @@ async function route(){
     const rb=$('routeReload');
     if(rb) rb.onclick=()=>location.reload();
   }
+}
+
+/* ---------- customer wallet ---------- */
+async function renderCustomerClaim(){
+  const claimParams=new URLSearchParams((location.hash.split('?')[1]||''));
+  const invitationToken=pendingCustomerInvitationToken||claimParams.get('invite')||'';
+  if(invitationToken){
+    history.replaceState(null,'',`${location.pathname}${location.search}#/claim`);
+  }
+  const customerCapabilities=await loadCustomerFeatureCapabilities();
+  if(!customerCapabilities.customer_identity||!customerCapabilities.customer_claims){
+    return renderCustomerWalletUnavailable('Customer claiming is not available yet.');
+  }
+  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><div class="wallet-head">
+    <div class="logo">frenly<span>.</span></div><span class="spacer"></span><button class="btn ghost sm" id="claimSignOut">Sign out</button></div>
+    <div class="card"><h1>${invitationToken?'Accept invitation':'Claim rewards'}</h1><p class="muted small" style="margin-top:6px">${invitationToken?'Confirm this private invitation while signed in to the intended account.':'Use the same confirmed email your business has on file.'}</p>
+      <div id="claimPersonas" style="margin-top:14px"><p class="muted small">Checking access…</p></div>
+      ${invitationToken?'':`<label>Business link</label><input id="claimSlug" autocomplete="off" placeholder="business-slug">`}
+      <button class="btn" id="claimStart" style="margin-top:14px">${invitationToken?'Accept invitation':'Claim'}</button>
+      <div id="claimResult"></div></div></div></div>`;
+  $('claimSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  const renderPersonas=async()=>{
+    const {data,error}=await sb.rpc('get_my_personas');
+    if(error){
+      $('claimPersonas').innerHTML=`<div class="err">Customer access could not be checked. <button class="btn ghost sm" id="claimPersonaRetry" style="margin-left:8px">Retry</button></div>`;
+      $('claimPersonaRetry').onclick=renderPersonas;
+      return;
+    }
+    const staff=data?.staff||[],customer=data?.customer||[];
+    $('claimPersonas').innerHTML=staff.length&&customer.length
+      ?`<div class="card" style="background:var(--bg)"><b>Choose where to continue</b><div class="row" style="margin-top:10px"><a class="btn ghost sm" href="#/workspace/${encodeURIComponent(staff[0].business_slug)}/dashboard">Staff workspace</a><a class="btn ghost sm" href="#/wallet">My Frenly</a></div></div>`
+      :customer.length
+        ?`<p class="muted small">Wallet links: ${customer.map(x=>`<a style="color:#D06A2E" href="#/wallet/${encodeURIComponent(x.business_slug)}">${esc(x.business_name)}</a>`).join(', ')}</p>`
+        :staff.length
+          ?`<p class="muted small">Staff workspace: <a style="color:#D06A2E" href="#/workspace/${encodeURIComponent(staff[0].business_slug)}/dashboard">${esc(staff[0].business_name)}</a></p>`
+          :'<p class="muted small">No wallet links yet.</p>';
+  };
+  await renderPersonas();
+  const identityAttemptId=crypto.randomUUID();
+  let claimAttempt=null;
+  $('claimStart').onclick=async()=>{
+    const slug=invitationToken?'':$('claimSlug').value.trim().toLowerCase();
+    if(!invitationToken&&slug.length<2)return toast('Enter the business link slug');
+    const attemptKey=invitationToken?'invitation':`email:${slug}`;
+    if(!claimAttempt||claimAttempt.key!==attemptKey)claimAttempt={key:attemptKey,id:crypto.randomUUID()};
+    const originalLabel=invitationToken?'Accept invitation':'Claim';
+    $('claimStart').disabled=true;$('claimStart').textContent='Checking…';
+    const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:identityAttemptId});
+    if(identity.error){
+      $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
+      $('claimResult').innerHTML='<div class="err">Customer access is unavailable. Please try again later.</div>';return;
+    }
+    const {data,error}=invitationToken
+      ?await sb.rpc('customer_claim_link_invitation',{p_token:invitationToken,p_idempotency_key:claimAttempt.id})
+      :await sb.rpc('customer_claim_link_by_email',{p_business_slug:slug,p_idempotency_key:claimAttempt.id});
+    $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
+    if(error){$('claimResult').innerHTML='<div class="err">Customer access is unavailable. Please try again later.</div>';return}
+    pendingCustomerInvitationToken='';
+    const outcome=data?.outcome||'no_link_created';
+    $('claimResult').innerHTML=`<div class="card" style="margin-top:16px"><b>${outcome==='linked'?'Linked':'Request received'}</b>
+      <p class="muted small" style="margin-top:6px">${outcome==='linked'?'Your wallet is ready.':'If the details match an available customer record, the business link will appear here.'}</p>
+      ${outcome==='linked'?'<button class="btn sm" id="goWallet" style="margin-top:10px">Open wallet</button>':''}</div>`;
+    if($('goWallet'))$('goWallet').onclick=()=>nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/wallet');
+    await renderPersonas();
+  };
+}
+
+function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
+  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><div class="wallet-head">
+    <div class="logo">frenly<span>.</span></div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2>My Frenly is not open yet</h2>
+      <p class="muted" style="margin-top:8px">${esc(message)}</p>
+    </div></div></div>`;
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+}
+
+function renderCustomerWalletRetry(message,businessSlug){
+  const body=$('walletBody');if(!body)return;
+  body.innerHTML=`<div class="card" style="text-align:center"><h2>Could not load My Frenly</h2><p class="muted small" style="margin-top:8px">${esc(message)}</p><button class="btn sm" id="walletRetry" style="margin-top:14px">Retry</button></div>`;
+  $('walletRetry').onclick=()=>renderCustomerWallet(businessSlug);
+}
+
+function walletDate(value,withTime=false){
+  if(!value)return '';
+  const date=new Date(value);if(Number.isNaN(date.getTime()))return '';
+  return date.toLocaleString('en-SG',{timeZone:'Asia/Singapore',dateStyle:'medium',...(withTime?{timeStyle:'short'}:{})});
+}
+
+function walletSectionShell(id,title,description=''){
+  return `<section class="card wallet-section" id="${id}" aria-busy="true"><div class="wallet-section-head"><div><h2>${esc(title)}</h2>${description?`<p class="muted small">${esc(description)}</p>`:''}</div></div><div class="wallet-skeleton"></div></section>`;
+}
+
+function walletSectionError(id,message,retry){
+  const host=$(id);if(!host)return;
+  host.setAttribute('aria-busy','false');
+  host.innerHTML=`<div class="wallet-section-head"><div><h2>Section unavailable</h2><p class="muted small">${esc(message)}</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}Retry">Retry</button></div>`;
+  $(`${id}Retry`).onclick=retry;
+}
+
+function walletRpcDenied(error){return error?.code==='42501'||error?.code==='PGRST301'}
+
+function ensureWalletEmptyState(businessSlug){
+  const sections=$('walletSections');if(!sections)return;
+  const hasSection=!!sections.querySelector('.wallet-section:not(#walletEmpty)');
+  const existing=$('walletEmpty');
+  if(hasSection){if(existing)existing.remove();return}
+  if(!existing)sections.insertAdjacentHTML('beforeend',`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`);
+  $('walletEmptyRetry').onclick=()=>renderCustomerWallet(businessSlug);
+}
+
+async function walletSectionEmpty(id,title,message,businessSlug,capability,retry){
+  const host=$(id);if(!host)return;
+  const {data,error}=await sb.rpc('customer_portal_capabilities',{p_business_slug:businessSlug});
+  if(error)return walletSectionError(id,'This section could not be refreshed.',retry);
+  if(!data?.[capability]){host.remove();ensureWalletEmptyState(businessSlug);return}
+  host.setAttribute('aria-busy','false');
+  host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(title)}</h2><p class="muted small">${esc(message)}</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}EmptyRetry">Refresh</button></div>`;
+  $(`${id}EmptyRetry`).onclick=retry;
+}
+
+function renderWalletAppointments(host,businessSlug,state,customerFeatures){
+  host.setAttribute('aria-busy','false');
+  host.innerHTML=`<div class="wallet-section-head"><div><h2>Appointments</h2><p class="muted small">Upcoming and recent visits</p></div></div>
+    <div>${state.items.map(a=>`<div class="wallet-appt"><div><b>${esc(walletDate(a.starts_at,true))}</b>
+      <p class="muted small" style="margin-top:3px">${esc(a.service_name||'Appointment')}${a.branch_name?' · '+esc(a.branch_name):''} · ${esc(String(a.status||'').replaceAll('_',' '))}</p></div><span class="spacer"></span>
+      ${customerFeatures.customer_actions&&a.status==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(a.appointment_id)}">Change</button>`:''}</div>`).join('')}</div>
+    ${state.nextCursor?'<button class="btn ghost sm" id="walletAppointmentsMore" style="margin-top:12px">Load more</button>':''}`;
+  wireWalletAppointmentActions(businessSlug);
+}
+
+function wireWalletAppointmentActions(businessSlug){
+  document.querySelectorAll('.walletChange').forEach(button=>button.onclick=()=>{
+    const modal=document.createElement('div');modal.className='modal';
+    modal.innerHTML=`<div class="modal-card"><div class="row"><h2>Change appointment</h2><span class="spacer"></span><button class="btn ghost sm" id="walletChangeClose">✕</button></div>
+      <label>Request</label><select id="walletChangeKind"><option value="cancel">Cancel appointment</option><option value="reschedule">Choose another time</option></select>
+      <div id="walletChangeTime" hidden><label>Preferred new time</label><input id="walletChangeAt" type="datetime-local"></div>
+      <label>Note (optional)</label><textarea id="walletChangeNote" rows="3" maxlength="750"></textarea>
+      <button class="btn" id="walletChangeSend" style="width:100%;margin-top:16px">Send request</button></div>`;
+    document.body.appendChild(modal);
+    $('walletChangeClose').onclick=()=>modal.remove();
+    $('walletChangeKind').onchange=()=>{$('walletChangeTime').hidden=$('walletChangeKind').value!=='reschedule'};
+    $('walletChangeSend').onclick=async()=>{
+      const kind=$('walletChangeKind').value,local=$('walletChangeAt').value;
+      if(kind==='reschedule'&&!local)return toast('Choose a new time');
+      $('walletChangeSend').disabled=true;
+      const {error}=await sb.rpc('customer_request_appointment_action',{
+        p_business_slug:businessSlug,p_appointment:button.dataset.id,p_action:kind,
+        p_proposed_at:kind==='reschedule'?sgIso(local):null,
+        p_note:$('walletChangeNote').value.trim()||null,p_idempotency_key:crypto.randomUUID()});
+      if(error){$('walletChangeSend').disabled=false;return fail(error)}
+      modal.remove();toast('Request sent to the business');
+    };
+  });
+}
+
+async function renderCustomerWallet(businessSlug=null){
+  const customerFeatures=await loadCustomerFeatureCapabilities();
+  if(!customerFeatures.customer_wallet)return renderCustomerWalletUnavailable();
+  const {data:walletPersonas}=await sb.rpc('get_my_personas');
+  const walletStaff=walletPersonas?.staff||[],walletCustomers=walletPersonas?.customer||[];
+  const dualRoleWorkspace=walletStaff.length&&walletCustomers.length?walletStaff[0]:null;
+  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><div class="wallet-head">
+    ${businessSlug?'<button class="btn ghost sm" id="walletBack">←</button>':''}<div class="logo">frenly<span>.</span></div>
+    <span class="spacer"></span>${dualRoleWorkspace?`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(dualRoleWorkspace.business_slug)}/dashboard">Staff workspace</a>`:''}<button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
+    <div id="walletBody"><div class="card"><p class="muted">Loading…</p></div></div></div></div>`;
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  if($('walletBack')) $('walletBack').onclick=()=>nav('#/wallet');
+  if(!businessSlug){
+    const {data,error}=await sb.rpc('customer_get_wallet');
+    if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null);
+    const cards=Array.isArray(data)?data:[];
+    $('walletBody').innerHTML=`<h1>My Frenly</h1><p class="muted small" style="margin:4px 0 18px">Each business keeps its own rewards and balances.</p>
+      <div class="wallet-firms">${cards.map(card=>{
+        const b=card.business||{},loyalty=card.loyalty||{},appointments=card.upcoming_appointments||{};
+        const currency=b.currency||'SGD';
+        return `<button class="wallet-firm" data-slug="${esc(b.slug)}"><b>${esc(b.name||'Business')}</b>
+          <p class="muted small" style="margin-top:3px">${esc(b.industry||'Local business')}</p>
+          <div class="wallet-metrics"><div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'points')}</span><b>${Number(loyalty.balance||0)}</b></div>
+          <div class="wallet-metric"><span class="muted small">Credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents||0)/100).toFixed(2)}</b></div></div>
+          <p class="muted small" style="margin-top:12px">${Number(appointments.count||0)} upcoming</p></button>`}).join('')}</div>
+      ${cards.length?'':'<div class="card"><p class="muted">No verified business links yet.</p></div>'}`;
+    document.querySelectorAll('.wallet-firm').forEach(button=>button.onclick=()=>nav('#/wallet/'+encodeURIComponent(button.dataset.slug)));
+    return;
+  }
+  const args={p_business_slug:businessSlug};
+  const [{data:summary,error:summaryError},{data:capabilities,error:capabilitiesError}]=await Promise.all([
+    sb.rpc('customer_get_business_summary',args),sb.rpc('customer_portal_capabilities',args)]);
+  if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
+  const b=summary.business||{},loyalty=summary.loyalty||{},packages=summary.packages||{},membership=summary.membership||{};
+  const currency=b.currency||'SGD';
+  const hasWalletSection=['booking_request','rewards','activity','packages','membership','appointments'].some(key=>!!capabilities[key]);
+  $('walletBody').innerHTML=`<div class="row"><div><h1>${esc(b.name||'My rewards')}</h1><p class="muted small" style="margin-top:4px">${esc(b.industry||'')}</p></div><span class="spacer"></span>${customerFeatures.customer_claims?'<button class="btn danger sm" id="walletUnlink">Disconnect</button>':''}</div>
+    <div class="wallet-metrics">
+      ${loyalty.enabled?`<div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'points')}</span><b>${Number(loyalty.balance||0)}</b></div>
+      <div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents||0)/100).toFixed(2)}</b></div>`:''}
+      ${capabilities.packages?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining||0)}</b></div>`:''}
+      ${capabilities.membership?`<div class="wallet-metric"><span class="muted small">Membership</span><b>${membership.active?'Active':'Inactive'}</b></div>`:''}
+    </div>
+    <div class="wallet-sections" id="walletSections">
+      ${capabilities.booking_request?`<section class="card wallet-section" id="walletBook" aria-busy="false"><div class="wallet-section-head"><div><h2>Book</h2><p class="muted small">Request your next visit with ${esc(b.name||'this business')}.</p></div><span class="spacer"></span><a class="btn sm" href="#/b/${encodeURIComponent(b.slug)}">Book now</a></div></section>`:''}
+      ${capabilities.rewards?walletSectionShell('walletRewards','Rewards','Browse rewards and ask the team to claim at the counter.'):''}
+      ${capabilities.activity?walletSectionShell('walletActivity','Activity','Your loyalty history with this business.'):''}
+      ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
+      ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
+      ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
+      ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
+    </div>
+    ${customerFeatures.customer_notifications?'<div id="customerNotificationPreferences"></div>':''}`;
+  let unlinkAttemptId=crypto.randomUUID();
+  if($('walletUnlink'))$('walletUnlink').onclick=async()=>{
+    if(!confirm('Disconnect this business from My Frenly? Your customer history stays with the business, but this account will immediately lose wallet access.'))return;
+    $('walletUnlink').disabled=true;
+    const {error}=await sb.rpc('customer_unlink_business_link',{
+      p_business_slug:businessSlug,p_idempotency_key:unlinkAttemptId});
+    if(error){$('walletUnlink').disabled=false;return toast('Customer access is unavailable. Please try again later.')}
+    toast('Business disconnected');nav('#/wallet');
+  };
+  ensureWalletEmptyState(businessSlug);
+  const loadRewards=async()=>{
+    const host=$('walletRewards');if(!host)return;
+    host.setAttribute('aria-busy','true');
+    const {data,error}=await sb.rpc('customer_get_reward_catalog',args);
+    if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?'Rewards are not available for this account.':'Rewards could not be loaded.',loadRewards);
+    const rewards=Array.isArray(data)?data:[];
+    if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards','No rewards are available right now.',businessSlug,'rewards',loadRewards);
+    const availability={available_at_counter:'Available at counter',insufficient_balance:'More points needed',not_started:'Available soon',ended:'Offer ended',limit_reached:'Claim limit reached'};
+    host.setAttribute('aria-busy','false');
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Rewards</h2><p class="muted small">Claims are completed with the team at the counter.</p></div></div><div class="wallet-rewards">${rewards.map(r=>`<article class="wallet-reward">
+      ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b>${esc(r.customer_name||'Reward')}</b><span class="spacer"></span><span class="pill">${Number(r.cost_points||0)} ${esc(loyalty.unit||'points')}</span></div>
+      ${r.description?`<p class="muted small" style="margin-top:7px">${esc(r.description)}</p>`:''}<p class="small" style="margin-top:9px">${esc(availability[r.availability]||'Ask at counter')}</p>
+      ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
+      ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
+      ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
+      ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}</article>`).join('')}</div>`;
+  };
+  const activityState={items:[],nextCursor:null};
+  const loadActivity=async(cursor=null)=>{
+    const host=$('walletActivity');if(!host)return;
+    const {data,error}=await sb.rpc('customer_get_loyalty_details',{...args,p_cursor:cursor||{limit:20}});
+    if(error)return walletSectionError('walletActivity',walletRpcDenied(error)?'Loyalty activity is not available for this account.':'Activity could not be loaded.',()=>loadActivity(cursor));
+    const next=Array.isArray(data?.items)?data.items:[];
+    activityState.items=cursor?[...activityState.items,...next]:next;activityState.nextCursor=data?.next_cursor||null;
+    if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity','No loyalty activity is available yet.',businessSlug,'activity',()=>loadActivity(null));
+    const unit=esc(data?.unit||loyalty.unit||'points'),expiry=data?.expiry||{};
+    host.setAttribute('aria-busy','false');
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Activity</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${Number(expiry.expiring_next_30_days)} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:'<p class="muted small">Your loyalty history with this business.</p>'}</div></div>
+      <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0);return `<div class="wallet-line"><div><b>${esc(item.title||'Loyalty activity')}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${item.detail?`<p class="muted small" style="margin-top:3px">${esc(item.detail)}</p>`:''}</div><span class="spacer"></span><span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':''}${delta} ${unit}</span></div>`}).join('')}</div>
+      ${activityState.nextCursor?'<button class="btn ghost sm" id="walletActivityMore" style="margin-top:12px">Load more</button>':''}`;
+    if($('walletActivityMore'))$('walletActivityMore').onclick=()=>{ $('walletActivityMore').disabled=true;loadActivity(activityState.nextCursor) };
+  };
+  const packageState={items:[],nextCursor:null};
+  const loadPackages=async(cursor=null)=>{
+    const host=$('walletPackages');if(!host)return;
+    const {data,error}=await sb.rpc('customer_get_packages',{...args,p_cursor:cursor||{limit:20}});
+    if(error)return walletSectionError('walletPackages',walletRpcDenied(error)?'Packages are not available for this account.':'Packages could not be loaded.',()=>loadPackages(cursor));
+    const next=Array.isArray(data?.items)?data.items:[];
+    packageState.items=cursor?[...packageState.items,...next]:next;packageState.nextCursor=data?.next_cursor||null;
+    if(!packageState.items.length)return walletSectionEmpty('walletPackages','Packages','No packages are available for this account.',businessSlug,'packages',()=>loadPackages(null));
+    host.setAttribute('aria-busy','false');
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Packages</h2><p class="muted small">Session balances and recent usage.</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
+      <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
+      ${(item.usage_history||[]).length?`<div class="wallet-history">${item.usage_history.map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`).join('')}
+      ${packageState.nextCursor?'<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">Load more</button>':''}`;
+    if($('walletPackagesMore'))$('walletPackagesMore').onclick=()=>{ $('walletPackagesMore').disabled=true;loadPackages(packageState.nextCursor) };
+  };
+  const loadMemberships=async()=>{
+    const host=$('walletMemberships');if(!host)return;
+    const {data,error}=await sb.rpc('customer_get_memberships',args);
+    if(error)return walletSectionError('walletMemberships',walletRpcDenied(error)?'Membership is not available for this account.':'Membership could not be loaded.',loadMemberships);
+    const memberships=Array.isArray(data)?data:[];
+    if(!memberships.length)return walletSectionEmpty('walletMemberships','Membership','No membership is available for this account.',businessSlug,'membership',loadMemberships);
+    host.setAttribute('aria-busy','false');
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Membership</h2><p class="muted small">Current plan and period status.</p></div></div>${memberships.map(item=>`<div class="wallet-line"><div><b>${esc(item.plan_name||'Membership')}</b><p class="muted small" style="margin-top:3px">${esc(String(item.cadence||'').replaceAll('_',' '))}${item.current_period_start?' · '+esc(walletDate(item.current_period_start))+' to '+esc(walletDate(item.current_period_end)):''}</p></div><span class="spacer"></span><span class="pill">${esc(String(item.status||'').replaceAll('_',' '))}</span></div>`).join('')}`;
+  };
+  const appointmentState={items:[],nextCursor:null};
+  const loadAppointments=async(cursor=null)=>{
+    const host=$('walletAppointments');if(!host)return;
+    const {data,error}=await sb.rpc('customer_get_appointments_page',{...args,p_cursor:cursor||{limit:20}});
+    if(error)return walletSectionError('walletAppointments',walletRpcDenied(error)?'Appointments are not available for this account.':'Appointments could not be loaded.',()=>loadAppointments(cursor));
+    const next=Array.isArray(data?.items)?data.items:[];
+    appointmentState.items=cursor?[...appointmentState.items,...next]:next;appointmentState.nextCursor=data?.next_cursor||null;
+    if(!appointmentState.items.length)return walletSectionEmpty('walletAppointments','Appointments','No appointments are available yet.',businessSlug,'appointments',()=>loadAppointments(null));
+    renderWalletAppointments(host,businessSlug,appointmentState,customerFeatures);
+    if($('walletAppointmentsMore'))$('walletAppointmentsMore').onclick=()=>{ $('walletAppointmentsMore').disabled=true;loadAppointments(appointmentState.nextCursor) };
+  };
+  await Promise.all([loadRewards(),loadActivity(),loadPackages(),loadMemberships(),loadAppointments()]);
+  if(customerFeatures.customer_notifications) renderCustomerNotificationPreferences(businessSlug);
+}
+
+async function renderCustomerNotificationPreferences(businessSlug){
+  const host=$('customerNotificationPreferences');if(!host)return;
+  const {data,error}=await sb.rpc('customer_get_notification_preferences',{p_business_slug:businessSlug});
+  if(error)return fail(error);
+  const current=new Map((data||[]).map(x=>[`${x.channel}:${x.topic}`,!!x.opted_in]));
+  const choices=[['in_app','booking_updates','Booking updates'],['in_app','loyalty_updates','Loyalty updates'],['email','marketing','Offers by email']];
+  host.innerHTML=`<h2 style="margin-top:28px">Notifications</h2>${choices.map(([channel,topic,label])=>`<label class="row" style="margin-top:10px;color:var(--ink);font-weight:500">
+    <input class="walletPref" type="checkbox" style="width:auto" data-channel="${channel}" data-topic="${topic}" ${current.get(`${channel}:${topic}`)?'checked':''}>${label}</label>`).join('')}`;
+  document.querySelectorAll('.walletPref').forEach(input=>input.onchange=async()=>{
+    input.disabled=true;
+    const {error:setError}=await sb.rpc('customer_set_notification_preference',{
+      p_business_slug:businessSlug,p_channel:input.dataset.channel,p_topic:input.dataset.topic,
+      p_opted_in:input.checked,p_idempotency_key:crypto.randomUUID()});
+    input.disabled=false;
+    if(setError){input.checked=!input.checked;return fail(setError)}
+    toast('Notification preference saved');
+  });
 }
 
 /* ---------- auth ---------- */
@@ -609,7 +1041,7 @@ function renderAuth(mode='in'){
         const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
         if(error) throw error;
       }
-      S.biz=null;route();
+      resetClientSessionState({preserveInvitation:true});route();
     }catch(e){
       if(authControl)authControl.reset();
       $('autherr').innerHTML=`<div class="err">${esc(e.message)}</div>`;
@@ -639,7 +1071,7 @@ function renderPasswordUpdate(){
     $('savePw').disabled=true;
     const {error}=await sb.auth.updateUser({password});
     if(error){$('autherr').innerHTML='<div class="err">This reset link is invalid or expired. Request a new one.</div>';$('savePw').disabled=false;return}
-    await sb.auth.signOut();passwordRecoveryActive=false;
+    await sb.auth.signOut();passwordRecoveryActive=false;resetClientSessionState();
     history.replaceState(null,'',location.pathname+'#/');
     renderAuth('in');
     $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Password updated. Sign in with your new password.</div>';
@@ -703,7 +1135,7 @@ function renderOnboard(){
       <button class="btn ghost" id="join">Join team</button></div>
     </div></div>`;
     document.querySelectorAll('.ind').forEach(el=>el.onclick=()=>{sel=el.dataset.k;const n=$('bn').value;draw();$('bn').value=n});
-    $('out').onclick=async()=>{killChannels();await sb.auth.signOut();S.biz=null;route()};
+    $('out').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();route()};
     $('join').onclick=async()=>{
       if(!$('ic').value.trim()) return toast('Enter your invite code');
       $('join').disabled=true;
@@ -739,8 +1171,8 @@ const IMPORT_CONFIGS={
       {key:'full_name',aliases:['name','full name','fullname','customer','client'],required:true},
       {key:'phone',aliases:['phone','mobile','contact','hp','number','tel']},
       {key:'email',aliases:['email','e-mail','mail']},
-      {key:'gender',aliases:['gender','sex'],transform:v=>['female','male','other'].includes(v.toLowerCase())?v.toLowerCase():null},
-      {key:'birth_date',aliases:['birthday','birth date','birth','dob'],transform:v=>/^\d{4}-\d{2}-\d{2}$/.test(v.trim())?v.trim():null},
+      {key:'gender',aliases:['gender','sex']},
+      {key:'birth_date',aliases:['birthday','birth date','birth','dob']},
       {key:'notes',aliases:['notes','note','remark','remarks']}],
     build:o=>({business_id:S.biz.id,...o})},
   services:{title:'Services',table:'services',
@@ -758,12 +1190,35 @@ const IMPORT_CONFIGS={
       {key:'name',aliases:['name','product','item'],required:true},
       {key:'sku',aliases:['sku','code','barcode','ref']},
       {key:'retail_price_cents',aliases:['price','retail','retail price','price (sgd)','amount','cost'],money:true},
-      {key:'__qty',aliases:['qty','quantity','stock','on hand','opening stock','count'],int:true,stripField:true}],
-    build:o=>{const q=o.__qty;delete o.__qty;return {business_id:S.biz.id,...o};},
-    postInsert:async(inserted,mapped)=>{
-      const q=parseInt(mapped.__qty||'0');
-      if(q>0) await sb.from('stock_batches').insert({product_id:inserted.id,qty:q});
-    }},
+      {key:'opening_qty',aliases:['qty','quantity','stock','on hand','opening stock','count'],int:true,stripField:true}],
+    build:o=>({business_id:S.biz.id,...o})},
+  staff:{title:'Team members',table:'staff',
+    hint:'Columns: name (required), email, phone, title, role, calendar_color. Imported people are roster records; invite them separately if they need to sign in.',
+    fields:[
+      {key:'full_name',aliases:['name','full name','fullname','staff','employee'],required:true},
+      {key:'email',aliases:['email','e-mail','mail']},
+      {key:'phone',aliases:['phone','mobile','contact','tel']},
+      {key:'title',aliases:['title','job title','position']},
+      {key:'role',aliases:['role','access role'],def:'staff'},
+      {key:'calendar_color',aliases:['calendar color','calendar colour','color','colour'],def:'#7C9CBF'}],
+    build:o=>({business_id:S.biz.id,active:true,...o})},
+  branches:{title:'Branches',table:'branches',
+    hint:'Columns: name (required), address, phone, email, timezone. Asia/Singapore is used when timezone is blank.',
+    fields:[
+      {key:'name',aliases:['name','branch','location','outlet'],required:true},
+      {key:'address',aliases:['address','location address']},
+      {key:'phone',aliases:['phone','contact','tel']},
+      {key:'email',aliases:['email','e-mail']},
+      {key:'timezone',aliases:['timezone','time zone'],def:'Asia/Singapore'}],
+    build:o=>({business_id:S.biz.id,active:true,...o})},
+  reservations:{title:'Tables / capacity',table:'booking_tables',
+    hint:'Columns: name (required), pax/seats, quantity, sort. Use one row per table type or capacity pool.',
+    fields:[
+      {key:'name',aliases:['name','table','table type','capacity type'],required:true},
+      {key:'pax',aliases:['pax','seats','party size'],int:true},
+      {key:'quantity',aliases:['quantity','qty','count','number'],int:true,def:1},
+      {key:'sort',aliases:['sort','order','position'],int:true,def:0}],
+    build:o=>({business_id:S.biz.id,active:true,...o})},
 };
 /* Parse pasted/file text into array-of-arrays. Auto-detects tab (Excel paste) vs comma (CSV),
    honours quoted fields + embedded newlines. */
@@ -813,25 +1268,23 @@ function mapRows(rows,cfg){
   }
   return {recs,skipped,total:rows.length-1,missing:null};
 }
-async function runImport(recs,cfg,onProgress){
-  let inserted=0,failed=0;const errs=[];
-  for(let i=0;i<recs.length;i+=20){
-    const chunk=recs.slice(i,i+20);
-    const res=await Promise.allSettled(chunk.map(async rec=>{
-      const {data,error}=await sb.from(cfg.table).insert(rec.payload).select().single();
-      if(error) throw error;
-      if(cfg.postInsert) await cfg.postInsert(data,rec.mapped);
-      return data;
-    }));
-    res.forEach(x=>{ if(x.status==='fulfilled')inserted++; else {failed++; if(errs.length<4)errs.push(x.reason?.message||'row failed')} });
-    if(onProgress) onProgress(inserted+failed,recs.length);
-  }
-  return {inserted,failed,errs};
+async function runImport(recs,entity,idempotencyKey,onProgress){
+  if(onProgress) onProgress(0,recs.length,'Validating');
+  const {data:staged,error:stageError}=await sb.rpc('stage_import_rows',{
+    p_business:S.biz.id,p_entity:entity,p_rows:recs.map(r=>r.mapped),
+    p_idempotency_key:idempotencyKey});
+  if(stageError) return {inserted:0,failed:recs.length,errs:[stageError.message],blocked:true};
+  const rowErrors=(staged.errors||[]).map(e=>`Row ${e.row_number}: ${(e.errors||[]).join(', ')}`);
+  if(staged.invalid>0) return {inserted:0,failed:staged.invalid,errs:rowErrors,blocked:true};
+  if(onProgress) onProgress(recs.length,recs.length,'Saving');
+  const {data:done,error:commitError}=await sb.rpc('commit_import_job',{p_job:staged.job_id});
+  if(commitError) return {inserted:0,failed:recs.length,errs:[commitError.message],blocked:true};
+  return {inserted:done.imported,failed:0,errs:[],blocked:false};
 }
 /* The modal. moduleKey ∈ customers|services|inventory. onDone() re-renders the caller. */
 window.openImport=function(moduleKey,onDone){
   const cfg=IMPORT_CONFIGS[moduleKey];if(!cfg)return;
-  let mode='paste',parsed=null;
+  let mode='paste',parsed=null,importIdem=null;
   const wrap=document.createElement('div');wrap.className='modal';wrap.id='impModal';
   document.body.appendChild(wrap);
   const close=()=>wrap.remove();
@@ -869,6 +1322,7 @@ window.openImport=function(moduleKey,onDone){
     }
   }
   function preview(rows){
+    importIdem=null;
     parsed=mapRows(rows,cfg);
     const R=$('impResult');
     if(parsed.missing){R.innerHTML=`<div class="err">Couldn't find a <b>${esc(parsed.missing)}</b> column. Make sure your first row has headers.</div>`;return}
@@ -881,10 +1335,11 @@ window.openImport=function(moduleKey,onDone){
       <div style="margin-top:12px"><button class="btn" id="impGo">Import ${parsed.recs.length} ${cfg.title.toLowerCase()}</button></div>`;
     $('impGo').onclick=async()=>{
       $('impGo').disabled=true;$('impGo').textContent='Importing…';
-      const {inserted,failed,errs}=await runImport(parsed.recs,cfg,(d,t)=>{$('impGo').textContent=`Importing… ${d}/${t}`});
-      R.innerHTML=`<div class="imp-note" style="background:#E7F6EE;color:#1f7a4d">✓ Imported <b>${inserted}</b> ${cfg.title.toLowerCase()}${failed?` · ${failed} skipped (duplicates or invalid)`:''}.</div>
+      if(!importIdem) importIdem=crypto.randomUUID();
+      const {inserted,failed,errs,blocked}=await runImport(parsed.recs,moduleKey,importIdem,(d,t,stage)=>{$('impGo').textContent=`${stage}… ${d}/${t}`});
+      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:#E7F6EE;color:#1f7a4d'}">${blocked?'Nothing imported. Correct the source data, then start the import again.':`✓ Imported <b>${inserted}</b> ${cfg.title.toLowerCase()}.`}</div>
         ${errs.length?`<p class="small muted" style="margin-top:8px">First issues: ${errs.map(e=>esc(e)).join('; ')}</p>`:''}
-        <div style="margin-top:14px"><button class="btn sm" id="impDone">Done</button></div>`;
+        <div style="margin-top:14px"><button class="btn sm" id="impDone">${blocked?'Close':'Done'}</button></div>`;
       $('impDone').onclick=()=>{close();if(onDone)onDone()};
     };
   }
@@ -938,6 +1393,7 @@ function profileHtml(){
         <span class="chev">▾</span>
       </div>
       ${profileOpen?`<div class="menu" id="profmenu">
+        ${S.hasCustomerPersona?`<a href="#/wallet" id="pmWallet">🎁 My Frenly</a>`:''}
         <a href="#/setup" id="pmSetup">✅ Get started</a>
         ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">⚙️ Settings</a>`:''}
         ${S.isSA?`<a href="#/platform" id="pmPlatform">🛡️ Platform</a>`:''}
@@ -952,10 +1408,11 @@ function profileHtml(){
 function wireProfile(page){
   $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen){bellOpen=false;renderBell(page);}renderProfile(page);};
   if(profileOpen){
-    $('pmSignout').onclick=async(e)=>{e.preventDefault();killChannels();await sb.auth.signOut();S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false,saChecked:false};selectedBranchId=null;profileOpen=false;nav('#/')};
+    $('pmSignout').onclick=async(e)=>{e.preventDefault();killChannels();await sb.auth.signOut();resetClientSessionState();nav('#/')};
     $('pmSetup').onclick=()=>{profileOpen=false};
     const pmS=$('pmSettings');if(pmS) pmS.onclick=()=>{profileOpen=false};
     const pmP=$('pmPlatform');if(pmP) pmP.onclick=()=>{profileOpen=false};
+    const pmW=$('pmWallet');if(pmW) pmW.onclick=()=>{profileOpen=false};
     /* click-away to dismiss — expected of a native popover, and without it the menu
        could only be closed by re-clicking the chip. One-shot listener, re-armed on
        each open, so it can't stack up across renders. */
@@ -1138,6 +1595,83 @@ function renderShell(page){
   initNotifications(); // fire-and-forget, like the page fn above — loads badge + (re)uses the realtime channel
 }
 const M=()=> $('main');
+
+/* ---------- v40 staff reversal workflow ----------
+   All writes stay behind reverse_sale / reverse_loyalty_redemption. The read model is a
+   bounded SECURITY DEFINER RPC because the immutable provenance tables are deliberately
+   not browser-readable. Keys survive retries and page re-renders for this tab session. */
+const reversalKeys=new Map(),reversalItems=new Map();
+const reversalItemKey=(kind,id)=>`${kind}:${id}`;
+async function loadReversalWorkflows(clientId=null,limit=100,mode='all'){
+  const {data,error}=await sb.rpc('staff_get_reversal_workflows',{
+    p_business:S.biz.id,p_client:clientId,p_limit:limit,p_mode:mode});
+  if(error){
+    if(error.code==='42501'||/permission|authorization|staff required/i.test(error.message||''))return null;
+    throw error;
+  }
+  [...(data?.sales||[])].forEach(x=>reversalItems.set(reversalItemKey('sale',x.id),x));
+  [...(data?.redemptions||[])].forEach(x=>reversalItems.set(reversalItemKey('redemption',x.id),x));
+  return data||{sales:[],redemptions:[]};
+}
+function reversalResultHtml(kind,result){
+  if(!result)return '';
+  if(kind==='sale'&&result.no_money_refund)return `<div class="imp-note"><b>Session restored.</b> No payment refund was created. ${Number(result.restored_sessions||1)} package session restored.</div>`;
+  if(kind==='sale')return `<div class="imp-note"><b>Reversal completed.</b> ${money(Number(result.reversed_cents||0))} reversed · ${money(Number(result.refunded_payment_cents||0))} refunded${result.replayed?' · exact replay verified':''}.</div>`;
+  return `<div class="imp-note"><b>Redemption reversed.</b> ${Number(result.restored_points||0)} points restored · ${money(Number(result.reversed_credit_cents||0))} credit compensated${result.replayed?' · exact replay verified':''}.</div>`;
+}
+function openReversalDialog(kind,item,onDone){
+  if(!item?.can_reverse)return toast(item?.refusal_reason||'This item cannot be reversed safely');
+  const keyId=reversalItemKey(kind,item.id);
+  if(!reversalKeys.has(keyId))reversalKeys.set(keyId,crypto.randomUUID());
+  const packageNote=kind==='sale'&&item.is_package_session
+    ?'<div class="imp-note"><b>Package session only.</b> This restores one session. No payment refund occurs.</div>':'';
+  const loyaltyNote=kind==='redemption'
+    ?`<div class="imp-note"><b>Exact compensation only.</b> Frenly checks the original points entry, every FEFO batch drain, configuration version, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal.</div>`:'';
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="reversalModal"><div class="modal-card" style="max-width:560px">
+    <div class="row"><div><h2>${kind==='sale'?'Reverse sale':'Reverse redemption'}</h2><p class="muted small">${kind==='sale'?`Sale ${esc(item.id)} · ${money(Number(item.amount_cents||0))}`:`${esc(item.reward_name||'Reward')} · ${Number(item.points_spent||0)} points`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="revClose">Close</button></div>
+    ${packageNote}${loyaltyNote}
+    <label>Reason (required, at least 10 characters)</label><textarea id="revReason" rows="3" placeholder="What happened and who approved this correction?"></textarea>
+    ${kind==='sale'?'<label>Reference (required)</label><input id="revReference" placeholder="Receipt, case, or manager reference">':''}
+    <label style="display:flex;gap:9px;align-items:flex-start;color:var(--ink2)"><input id="revConfirm" type="checkbox" style="width:auto;margin-top:2px">I checked the original record and understand this creates append-only compensating entries.</label>
+    <div id="revOutcome"></div><div class="row" style="margin-top:16px"><button class="btn danger" id="revSubmit" disabled>Confirm reversal</button><button class="btn ghost sm" id="revCancel">Cancel</button></div>
+  </div></div>`);
+  const close=()=>{$('reversalModal')?.remove();if(onDone)onDone()};
+  $('revClose').onclick=$('revCancel').onclick=close;
+  $('revConfirm').onchange=()=>{$('revSubmit').disabled=!$('revConfirm').checked};
+  async function invoke(isReplay=false){
+    const reason=$('revReason').value.trim();
+    if(reason.length<10)return toast('Write a reason of at least 10 characters');
+    const btn=$('revSubmit');btn.disabled=true;btn.textContent=isReplay?'Verifying…':'Reversing…';
+    const args=kind==='sale'
+      ?{p_business:S.biz.id,p_sale:item.id,p_reason:reason,p_idempotency_key:reversalKeys.get(keyId),p_reference:$('revReference').value.trim(),p_restock_policy:'none'}
+      :{p_business:S.biz.id,p_redemption:item.id,p_reason:reason,p_idempotency_key:reversalKeys.get(keyId)};
+    if(kind==='sale'&&!args.p_reference){btn.disabled=false;btn.textContent='Confirm reversal';return toast('Add a receipt, case, or manager reference')}
+    if(!isReplay&&!confirm(`Confirm ${kind==='sale'?'sale':'loyalty redemption'} reversal? This keeps the original and adds compensating records.`)){
+      btn.disabled=false;btn.textContent='Confirm reversal';return;
+    }
+    const {data,error}=await sb.rpc(kind==='sale'?'reverse_sale':'reverse_loyalty_redemption',args);
+    if(error){
+      const conflict=error.code==='23505'||/conflict|another immutable request|already reversed/i.test(error.message||'');
+      $('revOutcome').innerHTML=`<div class="err"><b>${conflict?'Changed-request conflict':'Reversal refused'}.</b> ${esc(error.message||'The database could not prove a safe compensation.')}</div>`;
+      btn.disabled=false;btn.textContent='Retry same request';return;
+    }
+    $('revOutcome').innerHTML=reversalResultHtml(kind,data||{});
+    btn.disabled=true;btn.textContent='Completed';
+    $('revCancel').textContent='Done';
+    if(!$('revReplay')){
+      $('revCancel').insertAdjacentHTML('beforebegin','<button class="btn ghost sm" id="revReplay">Verify exact replay</button>');
+      $('revReplay').onclick=()=>invoke(true);
+    }
+    toast(data?.replayed?'Exact replay returned the completed result':'Reversal completed');
+  }
+  $('revSubmit').onclick=()=>invoke(false);
+}
+function bindReversalButtons(onDone){
+  document.querySelectorAll('[data-reverse-kind]').forEach(btn=>btn.onclick=()=>{
+    const item=reversalItems.get(reversalItemKey(btn.dataset.reverseKind,btn.dataset.reverseId));
+    openReversalDialog(btn.dataset.reverseKind,item,onDone);
+  });
+}
 
 /* ---------- branch filter (shared: dashboard, daily report, P&L, reports) ----------
    One picker implementation reused by all four analytics pages. Owner/manager ("admin"
@@ -1327,7 +1861,9 @@ async function clientsPage(){
 }
 
 async function clientDetail(id){
-  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll}]=await Promise.all([
+  let classicRedemptionIdem=null;
+  const rewardRedemptionIdem=new Map();
+  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:rwBr},{data:rwSv},{data:rwPr},{data:ctxBr},{data:ctxSv},{data:ctxPr},{data:cfDefs},{data:cfVals},{data:cfOpts}]=await Promise.all([
     sb.from('clients').select('*').eq('id',id).single(),
     sb.from('client_points_balance').select('points').eq('client_id',id),
     sb.from('client_credit_balance').select('balance_cents').eq('client_id',id),
@@ -1338,33 +1874,66 @@ async function clientDetail(id){
     sb.from('loyalty_rewards').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort').order('created_at'),
     /* Full history (Feature 2) — separate, unlimited fetches so the existing 10-row KPI/list
        logic above stays untouched exactly as it was ("fix nothing else"). */
-    sb.from('sales').select('*').eq('client_id',id).order('occurred_at',{ascending:false}),
+    fetchAllRows(()=>sb.from('sales').select('*',{count:'exact'}).eq('client_id',id)
+      .order('occurred_at',{ascending:false}).order('id')).then(data=>({data})),
     sb.from('appointments').select('*, services!appointments_service_id_fkey(name)').eq('client_id',id).order('starts_at',{ascending:false}),
-    sb.from('staff').select('id,full_name').eq('business_id',S.biz.id)]);
+    sb.from('staff').select('id,full_name').eq('business_id',S.biz.id),
+    sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
+    sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
+    sb.from('loyalty_reward_products').select('reward_id,product_id').eq('business_id',S.biz.id),
+    sb.from('branches').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    S.myRole==='owner'?sb.from('client_field_definitions').select('*').eq('business_id',S.biz.id).eq('active',true).order('created_at'):Promise.resolve({data:[]}),
+    S.myRole==='owner'?sb.from('client_field_values').select('*').eq('business_id',S.biz.id).eq('client_id',id):Promise.resolve({data:[]}),
+    S.myRole==='owner'?sb.from('client_field_options').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort_order'):Promise.resolve({data:[]})]);
   if(error) return fail(error);
+  let reversalData=null;
+  try{reversalData=await loadReversalWorkflows(id,100)}catch(e){fail(e)}
+  const saleWorkflow=Object.fromEntries((reversalData?.sales||[]).map(x=>[x.id,x]));
   const staffName=Object.fromEntries((stAll||[]).map(s=>[s.id,s.full_name||'Team member']));
   /* Merge sales + appointments into one reverse-chronological timeline. Each entry keeps its
      own date field for sorting (sale.occurred_at / appointment.starts_at) and is rendered
      from its own shape — these are two different tables, not a union query. */
-  const histSales=(allSl||[]).map(s=>({t:s.occurred_at,kind:'sale',saleKind:s.kind,amount:s.amount_cents,note:s.note,staff:staffName[s.staff_id]||null}));
+  const histSales=(allSl||[]).map(s=>({...(saleWorkflow[s.id]||{}),t:s.occurred_at,kind:'sale',id:s.id,saleKind:s.kind,
+    amount:s.amount_cents,note:s.note,staff:staffName[s.staff_id]||null}));
   const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:a.services?.name,status:a.status}));
-  const history=[...histSales,...histAppts].sort((a,b)=>(b.t||'').localeCompare(a.t||''));
+  const histRedemptions=(reversalData?.redemptions||[]).map(r=>({t:r.redeemed_at,kind:'redemption',...r}));
+  const history=[...histSales,...histAppts,...histRedemptions].sort((a,b)=>(b.t||'').localeCompare(a.t||''));
   let histShown=50;
   const pts=pb?.[0]?.points||0,cred=cb?.[0]?.balance_cents||0,prog=lp?.[0];
   const nextExp=xb?.[0];
-  /* "Visits on record" must read each sale's own immutable counts_as_visit snapshot, not
-     just count every row — otherwise gift-card and (pre-v10.1) membership rows inflate it.
-     This list is also capped at the 10 most recent sales (see the query above), so the
-     '+' suffix already meant "at least this many" before this fix and still does.
-     refund/reversal state deferred to a future migration; no reversal rows exist yet. */
-  const visitSales=(sl||[]).filter(s=>s.counts_as_visit);
+  const idsByReward=(rows,key)=>rows.reduce((out,row)=>{
+    (out[row.reward_id]??=[]).push(row[key]);return out;
+  },{});
+  const rewardEligibility={branch:idsByReward(rwBr||[],'branch_id'),service:idsByReward(rwSv||[],'service_id'),product:idsByReward(rwPr||[],'product_id')};
+  const contextOptions=(rewardId,key,items)=>{
+    const allowed=rewardEligibility[key][rewardId]||[];
+    if(!allowed.length)return '';
+    const choices=items.filter(x=>allowed.includes(x.id));
+    return `<select class="reward-context" data-reward-${key}="${rewardId}" aria-label="Choose ${key}">${choices.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>`;
+  };
+  const customValueByField=Object.fromEntries((cfVals||[]).map(v=>[v.field_definition_id,v]));
+  const customFieldInput=(f)=>{
+    const v=customValueByField[f.id]||{},inputId=`cfv-${f.id}`;
+    if(f.value_type==='select'){
+      const choices=(cfOpts||[]).filter(o=>o.field_definition_id===f.id);
+      return `<select id="${inputId}"><option value="">Choose…</option>${choices.map(o=>`<option value="${o.option_key}" ${v.select_value===o.option_key?'selected':''}>${esc(o.option_label)}</option>`).join('')}</select>`;
+    }
+    if(f.value_type==='boolean')return `<select id="${inputId}"><option value="">Choose…</option><option value="true" ${v.boolean_value===true?'selected':''}>Yes</option><option value="false" ${v.boolean_value===false?'selected':''}>No</option></select>`;
+    const key={text:'text_value',number:'number_value',date:'date_value'}[f.value_type];
+    return `<input id="${inputId}" type="${f.value_type==='number'?'number':f.value_type==='date'?'date':'text'}" value="${esc(v[key]??'')}">`;
+  };
+  /* Net visits use the complete paged sale history, not the 10-row summary query. Each
+     immutable visit snapshot contributes +1 and its compensating reversal contributes -1. */
+  const netVisits=(allSl||[]).filter(s=>s.counts_as_visit).reduce((n,s)=>n+(s.reversal_of?-1:1),0);
   M().innerHTML=`<div class="topbar"><div><h1>${esc(c.full_name)}</h1>
       <p class="muted small">${esc(c.phone||'')} ${esc(c.email||'')} · ${esc(c.gender||'gender not set')} ${c.birth_date?'· born '+c.birth_date:''}</p></div>
     <a class="btn ghost sm" href="#/clients">← All customers</a></div>
     <div class="kpis">
       <div class="card kpi"><div class="l">Points</div><div class="v">${pts}</div></div>
       <div class="card kpi"><div class="l">Spendable credit</div><div class="v">${money(cred)}</div></div>
-      <div class="card kpi"><div class="l">Visits on record</div><div class="v">${visitSales.length}${(sl?.length||0)===10?'+':''}</div></div>
+      <div class="card kpi"><div class="l">Net visits on record</div><div class="v">${netVisits}</div></div>
     </div>
     <div class="split" style="margin-top:16px">
       <div class="card"><b>Loyalty</b>
@@ -1372,8 +1941,9 @@ async function clientDetail(id){
         ?`<p class="muted small" style="margin:6px 0 10px">${prog.loyalty_model==='stamps'
             ?`Stamp card — 1 stamp per ${money(prog.stamp_per_cents||500)} spent · balance <b>${pts} stamps</b>`
             :`Earns ${prog.earn_points_per_dollar} pt/$ · balance <b>${pts} points</b>`}</p>
-          ${(rwList&&rwList.length)?rwList.map(r=>`<div class="row" style="margin-top:8px"><span>${esc(r.name)}</span><span class="spacer"></span>
-            <button class="btn sm rewardGo" data-r="${r.id}" data-n="${esc(r.name)}" data-c="${r.credit_cents}" ${pts<r.cost_points?'disabled':''}>
+          ${(rwList&&rwList.length)?rwList.map(r=>`<div class="row" style="margin-top:8px;flex-wrap:wrap"><span>${esc(r.customer_name||r.name)}</span><span class="spacer"></span>
+            ${contextOptions(r.id,'branch',ctxBr||[])}${contextOptions(r.id,'service',ctxSv||[])}${contextOptions(r.id,'product',ctxPr||[])}
+            <button class="btn sm rewardGo" data-r="${r.id}" data-n="${esc(r.customer_name||r.name)}" data-c="${r.credit_cents}" ${pts<r.cost_points?'disabled':''}>
               ${r.cost_points} ${prog.loyalty_model==='stamps'?'stamps':'pts'}${r.credit_cents>0?' → '+money(r.credit_cents):' → claim'}</button></div>`).join('')
             :`<p class="muted small" style="margin-top:6px">No ${prog.loyalty_model==='stamps'?'milestones':'rewards'} defined yet — add them in Loyalty.</p>`}
           ${nextExp?`<p class="muted small" style="margin-top:8px">⏳ ${nextExp.remaining} expire ${nextExp.expires_at.slice(0,10)}</p>`:''}
@@ -1396,24 +1966,49 @@ async function clientDetail(id){
       </div>
       <div class="card"><b>Retention rewards earned</b>
         ${(rg&&rg.length)?rg.map(g=>`<div class="row" style="margin-top:10px"><span>🏆 ${esc(g.retention_programs?.name||'Program')}</span><span class="spacer"></span>
-          <span class="muted small">${g.reward_type==='credit'?money(g.reward_value):g.reward_type==='discount_pct'?g.reward_value+'% off':esc(g.reward_item||'free item')} · ${g.granted_at.slice(0,10)}</span></div>`).join('')
+          <span class="muted small">${esc(g.reward_label||'Reward')} · ${g.fulfillment_kind==='credit'?money(g.reward_value):g.fulfillment_kind==='discount_pct'?g.reward_value+'% off':esc(g.reward_item||'free item')} · ${g.granted_at.slice(0,10)}</span></div>`).join('')
         :'<p class="muted small" style="margin-top:6px">None yet — rewards land here automatically when visit goals are hit.</p>'}
       </div></div>
+    ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
+      <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
     <div class="card" style="margin-top:16px"><b>Full history</b><p class="muted small" style="margin:4px 0 8px">Every service and sale, ever — newest first.</p>
       <div id="histBody">${renderHistPage(history,histShown)}</div>
       ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
     </div>`;
+  document.querySelectorAll('.cfvSave').forEach(b=>b.onclick=async()=>{
+    const el=$(`cfv-${b.dataset.id}`),type=b.dataset.type,raw=el.value;
+    if(raw==='')return toast('Choose or enter a value, or use Clear');
+    const payload={business_id:S.biz.id,client_id:id,field_definition_id:b.dataset.id,
+      text_value:null,number_value:null,date_value:null,boolean_value:null,select_value:null};
+    if(type==='text')payload.text_value=raw.trim();
+    else if(type==='number')payload.number_value=Number(raw);
+    else if(type==='date')payload.date_value=raw;
+    else if(type==='boolean')payload.boolean_value=raw==='true';
+    else payload.select_value=raw;
+    const {error}=await sb.from('client_field_values').upsert(payload,{onConflict:'business_id,client_id,field_definition_id'});
+    if(error)return fail(error);toast('Customer detail saved');clientDetail(id);
+  });
+  document.querySelectorAll('.cfvClear').forEach(b=>b.onclick=async()=>{
+    const {error}=await sb.from('client_field_values').delete().eq('business_id',S.biz.id).eq('client_id',id).eq('field_definition_id',b.dataset.id);
+    if(error)return fail(error);toast('Customer detail cleared');clientDetail(id);
+  });
   const rd=$('redeem');
   if(rd) rd.onclick=async()=>{
     rd.disabled=true;
-    const {data,error}=await sb.rpc('redeem_points',{p_business:S.biz.id,p_client:id});
+    if(!classicRedemptionIdem) classicRedemptionIdem=crypto.randomUUID();
+    const {data,error}=await sb.rpc('redeem_points',{p_business:S.biz.id,p_client:id,
+      p_idempotency_key:classicRedemptionIdem});
     if(error){fail(error);rd.disabled=false;return}
     toast(`Redeemed → ${money(data.credit_cents)} credit added 🎉`);clientDetail(id);
   };
   /* catalog / milestone redemption (points_tiers + stamps models) */
   document.querySelectorAll('.rewardGo').forEach(b=>b.onclick=async()=>{
     b.disabled=true;
-    const {data,error}=await sb.rpc('redeem_reward',{p_business:S.biz.id,p_client:id,p_reward:b.dataset.r});
+    if(!rewardRedemptionIdem.has(b.dataset.r)) rewardRedemptionIdem.set(b.dataset.r,crypto.randomUUID());
+    const context=(key)=>document.querySelector(`[data-reward-${key}="${b.dataset.r}"]`)?.value||null;
+    const {data,error}=await sb.rpc('redeem_reward_at_context',{p_business:S.biz.id,p_client:id,
+      p_reward:b.dataset.r,p_idempotency_key:rewardRedemptionIdem.get(b.dataset.r),
+      p_branch:context('branch'),p_service:context('service'),p_product:context('product')});
     if(error){fail(error);b.disabled=false;return}
     toast(Number(b.dataset.c)>0
       ?`Redeemed "${b.dataset.n}" → ${money(Number(b.dataset.c))} credit added 🎉`
@@ -1442,8 +2037,10 @@ async function clientDetail(id){
   if(histMore) histMore.onclick=()=>{
     histShown+=50;
     $('histBody').innerHTML=renderHistPage(history,histShown);
+    bindReversalButtons(()=>clientDetail(id));
     if(histShown>=history.length) histMore.parentElement.style.display='none';
   };
+  bindReversalButtons(()=>clientDetail(id));
 }
 /* Renders the first n entries of a merged sale+appointment timeline (Feature 2). Each row
    shape differs by kind.kind (sale vs appointment) since they come from different tables. */
@@ -1453,8 +2050,19 @@ function renderHistPage(history,n){
   return `<table><tr><th>Date</th><th>Type</th><th>Details</th><th>Amount</th><th>Served by</th></tr>
     ${rows.map(h=>{
       if(h.kind==='sale'){
-        return `<tr><td>${sgt(h.t)||''}</td><td>Sale</td><td>${esc((h.saleKind||'').replace('_',' '))}${h.note?' — '+esc(h.note):''}</td>
-          <td>${money(h.amount)}</td><td class="muted">${esc(h.staff||'—')}</td></tr>`;
+        const relation=h.is_reversal?`<span class="pill no">reversal of ${esc(h.original_sale_id||'')}</span>`
+          :h.reversal_sale_id?`<span class="pill off">reversed → ${esc(h.reversal_sale_id)}</span>`:'';
+        const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
+          :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
+        return `<tr><td>${sgt(h.t)||''}</td><td>Sale ${relation}</td><td>${esc((h.saleKind||h.kind||'').replace('_',' '))}${h.note?' — '+esc(h.note):''}${h.is_package_session?'<br><span class="muted small">Package session · reversal restores one session with no payment refund</span>':''}</td>
+          <td>${money(Number((h.amount??h.amount_cents)??0))}${h.reversal_sale_id?`<br><span class="muted small">Net ${money(Number(h.net_amount_cents||0))}</span>`:''}</td><td class="muted">${esc(h.staff||'—')}<br>${action}</td></tr>`;
+      }
+      if(h.kind==='redemption'){
+        const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
+        const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
+          :`<span class="muted small">${esc(h.refusal_reason||'Not reversible')}</span>`;
+        return `<tr><td>${sgt(h.t)||''}</td><td>Reward ${relation}</td><td>${esc(h.reward_name||'Loyalty reward')} · ${Number(h.points_spent||0)} points${h.credit_cents?` → ${money(Number(h.credit_cents))} credit`:''}</td>
+          <td class="muted">—</td><td>${action}</td></tr>`;
       }
       return `<tr><td>${sgt(h.t)||''}</td><td>Appointment</td><td>${esc(h.service||'general visit')}</td>
         <td class="muted">—</td><td><span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span></td></tr>`;
@@ -1483,9 +2091,10 @@ async function tillPage(){
                            // key is only minted when a new sale starts (resetToStart / back).
   let busy=false;         // guards Find/Confirm while a request is in flight
   let doneInfo=null;      // {name, pointsEarned, pointsTotal, duplicate} for step 3
+  let redemptionIdem=null; // stable across retries for the current customer's redemption
 
   function resetToStart(){
-    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;busy=false;doneInfo=null;draw();
+    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;redemptionIdem=null;busy=false;doneInfo=null;draw();
   }
   function draw(){
     if(step===1) return drawStep1();
@@ -1595,13 +2204,16 @@ async function tillPage(){
         <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px;background:var(--green)">✓ Confirm</button>
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">← Different number</button>
       </div>`;
-    $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;draw()};
+    $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;redemptionIdem=null;draw()};
     $('tAmt').focus();
     const rd=$('tRedeem');
     if(rd) rd.onclick=async()=>{
       rd.disabled=true;
-      const {data,error}=await sb.rpc('redeem_points',{p_business:S.biz.id,p_client:cust.client_id});
+      if(!redemptionIdem) redemptionIdem=crypto.randomUUID();
+      const {data,error}=await sb.rpc('redeem_points',{p_business:S.biz.id,p_client:cust.client_id,
+        p_idempotency_key:redemptionIdem});
       if(error){fail(error);rd.disabled=false;return}
+      redemptionIdem=null;
       toast(`Redeemed → ${money(data.credit_cents)} credit added 🎉`);
       const {data:lk}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone});
       if(lk&&lk.status==='found') cust=lk;
@@ -1641,33 +2253,60 @@ async function tillPage(){
 
 /* ---------- sales ---------- */
 async function salesPage(){
-  const {data:cl}=await sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name');
+  const [{data:cl,error:clientError},{data:branchRows,error:branchError}]=await Promise.all([
+    sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
+    sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).eq('active',true).order('name')]);
+  if(clientError||branchError)return fail(clientError||branchError);
+  const saleBranches=branchRows||[];
+  const initialSaleBranch=saleBranches.some(b=>b.id===selectedBranchId)
+    ?selectedBranchId:(saleBranches.find(b=>b.is_default)?.id||saleBranches[0]?.id||'');
+  let quickSaleAttempt=null;
   M().innerHTML=`<div class="topbar"><div><h1>Sales</h1><p class="muted small">Record a sale — loyalty points and retention rewards fire automatically</p></div></div>
     <div class="split">
     <div class="card"><b>Quick sale</b>
       <label>Customer</label><select id="qc"><option value="">Walk-in (no loyalty)</option>
         ${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')}</select>
-      <label>Type</label><select id="qk"><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="retail">Retail</option></select>
+      <label>Branch</label><select id="qb">${saleBranches.map(b=>`<option value="${b.id}" ${b.id===initialSaleBranch?'selected':''}>${esc(b.name)}</option>`).join('')||'<option value="">No active permitted branch</option>'}</select>
       <label>Amount (${S.biz.currency||'SGD'})</label><input id="qa" type="number" min="0" step="0.01" placeholder="45.00">
+      <div class="split"><div><label>Payment state</label><select id="qpaid"><option value="true">Paid now</option><option value="false">Unpaid</option></select></div>
+      <div><label>Payment method</label><select id="qm"><option data-method="cash">Cash</option><option data-method="card">Card</option><option data-method="paynow">PayNow</option><option data-method="bank_transfer">Bank transfer</option><option data-method="other">Other</option></select></div></div>
       <label>Note</label><input id="qn" placeholder="optional">
       <div style="margin-top:16px"><button class="btn" id="rec">Record sale</button></div></div>
     <div class="card"><b>Recent sales</b><div id="recent" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
   $('rec').onclick=async()=>{
     const amt=Math.round(parseFloat($('qa').value||'0')*100);
     if(!(amt>0)) return toast('Enter an amount');
+    if(!$('qb').value) return toast('Choose an active branch');
+    const request={p_business:S.biz.id,p_amount_cents:amt,p_method:$('qm').selectedOptions[0].dataset.method,
+      p_client:$('qc').value||null,p_staff:null,p_branch:$('qb').value,
+      p_note:$('qn').value.trim()||null,p_paid:$('qpaid').value==='true'};
+    const fingerprint=JSON.stringify(request);
+    if(!quickSaleAttempt||quickSaleAttempt.fingerprint!==fingerprint){
+      quickSaleAttempt={fingerprint,key:crypto.randomUUID()};
+    }
     $('rec').disabled=true;
-    const {error}=await sb.from('sales').insert({business_id:S.biz.id,client_id:$('qc').value||null,
-      kind:$('qk').value,amount_cents:amt,note:$('qn').value||null});
+    const {data,error}=await sb.rpc('record_quick_sale',{
+      ...request,p_idempotency_key:quickSaleAttempt.key});
     $('rec').disabled=false;
     if(error) return fail(error);
-    toast($('qc').value?'Sale recorded — loyalty updated automatically ✓':'Sale recorded');
+    quickSaleAttempt=null;
+    toast(data?.replayed?'Quick sale retry verified — no duplicate created':
+      request.p_paid?'Quick sale and payment recorded atomically ✓':'Unpaid quick sale recorded ✓');
     $('qa').value='';$('qn').value='';loadRecent();
   };
   async function loadRecent(){
-    const {data:sl}=await sb.from('sales').select('*, clients(full_name)').eq('business_id',S.biz.id).order('occurred_at',{ascending:false}).limit(12);
-    $('recent').innerHTML=(sl&&sl.length)?`<table><tr><th>When</th><th>Customer</th><th>Amount</th></tr>
-      ${sl.map(s=>`<tr><td>${s.occurred_at.slice(0,16).replace('T',' ')}</td><td>${esc(s.clients?.full_name||'Walk-in')}</td><td>${money(s.amount_cents)}</td></tr>`).join('')}</table>`
+    const [{data:sl,error},workflow]=await Promise.all([
+      sb.from('sales').select('*, clients(full_name)').eq('business_id',S.biz.id).order('occurred_at',{ascending:false}).limit(50),
+      loadReversalWorkflows(null,50).catch(e=>{fail(e);return null})]);
+    if(error)return fail(error);
+    const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
+    $('recent').innerHTML=(sl&&sl.length)?`<table><tr><th>When</th><th>Customer</th><th>Relationship</th><th>Gross</th><th>Net</th><th></th></tr>
+      ${sl.map(s=>{const w=W[s.id]||{};return `<tr><td>${sgt(s.occurred_at)}</td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
+        <td>${s.reversal_of?`<span class="pill no">reversal of ${esc(s.reversal_of)}</span>`:w.reversal_sale_id?`<span class="pill off">reversed → ${esc(w.reversal_sale_id)}</span>`:'<span class="pill ok">original</span>'}${w.is_package_session?'<br><span class="muted small">Package session · no payment refund</span>':''}</td>
+        <td>${money(s.amount_cents)}</td><td><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
+        <td>${w.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table>`
       :`<div class="empty"><div class="big">🧾</div>No sales yet. Record the first one on the left.</div>`;
+    bindReversalButtons(loadRecent);
   }
   loadRecent();
 }
@@ -1811,7 +2450,7 @@ async function bookingsPage(){
       <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
     <div class="card" id="blist" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     ${isOwner?`<div class="split" style="margin-bottom:16px">
-      <div class="card"><b>Tables / capacity</b>
+      <div class="card"><div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
         <p class="muted small" style="margin:6px 0 10px">Owner only. Add your table types so customers can reserve them on your portal.</p>
         <div class="row"><input id="tblName" placeholder="e.g. Small (2-seater)">
           <input id="tblPax" type="number" min="1" placeholder="Pax" style="max-width:76px">
@@ -1991,27 +2630,128 @@ async function bookingsPage(){
    points_tiers — points + owner-defined reward catalog + tiers (multipliers by visits/spend/points).
    stamps       — every $Y spent = 1 stamp; owner-defined milestones ("4 stamps -> free bowl").
    Rewards/milestones live in loyalty_rewards (cost_points = points or stamps; credit_cents = 0
-   means a free-item claim staff fulfil, >0 mints store credit). Tiers in loyalty_tiers. */
-async function loyaltyPage(modelOverride){
-  const [{data:lp},{data:rw},{data:tr}]=await Promise.all([
-    sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
-    sb.from('loyalty_rewards').select('*').eq('business_id',S.biz.id).order('sort').order('created_at'),
-    sb.from('loyalty_tiers').select('*').eq('business_id',S.biz.id).order('threshold')]);
-  const p=lp?.[0],rewards=rw||[],tiers=tr||[];
+   means a manual-item claim, >0 mints store credit). Tiers in loyalty_tiers.
+
+   v27 frontend contract assumptions, kept explicit until the v27 migration lands:
+   - loyalty_rewards retains name, cost_points, credit_cents, active and sort, and adds
+     customer_name, description, estimated_cost_cents, entitlement_expiry_days, usage_limit,
+     image_ref and fulfillment_kind.
+   - fulfillment_kind is a controlled machine value: credit or manual_item. A firm label never
+     creates a new financial behaviour; unsupported kinds are intentionally not offered here.
+   - v27 extends the existing allowlisted create_loyalty_config_draft ->
+     save_loyalty_config_draft -> publish_loyalty_config workflow. The save JSON contains a
+     reward envelope plus branch/service/product IDs; the backend writes the normalized
+     eligibility tables loyalty_reward_branches, loyalty_reward_services and
+     loyalty_reward_products before atomic publication. No eligibility rows means unrestricted eligibility.
+   - These three relations use reward_id plus branch_id/service_id/product_id and are versioned by
+     the backend. This UI sends IDs, never a uuid array column, and never deletes reward history. */
+async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null){
+  let lp=[],rw=[],tr=[],rb=[],rs=[],rp=[],bo=[],draftSnapshotHash=null;
+  const [{data:br,error:brError},{data:sv,error:svError},{data:pr,error:prError}]=await Promise.all([
+    sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name'),
+    sb.from('services').select('id,name,active').eq('business_id',S.biz.id).order('name'),
+    sb.from('products').select('id,name,active').eq('business_id',S.biz.id).order('name')]);
+  if(brError||svError||prError)return fail(brError||svError||prError);
+  if(draftVersionId){
+    const {data:draft,error:draftError}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId});
+    if(draftError){
+      M().innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div>
+        <div class="card"><p class="err">${esc(draftError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
+      $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
+      return;
+    }
+    draftSnapshotHash=draft?.snapshot_hash||null;
+    lp=draft?.program?[draft.program]:[];
+    rw=draft?.rewards||[];
+    tr=draft?.tiers||[];
+    rb=(rw||[]).flatMap(r=>(r.eligibility?.branches||[]).map(branch_id=>({reward_id:r.reward_id||r.id,branch_id})));
+    rs=(rw||[]).flatMap(r=>(r.eligibility?.services||[]).map(service_id=>({reward_id:r.reward_id||r.id,service_id})));
+    rp=(rw||[]).flatMap(r=>(r.eligibility?.products||[]).map(product_id=>({reward_id:r.reward_id||r.id,product_id})));
+    const {data:branchOverrides,error:boError}=await sb.from('loyalty_branch_overrides')
+      .select('branch_id,active,earn_points_per_dollar,stamp_per_cents,expiry_mode,expiry_days')
+      .eq('business_id',S.biz.id).eq('config_version_id',draftVersionId);
+    if(boError){
+      M().innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div>
+        <div class="card"><p class="err">${esc(boError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
+      $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
+      return;
+    }
+    bo=branchOverrides||[];
+  }else{
+    const [{data:liveProgram,error:programError},{data:liveRewards,error:rewardsError},{data:liveTiers,error:tierError},{data:liveBranches,error:rbError},{data:liveServices,error:rsError},{data:liveProducts,error:rpError}]=await Promise.all([
+      sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
+      sb.from('loyalty_rewards').select('*').eq('business_id',S.biz.id).order('sort').order('created_at'),
+      sb.from('loyalty_tiers').select('*').eq('business_id',S.biz.id).order('threshold'),
+      sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
+      sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
+      sb.from('loyalty_reward_products').select('reward_id,product_id').eq('business_id',S.biz.id)]);
+    if(programError||rewardsError||tierError||rbError||rsError||rpError)return fail(programError||rewardsError||tierError||rbError||rsError||rpError);
+    lp=liveProgram||[];rw=liveRewards||[];tr=liveTiers||[];
+    rb=liveBranches||[];rs=liveServices||[];rp=liveProducts||[];
+  }
+  const p=lp?.[0]?{...lp[0],configuration_status:draftVersionId?'draft':lp[0].configuration_status}:null;
+  const rewards=rw||[],tiers=(tr||[]).filter(t=>t.active!==false);
   const model=modelOverride||p?.loyalty_model||'classic';
   const unit=model==='stamps'?'stamps':'points';
+  const groupEligibility=(rows,key)=>rows.reduce((a,x)=>{
+    (a[x.reward_id]??=[]).push(x[key]);
+    return a;
+  },{});
+  const eligibility={
+    branch:groupEligibility(rb||[],'branch_id'),
+    service:groupEligibility(rs||[],'service_id'),
+    product:groupEligibility(rp||[],'product_id')};
+  const activeItems=(items)=>items.filter(x=>x.active!==false);
+  const branchOverrideById=Object.fromEntries((bo||[]).map(x=>[x.branch_id,x]));
+  const rewardLabel=(r)=>r.customer_name||r.name||'Unnamed reward';
+  const rewardKind=(r)=>r.fulfillment_kind||((r.credit_cents||0)>0?'credit':'manual_item');
+  const eligibilitySummary=(r)=>['branch','service','product'].map((k)=>{
+    const n=(eligibility[k][r.id]||[]).length;
+    return n?`${n} ${k}${n===1?'':'s'}`:`all ${k}s`;
+  }).join(' · ');
+  const renderEligibilityGroup=(key,label,items,selected)=>`<div class="eligibility-group">
+    <b>${label}</b><p class="muted small help">Leave blank for all ${label.toLowerCase()}.</p>
+    ${(items.length?items.map(x=>`<label><input type="checkbox" data-reward-elig="${key}" value="${x.id}" ${selected.has(x.id)?'checked':''}>${esc(x.name)}</label>`).join(''):'<p class="muted small" style="margin-top:8px">None added yet.</p>')}
+  </div>`;
+  const branchOverrideRows=()=>draftVersionId?`
+    <details style="margin-top:18px"><summary>Branch settings</summary>
+      <p class="muted small help">Leave blank to inherit the firm setting. Save only changes this draft.</p>
+      ${activeItems(br||[]).length?activeItems(br||[]).map((branch,idx)=>{
+        const o=branchOverrideById[branch.id]||{};
+        return `<div class="branch-override" style="padding:12px 0;border-bottom:1px solid var(--line)">
+          <b>${esc(branch.name)}</b>
+          <div class="field-grid">
+            <div><label>Loyalty status</label><select data-bo-active="${idx}" data-branch="${branch.id}">
+              <option value="" ${o.active==null?'selected':''}>Inherit firm setting</option>
+              <option value="true" ${o.active===true?'selected':''}>Active here</option>
+              <option value="false" ${o.active===false?'selected':''}>Paused here</option>
+            </select></div>
+            <div><label>Points per $1</label><input data-bo-earn="${idx}" data-branch="${branch.id}" type="number" min="0" step="0.1" value="${o.earn_points_per_dollar??''}" placeholder="${p?.earn_points_per_dollar??1}"></div>
+            <div><label>Spend per stamp</label><input data-bo-stamp="${idx}" data-branch="${branch.id}" type="number" min="0.5" step="0.5" value="${o.stamp_per_cents!=null?(o.stamp_per_cents/100).toFixed(2):''}" placeholder="${((p?.stamp_per_cents??500)/100).toFixed(2)}"></div>
+            <div><label>Expiry</label><select data-bo-expiry="${idx}" data-branch="${branch.id}">
+              <option value="" ${!o.expiry_mode?'selected':''}>Inherit firm setting</option>
+              <option value="none" ${o.expiry_mode==='none'?'selected':''}>Never expire</option>
+              <option value="inactivity" ${o.expiry_mode==='inactivity'?'selected':''}>After inactivity</option>
+              <option value="fixed" ${o.expiry_mode==='fixed'?'selected':''}>Fixed shelf life</option>
+            </select></div>
+            <div><label>Expiry days</label><input data-bo-days="${idx}" data-branch="${branch.id}" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${p?.expiry_days??365}"></div>
+          </div>
+          <div class="row" style="margin-top:10px"><button class="btn ghost sm boInherit" data-idx="${idx}" data-branch="${branch.id}">Inherit firm setting</button><span class="spacer"></span><button class="btn sm boSave" data-idx="${idx}" data-branch="${branch.id}">Save branch</button></div>
+        </div>`;
+      }).join(''):'<p class="muted small" style="margin-top:8px">Add branches first.</p>'}
+    </details>`:'';
   const rewardRows=(label)=>`
     <b style="display:block;margin-top:18px">${label}</b>
-    ${rewards.length?rewards.map(r=>`<div class="row" style="margin-top:8px">
-      <span>${r.active?'':'⏸ '}${esc(r.name)}</span><span class="spacer"></span>
-      <span class="muted small">${r.cost_points} ${unit}${r.credit_cents>0?' → '+money(r.credit_cents)+' credit':' → free item / benefit'}</span>
-      <button class="btn ghost sm rwDel" data-id="${r.id}">✕</button></div>`).join('')
-      :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}
-    <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
-      <input id="rwName" placeholder="${model==='stamps'?'e.g. Free bowl of noodles':'e.g. $3 off'}" style="flex:2;min-width:150px">
-      <input id="rwCost" type="number" min="1" placeholder="${unit}" style="max-width:90px">
-      <input id="rwCred" type="number" min="0" step="0.01" placeholder="credit $ (0 = free item)" style="max-width:150px">
-      <button class="btn sm" id="rwAdd">Add</button></div>`;
+    <div class="reward-list" id="rwList">
+    ${rewards.length?rewards.map(r=>`<div class="reward-item">
+      <div class="meta"><div><b>${r.active?'':'⏸ '}${esc(rewardLabel(r))}</b>
+        <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
+        ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}</div>
+        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'live':'archived'}</span>
+        <button class="btn ghost sm rwEdit" data-id="${r.id}">Edit</button></div></div>`).join('')
+      :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}</div>
+    <div id="rwEditor" aria-live="polite"></div>
+    <button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>`;
   const tierRows=()=>`
     <b style="display:block;margin-top:18px">Tiers (optional)</b>
     <label>Tier level is earned by</label><select id="ltb">
@@ -2021,7 +2761,8 @@ async function loyaltyPage(modelOverride){
     ${tiers.length?tiers.map(t=>`<div class="row" style="margin-top:8px">
       <span>${esc(t.name)}</span><span class="spacer"></span>
       <span class="muted small">from ${t.threshold} · ${t.points_multiplier}× ${unit}${t.perk_note?' · '+esc(t.perk_note):''}</span>
-      <button class="btn ghost sm trDel" data-id="${t.id}">✕</button></div>`).join('')
+      <button class="btn ghost sm trEdit" data-id="${t.tier_id||t.id}">Edit</button>
+      <button class="btn ghost sm trDel" data-id="${t.tier_id||t.id}">✕</button></div>`).join('')
       :`<p class="muted small" style="margin-top:6px">No tiers yet — customers all earn at 1×.</p>`}
     <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
       <input id="trName" placeholder="e.g. Gold" style="flex:1;min-width:100px">
@@ -2029,9 +2770,11 @@ async function loyaltyPage(modelOverride){
       <input id="trMul" type="number" min="1" step="0.5" placeholder="× earn" style="max-width:90px">
       <input id="trPerk" placeholder="perk note (optional)" style="flex:1;min-width:120px">
       <button class="btn sm" id="trAdd">Add</button></div>`;
-  M().innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Pick the model that fits your business — every number below is yours to change</p></div></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Pick the model that fits your business — every number below is yours to change</p></div>
+      ${S.myRole==='owner'&&!draftVersionId?'<button class="btn ghost" id="loyaltyRecommend">Create recommended draft</button>':''}</div>
+    ${p?.configuration_status==='draft'?`<div class="imp-note" style="margin-bottom:16px"><b>Draft recommendation</b><br>${recommendation?esc(recommendation.rationale):'Nothing is earning or redeeming yet.'} Review every number below, then publish only when it fits your business.</div>`:''}
     <div class="split"><div class="card"><b>Program settings</b>
-      <label>Status</label><select id="la"><option value="true" ${p?.active!==false?'selected':''}>Active</option><option value="false" ${p&&!p.active?'selected':''}>Paused</option></select>
+      <label>Status</label><select id="la"><option value="true" ${p?.active?'selected':''}>Active</option><option value="false" ${!p?.active?'selected':''}>Paused</option></select>
       <label>Loyalty model</label><select id="lm">
         <option value="classic" ${model==='classic'?'selected':''}>Simple points — fixed redeem into credit</option>
         <option value="points_tiers" ${model==='points_tiers'?'selected':''}>Points + reward catalog + tiers</option>
@@ -2048,7 +2791,8 @@ async function loyaltyPage(modelOverride){
         <option value="inactivity" ${p?.expiry_mode==='inactivity'?'selected':''}>Expire after inactivity (clock resets on every earn)</option>
         <option value="fixed" ${p?.expiry_mode==='fixed'?'selected':''}>Fixed shelf life from earn (oldest expire first)</option></select>
       <label>Expiry window (days)</label><input id="lxd" type="number" min="1" value="${p?.expiry_days??365}">
-      <div style="margin-top:16px"><button class="btn" id="lsave">Save program</button></div></div>
+      ${branchOverrideRows()}
+      <div style="margin-top:16px"><button class="btn" id="lsave">${p?.configuration_status==='draft'?'Publish program':'Save program'}</button></div></div>
     <div class="card">
       ${model==='classic'
         ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">Every sale earns points automatically. At ${p?.redeem_points??800} points, one tap converts them into ${money(p?.reward_credit_cents??2000)} of real in-store credit. Switch models above any time — balances carry over.</p>`
@@ -2056,96 +2800,294 @@ async function loyaltyPage(modelOverride){
         ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.</p>${rewardRows('Your milestones')}`
         :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
     </div></div>`;
-  $('lm').onchange=()=>loyaltyPage($('lm').value);
+  const recommend=$('loyaltyRecommend');
+  if(recommend) recommend.onclick=async()=>{
+    recommend.disabled=true;recommend.textContent='Preparing draft…';
+    const {data,error}=await sb.rpc('generate_retention_recommendation',{
+      p_business:S.biz.id,p_idempotency_key:crypto.randomUUID()});
+    if(error){recommend.disabled=false;recommend.textContent='Create recommended draft';return fail(error)}
+    toast('Recommended draft created — review every number before publishing');
+    loyaltyPage(data.model,data.draft_config_version_id,data);
+  };
+  $('lm').onchange=()=>loyaltyPage($('lm').value,draftVersionId,recommendation);
+  document.querySelectorAll('.boSave').forEach(button=>button.onclick=async()=>{
+    const idx=button.dataset.idx,branchId=button.dataset.branch;
+    const active=document.querySelector(`[data-bo-active="${idx}"]`).value;
+    const earn=document.querySelector(`[data-bo-earn="${idx}"]`).value;
+    const stamp=document.querySelector(`[data-bo-stamp="${idx}"]`).value;
+    const expiry=document.querySelector(`[data-bo-expiry="${idx}"]`).value;
+    const days=document.querySelector(`[data-bo-days="${idx}"]`).value;
+    const override={};
+    if(active)override.active=active==='true';
+    if(earn!=='')override.earn_points_per_dollar=parseFloat(earn);
+    if(stamp!=='')override.stamp_per_cents=Math.round(parseFloat(stamp)*100);
+    if(expiry)override.expiry_mode=expiry;
+    if(days!=='')override.expiry_days=parseInt(days,10);
+    if(!Object.keys(override).length)return toast('Use Inherit firm setting to clear this branch');
+    button.disabled=true;button.textContent='Saving…';
+    const args={p_config_version:draftVersionId,p_branch:branchId,p_override:override,
+      p_expected_snapshot_hash:draftSnapshotHash||null};
+    const {error}=await sb.rpc('save_loyalty_branch_override_draft',args);
+    if(error){button.disabled=false;button.textContent='Save branch';return fail(error)}
+    toast('Branch setting saved');loyaltyPage(model,draftVersionId,recommendation);
+  });
+  document.querySelectorAll('.boInherit').forEach(button=>button.onclick=async()=>{
+    button.disabled=true;button.textContent='Clearing…';
+    const args={p_config_version:draftVersionId,p_branch:button.dataset.branch,
+      p_expected_snapshot_hash:draftSnapshotHash||null};
+    const {error}=await sb.rpc('remove_loyalty_branch_override_draft',args);
+    if(error){button.disabled=false;button.textContent='Inherit firm setting';return fail(error)}
+    toast('Branch now inherits firm setting');loyaltyPage(model,draftVersionId,recommendation);
+  });
   $('lsave').onclick=async()=>{
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
+      configuration_status:'published',
       expiry_mode:$('lx').value,expiry_days:parseInt($('lxd').value||'365')};
     if(model==='stamps') row.stamp_per_cents=Math.round(parseFloat($('lsp').value||'5')*100);
     else row.earn_points_per_dollar=parseFloat($('le').value||'1');
     if(model==='classic'){row.redeem_points=parseInt($('lr').value||'800');
       row.reward_credit_cents=Math.round(parseFloat($('lc').value||'20')*100)}
     if(model==='points_tiers'&&$('ltb')) row.tier_basis=$('ltb').value;
-    const q=p?sb.from('loyalty_programs').update(row).eq('id',p.id):sb.from('loyalty_programs').insert(row);
-    const {error}=await q;if(error)return fail(error);toast('Loyalty program saved');loyaltyPage();
+    $('lsave').disabled=true;
+    let versionId=draftVersionId;
+    if(!versionId){
+      const {data:draft,error:draftError}=await sb.rpc('create_loyalty_config_draft',{
+        p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_editor'});
+      if(draftError){$('lsave').disabled=false;return fail(draftError)}
+      versionId=draft.version_id;
+    }
+    const saveArgs={p_version:versionId,p_config:row,p_expected_snapshot_hash:draftSnapshotHash||null};
+    const {error:saveError}=await sb.rpc('save_loyalty_config_draft',saveArgs);
+    if(saveError){$('lsave').disabled=false;return fail(saveError)}
+    const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
+    if(publishError){$('lsave').disabled=false;return fail(publishError)}
+    toast(p?.configuration_status==='draft'?'Loyalty program published':'Loyalty program saved');loyaltyPage();
   };
+  let editorReward=null;
+  function openRewardEditor(reward){
+    editorReward=reward;
+    const r=reward||{};
+    const selected={
+      branch:new Set(eligibility.branch[r.id]||[]),
+      service:new Set(eligibility.service[r.id]||[]),
+      product:new Set(eligibility.product[r.id]||[])};
+    $('rwEditor').innerHTML=`<div class="reward-editor">
+      <div class="row" style="justify-content:space-between;gap:12px"><b>${reward?'Edit reward':'New reward'}</b><button class="btn ghost sm" id="rwClose" type="button">Close</button></div>
+      <div class="field-grid">
+        <div class="full"><label>Customer-facing name *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"></div>
+        <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
+        <div><label>${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4"></div>
+        <div><label>Estimated business cost (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 1.50"></div>
+        <div><label>Fulfilment</label><select id="rwKind"><option value="manual_item" ${rewardKind(r)==='manual_item'?'selected':''}>Manual item or benefit</option><option value="credit" ${rewardKind(r)==='credit'?'selected':''}>Store credit</option></select></div>
+        <div id="rwCreditWrap"><label>Store credit value (${S.biz.currency||'SGD'})</label><input id="rwCredit" type="number" min="0" step="0.01" value="${((r.credit_cents||0)/100).toFixed(2)}" placeholder="e.g. 3.00"></div>
+        <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
+        <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
+      </div>
+      <details><summary>More options</summary>
+        <div class="field-grid" style="margin-top:4px"><div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
+          <div class="full"><label>Image reference</label><input id="rwImage" value="${esc(r.image_ref||'')}" placeholder="Storage path or image URL"><p class="muted small help">Use a stable storage path or URL. Upload handling belongs to the v27 storage contract.</p></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwActive" type="checkbox" style="width:auto" ${r.active!==false?'checked':''}> Available for customers</label>
+        <p class="muted small help">Archived rewards stay in history and cannot be newly redeemed.</p>
+        <div class="eligibility-grid">
+          ${renderEligibilityGroup('branch','Branches',activeItems(br||[]),selected.branch)}
+          ${renderEligibilityGroup('service','Services',activeItems(sv||[]),selected.service)}
+          ${renderEligibilityGroup('product','Products',activeItems(pr||[]),selected.product)}
+        </div>
+        <p class="muted small help">Choose specific items to restrict eligibility. Leaving a group empty means all of that resource type.</p>
+      </details>
+      <div class="row" style="margin-top:16px"><button class="btn" id="rwSave">${reward?'Save changes':'Create reward'}</button><span class="spacer"></span>${reward?'<button class="btn danger sm" id="rwArchive" type="button">Archive</button>':''}</div>
+    </div>`;
+    $('rwClose').onclick=()=>{$('rwEditor').innerHTML='';editorReward=null};
+    const kind=$('rwKind'),creditWrap=$('rwCreditWrap');
+    const syncKind=()=>{creditWrap.style.display=kind.value==='credit'?'block':'none';if(kind.value!=='credit')$('rwCredit').value='0'};
+    kind.onchange=syncKind;syncKind();
+    $('rwSave').onclick=()=>saveReward(false);
+    const archive=$('rwArchive');if(archive)archive.onclick=()=>saveReward(true);
+  }
+  async function saveReward(archive){
+    const customerName=$('rwCustomerName').value.trim();
+    const cost=parseInt($('rwCost').value||'0',10);
+    const kind=archive?rewardKind(editorReward):$('rwKind').value;
+    if(customerName.length<2) return toast('Give the reward a clear customer-facing name');
+    if(!(cost>0)) return toast(`Enter a positive ${unit} cost`);
+    const expiry=parseInt($('rwExpiry').value||'0',10),usage=parseInt($('rwUsage').value||'0',10);
+    if(expiry<0||usage<0) return toast('Expiry and usage limit cannot be negative');
+    const creditCents=Math.round(parseFloat($('rwCredit').value||'0')*100);
+    if(kind==='credit'&&!(creditCents>0)) return toast('Enter a store credit value, or choose manual fulfilment');
+    const selected=(key)=>[...document.querySelectorAll(`[data-reward-elig="${key}"]:checked`)].map(x=>x.value);
+    const payload={id:editorReward?.reward_id||editorReward?.id||null,business_id:S.biz.id,
+      name:$('rwInternalName')?.value.trim()||customerName,customer_name:customerName,
+      description:$('rwDescription').value.trim()||null,cost_points:cost,
+      credit_cents:kind==='credit'?creditCents:0,
+      estimated_cost_cents:Math.round(parseFloat($('rwEstimate').value||'0')*100),
+      entitlement_expiry_days:expiry>0?expiry:null,usage_limit:usage>0?usage:null,
+      image_ref:$('rwImage')?.value.trim()||null,fulfillment_kind:kind,
+      active:archive?false:$('rwActive').checked};
+    const btn=archive?$('rwArchive'):$('rwSave');btn.disabled=true;btn.textContent=archive?'Archiving…':'Saving…';
+    let versionId=draftVersionId;
+    if(!versionId){
+      const {data:draft,error:draftError}=await sb.rpc('create_loyalty_config_draft',{
+        p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_reward_editor'});
+      if(draftError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(draftError)}
+      versionId=draft.version_id;
+    }
+    const saveArgs={p_version:versionId,p_config:{
+      reward:payload,reward_branch_ids:selected('branch'),reward_service_ids:selected('service'),
+      reward_product_ids:selected('product')},p_expected_snapshot_hash:draftSnapshotHash||null};
+    const {error:saveError}=await sb.rpc('save_loyalty_config_draft',saveArgs);
+    if(saveError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(saveError)}
+    if(!draftVersionId){
+      const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
+      if(publishError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(publishError)}
+    }
+    toast(draftVersionId?'Draft reward saved':archive?'Reward archived':editorReward?'Reward saved':'Reward created');
+    loyaltyPage(model,draftVersionId,recommendation);
+  }
   const ra=$('rwAdd');
-  if(ra) ra.onclick=async()=>{
-    const name=$('rwName').value.trim(),cost=parseInt($('rwCost').value||'0'),
-      cred=Math.round(parseFloat($('rwCred').value||'0')*100);
-    if(!name||!(cost>0)) return toast('Give the reward a name and a positive cost');
-    const {error}=await sb.from('loyalty_rewards').insert({business_id:S.biz.id,name,cost_points:cost,credit_cents:cred});
-    if(error)return fail(error);loyaltyPage(model);
-  };
+  if(ra) ra.onclick=()=>openRewardEditor(null);
+  document.querySelectorAll('.rwEdit').forEach(b=>b.onclick=()=>openRewardEditor(rewards.find(r=>r.id===b.dataset.id)));
+  let editingTier=null;
+  const fillTier=(tier)=>{editingTier=tier;$('trName').value=tier?.name||'';
+    $('trTh').value=tier?.threshold??'';$('trMul').value=tier?.points_multiplier??'';
+    $('trPerk').value=tier?.perk_note||'';$('trAdd').textContent=tier?'Save':'Add'};
+  async function saveTier(tier){
+    let versionId=draftVersionId;
+    if(!versionId){
+      const {data:draft,error}=await sb.rpc('create_loyalty_config_draft',{
+        p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_tier_editor'});
+      if(error)return fail(error);versionId=draft.version_id;
+    }
+    const saveArgs={p_version:versionId,p_config:{tier},p_expected_snapshot_hash:draftSnapshotHash||null};
+    const {error}=await sb.rpc('save_loyalty_config_draft',saveArgs);
+    if(error)return fail(error);
+    if(!draftVersionId){const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});if(publishError)return fail(publishError)}
+    loyaltyPage(model,draftVersionId,recommendation);
+  }
   const ta=$('trAdd');
   if(ta) ta.onclick=async()=>{
     const name=$('trName').value.trim(),th=parseInt($('trTh').value||'0'),mul=parseFloat($('trMul').value||'1');
     if(!name) return toast('Give the tier a name');
-    const {error}=await sb.from('loyalty_tiers').insert({business_id:S.biz.id,name,threshold:th,
-      points_multiplier:Math.max(1,mul),perk_note:$('trPerk').value.trim()||null});
-    if(error)return fail(error);loyaltyPage(model);
+    ta.disabled=true;
+    await saveTier({id:editingTier?.tier_id||editingTier?.id||null,name,threshold:Math.max(0,th),
+      points_multiplier:Math.max(1,mul),perk_note:$('trPerk').value.trim()||null,
+      sort:editingTier?.sort||0,active:true});
   };
-  document.querySelectorAll('.rwDel').forEach(b=>b.onclick=async()=>{
-    const {error}=await sb.from('loyalty_rewards').delete().eq('id',b.dataset.id);
-    if(error)return fail(error);loyaltyPage(model);
-  });
+  document.querySelectorAll('.trEdit').forEach(b=>b.onclick=()=>fillTier(
+    tiers.find(t=>(t.tier_id||t.id)===b.dataset.id)));
   document.querySelectorAll('.trDel').forEach(b=>b.onclick=async()=>{
-    const {error}=await sb.from('loyalty_tiers').delete().eq('id',b.dataset.id);
-    if(error)return fail(error);loyaltyPage(model);
+    const tier=tiers.find(t=>(t.tier_id||t.id)===b.dataset.id);
+    if(tier)await saveTier({id:tier.tier_id||tier.id,name:tier.name,threshold:tier.threshold,
+      points_multiplier:tier.points_multiplier,perk_note:tier.perk_note,sort:tier.sort||0,active:false});
   });
 }
 
-/* ---------- retention programs ---------- */
-async function retentionPage(){
-  M().innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Your rules: "come back N times in P days → get X" — rewards fire automatically</p></div></div>
-    <div class="card" style="margin-bottom:16px"><b>Quick templates</b>
-      <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
-        <button class="qbtn" data-t='{"name":"Weekly regular","g":1,"p":7,"rt":"discount_pct","rv":10}'>☕ 1 visit / week → 10% off</button>
-        <button class="qbtn" data-t='{"name":"Twice a week","g":2,"p":7,"rt":"free_item","ri":"Free drink"}'>🥤 2 visits / week → free item</button>
-        <button class="qbtn" data-t='{"name":"Loyal half-year","g":2,"p":180,"rt":"credit","rv":1000}'>💰 2 visits / 6 months → $10 credit</button>
-      </div></div>
-    <div class="split"><div class="card"><b>New program</b>
-      <label>Name</label><input id="rn" placeholder="e.g. Weekly regular">
-      <div class="split"><div><label>Goal — visits</label><input id="rg" type="number" min="1" value="2"></div>
-      <div><label>Within — days</label><input id="rp" type="number" min="1" value="7"></div></div>
-      <label>Reward</label><select id="rt">
-        <option value="discount_pct">Discount %</option><option value="free_item">Free item</option><option value="credit">Store credit</option></select>
-      <div id="rvwrap"><label id="rvl">Discount %</label><input id="rv" type="number" min="0" value="10"></div>
-      <div style="margin-top:16px"><button class="btn" id="radd">Create program</button></div></div>
-    <div class="card"><b>Active programs</b><div id="rlist" style="margin-top:8px"></div></div></div>`;
-  const rvl=$('rvl');
-  $('rt').onchange=()=>{
-    const t=$('rt').value;
-    rvl.textContent=t==='discount_pct'?'Discount %':t==='credit'?`Credit amount (${S.biz.currency||'SGD'})`:'Free item name';
-    $('rv').type=t==='free_item'?'text':'number';$('rv').value=t==='free_item'?'Free drink':t==='credit'?'10':'10';
-  };
-  document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
-    const t=JSON.parse(b.dataset.t);
-    $('rn').value=t.name;$('rg').value=t.g;$('rp').value=t.p;$('rt').value=t.rt;$('rt').onchange();
-    $('rv').value=t.rt==='free_item'?(t.ri||'Free item'):t.rt==='credit'?(t.rv/100):t.rv;
-    toast('Template loaded — tweak and create');
-  });
-  $('radd').onclick=async()=>{
-    const t=$('rt').value,name=$('rn').value.trim();
-    if(name.length<2) return toast('Name your program');
-    const row={business_id:S.biz.id,name,goal_visits:parseInt($('rg').value),period_days:parseInt($('rp').value),
-      reward_type:t,reward_value:t==='discount_pct'?parseFloat($('rv').value||'0'):t==='credit'?Math.round(parseFloat($('rv').value||'0')*100):0,
-      reward_item:t==='free_item'?$('rv').value:null};
-    const {error}=await sb.from('retention_programs').insert(row);
-    if(error) return fail(error);
-    toast('Program live — it starts counting visits now');$('rn').value='';load();
-  };
-  async function load(){
-    const {data:rp}=await sb.from('retention_programs').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false});
-    $('rlist').innerHTML=(rp&&rp.length)?rp.map(r=>{
-      const reward=r.reward_type==='credit'?money(r.reward_value):r.reward_type==='discount_pct'?r.reward_value+'% off':esc(r.reward_item||'free item');
-      return `<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)">
-        <div><b>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits>1?'s':''} in ${r.period_days} days → ${reward}</div></div>
-        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'live':'paused'}</span>
-        <button class="btn ghost sm" onclick="toggleRp('${r.id}',${!r.active})">${r.active?'Pause':'Resume'}</button></div>`}).join('')
-      :`<div class="empty"><div class="big">🔁</div>No programs yet. Use a template or create your own on the left.</div>`;
+/* ---------- versioned retention programs ---------- */
+async function retentionPage(draftVersionId=null,editProgramId=null){
+  const isOwner=S.myRole==='owner';
+  let programs=[],taxonomy=[],snapshotHash=null,currentVersion=null,history=[];
+  const {data:business,error:businessError}=await sb.from('businesses')
+    .select('active_config_version_id').eq('id',S.biz.id).single();
+  if(businessError)return fail(businessError);
+  currentVersion=business?.active_config_version_id||null;
+  if(draftVersionId){
+    const {data:draft,error}=await sb.rpc('get_retention_config_draft',{p_config_version:draftVersionId});
+    if(error){
+      M().innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div>
+        <div class="card"><p class="err">${esc(error.message)}</p><button class="btn" id="retryRetention">Retry</button></div>`;
+      $('retryRetention').onclick=()=>retentionPage(draftVersionId,editProgramId);return;
+    }
+    programs=draft?.programs||[];taxonomy=draft?.taxonomy||[];snapshotHash=draft?.snapshot_hash||null;
+  }else{
+    const [{data:live,error:liveError},{data:types,error:typeError}]=await Promise.all([
+      sb.from('retention_programs').select('*, firm_reward_taxonomy(label,fulfillment_kind,active,sort)')
+        .eq('business_id',S.biz.id).eq('current_config_version_id',currentVersion).order('created_at',{ascending:false}),
+      sb.from('firm_reward_taxonomy').select('id,label,fulfillment_kind,active,sort')
+        .eq('business_id',S.biz.id).order('sort').order('label')]);
+    if(liveError||typeError)return fail(liveError||typeError);
+    programs=(live||[]).map(r=>({...r,program_id:r.id,reward_label:r.firm_reward_taxonomy?.label,
+      fulfillment_kind:r.firm_reward_taxonomy?.fulfillment_kind||r.reward_type,
+      discount_percent:r.reward_type==='discount_pct'?r.reward_value:null,
+      credit_cents:r.reward_type==='credit'?Number(r.reward_value):null,
+      manual_item:r.reward_type==='free_item'?r.reward_item:null}));
+    taxonomy=types||[];
   }
-  window.toggleRp=async(id,to)=>{await sb.from('retention_programs').update({active:to}).eq('id',id);load()};
-  load();
+  if(isOwner){
+    const {data,error}=await sb.from('firm_config_versions').select('id,version_no,status,published_at,snapshot_hash')
+      .eq('business_id',S.biz.id).in('status',['published','superseded']).order('version_no',{ascending:false}).limit(20);
+    if(error)return fail(error);history=data||[];
+  }
+  const rewardTypes=taxonomy.filter(x=>x.active);
+  const newProgramRetryKey=draftVersionId?`frenly:retention-program:${S.biz.id}:${draftVersionId}`:null;
+  const pendingProgramId=newProgramRetryKey?sessionStorage.getItem(newProgramRetryKey):null;
+  if(pendingProgramId&&programs.some(r=>(r.program_id||r.id)===pendingProgramId))sessionStorage.removeItem(newProgramRetryKey);
+  const editing=programs.find(r=>(r.program_id||r.id)===editProgramId)||null;
+  const displayReward=(r)=>r.fulfillment_kind==='credit'?money(r.credit_cents||0)
+    :r.fulfillment_kind==='discount_pct'?`${r.discount_percent||0}% off`:esc(r.manual_item||'manual item');
+  const versionTools=isOwner?`<div class="card" style="margin-bottom:16px">
+    <div class="row"><div><b>${draftVersionId?'Draft configuration':'Published configuration'}</b>
+      <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':'Create a draft before changing retention behavior.'}</div></div><span class="spacer"></span>
+      ${draftVersionId?`<button class="btn ghost" id="discardRetentionDraft">Leave draft</button><button class="btn" id="publishRetention">Publish draft</button>`
+        :`<button class="btn" id="beginRetentionDraft" ${currentVersion?'':'disabled'}>Create editing draft</button>`}</div>
+    ${!draftVersionId&&history.length>1?`<div class="row" style="margin-top:12px"><label style="margin:0">Restore prior version</label>
+      <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
+      <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
+    </div>`:'';
+  M().innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Versioned return-visit rules with immutable reward behavior and grant history</p></div></div>
+    ${versionTools}
+    ${draftVersionId&&isOwner?`<div class="card" style="margin-bottom:16px"><b>Quick templates</b><div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+      <button class="qbtn" data-t='{"name":"Weekly regular","g":1,"p":7,"rt":"discount_pct","rv":10}'>☕ 1 visit / week → 10% off</button>
+      <button class="qbtn" data-t='{"name":"Twice a week","g":2,"p":7,"rt":"free_item","ri":"Free drink"}'>🥤 2 visits / week → free item</button>
+      <button class="qbtn" data-t='{"name":"Loyal half-year","g":2,"p":180,"rt":"credit","rv":1000}'>💰 2 visits / 6 months → $10 credit</button>
+    </div></div>`:''}
+    <div class="split"><div class="card"><b>${editing?'Edit program':draftVersionId?'New program':'Programs'}</b>
+      ${draftVersionId&&isOwner?`<label>Name</label><input id="rn" value="${esc(editing?.name||'')}" placeholder="e.g. Weekly regular">
+      <div class="split"><div><label>Goal — visits</label><input id="rg" type="number" min="1" value="${editing?.goal_visits||2}"></div>
+      <div><label>Within — days</label><input id="rp" type="number" min="1" value="${editing?.period_days||7}"></div></div>
+      <label>Starts on</label><input id="rs" type="date" value="${editing?.starts_on||new Date().toISOString().slice(0,10)}">
+      <label>Reward</label><select id="rt" ${rewardTypes.length?'':'disabled'}>${rewardTypes.map(t=>`<option value="${t.id}" data-kind="${t.fulfillment_kind}" ${editing?.reward_taxonomy_id===t.id?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
+      ${rewardTypes.length?'':'<p class="err">Add or reactivate a reward type before adding a program.</p>'}
+      <div><label id="rvl">Reward value</label><input id="rv"></div>
+      <label>Customer description (optional)</label><textarea id="rcd">${esc(editing?.customer_description||'')}</textarea>
+      <label>Staff instructions (optional)</label><textarea id="rsi">${esc(editing?.staff_description||'')}</textarea>
+      <label><input id="ra" type="checkbox" ${editing?.active!==false?'checked':''}> Active after publication</label>
+      <div class="row" style="margin-top:16px"><button class="btn" id="saveRetentionProgram" ${rewardTypes.length?'':'disabled'}>${editing?'Save draft changes':'Add to draft'}</button>${editing?'<button class="btn ghost" id="cancelRetentionEdit">Cancel</button>':''}</div>`
+      :`<p class="muted small" style="margin-top:8px">${isOwner?'Create an editing draft to add or change rules.':'Only the owner can change retention rules.'}</p>`}
+    </div>
+    <div class="card"><b>${draftVersionId?'Programs in this draft':'Published programs'}</b><div id="rlist" style="margin-top:8px">
+      ${programs.length?programs.map(r=>`<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)">
+        <div><b>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>
+        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?(draftVersionId?'will be live':'live'):'paused'}</span>
+        ${draftVersionId&&isOwner?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
+          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
+        :`<div class="empty"><div class="big">🔁</div>No retention programs in this ${draftVersionId?'draft':'configuration'}.</div>`}</div></div></div>
+    ${isOwner?`<div class="card" style="margin-top:16px"><b>Reward type labels</b><p class="muted small" style="margin-top:6px">Labels may be renamed, sorted, or retired. Their financial behavior can never be changed.</p>
+      <div style="margin-top:8px">${taxonomy.map(t=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span><span class="spacer"></span><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
+        <button class="btn ghost sm taxonomyRename" data-id="${t.id}" data-label="${esc(t.label)}">Rename</button><button class="btn ghost sm taxonomySort" data-id="${t.id}" data-sort="${t.sort||0}">Sort</button>${t.active?`<button class="btn ghost sm taxonomyRetire" data-id="${t.id}">Retire</button>`:''}</div>`).join('')}</div>
+      <details><summary>Add a new reward type</summary><label>Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label>Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option><option value="credit">Add store credit</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
+    </div>`:''}`;
+
+  if(isOwner&&!draftVersionId){
+    $('beginRetentionDraft').onclick=async()=>{const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_retention_editor'});if(error)return fail(error);retentionPage(data.version_id)};
+    if($('createRetentionRollback'))$('createRetentionRollback').onclick=async()=>{const base=$('retentionRollback').value;if(!base)return toast('Choose a prior version');const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:base,p_source:'retention_rollback'});if(error)return fail(error);toast('Rollback draft created — review before publishing');retentionPage(data.version_id)};
+  }
+  if(isOwner&&draftVersionId){
+    $('discardRetentionDraft').onclick=()=>retentionPage();
+    $('publishRetention').onclick=async()=>{if(!confirm('Publish this retention draft? New sales will use it immediately.'))return;$('publishRetention').disabled=true;const {error}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});if(error){$('publishRetention').disabled=false;return fail(error)}toast('Retention configuration published');retentionPage()};
+    const setRewardInput=()=>{const kind=$('rt').selectedOptions[0]?.dataset.kind;$('rvl').textContent=kind==='discount_pct'?'Discount %':kind==='credit'?`Credit amount (${S.biz.currency||'SGD'})`:'Item or benefit';$('rv').type=kind==='free_item'?'text':'number';if(editing){$('rv').value=kind==='discount_pct'?(editing.discount_percent||''):kind==='credit'?((editing.credit_cents||0)/100).toFixed(2):(editing.manual_item||'')}else $('rv').value=kind==='free_item'?'Free drink':'10'};
+    if(rewardTypes.length){$('rt').onchange=setRewardInput;setRewardInput()}
+    document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const t=JSON.parse(b.dataset.t),type=rewardTypes.find(x=>x.fulfillment_kind===t.rt);if(!type)return toast('Add this reward type first');$('rn').value=t.name;$('rg').value=t.g;$('rp').value=t.p;$('rt').value=type.id;setRewardInput();$('rv').value=t.rt==='free_item'?(t.ri||'Free item'):t.rt==='credit'?(t.rv/100):t.rv});
+    $('saveRetentionProgram').onclick=async()=>{const kind=$('rt').selectedOptions[0]?.dataset.kind,name=$('rn').value.trim();if(name.length<1)return toast('Name your program');const payload={name,active:$('ra').checked,goal_visits:parseInt($('rg').value),period_days:parseInt($('rp').value),starts_on:$('rs').value,reward_taxonomy_id:$('rt').value,customer_description:$('rcd').value.trim()||null,staff_description:$('rsi').value.trim()||null};if(kind==='discount_pct')payload.discount_percent=parseFloat($('rv').value||'0');if(kind==='credit')payload.credit_cents=Math.round(parseFloat($('rv').value||'0')*100);if(kind==='free_item')payload.manual_item=$('rv').value.trim();const programId=editing?.program_id||sessionStorage.getItem(newProgramRetryKey)||crypto.randomUUID();if(!editing)sessionStorage.setItem(newProgramRetryKey,programId);$('saveRetentionProgram').disabled=true;const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:programId,p_program:payload,p_expected_snapshot_hash:snapshotHash});if(error){$('saveRetentionProgram').disabled=false;return fail(error)}if(!editing)sessionStorage.removeItem(newProgramRetryKey);toast('Draft retention rule saved');retentionPage(draftVersionId)};
+    if($('cancelRetentionEdit'))$('cancelRetentionEdit').onclick=()=>retentionPage(draftVersionId);
+    document.querySelectorAll('.retentionEdit').forEach(b=>b.onclick=()=>retentionPage(draftVersionId,b.dataset.id));
+    document.querySelectorAll('.retentionToggle').forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:b.dataset.id,p_program:{active:b.dataset.to==='true'},p_expected_snapshot_hash:snapshotHash});if(error)return fail(error);retentionPage(draftVersionId)});
+  }
+  if(isOwner){
+    $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(error)return fail(error);toast('Reward type added');retentionPage(draftVersionId)};
+    document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');retentionPage(draftVersionId)});
+    document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(error)return fail(error);toast('Reward type order updated');retentionPage(draftVersionId)});
+    document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!confirm('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(error)return fail(error);toast('Reward type retired; history is preserved');retentionPage(draftVersionId)});
+  }
 }
 
 /* ---------- referrals ---------- */
@@ -2508,17 +3450,26 @@ async function packagesPage(){
     if(error) return fail(error);
     toast('Package sold — revenue booked, loyalty earned 🎉');packagesPage();
   };
-  const {data:cps}=await sb.from('client_packages')
-    .select('*, clients(full_name), package_plans(name,sessions)')
-    .eq('business_id',S.biz.id).order('purchased_at',{ascending:false});
+  const [{data:cps,error:cpError},workflow]=await Promise.all([
+    sb.from('client_packages').select('*, clients(full_name), package_plans(name,sessions)')
+      .eq('business_id',S.biz.id).order('purchased_at',{ascending:false}),
+    loadReversalWorkflows(null,100,'package').catch(e=>{fail(e);return null})]);
+  if(cpError)return fail(cpError);
+  const packageHistory=(workflow?.sales||[]).filter(x=>x.is_package_session||x.original_sale_id&&x.amount_cents===0);
   $('klist').innerHTML=(cps&&cps.length)?`<table><tr><th>Customer</th><th>Package</th><th>Left</th><th>Status</th><th></th></tr>
     ${cps.map(k=>`<tr><td><b>${esc(k.clients?.full_name||'—')}</b></td><td>${esc(k.package_plans?.name||'—')}</td>
     <td>${k.remaining}/${k.package_plans?.sessions||'?'}</td>
     <td><span class="pill ${k.status==='active'?'on':'off'}">${k.status.replace('_',' ')}</span></td>
-    <td>${k.remaining>0?`<button class="btn sm" onclick="usePkg('${k.id}')">Use session</button>`:''}</td></tr>`).join('')}</table>`
+    <td>${k.remaining>0?`<button class="btn sm" onclick="usePkg('${k.id}')">Use session</button>`:''}</td></tr>`).join('')}</table>
+    ${packageHistory.length?`<div style="margin-top:22px;border-top:1px solid var(--line);padding-top:16px"><b>Session correction history</b><p class="muted small" style="margin-top:4px">A correction restores one session and never refunds a payment. Showing the newest ${packageHistory.length} of ${Number(workflow?.total_sales??packageHistory.length)} accessible package-session rows (server limit ${Number(workflow?.limit||100)})${workflow?.may_have_more?' · older rows are not shown':''}.</p><table style="margin-top:8px"><tr><th>When</th><th>Customer</th><th>Relationship</th><th>Result</th><th></th></tr>
+      ${packageHistory.map(x=>`<tr><td>${sgt(x.occurred_at)}</td><td>${esc(x.customer_name||'Customer')}</td><td>${x.is_reversal?`Reversal of ${esc(x.original_sale_id||'')}`:x.reversal_sale_id?`Used session → reversed by ${esc(x.reversal_sale_id)}`:'Used session'}</td><td>${x.reversal_sale_id||x.is_reversal?'<span class="pill ok">1 session restored · no refund</span>':'<span class="pill new">session used</span>'}</td><td>${x.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${x.id}">Restore session</button>`:x.refusal_reason?`<span class="muted small">${esc(x.refusal_reason)}</span>`:''}</td></tr>`).join('')}</table></div>`:''}`
     :`<div class="empty"><div class="big">🎫</div>No packages sold yet.</div>`;
+  bindReversalButtons(packagesPage);
+  const packageSessionIdem=new Map();
   window.usePkg=async(id)=>{
-    const {data,error}=await sb.rpc('use_package_session',{p_business:S.biz.id,p_cp:id});
+    if(!packageSessionIdem.has(id))packageSessionIdem.set(id,crypto.randomUUID());
+    const {data,error}=await sb.rpc('use_package_session',{
+      p_business:S.biz.id,p_cp:id,p_idempotency_key:packageSessionIdem.get(id)});
     if(error) return fail(error);
     toast(`Session used — ${data} left. Visit counted for retention ✓`);packagesPage();
   };
@@ -2532,7 +3483,7 @@ async function packagesPage(){
    sales.branch_id for the 5 unmodified sales writers, so flipping it isn't a cosmetic choice. */
 async function branchesPage(){
   M().innerHTML=`<div class="topbar"><div><h1>Branches</h1><p class="muted small">Manage your locations. Staff assigned to a branch see only that branch's data — owners and managers always see every branch.</p></div>
-    <button class="btn" id="addBr">+ Add branch</button></div>
+    <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
     <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
     <div id="brList"><div class="card"><div class="empty">Loading…</div></div></div>`;
   let branchList=[],staffList=[],openAssignId=null,editId=null;
@@ -2622,17 +3573,29 @@ async function reportsPage(){
   let lastScope=null;
   async function run(){
     const from=$('rf').value,to=$('rt2').value;
-    const {data,error}=await sb.rpc('get_reports_summary',{
-      p_business:S.biz.id,p_from:from,p_to:to,p_branch:selectedBranchId||null});
+    const scope={from:sgDateBoundary(from),toExclusive:sgDateBoundary(to,1),branchId:selectedBranchId||null};
+    const [{data,error},reportSales]=await Promise.all([
+      sb.rpc('get_reports_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:selectedBranchId||null}),
+      fetchAllRows(()=>{let q=sb.from('sales').select('id,amount_cents,reversal_of,counts_as_revenue').eq('business_id',S.biz.id)
+        .gte('occurred_at',scope.from).lt('occurred_at',scope.toExclusive).order('occurred_at').order('id');
+        if(scope.branchId)q=q.eq('branch_id',scope.branchId);return q;})]);
     if(error) return fail(error);
-    lastScope={from:sgDateBoundary(from),toExclusive:sgDateBoundary(to,1),branchId:selectedBranchId||null};
+    lastScope=scope;
     const d=data||{},byKind=d.revenue_by_kind||{},nonRevByKind=d.non_revenue_by_kind||{},pt=d.points_by_type||{};
     const liab=d.credit_liability_cents||0,gcOut=d.gift_card_liability_cents||0,actMs=d.active_memberships||0;
+    const reversalRows=(reportSales||[]).filter(s=>s.reversal_of);
+    const reversedCents=Math.abs(reversalRows.filter(s=>s.counts_as_revenue).reduce((a,s)=>a+s.amount_cents,0));
+    const netRevenue=(reportSales||[]).filter(s=>s.counts_as_revenue).reduce((a,s)=>a+s.amount_cents,0);
     $('rbody').innerHTML=`
       <div class="card"><b>Revenue by type</b><table style="margin-top:8px">
         ${Object.entries(byKind).map(([k,v])=>`<tr><td>${k.replace('_',' ')}</td><td style="text-align:right"><b>${money(v)}</b></td></tr>`).join('')||'<tr><td class="muted">No sales in range</td></tr>'}
-        <tr><td><b>Total</b></td><td style="text-align:right"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table>
+        <tr><td><b>Net total</b></td><td style="text-align:right"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table>
         ${Object.keys(nonRevByKind).length?`<p class="muted small" style="margin-top:8px">Cash collected, not revenue: ${Object.entries(nonRevByKind).map(([k,v])=>`<b>${money(v)}</b> ${k.replace('_',' ')}`).join(', ')} — real cash in the drawer, but it isn't revenue until it's actually spent (gift cards) or otherwise realised, per this business's current sale policy.</p>`:''}</div>
+      <div class="card"><b>Reversal reconciliation</b><table style="margin-top:8px">
+        <tr><td>Compensating rows</td><td style="text-align:right"><b>${reversalRows.length}</b></td></tr>
+        <tr><td>Revenue reversed</td><td style="text-align:right"><b>−${money(reversedCents)}</b></td></tr>
+        <tr><td>Net revenue from immutable rows</td><td style="text-align:right"><b>${money(netRevenue)}</b></td></tr></table>
+        <p class="muted small" style="margin-top:8px">Originals remain on record. Negative reversal rows link back to them and reduce the net.</p></div>
       <div class="card"><b>Loyalty flow (in range)</b><table style="margin-top:8px">
         <tr><td>Points earned</td><td style="text-align:right"><b>${pt.earn||0}</b></td></tr>
         <tr><td>Points redeemed</td><td style="text-align:right"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
@@ -2661,13 +3624,12 @@ async function reportsPage(){
       });
     }catch(error){$('rcsv').disabled=false;return fail(error)}
     if(!lastSales.length){$('rcsv').disabled=false;return toast('No sales in this report range')}
-    /* counts_as_revenue/counts_as_visit are each sale's own immutable snapshot at record
-       time — included so this export stays byte-identical if the business's sale policy
-       changes later, instead of quietly reflecting whatever policy is live on export day.
-       refund/reversal state deferred to a future migration; no reversal rows exist yet. */
-    const rows=[['occurred_at','customer','kind','amount','note','counts_as_revenue','counts_as_visit'],
-      ...lastSales.map(s=>[s.occurred_at,s.clients?.full_name||'',s.kind,(s.amount_cents/100).toFixed(2),(s.note||'').replace(/,/g,';'),s.counts_as_revenue,s.counts_as_visit])];
-    const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+    /* Signed amounts plus explicit parent/child IDs make this export exactly reconcilable:
+       sum(signed_amount) is net, while originals and compensating rows remain immutable. */
+    const reversalByOriginal=Object.fromEntries(lastSales.filter(s=>s.reversal_of).map(s=>[s.reversal_of,s]));
+    const rows=[['occurred_at','customer','kind','relationship','original_sale_id','reversal_sale_id','signed_amount_additive','relationship_net_original_only','reason','note','counts_as_revenue','counts_as_visit'],
+      ...lastSales.map(s=>{const rev=reversalByOriginal[s.id];return [s.occurred_at,s.clients?.full_name||'',s.kind,s.reversal_of?'reversal':'original',s.reversal_of||s.id,s.reversal_of?s.id:(rev?.id||''),(s.amount_cents/100).toFixed(2),s.reversal_of?'':((s.amount_cents+(rev?.amount_cents||0))/100).toFixed(2),s.reversal_reason||'',s.note||'',s.counts_as_revenue,s.counts_as_visit]})];
+    const blob=new Blob([csvRows(rows)],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-sales.csv';a.click();
     $('rcsv').disabled=false;
     toast('CSV downloaded');
@@ -2866,30 +3828,36 @@ async function dailyReportPage(){
   $('drGo').onclick=load;
   $('drCsv').onclick=()=>{
     if(!lastRows.length) return toast('Generate a report first');
-    const rows=[['time','customer','phone','service_or_kind','amount','staff'],
-      ...lastRows.map(r=>[sgt(r.occurred_at),r.custName,r.custPhone,r.label,(r.amount_cents/100).toFixed(2),r.staffName])];
-    const blob=new Blob([rows.map(r=>r.map(v=>String(v??'').replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
+    const reversalByOriginal=Object.fromEntries(lastRows.filter(r=>r.reversal_of).map(r=>[r.reversal_of,r]));
+    const rows=[['time','customer','phone','service_or_kind','relationship','original_sale_id','reversal_sale_id','signed_amount_additive','relationship_net_original_only','staff'],
+      ...lastRows.map(r=>{const rev=reversalByOriginal[r.id];return [sgt(r.occurred_at),r.custName,r.custPhone,r.label,r.reversal_of?'reversal':'original',r.reversal_of||r.id,r.reversal_of?r.id:(rev?.id||''),(r.amount_cents/100).toFixed(2),r.reversal_of?'':((r.amount_cents+(rev?.amount_cents||0))/100).toFixed(2),r.staffName]})];
+    const blob=new Blob([csvRows(rows)],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-daily-report-'+$('drDate').value+'.csv';a.click();
     toast('CSV downloaded');
   };
   async function load(){
     const day=$('drDate').value;
-    const from=new Date(day+'T00:00:00+08:00').toISOString(), to=new Date(day+'T23:59:59+08:00').toISOString();
-    let q=sb.from('sales')
-      .select('*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name))')
-      .eq('business_id',S.biz.id).gte('occurred_at',from).lte('occurred_at',to).order('occurred_at');
-    if(selectedBranchId) q=q.eq('branch_id',selectedBranchId);
-    const {data:sl,error}=await q;
-    if(error) return fail(error);
+    const from=sgDateBoundary(day),toExclusive=sgDateBoundary(day,1);
+    let sl;
+    try{
+      sl=await fetchAllRows(()=>{
+        let q=sb.from('sales')
+          .select('*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name))',{count:'exact'})
+          .eq('business_id',S.biz.id).gte('occurred_at',from).lt('occurred_at',toExclusive);
+        if(selectedBranchId)q=q.eq('branch_id',selectedBranchId);
+        return q.order('occurred_at').order('id');
+      });
+    }catch(error){return fail(error)}
     const rows=(sl||[]).map(s=>({
       occurred_at:s.occurred_at,
       custName:s.clients?.full_name||'Walk-in',custPhone:s.clients?.phone||'',
       label:s.appointments?.services?.name||(s.kind||'').replace('_',' '),
       amount_cents:s.amount_cents,staffName:s.staff?.full_name||'Unattributed',
+      id:s.id,reversal_of:s.reversal_of,reversal_reason:s.reversal_reason,
       kind:s.kind,counts_as_revenue:s.counts_as_revenue,counts_as_visit:s.counts_as_visit,client_id:s.client_id}));
     lastRows=rows;
     const revenue=rows.filter(r=>r.counts_as_revenue).reduce((a,r)=>a+r.amount_cents,0);
-    const visits=rows.filter(r=>r.counts_as_visit).length;
+    const visits=rows.filter(r=>r.counts_as_visit).reduce((n,r)=>n+(r.reversal_of?-1:1),0);
     const uniq=new Set(rows.filter(r=>r.client_id).map(r=>r.client_id)).size;
     const giftCash=rows.filter(r=>r.kind==='gift_card').reduce((a,r)=>a+r.amount_cents,0);
     $('drBody').innerHTML=`<div class="kpis">
@@ -2900,10 +3868,10 @@ async function dailyReportPage(){
       </div>
       <div class="charts"><div class="card"><b>Revenue by staff</b><canvas id="drC1"></canvas></div>
         <div class="card"><b>Revenue by kind</b><canvas id="drC2"></canvas></div></div>
-      <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b>
-        ${rows.length?`<table style="margin-top:8px"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Amount</th><th>Staff</th></tr>
+      <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed: reversal rows reduce revenue and visits while originals remain visible.</p>
+        ${rows.length?`<table style="margin-top:8px"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th>Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${sgt(r.occurred_at).slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
-            <td>${esc(r.label)}</td><td>${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table>`
+            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no">reversal of ${esc(r.reversal_of)}</span>`:'<span class="pill ok">original</span>'}</td><td>${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table>`
         :`<div class="empty"><div class="big">📋</div>No sales recorded on this day.</div>`}</div>`;
     if(!rows.length) return;
     const byStaff={};rows.filter(r=>r.counts_as_revenue).forEach(r=>{byStaff[r.staffName]=(byStaff[r.staffName]||0)+r.amount_cents});
@@ -3046,6 +4014,13 @@ async function pnlPage(){
 /* ---------- settings ---------- */
 async function settingsPage(){
   const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard'&&m!=='setup');
+  const [{data:moduleRules,error:moduleRulesError},{data:fieldDefs,error:fieldDefsError}]=await Promise.all([
+    sb.from('module_registry').select('module_key,requires_modules').order('sort_order'),
+    sb.from('client_field_definitions').select('*').eq('business_id',S.biz.id).order('created_at')]);
+  if(moduleRulesError||fieldDefsError) return fail(moduleRulesError||fieldDefsError);
+  const moduleRuleByKey=Object.fromEntries((moduleRules||[]).map(r=>[r.module_key,r]));
+  const dependencyText=m=>(moduleRuleByKey[m]?.requires_modules||[])
+    .map(k=>MODULES[k]?.[1]||k).join(', ');
   M().innerHTML=`<div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
     <div class="split"><div class="card"><b>Business</b>
       <label>Name</label><input id="bn" value="${esc(S.biz.name)}">
@@ -3056,15 +4031,16 @@ async function settingsPage(){
       <p class="small" style="word-break:break-all;margin-top:4px"><a style="color:#D06A2E" target="_blank" href="${location.origin}${location.pathname}#/b/${S.biz.slug}">${location.origin}${location.pathname}#/b/${S.biz.slug}</a></p>
       <div style="margin-top:16px"><button class="btn" id="bsave">Save</button></div></div>
     <div class="card"><b>Modules</b><p class="muted small" style="margin:6px 0 4px">Toggle what ${esc(S.biz.name)} uses. Dashboard is always on.</p>
-      ${mods.map(m=>`<label style="display:flex;align-items:center;gap:10px;margin-top:12px;cursor:pointer;font-size:14px;color:var(--ink);font-weight:500">
-        <input type="checkbox" style="width:auto" data-m="${m}" ${S.biz.enabled_modules.includes(m)?'checked':''}> ${MODULES[m][0]} ${MODULES[m][1]}</label>`).join('')}
+      ${mods.map(m=>`<label style="display:flex;align-items:flex-start;gap:10px;margin-top:12px;cursor:pointer;font-size:14px;color:var(--ink);font-weight:500">
+        <input type="checkbox" style="width:auto;margin-top:2px" data-m="${m}" ${(S.biz.enabled_modules||[]).includes(m)?'checked':''}>
+        <span>${MODULES[m][0]} ${MODULES[m][1]}${dependencyText(m)?`<span class="muted small" style="display:block;font-weight:400">Uses ${esc(dependencyText(m))}</span>`:''}</span></label>`).join('')}
       <div style="margin-top:16px"><button class="btn" id="msave">Save modules</button></div></div></div>
     <div class="split" style="margin-top:16px">
       <div class="card" id="billingWrap"><div class="empty">Loading…</div></div>
       <div class="card" id="signupWrap"><div class="empty">Loading…</div></div>
     </div>
     <div class="split" style="margin-top:16px">
-    <div class="card"><b>Team</b><p class="muted small" style="margin:6px 0 10px">Five roles: owner · manager · staff · front desk · bookkeeper. Invite by code — teammate signs up, enters the code, and lands in this workspace. The owner always sees every module and can't be restricted.</p>
+    <div class="card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff')}</div><p class="muted small" style="margin:6px 0 10px">Five roles: owner · manager · staff · front desk · bookkeeper. Invite by code — teammate signs up, enters the code, and lands in this workspace. The owner always sees every module and can't be restricted.</p>
       <div id="team"><p class="muted small">Loading…</p></div>
       <div class="row" style="margin-top:14px"><select id="ir" style="max-width:150px">
         ${['manager','staff','frontdesk','bookkeeper'].map(r=>`<option value="${r}">${ROLE_LABELS[r]}</option>`).join('')}</select>
@@ -3080,6 +4056,16 @@ async function settingsPage(){
       <p class="muted small" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, gender, birth_date (YYYY-MM-DD).</p>
       <input type="file" id="csvf" accept=".csv,text/csv">
       <div id="csvprev" style="margin-top:12px"></div></div></div>
+    <div class="card" style="margin-top:16px"><b>Customer fields</b>
+      <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
+      <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
+      <details><summary>Add a customer field</summary>
+        <div class="field-grid"><div><label>Field name</label><input id="cfLabel" placeholder="e.g. Preferred therapist"></div>
+        <div><label>Answer type</label><select id="cfType"><option value="text">Short text</option><option value="number">Number</option><option value="date">Date</option><option value="boolean">Yes / no</option><option value="select">Choose from a list</option></select></div>
+        <div><label>Data classification</label><select id="cfClass"><option value="operational">Operational</option><option value="personal">Personal</option><option value="sensitive">Sensitive — owner only</option></select></div>
+        <div><label>Choices (list type only)</label><input id="cfOptions" placeholder="e.g. Alice, Ben, No preference"></div></div>
+        <button class="btn sm" id="cfAdd" style="margin-top:12px">Add field</button>
+      </details></div>
     <div class="card" style="margin-top:16px"><b>Tenant isolation</b>
       <p class="muted small" style="margin-top:6px;line-height:1.7">Every business on Frenly has its own isolated data space. Row-level security is enforced by the database on every table — your customers, sales, and programs are invisible to every other business, and theirs to you. Your team only ever sees this workspace.</p></div>
     <div id="commissionWrap"></div>`;
@@ -3092,9 +4078,35 @@ async function settingsPage(){
   };
   $('msave').onclick=async()=>{
     const on=['dashboard',...[...document.querySelectorAll('[data-m]')].filter(x=>x.checked).map(x=>x.dataset.m)];
-    const {error}=await sb.from('businesses').update({enabled_modules:on}).eq('id',S.biz.id);
-    if(error)return fail(error);S.biz.enabled_modules=on;toast('Modules updated');route();
+    const {data,error}=await sb.rpc('set_business_modules',{p_business:S.biz.id,p_modules:on});
+    if(error)return fail(error);
+    S.biz.enabled_modules=data.modules;
+    const added=(data.added_dependencies||[]).filter(m=>m!=='dashboard').map(m=>MODULES[m]?.[1]||m);
+    toast(added.length?`Modules updated. Kept ${added.join(', ')} on because another module uses it.`:'Modules updated');
+    route();
   };
+  $('cfAdd').onclick=async()=>{
+    const label=$('cfLabel').value.trim(),valueType=$('cfType').value;
+    if(label.length<2)return toast('Give the field a clear name');
+    const fieldKey=label.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,64);
+    if(fieldKey.length<2)return toast('Use a field name with at least two letters');
+    let options=[];
+    if(valueType==='select'){
+      options=$('cfOptions').value.split(',').map(x=>x.trim()).filter(Boolean);
+      if(options.length<2){
+        return toast('List fields need at least two choices');
+      }
+    }
+    const {error}=await sb.rpc('create_client_field_definition',{p_business:S.biz.id,
+      p_field_key:fieldKey,p_label:label,p_value_type:valueType,p_classification:$('cfClass').value,
+      p_options:options.map((optionLabel,i)=>({option_key:`option_${i+1}`,option_label:optionLabel}))});
+    if(error)return fail(error);
+    toast('Customer field added');settingsPage();
+  };
+  document.querySelectorAll('.cfRetire').forEach(b=>b.onclick=async()=>{
+    const {error}=await sb.from('client_field_definitions').update({active:false}).eq('id',b.dataset.id).eq('business_id',S.biz.id);
+    if(error)return fail(error);toast('Field retired; existing answers remain in history');settingsPage();
+  });
   /* Changing the industry re-applies that industry's preset modules (same rules as onboarding),
      so the owner starts from a sensible set instead of an empty/stale one. It only ticks the
      checkboxes — nothing is saved until "Save modules" — so the selection stays fully optional
@@ -3413,12 +4425,21 @@ async function platformPage(){
 
 /* ---------- public customer portal ---------- */
 async function renderPortal(slug){
+  const signedInUser=S.user;
   const incomingParams=new URLSearchParams((location.hash.split('?')[1]||''));
   let manageToken=incomingParams.get('manage')||'';
   if(manageToken){
     history.replaceState(null,'',`${location.pathname}${location.search}#/b/${encodeURIComponent(slug)}`);
   }
   root.innerHTML=`<div class="portal"><div class="head"><div class="logo">frenly<span>.</span></div><p class="muted small">powered booking</p></div><div class="card"><div class="empty">Loading…</div></div></div>`;
+  let signedInContext='';
+  if(signedInUser){
+    const {data:personas}=await sb.rpc('get_my_personas');
+    const customer=(personas?.customer||[]).find(p=>p.business_slug===slug);
+    const staff=(personas?.staff||[]).find(p=>p.business_slug===slug);
+    if(customer)signedInContext=`<div class="card" style="margin-bottom:16px"><div class="row"><span class="small">Signed in for ${esc(customer.business_name)}</span><span class="spacer"></span><a class="btn ghost sm" href="#/wallet/${encodeURIComponent(slug)}">Open rewards</a></div></div>`;
+    else if(staff)signedInContext=`<div class="card" style="margin-bottom:16px"><div class="row"><span class="small">Signed in as staff</span><span class="spacer"></span><a class="btn ghost sm" href="#/workspace/${encodeURIComponent(slug)}/dashboard">Open workspace</a></div></div>`;
+  }
   let biz;
   try{biz=await publicGateway('public-booking',{method:'GET',query:`?slug=${encodeURIComponent(slug)}`})}
   catch{root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">🤔</div>Business not found.</div>`;return}
@@ -3432,6 +4453,7 @@ async function renderPortal(slug){
     bookingTurnstileToken='';bookingTurnstileControl=null;
     root.innerHTML=`<div class="portal" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)">
       <div class="head"><h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
+      ${signedInContext}
       <div class="card">
         ${(biz.services&&biz.services.length)?`<b>Choose a service</b>
           <div style="margin:10px 0 4px">${biz.services.map(s=>`<div class="svc ${selSvc===s.id?'sel':''}" data-s="${s.id}">

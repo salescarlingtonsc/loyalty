@@ -18,18 +18,26 @@ declare
     'app.is_super_admin()'
   ];
   v_authenticated_rpc_names constant text[] := array[
-    'accept_invite', 'adjust_points', 'apply_module_template', 'close_drawer',
-    'convert_booking_request', 'create_business', 'create_invite', 'decide_change',
-    'enroll_membership', 'get_dashboard_summary', 'get_my_access', 'get_my_modules',
-    'get_notifications', 'get_reports_summary', 'get_revenue_summary', 'get_sale_policy',
+    'accept_invite', 'adjust_points', 'apply_module_template', 'close_drawer', 'commit_import_job',
+    'convert_booking_request', 'create_business', 'create_client_field_definition', 'create_invite', 'create_loyalty_config_draft',
+    'customer_claim_link_by_email', 'customer_claim_link_invitation', 'customer_create_identity',
+    'customer_get_appointments', 'customer_get_appointments_page', 'customer_get_business_summary',
+    'customer_get_identity', 'customer_get_loyalty_details', 'customer_get_memberships',
+    'customer_get_packages', 'customer_get_reward_catalog', 'customer_get_wallet',
+    'customer_get_notification_preferences', 'customer_issue_link_invitation', 'customer_portal_capabilities',
+    'customer_request_appointment_action', 'customer_set_notification_preference', 'customer_unlink_business_link', 'decide_change',
+    'enroll_membership', 'get_customer_feature_capabilities', 'get_dashboard_summary', 'get_my_access', 'get_my_modules', 'get_my_personas',
+    'generate_retention_recommendation', 'get_loyalty_reward_draft', 'get_retention_config_draft', 'get_notifications', 'get_reports_summary', 'get_revenue_summary', 'get_sale_policy',
     'import_bookings', 'issue_gift_card', 'lookup_client_by_phone',
     'mark_all_notifications_read', 'mark_notification_read', 'open_drawer',
     'quick_add_client', 'record_credit_tender', 'record_drawer_movement',
     'record_payment', 'record_quick_sale', 'record_sale_by_phone',
-    'reclassify_sale_policy', 'redeem_gift_card', 'redeem_points', 'redeem_reward', 'refund_sale',
-    'reverse_sale', 'save_module_template', 'sell_package', 'set_booking_settings',
-    'set_expense_void', 'set_sale_policy', 'set_staff_modules',
-    'super_admin_list_businesses', 'use_package_session'
+    'reclassify_sale_policy', 'redeem_gift_card', 'redeem_points', 'redeem_reward', 'redeem_reward_at_context', 'refund_sale',
+    'reverse_sale', 'reverse_loyalty_redemption', 'remove_loyalty_branch_override_draft',
+    'save_loyalty_branch_override_draft', 'save_loyalty_config_draft', 'save_retention_program_draft', 'save_reward_taxonomy', 'save_module_template', 'sell_package', 'set_booking_settings',
+    'set_business_modules',
+    'set_expense_void', 'set_sale_policy', 'set_staff_modules', 'stage_import_rows', 'publish_loyalty_config',
+    'staff_get_reversal_workflows', 'super_admin_list_businesses', 'use_package_session'
   ];
   v_service_rpc_names constant text[] := array[
     'internal_gateway_rate_limit', 'internal_public_join_page', 'internal_public_join',

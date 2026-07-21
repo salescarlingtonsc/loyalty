@@ -1,4 +1,5 @@
 -- Frenly v19: public traffic terminates at rate-limited Edge Functions.
+-- Those functions verify the required Turnstile CAPTCHA before service-only RPCs.
 -- Canonical order: source parity through v17, v18 reporting, v19 gateway, v20 financial.
 -- Generated with `supabase migration new frenly_v19_public_gateway_security`.
 

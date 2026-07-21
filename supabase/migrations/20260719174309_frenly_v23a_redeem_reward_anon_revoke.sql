@@ -1,0 +1,1 @@
+revoke execute on function public.redeem_reward(uuid, uuid, uuid, text) from anon, public;

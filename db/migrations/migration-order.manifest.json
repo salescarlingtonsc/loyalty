@@ -1,0 +1,585 @@
+{
+  "schemaVersion": 1,
+  "status": "planning_only_not_deployable",
+  "sourcePlan": "db/migrations/migration-order.plan.json",
+  "hashAlgorithm": "sha256-raw-bytes",
+  "itemCount": 63,
+  "executableCount": 49,
+  "reservationCount": 14,
+  "sourceCollisionsResolved": false,
+  "sourceDeployVersionCollisions": [
+    {
+      "sourceDeployVersion": "20260717",
+      "count": 7,
+      "paths": [
+        "db/migrations/20260717_frenly_v10_1_policy_snapshot.sql",
+        "db/migrations/20260717_frenly_v10_sale_policy.sql",
+        "db/migrations/20260717_frenly_v11a_branches_staff_services.sql",
+        "db/migrations/20260717_frenly_v11b_money.sql",
+        "db/migrations/20260717_frenly_v12_commission_snapshot.sql",
+        "db/migrations/20260717_frenly_v12a_completion_staff.sql",
+        "db/migrations/20260717_frenly_v9_giftcard_revenue.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260718",
+      "count": 3,
+      "paths": [
+        "db/migrations/20260718_frenly_v13_flat_commission.sql",
+        "db/migrations/20260718_frenly_v14_platform.sql",
+        "db/migrations/20260718_frenly_v17_branch_visibility.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260719",
+      "count": 5,
+      "paths": [
+        "db/migrations/20260719_frenly_v20_financial_engine.sql",
+        "db/migrations/20260719_frenly_v21_security_hardening.sql",
+        "db/migrations/20260719_frenly_v22_flat_commission_reconciliation.sql",
+        "db/migrations/20260719_frenly_v22a_app_default_privileges.sql",
+        "db/migrations/20260719_frenly_v22b_global_function_default_privileges.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260720",
+      "count": 28,
+      "paths": [
+        "db/migrations/20260720_frenly_v23_loyalty_points_tiers.sql",
+        "db/migrations/20260720_frenly_v23a_redeem_reward_anon_revoke.sql",
+        "db/migrations/20260720_frenly_v23b_redeem_reward_perm_fix.sql",
+        "db/migrations/20260720_frenly_v23c_redeem_reward_column_fix.sql",
+        "db/migrations/20260720_frenly_v23d_restore_loyalty_programs.sql",
+        "db/migrations/20260720_frenly_v23e_redeem_reward_ledger_routes.sql",
+        "db/migrations/20260720_frenly_v23f_restore_expiry_columns.sql",
+        "db/migrations/20260720_frenly_v23g_loyalty_model_consolidation.sql",
+        "db/migrations/20260720_frenly_v24_stamps_model.sql",
+        "db/migrations/20260720_frenly_v24a_redemption_idempotency.sql",
+        "db/migrations/20260720_frenly_v24b_module_dependency_registry.sql",
+        "db/migrations/20260720_frenly_v24c_import_job_foundation.sql",
+        "db/migrations/20260720_frenly_v25_draft_onboarding_loyalty.sql",
+        "db/migrations/20260720_frenly_v26_immutable_config_versions.sql",
+        "db/migrations/20260720_frenly_v27_rich_rewards.sql",
+        "db/migrations/20260720_frenly_v28_firm_reward_taxonomy.sql",
+        "db/migrations/20260720_frenly_v29_branch_overrides_custom_fields.sql",
+        "db/migrations/20260720_frenly_v30_customer_identity.sql",
+        "db/migrations/20260720_frenly_v31_customer_links_claims.sql",
+        "db/migrations/20260720_frenly_v32_customer_wallet.sql",
+        "db/migrations/20260720_frenly_v33_customer_actions_notifications.sql",
+        "db/migrations/20260720_frenly_v34_reversal_provenance.sql",
+        "db/migrations/20260720_frenly_v35_retention_recommendation_drafts.sql",
+        "db/migrations/20260720_frenly_v36_safe_draft_reward_editor.sql",
+        "db/migrations/20260720_frenly_v37_branch_override_editor_rpc.sql",
+        "db/migrations/20260720_frenly_v37b_versioned_retention_taxonomy.sql",
+        "db/migrations/20260720_frenly_v38_customer_personas_and_gates.sql",
+        "db/migrations/20260720_frenly_v39_detailed_customer_wallet.sql"
+      ]
+    }
+  ],
+  "items": [
+    {
+      "order": 1,
+      "kind": "executable",
+      "path": "db/migrations/20260716075908_frenly_init.sql",
+      "semanticVersion": "v1",
+      "proposedDeployVersion": "20260722000001",
+      "sha256": "548917d5de138daf56eccbd87e9c8a493baceffe0a51b4e15cff1704a4ebecf7"
+    },
+    {
+      "order": 2,
+      "kind": "executable",
+      "path": "db/migrations/20260716084652_frenly_v2_saas.sql",
+      "semanticVersion": "v2",
+      "proposedDeployVersion": "20260722000002",
+      "sha256": "eafd8da21817ca4a0a2c6ec55d67782e662ad89ea45907fcdaf6b08591d5ad56"
+    },
+    {
+      "order": 3,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v3_engine",
+      "semanticVersion": "v3",
+      "proposedDeployVersion": "20260722000003",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 4,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v4_onboarding_rpc",
+      "semanticVersion": "v4",
+      "proposedDeployVersion": "20260722000004",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 5,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v5_memberships_giftcards",
+      "semanticVersion": "v5",
+      "proposedDeployVersion": "20260722000005",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 6,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v6_ops_modules",
+      "semanticVersion": "v6",
+      "proposedDeployVersion": "20260722000006",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 7,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v7_team_brand",
+      "semanticVersion": "v7",
+      "proposedDeployVersion": "20260722000007",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 8,
+      "kind": "executable",
+      "path": "db/migrations/20260716_frenly_v8_requests_consumption.sql",
+      "semanticVersion": "v8",
+      "proposedDeployVersion": "20260722000008",
+      "sha256": "f7c5b6f6339600d5b5163b4622443e6ef8ffddf2ade6deea63dc3d7aacb8dcdf"
+    },
+    {
+      "order": 9,
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v9_giftcard_revenue.sql",
+      "semanticVersion": "v9",
+      "proposedDeployVersion": "20260722000009",
+      "sha256": "fa98ff7aad23a073e17a237feba7f4dc487007e11798dc1fc3708cbec32f74e0"
+    },
+    {
+      "order": 10,
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v10_sale_policy.sql",
+      "semanticVersion": "v10",
+      "proposedDeployVersion": "20260722000010",
+      "sha256": "3e2f8a73d7d270e488cb60e4cacf2fc45412f8553a1683d5b250a4c347ebc4cb"
+    },
+    {
+      "order": 11,
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v10_1_policy_snapshot.sql",
+      "semanticVersion": "v10.1",
+      "proposedDeployVersion": "20260722000011",
+      "sha256": "446239c5a2ff06d274ada97404473bb77386a793df9936e45f737138be5ee7b4"
+    },
+    {
+      "order": 12,
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v11a_branches_staff_services.sql",
+      "semanticVersion": "v11a",
+      "proposedDeployVersion": "20260722000012",
+      "sha256": "3f390660077006838432aa6661e9cce3d617390f63d4abc515e1e9303710bac6"
+    },
+    {
+      "order": 13,
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v11b_money.sql",
+      "semanticVersion": "v11b",
+      "proposedDeployVersion": "20260722000013",
+      "sha256": "6f1eece963334c9defdfcbb61757eb40fe6b36973f2afdeecc5a492739323237"
+    },
+    {
+      "order": 14,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v11c_revoke_truncate",
+      "semanticVersion": "v11c",
+      "proposedDeployVersion": "20260722000014",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 15,
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v12a_completion_staff.sql",
+      "semanticVersion": "v12a",
+      "proposedDeployVersion": "20260722000015",
+      "sha256": "9200bbfb20afa23d712a746a2b1f5f5200ea01d43c0c3e28d0d348e29d33c3f4"
+    },
+    {
+      "order": 16,
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v12_commission_snapshot.sql",
+      "semanticVersion": "v12",
+      "proposedDeployVersion": "20260722000016",
+      "sha256": "431b54737d3e034f70dadab4a07545210c2ea000818410ed7045a57d64caf967"
+    },
+    {
+      "order": 17,
+      "kind": "executable",
+      "path": "db/migrations/20260718_frenly_v13_flat_commission.sql",
+      "semanticVersion": "v13",
+      "proposedDeployVersion": "20260722000017",
+      "sha256": "340dff923674498bf81843b1c631ef54fe5d521aa97b6c496e1c8f5014a81d46"
+    },
+    {
+      "order": 18,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v14a_superadmin_roles_phone",
+      "semanticVersion": "v14a",
+      "proposedDeployVersion": "20260722000018",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 19,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v14b_billing_module_perms",
+      "semanticVersion": "v14b",
+      "proposedDeployVersion": "20260722000019",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 20,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v14c_customer_signup_phone_till",
+      "semanticVersion": "v14c",
+      "proposedDeployVersion": "20260722000020",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 21,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v14d_harden_search_path",
+      "semanticVersion": "v14d",
+      "proposedDeployVersion": "20260722000021",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 22,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v15a_booking_capacity_schema",
+      "semanticVersion": "v15a",
+      "proposedDeployVersion": "20260722000022",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 23,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v15b_booking_flows_notify_cron",
+      "semanticVersion": "v15b",
+      "proposedDeployVersion": "20260722000023",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 24,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v15c_convert_idempotency_guard",
+      "semanticVersion": "v15c",
+      "proposedDeployVersion": "20260722000024",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 25,
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v15d_booking_consent",
+      "semanticVersion": "v15d",
+      "proposedDeployVersion": "20260722000025",
+      "exactEvidence": "missing"
+    },
+    {
+      "order": 26,
+      "kind": "executable",
+      "path": "db/migrations/20260718_frenly_v14_platform.sql",
+      "semanticVersion": "v14",
+      "proposedDeployVersion": "20260722000026",
+      "sha256": "31c96b8a5de24d5877d2783b4f8c24678e5b123678238ac289f1812e234b8952"
+    },
+    {
+      "order": 27,
+      "kind": "executable",
+      "path": "db/migrations/20260718_frenly_v17_branch_visibility.sql",
+      "semanticVersion": "v17",
+      "proposedDeployVersion": "20260722000027",
+      "sha256": "b69be47aa6f1642d6916e4d56a5f5fccaffab83b365cc6d6fa6509e06423b963"
+    },
+    {
+      "order": 28,
+      "kind": "executable",
+      "path": "db/migrations/20260718135940_frenly_v18_scalable_reporting.sql",
+      "semanticVersion": "v18",
+      "proposedDeployVersion": "20260722000028",
+      "sha256": "d1f92b123110bcf7e67a25416c21c51f84464daf1300b2f0e59a981f711e46bb"
+    },
+    {
+      "order": 29,
+      "kind": "executable",
+      "path": "db/migrations/20260718180602_frenly_v19_public_gateway_security.sql",
+      "semanticVersion": "v19",
+      "proposedDeployVersion": "20260722000029",
+      "sha256": "0089b9cf2e37b59af7eefd66d24bc1e175d5f906ba0e21801f9b939109acca54"
+    },
+    {
+      "order": 30,
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v20_financial_engine.sql",
+      "semanticVersion": "v20",
+      "proposedDeployVersion": "20260722000030",
+      "sha256": "dd9bf245b4439c9a42989360df12aa9ad63f5a5197d3eebf58479c816e402f2e"
+    },
+    {
+      "order": 31,
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v21_security_hardening.sql",
+      "semanticVersion": "v21",
+      "proposedDeployVersion": "20260722000031",
+      "sha256": "ee95bfc3383470535a1979769e487475aff3db71d824a10b1a4dce59784732e2"
+    },
+    {
+      "order": 32,
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v22_flat_commission_reconciliation.sql",
+      "semanticVersion": "v22",
+      "proposedDeployVersion": "20260722000032",
+      "sha256": "b112bc14094ec9b70bbe86b7a929d31c17fc41c1d664101bfac6f40b42a3d2d8"
+    },
+    {
+      "order": 33,
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v22a_app_default_privileges.sql",
+      "semanticVersion": "v22a",
+      "proposedDeployVersion": "20260722000033",
+      "sha256": "2b0787753e4c3c6b10aff11eb28471e32b77b481dc664c16dd06ec2dd2ac27e6"
+    },
+    {
+      "order": 34,
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v22b_global_function_default_privileges.sql",
+      "semanticVersion": "v22b",
+      "proposedDeployVersion": "20260722000034",
+      "sha256": "daf0f658e4f998b5bd2fdb516c9fd6f949a512eb8f1b2cb79223af58dedf1b35"
+    },
+    {
+      "order": 35,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23_loyalty_points_tiers.sql",
+      "semanticVersion": "v23",
+      "proposedDeployVersion": "20260722000035",
+      "sha256": "84c976cb134ed191d68269d5e39adb00d836d917655c273c047ef78f0c33e7db"
+    },
+    {
+      "order": 36,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23a_redeem_reward_anon_revoke.sql",
+      "semanticVersion": "v23a",
+      "proposedDeployVersion": "20260722000036",
+      "sha256": "5bef66094730f9a84522ecd63496f8e7b5d0d979f65766deac4be423ae6d4044"
+    },
+    {
+      "order": 37,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23b_redeem_reward_perm_fix.sql",
+      "semanticVersion": "v23b",
+      "proposedDeployVersion": "20260722000037",
+      "sha256": "0b338f90492660bac35b0d5327a61bbd3fdf9c928c42a636d7dafcd6390ab079"
+    },
+    {
+      "order": 38,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23c_redeem_reward_column_fix.sql",
+      "semanticVersion": "v23c",
+      "proposedDeployVersion": "20260722000038",
+      "sha256": "596f57ba6d3e1de568f533e94070ca5e2682dabc1952917e03f815feef9233f7"
+    },
+    {
+      "order": 39,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23d_restore_loyalty_programs.sql",
+      "semanticVersion": "v23d",
+      "proposedDeployVersion": "20260722000039",
+      "sha256": "90d12dc38e6d08d7242147ecdf576798cab3b925b97a285fc98a9bd889529dcc"
+    },
+    {
+      "order": 40,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23e_redeem_reward_ledger_routes.sql",
+      "semanticVersion": "v23e",
+      "proposedDeployVersion": "20260722000040",
+      "sha256": "6b041a00ab6eb80bb259acac4fd98dc14386f4e61ca7d93dcea78ffa110b37d7"
+    },
+    {
+      "order": 41,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23f_restore_expiry_columns.sql",
+      "semanticVersion": "v23f",
+      "proposedDeployVersion": "20260722000041",
+      "sha256": "0219c7a949f0d900548d406c3dc9e092b416e971dc91e32cc4cd3bd31cf36b78"
+    },
+    {
+      "order": 42,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23g_loyalty_model_consolidation.sql",
+      "semanticVersion": "v23g",
+      "proposedDeployVersion": "20260722000042",
+      "sha256": "7a1bfeafc77fae4937d8b4ea6407c1a8b3798bd2bb4a645bc4472db4a5561d0d"
+    },
+    {
+      "order": 43,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v24_stamps_model.sql",
+      "semanticVersion": "v24",
+      "proposedDeployVersion": "20260722000043",
+      "sha256": "0c92ca4ffaa7aa76e7889f47f52c9584cf488659cc9ab4a06b61065ebdb652e9"
+    },
+    {
+      "order": 44,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v24a_redemption_idempotency.sql",
+      "semanticVersion": "v24a",
+      "proposedDeployVersion": "20260722000044",
+      "sha256": "33c4a98e74be33705e40552557b6727a24d6142789e9b2d8bd272b9c4ea9c4bb"
+    },
+    {
+      "order": 45,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v24b_module_dependency_registry.sql",
+      "semanticVersion": "v24b",
+      "proposedDeployVersion": "20260722000045",
+      "sha256": "c6764dfabad6ef3bf9cc8220dfbb85a1ab33c9d1ec798ae772b1c9dc3a52aa33"
+    },
+    {
+      "order": 46,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v24c_import_job_foundation.sql",
+      "semanticVersion": "v24c",
+      "proposedDeployVersion": "20260722000046",
+      "sha256": "4b32a1cdbe51b7c968557bc892a499fc0148f187b23eab26bc9032f73afb5763"
+    },
+    {
+      "order": 47,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v25_draft_onboarding_loyalty.sql",
+      "semanticVersion": "v25",
+      "proposedDeployVersion": "20260722000047",
+      "sha256": "5afc5e8739387404554bc860ecd681c6769ac94b292ed1068ae9e4804b191dd0"
+    },
+    {
+      "order": 48,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v26_immutable_config_versions.sql",
+      "semanticVersion": "v26",
+      "proposedDeployVersion": "20260722000048",
+      "sha256": "790d71c780807e5c8beba548eaa8945bfa1e8a033e46d1fce6dbac9c91a0d958"
+    },
+    {
+      "order": 49,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v27_rich_rewards.sql",
+      "semanticVersion": "v27",
+      "proposedDeployVersion": "20260722000049",
+      "sha256": "d9d541d147d1c3622006e55394f0992776a29b4dc9cc1adf4cd0c5c8eead1909"
+    },
+    {
+      "order": 50,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v28_firm_reward_taxonomy.sql",
+      "semanticVersion": "v28",
+      "proposedDeployVersion": "20260722000050",
+      "sha256": "9a3e87092c305b084079a113023847ca88256f181b8ac4d18acd0abf17c621b1"
+    },
+    {
+      "order": 51,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v29_branch_overrides_custom_fields.sql",
+      "semanticVersion": "v29",
+      "proposedDeployVersion": "20260722000051",
+      "sha256": "215b45303ad6e5b98f88db013642268fcf7ed6e7309909f850df3271ca7ac871"
+    },
+    {
+      "order": 52,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v30_customer_identity.sql",
+      "semanticVersion": "v30",
+      "proposedDeployVersion": "20260722000052",
+      "sha256": "680eeae5f7c73d24c02f7551ca011d0f9c98442fed3c2adff121c45b2ee4ec42"
+    },
+    {
+      "order": 53,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v31_customer_links_claims.sql",
+      "semanticVersion": "v31",
+      "proposedDeployVersion": "20260722000053",
+      "sha256": "da6768b18d135ed86ac793f187d9f236bfafab6ee44f17ce873e3f03e30772e9"
+    },
+    {
+      "order": 54,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v32_customer_wallet.sql",
+      "semanticVersion": "v32",
+      "proposedDeployVersion": "20260722000054",
+      "sha256": "2c1d3c76fbed7f606e58ce7cdeea249e9b1582fa52b416213ebfc9d10baab87a"
+    },
+    {
+      "order": 55,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v33_customer_actions_notifications.sql",
+      "semanticVersion": "v33",
+      "proposedDeployVersion": "20260722000055",
+      "sha256": "869c6b9f193b58052a45119078d438db9ba080fcfaca05024e26aa3d805feb42"
+    },
+    {
+      "order": 56,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v34_reversal_provenance.sql",
+      "semanticVersion": "v34",
+      "proposedDeployVersion": "20260722000056",
+      "sha256": "a62f7538a15413227ed7125372311ae5a837ac84ed6f1105813374e6774f56fe"
+    },
+    {
+      "order": 57,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v35_retention_recommendation_drafts.sql",
+      "semanticVersion": "v35",
+      "proposedDeployVersion": "20260722000057",
+      "sha256": "507b1aab13b7a66ff77d34a1be4ca001ba677e4e1996f7f7984ec3ea1710d3c2"
+    },
+    {
+      "order": 58,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v36_safe_draft_reward_editor.sql",
+      "semanticVersion": "v36",
+      "proposedDeployVersion": "20260722000058",
+      "sha256": "035315f6608dfbe28b9c2edef964edb145a7a4cc559f66132ec3319cf9a374b5"
+    },
+    {
+      "order": 59,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v37_branch_override_editor_rpc.sql",
+      "semanticVersion": "v37",
+      "proposedDeployVersion": "20260722000059",
+      "sha256": "4bb61be603e4924cd13c5f025ba4c212046588f176e64a32286f8f9d8832e497"
+    },
+    {
+      "order": 60,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v37b_versioned_retention_taxonomy.sql",
+      "semanticVersion": "v37b",
+      "proposedDeployVersion": "20260722000100",
+      "sha256": "291e55215a857b3528553e7ce7258e26c5b2a4bfa76f8e185108760084ca69e2"
+    },
+    {
+      "order": 61,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v38_customer_personas_and_gates.sql",
+      "semanticVersion": "v38",
+      "proposedDeployVersion": "20260722000101",
+      "sha256": "31dbbe6e65308097a53e46aa32eb6f3a21a320dd9384e3c7ca6bfb5f997db378"
+    },
+    {
+      "order": 62,
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v39_detailed_customer_wallet.sql",
+      "semanticVersion": "v39",
+      "proposedDeployVersion": "20260722000102",
+      "sha256": "5f3c2cb2d38ec0124ff80f0c46ec5021f2a71a850e369b5ce983166497931f7a"
+    },
+    {
+      "order": 63,
+      "kind": "executable",
+      "path": "db/migrations/20260721_frenly_v40_staff_reversal_workflows.sql",
+      "semanticVersion": "v40",
+      "proposedDeployVersion": "20260722000103",
+      "sha256": "5979cbc1f483dd300624996eb1ad349dab9394561db4fc93b387fd1fa92c5b37"
+    }
+  ]
+}

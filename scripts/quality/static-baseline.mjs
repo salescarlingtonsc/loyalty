@@ -253,19 +253,45 @@ export async function checkSupabaseProjectReferences(
 }
 
 export async function checkSupabaseClientContract(root = repoRoot) {
+  const productionConfig = JSON.parse(await readText(root, 'config/runtime/production.json'));
+  assert.deepEqual(Object.keys(productionConfig).sort(), [
+    'environment', 'projectRef', 'schemaVersion', 'supabasePublishableKey', 'supabaseUrl'
+  ]);
+  assert.equal(productionConfig.schemaVersion, 1);
+  assert.equal(productionConfig.environment, 'production');
+  assert.equal(productionConfig.projectRef, singaporeSupabaseRef);
+  assert.equal(productionConfig.supabaseUrl, singaporeSupabaseUrl);
+  assert.equal(productionConfig.supabasePublishableKey, singaporePublishableKey);
+
+  const runtimeArtifact = await readText(root, 'app/runtime-config.js');
+  assert.match(runtimeArtifact, /window\.__FRENLY_RUNTIME_CONFIG__\s*=\s*Object\.freeze\(/);
+  assert.ok(runtimeArtifact.includes(JSON.stringify(singaporeSupabaseUrl)),
+    'Generated runtime config must use the production Supabase URL.');
+  assert.ok(runtimeArtifact.includes(JSON.stringify(singaporePublishableKey)),
+    'Generated runtime config must use the production publishable key.');
+  assert.doesNotMatch(runtimeArtifact, /sb_secret_|service_role/i,
+    'Generated browser runtime config must never contain a secret/service-role credential.');
+
   const clientFiles = ['app/index.html', 'app/join.html'];
   for (const file of clientFiles) {
     const source = await readText(root, file);
     assert.match(
       source,
-      new RegExp(`const SB_URL='${singaporeSupabaseUrl.replaceAll('.', '\\.')}'`),
-      `${file} must use the Singapore Supabase URL.`
+      /<script src="\/runtime-config\.js"><\/script>[\s\S]*?<script src="\/runtime-config-loader\.js"><\/script>/,
+      `${file} must load explicit runtime config before the shared validator.`
     );
     assert.match(
       source,
-      new RegExp(`const SB_KEY='${singaporePublishableKey.replaceAll('_', '\\_')}'`),
-      `${file} must use the Singapore publishable key.`
+      /window\.FrenlyRuntimeConfig\.require\(window\)/,
+      `${file} must validate runtime config before creating a client.`
     );
+    assert.match(source, /const SB_URL=RUNTIME_CONFIG\.supabaseUrl;/,
+      `${file} must source its Supabase URL from validated runtime config.`);
+    assert.match(source, /const SB_KEY=RUNTIME_CONFIG\.supabasePublishableKey;/,
+      `${file} must source its browser key from validated runtime config.`);
+    assert.doesNotMatch(source, supabaseRefPattern, `${file} must not hardcode a Supabase project URL.`);
+    assert.doesNotMatch(source, /sb_(?:publishable|secret)_/,
+      `${file} must not hardcode any Supabase API key.`);
     assert.doesNotMatch(source, new RegExp(oldSupabaseUrl.replaceAll('.', '\\.')), `${file} must not contain the old Supabase URL.`);
     assert.doesNotMatch(source, new RegExp(oldPublishableKey), `${file} must not contain the old publishable key.`);
   }
@@ -381,7 +407,9 @@ function parseMigrationFilename(fileName) {
 
 export async function checkMigrationFilenameSanity(root = repoRoot) {
   const migrationsDir = path.join(root, 'db', 'migrations');
-  const files = (await readdir(migrationsDir)).filter((file) => !file.startsWith('.')).sort();
+  const files = (await readdir(migrationsDir))
+    .filter((file) => file.endsWith('.sql') || file.endsWith('.note.md'))
+    .sort();
   assert.ok(files.length > 0, 'db/migrations must contain migration files.');
   assert.equal(new Set(files).size, files.length, 'Migration filenames must be unique.');
 
