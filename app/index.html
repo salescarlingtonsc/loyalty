@@ -17,11 +17,11 @@
    generic web dashboard.
    ============================================================================ */
 :root{
-  --bg:#F4F2EE; --card:#FFFFFF; --ink:#17161A; --ink2:#3D3B44; --muted:#8B8794;
-  --line:#EAE6DF; --hair:rgba(23,22,26,.06);
-  --coral:#FF6B5E; --amber:#FFB86B; --green:#2FA36B;
-  --grad:linear-gradient(135deg,#FF7A6B,#FFB86B);
-  --tint:#FFF2ED;            /* coral wash for selected/active surfaces */
+  --bg:#F4F2EE; --card:#FFFFFF; --ink:#17161A; --ink2:#3D3B44; --muted:#6B6673;
+  --line:#EAE6DF; --control-border:#817B88; --hair:rgba(23,22,26,.06);
+  --coral:#C24135; --coral-hover:#9D352C; --amber:#A75514; --green:#1F6B48; --red:#9D352C;
+  --grad:linear-gradient(135deg,#C24135,#9D352C);
+  --tint:#FFF0EC;            /* coral wash for selected/active surfaces */
   /* iOS uses generous, continuous corner radii */
   --r:18px; --r-sm:12px; --r-lg:24px;
   /* Depth = several cheap shadows stacked, not one expensive one */
@@ -32,6 +32,9 @@
   --sf:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.skip-link{position:fixed;left:12px;top:10px;z-index:200;transform:translateY(-160%);background:var(--ink);color:#fff;padding:12px 16px;border-radius:10px;font-weight:700}
+.skip-link:focus{transform:translateY(0)}
 body{background:var(--bg);color:var(--ink);font-family:var(--sf);font-size:14.5px;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   font-feature-settings:'kern' 1,'liga' 1,'cv11' 1;letter-spacing:-.005em}
@@ -39,22 +42,22 @@ h1,h2,h3{font-family:var(--sf);font-weight:650;letter-spacing:-.022em;color:var(
 h1{letter-spacing:-.03em}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer;border:none;font-size:14px;letter-spacing:-.01em}
-input,select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--line);
-  border-radius:var(--r-sm);background:#fff;color:var(--ink);width:100%;
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+input,select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--control-border);
+  border-radius:var(--r-sm);background:#fff;color:var(--ink);width:100%;min-height:44px;
   transition:border-color .18s var(--ease),box-shadow .18s var(--ease)}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--coral);
-  box-shadow:0 0 0 3.5px rgba(255,107,94,.16)}
+input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3.5px rgba(194,65,53,.16)}
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
 /* Buttons: press-down on :active is the single strongest "native app" tell */
-.btn{background:var(--grad);color:#fff;font-weight:600;padding:11px 20px;border-radius:100px;
-  box-shadow:0 1px 2px rgba(255,107,94,.2),0 6px 16px rgba(255,107,94,.22);
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;background:var(--grad);color:#fff;font-weight:600;padding:10px 20px;border-radius:100px;
+  box-shadow:0 1px 2px rgba(194,65,53,.2),0 6px 16px rgba(194,65,53,.22);
   transition:transform .22s var(--spring),box-shadow .22s var(--ease),opacity .15s}
 .btn:hover{transform:translateY(-1.5px);box-shadow:0 2px 4px rgba(255,107,94,.22),0 10px 26px rgba(255,107,94,.3)}
 .btn:active{transform:scale(.965) translateY(0);transition-duration:.06s}
-.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow)}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--control-border);box-shadow:var(--shadow)}
 .btn.ghost:hover{border-color:#DDD7CD;box-shadow:var(--shadow-lg)}
-.btn.sm{padding:7px 14px;font-size:13px}
-.btn.danger{background:#fff;color:#C0392B;border:1px solid #F0C4BE;box-shadow:none}
+.btn.sm{padding:8px 14px;font-size:13px;min-height:44px}
+.btn.danger{background:#fff;color:var(--red);border:1px solid #D9A29C;box-shadow:none}
 .btn[disabled]{opacity:.42;pointer-events:none;box-shadow:none}
 .card{background:var(--card);border:1px solid var(--hair);border-radius:var(--r);
   box-shadow:var(--shadow);padding:22px}
@@ -62,8 +65,9 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .muted{color:var(--muted)} .small{font-size:12.5px}
 .pill{display:inline-block;padding:3.5px 10px;border-radius:100px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
 .pill.on{background:#E7F6EE;color:var(--green)} .pill.off{background:#F1EEE9;color:var(--muted)}
-.pill.new{background:var(--tint);color:#D0562E} .pill.ok{background:#E7F6EE;color:var(--green)} .pill.no{background:#FBEAE7;color:#C0392B}
+.pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:#E7F6EE;color:var(--green)} .pill.no{background:#FBEAE7;color:var(--red)}
 table{width:100%;border-collapse:collapse}
+caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
   text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
 td{padding:13px 12px;border-bottom:1px solid var(--hair);vertical-align:middle}
@@ -72,6 +76,22 @@ tr.click{cursor:pointer;transition:background .14s var(--ease)}
 tr.click:hover td{background:#FBFAF8}
 .empty{text-align:center;padding:52px 20px;color:var(--muted)}
 .empty .big{font-size:34px;margin-bottom:10px}
+.cui-icon{display:inline-block;flex:0 0 auto;vertical-align:-.15em}
+.cui-page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.cui-page-title{display:flex;align-items:flex-start;gap:12px}.cui-page-title>svg{color:var(--coral);margin-top:4px}
+.cui-page-title h1{font-size:1.85rem;font-weight:700}.cui-page-title p{color:var(--muted);font-size:13px;margin-top:3px;max-width:72ch;line-height:1.5}
+.cui-page-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.permission-banner{display:flex;gap:11px;align-items:flex-start;background:#FFF6E8;color:#65400C;border:1px solid #E7C994;border-radius:var(--r-sm);padding:13px 15px;margin:-7px 0 18px}
+.permission-banner p{font-size:12.5px;line-height:1.5;margin-top:2px}.permission-banner svg{margin-top:1px}
+.cui-card-head{margin-bottom:14px}.cui-card-head h2,.cui-empty h2{font-size:16px}.cui-card-head p,.cui-empty p,.cui-field-hint{color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:4px}
+.cui-field{min-width:0}.cui-field label{margin-top:0}.cui-field-hint{margin-top:6px}
+.cui-empty{display:grid;justify-items:center;gap:7px}.cui-empty>svg{color:var(--coral)}.cui-empty-action{margin-top:8px}
+.cui-table-wrap{width:100%;overflow-x:auto;border-radius:var(--r-sm);-webkit-overflow-scrolling:touch}
+.cui-table-wrap:focus-visible{outline-offset:2px}
+.cui-readonly-list{display:grid;gap:12px;margin-top:14px}.cui-readonly-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)}
+.cui-readonly-row:last-child{border-bottom:0}.cui-readonly-row dt{color:var(--muted);font-size:12.5px}.cui-readonly-row dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
+.customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.inline-status{display:inline-flex;align-items:center;gap:6px}
 /* Toast: frosted, springs up from the bottom like a native banner */
 .toast{position:fixed;bottom:26px;left:50%;background:rgba(23,22,26,.9);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
@@ -106,10 +126,10 @@ tr.click:hover td{background:#FBFAF8}
 .side{background:#FCFBF9;border-right:1px solid var(--line);color:var(--ink2);
   padding:22px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
 .side .logo{color:var(--ink);padding:0 10px 22px}
-.nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:14px;
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:14px;min-height:44px;
   font-weight:500;margin-bottom:1px;color:var(--ink2);transition:background .14s var(--ease),color .14s}
 .nav a:hover{background:#F2EFEA;color:var(--ink)}
-.nav a.act{background:var(--tint);color:#D0562E;font-weight:600}
+.nav a.act{background:var(--tint);color:var(--coral);font-weight:600}
 /* Icons get their own fixed-width box so every label starts on the same optical
    column, and so flex `gap` actually applies — an emoji sitting in the same text
    node as its label is one flex item, so gap silently does nothing and the icon
@@ -117,9 +137,9 @@ tr.click:hover td{background:#FBFAF8}
    and "looks generated". */
 .nav .ic{width:18px;font-size:14.5px;display:inline-flex;align-items:center;justify-content:center;
   flex-shrink:0;line-height:1}
-.navhead{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:11px;
-  font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#A8A3B0;cursor:pointer;
-  margin-top:12px;transition:color .14s}
+.navhead{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:9px 12px;border-radius:10px;font-size:11px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);cursor:pointer;text-align:left;background:transparent;
+  margin-top:12px;transition:color .14s,background .14s}
 .navhead:hover{color:var(--ink2)}
 .navhead.act{color:var(--ink2)}
 .navhead .chev{margin-left:auto;font-size:10.5px;opacity:.9;transition:transform .22s var(--spring)}
@@ -132,7 +152,7 @@ tr.click:hover td{background:#FBFAF8}
   background:rgba(244,242,238,.72);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
 .profile{position:relative}
-.profile .who{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:100px;
+.profile .who{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px 6px 6px;border-radius:100px;
   cursor:pointer;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
   transition:transform .2s var(--spring),box-shadow .2s var(--ease)}
 .profile .who:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
@@ -153,7 +173,7 @@ tr.click:hover td{background:#FBFAF8}
 .profile .menu a:hover{background:#F2EFEA;color:var(--ink)}
 /* notification bell — sits left of the profile chip, same frosted-popover language */
 .bellwrap{position:relative}
-.bellbtn{position:relative;width:38px;height:38px;border-radius:100px;display:flex;align-items:center;
+.bellbtn{position:relative;width:44px;height:44px;border-radius:100px;display:flex;align-items:center;
   justify-content:center;cursor:pointer;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
   font-size:16px;transition:transform .2s var(--spring),box-shadow .2s var(--ease)}
 .bellbtn:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
@@ -165,7 +185,7 @@ tr.click:hover td{background:#FBFAF8}
   background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border:1px solid var(--hair);border-radius:var(--r-sm);padding:8px;box-shadow:var(--shadow-lg);
   transform-origin:top right;animation:pop .2s var(--spring);max-height:420px;overflow-y:auto;z-index:41}
-.notif-item{display:block;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .14s var(--ease)}
+.notif-item{display:block;width:100%;padding:10px 12px;border-radius:8px;cursor:pointer;text-align:left;background:transparent;color:inherit;transition:background .14s var(--ease)}
 .notif-item:hover{background:#F2EFEA}
 .notif-item.unread{background:var(--tint)}
 .notif-item .t{font-size:13px;font-weight:600;color:var(--ink)}
@@ -173,10 +193,11 @@ tr.click:hover td{background:#FBFAF8}
 .notif-item .ago{font-size:10.5px;color:var(--muted);margin-top:4px}
 .notif-empty{text-align:center;padding:24px 12px;color:var(--muted);font-size:13px}
 .switchrow{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 4px;font-size:12.5px;color:var(--ink2)}
-.tglsw{position:relative;width:36px;height:21px;border-radius:100px;background:var(--line);cursor:pointer;
+.tglsw{position:relative;width:44px;height:44px;border-radius:100px;background:transparent;cursor:pointer}
+.tglsw::before{content:'';position:absolute;left:4px;top:11px;width:36px;height:21px;border-radius:100px;background:var(--line);
   transition:background .18s var(--ease);flex-shrink:0}
-.tglsw.on{background:var(--green)}
-.tglsw::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:100px;
+.tglsw.on::before{background:var(--green)}
+.tglsw::after{content:'';position:absolute;top:13px;left:6px;width:17px;height:17px;border-radius:100px;
   background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s var(--spring)}
 .tglsw.on::after{transform:translateX(15px)}
 /* universal importer modal */
@@ -222,10 +243,13 @@ tr.click:hover td{background:#FBFAF8}
 .kpi .l{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
 .charts .card{min-height:280px}
+.chart-frame{position:relative;block-size:240px;min-block-size:0;margin-top:12px;overflow:hidden}
+.chart-frame canvas{position:absolute;inset:0;display:block;width:100% !important;height:100% !important;max-height:100%}
+.expiry-days-field[hidden]{display:none}
 .range{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .range input{width:auto}
 /* segmented control, iOS-style */
-.qbtn{background:#fff;border:1px solid var(--hair);border-radius:100px;padding:7px 14px;font-size:12.5px;
+.qbtn{background:#fff;border:1px solid var(--control-border);border-radius:100px;padding:7px 14px;font-size:12.5px;
   font-weight:600;color:var(--muted);box-shadow:var(--shadow);
   transition:transform .18s var(--spring),color .14s,background .14s}
 .qbtn:hover{color:var(--ink)}
@@ -233,18 +257,37 @@ tr.click:hover td{background:#FBFAF8}
 .qbtn.act{background:var(--ink);color:#fff;border-color:var(--ink)}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .row{display:flex;gap:10px;align-items:center}
+.retention-taxonomy-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;min-width:0;padding:8px 0;border-bottom:1px solid var(--line)}
+.retention-taxonomy-copy{display:flex;align-items:center;flex:1 1 180px;flex-wrap:wrap;gap:8px;min-width:0}.retention-taxonomy-copy>span:first-child{min-width:0;overflow-wrap:anywhere}
+.retention-taxonomy-actions{display:flex;align-items:center;flex:0 1 auto;flex-wrap:wrap;gap:8px;min-width:0}
 .spacer{flex:1}
 @media(max-width:960px){
-  .shell{grid-template-columns:1fr}
-  .side{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto;
+  .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
+  .side{position:static;width:100%;max-width:100vw;min-width:0;height:auto;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;
     border-right:none;border-bottom:1px solid var(--line)}
   .side .foot,.side .logo{display:none}
-  .nav{display:flex}
+  .nav{display:flex;flex:0 0 max-content;min-width:0}
   .appbar{padding:10px 18px}
   .charts,.split{grid-template-columns:1fr}
+  .chart-frame{block-size:220px}
   .main{padding:18px 18px 40px}
 }
-@media(prefers-reduced-motion:reduce){*{animation:none !important;transition-duration:.01ms !important}}
+@media(max-width:767px){
+  .cui-page-head,.topbar{align-items:flex-start}.cui-page-actions,.topbar>.row{width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{flex:1 1 auto}
+  .cui-table[data-responsive="true"] thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  .cui-table[data-responsive="true"],.cui-table[data-responsive="true"] tbody,.cui-table[data-responsive="true"] tr,.cui-table[data-responsive="true"] td{display:block;width:100%}
+  .cui-table[data-responsive="true"] tr{padding:10px 0;border-bottom:1px solid var(--line)}
+  .cui-table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(108px,42%) 1fr;gap:12px;padding:8px 4px;border:0;text-align:right;overflow-wrap:anywhere}
+  .cui-table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left}
+  .cui-table[data-responsive="true"] td:empty{display:none}
+}
+@media(max-width:375px){
+  .main{padding:16px 12px 34px}.card{padding:17px}.cui-page-title h1,.topbar h1{font-size:1.55rem}
+  .cui-page-actions,.topbar>.row{display:grid;grid-template-columns:1fr;width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{width:100%}
+  .cui-readonly-row{display:block}.cui-readonly-row dd{text-align:left;margin-top:4px}
+}
+@media(min-width:376px) and (max-width:768px){.main{padding:18px 18px 40px}.cui-page-actions{max-width:100%}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 /* portal */
 .portal{max-width:640px;margin:0 auto;padding:40px 20px}
 .portal .head{text-align:center;margin-bottom:26px}
@@ -286,11 +329,15 @@ tr.click:hover td{background:#FBFAF8}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 <div id="root"></div>
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" aria-hidden="true"></div>
+<div id="appStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="appAlert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
 <script src="/runtime-config.js"></script>
 <script src="/runtime-config-loader.js"></script>
+<script src="/customer-ui.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
@@ -301,6 +348,7 @@ const RUNTIME_CONFIG=(()=>{try{return window.FrenlyRuntimeConfig.require(window)
   window.FrenlyRuntimeConfig?.renderFailure(document.getElementById('root'));
   throw new Error('Frenly runtime configuration is unavailable.');
 }})();
+const CUI=window.FrenlyCustomerUI;
 const SB_URL=RUNTIME_CONFIG.supabaseUrl;
 const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
 /* detectSessionInUrl:false — with it left at its (true) default, supabase-js inspects
@@ -420,29 +468,36 @@ const INDUSTRIES={
   retail:{em:'🛍️',label:'Retail',mods:['dashboard','till','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
   other:{em:'🏪',label:'Other',mods:ALLMODS}
 };
-const MODULES={dashboard:['📊','Dashboard'],till:['💵','Till'],clients:['👥','Customers'],appointments:['🗓️','Appointments'],
-  sales:['🧾','Sales'],services:['🛠️','Services'],bookings:['📅','Bookings'],waitlist:['⏳','Waitlist'],
-  inventory:['📦','Inventory'],packages:['🎫','Packages'],branches:['🏢','Branches'],loyalty:['🎁','Loyalty'],
-  retention:['🔁','Retention'],referrals:['🤝','Referrals'],memberships:['💎','Memberships'],
-  giftcards:['🎟️','Gift cards'],reports:['📈','Reports'],staffperf:['🧑‍💼','Staff performance'],
-  dailyreport:['📋','Daily report'],pnl:['📉','P&L'],expenses:['💸','Expenses'],
-  settings:['⚙️','Settings'],setup:['✅','Get started']};
+const MODULES={dashboard:['home','Dashboard'],till:['till','Till'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
+  sales:['sales','Sales'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
+  inventory:['inventory','Inventory'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
+  retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
+  giftcards:['giftcard','Gift cards'],reports:['reports','Reports'],staffperf:['staff','Staff performance'],
+  dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
+  settings:['settings','Settings'],setup:['setup','Get started']};
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
    frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
+const ROLE_CAPABILITIES={
+  owner:new Set(['create_sales']),manager:new Set(['create_sales']),staff:new Set(['create_sales']),
+  frontdesk:new Set(['create_sales']),bookkeeper:new Set()
+};
+const hasRoleCapability=capability=>ROLE_CAPABILITIES[S.myRole]?.has(capability)===true;
 
 /* Sidebar grouping (owner's "Cubbly" 4-header direction): flat modules are grouped under
    collapsible headers. Settings moves to the Profile menu, out of main nav. Group-open state
    lives in this plain JS object (NOT localStorage — prohibited in this stack) so it resets
    each full page load but persists across in-session route changes. */
 const NAVGROUPS=[
-  {key:'home',icon:'🏠',label:null,items:['dashboard']},
-  {key:'customers',icon:'👥',label:'Customers',items:['clients','loyalty','retention','referrals','memberships','giftcards']},
-  {key:'operations',icon:'🛠️',label:'Operations',items:['till','appointments','bookings','waitlist','sales','services','inventory','packages','branches']},
-  {key:'insights',icon:'📈',label:'Insights',items:['reports','staffperf','dailyreport','pnl','expenses']}
+  {key:'home',icon:'home',label:null,items:['dashboard']},
+  {key:'customers',icon:'customers',label:'Customers',items:['clients','loyalty','retention','referrals','memberships','giftcards']},
+  {key:'operations',icon:'services',label:'Operations',items:['till','appointments','bookings','waitlist','sales','services','inventory','packages','branches']},
+  {key:'insights',icon:'reports',label:'Insights',items:['reports','staffperf','dailyreport','pnl','expenses']}
 ];
 let navOpen={};
 let profileOpen=false;
+let customerUiObserver=null;
+let shellRenderEpoch=0;
 /* realtime notifications (bell) — module-level, plain JS vars only (no localStorage) */
 let currentPage=['dashboard']; // set by renderShell(); read by the realtime handlers to
                                 // decide whether to auto-refresh the page currently on screen
@@ -458,21 +513,25 @@ let muteAlerts=false;     // in-session-only pop-up mute for non-owners (can't p
    JS variable only (no localStorage, per this stack's rule); shared across those pages so
    moving between them keeps the same scope selected; reset on sign-out below. */
 let selectedBranchId=null; // null = consolidated
+let dashboardRenderEpoch=0; // invalidates pending dashboard/filter work as soon as routing starts
 
-let S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
+let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
 let customerFeatureCapabilities=null;
 let pendingCustomerInvitationToken='';
 function resetClientSessionState({preserveInvitation=false}={}){
   const invitation=preserveInvitation?pendingCustomerInvitationToken:'';
-  S={user:null,biz:null,charts:[],myModules:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
+  S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
   customerFeatureCapabilities=null;pendingCustomerInvitationToken=invitation;selectedBranchId=null;profileOpen=false;
 }
 const $=(id)=>document.getElementById(id);
 const root=$('root');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=c=>(S.biz?.currency||'SGD')+' '+((c||0)/100).toFixed(2);
-const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)};
-const fail=e=>{console.error(e);toast('⚠️ '+(e.message||e))};
+const canReadModule=module=>S.myRole==='owner'||S.myModules?.includes(module)===true;
+const canWriteModule=module=>S.myRole==='owner'||S.myModulePerms?.[module]==='rw';
+const showToast=message=>{const t=$('toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)};
+const toast=m=>{const message=String(m??'');showToast(message);CUI.announce(message)};
+const fail=e=>{console.error(e);const message=e?.message||String(e);showToast(message);CUI.announce(message,{assertive:true})};
 /* Singapore-fixed-offset (UTC+8) display helper: shows a stored UTC instant as SGT wall-clock
    text, regardless of the viewer's own browser/system timezone. Frenly is SG-first — bookings
    are always shown in SGT so "what the customer picked is what staff see". */
@@ -507,6 +566,30 @@ function csvField(value){
 function csvRows(rows){return rows.map(row=>row.map(csvField).join(',')).join('\r\n')+'\r\n'}
 /* reporting-scale:end */
 function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
+function expiryModeRequiresDays(mode){return mode==='fixed'||mode==='inactivity'}
+function positiveExpiryDays(value){const days=Number(value);return Number.isInteger(days)&&days>0?days:null}
+function syncExpiryModeUi(modeInput,daysInput,daysField){
+  const needsDays=expiryModeRequiresDays(modeInput.value),current=positiveExpiryDays(daysInput.value);
+  const showOptionalInheritedDays=daysInput.dataset.expiryAllowInherit==='true'&&modeInput.value!=='none';
+  if(needsDays&&!current)daysInput.value=String(positiveExpiryDays(daysInput.dataset.expiryPrior)||positiveExpiryDays(daysInput.dataset.expiryFallback)||365);
+  if(!needsDays&&current)daysInput.dataset.expiryPrior=String(current);
+  daysField.hidden=!(needsDays||showOptionalInheritedDays);daysInput.disabled=daysField.hidden;daysInput.required=needsDays;
+}
+function bindExpiryModeUi(modeInput,daysInput,daysField){
+  modeInput.addEventListener('change',()=>syncExpiryModeUi(modeInput,daysInput,daysField));
+  daysInput.addEventListener('input',()=>{const current=positiveExpiryDays(daysInput.value);if(current)daysInput.dataset.expiryPrior=String(current)});
+  syncExpiryModeUi(modeInput,daysInput,daysField);
+}
+function expiryDaysForMode(mode,daysInput){
+  if(mode==='none')return undefined;
+  const raw=String(daysInput.value??'').trim();
+  if(!raw)return expiryModeRequiresDays(mode)?NaN:undefined;
+  return positiveExpiryDays(raw)??NaN;
+}
+function createLatestRequestGate(isInstanceCurrent){
+  let generation=0;
+  return {begin(){const requestGeneration=++generation;return()=>requestGeneration===generation&&isInstanceCurrent()}};
+}
 function nav(h){location.hash=h}
 window.addEventListener('hashchange',route);
 
@@ -523,6 +606,7 @@ async function loadCustomerFeatureCapabilities({refresh=false}={}){
 
 /* ---------- routing ---------- */
 async function route(){
+  dashboardRenderEpoch+=1;
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
      hiccup used to throw straight out of this async function with nothing rendered, which
      read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
@@ -565,7 +649,7 @@ async function route(){
         root.innerHTML=`<div class="center-wrap"><div class="card" style="width:420px;max-width:100%;text-align:center"><h2>Workspace unavailable</h2><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p></div></div>`;return;
       }
       if(S.biz?.id!==workspace.id){
-        S.biz=workspace;S.myModules=null;S.myRole=null;S.isSA=false;S.saChecked=false;S.hasCustomerPersona=null;
+        S.biz=workspace;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.isSA=false;S.saChecked=false;S.hasCustomerPersona=null;
       }
       S.hasCustomerPersona=(personas?.customer||[]).length>0;
       workspacePage=requestedModule;
@@ -593,35 +677,38 @@ async function route(){
         if(workspaceStaffPersona){
           S.myRole=workspaceStaffPersona.role||null;
           S.myModules=Array.isArray(workspaceStaffPersona.modules)?workspaceStaffPersona.modules:[];
+          S.myModulePerms=Object.fromEntries(S.myModules.map(m=>[m,'r']));
         }else{
           const {data:me}=await sb.from('staff').select('role,modules,module_perms')
             .eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
           const staffRow=me&&me.length?me[0]:null;
           S.myRole=staffRow?.role||null;
-          if(!staffRow)S.myModules=[];
-          else if(staffRow.role==='owner')S.myModules=enabled;
-          else if(staffRow.module_perms!==null)S.myModules=enabled.filter(m=>Object.hasOwn(staffRow.module_perms||{},m));
-          else if(staffRow.modules===null)S.myModules=enabled;
-          else S.myModules=enabled.filter(m=>(staffRow.modules||[]).includes(m));
+          if(!staffRow){S.myModules=[];S.myModulePerms={}}
+          else if(staffRow.role==='owner'){S.myModules=enabled;S.myModulePerms=Object.fromEntries(enabled.map(m=>[m,'rw']))}
+          else if(staffRow.module_perms!==null){S.myModules=enabled.filter(m=>Object.hasOwn(staffRow.module_perms||{},m));S.myModulePerms=Object.fromEntries(S.myModules.map(m=>[m,staffRow.module_perms[m]]))}
+          else if(staffRow.modules===null){S.myModules=enabled;S.myModulePerms=Object.fromEntries(enabled.map(m=>[m,'rw']))}
+          else {S.myModules=enabled.filter(m=>(staffRow.modules||[]).includes(m));S.myModulePerms=Object.fromEntries(S.myModules.map(m=>[m,'rw']))}
         }
       }else{
-        S.myModules=Array.isArray(mm.modules)?mm.modules:[];S.myRole=mm.role||null;S.isSA=!!mm.is_super_admin;
+        S.myModules=Array.isArray(mm.modules)?mm.modules:[];S.myRole=mm.role||null;S.isSA=mm.is_super_admin===true;
+        S.myModulePerms=mm.module_perms&&typeof mm.module_perms==='object'
+          ?mm.module_perms:Object.fromEntries(S.myModules.map(m=>[m,'rw']));
       }
+    }
+    /* get_my_modules resolves staff status and super-admin status server-side. An
+       identity with neither an active staff role nor any effective modules must stop
+       here: rendering Dashboard would only issue predictable denied data requests. */
+    S.saChecked=true;
+    const hasResolvedStaffRole=typeof S.myRole==='string'&&S.myRole.length>0;
+    const hasResolvedStaffModules=Array.isArray(S.myModules)&&S.myModules.length>0;
+    if(!S.isSA&&!hasResolvedStaffRole&&!hasResolvedStaffModules){
+      S.myModules=[];S.myModulePerms={};
+      return renderWorkspaceAccessUnavailable();
     }
     if(S.hasCustomerPersona===null){
       const {data:personas}=await sb.rpc('get_my_personas');
       S.hasCustomerPersona=!!((personas?.staff||[]).some(p=>p.business_slug===S.biz.slug)
         &&(personas?.customer||[]).length);
-    }
-    /* Super-admin detection (Platform feature): gated on one live call to the exact RPC the
-       Platform page itself depends on — no client-side email/role list, so nothing here can
-       drift out of sync with the database's super_admins table. get_my_modules above already
-       surfaces is_super_admin too (same app.is_super_admin() underneath), but this explicit
-       probe is the authoritative one and overwrites it. Checked once per session (not on
-       every route()), since a success also writes an audit_log row server-side. */
-    if(!S.saChecked){
-      const {error:saErr}=await sb.rpc('super_admin_list_businesses');
-      S.isSA=!saErr;S.saChecked=true;
     }
     const page=workspacePage?[workspacePage]:(h.replace('#/','')||'dashboard').split('/');
     /* Route guard: a restricted employee must not reach a page by typing the URL, not
@@ -968,6 +1055,18 @@ async function renderCustomerNotificationPreferences(businessSlug){
   });
 }
 
+function renderWorkspaceAccessUnavailable(){
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="workspaceAccessTitle">
+    <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
+    <h1 id="workspaceAccessTitle" style="font-size:1.5rem;margin:14px 0 6px">Workspace access unavailable</h1>
+    <p class="muted" style="line-height:1.6">Your staff access is inactive or no longer assigned. Ask the workspace owner to reactivate your access before trying again.</p>
+    <button class="btn ghost" id="workspaceAccessSignOut" style="width:100%;margin-top:18px">Sign out</button>
+    ${legalLinks()}</section></main>`;
+  const main=$('main');main.focus();
+  CUI.announce('Workspace access is inactive or unavailable.',{assertive:true});
+  $('workspaceAccessSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+}
+
 /* ---------- auth ---------- */
 function renderAuth(mode='in'){
   if(mode==='forgot'){
@@ -975,7 +1074,7 @@ function renderAuth(mode='in'){
       <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
       <h2 style="margin:14px 0 2px">Reset your password</h2>
       <p class="muted small" style="margin-top:6px">Enter your account email and we will send a secure reset link.</p>
-      <label>Email</label><input id="em" type="email" autocomplete="email" placeholder="you@business.com">
+      <label for="em">Email</label><input id="em" type="email" autocomplete="email" placeholder="you@business.com">
       <div id="autherr"></div>
       ${authChallengeHtml()}
       <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest" disabled>Send reset link</button>
@@ -1007,8 +1106,8 @@ function renderAuth(mode='in'){
     <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
     <p class="muted" style="margin-bottom:8px">Loyalty & retention for every business — real rewards, not vanity points.</p>
     <h2 style="margin:14px 0 2px">${mode==='in'?'Sign in':'Create your account'}</h2>
-    <label>Email</label><input id="em" type="email" placeholder="you@business.com">
-    <label>Password</label><input id="pw" type="password" placeholder="••••••••">
+    <label for="em">Email</label><input id="em" type="email" placeholder="you@business.com">
+    <label for="pw">Password</label><input id="pw" type="password" placeholder="••••••••">
     <div id="autherr"></div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
     ${authChallengeHtml()}
@@ -1058,8 +1157,8 @@ function renderPasswordUpdate(){
     <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
     <h2 style="margin:14px 0 2px">Choose a new password</h2>
     <p class="muted small" style="margin-top:6px">Use at least 12 characters with upper and lowercase letters, a number and a symbol.</p>
-    <label>New password</label><input id="newPw" type="password" autocomplete="new-password">
-    <label>Confirm new password</label><input id="confirmPw" type="password" autocomplete="new-password">
+    <label for="newPw">New password</label><input id="newPw" type="password" autocomplete="new-password">
+    <label for="confirmPw">Confirm new password</label><input id="confirmPw" type="password" autocomplete="new-password">
     <div id="autherr"></div><button class="btn" id="savePw" style="width:100%;margin-top:18px">Update password</button>
     ${legalLinks()}</div></div>`;
   $('savePw').onclick=async()=>{
@@ -1125,7 +1224,7 @@ function renderOnboard(){
         `<div class="ind ${k===sel?'sel':''}" data-k="${k}"><span class="em">${v.em}</span><b>${v.label}</b></div>`).join('')}</div>
       <label>Modules included</label>
       <div class="chips">${Object.keys(MODULES).filter(m=>m!=='settings').map(m=>
-        `<span class="chip ${INDUSTRIES[sel].mods.includes(m)?'on':''}">${MODULES[m][0]} ${MODULES[m][1]}</span>`).join('')}</div>
+        `<span class="chip ${INDUSTRIES[sel].mods.includes(m)?'on':''}">${CUI.icon(MODULES[m][0],{size:15})} ${MODULES[m][1]}</span>`).join('')}</div>
       <div id="oberr"></div>
       <div class="row" style="margin-top:20px"><button class="btn" id="mk">Create my workspace</button>
       <span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>
@@ -1285,22 +1384,24 @@ async function runImport(recs,entity,idempotencyKey,onProgress){
 window.openImport=function(moduleKey,onDone){
   const cfg=IMPORT_CONFIGS[moduleKey];if(!cfg)return;
   let mode='paste',parsed=null,importIdem=null;
-  const wrap=document.createElement('div');wrap.className='modal';wrap.id='impModal';
+  const wrap=document.createElement('div');wrap.className='modal';wrap.id='impModal';wrap.tabIndex=-1;
+  wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');wrap.setAttribute('aria-labelledby','impTitle');
   document.body.appendChild(wrap);
-  const close=()=>wrap.remove();
+  let deactivateDialog;
+  const close=()=>deactivateDialog?deactivateDialog():wrap.remove();
   function render(){
     wrap.innerHTML=`<div class="modal-card">
-      <div class="row"><h2 style="font-size:1.3rem">⬆️ Import ${cfg.title}</h2><span class="spacer"></span>
+      <div class="row"><h2 id="impTitle" style="font-size:1.3rem">${CUI.icon('import',{size:21})} Import ${cfg.title}</h2><span class="spacer"></span>
         <button class="btn ghost sm" id="impX">Close</button></div>
       <div class="imp-note">${esc(cfg.hint)}</div>
       <div style="margin:16px 0 6px"><div class="seg">
-        <button class="${mode==='paste'?'act':''}" data-m="paste">📋 Paste from Excel</button>
-        <button class="${mode==='file'?'act':''}" data-m="file">📁 Upload file</button></div></div>
+        <button class="${mode==='paste'?'act':''}" data-m="paste">Paste from Excel</button>
+        <button class="${mode==='file'?'act':''}" data-m="file">Upload file</button></div></div>
       ${mode==='paste'
-        ? `<label>Copy the cells in Excel/Sheets (including the header row) and paste here</label>
+        ? `<label for="impText">Copy the cells in Excel/Sheets (including the header row) and paste here</label>
            <textarea id="impText" rows="7" placeholder="name&#9;phone&#9;email&#10;Jane Tan&#9;9123 4567&#9;jane@mail.com" style="font-family:ui-monospace,monospace;font-size:12.5px"></textarea>
            <div style="margin-top:12px"><button class="btn sm" id="impParse">Preview</button></div>`
-        : `<label>Choose a .csv or .xlsx file (first row = headers)</label>
+        : `<label for="impFile">Choose a .csv or .xlsx file (first row = headers)</label>
            <input type="file" id="impFile" accept=".csv,.tsv,.xlsx,.xls,text/csv">`}
       <div id="impResult"></div>
     </div>`;
@@ -1344,8 +1445,9 @@ window.openImport=function(moduleKey,onDone){
     };
   }
   render();
+  deactivateDialog=CUI.activateDialog(wrap,{onClose:close,initialFocus:'#impX'});
 };
-function importBtn(moduleKey){return `<button class="btn ghost sm" onclick="openImport('${moduleKey}',()=>route())">⬆️ Import</button>`;}
+function importBtn(moduleKey){return CUI.action({label:'Import',iconName:'import',variant:'secondary',className:'sm',attributes:`onclick="openImport('${moduleKey}',()=>route())"`});}
 
 /* ---------- shell ---------- */
 function activeGroupKey(pageKey){
@@ -1360,14 +1462,14 @@ function navHtml(page){
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(m=>m==='dashboard'||(enabled.includes(m)&&(m!=='branches'||S.myRole==='owner')))})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.key==='home'){
-      return `<a href="#/dashboard" class="${activeKey==='dashboard'?'act':''}"><span class="ic">🏠</span>Home</a>`;
+      return `<a href="#/dashboard" class="${activeKey==='dashboard'?'act':''}"${activeKey==='dashboard'?' aria-current="page"':''}><span class="ic">${CUI.icon('home',{size:18})}</span>Home</a>`;
     }
     if(!(g.key in navOpen)) navOpen[g.key]=(g.key===activeGrp);
     const isOpen=navOpen[g.key]||g.key===activeGrp;
     return `<div class="navgroup">
-      <div class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}"><span class="ic">${g.icon}</span>${g.label}<span class="chev">${isOpen?'▾':'▸'}</span></div>
-      <div class="navbody" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
-        ${g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"><span class="ic">${MODULES[m][0]}</span>${MODULES[m][1]}</a>`).join('')}
+      <button type="button" class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}" aria-expanded="${isOpen}" aria-controls="nav-${g.key}"><span class="ic">${CUI.icon(g.icon,{size:18})}</span>${g.label}<span class="chev" aria-hidden="true">${isOpen?'−':'+'}</span></button>
+      <div class="navbody" id="nav-${g.key}" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
+        ${g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span>${MODULES[m][1]}</a>`).join('')}
       </div></div>`;
   }).join('');
 }
@@ -1376,7 +1478,8 @@ function wireNav(){
     const k=el.dataset.grp;navOpen[k]=!navOpen[k];
     const body=document.querySelector(`[data-body="${k}"]`);
     body.style.display=navOpen[k]?'block':'none';
-    el.querySelector('.chev').textContent=navOpen[k]?'▾':'▸';
+    el.setAttribute('aria-expanded',String(navOpen[k]));
+    el.querySelector('.chev').textContent=navOpen[k]?'−':'+';
   });
 }
 /* Owner ruling 2026-07-18: the firm profile lives TOP-RIGHT, not bottom-left.
@@ -1384,20 +1487,20 @@ function wireNav(){
    while the page scrolls (native-app behaviour) and its menu drops downward. */
 function profileHtml(){
   return `<div class="profile" id="profwrap">
-      <div class="who" id="profWho">
+      <button type="button" class="who" id="profWho" aria-haspopup="true" aria-expanded="${profileOpen}" aria-controls="profmenu">
         <div class="avatar">${esc((S.biz.name||'?').trim().charAt(0).toUpperCase())}</div>
         <div style="min-width:0">
           <b style="font-size:13.5px;display:block;line-height:1.25;letter-spacing:-.012em">${esc(S.biz.name)}</b>
           <div class="small muted" style="line-height:1.25">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</div>
         </div>
-        <span class="chev">▾</span>
-      </div>
-      ${profileOpen?`<div class="menu" id="profmenu">
-        ${S.hasCustomerPersona?`<a href="#/wallet" id="pmWallet">🎁 My Frenly</a>`:''}
-        <a href="#/setup" id="pmSetup">✅ Get started</a>
-        ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">⚙️ Settings</a>`:''}
-        ${S.isSA?`<a href="#/platform" id="pmPlatform">🛡️ Platform</a>`:''}
-        <a href="#" id="pmSignout" style="color:#C0392B">↪ Sign out</a>
+        <span class="chev" aria-hidden="true">${profileOpen?'−':'+'}</span>
+      </button>
+      ${profileOpen?`<div class="menu" id="profmenu" aria-label="Account links">
+        ${S.hasCustomerPersona?`<a href="#/wallet" id="pmWallet">${CUI.icon('wallet',{size:18})}My Frenly</a>`:''}
+        <a href="#/setup" id="pmSetup">${CUI.icon('setup',{size:18})}Get started</a>
+        ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:18})}Settings</a>`:''}
+        ${S.isSA?`<a href="#/platform" id="pmPlatform">${CUI.icon('platform',{size:18})}Platform</a>`:''}
+        <a href="#" id="pmSignout" style="color:var(--red)">${CUI.icon('back',{size:18})}Sign out</a>
       </div>`:''}
     </div>`;
 }
@@ -1408,6 +1511,8 @@ function profileHtml(){
 function wireProfile(page){
   $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen){bellOpen=false;renderBell(page);}renderProfile(page);};
   if(profileOpen){
+    const menu=$('profmenu');
+    menu.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();profileOpen=false;renderProfile(page);$('profWho')?.focus()}};
     $('pmSignout').onclick=async(e)=>{e.preventDefault();killChannels();await sb.auth.signOut();resetClientSessionState();nav('#/')};
     $('pmSetup').onclick=()=>{profileOpen=false};
     const pmS=$('pmSettings');if(pmS) pmS.onclick=()=>{profileOpen=false};
@@ -1459,7 +1564,7 @@ async function loadNotifications(){
 function bellHtml(){
   const n=notifState.unread||0;
   return `<div class="bellwrap" id="bellwrap">
-      <div class="bellbtn" id="bellBtn" title="Notifications">🔔${n>0?`<span class="dot">${n>99?'99+':n}</span>`:''}</div>
+      <button type="button" class="bellbtn" id="bellBtn" title="Notifications" aria-label="Notifications${n?`, ${n} unread`:''}" aria-haspopup="true" aria-expanded="${bellOpen}">${CUI.icon('bell',{size:19})}${n>0?`<span class="dot" aria-hidden="true">${n>99?'99+':n}</span>`:''}</button>
       ${bellOpen?notifMenuHtml():''}
     </div>`;
 }
@@ -1471,16 +1576,16 @@ function notifMenuHtml(){
       ${notifState.unread>0?`<button class="btn ghost sm" id="markAll" style="padding:4px 10px;font-size:11.5px">Mark all read</button>`:''}</div>
     ${notifError?`<div class="err" style="margin:0 6px 8px">${esc(notifError)}</div>`:''}
     ${!notifLoaded?`<div class="notif-empty">Loading…</div>`
-      :items.length?items.map(it=>`<div class="notif-item ${it.read_at?'':'unread'}" data-nid="${esc(it.id)}" data-ref="${esc(it.kind)}">
+      :items.length?items.map(it=>`<button type="button" class="notif-item ${it.read_at?'':'unread'}" data-nid="${esc(it.id)}" data-ref="${esc(it.kind)}">
           <div class="t">${esc(it.title||'')}</div>
           ${it.body?`<div class="b">${esc(it.body)}</div>`:''}
-          <div class="ago">${timeAgo(it.created_at)}</div></div>`).join('')
+          <div class="ago">${timeAgo(it.created_at)}</div></button>`).join('')
       :`<div class="notif-empty">No notifications yet.</div>`}
     <hr style="border:none;border-top:1px solid var(--hair);margin:6px 0">
     ${isOwner?`<div class="switchrow"><span>Pop-up alerts</span>
-        <div class="tglsw ${S.biz.notify_new_bookings?'on':''}" id="notifToggle"></div></div>`
+        <button type="button" class="tglsw ${S.biz.notify_new_bookings?'on':''}" id="notifToggle" aria-label="Toggle pop-up alerts" aria-pressed="${!!S.biz.notify_new_bookings}"></button></div>`
       :`<div class="switchrow"><span>Pop-up alerts (this session)</span>
-        <div class="tglsw ${muteAlerts?'':'on'}" id="notifToggle"></div></div>`}
+        <button type="button" class="tglsw ${muteAlerts?'':'on'}" id="notifToggle" aria-label="Toggle pop-up alerts for this session" aria-pressed="${!muteAlerts}"></button></div>`}
     </div>`;
 }
 function wireBell(page){
@@ -1569,19 +1674,25 @@ async function initNotifications(){
 }
 
 function renderShell(page){
+  const renderEpoch=++shellRenderEpoch;
+  if(customerUiObserver)customerUiObserver.disconnect();
   currentPage=page; // used by the realtime handlers below to know what to auto-refresh
   root.innerHTML=`<div class="shell">
-    <aside class="side">
+    <aside class="side" aria-label="Workspace navigation">
       <a href="#/dashboard" class="logo" style="display:block">frenly<span>.</span></a>
-      <nav class="nav" id="navwrap">${navHtml(page)}</nav>
+      <nav class="nav" id="navwrap" aria-label="Main navigation">${navHtml(page)}</nav>
     </aside>
     <div class="col">
       <header class="appbar">
         ${bellHtml()}
         ${profileHtml()}
       </header>
-      <main class="main" id="main"></main>
+      <main class="main" id="main" tabindex="-1"></main>
     </div></div>`;
+  const main=$('main');
+  const customerUiRoutes=new Set(['till','clients','client','loyalty','retention','referrals','memberships','giftcards']);
+  const enhanceCustomerUi=customerUiRoutes.has(page[0]);
+  if(enhanceCustomerUi)customerUiObserver=CUI.mountMain(main);
   wireNav();
   wireBell(page);
   wireProfile(page);
@@ -1591,7 +1702,16 @@ function renderShell(page){
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,
     staffperf:staffPerfPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage};
-  (P[page[0]]||dashboard)(page[1]);
+  const pageFn=P[page[0]]||dashboard;
+  const pageResult=pageFn(page[1]);
+  Promise.resolve(pageResult).catch(error=>{
+    console.error(error);
+    if(shellRenderEpoch!==renderEpoch||!main.isConnected)return;
+    const title=MODULES[page[0]]?.[1]||(page[0]==='client'?'Customer':'Workspace');
+    main.innerHTML=CUI.errorState({title:`${title} unavailable`,message:error?.message||'Please try again.'});
+    CUI.announce(error?.message||'Page unavailable',{assertive:true});
+    const retry=$('routeRetry');if(retry)retry.onclick=()=>renderShell(page);
+  }).finally(()=>{if(shellRenderEpoch===renderEpoch&&main.isConnected)CUI.focusRoute(main,{enhanceContent:enhanceCustomerUi})});
   initNotifications(); // fire-and-forget, like the page fn above — loads badge + (re)uses the realtime channel
 }
 const M=()=> $('main');
@@ -1627,15 +1747,17 @@ function openReversalDialog(kind,item,onDone){
     ?'<div class="imp-note"><b>Package session only.</b> This restores one session. No payment refund occurs.</div>':'';
   const loyaltyNote=kind==='redemption'
     ?`<div class="imp-note"><b>Exact compensation only.</b> Frenly checks the original points entry, every FEFO batch drain, configuration version, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal.</div>`:'';
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="reversalModal"><div class="modal-card" style="max-width:560px">
-    <div class="row"><div><h2>${kind==='sale'?'Reverse sale':'Reverse redemption'}</h2><p class="muted small">${kind==='sale'?`Sale ${esc(item.id)} · ${money(Number(item.amount_cents||0))}`:`${esc(item.reward_name||'Reward')} · ${Number(item.points_spent||0)} points`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="revClose">Close</button></div>
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="reversalModal" role="dialog" aria-modal="true" aria-labelledby="revTitle" tabindex="-1"><div class="modal-card" style="max-width:560px">
+    <div class="row"><div><h2 id="revTitle">${kind==='sale'?'Reverse sale':'Reverse redemption'}</h2><p class="muted small">${kind==='sale'?`Sale ${esc(item.id)} · ${money(Number(item.amount_cents||0))}`:`${esc(item.reward_name||'Reward')} · ${Number(item.points_spent||0)} points`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="revClose">Close</button></div>
     ${packageNote}${loyaltyNote}
-    <label>Reason (required, at least 10 characters)</label><textarea id="revReason" rows="3" placeholder="What happened and who approved this correction?"></textarea>
-    ${kind==='sale'?'<label>Reference (required)</label><input id="revReference" placeholder="Receipt, case, or manager reference">':''}
+    <label for="revReason">Reason (required, at least 10 characters)</label><textarea id="revReason" rows="3" placeholder="What happened and who approved this correction?"></textarea>
+    ${kind==='sale'?'<label for="revReference">Reference (required)</label><input id="revReference" placeholder="Receipt, case, or manager reference">':''}
     <label style="display:flex;gap:9px;align-items:flex-start;color:var(--ink2)"><input id="revConfirm" type="checkbox" style="width:auto;margin-top:2px">I checked the original record and understand this creates append-only compensating entries.</label>
     <div id="revOutcome"></div><div class="row" style="margin-top:16px"><button class="btn danger" id="revSubmit" disabled>Confirm reversal</button><button class="btn ghost sm" id="revCancel">Cancel</button></div>
   </div></div>`);
-  const close=()=>{$('reversalModal')?.remove();if(onDone)onDone()};
+  let deactivateDialog;
+  const close=()=>{if(deactivateDialog)deactivateDialog();else $('reversalModal')?.remove();if(onDone)onDone()};
+  deactivateDialog=CUI.activateDialog($('reversalModal'),{onClose:close,initialFocus:'#revReason'});
   $('revClose').onclick=$('revCancel').onclick=close;
   $('revConfirm').onchange=()=>{$('revSubmit').disabled=!$('revConfirm').checked};
   async function invoke(isReplay=false){
@@ -1683,7 +1805,7 @@ function bindReversalButtons(onDone){
    left it unscoped so the picker has names to show) — the allow-list built here is what
    the *picker offers*, not the security boundary; the real boundary is server-side
    RLS/RPC, which every consumer of this filter still applies on its own query. */
-async function refreshBranchFilter(onChange){
+async function refreshBranchFilter(onChange,isCurrent=()=>true){
   const wrap=$('branchWrap');
   if(!wrap){ onChange(); return; }
   const isAdmin=S.myRole==='owner'||S.myRole==='manager';
@@ -1701,7 +1823,8 @@ async function refreshBranchFilter(onChange){
         branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
       }
     }
-  }catch(e){ console.error(e); }
+  }catch(e){if(isCurrent()&&wrap.isConnected&&$('branchWrap')===wrap)console.error(e)}
+  if(!isCurrent()||!wrap.isConnected||$('branchWrap')!==wrap)return;
   if(!isAdmin&&(!selectedBranchId||!branches.some(b=>b.id===selectedBranchId))){
     /* Employees can't request consolidated (the server raises branch_visibility on
        p_branch=null for them) — default to their first assigned branch so the page loads
@@ -1714,7 +1837,7 @@ async function refreshBranchFilter(onChange){
         ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}${b.active===false?' (inactive)':''}</option>`).join('')}
       </select>`
     : `<span class="muted small">No branch assigned — ask the owner</span>`;
-  const sel=$('branchSel');
+  const sel=wrap.querySelector('#branchSel');
   if(sel){
     sel.value=selectedBranchId||'';
     sel.onchange=()=>{selectedBranchId=sel.value||null;onChange()};
@@ -1726,59 +1849,85 @@ async function refreshBranchFilter(onChange){
 async function dashboard(){
   const today=new Date(),d30=new Date(Date.now()-29*864e5);
   const iso=d=>d.toISOString().slice(0,10);
-  M().innerHTML=`<div class="topbar"><div><h1>Dashboard</h1><p class="muted small">How ${esc(S.biz.name)} is doing</p></div>
+  const renderEpoch=++dashboardRenderEpoch;
+  M().innerHTML=`<section id="dashboardView" data-render-epoch="${renderEpoch}"><div class="topbar"><div><h1>Dashboard</h1><p class="muted small">How ${esc(S.biz.name)} is doing</p></div>
     <div class="range">
       <button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
       <input type="date" id="df" value="${iso(d30)}"> <span class="muted">→</span> <input type="date" id="dt" value="${iso(today)}">
       <span id="branchWrap"></span>
       <button class="btn sm" id="apply">Apply</button>
     </div></div>
-    <div class="kpis" id="kpis"></div><div class="charts" id="charts"></div>`;
-  document.querySelectorAll('.qbtn[data-d]').forEach(b=>b.onclick=()=>{
-    document.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
-    $('df').value=iso(new Date(Date.now()-(b.dataset.d-1)*864e5));$('dt').value=iso(new Date());load();
+    <div class="kpis" id="kpis"></div><div class="charts" id="charts"></div></section>`;
+  const dashboardRoot=$('dashboardView');
+  const isDashboardCurrent=()=>dashboardRenderEpoch===renderEpoch&&dashboardRoot.isConnected&&$('dashboardView')===dashboardRoot;
+  const requestGate=createLatestRequestGate(isDashboardCurrent);
+  dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(b=>b.onclick=()=>{
+    dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
+    dashboardRoot.querySelector('#df').value=iso(new Date(Date.now()-(b.dataset.d-1)*864e5));dashboardRoot.querySelector('#dt').value=iso(new Date());load();
   });
-  $('apply').onclick=()=>load();
+  dashboardRoot.querySelector('#apply').onclick=()=>load();
   async function load(){
+    const isCurrent=requestGate.begin();
+    if(!isCurrent())return;
     killCharts();
-    const {data,error}=await sb.rpc('get_dashboard_summary',{
-      p_business:S.biz.id,p_from:$('df').value,p_to:$('dt').value,p_branch:selectedBranchId||null});
+    let response;
+    try{response=await sb.rpc('get_dashboard_summary',{
+      p_business:S.biz.id,p_from:dashboardRoot.querySelector('#df').value,
+      p_to:dashboardRoot.querySelector('#dt').value,p_branch:selectedBranchId||null})}
+    catch(error){if(isCurrent())fail(error);return}
+    if(!isCurrent())return;
+    const {data,error}=response;
     if(error) return fail(error);
     const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
-    $('kpis').innerHTML=[['Visits (sales)',d.visits||0],['Revenue',money(d.revenue_cents||0)],['Unique customers',d.unique_customers||0],
+    const kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts');
+    if(!kpis||!charts)return;
+    kpis.innerHTML=[['Visits (sales)',d.visits||0],['Revenue',money(d.revenue_cents||0)],['Unique customers',d.unique_customers||0],
       ['New customers',d.new_customers||0],['Points issued',d.points_issued||0],['Credit liability',money(d.credit_liability_cents||0)]]
       .map(([l,v])=>`<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
-    $('charts').innerHTML=`
-      <div class="card"><b>Busiest days</b><p class="muted small">Visits by day of week</p><canvas id="c1"></canvas></div>
-      <div class="card"><b>Revenue over time</b><p class="muted small">Daily total in range</p><canvas id="c2"></canvas></div>
-      <div class="card"><b>Customer gender</b><p class="muted small">All customers on file</p><canvas id="c3"></canvas></div>
-      <div class="card"><b>Age groups</b><p class="muted small">From birth dates on file</p><canvas id="c4"></canvas></div>`;
+    charts.innerHTML=`
+      <div class="card"><b>Busiest days</b><p class="muted small">Visits by day of week</p><div class="chart-frame"><canvas id="c1"></canvas></div></div>
+      <div class="card"><b>Revenue over time</b><p class="muted small">Daily total in range</p><div class="chart-frame"><canvas id="c2"></canvas></div></div>
+      <div class="card"><b>Customer gender</b><p class="muted small">All customers on file</p><div class="chart-frame"><canvas id="c3"></canvas></div></div>
+      <div class="card"><b>Age groups</b><p class="muted small">From birth dates on file</p><div class="chart-frame"><canvas id="c4"></canvas></div></div>`;
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const revenueDays=d.revenue_by_day||[],dk=revenueDays.map(x=>x.day);
     const g={female:0,male:0,other:0,unknown:0,...(d.gender_counts||{})};
     const ac=d.age_counts||{};
     const ages={'<25':ac.under_25||0,'25–34':ac.age_25_34||0,'35–44':ac.age_35_44||0,
       '45–54':ac.age_45_54||0,'55+':ac.age_55_plus||0,'—':ac.unknown||0};
-    const C=(id,cfg)=>S.charts.push(new Chart($(id),cfg));
+    const C=(id,cfg)=>{if(isCurrent()){const canvas=dashboardRoot.querySelector('#'+id);if(canvas)S.charts.push(new Chart(canvas,cfg))}};
     const coral='#FF6B5E',amber='#FFB86B',ink='#1C1A22';
     C('c1',{type:'bar',data:{labels:days,datasets:[{data:wd,backgroundColor:days.map((_,i)=>wd[i]===Math.max(...wd)&&wd[i]>0?coral:amber),borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     C('c2',{type:'line',data:{labels:dk,datasets:[{data:revenueDays.map(x=>x.amount_cents/100),borderColor:coral,backgroundColor:'rgba(255,107,94,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false}}}});
     C('c3',{type:'doughnut',data:{labels:['Female','Male','Other','Not set'],datasets:[{data:[g.female,g.male,g.other,g.unknown],backgroundColor:[coral,amber,'#8B7BC7','#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});
     C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
   }
-  refreshBranchFilter(load);
+  refreshBranchFilter(load,isDashboardCurrent);
 }
 
 /* ---------- customers ---------- */
 async function clientsPage(){
-  M().innerHTML=`<div class="topbar"><div><h1>Customers</h1><p class="muted small">Your member base</p></div>
-    <div class="row"><button class="btn ghost sm" id="exp">Export CSV</button>${importBtn('customers')}<button class="btn" id="add">+ Add customer</button></div></div>
+  const routeMain=M();
+  const canWrite=canWriteModule('clients');
+  const canWriteReferrals=canWriteModule('referrals');
+  const customerActions=CUI.action({id:'exp',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'})+
+    (canWrite?importBtn('customers')+CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
+  routeMain.innerHTML=`<section id="customersView">${CUI.pageHeader({title:'Customers',subtitle:'Search, review, import, and manage your member base.',iconName:'customers',actions:customerActions,canWrite,moduleLabel:'Customer management'})}
+    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,260px)"><label for="clientSearch" style="margin-top:0">Search customers by name</label><input id="clientSearch" type="search" autocomplete="off" placeholder="Start typing a customer name"></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear',variant:'secondary'})}</div></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
-    <div class="card" id="list"><div class="empty">Loading…</div></div>`;
+    <div class="card" id="list"><div class="empty">Loading…</div></div></section>`;
+  const customersView=$('customersView');
+  const isCustomersCurrent=()=>routeMain.isConnected&&M()===routeMain&&customersView.isConnected&&$('customersView')===customersView;
+  const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
   const CLIENT_PAGE_SIZE=100;
   let clientPage=0;
+  let clientSearch='';
+  const runClientSearch=()=>{clientSearch=$('clientSearch').value.trim();clientPage=0;load()};
+  $('clientSearchGo').onclick=runClientSearch;
+  $('clientSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runClientSearch()}};
+  $('clientSearchClear').onclick=()=>{$('clientSearch').value='';clientSearch='';clientPage=0;load();$('clientSearch').focus()};
   $('exp').onclick=async()=>{
-    $('exp').disabled=true;
+    const exportButton=$('exp');exportButton.disabled=true;
     let cl,pb,cb;
     try{
       [cl,pb,cb]=await Promise.all([
@@ -1786,7 +1935,8 @@ async function clientsPage(){
           .order('created_at',{ascending:false}).order('id')),
         fetchAllRows(()=>sb.from('client_points_balance').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('client_id')),
         fetchAllRows(()=>sb.from('client_credit_balance').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('client_id'))]);
-    }catch(error){$('exp').disabled=false;return fail(error)}
+    }catch(error){if(isCustomersCurrent()){exportButton.disabled=false;fail(error)}return}
+    if(!isCustomersCurrent())return;
     const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
           C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
     const rows=[['name','phone','email','gender','birth_date','consent','points','credit'],
@@ -1794,61 +1944,60 @@ async function clientsPage(){
         c.marketing_consent?'yes':'no',P[c.id]||0,((C[c.id]||0)/100).toFixed(2)])];
     const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frenly-customers.csv';a.click();
-    $('exp').disabled=false;
+    exportButton.disabled=false;
     toast('CSV downloaded');
   };
-  $('add').onclick=()=>{
+  if($('add'))$('add').onclick=()=>{
+    const createClientIdempotencyKey=crypto.randomUUID();
     $('form').style.display='block';
-    $('form').innerHTML=`<b>New customer</b>
-      <div class="split"><div><label>Full name *</label><input id="cn"></div><div><label>Phone</label><input id="cp" placeholder="+65"></div></div>
-      <div class="split"><div><label>Email</label><input id="ce" type="email"></div><div><label>Birth date</label><input id="cb" type="date"></div></div>
-      <div class="split"><div><label>Gender</label><select id="cg"><option value="">Not set</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></div>
-      <div><label>Marketing consent (PDPA)</label><select id="cc"><option value="false">No</option><option value="true">Yes — consented</option></select></div></div>
-      <label>Referred by (friend's code, optional)</label><input id="cr" placeholder="e.g. 4F7K2A" style="text-transform:uppercase">
-      <div class="row" style="margin-top:16px"><button class="btn" id="save">Save customer</button>
-      <button class="btn ghost sm" id="cancel">Cancel</button></div>`;
+    $('form').innerHTML=`<div class="cui-card-head"><h2>New customer</h2><p>Only the name is required. Contact and consent details can be added now or later.</p></div>
+      <div class="split"><div><label for="cn">Full name <span aria-hidden="true">*</span></label><input id="cn" required autocomplete="name"></div><div><label for="cp">Phone</label><input id="cp" type="tel" autocomplete="tel" placeholder="+65"></div></div>
+      <div class="split"><div><label for="ce">Email</label><input id="ce" type="email" autocomplete="email"></div><div><label for="cb">Birth date</label><input id="cb" type="date"></div></div>
+      <div class="split"><div><label for="cg">Gender</label><select id="cg"><option value="">Not set</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></div>
+      <div><label for="cc">Marketing consent (PDPA)</label><select id="cc"><option value="false">No</option><option value="true">Yes — consented</option></select></div></div>
+      ${canWriteReferrals?`<label for="cr">Referred by (friend's code, optional)</label><input id="cr" placeholder="e.g. 4F7K2A" style="text-transform:uppercase">`:''}
+      <div class="row" style="margin-top:16px">${CUI.action({id:'save',label:'Save customer',iconName:'check'})}
+      ${CUI.action({id:'cancel',label:'Cancel',variant:'secondary',className:'sm'})}</div>`;
     $('cancel').onclick=()=>$('form').style.display='none';
     $('save').onclick=async()=>{
+      const saveButton=$('save');
       const full_name=$('cn').value.trim();
       if(full_name.length<2) return toast('Name required');
       const consent=$('cc').value==='true';
-      const {data:created,error}=await sb.from('clients').insert({business_id:S.biz.id,full_name,
-        phone:$('cp').value||null,email:$('ce').value||null,birth_date:$('cb').value||null,
-        gender:$('cg').value||null,marketing_consent:consent}).select().single();
-      if(error) return fail(error);
-      if(consent) await sb.from('consents').insert({business_id:S.biz.id,client_id:created.id,
-        channel:'marketing',action:'granted',source:'admin add-customer',actor:S.user.id});
-      const code=$('cr').value.trim().toUpperCase();
-      if(code){
-        const {data:ref}=await sb.from('clients').select('id').eq('business_id',S.biz.id).eq('referral_code',code).limit(1);
-        if(ref&&ref.length&&ref[0].id!==created.id){
-          const {error:re}=await sb.from('referrals').insert({business_id:S.biz.id,
-            referrer_client_id:ref[0].id,referred_client_id:created.id,status:'pending'});
-          if(re) toast('Customer saved, but referral not linked: '+re.message);
-          else toast('Customer added + referral linked — reward fires on their first qualifying sale');
-        } else toast('Customer added — referral code not found, skipped');
-      } else toast('Customer added');
+      saveButton.disabled=true;
+      const {data:created,error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,
+        p_idempotency_key:createClientIdempotencyKey,p_full_name:full_name,p_phone:$('cp').value||null,
+        p_email:$('ce').value||null,p_birth_date:$('cb').value||null,p_gender:$('cg').value||null,
+        p_marketing_consent:consent,p_referrer_code:canWriteReferrals?($('cr').value||null):null,p_source:'admin add-customer'});
+      if(!isCustomersCurrent())return;
+      if(error){saveButton.disabled=false;return fail(error)}
+      toast(created.referral_id
+        ?'Customer added + referral linked — reward fires on their first qualifying sale'
+        :'Customer added');
       $('form').style.display='none';load();
     };
   };
   async function load(){
+    const isCurrent=customerLoadGate.begin();
     const from=clientPage*CLIENT_PAGE_SIZE;
-    const {data:cl,error,count}=await sb.from('clients').select('*',{count:'exact'})
-      .eq('business_id',S.biz.id).order('created_at',{ascending:false}).order('id')
-      .range(from,from+CLIENT_PAGE_SIZE-1);
-    if(error) return fail(error);
-    if(!cl.length){$('list').innerHTML=`<div class="empty"><div class="big">👥</div>No customers yet.<br>Add your first customer — every sale you record for them earns loyalty automatically.</div>`;return}
+    let clientQuery=sb.from('clients').select('*',{count:'exact'}).eq('business_id',S.biz.id);
+    if(clientSearch)clientQuery=clientQuery.ilike('full_name',`%${clientSearch}%`);
+    const {data:cl,error,count}=await clientQuery.order('created_at',{ascending:false}).order('id').range(from,from+CLIENT_PAGE_SIZE-1);
+    if(!isCurrent())return;
+    if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
+    if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':'No customers yet',body:clientSearch?'Try a different name or clear the search.':canWrite?'Add your first customer to start earning loyalty automatically.':'Customers will appear here when an authorized teammate adds them.'});return}
     const ids=cl.map(c=>c.id);
     const [{data:pb,error:pe},{data:cb,error:ce}]=await Promise.all([
       sb.from('client_points_balance').select('client_id,points').eq('business_id',S.biz.id).in('client_id',ids),
       sb.from('client_credit_balance').select('client_id,balance_cents').eq('business_id',S.biz.id).in('client_id',ids)]);
+    if(!isCurrent())return;
     if(pe||ce) return fail(pe||ce);
     const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
           C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
     const total=count||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     $('list').innerHTML=`<table><tr><th>Name</th><th>Phone</th><th>Gender</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
-      ${cl.map(c=>`<tr class="click" onclick="location.hash='#/client/${c.id}'">
-        <td><b>${esc(c.full_name)}</b></td><td>${esc(c.phone||'—')}</td><td>${esc(c.gender||'—')}</td>
+      ${cl.map(c=>`<tr>
+        <td><a class="customer-link" href="#/client/${c.id}" aria-label="Open customer ${esc(c.full_name)}">${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${esc(c.gender||'—')}</td>
         <td>${P[c.id]||0} pts</td><td>${money(C[c.id]||0)}</td>
         <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table>
       <div class="row" style="margin-top:14px"><span class="muted small">${total} customers · page ${clientPage+1} of ${pages}</span><span class="spacer"></span>
@@ -1861,6 +2010,11 @@ async function clientsPage(){
 }
 
 async function clientDetail(id){
+  const routeMain=M();
+  const isClientDetailCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=CUI.loadingState({title:'Customer profile',iconName:'customers'});
+  const canWriteClients=canWriteModule('clients');
+  const canWriteLoyalty=canWriteModule('loyalty')&&hasRoleCapability('create_sales');
   let classicRedemptionIdem=null;
   const rewardRedemptionIdem=new Map();
   const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:rwBr},{data:rwSv},{data:rwPr},{data:ctxBr},{data:ctxSv},{data:ctxPr},{data:cfDefs},{data:cfVals},{data:cfOpts}]=await Promise.all([
@@ -1887,9 +2041,11 @@ async function clientDetail(id){
     S.myRole==='owner'?sb.from('client_field_definitions').select('*').eq('business_id',S.biz.id).eq('active',true).order('created_at'):Promise.resolve({data:[]}),
     S.myRole==='owner'?sb.from('client_field_values').select('*').eq('business_id',S.biz.id).eq('client_id',id):Promise.resolve({data:[]}),
     S.myRole==='owner'?sb.from('client_field_options').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort_order'):Promise.resolve({data:[]})]);
-  if(error) return fail(error);
+  if(!isClientDetailCurrent())return;
+  if(error) throw error;
   let reversalData=null;
   try{reversalData=await loadReversalWorkflows(id,100)}catch(e){fail(e)}
+  if(!isClientDetailCurrent())return;
   const saleWorkflow=Object.fromEntries((reversalData?.sales||[]).map(x=>[x.id,x]));
   const staffName=Object.fromEntries((stAll||[]).map(s=>[s.id,s.full_name||'Team member']));
   /* Merge sales + appointments into one reverse-chronological timeline. Each entry keeps its
@@ -1927,9 +2083,9 @@ async function clientDetail(id){
   /* Net visits use the complete paged sale history, not the 10-row summary query. Each
      immutable visit snapshot contributes +1 and its compensating reversal contributes -1. */
   const netVisits=(allSl||[]).filter(s=>s.counts_as_visit).reduce((n,s)=>n+(s.reversal_of?-1:1),0);
-  M().innerHTML=`<div class="topbar"><div><h1>${esc(c.full_name)}</h1>
-      <p class="muted small">${esc(c.phone||'')} ${esc(c.email||'')} · ${esc(c.gender||'gender not set')} ${c.birth_date?'· born '+c.birth_date:''}</p></div>
-    <a class="btn ghost sm" href="#/clients">← All customers</a></div>
+  const detailSubtitle=`${c.phone||''} ${c.email||''} · ${c.gender||'gender not set'} ${c.birth_date?'· born '+c.birth_date:''}`.trim();
+  const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:17})}<span>All customers</span></a>`;
+  routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:allCustomersAction,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
     <div class="kpis">
       <div class="card kpi"><div class="l">Points</div><div class="v">${pts}</div></div>
       <div class="card kpi"><div class="l">Spendable credit</div><div class="v">${money(cred)}</div></div>
@@ -1943,18 +2099,18 @@ async function clientDetail(id){
             :`Earns ${prog.earn_points_per_dollar} pt/$ · balance <b>${pts} points</b>`}</p>
           ${(rwList&&rwList.length)?rwList.map(r=>`<div class="row" style="margin-top:8px;flex-wrap:wrap"><span>${esc(r.customer_name||r.name)}</span><span class="spacer"></span>
             ${contextOptions(r.id,'branch',ctxBr||[])}${contextOptions(r.id,'service',ctxSv||[])}${contextOptions(r.id,'product',ctxPr||[])}
-            <button class="btn sm rewardGo" data-r="${r.id}" data-n="${esc(r.customer_name||r.name)}" data-c="${r.credit_cents}" ${pts<r.cost_points?'disabled':''}>
-              ${r.cost_points} ${prog.loyalty_model==='stamps'?'stamps':'pts'}${r.credit_cents>0?' → '+money(r.credit_cents):' → claim'}</button></div>`).join('')
+            ${canWriteLoyalty?`<button class="btn sm rewardGo" data-r="${r.id}" data-n="${esc(r.customer_name||r.name)}" data-c="${r.credit_cents}" ${pts<r.cost_points?'disabled':''}>
+              ${r.cost_points} ${prog.loyalty_model==='stamps'?'stamps':'pts'}${r.credit_cents>0?' → '+money(r.credit_cents):' → claim'}</button>`
+              :`<span class="pill off">Read only · ${r.cost_points} ${prog.loyalty_model==='stamps'?'stamps':'pts'}</span>`}</div>`).join('')
             :`<p class="muted small" style="margin-top:6px">No ${prog.loyalty_model==='stamps'?'milestones':'rewards'} defined yet — add them in Loyalty.</p>`}
-          ${nextExp?`<p class="muted small" style="margin-top:8px">⏳ ${nextExp.remaining} expire ${nextExp.expires_at.slice(0,10)}</p>`:''}
-          <div class="row" style="margin-top:14px"><input id="adjV" type="number" placeholder="+/- ${prog.loyalty_model==='stamps'?'stamps':'points'}" style="max-width:120px">
-          <input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>`
+          ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+          ${S.myRole==='owner'&&canWriteLoyalty?`<div class="row" style="margin-top:14px"><input id="adjV" type="number" placeholder="+/- ${prog.loyalty_model==='stamps'?'stamps':'points'}" style="max-width:120px">
+          <input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>`:''}`
         :`<p class="muted small" style="margin:6px 0 14px">Earns ${prog.earn_points_per_dollar} pt/$ · Redeem ${prog.redeem_points} pts → ${money(prog.reward_credit_cents)} credit</p>
-        <button class="btn sm" id="redeem" ${pts<prog.redeem_points?'disabled':''}>Redeem ${prog.redeem_points} pts → ${money(prog.reward_credit_cents)}</button>
+        ${canWriteLoyalty?`<button class="btn sm" id="redeem" ${pts<prog.redeem_points?'disabled':''}>Redeem ${prog.redeem_points} pts → ${money(prog.reward_credit_cents)}</button>`:'<span class="pill off">Redemption unavailable for this role</span>'}
         ${pts<prog.redeem_points?`<p class="muted small" style="margin-top:8px">${prog.redeem_points-pts} more points to unlock</p>`:''}
-        ${nextExp?`<p class="muted small" style="margin-top:8px">⏳ ${nextExp.remaining} pts expire ${nextExp.expires_at.slice(0,10)}</p>`:''}
-        <div class="row" style="margin-top:14px"><input id="adjV" type="number" placeholder="+/- points" style="max-width:120px">
-        <input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>`)
+        ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} pts expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+        ${S.myRole==='owner'&&canWriteLoyalty?'<div class="row" style="margin-top:14px"><input id="adjV" type="number" placeholder="+/- points" style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>':''}`)
         :'<p class="muted small" style="margin-top:6px">No active loyalty program. Configure it in Loyalty.</p>'}
       </div>
       <div class="card"><b>Referral & consent</b>
@@ -1962,10 +2118,10 @@ async function clientDetail(id){
         <div class="row"><b style="font-size:1.3rem;letter-spacing:.15em">${esc(c.referral_code||'—')}</b>
         <button class="btn ghost sm" id="copyRef">Copy</button></div>
         <p class="muted small" style="margin:14px 0 6px">Marketing consent (PDPA) — every change is recorded:</p>
-        <button class="btn ghost sm" id="consentBtn">${c.marketing_consent?'✓ Consented — withdraw':'Record consent'}</button>
+        ${canWriteClients?`<button class="btn ghost sm" id="consentBtn">${c.marketing_consent?CUI.icon('check',{size:17})+' Consented — withdraw':'Record consent'}</button>`:'<span class="pill off">Read only</span>'}
       </div>
       <div class="card"><b>Retention rewards earned</b>
-        ${(rg&&rg.length)?rg.map(g=>`<div class="row" style="margin-top:10px"><span>🏆 ${esc(g.retention_programs?.name||'Program')}</span><span class="spacer"></span>
+        ${(rg&&rg.length)?rg.map(g=>`<div class="row" style="margin-top:10px"><span class="inline-status">${CUI.icon('loyalty',{size:17})}<span>${esc(g.retention_programs?.name||'Program')}</span></span><span class="spacer"></span>
           <span class="muted small">${esc(g.reward_label||'Reward')} · ${g.fulfillment_kind==='credit'?money(g.reward_value):g.fulfillment_kind==='discount_pct'?g.reward_value+'% off':esc(g.reward_item||'free item')} · ${g.granted_at.slice(0,10)}</span></div>`).join('')
         :'<p class="muted small" style="margin-top:6px">None yet — rewards land here automatically when visit goals are hit.</p>'}
       </div></div>
@@ -1998,6 +2154,7 @@ async function clientDetail(id){
     if(!classicRedemptionIdem) classicRedemptionIdem=crypto.randomUUID();
     const {data,error}=await sb.rpc('redeem_points',{p_business:S.biz.id,p_client:id,
       p_idempotency_key:classicRedemptionIdem});
+    if(!isClientDetailCurrent())return;
     if(error){fail(error);rd.disabled=false;return}
     toast(`Redeemed → ${money(data.credit_cents)} credit added 🎉`);clientDetail(id);
   };
@@ -2009,6 +2166,7 @@ async function clientDetail(id){
     const {data,error}=await sb.rpc('redeem_reward_at_context',{p_business:S.biz.id,p_client:id,
       p_reward:b.dataset.r,p_idempotency_key:rewardRedemptionIdem.get(b.dataset.r),
       p_branch:context('branch'),p_service:context('service'),p_product:context('product')});
+    if(!isClientDetailCurrent())return;
     if(error){fail(error);b.disabled=false;return}
     toast(Number(b.dataset.c)>0
       ?`Redeemed "${b.dataset.n}" → ${money(Number(b.dataset.c))} credit added 🎉`
@@ -2025,12 +2183,15 @@ async function clientDetail(id){
     toast(`Adjusted — new balance ${data} pts (audited)`);clientDetail(id);
   };
   $('copyRef').onclick=()=>{navigator.clipboard.writeText(c.referral_code||'');toast('Code copied')};
-  $('consentBtn').onclick=async()=>{
+  const consentIdempotencyKey=crypto.randomUUID();
+  if($('consentBtn'))$('consentBtn').onclick=async()=>{
+    const consentButton=$('consentBtn');
     const to=!c.marketing_consent;
-    const {error:e1}=await sb.from('clients').update({marketing_consent:to}).eq('id',id);
-    if(e1) return fail(e1);
-    await sb.from('consents').insert({business_id:S.biz.id,client_id:id,channel:'marketing',
-      action:to?'granted':'withdrawn',source:'admin client page',actor:S.user.id});
+    consentButton.disabled=true;
+    const {error}=await sb.rpc('staff_set_marketing_consent',{p_business:S.biz.id,p_client:id,
+      p_idempotency_key:consentIdempotencyKey,p_marketing_consent:to,p_source:'admin client page'});
+    if(!isClientDetailCurrent())return;
+    if(error){consentButton.disabled=false;return fail(error)}
     toast(to?'Consent recorded':'Consent withdrawn — recorded');clientDetail(id);
   };
   const histMore=$('histMore');
@@ -2076,9 +2237,21 @@ function renderHistPage(history,n){
    Step 3 done. All UI state is local to this closure — nothing persisted, resets on reload
    (no localStorage in this stack) and resets itself on "Next customer". */
 async function tillPage(){
+  const routeMain=M();
+  const isTillCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  const canAddClient=canWriteModule('clients');
+  const canRecordSales=hasRoleCapability('create_sales')&&canReadModule('clients');
+  const canWriteLoyalty=canWriteModule('loyalty')&&canRecordSales;
+  if(!canRecordSales){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'Customer lookup and sales are unavailable for this role.',iconName:'till',canWrite:false,moduleLabel:'Till sales'})}${CUI.card({title:'Additional access required',description:'Till requires both customer read access and a role permitted to create sales.',body:'<p class="muted small">Ask an owner to review your Customers and Till assignments.</p>'})}`;
+    return;
+  }
+  routeMain.innerHTML=CUI.loadingState({title:'Till',iconName:'till'});
   /* v24: the one-tap classic redeem only applies to the classic model — catalog/stamp firms
      redeem from the customer page where the reward list lives. */
-  const {data:tillLp}=await sb.from('loyalty_programs').select('loyalty_model').eq('business_id',S.biz.id).limit(1);
+  const {data:tillLp,error:tillProgramError}=await sb.from('loyalty_programs').select('loyalty_model').eq('business_id',S.biz.id).limit(1);
+  if(!isTillCurrent())return;
+  if(tillProgramError)throw tillProgramError;
   const tillClassic=!tillLp?.[0]?.loyalty_model||tillLp[0].loyalty_model==='classic';
   let step=1;             // 1=enter number, 2=customer card / new customer / invalid, 3=done
   let phone='';           // digits typed so far in step 1
@@ -2092,9 +2265,10 @@ async function tillPage(){
   let busy=false;         // guards Find/Confirm while a request is in flight
   let doneInfo=null;      // {name, pointsEarned, pointsTotal, duplicate} for step 3
   let redemptionIdem=null; // stable across retries for the current customer's redemption
+  let quickAddIdem=null;   // stable while retrying one Till customer creation
 
   function resetToStart(){
-    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;redemptionIdem=null;busy=false;doneInfo=null;draw();
+    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;redemptionIdem=null;quickAddIdem=null;busy=false;doneInfo=null;draw();
   }
   function draw(){
     if(step===1) return drawStep1();
@@ -2103,12 +2277,13 @@ async function tillPage(){
   }
 
   function drawStep1(){
-    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1><p class="muted small">Type the customer's phone number, then press Find</p></div></div>
+    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:"Type the customer's phone number, then choose Find.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
       <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
+        <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" inputmode="numeric" maxlength="8" placeholder="8186 3833"
           style="font-size:34px;text-align:center;height:64px;letter-spacing:.04em" value="${esc(phone)}">
         <div id="tErr"></div>
-        <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:16px">🔎 Find</button>
+        <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:16px">${CUI.icon('search',{size:19})} Find customer</button>
         <div class="grid" id="tKeys" style="grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px">
           ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" style="height:60px;font-size:22px;font-weight:700">${k}</button>`).join('')}
         </div>
@@ -2132,10 +2307,11 @@ async function tillPage(){
     if(!phone){$('tErr').innerHTML='<div class="err">Enter a phone number</div>';return}
     busy=true;$('tFind').disabled=true;$('tFind').textContent='Looking…';
     const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:phone});
-    busy=false;$('tFind').disabled=false;$('tFind').textContent='🔎 Find';
+    if(!isTillCurrent())return;
+    busy=false;$('tFind').disabled=false;$('tFind').innerHTML=`${CUI.icon('search',{size:19})} Find customer`;
     if(error) return fail(error);
     if(data.status==='found'){cust=data;notFoundPhone=null;invalidMsg=null;step=2;draw();return}
-    if(data.status==='not_found'){cust=null;notFoundPhone=data.phone;invalidMsg=null;step=2;draw();return}
+    if(data.status==='not_found'){cust=null;notFoundPhone=data.phone;invalidMsg=null;quickAddIdem=crypto.randomUUID();step=2;draw();return}
     if(data.status==='invalid'){invalidMsg=data.message||'Enter a valid Singapore number';step=2;draw();return}
   }
 
@@ -2145,45 +2321,50 @@ async function tillPage(){
     return drawCustomerCard();
   }
   function drawInvalid(){
-    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1></div></div>
+    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'The phone number could not be used.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
       <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
-        <div style="font-size:40px">⚠️</div>
+        ${CUI.icon('info',{size:40})}
         <div class="err" style="margin-top:10px">${esc(invalidMsg)}</div>
-        <button class="btn ghost sm" id="tBack" style="margin-top:14px">← Try another number</button>
+        <button class="btn ghost sm" id="tBack" style="margin-top:14px">${CUI.icon('back',{size:17})} Try another number</button>
       </div>`;
     $('tBack').onclick=()=>{invalidMsg=null;step=1;draw()};
   }
   function drawNewCustomer(){
-    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1></div></div>
+    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'Add a new customer before recording a sale.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
       <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
-        <div style="font-size:40px">🙋</div>
+        ${CUI.icon('customers',{size:40})}
         <h2 style="margin:8px 0 2px">New customer</h2>
         <p class="muted small">${esc(notFoundPhone||phone)} isn't in your system yet</p>
-        <div style="text-align:left"><label>Name</label><input id="tName" placeholder="Customer's name">
+        <div style="text-align:left"><label for="tName">Name</label><input id="tName" placeholder="Customer's name">
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
           <input type="checkbox" id="tConsent" style="width:auto"> Marketing consent given</label></div>
         <div id="tErr2"></div>
-        <button class="btn" id="tAdd" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Add & continue</button>
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">← Different number</button>
+        ${canAddClient?'<button class="btn" id="tAdd" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Add & continue</button>':'<div class="err">Customer creation is read only for your role.</div>'}
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
-    $('tBack').onclick=()=>{step=1;draw()};
-    $('tAdd').onclick=async()=>{
+    $('tBack').onclick=()=>{quickAddIdem=null;step=1;draw()};
+    if($('tAdd'))$('tAdd').onclick=async()=>{
       if(busy) return;
       const name=$('tName').value.trim();
       if(name.length<2){$('tErr2').innerHTML='<div class="err">Enter a name</div>';return}
       busy=true;$('tAdd').disabled=true;
-      const {data,error}=await sb.rpc('quick_add_client',{p_business:S.biz.id,p_phone:notFoundPhone||phone,p_name:name,p_consent:$('tConsent').checked});
+      if(!quickAddIdem) quickAddIdem=crypto.randomUUID();
+      const {data,error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,p_idempotency_key:quickAddIdem,
+        p_phone:notFoundPhone||phone,p_full_name:name,p_marketing_consent:$('tConsent').checked,
+        p_source:'till quick add'});
+      if(!isTillCurrent())return;
       if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
       const {data:lk,error:lkErr}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:notFoundPhone||phone});
+      if(!isTillCurrent())return;
       busy=false;
       if(lkErr||!lk||lk.status!=='found'){$('tAdd').disabled=false;fail(lkErr||new Error('Customer added, but could not load their card — press Find again'));return}
-      toast(data.status==='created'?'Customer added ✓':'Customer found ✓');
+      toast(data.status==='completed'?'Customer added ✓':'Customer found ✓');
       cust=lk;step=2;draw();
     };
   }
   function drawCustomerCard(){
     const toNext=(cust.points_to_next!=null)?cust.points_to_next:null;
-    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1></div></div>
+    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'Review the customer and record the sale amount.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
       <div class="card" style="max-width:460px;margin:0 auto">
         <div style="text-align:center">
           <div style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em">${esc(cust.full_name)}</div>
@@ -2194,24 +2375,26 @@ async function tillPage(){
           <div class="card kpi"><div class="l">Credit</div><div class="v">${money(cust.credit_cents||0)}</div></div>
           <div class="card kpi"><div class="l">Visits</div><div class="v">${cust.visits??0}</div></div>
         </div>
-        ${tillClassic&&toNext!=null?`<p class="muted small" style="text-align:center;margin-top:10px">⏳ ${toNext} points to next reward</p>`:''}
-        ${tillClassic&&cust.can_redeem?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="tRedeem">🎁 Redeem reward</button></div>`:''}
-        ${!tillClassic?`<p class="muted small" style="text-align:center;margin-top:10px">🎁 Rewards are redeemed from the customer's page</p>`:''}
+        ${tillClassic&&toNext!=null?`<p class="muted small inline-status" style="justify-content:center;text-align:center;margin-top:10px">${CUI.icon('waitlist',{size:15})}<span>${toNext} points to next reward</span></p>`:''}
+        ${tillClassic&&canWriteLoyalty&&cust.can_redeem?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="tRedeem">${CUI.icon('loyalty',{size:17})} Redeem reward</button></div>`:''}
+        ${tillClassic&&!canWriteLoyalty&&cust.can_redeem?'<p class="muted small" style="text-align:center;margin-top:10px">Loyalty redemption is read only for your role.</p>':''}
+        ${!tillClassic?`<p class="muted small inline-status" style="justify-content:center;text-align:center;margin-top:10px">${CUI.icon('loyalty',{size:15})}<span>Rewards are redeemed from the customer's page</span></p>`:''}
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
-        <label>Amount (${S.biz.currency||'SGD'})</label>
+        ${canRecordSales?`<label for="tAmt">Amount (${S.biz.currency||'SGD'})</label>
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
         <div id="tErr3"></div>
-        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px;background:var(--green)">✓ Confirm</button>
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">← Different number</button>
+        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Confirm sale</button>`:'<div class="permission-banner" role="note">Sales cannot be recorded by this role.</div>'}
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
     $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;redemptionIdem=null;draw()};
-    $('tAmt').focus();
+    if($('tAmt'))$('tAmt').focus();
     const rd=$('tRedeem');
     if(rd) rd.onclick=async()=>{
       rd.disabled=true;
       if(!redemptionIdem) redemptionIdem=crypto.randomUUID();
       const {data,error}=await sb.rpc('redeem_points',{p_business:S.biz.id,p_client:cust.client_id,
         p_idempotency_key:redemptionIdem});
+      if(!isTillCurrent())return;
       if(error){fail(error);rd.disabled=false;return}
       redemptionIdem=null;
       toast(`Redeemed → ${money(data.credit_cents)} credit added 🎉`);
@@ -2219,7 +2402,7 @@ async function tillPage(){
       if(lk&&lk.status==='found') cust=lk;
       draw();
     };
-    $('tConfirm').onclick=async()=>{
+    if($('tConfirm'))$('tConfirm').onclick=async()=>{
       if(busy) return;
       const amt=Math.round(parseFloat($('tAmt').value||'0')*100);
       if(!(amt>0)){$('tErr3').innerHTML='<div class="err">Enter an amount</div>';return}
@@ -2227,6 +2410,7 @@ async function tillPage(){
       busy=true;$('tConfirm').disabled=true;$('tConfirm').textContent='Recording…';
       const {data,error}=await sb.rpc('record_sale_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone,
         p_amount_cents:amt,p_kind:'quick_sale',p_note:null,p_staff:null,p_idem:saleIdem});
+      if(!isTillCurrent())return;
       busy=false;
       if(error){$('tConfirm').disabled=false;$('tConfirm').textContent='✓ Confirm';return fail(error)}
       doneInfo=(data.status==='duplicate_ignored')
@@ -2236,14 +2420,14 @@ async function tillPage(){
     };
   }
   function drawStep3(){
-    M().innerHTML=`<div class="topbar"><div><h1>💵 Till</h1></div></div>
+    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'Sale complete.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
       <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
-        <div style="font-size:56px">✅</div>
+        ${CUI.icon('check',{size:56})}
         <h2 style="margin:8px 0 4px">${doneInfo.duplicate?'Already recorded':'Done'}</h2>
         ${doneInfo.duplicate?`<p class="muted">This sale was already recorded — no extra points added.</p>`
           :`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">+${doneInfo.pointsEarned} points</p>`}
         <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · now ${doneInfo.pointsTotal} points total</p>
-        <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer →</button>
+        <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
     $('tNext').onclick=resetToStart;
   }
@@ -2646,16 +2830,24 @@ async function bookingsPage(){
    - These three relations use reward_id plus branch_id/service_id/product_id and are versioned by
      the backend. This UI sends IDs, never a uuid array column, and never deletes reward history. */
 async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null){
+  const routeMain=M();
+  const isLoyaltyCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=CUI.loadingState({title:'Loyalty',iconName:'loyalty'});
+  const canWriteLoyalty=canWriteModule('loyalty');
+  const canManageLoyalty=S.myRole==='owner'&&canWriteLoyalty;
+  const loyaltyControlDisabled=canManageLoyalty?'':' disabled';
   let lp=[],rw=[],tr=[],rb=[],rs=[],rp=[],bo=[],draftSnapshotHash=null;
   const [{data:br,error:brError},{data:sv,error:svError},{data:pr,error:prError}]=await Promise.all([
     sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name'),
     sb.from('services').select('id,name,active').eq('business_id',S.biz.id).order('name'),
     sb.from('products').select('id,name,active').eq('business_id',S.biz.id).order('name')]);
-  if(brError||svError||prError)return fail(brError||svError||prError);
+  if(!isLoyaltyCurrent())return;
+  if(brError||svError||prError)throw brError||svError||prError;
   if(draftVersionId){
     const {data:draft,error:draftError}=await sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId});
+    if(!isLoyaltyCurrent())return;
     if(draftError){
-      M().innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div>
         <div class="card"><p class="err">${esc(draftError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
       $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
       return;
@@ -2670,8 +2862,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {data:branchOverrides,error:boError}=await sb.from('loyalty_branch_overrides')
       .select('branch_id,active,earn_points_per_dollar,stamp_per_cents,expiry_mode,expiry_days')
       .eq('business_id',S.biz.id).eq('config_version_id',draftVersionId);
+    if(!isLoyaltyCurrent())return;
     if(boError){
-      M().innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div>
         <div class="card"><p class="err">${esc(boError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
       $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
       return;
@@ -2685,7 +2878,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_products').select('reward_id,product_id').eq('business_id',S.biz.id)]);
-    if(programError||rewardsError||tierError||rbError||rsError||rpError)return fail(programError||rewardsError||tierError||rbError||rsError||rpError);
+    if(!isLoyaltyCurrent())return;
+    if(programError||rewardsError||tierError||rbError||rsError||rpError)throw programError||rewardsError||tierError||rbError||rsError||rpError;
     lp=liveProgram||[];rw=liveRewards||[];tr=liveTiers||[];
     rb=liveBranches||[];rs=liveServices||[];rp=liveProducts||[];
   }
@@ -2718,25 +2912,28 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <p class="muted small help">Leave blank to inherit the firm setting. Save only changes this draft.</p>
       ${activeItems(br||[]).length?activeItems(br||[]).map((branch,idx)=>{
         const o=branchOverrideById[branch.id]||{};
+        const branchExpiryMode=o.expiry_mode||'',branchExpiryNeedsDays=expiryModeRequiresDays(branchExpiryMode);
+        const branchExpiryShowsDays=branchExpiryMode!=='none';
+        const branchExpiryFallback=positiveExpiryDays(o.expiry_days)||positiveExpiryDays(p?.expiry_days)||365;
         return `<div class="branch-override" style="padding:12px 0;border-bottom:1px solid var(--line)">
           <b>${esc(branch.name)}</b>
           <div class="field-grid">
-            <div><label>Loyalty status</label><select data-bo-active="${idx}" data-branch="${branch.id}">
+            <div><label>Loyalty status</label><select data-bo-active="${idx}" data-branch="${branch.id}"${loyaltyControlDisabled}>
               <option value="" ${o.active==null?'selected':''}>Inherit firm setting</option>
               <option value="true" ${o.active===true?'selected':''}>Active here</option>
               <option value="false" ${o.active===false?'selected':''}>Paused here</option>
             </select></div>
-            <div><label>Points per $1</label><input data-bo-earn="${idx}" data-branch="${branch.id}" type="number" min="0" step="0.1" value="${o.earn_points_per_dollar??''}" placeholder="${p?.earn_points_per_dollar??1}"></div>
-            <div><label>Spend per stamp</label><input data-bo-stamp="${idx}" data-branch="${branch.id}" type="number" min="0.5" step="0.5" value="${o.stamp_per_cents!=null?(o.stamp_per_cents/100).toFixed(2):''}" placeholder="${((p?.stamp_per_cents??500)/100).toFixed(2)}"></div>
-            <div><label>Expiry</label><select data-bo-expiry="${idx}" data-branch="${branch.id}">
+            <div><label>Points per $1</label><input data-bo-earn="${idx}" data-branch="${branch.id}" type="number" min="0" step="0.1" value="${o.earn_points_per_dollar??''}" placeholder="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}></div>
+            <div><label>Spend per stamp</label><input data-bo-stamp="${idx}" data-branch="${branch.id}" type="number" min="0.5" step="0.5" value="${o.stamp_per_cents!=null?(o.stamp_per_cents/100).toFixed(2):''}" placeholder="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}></div>
+            <div><label>Expiry</label><select data-bo-expiry="${idx}" data-branch="${branch.id}" aria-controls="bo-days-field-${idx}"${loyaltyControlDisabled}>
               <option value="" ${!o.expiry_mode?'selected':''}>Inherit firm setting</option>
               <option value="none" ${o.expiry_mode==='none'?'selected':''}>Never expire</option>
               <option value="inactivity" ${o.expiry_mode==='inactivity'?'selected':''}>After inactivity</option>
               <option value="fixed" ${o.expiry_mode==='fixed'?'selected':''}>Fixed shelf life</option>
             </select></div>
-            <div><label>Expiry days</label><input data-bo-days="${idx}" data-branch="${branch.id}" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${p?.expiry_days??365}"></div>
+            <div class="expiry-days-field" id="bo-days-field-${idx}" data-bo-days-field="${idx}" ${branchExpiryShowsDays?'':'hidden'}><label>Expiry days</label><input data-bo-days="${idx}" data-branch="${branch.id}" data-expiry-fallback="${branchExpiryFallback}" data-expiry-allow-inherit="true" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${branchExpiryFallback}" ${branchExpiryNeedsDays?'required':branchExpiryShowsDays?'':'disabled'}${loyaltyControlDisabled}></div>
           </div>
-          <div class="row" style="margin-top:10px"><button class="btn ghost sm boInherit" data-idx="${idx}" data-branch="${branch.id}">Inherit firm setting</button><span class="spacer"></span><button class="btn sm boSave" data-idx="${idx}" data-branch="${branch.id}">Save branch</button></div>
+          ${canManageLoyalty?`<div class="row" style="margin-top:10px"><button class="btn ghost sm boInherit" data-idx="${idx}" data-branch="${branch.id}">Inherit firm setting</button><span class="spacer"></span><button class="btn sm boSave" data-idx="${idx}" data-branch="${branch.id}">Save branch</button></div>`:''}
         </div>`;
       }).join(''):'<p class="muted small" style="margin-top:8px">Add branches first.</p>'}
     </details>`:'';
@@ -2744,55 +2941,58 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     <b style="display:block;margin-top:18px">${label}</b>
     <div class="reward-list" id="rwList">
     ${rewards.length?rewards.map(r=>`<div class="reward-item">
-      <div class="meta"><div><b>${r.active?'':'⏸ '}${esc(rewardLabel(r))}</b>
+      <div class="meta"><div><b class="inline-status">${r.active?'':CUI.icon('retention',{size:15})}${esc(rewardLabel(r))}</b>
         <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
         ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}</div>
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'live':'archived'}</span>
-        <button class="btn ghost sm rwEdit" data-id="${r.id}">Edit</button></div></div>`).join('')
+        ${canManageLoyalty?`<button class="btn ghost sm rwEdit" data-id="${r.id}">Edit</button>`:''}</div></div>`).join('')
       :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}</div>
     <div id="rwEditor" aria-live="polite"></div>
-    <button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>`;
+    ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
   const tierRows=()=>`
     <b style="display:block;margin-top:18px">Tiers (optional)</b>
-    <label>Tier level is earned by</label><select id="ltb">
+    <label>Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}>
       <option value="visits" ${(p?.tier_basis??'visits')==='visits'?'selected':''}>Number of visits (recommended)</option>
       <option value="spend" ${p?.tier_basis==='spend'?'selected':''}>Lifetime spend ($)</option>
       <option value="points_earned" ${p?.tier_basis==='points_earned'?'selected':''}>Lifetime points earned</option></select>
     ${tiers.length?tiers.map(t=>`<div class="row" style="margin-top:8px">
       <span>${esc(t.name)}</span><span class="spacer"></span>
       <span class="muted small">from ${t.threshold} · ${t.points_multiplier}× ${unit}${t.perk_note?' · '+esc(t.perk_note):''}</span>
-      <button class="btn ghost sm trEdit" data-id="${t.tier_id||t.id}">Edit</button>
-      <button class="btn ghost sm trDel" data-id="${t.tier_id||t.id}">✕</button></div>`).join('')
+      ${canManageLoyalty?`<button class="btn ghost sm trEdit" data-id="${t.tier_id||t.id}">Edit</button>
+      <button class="btn ghost sm trDel" data-id="${t.tier_id||t.id}">✕</button>`:''}</div>`).join('')
       :`<p class="muted small" style="margin-top:6px">No tiers yet — customers all earn at 1×.</p>`}
-    <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+    ${canManageLoyalty?`<div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
       <input id="trName" placeholder="e.g. Gold" style="flex:1;min-width:100px">
       <input id="trTh" type="number" min="0" placeholder="from" style="max-width:80px">
       <input id="trMul" type="number" min="1" step="0.5" placeholder="× earn" style="max-width:90px">
       <input id="trPerk" placeholder="perk note (optional)" style="flex:1;min-width:120px">
-      <button class="btn sm" id="trAdd">Add</button></div>`;
-  M().innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Pick the model that fits your business — every number below is yours to change</p></div>
-      ${S.myRole==='owner'&&!draftVersionId?'<button class="btn ghost" id="loyaltyRecommend">Create recommended draft</button>':''}</div>
+      <button class="btn sm" id="trAdd">Add</button></div>`:''}`;
+  const firmExpiryMode=p?.expiry_mode??'none';
+  const firmExpiryDays=positiveExpiryDays(p?.expiry_days)||365;
+  const firmExpiryNeedsDays=expiryModeRequiresDays(firmExpiryMode);
+  const loyaltyActions=canManageLoyalty&&!draftVersionId?CUI.action({id:'loyaltyRecommend',label:'Create recommended draft',iconName:'add',variant:'secondary'}):'<span class="pill off">Read only</span>';
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:canManageLoyalty?'Choose the model and publish deliberate, versioned changes.':'Review the current program, rewards, tiers, and branch settings.',iconName:'loyalty',actions:loyaltyActions,canWrite:canManageLoyalty,moduleLabel:'Loyalty configuration'})}
     ${p?.configuration_status==='draft'?`<div class="imp-note" style="margin-bottom:16px"><b>Draft recommendation</b><br>${recommendation?esc(recommendation.rationale):'Nothing is earning or redeeming yet.'} Review every number below, then publish only when it fits your business.</div>`:''}
     <div class="split"><div class="card"><b>Program settings</b>
-      <label>Status</label><select id="la"><option value="true" ${p?.active?'selected':''}>Active</option><option value="false" ${!p?.active?'selected':''}>Paused</option></select>
-      <label>Loyalty model</label><select id="lm">
+      <label>Status</label><select id="la"${loyaltyControlDisabled}><option value="true" ${p?.active?'selected':''}>Active</option><option value="false" ${!p?.active?'selected':''}>Paused</option></select>
+      <label>Loyalty model</label><select id="lm"${loyaltyControlDisabled}>
         <option value="classic" ${model==='classic'?'selected':''}>Simple points — fixed redeem into credit</option>
         <option value="points_tiers" ${model==='points_tiers'?'selected':''}>Points + reward catalog + tiers</option>
         <option value="stamps" ${model==='stamps'?'selected':''}>Stamp card — $ per stamp, milestone rewards</option></select>
       ${model==='stamps'
-        ?`<label>Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}">
+        ?`<label>Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}>
           <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>`
-        :`<label>Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}">`}
+        :`<label>Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>`}
       ${model==='classic'
-        ?`<label>Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}">
-          <label>Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}">`:''}
-      <label>${model==='stamps'?'Stamp':'Points'} expiry</label><select id="lx">
-        <option value="none" ${(p?.expiry_mode??'none')==='none'?'selected':''}>Never expire</option>
+        ?`<label>Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}"${loyaltyControlDisabled}>
+          <label>Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}"${loyaltyControlDisabled}>`:''}
+      <label>${model==='stamps'?'Stamp':'Points'} expiry</label><select id="lx" aria-controls="lxdField"${loyaltyControlDisabled}>
+        <option value="none" ${firmExpiryMode==='none'?'selected':''}>Never expire</option>
         <option value="inactivity" ${p?.expiry_mode==='inactivity'?'selected':''}>Expire after inactivity (clock resets on every earn)</option>
         <option value="fixed" ${p?.expiry_mode==='fixed'?'selected':''}>Fixed shelf life from earn (oldest expire first)</option></select>
-      <label>Expiry window (days)</label><input id="lxd" type="number" min="1" value="${p?.expiry_days??365}">
+      <div class="expiry-days-field" id="lxdField" ${firmExpiryNeedsDays?'':'hidden'}><label for="lxd">Expiry window (days)</label><input id="lxd" data-expiry-fallback="${firmExpiryDays}" type="number" min="1" step="1" value="${firmExpiryDays}" ${firmExpiryNeedsDays?'required':'disabled'}${loyaltyControlDisabled}></div>
       ${branchOverrideRows()}
-      <div style="margin-top:16px"><button class="btn" id="lsave">${p?.configuration_status==='draft'?'Publish program':'Save program'}</button></div></div>
+      ${canManageLoyalty?`<div style="margin-top:16px"><button class="btn" id="lsave">${p?.configuration_status==='draft'?'Publish program':'Save program'}</button></div>`:''}</div>
     <div class="card">
       ${model==='classic'
         ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">Every sale earns points automatically. At ${p?.redeem_points??800} points, one tap converts them into ${money(p?.reward_credit_cents??2000)} of real in-store credit. Switch models above any time — balances carry over.</p>`
@@ -2800,34 +3000,44 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.</p>${rewardRows('Your milestones')}`
         :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
     </div></div>`;
+  if(!canManageLoyalty)return;
   const recommend=$('loyaltyRecommend');
   if(recommend) recommend.onclick=async()=>{
     recommend.disabled=true;recommend.textContent='Preparing draft…';
     const {data,error}=await sb.rpc('generate_retention_recommendation',{
       p_business:S.biz.id,p_idempotency_key:crypto.randomUUID()});
+    if(!isLoyaltyCurrent())return;
     if(error){recommend.disabled=false;recommend.textContent='Create recommended draft';return fail(error)}
     toast('Recommended draft created — review every number before publishing');
     loyaltyPage(data.model,data.draft_config_version_id,data);
   };
   $('lm').onchange=()=>loyaltyPage($('lm').value,draftVersionId,recommendation);
+  bindExpiryModeUi($('lx'),$('lxd'),$('lxdField'));
+  document.querySelectorAll('[data-bo-expiry]').forEach(modeInput=>{
+    const idx=modeInput.dataset.boExpiry;
+    bindExpiryModeUi(modeInput,document.querySelector(`[data-bo-days="${idx}"]`),document.querySelector(`[data-bo-days-field="${idx}"]`));
+  });
   document.querySelectorAll('.boSave').forEach(button=>button.onclick=async()=>{
     const idx=button.dataset.idx,branchId=button.dataset.branch;
     const active=document.querySelector(`[data-bo-active="${idx}"]`).value;
     const earn=document.querySelector(`[data-bo-earn="${idx}"]`).value;
     const stamp=document.querySelector(`[data-bo-stamp="${idx}"]`).value;
     const expiry=document.querySelector(`[data-bo-expiry="${idx}"]`).value;
-    const days=document.querySelector(`[data-bo-days="${idx}"]`).value;
+    const daysInput=document.querySelector(`[data-bo-days="${idx}"]`);
+    const expiryDays=expiryDaysForMode(expiry,daysInput);
+    if(Number.isNaN(expiryDays)){toast('Enter a positive whole-number expiry window');daysInput.focus();return}
     const override={};
     if(active)override.active=active==='true';
     if(earn!=='')override.earn_points_per_dollar=parseFloat(earn);
     if(stamp!=='')override.stamp_per_cents=Math.round(parseFloat(stamp)*100);
     if(expiry)override.expiry_mode=expiry;
-    if(days!=='')override.expiry_days=parseInt(days,10);
+    if(expiryDays!==undefined)override.expiry_days=expiryDays;
     if(!Object.keys(override).length)return toast('Use Inherit firm setting to clear this branch');
     button.disabled=true;button.textContent='Saving…';
     const args={p_config_version:draftVersionId,p_branch:branchId,p_override:override,
       p_expected_snapshot_hash:draftSnapshotHash||null};
     const {error}=await sb.rpc('save_loyalty_branch_override_draft',args);
+    if(!isLoyaltyCurrent())return;
     if(error){button.disabled=false;button.textContent='Save branch';return fail(error)}
     toast('Branch setting saved');loyaltyPage(model,draftVersionId,recommendation);
   });
@@ -2836,13 +3046,17 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const args={p_config_version:draftVersionId,p_branch:button.dataset.branch,
       p_expected_snapshot_hash:draftSnapshotHash||null};
     const {error}=await sb.rpc('remove_loyalty_branch_override_draft',args);
+    if(!isLoyaltyCurrent())return;
     if(error){button.disabled=false;button.textContent='Inherit firm setting';return fail(error)}
     toast('Branch now inherits firm setting');loyaltyPage(model,draftVersionId,recommendation);
   });
   $('lsave').onclick=async()=>{
+    const expiryMode=$('lx').value,expiryDays=expiryDaysForMode(expiryMode,$('lxd'));
+    if(Number.isNaN(expiryDays)){toast('Enter a positive whole-number expiry window');$('lxd').focus();return}
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
-      expiry_mode:$('lx').value,expiry_days:parseInt($('lxd').value||'365')};
+      expiry_mode:expiryMode};
+    if(expiryDays!==undefined)row.expiry_days=expiryDays;
     if(model==='stamps') row.stamp_per_cents=Math.round(parseFloat($('lsp').value||'5')*100);
     else row.earn_points_per_dollar=parseFloat($('le').value||'1');
     if(model==='classic'){row.redeem_points=parseInt($('lr').value||'800');
@@ -2853,13 +3067,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!versionId){
       const {data:draft,error:draftError}=await sb.rpc('create_loyalty_config_draft',{
         p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_editor'});
+      if(!isLoyaltyCurrent())return;
       if(draftError){$('lsave').disabled=false;return fail(draftError)}
       versionId=draft.version_id;
     }
     const saveArgs={p_version:versionId,p_config:row,p_expected_snapshot_hash:draftSnapshotHash||null};
     const {error:saveError}=await sb.rpc('save_loyalty_config_draft',saveArgs);
+    if(!isLoyaltyCurrent())return;
     if(saveError){$('lsave').disabled=false;return fail(saveError)}
     const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
+    if(!isLoyaltyCurrent())return;
     if(publishError){$('lsave').disabled=false;return fail(publishError)}
     toast(p?.configuration_status==='draft'?'Loyalty program published':'Loyalty program saved');loyaltyPage();
   };
@@ -2929,6 +3146,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!versionId){
       const {data:draft,error:draftError}=await sb.rpc('create_loyalty_config_draft',{
         p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_reward_editor'});
+      if(!isLoyaltyCurrent())return;
       if(draftError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(draftError)}
       versionId=draft.version_id;
     }
@@ -2936,9 +3154,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       reward:payload,reward_branch_ids:selected('branch'),reward_service_ids:selected('service'),
       reward_product_ids:selected('product')},p_expected_snapshot_hash:draftSnapshotHash||null};
     const {error:saveError}=await sb.rpc('save_loyalty_config_draft',saveArgs);
+    if(!isLoyaltyCurrent())return;
     if(saveError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(saveError)}
     if(!draftVersionId){
       const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
+      if(!isLoyaltyCurrent())return;
       if(publishError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(publishError)}
     }
     toast(draftVersionId?'Draft reward saved':archive?'Reward archived':editorReward?'Reward saved':'Reward created');
@@ -2956,10 +3176,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!versionId){
       const {data:draft,error}=await sb.rpc('create_loyalty_config_draft',{
         p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_tier_editor'});
+      if(!isLoyaltyCurrent())return;
       if(error)return fail(error);versionId=draft.version_id;
     }
     const saveArgs={p_version:versionId,p_config:{tier},p_expected_snapshot_hash:draftSnapshotHash||null};
     const {error}=await sb.rpc('save_loyalty_config_draft',saveArgs);
+    if(!isLoyaltyCurrent())return;
     if(error)return fail(error);
     if(!draftVersionId){const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});if(publishError)return fail(publishError)}
     loyaltyPage(model,draftVersionId,recommendation);
@@ -2984,27 +3206,36 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
 
 /* ---------- versioned retention programs ---------- */
 async function retentionPage(draftVersionId=null,editProgramId=null){
+  const routeMain=M();
+  const isRetentionCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=CUI.loadingState({title:'Retention programs',iconName:'retention'});
   const isOwner=S.myRole==='owner';
-  let programs=[],taxonomy=[],snapshotHash=null,currentVersion=null,history=[];
+  let programs=[],taxonomy=[],snapshotHash=null,currentVersion=null,history=[],resumableDraft=null;
   const {data:business,error:businessError}=await sb.from('businesses')
     .select('active_config_version_id').eq('id',S.biz.id).single();
-  if(businessError)return fail(businessError);
+  if(!isRetentionCurrent())return;
+  if(businessError)throw businessError;
   currentVersion=business?.active_config_version_id||null;
   if(draftVersionId){
     const {data:draft,error}=await sb.rpc('get_retention_config_draft',{p_config_version:draftVersionId});
+    if(!isRetentionCurrent())return;
     if(error){
-      M().innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div>
         <div class="card"><p class="err">${esc(error.message)}</p><button class="btn" id="retryRetention">Retry</button></div>`;
       $('retryRetention').onclick=()=>retentionPage(draftVersionId,editProgramId);return;
     }
     programs=draft?.programs||[];taxonomy=draft?.taxonomy||[];snapshotHash=draft?.snapshot_hash||null;
   }else{
+    const livePrograms=currentVersion
+      ?sb.from('retention_programs').select('*, firm_reward_taxonomy(label,fulfillment_kind,active,sort)')
+        .eq('business_id',S.biz.id).eq('current_config_version_id',currentVersion).order('created_at',{ascending:false})
+      :Promise.resolve({data:[],error:null});
     const [{data:live,error:liveError},{data:types,error:typeError}]=await Promise.all([
-      sb.from('retention_programs').select('*, firm_reward_taxonomy(label,fulfillment_kind,active,sort)')
-        .eq('business_id',S.biz.id).eq('current_config_version_id',currentVersion).order('created_at',{ascending:false}),
+      livePrograms,
       sb.from('firm_reward_taxonomy').select('id,label,fulfillment_kind,active,sort')
         .eq('business_id',S.biz.id).order('sort').order('label')]);
-    if(liveError||typeError)return fail(liveError||typeError);
+    if(!isRetentionCurrent())return;
+    if(liveError||typeError)throw liveError||typeError;
     programs=(live||[]).map(r=>({...r,program_id:r.id,reward_label:r.firm_reward_taxonomy?.label,
       fulfillment_kind:r.firm_reward_taxonomy?.fulfillment_kind||r.reward_type,
       discount_percent:r.reward_type==='discount_pct'?r.reward_value:null,
@@ -3013,9 +3244,16 @@ async function retentionPage(draftVersionId=null,editProgramId=null){
     taxonomy=types||[];
   }
   if(isOwner){
-    const {data,error}=await sb.from('firm_config_versions').select('id,version_no,status,published_at,snapshot_hash')
-      .eq('business_id',S.biz.id).in('status',['published','superseded']).order('version_no',{ascending:false}).limit(20);
-    if(error)return fail(error);history=data||[];
+    const draftRequest=!draftVersionId&&currentVersion
+      ?sb.from('firm_config_versions').select('id,version_no').eq('business_id',S.biz.id)
+        .eq('status','draft').eq('based_on_version_id',currentVersion).order('version_no',{ascending:false}).limit(1)
+      :Promise.resolve({data:[],error:null});
+    const [{data,error},{data:drafts,error:draftError}]=await Promise.all([
+      sb.from('firm_config_versions').select('id,version_no,status,published_at,snapshot_hash')
+        .eq('business_id',S.biz.id).in('status',['published','superseded']).order('version_no',{ascending:false}).limit(20),
+      draftRequest]);
+    if(!isRetentionCurrent())return;
+    if(error||draftError)throw error||draftError;history=data||[];resumableDraft=drafts?.[0]||null;
   }
   const rewardTypes=taxonomy.filter(x=>x.active);
   const newProgramRetryKey=draftVersionId?`frenly:retention-program:${S.biz.id}:${draftVersionId}`:null;
@@ -3026,19 +3264,20 @@ async function retentionPage(draftVersionId=null,editProgramId=null){
     :r.fulfillment_kind==='discount_pct'?`${r.discount_percent||0}% off`:esc(r.manual_item||'manual item');
   const versionTools=isOwner?`<div class="card" style="margin-bottom:16px">
     <div class="row"><div><b>${draftVersionId?'Draft configuration':'Published configuration'}</b>
-      <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':'Create a draft before changing retention behavior.'}</div></div><span class="spacer"></span>
+      <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':currentVersion?'Create a draft before changing retention behavior.':'Publish your loyalty foundation first; retention rules share the same versioned configuration.'}</div></div><span class="spacer"></span>
       ${draftVersionId?`<button class="btn ghost" id="discardRetentionDraft">Leave draft</button><button class="btn" id="publishRetention">Publish draft</button>`
-        :`<button class="btn" id="beginRetentionDraft" ${currentVersion?'':'disabled'}>Create editing draft</button>`}</div>
+        :currentVersion?(resumableDraft?`<a class="btn" href="#/retention/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`:'<button class="btn" id="beginRetentionDraft">Create editing draft</button>')
+          :'<a class="btn" href="#/loyalty">Set up loyalty first</a>'}</div>
     ${!draftVersionId&&history.length>1?`<div class="row" style="margin-top:12px"><label style="margin:0">Restore prior version</label>
       <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
-  M().innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Versioned return-visit rules with immutable reward behavior and grant history</p></div></div>
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Versioned return-visit rules with immutable reward behavior and grant history.',iconName:'retention',canWrite:isOwner,moduleLabel:'Retention configuration'})}
     ${versionTools}
     ${draftVersionId&&isOwner?`<div class="card" style="margin-bottom:16px"><b>Quick templates</b><div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
-      <button class="qbtn" data-t='{"name":"Weekly regular","g":1,"p":7,"rt":"discount_pct","rv":10}'>☕ 1 visit / week → 10% off</button>
-      <button class="qbtn" data-t='{"name":"Twice a week","g":2,"p":7,"rt":"free_item","ri":"Free drink"}'>🥤 2 visits / week → free item</button>
-      <button class="qbtn" data-t='{"name":"Loyal half-year","g":2,"p":180,"rt":"credit","rv":1000}'>💰 2 visits / 6 months → $10 credit</button>
+      <button class="qbtn" data-t='{"name":"Weekly regular","g":1,"p":7,"rt":"discount_pct","rv":10}'>1 visit / week → 10% off</button>
+      <button class="qbtn" data-t='{"name":"Twice a week","g":2,"p":7,"rt":"free_item","ri":"Free drink"}'>2 visits / week → free item</button>
+      <button class="qbtn" data-t='{"name":"Loyal half-year","g":2,"p":180,"rt":"credit","rv":1000}'>2 visits / 6 months → $10 credit</button>
     </div></div>`:''}
     <div class="split"><div class="card"><b>${editing?'Edit program':draftVersionId?'New program':'Programs'}</b>
       ${draftVersionId&&isOwner?`<label>Name</label><input id="rn" value="${esc(editing?.name||'')}" placeholder="e.g. Weekly regular">
@@ -3060,171 +3299,221 @@ async function retentionPage(draftVersionId=null,editProgramId=null){
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?(draftVersionId?'will be live':'live'):'paused'}</span>
         ${draftVersionId&&isOwner?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
           <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
-        :`<div class="empty"><div class="big">🔁</div>No retention programs in this ${draftVersionId?'draft':'configuration'}.</div>`}</div></div></div>
+        :CUI.emptyState({iconName:'retention',title:'No retention programs',body:`There are no programs in this ${draftVersionId?'draft':'configuration'}.`})}</div></div></div>
     ${isOwner?`<div class="card" style="margin-top:16px"><b>Reward type labels</b><p class="muted small" style="margin-top:6px">Labels may be renamed, sorted, or retired. Their financial behavior can never be changed.</p>
-      <div style="margin-top:8px">${taxonomy.map(t=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span><span class="spacer"></span><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
-        <button class="btn ghost sm taxonomyRename" data-id="${t.id}" data-label="${esc(t.label)}">Rename</button><button class="btn ghost sm taxonomySort" data-id="${t.id}" data-sort="${t.sort||0}">Sort</button>${t.active?`<button class="btn ghost sm taxonomyRetire" data-id="${t.id}">Retire</button>`:''}</div>`).join('')}</div>
+      <div style="margin-top:8px">${taxonomy.map(t=>`<div class="retention-taxonomy-row"><div class="retention-taxonomy-copy"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span></div><div class="retention-taxonomy-actions"><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
+        <button class="btn ghost sm taxonomyRename" data-id="${t.id}" data-label="${esc(t.label)}">Rename</button><button class="btn ghost sm taxonomySort" data-id="${t.id}" data-sort="${t.sort||0}">Sort</button>${t.active?`<button class="btn ghost sm taxonomyRetire" data-id="${t.id}">Retire</button>`:''}</div></div>`).join('')}</div>
       <details><summary>Add a new reward type</summary><label>Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label>Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option><option value="credit">Add store credit</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
     </div>`:''}`;
 
   if(isOwner&&!draftVersionId){
-    $('beginRetentionDraft').onclick=async()=>{const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_retention_editor'});if(error)return fail(error);retentionPage(data.version_id)};
-    if($('createRetentionRollback'))$('createRetentionRollback').onclick=async()=>{const base=$('retentionRollback').value;if(!base)return toast('Choose a prior version');const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:base,p_source:'retention_rollback'});if(error)return fail(error);toast('Rollback draft created — review before publishing');retentionPage(data.version_id)};
+    if($('beginRetentionDraft'))$('beginRetentionDraft').onclick=async()=>{const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_retention_editor'});if(!isRetentionCurrent())return;if(error)return fail(error);nav(`#/retention/${data.version_id}`)};
+    if($('createRetentionRollback'))$('createRetentionRollback').onclick=async()=>{const base=$('retentionRollback').value;if(!base)return toast('Choose a prior version');const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:base,p_source:'retention_rollback'});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Rollback draft created — review before publishing');nav(`#/retention/${data.version_id}`)};
   }
   if(isOwner&&draftVersionId){
-    $('discardRetentionDraft').onclick=()=>retentionPage();
-    $('publishRetention').onclick=async()=>{if(!confirm('Publish this retention draft? New sales will use it immediately.'))return;$('publishRetention').disabled=true;const {error}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});if(error){$('publishRetention').disabled=false;return fail(error)}toast('Retention configuration published');retentionPage()};
+    $('discardRetentionDraft').onclick=()=>nav('#/retention');
+    $('publishRetention').onclick=async()=>{if(!confirm('Publish this retention draft? New sales will use it immediately.'))return;const publishButton=$('publishRetention');publishButton.disabled=true;const {error}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});if(!isRetentionCurrent())return;if(error){publishButton.disabled=false;return fail(error)}toast('Retention configuration published');nav('#/retention')};
     const setRewardInput=()=>{const kind=$('rt').selectedOptions[0]?.dataset.kind;$('rvl').textContent=kind==='discount_pct'?'Discount %':kind==='credit'?`Credit amount (${S.biz.currency||'SGD'})`:'Item or benefit';$('rv').type=kind==='free_item'?'text':'number';if(editing){$('rv').value=kind==='discount_pct'?(editing.discount_percent||''):kind==='credit'?((editing.credit_cents||0)/100).toFixed(2):(editing.manual_item||'')}else $('rv').value=kind==='free_item'?'Free drink':'10'};
     if(rewardTypes.length){$('rt').onchange=setRewardInput;setRewardInput()}
     document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const t=JSON.parse(b.dataset.t),type=rewardTypes.find(x=>x.fulfillment_kind===t.rt);if(!type)return toast('Add this reward type first');$('rn').value=t.name;$('rg').value=t.g;$('rp').value=t.p;$('rt').value=type.id;setRewardInput();$('rv').value=t.rt==='free_item'?(t.ri||'Free item'):t.rt==='credit'?(t.rv/100):t.rv});
-    $('saveRetentionProgram').onclick=async()=>{const kind=$('rt').selectedOptions[0]?.dataset.kind,name=$('rn').value.trim();if(name.length<1)return toast('Name your program');const payload={name,active:$('ra').checked,goal_visits:parseInt($('rg').value),period_days:parseInt($('rp').value),starts_on:$('rs').value,reward_taxonomy_id:$('rt').value,customer_description:$('rcd').value.trim()||null,staff_description:$('rsi').value.trim()||null};if(kind==='discount_pct')payload.discount_percent=parseFloat($('rv').value||'0');if(kind==='credit')payload.credit_cents=Math.round(parseFloat($('rv').value||'0')*100);if(kind==='free_item')payload.manual_item=$('rv').value.trim();const programId=editing?.program_id||sessionStorage.getItem(newProgramRetryKey)||crypto.randomUUID();if(!editing)sessionStorage.setItem(newProgramRetryKey,programId);$('saveRetentionProgram').disabled=true;const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:programId,p_program:payload,p_expected_snapshot_hash:snapshotHash});if(error){$('saveRetentionProgram').disabled=false;return fail(error)}if(!editing)sessionStorage.removeItem(newProgramRetryKey);toast('Draft retention rule saved');retentionPage(draftVersionId)};
+    $('saveRetentionProgram').onclick=async()=>{const kind=$('rt').selectedOptions[0]?.dataset.kind,name=$('rn').value.trim();if(name.length<1)return toast('Name your program');const payload={name,active:$('ra').checked,goal_visits:parseInt($('rg').value),period_days:parseInt($('rp').value),starts_on:$('rs').value,reward_taxonomy_id:$('rt').value,customer_description:$('rcd').value.trim()||null,staff_description:$('rsi').value.trim()||null};if(kind==='discount_pct')payload.discount_percent=parseFloat($('rv').value||'0');if(kind==='credit')payload.credit_cents=Math.round(parseFloat($('rv').value||'0')*100);if(kind==='free_item')payload.manual_item=$('rv').value.trim();const programId=editing?.program_id||sessionStorage.getItem(newProgramRetryKey)||crypto.randomUUID();if(!editing)sessionStorage.setItem(newProgramRetryKey,programId);const saveButton=$('saveRetentionProgram');saveButton.disabled=true;const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:programId,p_program:payload,p_expected_snapshot_hash:snapshotHash});if(!isRetentionCurrent())return;if(error){saveButton.disabled=false;return fail(error)}if(!editing)sessionStorage.removeItem(newProgramRetryKey);toast('Draft retention rule saved');retentionPage(draftVersionId)};
     if($('cancelRetentionEdit'))$('cancelRetentionEdit').onclick=()=>retentionPage(draftVersionId);
     document.querySelectorAll('.retentionEdit').forEach(b=>b.onclick=()=>retentionPage(draftVersionId,b.dataset.id));
-    document.querySelectorAll('.retentionToggle').forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:b.dataset.id,p_program:{active:b.dataset.to==='true'},p_expected_snapshot_hash:snapshotHash});if(error)return fail(error);retentionPage(draftVersionId)});
+    document.querySelectorAll('.retentionToggle').forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:b.dataset.id,p_program:{active:b.dataset.to==='true'},p_expected_snapshot_hash:snapshotHash});if(!isRetentionCurrent())return;if(error)return fail(error);retentionPage(draftVersionId)});
   }
   if(isOwner){
-    $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(error)return fail(error);toast('Reward type added');retentionPage(draftVersionId)};
-    document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');retentionPage(draftVersionId)});
-    document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(error)return fail(error);toast('Reward type order updated');retentionPage(draftVersionId)});
-    document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!confirm('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(error)return fail(error);toast('Reward type retired; history is preserved');retentionPage(draftVersionId)});
+    $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type added');retentionPage(draftVersionId)};
+    document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');retentionPage(draftVersionId)});
+    document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');retentionPage(draftVersionId)});
+    document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!confirm('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');retentionPage(draftVersionId)});
   }
 }
 
 /* ---------- referrals ---------- */
 async function referralsPage(){
-  const {data:rp}=await sb.from('referral_programs').select('*').eq('business_id',S.biz.id).limit(1);
+  const routeMain=M();
+  const isReferralsCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=CUI.loadingState({title:'Referrals',iconName:'referrals'});
+  const canWrite=canWriteModule('referrals');
+  const {data:rp,error:programError}=await sb.from('referral_programs').select('*').eq('business_id',S.biz.id).limit(1);
+  if(!isReferralsCurrent())return;
+  if(programError)throw programError;
   const p=rp?.[0];
-  M().innerHTML=`<div class="topbar"><div><h1>Referrals</h1><p class="muted small">Every customer has a personal code — the reward only pays after their friend's first qualifying sale</p></div></div>
-    <div class="split"><div class="card"><b>Program settings</b>
-      <label>Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>Enabled</option><option value="false" ${!p||!p.enabled?'selected':''}>Off</option></select>
-      <label>Reward to referrer (${S.biz.currency||'SGD'} store credit)</label><input id="fr" type="number" min="0" step="0.01" value="${((p?.reward_cents??1000)/100).toFixed(2)}">
-      <label>Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">
+  const referralSettings=canWrite?`<label for="fe">Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>Enabled</option><option value="false" ${!p||!p.enabled?'selected':''}>Off</option></select>
+      <label for="fr">Reward to referrer (${S.biz.currency||'SGD'} store credit)</label><input id="fr" type="number" min="0" step="0.01" value="${((p?.reward_cents??1000)/100).toFixed(2)}">
+      <label for="fm">Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">`
+    :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${p?.enabled?'Enabled':'Off'}</dd></div><div class="cui-readonly-row"><dt>Reward to referrer</dt><dd>${money(p?.reward_cents??1000)}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Referrals',subtitle:"Every customer has a personal code; rewards pay only after a friend's first qualifying sale.",iconName:'referrals',canWrite,moduleLabel:'Referral settings'})}
+    <div class="split"><div class="card"><div class="cui-card-head"><h2>Program settings</h2></div>
+      ${referralSettings}
       <p class="muted small" style="margin-top:8px">Self-funding by design: nothing pays out until the new customer has actually come in and spent above your floor. One reward per referred customer, ever.</p>
-      <div style="margin-top:16px"><button class="btn" id="fsave">Save program</button></div></div>
-    <div class="card"><b>How to use it</b>
+      ${canWrite?`<div style="margin-top:16px">${CUI.action({id:'fsave',label:'Save program',iconName:'check'})}</div>`:''}</div>
+    <div class="card"><div class="cui-card-head"><h2>How to use it</h2></div>
       <p class="muted" style="margin-top:8px;line-height:1.7">1. Each customer's code is on their profile (Customers → open → copy).<br>
       2. When a new customer joins, type the friend's code into <b>"Referred by"</b> on the add-customer form.<br>
       3. The moment the new customer's first sale clears your minimum, ${money(p?.reward_cents??1000)} lands on the referrer's account automatically — audited, once only.</p></div></div>
-    <div class="card" style="margin-top:16px"><b>Referral activity</b><div id="flist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div>`;
-  $('fsave').onclick=async()=>{
-    const row={business_id:S.biz.id,enabled:$('fe').value==='true',
-      reward_cents:Math.round(parseFloat($('fr').value||'10')*100),
-      min_spend_cents:Math.round(parseFloat($('fm').value||'0')*100)};
-    const q=p?sb.from('referral_programs').update(row).eq('id',p.id):sb.from('referral_programs').insert(row);
-    const {error}=await q;if(error)return fail(error);toast('Referral program saved');
+    <div class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Referral activity</h2></div><div id="flist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div>`;
+  if($('fsave'))$('fsave').onclick=async()=>{
+    const saveButton=$('fsave');saveButton.disabled=true;
+    const {error}=await sb.rpc('save_referral_program',{p_business:S.biz.id,
+      p_enabled:$('fe').value==='true',p_reward_cents:Math.round(parseFloat($('fr').value||'10')*100),
+      p_min_spend_cents:Math.round(parseFloat($('fm').value||'0')*100)});
+    if(!isReferralsCurrent())return;
+    if(error){saveButton.disabled=false;return fail(error)}toast('Referral program saved');referralsPage();
   };
-  const {data:refs}=await sb.from('referrals')
+  const {data:refs,error:referralsError}=await sb.from('referrals')
     .select('*, referrer:clients!referrals_referrer_client_id_fkey(full_name), referred:clients!referrals_referred_client_id_fkey(full_name)')
     .eq('business_id',S.biz.id).order('created_at',{ascending:false});
+  if(!isReferralsCurrent())return;
+  if(referralsError)throw referralsError;
   $('flist').innerHTML=(refs&&refs.length)?`<table><tr><th>Referrer</th><th>Brought in</th><th>Status</th><th>Reward</th><th>Qualified</th></tr>
     ${refs.map(r=>`<tr><td><b>${esc(r.referrer?.full_name||'—')}</b></td><td>${esc(r.referred?.full_name||'—')}</td>
     <td><span class="pill ${r.status==='rewarded'?'ok':r.status==='pending'?'new':'off'}">${r.status}</span></td>
     <td>${r.status==='rewarded'?money(r.reward_cents):'—'}</td>
     <td>${r.qualified_at?r.qualified_at.slice(0,10):'—'}</td></tr>`).join('')}</table>`
-    :`<div class="empty"><div class="big">🤝</div>No referrals yet.<br>Link one via "Referred by" when adding a new customer.</div>`;
+    :CUI.emptyState({iconName:'referrals',title:'No referrals yet',body:'Link a referral with the “Referred by” field when adding a customer.'});
 }
 
 /* ---------- memberships ---------- */
 async function membershipsPage(){
-  const [{data:plans},{data:cl}]=await Promise.all([
+  const routeMain=M();
+  const isMembershipsCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=CUI.loadingState({title:'Memberships',iconName:'memberships'});
+  const canWrite=canWriteModule('memberships');
+  const canEnroll=canWrite&&hasRoleCapability('create_sales');
+  const [{data:plans,error:plansError},{data:cl,error:clientsError}]=await Promise.all([
     sb.from('membership_plans').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false}),
     sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name')]);
-  M().innerHTML=`<div class="topbar"><div><h1>Memberships</h1><p class="muted small">Recurring plans: a monthly/annual price that drops spendable credit every period. Renewals run themselves daily.</p></div></div>
-    <div class="split">
-    <div class="card"><b>Create a plan</b>
-      <label>Plan name</label><input id="mn" placeholder="e.g. Glow Monthly">
-      <div class="split"><div><label>Price (${S.biz.currency||'SGD'})</label><input id="mp" type="number" min="0" step="0.01" value="80"></div>
-      <div><label>Billing</label><select id="mc"><option value="monthly">Monthly</option><option value="annual">Annual</option></select></div></div>
-      <label>Credit dropped each period (${S.biz.currency||'SGD'})</label><input id="mcr" type="number" min="0" step="0.01" value="60">
+  if(!isMembershipsCurrent())return;
+  if(plansError||clientsError)throw plansError||clientsError;
+  const planEditor=canWrite?`<label for="mn">Plan name</label><input id="mn" placeholder="e.g. Glow Monthly">
+      <div class="split"><div><label for="mp">Price (${S.biz.currency||'SGD'})</label><input id="mp" type="number" min="0" step="0.01" value="80"></div>
+      <div><label for="mc">Billing</label><select id="mc"><option value="monthly">Monthly</option><option value="annual">Annual</option></select></div></div>
+      <label for="mcr">Credit dropped each period (${S.biz.currency||'SGD'})</label><input id="mcr" type="number" min="0" step="0.01" value="60">
       <p class="muted small" style="margin-top:8px">Billing is collect-in-person for now (renewal books the charge as a sale). Credits land on the member's account and roll over. Membership charges never earn loyalty points.</p>
-      <div style="margin-top:16px"><button class="btn" id="madd">Create plan</button></div>
+      <div style="margin-top:16px">${CUI.action({id:'madd',label:'Create plan',iconName:'add'})}</div>`
+    :`<p class="muted small">Plan creation is unavailable with read-only access. Existing prices, cadence, and credits remain visible below.</p>`;
+  const enrollmentEditor=canEnroll?`<label for="ec">Customer</label><select id="ec">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
+      <label for="ep">Plan</label><select id="ep">${(plans||[]).filter(p=>p.active).map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.price_cents)}/${p.cadence==='annual'?'yr':'mo'}</option>`).join('')||'<option value="">— create a plan first —</option>'}</select>
+      <div style="margin-top:16px">${CUI.action({id:'ego',label:'Enroll and charge first period',iconName:'add'})}</div>`
+    :`<p class="muted small">Enrollment requires membership write access and a role allowed to create sales. Current members remain visible below.</p>`;
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Memberships',subtitle:'Recurring plans with automated credit drops and daily renewals.',iconName:'memberships',canWrite,moduleLabel:'Membership management'})}
+    <div class="split">
+    <div class="card"><div class="cui-card-head"><h2>${canWrite?'Create a plan':'Plan catalogue'}</h2></div>
+      ${planEditor}
       <div id="plist" style="margin-top:18px"></div></div>
-    <div class="card"><b>Enroll a member</b>
-      <label>Customer</label><select id="ec">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
-      <label>Plan</label><select id="ep">${(plans||[]).filter(p=>p.active).map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.price_cents)}/${p.cadence==='annual'?'yr':'mo'}</option>`).join('')||'<option value="">— create a plan first —</option>'}</select>
-      <div style="margin-top:16px"><button class="btn" id="ego">Enroll — charge first period now</button></div>
+    <div class="card"><div class="cui-card-head"><h2>${canEnroll?'Enroll a member':'Current memberships'}</h2></div>
+      ${enrollmentEditor}
       <div id="mlist" style="margin-top:18px"><p class="muted small">Loading members…</p></div></div></div>`;
-  $('madd').onclick=async()=>{
+  if($('madd'))$('madd').onclick=async()=>{
     const name=$('mn').value.trim();
     if(name.length<2) return toast('Name the plan');
-    const {error}=await sb.from('membership_plans').insert({business_id:S.biz.id,name,
-      price_cents:Math.round(parseFloat($('mp').value||'0')*100),cadence:$('mc').value,
-      credit_cents:Math.round(parseFloat($('mcr').value||'0')*100)});
-    if(error) return fail(error);
+    const addButton=$('madd');addButton.disabled=true;
+    const {error}=await sb.rpc('save_membership_plan',{p_business:S.biz.id,p_plan:null,p_name:name,
+      p_price_cents:Math.round(parseFloat($('mp').value||'0')*100),p_cadence:$('mc').value,
+      p_credit_cents:Math.round(parseFloat($('mcr').value||'0')*100),p_discount_pct:0,p_active:true});
+    if(!isMembershipsCurrent())return;
+    if(error){addButton.disabled=false;return fail(error)}
     toast('Plan created');membershipsPage();
   };
-  $('ego').onclick=async()=>{
+  if(canEnroll&&$('ego'))$('ego').onclick=async()=>{
     if(!$('ec').value||!$('ep').value) return toast('Pick a customer and a plan');
-    $('ego').disabled=true;
-    const {error}=await sb.rpc('enroll_membership',{p_business:S.biz.id,p_client:$('ec').value,p_plan:$('ep').value});
-    if(error){fail(error);$('ego').disabled=false;return}
+    const enrollButton=$('ego');enrollButton.disabled=true;
+    const {error}=await sb.rpc('enroll_membership_v41',{p_business:S.biz.id,p_client:$('ec').value,p_plan:$('ep').value});
+    if(!isMembershipsCurrent())return;
+    if(error){fail(error);enrollButton.disabled=false;return}
     toast('Enrolled — first charge booked, credits dropped 🎉');membershipsPage();
   };
   $('plist').innerHTML=(plans&&plans.length)?plans.map(p=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">
     <div><b>${esc(p.name)}</b><div class="muted small">${money(p.price_cents)}/${p.cadence==='annual'?'yr':'mo'} → ${money(p.credit_cents)} credit each period</div></div>
     <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'off'}</span>
-    <button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Disable':'Enable'}</button></div>`).join('')
+    ${canWrite?`<button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Disable':'Enable'}</button>`:''}</div>`).join('')
     :'<p class="muted small" style="margin-top:10px">No plans yet.</p>';
-  window.togglePlan=async(id,to)=>{await sb.from('membership_plans').update({active:to}).eq('id',id);membershipsPage()};
-  const {data:ms}=await sb.from('memberships')
+  if(canWrite)window.togglePlan=async(id,to)=>{const p=(plans||[]).find(x=>x.id===id);if(!p)return toast('Plan not found');
+    const {error}=await sb.rpc('save_membership_plan',{p_business:S.biz.id,p_plan:id,p_name:p.name,
+      p_price_cents:p.price_cents,p_cadence:p.cadence,p_credit_cents:p.credit_cents,
+      p_discount_pct:p.discount_pct,p_active:to});if(error)return fail(error);membershipsPage()};
+  const {data:ms,error:membershipsError}=await sb.from('memberships')
     .select('*, clients(full_name), membership_plans(name,price_cents,cadence)')
     .eq('business_id',S.biz.id).order('created_at',{ascending:false});
+  if(!isMembershipsCurrent())return;
+  if(membershipsError)throw membershipsError;
   $('mlist').innerHTML=(ms&&ms.length)?`<table><tr><th>Member</th><th>Plan</th><th>Status</th><th>Renews</th><th></th></tr>
     ${ms.map(m=>`<tr><td><b>${esc(m.clients?.full_name||'—')}</b></td><td>${esc(m.membership_plans?.name||'—')}</td>
     <td><span class="pill ${m.status==='active'?'on':m.status==='cancelled'?'no':'off'}">${m.status.replace(/_/g,' ')}</span></td>
     <td>${m.current_period_end.slice(0,10)}</td>
-    <td>${m.status==='active'?`<button class="btn ghost sm" onclick="setMs('${m.id}','paused')">Pause</button>
+    <td>${canWrite&&m.status==='active'?`<button class="btn ghost sm" onclick="setMs('${m.id}','paused')">Pause</button>
       <button class="btn ghost sm" onclick="setMs('${m.id}','cancel_at_period_end')">Cancel@end</button>`
-      :m.status==='paused'?`<button class="btn ghost sm" onclick="setMs('${m.id}','active')">Resume</button>`:''}</td></tr>`).join('')}</table>`
+      :canWrite&&m.status==='paused'?`<button class="btn ghost sm" onclick="setMs('${m.id}','active')">Resume</button>`:''}</td></tr>`).join('')}</table>`
     :'<p class="muted small">No members yet — enroll your first above.</p>';
-  window.setMs=async(id,status)=>{const {error}=await sb.from('memberships').update({status}).eq('id',id);if(error)return fail(error);toast('Membership '+status.replace(/_/g,' '));membershipsPage()};
+  if(canWrite)window.setMs=async(id,status)=>{const {error}=await sb.rpc('set_membership_status',{p_business:S.biz.id,
+    p_membership:id,p_status:status});if(error)return fail(error);toast('Membership '+status.replace(/_/g,' '));membershipsPage()};
 }
 
 /* ---------- gift cards ---------- */
 async function giftcardsPage(){
-  const {data:cl}=await sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name');
-  M().innerHTML=`<div class="topbar"><div><h1>Gift cards</h1><p class="muted small">Sell a card, then redeem it onto any customer's account as spendable credit — one ledger, no side balances.</p></div></div>
-    <div class="split">
-    <div class="card"><b>Sell a gift card</b>
-      <label>Amount (${S.biz.currency||'SGD'})</label><input id="ga" type="number" min="1" step="0.01" value="50">
-      <label>Purchaser (optional — earns loyalty on the purchase)</label>
+  const routeMain=M();
+  const isGiftCardsCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=CUI.loadingState({title:'Gift cards',iconName:'giftcard'});
+  const canWrite=canWriteModule('giftcards');
+  const canTransact=canWrite&&hasRoleCapability('create_sales');
+  let issueGiftCardIdempotencyKey=crypto.randomUUID();
+  const {data:cl,error:clientsError}=await sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name');
+  if(!isGiftCardsCurrent())return;
+  if(clientsError)throw clientsError;
+  const giftCardWorkspace=canTransact?`<div class="cui-card-head"><h2>Sell a gift card</h2></div>
+      <label for="ga">Amount (${S.biz.currency||'SGD'})</label><input id="ga" type="number" min="1" step="0.01" value="50">
+      <label for="gp">Purchaser (optional — earns loyalty on the purchase)</label>
       <select id="gp"><option value="">Walk-in</option>${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')}</select>
-      <label>Recipient email (optional)</label><input id="gr" type="email" placeholder="friend@email.com">
-      <div style="margin-top:16px"><button class="btn" id="gsell">Sell card — generate code</button></div>
-      <div id="gcode"></div>
+      <label for="gr">Recipient email (optional)</label><input id="gr" type="email" autocomplete="email" placeholder="friend@email.com">
+      <div style="margin-top:16px">${CUI.action({id:'gsell',label:'Sell card and generate code',iconName:'giftcard'})}</div>
+      <div id="gcode" aria-live="polite"></div>
       <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
-      <b>Redeem a card</b>
-      <label>Code</label><input id="gc" placeholder="GC-XXXXXXXX" style="text-transform:uppercase">
-      <label>Load onto customer</label><select id="gcl">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
-      <div style="margin-top:16px"><button class="btn ghost" id="gredeem">Redeem full balance → customer credit</button></div></div>
-    <div class="card"><b>Cards on the books</b><div id="glist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
-  $('gsell').onclick=async()=>{
+      <div class="cui-card-head"><h2>Redeem a card</h2></div>
+      <label for="gc">Code</label><input id="gc" placeholder="GC-XXXXXXXX" style="text-transform:uppercase">
+      <label for="gcl">Load onto customer</label><select id="gcl">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
+      <div style="margin-top:16px">${CUI.action({id:'gredeem',label:'Redeem balance to customer credit',iconName:'redeem',variant:'secondary'})}</div>`
+    :`<div class="cui-card-head"><h2>Gift card transactions</h2><p>Issuing and redemption require gift-card write access and a role allowed to create sales.</p></div><dl class="cui-readonly-list"><div class="cui-readonly-row"><dt>Available actions</dt><dd>Review issued cards and balances</dd></div><div class="cui-readonly-row"><dt>Restricted actions</dt><dd>Sell cards and redeem balances</dd></div></dl>`;
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'Issue and redeem spendable credit through one auditable ledger.',iconName:'giftcard',canWrite:canTransact,moduleLabel:'Gift card transactions'})}
+    <div class="split">
+    <div class="card">${giftCardWorkspace}</div>
+    <div class="card"><div class="cui-card-head"><h2>Cards on the books</h2></div><div id="glist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+  if(canTransact&&$('gsell'))$('gsell').onclick=async()=>{
     const amt=Math.round(parseFloat($('ga').value||'0')*100);
     if(!(amt>0)) return toast('Enter an amount');
-    $('gsell').disabled=true;
+    const sellButton=$('gsell');sellButton.disabled=true;
     const {data,error}=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:amt,
-      p_purchaser:$('gp').value||null,p_recipient_email:$('gr').value||null});
-    $('gsell').disabled=false;
+      p_purchaser:$('gp').value||null,p_recipient_email:$('gr').value||null,
+      p_idempotency_key:issueGiftCardIdempotencyKey});
+    if(!isGiftCardsCurrent())return;
+    sellButton.disabled=false;
     if(error) return fail(error);
-    $('gcode').innerHTML=`<div class="err" style="background:#E7F6EE;color:#2FA36B"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. Give this code to the buyer.</div>`;
+    $('gcode').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. Give this code to the buyer.</div>`;
+    issueGiftCardIdempotencyKey=crypto.randomUUID();
     loadCards();
   };
-  $('gredeem').onclick=async()=>{
+  if(canTransact&&$('gredeem'))$('gredeem').onclick=async()=>{
     if(!$('gc').value.trim()||!$('gcl').value) return toast('Enter a code and pick a customer');
-    $('gredeem').disabled=true;
-    const {data,error}=await sb.rpc('redeem_gift_card',{p_business:S.biz.id,p_code:$('gc').value,
+    const redeemButton=$('gredeem');redeemButton.disabled=true;
+    const {data,error}=await sb.rpc('redeem_gift_card_v41',{p_business:S.biz.id,p_code:$('gc').value,
       p_client:$('gcl').value,p_amount:null});
-    $('gredeem').disabled=false;
+    if(!isGiftCardsCurrent())return;
+    redeemButton.disabled=false;
     if(error) return fail(error);
     toast(`${money(data.loaded_cents)} loaded onto account 🎉`);$('gc').value='';loadCards();
   };
   async function loadCards(){
-    const {data:gcs}=await sb.from('gift_cards').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false});
+    const {data:gcs,error}=await sb.rpc('staff_list_gift_cards',{p_business:S.biz.id,p_limit:100});
+    if(!isGiftCardsCurrent())return;
+    if(error){
+      $('glist').innerHTML=`<div class="err" role="alert">${esc(error.message||'Gift cards could not be loaded.')}</div><button class="btn ghost sm" id="giftCardsRetry" style="margin-top:12px">Try again</button>`;
+      $('giftCardsRetry').onclick=loadCards;return;
+    }
     $('glist').innerHTML=(gcs&&gcs.length)?`<table><tr><th>Code</th><th>Value</th><th>Balance</th><th>Status</th><th>Issued</th></tr>
-      ${gcs.map(g=>`<tr><td><b>${esc(g.code)}</b></td><td>${money(g.initial_cents)}</td><td>${money(g.balance_cents)}</td>
+      ${gcs.map(g=>`<tr><td><b>•••• ${esc(g.code_suffix)}</b></td><td>${money(g.initial_cents)}</td><td>${money(g.balance_cents)}</td>
       <td><span class="pill ${g.status==='active'?'on':g.status==='redeemed'?'ok':'no'}">${g.status}</span></td>
       <td>${g.created_at.slice(0,10)}</td></tr>`).join('')}</table>`
-      :`<div class="empty"><div class="big">🎟️</div>No gift cards yet. Sell the first one on the left.</div>`;
+      :CUI.emptyState({iconName:'giftcard',title:'No gift cards yet',body:canTransact?'Sell the first card from the transaction panel.':'Issued cards will appear here.'});
   }
   loadCards();
 }
@@ -3866,8 +4155,8 @@ async function dailyReportPage(){
         <div class="card kpi"><div class="l">Unique customers</div><div class="v">${uniq}</div></div>
         <div class="card kpi"><div class="l">Gift card cash collected</div><div class="v">${money(giftCash)}</div></div>
       </div>
-      <div class="charts"><div class="card"><b>Revenue by staff</b><canvas id="drC1"></canvas></div>
-        <div class="card"><b>Revenue by kind</b><canvas id="drC2"></canvas></div></div>
+      <div class="charts"><div class="card"><b>Revenue by staff</b><div class="chart-frame"><canvas id="drC1"></canvas></div></div>
+        <div class="card"><b>Revenue by kind</b><div class="chart-frame"><canvas id="drC2"></canvas></div></div></div>
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed: reversal rows reduce revenue and visits while originals remain visible.</p>
         ${rows.length?`<table style="margin-top:8px"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th>Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${sgt(r.occurred_at).slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
@@ -3997,8 +4286,8 @@ async function pnlPage(){
         <div class="card kpi"><div class="l">Net</div><div class="v" style="color:${net>=0?'#2FA36B':'#C0392B'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div></div>
       </div>
       <p class="muted small" style="margin:12px 0">Gift card sales are cash collected, not revenue — they appear when redeemed and spent.</p>
-      <div class="charts"><div class="card"><b>Expenses by category</b><canvas id="plC1"></canvas></div>
-        <div class="card"><b>${mk.length?'Revenue vs expenses by month':'Add a wider range to see month-by-month'}</b>${mk.length?'<canvas id="plC2"></canvas>':''}</div></div>`;
+      <div class="charts"><div class="card"><b>Expenses by category</b><div class="chart-frame"><canvas id="plC1"></canvas></div></div>
+        <div class="card"><b>${mk.length?'Revenue vs expenses by month':'Add a wider range to see month-by-month'}</b>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':''}</div></div>`;
     const coral='#FF6B5E',amber='#FFB86B',green='#2FA36B';
     const C=(id,cfg)=>S.charts.push(new Chart($(id),cfg));
     const catKeys=Object.keys(byCat);
@@ -4033,7 +4322,7 @@ async function settingsPage(){
     <div class="card"><b>Modules</b><p class="muted small" style="margin:6px 0 4px">Toggle what ${esc(S.biz.name)} uses. Dashboard is always on.</p>
       ${mods.map(m=>`<label style="display:flex;align-items:flex-start;gap:10px;margin-top:12px;cursor:pointer;font-size:14px;color:var(--ink);font-weight:500">
         <input type="checkbox" style="width:auto;margin-top:2px" data-m="${m}" ${(S.biz.enabled_modules||[]).includes(m)?'checked':''}>
-        <span>${MODULES[m][0]} ${MODULES[m][1]}${dependencyText(m)?`<span class="muted small" style="display:block;font-weight:400">Uses ${esc(dependencyText(m))}</span>`:''}</span></label>`).join('')}
+        <span>${CUI.icon(MODULES[m][0],{size:16})} ${MODULES[m][1]}${dependencyText(m)?`<span class="muted small" style="display:block;font-weight:400">Uses ${esc(dependencyText(m))}</span>`:''}</span></label>`).join('')}
       <div style="margin-top:16px"><button class="btn" id="msave">Save modules</button></div></div></div>
     <div class="split" style="margin-top:16px">
       <div class="card" id="billingWrap"><div class="empty">Loading…</div></div>
@@ -4140,7 +4429,7 @@ async function settingsPage(){
     const avail=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='setup'&&(S.biz.enabled_modules||[]).includes(m));
     if(!avail.length) return '<p class="muted small">No modules enabled for this business yet.</p>';
     return avail.map(m=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;color:var(--ink);font-size:13.5px">
-      <input type="checkbox" style="width:auto" ${sel.mods.includes(m)?'checked':''} onchange="toggleModCheck('${staffId}','${m}',this.checked)"> ${MODULES[m][0]} ${MODULES[m][1]}</label>`).join('');
+      <input type="checkbox" style="width:auto" ${sel.mods.includes(m)?'checked':''} onchange="toggleModCheck('${staffId}','${m}',this.checked)"> ${CUI.icon(MODULES[m][0],{size:16})} ${MODULES[m][1]}</label>`).join('');
   }
   function modPanelHtml(s){
     initPanelSel(s);
@@ -4216,7 +4505,7 @@ async function settingsPage(){
     toast('Modules updated');
     delete panelSel[staffId];openModId=null;
     await loadTeam();
-    if(staffId===myStaffId){S.myModules=null;route();}
+    if(staffId===myStaffId){S.myModules=null;S.myModulePerms=null;route();}
   };
   window.saveModTemplate=async(staffId)=>{
     const sel=panelSel[staffId];if(!sel)return;
@@ -4237,7 +4526,7 @@ async function settingsPage(){
     toast('Template applied');
     delete panelSel[staffId];openModId=staffId;
     await loadTeam();
-    if(staffId===myStaffId){S.myModules=null;route();}
+    if(staffId===myStaffId){S.myModules=null;S.myModulePerms=null;route();}
   };
   $('igo').onclick=async()=>{
     const {data,error}=await sb.rpc('create_invite',{p_business:S.biz.id,p_role:$('ir').value,p_email:$('ie').value||null});
@@ -4265,7 +4554,7 @@ async function settingsPage(){
     const iN=col('name'),iP=col('phone'),iE=col('email'),iG=col('gender'),iB=col('birth');
     if(iN<0) return toast('No "name" column found');
     const recs=rows.slice(1).filter(r=>r[iN]&&r[iN].trim().length>1).map(r=>({
-      business_id:S.biz.id,full_name:r[iN].trim(),
+      idempotency_key:crypto.randomUUID(),full_name:r[iN].trim(),
       phone:iP>=0?(r[iP]||null):null,email:iE>=0?(r[iE]||null):null,
       gender:iG>=0&&['female','male','other'].includes((r[iG]||'').toLowerCase())?r[iG].toLowerCase():null,
       birth_date:iB>=0&&/^\d{4}-\d{2}-\d{2}$/.test(r[iB]||'')?r[iB]:null}));
@@ -4274,10 +4563,13 @@ async function settingsPage(){
       <button class="btn sm" id="csvgo" style="margin-top:8px">Import ${recs.length} customers</button>`;
     $('csvgo').onclick=async()=>{
       $('csvgo').disabled=true;let done=0;
-      for(let i=0;i<recs.length;i+=100){
-        const {error}=await sb.from('clients').insert(recs.slice(i,i+100));
+      for(const rec of recs){
+        const {error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,
+          p_idempotency_key:rec.idempotency_key,p_full_name:rec.full_name,p_phone:rec.phone,
+          p_email:rec.email,p_birth_date:rec.birth_date,p_gender:rec.gender,
+          p_marketing_consent:false,p_referrer_code:null,p_source:'settings CSV import'});
         if(error){toast(`Imported ${done}, then failed: ${error.message}`);return}
-        done+=Math.min(100,recs.length-i);
+        done+=1;
       }
       toast(`Imported ${done} customers 🎉`);$('csvprev').innerHTML=`<p class="small">✓ ${done} imported.</p>`;
     };
