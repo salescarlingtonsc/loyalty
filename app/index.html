@@ -2625,6 +2625,22 @@ async function clientDetail(id){
   const netVisits=(allSl||[]).filter(s=>s.counts_as_visit).reduce((n,s)=>n+(s.reversal_of?-1:1),0);
   const detailSubtitle=`${c.phone||''} ${c.email||''} · ${c.gender||'gender not set'}`.trim();
   const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:17})}<span>All customers</span></a>`;
+  let birthdayCardMarkup='';
+  if(birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status!=='unavailable'){
+    const birthdayStatusLabel=birthdayBenefit.status==='redeemed'
+      ?'Redeemed'
+      :canRedeemBirthday?'Not currently redeemable':'Read only';
+    const birthdayRedeemMarkup=canRedeemBirthday&&birthdayBenefit.status==='available'&&birthdayBenefit.cta==='show_at_counter'
+      ?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><label class="sr-only" for="birthdayRedeemBranch">Redeeming branch</label><select id="birthdayRedeemBranch" aria-label="Redeeming branch">${(ctxBr||[]).map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}</select><button class="btn sm" id="birthdayRedeem">Redeem birthday benefit</button></div><p id="birthdayRedeemStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p>`
+      :`<span class="pill off" style="margin-top:10px">${birthdayStatusLabel}</span>`;
+    const birthdayReverseMarkup=canReverseBirthday&&birthdayBenefit.status==='redeemed'&&birthdayBenefit.redemption==='redeemed'
+      ?`<details style="margin-top:10px"><summary class="small">Owner correction</summary><label for="birthdayReverseReason" class="small" style="display:block;margin-top:8px">Reason for reversal</label><textarea id="birthdayReverseReason" rows="2" maxlength="500" placeholder="Required: explain the counter correction"></textarea><button class="btn danger sm" id="birthdayReverse" style="margin-top:8px">Reverse birthday redemption</button><p id="birthdayReverseStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p></details>`
+      :'';
+    birthdayCardMarkup=`<div class="card"><b>Birthday benefit</b>
+      <p class="muted small" style="margin-top:7px">${esc(birthdayBenefit.label||'Birthday benefit')} · ${esc(birthdayBenefit.display||String(birthdayBenefit.status||'').replaceAll('_',' '))}</p>
+      <p class="muted small" style="margin-top:5px">${birthdayBenefit.status==='available'?'Available to redeem now.':birthdayBenefit.status==='expired'?'No longer available.':'Fulfilment status is shown above.'} The team never sees the customer’s birthday date or validity window.</p>
+      ${birthdayRedeemMarkup}${birthdayReverseMarkup}</div>`;
+  }
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:allCustomersAction,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
     <div class="kpis">
       <div class="card kpi"><div class="l">Points</div><div class="v">${pts}</div></div>
@@ -2665,12 +2681,7 @@ async function clientDetail(id){
           <span class="muted small">${esc(g.reward_label||'Reward')} · ${g.fulfillment_kind==='credit'?money(g.reward_value):g.fulfillment_kind==='discount_pct'?g.reward_value+'% off':esc(g.reward_item||'free item')} · ${g.granted_at.slice(0,10)}</span></div>`).join('')
           :'<p class="muted small" style="margin-top:6px">None yet — rewards land here automatically when visit goals are hit.</p>'}
       </div>
-      ${birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status!=='unavailable'?`<div class="card"><b>Birthday benefit</b>
-        <p class="muted small" style="margin-top:7px">${esc(birthdayBenefit.label||'Birthday benefit')} · ${esc(birthdayBenefit.display||String(birthdayBenefit.status||'').replaceAll('_',' '))}</p>
-        <p class="muted small" style="margin-top:5px">${birthdayBenefit.status==='available'?'Available to redeem now.':birthdayBenefit.status==='expired'?'No longer available.':'Fulfilment status is shown above.'} The team never sees the customer’s birthday date or validity window.</p>
-        ${canRedeemBirthday&&birthdayBenefit.status==='available'&&birthdayBenefit.cta==='show_at_counter'?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><label class="sr-only" for="birthdayRedeemBranch">Redeeming branch</label><select id="birthdayRedeemBranch" aria-label="Redeeming branch">${(ctxBr||[]).map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}</select><button class="btn sm" id="birthdayRedeem">Redeem birthday benefit</button></div><p id="birthdayRedeemStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p>`:'<span class="pill off" style="margin-top:10px">${birthdayBenefit.status==='redeemed'?'Redeemed':canRedeemBirthday?'Not currently redeemable':'Read only'}</span>'}
-        ${canReverseBirthday&&birthdayBenefit.status==='redeemed'&&birthdayBenefit.redemption==='redeemed'?`<details style="margin-top:10px"><summary class="small">Owner correction</summary><label for="birthdayReverseReason" class="small" style="display:block;margin-top:8px">Reason for reversal</label><textarea id="birthdayReverseReason" rows="2" maxlength="500" placeholder="Required: explain the counter correction"></textarea><button class="btn danger sm" id="birthdayReverse" style="margin-top:8px">Reverse birthday redemption</button><p id="birthdayReverseStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p></details>`:''}
-      </div>`:''}</div>
+      ${birthdayCardMarkup}</div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
     <div class="card" style="margin-top:16px"><b>Full history</b><p class="muted small" style="margin:4px 0 8px">Every service and sale, ever — newest first.</p>
