@@ -291,8 +291,9 @@ tr.click:hover td{background:#FBFAF8}
 /* portal */
 .portal{max-width:640px;margin:0 auto;padding:40px 20px}
 .portal .head{text-align:center;margin-bottom:26px}
-.svc{display:flex;justify-content:space-between;padding:13px 16px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer;background:#fff}
+.svc{display:flex;justify-content:space-between;width:100%;padding:13px 16px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer;background:#fff;color:var(--ink);font:inherit;text-align:left}
 .svc.sel{border-color:var(--coral);background:#FFF7F0}
+.svc:disabled{cursor:not-allowed;opacity:.55}
 .wallet-shell{min-height:100vh;background:var(--bg);padding:28px 18px 56px}
 .wallet-inner{width:min(760px,100%);margin:0 auto}
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
@@ -612,16 +613,16 @@ function createLatestRequestGate(isInstanceCurrent){
 function nav(h){location.hash=h}
 window.addEventListener('hashchange',route);
 
-const unavailableCustomerCapabilities=()=>({customer_identity:false,customer_claims:false,
+const unavailableCustomerCapabilities=(loadError=false)=>({customer_identity:false,customer_claims:false,
   customer_wallet:false,customer_actions:false,customer_notifications:false,customer_email_otp:false,
   customer_phone_otp:false,customer_whatsapp_otp:false,customer_phone_registration:false,customer_phone_claims:false,
-  customer_actionable_wallet:false,customer_birthday_benefits:false,customer_in_app_inbox:false});
+  customer_actionable_wallet:false,customer_birthday_benefits:false,customer_in_app_inbox:false,_load_error:loadError});
 async function loadCustomerFeatureCapabilities({refresh=false}={}){
   if(CUSTOMER_FEATURES_EMERGENCY_DISABLED) return unavailableCustomerCapabilities();
   if(customerFeatureCapabilities&&!refresh) return customerFeatureCapabilities;
   const {data,error}=await sb.rpc('get_customer_feature_capabilities');
-  customerFeatureCapabilities=error?unavailableCustomerCapabilities():{
-    ...unavailableCustomerCapabilities(),...(data||{})};
+  if(error)return unavailableCustomerCapabilities(true);
+  customerFeatureCapabilities={...unavailableCustomerCapabilities(),...(data||{})};
   return customerFeatureCapabilities;
 }
 
@@ -653,6 +654,7 @@ async function route(){
     if(h==='#/claim'||h.startsWith('#/claim?')) return renderCustomerClaim();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
       const customerCapabilities=await loadCustomerFeatureCapabilities();
+      if(customerCapabilities._load_error)return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');
       if(!customerCapabilities.customer_wallet) return renderCustomerWalletUnavailable();
       return renderCustomerWallet(h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null);
     }
@@ -777,7 +779,7 @@ let customerRegistrationState={phone:'',channel:'sms'};
 function normalizeSingaporeCustomerPhone(value){
   const digits=String(value??'').replace(/[^0-9]/g,'');
   const local=digits.startsWith('65')&&digits.length===10?digits.slice(2):digits;
-  return /^[3689][0-9]{7}$/.test(local)?`+65${local}`:null;
+  return /^[89][0-9]{7}$/.test(local)?`+65${local}`:null;
 }
 const unavailableCustomerPhoneOtpCapabilities=()=>({sms:false,whatsapp:false});
 async function loadCustomerPhoneOtpCapabilities({refresh=false}={}){
@@ -902,13 +904,12 @@ function renderCustomerRegistrationProfile(){
 async function renderCustomerRegistration(){
   if(S.user){
     const customerFeatures=await loadCustomerFeatureCapabilities();
+    if(customerFeatures._load_error)return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');
     if(!customerFeatures.customer_phone_registration){
       return renderCustomerWalletUnavailable('Customer registration is not available yet.');
     }
     const {data:profile,error:profileError}=await sb.rpc('customer_get_profile');
-    if(profileError){
-      return renderCustomerWalletUnavailable('Customer profile is temporarily unavailable. Please try again later.');
-    }
+    if(profileError)return renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');
     if(profile?.profile!==null){
       nav('#/wallet');return;
     }
@@ -1035,6 +1036,17 @@ function renderCustomerWalletUnavailable(message='Customer wallet access is not 
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
 
+function renderCustomerCapabilityRetry(message){
+  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><div class="wallet-head">
+    <div class="logo">frenly<span>.</span></div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2>My Frenly could not load</h2>
+      <p class="muted" style="margin-top:8px">${esc(message)}</p>
+      <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
+    </div></div></div>`;
+  $('customerCapabilityRetry').onclick=()=>{customerFeatureCapabilities=null;route()};
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+}
+
 function renderCustomerWalletRetry(message,businessSlug){
   const body=$('walletBody');if(!body)return;
   body.innerHTML=`<div class="card" style="text-align:center"><h2>Could not load My Frenly</h2><p class="muted small" style="margin-top:8px">${esc(message)}</p><button class="btn sm" id="walletRetry" style="margin-top:14px">Retry</button></div>`;
@@ -1099,14 +1111,18 @@ function renderWalletAppointments(host,businessSlug,state,customerFeatures){
 
 function wireWalletAppointmentActions(businessSlug){
   document.querySelectorAll('.walletChange').forEach(button=>button.onclick=()=>{
-    const modal=document.createElement('div');modal.className='modal';
-    modal.innerHTML=`<div class="modal-card"><div class="row"><h2>Change appointment</h2><span class="spacer"></span><button class="btn ghost sm" id="walletChangeClose">✕</button></div>
-      <label>Request</label><select id="walletChangeKind"><option value="cancel">Cancel appointment</option><option value="reschedule">Choose another time</option></select>
-      <div id="walletChangeTime" hidden><label>Preferred new time</label><input id="walletChangeAt" type="datetime-local"></div>
-      <label>Note (optional)</label><textarea id="walletChangeNote" rows="3" maxlength="750"></textarea>
+    const modal=document.createElement('div');modal.className='modal';modal.tabIndex=-1;
+    modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','walletChangeTitle');
+    modal.innerHTML=`<div class="modal-card"><div class="row"><h2 id="walletChangeTitle">Change appointment</h2><span class="spacer"></span><button class="btn ghost sm" id="walletChangeClose" aria-label="Close change appointment">Close</button></div>
+      <label for="walletChangeKind">Request</label><select id="walletChangeKind"><option value="cancel">Cancel appointment</option><option value="reschedule">Choose another time</option></select>
+      <div id="walletChangeTime" hidden><label for="walletChangeAt">Preferred new time</label><input id="walletChangeAt" type="datetime-local"></div>
+      <label for="walletChangeNote">Note (optional)</label><textarea id="walletChangeNote" rows="3" maxlength="750"></textarea>
       <button class="btn" id="walletChangeSend" style="width:100%;margin-top:16px">Send request</button></div>`;
     document.body.appendChild(modal);
-    $('walletChangeClose').onclick=()=>modal.remove();
+    let deactivateDialog;
+    const close=()=>deactivateDialog?deactivateDialog():modal.remove();
+    deactivateDialog=CUI.activateDialog(modal,{onClose:close,initialFocus:'#walletChangeKind'});
+    $('walletChangeClose').onclick=close;
     $('walletChangeKind').onchange=()=>{$('walletChangeTime').hidden=$('walletChangeKind').value!=='reschedule'};
     $('walletChangeSend').onclick=async()=>{
       const kind=$('walletChangeKind').value,local=$('walletChangeAt').value;
@@ -1117,7 +1133,7 @@ function wireWalletAppointmentActions(businessSlug){
         p_proposed_at:kind==='reschedule'?sgIso(local):null,
         p_note:$('walletChangeNote').value.trim()||null,p_idempotency_key:crypto.randomUUID()});
       if(error){$('walletChangeSend').disabled=false;return fail(error)}
-      modal.remove();toast('Request sent to the business');
+      close();toast('Request sent to the business');
     };
   });
 }
@@ -1183,12 +1199,13 @@ async function renderCustomerWallet(businessSlug=null){
   const isWalletCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const customerFeatures=await loadCustomerFeatureCapabilities();
   if(!isWalletCurrent())return;
+  if(customerFeatures._load_error)return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');
   if(!customerFeatures.customer_wallet)return renderCustomerWalletUnavailable();
   if(customerFeatures.customer_phone_registration===true){
     const {data:profile,error:profileError}=await sb.rpc('customer_get_profile');
     if(!isWalletCurrent())return;
-    const profileReady=!profileError&&profile?.profile!==null;
-    if(!profileReady){
+    if(profileError)return renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');
+    if(profile?.profile===null){
       nav('#/customer');
       return renderCustomerRegistrationProfile();
     }
@@ -5355,6 +5372,14 @@ async function platformPage(){
 }
 
 /* ---------- public customer portal ---------- */
+function contrastSafeBrandColor(value){
+  const fallback='#C24135';
+  if(!/^#[0-9A-Fa-f]{6}$/.test(value||''))return fallback;
+  const channels=[1,3,5].map(offset=>parseInt(value.slice(offset,offset+2),16)/255)
+    .map(channel=>channel<=.04045?channel/12.92:((channel+.055)/1.055)**2.4);
+  const luminance=.2126*channels[0]+.7152*channels[1]+.0722*channels[2];
+  return 1.05/(luminance+.05)>=4.5?value.toUpperCase():fallback;
+}
 async function renderPortal(slug){
   const signedInUser=S.user;
   const incomingParams=new URLSearchParams((location.hash.split('?')[1]||''));
@@ -5378,35 +5403,34 @@ async function renderPortal(slug){
   let bookingTurnstileToken='',bookingTurnstileControl=null;
   let bookingChallengeGeneration=0;
   let changeAttempt=null;
-  const bc=/^#[0-9A-Fa-f]{6}$/.test(biz.brand_color||'')?biz.brand_color:'#FF6B5E';
+  const bc=contrastSafeBrandColor(biz.brand_color);
   const draw=()=>{
     const challengeGeneration=++bookingChallengeGeneration;
     bookingTurnstileToken='';bookingTurnstileControl=null;
-    root.innerHTML=`<div class="portal" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)">
+    root.innerHTML=`<div class="portal" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},${bc})">
       <div class="head"><h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
       ${signedInContext}
-      <div class="card">
+      <div class="card" id="bookingFormCard">
         ${(biz.services&&biz.services.length)?`<b>Choose a service</b>
-          <div style="margin:10px 0 4px">${biz.services.map(s=>`<div class="svc ${selSvc===s.id?'sel':''}" data-s="${s.id}">
+          <div style="margin:10px 0 4px">${biz.services.map(s=>`<button class="svc ${selSvc===s.id?'sel':''}" type="button" aria-pressed="${selSvc===s.id}" data-s="${s.id}">
             <span><b>${esc(s.name)}</b> <span class="muted small">· ${s.duration_min} min</span></span>
-            <b>${biz.currency||'SGD'} ${(s.price_cents/100).toFixed(2)}</b></div>`).join('')}
-          <div class="svc ${selSvc===null?'sel':''}" data-s=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></div></div>`
+            <b>${esc(biz.currency||'SGD')} ${(s.price_cents/100).toFixed(2)}</b></button>`).join('')}
+          <button class="svc ${selSvc===null?'sel':''}" type="button" aria-pressed="${selSvc===null}" data-s=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button></div>`
         :`<b>Make a reservation</b>`}
         ${biz.uses_tables?`<div style="margin-top:16px"><b>Choose a table</b>
           <div style="margin:10px 0 4px">${(biz.tables&&biz.tables.length)?biz.tables.map(t=>{
             const full=t.available<=0;
-            return `<div class="svc ${selTable===t.table_type_id?'sel':''}" ${full?'':`data-tbl="${t.table_type_id}"`}
-              style="${full?'opacity:.45;cursor:not-allowed':''}">
+            return `<button class="svc ${selTable===t.table_type_id?'sel':''}" type="button" aria-pressed="${selTable===t.table_type_id}" data-tbl="${t.table_type_id}" ${full?'disabled':''}>
               <span><b>${esc(t.name)}</b>${t.pax?` <span class="muted small">· seats ${t.pax}</span>`:''}</span>
-              <span class="muted small">${full?'Fully booked':t.available+' available'}</span></div>`;
+              <span class="muted small">${full?'Fully booked':t.available+' available'}</span></button>`;
           }).join(''):'<p class="muted small">No tables set up yet — request a general reservation below.</p>'}</div></div>`:''}
-        <div class="split"><div><label>Your name *</label><input id="pn"></div>
-          <div><label>Phone</label><div class="row">${ccSelectHtml('ppcc')}<input id="pp" placeholder="9123 4567"></div></div></div>
-        <div class="split"><div><label>Email</label><input id="pe" type="email"></div><div><label>Party size</label><input id="ps" type="number" min="1" value="2"></div></div>
-        <label>Preferred date & time</label><input id="pt" type="datetime-local">
-        <label>Notes</label><textarea id="pnotes" rows="2" placeholder="anything we should know?"></textarea>
-        <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-          <input type="checkbox" id="pconsent" style="width:auto"> 📩 Send me offers & updates</label>
+        <div class="split"><div><label for="pn">Your name *</label><input id="pn" autocomplete="name"></div>
+          <div><label for="pp">Phone</label><div class="row">${ccSelectHtml('ppcc')}<input id="pp" type="tel" autocomplete="tel" placeholder="9123 4567"></div></div></div>
+        <div class="split"><div><label for="pe">Email</label><input id="pe" type="email" autocomplete="email"></div><div><label for="ps">Party size</label><input id="ps" type="number" min="1" value="2"></div></div>
+        <label for="pt">Preferred date & time</label><input id="pt" type="datetime-local">
+        <label for="pnotes">Notes</label><textarea id="pnotes" rows="2" placeholder="Anything we should know?"></textarea>
+        <label for="pconsent" style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="pconsent" style="width:auto"> <span>Send me offers and updates</span></label>
         <p class="muted small" style="margin-top:2px">Occasional news and offers from ${esc(biz.name)} — you can opt out anytime.</p>
         <div class="challenge"><div id="bookingTurnstile"></div>
           <p class="challenge-status" id="bookingTurnstileStatus" role="status" aria-live="polite">Loading security check…</p>
@@ -5455,7 +5479,9 @@ async function renderPortal(slug){
       const m=msgs[bookRes&&bookRes.status]||msgs.pending;
       manageToken=bookRes.manage_token||'';
       const manageUrl=`${location.origin}${location.pathname}#/b/${encodeURIComponent(slug)}?manage=${encodeURIComponent(manageToken)}`;
-      root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 style="margin-bottom:8px">${esc(m.title)}</h2>
+      const bookingFormCard=$('bookingFormCard');
+      if(!bookingFormCard)return;
+      bookingFormCard.innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 style="margin-bottom:8px">${esc(m.title)}</h2>
         <p class="muted">${m.body}</p>${manageToken?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>
         <p class="small" style="margin-top:6px;word-break:break-all"><a href="${esc(manageUrl)}" style="color:#D06A2E;text-decoration:underline">${esc(manageUrl)}</a></p>
         <button class="btn ghost sm" id="copyManage" style="margin-top:12px">Copy private link</button>`:''}</div>`;

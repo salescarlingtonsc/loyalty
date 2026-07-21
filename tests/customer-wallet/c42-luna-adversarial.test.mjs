@@ -189,7 +189,7 @@ test('Luna C42 remediation: completed and incomplete registration routes termina
 
   assert.match(registrationUi, /if\(profile\?\.profile!==null\)\{\s*nav\('#\/wallet'\);return;\s*\}/i,
     'an already-complete customer visiting registration must end at the wallet');
-  assert.match(profileCheck, /customer_get_profile[\s\S]*if\(!profileReady\)\{\s*nav\('#\/customer'\);\s*return renderCustomerRegistrationProfile\(\);\s*\}/i,
+  assert.match(profileCheck, /customer_get_profile[\s\S]*if\(profileError\)return renderCustomerCapabilityRetry[\s\S]*if\(profile\?\.profile===null\)\{\s*nav\('#\/customer'\);\s*return renderCustomerRegistrationProfile\(\);\s*\}/i,
     'an incomplete customer must end at the profile form, rather than reach wallet readers');
   assert.ok(wallet.indexOf('customer_get_profile') < wallet.indexOf("sb.rpc('customer_get_wallet')"),
     'the registration gate must precede customer wallet reads');
