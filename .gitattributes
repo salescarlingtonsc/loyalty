@@ -1,0 +1,4 @@
+# These exact catalog-recovered single-statement bytes end with two LF bytes.
+# Preserve their evidence hashes without making git diff --check flag blank-at-EOF.
+supabase/migrations/20260719185223_frenly_v23g_loyalty_model_consolidation.sql whitespace=-blank-at-eof
+supabase/migrations/20260719190540_frenly_v24_stamps_model.sql whitespace=-blank-at-eof

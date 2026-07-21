@@ -94,12 +94,12 @@ async function addRecoveryEvidence(root, plan) {
   }, null, 2)}\n`);
 }
 
-test('checked-in canonical plan preserves 45 trusted catalog versions then 20 unique pending versions', () => {
+test('checked-in canonical plan preserves 45 trusted catalog versions then 25 unique pending versions', () => {
   const result = run(repoRoot, '--check-plan');
   assert.equal(result.status, 0, result.stderr);
 });
 
-test('materializer creates one byte-preserving 65-file chain and deterministic manifests', async (t) => {
+test('materializer creates one byte-preserving 70-file chain and deterministic manifests', async (t) => {
   const { root, plan } = await fixture(t);
   await addRecoveryEvidence(root, plan);
   const materialized = run(root, '--materialize');
@@ -109,12 +109,12 @@ test('materializer creates one byte-preserving 65-file chain and deterministic m
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 20);
-  assert.equal(manifest.itemCount, 65);
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 65);
+  assert.equal(manifest.pendingCount, 25);
+  assert.equal(manifest.itemCount, 70);
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 70);
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
-  assert.equal(manifest.items.at(-1).name, 'frenly_v40_staff_reversal_workflows');
+  assert.equal(manifest.items.at(-1).name, 'frenly_v46_customer_in_app_inbox');
   const recovery = JSON.parse(await readFile(path.join(root, recoveryRelativePath), 'utf8'));
   assert.equal(recovery.migrations[0].statementCount, 3);
   assert.equal(recovery.migrations[0].statements.length, 3);

@@ -27,7 +27,8 @@ insert into pg_temp.frenly_cleanup_scope values (
 );
 
 create temporary table pg_temp.frenly_cleanup_pending (
-  table_oid oid primary key
+  table_oid oid primary key,
+  scope text not null check (scope in ('business','identity','auth'))
 ) on commit drop;
 
 do $cleanup$
@@ -43,6 +44,8 @@ declare
   v_oid oid;
   v_user uuid;
   v_email text;
+  v_identities uuid[] := '{}'::uuid[];
+  v_auth_users uuid[] := '{}'::uuid[];
 begin
   select * into strict v_scope from pg_temp.frenly_cleanup_scope;
   if v_scope.confirmation <> 'YES-SCOPED-SYNTHETIC-CLEANUP' then
@@ -106,6 +109,27 @@ begin
     end if;
   end loop;
 
+  select array_agg(u order by u)
+    into v_auth_users
+    from (values (v_scope.auth_user_1),(v_scope.auth_user_2)) synthetic(u)
+   where u is not null;
+  select coalesce(array_agg(ci.id order by ci.id),'{}'::uuid[])
+    into v_identities
+    from public.customer_identities ci
+   where ci.auth_user_id = any(v_auth_users);
+  if cardinality(v_identities) > 0 then
+    if v_business is null then
+      raise exception 'refusing global customer-identity cleanup without an exact synthetic business';
+    end if;
+    if exists (
+      select 1 from public.customer_links cl
+       where cl.identity_id = any(v_identities)
+         and cl.business_id <> v_business
+    ) then
+      raise exception 'refusing to delete a synthetic identity linked to another business';
+    end if;
+  end if;
+
   if v_business is not null then
     select array_agg(c.oid order by n.nspname, c.relname)
       into v_trigger_tables
@@ -114,11 +138,9 @@ begin
      where n.nspname = 'public' and c.relkind in ('r', 'p')
        and (
          c.relname = 'businesses'
-         or exists (
-           select 1 from pg_attribute a
-            where a.attrelid = c.oid and a.attname = 'business_id'
-              and a.attnum > 0 and not a.attisdropped
-         )
+         or exists (select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='business_id' and a.attnum>0 and not a.attisdropped)
+         or exists (select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='identity_id' and a.attnum>0 and not a.attisdropped)
+         or exists (select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='auth_user_id' and a.attnum>0 and not a.attisdropped)
        );
 
     select string_agg(format('%s.%s=%s', c.relname, t.tgname, t.tgenabled), ', '
@@ -138,8 +160,8 @@ begin
 
     update public.businesses set active_config_version_id = null where id = v_business;
 
-    insert into pg_temp.frenly_cleanup_pending(table_oid)
-    select c.oid
+    insert into pg_temp.frenly_cleanup_pending(table_oid,scope)
+    select c.oid,'business'
       from pg_class c
       join pg_namespace n on n.oid = c.relnamespace
      where n.nspname = 'public'
@@ -147,21 +169,48 @@ begin
        and c.relname <> 'businesses'
        and exists (
          select 1 from pg_attribute a
-          where a.attrelid = c.oid and a.attname = 'business_id'
-            and a.attnum > 0 and not a.attisdropped
+         where a.attrelid = c.oid and a.attname = 'business_id'
+              and a.attnum > 0 and not a.attisdropped
        );
+
+    insert into pg_temp.frenly_cleanup_pending(table_oid,scope)
+    select c.oid,'identity'
+      from pg_class c join pg_namespace n on n.oid=c.relnamespace
+     where cardinality(v_identities)>0 and n.nspname='public' and c.relkind in ('r','p')
+       and c.relname<>'businesses'
+       and not exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='business_id' and a.attnum>0 and not a.attisdropped)
+       and exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='identity_id' and a.attnum>0 and not a.attisdropped)
+    on conflict (table_oid) do nothing;
+
+    insert into pg_temp.frenly_cleanup_pending(table_oid,scope)
+    select c.oid,'auth'
+      from pg_class c join pg_namespace n on n.oid=c.relnamespace
+     where cardinality(v_auth_users)>0 and n.nspname='public' and c.relkind in ('r','p')
+       and c.relname<>'businesses'
+       and not exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='business_id' and a.attnum>0 and not a.attisdropped)
+       and not exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='identity_id' and a.attnum>0 and not a.attisdropped)
+       and exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='auth_user_id' and a.attnum>0 and not a.attisdropped)
+    on conflict (table_oid) do nothing;
 
     loop
       v_progress := 0;
       for v_table in
-        select p.table_oid
+        select p.table_oid,p.scope
           from pg_temp.frenly_cleanup_pending p
           join pg_class c on c.oid = p.table_oid
          order by c.relname
       loop
         begin
-          execute format('delete from %s where business_id = $1', v_table.table_oid::regclass)
-            using v_business;
+          if v_table.scope='business' then
+            execute format('delete from %s where business_id = $1', v_table.table_oid::regclass)
+              using v_business;
+          elsif v_table.scope='identity' then
+            execute format('delete from %s where identity_id = any($1)', v_table.table_oid::regclass)
+              using v_identities;
+          else
+            execute format('delete from %s where auth_user_id = any($1)', v_table.table_oid::regclass)
+              using v_auth_users;
+          end if;
           delete from pg_temp.frenly_cleanup_pending where table_oid = v_table.table_oid;
           v_progress := v_progress + 1;
         exception when foreign_key_violation then
@@ -218,6 +267,30 @@ begin
       if v_matches <> 0 then
         raise exception 'post-cleanup rows remain in %', v_table.table_oid::regclass;
       end if;
+    end loop;
+  end if;
+  if cardinality(v_identities) > 0 then
+    for v_table in
+      select c.oid as table_oid
+        from pg_class c join pg_namespace n on n.oid=c.relnamespace
+       where n.nspname='public' and c.relkind in ('r','p')
+         and exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='identity_id' and a.attnum>0 and not a.attisdropped)
+    loop
+      execute format('select count(*) from %s where identity_id = any($1)',v_table.table_oid::regclass)
+        into v_matches using v_identities;
+      if v_matches<>0 then raise exception 'post-cleanup identity rows remain in %',v_table.table_oid::regclass; end if;
+    end loop;
+  end if;
+  if cardinality(v_auth_users) > 0 then
+    for v_table in
+      select c.oid as table_oid
+        from pg_class c join pg_namespace n on n.oid=c.relnamespace
+       where n.nspname='public' and c.relkind in ('r','p')
+         and exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attname='auth_user_id' and a.attnum>0 and not a.attisdropped)
+    loop
+      execute format('select count(*) from %s where auth_user_id = any($1)',v_table.table_oid::regclass)
+        into v_matches using v_auth_users;
+      if v_matches<>0 then raise exception 'post-cleanup auth-user rows remain in %',v_table.table_oid::regclass; end if;
     end loop;
   end if;
   if exists (

@@ -308,3 +308,4 @@ end $$;
 -- ACLs: public-schema create-or-replace re-applies the anon default — re-revoke (v21 invariant).
 revoke all on function public.redeem_reward(uuid, uuid, uuid, text) from public, anon;
 grant execute on function public.redeem_reward(uuid, uuid, uuid, text) to authenticated;
+

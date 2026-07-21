@@ -64,6 +64,11 @@
     { "kind": "executable", "path": "db/migrations/20260720_frenly_v37b_versioned_retention_taxonomy.sql", "semanticVersion": "v37b", "proposedDeployVersion": "20260722000100" },
     { "kind": "executable", "path": "db/migrations/20260720_frenly_v38_customer_personas_and_gates.sql", "semanticVersion": "v38", "proposedDeployVersion": "20260722000101" },
     { "kind": "executable", "path": "db/migrations/20260720_frenly_v39_detailed_customer_wallet.sql", "semanticVersion": "v39", "proposedDeployVersion": "20260722000102" },
-    { "kind": "executable", "path": "db/migrations/20260721_frenly_v40_staff_reversal_workflows.sql", "semanticVersion": "v40", "proposedDeployVersion": "20260722000103" }
+    { "kind": "executable", "path": "db/migrations/20260721_frenly_v40_staff_reversal_workflows.sql", "semanticVersion": "v40", "proposedDeployVersion": "20260722000103" },
+    { "kind": "executable", "path": "db/migrations/20260721_frenly_v41_customer_module_hardening.sql", "semanticVersion": "v41", "proposedDeployVersion": "20260722000104" },
+    { "kind": "executable", "path": "db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql", "semanticVersion": "v42", "proposedDeployVersion": "20260722000105" },
+    { "kind": "executable", "path": "db/migrations/20260721_frenly_v44_actionable_customer_wallet.sql", "semanticVersion": "v44", "proposedDeployVersion": "20260722000106" },
+    { "kind": "executable", "path": "db/migrations/20260721_frenly_v45_birthday_benefits.sql", "semanticVersion": "v45", "proposedDeployVersion": "20260722000107" },
+    { "kind": "executable", "path": "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql", "semanticVersion": "v46", "proposedDeployVersion": "20260722000108" }
   ]
 }

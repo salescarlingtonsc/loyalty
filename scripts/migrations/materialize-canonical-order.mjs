@@ -134,7 +134,7 @@ async function loadPlan() {
   assert.equal(plan.requireCatalogEvidenceForAllApplied, true,
     'every applied migration must retain catalog byte/hash evidence');
   assert.ok(Array.isArray(plan.items));
-  assert.equal(plan.items.length, 65, 'canonical plan must contain 45 catalog and 20 pending migrations');
+  assert.equal(plan.items.length, 70, 'canonical plan must contain 45 catalog and 25 pending migrations');
 
   const seenVersions = new Set();
   const seenNames = new Set();
@@ -176,7 +176,7 @@ async function loadPlan() {
   const applied = plan.items.filter(({ kind }) => kind === 'catalog-applied');
   const pending = plan.items.filter(({ kind }) => kind === 'pending');
   assert.equal(applied.length, 45);
-  assert.equal(pending.length, 20);
+  assert.equal(pending.length, 25);
   assert.deepEqual(applied.map(({ version, name }) => `${version}_${name}`), expectedCatalogIdentities,
     'catalog versions and names must match the trusted remote inventory exactly');
   assert.equal(applied.at(-1).version, plan.catalogCutoffVersion);
@@ -321,7 +321,7 @@ async function buildManifest(plan, evidence) {
     catalogRecoveryManifest: 'supabase/migrations/catalog-recovery.manifest.json',
     hashAlgorithm: 'sha256-raw-bytes',
     catalogAppliedCount: 45,
-    pendingCount: 20,
+    pendingCount: 25,
     itemCount: entries.length,
     items: entries
   };

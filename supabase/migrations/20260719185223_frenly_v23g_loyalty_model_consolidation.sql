@@ -432,3 +432,4 @@ revoke all on function public.redeem_points(uuid, uuid) from public, anon;
 grant execute on function public.redeem_points(uuid, uuid) to authenticated;
 revoke all on function public.redeem_reward(uuid, uuid, uuid, text) from public, anon;
 grant execute on function public.redeem_reward(uuid, uuid, uuid, text) to authenticated;
+

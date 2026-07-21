@@ -123,6 +123,19 @@ test('retention UI uses RPC drafts and keeps draft identities out of live reads'
   assert.match(app, /sb\.rpc\('save_retention_program_draft'/i);
   assert.match(app, /sb\.rpc\('save_reward_taxonomy'/i);
   assert.match(app, /\.eq\('current_config_version_id',currentVersion\)/i);
+  assert.match(app, /const livePrograms=currentVersion[\s\S]*Promise\.resolve\(\{data:\[\],error:null\}\)/i,
+    'a new business without an active version must not serialize null through a UUID equality filter');
+  assert.match(app, /Promise\.all\(\[\s*livePrograms,/i);
+  assert.match(app, /Publish your loyalty foundation first; retention rules share the same versioned configuration/);
+  assert.match(app, /href="#\/loyalty">Set up loyalty first<\/a>/);
+  assert.match(app, /if\(\$\('beginRetentionDraft'\)\)\$\('beginRetentionDraft'\)\.onclick/,
+    'new-business guidance must not leave an unguarded missing-button handler');
+  assert.match(app, /\.eq\('status','draft'\)\.eq\('based_on_version_id',currentVersion\)/,
+    'only a draft based on the active version may be offered for recovery');
+  assert.match(app, /href="#\/retention\/\$\{resumableDraft\.id\}">Resume draft v\$\{resumableDraft\.version_no\}/);
+  assert.match(app, /nav\(`#\/retention\/\$\{data\.version_id\}`\)/,
+    'new drafts must become refresh-safe routes');
+  assert.match(app, /\$\('discardRetentionDraft'\)\.onclick=\(\)=>nav\('#\/retention'\)/);
   assert.doesNotMatch(app, /from\('retention_programs'\)\.insert/i);
   assert.doesNotMatch(app, /from\('retention_programs'\)\.update/i);
   assert.doesNotMatch(app, /from\('firm_reward_taxonomy'\)\.insert/i);

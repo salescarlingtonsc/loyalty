@@ -17,6 +17,16 @@ function rpcNames(source) {
   return new Set([...source.matchAll(/\.rpc\('([a-z0-9_]+)'/gi)].map((item) => item[1]));
 }
 
+function authenticatedGrantNames(source) {
+  return new Set([...source.matchAll(/grant execute on function public\.([a-z0-9_]+)\([^;]*?\)\s+to authenticated/gi)]
+    .map((item) => item[1]));
+}
+
+function authenticatedGrantSignatures(source) {
+  return new Set([...source.matchAll(/grant execute on function public\.([a-z0-9_]+)\(([^)]*)\)\s+to authenticated/gi)]
+    .map(([, name, args]) => `${name}(${args.replaceAll(/\s+/g, '')})`));
+}
+
 function sqlSignatureArray(source, name) {
   const match = source.match(new RegExp(`${name} constant text\\[\\] := array\\[([\\s\\S]*?)\\]`, 'i'));
   assert.ok(match, `missing ${name} signature set`);
@@ -36,12 +46,41 @@ test('v21 is the single canonical post-v20 security migration', async () => {
   assert.match(v21, /^commit;/im);
 });
 
-test('authenticated RPC allowlist is derived from the shipped SPA, not a stale migration', async () => {
-  const [app, migration] = await Promise.all([read('app/index.html'), read(migrationPath)]);
+test('authenticated RPC allowlist plus exact forward v41/C42/C44/C45/C46 grants cover the shipped SPA', async () => {
+  const [app, migration, v41, c42, c44, c45, c46] = await Promise.all([
+    read('app/index.html'), read(migrationPath),
+    read('db/migrations/20260721_frenly_v41_customer_module_hardening.sql'),
+    read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
+    read('db/migrations/20260721_frenly_v44_actionable_customer_wallet.sql'),
+    read('db/migrations/20260721_frenly_v45_birthday_benefits.sql'),
+    read('db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql')
+  ]);
   const allowlist = sqlArray(migration, 'v_authenticated_rpc_names');
+  const forward = new Set([...authenticatedGrantNames(v41), ...authenticatedGrantNames(c42), ...authenticatedGrantNames(c44), ...authenticatedGrantNames(c45), ...authenticatedGrantNames(c46)]);
   const required = rpcNames(app);
   for (const rpc of required) {
-    assert.ok(allowlist.has(rpc), `shipped app RPC ${rpc} is missing from v21 allowlist`);
+    assert.ok(allowlist.has(rpc) || forward.has(rpc),
+      `shipped app RPC ${rpc} is missing from v21 or its exact forward-v41/C42 grants`);
+  }
+  const c44Signatures = authenticatedGrantSignatures(c44);
+  for (const signature of [
+    'customer_get_actionable_wallet()',
+    'customer_get_actionable_business(text)'
+  ]) {
+    assert.ok(c44Signatures.has(signature), `C44 must grant exactly ${signature} to authenticated`);
+    assert.match(c44, new RegExp(`revoke all on function public\\.${signature.replace(/[()]/g, '\\$&')}\\s+from public, anon, authenticated`, 'i'),
+      `C44 must revoke ${signature} before its authenticated-only grant`);
+  }
+  const c42Signatures = authenticatedGrantSignatures(c42);
+  for (const signature of [
+    'customer_register_verified_phone(text,date,text,boolean,boolean,boolean,text)',
+    'customer_get_profile()',
+    'customer_update_profile(text,text,text)',
+    'customer_claim_link_by_verified_phone(text,text)'
+  ]) {
+    assert.ok(c42Signatures.has(signature), `C42 must grant exactly ${signature} to authenticated`);
+    assert.match(c42, new RegExp(`revoke all on function public\\.${signature.replace(/[()]/g, '\\$&').replaceAll(',', '\\s*,\\s*')}\\s+from public, anon, authenticated`, 'i'),
+      `C42 must revoke ${signature} before its authenticated-only grant`);
   }
   assert.ok(allowlist.has('super_admin_list_businesses'));
   assert.ok(allowlist.has('record_payment'));
@@ -103,7 +142,7 @@ test('service-only allowlist is derived from the v19 Edge Function call graph', 
 
 test('v21 derives and restores the exact rehearsal v17 policy helper dependency set', async () => {
   const [migration, runtimeTest] = await Promise.all([read(migrationPath), read(sqlTestPath)]);
-  const expected = new Set([
+  const expectedAtV21 = new Set([
     'app.can_module(uuid,text)',
     'app.can_see_branch(uuid,uuid)',
     'app.has_perm(uuid,text)',
@@ -111,8 +150,9 @@ test('v21 derives and restores the exact rehearsal v17 policy helper dependency 
     'app.is_salon_owner(uuid)',
     'app.is_super_admin()',
   ]);
-  assert.deepEqual(sqlSignatureArray(migration, 'v_required_policy_helper_signatures'), expected);
-  assert.deepEqual(sqlSignatureArray(runtimeTest, 'v_required_policy_helper_signatures'), expected);
+  const expectedAfterV41 = new Set([...expectedAtV21, 'app.can_module_read(uuid,text)']);
+  assert.deepEqual(sqlSignatureArray(migration, 'v_required_policy_helper_signatures'), expectedAtV21);
+  assert.deepEqual(sqlSignatureArray(runtimeTest, 'v_required_policy_helper_signatures'), expectedAfterV41);
   for (const source of [migration, runtimeTest]) {
     assert.match(source, /from pg_depend d[\s\S]+join pg_policy pol[\s\S]+d\.refclassid = 'pg_proc'::regclass/i);
     assert.match(source, /array_agg\(distinct p\.oid::regprocedure::text order by p\.oid::regprocedure::text\)/i);

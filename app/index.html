@@ -297,7 +297,7 @@ tr.click:hover td{background:#FBFAF8}
 .wallet-inner{width:min(760px,100%);margin:0 auto}
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
 .wallet-firms{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}
-.wallet-firm{width:100%;text-align:left;border:1px solid var(--line);background:#fff;padding:18px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.wallet-firm{display:block;width:100%;min-height:44px;text-align:left;border:1px solid var(--line);background:#fff;padding:18px;border-radius:8px;cursor:pointer;color:var(--ink);text-decoration:none}
 .wallet-firm:hover{border-color:var(--coral)}
 .wallet-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
 .wallet-metric{background:var(--bg);padding:12px;border-radius:6px;min-width:0}
@@ -315,6 +315,12 @@ tr.click:hover td{background:#FBFAF8}
 .wallet-delta.plus{color:var(--green)}
 .wallet-delta.minus{color:var(--red)}
 .wallet-history{margin:9px 0 0 14px;padding-left:14px;border-left:2px solid var(--hair)}
+.customer-inbox-bell{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);cursor:pointer}
+.customer-inbox-bell:focus-visible,.customer-inbox-item button:focus-visible{outline:3px solid rgba(255,105,97,.45);outline-offset:2px}
+.customer-inbox-badge{position:absolute;top:-5px;right:-4px;min-width:20px;height:20px;padding:0 5px;display:grid;place-items:center;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800}
+.customer-inbox-item{padding:13px 0;border-bottom:1px solid var(--hair)}.customer-inbox-item:last-child{border-bottom:0}.customer-inbox-item.unread{border-left:3px solid var(--coral);padding-left:10px}.customer-inbox-item.resolved{opacity:.7}.customer-inbox-item.source_unavailable{border-left:3px solid var(--line);padding-left:10px;opacity:.82}.customer-inbox-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
+.customer-inbox-filter[aria-pressed="true"]{border-color:var(--coral);color:var(--coral)}
+.customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}.customer-inbox-quiet{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 0}.customer-inbox-quiet input{min-height:44px}
 .wallet-skeleton{height:58px;border-radius:6px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite}
 @keyframes wallet-loading{to{background-position:-200% 0}}
 .wallet-appt{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--hair)}
@@ -412,6 +418,17 @@ const AUTH_TURNSTILE_SITE_KEY='0x4AAAAAAD4_7rnuzB3ug-NF';
    switch exists only for an emergency fail-closed build; it must never enable a
    server-disabled feature. */
 const CUSTOMER_FEATURES_EMERGENCY_DISABLED=false;
+/* Phone OTP is an explicit non-production test seam. It is disabled unless a
+   test build sets this public boolean deliberately, and it can never run in a
+   production runtime configuration. No provider secret is present in the app. */
+const CUSTOMER_PHONE_OTP_RUNTIME_ENABLED=(
+  RUNTIME_CONFIG.environment!=='production'
+  && window.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__===true
+);
+const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=(
+  CUSTOMER_PHONE_OTP_RUNTIME_ENABLED
+  && window.__FRENLY_CUSTOMER_WHATSAPP_OTP_ENABLED__===true
+);
 function authChallengeHtml(){
   return `<div class="challenge"><div id="authTurnstile"></div>
     <p class="challenge-status" id="authTurnstileStatus" role="status" aria-live="polite">Loading security check…</p>
@@ -514,14 +531,16 @@ let muteAlerts=false;     // in-session-only pop-up mute for non-owners (can't p
    moving between them keeps the same scope selected; reset on sign-out below. */
 let selectedBranchId=null; // null = consolidated
 let dashboardRenderEpoch=0; // invalidates pending dashboard/filter work as soon as routing starts
+let customerWalletRenderEpoch=0; // prevents an older customer-wallet RPC from repainting a new route
 
 let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
 let customerFeatureCapabilities=null;
+let customerPhoneOtpCapabilities=null;
 let pendingCustomerInvitationToken='';
 function resetClientSessionState({preserveInvitation=false}={}){
   const invitation=preserveInvitation?pendingCustomerInvitationToken:'';
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
-  customerFeatureCapabilities=null;pendingCustomerInvitationToken=invitation;selectedBranchId=null;profileOpen=false;
+  customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;pendingCustomerInvitationToken=invitation;selectedBranchId=null;profileOpen=false;
 }
 const $=(id)=>document.getElementById(id);
 const root=$('root');
@@ -594,7 +613,9 @@ function nav(h){location.hash=h}
 window.addEventListener('hashchange',route);
 
 const unavailableCustomerCapabilities=()=>({customer_identity:false,customer_claims:false,
-  customer_wallet:false,customer_actions:false,customer_notifications:false,customer_email_otp:false});
+  customer_wallet:false,customer_actions:false,customer_notifications:false,customer_email_otp:false,
+  customer_phone_otp:false,customer_whatsapp_otp:false,customer_phone_registration:false,customer_phone_claims:false,
+  customer_actionable_wallet:false,customer_birthday_benefits:false,customer_in_app_inbox:false});
 async function loadCustomerFeatureCapabilities({refresh=false}={}){
   if(CUSTOMER_FEATURES_EMERGENCY_DISABLED) return unavailableCustomerCapabilities();
   if(customerFeatureCapabilities&&!refresh) return customerFeatureCapabilities;
@@ -607,6 +628,7 @@ async function loadCustomerFeatureCapabilities({refresh=false}={}){
 /* ---------- routing ---------- */
 async function route(){
   dashboardRenderEpoch+=1;
+  customerWalletRenderEpoch+=1;
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
      hiccup used to throw straight out of this async function with nothing rendered, which
      read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
@@ -626,6 +648,7 @@ async function route(){
     const {data:{session}}=await sb.auth.getSession();
     S.user=session?.user||null;
     if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
+    if(h==='#/customer'||h==='#/customer/register') return renderCustomerRegistration();
     if(!S.user) return renderAuth();
     if(h==='#/claim'||h.startsWith('#/claim?')) return renderCustomerClaim();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
@@ -750,6 +773,187 @@ async function route(){
 }
 
 /* ---------- customer wallet ---------- */
+let customerRegistrationState={phone:'',channel:'sms'};
+function normalizeSingaporeCustomerPhone(value){
+  const digits=String(value??'').replace(/[^0-9]/g,'');
+  const local=digits.startsWith('65')&&digits.length===10?digits.slice(2):digits;
+  return /^[3689][0-9]{7}$/.test(local)?`+65${local}`:null;
+}
+const unavailableCustomerPhoneOtpCapabilities=()=>({sms:false,whatsapp:false});
+async function loadCustomerPhoneOtpCapabilities({refresh=false}={}){
+  if(!CUSTOMER_PHONE_OTP_RUNTIME_ENABLED)return unavailableCustomerPhoneOtpCapabilities();
+  if(customerPhoneOtpCapabilities&&!refresh)return customerPhoneOtpCapabilities;
+  const {data,error}=await sb.rpc('get_customer_phone_otp_capabilities');
+  customerPhoneOtpCapabilities=error?unavailableCustomerPhoneOtpCapabilities():{
+    sms:data?.sms===true,whatsapp:data?.whatsapp===true
+  };
+  return customerPhoneOtpCapabilities;
+}
+async function customerPhoneOtpAvailable(channel='sms'){
+  if(!CUSTOMER_PHONE_OTP_RUNTIME_ENABLED)return false;
+  if(channel==='whatsapp'&&!CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED)return false;
+  const serverCapabilities=await loadCustomerPhoneOtpCapabilities({refresh:true});
+  return channel==='whatsapp'?serverCapabilities.whatsapp===true:serverCapabilities.sms===true;
+}
+function customerRegistrationShell(body){
+  root.innerHTML=`<main class="wallet-shell" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
+    <div class="logo">frenly<span>.</span></div><span class="spacer"></span>
+    <button class="btn ghost sm" id="customerBack" type="button">${CUI.icon('back',{size:17})}<span>Business sign in</span></button>
+    </header>${body}</div></main>`;
+  $('customerBack').onclick=()=>nav('#/');
+  CUI.focusRoute($('main'),{enhanceContent:true});
+}
+function renderCustomerOtpVerification(){
+  const {phone,channel}=customerRegistrationState;
+  if(!phone)return renderCustomerRegistration();
+  customerRegistrationShell(`<section class="card" aria-labelledby="customerOtpTitle">
+    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpTitle">Enter your code</h1><p class="muted small" style="margin-top:5px">Enter the one-time code sent to your mobile number.</p></div></div>
+    <label for="customerOtp">One-time code</label>
+    <input id="customerOtp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" aria-describedby="customerOtpHelp" required>
+    <p class="muted small" id="customerOtpHelp" style="margin-top:6px">The code expires according to your authentication provider’s policy.</p>
+    <div id="customerOtpError" role="alert" aria-live="assertive"></div>
+    <button class="btn" id="customerOtpVerify" type="button" style="width:100%;margin-top:16px">${CUI.icon('check',{size:18})}<span>Verify and continue</span></button>
+    <div style="margin-top:14px">${authChallengeHtml()}</div>
+    <button class="btn ghost" id="customerOtpResend" type="button" disabled style="width:100%;margin-top:10px">Resend available in 30 seconds</button>
+  </section>`);
+  let resendCaptcha='',resendControl=null,seconds=30;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
+    onToken:(token)=>{resendCaptcha=token;}}).then(control=>resendControl=control);
+  const resend=$('customerOtpResend');
+  const countdown=setInterval(()=>{
+    if(!resend?.isConnected)return clearInterval(countdown);
+    seconds-=1;
+    if(seconds>0)resend.textContent=`Resend available in ${seconds} seconds`;
+    else {resend.disabled=false;resend.textContent='Resend code';clearInterval(countdown);}
+  },1000);
+  $('customerOtpVerify').onclick=async()=>{
+    const token=$('customerOtp').value.replace(/\s/g,'');
+    if(!/^[0-9]{6}$/.test(token)){
+      $('customerOtpError').innerHTML='<div class="err">Enter the 6-digit code.</div>';return;
+    }
+    const button=$('customerOtpVerify');button.disabled=true;
+    const {data,error}=await sb.auth.verifyOtp({phone,token,type:'sms'});
+    if(error||!data?.user){
+      button.disabled=false;
+      $('customerOtpError').innerHTML='<div class="err">That code could not be verified. Check it and try again.</div>';return;
+    }
+    S.user=data.user;
+    renderCustomerRegistration();
+  };
+  resend.onclick=async()=>{
+    if(!(await customerPhoneOtpAvailable(channel))||!resendCaptcha){
+      $('customerOtpError').innerHTML='<div class="err">Customer mobile verification is unavailable. Please return and try again later.</div>';return;
+    }
+    resend.disabled=true;
+    const options={captchaToken:resendCaptcha};if(channel==='whatsapp')options.channel='whatsapp';
+    const {error}=await sb.auth.signInWithOtp({phone,options});
+    resendCaptcha='';resendControl?.reset();
+    if(error){resend.disabled=false;$('customerOtpError').innerHTML='<div class="err">We could not resend a code. Please try again.</div>';return;}
+    seconds=30;resend.textContent='Resend available in 30 seconds';
+    const nextCountdown=setInterval(()=>{
+      if(!resend?.isConnected)return clearInterval(nextCountdown);
+      seconds-=1;
+      if(seconds>0)resend.textContent=`Resend available in ${seconds} seconds`;
+      else {resend.disabled=false;resend.textContent='Resend code';clearInterval(nextCountdown);}
+    },1000);
+  };
+}
+function renderCustomerRegistrationProfile(){
+  customerRegistrationShell(`<section class="card" aria-labelledby="customerProfileTitle">
+    <div class="row"><span aria-hidden="true">${CUI.icon('wallet',{size:24})}</span><div><h1 id="customerProfileTitle">Set up My Frenly</h1><p class="muted small" style="margin-top:5px">Your rewards stay separate for each business you choose to join.</p></div></div>
+    <label for="customerFullName">Full name <span aria-hidden="true">*</span></label>
+    <input id="customerFullName" autocomplete="name" maxlength="200" required>
+    <label for="customerDob">Date of birth <span aria-hidden="true">*</span></label>
+    <input id="customerDob" type="date" autocomplete="bday" max="${new Date().toISOString().slice(0,10)}" required>
+    <label for="customerLanguage">Preferred language</label>
+    <select id="customerLanguage" autocomplete="language"><option value="en">English</option><option value="zh">中文</option><option value="ms">Bahasa Melayu</option><option value="ta">தமிழ்</option></select>
+    <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Required agreements</legend>
+      <label class="row" for="customerTerms" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerTerms" type="checkbox" style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Terms of Service</a>.</span></label>
+      <label class="row" for="customerPrivacy" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerPrivacy" type="checkbox" style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I have read the <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Privacy Notice</a>.</span></label>
+    </fieldset>
+    <label class="row" for="customerMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerMarketing" type="checkbox" style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Send me optional Frenly product updates. This does not opt me into messages from any business.</span></label>
+    <div id="customerProfileError" role="alert" aria-live="assertive"></div>
+    <button class="btn" id="customerRegister" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:18})}<span>Create my customer account</span></button>
+  </section>`);
+  const register=$('customerRegister');
+  register.onclick=async()=>{
+    const fullName=$('customerFullName').value.trim(),birthDate=$('customerDob').value,language=$('customerLanguage').value;
+    if(!fullName||!birthDate||new Date(`${birthDate}T00:00:00`)>new Date()){
+      $('customerProfileError').innerHTML='<div class="err">Enter your name and a date of birth that is not in the future.</div>';return;
+    }
+    if(!$('customerTerms').checked||!$('customerPrivacy').checked){
+      $('customerProfileError').innerHTML='<div class="err">Please accept the Terms and acknowledge the Privacy Notice to continue.</div>';return;
+    }
+    register.disabled=true;register.querySelector('span').textContent='Creating your account…';
+    const {data,error}=await sb.rpc('customer_register_verified_phone',{
+      p_full_name:fullName,p_birth_date:birthDate,p_preferred_language:language,
+      p_accept_terms:true,p_accept_privacy:true,p_platform_marketing_opted_in:$('customerMarketing').checked,
+      p_idempotency_key:crypto.randomUUID()
+    });
+    if(error||data?.outcome!=='registered'){
+      register.disabled=false;register.querySelector('span').textContent='Create my customer account';
+      $('customerProfileError').innerHTML='<div class="err">Customer registration is not available yet. Please try again later.</div>';return;
+    }
+    const {data:personas}=await sb.rpc('get_my_personas');
+    const businesses=personas?.customer||[];
+    nav(businesses.length?'#/wallet':'#/claim');
+  };
+}
+async function renderCustomerRegistration(){
+  if(S.user){
+    const customerFeatures=await loadCustomerFeatureCapabilities();
+    if(!customerFeatures.customer_phone_registration){
+      return renderCustomerWalletUnavailable('Customer registration is not available yet.');
+    }
+    const {data:profile,error:profileError}=await sb.rpc('customer_get_profile');
+    if(profileError){
+      return renderCustomerWalletUnavailable('Customer profile is temporarily unavailable. Please try again later.');
+    }
+    if(profile?.profile!==null){
+      nav('#/wallet');return;
+    }
+    return renderCustomerRegistrationProfile();
+  }
+  const serverCapabilities=await loadCustomerPhoneOtpCapabilities();
+  const customerCapabilities={
+    customer_phone_otp:serverCapabilities.sms===true,
+    customer_whatsapp_otp:serverCapabilities.whatsapp===true
+  };
+  const smsAvailable=CUSTOMER_PHONE_OTP_RUNTIME_ENABLED&&customerCapabilities.customer_phone_otp===true;
+  const whatsappAvailable=CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED&&customerCapabilities.customer_whatsapp_otp===true;
+  customerRegistrationShell(`<section class="card" aria-labelledby="customerStartTitle">
+    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerStartTitle">Join Frenly</h1><p class="muted small" style="margin-top:5px">Verify your Singapore mobile number to keep your programmes in one place.</p></div></div>
+    <label for="customerPhone">Singapore mobile number</label>
+    <input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8123 4567" aria-describedby="customerPhoneHelp" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
+    <p id="customerPhoneHelp" class="muted small" style="margin-top:6px">We’ll format this as +65. Your number is used for verification, not marketing consent.</p>
+    <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">How should we send your code?</legend>
+      <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS (recommended)</span></label>
+      <label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" ${whatsappAvailable?'':'disabled'} style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp ${whatsappAvailable?'':'— unavailable until configured'}</span></label>
+    </fieldset>
+    <div id="customerOtpError" role="alert" aria-live="assertive"></div>
+    ${smsAvailable?`<div style="margin-top:14px">${authChallengeHtml()}</div>`:`<p class="err" role="status" style="margin-top:16px">Customer mobile verification is not configured in this environment.</p>`}
+    <button class="btn" id="customerOtpSend" type="button" ${smsAvailable?'disabled':''} style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Send verification code</span></button>
+    <p class="muted small" style="margin-top:12px">Already have a business account? Use Business sign in above.</p>
+  </section>`);
+  if(!smsAvailable)return;
+  let captchaToken='',captchaControl=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
+    onToken:(token)=>{captchaToken=token;$('customerOtpSend').disabled=!token;}}).then(control=>captchaControl=control);
+  $('customerOtpSend').onclick=async()=>{
+    const phone=normalizeSingaporeCustomerPhone($('customerPhone').value);
+    const channel=document.querySelector('input[name="customerOtpChannel"]:checked')?.value||'sms';
+    if(!phone){$('customerOtpError').innerHTML='<div class="err">Enter a valid 8-digit Singapore number.</div>';return;}
+    if(!(await customerPhoneOtpAvailable(channel))||!captchaToken){
+      $('customerOtpError').innerHTML='<div class="err">Customer mobile verification is unavailable. Please try again later.</div>';return;
+    }
+    const button=$('customerOtpSend');button.disabled=true;
+    const options={captchaToken};if(channel==='whatsapp')options.channel='whatsapp';
+    const {error}=await sb.auth.signInWithOtp({phone,options});
+    captchaToken='';captchaControl?.reset();
+    if(error){button.disabled=false;$('customerOtpError').innerHTML='<div class="err">We could not send a code. Please check the number and try again.</div>';return;}
+    customerRegistrationState={phone,channel};renderCustomerOtpVerification();
+  };
+}
 async function renderCustomerClaim(){
   const claimParams=new URLSearchParams((location.hash.split('?')[1]||''));
   const invitationToken=pendingCustomerInvitationToken||claimParams.get('invite')||'';
@@ -760,11 +964,14 @@ async function renderCustomerClaim(){
   if(!customerCapabilities.customer_identity||!customerCapabilities.customer_claims){
     return renderCustomerWalletUnavailable('Customer claiming is not available yet.');
   }
+  const phoneClaimAvailable=!invitationToken
+    && customerCapabilities.customer_phone_claims===true
+    && customerCapabilities.customer_phone_registration===true;
   root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><div class="wallet-head">
     <div class="logo">frenly<span>.</span></div><span class="spacer"></span><button class="btn ghost sm" id="claimSignOut">Sign out</button></div>
-    <div class="card"><h1>${invitationToken?'Accept invitation':'Claim rewards'}</h1><p class="muted small" style="margin-top:6px">${invitationToken?'Confirm this private invitation while signed in to the intended account.':'Use the same confirmed email your business has on file.'}</p>
+    <div class="card"><h1>${invitationToken?'Accept invitation':'Add a business programme'}</h1><p class="muted small" style="margin-top:6px">${invitationToken?'Confirm this private invitation while signed in to the intended account.':phoneClaimAvailable?'Enter the business link from its QR or invitation. We only connect an exact unclaimed record.':'Use the same confirmed email your business has on file.'}</p>
       <div id="claimPersonas" style="margin-top:14px"><p class="muted small">Checking access…</p></div>
-      ${invitationToken?'':`<label>Business link</label><input id="claimSlug" autocomplete="off" placeholder="business-slug">`}
+      ${invitationToken?'':`${phoneClaimAvailable?`<fieldset style="border:0;padding:0;margin-top:14px"><legend class="small" style="font-weight:700">How should we find your record?</legend><label class="row" for="claimByPhone" style="color:var(--ink);font-weight:500"><input id="claimByPhone" name="claimMethod" type="radio" value="phone" checked style="width:20px;min-width:20px;min-height:20px"> <span>Use my verified mobile number</span></label><label class="row" for="claimByEmail" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="claimByEmail" name="claimMethod" type="radio" value="email" style="width:20px;min-width:20px;min-height:20px"> <span>Use my confirmed email instead</span></label></fieldset>`:''}<label for="claimSlug">Business link</label><input id="claimSlug" autocomplete="off" placeholder="business-slug">`}
       <button class="btn" id="claimStart" style="margin-top:14px">${invitationToken?'Accept invitation':'Claim'}</button>
       <div id="claimResult"></div></div></div></div>`;
   $('claimSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -790,18 +997,23 @@ async function renderCustomerClaim(){
   $('claimStart').onclick=async()=>{
     const slug=invitationToken?'':$('claimSlug').value.trim().toLowerCase();
     if(!invitationToken&&slug.length<2)return toast('Enter the business link slug');
-    const attemptKey=invitationToken?'invitation':`email:${slug}`;
+    const method=invitationToken?'invitation':(phoneClaimAvailable?(document.querySelector('input[name="claimMethod"]:checked')?.value||'phone'):'email');
+    const attemptKey=`${method}:${slug}`;
     if(!claimAttempt||claimAttempt.key!==attemptKey)claimAttempt={key:attemptKey,id:crypto.randomUUID()};
     const originalLabel=invitationToken?'Accept invitation':'Claim';
     $('claimStart').disabled=true;$('claimStart').textContent='Checking…';
-    const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:identityAttemptId});
-    if(identity.error){
-      $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
-      $('claimResult').innerHTML='<div class="err">Customer access is unavailable. Please try again later.</div>';return;
+    if(method==='email'||method==='invitation'){
+      const identity=await sb.rpc('customer_create_identity',{p_idempotency_key:identityAttemptId});
+      if(identity.error){
+        $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
+        $('claimResult').innerHTML='<div class="err">Customer access is unavailable. Please try again later.</div>';return;
+      }
     }
     const {data,error}=invitationToken
       ?await sb.rpc('customer_claim_link_invitation',{p_token:invitationToken,p_idempotency_key:claimAttempt.id})
-      :await sb.rpc('customer_claim_link_by_email',{p_business_slug:slug,p_idempotency_key:claimAttempt.id});
+      :method==='phone'
+        ?await sb.rpc('customer_claim_link_by_verified_phone',{p_business_slug:slug,p_idempotency_key:claimAttempt.id})
+        :await sb.rpc('customer_claim_link_by_email',{p_business_slug:slug,p_idempotency_key:claimAttempt.id});
     $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
     if(error){$('claimResult').innerHTML='<div class="err">Customer access is unavailable. Please try again later.</div>';return}
     pendingCustomerInvitationToken='';
@@ -848,6 +1060,13 @@ function walletSectionError(id,message,retry){
 
 function walletRpcDenied(error){return error?.code==='42501'||error?.code==='PGRST301'}
 
+// Detail sections share stable element IDs across business routes. An RPC that
+// began on route A must therefore prove both its render epoch and its original
+// DOM host before it can paint route B.
+function walletSectionStillCurrent(host,isCurrent){
+  return !!host&&isCurrent()&&host.isConnected&&$(host.id)===host;
+}
+
 function ensureWalletEmptyState(businessSlug){
   const sections=$('walletSections');if(!sections)return;
   const hasSection=!!sections.querySelector('.wallet-section:not(#walletEmpty)');
@@ -857,9 +1076,10 @@ function ensureWalletEmptyState(businessSlug){
   $('walletEmptyRetry').onclick=()=>renderCustomerWallet(businessSlug);
 }
 
-async function walletSectionEmpty(id,title,message,businessSlug,capability,retry){
-  const host=$(id);if(!host)return;
+async function walletSectionEmpty(id,title,message,businessSlug,capability,retry,isCurrent=()=>true){
+  const host=$(id);if(!walletSectionStillCurrent(host,isCurrent))return;
   const {data,error}=await sb.rpc('customer_portal_capabilities',{p_business_slug:businessSlug});
+  if(!walletSectionStillCurrent(host,isCurrent))return;
   if(error)return walletSectionError(id,'This section could not be refreshed.',retry);
   if(!data?.[capability]){host.remove();ensureWalletEmptyState(businessSlug);return}
   host.setAttribute('aria-busy','false');
@@ -902,20 +1122,106 @@ function wireWalletAppointmentActions(businessSlug){
   });
 }
 
+function actionableWalletExpiryText(expiry,unit){
+  if(expiry?.mode==='none')return 'Never expires';
+  if(Number(expiry?.expiring_units||0)>0&&expiry?.next_expiry_at){
+    return `${Number(expiry.expiring_units)} ${unit} expire within 30 days · next ${walletDate(expiry.next_expiry_at)}`;
+  }
+  return expiry?.mode==='inactivity'?'Expiry terms may apply':'No units expiring in the next 30 days';
+}
+function actionableWalletActionText(card){
+  const action=card?.action||{},reward=card?.next_eligible_reward||{},expiry=card?.expiry||{},visit=card?.visit_progress||{};
+  const unit=String(card?.loyalty?.unit||'points');
+  if(action.reason==='expiring_within_7_days')return `${Number(expiry.expiring_within_7_days||0)} ${unit} expire soon${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
+  if(action.reason==='reward_available')return `${reward.name||'Reward'} is ready at the counter`;
+  if(action.reason==='expiring_within_30_days')return `${Number(expiry.expiring_units||0)} ${unit} expire within 30 days${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
+  if(action.reason==='one_qualifying_visit_remaining')return `One qualifying visit remains${visit.customer_description?` · ${visit.customer_description}`:''}${action.deadline_at?` · by ${walletDate(action.deadline_at)}`:''}`;
+  if(action.reason==='reward_progress')return `${Number(reward.remaining_units||0)} ${unit} to ${reward.name||'your next reward'}`;
+  if(action.reason==='birthday_benefit_expiring_within_7_days')return `Birthday benefit ends soon${action.deadline_at?` · ends ${walletDate(action.deadline_at,true)}`:''}`;
+  if(action.reason==='birthday_benefit_available')return 'Birthday benefit is ready to use';
+  return 'No urgent action right now';
+}
+function birthdayBenefitMarkup(benefit,{interactive=false,compact=false}={}){
+  if(!benefit||benefit.status==='unavailable')return '';
+  const validity=benefit.validity||{},isReady=benefit.status==='ready_to_activate',isAvailable=benefit.status==='available';
+  const state=isReady?'Ready to activate':isAvailable?'Available now':String(benefit.status||'').replaceAll('_',' ');
+  if(compact)return `<div class="wallet-line birthday-benefit"><div><b>Birthday benefit</b><p class="muted small" style="margin-top:4px">${esc(benefit.label||'Birthday benefit')} · ${esc(benefit.display||state)}${validity.available_until?` · ends ${esc(walletDate(validity.available_until,true))}`:''}</p></div></div>`;
+  return `<section class="wallet-line birthday-benefit" aria-labelledby="birthdayBenefitTitle"><div style="width:100%">
+    <div class="row"><div><b id="birthdayBenefitTitle">${esc(benefit.label||'Birthday benefit')}</b><p class="muted small" style="margin-top:4px">${esc(benefit.display||'Birthday benefit')}</p></div><span class="spacer"></span><span class="pill">${esc(state)}</span></div>
+    ${benefit.description?`<p class="muted small" style="margin-top:7px">${esc(benefit.description)}</p>`:''}
+    ${validity.available_until?`<p class="muted small" style="margin-top:7px">${isAvailable||isReady?'Use':'Status checked'} before ${esc(walletDate(validity.available_until,true))}. The end instant is exclusive; benefits are handled at the counter.</p>`:''}
+    ${benefit.terms?`<details style="margin-top:8px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(benefit.terms)}</p></details>`:''}
+    ${interactive&&isReady?'<button type="button" class="btn sm" id="birthdayBenefitActivate" style="margin-top:12px">Activate benefit</button>':''}
+    ${interactive&&isAvailable?'<button type="button" class="btn ghost sm" id="birthdayBenefitShow" style="margin-top:12px">Show at counter</button><p id="birthdayBenefitCounter" class="muted small" role="status" aria-live="polite" style="margin-top:7px"></p>':''}
+  </div></section>`;
+}
+function actionableWalletCardMarkup(card,{detail=false}={}){
+  const business=card?.business||{},loyalty=card?.loyalty||{},credit=card?.credit||{},packages=card?.packages||{};
+  const unit=esc(loyalty.unit||'points'),currency=esc(business.currency||'SGD'),reward=card?.next_eligible_reward||null,visit=card?.visit_progress||{};
+  return `<article class="card wallet-section"${detail?'':' style="margin:0"'}>
+    <div class="row"><div><h${detail?'1':'2'}>${esc(business.name||'Business')}</h${detail?'1':'2'}><p class="muted small" style="margin-top:4px">${esc(business.industry||'Local business')}</p></div><span class="spacer"></span>${detail?'':`<span class="pill">${esc(actionableWalletActionText(card))}</span>`}</div>
+    <div class="wallet-metrics">
+      <div class="wallet-metric"><span class="muted small">${unit} balance</span><b>${Number(loyalty.balance||0)}</b></div>
+      <div class="wallet-metric"><span class="muted small">Credit balance</span><b>${currency} ${(Number(credit.balance_cents||0)/100).toFixed(2)}</b></div>
+      <div class="wallet-metric"><span class="muted small">Package session balance</span><b>${Number(packages.sessions_remaining||0)}</b></div>
+      <div class="wallet-metric"><span class="muted small">${unit} expiry</span><b style="font-size:14px;line-height:1.35">${esc(actionableWalletExpiryText(card?.expiry,loyalty.unit||'points'))}</b></div>
+    </div>
+    <div class="wallet-line" style="margin-top:8px"><div><b>Next reward</b><p class="muted small" style="margin-top:4px">${reward?reward.available_now?`${esc(reward.name||'Reward')} is ready at the counter.`:`${Number(reward.remaining_units||0)} ${unit} to ${esc(reward.name||'your next reward')}.`:'No active reward is available right now.'}</p></div></div>
+    ${card?.visits_remaining===null||card?.visits_remaining===undefined?'':`<div class="wallet-line"><div><b>Visit progress</b><p class="muted small" style="margin-top:4px">${Number(card.visits_remaining)===0?'Current visit goal is complete.':`${Number(card.visits_remaining)} qualifying visit${Number(card.visits_remaining)===1?'':'s'} remaining.`}${visit.customer_description?` ${esc(visit.customer_description)}`:''}</p></div></div>`}
+    ${birthdayBenefitMarkup(card?.birthday_benefit,{interactive:detail,compact:!detail})}
+    ${detail?`<p class="muted small" style="margin-top:14px">${esc(actionableWalletActionText(card))}</p>`:''}
+  </article>`;
+}
+function renderActionableWalletHome(payload){
+  const cards=Array.isArray(payload?.cards)?payload.cards:[];
+  $('walletBody').innerHTML=`<h1>My Frenly</h1><p class="muted small" style="margin:4px 0 18px">Your rewards stay separate by business. Cards are ordered by the next action you can take.</p>
+    ${payload?.truncated?'<div class="card" role="status"><p class="muted small">Showing the 100 highest-priority linked businesses. Ask Frenly support to help locate another programme.</p></div>':''}
+    ${cards.length?`<div class="wallet-firms">${cards.map(card=>`<a class="wallet-firm" href="#/wallet/${encodeURIComponent(card?.business?.slug||'')}" aria-label="Open ${esc(card?.business?.name||'business')} rewards">${actionableWalletCardMarkup(card)}</a>`).join('')}</div>`:'<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Use a business link or QR code to add a programme.</p></div>'}`;
+}
 async function renderCustomerWallet(businessSlug=null){
+  const walletRenderEpoch=++customerWalletRenderEpoch;
+  const isWalletCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const customerFeatures=await loadCustomerFeatureCapabilities();
+  if(!isWalletCurrent())return;
   if(!customerFeatures.customer_wallet)return renderCustomerWalletUnavailable();
+  if(customerFeatures.customer_phone_registration===true){
+    const {data:profile,error:profileError}=await sb.rpc('customer_get_profile');
+    if(!isWalletCurrent())return;
+    const profileReady=!profileError&&profile?.profile!==null;
+    if(!profileReady){
+      nav('#/customer');
+      return renderCustomerRegistrationProfile();
+    }
+  }
   const {data:walletPersonas}=await sb.rpc('get_my_personas');
+  if(!isWalletCurrent())return;
   const walletStaff=walletPersonas?.staff||[],walletCustomers=walletPersonas?.customer||[];
   const dualRoleWorkspace=walletStaff.length&&walletCustomers.length?walletStaff[0]:null;
   root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><div class="wallet-head">
     ${businessSlug?'<button class="btn ghost sm" id="walletBack">←</button>':''}<div class="logo">frenly<span>.</span></div>
-    <span class="spacer"></span>${dualRoleWorkspace?`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(dualRoleWorkspace.business_slug)}/dashboard">Staff workspace</a>`:''}<button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
+    <span class="spacer"></span><span id="customerInboxBellSlot"></span>${dualRoleWorkspace?`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(dualRoleWorkspace.business_slug)}/dashboard">Staff workspace</a>`:''}<button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
     <div id="walletBody"><div class="card"><p class="muted">Loading…</p></div></div></div></div>`;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   if($('walletBack')) $('walletBack').onclick=()=>nav('#/wallet');
+  let actionableCard=null;
+  if(customerFeatures.customer_actionable_wallet===true){
+    if(!businessSlug){
+      const {data,error}=await sb.rpc('customer_get_actionable_wallet');
+      if(!isWalletCurrent())return;
+      if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null);
+      renderActionableWalletHome(data);
+      if(customerFeatures.customer_in_app_inbox===true) renderCustomerInAppInbox(null,isWalletCurrent);
+      return;
+    }
+    const {data,error}=await sb.rpc('customer_get_actionable_business',{p_business_slug:businessSlug});
+    if(!isWalletCurrent())return;
+    if(error)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
+    actionableCard=data?.card||null;
+    if(!actionableCard)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
+  }
   if(!businessSlug){
     const {data,error}=await sb.rpc('customer_get_wallet');
+    if(!isWalletCurrent())return;
     if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null);
     const cards=Array.isArray(data)?data:[];
     $('walletBody').innerHTML=`<h1>My Frenly</h1><p class="muted small" style="margin:4px 0 18px">Each business keeps its own rewards and balances.</p>
@@ -929,22 +1235,25 @@ async function renderCustomerWallet(businessSlug=null){
           <p class="muted small" style="margin-top:12px">${Number(appointments.count||0)} upcoming</p></button>`}).join('')}</div>
       ${cards.length?'':'<div class="card"><p class="muted">No verified business links yet.</p></div>'}`;
     document.querySelectorAll('.wallet-firm').forEach(button=>button.onclick=()=>nav('#/wallet/'+encodeURIComponent(button.dataset.slug)));
+    if(customerFeatures.customer_in_app_inbox===true) renderCustomerInAppInbox(null,isWalletCurrent);
     return;
   }
   const args={p_business_slug:businessSlug};
   const [{data:summary,error:summaryError},{data:capabilities,error:capabilitiesError}]=await Promise.all([
     sb.rpc('customer_get_business_summary',args),sb.rpc('customer_portal_capabilities',args)]);
+  if(!isWalletCurrent())return;
   if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
   const b=summary.business||{},loyalty=summary.loyalty||{},packages=summary.packages||{},membership=summary.membership||{};
   const currency=b.currency||'SGD';
   const hasWalletSection=['booking_request','rewards','activity','packages','membership','appointments'].some(key=>!!capabilities[key]);
   $('walletBody').innerHTML=`<div class="row"><div><h1>${esc(b.name||'My rewards')}</h1><p class="muted small" style="margin-top:4px">${esc(b.industry||'')}</p></div><span class="spacer"></span>${customerFeatures.customer_claims?'<button class="btn danger sm" id="walletUnlink">Disconnect</button>':''}</div>
-    <div class="wallet-metrics">
+    ${actionableCard?`<div style="margin-top:18px">${actionableWalletCardMarkup(actionableCard,{detail:true})}</div>`:''}
+    ${actionableCard?'':`<div class="wallet-metrics">
       ${loyalty.enabled?`<div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'points')}</span><b>${Number(loyalty.balance||0)}</b></div>
       <div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents||0)/100).toFixed(2)}</b></div>`:''}
       ${capabilities.packages?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining||0)}</b></div>`:''}
       ${capabilities.membership?`<div class="wallet-metric"><span class="muted small">Membership</span><b>${membership.active?'Active':'Inactive'}</b></div>`:''}
-    </div>
+    </div>`}
     <div class="wallet-sections" id="walletSections">
       ${capabilities.booking_request?`<section class="card wallet-section" id="walletBook" aria-busy="false"><div class="wallet-section-head"><div><h2>Book</h2><p class="muted small">Request your next visit with ${esc(b.name||'this business')}.</p></div><span class="spacer"></span><a class="btn sm" href="#/b/${encodeURIComponent(b.slug)}">Book now</a></div></section>`:''}
       ${capabilities.rewards?walletSectionShell('walletRewards','Rewards','Browse rewards and ask the team to claim at the counter.'):''}
@@ -952,26 +1261,54 @@ async function renderCustomerWallet(businessSlug=null){
       ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
       ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
       ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
+      ${customerFeatures.customer_in_app_inbox?`<section class="card wallet-section" id="customerInAppInbox" aria-busy="true" tabindex="-1"><div class="wallet-skeleton"></div></section>`:''}
+      ${customerFeatures.customer_birthday_benefits?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>
     ${customerFeatures.customer_notifications?'<div id="customerNotificationPreferences"></div>':''}`;
   let unlinkAttemptId=crypto.randomUUID();
-  if($('walletUnlink'))$('walletUnlink').onclick=async()=>{
+  let birthdayActivationAttemptId=crypto.randomUUID();
+  const birthdayActivate=$('birthdayBenefitActivate');
+  if(birthdayActivate)birthdayActivate.onclick=async()=>{
+    birthdayActivate.disabled=true;
+    const {data,error}=await sb.rpc('customer_activate_birthday_benefit',{p_business_slug:businessSlug,p_idempotency_key:birthdayActivationAttemptId});
+    if(!isWalletCurrent()||!birthdayActivate.isConnected)return;
+    if(error){birthdayActivate.disabled=false;return toast('Birthday benefit is unavailable right now.');}
+    actionableCard={...actionableCard,birthday_benefit:data||null};
+    birthdayActivationAttemptId=crypto.randomUUID();
+    const cardHost=birthdayActivate.closest('.wallet-section');
+    if(cardHost&&cardHost.isConnected){
+      cardHost.outerHTML=actionableWalletCardMarkup(actionableCard,{detail:true});
+      const replacement=$('birthdayBenefitShow');
+      if(replacement)replacement.onclick=()=>{
+        const status=$('birthdayBenefitCounter');if(status)status.textContent='Show this screen to the team at the counter. No birthday details are shared with the business.';
+      };
+    }
+  };
+  const birthdayShow=$('birthdayBenefitShow');
+  if(birthdayShow)birthdayShow.onclick=()=>{
+    const status=$('birthdayBenefitCounter');if(status)status.textContent='Show this screen to the team at the counter. No birthday details are shared with the business.';
+  };
+  const unlinkButton=$('walletUnlink');
+  if(unlinkButton)unlinkButton.onclick=async()=>{
     if(!confirm('Disconnect this business from My Frenly? Your customer history stays with the business, but this account will immediately lose wallet access.'))return;
-    $('walletUnlink').disabled=true;
+    unlinkButton.disabled=true;
     const {error}=await sb.rpc('customer_unlink_business_link',{
       p_business_slug:businessSlug,p_idempotency_key:unlinkAttemptId});
-    if(error){$('walletUnlink').disabled=false;return toast('Customer access is unavailable. Please try again later.')}
+    if(!isWalletCurrent()||!unlinkButton.isConnected)return;
+    if(error){unlinkButton.disabled=false;return toast('Customer access is unavailable. Please try again later.')}
     toast('Business disconnected');nav('#/wallet');
   };
   ensureWalletEmptyState(businessSlug);
+  const isWalletSectionCurrent=(host)=>walletSectionStillCurrent(host,isWalletCurrent);
   const loadRewards=async()=>{
     const host=$('walletRewards');if(!host)return;
     host.setAttribute('aria-busy','true');
     const {data,error}=await sb.rpc('customer_get_reward_catalog',args);
+    if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?'Rewards are not available for this account.':'Rewards could not be loaded.',loadRewards);
     const rewards=Array.isArray(data)?data:[];
-    if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards','No rewards are available right now.',businessSlug,'rewards',loadRewards);
+    if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards','No rewards are available right now.',businessSlug,'rewards',loadRewards,isWalletCurrent);
     const availability={available_at_counter:'Available at counter',insufficient_balance:'More points needed',not_started:'Available soon',ended:'Offer ended',limit_reached:'Claim limit reached'};
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Rewards</h2><p class="muted small">Claims are completed with the team at the counter.</p></div></div><div class="wallet-rewards">${rewards.map(r=>`<article class="wallet-reward">
@@ -986,10 +1323,11 @@ async function renderCustomerWallet(businessSlug=null){
   const loadActivity=async(cursor=null)=>{
     const host=$('walletActivity');if(!host)return;
     const {data,error}=await sb.rpc('customer_get_loyalty_details',{...args,p_cursor:cursor||{limit:20}});
+    if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletActivity',walletRpcDenied(error)?'Loyalty activity is not available for this account.':'Activity could not be loaded.',()=>loadActivity(cursor));
     const next=Array.isArray(data?.items)?data.items:[];
     activityState.items=cursor?[...activityState.items,...next]:next;activityState.nextCursor=data?.next_cursor||null;
-    if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity','No loyalty activity is available yet.',businessSlug,'activity',()=>loadActivity(null));
+    if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity','No loyalty activity is available yet.',businessSlug,'activity',()=>loadActivity(null),isWalletCurrent);
     const unit=esc(data?.unit||loyalty.unit||'points'),expiry=data?.expiry||{};
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Activity</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${Number(expiry.expiring_next_30_days)} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:'<p class="muted small">Your loyalty history with this business.</p>'}</div></div>
@@ -1001,10 +1339,11 @@ async function renderCustomerWallet(businessSlug=null){
   const loadPackages=async(cursor=null)=>{
     const host=$('walletPackages');if(!host)return;
     const {data,error}=await sb.rpc('customer_get_packages',{...args,p_cursor:cursor||{limit:20}});
+    if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletPackages',walletRpcDenied(error)?'Packages are not available for this account.':'Packages could not be loaded.',()=>loadPackages(cursor));
     const next=Array.isArray(data?.items)?data.items:[];
     packageState.items=cursor?[...packageState.items,...next]:next;packageState.nextCursor=data?.next_cursor||null;
-    if(!packageState.items.length)return walletSectionEmpty('walletPackages','Packages','No packages are available for this account.',businessSlug,'packages',()=>loadPackages(null));
+    if(!packageState.items.length)return walletSectionEmpty('walletPackages','Packages','No packages are available for this account.',businessSlug,'packages',()=>loadPackages(null),isWalletCurrent);
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Packages</h2><p class="muted small">Session balances and recent usage.</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
@@ -1015,9 +1354,10 @@ async function renderCustomerWallet(businessSlug=null){
   const loadMemberships=async()=>{
     const host=$('walletMemberships');if(!host)return;
     const {data,error}=await sb.rpc('customer_get_memberships',args);
+    if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletMemberships',walletRpcDenied(error)?'Membership is not available for this account.':'Membership could not be loaded.',loadMemberships);
     const memberships=Array.isArray(data)?data:[];
-    if(!memberships.length)return walletSectionEmpty('walletMemberships','Membership','No membership is available for this account.',businessSlug,'membership',loadMemberships);
+    if(!memberships.length)return walletSectionEmpty('walletMemberships','Membership','No membership is available for this account.',businessSlug,'membership',loadMemberships,isWalletCurrent);
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Membership</h2><p class="muted small">Current plan and period status.</p></div></div>${memberships.map(item=>`<div class="wallet-line"><div><b>${esc(item.plan_name||'Membership')}</b><p class="muted small" style="margin-top:3px">${esc(String(item.cadence||'').replaceAll('_',' '))}${item.current_period_start?' · '+esc(walletDate(item.current_period_start))+' to '+esc(walletDate(item.current_period_end)):''}</p></div><span class="spacer"></span><span class="pill">${esc(String(item.status||'').replaceAll('_',' '))}</span></div>`).join('')}`;
   };
@@ -1025,20 +1365,201 @@ async function renderCustomerWallet(businessSlug=null){
   const loadAppointments=async(cursor=null)=>{
     const host=$('walletAppointments');if(!host)return;
     const {data,error}=await sb.rpc('customer_get_appointments_page',{...args,p_cursor:cursor||{limit:20}});
+    if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletAppointments',walletRpcDenied(error)?'Appointments are not available for this account.':'Appointments could not be loaded.',()=>loadAppointments(cursor));
     const next=Array.isArray(data?.items)?data.items:[];
     appointmentState.items=cursor?[...appointmentState.items,...next]:next;appointmentState.nextCursor=data?.next_cursor||null;
-    if(!appointmentState.items.length)return walletSectionEmpty('walletAppointments','Appointments','No appointments are available yet.',businessSlug,'appointments',()=>loadAppointments(null));
+    if(!appointmentState.items.length)return walletSectionEmpty('walletAppointments','Appointments','No appointments are available yet.',businessSlug,'appointments',()=>loadAppointments(null),isWalletCurrent);
     renderWalletAppointments(host,businessSlug,appointmentState,customerFeatures);
     if($('walletAppointmentsMore'))$('walletAppointmentsMore').onclick=()=>{ $('walletAppointmentsMore').disabled=true;loadAppointments(appointmentState.nextCursor) };
   };
-  await Promise.all([loadRewards(),loadActivity(),loadPackages(),loadMemberships(),loadAppointments()]);
-  if(customerFeatures.customer_notifications) renderCustomerNotificationPreferences(businessSlug);
+  const loadBirthdayParticipation=async()=>{
+    const host=$('walletBirthdayParticipation');if(!host)return;
+    const {data,error}=await sb.rpc('customer_get_birthday_participation');
+    if(!walletSectionStillCurrent(host,isWalletCurrent))return;
+    if(error){host.remove();ensureWalletEmptyState(businessSlug);return;}
+    const optedIn=data?.opted_in===true;
+    host.setAttribute('aria-busy','false');
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Birthday benefits</h2><p class="muted small">Your date of birth is used by Frenly to determine eligible birthday benefits. It is not shown to businesses, and this is separate from marketing.</p></div></div>
+      <div class="row" style="margin-top:10px"><span class="pill">${optedIn?'Participating':'Not participating'}</span><span class="spacer"></span><button type="button" class="btn ghost sm" id="birthdayParticipationToggle">${optedIn?'Turn off':'Turn on'}</button></div>
+      <p id="birthdayParticipationStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>`;
+    const toggle=$('birthdayParticipationToggle');
+    const birthdayParticipationAttemptId=crypto.randomUUID();
+    toggle.onclick=async()=>{
+      toggle.disabled=true;
+      const {error:setError}=await sb.rpc('customer_set_birthday_participation',{p_opted_in:!optedIn,p_idempotency_key:birthdayParticipationAttemptId});
+      if(!walletSectionStillCurrent(host,isWalletCurrent)||!toggle.isConnected)return;
+      if(setError){toggle.disabled=false;const status=$('birthdayParticipationStatus');if(status)status.textContent='Birthday participation could not be updated. Please try again.';return;}
+      // The participation state changes eligibility. Re-render the whole
+      // business wallet so the actionable card is never left stale after an
+      // opt-in or opt-out (the route/DOM guard above prevents late writes).
+      renderCustomerWallet(businessSlug);
+    };
+  };
+  await Promise.all([loadRewards(),loadActivity(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation()]);
+  if(!isWalletCurrent())return;
+  if(customerFeatures.customer_notifications) renderCustomerNotificationPreferences(businessSlug,isWalletCurrent);
+  if(customerFeatures.customer_in_app_inbox===true) renderCustomerInAppInbox(businessSlug,isWalletCurrent,actionableCard);
 }
 
-async function renderCustomerNotificationPreferences(businessSlug){
-  const host=$('customerNotificationPreferences');if(!host)return;
+async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionableCard=null){
+  let host=$('customerInAppInbox');
+  if(!host&&businessSlug===null){
+    const body=$('walletBody');
+    if(!body||!isCurrent()||!body.isConnected)return;
+    body.insertAdjacentHTML('beforeend','<section class="card wallet-section" id="customerInAppInbox" aria-busy="true" tabindex="-1"><div class="wallet-skeleton"></div></section>');
+    host=$('customerInAppInbox');
+  }
+  if(!walletSectionStillCurrent(host,isCurrent))return;
+  const slot=$('customerInboxBellSlot');
+  const slotCurrent=()=>!!slot&&slot.isConnected&&$('customerInboxBellSlot')===slot&&isCurrent();
+  const global=businessSlug===null;
+  const loyaltyUnit=actionableCard?.loyalty?.unit;
+  const expiryReminderLabel=loyaltyUnit==='stamps'?'Stamps expiry reminders':loyaltyUnit==='points'?'Points expiry reminders':'Expiry reminders';
+  let currentFilter='all',nextCursor=null,items=[],bell=null,refreshInbox;
+  const topicLabels={
+    value_expiry:expiryReminderLabel,reward_ready:'Reward ready reminders',
+    visit_progress:'Visit progress reminders',birthday_benefit:'Birthday benefit reminders',
+    booking_updates:'Booking update reminders'
+  };
+  const request=(name,args)=>sb.rpc(name,args);
+  const refreshBell=async()=>{
+    const {data,error}=await request(
+      global?'customer_get_in_app_inbox_global_count':'customer_get_in_app_inbox_count',
+      global?{}:{p_business_slug:businessSlug}
+    );
+    if(!walletSectionStillCurrent(host,isCurrent)||!slotCurrent())return null;
+    if(error)return {error};
+    const unread=Math.max(0,Number(data?.unread_count||0));
+    slot.innerHTML=`<button type="button" class="customer-inbox-bell" id="customerInboxBell" aria-label="Open inbox" aria-controls="customerInAppInbox" title="${unread?`${unread} unread inbox item${unread===1?'':'s'}`:'Open inbox'}">${CUI.icon('bell',{size:19})}${unread?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</button>`;
+    const bell=$('customerInboxBell');
+    if(bell)bell.onclick=()=>{if(!walletSectionStillCurrent(host,isCurrent))return;host.focus({preventScroll:true});host.scrollIntoView({behavior:'smooth',block:'start'});};
+    return {unread,quiet:data?.quiet_hours_active===true};
+  };
+  const render=()=>{
+    const status=[
+      bell?.quiet?'Quiet hours are active. Inbox items are available without interrupting you.':'',
+      items.some(item=>item?.state==='source_unavailable')?'Some programme updates are temporarily unavailable and cannot be opened.':''
+    ].filter(Boolean).join(' ');
+    let priorBusinessSlug='';
+    const renderedItems=items.map(item=>{
+      const state=String(item?.state||'read'),isResolved=state==='resolved',isUnavailable=state==='source_unavailable',business=item?.business||null;
+      const routeSlug=global?business?.slug:businessSlug;
+      const deadline=item?.deadline_at?`<p class="muted small" style="margin-top:4px">Relevant until ${esc(walletDate(item.deadline_at))}.</p>`:'';
+      const businessHeading=global&&business?.slug!==priorBusinessSlug?`<h3 class="customer-inbox-group">${esc(business?.name||'Business programme')}</h3>`:'';
+      if(global&&business?.slug)priorBusinessSlug=business.slug;
+      const stateCopy=isResolved?'Resolved history':isUnavailable?'Programme temporarily unavailable':state==='unread'?'Unread':'Read';
+      const openAction=item?.action_available===true&&!isResolved&&item?.route_key==='wallet_business'&&routeSlug?`<button type="button" class="btn ghost sm" data-inbox-open="${esc(item.event_id)}" data-route-key="wallet_business">Open programme</button>`:'';
+      const markAction=!isResolved?`<button type="button" class="btn ghost sm" data-inbox-state="${esc(item.event_id)}" data-state="${state==='unread'?'read':'unread'}">Mark ${state==='unread'?'read':'unread'}</button><button type="button" class="btn ghost sm" data-inbox-state="${esc(item.event_id)}" data-state="dismiss">Dismiss</button>`:'';
+      return `${businessHeading}<article class="customer-inbox-item ${esc(state)}"><div class="row"><div><b>${esc(item?.title||'Inbox update')}</b><p class="muted small" style="margin-top:3px">${esc(item?.body||'')}</p>${deadline}</div><span class="spacer"></span><span class="pill">${esc(stateCopy)}</span></div><div class="customer-inbox-actions">${openAction}${markAction}</div></article>`;
+    }).join('');
+    host.setAttribute('aria-busy','false');
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${global?'My Frenly inbox':'Inbox'}</h2><p class="muted small">${global?'Updates grouped by your separate business programmes.':'Customer-safe updates from this business.'}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button></div>
+      <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
+      <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
+      ${nextCursor?'<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">Load more</button>':''}
+      ${global?'':`<div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`}`;
+    host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
+      if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
+    });
+    host.querySelectorAll('[data-inbox-open]').forEach(button=>button.onclick=async()=>{
+      const item=items.find(entry=>entry?.event_id===button.dataset.inboxOpen);const slug=global?item?.business?.slug:businessSlug;
+      if(!item||!slug||!walletSectionStillCurrent(host,isCurrent))return;
+      button.disabled=true;await setState(item,'read');if(!isCurrent())return;nav('#/wallet/'+encodeURIComponent(slug));
+    });
+    host.querySelectorAll('[data-inbox-state]').forEach(button=>button.onclick=async()=>{
+      const item=items.find(entry=>entry?.event_id===button.dataset.inboxState);if(!item)return;
+      button.disabled=true;await setState(item,button.dataset.state);if(!walletSectionStillCurrent(host,isCurrent))return;load(null);
+    });
+    const more=$('customerInboxMore');if(more)more.onclick=()=>{more.disabled=true;load(nextCursor);};
+    if(!global)renderPreferences();
+  };
+  const setState=async(item,operation)=>{
+    const slug=global?item?.business?.slug:businessSlug;
+    if(!slug)return;
+    const {error}=await request('customer_set_in_app_inbox_state',{
+      p_business_slug:slug,p_event_id:item.event_id,p_operation:operation,p_idempotency_key:crypto.randomUUID()
+    });
+    if(!walletSectionStillCurrent(host,isCurrent))return;
+    const status=$('customerInboxStatus');
+    if(error){if(status)status.textContent='That inbox item could not be updated. Please try again.';return;}
+    if(status)status.textContent='Inbox updated.';CUI.announce('Inbox updated.');
+    const refreshedBell=await refreshBell();
+    if(refreshedBell?.error&&status)status.textContent='Inbox updated, but its unread count could not be refreshed.';
+  };
+  const renderRefreshUnavailable=()=>{
+    if(!walletSectionStillCurrent(host,isCurrent))return;
+    const offline=globalThis.navigator?.onLine===false;
+    const heading=global?'My Frenly inbox needs a refresh':'Inbox needs a refresh';
+    const message=offline
+      ?'You appear to be offline. Reconnect, then retry to refresh your current programme updates.'
+      :'We could not refresh your current programme updates. Programme actions are hidden until refresh succeeds.';
+    items=[];nextCursor=null;bell=null;
+    if(slotCurrent())slot.innerHTML='';
+    host.setAttribute('aria-busy','false');
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>${heading}</h2><p class="muted small" role="status" aria-live="polite">${message}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerInboxSyncRetry">Retry inbox refresh</button></div>`;
+    const retry=host.querySelector('#customerInboxSyncRetry');
+    if(retry)retry.onclick=async()=>{if(!walletSectionStillCurrent(host,isCurrent))return;retry.disabled=true;await refreshInbox();};
+  };
+  const load=async(cursor=null)=>{
+    const rpc=global?'customer_list_in_app_inbox_global':'customer_list_in_app_inbox';
+    const args=global?{p_cursor:cursor||{limit:20,filter:currentFilter}}:{p_business_slug:businessSlug,p_cursor:cursor||{limit:20,filter:currentFilter}};
+    const {data,error}=await request(rpc,args);
+    if(!walletSectionStillCurrent(host,isCurrent))return;
+    if(error){renderRefreshUnavailable();return;}
+    const fresh=Array.isArray(data?.items)?data.items:[];items=cursor?[...items,...fresh]:fresh;nextCursor=data?.next_cursor||null;render();
+  };
+  refreshInbox=async()=>{
+    if(!walletSectionStillCurrent(host,isCurrent))return;
+    host.setAttribute('aria-busy','true');
+    // A list is never loaded after a failed C46 sync. That prevents an old
+    // actionable route from looking current when source availability is unknown.
+    const {error}=await request(
+      global?'customer_sync_in_app_inbox_global':'customer_sync_in_app_inbox',
+      global?{p_idempotency_key:crypto.randomUUID()}:{p_business_slug:businessSlug,p_idempotency_key:crypto.randomUUID()}
+    );
+    if(!walletSectionStillCurrent(host,isCurrent))return;
+    if(error){renderRefreshUnavailable();return;}
+    const refreshedBell=await refreshBell();
+    if(!walletSectionStillCurrent(host,isCurrent))return;
+    if(!refreshedBell||refreshedBell.error){renderRefreshUnavailable();return;}
+    bell=refreshedBell;
+    await load(null);
+  };
+  const renderPreferences=async()=>{
+    const preferenceHost=$('customerInAppInboxPreferences');if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost)return;
+    const {data,error}=await request('customer_get_in_app_inbox_preferences',{p_business_slug:businessSlug});
+    if(!walletSectionStillCurrent(host,isCurrent)||!preferenceHost.isConnected)return;
+    if(error)return;
+    const preferences=new Map((Array.isArray(data)?data:[]).map(item=>[item.topic,item]));
+    const timezoneOptions='<datalist id="customerInboxIanaTimezones"><option value="Asia/Singapore"></option><option value="Asia/Kuala_Lumpur"></option><option value="Asia/Bangkok"></option><option value="Asia/Jakarta"></option><option value="Asia/Manila"></option><option value="Australia/Perth"></option><option value="Asia/Tokyo"></option><option value="Europe/London"></option><option value="America/Los_Angeles"></option></datalist>';
+    const preferenceRows=Object.entries(topicLabels).map(([topic,label])=>{
+      const preference=preferences.get(topic)||{};
+      const start=String(preference.quiet_hours_start||'').slice(0,5),end=String(preference.quiet_hours_end||'').slice(0,5);
+      const timezone=String(preference.quiet_hours_timezone||'Asia/Singapore').trim()||'Asia/Singapore';
+      const timezoneHelpId=`customerInboxQuietTimezoneHelp-${topic}`;
+      return `<fieldset style="margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:8px"><legend class="small" style="padding:0 4px">${esc(label)}</legend><label class="row" style="color:var(--ink);font-weight:500"><input type="checkbox" class="customerInboxPreference" style="width:auto" data-topic="${topic}" ${preference.opted_in===true?'checked':''}>Keep this reminder in my inbox</label><div class="customer-inbox-quiet"><label class="small">Quiet from<input class="customerInboxQuietStart" data-topic="${topic}" type="time" value="${esc(start)}"></label><label class="small">Quiet until<input class="customerInboxQuietEnd" data-topic="${topic}" type="time" value="${esc(end)}"></label><label class="small">Timezone<input class="customerInboxQuietTimezone" data-topic="${topic}" type="text" list="customerInboxIanaTimezones" value="${esc(timezone)}" spellcheck="false" autocapitalize="none" autocomplete="off" aria-describedby="${timezoneHelpId}"></label></div><p class="muted small" id="${timezoneHelpId}">Use an IANA timezone such as Asia/Singapore. It is checked when you save and only applies when both quiet-hour times are set.</p><button type="button" class="btn ghost sm customerInboxPreferenceSave" data-topic="${topic}" style="margin-top:8px">Save reminder</button></fieldset>`;
+    }).join('');
+    preferenceHost.innerHTML=`<h3 style="font-size:16px">Inbox reminders</h3><p class="muted small" style="margin-top:4px">Choose what this business can place in your inbox. Each reminder type has its own optional quiet hours. Inbox items remain available during quiet hours; these saved hours are retained for a future interruptive channel. Nothing changes until you select Save.</p>${timezoneOptions}${preferenceRows}`;
+    preferenceHost.querySelectorAll('.customerInboxPreferenceSave').forEach(button=>button.onclick=async()=>{
+      const topic=button.dataset.topic;const checkbox=preferenceHost.querySelector(`.customerInboxPreference[data-topic="${topic}"]`);const startInput=preferenceHost.querySelector(`.customerInboxQuietStart[data-topic="${topic}"]`);const endInput=preferenceHost.querySelector(`.customerInboxQuietEnd[data-topic="${topic}"]`);const timezoneInput=preferenceHost.querySelector(`.customerInboxQuietTimezone[data-topic="${topic}"]`);if(!checkbox||!startInput||!endInput||!timezoneInput)return;
+      const start=startInput.value||null,end=endInput.value||null,timezone=timezoneInput.value.trim();if((start&&!end)||(!start&&end)){const status=$('customerInboxStatus');if(status)status.textContent='Set both quiet-hour times, or clear both.';return;}if(start&&!timezone){const status=$('customerInboxStatus');if(status)status.textContent='Enter an IANA timezone, such as Asia/Singapore, before saving quiet hours.';timezoneInput.focus();return;}
+      button.disabled=true;const {error:setError}=await request('customer_set_in_app_inbox_preferences',{
+        p_business_slug:businessSlug,p_topic:topic,p_opted_in:checkbox.checked,
+        p_quiet_hours_timezone:start?timezone:null,p_quiet_hours_start:start,p_quiet_hours_end:end,p_idempotency_key:crypto.randomUUID()
+      });
+      if(!walletSectionStillCurrent(host,isCurrent)||!button.isConnected)return;
+      button.disabled=false;const status=$('customerInboxStatus');if(setError){if(status)status.textContent='That reminder could not be saved. Please check the quiet hours and try again.';return;}
+      preferences.set(topic,{opted_in:checkbox.checked,quiet_hours_timezone:start?timezone:null,quiet_hours_start:start,quiet_hours_end:end});if(status)status.textContent='Inbox reminder saved.';CUI.announce('Inbox reminder saved.');await refreshBell();
+    });
+  };
+  await refreshInbox();
+}
+
+async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>true){
+  const host=$('customerNotificationPreferences');if(!walletSectionStillCurrent(host,isCurrent))return;
   const {data,error}=await sb.rpc('customer_get_notification_preferences',{p_business_slug:businessSlug});
+  if(!walletSectionStillCurrent(host,isCurrent))return;
   if(error)return fail(error);
   const current=new Map((data||[]).map(x=>[`${x.channel}:${x.topic}`,!!x.opted_in]));
   const choices=[['in_app','booking_updates','Booking updates'],['in_app','loyalty_updates','Loyalty updates'],['email','marketing','Offers by email']];
@@ -1049,6 +1570,7 @@ async function renderCustomerNotificationPreferences(businessSlug){
     const {error:setError}=await sb.rpc('customer_set_notification_preference',{
       p_business_slug:businessSlug,p_channel:input.dataset.channel,p_topic:input.dataset.topic,
       p_opted_in:input.checked,p_idempotency_key:crypto.randomUUID()});
+    if(!walletSectionStillCurrent(host,isCurrent)||!input.isConnected)return;
     input.disabled=false;
     if(setError){input.checked=!input.checked;return fail(setError)}
     toast('Notification preference saved');
@@ -1115,13 +1637,16 @@ function renderAuth(mode='in'){
       <button class="btn" id="go" disabled>${mode==='in'?'Sign in':'Sign up'}</button>
       <span class="spacer"></span>
       <button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>
-    </div>${legalLinks()}</div></div>`;
+    </div>
+    <button class="btn ghost" id="customerAuth" type="button" style="width:100%;margin-top:12px">${CUI.icon('customers',{size:18})}<span>I’m a customer</span></button>
+    ${legalLinks()}</div></div>`;
   let authToken='',authControl=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
     retry:'authTurnstileRetry',action:'frenly_auth',
     onToken:(token)=>{authToken=token;$('go').disabled=!token}})
     .then(control=>authControl=control);
   $('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
+  $('customerAuth').onclick=()=>nav('#/customer');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot');
   $('go').onclick=async()=>{
     const email=$('em').value.trim(),password=$('pw').value;
@@ -2015,10 +2540,22 @@ async function clientDetail(id){
   routeMain.innerHTML=CUI.loadingState({title:'Customer profile',iconName:'customers'});
   const canWriteClients=canWriteModule('clients');
   const canWriteLoyalty=canWriteModule('loyalty')&&hasRoleCapability('create_sales');
+  const customerFeatures=await loadCustomerFeatureCapabilities();
+  if(!isClientDetailCurrent())return;
+  // Birthday data is capability-gated before any staff reader is called. This
+  // prevents the customer detail view from probing or rendering the feature
+  // while C45 remains disabled, rather than relying on an RPC error alone.
+  const birthdayBenefitsEnabled=customerFeatures.customer_birthday_benefits===true;
+  const canRedeemBirthday=birthdayBenefitsEnabled&&canWriteModule('loyalty');
+  const canReverseBirthday=birthdayBenefitsEnabled&&S.myRole==='owner'&&canWriteModule('loyalty');
   let classicRedemptionIdem=null;
+  let birthdayRedemptionIdem=null;
+  let birthdayReversalIdem=null;
   const rewardRedemptionIdem=new Map();
-  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:rwBr},{data:rwSv},{data:rwPr},{data:ctxBr},{data:ctxSv},{data:ctxPr},{data:cfDefs},{data:cfVals},{data:cfOpts}]=await Promise.all([
-    sb.from('clients').select('*').eq('id',id).single(),
+  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:rwBr},{data:rwSv},{data:rwPr},{data:ctxBr},{data:ctxSv},{data:ctxPr},{data:cfDefs},{data:cfVals},{data:cfOpts},{data:birthdayBenefit}]=await Promise.all([
+    // Staff customer detail deliberately excludes DOB. Birthday fulfilment
+    // exposes only the capability-gated, benefit-safe RPC projection below.
+    sb.from('clients').select('id,business_id,full_name,phone,email,gender,referral_code,marketing_consent').eq('id',id).single(),
     sb.from('client_points_balance').select('points').eq('client_id',id),
     sb.from('client_credit_balance').select('balance_cents').eq('client_id',id),
     sb.from('sales').select('*').eq('client_id',id).order('occurred_at',{ascending:false}).limit(10),
@@ -2040,7 +2577,10 @@ async function clientDetail(id){
     sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
     S.myRole==='owner'?sb.from('client_field_definitions').select('*').eq('business_id',S.biz.id).eq('active',true).order('created_at'):Promise.resolve({data:[]}),
     S.myRole==='owner'?sb.from('client_field_values').select('*').eq('business_id',S.biz.id).eq('client_id',id):Promise.resolve({data:[]}),
-    S.myRole==='owner'?sb.from('client_field_options').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort_order'):Promise.resolve({data:[]})]);
+    S.myRole==='owner'?sb.from('client_field_options').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort_order'):Promise.resolve({data:[]}),
+    birthdayBenefitsEnabled
+      ?sb.rpc('staff_get_customer_birthday_benefit',{p_business_id:S.biz.id,p_client_id:id})
+      :Promise.resolve({data:null})]);
   if(!isClientDetailCurrent())return;
   if(error) throw error;
   let reversalData=null;
@@ -2083,7 +2623,7 @@ async function clientDetail(id){
   /* Net visits use the complete paged sale history, not the 10-row summary query. Each
      immutable visit snapshot contributes +1 and its compensating reversal contributes -1. */
   const netVisits=(allSl||[]).filter(s=>s.counts_as_visit).reduce((n,s)=>n+(s.reversal_of?-1:1),0);
-  const detailSubtitle=`${c.phone||''} ${c.email||''} · ${c.gender||'gender not set'} ${c.birth_date?'· born '+c.birth_date:''}`.trim();
+  const detailSubtitle=`${c.phone||''} ${c.email||''} · ${c.gender||'gender not set'}`.trim();
   const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:17})}<span>All customers</span></a>`;
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:allCustomersAction,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
     <div class="kpis">
@@ -2123,8 +2663,14 @@ async function clientDetail(id){
       <div class="card"><b>Retention rewards earned</b>
         ${(rg&&rg.length)?rg.map(g=>`<div class="row" style="margin-top:10px"><span class="inline-status">${CUI.icon('loyalty',{size:17})}<span>${esc(g.retention_programs?.name||'Program')}</span></span><span class="spacer"></span>
           <span class="muted small">${esc(g.reward_label||'Reward')} · ${g.fulfillment_kind==='credit'?money(g.reward_value):g.fulfillment_kind==='discount_pct'?g.reward_value+'% off':esc(g.reward_item||'free item')} · ${g.granted_at.slice(0,10)}</span></div>`).join('')
-        :'<p class="muted small" style="margin-top:6px">None yet — rewards land here automatically when visit goals are hit.</p>'}
-      </div></div>
+          :'<p class="muted small" style="margin-top:6px">None yet — rewards land here automatically when visit goals are hit.</p>'}
+      </div>
+      ${birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status!=='unavailable'?`<div class="card"><b>Birthday benefit</b>
+        <p class="muted small" style="margin-top:7px">${esc(birthdayBenefit.label||'Birthday benefit')} · ${esc(birthdayBenefit.display||String(birthdayBenefit.status||'').replaceAll('_',' '))}</p>
+        <p class="muted small" style="margin-top:5px">${birthdayBenefit.status==='available'?'Available to redeem now.':birthdayBenefit.status==='expired'?'No longer available.':'Fulfilment status is shown above.'} The team never sees the customer’s birthday date or validity window.</p>
+        ${canRedeemBirthday&&birthdayBenefit.status==='available'&&birthdayBenefit.cta==='show_at_counter'?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><label class="sr-only" for="birthdayRedeemBranch">Redeeming branch</label><select id="birthdayRedeemBranch" aria-label="Redeeming branch">${(ctxBr||[]).map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}</select><button class="btn sm" id="birthdayRedeem">Redeem birthday benefit</button></div><p id="birthdayRedeemStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p>`:'<span class="pill off" style="margin-top:10px">${birthdayBenefit.status==='redeemed'?'Redeemed':canRedeemBirthday?'Not currently redeemable':'Read only'}</span>'}
+        ${canReverseBirthday&&birthdayBenefit.status==='redeemed'&&birthdayBenefit.redemption==='redeemed'?`<details style="margin-top:10px"><summary class="small">Owner correction</summary><label for="birthdayReverseReason" class="small" style="display:block;margin-top:8px">Reason for reversal</label><textarea id="birthdayReverseReason" rows="2" maxlength="500" placeholder="Required: explain the counter correction"></textarea><button class="btn danger sm" id="birthdayReverse" style="margin-top:8px">Reverse birthday redemption</button><p id="birthdayReverseStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p></details>`:''}
+      </div>`:''}</div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
     <div class="card" style="margin-top:16px"><b>Full history</b><p class="muted small" style="margin:4px 0 8px">Every service and sale, ever — newest first.</p>
@@ -2157,6 +2703,30 @@ async function clientDetail(id){
     if(!isClientDetailCurrent())return;
     if(error){fail(error);rd.disabled=false;return}
     toast(`Redeemed → ${money(data.credit_cents)} credit added 🎉`);clientDetail(id);
+  };
+  const birthdayRedeem=$('birthdayRedeem');
+  if(birthdayRedeem)birthdayRedeem.onclick=async()=>{
+    if(!birthdayBenefitsEnabled)return;
+    const branchId=$('birthdayRedeemBranch')?.value;
+    if(!branchId)return toast('Choose the branch completing this benefit');
+    if(!birthdayRedemptionIdem)birthdayRedemptionIdem=crypto.randomUUID();
+    birthdayRedeem.disabled=true;
+    const {error:redeemError}=await sb.rpc('redeem_customer_birthday_benefit',{p_business_id:S.biz.id,p_client_id:id,p_branch_id:branchId,p_idempotency_key:birthdayRedemptionIdem});
+    if(!isClientDetailCurrent()||!birthdayRedeem.isConnected)return;
+    if(redeemError){birthdayRedeem.disabled=false;const status=$('birthdayRedeemStatus');if(status)status.textContent='Birthday benefit could not be redeemed. Please verify its status and try again.';return;}
+    toast('Birthday benefit redeemed');birthdayRedemptionIdem=crypto.randomUUID();clientDetail(id);
+  };
+  const birthdayReverse=$('birthdayReverse');
+  if(birthdayReverse)birthdayReverse.onclick=async()=>{
+    if(!birthdayBenefitsEnabled)return;
+    const reason=$('birthdayReverseReason')?.value.trim()||'';
+    if(reason.length<3){const status=$('birthdayReverseStatus');if(status)status.textContent='Enter a reason of at least 3 characters.';return;}
+    if(!birthdayReversalIdem)birthdayReversalIdem=crypto.randomUUID();
+    birthdayReverse.disabled=true;
+    const {error:reverseError}=await sb.rpc('reverse_customer_birthday_benefit_for_client',{p_business_id:S.biz.id,p_client_id:id,p_reason:reason,p_idempotency_key:birthdayReversalIdem});
+    if(!isClientDetailCurrent()||!birthdayReverse.isConnected)return;
+    if(reverseError){birthdayReverse.disabled=false;const status=$('birthdayReverseStatus');if(status)status.textContent='Birthday redemption could not be reversed. Review the current status and retry.';return;}
+    toast('Birthday redemption reversed');birthdayReversalIdem=crypto.randomUUID();clientDetail(id);
   };
   /* catalog / milestone redemption (points_tiers + stamps models) */
   document.querySelectorAll('.rewardGo').forEach(b=>b.onclick=async()=>{
@@ -2836,7 +3406,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const canWriteLoyalty=canWriteModule('loyalty');
   const canManageLoyalty=S.myRole==='owner'&&canWriteLoyalty;
   const loyaltyControlDisabled=canManageLoyalty?'':' disabled';
-  let lp=[],rw=[],tr=[],rb=[],rs=[],rp=[],bo=[],draftSnapshotHash=null;
+  let lp=[],rw=[],tr=[],rb=[],rs=[],rp=[],bo=[],birthdayPrograms=[],publishedBirthdayPrograms=[],draftSnapshotHash=null;
   const [{data:br,error:brError},{data:sv,error:svError},{data:pr,error:prError}]=await Promise.all([
     sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name'),
     sb.from('services').select('id,name,active').eq('business_id',S.biz.id).order('name'),
@@ -2870,6 +3440,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       return;
     }
     bo=branchOverrides||[];
+    const {data:birthdayDraft}=await sb.rpc('get_birthday_program_draft',{p_config_version:draftVersionId});
+    if(!isLoyaltyCurrent())return;
+    birthdayPrograms=Array.isArray(birthdayDraft?.programs)?birthdayDraft.programs:[];
   }else{
     const [{data:liveProgram,error:programError},{data:liveRewards,error:rewardsError},{data:liveTiers,error:tierError},{data:liveBranches,error:rbError},{data:liveServices,error:rsError},{data:liveProducts,error:rpError}]=await Promise.all([
       sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
@@ -2882,8 +3455,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(programError||rewardsError||tierError||rbError||rsError||rpError)throw programError||rewardsError||tierError||rbError||rsError||rpError;
     lp=liveProgram||[];rw=liveRewards||[];tr=liveTiers||[];
     rb=liveBranches||[];rs=liveServices||[];rp=liveProducts||[];
+    const {data:publishedBirthday}=await sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id});
+    if(!isLoyaltyCurrent())return;
+    publishedBirthdayPrograms=Array.isArray(publishedBirthday?.programs)?publishedBirthday.programs:[];
   }
   const p=lp?.[0]?{...lp[0],configuration_status:draftVersionId?'draft':lp[0].configuration_status}:null;
+  const birthdayProgram=birthdayPrograms[0]||null;
+  const publishedBirthdayProgram=publishedBirthdayPrograms[0]||null;
   const rewards=rw||[],tiers=(tr||[]).filter(t=>t.active!==false);
   const model=modelOverride||p?.loyalty_model||'classic';
   const unit=model==='stamps'?'stamps':'points';
@@ -2971,6 +3549,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const firmExpiryDays=positiveExpiryDays(p?.expiry_days)||365;
   const firmExpiryNeedsDays=expiryModeRequiresDays(firmExpiryMode);
   const loyaltyActions=canManageLoyalty&&!draftVersionId?CUI.action({id:'loyaltyRecommend',label:'Create recommended draft',iconName:'add',variant:'secondary'}):'<span class="pill off">Read only</span>';
+  const publishedBirthdaySummary=publishedBirthdayProgram
+    ?`<div class="wallet-line" style="margin-top:12px"><div><b>${esc(publishedBirthdayProgram.customer_label||'Birthday benefit')}</b><p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.fulfillment_kind==='discount_pct'?`${publishedBirthdayProgram.discount_percent}% off`:publishedBirthdayProgram.manual_item||'Manual benefit')} · ${publishedBirthdayProgram.active?'Live for eligible customers':'Published but paused'} · window ${Number(publishedBirthdayProgram.window_days_before||0)} day(s) before to ${Number(publishedBirthdayProgram.window_days_after||0)} day(s) after</p>${publishedBirthdayProgram.customer_description?`<p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.customer_description)}</p>`:''}</div><span class="spacer"></span><span class="pill ${publishedBirthdayProgram.active?'on':'off'}">Published</span></div>`
+    :'<p class="muted small" style="margin-top:10px">No birthday benefit is published. Starting a draft makes no offer until you complete, explicitly enable, and publish it.</p>';
+  const birthdayEditor=canManageLoyalty
+    ?!draftVersionId?`<div class="card" style="margin-top:16px"><b>Birthday benefit</b><p class="muted small" style="margin-top:6px">Customer participation is separately opt-in and birthday details are never shared with your team.</p>${publishedBirthdaySummary}<button class="btn ghost sm" id="birthdayStartDraft" style="margin-top:12px">${publishedBirthdayProgram?'Create change draft':'Configure birthday benefit'}</button></div>`
+    :`<div class="card" style="margin-top:16px"><div class="row"><div><b>Birthday benefit</b><p class="muted small" style="margin-top:5px">One programme per configuration version. A new programme starts blank and paused; no customer promise exists until you complete, explicitly enable, and publish it.</p></div><span class="spacer"></span><span class="pill">Draft</span></div>
+      <div class="field-grid" style="margin-top:10px"><div class="full"><label for="birthdayLabel">Customer-facing label</label><input id="birthdayLabel" value="${esc(birthdayProgram?.customer_label||'')}"></div><div class="full"><label for="birthdayDescription">Customer description</label><textarea id="birthdayDescription" rows="2">${esc(birthdayProgram?.customer_description||'')}</textarea></div><div class="full"><label for="birthdayTerms">Terms</label><textarea id="birthdayTerms" rows="2">${esc(birthdayProgram?.customer_terms||'')}</textarea></div><div><label for="birthdayKind">Benefit type</label><select id="birthdayKind"><option value="" ${birthdayProgram?.fulfillment_kind?'':'selected'}>Choose a benefit type</option><option value="discount_pct" ${birthdayProgram?.fulfillment_kind==='discount_pct'?'selected':''}>Percentage discount</option><option value="free_item" ${birthdayProgram?.fulfillment_kind==='free_item'?'selected':''}>Free item / manual benefit</option></select></div><div id="birthdayDiscountField"><label for="birthdayDiscount">Discount percentage</label><input id="birthdayDiscount" type="number" min="0.01" max="100" step="0.01" value="${birthdayProgram?.discount_percent??''}"></div><div id="birthdayItemField"><label for="birthdayItem">Free item / benefit</label><input id="birthdayItem" value="${esc(birthdayProgram?.manual_item||'')}"></div><div><label for="birthdayBefore">Days before birthday</label><input id="birthdayBefore" type="number" min="0" max="182" value="${birthdayProgram?.window_days_before??0}"></div><div><label for="birthdayAfter">Days after birthday</label><input id="birthdayAfter" type="number" min="0" max="182" value="${birthdayProgram?.window_days_after??0}"></div></div><label class="row" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="birthdayActive" type="checkbox" style="width:auto" ${birthdayProgram?.active===true?'checked':''}> I explicitly enable this benefit for eligible customers after publication</label><div class="row" style="margin-top:14px"><button class="btn sm" id="birthdaySaveDraft">Save birthday benefit draft</button><p id="birthdayDraftStatus" class="muted small" role="status" aria-live="polite"></p></div></div>`
+    :'';
   routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:canManageLoyalty?'Choose the model and publish deliberate, versioned changes.':'Review the current program, rewards, tiers, and branch settings.',iconName:'loyalty',actions:loyaltyActions,canWrite:canManageLoyalty,moduleLabel:'Loyalty configuration'})}
     ${p?.configuration_status==='draft'?`<div class="imp-note" style="margin-bottom:16px"><b>Draft recommendation</b><br>${recommendation?esc(recommendation.rationale):'Nothing is earning or redeeming yet.'} Review every number below, then publish only when it fits your business.</div>`:''}
     <div class="split"><div class="card"><b>Program settings</b>
@@ -2999,8 +3585,50 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         :model==='stamps'
         ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.</p>${rewardRows('Your milestones')}`
         :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
-    </div></div>`;
+    </div></div>${birthdayEditor}`;
   if(!canManageLoyalty)return;
+  const birthdayStartDraft=$('birthdayStartDraft');
+  if(birthdayStartDraft)birthdayStartDraft.onclick=async()=>{
+    birthdayStartDraft.disabled=true;
+    const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_birthday_editor'});
+    if(!isLoyaltyCurrent())return;
+    if(error){birthdayStartDraft.disabled=false;return fail(error)}
+    loyaltyPage(model,data.version_id,recommendation);
+  };
+  const birthdaySaveDraft=$('birthdaySaveDraft');
+  if(birthdaySaveDraft){
+    const birthdayProgramId=birthdayProgram?.program_id||crypto.randomUUID();
+    const syncBirthdayKind=()=>{
+      const isDiscount=$('birthdayKind').value==='discount_pct';
+      $('birthdayDiscountField').hidden=!isDiscount;$('birthdayItemField').hidden=isDiscount;
+    };
+    $('birthdayKind').onchange=syncBirthdayKind;syncBirthdayKind();
+    birthdaySaveDraft.onclick=async()=>{
+      const kind=$('birthdayKind').value;
+      const label=$('birthdayLabel').value.trim(),description=$('birthdayDescription').value.trim(),terms=$('birthdayTerms').value.trim();
+      const draftStatus=$('birthdayDraftStatus');
+      if(!label||!description||!terms||!['discount_pct','free_item'].includes(kind)){
+        if(draftStatus)draftStatus.textContent='Complete the customer copy and choose a benefit type before saving.';
+        return;
+      }
+      if(kind==='discount_pct'&&!(Number($('birthdayDiscount').value)>0&&Number($('birthdayDiscount').value)<=100)){
+        if(draftStatus)draftStatus.textContent='Enter a discount percentage between 0.01 and 100.';
+        return;
+      }
+      if(kind==='free_item'&&!$('birthdayItem').value.trim()){
+        if(draftStatus)draftStatus.textContent='Describe the free item or manual benefit before saving.';
+        return;
+      }
+      const payload={active:$('birthdayActive').checked,customer_label:label,customer_description:description,customer_terms:terms,fulfillment_kind:kind,window_days_before:Number($('birthdayBefore').value),window_days_after:Number($('birthdayAfter').value),sort:0};
+      if(kind==='discount_pct')payload.discount_percent=Number($('birthdayDiscount').value);else payload.manual_item=$('birthdayItem').value.trim();
+      birthdaySaveDraft.disabled=true;
+      const {data,error}=await sb.rpc('save_birthday_program_draft',{p_config_version:draftVersionId,p_program_id:birthdayProgramId,p_program:payload,p_expected_snapshot_hash:draftSnapshotHash});
+      if(!isLoyaltyCurrent())return;
+      if(error){birthdaySaveDraft.disabled=false;const status=$('birthdayDraftStatus');if(status)status.textContent='Birthday benefit draft could not be saved. Reload and review the fields.';return;}
+      const status=$('birthdayDraftStatus');if(status)status.textContent=data?.replayed?'Saved previously.':'Birthday benefit draft saved. Review then publish the configuration.';
+      loyaltyPage(model,draftVersionId,recommendation);
+    };
+  }
   const recommend=$('loyaltyRecommend');
   if(recommend) recommend.onclick=async()=>{
     recommend.disabled=true;recommend.textContent='Preparing draft…';

@@ -1,13 +1,15 @@
 # Canonical migration order
 
-Status: exact catalog-statement recovery and local materialization are complete. The 20 forward
-migrations passed a rollback-only PostgreSQL 17 rehearsal and were then atomically applied to the
-owner-authorized disposable development/test project. This is not production or release approval.
+Status: exact catalog-statement recovery and local materialization are complete through v40. Those
+20 forward migrations passed a rollback-only PostgreSQL 17 rehearsal and were then atomically
+applied to the owner-authorized disposable development/test project. v41 is an additional local-only
+pending migration and has not been applied remotely. This is not production or release approval.
 
 `supabase/canonical-migration-order.plan.json` is the sole proposed deploy order. It preserves the
 45 trusted catalog versions and names exactly as they were applied to project
-`gadpooereceldfpfxsod`, including the non-semantic placement of v13 after v21. It then assigns 20
-new, unique versions (`20260721000001` through `20260721000020`) to the pending v24a-v40 files.
+`gadpooereceldfpfxsod`, including the non-semantic placement of v13 after v21. It then assigns 21
+new, unique versions (`20260721000001` through `20260721000020`, then the CLI-created
+`20260721074441`) to the pending v24a-v41 files.
 This removes every same-prefix collision without renaming or modifying the source SQL.
 
 ## Exact recovery result
@@ -77,6 +79,12 @@ join adjacent statements with `;\n\n`, then append `;\n` after the final stateme
 file's independent octet length and SHA-256. The verifier recomputes both the per-statement evidence
 and this canonical file before accepting it.
 
+Two tracked local targets were each one final LF shorter than their recovered single-statement
+catalog evidence. Materialization deliberately restores those exact catalog bytes: v23g is 17,675
+bytes with SHA-256 `c409f20f1bee94b1708da6fb08314785658a43934a0db5859aa464afc8428194`, and v24 is
+12,748 bytes with SHA-256 `00674aa8d7b249229fefd7aaede1c471aba74d6b35dbe8be749bbaf17da8a909`.
+This is evidence-backed recovery of prior one-byte local drift, not a semantic history rewrite.
+
 ## Local materialization and verification
 
 The safe sequence is:
@@ -89,9 +97,9 @@ npm run canonical-migrations:check
 
 The materializer writes every catalog-applied target from verified catalog evidence, even when a
 same-named local historical source exists. This deliberately prevents local legacy drift from being
-promoted into deployed history. Pending v24a-v40 targets are copied byte-for-byte from their source
+promoted into deployed history. Pending v24a-v41 targets are copied byte-for-byte from their source
 migrations. It emits
-`supabase/canonical-migration-order.manifest.json` and a companion SHA-256 only after all 65 SQL files
+`supabase/canonical-migration-order.manifest.json` and a companion SHA-256 only after all 66 SQL files
 exist, required evidence matches, no unplanned SQL exists, and every pending target equals its source.
 
 The generated status `canonical_deployable_locally_not_applied` means only that the local artifact is
@@ -100,8 +108,8 @@ or push. Database rehearsal and release remain separate owner/Sol gates.
 
 ## Remaining acceptance gates
 
-1. Retain the 65-row history/hash, schema, RLS, ACL, cron, feature-flag and financial-invariant
-   evidence recorded in `V24A_V40_PERSISTENT_APPLICATION.md`.
+1. Retain the 66-row local canonical history/hash while keeping the separately proven v24a-v40
+   runtime evidence recorded in `V24A_V40_PERSISTENT_APPLICATION.md` distinct from unrun v41.
 2. Obtain Sol's final read-only verdict on the installed disposable-database state.
 3. Run the two-session v37/v40 concurrency harnesses only when a direct PostgreSQL connection is
    available; the managed connector serializes calls and cannot prove concurrency.

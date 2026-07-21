@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 20,
-  "itemCount": 65,
+  "pendingCount": 25,
+  "itemCount": 70,
   "items": [
     {
       "order": 1,
@@ -657,6 +657,56 @@
       "path": "supabase/migrations/20260721000020_frenly_v40_staff_reversal_workflows.sql",
       "octetLength": 22354,
       "sha256": "5979cbc1f483dd300624996eb1ad349dab9394561db4fc93b387fd1fa92c5b37",
+      "provenance": "local-source"
+    },
+    {
+      "order": 66,
+      "kind": "pending",
+      "version": "20260721074441",
+      "name": "frenly_v41_customer_module_hardening",
+      "path": "supabase/migrations/20260721074441_frenly_v41_customer_module_hardening.sql",
+      "octetLength": 46813,
+      "sha256": "e37bd6e163a572e304fc693cbbf94715e34f20e0cc67cd685e2d7319d2d4715d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 67,
+      "kind": "pending",
+      "version": "20260721135556",
+      "name": "frenly_c42_consumer_registration_contracts",
+      "path": "supabase/migrations/20260721135556_frenly_c42_consumer_registration_contracts.sql",
+      "octetLength": 30786,
+      "sha256": "dc191bf14f5c7143affe63f53a6f8428748aaa60b6107fe81f97bccf77bb1a59",
+      "provenance": "local-source"
+    },
+    {
+      "order": 68,
+      "kind": "pending",
+      "version": "20260721150000",
+      "name": "frenly_c44_actionable_customer_wallet",
+      "path": "supabase/migrations/20260721150000_frenly_c44_actionable_customer_wallet.sql",
+      "octetLength": 18325,
+      "sha256": "6cfabfdc929746a651b4b73e7451f4652e0146a9fb7a29d7439f8d50034ce67d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 69,
+      "kind": "pending",
+      "version": "20260721163000",
+      "name": "frenly_c45_birthday_benefits",
+      "path": "supabase/migrations/20260721163000_frenly_c45_birthday_benefits.sql",
+      "octetLength": 82809,
+      "sha256": "2326d2dac76d3f8b3e99a543fb16e0e39146aa13b4911328491279367213ca76",
+      "provenance": "local-source"
+    },
+    {
+      "order": 70,
+      "kind": "pending",
+      "version": "20260721170000",
+      "name": "frenly_v46_customer_in_app_inbox",
+      "path": "supabase/migrations/20260721170000_frenly_v46_customer_in_app_inbox.sql",
+      "octetLength": 64573,
+      "sha256": "6cd668ff3535593b3ae6efba577129322aa6c91d53176ca2cc9b304d64e2a80d",
       "provenance": "local-source"
     }
   ]

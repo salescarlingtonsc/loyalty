@@ -27,7 +27,12 @@ const sqlTestByVersion = new Map([
   ['v37b', 'db/tests/v37b_versioned_retention_taxonomy.sql'],
   ['v38', 'db/tests/v38_customer_personas_and_gates.sql'],
   ['v39', 'db/tests/v39_detailed_customer_wallet.sql'],
-  ['v40', 'db/tests/v40_staff_reversal_workflows.sql']
+  ['v40', 'db/tests/v40_staff_reversal_workflows.sql'],
+  ['v41', 'db/tests/v41_customer_module_hardening.sql'],
+  ['c42', 'db/tests/v42_consumer_registration_contracts.sql'],
+  ['c44', 'db/tests/v44_actionable_customer_wallet.sql'],
+  ['c45', 'db/tests/v45_birthday_benefits.sql'],
+  ['v46', 'db/tests/v46_customer_in_app_inbox.sql']
 ]);
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -41,7 +46,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 20);
+  assert.equal(pending.length, 25);
   assert.equal(sqlTestByVersion.size, pending.length);
 
   for (const migration of pending) {
@@ -49,7 +54,7 @@ test('all pending migrations and SQL acceptance suites have atomic boundaries', 
     assert.equal(statementCount(migrationSql, 'begin'), 1, `${migration.name} must begin one transaction`);
     assert.equal(statementCount(migrationSql, 'commit'), 1, `${migration.name} must commit one transaction`);
 
-    const semanticVersion = migration.name.match(/^frenly_(v\d+[a-z]?)(?:_|$)/)?.[1];
+    const semanticVersion = migration.name.match(/^frenly_(v\d+[a-z]?|c\d+)(?:_|$)/)?.[1];
     const testPath = sqlTestByVersion.get(semanticVersion);
     assert.ok(testPath, `${semanticVersion} must have a mapped rollback suite`);
     const testSql = await readFile(path.join(repoRoot, testPath), 'utf8');

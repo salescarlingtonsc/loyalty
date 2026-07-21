@@ -73,10 +73,10 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.status, 'planning_only_not_deployable');
   assert.equal(manifest.hashAlgorithm, 'sha256-raw-bytes');
-  assert.equal(manifest.itemCount, 63);
-  assert.equal(manifest.executableCount, 49);
+  assert.equal(manifest.itemCount, 68);
+  assert.equal(manifest.executableCount, 54);
   assert.equal(manifest.reservationCount, 14);
-  assert.equal(sqlItems.length, 49);
+  assert.equal(sqlItems.length, 54);
   assert.equal(reservations.length, 14);
   assert.equal(manifest.sourceCollisionsResolved, false);
 
@@ -84,7 +84,8 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
     ['20260717', 7],
     ['20260718', 3],
     ['20260719', 5],
-    ['20260720', 28]
+    ['20260720', 28],
+    ['20260721', 5]
   ]);
   assert.deepEqual(
     manifest.sourceDeployVersionCollisions.map(({ sourceDeployVersion, count }) => [sourceDeployVersion, count]),
@@ -120,14 +121,14 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
 test('an additional same-prefix migration updates collision reporting deterministically', async (t) => {
   const root = await isolatedManifestRepo(t);
   const plan = await readPlan(root);
-  const migrationPath = 'db/migrations/20260720_frenly_v41_extra_collision.sql';
+  const migrationPath = 'db/migrations/20260720_frenly_v47_extra_collision.sql';
   plan.items.push({
     kind: 'executable',
     path: migrationPath,
-    semanticVersion: 'v41',
-    proposedDeployVersion: '20260722000104'
+    semanticVersion: 'v47',
+    proposedDeployVersion: '20260722000109'
   });
-  await writeFile(path.join(root, migrationPath), 'select 41;\n');
+  await writeFile(path.join(root, migrationPath), 'select 42;\n');
   await writePlan(root, plan);
 
   const firstWrite = runGenerator(root, '--write');
