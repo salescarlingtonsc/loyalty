@@ -1,0 +1,1665 @@
+{
+  "reportDate": "2026-07-22",
+  "targetProjectRef": "gadpooereceldfpfxsod",
+  "method": "get_advisors(type=security|performance) plus live read-only catalog SELECTs (pg_proc, pg_namespace, pg_class, pg_policies, has_function_privilege, has_table_privilege, pg_get_functiondef) against gadpooereceldfpfxsod. No write, no DDL, no customer-data SELECT was performed.",
+  "security": {
+    "summary": {
+      "totalFindings": 161,
+      "byRule": {
+        "rls_enabled_no_policy": 47,
+        "anon_security_definer_function_executable": 1,
+        "authenticated_security_definer_function_executable": 113
+      },
+      "acceptedByDesignCount": 48,
+      "needsFixCount": 1,
+      "launchBlockingCount": 0,
+      "launchBlockingNote": "No individual security advisor finding is independently launch-blocking; the 113 authenticated-SECURITY-DEFINER warnings collectively depend on P0-RLS-GRANTS-004's adversarial suite, which IS a launch-blocking gate already tracked in launch-blockers.json -- see evidence-plan/P0-RLS-GRANTS-004.md."
+    },
+    "rlsEnabledNoPolicy": [
+      {
+        "schema": "app",
+        "table": "appointment_booking_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "app",
+        "table": "appointment_reschedule_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "app",
+        "table": "booking_management_change_submissions",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "app",
+        "table": "booking_management_tokens",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "app",
+        "table": "customer_legal_documents",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "app",
+        "table": "platform_feature_flags",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "app",
+        "table": "public_gateway_rate_limits",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "birthday_program_draft_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "birthday_program_versions",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "birthday_programs",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_appointment_action_requests",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_birthday_activation_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_birthday_entitlements",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_birthday_participation",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_birthday_participation_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_birthday_redemptions",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_contact_proofs",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_identities",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_identity_audit_events",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_in_app_inbox_events",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_in_app_inbox_global_sync_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_in_app_inbox_resolutions",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_in_app_inbox_state",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_in_app_inbox_state_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_in_app_inbox_sync_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_legal_acceptances",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_link_audit_events",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_link_claim_attempts",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_link_invitation_issues",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_link_invitations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_link_unlink_events",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_links",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_notification_outbox",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_notification_preferences",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_preference_audit",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_profiles",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_registration_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_registration_preferences",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_staff_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "customer_verified_contacts",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "gift_card_issue_operations",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "leads",
+        "lintLevel": "INFO",
+        "classification": "NEEDS-FIX",
+        "rationale": "RLS enabled with zero policies denies all rows today (fail-closed), but the table still carries an anon/authenticated SELECT grant with no corresponding policy. Currently inert (0 rows ever returned), but it is unnecessary standing exposure: a future policy added without full review, or RLS being disabled by accident, would activate this grant immediately. Revoke the unused anon/authenticated grant for defense in depth; not launch-blocking given RLS currently fail-closes it.",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": true,
+          "anon_insert": false,
+          "auth_select": true,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "loyalty_redemption_batch_drains",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "loyalty_redemption_provenance",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "loyalty_redemption_reversals",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "package_session_consumptions",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      },
+      {
+        "schema": "public",
+        "table": "package_session_reversals",
+        "lintLevel": "INFO",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "RLS enabled with zero policies denies all rows by default (fail-closed); table also carries zero anon/authenticated table-level grants, so it is unreachable via PostgREST at all and is read/written only through SECURITY DEFINER RPCs (RPC-only-by-design pattern used throughout this schema for internal state/operation-log tables).",
+        "tableLevelGrantsCheckedLive": {
+          "anon_select": false,
+          "anon_insert": false,
+          "auth_select": false,
+          "auth_insert": false
+        }
+      }
+    ],
+    "anonExecutableSecurityDefiner": [
+      {
+        "function": "public.get_customer_phone_otp_capabilities()",
+        "classification": "ACCEPTED-BY-DESIGN",
+        "rationale": "public.get_customer_phone_otp_capabilities() takes no arguments, performs no table reads or writes, and returns exactly two booleans derived from app.platform_feature_enabled() feature flags (sms/whatsapp capability). It is a deliberate public capability-discovery endpoint with no PII exposure and cannot be used as a per-customer oracle since it takes no input. Verified via pg_get_functiondef against production."
+      }
+    ],
+    "authenticatedExecutableSecurityDefiner": {
+      "count": 113,
+      "classification": "ACCEPTED-BY-DESIGN-PENDING-P0-RLS-GRANTS-004",
+      "rationale": "This is the platform's deliberate architecture: every module writes through a SECURITY DEFINER RPC callable by 'authenticated' that is expected to check tenant/staff/role ownership internally (RLS alone cannot express all of these checks, e.g. cross-table tenant joins). A catalog read proves each function has EXECUTE granted to authenticated and a pinned search_path (verified: 0 of 253 SECURITY DEFINER functions across public+app lack a pinned search_path) -- it cannot prove the function body correctly enforces tenant ownership at runtime. That runtime proof is exactly what launch-blockers.json's P0-RLS-GRANTS-004 (db/tests/rls_adversarial_isolation.sql, run with real SET ROLE / request.jwt.claims principals) exists to close. Disposition: architecturally accepted as a class, launch-blocking as individual runtime-unverified instances until that suite runs against production. Not a new/duplicate finding relative to P0-RLS-GRANTS-004 -- this warning set IS what that gate covers.",
+      "priorityForManualSpotCheckAheadOfTheAdversarialSuite": [
+        "public.accept_invite(p_code text)",
+        "public.adjust_points(p_business uuid, p_client uuid, p_points integer, p_reason text)",
+        "public.book_appointment_smart_v47(p_business uuid, p_client uuid, p_branch uuid, p_service uuid, p_starts timestamp with time zone, p_duration_minutes integer, p_requested_staff uuid, p_assignment_mode text, p_note text, p_idempotency_key text)",
+        "public.customer_get_appointments(p_business_slug text)",
+        "public.customer_get_appointments_page(p_business_slug text, p_cursor jsonb)",
+        "public.customer_get_memberships(p_business_slug text)",
+        "public.customer_get_reward_catalog(p_business_slug text)",
+        "public.customer_request_appointment_action(p_business_slug text, p_appointment uuid, p_action text, p_proposed_at timestamp with time zone, p_note text, p_idempotency_key text)",
+        "public.enroll_membership_v41(p_business uuid, p_client uuid, p_plan uuid)",
+        "public.get_loyalty_reward_draft(p_config_version uuid)",
+        "public.get_sale_policy(p_business uuid)",
+        "public.issue_gift_card(p_business uuid, p_amount integer, p_purchaser uuid, p_recipient_email text, p_idempotency_key uuid)",
+        "public.reclassify_sale_policy(p_sale uuid, p_counts_as_revenue boolean, p_reason text)",
+        "public.record_credit_tender(p_business uuid, p_sale uuid, p_amount_cents integer, p_reason text, p_idempotency_key text)",
+        "public.record_payment(p_business uuid, p_method text, p_amount_cents integer, p_sale uuid, p_appointment uuid, p_client uuid, p_staff uuid, p_kind text, p_branch uuid, p_reference text, p_note text, p_idempotency_key text)",
+        "public.record_quick_sale(p_business uuid, p_amount_cents integer, p_method text, p_client uuid, p_staff uuid, p_branch uuid, p_note text, p_idempotency_key text, p_paid boolean)",
+        "public.record_sale_by_phone(p_business uuid, p_phone text, p_amount_cents integer, p_kind text, p_note text, p_staff uuid, p_idem text, p_branch uuid, p_method text)",
+        "public.redeem_customer_birthday_benefit(p_business_id uuid, p_client_id uuid, p_branch_id uuid, p_idempotency_key uuid)",
+        "public.redeem_gift_card_v41(p_business uuid, p_code text, p_client uuid, p_amount integer)",
+        "public.redeem_points(p_business uuid, p_client uuid, p_idempotency_key text)",
+        "public.redeem_reward(p_business uuid, p_client uuid, p_reward uuid, p_idempotency_key text)",
+        "public.redeem_reward_at_context(p_business uuid, p_client uuid, p_reward uuid, p_idempotency_key text, p_branch uuid, p_service uuid, p_product uuid)",
+        "public.refund_sale(p_business uuid, p_sale uuid, p_reason text, p_idempotency_key text, p_reference text, p_restock_policy text)",
+        "public.reschedule_appointment_v48(p_business uuid, p_appointment uuid, p_starts timestamp with time zone, p_duration_minutes integer, p_staff uuid, p_note text, p_idempotency_key uuid)",
+        "public.resolve_legacy_referral(p_business uuid, p_referral uuid, p_selected_sale uuid, p_reason text)",
+        "public.reverse_customer_birthday_benefit_for_client(p_business_id uuid, p_client_id uuid, p_reason text, p_idempotency_key uuid)",
+        "public.reverse_loyalty_redemption(p_business uuid, p_redemption uuid, p_reason text, p_idempotency_key text)",
+        "public.reverse_sale(p_business uuid, p_sale uuid, p_reason text, p_idempotency_key text, p_reference text, p_restock_policy text)",
+        "public.save_membership_plan(p_business uuid, p_plan uuid, p_name text, p_price_cents integer, p_cadence text, p_credit_cents integer, p_discount_pct numeric, p_active boolean)",
+        "public.save_referral_program(p_business uuid, p_enabled boolean, p_reward_cents integer, p_min_spend_cents integer)",
+        "public.save_reward_taxonomy(p_business uuid, p_taxonomy_id uuid, p_taxonomy jsonb)",
+        "public.set_appointment_status_v47(p_business uuid, p_appointment uuid, p_status text)",
+        "public.set_membership_status(p_business uuid, p_membership uuid, p_status text)",
+        "public.set_sale_policy(p_business uuid, p_kind text, p_counts_as_revenue boolean, p_counts_as_visit boolean, p_earns_points boolean, p_note text)",
+        "public.staff_get_reversal_workflows(p_business uuid, p_client uuid, p_limit integer, p_mode text)",
+        "public.staff_list_gift_cards(p_business uuid, p_limit integer)",
+        "public.suggest_appointment_staff_v47(p_business uuid, p_branch uuid, p_service uuid, p_starts timestamp with time zone, p_duration_minutes integer, p_limit integer)",
+        "public.super_admin_list_businesses()"
+      ],
+      "allFunctions": [
+        "public.accept_invite(p_code text)",
+        "public.adjust_points(p_business uuid, p_client uuid, p_points integer, p_reason text)",
+        "public.apply_module_template(p_staff uuid, p_template uuid)",
+        "public.book_appointment_smart_v47(p_business uuid, p_client uuid, p_branch uuid, p_service uuid, p_starts timestamp with time zone, p_duration_minutes integer, p_requested_staff uuid, p_assignment_mode text, p_note text, p_idempotency_key text)",
+        "public.close_drawer(p_business uuid, p_session uuid, p_counted_cents integer, p_note text)",
+        "public.commit_import_job(p_job uuid)",
+        "public.convert_booking_request(p_request uuid)",
+        "public.create_business(p_name text, p_slug text, p_industry text, p_modules text[])",
+        "public.create_client_field_definition(p_business uuid, p_field_key text, p_label text, p_value_type text, p_classification text, p_options jsonb)",
+        "public.create_invite(p_business uuid, p_role text, p_email text)",
+        "public.create_loyalty_config_draft(p_business uuid, p_based_on uuid, p_source text)",
+        "public.customer_activate_birthday_benefit(p_business_slug text, p_idempotency_key uuid)",
+        "public.customer_claim_link_by_email(p_business_slug text, p_idempotency_key text)",
+        "public.customer_claim_link_by_verified_phone(p_business_slug text, p_idempotency_key text)",
+        "public.customer_claim_link_invitation(p_token text, p_idempotency_key text)",
+        "public.customer_create_identity(p_idempotency_key text)",
+        "public.customer_get_actionable_business(p_business_slug text)",
+        "public.customer_get_actionable_wallet()",
+        "public.customer_get_appointments(p_business_slug text)",
+        "public.customer_get_appointments_page(p_business_slug text, p_cursor jsonb)",
+        "public.customer_get_birthday_benefit(p_business_slug text)",
+        "public.customer_get_birthday_participation()",
+        "public.customer_get_business_summary(p_business_slug text)",
+        "public.customer_get_identity()",
+        "public.customer_get_in_app_inbox_count(p_business_slug text)",
+        "public.customer_get_in_app_inbox_global_count()",
+        "public.customer_get_in_app_inbox_preferences(p_business_slug text)",
+        "public.customer_get_loyalty_details(p_business_slug text, p_cursor jsonb)",
+        "public.customer_get_memberships(p_business_slug text)",
+        "public.customer_get_notification_preferences(p_business_slug text)",
+        "public.customer_get_packages(p_business_slug text, p_cursor jsonb)",
+        "public.customer_get_profile()",
+        "public.customer_get_reward_catalog(p_business_slug text)",
+        "public.customer_get_wallet()",
+        "public.customer_issue_link_invitation(p_business uuid, p_client uuid, p_idempotency_key text, p_expires_in_minutes integer)",
+        "public.customer_list_in_app_inbox(p_business_slug text, p_cursor jsonb)",
+        "public.customer_list_in_app_inbox_global(p_cursor jsonb)",
+        "public.customer_portal_capabilities(p_business_slug text)",
+        "public.customer_register_verified_phone(p_full_name text, p_birth_date date, p_preferred_language text, p_accept_terms boolean, p_accept_privacy boolean, p_platform_marketing_opted_in boolean, p_idempotency_key text)",
+        "public.customer_request_appointment_action(p_business_slug text, p_appointment uuid, p_action text, p_proposed_at timestamp with time zone, p_note text, p_idempotency_key text)",
+        "public.customer_set_birthday_participation(p_opted_in boolean, p_idempotency_key uuid)",
+        "public.customer_set_in_app_inbox_preferences(p_business_slug text, p_topic text, p_opted_in boolean, p_quiet_hours_timezone text, p_quiet_hours_start time without time zone, p_quiet_hours_end time without time zone, p_idempotency_key uuid)",
+        "public.customer_set_in_app_inbox_state(p_business_slug text, p_event_id uuid, p_operation text, p_idempotency_key uuid)",
+        "public.customer_set_notification_preference(p_business_slug text, p_channel text, p_topic text, p_opted_in boolean, p_idempotency_key text)",
+        "public.customer_sync_in_app_inbox(p_business_slug text, p_idempotency_key uuid)",
+        "public.customer_sync_in_app_inbox_global(p_idempotency_key uuid)",
+        "public.customer_unlink_business_link(p_business_slug text, p_idempotency_key text)",
+        "public.customer_update_profile(p_full_name text, p_preferred_language text, p_idempotency_key text)",
+        "public.decide_change(p_request uuid, p_approve boolean)",
+        "public.enroll_membership_v41(p_business uuid, p_client uuid, p_plan uuid)",
+        "public.generate_retention_recommendation(p_business uuid, p_idempotency_key text)",
+        "public.get_active_birthday_program(p_business_id uuid)",
+        "public.get_birthday_program_draft(p_config_version uuid)",
+        "public.get_customer_feature_capabilities()",
+        "public.get_customer_phone_otp_capabilities()",
+        "public.get_loyalty_reward_draft(p_config_version uuid)",
+        "public.get_my_modules(p_business uuid)",
+        "public.get_my_personas()",
+        "public.get_notifications(p_business uuid, p_limit integer)",
+        "public.get_retention_config_draft(p_config_version uuid)",
+        "public.get_revenue_summary(p_business uuid, p_from date, p_to date, p_branch uuid)",
+        "public.get_sale_policy(p_business uuid)",
+        "public.import_bookings(p_business uuid, p_rows jsonb)",
+        "public.issue_gift_card(p_business uuid, p_amount integer, p_purchaser uuid, p_recipient_email text, p_idempotency_key uuid)",
+        "public.lookup_client_by_phone(p_business uuid, p_phone text)",
+        "public.mark_all_notifications_read(p_business uuid)",
+        "public.mark_notification_read(p_id uuid)",
+        "public.open_drawer(p_business uuid, p_branch uuid, p_float_cents integer)",
+        "public.publish_loyalty_config(p_version uuid)",
+        "public.reclassify_sale_policy(p_sale uuid, p_counts_as_revenue boolean, p_reason text)",
+        "public.record_credit_tender(p_business uuid, p_sale uuid, p_amount_cents integer, p_reason text, p_idempotency_key text)",
+        "public.record_drawer_movement(p_business uuid, p_branch uuid, p_kind text, p_amount_cents integer, p_note text, p_staff uuid)",
+        "public.record_payment(p_business uuid, p_method text, p_amount_cents integer, p_sale uuid, p_appointment uuid, p_client uuid, p_staff uuid, p_kind text, p_branch uuid, p_reference text, p_note text, p_idempotency_key text)",
+        "public.record_quick_sale(p_business uuid, p_amount_cents integer, p_method text, p_client uuid, p_staff uuid, p_branch uuid, p_note text, p_idempotency_key text, p_paid boolean)",
+        "public.record_sale_by_phone(p_business uuid, p_phone text, p_amount_cents integer, p_kind text, p_note text, p_staff uuid, p_idem text, p_branch uuid, p_method text)",
+        "public.redeem_customer_birthday_benefit(p_business_id uuid, p_client_id uuid, p_branch_id uuid, p_idempotency_key uuid)",
+        "public.redeem_gift_card_v41(p_business uuid, p_code text, p_client uuid, p_amount integer)",
+        "public.redeem_points(p_business uuid, p_client uuid, p_idempotency_key text)",
+        "public.redeem_reward(p_business uuid, p_client uuid, p_reward uuid, p_idempotency_key text)",
+        "public.redeem_reward_at_context(p_business uuid, p_client uuid, p_reward uuid, p_idempotency_key text, p_branch uuid, p_service uuid, p_product uuid)",
+        "public.refund_sale(p_business uuid, p_sale uuid, p_reason text, p_idempotency_key text, p_reference text, p_restock_policy text)",
+        "public.remove_loyalty_branch_override_draft(p_config_version uuid, p_branch uuid, p_expected_snapshot_hash text)",
+        "public.reschedule_appointment_v48(p_business uuid, p_appointment uuid, p_starts timestamp with time zone, p_duration_minutes integer, p_staff uuid, p_note text, p_idempotency_key uuid)",
+        "public.resolve_legacy_referral(p_business uuid, p_referral uuid, p_selected_sale uuid, p_reason text)",
+        "public.reverse_customer_birthday_benefit_for_client(p_business_id uuid, p_client_id uuid, p_reason text, p_idempotency_key uuid)",
+        "public.reverse_loyalty_redemption(p_business uuid, p_redemption uuid, p_reason text, p_idempotency_key text)",
+        "public.reverse_sale(p_business uuid, p_sale uuid, p_reason text, p_idempotency_key text, p_reference text, p_restock_policy text)",
+        "public.run_expiry_now(p_business uuid)",
+        "public.save_birthday_program_draft(p_config_version uuid, p_program_id uuid, p_program jsonb, p_expected_snapshot_hash text)",
+        "public.save_loyalty_branch_override_draft(p_config_version uuid, p_branch uuid, p_override jsonb, p_expected_snapshot_hash text)",
+        "public.save_loyalty_config_draft(p_version uuid, p_config jsonb, p_expected_snapshot_hash text)",
+        "public.save_membership_plan(p_business uuid, p_plan uuid, p_name text, p_price_cents integer, p_cadence text, p_credit_cents integer, p_discount_pct numeric, p_active boolean)",
+        "public.save_module_template(p_business uuid, p_name text, p_modules text[])",
+        "public.save_referral_program(p_business uuid, p_enabled boolean, p_reward_cents integer, p_min_spend_cents integer)",
+        "public.save_retention_program_draft(p_config_version uuid, p_program_id uuid, p_program jsonb, p_expected_snapshot_hash text)",
+        "public.save_reward_taxonomy(p_business uuid, p_taxonomy_id uuid, p_taxonomy jsonb)",
+        "public.sell_package(p_business uuid, p_client uuid, p_plan uuid)",
+        "public.set_appointment_status_v47(p_business uuid, p_appointment uuid, p_status text)",
+        "public.set_booking_settings(p_business uuid, p_hold_minutes integer, p_overflow text, p_notify boolean, p_auto_confirm boolean)",
+        "public.set_business_modules(p_business uuid, p_modules text[])",
+        "public.set_expense_void(p_business uuid, p_expense uuid, p_void boolean)",
+        "public.set_membership_status(p_business uuid, p_membership uuid, p_status text)",
+        "public.set_sale_policy(p_business uuid, p_kind text, p_counts_as_revenue boolean, p_counts_as_visit boolean, p_earns_points boolean, p_note text)",
+        "public.set_staff_modules(p_staff uuid, p_modules text[])",
+        "public.staff_create_client(p_business uuid, p_idempotency_key uuid, p_full_name text, p_phone text, p_email text, p_birth_date date, p_gender text, p_marketing_consent boolean, p_referrer_code text, p_source text)",
+        "public.staff_get_customer_birthday_benefit(p_business_id uuid, p_client_id uuid)",
+        "public.staff_get_reversal_workflows(p_business uuid, p_client uuid, p_limit integer, p_mode text)",
+        "public.staff_list_gift_cards(p_business uuid, p_limit integer)",
+        "public.staff_set_marketing_consent(p_business uuid, p_client uuid, p_idempotency_key uuid, p_marketing_consent boolean, p_source text)",
+        "public.stage_import_rows(p_business uuid, p_entity text, p_rows jsonb, p_idempotency_key text)",
+        "public.suggest_appointment_staff_v47(p_business uuid, p_branch uuid, p_service uuid, p_starts timestamp with time zone, p_duration_minutes integer, p_limit integer)",
+        "public.super_admin_list_businesses()",
+        "public.use_package_session(p_business uuid, p_cp uuid, p_idempotency_key text)"
+      ]
+    },
+    "searchPathAudit": {
+      "totalSecurityDefinerFunctionsInspected": 253,
+      "missingPinnedSearchPath": 0,
+      "classification": "ACCEPTED-BY-DESIGN",
+      "rationale": "0 of 253 SECURITY DEFINER functions in public+app lack an explicit search_path in proconfig -- the classic search-path-hijack class is closed fleet-wide."
+    },
+    "publicPseudoRoleExecuteAudit": {
+      "functionsWithPublicPseudoRoleExecute": [
+        "app.forbid_mutation()",
+        "app.norm_phone(p text)",
+        "app.phone_match_key(p text)",
+        "app.role_class(p_role text)",
+        "app.role_perms(p_role text)",
+        "app.sale_policy_defaults()",
+        "app.touch_updated_at()"
+      ],
+      "classification": "ACCEPTED-BY-DESIGN",
+      "rationale": "All 7 are non-SECURITY-DEFINER app-schema helpers: two are trigger functions (forbid_mutation, touch_updated_at) which Postgres invokes without checking the invoking role's EXECUTE privilege at all, so the grant is inert; the rest (norm_phone, phone_match_key, role_class, role_perms, sale_policy_defaults) are pure/stateless computations with no table access, safe under any caller. The app schema is not the PostgREST-exposed API schema (only public is), so none of these are reachable via REST regardless."
+    }
+  },
+  "performance": {
+    "totalFindings": 368,
+    "byRule": {
+      "unindexed_foreign_keys": 261,
+      "unused_index": 19,
+      "multiple_permissive_policies": 87,
+      "auth_db_connections_absolute": 1
+    },
+    "unindexedForeignKeys": {
+      "totalFindings": 261,
+      "uniqueTablesAffected": 100,
+      "currentRealtimeRisk": "LOW -- production is pre-launch; busiest sampled table (sales) estimates 10 rows",
+      "scaleRisk": "The real risk is workload-shape, not current row count: financial/ledger and booking hot-path tables will be joined constantly once real tenants land.",
+      "top15ByUnindexedFkCount": [
+        {
+          "schema": "public",
+          "table": "loyalty_redemption_provenance",
+          "unindexedForeignKeyCount": 7,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "PRE-LAUNCH"
+        },
+        {
+          "schema": "public",
+          "table": "credit_tenders",
+          "unindexedForeignKeyCount": 6,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "PRE-LAUNCH"
+        },
+        {
+          "schema": "public",
+          "table": "customer_birthday_redemptions",
+          "unindexedForeignKeyCount": 6,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "DEFERRABLE"
+        },
+        {
+          "schema": "public",
+          "table": "sale_reversal_payment_links",
+          "unindexedForeignKeyCount": 6,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "PRE-LAUNCH"
+        },
+        {
+          "schema": "public",
+          "table": "sales",
+          "unindexedForeignKeyCount": 6,
+          "currentEstimatedRows": 10,
+          "tier": "PRE-LAUNCH"
+        },
+        {
+          "schema": "public",
+          "table": "appointments",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": 8,
+          "tier": "PRE-LAUNCH"
+        },
+        {
+          "schema": "public",
+          "table": "cash_drawer_movements",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": 0,
+          "tier": "PRE-LAUNCH"
+        },
+        {
+          "schema": "public",
+          "table": "customer_birthday_entitlements",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "DEFERRABLE"
+        },
+        {
+          "schema": "public",
+          "table": "customer_in_app_inbox_events",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "DEFERRABLE"
+        },
+        {
+          "schema": "public",
+          "table": "customer_in_app_inbox_sync_operations",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "DEFERRABLE"
+        },
+        {
+          "schema": "public",
+          "table": "customer_link_audit_events",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "DEFERRABLE"
+        },
+        {
+          "schema": "public",
+          "table": "loyalty_redemption_batch_drains",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "PRE-LAUNCH"
+        },
+        {
+          "schema": "public",
+          "table": "loyalty_redemption_reversals",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": "not sampled / effectively empty pre-launch",
+          "tier": "PRE-LAUNCH"
+        },
+        {
+          "schema": "public",
+          "table": "payments",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": 0,
+          "tier": "PRE-LAUNCH"
+        },
+        {
+          "schema": "public",
+          "table": "reward_grants",
+          "unindexedForeignKeyCount": 5,
+          "currentEstimatedRows": 1,
+          "tier": "PRE-LAUNCH"
+        }
+      ],
+      "preLaunchIndexSet": [
+        "appointments",
+        "cash_drawer_movements",
+        "credit_ledger",
+        "credit_tenders",
+        "customer_link_claim_attempts",
+        "customer_links",
+        "financial_operations",
+        "gift_card_issue_operations",
+        "gift_cards",
+        "loyalty_redemption_batch_drains",
+        "loyalty_redemption_provenance",
+        "loyalty_redemption_reversals",
+        "loyalty_redemptions",
+        "payments",
+        "points_batches",
+        "points_ledger",
+        "reward_grants",
+        "sale_reversal_audits",
+        "sale_reversal_payment_links",
+        "sales"
+      ],
+      "deferrableSet": [
+        "appointment_booking_operations",
+        "appointment_reschedule_operations",
+        "appointment_services",
+        "birthday_program_draft_operations",
+        "birthday_program_versions",
+        "birthday_programs",
+        "booking_management_tokens",
+        "booking_requests",
+        "branch_breaks",
+        "branch_hours",
+        "bundle_items",
+        "bundles",
+        "businesses",
+        "cash_drawer_sessions",
+        "change_requests",
+        "client_field_options",
+        "client_field_values",
+        "client_packages",
+        "consents",
+        "customer_appointment_action_requests",
+        "customer_birthday_activation_operations",
+        "customer_birthday_entitlements",
+        "customer_birthday_participation",
+        "customer_birthday_participation_operations",
+        "customer_birthday_redemptions",
+        "customer_contact_proofs",
+        "customer_identity_audit_events",
+        "customer_in_app_inbox_events",
+        "customer_in_app_inbox_global_sync_operations",
+        "customer_in_app_inbox_resolutions",
+        "customer_in_app_inbox_state",
+        "customer_in_app_inbox_state_operations",
+        "customer_in_app_inbox_sync_operations",
+        "customer_legal_acceptances",
+        "customer_link_audit_events",
+        "customer_link_invitation_issues",
+        "customer_link_invitations",
+        "customer_link_unlink_events",
+        "customer_notification_outbox",
+        "customer_notification_preferences",
+        "customer_preference_audit",
+        "customer_profiles",
+        "customer_registration_operations",
+        "customer_registration_preferences",
+        "customer_staff_operations",
+        "customer_verified_contacts",
+        "expense_recurrences",
+        "expenses",
+        "firm_config_versions",
+        "import_rows",
+        "legacy_referral_provenance",
+        "legacy_referral_resolution_events",
+        "legacy_referral_sale_candidates",
+        "loyalty_branch_overrides",
+        "loyalty_operations",
+        "loyalty_program_versions",
+        "loyalty_programs",
+        "loyalty_reward_branches",
+        "loyalty_reward_products",
+        "loyalty_reward_services",
+        "loyalty_reward_versions",
+        "loyalty_rewards",
+        "loyalty_tier_versions",
+        "memberships",
+        "package_plans",
+        "package_session_consumptions",
+        "package_session_reversals",
+        "referrals",
+        "resources",
+        "retention_program_versions",
+        "retention_programs",
+        "retention_recommendation_runs",
+        "service_branches",
+        "service_products",
+        "staff",
+        "staff_branches",
+        "staff_hours",
+        "staff_off_days",
+        "staff_services",
+        "waitlist"
+      ],
+      "recommendation": "Create covering indexes for the unindexed FK columns on the PRE-LAUNCH tier before onboarding the first real tenant (these are exactly the tables named in P0-FINANCE-REVERSAL-005 and P0-REPORTING-SCALE-006's own success criteria). Defer the rest until real usage data shows which actually get joined -- creating an index nobody queries by just adds write overhead, and Supabase's own 'unused index' advisor (below) already shows the cost of guessing wrong pre-launch."
+    },
+    "multiplePermissivePolicies": {
+      "totalFindings": 87,
+      "uniqueTablesAffected": 67,
+      "superAdminReadOverlayCount": 83,
+      "ownerReadWriteOverlayCount": 4,
+      "classification": "NEEDS-FIX (low priority, deferrable)",
+      "rationale": "83 of 87 are the deliberate v14 super-admin '<table>_sa_read' policy sitting alongside each table's normal tenant policy for the same role+action (matches CLAUDE.md's documented '46 SELECT-only <t>_sa_read policies' design). This is a real, measurable-at-scale query-planner cost (Postgres evaluates both permissive predicates per row) but zero security risk. 4 are a different, consolidatable owner_read/owner_write redundancy on client_field_definitions, client_field_options, client_field_values, and subscriptions.",
+      "findings": [
+        {
+          "table": "appointment_services",
+          "detail": "Table \\`public.appointment_services\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{appointment_services_sa_read,appt_services_all}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "appointments",
+          "detail": "Table \\`public.appointments\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{appointments_sa_read,appointments_v47_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "audit_log",
+          "detail": "Table \\`public.audit_log\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{audit_log_sa_read,audit_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "booking_requests",
+          "detail": "Table \\`public.booking_requests\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{booking_requests_sa_read,br_all}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "booking_tables",
+          "detail": "Table \\`public.booking_tables\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{booking_tables_read,booking_tables_sa_read,booking_tables_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "branch_breaks",
+          "detail": "Table \\`public.branch_breaks\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{branch_breaks_sa_read,branch_breaks_select,branch_breaks_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "branch_hours",
+          "detail": "Table \\`public.branch_hours\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{branch_hours_sa_read,branch_hours_select,branch_hours_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "branches",
+          "detail": "Table \\`public.branches\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{branches_sa_read,branches_select,branches_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "bundle_items",
+          "detail": "Table \\`public.bundle_items\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{bundle_items_all,bundle_items_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "bundles",
+          "detail": "Table \\`public.bundles\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{bundles_all,bundles_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "businesses",
+          "detail": "Table \\`public.businesses\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{businesses_sa_read,salons_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "cash_drawer_movements",
+          "detail": "Table \\`public.cash_drawer_movements\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{cash_drawer_movements_sa_read,cash_drawer_movements_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "cash_drawer_sessions",
+          "detail": "Table \\`public.cash_drawer_sessions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{cash_drawer_sessions_sa_read,cash_drawer_sessions_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "change_requests",
+          "detail": "Table \\`public.change_requests\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{change_requests_sa_read,change_requests_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "client_field_definitions",
+          "detail": "Table \\`public.client_field_definitions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{client_field_definitions_owner_read,client_field_definitions_owner_write}\\`",
+          "pattern": "owner-read-vs-owner-write-overlay",
+          "consolidationSafety": "SAFE, WORTH DOING -- these 4 are two independently-authored policies for the *same* owner scope (not the deliberate super-admin overlay), so consolidating an owner_read + owner_write pair into one FOR ALL policy is a straightforward redundancy cleanup with no access-scope change."
+        },
+        {
+          "table": "client_field_options",
+          "detail": "Table \\`public.client_field_options\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{client_field_options_owner_read,client_field_options_owner_write}\\`",
+          "pattern": "owner-read-vs-owner-write-overlay",
+          "consolidationSafety": "SAFE, WORTH DOING -- these 4 are two independently-authored policies for the *same* owner scope (not the deliberate super-admin overlay), so consolidating an owner_read + owner_write pair into one FOR ALL policy is a straightforward redundancy cleanup with no access-scope change."
+        },
+        {
+          "table": "client_field_values",
+          "detail": "Table \\`public.client_field_values\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{client_field_values_owner_read,client_field_values_owner_write}\\`",
+          "pattern": "owner-read-vs-owner-write-overlay",
+          "consolidationSafety": "SAFE, WORTH DOING -- these 4 are two independently-authored policies for the *same* owner scope (not the deliberate super-admin overlay), so consolidating an owner_read + owner_write pair into one FOR ALL policy is a straightforward redundancy cleanup with no access-scope change."
+        },
+        {
+          "table": "client_packages",
+          "detail": "Table \\`public.client_packages\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{client_packages_sa_read,cpkg_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "clients",
+          "detail": "Table \\`public.clients\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{clients_sa_read,clients_v41_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "consents",
+          "detail": "Table \\`public.consents\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{consents_sa_read,consents_v41_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "credit_ledger",
+          "detail": "Table \\`public.credit_ledger\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{credit_ledger_sa_read,credit_ledger_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "expense_recurrences",
+          "detail": "Table \\`public.expense_recurrences\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{expense_recurrences_all,expense_recurrences_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "expenses",
+          "detail": "Table \\`public.expenses\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{expenses_all,expenses_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "firm_config_versions",
+          "detail": "Table \\`public.firm_config_versions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{firm_config_versions_read,firm_config_versions_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "firm_reward_taxonomy",
+          "detail": "Table \\`public.firm_reward_taxonomy\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{firm_reward_taxonomy_read,firm_reward_taxonomy_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "import_jobs",
+          "detail": "Table \\`public.import_jobs\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{import_jobs_owner_read,import_jobs_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "import_rows",
+          "detail": "Table \\`public.import_rows\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{import_rows_owner_read,import_rows_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_branch_overrides",
+          "detail": "Table \\`public.loyalty_branch_overrides\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_branch_overrides_read,loyalty_branch_overrides_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_program_versions",
+          "detail": "Table \\`public.loyalty_program_versions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_program_versions_read,loyalty_program_versions_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_programs",
+          "detail": "Table \\`public.loyalty_programs\\` has multiple permissive policies for role \\`anon\\` for action \\`SELECT\\`. Policies include \\`{loyalty_programs_read,loyalty_programs_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_programs",
+          "detail": "Table \\`public.loyalty_programs\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_programs_read,loyalty_programs_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_programs",
+          "detail": "Table \\`public.loyalty_programs\\` has multiple permissive policies for role \\`authenticator\\` for action \\`SELECT\\`. Policies include \\`{loyalty_programs_read,loyalty_programs_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_programs",
+          "detail": "Table \\`public.loyalty_programs\\` has multiple permissive policies for role \\`cli_login_postgres\\` for action \\`SELECT\\`. Policies include \\`{loyalty_programs_read,loyalty_programs_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_programs",
+          "detail": "Table \\`public.loyalty_programs\\` has multiple permissive policies for role \\`dashboard_user\\` for action \\`SELECT\\`. Policies include \\`{loyalty_programs_read,loyalty_programs_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_programs",
+          "detail": "Table \\`public.loyalty_programs\\` has multiple permissive policies for role \\`supabase_privileged_role\\` for action \\`SELECT\\`. Policies include \\`{loyalty_programs_read,loyalty_programs_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_redemptions",
+          "detail": "Table \\`public.loyalty_redemptions\\` has multiple permissive policies for role \\`anon\\` for action \\`SELECT\\`. Policies include \\`{loyalty_redemptions_read,loyalty_redemptions_sa_read,loyalty_redemptions_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_redemptions",
+          "detail": "Table \\`public.loyalty_redemptions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_redemptions_read,loyalty_redemptions_sa_read,loyalty_redemptions_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_redemptions",
+          "detail": "Table \\`public.loyalty_redemptions\\` has multiple permissive policies for role \\`authenticator\\` for action \\`SELECT\\`. Policies include \\`{loyalty_redemptions_read,loyalty_redemptions_sa_read,loyalty_redemptions_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_redemptions",
+          "detail": "Table \\`public.loyalty_redemptions\\` has multiple permissive policies for role \\`cli_login_postgres\\` for action \\`SELECT\\`. Policies include \\`{loyalty_redemptions_read,loyalty_redemptions_sa_read,loyalty_redemptions_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_redemptions",
+          "detail": "Table \\`public.loyalty_redemptions\\` has multiple permissive policies for role \\`dashboard_user\\` for action \\`SELECT\\`. Policies include \\`{loyalty_redemptions_read,loyalty_redemptions_sa_read,loyalty_redemptions_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_redemptions",
+          "detail": "Table \\`public.loyalty_redemptions\\` has multiple permissive policies for role \\`supabase_privileged_role\\` for action \\`SELECT\\`. Policies include \\`{loyalty_redemptions_read,loyalty_redemptions_sa_read,loyalty_redemptions_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_reward_branches",
+          "detail": "Table \\`public.loyalty_reward_branches\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_reward_branches_read,loyalty_reward_branches_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_reward_products",
+          "detail": "Table \\`public.loyalty_reward_products\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_reward_products_read,loyalty_reward_products_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_reward_services",
+          "detail": "Table \\`public.loyalty_reward_services\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_reward_services_read,loyalty_reward_services_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_reward_versions",
+          "detail": "Table \\`public.loyalty_reward_versions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_reward_versions_read,loyalty_reward_versions_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_rewards",
+          "detail": "Table \\`public.loyalty_rewards\\` has multiple permissive policies for role \\`anon\\` for action \\`SELECT\\`. Policies include \\`{loyalty_rewards_read,loyalty_rewards_sa_read,loyalty_rewards_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_rewards",
+          "detail": "Table \\`public.loyalty_rewards\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_rewards_read,loyalty_rewards_sa_read,loyalty_rewards_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_rewards",
+          "detail": "Table \\`public.loyalty_rewards\\` has multiple permissive policies for role \\`authenticator\\` for action \\`SELECT\\`. Policies include \\`{loyalty_rewards_read,loyalty_rewards_sa_read,loyalty_rewards_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_rewards",
+          "detail": "Table \\`public.loyalty_rewards\\` has multiple permissive policies for role \\`cli_login_postgres\\` for action \\`SELECT\\`. Policies include \\`{loyalty_rewards_read,loyalty_rewards_sa_read,loyalty_rewards_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_rewards",
+          "detail": "Table \\`public.loyalty_rewards\\` has multiple permissive policies for role \\`dashboard_user\\` for action \\`SELECT\\`. Policies include \\`{loyalty_rewards_read,loyalty_rewards_sa_read,loyalty_rewards_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_rewards",
+          "detail": "Table \\`public.loyalty_rewards\\` has multiple permissive policies for role \\`supabase_privileged_role\\` for action \\`SELECT\\`. Policies include \\`{loyalty_rewards_read,loyalty_rewards_sa_read,loyalty_rewards_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_tiers",
+          "detail": "Table \\`public.loyalty_tiers\\` has multiple permissive policies for role \\`anon\\` for action \\`SELECT\\`. Policies include \\`{loyalty_tiers_read,loyalty_tiers_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_tiers",
+          "detail": "Table \\`public.loyalty_tiers\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{loyalty_tiers_read,loyalty_tiers_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_tiers",
+          "detail": "Table \\`public.loyalty_tiers\\` has multiple permissive policies for role \\`authenticator\\` for action \\`SELECT\\`. Policies include \\`{loyalty_tiers_read,loyalty_tiers_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_tiers",
+          "detail": "Table \\`public.loyalty_tiers\\` has multiple permissive policies for role \\`cli_login_postgres\\` for action \\`SELECT\\`. Policies include \\`{loyalty_tiers_read,loyalty_tiers_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_tiers",
+          "detail": "Table \\`public.loyalty_tiers\\` has multiple permissive policies for role \\`dashboard_user\\` for action \\`SELECT\\`. Policies include \\`{loyalty_tiers_read,loyalty_tiers_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "loyalty_tiers",
+          "detail": "Table \\`public.loyalty_tiers\\` has multiple permissive policies for role \\`supabase_privileged_role\\` for action \\`SELECT\\`. Policies include \\`{loyalty_tiers_read,loyalty_tiers_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "membership_plans",
+          "detail": "Table \\`public.membership_plans\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{membership_plans_sa_read,membership_plans_v41_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "memberships",
+          "detail": "Table \\`public.memberships\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{memberships_sa_read,memberships_v41_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "module_templates",
+          "detail": "Table \\`public.module_templates\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{module_templates_sa_read,module_templates_select,module_templates_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "notifications",
+          "detail": "Table \\`public.notifications\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{notifications_sa_read,notifications_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "package_plans",
+          "detail": "Table \\`public.package_plans\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{package_plans_sa_read,pkgplans_all}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "payments",
+          "detail": "Table \\`public.payments\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{payments_sa_read,payments_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "points_batches",
+          "detail": "Table \\`public.points_batches\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{batches_select,points_batches_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "points_ledger",
+          "detail": "Table \\`public.points_ledger\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{points_ledger_sa_read,points_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "products",
+          "detail": "Table \\`public.products\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{products_all,products_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "referral_programs",
+          "detail": "Table \\`public.referral_programs\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{referral_programs_sa_read,referral_programs_v41_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "referrals",
+          "detail": "Table \\`public.referrals\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{referrals_sa_read,referrals_v41_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "resources",
+          "detail": "Table \\`public.resources\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{resources_all,resources_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "retention_program_versions",
+          "detail": "Table \\`public.retention_program_versions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{retention_program_versions_owner_read,retention_program_versions_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "retention_programs",
+          "detail": "Table \\`public.retention_programs\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{retention_programs_read,retention_programs_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "retention_recommendation_runs",
+          "detail": "Table \\`public.retention_recommendation_runs\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{retention_recommendation_runs_owner_read,retention_recommendation_runs_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "reward_grants",
+          "detail": "Table \\`public.reward_grants\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{grants_select,reward_grants_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "sale_policies",
+          "detail": "Table \\`public.sale_policies\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{sale_policies_all,sale_policies_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "sales",
+          "detail": "Table \\`public.sales\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{sales_sa_read,sales_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "service_branches",
+          "detail": "Table \\`public.service_branches\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{service_branches_all,service_branches_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "service_products",
+          "detail": "Table \\`public.service_products\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{service_products_all,service_products_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "services",
+          "detail": "Table \\`public.services\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{services_all,services_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "staff",
+          "detail": "Table \\`public.staff\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{staff_sa_read,staff_select}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "staff_branches",
+          "detail": "Table \\`public.staff_branches\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{staff_branches_all,staff_branches_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "staff_hours",
+          "detail": "Table \\`public.staff_hours\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{staff_hours_sa_read,staff_hours_select,staff_hours_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "staff_invites",
+          "detail": "Table \\`public.staff_invites\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{invites_select,staff_invites_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "staff_off_days",
+          "detail": "Table \\`public.staff_off_days\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{staff_off_days_sa_read,staff_off_days_select,staff_off_days_write}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "staff_services",
+          "detail": "Table \\`public.staff_services\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{staff_services_all,staff_services_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "stock_batches",
+          "detail": "Table \\`public.stock_batches\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{stock_batches_all,stock_batches_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        },
+        {
+          "table": "subscriptions",
+          "detail": "Table \\`public.subscriptions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{subscriptions_sa_write,subscriptions_select}\\`",
+          "pattern": "owner-read-vs-owner-write-overlay",
+          "consolidationSafety": "SAFE, WORTH DOING -- these 4 are two independently-authored policies for the *same* owner scope (not the deliberate super-admin overlay), so consolidating an owner_read + owner_write pair into one FOR ALL policy is a straightforward redundancy cleanup with no access-scope change."
+        },
+        {
+          "table": "waitlist",
+          "detail": "Table \\`public.waitlist\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{waitlist_all,waitlist_sa_read}\\`",
+          "pattern": "super-admin-read-overlay",
+          "consolidationSafety": "SAFE BUT LOW PRIORITY -- both policies are permissive and combine with logical OR already; merging into one policy with an OR'd USING clause is mathematically equivalent and only saves a per-row predicate evaluation. Consolidating loses the audit clarity of a separately named super-admin-read policy. Defer until real query volume makes the overhead measurable."
+        }
+      ]
+    },
+    "unusedIndexes": {
+      "totalFindings": 19,
+      "classification": "ACCEPTED-BY-DESIGN / DEFERRABLE",
+      "rationale": "Every one of these indexes supports a query shape the product will need once it has real traffic (payroll/commission reports, branch-scoped cash-drawer lookups, actionable-wallet filters, membership status lookups) -- they are unused because the database has near-zero rows and no real usage yet, not because they are unnecessary. Dropping indexes pre-launch on the strength of a zero-traffic advisor reading would be premature; revisit after the first real usage window (tie this review to the P0-POST-CUTOVER-SMOKE-016 monitoring window).",
+      "findings": [
+        {
+          "table": "points_batches",
+          "index": "Index \\`points_batches_business_id_expires_at_idx\\` on table \\`public.points_batches\\` has not been used"
+        },
+        {
+          "table": "points_batches",
+          "index": "Index \\`c44_points_batches_actionable_idx\\` on table \\`public.points_batches\\` has not been used"
+        },
+        {
+          "table": "credit_ledger",
+          "index": "Index \\`credit_ledger_payment_idx\\` on table \\`public.credit_ledger\\` has not been used"
+        },
+        {
+          "table": "referrals",
+          "index": "Index \\`referrals_salon_id_idx\\` on table \\`public.referrals\\` has not been used"
+        },
+        {
+          "table": "referrals",
+          "index": "Index \\`referrals_qualified_sale_idx\\` on table \\`public.referrals\\` has not been used"
+        },
+        {
+          "table": "gift_cards",
+          "index": "Index \\`gift_cards_business_status_idx\\` on table \\`public.gift_cards\\` has not been used"
+        },
+        {
+          "table": "appointments",
+          "index": "Index \\`appointments_table_type_idx\\` on table \\`public.appointments\\` has not been used"
+        },
+        {
+          "table": "appointments",
+          "index": "Index \\`appointments_staff_active_window_v47_idx\\` on table \\`public.appointments\\` has not been used"
+        },
+        {
+          "table": "loyalty_reward_versions",
+          "index": "Index \\`c44_reward_versions_actionable_idx\\` on table \\`public.loyalty_reward_versions\\` has not been used"
+        },
+        {
+          "table": "client_packages",
+          "index": "Index \\`c44_client_packages_actionable_idx\\` on table \\`public.client_packages\\` has not been used"
+        },
+        {
+          "table": "payments",
+          "index": "Index \\`payments_branch_time\\` on table \\`public.payments\\` has not been used"
+        },
+        {
+          "table": "cash_drawer_movements",
+          "index": "Index \\`cash_drawer_movements_branch\\` on table \\`public.cash_drawer_movements\\` has not been used"
+        },
+        {
+          "table": "cash_drawer_movements",
+          "index": "Index \\`cash_drawer_movements_session\\` on table \\`public.cash_drawer_movements\\` has not been used"
+        },
+        {
+          "table": "booking_requests",
+          "index": "Index \\`booking_requests_table_type_idx\\` on table \\`public.booking_requests\\` has not been used"
+        },
+        {
+          "table": "booking_management_tokens",
+          "index": "Index \\`booking_management_token_expiry\\` on table \\`app.booking_management_tokens\\` has not been used"
+        },
+        {
+          "table": "sales",
+          "index": "Index \\`sales_staff\\` on table \\`public.sales\\` has not been used"
+        },
+        {
+          "table": "sales",
+          "index": "Index \\`sales_commission_payroll_idx\\` on table \\`public.sales\\` has not been used"
+        },
+        {
+          "table": "memberships",
+          "index": "Index \\`memberships_business_id_status_current_period_end_idx\\` on table \\`public.memberships\\` has not been used"
+        },
+        {
+          "table": "memberships",
+          "index": "Index \\`memberships_business_status_idx\\` on table \\`public.memberships\\` has not been used"
+        }
+      ]
+    },
+    "authConnectionStrategy": {
+      "totalFindings": 1,
+      "classification": "NEEDS-FIX (low priority, pre-scale hardening)",
+      "rationale": "Auth's DB connection pool is configured as an absolute count (10) rather than a percentage of the instance's connection budget; harmless at current near-zero load, but should be switched to percentage-based before increasing compute size, per Supabase's own guidance, or a future resize silently won't help Auth throughput."
+    }
+  }
+}
