@@ -2312,6 +2312,21 @@ function activeGroupKey(pageKey){
   const g=NAVGROUPS.find(g=>g.items.includes(k));
   return g?g.key:null;
 }
+/* Loyalty + retention render as ONE sidebar link (owner directive 2026-07-23: keep both
+   engines separate underneath, merge the experience into a single "Grow" surface — see
+   growPage()). This only changes what the link looks like; NAVGROUPS.grow.items still lists
+   both real module keys so the access filter above (business-enabled + this staff member's
+   modules) keeps gating each of them exactly as before — a teammate with only one of the two
+   still only ever sees that one module key pass the filter, so hasRewards/hasWinback below
+   can never both be false while this renders. Links to whichever tab is already open if the
+   staff member is already on the Grow surface, else defaults to Everyday rewards. */
+function growNavItemHtml(items,activeKey){
+  const hasRewards=items.includes('loyalty'),hasWinback=items.includes('retention');
+  if(!hasRewards&&!hasWinback)return '';
+  const onGrowSurface=activeKey==='loyalty'||activeKey==='retention';
+  const target=onGrowSurface?activeKey:(hasRewards?'loyalty':'retention');
+  return `<a href="#/${target}" class="${onGrowSurface?'act':''}"${onGrowSurface?' aria-current="page"':''}><span class="ic">${CUI.icon('loyalty',{size:18})}</span>Rewards &amp; bring-backs</a>`;
+}
 function navHtml(page){
   const enabled=S.myModules||S.biz.enabled_modules||[];
   const activeKey=page[0]==='client'?'clients':page[0];
@@ -2324,10 +2339,12 @@ function navHtml(page){
     }
     if(!(g.key in navOpen)) navOpen[g.key]=(g.key===activeGrp);
     const isOpen=navOpen[g.key]||g.key===activeGrp;
+    const restItems=g.key==='grow'?g.items.filter(m=>m!=='loyalty'&&m!=='retention'):g.items;
     return `<div class="navgroup">
       <button type="button" class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}" aria-expanded="${isOpen}" aria-controls="nav-${g.key}"><span class="ic">${CUI.icon(g.icon,{size:18})}</span>${g.label}<span class="chev" aria-hidden="true">${isOpen?'−':'+'}</span></button>
       <div class="navbody" id="nav-${g.key}" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
-        ${g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span>${MODULES[m][1]}</a>`).join('')}
+        ${g.key==='grow'?growNavItemHtml(g.items,activeKey):''}
+        ${restItems.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span>${MODULES[m][1]}</a>`).join('')}
       </div></div>`;
   }).join('');
 }
@@ -2606,8 +2623,13 @@ function renderShell(page){
   wireGlobalActions();
   wireBell(page);
   wireProfile(page);
+  /* Loyalty and retention share one presentation surface (growPage, below) while staying two
+     completely separate engines underneath — same RPCs, same routes, same module keys. The
+     route key each hash resolves to (page[0]) is still 'loyalty' or 'retention', unchanged;
+     only which function that key maps to is new, so the module route-guard above this
+     function needs no changes at all. */
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
-    bookings:bookingsPage,loyalty:loyaltyPage,retention:retentionPage,referrals:referralsPage,
+    bookings:bookingsPage,loyalty:hashParam=>growPage('rewards',hashParam),retention:hashParam=>growPage('winback',hashParam),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,
     staffperf:staffPerfPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
@@ -4842,6 +4864,103 @@ async function retentionPage(draftVersionId=null,editProgramId=null){
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');retentionPage(draftVersionId)});
     document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!confirm('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');retentionPage(draftVersionId)});
   }
+}
+
+/* ---------- Grow: rewards & bring-backs (combined presentation surface) ----------
+   Owner asked why Loyalty and Retention are two modules and whether they can be combined.
+   Answer implemented here: they can't, underneath — different engines, different tables,
+   different versioning flows — but the STAFF-FACING SURFACE can be one screen. loyaltyPage()
+   and retentionPage() above are completely untouched: identical RPCs, queries, drafts/
+   publish flows and save semantics. This wrapper adds one shared header + explainer + two
+   ARIA tabs (pattern reused from the Settings tablist, commit 2054796: roving tabindex,
+   Arrow/Home/End, aria-controls) and mounts whichever page owns the active tab into it.
+   Routing: old routes keep working unchanged. #/loyalty still routes here with "Everyday
+   rewards" active; #/retention (optionally #/retention/<draftVersionId>, still honoured on
+   first mount) still routes here with "Bring-backs" active. Every existing nav('#/loyalty')/
+   href="#/loyalty" call elsewhere in the app (e.g. retentionPage's "Set up loyalty first"
+   link, the setup checklist) lands on this same surface with the matching tab active — see
+   the P map in renderShell().
+   Permissions: module gating is untouched. route()'s guard (above renderShell) still checks
+   S.myModules.includes('loyalty'/'retention') against whichever key was actually routed,
+   before this function ever runs — so a teammate with neither module never reaches it. Within
+   the surface, a teammate who can read only ONE of the two modules gets that page directly,
+   with NO tab chrome at all (never a tab they can't open); both single-tab branches below call
+   the wrapped page function exactly as the old P map did.
+   Mounting is lazy, one tab at a time — not the Settings "keep every panel in the DOM" style,
+   because unlike Settings' single render function, loyaltyPage()/retentionPage() are two
+   separate functions that each fully own whatever element currently holds id="main" (that's
+   what the shared M()/$('main') helper resolves to). So each tab activation gets a FRESH host
+   element that borrows that id for as long as it's the active tab, mirroring how renderShell()
+   hands a brand-new <main id="main"> to every full route change — which means the
+   isLoyaltyCurrent()/isRetentionCurrent() staleness guards already inside those two functions
+   keep working exactly as designed if a fetch/save from a since-abandoned tab resolves late:
+   its captured element is detached (not just hidden), so `routeMain.isConnected` is false and
+   the stale render is dropped, exactly like switching to a different route today. */
+async function growPage(routedTab,hashParam){
+  /* Deliberately NOT canReadModule() here: that helper bypasses business-level
+     enabled_modules for an owner, but route()'s own guard above renderShell() gates on plain
+     S.myModules.includes(pageKey) with no owner bypass. Mirroring that exact check means "is
+     the other tab shown" always agrees with "would navigating straight to its hash work" —
+     an owner who has switched Retention off in Settings sees Loyalty with no tab chrome at
+     all, not a Bring-backs tab that would 401 the moment route() itself handled the nav. */
+  const myModules=S.myModules||[];
+  const canRewards=myModules.includes('loyalty'),canWinback=myModules.includes('retention');
+  /* Single-tab case: render the underlying page directly, with no combined chrome at all —
+     byte-identical to how this route rendered before the merge. */
+  if(routedTab==='rewards'&&!canWinback)return loyaltyPage();
+  if(routedTab==='winback'&&!canRewards)return retentionPage(hashParam||null);
+  const outerMain=M();
+  outerMain.innerHTML=`${CUI.pageHeader({title:'Grow: rewards & bring-backs',subtitle:'Two systems, reviewed and published separately — pick a tab below.',iconName:'loyalty'})}
+    <div style="margin:-8px 0 18px">
+      <p class="muted small" style="line-height:1.6"><b>Everyday rewards</b> — every visit earns automatically for every customer, however you choose to run it.</p>
+      <p class="muted small" style="line-height:1.6;margin-top:6px"><b>Bring-backs</b> — measured, versioned rules that win customers back before they drift away, with a full grant history.</p>
+    </div>
+    <div class="settings-tabs" role="tablist" aria-label="Grow sections">
+      <button type="button" class="settings-tab" role="tab" id="growtab-rewards" aria-controls="main" aria-selected="false" tabindex="-1" data-growtab="rewards">Everyday rewards</button>
+      <button type="button" class="settings-tab" role="tab" id="growtab-winback" aria-controls="main" aria-selected="false" tabindex="-1" data-growtab="winback">Bring-backs</button>
+    </div>
+    <div id="growpanelhost"></div>`;
+  /* aria-controls points at "main", not a stable panel id: the mounted panel below IS
+     whichever element currently holds id="main" (see mountGrowTab), because that's the only
+     way to hand the shared M()/$('main') helper to the active tab's content without touching
+     loyaltyPage()/retentionPage() themselves. Both tabs deliberately point at the same id —
+     at any moment exactly one panel is live, so it always resolves to the right target. */
+  const tabs=[...document.querySelectorAll('#growtab-rewards,#growtab-winback')];
+  const panelHost=$('growpanelhost');
+  let activeGrowTab=null;
+  async function mountGrowTab(key,{focus=false}={}){
+    if(key===activeGrowTab)return;
+    activeGrowTab=key;
+    tabs.forEach(t=>{
+      const on=t.dataset.growtab===key;
+      t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
+      if(focus&&on)t.focus();
+    });
+    /* replaceState (not location.hash=) keeps the URL honest for refresh/copy-paste without
+       firing hashchange — a real route rebuild on every tab click would be jarring and would
+       also fight CUI.focusRoute()'s post-route h1 focus, which only fires once per route(). */
+    history.replaceState(null,'',`${location.pathname}${location.search}#/${key==='rewards'?'loyalty':'retention'}`);
+    CUI.announce(key==='rewards'?'Everyday rewards':'Bring-backs');
+    const fresh=document.createElement('section');
+    fresh.setAttribute('role','tabpanel');fresh.setAttribute('aria-labelledby','growtab-'+key);fresh.tabIndex=-1;
+    panelHost.replaceChildren(fresh); // detaches the previous tab's panel — its isXCurrent() guard now sees isConnected===false
+    if(outerMain.id==='main')outerMain.removeAttribute('id');
+    fresh.id='main';
+    if(key==='rewards')await loyaltyPage();
+    else await retentionPage(key===routedTab?(hashParam||null):null); // the routed draftVersionId only applies to the tab that was actually deep-linked
+  }
+  tabs.forEach((tab,i)=>{
+    tab.onclick=()=>mountGrowTab(tab.dataset.growtab);
+    tab.onkeydown=e=>{
+      let ni=null;
+      if(e.key==='ArrowRight'||e.key==='ArrowDown')ni=(i+1)%tabs.length;
+      else if(e.key==='ArrowLeft'||e.key==='ArrowUp')ni=(i-1+tabs.length)%tabs.length;
+      else if(e.key==='Home')ni=0;else if(e.key==='End')ni=tabs.length-1;
+      if(ni===null)return;
+      e.preventDefault();mountGrowTab(tabs[ni].dataset.growtab,{focus:true});
+    };
+  });
+  return mountGrowTab(routedTab);
 }
 
 /* ---------- referrals ---------- */
