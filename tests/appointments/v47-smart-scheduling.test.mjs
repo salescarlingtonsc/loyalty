@@ -93,6 +93,7 @@ test('calendar UI exposes everyone or individual staff and never writes appointm
   assert.match(calendar,/left:calc\(\$\{left\}% \+ 3px\)[\s\S]*width:calc\(\$\{width\}% - 6px\)/i);
   assert.match(calendar,/shortestDuration[\s\S]*Math\.max\(64,Math\.ceil\(44\*60\/shortestDuration\)\)/i);
   assert.match(calendar,/--calendar-hour-height:\$\{hourHeight\}px/i);
+  assert.match(calendar,/height=\(to-from\)\/60\*hourHeight/i);
   assert.doesNotMatch(calendar,/from\('appointments'\)\.insert|from\('appointments'\)\.update|from\('appointments'\)\.delete/);
   assert.match(calendar,/createLatestRequestGate\(isCurrent\)/);
   assert.match(calendar,/availabilityGate\.invalidate\(\)/);
@@ -108,9 +109,10 @@ test('calendar UI exposes everyone or individual staff and never writes appointm
 test('short adjacent appointments retain 44px targets without vertical overlap', () => {
   for (const durationMinutes of [15,30,60]) {
     const hourHeight=Math.max(64,Math.ceil(44*60/durationMinutes));
-    const renderedHeight=Math.max(44,durationMinutes/60*hourHeight);
+    const renderedHeight=durationMinutes/60*hourHeight;
     const nextStart=durationMinutes/60*hourHeight;
-    assert.ok(nextStart>=renderedHeight,
+    assert.ok(renderedHeight>=44,'adaptive hour scale must preserve a 44px target');
+    assert.equal(nextStart,renderedHeight,
       `${durationMinutes}-minute adjacent events must not visually overlap`);
   }
 });

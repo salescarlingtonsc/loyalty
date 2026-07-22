@@ -78,6 +78,7 @@
     { "kind": "pending", "version": "20260722120000", "name": "frenly_v46a_birthday_draft_runtime_fix", "sourcePath": "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql" },
     { "kind": "pending", "version": "20260722130000", "name": "frenly_v47_smart_staff_scheduling", "sourcePath": "db/migrations/20260722050339_frenly_v47_smart_staff_scheduling.sql" },
     { "kind": "pending", "version": "20260722131000", "name": "frenly_v47a_record_sale_overload_cleanup", "sourcePath": "db/migrations/20260722_frenly_v47a_record_sale_overload_cleanup.sql" },
-    { "kind": "pending", "version": "20260722132000", "name": "frenly_v47b_record_sale_dispatch_fix", "sourcePath": "db/migrations/20260722_frenly_v47b_record_sale_dispatch_fix.sql" }
+    { "kind": "pending", "version": "20260722132000", "name": "frenly_v47b_record_sale_dispatch_fix", "sourcePath": "db/migrations/20260722_frenly_v47b_record_sale_dispatch_fix.sql" },
+    { "kind": "pending", "version": "20260722133000", "name": "frenly_v48_calendar_details_reschedule", "sourcePath": "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql" }
   ]
 }

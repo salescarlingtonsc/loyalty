@@ -193,7 +193,7 @@
     };
     dialog.addEventListener('keydown',keydown);
     requestAnimationFrame(()=>{const target=dialog.querySelector(initialFocus)||focusable()[0]||dialog;target.focus()});
-    return ()=>{dialog.removeEventListener('keydown',keydown);dialog.remove();if(returnFocus?.isConnected)returnFocus.focus()};
+    return ({restoreFocus=true}={})=>{dialog.removeEventListener('keydown',keydown);dialog.remove();if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus()};
   }
 
   global.FrenlyCustomerUI=Object.freeze({

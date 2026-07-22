@@ -280,14 +280,18 @@ tr.click:hover td{background:#FBFAF8}
 .calendar-week-head{display:grid;grid-template-columns:64px repeat(7,minmax(116px,1fr));position:sticky;top:0;z-index:4;background:#fff;border-bottom:1px solid var(--line)}
 .calendar-week-head>div{padding:10px 8px;border-left:1px solid var(--hair);font-size:12px;font-weight:700;text-align:center}
 .calendar-week-head>div:first-child{border-left:0}
+.calendar-week-head .is-today{background:#FFF2EA;color:#A64020}.calendar-week-head .calendar-date{display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:32px;margin-top:3px;border-radius:50%;font-size:14px}
+.calendar-week-head .is-today .calendar-date{background:var(--coral);color:#fff}
 .calendar-week-body{display:grid;grid-template-columns:64px repeat(7,minmax(116px,1fr));position:relative}
 .calendar-time-axis{position:relative;border-right:1px solid var(--line)}
 .calendar-time-label{position:absolute;right:8px;transform:translateY(-8px);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .calendar-day{position:relative;border-right:1px solid var(--hair);background-image:linear-gradient(to bottom,transparent calc(100% - 1px),var(--line) 0);background-size:100% var(--calendar-hour-height,64px);background-repeat:repeat-y}
+.calendar-day.is-today{background-color:#FFFBF8}
 .calendar-day:last-child{border-right:0}
 .calendar-event{position:absolute;left:4px;right:4px;display:block;width:calc(100% - 8px);min-height:44px;overflow:hidden;padding:6px 7px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 13%,#fff);color:var(--ink);text-align:left;font-size:11px;line-height:1.28;z-index:2}
-.calendar-event:hover{box-shadow:var(--shadow);z-index:3}.calendar-event b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.calendar-agenda{display:none}.calendar-agenda-item{display:grid;grid-template-columns:82px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--hair)}
+.calendar-event:hover,.calendar-event:focus-visible{box-shadow:var(--shadow);z-index:3}.calendar-event b,.calendar-event-time{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-event-time{font-variant-numeric:tabular-nums;font-weight:650;margin-top:2px}
+.calendar-agenda{display:none}.calendar-agenda-item{display:grid;grid-template-columns:minmax(112px,auto) 1fr;gap:12px;min-height:44px;padding:12px 4px;border:0;border-bottom:1px solid var(--hair);border-radius:8px;color:inherit;cursor:pointer}.calendar-agenda-item:hover,.calendar-agenda-item:focus-visible{background:#FBF7F3}.calendar-agenda-time{font-variant-numeric:tabular-nums;line-height:1.45}
+.appointment-detail-modal .modal-card{width:min(760px,100%)}.appointment-detail-head{align-items:flex-start}.appointment-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px;margin-top:18px}.appointment-detail-section{border-top:1px solid var(--line);padding-top:16px;margin-top:18px}.appointment-detail-section h3{font-size:15px;margin-bottom:9px}.appointment-detail-list{display:grid;gap:8px;margin:0}.appointment-detail-list>div{display:grid;grid-template-columns:minmax(105px,34%) 1fr;gap:12px}.appointment-detail-list dt{color:var(--muted);font-size:12px;font-weight:700}.appointment-detail-list dd{margin:0;overflow-wrap:anywhere}.appointment-detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.appointment-reschedule-form{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}.appointment-reschedule-form[hidden]{display:none}.appointment-reschedule-feedback{margin-top:12px}.appointment-reschedule-feedback .schedule-suggestion{margin-top:0}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
   .side{position:static;width:100%;max-width:100vw;min-width:0;height:auto;display:block;overflow:visible;padding:10px 12px;
@@ -314,6 +318,7 @@ tr.click:hover td{background:#FBFAF8}
   .cui-table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left}
   .cui-table[data-responsive="true"] td:empty{display:none}
   .calendar-week-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
+  .appointment-detail-modal{align-items:flex-end;padding:0}.appointment-detail-modal .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))}.appointment-detail-grid{grid-template-columns:1fr}.appointment-detail-actions>.btn,.appointment-detail-actions>a.btn{flex:1 1 100%}.appointment-reschedule-form .split{grid-template-columns:1fr}
 }
 @media(max-width:375px){
   .main{padding:16px 12px 34px}.card{padding:17px}.cui-page-title h1,.topbar h1{font-size:1.55rem}
@@ -577,6 +582,12 @@ let navOpen={};
 let profileOpen=false;
 let customerUiObserver=null;
 let shellRenderEpoch=0;
+let routeDispose=()=>{};
+function disposeCurrentRoute(){
+  const dispose=routeDispose;routeDispose=()=>{};
+  dispose({restoreFocus:false});
+  document.querySelectorAll('.appointment-detail-modal').forEach(dialog=>dialog.remove());
+}
 /* realtime notifications (bell) — module-level, plain JS vars only (no localStorage) */
 let currentPage=['dashboard']; // set by renderShell(); read by the realtime handlers to
                                 // decide whether to auto-refresh the page currently on screen
@@ -701,6 +712,7 @@ async function route(){
   dashboardRenderEpoch+=1;
   customerWalletRenderEpoch+=1;
   destroyMountedTurnstiles();
+  disposeCurrentRoute();
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
      hiccup used to throw straight out of this async function with nothing rendered, which
      read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
@@ -2318,6 +2330,7 @@ async function initNotifications(){
 
 function renderShell(page){
   const renderEpoch=++shellRenderEpoch;
+  disposeCurrentRoute();
   if(customerUiObserver)customerUiObserver.disconnect();
   currentPage=page; // used by the realtime handlers below to know what to auto-refresh
   root.innerHTML=`<div class="shell">
@@ -4293,6 +4306,7 @@ async function giftcardsPage(){
 
 /* ---------- appointments ---------- */
 async function appointmentsPage(){
+  disposeCurrentRoute();
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('appointments');
   const canComplete=canWrite&&hasRoleCapability('create_sales');
@@ -4323,11 +4337,13 @@ async function appointmentsPage(){
     (visibleBranches.find(b=>b.is_default)?.id||visibleBranches[0]?.id||'');
   if(branchId)selectedBranchId=branchId;
   let staffFilter=canSeeAll?'all':(myStaff?myStaff.id:'all');
-  let view='week',wkOff=0,calendarItems=[],bookingAttempt=null;
+  let view='week',wkOff=0,calendarItems=[],bookingAttempt=null,rescheduleAttempt=null,closeAppointmentDialog=null;
   const availabilityGate=createLatestRequestGate(isCurrent);
   const bookingGate=createLatestRequestGate(isCurrent);
   const statusGate=createLatestRequestGate(isCurrent);
   const calendarGate=createLatestRequestGate(isCurrent);
+  const rescheduleGate=createLatestRequestGate(isCurrent);
+  const detailGate=createLatestRequestGate(isCurrent);
   const todaySg=new Date(Date.now()+8*3600000).toISOString().slice(0,10);
   const branchStaff=id=>staff.filter(s=>(staffBranches||[]).some(x=>x.branch_id===id&&x.staff_id===s.id));
   const branchServices=id=>(sv||[]).filter(service=>{
@@ -4472,48 +4488,137 @@ async function appointmentsPage(){
     const d=new Date(new Date(iso).getTime()+8*3600000);
     return {date:d.toISOString().slice(0,10),minutes:d.getUTCHours()*60+d.getUTCMinutes()};
   }
+  const calendarClock=iso=>{const minutes=eventParts(iso).minutes;return `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`};
+  const appointmentDuration=item=>Math.max(0,Math.round((new Date(item.ends_at)-new Date(item.starts_at))/60000));
+  const appointmentTimeRange=item=>`${calendarClock(item.starts_at)}–${calendarClock(item.ends_at)}`;
+  const resolveBookedPriceCents=(appointmentTotal,serviceTotal)=>{const appointmentPrice=Number(appointmentTotal),servicePrice=Number(serviceTotal);return Number.isFinite(appointmentPrice)&&appointmentPrice>0?appointmentPrice:Number.isFinite(servicePrice)&&servicePrice>0?servicePrice:null};
+  const safeCallNumber=item=>{const normalized=String(item?.clients?.phone_norm||'').trim();return /^\d{8}$/.test(normalized)?normalizeSingaporeCustomerPhone(normalized):normalizeSingaporeCustomerPhone(item?.clients?.phone)};
+  const calendarDayLabel=iso=>{const date=eventParts(iso).date,d=new Date(`${date}T00:00:00Z`),weekdays=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${weekdays[d.getUTCDay()]} ${d.getUTCDate()} ${months[d.getUTCMonth()]}`};
   const appointmentOutcomeIsDue=item=>Number.isFinite(new Date(item?.starts_at).getTime())&&new Date(item.starts_at).getTime()<=Date.now();
-  function wireAppointmentActions(){
-    document.querySelectorAll('[data-appointment]').forEach(button=>button.onclick=()=>{
-      statusGate.invalidate();
-      const item=calendarItems.find(a=>a.id===button.dataset.appointment);if(!item)return;
-      const outcomeIsDue=appointmentOutcomeIsDue(item);
-      const host=$('calendarSelection');
-      host.innerHTML=`<div class="schedule-suggestion"><div class="row" style="flex-wrap:wrap"><div><h3>${esc(item.clients?.full_name||'Appointment')}</h3><p class="muted small">${esc(sgt(item.starts_at))} · ${esc(item.services?.name||'General visit')} · ${esc(staffName[item.staff_id]||'Unassigned')}</p></div><span class="spacer"></span>
-        ${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button class="btn sm statusAction" data-status="completed">Complete</button>':''}${outcomeIsDue?'<button class="btn ghost sm statusAction" data-status="no_show">No-show</button>':'<span class="pill new">Upcoming</span>'}<button class="btn danger sm statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>${item.status==='booked'&&!outcomeIsDue?'<p class="muted small" style="margin-top:8px">Complete and No-show become available after the appointment starts.</p>':''}</div>`;
-      host.querySelectorAll('.statusAction').forEach(action=>action.onclick=()=>setStatus(item.id,action.dataset.status));
-      host.scrollIntoView({block:'nearest',behavior:'smooth'});
+  const closeAppointmentDetails=({restoreFocus=true}={})=>{detailGate.invalidate();rescheduleGate.invalidate();rescheduleAttempt=null;if(closeAppointmentDialog){const close=closeAppointmentDialog;closeAppointmentDialog=null;close({restoreFocus})}};
+  routeDispose=closeAppointmentDetails;
+  function renderRescheduleSuggestions(host,payload){
+    const available=payload?.available_staff||[],next=payload?.next_best_slots||[];
+    host.innerHTML=`<div class="schedule-suggestion"><h3>That time is not available</h3><p class="muted small" style="margin-top:5px">Choose another available staff member or one of the next times below. The appointment has not changed.</p>
+      ${available.length?`<p class="muted small" style="margin-top:11px">Available at your requested time</p><div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm rescheduleStaffSuggestion" data-staff="${person.staff_id}">${esc(person.staff_name)}</button>`).join('')}</div>`:''}
+      ${next.length?`<p class="muted small" style="margin-top:11px">Next best times today</p><div class="schedule-suggestion-actions">${next.map(slot=>`<button type="button" class="btn ghost sm rescheduleTimeSuggestion" data-start="${esc(slot.starts_at)}" data-staff="${slot.staff_id}">${esc(appointmentTimeRange(slot))} · ${esc(slot.staff_name)}</button>`).join('')}</div>`:''}</div>`;
+    host.querySelectorAll('.rescheduleStaffSuggestion').forEach(button=>button.onclick=()=>{
+      $('appointmentEditStaff').value=button.dataset.staff;rescheduleAttempt=null;host.innerHTML='';$('appointmentEditStaff').focus();
     });
-    document.querySelectorAll('.statusAction[data-id]').forEach(button=>button.onclick=()=>setStatus(button.dataset.id,button.dataset.status));
+    host.querySelectorAll('.rescheduleTimeSuggestion').forEach(button=>button.onclick=()=>{
+      const local=sgInput(button.dataset.start);$('appointmentEditDate').value=local.slice(0,10);$('appointmentEditTime').value=local.slice(11,16);
+      $('appointmentEditStaff').value=button.dataset.staff;rescheduleAttempt=null;host.innerHTML='';$('appointmentEditTime').focus();
+    });
+  }
+  async function openAppointmentDetails(summary){
+    closeAppointmentDetails();
+    const loading=document.createElement('div');loading.className='modal appointment-detail-modal';loading.setAttribute('role','dialog');loading.setAttribute('aria-modal','true');loading.setAttribute('aria-labelledby','appointmentDetailLoadingTitle');loading.tabIndex=-1;
+    loading.innerHTML=`<div class="modal-card"><div class="row"><div><h2 id="appointmentDetailLoadingTitle">Appointment details</h2><p class="muted small" style="margin-top:4px">Loading customer and service information…</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentLoadingClose" aria-label="Close appointment details">Close</button></div><div class="empty" role="status" style="margin-top:18px">Loading…</div></div>`;
+    document.body.append(loading);
+    let deactivateLoading=null;
+    const removeLoading=({restoreFocus=true}={})=>{
+      if(deactivateLoading){const deactivate=deactivateLoading;deactivateLoading=null;deactivate({restoreFocus})}
+      else loading.remove();
+      if(closeAppointmentDialog===removeLoading)closeAppointmentDialog=null;
+    };
+    const close=()=>closeAppointmentDetails();closeAppointmentDialog=removeLoading;deactivateLoading=CUI.activateDialog(loading,{onClose:close,initialFocus:'#appointmentLoadingClose'});$('appointmentLoadingClose').onclick=close;
+    const stillCurrent=detailGate.begin();
+    const {data,error}=await sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,note,total_cents,clients(full_name,phone,phone_norm,email,birth_date,notes),services!appointments_service_id_fkey(name,duration_min,price_cents)')
+      .eq('business_id',S.biz.id).eq('branch_id',summary.branch_id).eq('id',summary.id).maybeSingle();
+    if(!stillCurrent()||!loading.isConnected){removeLoading({restoreFocus:false});return}
+    if(error||!data){
+      loading.querySelector('.modal-card').innerHTML=`<div class="row"><div><h2 id="appointmentDetailLoadingTitle">Unable to load details</h2><p class="muted small" style="margin-top:4px">The appointment may no longer be available in your branch scope.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentLoadingClose" aria-label="Close appointment details">Close</button></div><div class="err" role="alert" style="margin-top:18px">Appointment details could not be loaded. Try again.</div><button type="button" class="btn" id="appointmentDetailRetry" style="margin-top:14px">Try again</button>`;
+      $('appointmentLoadingClose').onclick=close;$('appointmentDetailRetry').onclick=()=>openAppointmentDetails(summary);
+      requestAnimationFrame(()=>$('appointmentDetailRetry')?.focus());return;
+    }
+    removeLoading();renderAppointmentDetails(data);
+  }
+  function renderAppointmentDetails(item){
+    closeAppointmentDetails();statusGate.invalidate();
+    const outcomeIsDue=appointmentOutcomeIsDue(item),duration=appointmentDuration(item),callNumber=safeCallNumber(item);
+    const futureBooked=item.status==='booked'&&!outcomeIsDue&&canWrite;
+    const local=sgInput(item.starts_at),service=item.services||{},client=item.clients||{};
+    const bookedPriceCents=resolveBookedPriceCents(item.total_cents,service.price_cents);
+    const dialog=document.createElement('div');dialog.className='modal appointment-detail-modal';dialog.id='appointmentDetailDialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','appointmentDetailTitle');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card"><div class="row appointment-detail-head"><div><h2 id="appointmentDetailTitle">${esc(client.full_name||'Appointment')}</h2><p class="muted small" style="margin-top:4px">${esc(sgt(item.starts_at)?.slice(0,10)||'')} · ${esc(appointmentTimeRange(item))} · ${duration} min</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentDialogClose" aria-label="Close appointment details">Close</button></div>
+      <div class="appointment-detail-grid"><section aria-labelledby="appointmentServiceTitle"><h3 id="appointmentServiceTitle">Service</h3><dl class="appointment-detail-list"><div><dt>Service</dt><dd>${esc(service.name||'General visit')}</dd></div><div><dt>Duration</dt><dd>${duration} minutes</dd></div><div><dt>Booked price</dt><dd>${bookedPriceCents===null?'Not available':esc(money(bookedPriceCents))}</dd></div><div><dt>Appointment note</dt><dd>${esc(item.note||'None')}</dd></div></dl></section>
+      <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p>${esc(client.notes||'None')}</p></div></section></div>
+      <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd>${esc(visibleBranches.find(b=>b.id===item.branch_id)?.name||'Branch')}</dd></div><div><dt>Staff</dt><dd>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
+      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">Call customer</a>`:''}${futureBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Change appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      ${futureBooked?`<p class="muted small" style="margin-top:12px">Complete and No-show become available after the appointment starts.</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Change date, time or staff</h3><p class="muted small" style="margin-top:4px">Frenly checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(person.full_name||'Staff')}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm change</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
+    document.body.append(dialog);
+    const close=()=>closeAppointmentDetails();
+    closeAppointmentDialog=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#appointmentDialogClose'});
+    $('appointmentDialogClose').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
+    dialog.querySelectorAll('.statusAction').forEach(action=>action.onclick=async()=>{if(await setStatus(item.id,action.dataset.status))close()});
+    if(!futureBooked)return;
+    const editForm=$('appointmentRescheduleForm'),toggle=$('appointmentEditToggle'),feedback=$('appointmentRescheduleFeedback');
+    const setReschedulePending=pending=>{
+      editForm.setAttribute('aria-busy',String(pending));
+      [...editForm.elements].forEach(control=>{control.disabled=pending});
+    };
+    toggle.onclick=()=>{const open=editForm.hidden;editForm.hidden=!open;toggle.setAttribute('aria-expanded',String(open));if(open)$('appointmentEditDate').focus()};
+    $('appointmentRescheduleCancel').onclick=()=>{editForm.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus()};
+    const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
+    ['appointmentEditDate','appointmentEditTime','appointmentEditDuration','appointmentEditStaff','appointmentEditNote'].forEach(id=>{
+      $(id).addEventListener('input',invalidateRescheduleEdit);$(id).addEventListener('change',invalidateRescheduleEdit);
+    });
+    editForm.onsubmit=async event=>{
+      event.preventDefault();
+      const starts=sgIso(`${$('appointmentEditDate').value}T${$('appointmentEditTime').value}`),editedDuration=Number($('appointmentEditDuration').value),editedStaff=$('appointmentEditStaff').value,editedNote=$('appointmentEditNote').value.trim();
+      const errorHost=$('appointmentRescheduleError');
+      if(!starts||!Number.isInteger(editedDuration)||editedDuration<15||editedDuration>720||!editedStaff){errorHost.innerHTML='<div class="err">Choose a valid future date, time, duration and staff member.</div>';return}
+      const request={p_business:S.biz.id,p_appointment:item.id,p_starts:starts,p_duration_minutes:editedDuration,p_staff:editedStaff,p_note:editedNote||null};
+      const fingerprint=JSON.stringify(request);if(!rescheduleAttempt||rescheduleAttempt.fingerprint!==fingerprint)rescheduleAttempt={fingerprint,key:crypto.randomUUID()};
+      const stillCurrent=rescheduleGate.begin();setReschedulePending(true);errorHost.innerHTML='';
+      const {data,error}=await sb.rpc('reschedule_appointment_v48',{...request,p_idempotency_key:rescheduleAttempt.key});
+      if(!stillCurrent()){if(editForm.isConnected)setReschedulePending(false);return}setReschedulePending(false);
+      if(error){errorHost.innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(data?.status==='conflict'){renderRescheduleSuggestions(feedback,data.suggestions||{});CUI.announce('Appointment clash found. The appointment was not changed.',{assertive:true});return}
+      const confirmation={
+        in_app_created:' Customer in-app confirmation created.',
+        suppressed:' Customer did not opt into in-app booking updates.',
+        unavailable:' In-app confirmation service is unavailable.',
+        not_applicable:' No verified active customer wallet is linked to this appointment.'
+      }[data?.notification_state]||' Confirmation status is unavailable.';
+      rescheduleAttempt=null;close();toast(`${data?.replayed?'Appointment change already saved':'Appointment changed'}.${confirmation}`);loadCalendar();
+    };
+  }
+  function wireAppointmentActions(){
+    routeMain.querySelectorAll('[data-appointment]').forEach(button=>button.onclick=()=>{
+      const item=calendarItems.find(a=>a.id===button.dataset.appointment);if(!item)return;
+      openAppointmentDetails(item);
+    });
+    routeMain.querySelectorAll('.statusAction[data-id]').forEach(button=>button.onclick=()=>setStatus(button.dataset.id,button.dataset.status));
   }
   async function setStatus(id,status){
     const item=calendarItems.find(appointment=>appointment.id===id);
-    if((status==='completed'||status==='no_show')&&!appointmentOutcomeIsDue(item))return toast('This outcome can only be recorded after the appointment starts.');
-    if(status==='completed'&&!canComplete)return toast('Create-sales access is required to complete an appointment.');
+    if((status==='completed'||status==='no_show')&&!appointmentOutcomeIsDue(item)){toast('This outcome can only be recorded after the appointment starts.');return false}
+    if(status==='completed'&&!canComplete){toast('Create-sales access is required to complete an appointment.');return false}
     const words=status==='completed'?'Complete this appointment and record its sale?':status==='cancelled'?'Cancel this appointment?':'Mark this appointment as a no-show?';
-    if(!confirm(words))return;
+    if(!confirm(words))return false;
     const stillCurrent=statusGate.begin();
     const {data,error}=await sb.rpc('set_appointment_status_v47',{p_business:S.biz.id,p_appointment:id,p_status:status});
     if(!stillCurrent())return;
-    if(error)return fail(error);
+    if(error){fail(error);return false}
     toast(data?.replayed?'Status was already saved':status==='completed'?'Completed — sale and loyalty recorded':`Appointment ${status.replace('_',' ')}`);
-    $('calendarSelection').innerHTML='';loadCalendar();
+    $('calendarSelection').innerHTML='';loadCalendar();return true;
   }
   async function loadCalendar(){
     if(view==='list')return loadList();
     const stillCurrent=calendarGate.begin();
     const start=weekStart(wkOff),end=addDays(start,7);
-    const {data,error}=await staffQ(sb.from('appointments').select('id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name)')
+    const {data,error}=await staffQ(sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name)')
       .eq('business_id',S.biz.id).eq('branch_id',branchId).gte('starts_at',sgDateBoundary(start)).lt('starts_at',sgDateBoundary(end)).order('starts_at'));
     if(!stillCurrent())return;if(error)throw error;calendarItems=data||[];renderWeek(start);
   }
   async function loadList(){
     const stillCurrent=calendarGate.begin();
-    const {data,error}=await staffQ(sb.from('appointments').select('id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name)')
+    const {data,error}=await staffQ(sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name)')
       .eq('business_id',S.biz.id).eq('branch_id',branchId).order('starts_at',{ascending:false}).limit(100));
     if(!stillCurrent())return;if(error)throw error;calendarItems=data||[];
     $('alist').innerHTML=calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Action</th></tr></thead><tbody>
-      ${calendarItems.map(a=>`<tr><td data-label="When">${esc(sgt(a.starts_at))}</td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff">${esc(staffName[a.staff_id]||'—')}</td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Action">${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?`<button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete</button>`:''}</td></tr>`).join('')}</tbody></table></div>`
+      ${calendarItems.map(a=>`<tr><td data-label="When">${esc(sgt(a.starts_at)?.slice(0,10))}<br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} min</span></td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff">${esc(staffName[a.staff_id]||'—')}</td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Action"><button type="button" class="btn ghost sm" data-appointment="${a.id}" aria-label="View details for ${esc(a.clients?.full_name||'appointment')}">Details</button>${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete</button>`:''}</td></tr>`).join('')}</tbody></table></div>`
       :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`;
     wireAppointmentActions();
   }
@@ -4549,11 +4654,11 @@ async function appointmentsPage(){
     const bodyHeight=(endHour-startHour)*hourHeight;
     const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const dayEvents=days.map(day=>layoutCalendarDay(calendarItems.filter(a=>eventParts(a.starts_at).date===day)));
-    const agenda=calendarItems.map(a=>`<button type="button" class="calendar-agenda-item" data-appointment="${a.id}" style="width:100%;background:transparent;text-align:left"><b>${esc(sgt(a.starts_at)?.slice(11)||'')}</b><span><b>${esc(a.clients?.full_name||'—')}</b><br><span class="muted small">${esc(a.services?.name||'General visit')} · ${esc(staffName[a.staff_id]||'Unassigned')}</span></span></button>`).join('');
+    const agenda=calendarItems.map(a=>`<button type="button" class="calendar-agenda-item" data-appointment="${a.id}" style="width:100%;background:transparent;text-align:left" aria-label="View ${esc(a.services?.name||'appointment')} for ${esc(a.clients?.full_name||'customer')}, ${esc(calendarDayLabel(a.starts_at))}, ${esc(appointmentTimeRange(a))}, ${appointmentDuration(a)} minutes"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(a.starts_at))}</b><br><span>${esc(appointmentTimeRange(a))}</span><br><span class="muted small">${appointmentDuration(a)} min</span></span><span><b>${esc(a.clients?.full_name||'—')}</b><br><span class="muted small">${esc(a.services?.name||'General visit')} · ${esc(staffName[a.staff_id]||'Unassigned')}</span></span></button>`).join('');
     $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · Singapore time</p>
-      <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div></div>${days.map((day,i)=>`<div>${dayNames[i]}<br><span class="muted">${day.slice(5)}</span></div>`).join('')}</div>
+      <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div aria-hidden="true"></div>${days.map((day,i)=>`<div class="${day===todaySg?'is-today':''}" ${day===todaySg?'aria-current="date"':''}><span>${dayNames[i]}</span><br><span class="calendar-date">${Number(day.slice(8))}</span></div>`).join('')}</div>
       <div class="calendar-week-body" style="height:${bodyHeight}px"><div class="calendar-time-axis" style="height:${bodyHeight}px">${[...Array(endHour-startHour+1)].map((_,i)=>`<span class="calendar-time-label" style="top:${i*hourHeight}px">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>
-      ${days.map((day,index)=>`<div class="calendar-day" style="height:${bodyHeight}px;--calendar-hour-height:${hourHeight}px">${dayEvents[index].map(({item:a,from,to,lane,laneCount})=>{const top=Math.max(0,(from-startHour*60)/60*hourHeight),height=Math.max(44,(to-from)/60*hourHeight),color=staffColor[a.staff_id]||'#7C9CBF',left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);return `<button type="button" class="calendar-event" data-appointment="${a.id}" style="--event-color:${esc(color)};top:${top}px;height:${height}px;left:calc(${left}% + 3px);right:auto;width:calc(${width}% - 6px)" aria-label="${esc(`${a.clients?.full_name||'Appointment'}, ${sgt(a.starts_at)}, ${staffName[a.staff_id]||'unassigned'}`)}"><b>${esc(a.clients?.full_name||'—')}</b>${esc(a.services?.name||'General visit')}${staffFilter==='all'?`<br>${esc(staffName[a.staff_id]||'Unassigned')}`:''}</button>`}).join('')}</div>`).join('')}</div></div></div>
+      ${days.map((day,index)=>`<div class="calendar-day ${day===todaySg?'is-today':''}" style="height:${bodyHeight}px;--calendar-hour-height:${hourHeight}px">${dayEvents[index].map(({item:a,from,to,lane,laneCount})=>{const top=Math.max(0,(from-startHour*60)/60*hourHeight),height=(to-from)/60*hourHeight,color=staffColor[a.staff_id]||'#7C9CBF',left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);return `<button type="button" class="calendar-event" data-appointment="${a.id}" style="--event-color:${esc(color)};top:${top}px;height:${height}px;left:calc(${left}% + 3px);right:auto;width:calc(${width}% - 6px)" aria-label="${esc(`${a.services?.name||'Appointment'} for ${a.clients?.full_name||'customer'}, ${appointmentTimeRange(a)}, ${appointmentDuration(a)} minutes, ${staffName[a.staff_id]||'unassigned'}`)}"><b>${esc(a.services?.name||'General visit')} · ${esc(a.clients?.full_name||'—')}</b><span class="calendar-event-time">${esc(appointmentTimeRange(a))}</span>${staffFilter==='all'?`<span>${esc(staffName[a.staff_id]||'Unassigned')}</span>`:''}</button>`}).join('')}</div>`).join('')}</div></div></div>
       <div class="calendar-agenda">${agenda||`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments this week</h2></div>`}</div>`;
     wireAppointmentActions();
   }
