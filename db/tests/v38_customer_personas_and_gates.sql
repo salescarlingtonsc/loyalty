@@ -1,5 +1,6 @@
 -- Rollback-only v38 customer personas and private gates suite.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v38_test$
 declare
@@ -45,7 +46,11 @@ begin
   v_capabilities := public.get_customer_feature_capabilities();
   if v_capabilities <> jsonb_build_object(
     'customer_identity', false, 'customer_claims', false, 'customer_wallet', false,
-    'customer_actions', false, 'customer_notifications', false, 'customer_email_otp', false
+    'customer_actions', false, 'customer_notifications', false, 'customer_email_otp', false,
+    'customer_phone_registration', false, 'customer_phone_otp', false,
+    'customer_whatsapp_otp', false, 'customer_phone_claims', false,
+    'customer_actionable_wallet', false, 'customer_birthday_benefits', false,
+    'customer_in_app_inbox', false
   ) then
     raise exception 'disabled customer capabilities were not fail closed: %', v_capabilities;
   end if;

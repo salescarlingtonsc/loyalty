@@ -1,5 +1,6 @@
 -- Rollback-only v27 rich rewards suite. Run after v26 and v27 in a rehearsal database.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v27_test$
 declare

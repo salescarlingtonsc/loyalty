@@ -74,6 +74,9 @@
     { "kind": "executable", "path": "db/migrations/20260722050339_frenly_v47_smart_staff_scheduling.sql", "semanticVersion": "v47", "proposedDeployVersion": "20260722000110" },
     { "kind": "executable", "path": "db/migrations/20260722_frenly_v47a_record_sale_overload_cleanup.sql", "semanticVersion": "v47a", "proposedDeployVersion": "20260722000111" },
     { "kind": "executable", "path": "db/migrations/20260722_frenly_v47b_record_sale_dispatch_fix.sql", "semanticVersion": "v47b", "proposedDeployVersion": "20260722000112" },
-    { "kind": "executable", "path": "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql", "semanticVersion": "v48", "proposedDeployVersion": "20260722000113" }
+    { "kind": "executable", "path": "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql", "semanticVersion": "v48", "proposedDeployVersion": "20260722000113" },
+    { "kind": "executable", "path": "db/migrations/20260722_frenly_v49_billing_projection_rpc.sql", "semanticVersion": "v49", "proposedDeployVersion": "20260722000114" },
+    { "kind": "executable", "path": "db/migrations/20260722_frenly_v49a_lint_and_rehearsal_repairs.sql", "semanticVersion": "v49a", "proposedDeployVersion": "20260722000115" },
+    { "kind": "executable", "path": "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql", "semanticVersion": "v49b", "proposedDeployVersion": "20260722000116" }
   ]
 }

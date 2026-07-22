@@ -5,6 +5,7 @@
 -- isolation; expired single-use replay and
 -- idempotent unlink deletion denial, plus PUBLIC and anon ACL denial.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 create or replace function pg_temp.as_customer(p_uid uuid) returns void
 language plpgsql as $$

@@ -79,6 +79,9 @@
     { "kind": "pending", "version": "20260722130000", "name": "frenly_v47_smart_staff_scheduling", "sourcePath": "db/migrations/20260722050339_frenly_v47_smart_staff_scheduling.sql" },
     { "kind": "pending", "version": "20260722131000", "name": "frenly_v47a_record_sale_overload_cleanup", "sourcePath": "db/migrations/20260722_frenly_v47a_record_sale_overload_cleanup.sql" },
     { "kind": "pending", "version": "20260722132000", "name": "frenly_v47b_record_sale_dispatch_fix", "sourcePath": "db/migrations/20260722_frenly_v47b_record_sale_dispatch_fix.sql" },
-    { "kind": "pending", "version": "20260722133000", "name": "frenly_v48_calendar_details_reschedule", "sourcePath": "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql" }
+    { "kind": "pending", "version": "20260722133000", "name": "frenly_v48_calendar_details_reschedule", "sourcePath": "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql" },
+    { "kind": "pending", "version": "20260722134000", "name": "frenly_v49_billing_projection_rpc", "sourcePath": "db/migrations/20260722_frenly_v49_billing_projection_rpc.sql" },
+    { "kind": "pending", "version": "20260722140000", "name": "frenly_v49a_lint_and_rehearsal_repairs", "sourcePath": "db/migrations/20260722_frenly_v49a_lint_and_rehearsal_repairs.sql" },
+    { "kind": "pending", "version": "20260722141000", "name": "frenly_v49b_reports_read_authorization", "sourcePath": "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql" }
   ]
 }

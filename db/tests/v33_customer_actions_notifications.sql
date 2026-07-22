@@ -7,6 +7,7 @@
 -- action request or outbox row is permitted for an idempotent replay. Channel and
 -- topic consent are always scoped to one verified customer link and one business.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 create or replace function pg_temp.as_customer(p_uid uuid) returns void
 language plpgsql as $$
@@ -168,8 +169,13 @@ begin
   if coalesce(jsonb_array_length(public.customer_get_notification_preferences(v_slug_a)), 0) <> 2 then
     raise exception 'self-derived notification preference read is incorrect';
   end if;
-  update public.appointments set status = 'cancelled' where id = v_appointment;
-  get diagnostics v_rows = row_count;
+  v_rows := 0;
+  begin
+    update public.appointments set status = 'cancelled' where id = v_appointment;
+    get diagnostics v_rows = row_count;
+  exception when insufficient_privilege then
+    v_rows := 0;
+  end;
   if v_rows <> 0 then
     raise exception 'customer directly changed appointment';
   end if;

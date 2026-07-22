@@ -100,6 +100,17 @@ test('inactive staff stop before page data calls with a reactivation and sign-ou
   assert.match(bootstrap,/id="workspaceAccessSignOut"[\s\S]*sb\.auth\.signOut\(\)[\s\S]*resetClientSessionState\(\)/);
 });
 
+test('inactive-access legal links are semantic WCAG targets on desktop and 390px',()=>{
+  const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
+
+  assert.match(app,/const legalLinks=\(\)=>`<nav class="legal-links" aria-label="Legal and privacy">/);
+  for(const [href,label] of [
+    ['/privacy.html','Privacy'],['/terms.html','Terms'],['/data-request.html','Data request'],
+  ])assert.match(app,new RegExp(`<a href="${href.replace(/[/.]/g,'\\$&')}">${label}<\\/a>`));
+  assert.match(app,/\.legal-links a\{[^}]*display:inline-flex[^}]*min-height:44px[^}]*padding:8px[^}]*color:var\(--muted\)/s);
+  assert.match(mobile,/\.legal-links\{[^}]*width:100%[^}]*max-width:100%[^}]*\}[\s\S]*\.legal-links a\{[^}]*min-height:44px/s);
+});
+
 test('target customer routes use SVG icons instead of raw structural glyphs',()=>{
   for(const source of [detail,till,loyalty])assert.doesNotMatch(source,/[⏳🏆🎁⏸←]/u);
   assert.match(detail,/CUI\.icon\('waitlist',\{size:15\}\)/);
@@ -164,6 +175,45 @@ test('mobile Retention actions wrap and navigation stays fully discoverable with
   assert.match(mobileShell,/\.side\{[^}]*width:100%[^}]*max-width:100vw[^}]*min-width:0[^}]*overflow:visible/s);
   assert.match(mobileShell,/\.nav\{[^}]*display:grid[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)[^}]*width:100%[^}]*min-width:0/s);
   assert.doesNotMatch(mobileShell,/overflow-x:auto|flex:0 0 max-content/);
+});
+
+test('Settings forms are explicitly labelled and reflow without 390px page overflow',()=>{
+  const settings=section('async function settingsPage()','/* ---------- billing (read-only) ---------- */');
+  const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
+
+  assert.match(settings,/<div class="settings-page">/);
+  for(const [id,label] of [
+    ['bn','Name'],['bi','Industry'],['bc','Brand colour (used on your portal)'],
+    ['bp','Booking policy (shown on your portal)'],['ir','Invite role'],
+    ['ie','Invite email (optional)'],['csvf','Customer CSV file'],
+    ['cfLabel','Field name'],['cfType','Answer type'],
+    ['cfClass','Data classification'],['cfOptions','Choices (list type only)'],
+  ])assert.match(settings,new RegExp(`<label[^>]*for="${id}"[^>]*>${label.replace(/[()]/g,'\\$&')}<\\/label>`));
+  assert.match(settings,/id="csvf"[^>]*aria-describedby="csvHelp"/);
+  assert.match(app,/\.settings-page,\.settings-page \.split,\.settings-page \.card\{[^}]*min-width:0[^}]*max-width:100%/s);
+  assert.match(mobile,/\.settings-page \.row\{[^}]*flex-wrap:wrap[^}]*width:100%/s);
+  assert.match(mobile,/\.settings-page \.row>input,\.settings-page \.row>select\{[^}]*width:100%[^}]*max-width:100%!important/s);
+  assert.match(app,/\.settings-choice\{[^}]*min-height:44px/s);
+  assert.match(settings,/<p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="\$\{location\.origin\}\$\{location\.pathname\}#\/b\/\$\{S\.biz\.slug\}">/);
+  assert.match(app,/\.portal-link\{[^}]*display:flex[^}]*width:100%[^}]*max-width:100%[^}]*min-height:44px[^}]*overflow-wrap:anywhere[^}]*word-break:break-word/s);
+  assert.match(mobile,/\.portal-link-row,\.portal-link\{[^}]*width:100%[^}]*max-width:100%[^}]*min-width:0/s);
+  assert.ok(contrast('#A64020','#FFFFFF')>=4.5,'portal URL text must meet WCAG AA on white');
+});
+
+test('customer sign-up join URL is a safe 44px target without 390px overflow',()=>{
+  const signup=section('async function loadSignupConfig()','async function loadCommissionConfig()');
+  const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
+
+  assert.match(signup,/<p class="small portal-link-row"[^>]*><a class="portal-link" target="_blank" rel="noopener noreferrer" href="\$\{esc\(url\)\}">\$\{esc\(url\)\}<\/a><\/p>/);
+  assert.match(app,/\.portal-link\{[^}]*display:flex[^}]*width:100%[^}]*max-width:100%[^}]*min-height:44px[^}]*overflow-wrap:anywhere[^}]*word-break:break-word/s);
+  assert.match(mobile,/\.portal-link-row,\.portal-link\{[^}]*width:100%[^}]*max-width:100%[^}]*min-width:0/s);
+});
+
+test('foreign workspace denials expose a focused main landmark and page heading',()=>{
+  const routing=section('async function route()','/* ---------- customer wallet ---------- */');
+  assert.equal((routing.match(/<h1 id="workspaceUnavailableTitle"/g)||[]).length,2);
+  assert.equal((routing.match(/<main class="center-wrap" id="main" tabindex="-1">/g)||[]).length,2);
+  assert.equal((routing.match(/\$\('main'\)\.focus\(\)/g)||[]).length,2);
 });
 
 test('progressive enhancement is scoped to approved customer routes',()=>{

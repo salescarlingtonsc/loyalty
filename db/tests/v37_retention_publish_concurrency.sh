@@ -86,7 +86,6 @@ fixture_output="$(psql "$DATABASE_URL" -X -qAt -F '|' -v ON_ERROR_STOP=1 \
 insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
 values('00000000-0000-0000-0000-000000000000',:'owner','authenticated','authenticated',
   :'owner_email','',now(),now(),now());
-set role authenticated;
 select set_config('request.jwt.claim.sub',:'owner',false);
 select (public.create_business(:'fixture_name',:'fixture_slug',
   'test',array['dashboard','clients','sales','loyalty','retention'])::jsonb->>'id')::uuid as biz \gset
@@ -106,7 +105,6 @@ select public.publish_loyalty_config(:'base');
 select (public.create_loyalty_config_draft(:'biz',:'base','v37-race-next')::jsonb->>'version_id')::uuid as draft \gset
 select snapshot_hash as draft_hash from public.firm_config_versions where id=:'draft' \gset
 select public.save_retention_program_draft(:'draft',:'program',jsonb_build_object('credit_cents',202),:'draft_hash');
-reset role;
 select :'biz',:'branch',:'owner_staff',:'client',:'program',:'base',:'draft';
 SQL
 )"

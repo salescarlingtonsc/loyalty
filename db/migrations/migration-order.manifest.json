@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 73,
-  "executableCount": 59,
+  "itemCount": 76,
+  "executableCount": 62,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -88,13 +88,16 @@
     },
     {
       "sourceDeployVersion": "20260722",
-      "count": 5,
+      "count": 8,
       "paths": [
         "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql",
         "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql",
         "db/migrations/20260722_frenly_v47a_record_sale_overload_cleanup.sql",
         "db/migrations/20260722_frenly_v47b_record_sale_dispatch_fix.sql",
-        "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql"
+        "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql",
+        "db/migrations/20260722_frenly_v49_billing_projection_rpc.sql",
+        "db/migrations/20260722_frenly_v49a_lint_and_rehearsal_repairs.sql",
+        "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql"
       ]
     }
   ],
@@ -682,6 +685,30 @@
       "semanticVersion": "v48",
       "proposedDeployVersion": "20260722000113",
       "sha256": "6335ecf015e117eff0458daea2889a46f2dc38e680fcfc0e572d0a5bb68b3940"
+    },
+    {
+      "order": 74,
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v49_billing_projection_rpc.sql",
+      "semanticVersion": "v49",
+      "proposedDeployVersion": "20260722000114",
+      "sha256": "e72e59554d7821ae1c46273d2276a7a63b41326227428fe7a96a6046fb1beed7"
+    },
+    {
+      "order": 75,
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v49a_lint_and_rehearsal_repairs.sql",
+      "semanticVersion": "v49a",
+      "proposedDeployVersion": "20260722000115",
+      "sha256": "784089f0153bcea7e5d8e2111650070de1bd7b0d3c5f9e73486ae0d80d40b873"
+    },
+    {
+      "order": 76,
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql",
+      "semanticVersion": "v49b",
+      "proposedDeployVersion": "20260722000116",
+      "sha256": "f5b29ad9e68f31f3bace6beeac6d9e996ab1c0c4905fd61b6efd29d8318ad3ea"
     }
   ]
 }

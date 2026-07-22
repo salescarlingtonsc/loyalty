@@ -2,6 +2,7 @@
 -- rehearsal database. It is intentionally behavioral; static checks are not
 -- enough to prove eligibility isolation.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v36_test$
 declare

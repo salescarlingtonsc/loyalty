@@ -1,6 +1,7 @@
 -- Rollback-only v29 branch override and typed custom-field suite.
 -- Run after v26, v27, v28, and v29 in a rehearsal database.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v29_test$
 declare

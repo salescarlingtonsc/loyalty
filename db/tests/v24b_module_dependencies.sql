@@ -1,5 +1,6 @@
 -- Rollback-only v24b module dependency and authorization suite.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v24b_test$
 declare

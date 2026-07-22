@@ -68,15 +68,10 @@ begin
     join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'app';
 
-  -- pg_catalog does not promise a stable ordering for equal-prefix
-  -- regprocedure text values across Postgres builds. Compare this as the
-  -- dependency set it represents while retaining the distinct aggregation
-  -- above so missing or unexpected helpers still fail closed.
-  if not (
-    v_policy_helper_signatures @> v_required_policy_helper_signatures
-    and v_policy_helper_signatures <@ v_required_policy_helper_signatures
-  ) then
-    raise exception 'v17 policy helper dependency mismatch: expected %, found %',
+  -- Later customer and scheduling phases legitimately add policy helpers. The
+  -- retained v17 security contract is that none of its required helpers vanish.
+  if not (v_policy_helper_signatures @> v_required_policy_helper_signatures) then
+    raise exception 'v17 policy helper dependency mismatch: required %, found %',
       v_required_policy_helper_signatures, v_policy_helper_signatures;
   end if;
 
@@ -201,12 +196,35 @@ begin
       from pg_proc p
       join pg_namespace n on n.oid = p.pronamespace
      where n.nspname in ('app', 'public') and p.prosecdef
-       and coalesce(array_to_string(p.proconfig, ','), '')
-             not like '%search_path=pg_catalog, public, app, pg_temp%'
-       and coalesce(array_to_string(p.proconfig, ','), '')
-             not like '%search_path=pg_catalog, pg_temp%'
+       and coalesce(array_to_string(p.proconfig, ','), '') not in (
+         'search_path=pg_catalog, public, app, pg_temp',
+         'search_path=pg_catalog, public, app, extensions, pg_temp',
+         'search_path=pg_catalog, pg_temp'
+       )
   ) then
-    raise exception 'SECURITY DEFINER function has an unsafe or missing search_path';
+    raise exception 'SECURITY DEFINER function has an unapproved or missing search_path';
+  end if;
+
+  -- Every non-catalog schema admitted above must remain owned by a privileged
+  -- database role and non-creatable by browser principals. This prevents an
+  -- allowed path entry from becoming a function-shadowing seam later.
+  if exists (
+    select 1
+      from pg_namespace n
+     where n.nspname in ('public','app','extensions')
+       and (
+         pg_get_userbyid(n.nspowner) in ('anon','authenticated','authenticator')
+         or has_schema_privilege('anon',n.oid,'create')
+         or has_schema_privilege('authenticated',n.oid,'create')
+         or has_schema_privilege('authenticator',n.oid,'create')
+         or exists (
+           select 1
+             from aclexplode(coalesce(n.nspacl,acldefault('n',n.nspowner))) acl
+            where acl.grantee=0 and acl.privilege_type='CREATE'
+         )
+       )
+  ) then
+    raise exception 'an approved SECURITY DEFINER search_path schema is browser-writable';
   end if;
 
   if exists (

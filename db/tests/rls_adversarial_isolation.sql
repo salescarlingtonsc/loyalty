@@ -8,6 +8,7 @@
 -- Principals are resolved dynamically: two distinct non-super owners of two distinct
 -- tenants, one super-admin, plus synthetic anon and ghost-authenticated identities.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 do $adv$
 declare
   ownerB uuid; bizB uuid;   -- a non-super owner + their tenant

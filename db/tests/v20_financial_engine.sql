@@ -140,16 +140,16 @@ begin
   );
   perform pg_temp.assert_true(
     pg_get_function_result(
-      to_regprocedure('public.redeem_gift_card(uuid,text,uuid,integer)')
+      to_regprocedure('public.redeem_gift_card_v41(uuid,text,uuid,integer)')
     ) = 'json'
       and exists (
         select 1 from pg_catalog.pg_proc p
-         where p.oid = to_regprocedure('public.redeem_gift_card(uuid,text,uuid,integer)')
+         where p.oid = to_regprocedure('public.redeem_gift_card_v41(uuid,text,uuid,integer)')
            and p.prosecdef
            and p.pronargdefaults = 1
            and pg_get_expr(p.proargdefaults, 0) = 'NULL::integer'
       ),
-    'gift-card redemption preserves json and p_amount DEFAULT NULL ABI'
+    'current gift-card redemption preserves json and p_amount DEFAULT NULL ABI'
   );
   perform pg_temp.assert_true(
     pg_get_function_result(to_regprocedure('app.run_membership_renewals()')) = 'void'
@@ -237,7 +237,8 @@ begin
 
   insert into public.businesses(name, slug, industry, enabled_modules)
   values
-    ('V20 A', 'v20-a-' || substr(owner_a::text, 1, 8), 'test', array['dashboard','clients','sales'])
+    ('V20 A', 'v20-a-' || substr(owner_a::text, 1, 8), 'test',
+     array['dashboard','clients','sales','loyalty','giftcards','memberships'])
   returning id into biz_a;
 
   insert into public.businesses(name, slug, industry, enabled_modules)
@@ -308,9 +309,9 @@ begin
 
   insert into public.loyalty_programs(
     business_id, kind, earn_points_per_dollar, redeem_points,
-    reward_credit_cents, active, expiry_mode, expiry_days
+    reward_credit_cents, active, expiry_mode, expiry_days, configuration_status
   )
-  values (biz_a, 'points', 1, 50, 500, true, 'fixed', 30)
+  values (biz_a, 'points', 1, 50, 500, true, 'fixed', 30, 'published')
   on conflict (business_id) do update set
     kind = excluded.kind,
     earn_points_per_dollar = excluded.earn_points_per_dollar,
@@ -326,14 +327,14 @@ begin
           '2000-01-01 00:00:00+00', 'other tenant sale')
   returning id into sale_b;
 
-  perform pg_temp.as_user(owner_a);
-
+  execute 'reset role';
   insert into public.gift_cards(
     business_id, code, initial_cents, balance_cents, status
   ) values (
     biz_a, 'GC-V20SEED', 6000, 6000, 'active'
   );
-  result := public.redeem_gift_card(
+  perform pg_temp.as_user(owner_a);
+  result := public.redeem_gift_card_v41(
     biz_a, ' gc-v20seed ', client_a
   )::jsonb;
   perform pg_temp.assert_eq(
@@ -503,7 +504,7 @@ begin
   perform pg_temp.as_user(owner_a);
 
   perform public.adjust_points(biz_a, client_loyalty, 100, 'redeemable points seed');
-  result := public.redeem_points(biz_a, client_loyalty)::jsonb;
+  result := public.redeem_points(biz_a, client_loyalty,'v20-redeem-points')::jsonb;
   perform pg_temp.assert_eq(
     (result->>'points_spent')::int,
     50,
@@ -531,7 +532,7 @@ begin
   update public.loyalty_programs set reward_credit_cents = 0 where business_id = biz_a;
   perform pg_temp.as_user(owner_a);
   begin
-    perform public.redeem_points(biz_a, client_loyalty);
+    perform public.redeem_points(biz_a, client_loyalty,'v20-zero-credit-rejection');
     raise exception 'expected zero-credit points configuration to be rejected';
   exception when others then
     perform pg_temp.assert_true(
@@ -548,7 +549,7 @@ begin
     biz_a, 'V20 Monthly', 8000, 'monthly', 6000, true
   ) returning id into membership_plan;
   perform pg_temp.as_user(owner_a);
-  result := public.enroll_membership(
+  result := public.enroll_membership_v41(
     biz_a, client_membership, membership_plan
   )::jsonb;
   perform pg_temp.assert_true(

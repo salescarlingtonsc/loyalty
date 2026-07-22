@@ -1,5 +1,6 @@
 -- Rollback-only v30 customer identity isolation and adversarial suite.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 create or replace function pg_temp.as_identity_user(p_uid uuid) returns void
 language plpgsql

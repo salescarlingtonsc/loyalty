@@ -1,5 +1,6 @@
 -- Rollback-only v28 tenant, retirement and immutable-snapshot suite.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v28_test$
 declare

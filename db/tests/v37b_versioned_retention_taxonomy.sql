@@ -1,6 +1,7 @@
 -- Rollback-only v37b retention versioning and taxonomy suite.
 -- Run after v37b in a disposable rehearsal database.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 create temporary table v37b_rls_context(owner_id uuid, hidden_program_id uuid) on commit drop;
 grant select on v37b_rls_context to authenticated;

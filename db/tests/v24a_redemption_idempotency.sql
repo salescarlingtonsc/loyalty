@@ -1,5 +1,6 @@
 -- Rollback-only v24a financial behavior suite. Run after applying v24a in rehearsal.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v24a_test$
 declare

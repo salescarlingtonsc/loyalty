@@ -1,5 +1,6 @@
 -- Rollback-only v24c import staging, atomicity and replay suite.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v24c_test$
 declare

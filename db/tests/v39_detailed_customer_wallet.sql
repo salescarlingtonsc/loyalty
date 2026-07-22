@@ -3,6 +3,7 @@
 -- cursor rejection, disabled module denial, prohibited output keys, raw table
 -- denial through RLS, and PUBLIC/anon/authenticated/search_path ACL contracts.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 create or replace function pg_temp.as_v39_user(p_uid uuid) returns void
 language plpgsql as $$

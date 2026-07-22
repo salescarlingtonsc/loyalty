@@ -96,15 +96,12 @@ values('00000000-0000-0000-0000-000000000000',:'owner','authenticated','authenti
   :'owner_email','',now(),now(),now()),
  ('00000000-0000-0000-0000-000000000000',:'manager','authenticated','authenticated',
   :'manager_email','',now(),now(),now());
-set role authenticated;
 select set_config('request.jwt.claim.sub',:'owner',false);
 select (public.create_business(:'fixture_name',:'fixture_slug',
   'test',array['dashboard','clients','sales','loyalty'])::jsonb->>'id')::uuid as biz \gset
 select id as branch from public.branches where business_id=:'biz' and is_default limit 1 \gset
-reset role;
 insert into public.staff(business_id,user_id,role,full_name,active)
 values(:'biz',:'manager','manager','V40 race manager',true);
-set role authenticated;
 select set_config('request.jwt.claim.sub',:'owner',false);
 insert into public.clients(business_id,full_name)
 values(:'biz','V40 tender/reversal race') returning id as client \gset
@@ -123,10 +120,8 @@ select public.save_loyalty_config_draft(:'draft',jsonb_build_object(
   'reward_service_ids',jsonb_build_array(:'service'::uuid),
   'reward_product_ids',jsonb_build_array(:'product'::uuid)
 ),null);
-reset role;
 select reward_id as reward from public.loyalty_reward_versions
  where config_version_id=:'draft' and customer_name='V40 race reward' \gset
-set role authenticated;
 select set_config('request.jwt.claim.sub',:'owner',false);
 select public.publish_loyalty_config(:'draft');
 select public.adjust_points(:'biz',:'client',100,'v40 concurrency points');
@@ -134,7 +129,6 @@ select (public.redeem_reward_at_context(:'biz',:'client',:'reward','v40-race-red
   :'branch',:'service',:'product')::jsonb->>'redemption_id')::uuid as redemption \gset
 insert into public.sales(business_id,branch_id,client_id,kind,amount_cents,note)
 values(:'biz',:'branch',:'client','membership',100,'v40 credit tender race') returning id as sale \gset
-reset role;
 select :'biz',:'client',:'sale',:'redemption',
        hashtextextended(:'client'||':v40-credit-race',0);
 SQL

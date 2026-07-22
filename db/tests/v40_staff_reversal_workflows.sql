@@ -2,6 +2,7 @@
 -- Run after the complete v20-v40 chain; v34 suite remains the authoritative loyalty
 -- compensation/FEFO reconciliation fixture and must run immediately before this suite.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 create or replace function pg_temp.as_v40_user(p_uid uuid, p_role text default 'authenticated')
 returns void language plpgsql as $$

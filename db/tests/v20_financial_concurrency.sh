@@ -9,25 +9,93 @@ if [ -z "${DATABASE_URL:-}" ]; then
   echo "DATABASE_URL is required." >&2
   exit 2
 fi
+case "$DATABASE_URL" in postgresql://*|postgres://*) ;; *)
+  echo "DATABASE_URL must be a PostgreSQL URL." >&2; exit 2;;
+esac
+url_authority="${DATABASE_URL#*://}"; url_authority="${url_authority%%/*}"
+case "$url_authority" in *@*)
+  url_userinfo="${url_authority%@*}"
+  case "$url_userinfo" in *:*|*%3[Aa]*)
+    echo "DATABASE_URL must not contain embedded password material; use PGPASSWORD." >&2; exit 2;;
+  esac;;
+esac
+url_lower="$(printf '%s' "$DATABASE_URL" | tr '[:upper:]' '[:lower:]')"
+case "$url_lower" in *\?*pass*=*|*\&*pass*=*)
+  echo "DATABASE_URL must not contain password query material; use PGPASSWORD." >&2; exit 2;;
+esac
+if [ -z "${PGPASSWORD:-}" ]; then
+  echo "PGPASSWORD is required with the passwordless DATABASE_URL." >&2; exit 2
+fi
+
+export PGCONNECT_TIMEOUT="${PGCONNECT_TIMEOUT:-10}"
+export PGOPTIONS="-c statement_timeout=30000 -c lock_timeout=10000"
+script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+actor="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
+case "$actor" in ????????-????-????-????-????????????) ;; *)
+  echo "failed to allocate fixture UUID" >&2; exit 1;;
+esac
+actor_prefix="${actor%%-*}"
+fixture_name="V20 concurrency"
+fixture_slug="v20-concurrency-$actor_prefix"
+actor_email="v20-concurrency-$actor_prefix@example.test"
+biz=""
+result_message=""
+same_holder=""; same_a=""; same_b=""; race_holder=""; race_a=""; race_b=""
 
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/frenly-v20-concurrency.XXXXXX")"
-trap 'rm -f "$work_dir"/same-a "$work_dir"/same-b "$work_dir"/same-holder "$work_dir"/race-a "$work_dir"/race-b "$work_dir"/race-holder; rmdir "$work_dir"' EXIT
 
-fixture="$({ psql "$DATABASE_URL" -X -qAt -F '|' -v ON_ERROR_STOP=1 <<'SQL'
-select gen_random_uuid() as actor \gset
+cleanup(){
+  original_status="$1"
+  trap - EXIT HUP INT TERM
+  set +e
+  if [ "$original_status" -ne 0 ]; then
+    for child_pid in "$same_holder" "$same_a" "$same_b" "$race_holder" "$race_a" "$race_b"; do
+      if [ -n "$child_pid" ]; then kill -TERM "$child_pid" 2>/dev/null || true; fi
+    done
+  fi
+  for child_pid in "$same_holder" "$same_a" "$same_b" "$race_holder" "$race_a" "$race_b"; do
+    if [ -n "$child_pid" ]; then wait "$child_pid" 2>/dev/null || true; fi
+  done
+  cleanup_status=0
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 \
+    -v cleanup_confirm="YES-SCOPED-SYNTHETIC-CLEANUP" \
+    -v cleanup_business="$biz" -v cleanup_business_name="$fixture_name" \
+    -v cleanup_business_slug="$fixture_slug" \
+    -v cleanup_auth_user_1="$actor" -v cleanup_auth_email_1="$actor_email" \
+    -v cleanup_auth_user_2="" -v cleanup_auth_email_2="" \
+    -f "$script_dir/cleanup_synthetic_fixture.sql" >"$work_dir/cleanup" 2>&1 || cleanup_status=$?
+  if [ "$cleanup_status" -ne 0 ]; then
+    echo "v20 synthetic fixture cleanup failed (status $cleanup_status); first sanitized lines:" >&2
+    sed -n '1,8p' "$work_dir/cleanup" | cut -c1-240 | sed -E \
+      -e 's#postgres(ql)?://[^[:space:]]+#<redacted-database-url>#g' \
+      -e 's#([Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]|[Pp][Aa][Ss][Ss][Ff][Ii][Ll][Ee])=[^[:space:]]+#\1=<redacted>#g' >&2
+  fi
+  rm -f "$work_dir"/same-a "$work_dir"/same-b "$work_dir"/same-holder \
+    "$work_dir"/race-a "$work_dir"/race-b "$work_dir"/race-holder "$work_dir"/cleanup
+  rmdir "$work_dir" 2>/dev/null || true
+  if [ "$cleanup_status" -ne 0 ]; then exit 1; fi
+  if [ "$original_status" -eq 0 ] && [ -n "$result_message" ]; then echo "$result_message"; fi
+  exit "$original_status"
+}
+trap 'cleanup "$?"' EXIT
+trap 'exit 130' HUP INT TERM
+
+fixture_output="$(psql "$DATABASE_URL" -X -qAt -F '|' -v ON_ERROR_STOP=1 \
+  -v actor="$actor" -v fixture_name="$fixture_name" -v fixture_slug="$fixture_slug" \
+  -v actor_email="$actor_email" <<'SQL'
 insert into auth.users(
   instance_id, id, aud, role, email, encrypted_password,
   email_confirmed_at, created_at, updated_at
 ) values (
   '00000000-0000-0000-0000-000000000000', :'actor',
   'authenticated', 'authenticated',
-  'v20-concurrency-' || substr(:'actor', 1, 8) || '@example.test', '',
+  :'actor_email', '',
   now(), now(), now()
 );
 insert into public.businesses(name, slug, industry, enabled_modules)
 values (
-  'V20 concurrency', 'v20-concurrency-' || substr(:'actor', 1, 8),
-  'test', array['dashboard','clients','sales']
+  :'fixture_name', :'fixture_slug',
+  'test', array['dashboard','clients','sales','giftcards']
 ) returning id as biz \gset
 insert into public.branches(business_id, name, is_default, active)
 values (:'biz', 'Concurrency main', true, true)
@@ -47,26 +115,30 @@ returning code as code_same \gset
 insert into public.gift_cards(business_id, code, initial_cents, balance_cents, status)
 values (:'biz', 'GC-' || upper(substr(replace(:'client_race','-',''), 1, 8)), 1000, 1000, 'active')
 returning code as code_race \gset
-set role authenticated;
 select set_config('request.jwt.claim.sub', :'actor', false);
-select public.redeem_gift_card(:'biz', :'code_same', :'client_same', null);
-select public.redeem_gift_card(:'biz', :'code_race', :'client_race', null);
+select public.redeem_gift_card_v41(:'biz', :'code_same', :'client_same', null);
+select public.redeem_gift_card_v41(:'biz', :'code_race', :'client_race', null);
 insert into public.sales(business_id, branch_id, client_id, kind, amount_cents, note)
 values (:'biz', :'branch', :'client_same', 'service', 1000, 'same-key race')
 returning id as sale_same \gset
 insert into public.sales(business_id, branch_id, client_id, kind, amount_cents, note)
 values (:'biz', :'branch', :'client_race', 'service', 2000, 'balance race')
 returning id as sale_race \gset
-reset role;
 select :'actor', :'biz', :'sale_same', :'sale_race',
        hashtextextended(:'actor' || ':same-barrier', 0),
        hashtextextended(:'actor' || ':race-barrier', 0);
 SQL
-} | tail -n 1)"
+)"
+fixture="$(printf '%s\n' "$fixture_output" | tail -n 1)"
 
 IFS='|' read -r actor biz sale_same sale_race same_barrier race_barrier <<EOF
 $fixture
 EOF
+for fixture_uuid in "$actor" "$biz" "$sale_same" "$sale_race"; do
+  case "$fixture_uuid" in ????????-????-????-????-????????????) ;; *)
+    echo "fixture setup returned an invalid UUID" >&2; exit 1;;
+  esac
+done
 
 call_tender() {
   sale="$1"
@@ -262,4 +334,4 @@ if [ "$balance_proof" != "1|800|200" ]; then
   exit 1
 fi
 
-echo "v20 two-session concurrency checks passed (same-key replay and competing balance race)."
+result_message="v20 two-session concurrency checks: PASS (same-key replay and competing balance race)"

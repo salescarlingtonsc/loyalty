@@ -46,8 +46,8 @@ test('v21 is the single canonical post-v20 security migration', async () => {
   assert.match(v21, /^commit;/im);
 });
 
-test('authenticated RPC allowlist plus exact forward v41/C42/C44/C45/C46/v47/v48 grants cover the shipped SPA', async () => {
-  const [app, migration, v41, c42, c44, c45, c46, v47, v48] = await Promise.all([
+test('authenticated RPC allowlist plus exact forward v41/C42/C44/C45/C46/v47/v48/v49 grants cover the shipped SPA', async () => {
+  const [app, migration, v41, c42, c44, c45, c46, v47, v48, v49] = await Promise.all([
     read('app/index.html'), read(migrationPath),
     read('db/migrations/20260721_frenly_v41_customer_module_hardening.sql'),
     read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
@@ -55,10 +55,11 @@ test('authenticated RPC allowlist plus exact forward v41/C42/C44/C45/C46/v47/v48
     read('db/migrations/20260721_frenly_v45_birthday_benefits.sql'),
     read('db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql'),
     read('db/migrations/20260722050339_frenly_v47_smart_staff_scheduling.sql'),
-    read('db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql')
+    read('db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql'),
+    read('db/migrations/20260722_frenly_v49_billing_projection_rpc.sql')
   ]);
   const allowlist = sqlArray(migration, 'v_authenticated_rpc_names');
-  const forward = new Set([...authenticatedGrantNames(v41), ...authenticatedGrantNames(c42), ...authenticatedGrantNames(c44), ...authenticatedGrantNames(c45), ...authenticatedGrantNames(c46), ...authenticatedGrantNames(v47), ...authenticatedGrantNames(v48)]);
+  const forward = new Set([...authenticatedGrantNames(v41), ...authenticatedGrantNames(c42), ...authenticatedGrantNames(c44), ...authenticatedGrantNames(c45), ...authenticatedGrantNames(c46), ...authenticatedGrantNames(v47), ...authenticatedGrantNames(v48), ...authenticatedGrantNames(v49)]);
   const required = rpcNames(app);
   for (const rpc of required) {
     assert.ok(allowlist.has(rpc) || forward.has(rpc),
@@ -142,7 +143,7 @@ test('service-only allowlist is derived from the v19 Edge Function call graph', 
   assert.deepEqual([...allowlist].sort(), [...required].sort());
 });
 
-test('v21 derives and restores the exact rehearsal v17 policy helper dependency set', async () => {
+test('v21 retains every required v17 policy helper while allowing later guarded helpers', async () => {
   const [migration, runtimeTest] = await Promise.all([read(migrationPath), read(sqlTestPath)]);
   const expectedAtV21 = new Set([
     'app.can_module(uuid,text)',
@@ -161,8 +162,11 @@ test('v21 derives and restores the exact rehearsal v17 policy helper dependency 
   }
   assert.match(migration, /is distinct from v_required_policy_helper_signatures/i);
   assert.match(runtimeTest,
-    /v_policy_helper_signatures\s*@>\s*v_required_policy_helper_signatures[\s\S]*v_policy_helper_signatures\s*<@\s*v_required_policy_helper_signatures/i,
-    'the cross-version runtime test must compare the catalog dependencies as an exact set');
+    /v_policy_helper_signatures\s*@>\s*v_required_policy_helper_signatures/i,
+    'the cross-version runtime test must retain the complete required dependency subset');
+  assert.doesNotMatch(runtimeTest,
+    /v_policy_helper_signatures\s*<@\s*v_required_policy_helper_signatures/i,
+    'later migrations may add independently reviewed policy helpers');
   assert.match(migration, /to_regprocedure\(required\.signature\)/i);
   assert.match(migration, /grant execute on function %s to authenticated/i);
   assert.match(runtimeTest, /has_function_privilege\('authenticated', v_proc\.oid, 'execute'\)/i);
@@ -195,6 +199,8 @@ test('runtime catalog test rejects anonymous definer RPCs and always-true write 
   assert.match(sqlTest, /has_function_privilege\('service_role', p\.oid, 'execute'\)/i);
   assert.match(sqlTest, /pol\.polcmd in \('a', 'w', '\*'\)/i);
   assert.match(sqlTest, /always-true public write policy remains/i);
-  assert.match(sqlTest, /unsafe or missing search_path/i);
+  assert.match(sqlTest, /unapproved or missing search_path/i);
+  assert.match(sqlTest, /approved SECURITY DEFINER search_path schema is browser-writable/i);
+  assert.match(sqlTest, /has_schema_privilege\('authenticated',n\.oid,'create'\)/i);
   assert.match(sqlTest, /legacy unrestricted intake policy remains/i);
 });

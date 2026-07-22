@@ -2,13 +2,15 @@
 -- Run after the complete v20-v41 chain. This suite mutates only synthetic rows
 -- inside this transaction and intentionally forces consent-event failures.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 -- Keep this suite reproducible on a freshly materialized canonical database.
 -- Both synthetic tenants are transaction-local because the suite rolls back.
 create temporary table pg_temp.v41_integrity_fixture (
   business_id uuid primary key,
   owner_id uuid not null unique,
-  other_business_id uuid not null unique
+  other_business_id uuid not null unique,
+  branch_id uuid not null unique
 ) on commit drop;
 
 do $v41_fixture$
@@ -16,6 +18,7 @@ declare
   v_owner uuid := gen_random_uuid();
   v_business uuid;
   v_other_business uuid;
+  v_branch uuid;
 begin
   insert into auth.users (
     instance_id, id, aud, role, email, encrypted_password,
@@ -38,6 +41,9 @@ begin
   ) values (
     v_business, v_owner, 'owner', 'V41 integrity owner', true, null, null
   );
+  insert into public.branches(business_id,name,is_default,active)
+  values(v_business,'V41 integrity main',true,true)
+  returning id into v_branch;
   insert into public.businesses (name, slug, industry, enabled_modules)
   values (
     'V41 integrity other tenant',
@@ -45,8 +51,8 @@ begin
     'test',
     array['dashboard','clients']
   ) returning id into v_other_business;
-  insert into pg_temp.v41_integrity_fixture(business_id, owner_id, other_business_id)
-  values (v_business, v_owner, v_other_business);
+  insert into pg_temp.v41_integrity_fixture(business_id,owner_id,other_business_id,branch_id)
+  values (v_business,v_owner,v_other_business,v_branch);
 end
 $v41_fixture$;
 
@@ -101,6 +107,7 @@ do $v41_test$
 declare
   v_business uuid;
   v_other_business uuid;
+  v_branch uuid;
   v_owner uuid;
   v_restricted uuid := gen_random_uuid();
   v_readonly uuid := gen_random_uuid();
@@ -150,8 +157,8 @@ declare
   v_proc regprocedure;
 begin
   reset role;
-  select f.business_id, f.owner_id, f.other_business_id
-    into v_business, v_owner, v_other_business
+  select f.business_id,f.owner_id,f.other_business_id,f.branch_id
+    into v_business,v_owner,v_other_business,v_branch
     from pg_temp.v41_integrity_fixture f;
   if v_business is null or v_owner is null or v_other_business is null then
     raise exception 'v41 suite requires an active owner and two businesses';
@@ -175,7 +182,7 @@ begin
     to_regprocedure('public.enroll_membership_v41(uuid,uuid,uuid)'),
     to_regprocedure('public.redeem_gift_card_v41(uuid,text,uuid,integer)'),
     to_regprocedure('public.lookup_client_by_phone(uuid,text)'),
-    to_regprocedure('public.record_sale_by_phone(uuid,text,integer,text,text,uuid,text)')
+    to_regprocedure('public.record_sale_by_phone(uuid,text,integer,text,text,uuid,text,uuid,text)')
   ] loop
     if v_proc is null then raise exception 'missing v41 RPC'; end if;
     if has_function_privilege('anon', v_proc, 'EXECUTE')
@@ -254,6 +261,10 @@ begin
     (v_business,v_rw,'staff','V41 clients and loyalty read-write override',true,array['inventory'],'{"clients":"rw","loyalty":"rw"}'::jsonb),
     (v_business,v_legacy,'staff','V41 legacy clients staff',true,array['clients'],null),
     (v_business,v_inactive,'manager','V41 inactive manager',false,null,null);
+  insert into public.staff_branches(business_id,staff_id,branch_id)
+  select v_business,s.id,v_branch from public.staff s
+   where s.business_id=v_business and s.active
+  on conflict do nothing;
   insert into public.clients(business_id,full_name)
   values(v_other_business,'V41 other-tenant purchaser') returning id into v_other_client;
 
@@ -536,8 +547,8 @@ begin
     'select public.lookup_client_by_phone(%L::uuid,%L)',v_business,v_phone
   ),'missing clients key phone lookup PII','42501');
   perform pg_temp.expect_v41_denied(format(
-    'select public.record_sale_by_phone(%L::uuid,%L,100,%L,%L,null,%L)',
-    v_business,v_phone,'quick_sale','v41 denied till sale','v41-denied-till-sale'
+    'select public.record_sale_by_phone(%L::uuid,%L,100,%L,%L,null,%L,%L::uuid,%L)',
+    v_business,v_phone,'quick_sale','v41 denied till sale','v41-denied-till-sale',v_branch,'cash'
   ),'missing clients key record sale by phone','42501');
   reset role;
   if (select count(*) from public.sales
@@ -551,14 +562,16 @@ begin
     raise exception 'clients r phone lookup failed: %',v_result;
   end if;
   v_result := public.record_sale_by_phone(
-    v_business,v_phone,100,'quick_sale','v41 readonly till sale',null,'v41-readonly-till-sale'
+    v_business,v_phone,100,'quick_sale','v41 readonly till sale',null,
+    'v41-readonly-till-sale',v_branch,'cash'
   )::jsonb;
   if v_result->>'status' <> 'ok' or (v_result->>'client_id')::uuid <> v_phone_client then
     raise exception 'clients r could not record authorized till sale: %',v_result;
   end if;
   v_first := v_result;
   v_replay := public.record_sale_by_phone(
-    v_business,v_phone,100,'quick_sale','v41 readonly till sale',null,'v41-readonly-till-sale'
+    v_business,v_phone,100,'quick_sale','v41 readonly till sale',null,
+    'v41-readonly-till-sale',v_branch,'cash'
   )::jsonb;
   if v_replay->>'status' <> 'duplicate_ignored'
      or v_replay->>'sale_id' is distinct from v_first->>'sale_id'
@@ -567,8 +580,8 @@ begin
       v_first,v_replay;
   end if;
   perform pg_temp.expect_v41_denied(format(
-    'select public.record_sale_by_phone(%L::uuid,%L,101,%L,%L,null,%L)',
-    v_business,v_phone,'quick_sale','v41 readonly till sale','v41-readonly-till-sale'
+    'select public.record_sale_by_phone(%L::uuid,%L,101,%L,%L,null,%L,%L::uuid,%L)',
+    v_business,v_phone,'quick_sale','v41 readonly till sale','v41-readonly-till-sale',v_branch,'cash'
   ),'changed Till request under one key','23505');
   perform pg_temp.expect_v41_denied(format(
     'select public.staff_create_client(%L::uuid,%L::uuid,%L,null,null,null,null,false,null,%L)',
@@ -581,7 +594,8 @@ begin
     raise exception 'clients rw phone lookup failed: %',v_result;
   end if;
   v_result := public.record_sale_by_phone(
-    v_business,v_phone,200,'quick_sale','v41 rw till sale',null,'v41-rw-till-sale'
+    v_business,v_phone,200,'quick_sale','v41 rw till sale',null,
+    'v41-rw-till-sale',v_branch,'cash'
   )::jsonb;
   if v_result->>'status' <> 'ok' or (v_result->>'client_id')::uuid <> v_phone_client then
     raise exception 'clients rw till workflow failed: %',v_result;

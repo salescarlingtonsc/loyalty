@@ -1,6 +1,7 @@
 -- Rollback-only v37 branch override editor RPC suite. Run after v29 and v37
 -- in a rehearsal database.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v37_test$
 declare

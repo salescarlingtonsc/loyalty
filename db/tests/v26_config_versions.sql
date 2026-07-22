@@ -1,5 +1,6 @@
 -- Rollback-only v26 version publication and event-stamp suite.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v26_test$
 declare

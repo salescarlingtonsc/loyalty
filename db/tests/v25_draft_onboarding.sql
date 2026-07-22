@@ -1,5 +1,6 @@
 -- Rollback-only v25 contract suite.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v25_test$
 declare

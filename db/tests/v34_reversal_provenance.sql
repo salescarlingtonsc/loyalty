@@ -1,6 +1,7 @@
 -- v34 rolled-back security and structural regression suite.
 -- Run only after the complete v20, v21, and v24a-v34 migration chain is present.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $test$
 declare

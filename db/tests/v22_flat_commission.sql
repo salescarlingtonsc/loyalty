@@ -4,6 +4,7 @@
 -- with ROLLBACK — nothing is committed. Requires at least one business that has an
 -- active owner login (staff.user_id) and one client.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 do $v22_test$
 declare

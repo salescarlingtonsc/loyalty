@@ -1,0 +1,87 @@
+-- Shared rollback-only seed for legacy suites executed against a pristine final chain.
+-- The including suite owns BEGIN/ROLLBACK. Nothing in this file commits.
+do $pristine_chain_fixture$
+declare
+  v_owner_a uuid := gen_random_uuid();
+  v_owner_b uuid := gen_random_uuid();
+  v_business_a uuid;
+  v_business_b uuid;
+  v_client_a uuid;
+  v_client_b uuid;
+  v_draft uuid;
+begin
+  reset role;
+  insert into auth.users(
+    instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at
+  ) values
+    ('00000000-0000-0000-0000-000000000000',v_owner_a,'authenticated','authenticated',
+     'pristine-owner-a-'||v_owner_a::text||'@example.test','',now(),now(),now()),
+    ('00000000-0000-0000-0000-000000000000',v_owner_b,'authenticated','authenticated',
+     'pristine-owner-b-'||v_owner_b::text||'@example.test','',now(),now(),now());
+
+  perform set_config('request.jwt.claim.sub',v_owner_a::text,true);
+  perform set_config('request.jwt.claims',json_build_object(
+    'sub',v_owner_a,'role','authenticated'
+  )::text,true);
+  v_business_a := (public.create_business(
+    'Pristine chain fixture A',
+    'pristine-a-'||replace(v_owner_a::text,'-',''),
+    'test',array['dashboard','clients','sales','loyalty','packages','retention','appointments']
+  )::jsonb->>'id')::uuid;
+
+  perform set_config('request.jwt.claim.sub',v_owner_b::text,true);
+  perform set_config('request.jwt.claims',json_build_object(
+    'sub',v_owner_b,'role','authenticated'
+  )::text,true);
+  v_business_b := (public.create_business(
+    'Pristine chain fixture B',
+    'pristine-b-'||replace(v_owner_b::text,'-',''),
+    'test',array['dashboard','clients','sales','loyalty','packages','retention']
+  )::jsonb->>'id')::uuid;
+
+  reset role;
+  update public.businesses set created_at='2000-01-01 00:00:00+00' where id=v_business_a;
+  update public.businesses set created_at='2000-01-02 00:00:00+00' where id=v_business_b;
+  update public.staff set created_at='2000-01-01 00:00:00+00' where business_id=v_business_a;
+  update public.staff set created_at='2000-01-02 00:00:00+00' where business_id=v_business_b;
+
+  insert into public.clients(business_id,full_name,email,phone) values
+    (v_business_a,'Pristine customer A','pristine-a@example.test','+6590000001'),
+    (v_business_b,'Pristine customer B','pristine-b@example.test','+6590000002');
+  select id into v_client_a from public.clients
+   where business_id=v_business_a and email='pristine-a@example.test';
+  select id into v_client_b from public.clients
+   where business_id=v_business_b and email='pristine-b@example.test';
+
+  insert into public.sales(business_id,client_id,kind,amount_cents,occurred_at,note)
+  values
+    (v_business_a,v_client_a,'quick_sale',100,statement_timestamp(),'pristine RLS control A'),
+    (v_business_b,v_client_b,'quick_sale',100,statement_timestamp(),'pristine RLS control B');
+
+  -- The first tenant is the deterministic active-loyalty fixture selected by the
+  -- legacy v26-v41 suites. Build it only through the current owner APIs.
+  perform set_config('request.jwt.claim.sub',v_owner_a::text,true);
+  perform set_config('request.jwt.claims',json_build_object(
+    'sub',v_owner_a,'role','authenticated'
+  )::text,true);
+  v_draft := (public.create_loyalty_config_draft(
+    v_business_a,null,'pristine-final-chain'
+  )::jsonb->>'version_id')::uuid;
+  perform public.save_loyalty_config_draft(v_draft,jsonb_build_object(
+    'active',true,
+    'kind','points',
+    'loyalty_model','classic',
+    'earn_points_per_dollar',1,
+    'redeem_points',50,
+    'reward_credit_cents',500,
+    'expiry_mode','none'
+  ),null);
+  perform public.publish_loyalty_config(v_draft);
+
+  reset role;
+  insert into public.super_admins(user_id,email,note)
+  values(v_owner_b,'pristine-owner-b@example.test','rollback-only RLS fixture');
+  perform set_config('request.jwt.claim.sub','',true);
+  perform set_config('request.jwt.claims','{}',true);
+end
+$pristine_chain_fixture$;

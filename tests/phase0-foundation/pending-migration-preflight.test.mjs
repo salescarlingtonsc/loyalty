@@ -37,7 +37,10 @@ const sqlTestByVersion = new Map([
   ['v47', 'db/tests/v47_smart_staff_scheduling.sql'],
   ['v47a', 'db/tests/v47_smart_staff_scheduling.sql'],
   ['v47b', 'db/tests/v47_smart_staff_scheduling.sql'],
-  ['v48', 'db/tests/v48_calendar_details_reschedule.sql']
+  ['v48', 'db/tests/v48_calendar_details_reschedule.sql'],
+  ['v49', 'db/tests/v49_billing_projection.sql'],
+  ['v49a', 'db/tests/v49a_lint_and_rehearsal_repairs.sql'],
+  ['v49b', 'db/tests/v49b_reports_read_authorization.sql']
 ]);
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -51,7 +54,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 30);
+  assert.equal(pending.length, 33);
   assert.equal(sqlTestByVersion.size, pending.length);
 
   for (const migration of pending) {
@@ -63,6 +66,11 @@ test('all pending migrations and SQL acceptance suites have atomic boundaries', 
     const testPath = sqlTestByVersion.get(semanticVersion);
     assert.ok(testPath, `${semanticVersion} must have a mapped rollback suite`);
     const testSql = await readFile(path.join(repoRoot, testPath), 'utf8');
+    assert.doesNotMatch(
+      testSql,
+      /^\\\\ir\s/m,
+      `${testPath} must use one literal backslash for psql include commands`
+    );
     assert.equal(statementCount(testSql, 'begin'), 1, `${testPath} must begin one transaction`);
     assert.equal(statementCount(testSql, 'rollback'), 1, `${testPath} must roll back its fixture changes`);
   }

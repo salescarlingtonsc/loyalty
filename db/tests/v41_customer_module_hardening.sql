@@ -1,6 +1,7 @@
 -- Rollback-only v41 transactional customer-module smoke/reconciliation suite.
 -- Run after the complete canonical chain through v41.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 -- Keep this suite reproducible on a freshly materialized canonical database.
 -- The synthetic tenant is transaction-local because the suite always rolls back.
@@ -210,7 +211,10 @@ begin
     raise exception 'read-only client override could not use the Till customer lookup';
   end if;
   begin
-    perform public.record_sale_by_phone(v_business, '+65 8111 2233', 0);
+    perform public.record_sale_by_phone(
+      v_business,'+65 8111 2233',0,'quick_sale',null,null,
+      'v41-readonly-invalid',null,'cash'
+    );
     raise exception 'read-only client override unexpectedly accepted an invalid sale';
   exception when sqlstate '22023' then null;
   end;
@@ -231,7 +235,10 @@ begin
   end if;
   v_blocked := false;
   begin
-    perform public.record_sale_by_phone(v_business, '+65 8111 2233', 100);
+    perform public.record_sale_by_phone(
+      v_business,'+65 8111 2233',100,'quick_sale',null,null,
+      'v41-sales-only-denied',null,'cash'
+    );
   exception when insufficient_privilege then
     v_blocked := true;
   end;

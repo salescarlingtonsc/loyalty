@@ -172,11 +172,24 @@
     requestAnimationFrame(()=>target.focus({preventScroll:false}));
   }
 
+  const liveRegionState=new WeakMap();
   function announce(message,{assertive=false}={}){
     const target=document.getElementById(assertive?'appAlert':'appStatus');
     if(!target)return;
+    const previous=liveRegionState.get(target);
+    if(previous?.timer)clearTimeout(previous.timer);
+    const generation=(previous?.generation||0)+1;
+    liveRegionState.set(target,{generation,timer:null});
     target.textContent='';
-    requestAnimationFrame(()=>{target.textContent=String(message??'')});
+    requestAnimationFrame(()=>{
+      if(liveRegionState.get(target)?.generation!==generation)return;
+      target.textContent=String(message??'');
+      const timer=setTimeout(()=>{
+        if(liveRegionState.get(target)?.generation!==generation)return;
+        target.textContent='';liveRegionState.delete(target);
+      },5000);
+      liveRegionState.set(target,{generation,timer});
+    });
   }
 
   function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]'}={}){

@@ -5,6 +5,7 @@
 -- business B, a wrong business, verified customer_links, enabled_modules, the
 -- SECURITY DEFINER search_path, and raw table grants.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 
 create or replace function pg_temp.as_wallet_customer(p_uid uuid) returns void
 language plpgsql as $$

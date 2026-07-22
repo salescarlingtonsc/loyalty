@@ -8,6 +8,26 @@ import test from 'node:test';
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const read = (relative) => readFile(path.join(root, relative), 'utf8');
 
+test('v20 concurrency uses current authenticated tender APIs and exact scoped cleanup', async () => {
+  const script = await read('db/tests/v20_financial_concurrency.sh');
+  assert.match(script, /PGPASSWORD is required with the passwordless DATABASE_URL/);
+  assert.match(script, /cleanup_synthetic_fixture\.sql/);
+  assert.match(script, /YES-SCOPED-SYNTHETIC-CLEANUP/);
+  assert.match(script, /trap 'cleanup "\$\?"' EXIT/);
+  assert.match(script, /fixture_output="\$\(psql/);
+  assert.doesNotMatch(script, /}\s*\|\s*tail\s+-n\s+1/,
+    'fixture psql failures must not be hidden behind a pipeline');
+  assert.match(script, /public\.redeem_gift_card_v41\(/);
+  assert.doesNotMatch(script, /public\.redeem_gift_card\(/);
+  assert.match(script, /set role authenticated;[\s\S]*public\.record_credit_tender\(/,
+    'raced financial calls must execute through the current authenticated runtime API');
+  assert.ok(
+    script.indexOf('insert into public.gift_cards') < script.indexOf('set role authenticated;'),
+    'privileged fixture setup must finish before an authenticated raced session begins'
+  );
+  assert.match(script,/result_message="v20 two-session concurrency checks: PASS/);
+});
+
 test('concurrency holders self-release and every harness traps scoped cleanup', async () => {
   const [v37, v40] = await Promise.all([
     read('db/tests/v37_retention_publish_concurrency.sh'),

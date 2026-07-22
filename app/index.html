@@ -49,6 +49,7 @@ input,select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;borde
   transition:border-color .18s var(--ease),box-shadow .18s var(--ease)}
 input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3.5px rgba(194,65,53,.16)}
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
+.field-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
 /* Buttons: press-down on :active is the single strongest "native app" tell */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;background:var(--grad);color:#fff;font-weight:600;padding:10px 20px;border-radius:100px;
   box-shadow:0 1px 2px rgba(194,65,53,.2),0 6px 16px rgba(194,65,53,.22);
@@ -105,9 +106,11 @@ tr.click:hover td{background:#FBFAF8}
 /* auth + onboard */
 .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
 .auth-card{width:420px;max-width:100%;border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:30px}
-.legal-links{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 14px;margin-top:18px;
-  color:var(--muted);font-size:11.5px}
-.legal-links a{text-decoration:underline;text-underline-offset:2px}
+.legal-links{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:0 6px;margin-top:18px;
+  color:var(--muted);font-size:11.5px;min-width:0;max-width:100%}
+.legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
+  color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
 .challenge-retry{background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
 .logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;letter-spacing:-.02em}
@@ -258,6 +261,17 @@ tr.click:hover td{background:#FBFAF8}
 .qbtn.act{background:var(--ink);color:#fff;border-color:var(--ink)}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .row{display:flex;gap:10px;align-items:center}
+.settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
+.settings-page .row>*{min-width:0}
+.settings-page input[type="file"]{max-width:100%}
+.reports-grid{grid-template-columns:repeat(2,minmax(0,1fr));width:100%;min-width:0;max-width:100%}
+.reports-grid>.card{min-width:0;max-width:100%}.reports-grid table{table-layout:fixed}.reports-grid td{overflow-wrap:anywhere}
+.portal-link-row{margin-top:4px;min-width:0;max-width:100%}
+.portal-link{display:flex;align-items:center;width:100%;min-width:0;max-width:100%;min-height:44px;padding:8px 0;
+  color:#A64020;font-weight:700;line-height:1.4;text-decoration:underline;text-underline-offset:3px;
+  overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+.settings-choice{display:flex;align-items:flex-start;gap:10px;min-height:44px;padding:6px 0;margin:6px 0;cursor:pointer;font-size:14px;color:var(--ink);font-weight:500}
+.settings-choice>input{flex:0 0 auto;width:24px;min-height:24px;margin-top:4px}
 .retention-taxonomy-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;min-width:0;padding:8px 0;border-bottom:1px solid var(--line)}
 .retention-taxonomy-copy{display:flex;align-items:center;flex:1 1 180px;flex-wrap:wrap;gap:8px;min-width:0}.retention-taxonomy-copy>span:first-child{min-width:0;overflow-wrap:anywhere}
 .retention-taxonomy-actions{display:flex;align-items:center;flex:0 1 auto;flex-wrap:wrap;gap:8px;min-width:0}
@@ -319,6 +333,14 @@ tr.click:hover td{background:#FBFAF8}
   .cui-table[data-responsive="true"] td:empty{display:none}
   .calendar-week-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
   .appointment-detail-modal{align-items:flex-end;padding:0}.appointment-detail-modal .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))}.appointment-detail-grid{grid-template-columns:1fr}.appointment-detail-actions>.btn,.appointment-detail-actions>a.btn{flex:1 1 100%}.appointment-reschedule-form .split{grid-template-columns:1fr}
+  .settings-page .row{align-items:stretch;flex-wrap:wrap;width:100%}
+  .settings-page .row>.spacer{display:none}
+  .settings-page .row>input,.settings-page .row>select{flex:1 1 100%;width:100%;max-width:100%!important}
+  .settings-page .row>.btn{flex:1 1 auto;max-width:100%}
+  .settings-page .row>span,.settings-page .row>b{max-width:100%;overflow-wrap:anywhere}
+  .reports-grid{grid-template-columns:minmax(0,1fr);width:100%;min-width:0;max-width:100%}
+  .portal-link-row,.portal-link{width:100%;max-width:100%;min-width:0}
+  .legal-links{width:100%;max-width:100%}.legal-links a{flex:0 1 auto;min-height:44px}
 }
 @media(max-width:375px){
   .main{padding:16px 12px 34px}.card{padding:17px}.cui-page-title h1,.topbar h1{font-size:1.55rem}
@@ -403,7 +425,25 @@ const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
    nothing unless I retype the URL"). We don't use Supabase's own hash-based OAuth redirect
    flow here, so it's safe to turn off. */
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit'}});
-const legalLinks=()=>`<div class="legal-links"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/data-request.html">Data request</a></div>`;
+let buildIdentity=Object.freeze({available:false});
+const buildIdentityLabel=()=>buildIdentity.available
+  ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';
+const buildIdentityHtml=()=>`<span class="build-identity" data-build-identity>${esc(buildIdentityLabel())}</span>`;
+function syncBuildIdentityLabels(){document.querySelectorAll('[data-build-identity]').forEach(element=>{element.textContent=buildIdentityLabel()})}
+async function loadBuildIdentity(){
+  try{
+    const response=await fetch('/api/build',{method:'GET',credentials:'same-origin',headers:{accept:'application/json'}});
+    const payload=await response.json();
+    const valid=response.ok&&payload?.schemaVersion===1&&payload?.service==='loyalty'&&payload?.available===true
+      &&/^[0-9a-f]{40}$/.test(payload.commitSha)&&payload.shortSha===payload.commitSha.slice(0,12)
+      &&['production','preview','development'].includes(payload.environment);
+    if(!valid)throw new Error('Build identity unavailable.');
+    buildIdentity=Object.freeze({available:true,commitSha:payload.commitSha,shortSha:payload.shortSha,environment:payload.environment});
+    window.__FRENLY_BUILD_IDENTITY__=buildIdentity;
+  }catch{buildIdentity=Object.freeze({available:false})}
+  syncBuildIdentityLabels();
+}
+const legalLinks=()=>`<nav class="legal-links" aria-label="Legal and privacy"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/data-request.html">Data request</a>${buildIdentityHtml()}</nav>`;
 const publicFunctionUrl=(name,query='')=>`${SB_URL}/functions/v1/${name}${query}`;
 async function publicGateway(name,{method='POST',body=null,query=''}={}){
   const response=await fetch(publicFunctionUrl(name,query),{
@@ -626,7 +666,16 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=c=>(S.biz?.currency||'SGD')+' '+((c||0)/100).toFixed(2);
 const canReadModule=module=>S.myRole==='owner'||S.myModules?.includes(module)===true;
 const canWriteModule=module=>S.myRole==='owner'||S.myModulePerms?.[module]==='rw';
-const showToast=message=>{const t=$('toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)};
+let toastGeneration=0,toastTimer=null;
+const showToast=message=>{
+  const t=$('toast'),generation=++toastGeneration;
+  if(toastTimer)clearTimeout(toastTimer);
+  t.textContent=message;t.classList.add('show');
+  toastTimer=setTimeout(()=>{
+    if(generation!==toastGeneration)return;
+    t.classList.remove('show');t.textContent='';toastTimer=null;
+  },2600);
+};
 const toast=m=>{const message=String(m??'');showToast(message);CUI.announce(message)};
 const fail=e=>{console.error(e);const message=e?.message||String(e);showToast(message);CUI.announce(message,{assertive:true})};
 /* Singapore-fixed-offset (UTC+8) display helper: shows a stored UTC instant as SGT wall-clock
@@ -758,12 +807,13 @@ async function route(){
       const {data:personas,error:personaError}=await sb.rpc('get_my_personas');
       workspaceStaffPersona=!personaError&&(personas?.staff||[]).find(p=>p.business_slug===workspaceSlug);
       if(!workspaceStaffPersona){
-        root.innerHTML=`<div class="center-wrap"><div class="card" style="width:420px;max-width:100%;text-align:center"><h2>Workspace unavailable</h2><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p><button class="btn" id="workspaceHome" style="margin-top:16px">Continue</button></div></div>`;
+        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p><button class="btn" id="workspaceHome" style="margin-top:16px">Continue</button></section></main>`;
+        $('main').focus();
         $('workspaceHome').onclick=()=>nav(personas?.default_route||'#/');return;
       }
       const {data:workspace,error:workspaceError}=await sb.from('businesses').select('*').eq('slug',workspaceSlug).single();
       if(workspaceError||!workspace){
-        root.innerHTML=`<div class="center-wrap"><div class="card" style="width:420px;max-width:100%;text-align:center"><h2>Workspace unavailable</h2><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p></div></div>`;return;
+        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p></section></main>`;$('main').focus();return;
       }
       if(S.biz?.id!==workspace.id){
         S.biz=workspace;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.isSA=false;S.saChecked=false;S.hasCustomerPersona=null;
@@ -2337,6 +2387,7 @@ function renderShell(page){
     <aside class="side" aria-label="Workspace navigation">
       <a href="#/dashboard" class="logo" style="display:block">frenly<span>.</span></a>
       <nav class="nav" id="navwrap" aria-label="Main navigation">${navHtml(page)}</nav>
+      <div class="foot" aria-label="Application version">${buildIdentityHtml()}</div>
     </aside>
     <div class="col">
       <header class="appbar">
@@ -3347,7 +3398,7 @@ async function bookingsPage(){
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
       <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
-      <p class="small" style="margin-top:8px;word-break:break-all"><a href="${portal}" target="_blank" style="color:#D06A2E">${portal}</a></p></div>
+      <p class="small portal-link-row"><a class="portal-link" href="${portal}" target="_blank" rel="noopener noreferrer">${portal}</a></p></div>
     <div class="card" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
       <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
@@ -3377,6 +3428,7 @@ async function bookingsPage(){
       </div>
       <div class="card"><b>Import existing bookings (CSV)</b>
         <p class="muted small" style="margin:6px 0 10px">Columns recognised: <b>name</b> (required), phone, email, party_size, preferred_at, notes, table_type. Bookings import as pending for you to review.</p>
+        <label for="bkCsvf">Bookings CSV file</label>
         <input type="file" id="bkCsvf" accept=".csv,text/csv">
         <div id="bkCsvPrev" style="margin-top:12px"></div>
       </div>
@@ -4897,7 +4949,7 @@ async function reportsPage(){
     <div class="range"><input type="date" id="rf" value="${iso(new Date(Date.now()-29*864e5))}"> <span class="muted">→</span>
     <input type="date" id="rt2" value="${iso(new Date())}"> <span id="branchWrap"></span><button class="btn sm" id="rgo">Run</button>
     <button class="btn ghost sm" id="rcsv">Export sales CSV</button></div></div>
-    <div class="grid" id="rbody" style="grid-template-columns:1fr 1fr"><div class="card"><div class="empty">Pick a range and Run.</div></div></div>`;
+    <div class="grid reports-grid" id="rbody"><div class="card"><div class="empty">Pick a range and Run.</div></div></div>`;
   let lastScope=null;
   async function run(){
     const from=$('rf').value,to=$('rt2').value;
@@ -4932,7 +4984,7 @@ async function reportsPage(){
       <div class="card"><b>Liabilities (now)</b><table style="margin-top:8px">
         <tr><td>Customer credit outstanding</td><td style="text-align:right"><b>${money(liab)}</b></td></tr>
         <tr><td>Gift cards unredeemed</td><td style="text-align:right"><b>${money(gcOut)}</b></td></tr></table>
-        <p class="muted small" style="margin-top:8px">Credit is money you owe customers — the daily expiry sweep keeps it honest.</p></div>
+        <p class="muted small" style="margin-top:8px">Credit is money you owe customers — the daily expiry sweep keeps it honest. Gift-card liability is business-wide, even when a branch filter is selected, because gift cards are not assigned to branches.</p></div>
       <div class="card"><b>Memberships</b><table style="margin-top:8px">
         <tr><td>Active members</td><td style="text-align:right"><b>${actMs}</b></td></tr>
         <tr><td>Membership revenue (range)</td><td style="text-align:right"><b>${money(byKind.membership||0)}</b></td></tr></table></div>`;
@@ -5349,17 +5401,17 @@ async function settingsPage(){
   const moduleRuleByKey=Object.fromEntries((moduleRules||[]).map(r=>[r.module_key,r]));
   const dependencyText=m=>(moduleRuleByKey[m]?.requires_modules||[])
     .map(k=>MODULES[k]?.[1]||k).join(', ');
-  M().innerHTML=`<div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
+  M().innerHTML=`<div class="settings-page"><div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
     <div class="split"><div class="card"><b>Business</b>
-      <label>Name</label><input id="bn" value="${esc(S.biz.name)}">
-      <label>Industry</label><select id="bi">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
-      <label>Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
-      <label>Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
-      <label>Portal link (share with customers)</label>
-      <p class="small" style="word-break:break-all;margin-top:4px"><a style="color:#D06A2E" target="_blank" href="${location.origin}${location.pathname}#/b/${S.biz.slug}">${location.origin}${location.pathname}#/b/${S.biz.slug}</a></p>
+      <label for="bn">Name</label><input id="bn" value="${esc(S.biz.name)}">
+      <label for="bi">Industry</label><select id="bi">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
+      <label for="bc">Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
+      <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
+      <p class="field-label">Portal link (share with customers)</p>
+      <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${location.origin}${location.pathname}#/b/${S.biz.slug}">${location.origin}${location.pathname}#/b/${S.biz.slug}</a></p>
       <div style="margin-top:16px"><button class="btn" id="bsave">Save</button></div></div>
     <div class="card"><b>Modules</b><p class="muted small" style="margin:6px 0 4px">Toggle what ${esc(S.biz.name)} uses. Dashboard is always on.</p>
-      ${mods.map(m=>`<label style="display:flex;align-items:flex-start;gap:10px;margin-top:12px;cursor:pointer;font-size:14px;color:var(--ink);font-weight:500">
+      ${mods.map(m=>`<label class="settings-choice">
         <input type="checkbox" style="width:auto;margin-top:2px" data-m="${m}" ${(S.biz.enabled_modules||[]).includes(m)?'checked':''}>
         <span>${CUI.icon(MODULES[m][0],{size:16})} ${MODULES[m][1]}${dependencyText(m)?`<span class="muted small" style="display:block;font-weight:400">Uses ${esc(dependencyText(m))}</span>`:''}</span></label>`).join('')}
       <div style="margin-top:16px"><button class="btn" id="msave">Save modules</button></div></div></div>
@@ -5368,11 +5420,11 @@ async function settingsPage(){
       <div class="card" id="signupWrap"><div class="empty">Loading…</div></div>
     </div>
     <div class="split" style="margin-top:16px">
-    <div class="card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff')}</div><p class="muted small" style="margin:6px 0 10px">Five roles: owner · manager · staff · front desk · bookkeeper. Invite by code — teammate signs up, enters the code, and lands in this workspace. The owner always sees every module and can't be restricted.</p>
+    <div class="card settings-team-card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff')}</div><p class="muted small" style="margin:6px 0 10px">Five roles: owner · manager · staff · front desk · bookkeeper. Invite by code — teammate signs up, enters the code, and lands in this workspace. The owner always sees every module and can't be restricted.</p>
       <div id="team"><p class="muted small">Loading…</p></div>
-      <div class="row" style="margin-top:14px"><select id="ir" style="max-width:150px">
+      <div class="row" style="margin-top:14px"><label class="sr-only" for="ir">Invite role</label><select id="ir" style="max-width:150px">
         ${['manager','staff','frontdesk','bookkeeper'].map(r=>`<option value="${r}">${ROLE_LABELS[r]}</option>`).join('')}</select>
-      <input id="ie" type="email" placeholder="email (optional, for your records)">
+      <label class="sr-only" for="ie">Invite email (optional)</label><input id="ie" type="email" placeholder="email (optional, for your records)">
       <button class="btn sm" id="igo">Create invite</button></div>
       <div id="invites" style="margin-top:10px"></div>
       <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
@@ -5381,22 +5433,23 @@ async function settingsPage(){
       <div id="tplList"><p class="muted small">Loading…</p></div>
     </div>
     <div class="card"><b>Import customers (CSV)</b>
-      <p class="muted small" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, gender, birth_date (YYYY-MM-DD).</p>
-      <input type="file" id="csvf" accept=".csv,text/csv">
+      <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, gender, birth_date (YYYY-MM-DD).</p>
+      <label for="csvf">Customer CSV file</label>
+      <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
       <div id="csvprev" style="margin-top:12px"></div></div></div>
     <div class="card" style="margin-top:16px"><b>Customer fields</b>
       <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
       <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
       <details><summary>Add a customer field</summary>
-        <div class="field-grid"><div><label>Field name</label><input id="cfLabel" placeholder="e.g. Preferred therapist"></div>
-        <div><label>Answer type</label><select id="cfType"><option value="text">Short text</option><option value="number">Number</option><option value="date">Date</option><option value="boolean">Yes / no</option><option value="select">Choose from a list</option></select></div>
-        <div><label>Data classification</label><select id="cfClass"><option value="operational">Operational</option><option value="personal">Personal</option><option value="sensitive">Sensitive — owner only</option></select></div>
-        <div><label>Choices (list type only)</label><input id="cfOptions" placeholder="e.g. Alice, Ben, No preference"></div></div>
+        <div class="field-grid"><div><label for="cfLabel">Field name</label><input id="cfLabel" placeholder="e.g. Preferred therapist"></div>
+        <div><label for="cfType">Answer type</label><select id="cfType"><option value="text">Short text</option><option value="number">Number</option><option value="date">Date</option><option value="boolean">Yes / no</option><option value="select">Choose from a list</option></select></div>
+        <div><label for="cfClass">Data classification</label><select id="cfClass"><option value="operational">Operational</option><option value="personal">Personal</option><option value="sensitive">Sensitive — owner only</option></select></div>
+        <div><label for="cfOptions">Choices (list type only)</label><input id="cfOptions" placeholder="e.g. Alice, Ben, No preference"></div></div>
         <button class="btn sm" id="cfAdd" style="margin-top:12px">Add field</button>
       </details></div>
     <div class="card" style="margin-top:16px"><b>Tenant isolation</b>
       <p class="muted small" style="margin-top:6px;line-height:1.7">Every business on Frenly has its own isolated data space. Row-level security is enforced by the database on every table — your customers, sales, and programs are invisible to every other business, and theirs to you. Your team only ever sees this workspace.</p></div>
-    <div id="commissionWrap"></div>`;
+    <div id="commissionWrap"></div></div>`;
   $('bsave').onclick=async()=>{
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),industry:$('bi').value,
       brand_color:$('bc').value,booking_policy:$('bp').value||null}).eq('id',S.biz.id);
@@ -5467,7 +5520,7 @@ async function settingsPage(){
   function modChecklistHtml(staffId,sel){
     const avail=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='setup'&&(S.biz.enabled_modules||[]).includes(m));
     if(!avail.length) return '<p class="muted small">No modules enabled for this business yet.</p>';
-    return avail.map(m=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;color:var(--ink);font-size:13.5px">
+    return avail.map(m=>`<label class="settings-choice" style="font-size:13.5px">
       <input type="checkbox" style="width:auto" ${sel.mods.includes(m)?'checked':''} onchange="toggleModCheck('${staffId}','${m}',this.checked)"> ${CUI.icon(MODULES[m][0],{size:16})} ${MODULES[m][1]}</label>`).join('');
   }
   function modPanelHtml(s){
@@ -5475,9 +5528,9 @@ async function settingsPage(){
     const sel=panelSel[s.id];
     return `<div class="card" style="margin-top:8px;background:#FBFAF7">
       <p class="muted small" style="margin-bottom:8px">What can <b style="color:var(--ink)">${esc(s.full_name||'this teammate')}</b> see?</p>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--ink);font-size:13.5px;margin-bottom:6px">
+      <label class="settings-choice" style="font-size:13.5px;margin-bottom:6px">
         <input type="radio" name="modmode-${s.id}" style="width:auto" ${sel.mode==='all'?'checked':''} onchange="setModMode('${s.id}','all')"> Sees everything (default)</label>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--ink);font-size:13.5px">
+      <label class="settings-choice" style="font-size:13.5px">
         <input type="radio" name="modmode-${s.id}" style="width:auto" ${sel.mode==='selected'?'checked':''} onchange="setModMode('${s.id}','selected')"> Only selected</label>
       <div id="modgrid-${s.id}" style="display:${sel.mode==='selected'?'grid':'none'};grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px;margin:10px 0;padding:10px;background:#fff;border:1px solid var(--line);border-radius:10px">
         ${modChecklistHtml(s.id,sel)}
@@ -5621,15 +5674,24 @@ async function settingsPage(){
 }
 /* ---------- billing (read-only) ---------- */
 async function loadBillingConfig(){
-  const {data:b,error}=await sb.from('v_business_billing').select('*').eq('business_id',S.biz.id).single();
-  if(error){$('billingWrap').innerHTML=`<b>Billing</b><div class="empty small">Could not load billing — ${esc(error.message)}</div>`;return}
+  const wrap=$('billingWrap');if(!wrap||!S.biz?.id)return;
+  wrap.setAttribute('aria-busy','true');
+  const {data:b,error}=await sb.rpc('get_business_billing_v49',{p_business:S.biz.id});
+  if(!wrap.isConnected)return;
+  wrap.setAttribute('aria-busy','false');
+  if(error||!b||b.business_id!==S.biz.id){
+    wrap.innerHTML=`<b>Billing</b><div class="empty small" role="alert">Billing details could not load. Check your connection and try again.</div><button type="button" class="btn ghost sm" id="billingRetry">Retry billing</button>`;
+    $('billingRetry').onclick=()=>loadBillingConfig();return;
+  }
+  const billingCurrency=typeof b.currency==='string'&&/^[A-Z]{3}$/.test(b.currency)?b.currency:'SGD';
+  const billingMoney=c=>billingCurrency+' '+((Number.isFinite(Number(c))?Number(c):0)/100).toFixed(2);
   const seats=b.billable_seats??0,extra=b.extra_seats??0,base=b.base_price_cents??0,perSeat=b.per_seat_price_cents??0,incl=b.included_seats??1;
   const statusPill=b.status==='active'?'ok':b.status==='trialing'?'new':'off';
-  $('billingWrap').innerHTML=`<b>Billing</b>
+  wrap.innerHTML=`<b>Billing</b>
     <div class="row" style="margin-top:8px"><span class="pill ${statusPill}">${esc(b.status||'—')}</span>
     <span class="spacer"></span><span class="muted small">Logins in use: <b style="color:var(--ink)">${seats}</b></span></div>
-    <p class="muted small" style="margin-top:12px;line-height:1.6">${money(base)} base (${incl} login${incl===1?'':'s'} included)${extra>0?` + ${extra} extra × ${money(perSeat)}`:''} = <b style="color:var(--ink)">${money(b.monthly_total_cents||0)}</b>/month</p>
-    <div style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em;margin-top:6px;font-variant-numeric:tabular-nums">${money(b.monthly_total_cents||0)}<span class="muted small" style="font-weight:500;letter-spacing:-.005em"> /month</span></div>
+    <p class="muted small" style="margin-top:12px;line-height:1.6">${billingMoney(base)} base (${incl} login${incl===1?'':'s'} included)${extra>0?` + ${extra} extra × ${billingMoney(perSeat)}`:''} = <b style="color:var(--ink)">${billingMoney(b.monthly_total_cents||0)}</b>/month</p>
+    <div style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em;margin-top:6px;font-variant-numeric:tabular-nums">${billingMoney(b.monthly_total_cents||0)}<span class="muted small" style="font-weight:500;letter-spacing:-.005em"> /month</span></div>
     ${b.status==='trialing'&&b.trial_ends_at?`<p class="muted small" style="margin-top:8px">Free trial until ${esc(sgt(b.trial_ends_at))}</p>`:''}
     <p class="muted small" style="margin-top:12px">Payment isn't collected in-app yet.</p>`;
 }
@@ -5639,7 +5701,7 @@ async function loadSignupConfig(){
   $('signupWrap').innerHTML=`<b>Customer sign-up</b>
     <p class="muted small" style="margin:6px 0 10px">Print this QR for your counter. Customers scan it to join your loyalty programme.</p>
     <div id="joinQr" style="width:180px;height:180px;margin:0 auto"></div>
-    <p class="small" style="word-break:break-all;margin-top:12px"><a target="_blank" style="color:#D06A2E" href="${esc(url)}">${esc(url)}</a></p>
+    <p class="small portal-link-row" style="margin-top:12px"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a></p>
     <div class="row" style="margin-top:10px"><button class="btn ghost sm" id="cpJoin">Copy link</button>
     <button class="btn ghost sm" id="dlQr">Download QR</button></div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
@@ -5919,6 +5981,7 @@ async function renderPortal(slug){
 
 async function boot(){
   try{await consumePasswordRecoveryRedirect()}catch{}
+  loadBuildIdentity();
   route();
 }
 boot();

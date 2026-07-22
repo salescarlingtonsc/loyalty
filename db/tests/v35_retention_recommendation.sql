@@ -1,5 +1,6 @@
 -- Rollback-only recommendation draft contract.
 begin;
+\ir fixtures/pristine_chain_fixture.psql
 do $v35_test$
 declare v_business uuid;v_owner uuid;v_before uuid;v_result json;v_draft uuid;
 begin
