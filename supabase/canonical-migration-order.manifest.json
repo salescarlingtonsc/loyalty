@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 34,
-  "itemCount": 79,
+  "pendingCount": 36,
+  "itemCount": 81,
   "items": [
     {
       "order": 1,
@@ -797,6 +797,26 @@
       "path": "supabase/migrations/20260722150000_frenly_v50_retention_measurement.sql",
       "octetLength": 42767,
       "sha256": "d3c16d18921d4b1fa2826c332559d9518aff8e47a8aafbe48183cf26279cdf4c",
+      "provenance": "local-source"
+    },
+    {
+      "order": 80,
+      "kind": "pending",
+      "version": "20260723090000",
+      "name": "frenly_v50a_sgt_birthdate_guard",
+      "path": "supabase/migrations/20260723090000_frenly_v50a_sgt_birthdate_guard.sql",
+      "octetLength": 4372,
+      "sha256": "a836185a091b0d55ceb246c69f43fe0d46a4ad6c3da7ce4e77e2c0f19da5ca23",
+      "provenance": "local-source"
+    },
+    {
+      "order": 81,
+      "kind": "pending",
+      "version": "20260723100000",
+      "name": "frenly_v50b_contact_proof_constraint_repair",
+      "path": "supabase/migrations/20260723100000_frenly_v50b_contact_proof_constraint_repair.sql",
+      "octetLength": 4747,
+      "sha256": "123d401a855abe9f86c2ad329500ce3063a86f7e089ca02a90ca3ba03348a5ab",
       "provenance": "local-source"
     }
   ]

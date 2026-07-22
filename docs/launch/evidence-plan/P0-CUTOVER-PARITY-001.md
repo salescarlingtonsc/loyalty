@@ -112,3 +112,20 @@ constants, not a live query) — do not read "33 pending" as current truth. Only
 - Path A (full comparator): 2-4 hours including source/target dump extraction, `jq` combination, and
   the manual Dashboard walkthrough — most of this is credential setup and Dashboard review, not the
   scripted parts.
+
+## 6. Addendum 2026-07-23 — chain-fidelity evidence and one production catalog defect
+
+A full local replay of the canonical chain (all migrations, manifest order, fresh Postgres 17)
+reproduced the production catalog **including a latent defect, byte-for-byte**: production's
+`public.customer_contact_proofs` carries BOTH the c42 `..._method_type_check` (phone-aware) and the
+stale v30 inline `..._proof_method_check` (email-only) — confirmed by identical read-only catalog
+queries against the replay and against `gadpooereceldfpfxsod`. Two consequences for this gate:
+
+1. **Positive parity signal:** the recovered canonical chain faithfully reproduces live catalog state,
+   defects included. This materially de-risks the "schema parity is unproven" concern for the
+   migration-governed part of the comparator scope.
+2. **New pending repair:** the stale constraint structurally blocks the phone-registration happy path
+   (`customer_register_verified_phone` → contact-proof insert violates the stale check). Dormant in
+   production only because `platform_feature_flags.customer_phone_claims` defaults off. Repair ships as
+   migration `v50b_contact_proof_constraint_repair` (pending, needs `RELEASE APPROVED`). The pending
+   set this gate must see applied is now v49, v49a, v49b, v50, v50a, v50b.

@@ -50,7 +50,7 @@ declare
   v_treatment uuid[]; v_holdout uuid[];
   v_t1 uuid; v_t2 uuid; v_t3 uuid; v_h1 uuid;
   v_c2_t1 uuid; v_c2_t2 uuid;
-  v_sale_t3 uuid;
+  v_sale_t3 uuid; v_sale_h1 uuid;
   v_members integer; v_t_members integer; v_h_members integer;
   v_bucket smallint; v_bucket_again smallint;
 begin
@@ -188,7 +188,7 @@ begin
   perform public.record_quick_sale(v_business_a, 5000, 'cash', v_t1, v_owner_staff, v_branch, 'v50 t1 return', 'v50-sale-t1-key', true);
   perform public.record_quick_sale(v_business_a, 5000, 'cash', v_t2, v_owner_staff, v_branch, 'v50 t2 return', 'v50-sale-t2-key', true);
   v_sale_t3 := (public.record_quick_sale(v_business_a, 5000, 'cash', v_t3, v_owner_staff, v_branch, 'v50 t3 return', 'v50-sale-t3-key', true)::jsonb->'sale'->>'id')::uuid;
-  perform public.record_quick_sale(v_business_a, 5000, 'cash', v_h1, v_owner_staff, v_branch, 'v50 h1 return', 'v50-sale-h1-key', true);
+  v_sale_h1 := (public.record_quick_sale(v_business_a, 5000, 'cash', v_h1, v_owner_staff, v_branch, 'v50 h1 return', 'v50-sale-h1-key', true)::jsonb->'sale'->>'id')::uuid;
   -- Reverse T3: a reversed sale must never count as a return.
   perform public.reverse_sale(v_business_a, v_sale_t3, 'v50 reversal provenance for the return', 'v50-reverse-t3-key');
 
@@ -206,6 +206,16 @@ begin
     raise exception 'first qualifying return sale/timestamp was not recorded per member';
   end if;
 
+  -- Reverse H1 AFTER durable capture: the append-only evidence row must survive
+  -- while the live reversal-aware readout excludes it. This also makes the
+  -- positive-lift assertion below deterministic for ANY hash split (holdout live
+  -- rate is exactly zero, treatment rate is strictly positive).
+  perform public.reverse_sale(v_business_a, v_sale_h1, 'v50 holdout return reversal', 'v50-reverse-h1-key');
+  if not exists (select 1 from public.retention_campaign_returns
+                  where campaign_id = v_campaign and client_id = v_h1) then
+    raise exception 'durable holdout return evidence must survive the reversal';
+  end if;
+
   -- --------------------------------------------------------------------------
   -- Lift readout math (owner). Split-independent absolute checks + arithmetic.
   -- --------------------------------------------------------------------------
@@ -216,8 +226,8 @@ begin
   end if;
   if (v_result->'treatment'->>'returned')::int <> 2
      or (v_result->'treatment'->>'revenue_cents')::bigint <> 10000
-     or (v_result->'holdout'->>'returned')::int <> 1
-     or (v_result->'holdout'->>'revenue_cents')::bigint <> 5000 then
+     or (v_result->'holdout'->>'returned')::int <> 0
+     or (v_result->'holdout'->>'revenue_cents')::bigint <> 0 then
     raise exception 'reversal-aware returns/revenue readout wrong: %', v_result;
   end if;
   if (v_result->'treatment'->>'members')::int + (v_result->'holdout'->>'members')::int <> 30
@@ -227,13 +237,10 @@ begin
   end if;
   -- Internal arithmetic consistency (bps, net lift, incremental counterfactual).
   if (v_result->'treatment'->>'return_rate_bps')::int <> (2 * 10000) / v_t_members
-     or (v_result->'holdout'->>'return_rate_bps')::int <> (1 * 10000) / v_h_members
-     or (v_result->>'net_lift_bps')::int
-        <> ((2 * 10000) / v_t_members) - ((1 * 10000) / v_h_members)
-     or (v_result->>'incremental_returns')::bigint
-        <> 2 - round(v_t_members::numeric * 1 / v_h_members)
-     or (v_result->>'incremental_revenue_cents')::bigint
-        <> 10000 - round(v_t_members::numeric * 5000 / v_h_members) then
+     or (v_result->'holdout'->>'return_rate_bps')::int <> 0
+     or (v_result->>'net_lift_bps')::int <> (2 * 10000) / v_t_members
+     or (v_result->>'incremental_returns')::bigint <> 2
+     or (v_result->>'incremental_revenue_cents')::bigint <> 10000 then
     raise exception 'incremental-lift arithmetic is inconsistent: %', v_result;
   end if;
   if (v_result->>'net_lift_bps')::int <= 0 then

@@ -19,6 +19,26 @@ CLAUDE.md-recorded residual has been closed by the v48 calendar rework — but t
 plan and a source read is not the same evidence class as a live two-clock proof. Run the drill below to
 turn "looks closed by inspection" into an accepted runtime fact rather than assuming it.
 
+## 1a. Confirmed findings from the 2026-07-23 rehearsal-chain replay (post-dates this plan's first draft)
+
+Running the full SQL suite matrix on a local replay of the complete canonical chain **inside the
+00:00–08:00 SGT window** (the exact window where the SGT calendar date is one day ahead of UTC)
+produced hard evidence for this gate:
+
+- **CONFIRMED DEFECT (fixed in v50a):** both C42 birth-date validators (`app.c42_profile_guard()` and
+  `public.customer_register_verified_phone(...)`) compared against `current_date` — the server-local
+  UTC date on Supabase — so an SGT-derived "today" birth date was rejected with `22023` during the
+  window. Proven by `db/tests/v45_birthday_benefits.sql` / `v46_customer_in_app_inbox.sql` failing
+  pre-fix and passing post-fix in the live window. Migration `v50a_sgt_birthdate_guard` (pending,
+  needs `RELEASE APPROVED`) repairs it; `db/tests/v50a_sgt_birthdate_guard.sql` pins the regression.
+- **Assessed and deliberately NOT hot-fixed** (internally consistent date-labeling skews, no rejection
+  or double/missed record; candidates for one coordinated SGT-normalization migration later):
+  `received_on` default `current_date` (init), `occurred_on` default (v11b expenses), `starts_on`
+  defaults (v2 retention_programs, v11b expense_recurrences, v37b draft fallback), the v11b recurrence
+  loop `next_run_on <= current_date` under the 19:xx-UTC cron (posts up to a day late in the window,
+  never skips or duplicates), and v18 age-bracket edges. The two-clock drill below should observe these
+  as known, accepted skews — they are not drill failures.
+
 ## 2. Preconditions
 
 - Two systems (or one system with its OS clock/timezone changed) — one set to Asia/Singapore, one set to
