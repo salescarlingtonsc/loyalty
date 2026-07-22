@@ -333,6 +333,51 @@ tr.click:hover td{background:#FBFAF8}
 .calendar-event:hover,.calendar-event:focus-visible{box-shadow:var(--shadow);z-index:3}.calendar-event b,.calendar-event-time{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-event-time{font-variant-numeric:tabular-nums;font-weight:650;margin-top:2px}
 .calendar-agenda{display:none}.calendar-agenda-item{display:grid;grid-template-columns:minmax(112px,auto) 1fr;gap:12px;min-height:44px;padding:12px 4px;border:0;border-bottom:1px solid var(--hair);border-radius:8px;color:inherit;cursor:pointer}.calendar-agenda-item:hover,.calendar-agenda-item:focus-visible{background:#FBF7F3}.calendar-agenda-time{font-variant-numeric:tabular-nums;line-height:1.45}
 .appointment-detail-modal .modal-card{width:min(760px,100%)}.appointment-detail-head{align-items:flex-start}.appointment-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px;margin-top:18px}.appointment-detail-section{border-top:1px solid var(--line);padding-top:16px;margin-top:18px}.appointment-detail-section h3{font-size:15px;margin-bottom:9px}.appointment-detail-list{display:grid;gap:8px;margin:0}.appointment-detail-list>div{display:grid;grid-template-columns:minmax(105px,34%) 1fr;gap:12px}.appointment-detail-list dt{color:var(--muted);font-size:12px;font-weight:700}.appointment-detail-list dd{margin:0;overflow-wrap:anywhere}.appointment-detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.appointment-reschedule-form{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}.appointment-reschedule-form[hidden]{display:none}.appointment-reschedule-feedback{margin-top:12px}.appointment-reschedule-feedback .schedule-suggestion{margin-top:0}
+/* Customer 360 (competitive audit §10 Phase 2): one header, one next-best-action, one timeline.
+   Pictogram-first, big tap targets, numbers over words — low-literacy-first per CLAUDE.md. */
+.c360-badges{display:flex;gap:7px;flex-wrap:wrap;margin:-4px 0 16px}
+.c360-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:100px;font-size:12px;font-weight:650;border:1px solid var(--hair);background:#FBF7F3;color:var(--ink2)}
+.c360-badge svg{color:currentColor}
+.c360-badge.vip{background:#F6EFFC;color:#7A2E9D;border-color:#E6D3F3}
+.c360-badge.regular{background:#E7F6EE;color:var(--green);border-color:#CBEAD8}
+.c360-badge.newc{background:var(--tint);color:var(--coral);border-color:#F3D3CB}
+.c360-badge.member{background:#EAF1FB;color:#1F5199;border-color:#D2E0F4}
+.c360-badge.package{background:#FFF6E8;color:#8A5A12;border-color:#EBD9B4}
+.c360-badge.consent-no{background:#F1EEE9;color:var(--muted)}
+.c360-nba{border:1px solid var(--hair);border-left:4px solid var(--coral);background:linear-gradient(180deg,#FFF7F4,#fff 62%);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;display:flex;gap:15px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--shadow)}
+.c360-nba-ic{flex:0 0 auto;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:var(--tint);color:var(--coral)}
+.c360-nba-body{flex:1 1 260px;min-width:0}
+.c360-nba-body .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--coral)}
+.c360-nba-body h2{font-size:1.16rem;margin:3px 0 4px;letter-spacing:-.02em}
+.c360-nba-body p{color:var(--ink2);font-size:13.5px;line-height:1.5}
+.c360-nba-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:13px}
+.c360-more{position:relative}
+.c360-more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:#fff;border:1px solid var(--hair);border-radius:var(--r-sm);box-shadow:var(--shadow-lg);padding:6px;min-width:230px;display:grid;gap:2px}
+.c360-more-menu[hidden]{display:none}
+.c360-more-menu button{display:block;text-align:left;width:100%;background:none;border:0;border-radius:8px;padding:9px 11px;font-size:13px;font-weight:650;color:var(--ink);cursor:pointer;min-height:44px}
+.c360-more-menu button:hover,.c360-more-menu button:focus-visible{background:#FBF7F3}
+.c360-more-menu .sub{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
+.c360-flash{animation:c360flash 1.3s var(--ease)}
+@keyframes c360flash{0%{box-shadow:0 0 0 0 rgba(194,65,53,.35)}100%{box-shadow:0 0 0 10px rgba(194,65,53,0)}}
+.c360-timeline{display:grid;gap:0;margin-top:8px;list-style:none;padding:0}
+.c360-tl-item{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:13px;align-items:start;padding:13px 2px;border-bottom:1px solid var(--hair)}
+.c360-tl-item:last-child{border-bottom:0}
+.c360-tl-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#F1EEE9;color:var(--ink2)}
+.c360-tl-ic.sale{background:#E7F6EE;color:var(--green)}
+.c360-tl-ic.reversal{background:#FBEAE7;color:var(--red)}
+.c360-tl-ic.appt{background:#EAF1FB;color:#1F5199}
+.c360-tl-ic.reward{background:var(--tint);color:var(--coral)}
+.c360-tl-ic.membership{background:#F6EFFC;color:#7A2E9D}
+.c360-tl-ic.package{background:#FFF6E8;color:#8A5A12}
+.c360-tl-main{min-width:0}
+.c360-tl-main .t{font-weight:650;font-size:13.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.c360-tl-main .d{color:var(--muted);font-size:12px;margin-top:3px;line-height:1.45;overflow-wrap:anywhere}
+.c360-tl-main .d .btn{margin-top:7px}
+.c360-tl-side{text-align:right;white-space:nowrap}
+.c360-tl-amt{font-weight:680;font-variant-numeric:tabular-nums;font-size:13.5px}
+.c360-tl-when{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;margin-top:3px}
+.c360-upcoming{color:var(--coral);font-weight:700}
+@media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
   .side{position:static;width:100%;max-width:100vw;min-width:0;height:auto;display:block;overflow:visible;padding:10px 12px;
@@ -690,6 +735,7 @@ let navOpen={};
    across the in-place re-renders that adding/retiring a customer field trigger. */
 let pendingCustomerSearch='';
 let pendingTillPhone='';
+let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
 let settingsActiveTab='workspace';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -731,7 +777,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   const invitation=preserveInvitation?pendingCustomerInvitationToken:'';
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;pendingCustomerInvitationToken=invitation;selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';settingsActiveTab='workspace';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';settingsActiveTab='workspace';
 }
 const $=(id)=>document.getElementById(id);
 const root=$('root');
@@ -2875,19 +2921,18 @@ async function clientDetail(id){
   let birthdayRedemptionIdem=null;
   let birthdayReversalIdem=null;
   const rewardRedemptionIdem=new Map();
-  const [{data:c,error},{data:pb},{data:cb},{data:sl},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:rwBr},{data:rwSv},{data:rwPr},{data:ctxBr},{data:ctxSv},{data:ctxPr},{data:cfDefs},{data:cfVals},{data:cfOpts},{data:birthdayBenefit}]=await Promise.all([
+  const [{data:c,error},{data:pb},{data:cb},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:rwBr},{data:rwSv},{data:rwPr},{data:ctxBr},{data:ctxSv},{data:ctxPr},{data:cfDefs},{data:cfVals},{data:cfOpts},{data:birthdayBenefit},{data:msRows},{data:cpRows}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
     sb.from('clients').select('id,business_id,full_name,phone,email,gender,referral_code,marketing_consent').eq('id',id).single(),
     sb.from('client_points_balance').select('points').eq('client_id',id),
     sb.from('client_credit_balance').select('balance_cents').eq('client_id',id),
-    sb.from('sales').select('*').eq('client_id',id).order('occurred_at',{ascending:false}).limit(10),
     sb.from('reward_grants').select('*, retention_programs(name)').eq('client_id',id).order('granted_at',{ascending:false}),
     sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
     sb.from('points_batches').select('remaining,expires_at').eq('client_id',id).gt('remaining',0).not('expires_at','is',null).order('expires_at').limit(1),
     sb.from('loyalty_rewards').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort').order('created_at'),
-    /* Full history (Feature 2) — separate, unlimited fetches so the existing 10-row KPI/list
-       logic above stays untouched exactly as it was ("fix nothing else"). */
+    /* Full history — one unlimited paged fetch drives both the Customer 360 timeline and the
+       net-visit/lifetime-spend totals below (the old duplicate 10-row summary query was unused). */
     fetchAllRows(()=>sb.from('sales').select('*',{count:'exact'}).eq('client_id',id)
       .order('occurred_at',{ascending:false}).order('id')).then(data=>({data})),
     sb.from('appointments').select('*, services!appointments_service_id_fkey(name)').eq('client_id',id).order('starts_at',{ascending:false}),
@@ -2903,7 +2948,11 @@ async function clientDetail(id){
     S.myRole==='owner'?sb.from('client_field_options').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort_order'):Promise.resolve({data:[]}),
     birthdayBenefitsEnabled
       ?sb.rpc('staff_get_customer_birthday_benefit',{p_business_id:S.biz.id,p_client_id:id})
-      :Promise.resolve({data:null})]);
+      :Promise.resolve({data:null}),
+    /* Membership + package events for the unified timeline and the status badges. These reuse
+       the same tables the Memberships / Packages pages already query, now scoped to one client. */
+    sb.from('memberships').select('*, membership_plans(name,price_cents,cadence)').eq('business_id',S.biz.id).eq('client_id',id).order('created_at',{ascending:false}),
+    sb.from('client_packages').select('*, package_plans(name,sessions)').eq('business_id',S.biz.id).eq('client_id',id).order('purchased_at',{ascending:false})]);
   if(!isClientDetailCurrent())return;
   if(error) throw error;
   let reversalData=null;
@@ -2911,14 +2960,24 @@ async function clientDetail(id){
   if(!isClientDetailCurrent())return;
   const saleWorkflow=Object.fromEntries((reversalData?.sales||[]).map(x=>[x.id,x]));
   const staffName=Object.fromEntries((stAll||[]).map(s=>[s.id,s.full_name||'Team member']));
-  /* Merge sales + appointments into one reverse-chronological timeline. Each entry keeps its
-     own date field for sorting (sale.occurred_at / appointment.starts_at) and is rendered
-     from its own shape — these are two different tables, not a union query. */
+  const nowIso=new Date().toISOString();
+  /* One unified reverse-chronological timeline. Each source keeps its own date field for sorting
+     and is rendered from its own shape (they are separate tables, not a union query): sales carry
+     reversal provenance from staff_get_reversal_workflows; appointments split past vs upcoming;
+     retention grants, membership enrolments and package purchases add their lifecycle facets. */
   const histSales=(allSl||[]).map(s=>({...(saleWorkflow[s.id]||{}),t:s.occurred_at,kind:'sale',id:s.id,saleKind:s.kind,
     amount:s.amount_cents,note:s.note,staff:staffName[s.staff_id]||null}));
-  const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:a.services?.name,status:a.status}));
+  const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:a.services?.name,status:a.status,
+    upcoming:(a.starts_at||'')>nowIso&&a.status!=='cancelled'&&a.status!=='completed'}));
   const histRedemptions=(reversalData?.redemptions||[]).map(r=>({t:r.redeemed_at,kind:'redemption',...r}));
-  const history=[...histSales,...histAppts,...histRedemptions].sort((a,b)=>(b.t||'').localeCompare(a.t||''));
+  const histGrants=(rg||[]).map(g=>({t:g.granted_at,kind:'grant',program:g.retention_programs?.name,
+    reward_label:g.reward_label,fulfillment_kind:g.fulfillment_kind,reward_value:g.reward_value,reward_item:g.reward_item}));
+  const histMemberships=(msRows||[]).map(m=>({t:m.created_at,kind:'membership',plan:m.membership_plans?.name,
+    status:m.status,cadence:m.membership_plans?.cadence,renews:m.current_period_end}));
+  const histPackages=(cpRows||[]).map(k=>({t:k.purchased_at,kind:'package',plan:k.package_plans?.name,
+    sessions:k.package_plans?.sessions,remaining:k.remaining,status:k.status}));
+  const history=[...histSales,...histAppts,...histRedemptions,...histGrants,...histMemberships,...histPackages]
+    .sort((a,b)=>(b.t||'').localeCompare(a.t||''));
   let histShown=50;
   const pts=pb?.[0]?.points||0,cred=cb?.[0]?.balance_cents||0,prog=lp?.[0];
   const nextExp=xb?.[0];
@@ -2946,8 +3005,124 @@ async function clientDetail(id){
   /* Net visits use the complete paged sale history, not the 10-row summary query. Each
      immutable visit snapshot contributes +1 and its compensating reversal contributes -1. */
   const netVisits=(allSl||[]).filter(s=>s.counts_as_visit).reduce((n,s)=>n+(s.reversal_of?-1:1),0);
+  /* Lifetime spend uses the app's canonical net-revenue methodology (see Reports): reversal rows
+     carry a signed-negative amount_cents, so a plain additive sum over counts_as_revenue rows is
+     already net of every correction. */
+  const lifetimeSpendCents=(allSl||[]).filter(s=>s.counts_as_revenue).reduce((a,s)=>a+(s.amount_cents||0),0);
+  const dayMs=86400000;
+  const lastVisitIso=(allSl||[]).filter(s=>s.counts_as_visit&&!s.reversal_of)
+    .reduce((mx,s)=>(s.occurred_at||'')>mx?s.occurred_at:mx,'');
+  const lastVisitDays=lastVisitIso?Math.floor((Date.now()-new Date(lastVisitIso).getTime())/dayMs):null;
+  /* Which reward (if any) the customer can redeem right now, honouring the active model: a catalog
+     model reads loyalty_rewards, classic uses the program threshold. Deterministic — no guessing. */
+  let rewardReady=false,rewardReadyLabel='',pointsToUnlock=null;
+  if(prog&&prog.active){
+    if(prog.loyalty_model&&prog.loyalty_model!=='classic'){
+      const sorted=[...(rwList||[])].sort((a,b)=>a.cost_points-b.cost_points);
+      const afford=sorted.filter(r=>pts>=r.cost_points);
+      if(afford.length){rewardReady=true;const best=afford[afford.length-1];rewardReadyLabel=best.customer_name||best.name||'a reward';}
+      else if(sorted.length){pointsToUnlock=sorted[0].cost_points-pts;rewardReadyLabel=sorted[0].customer_name||sorted[0].name||'a reward';}
+    }else if(prog.redeem_points){
+      if(pts>=prog.redeem_points){rewardReady=true;rewardReadyLabel=`${money(prog.reward_credit_cents)} credit`;}
+      else{pointsToUnlock=prog.redeem_points-pts;rewardReadyLabel=`${money(prog.reward_credit_cents)} credit`;}
+    }
+  }
+  const activeMembership=(msRows||[]).find(m=>m.status==='active');
+  const activePackage=(cpRows||[]).find(k=>k.status==='active'&&k.remaining>0);
+  /* Deep-link plumbing to EXISTING write surfaces only. Quick earn needs a usable SG mobile on file
+     (the till identifies the customer by phone); New appointment prefills the existing dropdown. */
+  const digitsPhone=String(c.phone||'').replace(/\D/g,'');
+  const localMobile=digitsPhone.length===10&&digitsPhone.startsWith('65')?digitsPhone.slice(2):digitsPhone.slice(-8);
+  const hasTillPhone=/^[89]\d{7}$/.test(localMobile);
+  const canQuickEarn=canReadModule('till')&&canReadModule('clients')&&hasRoleCapability('create_sales')&&hasTillPhone;
+  const canBookAppt=canWriteModule('appointments');
+  const goQuickEarn=()=>{pendingTillPhone=localMobile;nav('#/till')};
+  const goNewAppt=()=>{pendingApptClientId=id;nav('#/appointments')};
+  const focusCard=(cardId)=>{
+    const el=$(cardId);if(!el)return;
+    el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+    el.classList.add('c360-flash');setTimeout(()=>{el.classList.remove('c360-flash')},1400);
+    (el.querySelector('button:not([disabled]),select,a')||el).focus?.({preventScroll:true});
+  };
+  /* Status badges — every one is derived from data already fetched above (no persona table read). */
+  const badges=[];
+  if(netVisits>=10)badges.push({cls:'vip',icon:'loyalty',label:`VIP · ${netVisits} visits`});
+  else if(netVisits>=3)badges.push({cls:'regular',icon:'check',label:`Regular · ${netVisits} visits`});
+  else if(netVisits<=0)badges.push({cls:'newc',icon:'add',label:'New customer'});
+  else badges.push({cls:'',icon:'customers',label:`${netVisits} visit${netVisits===1?'':'s'}`});
+  if(activeMembership)badges.push({cls:'member',icon:'memberships',label:`Member${activeMembership.membership_plans?.name?' · '+activeMembership.membership_plans.name:''}`});
+  if(activePackage)badges.push({cls:'package',icon:'packages',label:`Package · ${activePackage.remaining} left`});
+  if(cred>0)badges.push({cls:'',icon:'giftcard',label:`${money(cred)} credit`});
+  if(birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available')badges.push({cls:'newc',icon:'loyalty',label:'Birthday reward'});
+  badges.push(c.marketing_consent?{cls:'regular',icon:'check',label:'PDPA consent'}:{cls:'consent-no',icon:'info',label:'No marketing consent'});
+  const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:14})}${esc(b.label)}</span>`).join('')}</div>`;
+  /* Next-best-action: a deterministic priority cascade over the signals above. First matching rule
+     whose deep-link the current role can actually use becomes the ONE primary action; the remaining
+     actionable rules collapse into a "More options" menu. Every action lands on an existing surface. */
+  const expDays=nextExp?Math.max(0,Math.round((new Date(nextExp.expires_at).getTime()-Date.now())/dayMs)):null;
+  const candidates=[];
+  if(birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available'){
+    candidates.push({actionKey:'birthday',iconName:'loyalty',title:'Birthday reward is ready',
+      reason:'Their birthday window is open now. Redeem the treat before it lapses — the team never sees the date.',
+      ctaLabel:'Go to birthday reward',run:canRedeemBirthday?()=>focusCard('c360-birthday'):null});
+  }
+  if(nextExp&&pts>0&&expDays!=null&&expDays<=30){
+    if(rewardReady){
+      candidates.push({actionKey:'loyalty',iconName:'redeem',title:'Points expire soon — redeem now',
+        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${nextExp.expires_at.slice(0,10)} (in ${expDays} day${expDays===1?'':'s'}). They already have enough for ${rewardReadyLabel} — redeem so nothing is lost.`,
+        ctaLabel:'Redeem reward',run:canWriteLoyalty?()=>focusCard('c360-loyalty'):null});
+    }else{
+      candidates.push({actionKey:'quickearn',iconName:'till',title:'Points expire soon',
+        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${nextExp.expires_at.slice(0,10)} (in ${expDays} day${expDays===1?'':'s'})${pointsToUnlock?`, ${pointsToUnlock} short of ${rewardReadyLabel}`:''}. Invite a visit so they build toward a reward before then.`,
+        ctaLabel:'Quick earn',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
+    }
+  }
+  if(rewardReady){
+    candidates.push({actionKey:'loyalty',iconName:'redeem',title:'A reward is ready to redeem',
+      reason:`They have ${pts} point${pts===1?'':'s'} — enough for ${rewardReadyLabel}. Redeeming it is a reason to come back.`,
+      ctaLabel:'Redeem reward',run:canWriteLoyalty?()=>focusCard('c360-loyalty'):null});
+  }
+  if(netVisits>=3&&lastVisitDays!=null&&lastVisitDays>45){
+    candidates.push({actionKey:canBookAppt?'appt':'quickearn',iconName:'appointments',title:'Regular customer is overdue',
+      reason:`${netVisits} visits on record, but none in ${lastVisitDays} days. Book them back in before you lose them.`,
+      ctaLabel:canBookAppt?'New appointment':'Quick earn',run:canBookAppt?goNewAppt:(canQuickEarn?goQuickEarn:null)});
+  }
+  if(cred>0){
+    candidates.push({actionKey:'quickearn',iconName:'giftcard',title:'Store credit is waiting',
+      reason:`${money(cred)} in spendable credit is sitting unused. Remind them to spend it on the next visit.`,
+      ctaLabel:'Quick earn',run:canQuickEarn?goQuickEarn:null});
+  }
+  if(netVisits<=0){
+    candidates.push({actionKey:'quickearn',iconName:'till',title:'New customer — no visits yet',
+      reason:'Record their first purchase to start earning points and unlock loyalty automatically.',
+      ctaLabel:'Quick earn',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
+  }
+  candidates.push({actionKey:'quickearn',iconName:'check',title:'Everything looks healthy',
+    reason:`${lastVisitDays!=null?`Last visit ${lastVisitDays} day${lastVisitDays===1?'':'s'} ago.`:'No recent activity to flag.'} Record the next visit when they come in.`,
+    ctaLabel:'Quick earn',run:canQuickEarn?goQuickEarn:null});
+  const primaryNba=candidates.find(x=>x.run)||candidates[0];
+  const nbaSeen=new Set([primaryNba.actionKey]);
+  const secondaryNba=candidates.filter(x=>x!==primaryNba&&x.run&&!nbaSeen.has(x.actionKey)&&nbaSeen.add(x.actionKey)).slice(0,4);
+  const nbaHtml=`<section class="c360-nba" aria-label="Recommended next action">
+    <div class="c360-nba-ic" aria-hidden="true">${CUI.icon(primaryNba.iconName,{size:24})}</div>
+    <div class="c360-nba-body">
+      <p class="eyebrow">Next best action</p>
+      <h2>${esc(primaryNba.title)}</h2>
+      <p>${esc(primaryNba.reason)}</p>
+      <div class="c360-nba-actions">
+        ${primaryNba.run?`<button class="btn" id="c360Primary">${CUI.icon(primaryNba.iconName,{size:17})}<span>${esc(primaryNba.ctaLabel)}</span></button>`:'<span class="pill off">No action available for your role</span>'}
+        ${secondaryNba.length?`<div class="c360-more"><button type="button" class="btn ghost sm" id="c360MoreBtn" aria-expanded="false" aria-controls="c360MoreMenu">More options</button>
+          <div class="c360-more-menu" id="c360MoreMenu" hidden>${secondaryNba.map((s,i)=>`<button type="button" data-c360-secondary="${i}">${esc(s.ctaLabel)}<span class="sub">${esc(s.title)}</span></button>`).join('')}</div></div>`:''}
+      </div>
+    </div>
+  </section>`;
   const detailSubtitle=`${c.phone||''} ${c.email||''} · ${c.gender||'gender not set'}`.trim();
   const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:17})}<span>All customers</span></a>`;
+  const headerActions=[
+    canQuickEarn?CUI.action({id:'c360QuickEarn',label:'Quick earn',iconName:'till'}):'',
+    canBookAppt?CUI.action({id:'c360NewAppt',label:'New appointment',iconName:'appointments',variant:'secondary'}):'',
+    allCustomersAction
+  ].filter(Boolean).join('');
   let birthdayCardMarkup='';
   if(birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status!=='unavailable'){
     const birthdayStatusLabel=birthdayBenefit.status==='redeemed'
@@ -2959,19 +3134,22 @@ async function clientDetail(id){
     const birthdayReverseMarkup=canReverseBirthday&&birthdayBenefit.status==='redeemed'&&birthdayBenefit.redemption==='redeemed'
       ?`<details style="margin-top:10px"><summary class="small">Owner correction</summary><label for="birthdayReverseReason" class="small" style="display:block;margin-top:8px">Reason for reversal</label><textarea id="birthdayReverseReason" rows="2" maxlength="500" placeholder="Required: explain the counter correction"></textarea><button class="btn danger sm" id="birthdayReverse" style="margin-top:8px">Reverse birthday redemption</button><p id="birthdayReverseStatus" class="muted small" role="status" aria-live="polite" style="margin-top:6px"></p></details>`
       :'';
-    birthdayCardMarkup=`<div class="card"><b>Birthday benefit</b>
+    birthdayCardMarkup=`<div class="card" id="c360-birthday"><b>Birthday benefit</b>
       <p class="muted small" style="margin-top:7px">${esc(birthdayBenefit.label||'Birthday benefit')} · ${esc(birthdayBenefit.display||String(birthdayBenefit.status||'').replaceAll('_',' '))}</p>
       <p class="muted small" style="margin-top:5px">${birthdayBenefit.status==='available'?'Available to redeem now.':birthdayBenefit.status==='expired'?'No longer available.':'Fulfilment status is shown above.'} The team never sees the customer’s birthday date or validity window.</p>
       ${birthdayRedeemMarkup}${birthdayReverseMarkup}</div>`;
   }
-  routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:allCustomersAction,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:headerActions,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
+    ${badgesHtml}
+    ${nbaHtml}
     <div class="kpis">
+      <div class="card kpi"><div class="l">Visits</div><div class="v">${netVisits}</div></div>
+      <div class="card kpi"><div class="l">Lifetime spend</div><div class="v">${money(lifetimeSpendCents)}</div></div>
       <div class="card kpi"><div class="l">Points</div><div class="v">${pts}</div></div>
       <div class="card kpi"><div class="l">Spendable credit</div><div class="v">${money(cred)}</div></div>
-      <div class="card kpi"><div class="l">Net visits on record</div><div class="v">${netVisits}</div></div>
     </div>
     <div class="split" style="margin-top:16px">
-      <div class="card"><b>Loyalty</b>
+      <div class="card" id="c360-loyalty"><b>Loyalty</b>
         ${prog&&prog.active?(prog.loyalty_model&&prog.loyalty_model!=='classic'
         ?`<p class="muted small" style="margin:6px 0 10px">${prog.loyalty_model==='stamps'
             ?`Stamp card — 1 stamp per ${money(prog.stamp_per_cents||500)} spent · balance <b>${pts} stamps</b>`
@@ -3007,10 +3185,32 @@ async function clientDetail(id){
       ${birthdayCardMarkup}</div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
-    <div class="card" style="margin-top:16px"><b>Full history</b><p class="muted small" style="margin:4px 0 8px">Every service and sale, ever — newest first.</p>
+    <div class="card" style="margin-top:16px"><b>Timeline</b><p class="muted small" style="margin:4px 0 8px">Every visit, sale, appointment, reward, membership and package — newest first.</p>
       <div id="histBody">${renderHistPage(history,histShown)}</div>
       ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
     </div>`;
+  /* Next-best-action + header quick actions. Every handler routes to an existing surface — no new
+     write path is introduced here. */
+  if($('c360Primary')&&primaryNba.run)$('c360Primary').onclick=primaryNba.run;
+  if($('c360QuickEarn'))$('c360QuickEarn').onclick=goQuickEarn;
+  if($('c360NewAppt'))$('c360NewAppt').onclick=goNewAppt;
+  const moreBtn=$('c360MoreBtn'),moreMenu=$('c360MoreMenu');
+  if(moreBtn&&moreMenu){
+    /* Outside-click listener is bound only while the menu is open and removed on close, so
+       repeated clientDetail re-renders never accumulate document-level listeners. */
+    const onOutside=(e)=>{if(!moreMenu.contains(e.target)&&e.target!==moreBtn)closeMenu()};
+    function closeMenu(){moreMenu.hidden=true;moreBtn.setAttribute('aria-expanded','false');document.removeEventListener('click',onOutside)}
+    moreBtn.onclick=(e)=>{
+      e.stopPropagation();
+      const open=moreMenu.hidden;
+      if(open){moreMenu.hidden=false;moreBtn.setAttribute('aria-expanded','true');moreMenu.querySelector('button')?.focus();setTimeout(()=>document.addEventListener('click',onOutside),0)}
+      else closeMenu();
+    };
+    moreMenu.querySelectorAll('[data-c360-secondary]').forEach(b=>b.onclick=()=>{
+      const action=secondaryNba[Number(b.dataset.c360Secondary)];closeMenu();action?.run?.();
+    });
+    moreMenu.addEventListener('keydown',(e)=>{if(e.key==='Escape'){closeMenu();moreBtn.focus()}});
+  }
   document.querySelectorAll('.cfvSave').forEach(b=>b.onclick=async()=>{
     const el=$(`cfv-${b.dataset.id}`),type=b.dataset.type,raw=el.value;
     if(raw==='')return toast('Choose or enter a value, or use Clear');
@@ -3107,31 +3307,61 @@ async function clientDetail(id){
   };
   bindReversalButtons(()=>clientDetail(id));
 }
-/* Renders the first n entries of a merged sale+appointment timeline (Feature 2). Each row
-   shape differs by kind.kind (sale vs appointment) since they come from different tables. */
+/* Renders the first n entries of the unified Customer 360 timeline. Each entry keeps its own
+   shape (sales carry reversal provenance; appointments split past/upcoming; grants, membership
+   and package rows add their own facets) — these come from different tables, not a union query.
+   Rendered as a pictogram-first list (low-literacy-first, CLAUDE.md) while preserving the reversal
+   buttons' data-reverse-kind/data-reverse-id hooks so bindReversalButtons keeps working. */
 function renderHistPage(history,n){
   const rows=history.slice(0,n);
-  if(!rows.length) return '<p class="muted small" style="margin-top:6px">No history yet.</p>';
-  return `<table><tr><th>Date</th><th>Type</th><th>Details</th><th>Amount</th><th>Served by</th></tr>
-    ${rows.map(h=>{
-      if(h.kind==='sale'){
-        const relation=h.is_reversal?`<span class="pill no">reversal of ${esc(h.original_sale_id||'')}</span>`
-          :h.reversal_sale_id?`<span class="pill off">reversed → ${esc(h.reversal_sale_id)}</span>`:'';
-        const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
-          :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
-        return `<tr><td>${sgt(h.t)||''}</td><td>Sale ${relation}</td><td>${esc((h.saleKind||h.kind||'').replace('_',' '))}${h.note?' — '+esc(h.note):''}${h.is_package_session?'<br><span class="muted small">Package session · reversal restores one session with no payment refund</span>':''}</td>
-          <td>${money(Number((h.amount??h.amount_cents)??0))}${h.reversal_sale_id?`<br><span class="muted small">Net ${money(Number(h.net_amount_cents||0))}</span>`:''}</td><td class="muted">${esc(h.staff||'—')}<br>${action}</td></tr>`;
-      }
-      if(h.kind==='redemption'){
-        const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
-        const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
-          :`<span class="muted small">${esc(h.refusal_reason||'Not reversible')}</span>`;
-        return `<tr><td>${sgt(h.t)||''}</td><td>Reward ${relation}</td><td>${esc(h.reward_name||'Loyalty reward')} · ${Number(h.points_spent||0)} points${h.credit_cents?` → ${money(Number(h.credit_cents))} credit`:''}</td>
-          <td class="muted">—</td><td>${action}</td></tr>`;
-      }
-      return `<tr><td>${sgt(h.t)||''}</td><td>Appointment</td><td>${esc(h.service||'general visit')}</td>
-        <td class="muted">—</td><td><span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span></td></tr>`;
-    }).join('')}</table>`;
+  if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity yet. When this customer buys, books, or earns a reward, it appears here.</div>';
+  const when=t=>`<div class="c360-tl-when">${esc(sgt(t)||'')}</div>`;
+  const item=(tone,iconName,titleHtml,detailHtml,sideHtml)=>`<li class="c360-tl-item">
+    <span class="c360-tl-ic ${tone}" aria-hidden="true">${CUI.icon(iconName,{size:17})}</span>
+    <div class="c360-tl-main"><div class="t">${titleHtml}</div>${detailHtml?`<div class="d">${detailHtml}</div>`:''}</div>
+    <div class="c360-tl-side">${sideHtml||''}</div></li>`;
+  return `<ul class="c360-timeline">${rows.map(h=>{
+    if(h.kind==='sale'){
+      const isRev=!!h.is_reversal;
+      const relation=isRev?`<span class="pill no">reversal of ${esc(h.original_sale_id||'')}</span>`
+        :h.reversal_sale_id?`<span class="pill off">reversed → ${esc(h.reversal_sale_id)}</span>`:'';
+      const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
+        :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
+      const detail=`${esc((h.saleKind||'sale').replace('_',' '))}${h.staff?' · '+esc(h.staff):''}${h.note?' — '+esc(h.note):''}`
+        +`${h.is_package_session?'<br><span class="muted small">Package session · reversal restores one session with no payment refund</span>':''}`
+        +`${action?'<br>'+action:''}`;
+      const amt=Number((h.amount??h.amount_cents)??0);
+      const side=`<div class="c360-tl-amt">${money(amt)}</div>${h.reversal_sale_id?`<div class="c360-tl-when">Net ${money(Number(h.net_amount_cents||0))}</div>`:''}${when(h.t)}`;
+      return item(isRev?'reversal':'sale',isRev?'retention':'sales',`${isRev?'Reversal':'Sale'} ${relation}`,detail,side);
+    }
+    if(h.kind==='redemption'){
+      const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
+      const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
+        :`<span class="muted small">${esc(h.refusal_reason||'Not reversible')}</span>`;
+      const detail=`${esc(h.reward_name||'Loyalty reward')} · ${Number(h.points_spent||0)} points${h.credit_cents?` → ${money(Number(h.credit_cents))} credit`:''}<br>${action}`;
+      return item('reward','redeem',`Reward redeemed ${relation}`,detail,when(h.t));
+    }
+    if(h.kind==='grant'){
+      const value=h.fulfillment_kind==='credit'?money(Number(h.reward_value||0))
+        :h.fulfillment_kind==='discount_pct'?`${h.reward_value}% off`:esc(h.reward_item||'free item');
+      const detail=`${esc(h.program||'Retention program')} · ${esc(h.reward_label||'Reward')} · ${value}`;
+      const side=`${h.fulfillment_kind==='credit'?`<div class="c360-tl-amt">${money(Number(h.reward_value||0))}</div>`:''}${when(h.t)}`;
+      return item('reward','loyalty','Retention reward earned',detail,side);
+    }
+    if(h.kind==='membership'){
+      const status=`<span class="pill ${h.status==='active'?'on':h.status==='cancelled'?'no':'off'}">${esc((h.status||'').replace(/_/g,' '))}</span>`;
+      const detail=`${esc(h.plan||'Membership')}${h.cadence?' · '+esc(h.cadence):''}${h.renews?' · renews '+esc(String(h.renews).slice(0,10)):''}`;
+      return item('membership','memberships',`Membership ${status}`,detail,when(h.t));
+    }
+    if(h.kind==='package'){
+      const status=`<span class="pill ${h.status==='active'?'on':'off'}">${esc((h.status||'').replace(/_/g,' '))}</span>`;
+      const detail=`${esc(h.plan||'Package')} · ${Number(h.remaining||0)}/${h.sessions||'?'} sessions left`;
+      return item('package','packages',`Package ${status}`,detail,when(h.t));
+    }
+    const status=`<span class="pill ${h.status==='completed'?'ok':h.status==='booked'?'new':'off'}">${esc(h.status||'')}</span>`;
+    const title=`Appointment${h.upcoming?' <span class="c360-upcoming">· upcoming</span>':''}`;
+    return item('appt','appointments',title,`${esc(h.service||'general visit')} · ${status}`,when(h.t));
+  }).join('')}</ul>`;
 }
 
 /* ---------- quick earn (8-digit phone lookup + amount — the counter flow) ----------
@@ -4506,6 +4736,9 @@ async function giftcardsPage(){
 async function appointmentsPage(){
   disposeCurrentRoute();
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  // Customer 360 hand-off: capture the prefilled customer once, up front, so it can never leak
+  // into a later visit even if this page early-returns (no branch / read-only).
+  const apptPrefillClient=pendingApptClientId;pendingApptClientId='';
   const canWrite=canWriteModule('appointments');
   const canComplete=canWrite&&hasRoleCapability('create_sales');
   routeMain.innerHTML=CUI.loadingState({title:'Appointments',iconName:'appointments'});
@@ -4634,6 +4867,16 @@ async function appointmentsPage(){
   }
   if(canWrite){
     syncFormOptions();
+    /* Customer 360 deep-link: a customer handed in via pendingApptClientId (captured above as
+       apptPrefillClient) pre-selects that customer in the existing #ac dropdown — same select,
+       no new query. The form is then brought into view so staff land ready to pick a time. */
+    if(apptPrefillClient){
+      const clientSelect=$('ac');
+      if(clientSelect&&[...clientSelect.options].some(o=>o.value===apptPrefillClient)){
+        clientSelect.value=apptPrefillClient;
+        clientSelect.closest('.appointment-form-card')?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+      }
+    }
     $('as').onchange=()=>{$('generalDuration').hidden=$('as').value!=='';invalidateFormRequests()};
     ['ad','at','astf','apDuration'].forEach(id=>$(id).onchange=()=>invalidateFormRequests());
     $('ac').onchange=()=>invalidateFormRequests({clearSuggestions:false,availability:false});
