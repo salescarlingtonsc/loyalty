@@ -31,13 +31,16 @@ test('keyless classic redemption is no longer application executable', async () 
 test('every shipped redemption call sends a stable retry key', async () => {
   const app = await read('app/index.html');
   const calls = [...app.matchAll(/sb\.rpc\('(redeem_points|redeem_reward(?:_at_context)?)',\{([\s\S]*?)\}\)/g)];
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 2,
+    'redemption remains on customer detail; the single-purpose Quick earn page must not add a third path');
   for (const [, rpc, body] of calls) {
     assert.match(body, /p_idempotency_key\s*:/i, `${rpc} call is missing p_idempotency_key`);
   }
   assert.match(app, /if\(!classicRedemptionIdem\) classicRedemptionIdem=crypto\.randomUUID\(\)/);
   assert.match(app, /rewardRedemptionIdem\.has\(b\.dataset\.r\)/);
-  assert.match(app, /if\(!redemptionIdem\) redemptionIdem=crypto\.randomUUID\(\)/);
+  const tillStart = app.indexOf('async function tillPage(){');
+  const tillEnd = app.indexOf('async function salesPage(){',tillStart);
+  assert.doesNotMatch(app.slice(tillStart,tillEnd),/redeem_points|redeem_reward|redemptionIdem/);
 });
 
 test('operation table is RLS-protected and has no client write grant', async () => {

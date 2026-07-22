@@ -341,15 +341,10 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
     'manual balance adjustment must remain owner-only');
 
   const tillPage = appSection(app, 'async function tillPage(){', 'async function salesPage(){');
-  assert.match(tillPage, /const canWriteLoyalty=canWriteModule\('loyalty'\)/i);
-  assert.match(tillPage,
-    /tillClassic&&canWriteLoyalty&&cust\.can_redeem\?`[\s\S]{0,300}?id="tRedeem"/i,
-    'loyalty:rw must expose classic Till redemption when the customer is eligible');
-  assert.doesNotMatch(tillPage,
-    /tillClassic&&cust\.can_redeem\?`[\s\S]{0,300}?id="tRedeem"/i,
-    'loyalty:r must not receive the classic Till redemption control');
-  assert.match(tillPage, /!canWriteLoyalty&&cust\.can_redeem\?[\s\S]{0,200}?read only for your role/i,
-    'an eligible loyalty:r Till user must receive an explicit read-only cue');
+  assert.doesNotMatch(tillPage, /redeem_points|redeem_reward|tRedeem|can_redeem/i,
+    'Quick earn must stay a single-purpose phone-and-spend flow without redemption choices');
+  assert.match(tillPage, /record_sale_by_phone/i,
+    'Quick earn must retain the atomic sale-and-points path');
 
   const loyaltyPage = appSection(app, 'async function loyaltyPage(', 'async function retentionPage(');
   assert.match(loyaltyPage, /const canWriteLoyalty=canWriteModule\('loyalty'\)/i);

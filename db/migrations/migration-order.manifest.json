@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 69,
-  "executableCount": 55,
+  "itemCount": 70,
+  "executableCount": 56,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -647,6 +647,14 @@
       "semanticVersion": "v46a",
       "proposedDeployVersion": "20260722000109",
       "sha256": "b7a82268626234af24cba95fce8a9a5041d649b84c898e420e63c797724815d4"
+    },
+    {
+      "order": 70,
+      "kind": "executable",
+      "path": "db/migrations/20260722050339_frenly_v47_smart_staff_scheduling.sql",
+      "semanticVersion": "v47",
+      "proposedDeployVersion": "20260722000110",
+      "sha256": "bd483583608a065888a0469243b79067d626209709146d1f18eff73548432fac"
     }
   ]
 }

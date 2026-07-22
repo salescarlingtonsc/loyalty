@@ -262,6 +262,32 @@ tr.click:hover td{background:#FBFAF8}
 .retention-taxonomy-copy{display:flex;align-items:center;flex:1 1 180px;flex-wrap:wrap;gap:8px;min-width:0}.retention-taxonomy-copy>span:first-child{min-width:0;overflow-wrap:anywhere}
 .retention-taxonomy-actions{display:flex;align-items:center;flex:0 1 auto;flex-wrap:wrap;gap:8px;min-width:0}
 .spacer{flex:1}
+.frontline-card{max-width:460px;margin:0 auto}
+.frontline-phone{font-size:34px;text-align:center;height:64px;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.frontline-keypad{grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.frontline-keypad .btn{height:60px;font-size:22px;font-weight:700}
+.frontline-tenders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
+.frontline-tenders .btn{min-height:52px;font-size:15px}
+.frontline-tenders .btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.appointment-layout{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);gap:16px;align-items:start}
+.appointment-form-card{position:sticky;top:82px}
+.appointment-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.appointment-toolbar select{width:auto;min-width:150px;margin:0}
+.schedule-suggestion{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
+.schedule-suggestion h3{font-size:14px}.schedule-suggestion-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.calendar-week-scroll{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;max-height:70vh}
+.calendar-week{min-width:920px}
+.calendar-week-head{display:grid;grid-template-columns:64px repeat(7,minmax(116px,1fr));position:sticky;top:0;z-index:4;background:#fff;border-bottom:1px solid var(--line)}
+.calendar-week-head>div{padding:10px 8px;border-left:1px solid var(--hair);font-size:12px;font-weight:700;text-align:center}
+.calendar-week-head>div:first-child{border-left:0}
+.calendar-week-body{display:grid;grid-template-columns:64px repeat(7,minmax(116px,1fr));position:relative}
+.calendar-time-axis{position:relative;border-right:1px solid var(--line)}
+.calendar-time-label{position:absolute;right:8px;transform:translateY(-8px);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.calendar-day{position:relative;border-right:1px solid var(--hair);background-image:linear-gradient(to bottom,transparent calc(100% - 1px),var(--line) 0);background-size:100% var(--calendar-hour-height,64px);background-repeat:repeat-y}
+.calendar-day:last-child{border-right:0}
+.calendar-event{position:absolute;left:4px;right:4px;display:block;width:calc(100% - 8px);min-height:44px;overflow:hidden;padding:6px 7px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 13%,#fff);color:var(--ink);text-align:left;font-size:11px;line-height:1.28;z-index:2}
+.calendar-event:hover{box-shadow:var(--shadow);z-index:3}.calendar-event b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calendar-agenda{display:none}.calendar-agenda-item{display:grid;grid-template-columns:82px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--hair)}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
   .side{position:static;width:100%;max-width:100vw;min-width:0;height:auto;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;
@@ -269,7 +295,8 @@ tr.click:hover td{background:#FBFAF8}
   .side .foot,.side .logo{display:none}
   .nav{display:flex;flex:0 0 max-content;min-width:0}
   .appbar{padding:10px 18px}
-  .charts,.split{grid-template-columns:1fr}
+  .charts,.split,.appointment-layout{grid-template-columns:1fr}
+  .appointment-form-card{position:static}
   .chart-frame{block-size:220px}
   .main{padding:18px 18px 40px}
 }
@@ -281,6 +308,7 @@ tr.click:hover td{background:#FBFAF8}
   .cui-table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(108px,42%) 1fr;gap:12px;padding:8px 4px;border:0;text-align:right;overflow-wrap:anywhere}
   .cui-table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left}
   .cui-table[data-responsive="true"] td:empty{display:none}
+  .calendar-week-scroll{display:none}.calendar-agenda{display:block}.appointment-toolbar select{width:100%}
 }
 @media(max-width:375px){
   .main{padding:16px 12px 34px}.card{padding:17px}.cui-page-title h1,.topbar h1{font-size:1.55rem}
@@ -499,7 +527,7 @@ const INDUSTRIES={
   retail:{em:'🛍️',label:'Retail',mods:['dashboard','till','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
   other:{em:'🏪',label:'Other',mods:ALLMODS}
 };
-const MODULES={dashboard:['home','Dashboard'],till:['till','Till'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
+const MODULES={dashboard:['home','Dashboard'],till:['till','Quick earn'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
   sales:['sales','Sales'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
   inventory:['inventory','Inventory'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
@@ -521,8 +549,9 @@ const hasRoleCapability=capability=>ROLE_CAPABILITIES[S.myRole]?.has(capability)
    each full page load but persists across in-session route changes. */
 const NAVGROUPS=[
   {key:'home',icon:'home',label:null,items:['dashboard']},
+  {key:'frontline',icon:'till',label:null,items:['till']},
   {key:'customers',icon:'customers',label:'Customers',items:['clients','loyalty','retention','referrals','memberships','giftcards']},
-  {key:'operations',icon:'services',label:'Operations',items:['till','appointments','bookings','waitlist','sales','services','inventory','packages','branches']},
+  {key:'operations',icon:'services',label:'Operations',items:['appointments','bookings','waitlist','sales','services','inventory','packages','branches']},
   {key:'insights',icon:'reports',label:'Insights',items:['reports','staffperf','dailyreport','pnl','expenses']}
 ];
 let navOpen={};
@@ -621,7 +650,10 @@ function expiryDaysForMode(mode,daysInput){
 }
 function createLatestRequestGate(isInstanceCurrent){
   let generation=0;
-  return {begin(){const requestGeneration=++generation;return()=>requestGeneration===generation&&isInstanceCurrent()}};
+  return {
+    begin(){const requestGeneration=++generation;return()=>requestGeneration===generation&&isInstanceCurrent()},
+    invalidate(){generation+=1}
+  };
 }
 function nav(h){location.hash=h}
 window.addEventListener('hashchange',route);
@@ -748,7 +780,9 @@ async function route(){
       S.hasCustomerPersona=!!((personas?.staff||[]).some(p=>p.business_slug===S.biz.slug)
         &&(personas?.customer||[]).length);
     }
-    const page=workspacePage?[workspacePage]:(h.replace('#/','')||'dashboard').split('/');
+    const frontlineDefault=!workspacePage&&h==='#/'&&['staff','frontdesk'].includes(S.myRole)&&S.myModules.includes('till');
+    const page=workspacePage?[workspacePage]:frontlineDefault?['till']:(h.replace('#/','')||'dashboard').split('/');
+    if(frontlineDefault)history.replaceState(null,'',`${location.pathname}${location.search}#/till`);
     /* Route guard: a restricted employee must not reach a page by typing the URL, not
        just by it being hidden from nav. 'client' maps to the 'clients' module key, same
        as activeGroupKey() does for the sidebar. dashboard/setup are always reachable. */
@@ -2019,6 +2053,9 @@ function navHtml(page){
     if(g.key==='home'){
       return `<a href="#/dashboard" class="${activeKey==='dashboard'?'act':''}"${activeKey==='dashboard'?' aria-current="page"':''}><span class="ic">${CUI.icon('home',{size:18})}</span>Home</a>`;
     }
+    if(g.key==='frontline'){
+      return `<a href="#/till" class="${activeKey==='till'?'act':''}"${activeKey==='till'?' aria-current="page"':''}><span class="ic">${CUI.icon('till',{size:18})}</span>Quick earn</a>`;
+    }
     if(!(g.key in navOpen)) navOpen[g.key]=(g.key===activeGrp);
     const isOpen=navOpen[g.key]||g.key===activeGrp;
     return `<div class="navgroup">
@@ -2841,7 +2878,7 @@ function renderHistPage(history,n){
     }).join('')}</table>`;
 }
 
-/* ---------- till (8-digit phone lookup + confirm sale — the counter POS flow) ----------
+/* ---------- quick earn (8-digit phone lookup + amount — the counter flow) ----------
    Story: customer pays, staff types the 8-digit phone number, system shows the customer,
    staff presses Confirm. Built as a big, dumb, 3-step screen for low-literacy staff on a
    tablet till: Step 1 number entry (with on-screen keypad), Step 2 customer card + amount,
@@ -2852,18 +2889,32 @@ async function tillPage(){
   const isTillCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canAddClient=canWriteModule('clients');
   const canRecordSales=hasRoleCapability('create_sales')&&canReadModule('clients');
-  const canWriteLoyalty=canWriteModule('loyalty')&&canRecordSales;
   if(!canRecordSales){
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'Customer lookup and sales are unavailable for this role.',iconName:'till',canWrite:false,moduleLabel:'Till sales'})}${CUI.card({title:'Additional access required',description:'Till requires both customer read access and a role permitted to create sales.',body:'<p class="muted small">Ask an owner to review your Customers and Till assignments.</p>'})}`;
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Customer lookup and purchase recording are unavailable for this role.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Additional access required',description:'Quick earn requires customer read access and permission to record purchases.',body:'<p class="muted small">Ask an owner to review your Customers and Quick earn assignments.</p>'})}`;
     return;
   }
-  routeMain.innerHTML=CUI.loadingState({title:'Till',iconName:'till'});
-  /* v24: the one-tap classic redeem only applies to the classic model — catalog/stamp firms
-     redeem from the customer page where the reward list lives. */
-  const {data:tillLp,error:tillProgramError}=await sb.from('loyalty_programs').select('loyalty_model').eq('business_id',S.biz.id).limit(1);
+  routeMain.innerHTML=CUI.loadingState({title:'Quick earn',iconName:'till'});
+  const [
+    {data:tillStaff,error:tillStaffError},{data:tillBranches,error:tillBranchError},
+    {data:tillStaffBranches,error:tillStaffBranchError}
+  ]=await Promise.all([
+    sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).eq('active',true).limit(1),
+    sb.from('branches').select('id,name,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)
+  ]);
   if(!isTillCurrent())return;
-  if(tillProgramError)throw tillProgramError;
-  const tillClassic=!tillLp?.[0]?.loyalty_model||tillLp[0].loyalty_model==='classic';
+  if(tillStaffError||tillBranchError||tillStaffBranchError)throw tillStaffError||tillBranchError||tillStaffBranchError;
+  const tillStaffId=tillStaff?.[0]?.id||null;
+  const canSeeAllTillBranches=S.myRole==='owner'||S.myRole==='manager';
+  const tillAssignedBranchIds=new Set((tillStaffBranches||[]).filter(row=>row.staff_id===tillStaffId).map(row=>row.branch_id));
+  const accessibleTillBranches=(tillBranches||[]).filter(branch=>canSeeAllTillBranches||tillAssignedBranchIds.has(branch.id));
+  let tillBranchId=accessibleTillBranches.some(branch=>branch.id===selectedBranchId)?selectedBranchId:
+    (accessibleTillBranches.find(branch=>branch.is_default)?.id||accessibleTillBranches[0]?.id||'');
+  if(!tillStaffId||!tillBranchId){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'A staff identity and active branch are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn is not ready',description:'Ask an owner to activate this staff account and assign it to a branch.',body:'<p class="muted small">No purchase or points were recorded.</p>'})}`;
+    return;
+  }
+  selectedBranchId=tillBranchId;
   let step=1;             // 1=enter number, 2=customer card / new customer / invalid, 3=done
   let phone='';           // digits typed so far in step 1
   let cust=null;          // lookup_client_by_phone result once status==='found'
@@ -2875,11 +2926,11 @@ async function tillPage(){
                            // key is only minted when a new sale starts (resetToStart / back).
   let busy=false;         // guards Find/Confirm while a request is in flight
   let doneInfo=null;      // {name, pointsEarned, pointsTotal, duplicate} for step 3
-  let redemptionIdem=null; // stable across retries for the current customer's redemption
   let quickAddIdem=null;   // stable while retrying one Till customer creation
+  let tender=null;         // intentionally selected received tender for this purchase
 
   function resetToStart(){
-    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;redemptionIdem=null;quickAddIdem=null;busy=false;doneInfo=null;draw();
+    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;draw();
   }
   function draw(){
     if(step===1) return drawStep1();
@@ -2888,15 +2939,14 @@ async function tillPage(){
   }
 
   function drawStep1(){
-    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:"Type the customer's phone number, then choose Find.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
-      <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:"Type the customer's phone number. Nothing else is needed on this step.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+      <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
-        <input id="tPhone" inputmode="numeric" maxlength="8" placeholder="8186 3833"
-          style="font-size:34px;text-align:center;height:64px;letter-spacing:.04em" value="${esc(phone)}">
+        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="8186 3833" value="${esc(phone)}">
         <div id="tErr"></div>
-        <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:16px">${CUI.icon('search',{size:19})} Find customer</button>
-        <div class="grid" id="tKeys" style="grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px">
-          ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" style="height:60px;font-size:22px;font-weight:700">${k}</button>`).join('')}
+        <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:19})} Next</button>
+        <div class="grid frontline-keypad" id="tKeys" aria-label="Phone keypad">
+          ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" aria-label="${k==='⌫'?'Delete one digit':k==='✕'?'Clear phone number':'Digit '+k}">${k}</button>`).join('')}
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
       </div>`;
@@ -2919,7 +2969,7 @@ async function tillPage(){
     busy=true;$('tFind').disabled=true;$('tFind').textContent='Looking…';
     const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:phone});
     if(!isTillCurrent())return;
-    busy=false;$('tFind').disabled=false;$('tFind').innerHTML=`${CUI.icon('search',{size:19})} Find customer`;
+    busy=false;$('tFind').disabled=false;$('tFind').innerHTML=`${CUI.icon('forward',{size:19})} Next`;
     if(error) return fail(error);
     if(data.status==='found'){cust=data;notFoundPhone=null;invalidMsg=null;step=2;draw();return}
     if(data.status==='not_found'){cust=null;notFoundPhone=data.phone;invalidMsg=null;quickAddIdem=crypto.randomUUID();step=2;draw();return}
@@ -2932,8 +2982,8 @@ async function tillPage(){
     return drawCustomerCard();
   }
   function drawInvalid(){
-    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'The phone number could not be used.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
-      <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'The phone number could not be used.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+      <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('info',{size:40})}
         <div class="err" style="margin-top:10px">${esc(invalidMsg)}</div>
         <button class="btn ghost sm" id="tBack" style="margin-top:14px">${CUI.icon('back',{size:17})} Try another number</button>
@@ -2941,8 +2991,8 @@ async function tillPage(){
     $('tBack').onclick=()=>{invalidMsg=null;step=1;draw()};
   }
   function drawNewCustomer(){
-    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'Add a new customer before recording a sale.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
-      <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'This number is new. Add the customer once, then continue.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+      <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('customers',{size:40})}
         <h2 style="margin:8px 0 2px">New customer</h2>
         <p class="muted small">${esc(notFoundPhone||phone)} isn't in your system yet</p>
@@ -2974,70 +3024,66 @@ async function tillPage(){
     };
   }
   function drawCustomerCard(){
-    const toNext=(cust.points_to_next!=null)?cust.points_to_next:null;
-    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'Review the customer and record the sale amount.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
-      <div class="card" style="max-width:460px;margin:0 auto">
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Confirm the customer, amount paid and payment method. Frenly saves the purchase and points together.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+      <div class="card frontline-card">
         <div style="text-align:center">
           <div style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em">${esc(cust.full_name)}</div>
-          <p class="muted small">${esc(cust.phone||'')}${cust.member_since?' · member since '+esc(String(cust.member_since).slice(0,10)):''}</p>
+          <p class="muted small">${esc(cust.phone||'')}</p>
+          <p class="inline-status" style="justify-content:center;margin-top:9px;color:var(--green)">${CUI.icon('check',{size:17})}<span>Customer found</span></p>
         </div>
-        <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(3,1fr)">
-          <div class="card kpi"><div class="l">Points</div><div class="v">${cust.points??0}</div></div>
-          <div class="card kpi"><div class="l">Credit</div><div class="v">${money(cust.credit_cents||0)}</div></div>
-          <div class="card kpi"><div class="l">Visits</div><div class="v">${cust.visits??0}</div></div>
-        </div>
-        ${tillClassic&&toNext!=null?`<p class="muted small inline-status" style="justify-content:center;text-align:center;margin-top:10px">${CUI.icon('waitlist',{size:15})}<span>${toNext} points to next reward</span></p>`:''}
-        ${tillClassic&&canWriteLoyalty&&cust.can_redeem?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="tRedeem">${CUI.icon('loyalty',{size:17})} Redeem reward</button></div>`:''}
-        ${tillClassic&&!canWriteLoyalty&&cust.can_redeem?'<p class="muted small" style="text-align:center;margin-top:10px">Loyalty redemption is read only for your role.</p>':''}
-        ${!tillClassic?`<p class="muted small inline-status" style="justify-content:center;text-align:center;margin-top:10px">${CUI.icon('loyalty',{size:15})}<span>Rewards are redeemed from the customer's page</span></p>`:''}
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
-        ${canRecordSales?`<label for="tAmt">Amount (${S.biz.currency||'SGD'})</label>
+        ${canRecordSales?`${accessibleTillBranches.length>1
+          ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
+          :`<p class="muted small" style="margin-bottom:12px"><b>Branch:</b> ${esc(accessibleTillBranches[0].name)}</p>`}
+        <label for="tAmt">Amount paid (${S.biz.currency||'SGD'})</label>
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
+        <fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
+          <div class="frontline-tenders" id="tTenders">
+            ${[['cash','Cash'],['card','Card'],['paynow','PayNow'],['other','Other']].map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}
+          </div>
+        </fieldset>
         <div id="tErr3"></div>
-        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Confirm sale</button>`:'<div class="permission-banner" role="note">Sales cannot be recorded by this role.</div>'}
+        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Save & add points</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
-    $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;redemptionIdem=null;draw()};
-    if($('tAmt'))$('tAmt').focus();
-    const rd=$('tRedeem');
-    if(rd) rd.onclick=async()=>{
-      rd.disabled=true;
-      if(!redemptionIdem) redemptionIdem=crypto.randomUUID();
-      const {data,error}=await sb.rpc('redeem_points',{p_business:S.biz.id,p_client:cust.client_id,
-        p_idempotency_key:redemptionIdem});
-      if(!isTillCurrent())return;
-      if(error){fail(error);rd.disabled=false;return}
-      redemptionIdem=null;
-      toast(`Redeemed → ${money(data.credit_cents)} credit added 🎉`);
-      const {data:lk}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone});
-      if(lk&&lk.status==='found') cust=lk;
-      draw();
-    };
+    $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;draw()};
+    if($('tBranch'))$('tBranch').onchange=()=>{tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;saleIdem=null};
+    document.querySelectorAll('[data-tender]').forEach(button=>button.onclick=()=>{
+      tender=button.dataset.tender;saleIdem=null;
+      document.querySelectorAll('[data-tender]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
+      CUI.announce(`${button.textContent.trim()} selected`);
+    });
+    if($('tAmt')){$('tAmt').focus();$('tAmt').oninput=()=>{saleIdem=null}};
+    if($('tAmt'))$('tAmt').onkeydown=e=>{if(e.key==='Enter')$('tConfirm')?.click()};
     if($('tConfirm'))$('tConfirm').onclick=async()=>{
       if(busy) return;
-      const amt=Math.round(parseFloat($('tAmt').value||'0')*100);
-      if(!(amt>0)){$('tErr3').innerHTML='<div class="err">Enter an amount</div>';return}
+      const rawAmount=$('tAmt').value.trim();
+      if(!/^\d+(?:\.\d{1,2})?$/.test(rawAmount)){$('tErr3').innerHTML='<div class="err">Enter dollars and cents, for example 12.50</div>';return}
+      const amt=Math.round(Number(rawAmount)*100);
+      if(!(amt>0)||amt>2147483647){$('tErr3').innerHTML='<div class="err">Enter an amount between 0.01 and 21,474,836.47</div>';return}
+      if(!tender){$('tErr3').innerHTML='<div class="err">Choose how the customer paid</div>';return}
       if(!saleIdem) saleIdem=crypto.randomUUID(); // fresh key for this sale; reused on retry
       busy=true;$('tConfirm').disabled=true;$('tConfirm').textContent='Recording…';
       const {data,error}=await sb.rpc('record_sale_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone,
-        p_amount_cents:amt,p_kind:'quick_sale',p_note:null,p_staff:null,p_idem:saleIdem});
+        p_amount_cents:amt,p_kind:'quick_sale',p_note:null,p_staff:tillStaffId,p_idem:saleIdem,
+        p_branch:tillBranchId,p_method:tender});
       if(!isTillCurrent())return;
       busy=false;
-      if(error){$('tConfirm').disabled=false;$('tConfirm').textContent='✓ Confirm';return fail(error)}
+      if(error){$('tConfirm').disabled=false;$('tConfirm').textContent='Save & add points';return fail(error)}
       doneInfo=(data.status==='duplicate_ignored')
-        ?{name:data.full_name,pointsEarned:0,pointsTotal:data.points,duplicate:true}
-        :{name:data.full_name,pointsEarned:data.points_earned||0,pointsTotal:data.points,duplicate:false};
+        ?{name:data.full_name,pointsEarned:0,pointsTotal:data.points,method:data.payment_method,duplicate:true}
+        :{name:data.full_name,pointsEarned:data.points_earned||0,pointsTotal:data.points,method:data.payment_method,duplicate:false};
       step=3;draw();
     };
   }
   function drawStep3(){
-    M().innerHTML=`${CUI.pageHeader({title:'Till',subtitle:'Sale complete.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Till sales'})}
-      <div class="card" style="max-width:420px;margin:0 auto;text-align:center">
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Points added. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+      <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:56})}
         <h2 style="margin:8px 0 4px">${doneInfo.duplicate?'Already recorded':'Done'}</h2>
         ${doneInfo.duplicate?`<p class="muted">This sale was already recorded — no extra points added.</p>`
           :`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">+${doneInfo.pointsEarned} points</p>`}
-        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · now ${doneInfo.pointsTotal} points total</p>
+        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received · now ${doneInfo.pointsTotal} points total</p>
         <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
     $('tNext').onclick=resetToStart;
@@ -3314,7 +3360,11 @@ async function bookingsPage(){
   window.decideCr=async(id,approve)=>{
     const {data,error}=await sb.rpc('decide_change',{p_request:id,p_approve:approve});
     if(error) return fail(error);
-    toast(`Request ${data.status}`);loadCr();
+    if(data.status==='conflict'){
+      const next=data.suggestions?.next_best_slots||[];
+      toast(next.length?`Clash found. Next: ${next.map(x=>sgt(x.starts_at)).join(' or ')}`:'Clash found. Choose another time in Appointments.');
+    }else toast(`Request ${data.status}`);
+    loadCr();
   };
   load();loadCr();
 
@@ -4192,110 +4242,271 @@ async function giftcardsPage(){
 
 /* ---------- appointments ---------- */
 async function appointmentsPage(){
-  const [{data:cl},{data:sv},{data:stf}]=await Promise.all([
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  const canWrite=canWriteModule('appointments');
+  const canComplete=canWrite&&hasRoleCapability('create_sales');
+  routeMain.innerHTML=CUI.loadingState({title:'Appointments',iconName:'appointments'});
+  const [
+    {data:cl,error:clientError},{data:sv,error:serviceError},{data:stf,error:staffError},
+    {data:branches,error:branchError},{data:staffBranches,error:staffBranchError},
+    {data:serviceBranches,error:serviceBranchError}
+  ]=await Promise.all([
     sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
     sb.from('services').select('id,name,price_cents,duration_min').eq('business_id',S.biz.id).eq('active',true).order('name'),
-    sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name')]);
+    sb.from('staff').select('id,full_name,user_id,calendar_color').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
+    sb.from('branches').select('id,name,is_default,timezone').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id),
+    sb.from('service_branches').select('service_id,branch_id').eq('business_id',S.biz.id)
+  ]);
+  if(!isCurrent())return;
+  const loadError=clientError||serviceError||staffError||branchError||staffBranchError||serviceBranchError;
+  if(loadError)throw loadError;
   const staff=stf||[];
   const staffName=Object.fromEntries(staff.map(s=>[s.id,s.full_name||'Staff']));
+  const staffColor=Object.fromEntries(staff.map(s=>[s.id,s.calendar_color||'#7C9CBF']));
   const myStaff=staff.find(s=>s.user_id===S.user.id);
-  /* Owner/manager see everyone's schedule; a staff member defaults to their own
-     (they can still switch — hard per-staff lockdown would be an RLS follow-up). */
   const canSeeAll=S.myRole==='owner'||S.myRole==='manager';
+  const myBranchIds=new Set((staffBranches||[]).filter(x=>x.staff_id===myStaff?.id).map(x=>x.branch_id));
+  const visibleBranches=(branches||[]).filter(b=>canSeeAll||myBranchIds.has(b.id));
+  let branchId=visibleBranches.some(b=>b.id===selectedBranchId)?selectedBranchId:
+    (visibleBranches.find(b=>b.is_default)?.id||visibleBranches[0]?.id||'');
+  if(branchId)selectedBranchId=branchId;
   let staffFilter=canSeeAll?'all':(myStaff?myStaff.id:'all');
-  const staffOpts=sel=>`<option value="all" ${sel==='all'?'selected':''}>All staff</option>`+
-    staff.map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(s.full_name||'Staff')}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
-  M().innerHTML=`<div class="topbar"><div><h1>Appointments</h1><p class="muted small">Completing an appointment books the sale and fires loyalty automatically — nothing to remember at the desk.</p></div></div>
-    <div class="split">
-    <div class="card"><b>New appointment</b>
-      <label>Customer</label><select id="ac">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
-      <label>Service (optional)</label><select id="as"><option value="">— none / general visit —</option>
-        ${(sv||[]).map(s=>`<option value="${s.id}" data-d="${s.duration_min}">${esc(s.name)} — ${money(s.price_cents)}</option>`).join('')}</select>
-      <label>Staff${staff.length?'':' (add staff in Settings first)'}</label><select id="astf"><option value="">— unassigned —</option>
-        ${staff.map(s=>`<option value="${s.id}" ${myStaff&&myStaff.id===s.id?'selected':''}>${esc(s.full_name||'Staff')}</option>`).join('')}</select>
-      <div class="split"><div><label>Date</label><input id="ad" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
-      <div><label>Time</label><input id="at" type="time" value="10:00"></div></div>
-      <label>Note</label><input id="an" placeholder="optional">
-      <div style="margin-top:16px"><button class="btn" id="ago">Book appointment</button></div></div>
-    <div class="card"><div class="row" style="flex-wrap:wrap"><b>Schedule</b><span class="spacer"></span>
-      <select id="stfFilter" class="qbtn" style="padding-right:24px">${staffOpts(staffFilter)}</select>
-      <button class="qbtn act" id="vList">List</button><button class="qbtn" id="vWeek">Week</button>
-      <button class="qbtn" id="wkPrev" style="display:none">←</button><button class="qbtn" id="wkNext" style="display:none">→</button>
-      <button class="qbtn" id="apPrint">Print</button><button class="qbtn" id="apCsv">CSV</button></div>
-      <div id="alist" style="margin-top:10px"><p class="muted small">Loading…</p></div></div></div>`;
-  let view='list',wkOff=0;
-  $('stfFilter').onchange=()=>{staffFilter=$('stfFilter').value;view==='week'?loadWeek():loadAppts()};
-  $('ago').onclick=async()=>{
-    if(!$('ac').value) return toast('Pick a customer');
-    const opt=$('as').selectedOptions[0],dur=parseInt(opt?.dataset?.d||'60');
-    const starts=new Date($('ad').value+'T'+$('at').value);
-    const {error}=await sb.from('appointments').insert({business_id:S.biz.id,client_id:$('ac').value,
-      service_id:$('as').value||null,staff_id:$('astf').value||null,starts_at:starts.toISOString(),
-      ends_at:new Date(starts.getTime()+dur*60000).toISOString(),note:$('an').value||null});
-    if(error) return fail(error);
-    toast('Appointment booked');loadAppts();
-  };
-  $('vList').onclick=()=>{view='list';$('vList').classList.add('act');$('vWeek').classList.remove('act');
-    $('wkPrev').style.display=$('wkNext').style.display='none';loadAppts()};
-  $('vWeek').onclick=()=>{view='week';$('vWeek').classList.add('act');$('vList').classList.remove('act');
-    $('wkPrev').style.display=$('wkNext').style.display='inline-block';loadAppts()};
-  $('wkPrev').onclick=()=>{wkOff--;loadAppts()};
-  $('wkNext').onclick=()=>{wkOff++;loadAppts()};
+  let view='week',wkOff=0,calendarItems=[],bookingAttempt=null;
+  const availabilityGate=createLatestRequestGate(isCurrent);
+  const bookingGate=createLatestRequestGate(isCurrent);
+  const statusGate=createLatestRequestGate(isCurrent);
+  const calendarGate=createLatestRequestGate(isCurrent);
+  const todaySg=new Date(Date.now()+8*3600000).toISOString().slice(0,10);
+  const branchStaff=id=>staff.filter(s=>(staffBranches||[]).some(x=>x.branch_id===id&&x.staff_id===s.id));
+  const branchServices=id=>(sv||[]).filter(service=>{
+    const configured=(serviceBranches||[]).some(x=>x.service_id===service.id);
+    return !configured||(serviceBranches||[]).some(x=>x.service_id===service.id&&x.branch_id===id);
+  });
+  const staffOpts=(sel,id)=>`${canSeeAll?`<option value="all" ${sel==='all'?'selected':''}>Everyone</option>`:''}`+
+    branchStaff(id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(s.full_name||'Staff')}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Appointments',subtitle:'See everyone at once, prevent clashes, and let Frenly share new jobs fairly.',iconName:'appointments',canWrite,moduleLabel:'Appointment scheduling'})}
+    ${!visibleBranches.length?CUI.card({title:'No available branch',description:'Assign this staff account to an active branch before using the calendar.'}):`
+    <div class="appointment-layout">
+      ${canWrite?`<section class="card appointment-form-card" aria-labelledby="newAppointmentTitle"><h2 id="newAppointmentTitle" style="font-size:17px">Add appointment</h2>
+        <label for="apBranch">Branch</label><select id="apBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select>
+        <label for="ac">Customer</label><select id="ac">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">Add a customer first</option>'}</select>
+        <label for="as">Service</label><select id="as"></select>
+        <div id="generalDuration" hidden><label for="apDuration">Duration (minutes)</label><input id="apDuration" type="number" min="15" max="720" step="15" value="60"></div>
+        <label for="astf">Assign to</label><select id="astf"></select>
+        <p class="muted small" style="margin-top:6px">Best available uses the fewest appointments in the last 30 days. You can still choose a person yourself.</p>
+        <div class="split"><div><label for="ad">Date</label><input id="ad" type="date" value="${todaySg}"></div>
+        <div><label for="at">Time</label><input id="at" type="time" value="10:00" step="900"></div></div>
+        <label for="an">Note (optional)</label><textarea id="an" rows="2" maxlength="1000"></textarea>
+        <div id="appointmentFormError" role="alert"></div><div id="scheduleSuggestion" aria-live="polite"></div>
+        <div class="row" style="margin-top:16px;flex-wrap:wrap"><button class="btn ghost" id="checkAvailability">${CUI.icon('staff',{size:18})} Check staff</button>
+          <button class="btn" id="ago">${CUI.icon('check',{size:18})} Book appointment</button></div>
+      </section>`:''}
+      <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><b>Calendar</b><span class="spacer"></span>
+        <label class="sr-only" for="calendarBranch">Calendar branch</label><select id="calendarBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select>
+        <label class="sr-only" for="stfFilter">Calendar staff</label><select id="stfFilter">${staffOpts(staffFilter,branchId)}</select>
+        <button class="qbtn act" id="vWeek">Week</button><button class="qbtn" id="vList">List</button>
+        <button class="qbtn" id="wkToday">Today</button><button class="qbtn" id="wkPrev" aria-label="Previous week">${CUI.icon('back',{size:17})}</button><button class="qbtn" id="wkNext" aria-label="Next week">${CUI.icon('forward',{size:17})}</button>
+        <button class="qbtn" id="apPrint">Print</button><button class="qbtn" id="apCsv">CSV</button></div>
+        <div id="calendarSelection"></div><div id="alist" style="margin-top:12px"><p class="muted small">Loading calendar…</p></div>
+      </section>
+    </div>`}`;
+  if(!visibleBranches.length)return;
+  function syncFormOptions(){
+    if(!canWrite)return;
+    const services=branchServices(branchId),people=branchStaff(branchId);
+    $('as').innerHTML=`<option value="">General visit</option>${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}">${esc(s.name)} · ${s.duration_min} min</option>`).join('')}`;
+    $('astf').innerHTML=`<option value="auto">Best available · fair rotation</option>${people.map(s=>`<option value="${s.id}">${esc(s.full_name||'Staff')}</option>`).join('')}`;
+    $('generalDuration').hidden=$('as').value!=='';
+  }
+  const selectedDuration=()=>Number($('as')?.selectedOptions?.[0]?.dataset?.duration||$('apDuration')?.value||60);
+  const selectedStart=()=>sgIso(`${$('ad')?.value||''}T${$('at')?.value||''}`);
+  const sgInput=iso=>{const d=new Date(new Date(iso).getTime()+8*3600000);return d.toISOString().slice(0,16)};
+  function invalidateFormRequests({clearSuggestions=true,availability=true}={}){
+    if(availability)availabilityGate.invalidate();
+    bookingGate.invalidate();bookingAttempt=null;
+    if($('checkAvailability'))$('checkAvailability').disabled=false;
+    if($('ago'))$('ago').disabled=false;
+    if(clearSuggestions&&$('scheduleSuggestion'))$('scheduleSuggestion').innerHTML='';
+  }
+  function renderSuggestions(payload,conflict=false){
+    const host=$('scheduleSuggestion');if(!host)return;
+    const available=payload?.available_staff||[],next=payload?.next_best_slots||[];
+    const selected=$('astf').value;
+    const selectedFree=selected==='auto'||available.some(x=>x.staff_id===selected);
+    const recommended=available[0];
+    host.innerHTML=`<div class="schedule-suggestion">
+      <h3>${conflict||!selectedFree?'That person is not free':'Availability checked'}</h3>
+      <p class="muted small" style="margin-top:5px">${available.length
+        ?`${esc(recommended.staff_name)} is the fairest available choice now. Showing ${available.length} eligible staff member${available.length===1?'':'s'}.`
+        :'No eligible staff member is free at this time.'}</p>
+      ${available.length?`<div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm suggestionStaff" data-staff="${person.staff_id}">${CUI.icon('staff',{size:16})} ${esc(person.staff_name)} · ${person.recent_appointments} recent</button>`).join('')}</div>`:''}
+      ${next.length?`<p class="muted small" style="margin-top:11px">Next best times today</p><div class="schedule-suggestion-actions">${next.map(slot=>`<button type="button" class="btn ghost sm suggestionTime" data-start="${esc(slot.starts_at)}" data-staff="${slot.staff_id}">${esc(sgt(slot.starts_at))} · ${esc(slot.staff_name)}</button>`).join('')}</div>`:''}
+    </div>`;
+    host.querySelectorAll('.suggestionStaff').forEach(button=>button.onclick=()=>{
+      invalidateFormRequests();$('astf').value=button.dataset.staff;
+      CUI.announce(`${button.textContent.trim()} selected`);
+    });
+    host.querySelectorAll('.suggestionTime').forEach(button=>button.onclick=()=>{
+      const local=sgInput(button.dataset.start);invalidateFormRequests();
+      $('ad').value=local.slice(0,10);$('at').value=local.slice(11,16);$('astf').value=button.dataset.staff;
+      renderAvailability();
+    });
+  }
+  async function renderAvailability(){
+    const stillCurrent=availabilityGate.begin();
+    const starts=selectedStart(),duration=selectedDuration(),formError=$('appointmentFormError');
+    if(!starts||!Number.isInteger(duration)||duration<15||duration>720){
+      formError.innerHTML='<div class="err">Choose a valid date, time and duration.</div>';return null;
+    }
+    formError.innerHTML='';$('checkAvailability').disabled=true;
+    const {data,error}=await sb.rpc('suggest_appointment_staff_v47',{p_business:S.biz.id,p_branch:branchId,
+      p_service:$('as').value||null,p_starts:starts,p_duration_minutes:duration,p_limit:5});
+    if(!stillCurrent())return null;
+    $('checkAvailability').disabled=false;
+    if(error){formError.innerHTML=`<div class="err">${esc(error.message)}</div>`;return null}
+    renderSuggestions(data||{});return data;
+  }
+  if(canWrite){
+    syncFormOptions();
+    $('as').onchange=()=>{$('generalDuration').hidden=$('as').value!=='';invalidateFormRequests()};
+    ['ad','at','astf','apDuration'].forEach(id=>$(id).onchange=()=>invalidateFormRequests());
+    $('ac').onchange=()=>invalidateFormRequests({clearSuggestions:false,availability:false});
+    $('an').oninput=()=>invalidateFormRequests({clearSuggestions:false,availability:false});
+    $('checkAvailability').onclick=renderAvailability;
+    $('apBranch').onchange=()=>{invalidateFormRequests();branchId=$('apBranch').value;selectedBranchId=branchId;$('calendarBranch').value=branchId;staffFilter=canSeeAll?'all':(myStaff?.id||'all');$('stfFilter').innerHTML=staffOpts(staffFilter,branchId);syncFormOptions();loadCalendar()};
+    $('ago').onclick=async()=>{
+      const starts=selectedStart(),duration=selectedDuration(),assignment=$('astf').value;
+      if(!$('ac').value)return $('appointmentFormError').innerHTML='<div class="err">Choose a customer.</div>';
+      if(!starts||!Number.isInteger(duration)||duration<15||duration>720)return $('appointmentFormError').innerHTML='<div class="err">Choose a valid date, time and duration.</div>';
+      const request={p_business:S.biz.id,p_client:$('ac').value,p_branch:branchId,p_service:$('as').value||null,
+        p_starts:starts,p_duration_minutes:duration,p_requested_staff:assignment==='auto'?null:assignment,
+        p_assignment_mode:assignment==='auto'?'round_robin':'manual',p_note:$('an').value.trim()||null};
+      const fingerprint=JSON.stringify(request);
+      if(!bookingAttempt||bookingAttempt.fingerprint!==fingerprint)bookingAttempt={fingerprint,key:crypto.randomUUID()};
+      const stillCurrent=bookingGate.begin();
+      $('ago').disabled=true;$('appointmentFormError').innerHTML='';
+      const {data,error}=await sb.rpc('book_appointment_smart_v47',{...request,p_idempotency_key:bookingAttempt.key});
+      if(!stillCurrent())return;
+      $('ago').disabled=false;
+      if(error){$('appointmentFormError').innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(data?.status==='conflict'){renderSuggestions(data.suggestions||{},true);CUI.announce('Appointment clash found. Choose an available staff member or another time.',{assertive:true});return}
+      bookingAttempt=null;$('an').value='';$('scheduleSuggestion').innerHTML='';
+      toast(data?.replayed?'Appointment already booked — no duplicate created':`Booked with ${data?.staff_name||staffName[data?.staff_id]||'staff'}`);
+      loadCalendar();
+    };
+  }
+  $('calendarBranch').onchange=()=>{if(canWrite)invalidateFormRequests();branchId=$('calendarBranch').value;selectedBranchId=branchId;if(canWrite)$('apBranch').value=branchId;staffFilter=canSeeAll?'all':(myStaff?.id||'all');$('stfFilter').innerHTML=staffOpts(staffFilter,branchId);if(canWrite)syncFormOptions();loadCalendar()};
+  $('stfFilter').onchange=()=>{staffFilter=$('stfFilter').value;loadCalendar()};
+  $('vList').onclick=()=>{view='list';$('vList').classList.add('act');$('vWeek').classList.remove('act');loadCalendar()};
+  $('vWeek').onclick=()=>{view='week';$('vWeek').classList.add('act');$('vList').classList.remove('act');loadCalendar()};
+  $('wkToday').onclick=()=>{wkOff=0;view='week';$('vWeek').classList.add('act');$('vList').classList.remove('act');loadCalendar()};
+  $('wkPrev').onclick=()=>{wkOff--;view='week';loadCalendar()};
+  $('wkNext').onclick=()=>{wkOff++;view='week';loadCalendar()};
   $('apPrint').onclick=()=>window.print();
+  $('apCsv').onclick=()=>{
+    const rows=[['when_sgt','customer','service','staff','status'],...calendarItems.map(a=>[
+      sgt(a.starts_at),a.clients?.full_name||'',a.services?.name||'',staffName[a.staff_id]||'',a.status])];
+    const blob=new Blob([csvRows(rows)],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='frenly-appointments.csv';link.click();URL.revokeObjectURL(url);toast('Calendar CSV downloaded');
+  };
   const staffQ=q=>staffFilter&&staffFilter!=='all'?q.eq('staff_id',staffFilter):q;
-  $('apCsv').onclick=async()=>{
-    const {data:ap,error}=await staffQ(sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name,price_cents)')
-      .eq('business_id',S.biz.id)).order('starts_at',{ascending:false}).limit(25);
-    if(error) return fail(error);
-    const rows=[['when','customer','service','staff','status'],
-      ...(ap||[]).map(a=>[a.starts_at,a.clients?.full_name||'',a.services?.name||'',staffName[a.staff_id]||'',a.status])];
-    const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
-    const a2=document.createElement('a');a2.href=URL.createObjectURL(blob);a2.download='frenly-appointments.csv';a2.click();
-    toast('CSV downloaded');
-  };
-  async function loadAppts(){
-    if(view==='week') return loadWeek();
-    const {data:ap}=await staffQ(sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name,price_cents)')
-      .eq('business_id',S.biz.id)).order('starts_at',{ascending:false}).limit(25);
-    $('alist').innerHTML=(ap&&ap.length)?`<table><tr><th>When</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th></th></tr>
-      ${ap.map(a=>`<tr><td>${sgt(a.starts_at)}</td><td><b>${esc(a.clients?.full_name||'—')}</b></td>
-      <td>${esc(a.services?.name||'—')}</td>
-      <td class="small">${esc(staffName[a.staff_id]||'—')}</td>
-      <td><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'no'}">${a.status.replace('_',' ')}</span></td>
-      <td>${a.status==='booked'?`<button class="btn sm" onclick="setAp('${a.id}','completed')">✓ Complete</button>
-      <button class="btn ghost sm" onclick="setAp('${a.id}','no_show')">No-show</button>
-      <button class="btn ghost sm" onclick="setAp('${a.id}','cancelled')">Cancel</button>`:''}</td></tr>`).join('')}</table>`
-      :`<div class="empty"><div class="big">🗓️</div>${staffFilter!=='all'?'No appointments for this staff member yet.':'No appointments yet. Book one on the left, or convert a booking request.'}</div>`;
+  function weekStart(offset=0){
+    const now=new Date(Date.now()+8*3600000),day=(now.getUTCDay()+6)%7;
+    const monday=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()-day+offset*7));
+    return monday.toISOString().slice(0,10);
   }
-  async function loadWeek(){
-    const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7)+wkOff*7);mon.setHours(0,0,0,0);
-    const end=new Date(mon.getTime()+7*864e5);
-    const {data:ap}=await staffQ(sb.from('appointments').select('*, clients(full_name), services!appointments_service_id_fkey(name)')
-      .eq('business_id',S.biz.id)).gte('starts_at',mon.toISOString()).lt('starts_at',end.toISOString());
-    const days=[...Array(7)].map((_,i)=>new Date(mon.getTime()+i*864e5));
-    const cell={};(ap||[]).forEach(a=>{const d=new Date(a.starts_at);const k=d.toISOString().slice(0,10)+'-'+d.getHours();(cell[k]=cell[k]||[]).push(a)});
-    $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${mon.toISOString().slice(0,10)} → ${new Date(end-1).toISOString().slice(0,10)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''}</p>
-      <div style="overflow-x:auto"><table style="min-width:720px"><tr><th style="width:52px"></th>
-      ${days.map(d=>`<th>${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][(d.getDay()+6)%7]} ${d.getDate()}</th>`).join('')}</tr>
-      ${[...Array(11)].map((_,h)=>{const hr=h+9;return `<tr><td class="small muted">${String(hr).padStart(2,'0')}:00</td>
-        ${days.map(d=>{const k=d.toISOString().slice(0,10)+'-'+hr;const items=cell[k]||[];
-          return `<td style="min-height:36px;padding:6px">${items.map(a=>
-            `<div onclick="apAct('${a.id}','${a.status}')" style="cursor:pointer;background:${a.status==='completed'?'#E7F6EE':a.status==='booked'?'#FFF1E8':'#F3F1EC'};border-radius:8px;padding:4px 8px;font-size:11.5px;margin-bottom:3px">
-            <b>${esc((a.clients?.full_name||'—').split(' ')[0])}</b> ${esc(a.services?.name||'')}${staffFilter==='all'&&a.staff_id?` <span class="muted">· ${esc((staffName[a.staff_id]||'').split(' ')[0])}</span>`:''}</div>`).join('')}</td>`}).join('')}</tr>`}).join('')}</table></div>
-      <p class="muted small" style="margin-top:8px">Click a booked (orange) slot to complete it — the sale and loyalty fire automatically.</p>`;
+  const addDays=(date,days)=>{const d=new Date(date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)};
+  function eventParts(iso){
+    const d=new Date(new Date(iso).getTime()+8*3600000);
+    return {date:d.toISOString().slice(0,10),minutes:d.getUTCHours()*60+d.getUTCMinutes()};
   }
-  window.apAct=async(id,status)=>{
-    if(status!=='booked') return;
-    if(!confirm('Mark this appointment completed? The sale will be booked and loyalty fires.')) return;
-    await window.setAp(id,'completed');
-  };
-  window.setAp=async(id,status)=>{
-    const {error}=await sb.from('appointments').update({status}).eq('id',id);
-    if(error) return fail(error);
-    toast(status==='completed'?'Completed — sale booked, loyalty fired 🎉':'Appointment '+status.replace('_',' '));
-    loadAppts();
-  };
-  loadAppts();
+  const appointmentOutcomeIsDue=item=>Number.isFinite(new Date(item?.starts_at).getTime())&&new Date(item.starts_at).getTime()<=Date.now();
+  function wireAppointmentActions(){
+    document.querySelectorAll('[data-appointment]').forEach(button=>button.onclick=()=>{
+      statusGate.invalidate();
+      const item=calendarItems.find(a=>a.id===button.dataset.appointment);if(!item)return;
+      const outcomeIsDue=appointmentOutcomeIsDue(item);
+      const host=$('calendarSelection');
+      host.innerHTML=`<div class="schedule-suggestion"><div class="row" style="flex-wrap:wrap"><div><h3>${esc(item.clients?.full_name||'Appointment')}</h3><p class="muted small">${esc(sgt(item.starts_at))} · ${esc(item.services?.name||'General visit')} · ${esc(staffName[item.staff_id]||'Unassigned')}</p></div><span class="spacer"></span>
+        ${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button class="btn sm statusAction" data-status="completed">Complete</button>':''}${outcomeIsDue?'<button class="btn ghost sm statusAction" data-status="no_show">No-show</button>':'<span class="pill new">Upcoming</span>'}<button class="btn danger sm statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>${item.status==='booked'&&!outcomeIsDue?'<p class="muted small" style="margin-top:8px">Complete and No-show become available after the appointment starts.</p>':''}</div>`;
+      host.querySelectorAll('.statusAction').forEach(action=>action.onclick=()=>setStatus(item.id,action.dataset.status));
+      host.scrollIntoView({block:'nearest',behavior:'smooth'});
+    });
+    document.querySelectorAll('.statusAction[data-id]').forEach(button=>button.onclick=()=>setStatus(button.dataset.id,button.dataset.status));
+  }
+  async function setStatus(id,status){
+    const item=calendarItems.find(appointment=>appointment.id===id);
+    if((status==='completed'||status==='no_show')&&!appointmentOutcomeIsDue(item))return toast('This outcome can only be recorded after the appointment starts.');
+    if(status==='completed'&&!canComplete)return toast('Create-sales access is required to complete an appointment.');
+    const words=status==='completed'?'Complete this appointment and record its sale?':status==='cancelled'?'Cancel this appointment?':'Mark this appointment as a no-show?';
+    if(!confirm(words))return;
+    const stillCurrent=statusGate.begin();
+    const {data,error}=await sb.rpc('set_appointment_status_v47',{p_business:S.biz.id,p_appointment:id,p_status:status});
+    if(!stillCurrent())return;
+    if(error)return fail(error);
+    toast(data?.replayed?'Status was already saved':status==='completed'?'Completed — sale and loyalty recorded':`Appointment ${status.replace('_',' ')}`);
+    $('calendarSelection').innerHTML='';loadCalendar();
+  }
+  async function loadCalendar(){
+    if(view==='list')return loadList();
+    const stillCurrent=calendarGate.begin();
+    const start=weekStart(wkOff),end=addDays(start,7);
+    const {data,error}=await staffQ(sb.from('appointments').select('id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name)')
+      .eq('business_id',S.biz.id).eq('branch_id',branchId).gte('starts_at',sgDateBoundary(start)).lt('starts_at',sgDateBoundary(end)).order('starts_at'));
+    if(!stillCurrent())return;if(error)throw error;calendarItems=data||[];renderWeek(start);
+  }
+  async function loadList(){
+    const stillCurrent=calendarGate.begin();
+    const {data,error}=await staffQ(sb.from('appointments').select('id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name)')
+      .eq('business_id',S.biz.id).eq('branch_id',branchId).order('starts_at',{ascending:false}).limit(100));
+    if(!stillCurrent())return;if(error)throw error;calendarItems=data||[];
+    $('alist').innerHTML=calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Action</th></tr></thead><tbody>
+      ${calendarItems.map(a=>`<tr><td data-label="When">${esc(sgt(a.starts_at))}</td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff">${esc(staffName[a.staff_id]||'—')}</td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Action">${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?`<button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete</button>`:''}</td></tr>`).join('')}</tbody></table></div>`
+      :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`;
+    wireAppointmentActions();
+  }
+  function layoutCalendarDay(items){
+    const sorted=[...items].sort((a,b)=>eventParts(a.starts_at).minutes-eventParts(b.starts_at).minutes||
+      eventParts(a.ends_at).minutes-eventParts(b.ends_at).minutes||a.id.localeCompare(b.id));
+    const groups=[];let group=[],groupEnd=-1;
+    sorted.forEach(item=>{
+      const from=eventParts(item.starts_at).minutes,to=eventParts(item.ends_at).minutes;
+      if(group.length&&from>=groupEnd){groups.push(group);group=[];groupEnd=-1}
+      group.push({item,from,to});groupEnd=Math.max(groupEnd,to);
+    });
+    if(group.length)groups.push(group);
+    return groups.flatMap(overlapGroup=>{
+      const laneEnds=[];
+      const placed=overlapGroup.map(entry=>{
+        let lane=laneEnds.findIndex(end=>end<=entry.from);
+        if(lane<0){lane=laneEnds.length;laneEnds.push(entry.to)}else laneEnds[lane]=entry.to;
+        return {...entry,lane};
+      });
+      const laneCount=Math.max(1,laneEnds.length);
+      return placed.map(entry=>({...entry,laneCount}));
+    });
+  }
+  function renderWeek(start){
+    const days=[...Array(7)].map((_,i)=>addDays(start,i));
+    const minuteValues=calendarItems.flatMap(a=>[eventParts(a.starts_at).minutes,eventParts(a.ends_at).minutes]);
+    const startHour=Math.max(0,Math.min(8,Math.floor((minuteValues.length?Math.min(...minuteValues):8*60)/60)));
+    const endHour=Math.min(24,Math.max(20,Math.ceil((minuteValues.length?Math.max(...minuteValues):20*60)/60)));
+    const positiveDurations=calendarItems.map(item=>eventParts(item.ends_at).minutes-eventParts(item.starts_at).minutes).filter(minutes=>minutes>0);
+    const shortestDuration=positiveDurations.length?Math.min(...positiveDurations):60;
+    const hourHeight=Math.max(64,Math.ceil(44*60/shortestDuration));
+    const bodyHeight=(endHour-startHour)*hourHeight;
+    const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const dayEvents=days.map(day=>layoutCalendarDay(calendarItems.filter(a=>eventParts(a.starts_at).date===day)));
+    const agenda=calendarItems.map(a=>`<button type="button" class="calendar-agenda-item" data-appointment="${a.id}" style="width:100%;background:transparent;text-align:left"><b>${esc(sgt(a.starts_at)?.slice(11)||'')}</b><span><b>${esc(a.clients?.full_name||'—')}</b><br><span class="muted small">${esc(a.services?.name||'General visit')} · ${esc(staffName[a.staff_id]||'Unassigned')}</span></span></button>`).join('');
+    $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · Singapore time</p>
+      <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div></div>${days.map((day,i)=>`<div>${dayNames[i]}<br><span class="muted">${day.slice(5)}</span></div>`).join('')}</div>
+      <div class="calendar-week-body" style="height:${bodyHeight}px"><div class="calendar-time-axis" style="height:${bodyHeight}px">${[...Array(endHour-startHour+1)].map((_,i)=>`<span class="calendar-time-label" style="top:${i*hourHeight}px">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>
+      ${days.map((day,index)=>`<div class="calendar-day" style="height:${bodyHeight}px;--calendar-hour-height:${hourHeight}px">${dayEvents[index].map(({item:a,from,to,lane,laneCount})=>{const top=Math.max(0,(from-startHour*60)/60*hourHeight),height=Math.max(44,(to-from)/60*hourHeight),color=staffColor[a.staff_id]||'#7C9CBF',left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);return `<button type="button" class="calendar-event" data-appointment="${a.id}" style="--event-color:${esc(color)};top:${top}px;height:${height}px;left:calc(${left}% + 3px);right:auto;width:calc(${width}% - 6px)" aria-label="${esc(`${a.clients?.full_name||'Appointment'}, ${sgt(a.starts_at)}, ${staffName[a.staff_id]||'unassigned'}`)}"><b>${esc(a.clients?.full_name||'—')}</b>${esc(a.services?.name||'General visit')}${staffFilter==='all'?`<br>${esc(staffName[a.staff_id]||'Unassigned')}`:''}</button>`}).join('')}</div>`).join('')}</div></div></div>
+      <div class="calendar-agenda">${agenda||`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments this week</h2></div>`}</div>`;
+    wireAppointmentActions();
+  }
+  loadCalendar().catch(fail);
 }
 
 /* ---------- waitlist ---------- */
