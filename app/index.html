@@ -196,6 +196,33 @@ tr.click:hover td{background:#FBFAF8}
 .notif-item .b{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
 .notif-item .ago{font-size:10.5px;color:var(--muted);margin-top:4px}
 .notif-empty{text-align:center;padding:24px 12px;color:var(--muted);font-size:13px}
+/* global top-bar action cluster — search + everyday actions, sits left of the bell so the
+   jobs used all day (find a customer, quick earn, new appointment) are one reach from any route */
+.global-actions{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;margin-right:auto}
+.global-search{display:flex;align-items:center;gap:6px;flex:0 1 340px;min-width:0;height:44px;padding-left:13px;
+  background:#fff;border:1px solid var(--hair);border-radius:100px;box-shadow:var(--shadow);
+  transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+.global-search:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px rgba(255,107,94,.18)}
+.global-search-ic{display:inline-flex;align-items:center;color:var(--muted);flex-shrink:0}
+.global-search input{flex:1 1 auto;min-width:0;width:auto;min-height:0;height:42px;border:0;background:transparent;
+  box-shadow:none;padding:0 4px;font-size:13.5px;color:var(--ink)}
+.global-search input:focus{outline:none;border:0;box-shadow:none}
+.global-search-go{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;
+  border-radius:100px;background:var(--grad);color:#fff;box-shadow:0 1px 2px rgba(194,65,53,.2)}
+.global-search-go:active{transform:scale(.92)}
+.global-quick{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.global-act{white-space:nowrap}.global-act svg{flex-shrink:0}
+/* settings — tabbed sections so each save has a clear, small scope instead of one long page */
+.settings-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+.settings-tab{min-height:44px;padding:10px 15px;border:0;border-bottom:2px solid transparent;background:transparent;
+  color:var(--muted);font-size:13.5px;font-weight:600;cursor:pointer;border-radius:10px 10px 0 0;white-space:nowrap;
+  transition:color .14s,background .14s,border-color .14s}
+.settings-tab:hover{color:var(--ink2);background:#F2EFEA}
+.settings-tab[aria-selected="true"]{color:var(--coral);border-bottom-color:var(--coral)}
+.settings-panel[hidden]{display:none}
+.settings-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+.settings-save-row .btn{flex:0 0 auto}
+.settings-scope{color:var(--muted);font-size:12px;line-height:1.4;flex:1 1 160px;min-width:0}
 .switchrow{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 4px;font-size:12.5px;color:var(--ink2)}
 .tglsw{position:relative;width:44px;height:44px;border-radius:100px;background:transparent;cursor:pointer}
 .tglsw::before{content:'';position:absolute;left:4px;top:11px;width:36px;height:21px;border-radius:100px;background:var(--line);
@@ -317,7 +344,13 @@ tr.click:hover td{background:#FBFAF8}
   .navhead{margin-top:0}
   .navbody{margin-top:4px}
   .navbody a{padding-left:12px}
-  .appbar{padding:10px 18px}
+  .appbar{padding:10px 18px;flex-wrap:wrap;row-gap:8px}
+  /* two-row app bar on tablet/phone: bell + profile stay top-right, the action cluster
+     drops to its own full-width row underneath so search + quick actions never overflow */
+  .global-actions{order:3;flex:1 1 100%;min-width:0;margin-right:0;flex-wrap:wrap}
+  .global-search{flex:1 1 200px}
+  .global-quick{flex:1 1 auto;flex-wrap:wrap}
+  .global-act{flex:1 1 auto;justify-content:center}
   .charts,.split,.appointment-layout{grid-template-columns:1fr}
   .appointment-form-card{position:static}
   .chart-frame{block-size:220px}
@@ -611,14 +644,27 @@ const hasRoleCapability=capability=>ROLE_CAPABILITIES[S.myRole]?.has(capability)
    collapsible headers. Settings moves to the Profile menu, out of main nav. Group-open state
    lives in this plain JS object (NOT localStorage — prohibited in this stack) so it resets
    each full page load but persists across in-session route changes. */
+/* Job-based grouping (competitive-audit direction 2026-07-22): the rail is organised by what
+   staff DO across a day — serve & sell, grow, money — not by the underlying data entities.
+   Single-item groups (Home, Customers) render as flat links via `flat`; the rest are the same
+   collapsible navhead/navbody headers as before. Every module key still maps to its original
+   route, so this is pure regrouping + relabelling, not a routing change. */
 const NAVGROUPS=[
-  {key:'home',icon:'home',label:null,items:['dashboard']},
-  {key:'frontline',icon:'till',label:null,items:['till']},
-  {key:'customers',icon:'customers',label:'Customers',items:['clients','loyalty','retention','referrals','memberships','giftcards']},
-  {key:'operations',icon:'services',label:'Operations',items:['appointments','bookings','waitlist','sales','services','inventory','packages','branches']},
-  {key:'insights',icon:'reports',label:'Insights',items:['reports','staffperf','dailyreport','pnl','expenses']}
+  {key:'home',icon:'home',flat:'Home',items:['dashboard']},
+  {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
+  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist','sales']},
+  {key:'grow',icon:'retention',label:'Grow',items:['loyalty','retention','referrals','memberships','giftcards']},
+  {key:'money',icon:'reports',label:'Money',items:['reports','dailyreport','pnl','expenses','staffperf']},
+  {key:'setup',icon:'services',label:'Operations setup',items:['services','inventory','packages','branches']}
 ];
 let navOpen={};
+/* Global top-bar action state (no localStorage in this stack — plain in-session vars). A global
+   search hands a name to Customers or a phone to Quick earn via these, reusing each page's own
+   existing lookup — no new query is introduced. settingsActiveTab keeps the Settings tab in place
+   across the in-place re-renders that adding/retiring a customer field trigger. */
+let pendingCustomerSearch='';
+let pendingTillPhone='';
+let settingsActiveTab='workspace';
 let profileOpen=false;
 let customerUiObserver=null;
 let shellRenderEpoch=0;
@@ -659,6 +705,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   const invitation=preserveInvitation?pendingCustomerInvitationToken:'';
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;pendingCustomerInvitationToken=invitation;selectedBranchId=null;profileOpen=false;
+  pendingCustomerSearch='';pendingTillPhone='';settingsActiveTab='workspace';
 }
 const $=(id)=>document.getElementById(id);
 const root=$('root');
@@ -741,6 +788,22 @@ function createLatestRequestGate(isInstanceCurrent){
 }
 function nav(h){location.hash=h}
 window.addEventListener('hashchange',route);
+/* "/" or ⌘K / Ctrl+K focuses the global customer search from anywhere in the workspace. "/"
+   is ignored while the user is typing in a field so it can't hijack normal input. The listener
+   is attached once and resolves #globalSearch at event time, so it survives every shell re-render
+   and no-ops on routes (auth, portal, wallet) where the app bar isn't present. */
+function handleGlobalSearchHotkey(e){
+  const input=document.getElementById('globalSearch');
+  if(!input)return;
+  const cmdK=(e.key==='k'||e.key==='K')&&(e.metaKey||e.ctrlKey);
+  const slash=e.key==='/'&&!e.metaKey&&!e.ctrlKey&&!e.altKey;
+  if(!cmdK&&!slash)return;
+  const t=e.target;
+  const typing=t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable);
+  if(slash&&typing)return;
+  e.preventDefault();input.focus();if(input.select)input.select();
+}
+document.addEventListener('keydown',handleGlobalSearchHotkey);
 
 const unavailableCustomerCapabilities=(loadError=false)=>({customer_identity:false,customer_claims:false,
   customer_wallet:false,customer_actions:false,customer_notifications:false,customer_email_otp:false,
@@ -2163,11 +2226,9 @@ function navHtml(page){
   const activeGrp=activeGroupKey(page[0]);
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(m=>m==='dashboard'||(enabled.includes(m)&&(m!=='branches'||S.myRole==='owner')))})).filter(g=>g.items.length);
   return visGroups.map(g=>{
-    if(g.key==='home'){
-      return `<a href="#/dashboard" class="${activeKey==='dashboard'?'act':''}"${activeKey==='dashboard'?' aria-current="page"':''}><span class="ic">${CUI.icon('home',{size:18})}</span>Home</a>`;
-    }
-    if(g.key==='frontline'){
-      return `<a href="#/till" class="${activeKey==='till'?'act':''}"${activeKey==='till'?' aria-current="page"':''}><span class="ic">${CUI.icon('till',{size:18})}</span>Quick earn</a>`;
+    if(g.flat){
+      const target=g.items[0],isAct=activeKey===target;
+      return `<a href="#/${target}" class="${isAct?'act':''}"${isAct?' aria-current="page"':''}><span class="ic">${CUI.icon(g.icon,{size:18})}</span>${g.flat}</a>`;
     }
     if(!(g.key in navOpen)) navOpen[g.key]=(g.key===activeGrp);
     const isOpen=navOpen[g.key]||g.key===activeGrp;
@@ -2186,6 +2247,54 @@ function wireNav(){
     el.setAttribute('aria-expanded',String(navOpen[k]));
     el.querySelector('.chev').textContent=navOpen[k]?'−':'+';
   });
+}
+/* Global action cluster in the app bar (competitive-audit direction): the jobs used all day —
+   find a customer, quick earn, new appointment — reachable from every workspace route, plus the
+   existing notifications bell. Each control respects the same module gating as the nav, so a
+   restricted role only sees what it can act on. */
+function globalActionsHtml(){
+  const canFindCustomer=canReadModule('clients')||canReadModule('till');
+  const canQuickEarn=canReadModule('till');
+  const canNewAppt=canReadModule('appointments');
+  return `<div class="global-actions">
+    ${canFindCustomer?`<div class="global-search" role="search">
+      <span class="global-search-ic">${CUI.icon('search',{size:17})}</span>
+      <label class="sr-only" for="globalSearch">Find a customer by name or phone</label>
+      <input id="globalSearch" type="search" autocomplete="off" enterkeyhint="search" placeholder="Find a customer  ( / )" aria-keyshortcuts="/ Meta+K Control+K">
+      <button type="button" class="global-search-go" id="globalSearchGo" aria-label="Search customers">${CUI.icon('forward',{size:16})}</button>
+    </div>`:''}
+    <div class="global-quick">
+      ${canQuickEarn?`<button type="button" class="btn sm global-act" id="globalQuickEarn" title="Quick earn"><span class="ic" aria-hidden="true">${CUI.icon('till',{size:17})}</span><span>Quick earn</span></button>`:''}
+      ${canNewAppt?`<button type="button" class="btn ghost sm global-act" id="globalNewAppt" title="New appointment"><span class="ic" aria-hidden="true">${CUI.icon('appointments',{size:17})}</span><span>New appointment</span></button>`:''}
+    </div>
+  </div>`;
+}
+function wireGlobalActions(){
+  const input=$('globalSearch');
+  if(input){
+    /* Route the query into an EXISTING lookup — a phone-shaped term to Quick earn's phone lookup,
+       otherwise a name to the Customers search — so no new database query is introduced. When the
+       target route is already open, re-run route() directly (setting the hash to its current value
+       fires no hashchange). */
+    const goTo=target=>{if(location.hash===target){route()}else{nav(target)}};
+    const run=()=>{
+      const q=input.value.trim();
+      if(!q)return;
+      const digits=q.replace(/\D/g,'');
+      const looksPhone=digits.length>=4&&/^[+\s()\-\d]+$/.test(q);
+      input.value='';
+      if(looksPhone&&canReadModule('till')){pendingTillPhone=digits;goTo('#/till');return}
+      if(canReadModule('clients')){pendingCustomerSearch=q;goTo('#/clients');return}
+      if(canReadModule('till')){pendingTillPhone=digits;goTo('#/till')}
+    };
+    input.onkeydown=e=>{
+      if(e.key==='Enter'){e.preventDefault();run()}
+      else if(e.key==='Escape'){e.preventDefault();input.value='';input.blur()}
+    };
+    const go=$('globalSearchGo');if(go)go.onclick=run;
+  }
+  const qe=$('globalQuickEarn');if(qe)qe.onclick=()=>nav('#/till');
+  const na=$('globalNewAppt');if(na)na.onclick=()=>nav('#/appointments');
 }
 /* Owner ruling 2026-07-18: the firm profile lives TOP-RIGHT, not bottom-left.
    It now sits in a sticky frosted .appbar in the right-hand column, so it stays put
@@ -2391,6 +2500,7 @@ function renderShell(page){
     </aside>
     <div class="col">
       <header class="appbar">
+        ${globalActionsHtml()}
         ${bellHtml()}
         ${profileHtml()}
       </header>
@@ -2401,6 +2511,7 @@ function renderShell(page){
   const enhanceCustomerUi=customerUiRoutes.has(page[0]);
   if(enhanceCustomerUi)customerUiObserver=CUI.mountMain(main);
   wireNav();
+  wireGlobalActions();
   wireBell(page);
   wireProfile(page);
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
@@ -2628,7 +2739,11 @@ async function clientsPage(){
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
   const CLIENT_PAGE_SIZE=100;
   let clientPage=0;
-  let clientSearch='';
+  /* A name handed in from the global app-bar search pre-fills and runs the existing name search
+     (same query, no new call). Consumed once so a later visit starts clean. */
+  let clientSearch=pendingCustomerSearch||'';
+  pendingCustomerSearch='';
+  if(clientSearch&&$('clientSearch'))$('clientSearch').value=clientSearch;
   const runClientSearch=()=>{clientSearch=$('clientSearch').value.trim();clientPage=0;load()};
   $('clientSearchGo').onclick=runClientSearch;
   $('clientSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runClientSearch()}};
@@ -3204,7 +3319,12 @@ async function tillPage(){
     $('tNext').onclick=resetToStart;
   }
 
+  /* A phone handed in from the global app-bar search starts step 1 pre-filled and, when it is a
+     complete number, runs the same lookup a keypad tap would (lookup_client_by_phone) — no new
+     call, just a jump straight to the customer's card. */
+  if(pendingTillPhone){phone=String(pendingTillPhone).replace(/\D/g,'').slice(0,8);pendingTillPhone='';}
   draw();
+  if(phone.length===8)doFind();
 }
 
 /* ---------- sales ---------- */
@@ -5402,24 +5522,28 @@ async function settingsPage(){
   const dependencyText=m=>(moduleRuleByKey[m]?.requires_modules||[])
     .map(k=>MODULES[k]?.[1]||k).join(', ');
   M().innerHTML=`<div class="settings-page"><div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
-    <div class="split"><div class="card"><b>Business</b>
+    <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+      <button type="button" class="settings-tab" role="tab" id="settab-workspace" aria-controls="setpanel-workspace" aria-selected="true" data-settab="workspace">Workspace &amp; brand</button>
+      <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
+      <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
+      <button type="button" class="settings-tab" role="tab" id="settab-data" aria-controls="setpanel-data" aria-selected="false" tabindex="-1" data-settab="data">Import &amp; sign-up</button>
+      <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer fields &amp; privacy</button>
+    </div>
+    <section class="settings-panel" id="setpanel-workspace" role="tabpanel" aria-labelledby="settab-workspace" tabindex="-1"><div class="card"><b>Business</b>
       <label for="bn">Name</label><input id="bn" value="${esc(S.biz.name)}">
       <label for="bi">Industry</label><select id="bi">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
       <label for="bc">Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
       <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
       <p class="field-label">Portal link (share with customers)</p>
       <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${location.origin}${location.pathname}#/b/${S.biz.slug}">${location.origin}${location.pathname}#/b/${S.biz.slug}</a></p>
-      <div style="margin-top:16px"><button class="btn" id="bsave">Save</button></div></div>
-    <div class="card"><b>Modules</b><p class="muted small" style="margin:6px 0 4px">Toggle what ${esc(S.biz.name)} uses. Dashboard is always on.</p>
+      <div class="settings-save-row"><button class="btn" id="bsave">Save workspace</button><span class="settings-scope">Saves this workspace's name, industry, brand colour and booking policy.</span></div></div></section>
+    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1" hidden><div class="split"><div class="card"><b>Modules</b><p class="muted small" style="margin:6px 0 4px">Toggle what ${esc(S.biz.name)} uses. Dashboard is always on.</p>
       ${mods.map(m=>`<label class="settings-choice">
         <input type="checkbox" style="width:auto;margin-top:2px" data-m="${m}" ${(S.biz.enabled_modules||[]).includes(m)?'checked':''}>
         <span>${CUI.icon(MODULES[m][0],{size:16})} ${MODULES[m][1]}${dependencyText(m)?`<span class="muted small" style="display:block;font-weight:400">Uses ${esc(dependencyText(m))}</span>`:''}</span></label>`).join('')}
-      <div style="margin-top:16px"><button class="btn" id="msave">Save modules</button></div></div></div>
-    <div class="split" style="margin-top:16px">
-      <div class="card" id="billingWrap"><div class="empty">Loading…</div></div>
-      <div class="card" id="signupWrap"><div class="empty">Loading…</div></div>
-    </div>
-    <div class="split" style="margin-top:16px">
+      <div class="settings-save-row"><button class="btn" id="msave">Save modules</button><span class="settings-scope">Turns modules on or off for the whole workspace.</span></div></div>
+      <div class="card" id="billingWrap"><div class="empty">Loading…</div></div></div></section>
+    <section class="settings-panel" id="setpanel-team" role="tabpanel" aria-labelledby="settab-team" tabindex="-1" hidden>
     <div class="card settings-team-card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff')}</div><p class="muted small" style="margin:6px 0 10px">Five roles: owner · manager · staff · front desk · bookkeeper. Invite by code — teammate signs up, enters the code, and lands in this workspace. The owner always sees every module and can't be restricted.</p>
       <div id="team"><p class="muted small">Loading…</p></div>
       <div class="row" style="margin-top:14px"><label class="sr-only" for="ir">Invite role</label><select id="ir" style="max-width:150px">
@@ -5432,11 +5556,14 @@ async function settingsPage(){
       <p class="muted small" style="margin:4px 0 8px">Reusable module sets — save one from a staff member's "Modules" panel below, then apply it to others. Example: Staff A → Dashboard + Customers. Staff B → Inventory only.</p>
       <div id="tplList"><p class="muted small">Loading…</p></div>
     </div>
-    <div class="card"><b>Import customers (CSV)</b>
+    <div id="commissionWrap"></div></section>
+    <section class="settings-panel" id="setpanel-data" role="tabpanel" aria-labelledby="settab-data" tabindex="-1" hidden><div class="split"><div class="card"><b>Import customers (CSV)</b>
       <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, gender, birth_date (YYYY-MM-DD).</p>
       <label for="csvf">Customer CSV file</label>
       <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
-      <div id="csvprev" style="margin-top:12px"></div></div></div>
+      <div id="csvprev" style="margin-top:12px"></div></div>
+      <div class="card" id="signupWrap"><div class="empty">Loading…</div></div></div></section>
+    <section class="settings-panel" id="setpanel-fields" role="tabpanel" aria-labelledby="settab-fields" tabindex="-1" hidden>
     <div class="card" style="margin-top:16px"><b>Customer fields</b>
       <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
       <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
@@ -5449,7 +5576,36 @@ async function settingsPage(){
       </details></div>
     <div class="card" style="margin-top:16px"><b>Tenant isolation</b>
       <p class="muted small" style="margin-top:6px;line-height:1.7">Every business on Frenly has its own isolated data space. Row-level security is enforced by the database on every table — your customers, sales, and programs are invisible to every other business, and theirs to you. Your team only ever sees this workspace.</p></div>
-    <div id="commissionWrap"></div></div>`;
+    </section></div>`;
+  /* Tabbed sections (ARIA tablist): every field stays in the DOM at once — only the active
+     panel is shown — so each Save button keeps reading exactly the inputs it always did, no
+     save semantics change. Roving tabindex + arrow/Home/End keys make the tabs keyboard-complete.
+     settingsActiveTab persists the choice across the in-place re-renders that add/retire trigger. */
+  const settingsTabs=[...document.querySelectorAll('.settings-tab')];
+  const settingsPanels=Object.fromEntries([...document.querySelectorAll('.settings-panel')].map(p=>[p.id,p]));
+  function selectSettingsTab(tab,focus){
+    settingsTabs.forEach(t=>{
+      const on=t===tab;
+      t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
+      const panel=settingsPanels['setpanel-'+t.dataset.settab];
+      if(panel)panel.hidden=!on;
+    });
+    settingsActiveTab=tab.dataset.settab;
+    if(focus)tab.focus();
+  }
+  settingsTabs.forEach((tab,i)=>{
+    tab.onclick=()=>selectSettingsTab(tab,false);
+    tab.onkeydown=e=>{
+      let ni=null;
+      if(e.key==='ArrowRight'||e.key==='ArrowDown')ni=(i+1)%settingsTabs.length;
+      else if(e.key==='ArrowLeft'||e.key==='ArrowUp')ni=(i-1+settingsTabs.length)%settingsTabs.length;
+      else if(e.key==='Home')ni=0;else if(e.key==='End')ni=settingsTabs.length-1;
+      if(ni===null)return;
+      e.preventDefault();selectSettingsTab(settingsTabs[ni],true);
+    };
+  });
+  const initialSettingsTab=document.getElementById('settab-'+settingsActiveTab);
+  if(initialSettingsTab&&initialSettingsTab!==settingsTabs[0])selectSettingsTab(initialSettingsTab,false);
   $('bsave').onclick=async()=>{
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),industry:$('bi').value,
       brand_color:$('bc').value,booking_policy:$('bp').value||null}).eq('id',S.biz.id);
