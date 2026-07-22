@@ -85,20 +85,32 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
   let api,widgetId;
   const message=(text,isError=false)=>{statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
   const clear=(text,isError=false)=>{onToken('');message(text,isError)};
+  const logTurnstileError=(errorCode)=>{
+    const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
+    console.warn('Turnstile error code:',code);
+  };
+  const removeWidget=()=>{
+    if(!api||widgetId===undefined) return;
+    try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
+    widgetId=undefined;
+    document.getElementById(container)?.replaceChildren();
+  };
   const render=async()=>{
     message('Loading security check…');retryEl.hidden=true;
     try{
       api=await loadTurnstile();
       if(!document.getElementById(container)) return;
+      removeWidget();
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,
         callback:(token)=>{onToken(token);message('Security check complete.');retryEl.hidden=true},
         'expired-callback':()=>{clear('Security check expired. Please try again.',true);retryEl.hidden=false},
         'timeout-callback':()=>{clear('Security check timed out. Please try again.',true);retryEl.hidden=false},
-        'error-callback':()=>{clear('Security check could not load. Please try again.',true);retryEl.hidden=false;return true}});
+        'error-callback':(errorCode)=>{logTurnstileError(errorCode);clear('Security check could not connect. Please retry, or check your browser and network settings.',true);retryEl.hidden=false;return true}});
     }catch{clear('Security check could not load. Check your connection and try again.',true);retryEl.hidden=false}
   };
+  const retryRender=()=>{clear('Complete the security check to continue.');retryEl.hidden=true;render()};
   const reset=()=>{clear('Complete the security check to continue.');retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
-  retryEl.onclick=reset;
+  retryEl.onclick=retryRender;
   await render();
   return {reset};
 }

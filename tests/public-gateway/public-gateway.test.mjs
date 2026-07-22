@@ -360,9 +360,15 @@ test('public write forms render and reset explicit Turnstile widgets under exact
     assert.match(page, /aria-live="polite"/);
     assert.match(page, /Retry security check/);
     assert.match(page, /'expired-callback'/);
-    assert.match(page, /'error-callback'/);
+    assert.match(page, /'error-callback':\(errorCode\)=>/);
+    assert.match(page, /logTurnstileError\(errorCode\)/);
+    assert.match(page, /console\.warn\('Turnstile error code:',code\)/);
     assert.match(page, /\.reset\(widgetId\)/);
+    assert.match(page, /function'\)api\.remove\(widgetId\);else api\.reset\(widgetId\)/);
+    assert.match(page, /document\.getElementById\(container\)\?\.replaceChildren\(\)/);
+    assert.match(page, /retryEl\.onclick=retryRender/);
     assert.doesNotMatch(page, /FRENLY_TURNSTILE_TOKEN/);
+    assert.doesNotMatch(page, /TURNSTILE_SECRET_KEY|CLOUDFLARE_SECRET_KEY|secretKey\s*=/);
   }
   assert.match(app, /action:'public_booking'/);
   assert.match(joinPage, /action:'public_join'/);
@@ -370,7 +376,19 @@ test('public write forms render and reset explicit Turnstile widgets under exact
   assert.match(joinPage, /turnstile_token:turnstileToken/);
   assert.match(vercel, /script-src[^;]+https:\/\/challenges\.cloudflare\.com/);
   assert.match(vercel, /frame-src https:\/\/challenges\.cloudflare\.com/);
+  assert.match(vercel, /connect-src[^;]+https:\/\/gadpooereceldfpfxsod\.supabase\.co[^;]+wss:\/\/gadpooereceldfpfxsod\.supabase\.co[^;]+https:\/\/challenges\.cloudflare\.com/);
   assert.match(docs, /both are required before exposing public join[\s\S]+booking writes/);
+});
+
+test('staff auth submit stays disabled until Turnstile returns a token', async () => {
+  const app = await read('app/index.html');
+  const authStart = app.indexOf("function renderAuth(mode='in')");
+  const authEnd = app.indexOf('function validNewPassword', authStart);
+  const auth = app.slice(authStart, authEnd);
+  assert.match(auth, /<button class="btn" id="go" disabled>/);
+  assert.match(auth, /let authToken='',authControl=null/);
+  assert.match(auth, /onToken:\(token\)=>\{authToken=token;\$\(\'go\'\)\.disabled=!token\}/);
+  assert.match(auth, /if\(!authToken\) return/);
 });
 
 test('booking capabilities are scrubbed from current history and change retries retain an intent ID', async () => {

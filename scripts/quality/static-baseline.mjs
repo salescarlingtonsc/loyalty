@@ -455,12 +455,13 @@ export async function checkVercelSecurityHeaders(root = repoRoot) {
   expectDirectiveValues(directives, 'connect-src', [
     "'self'",
     singaporeSupabaseUrl,
-    singaporeSupabaseWsUrl
+    singaporeSupabaseWsUrl,
+    'https://challenges.cloudflare.com'
   ]);
   assert.deepEqual(
     directives.get('connect-src'),
-    ["'self'", singaporeSupabaseUrl, singaporeSupabaseWsUrl],
-    'CSP connect-src must be restricted to self and the Singapore Supabase HTTPS/WSS origins only.'
+    ["'self'", singaporeSupabaseUrl, singaporeSupabaseWsUrl, 'https://challenges.cloudflare.com'],
+    'CSP connect-src must be restricted to self, the Singapore Supabase HTTPS/WSS origins, and Cloudflare Turnstile.'
   );
   assert.ok(!csp.includes(oldSupabaseUrl), 'CSP must not include the old Supabase HTTPS origin.');
   assert.ok(!csp.includes(oldSupabaseWsUrl), 'CSP must not include the old Supabase WSS origin.');

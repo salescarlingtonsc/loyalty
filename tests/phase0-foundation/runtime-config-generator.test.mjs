@@ -59,7 +59,7 @@ test('generator emits a frozen public config and an exact-origin CSP in an isola
   assert.match(runtime, /^\/\* Generated from an explicit public runtime configuration\./);
   assert.match(runtime, /window\.__FRENLY_RUNTIME_CONFIG__ = Object\.freeze\(/);
   assert.match(runtime, new RegExp(`"projectRef": "${NON_PRODUCTION_REF}"`));
-  assert.match(csp, new RegExp(`connect-src 'self' https:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co wss:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co;`));
+  assert.match(csp, new RegExp(`connect-src 'self' https:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co wss:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co https:\/\/challenges\\.cloudflare\\.com;`));
   assert.doesNotMatch(csp, /connect-src[^;]*\*/);
   assert.doesNotMatch(csp, /\{\{SUPABASE_/);
 
