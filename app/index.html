@@ -388,6 +388,32 @@ tr.click:hover td{background:#FBFAF8}
 .svc{display:flex;justify-content:space-between;width:100%;padding:13px 16px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer;background:#fff;color:var(--ink);font:inherit;text-align:left}
 .svc.sel{border-color:var(--coral);background:#FFF7F0}
 .svc:disabled{cursor:not-allowed;opacity:.55}
+.svc>span{min-width:0;overflow-wrap:anywhere}
+/* guided public booking journey */
+.pf-progress{display:flex;align-items:flex-start;gap:4px;margin:0 0 22px;padding:0;list-style:none}
+.pf-progress li{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;font-size:11px;font-weight:600;color:var(--muted);text-align:center;min-width:0;line-height:1.2;overflow:hidden}
+.pf-progress li::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:2px;background:var(--line)}
+.pf-progress li:first-child::before{display:none}
+.pf-progress .pf-dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid var(--line);color:var(--muted);font-size:13px;font-weight:700;position:relative;z-index:1;transition:background .2s,border-color .2s,color .2s}
+.pf-progress li.done .pf-dot{background:var(--coral);border-color:var(--coral);color:#fff}
+.pf-progress li.done::before,.pf-progress li.current::before{background:var(--coral)}
+.pf-progress li.current .pf-dot{border-color:var(--coral);color:var(--coral)}
+.pf-progress li.current{color:var(--ink)}
+.pf-step[hidden]{display:none}
+.pf-step h2{font-size:1.2rem;margin:0 0 4px}
+.pf-step .pf-hint{color:var(--muted);font-size:13px;margin:0 0 14px}
+.pf-nav{display:flex;gap:10px;margin-top:22px}
+.pf-nav .btn{flex:1 1 auto}
+.pf-nav .pf-back{flex:0 0 auto;min-width:96px}
+.pf-summary{background:var(--bg);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.pf-summary dl{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;margin:0}
+.pf-summary dt{color:var(--muted);font-size:12.5px;font-weight:600}
+.pf-summary dd{margin:0;font-weight:600;text-align:right;min-width:0;overflow-wrap:anywhere}
+.pf-choice{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}
+.pf-inlineerr{color:var(--red);font-size:13px;font-weight:600;margin-top:12px}
+.pf-inlineerr:empty{display:none}
+.pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
+@media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100vh;background:var(--bg);padding:28px 18px 56px}
 .wallet-inner{width:min(760px,100%);margin:0 auto}
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
@@ -5988,60 +6014,118 @@ async function renderPortal(slug){
   if(manageToken){
     history.replaceState(null,'',`${location.pathname}${location.search}#/b/${encodeURIComponent(slug)}`);
   }
-  root.innerHTML=`<div class="portal"><div class="head"><div class="logo">frenly<span>.</span></div><p class="muted small">powered booking</p></div><div class="card"><div class="empty">Loading…</div></div></div>`;
-  let signedInContext='';
-  if(signedInUser){
-    const {data:personas}=await sb.rpc('get_my_personas');
-    const customer=(personas?.customer||[]).find(p=>p.business_slug===slug);
-    const staff=(personas?.staff||[]).find(p=>p.business_slug===slug);
-    if(customer)signedInContext=`<div class="card" style="margin-bottom:16px"><div class="row"><span class="small">Signed in for ${esc(customer.business_name)}</span><span class="spacer"></span><a class="btn ghost sm" href="#/wallet/${encodeURIComponent(slug)}">Open rewards</a></div></div>`;
-    else if(staff)signedInContext=`<div class="card" style="margin-bottom:16px"><div class="row"><span class="small">Signed in as staff</span><span class="spacer"></span><a class="btn ghost sm" href="#/workspace/${encodeURIComponent(slug)}/dashboard">Open workspace</a></div></div>`;
-  }
+  /* Perceived performance: paint a branded, business-agnostic skeleton immediately — before any
+     network await — so the portal never shows a blank frame while data loads. The single
+     business fetch is the only thing on the critical path. The signed-in persona lookup used to
+     block ahead of it; it now runs in PARALLEL and only injects an optional banner once resolved,
+     so the booking journey renders the instant the business responds. */
+  root.innerHTML=`<div class="portal"><div class="head"><div class="logo">frenly<span>.</span></div><p class="muted small">powered booking</p></div>
+    <div class="card" aria-busy="true"><p class="sr-only" role="status">Loading booking…</p>
+      <div class="pf-skeleton"></div><div class="pf-skeleton"></div><div class="pf-skeleton" style="width:62%"></div></div></div>`;
+  const personaPromise=signedInUser?sb.rpc('get_my_personas').then(r=>r?.data||null).catch(()=>null):Promise.resolve(null);
   let biz;
   try{biz=await publicGateway('public-booking',{method:'GET',query:`?slug=${encodeURIComponent(slug)}`})}
   catch{root.querySelector('.card').innerHTML=`<div class="empty"><div class="big">🤔</div>Business not found.</div>`;return}
-  let selSvc=null,selTable=null,bookingSubmissionId=null,bookingSubmissionKey='';
+
+  const bc=contrastSafeBrandColor(biz.brand_color);
+  const currency=biz.currency||'SGD';
+  const services=(biz.services&&biz.services.length)?biz.services:[];
+  const hasServices=services.length>0;
+  const usesTables=!!biz.uses_tables;
+  const tables=(biz.tables&&biz.tables.length)?biz.tables:[];
+  /* Step 2 is a table choice (which DOES have real, anon-reachable availability) for reservation
+     businesses, otherwise a team-member preference for service businesses. Live per-slot staff
+     availability is not exposed to the anonymous portal context today (see design note in report),
+     so the team step is an honest "anyone available / someone specific" preference that rides
+     along in the notes the gateway already accepts — no payload-contract change. */
+  const middleStep=usesTables?'table':'team';
+  const steps=['service',middleStep,'time','details'];
+  const stepMeta={service:{label:'Service'},table:{label:'Table'},team:{label:'Team'},time:{label:'Time'},details:{label:'Details'}};
+  let selSvc=null;                       // null = general reservation, or a service uuid
+  let serviceChosen=!hasServices;        // reservation-only businesses need no service pick
+  let selTable=null;                     // reservation table type uuid (null = any/general)
+  let teamPref='any';                    // 'any' | 'named'
+  let stepIdx=0;
+  let bookingSubmissionId=null,bookingSubmissionKey='';
   let bookingTurnstileToken='',bookingTurnstileControl=null;
   let bookingChallengeGeneration=0;
   let changeAttempt=null;
-  const bc=contrastSafeBrandColor(biz.brand_color);
+  let turnstileMounted=false;
+  const nowSgtLocal=new Date(Date.now()+8*3600000).toISOString().slice(0,16);
+  const svcObj=()=>services.find(s=>s.id===selSvc)||null;
+  const staffName=()=>($('teamName')?.value||'').trim();
+  const fmtPicked=v=>{if(!v)return 'Not chosen yet';const t=v.split('T')[1]||'';const dt=new Date(v);return isNaN(dt)?v:dt.toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'})+(t?' · '+t:'');};
   const draw=()=>{
     destroyMountedTurnstiles();
-    const challengeGeneration=++bookingChallengeGeneration;
-    bookingTurnstileToken='';bookingTurnstileControl=null;
+    const progressHtml=`<ol class="pf-progress" id="pfProgress">${steps.map((k,i)=>`<li data-dot="${i}"><span class="pf-dot" aria-hidden="true">${i+1}</span>${esc(stepMeta[k].label)}</li>`).join('')}</ol>`;
+    const serviceStep=`<section class="pf-step" data-step="service" hidden>
+      <h2 tabindex="-1">${hasServices?'What would you like?':'Start your booking'}</h2>
+      <p class="pf-hint">${hasServices?'Choose a service to get started.':'Tell us a little about your visit.'}</p>
+      ${hasServices?`<div class="pf-choice" role="group" aria-label="Choose a service">
+        ${services.map(s=>`<button class="svc${selSvc===s.id?' sel':''}" type="button" aria-pressed="${selSvc===s.id}" data-svc="${esc(s.id)}">
+          <span><b>${esc(s.name)}</b> <span class="muted small">· ${s.duration_min} min</span></span>
+          <b>${esc(currency)} ${(s.price_cents/100).toFixed(2)}</b></button>`).join('')}
+        <button class="svc${(serviceChosen&&selSvc===null)?' sel':''}" type="button" aria-pressed="${serviceChosen&&selSvc===null}" data-svc=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button>
+      </div>`:`<p class="muted small">We'll note this as a general visit — pick your time on the next step.</p>`}
+      <div class="pf-inlineerr" id="err-service" role="alert"></div>
+      <div class="pf-nav"><button class="btn" id="next-service" type="button">Continue</button></div>
+    </section>`;
+    const tableStep=`<section class="pf-step" data-step="table" hidden>
+      <h2 tabindex="-1">Choose a table</h2>
+      <p class="pf-hint">Live availability for your visit.</p>
+      <div class="pf-choice" role="group" aria-label="Choose a table">
+        <button class="svc${selTable===null?' sel':''}" type="button" aria-pressed="${selTable===null}" data-tbl=""><span><b>Any available table</b> <span class="muted small">· we'll seat you</span></span></button>
+        ${tables.map(t=>{const full=t.available<=0;return `<button class="svc${selTable===t.table_type_id?' sel':''}" type="button" aria-pressed="${selTable===t.table_type_id}" data-tbl="${t.table_type_id}" ${full?'disabled':''}>
+          <span><b>${esc(t.name)}</b>${t.pax?` <span class="muted small">· seats ${t.pax}</span>`:''}</span>
+          <span class="muted small">${full?'Fully booked':t.available+' available'}</span></button>`;}).join('')}
+      </div>
+      ${tables.length?'':`<p class="muted small">No specific tables set up — we'll arrange a general reservation.</p>`}
+      <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="next-table" type="button">Continue</button></div>
+    </section>`;
+    const teamStep=`<section class="pf-step" data-step="team" hidden>
+      <h2 tabindex="-1">Who would you like?</h2>
+      <p class="pf-hint">Pick a team member, or let us assign the best available.</p>
+      <div class="pf-choice" role="group" aria-label="Choose a team member">
+        <button class="svc${teamPref==='any'?' sel':''}" type="button" aria-pressed="${teamPref==='any'}" data-team="any"><span><b>Anyone available</b> <span class="muted small">· recommended</span></span></button>
+        <button class="svc${teamPref==='named'?' sel':''}" type="button" aria-pressed="${teamPref==='named'}" data-team="named"><span><b>Someone specific</b> <span class="muted small">· tell us who</span></span></button>
+      </div>
+      <div id="teamNamedWrap"${teamPref==='named'?'':' hidden'}><label for="teamName">Team member's name</label><input id="teamName" autocomplete="off" placeholder="e.g. Jamie"></div>
+      <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="next-team" type="button">Continue</button></div>
+    </section>`;
+    const timeStep=`<section class="pf-step" data-step="time" hidden>
+      <h2 tabindex="-1">Pick a date & time</h2>
+      <p class="pf-hint">${biz.booking_auto_confirm?'We confirm instantly when a spot is free.':'Choose your preferred slot — the team confirms your exact time, usually within a few hours.'}</p>
+      <label for="pt">Preferred date & time</label><input id="pt" type="datetime-local" min="${nowSgtLocal}">
+      <div class="pf-inlineerr" id="err-time" role="alert"></div>
+      <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="next-time" type="button">Continue</button></div>
+    </section>`;
+    const detailsStep=`<section class="pf-step" data-step="details" hidden>
+      <h2 tabindex="-1">Your details</h2>
+      <p class="pf-hint">Almost done — just so we can confirm your booking.</p>
+      <div class="pf-summary" id="pfSummary"></div>
+      <div class="split"><div><label for="pn">Your name *</label><input id="pn" autocomplete="name"></div>
+        <div><label for="pp">Phone</label><div class="row">${ccSelectHtml('ppcc')}<input id="pp" type="tel" autocomplete="tel" placeholder="9123 4567"></div></div></div>
+      <div class="split"><div><label for="pe">Email</label><input id="pe" type="email" autocomplete="email"></div><div><label for="ps">${usesTables?'Party size':'Guests'}</label><input id="ps" type="number" min="1" max="50" value="${usesTables?2:1}"></div></div>
+      <p class="muted small" style="margin-top:6px">Add a phone or email so we can confirm your booking.</p>
+      <label for="pnotes">Notes</label><textarea id="pnotes" rows="2" placeholder="Anything we should know?"></textarea>
+      <label for="pconsent" style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        <input type="checkbox" id="pconsent" style="width:auto"> <span>Send me offers and updates</span></label>
+      <p class="muted small" style="margin-top:2px">Occasional news and offers from ${esc(biz.name)} — you can opt out anytime.</p>
+      <div class="challenge"><div id="bookingTurnstile"></div>
+        <p class="challenge-status" id="bookingTurnstileStatus" role="status" aria-live="polite">Loading security check…</p>
+        <button class="challenge-retry" id="bookingTurnstileRetry" type="button" hidden>Retry security check</button>
+      </div>
+      <div id="perr"></div>
+      <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="psend" disabled>Confirm booking</button></div>
+      ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
+    </section>`;
+    const stepBody={service:serviceStep,table:tableStep,team:teamStep,time:timeStep,details:detailsStep};
     root.innerHTML=`<div class="portal" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},${bc})">
       <div class="head"><h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
-      ${signedInContext}
+      <div id="portalSignedInSlot"></div>
       <div class="card" id="bookingFormCard">
-        ${(biz.services&&biz.services.length)?`<b>Choose a service</b>
-          <div style="margin:10px 0 4px">${biz.services.map(s=>`<button class="svc ${selSvc===s.id?'sel':''}" type="button" aria-pressed="${selSvc===s.id}" data-s="${s.id}">
-            <span><b>${esc(s.name)}</b> <span class="muted small">· ${s.duration_min} min</span></span>
-            <b>${esc(biz.currency||'SGD')} ${(s.price_cents/100).toFixed(2)}</b></button>`).join('')}
-          <button class="svc ${selSvc===null?'sel':''}" type="button" aria-pressed="${selSvc===null}" data-s=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button></div>`
-        :`<b>Make a reservation</b>`}
-        ${biz.uses_tables?`<div style="margin-top:16px"><b>Choose a table</b>
-          <div style="margin:10px 0 4px">${(biz.tables&&biz.tables.length)?biz.tables.map(t=>{
-            const full=t.available<=0;
-            return `<button class="svc ${selTable===t.table_type_id?'sel':''}" type="button" aria-pressed="${selTable===t.table_type_id}" data-tbl="${t.table_type_id}" ${full?'disabled':''}>
-              <span><b>${esc(t.name)}</b>${t.pax?` <span class="muted small">· seats ${t.pax}</span>`:''}</span>
-              <span class="muted small">${full?'Fully booked':t.available+' available'}</span></button>`;
-          }).join(''):'<p class="muted small">No tables set up yet — request a general reservation below.</p>'}</div></div>`:''}
-        <div class="split"><div><label for="pn">Your name *</label><input id="pn" autocomplete="name"></div>
-          <div><label for="pp">Phone</label><div class="row">${ccSelectHtml('ppcc')}<input id="pp" type="tel" autocomplete="tel" placeholder="9123 4567"></div></div></div>
-        <div class="split"><div><label for="pe">Email</label><input id="pe" type="email" autocomplete="email"></div><div><label for="ps">Party size</label><input id="ps" type="number" min="1" value="2"></div></div>
-        <label for="pt">Preferred date & time</label><input id="pt" type="datetime-local">
-        <label for="pnotes">Notes</label><textarea id="pnotes" rows="2" placeholder="Anything we should know?"></textarea>
-        <label for="pconsent" style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-          <input type="checkbox" id="pconsent" style="width:auto"> <span>Send me offers and updates</span></label>
-        <p class="muted small" style="margin-top:2px">Occasional news and offers from ${esc(biz.name)} — you can opt out anytime.</p>
-        <div class="challenge"><div id="bookingTurnstile"></div>
-          <p class="challenge-status" id="bookingTurnstileStatus" role="status" aria-live="polite">Loading security check…</p>
-          <button class="challenge-retry" id="bookingTurnstileRetry" type="button" hidden>Retry security check</button>
-        </div>
-        <div id="perr"></div>
-        <div style="margin-top:18px"><button class="btn" id="psend" disabled style="width:100%">Request booking</button></div>
-        ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
-        <p class="muted small" style="margin-top:12px;text-align:center">The team confirms your request personally — you'll hear back soon.</p>
+        ${progressHtml}
+        ${steps.map(k=>stepBody[k]).join('')}
       </div>
       <div class="card" style="margin-top:16px"><b>Manage an existing booking</b>
         <p class="muted small" style="margin:6px 0 10px">Use the private management code issued with your booking. Your phone number is never used as a password.</p>
@@ -6049,20 +6133,66 @@ async function renderPortal(slug){
         <div id="merr"></div>
         <div id="mlist" style="margin-top:12px"></div>
       </div>${legalLinks()}</div>`;
-    document.querySelectorAll('[data-s]').forEach(el=>el.onclick=()=>{selSvc=el.dataset.s||null;draw()});
-    document.querySelectorAll('[data-tbl]').forEach(el=>el.onclick=()=>{selTable=el.dataset.tbl||null;draw()});
-    mountTurnstile(biz.turnstile_site_key,{container:'bookingTurnstile',status:'bookingTurnstileStatus',retry:'bookingTurnstileRetry',action:'public_booking',
-      onToken:(token)=>{if(challengeGeneration!==bookingChallengeGeneration)return;bookingTurnstileToken=token;if($('psend'))$('psend').disabled=!token}})
-      .then(control=>{if(challengeGeneration===bookingChallengeGeneration)bookingTurnstileControl=control});
+    const buildSummary=()=>{
+      const el=$('pfSummary');if(!el)return;
+      const s=svcObj();
+      const rows=[['Service', s?esc(s.name):'General visit']];
+      if(s)rows.push(['Duration & price',`${s.duration_min} min · ${esc(currency)} ${(s.price_cents/100).toFixed(2)}`]);
+      if(usesTables)rows.push(['Table', selTable?esc((tables.find(t=>t.table_type_id===selTable)||{}).name||'Selected'):'Any available']);
+      else rows.push(['Team member',(teamPref==='named'&&staffName())?esc(staffName()):'Anyone available']);
+      rows.push(['When',esc(fmtPicked($('pt')?.value))]);
+      if(biz.booking_policy)rows.push(['Good to know',esc(biz.booking_policy)]);
+      el.innerHTML=`<dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+    };
+    const mountBookingTurnstile=()=>{
+      if(turnstileMounted)return;
+      turnstileMounted=true;
+      const challengeGeneration=++bookingChallengeGeneration;
+      bookingTurnstileToken='';bookingTurnstileControl=null;
+      mountTurnstile(biz.turnstile_site_key,{container:'bookingTurnstile',status:'bookingTurnstileStatus',retry:'bookingTurnstileRetry',action:'public_booking',
+        onToken:(token)=>{if(challengeGeneration!==bookingChallengeGeneration)return;bookingTurnstileToken=token;if($('psend'))$('psend').disabled=!token}})
+        .then(control=>{if(challengeGeneration===bookingChallengeGeneration)bookingTurnstileControl=control});
+    };
+    const showStep=(idx)=>{
+      stepIdx=Math.max(0,Math.min(idx,steps.length-1));
+      const key=steps[stepIdx];
+      root.querySelectorAll('.pf-step').forEach(el=>{el.hidden=el.dataset.step!==key;});
+      root.querySelectorAll('#pfProgress li').forEach((li,i)=>{
+        li.classList.toggle('current',i===stepIdx);
+        li.classList.toggle('done',i<stepIdx);
+        if(i===stepIdx)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');
+      });
+      if(key==='details'){buildSummary();mountBookingTurnstile();}
+      const stepEl=root.querySelector(`.pf-step[data-step="${key}"]`);
+      const heading=stepEl?.querySelector('h2');
+      if(heading)requestAnimationFrame(()=>heading.focus({preventScroll:false}));
+      CUI.announce(`Step ${stepIdx+1} of ${steps.length}: ${stepMeta[key].label}`);
+    };
+    const setChoice=(selector,el)=>root.querySelectorAll(selector).forEach(b=>{const on=b===el;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',String(on));});
+    root.querySelectorAll('[data-svc]').forEach(el=>el.onclick=()=>{selSvc=el.dataset.svc||null;serviceChosen=true;setChoice('[data-svc]',el);const e=$('err-service');if(e)e.textContent='';});
+    root.querySelectorAll('[data-tbl]').forEach(el=>el.onclick=()=>{selTable=el.dataset.tbl||null;setChoice('[data-tbl]',el);});
+    root.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{teamPref=el.dataset.team;setChoice('[data-team]',el);const wrap=$('teamNamedWrap');if(wrap)wrap.hidden=teamPref!=='named';if(teamPref==='named')requestAnimationFrame(()=>$('teamName')?.focus());});
+    root.querySelectorAll('[data-back]').forEach(el=>el.onclick=()=>showStep(stepIdx-1));
+    if($('next-service'))$('next-service').onclick=()=>{if(hasServices&&!serviceChosen){$('err-service').textContent='Please choose a service, or “Just a reservation”.';CUI.announce('Please choose a service',{assertive:true});return;}showStep(stepIdx+1);};
+    if($('next-table'))$('next-table').onclick=()=>showStep(stepIdx+1);
+    if($('next-team'))$('next-team').onclick=()=>showStep(stepIdx+1);
+    if($('next-time'))$('next-time').onclick=()=>{if(!$('pt').value){$('err-time').textContent='Please pick a date and time.';CUI.announce('Please pick a date and time',{assertive:true});return;}showStep(stepIdx+1);};
     $('psend').onclick=async()=>{
       if(!bookingTurnstileToken) return;
-      $('psend').disabled=true;
+      const name=($('pn').value||'').trim();
       const rawPhone=($('pp').value||'').trim();
+      const email=($('pe').value||'').trim();
+      if(name.length<2){$('perr').innerHTML=`<div class="err">Please enter your name.</div>`;$('pn').focus();return;}
+      if(!rawPhone&&!email){$('perr').innerHTML=`<div class="err">Add a phone number or email so we can confirm.</div>`;$('pp').focus();return;}
+      $('perr').innerHTML='';$('psend').disabled=true;
+      let notesFinal=($('pnotes').value||'').trim();
+      if(!usesTables&&teamPref==='named'&&staffName())notesFinal=(notesFinal?notesFinal+' — ':'')+`Preferred team member: ${staffName()}`;
+      notesFinal=notesFinal?notesFinal.slice(0,1000):null;
       const bookingPayload={
-        slug,name:$('pn').value,email:$('pe').value||null,
+        slug,name,email:email||null,
         phone:rawPhone?buildPhone('ppcc','pp'):null,service:selSvc,
         party:parseInt($('ps').value||'1'),preferred:sgIso($('pt').value),
-        notes:$('pnotes').value||null,table_type:biz.uses_tables?selTable:null,
+        notes:notesFinal,table_type:usesTables?selTable:null,
         consent:$('pconsent').checked};
       const nextBookingKey=JSON.stringify(bookingPayload);
       if(!bookingSubmissionId||bookingSubmissionKey!==nextBookingKey){
@@ -6073,10 +6203,10 @@ async function renderPortal(slug){
         turnstile_token:bookingTurnstileToken}})}
       catch(error){$('perr').innerHTML=`<div class="err">${esc(error.message)}</div>`;bookingTurnstileControl?.reset();return}
       const msgs={
-        confirmed:{em:'🎉',title:"You're booked!",body:`${esc(biz.name)} has confirmed your booking.`},
-        pending:{em:'🎉',title:'Request sent!',body:`${esc(biz.name)} has your booking request and will confirm shortly.`},
-        waitlisted:{em:'⏳',title:"You're on the waitlist",body:`${esc(biz.name)} is fully booked for that time — we'll be in touch as soon as a spot opens up.`},
-        rejected:{em:'😔',title:'Fully booked',body:`Sorry, ${esc(biz.name)} is fully booked for that — try another table or time.`}
+        confirmed:{em:'🎉',title:"You're booked!",body:`${esc(biz.name)} has confirmed your booking.`,next:"We've saved your booking — no further action needed."},
+        pending:{em:'🎉',title:'Request sent!',body:`${esc(biz.name)} has your booking request and will confirm shortly.`,next:'The team reviews your request and confirms personally — you\'ll hear back soon.'},
+        waitlisted:{em:'⏳',title:"You're on the waitlist",body:`${esc(biz.name)} is fully booked for that time — we'll be in touch as soon as a spot opens up.`,next:"We'll message you the moment a spot opens up."},
+        rejected:{em:'😔',title:'Fully booked',body:`Sorry, ${esc(biz.name)} is fully booked for that — try another table or time.`,next:'Try another table or time — nothing was booked.'}
       };
       const m=msgs[bookRes&&bookRes.status]||msgs.pending;
       manageToken=bookRes.manage_token||'';
@@ -6084,10 +6214,13 @@ async function renderPortal(slug){
       const bookingFormCard=$('bookingFormCard');
       if(!bookingFormCard)return;
       bookingTurnstileControl?.destroy();bookingTurnstileControl=null;
-      bookingFormCard.innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 style="margin-bottom:8px">${esc(m.title)}</h2>
-        <p class="muted">${m.body}</p>${manageToken?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>
+      bookingFormCard.innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 tabindex="-1" style="margin-bottom:8px">${esc(m.title)}</h2>
+        <p class="muted">${m.body}</p>
+        <p class="small" style="margin-top:10px"><b>What happens next:</b> ${m.next}</p>${manageToken?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>
         <p class="small" style="margin-top:6px;word-break:break-all"><a href="${esc(manageUrl)}" style="color:#D06A2E;text-decoration:underline">${esc(manageUrl)}</a></p>
         <button class="btn ghost sm" id="copyManage" style="margin-top:12px">Copy private link</button>`:''}</div>`;
+      CUI.announce(`${m.title} ${m.body}`,{assertive:true});
+      requestAnimationFrame(()=>bookingFormCard.querySelector('h2')?.focus());
       if($('copyManage')) $('copyManage').onclick=async()=>{await navigator.clipboard.writeText(manageUrl);toast('Private link copied')};
     };
     $('mfind').onclick=async()=>{
@@ -6105,6 +6238,7 @@ async function renderPortal(slug){
         <div class="row" style="margin-top:10px"><button class="btn ghost sm" onclick="mCancel()">Cancel booking</button>
         <button class="btn sm" onclick="mReschedule()">Request reschedule</button></div>`:'<p class="muted small">Changes are not available for this booking.</p>'}`;
     };
+    showStep(0);
     if(manageToken) setTimeout(()=>$('mfind')?.click(),0);
   };
   window.mCancel=async()=>{
@@ -6133,6 +6267,16 @@ async function renderPortal(slug){
     toast(data&&data.status==='approved'?'Done — auto-approved':'Request sent — the team will confirm');
   };
   draw();
+  /* Off the critical path: once personas resolve, inject a CUSTOMER-only "Open rewards" banner.
+     A staff session in the same browser is deliberately NOT surfaced here — the audit flagged the
+     old "Signed in as staff" line as contextually confusing on a customer-facing surface. The
+     portal renders as a pure customer product; staff reach their workspace through the app. */
+  personaPromise.then(personas=>{
+    const slot=$('portalSignedInSlot');
+    if(!slot||!personas)return;
+    const customer=(personas.customer||[]).find(p=>p.business_slug===slug);
+    if(customer)slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="row"><span class="small">Signed in for ${esc(customer.business_name)}</span><span class="spacer"></span><a class="btn ghost sm" href="#/wallet/${encodeURIComponent(slug)}">Open rewards</a></div></div>`;
+  }).catch(()=>{});
 }
 
 async function boot(){
