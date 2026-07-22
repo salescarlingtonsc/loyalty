@@ -1,6 +1,6 @@
 -- FRENLY v50 - RETENTION MEASUREMENT (HOLDOUT GROUPS + INCREMENTAL-LIFT ATTRIBUTION)
 --
--- Local review candidate. Forward-only; not approved for production application.
+-- Forward-only. RELEASE APPROVED by owner 2026-07-23; applied with the v49->v50b chain.
 -- Builds the measurement layer for Frenly's differentiator: publish a versioned
 -- retention rule against a FROZEN audience snapshot, deterministically split that
 -- audience into treatment/holdout, issue the offer ONLY to treatment members, then

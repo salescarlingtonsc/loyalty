@@ -725,7 +725,7 @@
       "path": "db/migrations/20260722_frenly_v50_retention_measurement.sql",
       "semanticVersion": "v50",
       "proposedDeployVersion": "20260722000117",
-      "sha256": "d3c16d18921d4b1fa2826c332559d9518aff8e47a8aafbe48183cf26279cdf4c"
+      "sha256": "6a500f84246ac708835f61f0093dec78cf07eeda235d8aabb0dfb24c4c894917"
     },
     {
       "order": 78,
