@@ -153,7 +153,7 @@ test('dashboard and customer loyalty detail preserve accessible names and one pa
     'read-only staff must not call the owner-only birthday programme RPC');
 });
 
-test('mobile Retention actions wrap and the horizontal nav stays inside the viewport',()=>{
+test('mobile Retention actions wrap and navigation stays fully discoverable without horizontal scrolling',()=>{
   assert.match(retention,/class="retention-taxonomy-row"/);
   assert.match(retention,/class="retention-taxonomy-actions"/);
   assert.match(app,/\.retention-taxonomy-row\{[^}]*flex-wrap:wrap[^}]*min-width:0/s);
@@ -161,8 +161,9 @@ test('mobile Retention actions wrap and the horizontal nav stays inside the view
   assert.match(app,/\.retention-taxonomy-actions\{[^}]*flex-wrap:wrap[^}]*min-width:0/s);
   const mobileShell=section('@media(max-width:960px){','@media(max-width:767px){');
   assert.match(mobileShell,/\.shell\{[^}]*grid-template-columns:minmax\(0,1fr\)[^}]*max-width:100vw[^}]*min-width:0/s);
-  assert.match(mobileShell,/\.side\{[^}]*width:100%[^}]*max-width:100vw[^}]*min-width:0[^}]*overflow-x:auto[^}]*overflow-y:hidden/s);
-  assert.match(mobileShell,/\.nav\{[^}]*display:flex[^}]*min-width:0/s);
+  assert.match(mobileShell,/\.side\{[^}]*width:100%[^}]*max-width:100vw[^}]*min-width:0[^}]*overflow:visible/s);
+  assert.match(mobileShell,/\.nav\{[^}]*display:grid[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)[^}]*width:100%[^}]*min-width:0/s);
+  assert.doesNotMatch(mobileShell,/overflow-x:auto|flex:0 0 max-content/);
 });
 
 test('progressive enhancement is scoped to approved customer routes',()=>{

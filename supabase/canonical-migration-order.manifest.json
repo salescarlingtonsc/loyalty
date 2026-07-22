@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 27,
-  "itemCount": 72,
+  "pendingCount": 29,
+  "itemCount": 74,
   "items": [
     {
       "order": 1,
@@ -727,6 +727,26 @@
       "path": "supabase/migrations/20260722130000_frenly_v47_smart_staff_scheduling.sql",
       "octetLength": 35627,
       "sha256": "bd483583608a065888a0469243b79067d626209709146d1f18eff73548432fac",
+      "provenance": "local-source"
+    },
+    {
+      "order": 73,
+      "kind": "pending",
+      "version": "20260722131000",
+      "name": "frenly_v47a_record_sale_overload_cleanup",
+      "path": "supabase/migrations/20260722131000_frenly_v47a_record_sale_overload_cleanup.sql",
+      "octetLength": 412,
+      "sha256": "a9b5f815dea66582a88f98665354b8472d7af01ef771a987b70f732668974bbe",
+      "provenance": "local-source"
+    },
+    {
+      "order": 74,
+      "kind": "pending",
+      "version": "20260722132000",
+      "name": "frenly_v47b_record_sale_dispatch_fix",
+      "path": "supabase/migrations/20260722132000_frenly_v47b_record_sale_dispatch_fix.sql",
+      "octetLength": 5228,
+      "sha256": "905c3d28b821498f4eb5984574bd2d2bcbf286e85682be09efc365076ce5d25e",
       "provenance": "local-source"
     }
   ]

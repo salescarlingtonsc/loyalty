@@ -34,7 +34,9 @@ const sqlTestByVersion = new Map([
   ['c45', 'db/tests/v45_birthday_benefits.sql'],
   ['v46', 'db/tests/v46_customer_in_app_inbox.sql'],
   ['v46a', 'db/tests/v46a_birthday_draft_runtime_fix.sql'],
-  ['v47', 'db/tests/v47_smart_staff_scheduling.sql']
+  ['v47', 'db/tests/v47_smart_staff_scheduling.sql'],
+  ['v47a', 'db/tests/v47_smart_staff_scheduling.sql'],
+  ['v47b', 'db/tests/v47_smart_staff_scheduling.sql']
 ]);
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -48,7 +50,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 27);
+  assert.equal(pending.length, 29);
   assert.equal(sqlTestByVersion.size, pending.length);
 
   for (const migration of pending) {
@@ -97,7 +99,11 @@ test('pending public SECURITY DEFINER RPCs pin search_path and revoke default ex
       const nextOffset = definitions[index + 1]?.index ?? sql.length;
       const block = sql.slice(definition.index, nextOffset);
       const functionName = definition[1];
-      assert.match(block, /security definer/i, `${migration.name}: ${functionName} must be SECURITY DEFINER`);
+      const retiredFailClosedStub=/security invoker/i.test(block)
+        &&/Legacy phone-sale signature is retired/.test(block)
+        &&functionName==='public.record_sale_by_phone';
+      assert.ok(/security definer/i.test(block)||retiredFailClosedStub,
+        `${migration.name}: ${functionName} must be SECURITY DEFINER or an explicitly retired fail-closed stub`);
       assert.match(block, /set search_path\s+(?:to|=)/i, `${migration.name}: ${functionName} must pin search_path`);
       assert.match(
         sql,

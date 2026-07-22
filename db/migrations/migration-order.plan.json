@@ -71,6 +71,8 @@
     { "kind": "executable", "path": "db/migrations/20260721_frenly_v45_birthday_benefits.sql", "semanticVersion": "v45", "proposedDeployVersion": "20260722000107" },
     { "kind": "executable", "path": "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql", "semanticVersion": "v46", "proposedDeployVersion": "20260722000108" },
     { "kind": "executable", "path": "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql", "semanticVersion": "v46a", "proposedDeployVersion": "20260722000109" },
-    { "kind": "executable", "path": "db/migrations/20260722050339_frenly_v47_smart_staff_scheduling.sql", "semanticVersion": "v47", "proposedDeployVersion": "20260722000110" }
+    { "kind": "executable", "path": "db/migrations/20260722050339_frenly_v47_smart_staff_scheduling.sql", "semanticVersion": "v47", "proposedDeployVersion": "20260722000110" },
+    { "kind": "executable", "path": "db/migrations/20260722_frenly_v47a_record_sale_overload_cleanup.sql", "semanticVersion": "v47a", "proposedDeployVersion": "20260722000111" },
+    { "kind": "executable", "path": "db/migrations/20260722_frenly_v47b_record_sale_dispatch_fix.sql", "semanticVersion": "v47b", "proposedDeployVersion": "20260722000112" }
   ]
 }

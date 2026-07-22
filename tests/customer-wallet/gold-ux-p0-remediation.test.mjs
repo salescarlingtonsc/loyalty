@@ -59,7 +59,7 @@ test('public booking uses semantic choices, safe contrast and the exact result h
     assert.match(portal, new RegExp(`<label for="${id}"`));
   }
   assert.match(portal, /id="bookingFormCard"/);
-  assert.match(portal, /const bookingFormCard=\$\('bookingFormCard'\);\s*if\(!bookingFormCard\)return;\s*bookingFormCard\.innerHTML=/);
+  assert.match(portal, /const bookingFormCard=\$\('bookingFormCard'\);\s*if\(!bookingFormCard\)return;\s*bookingTurnstileControl\?\.destroy\(\);bookingTurnstileControl=null;\s*bookingFormCard\.innerHTML=/);
   assert.doesNotMatch(portal, /root\.querySelector\('\.card'\)\.innerHTML=`<div class="empty"><div class="big">\$\{m\.em\}/,
     'booking success must not overwrite the signed-in context card');
   assert.match(portal, /--grad:linear-gradient\(100deg,\$\{bc\},\$\{bc\}\)/);

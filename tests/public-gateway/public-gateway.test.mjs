@@ -365,7 +365,7 @@ test('public write forms render and reset explicit Turnstile widgets under exact
     assert.match(page, /console\.warn\('Turnstile error code:',code\)/);
     assert.match(page, /\.reset\(widgetId\)/);
     assert.match(page, /function'\)api\.remove\(widgetId\);else api\.reset\(widgetId\)/);
-    assert.match(page, /document\.getElementById\(container\)\?\.replaceChildren\(\)/);
+    assert.match(page, /host\?\.replaceChildren\(\)|document\.getElementById\(container\)\?\.replaceChildren\(\)/);
     assert.match(page, /retryEl\.onclick=retryRender/);
     assert.doesNotMatch(page, /FRENLY_TURNSTILE_TOKEN/);
     assert.doesNotMatch(page, /TURNSTILE_SECRET_KEY|CLOUDFLARE_SECRET_KEY|secretKey\s*=/);
@@ -373,6 +373,10 @@ test('public write forms render and reset explicit Turnstile widgets under exact
   assert.match(app, /action:'public_booking'/);
   assert.match(joinPage, /action:'public_join'/);
   assert.match(app, /turnstile_token:bookingTurnstileToken/);
+  assert.match(app, /const mountedTurnstileControls=new Set\(\)/);
+  assert.match(app, /function destroyMountedTurnstiles\(\)[\s\S]*control=>control\.destroy\(\)/);
+  assert.match(app, /const destroy=\(\)=>\{[\s\S]*retryEl\.onclick=null[\s\S]*removeWidget\(\)[\s\S]*mountedTurnstileControls\.delete\(control\)/);
+  assert.match(app, /bookingTurnstileControl\?\.destroy\(\);bookingTurnstileControl=null/);
   assert.match(joinPage, /turnstile_token:turnstileToken/);
   assert.match(vercel, /script-src[^;]+https:\/\/challenges\.cloudflare\.com/);
   assert.match(vercel, /frame-src https:\/\/challenges\.cloudflare\.com/);

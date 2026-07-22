@@ -290,10 +290,15 @@ tr.click:hover td{background:#FBFAF8}
 .calendar-agenda{display:none}.calendar-agenda-item{display:grid;grid-template-columns:82px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--hair)}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
-  .side{position:static;width:100%;max-width:100vw;min-width:0;height:auto;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;
+  .side{position:static;width:100%;max-width:100vw;min-width:0;height:auto;display:block;overflow:visible;padding:10px 12px;
     border-right:none;border-bottom:1px solid var(--line)}
   .side .foot,.side .logo{display:none}
-  .nav{display:flex;flex:0 0 max-content;min-width:0}
+  .nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;min-width:0}
+  .nav>a,.navgroup{min-width:0}
+  .nav a,.navhead{width:100%;margin:0;white-space:normal}
+  .navhead{margin-top:0}
+  .navbody{margin-top:4px}
+  .navbody a{padding-left:12px}
   .appbar{padding:10px 18px}
   .charts,.split,.appointment-layout{grid-template-columns:1fr}
   .appointment-form-card{position:static}
@@ -405,6 +410,10 @@ async function publicGateway(name,{method='POST',body=null,query=''}={}){
   return payload;
 }
 let turnstileLoader;
+const mountedTurnstileControls=new Set();
+function destroyMountedTurnstiles(){
+  [...mountedTurnstileControls].forEach(control=>control.destroy());
+}
 function loadTurnstile(){
   if(window.turnstile) return Promise.resolve(window.turnstile);
   if(turnstileLoader) return turnstileLoader;
@@ -419,7 +428,7 @@ function loadTurnstile(){
   return turnstileLoader;
 }
 async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
-  const statusEl=$(status),retryEl=$(retry);let api,widgetId;
+  const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
   const message=(text,isError=false)=>{statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
   const clear=(text,isError=false)=>{onToken('');message(text,isError)};
   const logTurnstileError=(errorCode)=>{
@@ -427,29 +436,39 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
     console.warn('Turnstile error code:',code);
   };
   const removeWidget=()=>{
-    if(!api||widgetId===undefined) return;
-    try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
+    const host=document.getElementById(container);
+    if(api&&widgetId!==undefined&&host){
+      try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
+    }
     widgetId=undefined;
-    document.getElementById(container)?.replaceChildren();
+    host?.replaceChildren();
   };
   const render=async()=>{
+    if(destroyed)return;
     message('Loading security check…');retryEl.hidden=true;
     try{
       api=await loadTurnstile();
-      if(!document.getElementById(container)) return;
+      if(destroyed||!document.getElementById(container)) return;
       removeWidget();
+      if(destroyed)return;
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,
-        callback:(token)=>{onToken(token);message('Security check complete.');retryEl.hidden=true},
-        'expired-callback':()=>{clear('Security check expired. Please try again.',true);retryEl.hidden=false},
-        'timeout-callback':()=>{clear('Security check timed out. Please try again.',true);retryEl.hidden=false},
-        'error-callback':(errorCode)=>{logTurnstileError(errorCode);clear('Security check could not connect. Please retry, or check your browser and network settings.',true);retryEl.hidden=false;return true}});
-    }catch{clear('Security check could not load. Check your connection and try again.',true);retryEl.hidden=false}
+        callback:(token)=>{if(destroyed)return;onToken(token);message('Security check complete.');retryEl.hidden=true},
+        'expired-callback':()=>{if(destroyed)return;clear('Security check expired. Please try again.',true);retryEl.hidden=false},
+        'timeout-callback':()=>{if(destroyed)return;clear('Security check timed out. Please try again.',true);retryEl.hidden=false},
+        'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear('Security check could not connect. Please retry, or check your browser and network settings.',true);retryEl.hidden=false;return true}});
+    }catch{if(!destroyed){clear('Security check could not load. Check your connection and try again.',true);retryEl.hidden=false}}
   };
-  const retryRender=()=>{clear('Complete the security check to continue.');retryEl.hidden=true;render()};
-  const reset=()=>{clear('Complete the security check to continue.');retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  const retryRender=()=>{if(destroyed)return;clear('Complete the security check to continue.');retryEl.hidden=true;render()};
+  const reset=()=>{if(destroyed)return;clear('Complete the security check to continue.');retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  const destroy=()=>{
+    if(destroyed)return;
+    destroyed=true;retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
+  };
+  const control={reset,destroy};
+  mountedTurnstileControls.add(control);
   retryEl.onclick=retryRender;
   await render();
-  return {reset};
+  return control;
 }
 /* Supabase Auth has CAPTCHA protection enabled (Cloudflare Turnstile), so every
    signUp / signInWithPassword / resetPasswordForEmail call must carry a captchaToken.
@@ -575,6 +594,11 @@ let muteAlerts=false;     // in-session-only pop-up mute for non-owners (can't p
 let selectedBranchId=null; // null = consolidated
 let dashboardRenderEpoch=0; // invalidates pending dashboard/filter work as soon as routing starts
 let customerWalletRenderEpoch=0; // prevents an older customer-wallet RPC from repainting a new route
+let routeRenderEpoch=0; // prevents an older async route from redirecting over newer navigation
+const beginRouteInvocation=()=>{
+  const routeEpoch=++routeRenderEpoch;
+  return ()=>routeRenderEpoch===routeEpoch;
+};
 
 let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null};
 let customerFeatureCapabilities=null;
@@ -673,8 +697,10 @@ async function loadCustomerFeatureCapabilities({refresh=false}={}){
 
 /* ---------- routing ---------- */
 async function route(){
+  const isRouteCurrent=beginRouteInvocation();
   dashboardRenderEpoch+=1;
   customerWalletRenderEpoch+=1;
+  destroyMountedTurnstiles();
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
      hiccup used to throw straight out of this async function with nothing rendered, which
      read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
@@ -692,6 +718,7 @@ async function route(){
       }
     }
     const {data:{session}}=await sb.auth.getSession();
+    if(!isRouteCurrent())return;
     S.user=session?.user||null;
     if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
     if(h==='#/customer'||h==='#/customer/register') return renderCustomerRegistration();
@@ -702,6 +729,14 @@ async function route(){
       if(customerCapabilities._load_error)return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');
       if(!customerCapabilities.customer_wallet) return renderCustomerWalletUnavailable();
       return renderCustomerWallet(h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null);
+    }
+    if(h==='#/'){
+      const {data:rootPersonas,error:rootPersonaError}=await sb.rpc('get_my_personas');
+      if(!isRouteCurrent()||location.hash&&location.hash!=='#/')return;
+      if(rootPersonaError)return renderPersonaResolutionUnavailable();
+      const staffPersonas=rootPersonas?.staff||[],customerPersonas=rootPersonas?.customer||[];
+      if(customerPersonas.length&&!staffPersonas.length){nav('#/wallet');return}
+      if(customerPersonas.length&&staffPersonas.length){nav(rootPersonas.default_route||`#/workspace/${encodeURIComponent(staffPersonas[0].business_slug)}/dashboard`);return}
     }
     let workspacePage=null,workspaceStaffPersona=null;
     if(h.startsWith('#/workspace/')){
@@ -845,6 +880,7 @@ async function customerPhoneOtpAvailable(channel='sms'){
   return channel==='whatsapp'?serverCapabilities.whatsapp===true:serverCapabilities.sms===true;
 }
 function customerRegistrationShell(body){
+  destroyMountedTurnstiles();
   root.innerHTML=`<main class="wallet-shell" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <div class="logo">frenly<span>.</span></div><span class="spacer"></span>
     <button class="btn ghost sm" id="customerBack" type="button">${CUI.icon('back',{size:17})}<span>Business sign in</span></button>
@@ -1641,6 +1677,20 @@ async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>
   });
 }
 
+function renderPersonaResolutionUnavailable(){
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="accountAccessTitle">
+    <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
+    <h1 id="accountAccessTitle" style="font-size:1.5rem;margin:14px 0 6px">We couldn't load your account</h1>
+    <p class="muted" style="line-height:1.6">Your account is still signed in. Retry to open the correct business or customer view.</p>
+    <button class="btn" id="accountAccessRetry" style="width:100%;margin-top:18px">Retry</button>
+    <button class="btn ghost" id="accountAccessSignOut" style="width:100%;margin-top:10px">Sign out</button>
+    ${legalLinks()}</section></main>`;
+  const main=$('main');main.focus();
+  CUI.announce('Account access could not be loaded.',{assertive:true});
+  $('accountAccessRetry').onclick=route;
+  $('accountAccessSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+}
+
 function renderWorkspaceAccessUnavailable(){
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="workspaceAccessTitle">
     <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
@@ -1655,6 +1705,7 @@ function renderWorkspaceAccessUnavailable(){
 
 /* ---------- auth ---------- */
 function renderAuth(mode='in'){
+  destroyMountedTurnstiles();
   if(mode==='forgot'){
     root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
       <div class="logo" style="margin-bottom:6px">frenly<span>.</span></div>
@@ -5632,6 +5683,7 @@ async function renderPortal(slug){
   let changeAttempt=null;
   const bc=contrastSafeBrandColor(biz.brand_color);
   const draw=()=>{
+    destroyMountedTurnstiles();
     const challengeGeneration=++bookingChallengeGeneration;
     bookingTurnstileToken='';bookingTurnstileControl=null;
     root.innerHTML=`<div class="portal" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},${bc})">
@@ -5708,6 +5760,7 @@ async function renderPortal(slug){
       const manageUrl=`${location.origin}${location.pathname}#/b/${encodeURIComponent(slug)}?manage=${encodeURIComponent(manageToken)}`;
       const bookingFormCard=$('bookingFormCard');
       if(!bookingFormCard)return;
+      bookingTurnstileControl?.destroy();bookingTurnstileControl=null;
       bookingFormCard.innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 style="margin-bottom:8px">${esc(m.title)}</h2>
         <p class="muted">${m.body}</p>${manageToken?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>
         <p class="small" style="margin-top:6px;word-break:break-all"><a href="${esc(manageUrl)}" style="color:#D06A2E;text-decoration:underline">${esc(manageUrl)}</a></p>

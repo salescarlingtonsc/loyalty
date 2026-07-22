@@ -67,6 +67,10 @@ const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 const legalLinks=()=>`<div class="legal-links"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/data-request.html">Data request</a></div>`;
 let turnstileLoader;
+const mountedTurnstileControls=new Set();
+function destroyMountedTurnstiles(){
+  [...mountedTurnstileControls].forEach(control=>control.destroy());
+}
 function loadTurnstile(){
   if(window.turnstile) return Promise.resolve(window.turnstile);
   if(turnstileLoader) return turnstileLoader;
@@ -82,7 +86,7 @@ function loadTurnstile(){
 }
 async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
   const statusEl=$(status),retryEl=$(retry);
-  let api,widgetId;
+  let api,widgetId,destroyed=false;
   const message=(text,isError=false)=>{statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
   const clear=(text,isError=false)=>{onToken('');message(text,isError)};
   const logTurnstileError=(errorCode)=>{
@@ -90,29 +94,39 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
     console.warn('Turnstile error code:',code);
   };
   const removeWidget=()=>{
-    if(!api||widgetId===undefined) return;
-    try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
+    const host=document.getElementById(container);
+    if(api&&widgetId!==undefined&&host){
+      try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
+    }
     widgetId=undefined;
-    document.getElementById(container)?.replaceChildren();
+    host?.replaceChildren();
   };
   const render=async()=>{
+    if(destroyed)return;
     message('Loading security check…');retryEl.hidden=true;
     try{
       api=await loadTurnstile();
-      if(!document.getElementById(container)) return;
+      if(destroyed||!document.getElementById(container)) return;
       removeWidget();
+      if(destroyed)return;
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,
-        callback:(token)=>{onToken(token);message('Security check complete.');retryEl.hidden=true},
-        'expired-callback':()=>{clear('Security check expired. Please try again.',true);retryEl.hidden=false},
-        'timeout-callback':()=>{clear('Security check timed out. Please try again.',true);retryEl.hidden=false},
-        'error-callback':(errorCode)=>{logTurnstileError(errorCode);clear('Security check could not connect. Please retry, or check your browser and network settings.',true);retryEl.hidden=false;return true}});
-    }catch{clear('Security check could not load. Check your connection and try again.',true);retryEl.hidden=false}
+        callback:(token)=>{if(destroyed)return;onToken(token);message('Security check complete.');retryEl.hidden=true},
+        'expired-callback':()=>{if(destroyed)return;clear('Security check expired. Please try again.',true);retryEl.hidden=false},
+        'timeout-callback':()=>{if(destroyed)return;clear('Security check timed out. Please try again.',true);retryEl.hidden=false},
+        'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear('Security check could not connect. Please retry, or check your browser and network settings.',true);retryEl.hidden=false;return true}});
+    }catch{if(!destroyed){clear('Security check could not load. Check your connection and try again.',true);retryEl.hidden=false}}
   };
-  const retryRender=()=>{clear('Complete the security check to continue.');retryEl.hidden=true;render()};
-  const reset=()=>{clear('Complete the security check to continue.');retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  const retryRender=()=>{if(destroyed)return;clear('Complete the security check to continue.');retryEl.hidden=true;render()};
+  const reset=()=>{if(destroyed)return;clear('Complete the security check to continue.');retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  const destroy=()=>{
+    if(destroyed)return;
+    destroyed=true;retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
+  };
+  const control={reset,destroy};
+  mountedTurnstileControls.add(control);
   retryEl.onclick=retryRender;
   await render();
-  return {reset};
+  return control;
 }
 async function publicJoin({method='POST',body=null,slug=null}={}){
   const query=slug?`?slug=${encodeURIComponent(slug)}`:'';
@@ -143,6 +157,7 @@ function getSlug(){
 }
 
 function shellOpen(inner){
+  destroyMountedTurnstiles();
   root.innerHTML=`<div class="wrap"><div class="join">
     <div class="jhead"><div class="logo">frenly<span>.</span></div></div>
     ${inner}${legalLinks()}
@@ -178,6 +193,7 @@ function renderLoadError(){
 function renderSuccess(bizName){
   const cardEl=document.querySelector('.join .card');
   if(!cardEl) return;
+  destroyMountedTurnstiles();
   cardEl.innerHTML=`<div class="empty">
     <div class="big">✅</div>
     <h2 style="margin-bottom:10px">You're in!</h2>
@@ -188,6 +204,7 @@ function renderSuccess(bizName){
 
 /* ---- state: form (page loaded, ready for input) ---- */
 function renderForm(page, slug){
+  destroyMountedTurnstiles();
   const bc=/^#[0-9A-Fa-f]{6}$/.test(page.brand_color||'')?page.brand_color:'#FF6B5E';
   document.title=(page.name||'Join')+' — Frenly';
   root.innerHTML=`<div class="wrap" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)"><div class="join">
