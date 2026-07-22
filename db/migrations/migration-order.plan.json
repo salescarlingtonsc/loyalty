@@ -80,6 +80,9 @@
     { "kind": "executable", "path": "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql", "semanticVersion": "v49b", "proposedDeployVersion": "20260722000116" },
     { "kind": "executable", "path": "db/migrations/20260722_frenly_v50_retention_measurement.sql", "semanticVersion": "v50", "proposedDeployVersion": "20260722000117" },
     { "kind": "executable", "path": "db/migrations/20260723_frenly_v50a_sgt_birthdate_guard.sql", "semanticVersion": "v50a", "proposedDeployVersion": "20260722000118" },
-    { "kind": "executable", "path": "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql", "semanticVersion": "v50b", "proposedDeployVersion": "20260722000119" }
+    { "kind": "executable", "path": "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql", "semanticVersion": "v50b", "proposedDeployVersion": "20260722000119" },
+    { "kind": "executable", "path": "db/migrations/20260723_frenly_v51_sale_line_items.sql", "semanticVersion": "v51", "proposedDeployVersion": "20260722000120" },
+    { "kind": "executable", "path": "db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql", "semanticVersion": "v51a", "proposedDeployVersion": "20260722000121" },
+    { "kind": "executable", "path": "db/migrations/20260723_frenly_v51b_client_credit_history.sql", "semanticVersion": "v51b", "proposedDeployVersion": "20260722000122" }
   ]
 }

@@ -73,10 +73,10 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.status, 'planning_only_not_deployable');
   assert.equal(manifest.hashAlgorithm, 'sha256-raw-bytes');
-  assert.equal(manifest.itemCount, 79);
-  assert.equal(manifest.executableCount, 65);
+  assert.equal(manifest.itemCount, 82);
+  assert.equal(manifest.executableCount, 68);
   assert.equal(manifest.reservationCount, 14);
-  assert.equal(sqlItems.length, 65);
+  assert.equal(sqlItems.length, 68);
   assert.equal(reservations.length, 14);
   assert.equal(manifest.sourceCollisionsResolved, false);
 
@@ -87,7 +87,7 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
     ['20260720', 28],
     ['20260721', 5],
     ['20260722', 9],
-    ['20260723', 2]
+    ['20260723', 5]
   ]);
   assert.deepEqual(
     manifest.sourceDeployVersionCollisions.map(({ sourceDeployVersion, count }) => [sourceDeployVersion, count]),
@@ -128,7 +128,7 @@ test('an additional same-prefix migration updates collision reporting determinis
     kind: 'executable',
     path: migrationPath,
     semanticVersion: 'v48',
-    proposedDeployVersion: '20260722000120'
+    proposedDeployVersion: '20260722000130'
   });
   await writeFile(path.join(root, migrationPath), 'select 42;\n');
   await writePlan(root, plan);

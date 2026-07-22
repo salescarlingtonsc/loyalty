@@ -85,6 +85,9 @@
     { "kind": "pending", "version": "20260722141000", "name": "frenly_v49b_reports_read_authorization", "sourcePath": "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql" },
     { "kind": "pending", "version": "20260722150000", "name": "frenly_v50_retention_measurement", "sourcePath": "db/migrations/20260722_frenly_v50_retention_measurement.sql" },
     { "kind": "pending", "version": "20260723090000", "name": "frenly_v50a_sgt_birthdate_guard", "sourcePath": "db/migrations/20260723_frenly_v50a_sgt_birthdate_guard.sql" },
-    { "kind": "pending", "version": "20260723100000", "name": "frenly_v50b_contact_proof_constraint_repair", "sourcePath": "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql" }
+    { "kind": "pending", "version": "20260723100000", "name": "frenly_v50b_contact_proof_constraint_repair", "sourcePath": "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql" },
+    { "kind": "pending", "version": "20260723120000", "name": "frenly_v51_sale_line_items", "sourcePath": "db/migrations/20260723_frenly_v51_sale_line_items.sql" },
+    { "kind": "pending", "version": "20260723121000", "name": "frenly_v51a_idempotent_sell_overloads", "sourcePath": "db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql" },
+    { "kind": "pending", "version": "20260723122000", "name": "frenly_v51b_client_credit_history", "sourcePath": "db/migrations/20260723_frenly_v51b_client_credit_history.sql" }
   ]
 }
