@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 76,
-  "executableCount": 62,
+  "itemCount": 77,
+  "executableCount": 63,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -88,7 +88,7 @@
     },
     {
       "sourceDeployVersion": "20260722",
-      "count": 8,
+      "count": 9,
       "paths": [
         "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql",
         "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql",
@@ -97,7 +97,8 @@
         "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql",
         "db/migrations/20260722_frenly_v49_billing_projection_rpc.sql",
         "db/migrations/20260722_frenly_v49a_lint_and_rehearsal_repairs.sql",
-        "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql"
+        "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql",
+        "db/migrations/20260722_frenly_v50_retention_measurement.sql"
       ]
     }
   ],
@@ -709,6 +710,14 @@
       "semanticVersion": "v49b",
       "proposedDeployVersion": "20260722000116",
       "sha256": "f5b29ad9e68f31f3bace6beeac6d9e996ab1c0c4905fd61b6efd29d8318ad3ea"
+    },
+    {
+      "order": 77,
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v50_retention_measurement.sql",
+      "semanticVersion": "v50",
+      "proposedDeployVersion": "20260722000117",
+      "sha256": "d3c16d18921d4b1fa2826c332559d9518aff8e47a8aafbe48183cf26279cdf4c"
     }
   ]
 }
