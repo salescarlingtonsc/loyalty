@@ -310,6 +310,26 @@ tr.click:hover td{background:#FBFAF8}
 .frontline-tenders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
 .frontline-tenders .btn{min-height:52px;font-size:15px}
 .frontline-tenders .btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.till-cart-card{max-width:560px}
+.till-cart-catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin-top:6px}
+.till-cart-catalog .btn{min-height:64px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;padding:10px 12px;font-size:14px;font-weight:600;line-height:1.25}
+.till-cart-catalog .btn .till-cart-price{font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
+.till-cart-lines{list-style:none;padding:0;margin:12px 0 0}
+.till-cart-line{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.till-cart-line .till-cart-line-label{flex:1;min-width:0;font-weight:600}
+.till-cart-line .till-cart-line-sub{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.till-cart-qty{display:flex;align-items:center;gap:8px}
+.till-cart-qty .btn{min-width:40px;min-height:40px;padding:0;font-size:20px;font-weight:700}
+.till-cart-qty output{min-width:24px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.till-cart-line-amount{min-width:76px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.till-cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font-size:1.5rem;font-weight:800;letter-spacing:-.03em}
+.till-cart-total .till-cart-total-num{font-variant-numeric:tabular-nums}
+.till-cart-status{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:14px}
+.till-cart-status.ok{color:var(--green)}
+.till-cart-status.no{color:var(--red,#c0392b)}
+.till-receipt-lines{list-style:none;padding:0;margin:10px 0}
+.till-receipt-lines li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.till-receipt-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;letter-spacing:.03em}
 .appointment-layout{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);gap:16px;align-items:start}
 .appointment-form-card{position:sticky;top:82px}
 .appointment-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -3415,8 +3435,26 @@ async function tillPage(){
   let quickAddIdem=null;   // stable while retrying one Till customer creation
   let tender=null;         // intentionally selected received tender for this purchase
 
+  /* ---- optional cart mode (opt-in advanced checkout; simple mode above is the default) ----
+     Cart mode is a per-browser preference. localStorage is prohibited in this stack, so the
+     flag rides in sessionStorage (the same primitive the app already uses for retry keys):
+     it survives in-session SPA navigation across the till and resets on a full reload, exactly
+     like every other preference here. Cart mode changes ONLY the customer-card screen (step 2)
+     and adds a receipt to step 3 — steps 1 and the simple confirm path stay byte-identical. */
+  const TILL_CART_PREF='frenly.till.cartMode';
+  const readCartPref=()=>{try{return sessionStorage.getItem(TILL_CART_PREF)==='1'}catch{return false}};
+  const writeCartPref=(on)=>{try{sessionStorage.setItem(TILL_CART_PREF,on?'1':'0')}catch{}};
+  let cartMode=readCartPref();
+  let cart=[];            // sale + gift lines: {id,type:'service'|'product'|'custom'|'giftcard',label,unit_cents,qty,key?}
+  let catalog=null;       // {services:[...],products:[...]|null} lazy-loaded once when cart mode opens
+  let catalogLoading=false, catalogError=null;
+  let saleCommitted=false, saleResult=null; // once the quick_sale succeeds it is LOCKED; a retry
+                                             // never re-runs it, only the failed gift-card calls.
+  let checkoutError=null;  // partial-failure banner state on the composer
+
   function resetToStart(){
-    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;draw();
+    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
+    cart=[];saleCommitted=false;saleResult=null;checkoutError=null;draw();
   }
   function draw(){
     if(step===1) return drawStep1();
@@ -3465,7 +3503,18 @@ async function tillPage(){
   function drawStep2(){
     if(invalidMsg) return drawInvalid();
     if(!cust) return drawNewCustomer();
-    return drawCustomerCard();
+    return cartMode?drawCartComposer():drawCustomerCard();
+  }
+  /* Mode switch shown in the step-2 header. Present in BOTH renders so switching is symmetric;
+     it never touches the simple-mode form fields, so the simple sale flow is unchanged. */
+  function cartToggleHtml(){
+    return `<button type="button" class="btn ghost sm" id="tModeToggle" role="switch" aria-checked="${cartMode?'true':'false'}" aria-label="Cart mode — build a multi-item sale">
+      ${CUI.icon(cartMode?'sales':'till',{size:16})}<span>${cartMode?'Cart mode':'Simple mode'}</span></button>`;
+  }
+  function bindCartToggle(){
+    const t=$('tModeToggle');if(!t)return;
+    t.onclick=()=>{cartMode=!cartMode;writeCartPref(cartMode);saleIdem=null;checkoutError=null;
+      CUI.announce(cartMode?'Cart mode on':'Simple mode on');draw();};
   }
   function drawInvalid(){
     M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'The phone number could not be used.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
@@ -3510,7 +3559,7 @@ async function tillPage(){
     };
   }
   function drawCustomerCard(){
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Confirm the customer, amount paid and payment method. Frenly saves the purchase and points together.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Confirm the customer, amount paid and payment method. Frenly saves the purchase and points together.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn',actions:cartToggleHtml()})}
       <div class="card frontline-card">
         <div style="text-align:center">
           <div style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em">${esc(cust.full_name)}</div>
@@ -3532,6 +3581,7 @@ async function tillPage(){
         <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Save & add points</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
+    bindCartToggle();
     $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;draw()};
     if($('tBranch'))$('tBranch').onchange=()=>{tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;saleIdem=null};
     document.querySelectorAll('[data-tender]').forEach(button=>button.onclick=()=>{
@@ -3562,7 +3612,235 @@ async function tillPage(){
       step=3;draw();
     };
   }
+
+  /* ---- cart mode: compose a multi-item sale from the catalog the app already reads ----
+     Honest write-path map (verified against migrations): the only sale write path reachable
+     from this till surface is record_sale_by_phone → record_quick_sale, which books ONE
+     quick_sale row + ONE payment row for a single total and earns points on it. There is NO
+     sale_items / line-item table. So service, retail and custom lines are summed into that one
+     idempotent quick_sale and their breakdown is written into the note (a real field in the
+     contract, ≤1000 chars) — never faked as per-line financial rows. Gift cards ARE a separate
+     honest, server-idempotent path (issue_gift_card), so each gift line is its own call, run
+     AFTER the sale. Packages/memberships are deliberately excluded: sell_package and
+     enroll_membership_v41 have NO server idempotency key, so they cannot be made double-tap
+     safe here without a forbidden write-path change (gap recorded for a future v51). */
+  async function loadCatalog(){
+    if(catalog||catalogLoading) return;
+    catalogLoading=true;catalogError=null;
+    const wantProducts=canReadModule('inventory');
+    const [svc,prod]=await Promise.all([
+      sb.from('services').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).order('name'),
+      wantProducts?sb.from('products').select('id,name,retail_price_cents,active').eq('business_id',S.biz.id).eq('active',true).order('name')
+        :Promise.resolve({data:null,error:null})
+    ]);
+    if(!isTillCurrent())return;
+    catalogLoading=false;
+    if(svc.error){catalogError=svc.error.message||'The catalog could not be loaded.';draw();return}
+    catalog={
+      services:(svc.data||[]).map(s=>({id:s.id,name:s.name,unit_cents:s.price_cents||0})),
+      products:(prod.error||!prod.data)?null:prod.data.map(p=>({id:p.id,name:p.name,unit_cents:p.retail_price_cents||0}))
+    };
+    draw();
+  }
+  function addCatalogLine(type,item){
+    if(checkoutError)return;
+    const ex=cart.find(l=>l.type===type&&l.ref===item.id);
+    if(ex){ex.qty++;}
+    else cart.push({lineId:crypto.randomUUID(),type,ref:item.id,label:item.name,unit_cents:item.unit_cents,qty:1});
+    saleIdem=null;CUI.announce(`${item.name} added`);draw();
+  }
+  function addCustomLine(cents){
+    if(checkoutError)return;
+    cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1});
+    saleIdem=null;CUI.announce('Item added');draw();
+  }
+  function addGiftLine(cents){
+    if(checkoutError)return;
+    cart.push({lineId:crypto.randomUUID(),type:'giftcard',ref:null,label:'Gift card',unit_cents:cents,qty:1,key:crypto.randomUUID()});
+    CUI.announce('Gift card added');draw();
+  }
+  function changeQty(lineId,delta){
+    if(checkoutError)return;
+    const l=cart.find(x=>x.lineId===lineId);if(!l||l.type==='giftcard')return;
+    l.qty=Math.max(1,l.qty+delta);saleIdem=null;draw();
+  }
+  function removeLine(lineId){
+    if(checkoutError)return;
+    cart=cart.filter(x=>x.lineId!==lineId);saleIdem=null;draw();
+  }
+  function saleLinesOf(){return cart.filter(l=>l.type!=='giftcard')}
+  function giftLinesOf(){return cart.filter(l=>l.type==='giftcard')}
+  function saleSubtotalCents(){return saleLinesOf().reduce((s,l)=>s+l.unit_cents*l.qty,0)}
+  function grandTotalCents(){return cart.reduce((s,l)=>s+l.unit_cents*l.qty,0)}
+
+  function drawCartComposer(){
+    if(catalog===null&&!catalogError)loadCatalog();
+    const canGift=canWriteModule('giftcards');
+    const saleSub=saleSubtotalCents(), grand=grandTotalCents();
+    const branchPicker=accessibleTillBranches.length>1
+      ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
+      :`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> ${esc(accessibleTillBranches[0].name)}</p>`;
+    // catalog picker (hidden while the partial-failure panel is up)
+    let picker='';
+    if(!checkoutError){
+      if(catalogError){
+        picker=`<div class="err" role="alert">${esc(catalogError)}</div><button class="btn ghost sm" id="tCatRetry" style="margin-top:8px">${CUI.icon('retention',{size:16})} Try again</button>`;
+      }else if(!catalog){
+        picker=`<p class="muted small" role="status">Loading your services…</p>`;
+      }else{
+        const svcBtns=catalog.services.length
+          ?`<div class="till-cart-catalog">${catalog.services.map(s=>`<button type="button" class="btn ghost" data-add="service" data-id="${s.id}">${esc(s.name)}<span class="till-cart-price">${money(s.unit_cents)}</span></button>`).join('')}</div>`
+          :`<p class="muted small">No active services yet.</p>`;
+        const prodBtns=(catalog.products&&catalog.products.length)
+          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>`<button type="button" class="btn ghost" data-add="product" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
+          :'';
+        picker=`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}
+          <div class="split" style="margin-top:14px;align-items:end">
+            <div><label for="tCustom">Other amount (${S.biz.currency||'SGD'})</label><input id="tCustom" inputmode="decimal" placeholder="0.00"></div>
+            <div><button type="button" class="btn ghost" id="tCustomAdd" style="width:100%">${CUI.icon('add',{size:16})} Add item</button></div>
+          </div>
+          ${canGift?`<div class="split" style="margin-top:10px;align-items:end">
+            <div><label for="tGift">Gift card value (${S.biz.currency||'SGD'})</label><input id="tGift" inputmode="decimal" placeholder="0.00"></div>
+            <div><button type="button" class="btn ghost" id="tGiftAdd" style="width:100%">${CUI.icon('giftcard',{size:16})} Add card</button></div>
+          </div><p class="muted small" style="margin-top:6px">A gift card is issued as its own record and does not earn points.</p>`:''}`;
+      }
+    }
+    // cart lines
+    const linesHtml=cart.length?`<ul class="till-cart-lines">${cart.map(l=>{
+      const done=l.type==='giftcard'&&l._status==='issued';
+      const failed=l.type==='giftcard'&&l._status==='failed';
+      const badge=l.type==='giftcard'?`<span class="till-cart-line-sub">${done?`Issued · <span class="till-receipt-code">${esc(l._code||'')}</span>`:failed?`Not issued — ${esc(l._error||'failed')}`:'Gift card — issued at checkout'}</span>`
+        :l.type==='custom'?'<span class="till-cart-line-sub">Other item</span>':'';
+      const qtyCtl=(l.type==='giftcard'||checkoutError)?'':`<div class="till-cart-qty">
+        <button type="button" class="btn ghost" data-qty="-1" data-line="${l.lineId}" aria-label="Reduce quantity">−</button>
+        <output aria-label="Quantity">${l.qty}</output>
+        <button type="button" class="btn ghost" data-qty="1" data-line="${l.lineId}" aria-label="Increase quantity">+</button></div>`;
+      const rm=checkoutError?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" aria-label="Remove ${esc(l.label)}">${CUI.icon('close',{size:16})}</button>`;
+      return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1&&l.type!=='giftcard'?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
+    }).join('')}</ul>
+      <div class="till-cart-total"><span>Total</span><span class="till-cart-total-num">${money(grand)}</span></div>`
+      :`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Cart is empty. Tap a service or add an amount to begin.</p></div>`;
+    // tender (only meaningful when a points-earning sale is part of the cart)
+    const tenderHtml=(cart.length&&!checkoutError)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
+      <div class="frontline-tenders" id="tTenders">${[['cash','Cash'],['card','Card'],['paynow','PayNow'],['other','Other']].map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
+      ${saleSub===0?'<p class="muted small" style="margin-top:6px">Gift-card-only sale — tender is recorded on your receipt but not stored against the card.</p>':''}</fieldset>`:'';
+    // partial-failure panel
+    const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
+      <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted?`Sale recorded${saleResult?.duplicate?' (already recorded earlier)':''} · +${saleResult?.pointsEarned||0} points`:'No points-earning sale in this cart'}</span></div>
+      <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:18})} Retry unfinished</button>
+      <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
+
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Build the cart, choose payment, then charge once. Points are added on the sale total.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn',actions:cartToggleHtml()})}
+      <div class="card frontline-card till-cart-card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+          <div><div style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">${esc(cust.full_name)}</div><p class="muted small" style="margin:0">${esc(cust.phone||'')}</p></div>
+          <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+        ${branchPicker}
+        ${picker}
+        ${linesHtml}
+        <div id="tcErr"></div>
+        ${tenderHtml}
+        ${partialHtml}
+        ${(cart.length&&!checkoutError)?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(grand)}</button>`:''}
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
+      </div>`;
+    bindCartToggle();
+    $('tBack').onclick=()=>{if(checkoutError){toast('Finish or retry the gift cards first');return}step=1;cust=null;saleIdem=null;cart=[];draw()};
+    if($('tBranch'))$('tBranch').onchange=()=>{tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;saleIdem=null};
+    if($('tCatRetry'))$('tCatRetry').onclick=()=>{catalogError=null;catalog=null;draw()};
+    document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
+      const type=b.dataset.add, list=type==='service'?catalog.services:catalog.products;
+      const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addCatalogLine(type,item);
+    });
+    if($('tCustomAdd'))$('tCustomAdd').onclick=()=>{
+      const raw=($('tCustom').value||'').trim();
+      if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return cartErr('Enter dollars and cents, for example 12.50');
+      const c=Math.round(Number(raw)*100);if(!(c>0)||c>2147483647)return cartErr('Enter an amount between 0.01 and 21,474,836.47');
+      addCustomLine(c);
+    };
+    if($('tGiftAdd'))$('tGiftAdd').onclick=()=>{
+      const raw=($('tGift').value||'').trim();
+      if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return cartErr('Enter a gift-card value, for example 50.00');
+      const c=Math.round(Number(raw)*100);if(!(c>0)||c>100000000)return cartErr('Gift card must be between 0.01 and 1,000,000.00');
+      addGiftLine(c);
+    };
+    document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>changeQty(b.dataset.line,parseInt(b.dataset.qty,10)));
+    document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removeLine(b.dataset.remove));
+    document.querySelectorAll('[data-tender]').forEach(button=>button.onclick=()=>{
+      tender=button.dataset.tender;saleIdem=null;
+      document.querySelectorAll('[data-tender]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
+      CUI.announce(`${button.textContent.trim()} selected`);
+    });
+    if($('tCartConfirm'))$('tCartConfirm').onclick=doCartCheckout;
+    if($('tRetryGifts'))$('tRetryGifts').onclick=doCartCheckout;
+    if($('tFinishPartial'))$('tFinishPartial').onclick=()=>finishCartReceipt();
+  }
+  function cartErr(msg){const e=$('tcErr');if(e)e.innerHTML=`<div class="err">${esc(msg)}</div>`;else toast(msg)}
+
+  /* Honest checkout sequencing + partial-failure handling.
+     Order: (1) the single points-earning quick_sale (record_sale_by_phone) for the summed
+     service/retail/custom lines, then (2) one issue_gift_card per gift line. Idempotency:
+     the quick_sale reuses `saleIdem` across retries (server dedupes on it); each gift line
+     carries its own stable `key`. If the sale fails we STOP — no gift card is issued. If the
+     sale succeeds it is LOCKED (saleCommitted) and never re-run; a retry re-invokes only the
+     gift-card calls that failed, with their original keys — never a different call, never a
+     silent replay of the sale. */
+  async function doCartCheckout(){
+    if(busy)return;
+    const saleLines=saleLinesOf(), giftLines=giftLinesOf(), saleSub=saleSubtotalCents();
+    if(!cart.length)return cartErr('Add at least one item');
+    if(saleSub>0&&saleSub>2147483647)return cartErr('Sale total is too large');
+    if(saleSub>0&&!tender)return cartErr('Choose how the customer paid');
+    busy=true;checkoutError=null;
+    const confirmBtn=$('tCartConfirm')||$('tRetryGifts');if(confirmBtn){confirmBtn.disabled=true;confirmBtn.textContent='Working…'}
+    // (1) points-earning quick sale — only if not already committed and there is a positive subtotal
+    if(saleSub>0&&!saleCommitted){
+      if(!saleIdem)saleIdem=crypto.randomUUID();
+      let note=`Till cart · ${saleLines.length} line${saleLines.length===1?'':'s'} · `+
+        saleLines.map(l=>`${l.label}${l.qty>1?' x'+l.qty:''} ${money(l.unit_cents*l.qty)}`).join('; ');
+      if(note.length>1000)note=note.slice(0,997)+'…';
+      const {data,error}=await sb.rpc('record_sale_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone,
+        p_amount_cents:saleSub,p_kind:'quick_sale',p_note:note,p_staff:tillStaffId,p_idem:saleIdem,
+        p_branch:tillBranchId,p_method:tender});
+      if(!isTillCurrent())return;
+      if(error){busy=false;if(confirmBtn){confirmBtn.disabled=false;confirmBtn.textContent='Retry'}return cartErr(error.message||'The sale could not be recorded — try again')}
+      saleCommitted=true;
+      saleResult=(data.status==='duplicate_ignored')
+        ?{pointsEarned:0,pointsTotal:data.points,method:data.payment_method,duplicate:true}
+        :{pointsEarned:data.points_earned||0,pointsTotal:data.points,method:data.payment_method,duplicate:false};
+    }
+    // (2) gift cards — each independent and idempotent; failures are collected, not thrown
+    let anyGiftFailed=false;
+    for(const l of giftLines){
+      if(l._status==='issued')continue;
+      const {data,error}=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:l.unit_cents,
+        p_purchaser:cust.client_id,p_recipient_email:null,p_idempotency_key:l.key});
+      if(!isTillCurrent())return;
+      if(error){anyGiftFailed=true;l._status='failed';l._error=error.message||'issue failed';continue}
+      l._status='issued';l._code=data.code;l._error=null;
+    }
+    busy=false;
+    if(anyGiftFailed){
+      checkoutError='The sale is safe. One or more gift cards could not be issued. Retry to finish just those — nothing is charged twice.';
+      draw();return;
+    }
+    finishCartReceipt();
+  }
+  function finishCartReceipt(){
+    const saleLines=saleLinesOf(), giftLines=giftLinesOf(), saleSub=saleSubtotalCents();
+    doneInfo={receipt:true,name:cust.full_name,tender,
+      lines:saleLines.map(l=>({label:l.label,qty:l.qty,amount:l.unit_cents*l.qty})),
+      gifts:giftLines.map(l=>({amount:l.unit_cents,status:l._status||'issued',code:l._code||null,error:l._error||null})),
+      saleSub,grand:grandTotalCents(),
+      pointsEarned:saleResult?saleResult.pointsEarned:0,
+      pointsTotal:saleResult?saleResult.pointsTotal:(cust.points??null),
+      duplicate:saleResult?saleResult.duplicate:false};
+    checkoutError=null;step=3;draw();
+  }
   function drawStep3(){
+    if(doneInfo&&doneInfo.receipt)return drawCartReceipt();
     M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Points added. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:56})}
@@ -3571,6 +3849,29 @@ async function tillPage(){
           :`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">+${doneInfo.pointsEarned} points</p>`}
         <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received · now ${doneInfo.pointsTotal} points total</p>
         <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
+      </div>`;
+    $('tNext').onclick=resetToStart;
+  }
+  /* Cart-mode receipt: items, gift-card codes (with any failures honestly flagged), tender,
+     points earned (straight from the RPC responses), then reset for the next customer. */
+  function drawCartReceipt(){
+    const d=doneInfo;
+    const anyGiftFailed=d.gifts.some(g=>g.status==='failed');
+    const lineRows=d.lines.map(l=>`<li><span>${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}</span><span>${money(l.amount)}</span></li>`).join('');
+    const giftRows=d.gifts.map(g=>`<li><span>Gift card ${g.status==='failed'?'(not issued)':`· <span class="till-receipt-code">${esc(g.code||'')}</span>`}</span><span>${g.status==='failed'?'—':money(g.amount)}</span></li>`).join('');
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:anyGiftFailed?'Sale saved. Some gift cards did not issue.':'Sale saved and points added. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+      <div class="card frontline-card till-cart-card" style="text-align:center">
+        ${CUI.icon(anyGiftFailed?'info':'check',{size:52})}
+        <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyGiftFailed?'Mostly done':'Done'}</h2>
+        ${d.saleSub>0?(d.duplicate
+          ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
+          :`<p style="font-size:1.5rem;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`)
+          :`<p class="muted small">Gift-card-only sale — no points earned.</p>`}
+        <ul class="till-receipt-lines" style="text-align:left">${lineRows}${giftRows}</ul>
+        <div class="till-cart-total"><span>Total</span><span class="till-cart-total-num">${money(d.grand)}</span></div>
+        <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received${d.pointsTotal!=null?` · now ${d.pointsTotal} points total`:''}</p>
+        ${anyGiftFailed?`<p class="err" role="alert" style="margin-top:10px">Some gift cards could not be issued. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
+        <button class="btn" id="tNext" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
     $('tNext').onclick=resetToStart;
   }
