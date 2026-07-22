@@ -74,6 +74,7 @@
     { "kind": "pending", "version": "20260721135556", "name": "frenly_c42_consumer_registration_contracts", "sourcePath": "db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql" },
     { "kind": "pending", "version": "20260721150000", "name": "frenly_c44_actionable_customer_wallet", "sourcePath": "db/migrations/20260721_frenly_v44_actionable_customer_wallet.sql" },
     { "kind": "pending", "version": "20260721163000", "name": "frenly_c45_birthday_benefits", "sourcePath": "db/migrations/20260721_frenly_v45_birthday_benefits.sql" },
-    { "kind": "pending", "version": "20260721170000", "name": "frenly_v46_customer_in_app_inbox", "sourcePath": "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql" }
+    { "kind": "pending", "version": "20260721170000", "name": "frenly_v46_customer_in_app_inbox", "sourcePath": "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql" },
+    { "kind": "pending", "version": "20260722120000", "name": "frenly_v46a_birthday_draft_runtime_fix", "sourcePath": "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql" }
   ]
 }

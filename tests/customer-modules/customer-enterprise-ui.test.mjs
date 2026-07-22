@@ -124,6 +124,8 @@ test('shell and route accessibility provide skip, focus, landmarks, and one anno
 test('targets, mobile layouts, reflowing tables, and reduced motion are explicit',()=>{
   assert.match(app,/\.btn\{[^}]*min-height:44px/s);
   assert.match(app,/\.btn\.sm\{[^}]*min-height:44px/s);
+  assert.match(app,/\.qbtn\{[^}]*min-height:44px/s);
+  assert.match(app,/\.skip-link\{[^}]*min-height:44px/s);
   assert.match(app,/input,select,textarea\{[^}]*min-height:44px/s);
   assert.match(app,/@media\(max-width:375px\)/);
   assert.match(app,/@media\(min-width:376px\) and \(max-width:768px\)/);
@@ -132,6 +134,23 @@ test('targets, mobile layouts, reflowing tables, and reduced motion are explicit
   assert.match(ui,/const isComplex=!!table\.querySelector\('\[colspan\],\[rowspan\]'\)/);
   assert.match(ui,/looseRows\.forEach\(row=>body\.append\(row\)\)/);
   assert.match(ui,/cell\.dataset\.label=headers\[index\]/);
+});
+
+test('dashboard and customer loyalty detail preserve accessible names and one page heading',()=>{
+  const dashboard=section('async function dashboard(){','/* ---------- customers ---------- */');
+  const walletCard=section('function actionableWalletCardMarkup(','function renderActionableWalletHome(');
+
+  assert.match(dashboard,/<label class="sr-only" for="df">Dashboard start date<\/label>/);
+  assert.match(dashboard,/<label class="sr-only" for="dt">Dashboard end date<\/label>/);
+  assert.match(app,/id="branchSel"[^>]*aria-label="Business branch"/);
+  for(const [id,label] of [['trName','Tier name'],['trTh','Tier threshold'],['trMul','Points earning multiplier'],['trPerk','Tier perk note']]){
+    assert.match(loyalty,new RegExp(`<label class="sr-only" for="${id}">${label}<\\/label>`));
+  }
+  assert.doesNotMatch(walletCard,/h\$\{detail\?'1':'2'\}/);
+  assert.match(walletCard,/<h2>\$\{esc\(business\.name\|\|'Business'\)\} rewards<\/h2>/);
+  assert.match(app,/id="walletBack" aria-label="Back to all businesses"[^>]*min-width:44px/);
+  assert.match(loyalty,/if\(canManageLoyalty\)\{[\s\S]{0,300}?get_active_birthday_program/,
+    'read-only staff must not call the owner-only birthday programme RPC');
 });
 
 test('mobile Retention actions wrap and the horizontal nav stays inside the viewport',()=>{

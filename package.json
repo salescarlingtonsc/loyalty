@@ -15,6 +15,6 @@
     "canonical-migrations:check": "node scripts/migrations/materialize-canonical-order.mjs --check",
     "test": "node --test",
     "build": "node scripts/quality/build-static.mjs",
-    "validate": "npm run quality && npm run runtime-config:check && npm run migration-manifest:check && npm run canonical-migrations:plan:check && npm test && npm run build"
+    "validate": "npm run quality && npm run runtime-config:check && npm run migration-manifest:check && npm run canonical-migrations:check && npm test && npm run build"
   }
 }

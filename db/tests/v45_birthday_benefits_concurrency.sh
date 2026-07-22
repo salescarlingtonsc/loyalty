@@ -17,6 +17,11 @@ case "$(printf '%s' "$DATABASE_URL" | tr '[:upper:]' '[:lower:]')" in
   *gadpooereceldfpfxsod*) echo "Refusing C45 runtime against the protected project reference." >&2; exit 2;;
 esac
 
+psql_sql(){
+  sql="$1"; shift
+  printf '%s\n' "$sql" | psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 "$@"
+}
+
 script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/frenly-c45-concurrency.XXXXXX")"
 owner="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
@@ -34,8 +39,8 @@ restore_feature_flags(){
   [ -n "$feature_flag_state" ] || return 0
   while IFS='|' read -r feature_key feature_enabled; do
     [ -n "$feature_key" ] || continue
-    psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v feature_key="$feature_key" -v feature_enabled="$feature_enabled" \
-      -c "update app.platform_feature_flags set enabled=:'feature_enabled'::boolean where feature_key=:'feature_key'" >/dev/null 2>&1 || return 1
+    psql_sql "update app.platform_feature_flags set enabled=:'feature_enabled'::boolean where feature_key=:'feature_key'" \
+      -v feature_key="$feature_key" -v feature_enabled="$feature_enabled" >/dev/null 2>&1 || return 1
   done <<EOF
 $feature_flag_state
 EOF
@@ -74,16 +79,21 @@ update app.platform_feature_flags set enabled=true where feature_key in ('custom
 insert into public.staff_branches(business_id,staff_id,branch_id) values(:'business',:'owner_staff',:'branch') on conflict do nothing;
 insert into public.clients(business_id,full_name) values(:'business','C45 synthetic customer') returning id as client \gset
 insert into public.customer_identities(id,auth_user_id,status,created_via) values(gen_random_uuid(),:'customer','active','phone_registration') returning id as identity \gset
-select set_config('app.c42_profile_identity',:'identity',true) \gset
+select set_config('app.c42_profile_identity',:'identity',false) \gset
 insert into public.customer_profiles(identity_id,auth_user_id,full_name,birth_date) values(:'identity',:'customer','C45 synthetic customer',current_date);
-insert into public.customer_links(business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
-values(:'business',:'identity',:'customer',:'client','verified','phone_claim',now());
+select set_config('app.c42_profile_identity','',false) \gset
+select gen_random_uuid() as link \gset
+select set_config('app.customer_link_insert_id',:'link',false) \gset
+insert into public.customer_links(id,business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
+values(:'link',:'business',:'identity',:'customer',:'client','verified','phone_claim',now());
+select set_config('app.customer_link_insert_id','',false) \gset
 set role authenticated;
 select set_config('request.jwt.claim.sub',:'owner',false) \gset
 select (public.create_loyalty_config_draft(:'business',null,'c45-concurrency')::jsonb->>'version_id')::uuid as draft \gset
 -- New businesses start with inactive loyalty. Make the explicitly reviewed
 -- fixture config active before publishing so activation joins a live model.
-select public.save_loyalty_config_draft(:'draft',jsonb_build_object('active',true)) \gset
+select snapshot_hash as draft_hash from public.firm_config_versions where id=:'draft' \gset
+select public.save_loyalty_config_draft(:'draft',jsonb_build_object('active',true),:'draft_hash') \gset
 select public.get_birthday_program_draft(:'draft')->>'snapshot_hash' as draft_hash \gset
 select public.save_birthday_program_draft(:'draft',gen_random_uuid(),jsonb_build_object(
   'active',true,'customer_label','C45 birthday treat','customer_description','Synthetic only','customer_terms','Synthetic only',
@@ -99,11 +109,15 @@ reset role;
 -- changing the live customer's immutable entitlement window.
 insert into public.clients(business_id,full_name) values(:'business','C45 synthetic expiry customer') returning id as expiry_client \gset
 insert into public.customer_identities(id,auth_user_id,status,created_via) values(gen_random_uuid(),:'owner','active','phone_registration') returning id as expiry_identity \gset
-select set_config('app.c42_profile_identity',:'expiry_identity',true) \gset
+select set_config('app.c42_profile_identity',:'expiry_identity',false) \gset
 insert into public.customer_profiles(identity_id,auth_user_id,full_name,birth_date)
 values(:'expiry_identity',:'owner','C45 synthetic expiry customer',(timezone('Asia/Singapore',statement_timestamp()))::date);
-insert into public.customer_links(business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
-values(:'business',:'expiry_identity',:'owner',:'expiry_client','verified','phone_claim',now());
+select set_config('app.c42_profile_identity','',false) \gset
+select gen_random_uuid() as expiry_link \gset
+select set_config('app.customer_link_insert_id',:'expiry_link',false) \gset
+insert into public.customer_links(id,business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
+values(:'expiry_link',:'business',:'expiry_identity',:'owner',:'expiry_client','verified','phone_claim',now());
+select set_config('app.customer_link_insert_id','',false) \gset
 insert into public.customer_birthday_entitlements(
   business_id,client_id,identity_id,config_version_id,birthday_program_version_id,birthday_year,status,valid_from,valid_until,benefit_snapshot
 )
@@ -122,7 +136,7 @@ for id in "$business" "$branch" "$client" "$expiry_client"; do case "$id" in ???
 # payload while the unique business/client/birthday-year rule leaves one promise.
 activation_key="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
 activate(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v key="$activation_key" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v key="$activation_key" <<'SQL'
 set role authenticated; select set_config('request.jwt.claim.sub',:'customer',false);
 select public.customer_activate_birthday_benefit(:'slug',:'key')::text;
 SQL
@@ -132,14 +146,14 @@ activate >"$work_dir/activation-b" 2>&1 & activation_b=$!
 set +e; wait "$activation_a"; activation_status_a=$?; wait "$activation_b"; activation_status_b=$?; set -e
 [ "$activation_status_a" -eq 0 ] && [ "$activation_status_b" -eq 0 ] || { echo "same-key activation did not succeed in both sessions" >&2; exit 1; }
 cmp -s "$work_dir/activation-a" "$work_dir/activation-b" || { echo "same-key activation responses were not exact replays" >&2; exit 1; }
-activation_count="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v client="$client" -c "select count(*) from public.customer_birthday_entitlements where business_id=:'business' and client_id=:'client'")"
+activation_count="$(psql_sql "select count(*) from public.customer_birthday_entitlements where business_id=:'business' and client_id=:'client'" -v business="$business" -v client="$client")"
 [ "$activation_count" = "1" ] || { echo "same-key two-session activation did not yield exactly one entitlement" >&2; exit 1; }
 
 # different-key loser conflict: two owner counter requests race for one live
 # redemption. Exactly one writes a redemption; the loser is rejected, never
 # relabelled as a replay of a different idempotency key.
 redeem(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v owner="$owner" -v business="$business" -v client="$1" -v branch="$branch" -v key="$2" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v owner="$owner" -v business="$business" -v client="$1" -v branch="$branch" -v key="$2" <<'SQL'
 set role authenticated; select set_config('request.jwt.claim.sub',:'owner',false);
 select public.redeem_customer_birthday_benefit(:'business',:'client',:'branch',:'key')::text;
 SQL
@@ -154,7 +168,7 @@ if ! { [ "$status_a" -eq 0 ] && [ "$status_b" -ne 0 ]; } && ! { [ "$status_b" -e
 fi
 if [ "$status_a" -ne 0 ]; then loser_log="$work_dir/redeem-a"; else loser_log="$work_dir/redeem-b"; fi
 grep -Eqi '40001|birthday redemption conflicts with an existing operation' "$loser_log" || { echo "different-key loser was not an explicit conflict" >&2; exit 1; }
-redemption="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v client="$client" -c "select id from public.customer_birthday_redemptions where business_id=:'business' and client_id=:'client' and operation_kind='redemption' and active")"
+redemption="$(psql_sql "select id from public.customer_birthday_redemptions where business_id=:'business' and client_id=:'client' and operation_kind='redemption' and active" -v business="$business" -v client="$client")"
 case "$redemption" in ????????-????-????-????-????????????) ;; *) echo "winner redemption missing" >&2; exit 1;; esac
 
 # Two owner sessions use the same client-scoped reversal key. They must both
@@ -162,7 +176,7 @@ case "$redemption" in ????????-????-????-????-????????????) ;; *) echo "winner r
 # original redemption. No internal redemption UUID is sent by this workflow.
 reversal_key="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
 reverse(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v owner="$owner" -v business="$business" -v client="$client" -v key="$reversal_key" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v owner="$owner" -v business="$business" -v client="$client" -v key="$reversal_key" <<'SQL'
 set role authenticated; select set_config('request.jwt.claim.sub',:'owner',false);
 select public.reverse_customer_birthday_benefit_for_client(:'business',:'client','synthetic counter correction',:'key')::text;
 SQL
@@ -171,7 +185,7 @@ reverse >"$work_dir/reverse-a" 2>&1 & reverse_a=$!
 reverse >"$work_dir/reverse-b" 2>&1 & reverse_b=$!
 set +e; wait "$reverse_a"; reverse_status_a=$?; wait "$reverse_b"; reverse_status_b=$?; set -e
 [ "$reverse_status_a" -eq 0 ] && [ "$reverse_status_b" -eq 0 ] || { echo "same-key reversal did not succeed in both sessions" >&2; exit 1; }
-reversal_rows="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v redemption="$redemption" -c "select count(*) from public.customer_birthday_redemptions where original_redemption_id=:'redemption' and operation_kind='reversal' and active")"
+reversal_rows="$(psql_sql "select count(*) from public.customer_birthday_redemptions where original_redemption_id=:'redemption' and operation_kind='reversal' and active" -v redemption="$redemption")"
 [ "$reversal_rows" = "1" ] || { echo "same-key reversal did not append exactly one active compensation" >&2; exit 1; }
 
 # The expiry fixture has valid_until exactly at a prior statement timestamp:
@@ -185,13 +199,13 @@ redeem "$expiry_client" "$expiry_key_a" >"$work_dir/expiry-a" 2>&1 & expiry_a=$!
 redeem "$expiry_client" "$expiry_key_b" >"$work_dir/expiry-b" 2>&1 & expiry_b=$!
 set +e; wait "$expiry_a"; expiry_status_a=$?; wait "$expiry_b"; expiry_status_b=$?; set -e
 [ "$expiry_status_a" -ne 0 ] && [ "$expiry_status_b" -ne 0 ] || { echo "exclusive expiry-boundary race unexpectedly redeemed" >&2; exit 1; }
-expiry_effective="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v client="$expiry_client" -c "select app.c45_staff_safe_birthday_entitlement(e,statement_timestamp())->>'status' from public.customer_birthday_entitlements e where e.business_id=:'business' and e.client_id=:'client'")"
+expiry_effective="$(psql_sql "select app.c45_staff_safe_birthday_entitlement(e,statement_timestamp())->>'status' from public.customer_birthday_entitlements e where e.business_id=:'business' and e.client_id=:'client'" -v business="$business" -v client="$expiry_client")"
 [ "$expiry_effective" = "expired" ] || { echo "effective expiry projection did not expire the boundary fixture" >&2; exit 1; }
-expiry_redemptions="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v client="$expiry_client" -c "select count(*) from public.customer_birthday_redemptions where business_id=:'business' and client_id=:'client'")"
+expiry_redemptions="$(psql_sql "select count(*) from public.customer_birthday_redemptions where business_id=:'business' and client_id=:'client'" -v business="$business" -v client="$expiry_client")"
 [ "$expiry_redemptions" = "0" ] || { echo "expiry-boundary fixture created a redemption" >&2; exit 1; }
 
 # No birthday activation, redemption, reversal, or expiry handling may write
 # monetary ledgers or mutate a sale.
-financial_rows="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v client="$client" -c "select (select count(*) from public.credit_ledger where business_id=:'business' and client_id=:'client') + (select count(*) from public.points_ledger where business_id=:'business' and client_id=:'client')")"
+financial_rows="$(psql_sql "select (select count(*) from public.credit_ledger where business_id=:'business' and client_id=:'client') + (select count(*) from public.points_ledger where business_id=:'business' and client_id=:'client')" -v business="$business" -v client="$client")"
 [ "$financial_rows" = "0" ] || { echo "birthday benefit touched financial ledgers" >&2; exit 1; }
 echo "C45 activation/redeem/reversal/expiry concurrency: PASS (synthetic-fixture-cleanup and feature-flag restoration run on exit)"

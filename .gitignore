@@ -6,3 +6,4 @@ node_modules/
 .vercel
 .local/supabase-sync/
 supabase/.temp/
+supabase/.branches/

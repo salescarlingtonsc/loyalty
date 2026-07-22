@@ -37,8 +37,8 @@ grant execute on function pg_temp.expect_c45_denied(text,text,text) to public;
 
 do $c45$
 declare
-  v_business uuid; v_slug text; v_owner uuid; v_owner_staff uuid; v_branch uuid;
-  v_customer uuid:=gen_random_uuid(); v_identity uuid:=gen_random_uuid(); v_client uuid:=gen_random_uuid();
+  v_business uuid; v_slug text; v_owner uuid:=gen_random_uuid(); v_owner_staff uuid; v_branch uuid;
+  v_customer uuid:=gen_random_uuid(); v_identity uuid:=gen_random_uuid(); v_client uuid:=gen_random_uuid(); v_link uuid:=gen_random_uuid();
   v_loyalty_r uuid:=gen_random_uuid(); v_loyalty_rw uuid:=gen_random_uuid(); v_denied uuid:=gen_random_uuid();
   v_foreign uuid:=gen_random_uuid(); v_loyalty_r_staff uuid; v_loyalty_rw_staff uuid; v_foreign_business uuid;
   v_draft uuid; v_program uuid:=gen_random_uuid(); v_hash text; v_saved jsonb; v_replay jsonb;
@@ -51,16 +51,27 @@ declare
   v_calendar_from_tz timestamptz; v_calendar_until_tz timestamptz;
 begin
   reset role;
+  insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
+  values ('00000000-0000-0000-0000-000000000000',v_owner,'authenticated','authenticated',
+    'c45-owner-'||v_owner::text||'@example.test','',now(),now(),now());
+  perform pg_temp.as_c45_user(v_owner);
+  v_business := (public.create_business(
+    'C45 birthday fixture '||substr(v_owner::text,1,8),
+    'c45-birthday-suite-'||substr(v_owner::text,1,8),'test',
+    array['dashboard','clients','sales','loyalty']
+  )::jsonb->>'id')::uuid;
+  reset role;
   select b.id,b.slug,s.user_id,s.id,br.id
     into v_business,v_slug,v_owner,v_owner_staff,v_branch
     from public.businesses b
     join public.staff s on s.business_id=b.id and s.role='owner' and s.active
     join public.branches br on br.business_id=b.id and br.active
-   where 'loyalty'=any(coalesce(b.enabled_modules,'{}'::text[]))
-   order by b.created_at,s.created_at,br.is_default desc,br.created_at
+   where b.id=v_business and s.user_id=v_owner
+     and 'loyalty'=any(coalesce(b.enabled_modules,'{}'::text[]))
+   order by s.created_at,br.is_default desc,br.created_at
    limit 1;
   if v_business is null or v_owner is null or v_branch is null then
-    raise exception 'C45 suite requires one active synthetic/disposable owner business with loyalty enabled';
+    raise exception 'C45 self-created business fixture is incomplete';
   end if;
 
   -- Executable SG calendar contract. The observed date is never based on the
@@ -182,7 +193,8 @@ begin
   -- work is introduced by this fixture.
   perform pg_temp.as_c45_user(v_owner);
   v_draft:=(public.create_loyalty_config_draft(v_business,null,'c45-rollback-suite')::jsonb->>'version_id')::uuid;
-  perform public.save_loyalty_config_draft(v_draft,jsonb_build_object('active',true));
+  select snapshot_hash into v_hash from public.firm_config_versions where id=v_draft;
+  perform public.save_loyalty_config_draft(v_draft,jsonb_build_object('active',true),v_hash);
   select snapshot_hash into v_hash from public.firm_config_versions where id=v_draft;
   v_saved:=public.save_birthday_program_draft(v_draft,v_program,jsonb_build_object(
     'active',true,'customer_label','C45 rollback birthday item','customer_description','Synthetic manual birthday benefit',
@@ -218,8 +230,10 @@ begin
   perform set_config('app.c42_profile_identity',v_identity::text,true);
   insert into public.customer_profiles(identity_id,auth_user_id,full_name,birth_date)
   values(v_identity,v_customer,'C45 rollback customer',(timezone('Asia/Singapore',statement_timestamp()))::date);
-  insert into public.customer_links(business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
-  values(v_business,v_identity,v_customer,v_client,'verified','phone_claim',now());
+  perform set_config('app.customer_link_insert_id',v_link::text,true);
+  insert into public.customer_links(id,business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
+  values(v_link,v_business,v_identity,v_customer,v_client,'verified','phone_claim',now());
+  perform set_config('app.customer_link_insert_id','',true);
 
   -- Participation is separately default-off and rejects a nullable request;
   -- it is not marketing consent. SG current date makes an explicit current

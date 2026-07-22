@@ -23,7 +23,7 @@ declare
   v_other_business uuid;
   v_slug text;
   v_other_slug text;
-  v_owner uuid;
+  v_owner uuid := gen_random_uuid();
   v_owner_staff uuid;
   v_branch uuid;
   v_customer uuid := gen_random_uuid();
@@ -43,6 +43,7 @@ declare
   v_expected_visit_description text;
   v_unprovable_sale uuid;
   v_provable_sale uuid;
+  v_sale_result jsonb;
   v_wallet jsonb;
   v_legacy jsonb;
   v_card jsonb;
@@ -54,21 +55,34 @@ declare
   v_name text;
 begin
   reset role;
+  insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
+  values ('00000000-0000-0000-0000-000000000000',v_owner,'authenticated','authenticated',
+    'c44-owner-'||v_owner::text||'@example.test','',now(),now(),now());
+  perform pg_temp.as_c44_user(v_owner);
+  v_business := (public.create_business(
+    'C44 wallet fixture '||substr(v_owner::text,1,8),
+    'c44-wallet-'||substr(v_owner::text,1,8),'test',
+    array['dashboard','clients','sales','loyalty','packages','retention']
+  )::jsonb->>'id')::uuid;
+  v_other_business := (public.create_business(
+    'C44 wallet other fixture '||substr(v_owner::text,1,8),
+    'c44-wallet-other-'||substr(v_owner::text,1,8),'test',
+    array['dashboard','clients','sales','loyalty','packages','retention']
+  )::jsonb->>'id')::uuid;
+  reset role;
   select b.id, b.slug, s.user_id, s.id
     into v_business, v_slug, v_owner, v_owner_staff
     from public.businesses b
     join public.staff s on s.business_id = b.id
-    join public.loyalty_programs lp on lp.business_id = b.id and lp.active
-   where s.role = 'owner' and s.active and s.user_id is not null
-   order by b.created_at, s.created_at
+   where b.id = v_business and s.role = 'owner' and s.active and s.user_id = v_owner
+   order by s.created_at
    limit 1;
   select b.id, b.slug into v_other_business, v_other_slug
-    from public.businesses b where b.id <> v_business
-   order by b.created_at, b.id limit 1;
+    from public.businesses b where b.id = v_other_business;
   select br.id into v_branch from public.branches br
    where br.business_id=v_business and br.active order by br.is_default desc,br.created_at limit 1;
   if v_business is null or v_other_business is null or v_owner is null or v_owner_staff is null or v_branch is null then
-    raise exception 'C44 suite requires two businesses and one active owner loyalty fixture';
+    raise exception 'C44 self-created business fixture is incomplete';
   end if;
 
   update public.businesses set enabled_modules = array['loyalty','packages'] where id = v_business;
@@ -131,12 +145,12 @@ begin
   update public.points_batches
      set expires_at = statement_timestamp() + interval '2 days'
    where business_id=v_business and client_id=v_client and remaining>0;
-  perform pg_temp.as_c44_user(v_customer);
-  v_wallet := public.customer_get_actionable_wallet();
-  v_card := v_wallet->'cards'->0;
   select coalesce(sum(remaining),0)::integer into v_unexpired
     from public.points_batches
    where business_id=v_business and client_id=v_client and remaining>0 and expires_at>statement_timestamp();
+  perform pg_temp.as_c44_user(v_customer);
+  v_wallet := public.customer_get_actionable_wallet();
+  v_card := v_wallet->'cards'->0;
   if (v_card#>>'{loyalty,balance}')::integer <> 30
      or (v_card#>>'{loyalty,balance}')::integer > v_unexpired
      or (v_card#>>'{expiry,expiring_within_7_days}')::integer <> 30
@@ -233,13 +247,15 @@ begin
   perform pg_temp.as_c44_user(v_owner);
   perform public.set_sale_policy(v_business,'quick_sale',true,false,false,
     'C44 synthetic unprovable visit snapshot');
-  perform public.record_quick_sale(v_business,100,'cash',v_client,v_owner_staff,v_branch,
-    'C44 unprovable sale','c44-unprovable-sale',true);
-  select id into v_unprovable_sale from public.sales
-   where business_id=v_business and idem_key='c44-unprovable-sale';
+  v_sale_result := public.record_quick_sale(v_business,100,'cash',v_client,v_owner_staff,v_branch,
+    'C44 unprovable sale','c44-unprovable-sale',true)::jsonb;
+  v_unprovable_sale := (v_sale_result#>>'{sale,id}')::uuid;
+  reset role;
   if v_unprovable_sale is null
      or coalesce((select counts_as_visit from public.sales where id=v_unprovable_sale),true) then
-    raise exception 'C44 unprovable fixture did not persist counts_as_visit=false';
+    raise exception 'C44 unprovable fixture did not persist counts_as_visit=false; policy=%, sale=%',
+      (select row_to_json(p) from app.sale_policy(v_business,'quick_sale') p),
+      (select row_to_json(s) from public.sales s where s.id=v_unprovable_sale);
   end if;
   perform pg_temp.as_c44_user(v_customer);
   v_card := public.customer_get_actionable_business(v_slug)->'card';
@@ -250,10 +266,10 @@ begin
   perform pg_temp.as_c44_user(v_owner);
   perform public.set_sale_policy(v_business,'quick_sale',true,true,false,
     'C44 synthetic provable visit snapshot');
-  perform public.record_quick_sale(v_business,100,'cash',v_client,v_owner_staff,v_branch,
-    'C44 provable visit','c44-provable-sale',true);
-  select id into v_provable_sale from public.sales
-   where business_id=v_business and idem_key='c44-provable-sale';
+  v_sale_result := public.record_quick_sale(v_business,100,'cash',v_client,v_owner_staff,v_branch,
+    'C44 provable visit','c44-provable-sale',true)::jsonb;
+  v_provable_sale := (v_sale_result#>>'{sale,id}')::uuid;
+  reset role;
   if v_provable_sale is null
      or not coalesce((select counts_as_visit from public.sales where id=v_provable_sale),false) then
     raise exception 'C44 provable fixture did not persist counts_as_visit=true';
@@ -316,7 +332,14 @@ begin
   -- sales snapshot with counts_as_visit. Points, stamps, spending and an
   -- unprovable legacy transaction must not fabricate a visit promise.
   reset role;
-  v_definition := pg_get_functiondef('app.c44_actionable_wallet_card(uuid,uuid,text,text,text,text,text[],timestamp with time zone)'::regprocedure);
+  -- C45 decorates the C44 projection and retains the reviewed C44 body under
+  -- this private base name. Inspect whichever implementation is authoritative
+  -- for the installed chain.
+  v_proc := coalesce(
+    to_regprocedure('app.c45_base_actionable_wallet_card(uuid,uuid,text,text,text,text,text[],timestamp with time zone)'),
+    to_regprocedure('app.c44_actionable_wallet_card(uuid,uuid,text,text,text,text,text[],timestamp with time zone)')
+  );
+  v_definition := pg_get_functiondef(v_proc);
   if v_definition !~* 'retention_program_versions'
      or v_definition !~* 'config_version_id = b.active_config_version_id'
      or v_definition !~* 's\.counts_as_visit'

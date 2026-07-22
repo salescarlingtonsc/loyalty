@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Frenly — Loyalty & retention for every business</title>
+<link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -33,7 +34,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-.skip-link{position:fixed;left:12px;top:10px;z-index:200;transform:translateY(-160%);background:var(--ink);color:#fff;padding:12px 16px;border-radius:10px;font-weight:700}
+.skip-link{position:fixed;left:12px;top:10px;z-index:200;transform:translateY(-160%);display:inline-flex;align-items:center;min-height:44px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:700}
 .skip-link:focus{transform:translateY(0)}
 body{background:var(--bg);color:var(--ink);font-family:var(--sf);font-size:14.5px;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
@@ -249,7 +250,7 @@ tr.click:hover td{background:#FBFAF8}
 .range{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .range input{width:auto}
 /* segmented control, iOS-style */
-.qbtn{background:#fff;border:1px solid var(--control-border);border-radius:100px;padding:7px 14px;font-size:12.5px;
+.qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:100px;padding:9px 14px;font-size:12.5px;
   font-weight:600;color:var(--muted);box-shadow:var(--shadow);
   transition:transform .18s var(--spring),color .14s,background .14s}
 .qbtn:hover{color:var(--ink)}
@@ -1175,7 +1176,7 @@ function actionableWalletCardMarkup(card,{detail=false}={}){
   const business=card?.business||{},loyalty=card?.loyalty||{},credit=card?.credit||{},packages=card?.packages||{};
   const unit=esc(loyalty.unit||'points'),currency=esc(business.currency||'SGD'),reward=card?.next_eligible_reward||null,visit=card?.visit_progress||{};
   return `<article class="card wallet-section"${detail?'':' style="margin:0"'}>
-    <div class="row"><div><h${detail?'1':'2'}>${esc(business.name||'Business')}</h${detail?'1':'2'}><p class="muted small" style="margin-top:4px">${esc(business.industry||'Local business')}</p></div><span class="spacer"></span>${detail?'':`<span class="pill">${esc(actionableWalletActionText(card))}</span>`}</div>
+    <div class="row"><div><h2>${esc(business.name||'Business')} rewards</h2><p class="muted small" style="margin-top:4px">${esc(business.industry||'Local business')}</p></div><span class="spacer"></span>${detail?'':`<span class="pill">${esc(actionableWalletActionText(card))}</span>`}</div>
     <div class="wallet-metrics">
       <div class="wallet-metric"><span class="muted small">${unit} balance</span><b>${Number(loyalty.balance||0)}</b></div>
       <div class="wallet-metric"><span class="muted small">Credit balance</span><b>${currency} ${(Number(credit.balance_cents||0)/100).toFixed(2)}</b></div>
@@ -1215,7 +1216,7 @@ async function renderCustomerWallet(businessSlug=null){
   const walletStaff=walletPersonas?.staff||[],walletCustomers=walletPersonas?.customer||[];
   const dualRoleWorkspace=walletStaff.length&&walletCustomers.length?walletStaff[0]:null;
   root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><div class="wallet-head">
-    ${businessSlug?'<button class="btn ghost sm" id="walletBack">←</button>':''}<div class="logo">frenly<span>.</span></div>
+    ${businessSlug?'<button class="btn ghost sm" id="walletBack" aria-label="Back to all businesses" style="min-width:44px">←</button>':''}<div class="logo">frenly<span>.</span></div>
     <span class="spacer"></span><span id="customerInboxBellSlot"></span>${dualRoleWorkspace?`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(dualRoleWorkspace.business_slug)}/dashboard">Staff workspace</a>`:''}<button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
     <div id="walletBody"><div class="card"><p class="muted">Loading…</p></div></div></div></div>`;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -2374,7 +2375,7 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true){
     selectedBranchId=branches.length?branches[0].id:null;
   }
   wrap.innerHTML=(branches.length||isAdmin)
-    ? `<select id="branchSel" class="qbtn" style="padding-right:22px">
+    ? `<select id="branchSel" class="qbtn" aria-label="Business branch" style="padding-right:22px">
         ${isAdmin?`<option value="">All branches (consolidated)</option>`:''}
         ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}${b.active===false?' (inactive)':''}</option>`).join('')}
       </select>`
@@ -2394,8 +2395,8 @@ async function dashboard(){
   const renderEpoch=++dashboardRenderEpoch;
   M().innerHTML=`<section id="dashboardView" data-render-epoch="${renderEpoch}"><div class="topbar"><div><h1>Dashboard</h1><p class="muted small">How ${esc(S.biz.name)} is doing</p></div>
     <div class="range">
-      <button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
-      <input type="date" id="df" value="${iso(d30)}"> <span class="muted">→</span> <input type="date" id="dt" value="${iso(today)}">
+      <button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
+      <label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${iso(d30)}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${iso(today)}">
       <span id="branchWrap"></span>
       <button class="btn sm" id="apply">Apply</button>
     </div></div>
@@ -3483,9 +3484,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(programError||rewardsError||tierError||rbError||rsError||rpError)throw programError||rewardsError||tierError||rbError||rsError||rpError;
     lp=liveProgram||[];rw=liveRewards||[];tr=liveTiers||[];
     rb=liveBranches||[];rs=liveServices||[];rp=liveProducts||[];
-    const {data:publishedBirthday}=await sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id});
-    if(!isLoyaltyCurrent())return;
-    publishedBirthdayPrograms=Array.isArray(publishedBirthday?.programs)?publishedBirthday.programs:[];
+    if(canManageLoyalty){
+      const {data:publishedBirthday,error:publishedBirthdayError}=await sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id});
+      if(!isLoyaltyCurrent())return;
+      if(publishedBirthdayError)throw publishedBirthdayError;
+      publishedBirthdayPrograms=Array.isArray(publishedBirthday?.programs)?publishedBirthday.programs:[];
+    }
   }
   const p=lp?.[0]?{...lp[0],configuration_status:draftVersionId?'draft':lp[0].configuration_status}:null;
   const birthdayProgram=birthdayPrograms[0]||null;
@@ -3568,10 +3572,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <button class="btn ghost sm trDel" data-id="${t.tier_id||t.id}">✕</button>`:''}</div>`).join('')
       :`<p class="muted small" style="margin-top:6px">No tiers yet — customers all earn at 1×.</p>`}
     ${canManageLoyalty?`<div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
-      <input id="trName" placeholder="e.g. Gold" style="flex:1;min-width:100px">
-      <input id="trTh" type="number" min="0" placeholder="from" style="max-width:80px">
-      <input id="trMul" type="number" min="1" step="0.5" placeholder="× earn" style="max-width:90px">
-      <input id="trPerk" placeholder="perk note (optional)" style="flex:1;min-width:120px">
+      <label class="sr-only" for="trName">Tier name</label><input id="trName" placeholder="e.g. Gold" style="flex:1;min-width:100px">
+      <label class="sr-only" for="trTh">Tier threshold</label><input id="trTh" type="number" min="0" placeholder="from" style="max-width:80px">
+      <label class="sr-only" for="trMul">Points earning multiplier</label><input id="trMul" type="number" min="1" step="0.5" placeholder="× earn" style="max-width:90px">
+      <label class="sr-only" for="trPerk">Tier perk note</label><input id="trPerk" placeholder="perk note (optional)" style="flex:1;min-width:120px">
       <button class="btn sm" id="trAdd">Add</button></div>`:''}`;
   const firmExpiryMode=p?.expiry_mode??'none';
   const firmExpiryDays=positiveExpiryDays(p?.expiry_days)||365;

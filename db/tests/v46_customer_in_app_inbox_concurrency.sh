@@ -18,6 +18,11 @@ case "$(printf '%s' "$DATABASE_URL" | tr '[:upper:]' '[:lower:]')" in
   *gadpooereceldfpfxsod*) echo "Refusing C46 runtime against the protected project reference." >&2; exit 2;;
 esac
 
+psql_sql(){
+  sql="$1"; shift
+  printf '%s\n' "$sql" | psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 "$@"
+}
+
 script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/frenly-c46-concurrency.XXXXXX")"
 owner="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
@@ -37,8 +42,8 @@ restore_feature_flags(){
   [ -n "$feature_flag_state" ] || return 0
   while IFS='|' read -r feature_key feature_enabled; do
     [ -n "$feature_key" ] || continue
-    psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v feature_key="$feature_key" -v feature_enabled="$feature_enabled" \
-      -c "update app.platform_feature_flags set enabled=:'feature_enabled'::boolean where feature_key=:'feature_key'" >/dev/null 2>&1 || return 1
+    psql_sql "update app.platform_feature_flags set enabled=:'feature_enabled'::boolean where feature_key=:'feature_key'" \
+      -v feature_key="$feature_key" -v feature_enabled="$feature_enabled" >/dev/null 2>&1 || return 1
   done <<EOF
 $feature_flag_state
 EOF
@@ -82,11 +87,15 @@ update app.platform_feature_flags set enabled=true where feature_key in ('custom
 insert into public.clients(business_id,full_name) values(:'business','C46 synthetic customer') returning id as client \gset
 insert into public.customer_identities(id,auth_user_id,status,created_via)
 values(gen_random_uuid(),:'customer','active','phone_registration') returning id as identity \gset
-select set_config('app.c42_profile_identity',:'identity',true) \gset
+select set_config('app.c42_profile_identity',:'identity',false) \gset
 insert into public.customer_profiles(identity_id,auth_user_id,full_name,birth_date)
 values(:'identity',:'customer','C46 synthetic customer',(timezone('Asia/Singapore',statement_timestamp()))::date);
-insert into public.customer_links(business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
-values(:'business',:'identity',:'customer',:'client','verified','phone_claim',now()) returning id as link \gset
+select set_config('app.c42_profile_identity','',false) \gset
+select gen_random_uuid() as link \gset
+select set_config('app.customer_link_insert_id',:'link',false) \gset
+insert into public.customer_links(id,business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
+values(:'link',:'business',:'identity',:'customer',:'client','verified','phone_claim',now());
+select set_config('app.customer_link_insert_id','',false) \gset
 insert into public.appointments(business_id,client_id,staff_id,starts_at,ends_at,status)
 values(:'business',:'client',:'owner_staff',now()+interval '2 days',now()+interval '2 days 1 hour','booked') returning id as appointment \gset
 insert into public.customer_appointment_action_requests(
@@ -101,7 +110,8 @@ insert into public.customer_appointment_action_requests(
 set role authenticated;
 select set_config('request.jwt.claim.sub',:'owner',false) \gset
 select (public.create_loyalty_config_draft(:'business',null,'c46-concurrency-birthday')::jsonb->>'version_id')::uuid as birthday_draft \gset
-select public.save_loyalty_config_draft(:'birthday_draft',jsonb_build_object('active',true)) \gset
+select snapshot_hash as birthday_draft_hash from public.firm_config_versions where id=:'birthday_draft' \gset
+select public.save_loyalty_config_draft(:'birthday_draft',jsonb_build_object('active',true),:'birthday_draft_hash') \gset
 select snapshot_hash as birthday_draft_hash from public.firm_config_versions where id=:'birthday_draft' \gset
 select public.save_birthday_program_draft(:'birthday_draft',gen_random_uuid(),jsonb_build_object(
   'active',true,'customer_label','C46 concurrency birthday','customer_description','Synthetic only','customer_terms','Synthetic only',
@@ -127,7 +137,7 @@ case "$business" in ????????-????-????-????-????????????) ;; *) echo "self-creat
 case "$fixture_slug" in c46-inbox-*) ;; *) echo "self-created C46 slug fixture failed" >&2; exit 1;; esac
 
 sync(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v key="$1" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v key="$1" <<'SQL'
 set role authenticated;
 select set_config('request.jwt.claim.sub',:'customer',false);
 select public.customer_sync_in_app_inbox(:'slug',:'key')::text;
@@ -135,7 +145,7 @@ SQL
 }
 
 add_booking_source(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -v source_key="$1" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -v source_key="$1" <<'SQL'
 insert into public.customer_appointment_action_requests(
   business_id,identity_id,auth_user_id,link_id,client_id,appointment_id,action,proposed_at,note,status,idempotency_key,request_hash
 )
@@ -149,7 +159,7 @@ SQL
 }
 
 set_booking_preference(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v opted="$1" -v key="$2" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v opted="$1" -v key="$2" <<'SQL'
 set role authenticated;
 select set_config('request.jwt.claim.sub',:'customer',false) \gset
 select public.customer_set_in_app_inbox_preferences(
@@ -159,7 +169,7 @@ SQL
 }
 
 set_birthday_participation(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v opted="$1" -v key="$2" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v opted="$1" -v key="$2" <<'SQL'
 set role authenticated;
 select set_config('request.jwt.claim.sub',:'customer',false) \gset
 select public.customer_set_birthday_participation(:'opted'::boolean,:'key')::text;
@@ -182,7 +192,7 @@ wait_for_identity_lock(){
 }
 
 preference_with_identity_lock(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v opted="$1" -v key="$2" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v opted="$1" -v key="$2" <<'SQL'
 begin;
 select 1 from public.customer_identities where auth_user_id=:'customer' and status='active' for update;
 select 'C46_IDENTITY_LOCK_HELD';
@@ -197,7 +207,7 @@ SQL
 }
 
 sync_with_identity_lock(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v key="$1" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v key="$1" <<'SQL'
 begin;
 select 1 from public.customer_identities where auth_user_id=:'customer' and status='active' for update;
 select 'C46_IDENTITY_LOCK_HELD';
@@ -210,7 +220,7 @@ SQL
 }
 
 participation_with_identity_lock(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v opted="$1" -v key="$2" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v opted="$1" -v key="$2" <<'SQL'
 begin;
 select 1 from public.customer_identities where auth_user_id=:'customer' and status='active' for update;
 select 'C46_IDENTITY_LOCK_HELD';
@@ -230,8 +240,8 @@ sync "$sync_key" >"$work_dir/sync-same-b" 2>&1 & sync_same_b=$!
 set +e; wait "$sync_same_a"; sync_same_status_a=$?; wait "$sync_same_b"; sync_same_status_b=$?; set -e
 [ "$sync_same_status_a" -eq 0 ] && [ "$sync_same_status_b" -eq 0 ] || { echo "same-key two-session sync did not succeed" >&2; exit 1; }
 cmp -s "$work_dir/sync-same-a" "$work_dir/sync-same-b" || { echo "same-key sync responses were not exact replays" >&2; exit 1; }
-sync_same_rows="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v key="$sync_key" -c "select count(*) from public.customer_in_app_inbox_sync_operations where auth_user_id=:'customer' and idempotency_key=:'key'")"
-event_rows="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -c "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer'")"
+sync_same_rows="$(psql_sql "select count(*) from public.customer_in_app_inbox_sync_operations where auth_user_id=:'customer' and idempotency_key=:'key'" -v customer="$customer" -v key="$sync_key")"
+event_rows="$(psql_sql "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer'" -v business="$business" -v customer="$customer")"
 [ "$sync_same_rows" = "1" ] && [ "$event_rows" = "1" ] || { echo "same-key sync did not retain one operation and one event" >&2; exit 1; }
 
 # Different sync keys are distinct operation evidence, but converge on the
@@ -242,15 +252,15 @@ sync "$sync_key_a" >"$work_dir/sync-different-a" 2>&1 & sync_different_a=$!
 sync "$sync_key_b" >"$work_dir/sync-different-b" 2>&1 & sync_different_b=$!
 set +e; wait "$sync_different_a"; sync_different_status_a=$?; wait "$sync_different_b"; sync_different_status_b=$?; set -e
 [ "$sync_different_status_a" -eq 0 ] && [ "$sync_different_status_b" -eq 0 ] || { echo "different-key two-session sync did not succeed" >&2; exit 1; }
-sync_different_rows="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v key_a="$sync_key_a" -v key_b="$sync_key_b" -c "select count(*) from public.customer_in_app_inbox_sync_operations where auth_user_id=:'customer' and idempotency_key in (:'key_a',:'key_b')")"
-event_rows="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -c "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer'")"
+sync_different_rows="$(psql_sql "select count(*) from public.customer_in_app_inbox_sync_operations where auth_user_id=:'customer' and idempotency_key in (:'key_a',:'key_b')" -v customer="$customer" -v key_a="$sync_key_a" -v key_b="$sync_key_b")"
+event_rows="$(psql_sql "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer'" -v business="$business" -v customer="$customer")"
 [ "$sync_different_rows" = "2" ] && [ "$event_rows" = "1" ] || { echo "different-key sync did not converge on one immutable event" >&2; exit 1; }
 
-event="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -c "select id from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' order by created_at,id limit 1")"
+event="$(psql_sql "select id from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' order by created_at,id limit 1" -v business="$business" -v customer="$customer")"
 case "$event" in ????????-????-????-????-????????????) ;; *) echo "C46 sync event fixture missing" >&2; exit 1;; esac
 
 state(){
-  exec psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v event="$event" -v operation="$1" -v key="$2" <<'SQL'
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" -v event="$event" -v operation="$1" -v key="$2" <<'SQL'
 set role authenticated;
 select set_config('request.jwt.claim.sub',:'customer',false);
 select public.customer_set_in_app_inbox_state(:'slug',:'event',:'operation',:'key')::text;
@@ -264,7 +274,7 @@ state read "$state_key" >"$work_dir/state-same-b" 2>&1 & state_same_b=$!
 set +e; wait "$state_same_a"; state_same_status_a=$?; wait "$state_same_b"; state_same_status_b=$?; set -e
 [ "$state_same_status_a" -eq 0 ] && [ "$state_same_status_b" -eq 0 ] || { echo "same-key two-session state operation did not succeed" >&2; exit 1; }
 cmp -s "$work_dir/state-same-a" "$work_dir/state-same-b" || { echo "same-key two-session state responses were not exact replays" >&2; exit 1; }
-state_same_rows="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v event="$event" -v key="$state_key" -c "select count(*) from public.customer_in_app_inbox_state_operations where event_id=:'event' and idempotency_key=:'key'")"
+state_same_rows="$(psql_sql "select count(*) from public.customer_in_app_inbox_state_operations where event_id=:'event' and idempotency_key=:'key'" -v event="$event" -v key="$state_key")"
 [ "$state_same_rows" = "1" ] || { echo "same-key state operation did not retain exactly one evidence row" >&2; exit 1; }
 
 # Different keys preserve two distinct operation facts while the guarded state
@@ -275,9 +285,9 @@ state unread "$state_key_a" >"$work_dir/state-different-a" 2>&1 & state_differen
 state dismiss "$state_key_b" >"$work_dir/state-different-b" 2>&1 & state_different_b=$!
 set +e; wait "$state_different_a"; state_different_status_a=$?; wait "$state_different_b"; state_different_status_b=$?; set -e
 [ "$state_different_status_a" -eq 0 ] && [ "$state_different_status_b" -eq 0 ] || { echo "different-key two-session state operations did not succeed" >&2; exit 1; }
-state_different_rows="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v event="$event" -v key_a="$state_key_a" -v key_b="$state_key_b" -c "select count(*) from public.customer_in_app_inbox_state_operations where event_id=:'event' and idempotency_key in (:'key_a',:'key_b')")"
+state_different_rows="$(psql_sql "select count(*) from public.customer_in_app_inbox_state_operations where event_id=:'event' and idempotency_key in (:'key_a',:'key_b')" -v event="$event" -v key_a="$state_key_a" -v key_b="$state_key_b")"
 [ "$state_different_rows" = "2" ] || { echo "different-key state operations did not retain separate evidence" >&2; exit 1; }
-terminal_state="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v event="$event" -c "select case when dismissed_at is not null then 'dismissed' else 'not-dismissed' end from public.customer_in_app_inbox_state where event_id=:'event'")"
+terminal_state="$(psql_sql "select case when dismissed_at is not null then 'dismissed' else 'not-dismissed' end from public.customer_in_app_inbox_state where event_id=:'event'" -v event="$event")"
 [ "$terminal_state" = "dismissed" ] || { echo "unread-vs-dismiss race resurrected a dismissed inbox event" >&2; exit 1; }
 unread_after_dismiss="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v customer="$customer" -v slug="$fixture_slug" <<'SQL'
 set role authenticated;
@@ -301,7 +311,7 @@ SQL
 # fact before the later opt-out (C46 preference history is deliberately kept).
 pref_race_source_a="c46-pref-off-first-$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
 add_booking_source "$pref_race_source_a"
-booking_before="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -c "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='booking_updates'")"
+booking_before="$(psql_sql "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='booking_updates'" -v business="$business" -v customer="$customer")"
 pref_off_first_key="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
 pref_off_first_sync_key="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
 preference_with_identity_lock false "$pref_off_first_key" >"$work_dir/race-first" 2>&1 & race_first=$!
@@ -309,7 +319,7 @@ wait_for_identity_lock "$work_dir/race-first"
 sync "$pref_off_first_sync_key" >"$work_dir/race-second" 2>&1 & race_second=$!
 set +e; wait "$race_first"; race_first_status=$?; wait "$race_second"; race_second_status=$?; set -e
 [ "$race_first_status" -eq 0 ] && [ "$race_second_status" -eq 0 ] || { echo "opt-out-first preference-vs-sync race failed" >&2; exit 1; }
-booking_after="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -c "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='booking_updates'")"
+booking_after="$(psql_sql "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='booking_updates'" -v business="$business" -v customer="$customer")"
 [ "$booking_after" = "$booking_before" ] || { echo "opt-out-first preference race created a new booking inbox event" >&2; exit 1; }
 
 # Opposite order: while booking consent is true, sync obtains the identity
@@ -326,14 +336,14 @@ wait_for_identity_lock "$work_dir/race-first"
 preference_with_identity_lock false "$pref_off_second_key" >"$work_dir/race-second" 2>&1 & race_second=$!
 set +e; wait "$race_first"; race_first_status=$?; wait "$race_second"; race_second_status=$?; set -e
 [ "$race_first_status" -eq 0 ] && [ "$race_second_status" -eq 0 ] || { echo "sync-first preference-vs-opt-out race failed" >&2; exit 1; }
-booking_after="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -c "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='booking_updates'")"
+booking_after="$(psql_sql "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='booking_updates'" -v business="$business" -v customer="$customer")"
 [ "$booking_after" -eq $((booking_before + 2)) ] || { echo "sync-first preference race did not create exactly the two pending booking facts before opt-out" >&2; exit 1; }
 
 # The C45 entitlement is still available after participation withdrawal. C46
 # must nevertheless use the same shared lock and withhold birthday events when
 # withdrawal is first, then resolve the prior event after a sync-first race.
 set_birthday_participation true "$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')" >/dev/null
-birthday_before="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -c "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='birthday_benefit'")"
+birthday_before="$(psql_sql "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='birthday_benefit'" -v business="$business" -v customer="$customer")"
 birthday_off_first_key="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
 birthday_off_first_sync_key="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')"
 participation_with_identity_lock false "$birthday_off_first_key" >"$work_dir/race-first" 2>&1 & race_first=$!
@@ -341,7 +351,7 @@ wait_for_identity_lock "$work_dir/race-first"
 sync "$birthday_off_first_sync_key" >"$work_dir/race-second" 2>&1 & race_second=$!
 set +e; wait "$race_first"; race_first_status=$?; wait "$race_second"; race_second_status=$?; set -e
 [ "$race_first_status" -eq 0 ] && [ "$race_second_status" -eq 0 ] || { echo "participation-withdraw-first vs sync race failed" >&2; exit 1; }
-birthday_after="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -c "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='birthday_benefit'")"
+birthday_after="$(psql_sql "select count(*) from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='birthday_benefit'" -v business="$business" -v customer="$customer")"
 [ "$birthday_after" = "$birthday_before" ] || { echo "withdraw-first participation race created a new birthday inbox event" >&2; exit 1; }
 
 set_birthday_participation true "$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')" >/dev/null
@@ -352,12 +362,12 @@ wait_for_identity_lock "$work_dir/race-first"
 participation_with_identity_lock false "$birthday_off_second_key" >"$work_dir/race-second" 2>&1 & race_second=$!
 set +e; wait "$race_first"; race_first_status=$?; wait "$race_second"; race_second_status=$?; set -e
 [ "$race_first_status" -eq 0 ] && [ "$race_second_status" -eq 0 ] || { echo "sync-first participation-withdraw race failed" >&2; exit 1; }
-birthday_event="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" -c "select id from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='birthday_benefit' order by created_at desc,id desc limit 1")"
+birthday_event="$(psql_sql "select id from public.customer_in_app_inbox_events where business_id=:'business' and auth_user_id=:'customer' and topic='birthday_benefit' order by created_at desc,id desc limit 1" -v business="$business" -v customer="$customer")"
 case "$birthday_event" in ????????-????-????-????-????????????) ;; *) echo "sync-first participation race did not create a birthday inbox event" >&2; exit 1;; esac
 sync "$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'select gen_random_uuid()')" >/dev/null
-birthday_resolved="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v event="$birthday_event" -c "select count(*) from public.customer_in_app_inbox_resolutions where event_id=:'event'")"
+birthday_resolved="$(psql_sql "select count(*) from public.customer_in_app_inbox_resolutions where event_id=:'event'" -v event="$birthday_event")"
 [ "$birthday_resolved" = "1" ] || { echo "post-withdraw revalidation did not resolve the C46 birthday event" >&2; exit 1; }
 
-outbox_rows="$(psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -v business="$business" -c "select count(*) from public.customer_notification_outbox where business_id=:'business'")"
+outbox_rows="$(psql_sql "select count(*) from public.customer_notification_outbox where business_id=:'business'" -v business="$business")"
 [ "$outbox_rows" = "0" ] || { echo "C46 concurrency harness observed a legacy outbox/provider write" >&2; exit 1; }
 echo "C46 sync/state concurrency: PASS (self-created synthetic fixture cleanup and feature-flag restoration run on exit)"

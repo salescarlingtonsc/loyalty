@@ -28,13 +28,13 @@ declare
     'customer_get_birthday_benefit', 'customer_get_birthday_participation', 'customer_activate_birthday_benefit',
     'customer_get_notification_preferences', 'customer_issue_link_invitation', 'customer_portal_capabilities',
     'customer_request_appointment_action', 'customer_set_birthday_participation', 'customer_set_notification_preference', 'customer_unlink_business_link', 'decide_change',
-    'enroll_membership', 'get_customer_feature_capabilities', 'get_dashboard_summary', 'get_my_access', 'get_my_modules', 'get_my_personas',
+    'enroll_membership_v41', 'get_customer_feature_capabilities', 'get_dashboard_summary', 'get_my_access', 'get_my_modules', 'get_my_personas',
     'generate_retention_recommendation', 'get_active_birthday_program', 'get_birthday_program_draft', 'get_loyalty_reward_draft', 'get_retention_config_draft', 'get_notifications', 'get_reports_summary', 'get_revenue_summary', 'get_sale_policy',
     'import_bookings', 'issue_gift_card', 'lookup_client_by_phone',
     'mark_all_notifications_read', 'mark_notification_read', 'open_drawer',
     'record_credit_tender', 'record_drawer_movement',
     'record_payment', 'record_quick_sale', 'record_sale_by_phone',
-    'reclassify_sale_policy', 'redeem_customer_birthday_benefit', 'redeem_gift_card', 'redeem_points', 'redeem_reward', 'redeem_reward_at_context', 'refund_sale',
+    'reclassify_sale_policy', 'redeem_customer_birthday_benefit', 'redeem_gift_card_v41', 'redeem_points', 'redeem_reward', 'redeem_reward_at_context', 'refund_sale',
     'reverse_customer_birthday_benefit_for_client', 'reverse_sale', 'reverse_loyalty_redemption', 'remove_loyalty_branch_override_draft',
     'save_birthday_program_draft', 'save_loyalty_branch_override_draft', 'save_loyalty_config_draft', 'save_retention_program_draft', 'save_reward_taxonomy', 'save_module_template', 'sell_package', 'set_booking_settings',
     'set_business_modules',
@@ -68,7 +68,14 @@ begin
     join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'app';
 
-  if v_policy_helper_signatures is distinct from v_required_policy_helper_signatures then
+  -- pg_catalog does not promise a stable ordering for equal-prefix
+  -- regprocedure text values across Postgres builds. Compare this as the
+  -- dependency set it represents while retaining the distinct aggregation
+  -- above so missing or unexpected helpers still fail closed.
+  if not (
+    v_policy_helper_signatures @> v_required_policy_helper_signatures
+    and v_policy_helper_signatures <@ v_required_policy_helper_signatures
+  ) then
     raise exception 'v17 policy helper dependency mismatch: expected %, found %',
       v_required_policy_helper_signatures, v_policy_helper_signatures;
   end if;
@@ -79,6 +86,12 @@ begin
       join pg_namespace n on n.oid = p.pronamespace
      where n.nspname in ('app', 'public')
        and p.prosecdef
+       -- C42 deliberately exposes this exact two-boolean, fail-closed
+       -- pre-auth capability seam. Its shape and exact role grants are
+       -- asserted independently by the C42 runtime suite.
+       and p.oid is distinct from to_regprocedure(
+         'public.get_customer_phone_otp_capabilities()'
+       )
        and (
          has_function_privilege('anon', p.oid, 'execute')
          or exists (
@@ -190,6 +203,8 @@ begin
      where n.nspname in ('app', 'public') and p.prosecdef
        and coalesce(array_to_string(p.proconfig, ','), '')
              not like '%search_path=pg_catalog, public, app, pg_temp%'
+       and coalesce(array_to_string(p.proconfig, ','), '')
+             not like '%search_path=pg_catalog, pg_temp%'
   ) then
     raise exception 'SECURITY DEFINER function has an unsafe or missing search_path';
   end if;

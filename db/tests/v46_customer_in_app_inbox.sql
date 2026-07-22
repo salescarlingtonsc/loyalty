@@ -91,6 +91,8 @@ declare
   v_unread_after_dismiss integer;
   v_outbox_before integer;
   v_outbox_after integer;
+  v_internal_count integer;
+  v_internal_exists boolean;
   v_flag boolean;
 begin
   reset role;
@@ -188,11 +190,16 @@ begin
     (v_client,v_business,'C46 synthetic customer'),
     (v_client_b,v_business_b,'C46 synthetic customer B'),
     (v_foreign_client,v_business_b,'C46 synthetic foreign customer');
+  perform set_config('app.customer_link_insert_id',v_link::text,true);
   insert into public.customer_links(id,business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
-  values
-    (v_link,v_business,v_identity,v_customer,v_client,'verified','phone_claim',now()),
-    (v_link_b,v_business_b,v_identity,v_customer,v_client_b,'verified','phone_claim',now()),
-    (v_foreign_link,v_business_b,v_foreign_identity,v_foreign_customer,v_foreign_client,'verified','phone_claim',now());
+  values (v_link,v_business,v_identity,v_customer,v_client,'verified','phone_claim',now());
+  perform set_config('app.customer_link_insert_id',v_link_b::text,true);
+  insert into public.customer_links(id,business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
+  values (v_link_b,v_business_b,v_identity,v_customer,v_client_b,'verified','phone_claim',now());
+  perform set_config('app.customer_link_insert_id',v_foreign_link::text,true);
+  insert into public.customer_links(id,business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
+  values (v_foreign_link,v_business_b,v_foreign_identity,v_foreign_customer,v_foreign_client,'verified','phone_claim',now());
+  perform set_config('app.customer_link_insert_id','',true);
   -- Privileged setup still cannot pair an authentic foreign link/client tuple
   -- with this identity. Both root C46 provenance tables must prove the same
   -- (link,business,identity) relationship before a downstream event exists.
@@ -240,7 +247,10 @@ begin
   -- mistake for permission to create an inbox event.
   perform pg_temp.as_c46_user(v_owner);
   v_birthday_draft := (public.create_loyalty_config_draft(v_business,null,'c46-birthday-double-consent')::jsonb->>'version_id')::uuid;
-  perform public.save_loyalty_config_draft(v_birthday_draft,jsonb_build_object('active',true));
+  select snapshot_hash into v_birthday_draft_hash from public.firm_config_versions where id=v_birthday_draft;
+  perform public.save_loyalty_config_draft(
+    v_birthday_draft,jsonb_build_object('active',true),v_birthday_draft_hash
+  );
   select snapshot_hash into v_birthday_draft_hash from public.firm_config_versions where id=v_birthday_draft;
   v_birthday_draft_hash := (public.save_birthday_program_draft(
     v_birthday_draft,v_birthday_program,jsonb_build_object(
@@ -255,10 +265,12 @@ begin
   perform pg_temp.as_c46_user(v_customer);
   perform public.customer_set_birthday_participation(true,gen_random_uuid());
   v_birthday_result := public.customer_activate_birthday_benefit(v_slug,gen_random_uuid());
+  reset role;
   if v_birthday_result->>'status' <> 'available'
      or not exists(select 1 from public.customer_birthday_entitlements where business_id=v_business and client_id=v_client and identity_id=v_identity and status='available') then
     raise exception 'C46 birthday double-consent fixture did not create an eligible C45 entitlement: %',v_birthday_result;
   end if;
+  perform pg_temp.as_c46_user(v_customer);
   perform public.customer_set_birthday_participation(false,gen_random_uuid());
   if coalesce((public.customer_get_birthday_participation()->>'opted_in')::boolean,true) then
     raise exception 'C46 birthday double-consent fixture did not begin with C45 participation off';
@@ -271,10 +283,14 @@ begin
      where coalesce((x->>'opted_in')::boolean,false)
   ) then raise exception 'C46 inbox preferences were not default-off'; end if;
   v_response := public.customer_sync_in_app_inbox(v_slug,v_sync_key);
-  if coalesce((v_response->>'created')::integer,-1) <> 0
-     or exists(select 1 from public.customer_in_app_inbox_events where business_id=v_business and identity_id=v_identity) then
+  if coalesce((v_response->>'created')::integer,-1) <> 0 then
     raise exception 'C46 generated a customer inbox fact before explicit opt-in: %',v_response;
   end if;
+  reset role;
+  if exists(select 1 from public.customer_in_app_inbox_events where business_id=v_business and identity_id=v_identity) then
+    raise exception 'C46 generated a customer inbox fact before explicit opt-in';
+  end if;
+  perform pg_temp.as_c46_user(v_customer);
 
   perform public.customer_set_in_app_inbox_preferences(
     v_slug,'birthday_benefit',true,null,null,null,v_birthday_pref_key
@@ -283,15 +299,23 @@ begin
     raise exception 'C46 birthday reminder consent silently changed C45 participation';
   end if;
   v_response := public.customer_sync_in_app_inbox(v_slug,gen_random_uuid());
-  if coalesce((v_response->>'created')::integer,-1) <> 0
-     or exists(select 1 from public.customer_in_app_inbox_events where identity_id=v_identity and topic='birthday_benefit') then
+  if coalesce((v_response->>'created')::integer,-1) <> 0 then
     raise exception 'C46 created a birthday inbox event without current C45 participation: %',v_response;
   end if;
+  reset role;
+  select exists(select 1 from public.customer_in_app_inbox_events
+    where identity_id=v_identity and topic='birthday_benefit') into v_internal_exists;
+  if v_internal_exists then
+    raise exception 'C46 created a birthday inbox event without current C45 participation';
+  end if;
+  perform pg_temp.as_c46_user(v_customer);
   perform public.customer_set_birthday_participation(true,gen_random_uuid());
   v_response := public.customer_sync_in_app_inbox(v_slug,gen_random_uuid());
+  reset role;
   select id into v_birthday_event from public.customer_in_app_inbox_events
    where identity_id=v_identity and topic='birthday_benefit'
    order by created_at desc,id desc limit 1;
+  perform pg_temp.as_c46_user(v_customer);
   if v_birthday_event is null or coalesce((v_response->>'created')::integer,-1) <> 1 then
     raise exception 'C46 birthday re-opt-in did not create one inbox event: %',v_response;
   end if;
@@ -315,8 +339,12 @@ begin
   v_response := public.customer_sync_in_app_inbox(v_slug,gen_random_uuid());
   v_unavailable_list := public.customer_list_in_app_inbox(v_slug,jsonb_build_object('limit',50,'filter','all'));
   v_unavailable_global_list := public.customer_list_in_app_inbox_global(jsonb_build_object('limit',50,'filter','all'));
+  reset role;
+  select exists(select 1 from public.customer_in_app_inbox_resolutions
+    where event_id in (v_birthday_event,v_c44_disabled_event)) into v_internal_exists;
+  perform pg_temp.as_c46_user(v_customer);
   if coalesce((v_response->>'source_available')::boolean,true)
-     or exists(select 1 from public.customer_in_app_inbox_resolutions where event_id in (v_birthday_event,v_c44_disabled_event))
+     or v_internal_exists
      or coalesce((public.customer_get_in_app_inbox_count(v_slug)->>'unread_count')::integer,-1) <> 0
      or coalesce((public.customer_get_in_app_inbox_global_count()->>'unread_count')::integer,-1) <> 0
      or (select count(*) from jsonb_array_elements(v_unavailable_list->'items') x
@@ -343,8 +371,12 @@ begin
    where feature_key='customer_actionable_wallet';
   perform pg_temp.as_c46_user(v_customer);
   v_response := public.customer_sync_in_app_inbox(v_slug,gen_random_uuid());
+  reset role;
+  select exists(select 1 from public.customer_in_app_inbox_resolutions
+    where event_id=v_birthday_event) into v_internal_exists;
+  perform pg_temp.as_c46_user(v_customer);
   if coalesce((v_response->>'source_available')::boolean,false) is not true
-     or exists(select 1 from public.customer_in_app_inbox_resolutions where event_id=v_birthday_event)
+     or v_internal_exists
      or coalesce((public.customer_get_in_app_inbox_count(v_slug)->>'unread_count')::integer,-1) <> 1
      or not exists(
        select 1 from jsonb_array_elements(public.customer_list_in_app_inbox(v_slug,jsonb_build_object('limit',50,'filter','all'))->'items') x
@@ -355,7 +387,11 @@ begin
   end if;
   perform public.customer_set_birthday_participation(false,gen_random_uuid());
   v_response := public.customer_sync_in_app_inbox(v_slug,gen_random_uuid());
-  if not exists(select 1 from public.customer_in_app_inbox_resolutions where event_id=v_birthday_event)
+  reset role;
+  select exists(select 1 from public.customer_in_app_inbox_resolutions
+    where event_id=v_birthday_event) into v_internal_exists;
+  perform pg_temp.as_c46_user(v_customer);
+  if not v_internal_exists
      or coalesce((public.customer_get_in_app_inbox_count(v_slug)->>'unread_count')::integer,-1) <> 0
      or public.customer_get_birthday_benefit(v_slug)->>'status' <> 'available' then
     raise exception 'C46 C45 withdrawal did not resolve/suppress birthday inbox history while retaining the entitlement: %',v_response;
@@ -380,11 +416,14 @@ begin
   if v_response is distinct from v_replay or coalesce((v_response->>'created')::integer,-1) <> 1 then
     raise exception 'C46 same-key sync was not an exact single creation replay: %, %',v_response,v_replay;
   end if;
+  reset role;
   select id into v_live_event from public.customer_in_app_inbox_events
    where business_id=v_business and identity_id=v_identity and source_kind='v33_booking_action'
    order by created_at,id limit 1;
-  if v_live_event is null or (select count(*) from public.customer_in_app_inbox_sync_operations
-      where identity_id=v_identity and idempotency_key=v_sync_key) <> 1 then
+  select count(*) into v_internal_count from public.customer_in_app_inbox_sync_operations
+    where identity_id=v_identity and idempotency_key=v_sync_key;
+  perform pg_temp.as_c46_user(v_customer);
+  if v_live_event is null or v_internal_count <> 1 then
     raise exception 'C46 sync dedupe evidence is incomplete';
   end if;
   perform pg_temp.expect_c46_sqlstate(format(
@@ -394,6 +433,7 @@ begin
   -- A fact which has stopped being authoritative is resolved, not mutated or
   -- deleted. When its exact immutable v33 source reappears, C46 emits the next
   -- deterministic cycle as a fresh unread event.
+  reset role;
   v_stale_fingerprint := app.c46_sha256_hex(jsonb_build_object(
     'source','v33-booking-action','request_id',v_reappearing_request,'action','cancel',
     'proposed_at',null,'created_at',v_reappearing_created_at
@@ -402,7 +442,6 @@ begin
     'business_id',v_business,'identity_id',v_identity,'source_kind','v33_booking_action',
     'source_fingerprint',v_stale_fingerprint,'source_cycle',0
   )::text);
-  reset role;
   insert into public.customer_in_app_inbox_events(
     id,business_id,identity_id,auth_user_id,link_id,client_id,source_kind,topic,route_key,
     source_fingerprint,dedupe_key,title,body,deadline_at
@@ -413,10 +452,12 @@ begin
   );
   perform pg_temp.as_c46_user(v_customer);
   perform public.customer_sync_in_app_inbox(v_slug,gen_random_uuid());
-  if not exists(select 1 from public.customer_in_app_inbox_resolutions where event_id=v_stale_event) then
+  reset role;
+  select exists(select 1 from public.customer_in_app_inbox_resolutions
+    where event_id=v_stale_event) into v_internal_exists;
+  if not v_internal_exists then
     raise exception 'C46 stale source was not resolved as immutable history';
   end if;
-  reset role;
   insert into public.customer_appointment_action_requests(
     id,business_id,identity_id,auth_user_id,link_id,client_id,appointment_id,action,
     proposed_at,note,status,idempotency_key,request_hash,created_at
@@ -427,19 +468,26 @@ begin
   );
   perform pg_temp.as_c46_user(v_customer);
   perform public.customer_sync_in_app_inbox(v_slug,gen_random_uuid());
+  reset role;
   select id into v_reappeared_event from public.customer_in_app_inbox_events
    where identity_id=v_identity and source_fingerprint=v_stale_fingerprint and id<>v_stale_event
    order by created_at desc,id desc limit 1;
+  select exists(select 1 from public.customer_in_app_inbox_resolutions
+    where event_id=v_reappeared_event) into v_internal_exists;
+  perform pg_temp.as_c46_user(v_customer);
   if v_reappeared_event is null
-     or exists(select 1 from public.customer_in_app_inbox_resolutions where event_id=v_reappeared_event) then
+     or v_internal_exists then
     raise exception 'C46 resolved source did not recur as a new unread cycle';
   end if;
 
   v_response := public.customer_set_in_app_inbox_state(v_slug,v_reappeared_event,'read',v_state_key);
   v_replay := public.customer_set_in_app_inbox_state(v_slug,v_reappeared_event,'read',v_state_key);
+  reset role;
+  select count(*) into v_internal_count from public.customer_in_app_inbox_state_operations
+    where identity_id=v_identity and event_id=v_reappeared_event and idempotency_key=v_state_key;
+  perform pg_temp.as_c46_user(v_customer);
   if v_response is distinct from v_replay
-     or (select count(*) from public.customer_in_app_inbox_state_operations
-         where identity_id=v_identity and event_id=v_reappeared_event and idempotency_key=v_state_key) <> 1 then
+     or v_internal_count <> 1 then
     raise exception 'C46 same-key state replay did not retain exactly one operation';
   end if;
   perform pg_temp.expect_c46_sqlstate(format(
@@ -463,8 +511,12 @@ begin
     raise exception 'C46 read resurrected a dismissed inbox event: %',v_response;
   end if;
   v_response := public.customer_set_in_app_inbox_state(v_slug,v_reappeared_event,'unread',gen_random_uuid());
+  reset role;
+  select exists(select 1 from public.customer_in_app_inbox_state
+    where event_id=v_reappeared_event and dismissed_at is not null) into v_internal_exists;
+  perform pg_temp.as_c46_user(v_customer);
   if v_response->>'state' <> 'dismissed'
-     or not exists(select 1 from public.customer_in_app_inbox_state where event_id=v_reappeared_event and dismissed_at is not null)
+     or not v_internal_exists
      or v_unread_after_dismiss <> v_unread_before_dismiss-1
      or (public.customer_get_in_app_inbox_count(v_slug)->>'unread_count')::integer <> v_unread_after_dismiss
      or exists(select 1 from jsonb_array_elements(public.customer_list_in_app_inbox(v_slug,jsonb_build_object('limit',50,'filter','all'))->'items') x where x->>'event_id'=v_reappeared_event::text) then
@@ -505,7 +557,7 @@ begin
   perform pg_temp.as_c46_user(null,'anon');
   perform pg_temp.expect_c46_sqlstate(
     'select public.customer_get_in_app_inbox_global_count()',
-    'C46 anonymous inbox isolation','28000');
+    'C46 anonymous inbox isolation','42501');
   reset role;
 
   select count(*)::integer into v_outbox_after

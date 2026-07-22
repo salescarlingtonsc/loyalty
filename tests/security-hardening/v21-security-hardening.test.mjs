@@ -156,8 +156,11 @@ test('v21 derives and restores the exact rehearsal v17 policy helper dependency 
   for (const source of [migration, runtimeTest]) {
     assert.match(source, /from pg_depend d[\s\S]+join pg_policy pol[\s\S]+d\.refclassid = 'pg_proc'::regclass/i);
     assert.match(source, /array_agg\(distinct p\.oid::regprocedure::text order by p\.oid::regprocedure::text\)/i);
-    assert.match(source, /is distinct from v_required_policy_helper_signatures/i);
   }
+  assert.match(migration, /is distinct from v_required_policy_helper_signatures/i);
+  assert.match(runtimeTest,
+    /v_policy_helper_signatures\s*@>\s*v_required_policy_helper_signatures[\s\S]*v_policy_helper_signatures\s*<@\s*v_required_policy_helper_signatures/i,
+    'the cross-version runtime test must compare the catalog dependencies as an exact set');
   assert.match(migration, /to_regprocedure\(required\.signature\)/i);
   assert.match(migration, /grant execute on function %s to authenticated/i);
   assert.match(runtimeTest, /has_function_privilege\('authenticated', v_proc\.oid, 'execute'\)/i);

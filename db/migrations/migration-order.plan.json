@@ -69,6 +69,7 @@
     { "kind": "executable", "path": "db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql", "semanticVersion": "v42", "proposedDeployVersion": "20260722000105" },
     { "kind": "executable", "path": "db/migrations/20260721_frenly_v44_actionable_customer_wallet.sql", "semanticVersion": "v44", "proposedDeployVersion": "20260722000106" },
     { "kind": "executable", "path": "db/migrations/20260721_frenly_v45_birthday_benefits.sql", "semanticVersion": "v45", "proposedDeployVersion": "20260722000107" },
-    { "kind": "executable", "path": "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql", "semanticVersion": "v46", "proposedDeployVersion": "20260722000108" }
+    { "kind": "executable", "path": "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql", "semanticVersion": "v46", "proposedDeployVersion": "20260722000108" },
+    { "kind": "executable", "path": "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql", "semanticVersion": "v46a", "proposedDeployVersion": "20260722000109" }
   ]
 }

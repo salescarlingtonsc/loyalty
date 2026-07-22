@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 68,
-  "executableCount": 54,
+  "itemCount": 69,
+  "executableCount": 55,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -84,6 +84,14 @@
         "db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql",
         "db/migrations/20260721_frenly_v44_actionable_customer_wallet.sql",
         "db/migrations/20260721_frenly_v45_birthday_benefits.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260722",
+      "count": 2,
+      "paths": [
+        "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql",
+        "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql"
       ]
     }
   ],
@@ -631,6 +639,14 @@
       "semanticVersion": "v46",
       "proposedDeployVersion": "20260722000108",
       "sha256": "6cd668ff3535593b3ae6efba577129322aa6c91d53176ca2cc9b304d64e2a80d"
+    },
+    {
+      "order": 69,
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql",
+      "semanticVersion": "v46a",
+      "proposedDeployVersion": "20260722000109",
+      "sha256": "b7a82268626234af24cba95fce8a9a5041d649b84c898e420e63c797724815d4"
     }
   ]
 }
