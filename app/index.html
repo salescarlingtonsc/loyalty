@@ -3467,12 +3467,21 @@ async function tillPage(){
   const readCartPref=()=>{try{return sessionStorage.getItem(TILL_CART_PREF)==='1'}catch{return false}};
   const writeCartPref=(on)=>{try{sessionStorage.setItem(TILL_CART_PREF,on?'1':'0')}catch{}};
   let cartMode=readCartPref();
-  let cart=[];            // sale + gift lines: {id,type:'service'|'product'|'custom'|'giftcard',label,unit_cents,qty,key?}
-  let catalog=null;       // {services:[...],products:[...]|null} lazy-loaded once when cart mode opens
+  let cart=[];            // lines: {lineId,type:'service'|'product'|'custom'|'giftcard'|'package'|'membership',ref,label,unit_cents,qty,key?}
+                           // service/product/custom = itemized rows of ONE record_cart_sale (v51);
+                           // giftcard/package/membership = each its own server-idempotent RPC per line.
+  let catalog=null;       // {services,products|null,packages|null,memberships|null} lazy-loaded once
   let catalogLoading=false, catalogError=null;
-  let saleCommitted=false, saleResult=null; // once the quick_sale succeeds it is LOCKED; a retry
-                                             // never re-runs it, only the failed gift-card calls.
+  let saleCommitted=false, saleResult=null; // once the cart sale succeeds it is LOCKED; a retry never
+                                             // re-runs it, only the failed gift/package/membership calls.
   let checkoutError=null;  // partial-failure banner state on the composer
+  // A cart-sale line (service/product/custom) rolls into the single record_cart_sale; everything
+  // else (giftcard/package/membership) is an "extra" line with its own idempotency key + RPC.
+  const isCartSaleLine=l=>l.type==='service'||l.type==='product'||l.type==='custom';
+  // Backend not yet on v51: record_cart_sale / the 4-arg overloads are absent (undefined_function
+  // 42883, or PostgREST 404 / PGRST202). Detect so checkout can say "update needed", never fall back.
+  const isBackendMissing=err=>!!err&&(err.code==='42883'||err.code==='PGRST202'||err.status===404
+    ||/Could not find the function|does not exist/i.test(err.message||''));
 
   function resetToStart(){
     step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
@@ -3636,23 +3645,30 @@ async function tillPage(){
   }
 
   /* ---- cart mode: compose a multi-item sale from the catalog the app already reads ----
-     Honest write-path map (verified against migrations): the only sale write path reachable
-     from this till surface is record_sale_by_phone → record_quick_sale, which books ONE
-     quick_sale row + ONE payment row for a single total and earns points on it. There is NO
-     sale_items / line-item table. So service, retail and custom lines are summed into that one
-     idempotent quick_sale and their breakdown is written into the note (a real field in the
-     contract, ≤1000 chars) — never faked as per-line financial rows. Gift cards ARE a separate
-     honest, server-idempotent path (issue_gift_card), so each gift line is its own call, run
-     AFTER the sale. Packages/memberships are deliberately excluded: sell_package and
-     enroll_membership_v41 have NO server idempotency key, so they cannot be made double-tap
-     safe here without a forbidden write-path change (gap recorded for a future v51). */
+     Honest write-path map (verified against the v51 migrations, LIVE):
+       • service / retail / custom lines -> ONE public.record_cart_sale carrying real line items
+         (public.sale_items). That parent row is a kind='quick_sale' via record_quick_sale, so it
+         keeps the exact points/retention/referral firing and the reserve->complete idempotency of
+         the till today. A single-retail cart FEFO-deducts stock server-side; multi-retail does not.
+       • gift cards -> issue_gift_card (unchanged), one call per line, AFTER the sale.
+       • packages -> sell_package(…,p_idempotency_key uuid) 4-arg overload; memberships ->
+         enroll_membership_v41(…,p_idempotency_key uuid) 4-arg overload. Both are now server-
+         idempotent (v51a keyed ledger), so they are admitted as their own per-line calls exactly
+         like gift cards — NEVER as record_cart_sale line items (the engine treats those item_types
+         as descriptive; the real package/membership sale rows come only from the overloads). */
   async function loadCatalog(){
     if(catalog||catalogLoading) return;
     catalogLoading=true;catalogError=null;
     const wantProducts=canReadModule('inventory');
-    const [svc,prod]=await Promise.all([
+    const wantPackages=canWriteModule('packages');
+    const wantMemberships=canWriteModule('memberships');
+    const [svc,prod,pkg,mem]=await Promise.all([
       sb.from('services').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).order('name'),
       wantProducts?sb.from('products').select('id,name,retail_price_cents,active').eq('business_id',S.biz.id).eq('active',true).order('name')
+        :Promise.resolve({data:null,error:null}),
+      wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).order('name')
+        :Promise.resolve({data:null,error:null}),
+      wantMemberships?sb.from('membership_plans').select('id,name,price_cents,cadence,active').eq('business_id',S.biz.id).eq('active',true).order('name')
         :Promise.resolve({data:null,error:null})
     ]);
     if(!isTillCurrent())return;
@@ -3660,7 +3676,9 @@ async function tillPage(){
     if(svc.error){catalogError=svc.error.message||'The catalog could not be loaded.';draw();return}
     catalog={
       services:(svc.data||[]).map(s=>({id:s.id,name:s.name,unit_cents:s.price_cents||0})),
-      products:(prod.error||!prod.data)?null:prod.data.map(p=>({id:p.id,name:p.name,unit_cents:p.retail_price_cents||0}))
+      products:(prod.error||!prod.data)?null:prod.data.map(p=>({id:p.id,name:p.name,unit_cents:p.retail_price_cents||0})),
+      packages:(pkg.error||!pkg.data)?null:pkg.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0})),
+      memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence}))
     };
     draw();
   }
@@ -3681,23 +3699,37 @@ async function tillPage(){
     cart.push({lineId:crypto.randomUUID(),type:'giftcard',ref:null,label:'Gift card',unit_cents:cents,qty:1,key:crypto.randomUUID()});
     CUI.announce('Gift card added');draw();
   }
+  /* Package/membership lines mirror gift cards: qty 1, a stable per-line uuid key minted at
+     add-time (reused verbatim on retry so the 4-arg overload dedupes), always a NEW line. */
+  function addPlanLine(type,plan){
+    if(checkoutError)return;
+    cart.push({lineId:crypto.randomUUID(),type,ref:plan.id,label:plan.name,unit_cents:plan.unit_cents,qty:1,key:crypto.randomUUID()});
+    CUI.announce(`${plan.name} added`);draw();
+  }
   function changeQty(lineId,delta){
     if(checkoutError)return;
-    const l=cart.find(x=>x.lineId===lineId);if(!l||l.type==='giftcard')return;
+    const l=cart.find(x=>x.lineId===lineId);if(!l||!isCartSaleLine(l))return;
     l.qty=Math.max(1,l.qty+delta);saleIdem=null;draw();
   }
   function removeLine(lineId){
     if(checkoutError)return;
     cart=cart.filter(x=>x.lineId!==lineId);saleIdem=null;draw();
   }
-  function saleLinesOf(){return cart.filter(l=>l.type!=='giftcard')}
-  function giftLinesOf(){return cart.filter(l=>l.type==='giftcard')}
-  function saleSubtotalCents(){return saleLinesOf().reduce((s,l)=>s+l.unit_cents*l.qty,0)}
+  function cartSaleLines(){return cart.filter(isCartSaleLine)}   // service/product/custom -> record_cart_sale
+  function extraLines(){return cart.filter(l=>!isCartSaleLine(l))} // giftcard/package/membership -> own RPC
+  function saleSubtotalCents(){return cartSaleLines().reduce((s,l)=>s+l.unit_cents*l.qty,0)}
   function grandTotalCents(){return cart.reduce((s,l)=>s+l.unit_cents*l.qty,0)}
+  function extraLineBadge(l,succeeded,failed){
+    if(l.type==='giftcard')return succeeded?`Issued · <span class="till-receipt-code">${esc(l._code||'')}</span>`:failed?`Not issued — ${esc(l._error||'failed')}`:'Gift card — issued at checkout';
+    if(l.type==='package')return succeeded?'Sold':failed?`Not sold — ${esc(l._error||'failed')}`:'Package — charged at checkout';
+    if(l.type==='membership')return succeeded?'Enrolled':failed?`Not enrolled — ${esc(l._error||'failed')}`:'Membership — charged at checkout';
+    return '';
+  }
 
   function drawCartComposer(){
     if(catalog===null&&!catalogError)loadCatalog();
     const canGift=canWriteModule('giftcards');
+    const canPkg=canWriteModule('packages'), canMem=canWriteModule('memberships');
     const saleSub=saleSubtotalCents(), grand=grandTotalCents();
     const branchPicker=accessibleTillBranches.length>1
       ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
@@ -3716,7 +3748,13 @@ async function tillPage(){
         const prodBtns=(catalog.products&&catalog.products.length)
           ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>`<button type="button" class="btn ghost" data-add="product" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
-        picker=`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}
+        const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
+          ?`<b class="small" style="display:block;margin-top:14px">Packages</b><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="btn ghost" data-plan="package" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
+          :'';
+        const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
+          ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
+          :'';
+        picker=`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}${pkgBtns}${memBtns}
           <div class="split" style="margin-top:14px;align-items:end">
             <div><label for="tCustom">Other amount (${S.biz.currency||'SGD'})</label><input id="tCustom" inputmode="decimal" placeholder="0.00"></div>
             <div><button type="button" class="btn ghost" id="tCustomAdd" style="width:100%">${CUI.icon('add',{size:16})} Add item</button></div>
@@ -3724,28 +3762,30 @@ async function tillPage(){
           ${canGift?`<div class="split" style="margin-top:10px;align-items:end">
             <div><label for="tGift">Gift card value (${S.biz.currency||'SGD'})</label><input id="tGift" inputmode="decimal" placeholder="0.00"></div>
             <div><button type="button" class="btn ghost" id="tGiftAdd" style="width:100%">${CUI.icon('giftcard',{size:16})} Add card</button></div>
-          </div><p class="muted small" style="margin-top:6px">A gift card is issued as its own record and does not earn points.</p>`:''}`;
+          </div><p class="muted small" style="margin-top:6px">A gift card is issued as its own record and does not earn points.</p>`:''}
+          ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">Packages and memberships are charged as their own record and do not earn points here.</p>`:''}`;
       }
     }
     // cart lines
     const linesHtml=cart.length?`<ul class="till-cart-lines">${cart.map(l=>{
-      const done=l.type==='giftcard'&&l._status==='issued';
-      const failed=l.type==='giftcard'&&l._status==='failed';
-      const badge=l.type==='giftcard'?`<span class="till-cart-line-sub">${done?`Issued · <span class="till-receipt-code">${esc(l._code||'')}</span>`:failed?`Not issued — ${esc(l._error||'failed')}`:'Gift card — issued at checkout'}</span>`
+      const extra=!isCartSaleLine(l);
+      const succeeded=l._status==='issued'||l._status==='done';
+      const failed=l._status==='failed';
+      const badge=extra?`<span class="till-cart-line-sub">${extraLineBadge(l,succeeded,failed)}</span>`
         :l.type==='custom'?'<span class="till-cart-line-sub">Other item</span>':'';
-      const qtyCtl=(l.type==='giftcard'||checkoutError)?'':`<div class="till-cart-qty">
+      const qtyCtl=(extra||checkoutError)?'':`<div class="till-cart-qty">
         <button type="button" class="btn ghost" data-qty="-1" data-line="${l.lineId}" aria-label="Reduce quantity">−</button>
         <output aria-label="Quantity">${l.qty}</output>
         <button type="button" class="btn ghost" data-qty="1" data-line="${l.lineId}" aria-label="Increase quantity">+</button></div>`;
       const rm=checkoutError?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" aria-label="Remove ${esc(l.label)}">${CUI.icon('close',{size:16})}</button>`;
-      return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1&&l.type!=='giftcard'?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
+      return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1&&!extra?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
     }).join('')}</ul>
       <div class="till-cart-total"><span>Total</span><span class="till-cart-total-num">${money(grand)}</span></div>`
       :`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Cart is empty. Tap a service or add an amount to begin.</p></div>`;
     // tender (only meaningful when a points-earning sale is part of the cart)
     const tenderHtml=(cart.length&&!checkoutError)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
       <div class="frontline-tenders" id="tTenders">${[['cash','Cash'],['card','Card'],['paynow','PayNow'],['other','Other']].map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
-      ${saleSub===0?'<p class="muted small" style="margin-top:6px">Gift-card-only sale — tender is recorded on your receipt but not stored against the card.</p>':''}</fieldset>`:'';
+      ${saleSub===0?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
     // partial-failure panel
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
       <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted?`Sale recorded${saleResult?.duplicate?' (already recorded earlier)':''} · +${saleResult?.pointsEarned||0} points`:'No points-earning sale in this cart'}</span></div>
@@ -3769,12 +3809,16 @@ async function tillPage(){
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
     bindCartToggle();
-    $('tBack').onclick=()=>{if(checkoutError){toast('Finish or retry the gift cards first');return}step=1;cust=null;saleIdem=null;cart=[];draw()};
+    $('tBack').onclick=()=>{if(checkoutError){toast('Finish or retry the unfinished items first');return}step=1;cust=null;saleIdem=null;cart=[];draw()};
     if($('tBranch'))$('tBranch').onchange=()=>{tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;saleIdem=null};
     if($('tCatRetry'))$('tCatRetry').onclick=()=>{catalogError=null;catalog=null;draw()};
     document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.add, list=type==='service'?catalog.services:catalog.products;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addCatalogLine(type,item);
+    });
+    document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{
+      const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
+      const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
     if($('tCustomAdd'))$('tCustomAdd').onclick=()=>{
       const raw=($('tCustom').value||'').trim();
@@ -3802,62 +3846,84 @@ async function tillPage(){
   function cartErr(msg){const e=$('tcErr');if(e)e.innerHTML=`<div class="err">${esc(msg)}</div>`;else toast(msg)}
 
   /* Honest checkout sequencing + partial-failure handling.
-     Order: (1) the single points-earning quick_sale (record_sale_by_phone) for the summed
-     service/retail/custom lines, then (2) one issue_gift_card per gift line. Idempotency:
-     the quick_sale reuses `saleIdem` across retries (server dedupes on it); each gift line
-     carries its own stable `key`. If the sale fails we STOP — no gift card is issued. If the
-     sale succeeds it is LOCKED (saleCommitted) and never re-run; a retry re-invokes only the
-     gift-card calls that failed, with their original keys — never a different call, never a
-     silent replay of the sale. */
+     Order: (1) ONE record_cart_sale carrying the service/retail/custom line items (only when the
+     subtotal is positive), then (2) one call per extra line — issue_gift_card, the 4-arg
+     sell_package, or the 4-arg enroll_membership_v41. Idempotency: the cart sale reuses `saleIdem`
+     across retries (regenerated only when the cart mutates; the server dedupes on it, ≥8 chars);
+     each extra line carries its own stable uuid `key` (minted at add-time, reused verbatim on
+     retry). If the cart sale fails we STOP — no extra is attempted. If it succeeds it is LOCKED
+     (saleCommitted) and never re-run; a retry re-invokes only the extra calls that failed, with
+     their original keys — never a different call, never a silent replay of the sale. If
+     record_cart_sale is absent (older backend) we say so and stop — never a broken half-checkout. */
   async function doCartCheckout(){
     if(busy)return;
-    const saleLines=saleLinesOf(), giftLines=giftLinesOf(), saleSub=saleSubtotalCents();
+    const saleLines=cartSaleLines(), extras=extraLines(), saleSub=saleSubtotalCents();
     if(!cart.length)return cartErr('Add at least one item');
     if(saleSub>0&&saleSub>2147483647)return cartErr('Sale total is too large');
     if(saleSub>0&&!tender)return cartErr('Choose how the customer paid');
     busy=true;checkoutError=null;
     const confirmBtn=$('tCartConfirm')||$('tRetryGifts');if(confirmBtn){confirmBtn.disabled=true;confirmBtn.textContent='Working…'}
-    // (1) points-earning quick sale — only if not already committed and there is a positive subtotal
+    // (1) the itemized cart sale — only if not already committed and there is a positive subtotal
     if(saleSub>0&&!saleCommitted){
       if(!saleIdem)saleIdem=crypto.randomUUID();
-      let note=`Till cart · ${saleLines.length} line${saleLines.length===1?'':'s'} · `+
-        saleLines.map(l=>`${l.label}${l.qty>1?' x'+l.qty:''} ${money(l.unit_cents*l.qty)}`).join('; ');
-      if(note.length>1000)note=note.slice(0,997)+'…';
-      const {data,error}=await sb.rpc('record_sale_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone,
-        p_amount_cents:saleSub,p_kind:'quick_sale',p_note:note,p_staff:tillStaffId,p_idem:saleIdem,
-        p_branch:tillBranchId,p_method:tender});
+      const lines=saleLines.map(l=>{
+        const item_type=l.type==='product'?'retail':l.type; // 'service' | 'retail' | 'custom'
+        const line={item_type,qty:l.qty,unit_cents:l.unit_cents,description:l.label};
+        if(item_type!=='custom')line.ref_id=l.ref; // a custom line carries no typed reference
+        return line;
+      });
+      const {data,error}=await sb.rpc('record_cart_sale',{p_business:S.biz.id,p_client:cust.client_id,
+        p_branch:tillBranchId,p_staff:tillStaffId,p_method:tender,p_idempotency_key:saleIdem,p_lines:lines});
       if(!isTillCurrent())return;
-      if(error){busy=false;if(confirmBtn){confirmBtn.disabled=false;confirmBtn.textContent='Retry'}return cartErr(error.message||'The sale could not be recorded — try again')}
+      if(error){
+        busy=false;if(confirmBtn){confirmBtn.disabled=false;confirmBtn.textContent='Retry'}
+        return cartErr(isBackendMissing(error)
+          ?'Cart checkout needs the latest system update — ask an owner to update Frenly. Nothing was charged.'
+          :(error.message||'The sale could not be recorded — try again'));
+      }
       saleCommitted=true;
-      saleResult=(data.status==='duplicate_ignored')
-        ?{pointsEarned:0,pointsTotal:data.points,method:data.payment_method,duplicate:true}
-        :{pointsEarned:data.points_earned||0,pointsTotal:data.points,method:data.payment_method,duplicate:false};
+      const dup=data.status==='duplicate_ignored';
+      saleResult={items:Array.isArray(data.items)?data.items:[],
+        pointsEarned:dup?0:(data.points_earned||0),duplicate:dup,
+        saleProductId:(data.sale&&data.sale.product_id)||null};
     }
-    // (2) gift cards — each independent and idempotent; failures are collected, not thrown
-    let anyGiftFailed=false;
-    for(const l of giftLines){
-      if(l._status==='issued')continue;
-      const {data,error}=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:l.unit_cents,
+    // (2) extras — each independent and server-idempotent; failures are collected, not thrown
+    let anyExtraFailed=false;
+    for(const l of extras){
+      if(l._status==='issued'||l._status==='done')continue;
+      let res;
+      if(l.type==='giftcard')res=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:l.unit_cents,
         p_purchaser:cust.client_id,p_recipient_email:null,p_idempotency_key:l.key});
+      else if(l.type==='package')res=await sb.rpc('sell_package',{p_business:S.biz.id,p_client:cust.client_id,
+        p_plan:l.ref,p_idempotency_key:l.key});
+      else res=await sb.rpc('enroll_membership_v41',{p_business:S.biz.id,p_client:cust.client_id,
+        p_plan:l.ref,p_idempotency_key:l.key});
       if(!isTillCurrent())return;
-      if(error){anyGiftFailed=true;l._status='failed';l._error=error.message||'issue failed';continue}
-      l._status='issued';l._code=data.code;l._error=null;
+      if(res.error){anyExtraFailed=true;l._status='failed';
+        l._error=isBackendMissing(res.error)?'needs the latest system update':(res.error.message||'failed');continue}
+      if(l.type==='giftcard'){l._status='issued';l._code=res.data&&res.data.code;l._error=null}
+      else{l._status='done';l._error=null}
     }
     busy=false;
-    if(anyGiftFailed){
-      checkoutError='The sale is safe. One or more gift cards could not be issued. Retry to finish just those — nothing is charged twice.';
+    if(anyExtraFailed){
+      checkoutError='The sale is safe. Some items could not be completed. Retry to finish just those — nothing is charged twice.';
       draw();return;
     }
     finishCartReceipt();
   }
   function finishCartReceipt(){
-    const saleLines=saleLinesOf(), giftLines=giftLinesOf(), saleSub=saleSubtotalCents();
+    const extras=extraLines();
+    const items=(saleResult&&saleResult.items)||[];
+    const stampedProduct=saleResult&&saleResult.saleProductId;
+    const typeLabel={service:'Service',retail:'Retail item',custom:'Other item'};
     doneInfo={receipt:true,name:cust.full_name,tender,
-      lines:saleLines.map(l=>({label:l.label,qty:l.qty,amount:l.unit_cents*l.qty})),
-      gifts:giftLines.map(l=>({amount:l.unit_cents,status:l._status||'issued',code:l._code||null,error:l._error||null})),
-      saleSub,grand:grandTotalCents(),
+      lines:items.map(it=>({label:it.description||typeLabel[it.item_type]||'Item',qty:it.qty,amount:it.line_cents,
+        stock:it.item_type==='retail'&&!!stampedProduct&&it.product_id===stampedProduct})),
+      extras:extras.map(l=>({type:l.type,label:l.label,amount:l.unit_cents,
+        status:l._status==='failed'?'failed':'done',code:l._code||null,error:l._error||null})),
+      hasSale:!!saleResult,grand:grandTotalCents(),
       pointsEarned:saleResult?saleResult.pointsEarned:0,
-      pointsTotal:saleResult?saleResult.pointsTotal:(cust.points??null),
+      pointsTotal:(cust.points!=null&&saleResult&&!saleResult.duplicate)?cust.points+saleResult.pointsEarned:null,
       duplicate:saleResult?saleResult.duplicate:false};
     checkoutError=null;step=3;draw();
   }
@@ -3874,25 +3940,32 @@ async function tillPage(){
       </div>`;
     $('tNext').onclick=resetToStart;
   }
-  /* Cart-mode receipt: items, gift-card codes (with any failures honestly flagged), tender,
-     points earned (straight from the RPC responses), then reset for the next customer. */
+  /* Cart-mode receipt: REAL line items + points_earned from the record_cart_sale response, then the
+     gift-card / package / membership outcomes (failures honestly flagged), then reset. The single-
+     retail "Stock updated" hint is shown only when the server actually stamped that product_id. */
   function drawCartReceipt(){
     const d=doneInfo;
-    const anyGiftFailed=d.gifts.some(g=>g.status==='failed');
-    const lineRows=d.lines.map(l=>`<li><span>${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}</span><span>${money(l.amount)}</span></li>`).join('');
-    const giftRows=d.gifts.map(g=>`<li><span>Gift card ${g.status==='failed'?'(not issued)':`· <span class="till-receipt-code">${esc(g.code||'')}</span>`}</span><span>${g.status==='failed'?'—':money(g.amount)}</span></li>`).join('');
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:anyGiftFailed?'Sale saved. Some gift cards did not issue.':'Sale saved and points added. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    const anyExtraFailed=d.extras.some(x=>x.status==='failed');
+    const lineRows=d.lines.map(l=>`<li><span>${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}${l.stock?'<span class="till-cart-line-sub">Stock updated</span>':''}</span><span>${money(l.amount)}</span></li>`).join('');
+    const extraRows=d.extras.map(x=>{
+      const failed=x.status==='failed';
+      const name=x.type==='giftcard'?`Gift card ${failed?'(not issued)':`· <span class="till-receipt-code">${esc(x.code||'')}</span>`}`
+        :x.type==='package'?`${esc(x.label)} ${failed?'(not sold)':'· sold'}`
+        :`${esc(x.label)} ${failed?'(not enrolled)':'· enrolled'}`;
+      return `<li><span>${name}</span><span>${failed?'—':money(x.amount)}</span></li>`;
+    }).join('');
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:anyExtraFailed?'Sale saved. Some items did not finish.':'Sale saved and points added. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
       <div class="card frontline-card till-cart-card" style="text-align:center">
-        ${CUI.icon(anyGiftFailed?'info':'check',{size:52})}
-        <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyGiftFailed?'Mostly done':'Done'}</h2>
-        ${d.saleSub>0?(d.duplicate
+        ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
+        <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
+        ${d.hasSale?(d.duplicate
           ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
           :`<p style="font-size:1.5rem;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`)
-          :`<p class="muted small">Gift-card-only sale — no points earned.</p>`}
-        <ul class="till-receipt-lines" style="text-align:left">${lineRows}${giftRows}</ul>
+          :`<p class="muted small">No points-earning items — none earned.</p>`}
+        <ul class="till-receipt-lines" style="text-align:left">${lineRows}${extraRows}</ul>
         <div class="till-cart-total"><span>Total</span><span class="till-cart-total-num">${money(d.grand)}</span></div>
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received${d.pointsTotal!=null?` · now ${d.pointsTotal} points total`:''}</p>
-        ${anyGiftFailed?`<p class="err" role="alert" style="margin-top:10px">Some gift cards could not be issued. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
+        ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         <button class="btn" id="tNext" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
     $('tNext').onclick=resetToStart;
