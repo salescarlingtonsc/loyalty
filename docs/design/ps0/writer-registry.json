@@ -1219,11 +1219,12 @@
     {
       "id": "db.fn:app.ps1b_execute_event/1",
       "surface": "db_function",
-      "latest_file": "20260724150000_frenly_v56_ps1b_events_execution.sql",
+      "latest_file": "20260724160000_frenly_v57_ps1b1_price_fail_closed.sql",
       "rows_written": "program_entitlements:INSERT, benefit_fulfilments:INSERT, rule_effect_log:INSERT, benefit_shadow_evaluations:INSERT, event_outbox:INSERT, budget_periods:INSERT/UPDATE, budget_reservations:INSERT, domain_event_execution:INSERT",
       "entry_point": "app.run_studio_executor sweep (cron frenly-studio-executor + test-invoked)",
       "idempotency": "rule_effect_log UNIQUE(event_id,rule_id,effect_index), program_entitlements lazy UNIQUE(business,client,rule,period_key), domain_event_execution marker — all ON CONFLICT DO NOTHING",
-      "value": "PROMISE ONLY — materialises claimable entitlements + their fulfilment rows; consults benefit_registry authority and REFUSES (shadow-logs) unless studio-active; NO credit_ledger/points_ledger/discount/tender write",
+      "fail_closed": "v57 (PS-1B.1): the grant_free_item path consults the TYPED app.ps1b_catalog_price {status,price_cents,reason}; an invalid_kind/not_found/error price (or not_applicable with no amount_cents) logs rule_effect_log outcome 'failed' (failure_reason set) with NO entitlement/fulfilment/reservation — never a silent-zero promise. Each effect runs in its own subtransaction so one poisoned rule fails CLOSED without wedging siblings or the domain_event_execution marker.",
+      "value": "PROMISE ONLY — materialises claimable entitlements + their fulfilment rows at the TRUE catalog price; consults benefit_registry authority and REFUSES (shadow-logs) unless studio-active; NO credit_ledger/points_ledger/discount/tender write",
       "kernel": "N/A in PS-1B (no money moves). PS-1C will route any value-moving effect (grant_credit/discount) through the checkout kernel; here they are shadow-logged only"
     },
     {
