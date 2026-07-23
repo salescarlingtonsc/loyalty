@@ -46,8 +46,8 @@ test('v21 is the single canonical post-v20 security migration', async () => {
   assert.match(v21, /^commit;/im);
 });
 
-test('authenticated RPC allowlist plus exact forward v41/C42/C44/C45/C46/v47/v48/v49/v50/v51/v52/v53 grants cover the shipped SPA', async () => {
-  const [app, migration, v41, c42, c44, c45, c46, v47, v48, v49, v50, v51, v51a, v51b, v52, v53] = await Promise.all([
+test('authenticated RPC allowlist plus exact forward v41/C42/C44/C45/C46/v47/v48/v49/v50/v51/v52/v53/v53a grants cover the shipped SPA', async () => {
+  const [app, migration, v41, c42, c44, c45, c46, v47, v48, v49, v50, v51, v51a, v51b, v52, v53, v53a] = await Promise.all([
     read('app/index.html'), read(migrationPath),
     read('db/migrations/20260721_frenly_v41_customer_module_hardening.sql'),
     read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
@@ -62,10 +62,11 @@ test('authenticated RPC allowlist plus exact forward v41/C42/C44/C45/C46/v47/v48
     read('db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql'),
     read('db/migrations/20260723_frenly_v51b_client_credit_history.sql'),
     read('db/migrations/20260723_frenly_v52_sgt_date_normalization.sql'),
-    read('db/migrations/20260723_frenly_v53_visit_feedback.sql')
+    read('db/migrations/20260723_frenly_v53_visit_feedback.sql'),
+    read('db/migrations/20260723_frenly_v53a_wallet_review_url.sql')
   ]);
   const allowlist = sqlArray(migration, 'v_authenticated_rpc_names');
-  const forward = new Set([...authenticatedGrantNames(v41), ...authenticatedGrantNames(c42), ...authenticatedGrantNames(c44), ...authenticatedGrantNames(c45), ...authenticatedGrantNames(c46), ...authenticatedGrantNames(v47), ...authenticatedGrantNames(v48), ...authenticatedGrantNames(v49), ...authenticatedGrantNames(v50), ...authenticatedGrantNames(v51), ...authenticatedGrantNames(v51a), ...authenticatedGrantNames(v51b), ...authenticatedGrantNames(v52), ...authenticatedGrantNames(v53)]);
+  const forward = new Set([...authenticatedGrantNames(v41), ...authenticatedGrantNames(c42), ...authenticatedGrantNames(c44), ...authenticatedGrantNames(c45), ...authenticatedGrantNames(c46), ...authenticatedGrantNames(v47), ...authenticatedGrantNames(v48), ...authenticatedGrantNames(v49), ...authenticatedGrantNames(v50), ...authenticatedGrantNames(v51), ...authenticatedGrantNames(v51a), ...authenticatedGrantNames(v51b), ...authenticatedGrantNames(v52), ...authenticatedGrantNames(v53), ...authenticatedGrantNames(v53a)]);
   const required = rpcNames(app);
   for (const rpc of required) {
     assert.ok(allowlist.has(rpc) || forward.has(rpc),

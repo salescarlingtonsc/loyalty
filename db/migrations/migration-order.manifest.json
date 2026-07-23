@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 84,
-  "executableCount": 70,
+  "itemCount": 85,
+  "executableCount": 71,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -103,7 +103,7 @@
     },
     {
       "sourceDeployVersion": "20260723",
-      "count": 7,
+      "count": 8,
       "paths": [
         "db/migrations/20260723_frenly_v50a_sgt_birthdate_guard.sql",
         "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql",
@@ -111,7 +111,8 @@
         "db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql",
         "db/migrations/20260723_frenly_v51b_client_credit_history.sql",
         "db/migrations/20260723_frenly_v52_sgt_date_normalization.sql",
-        "db/migrations/20260723_frenly_v53_visit_feedback.sql"
+        "db/migrations/20260723_frenly_v53_visit_feedback.sql",
+        "db/migrations/20260723_frenly_v53a_wallet_review_url.sql"
       ]
     }
   ],
@@ -787,6 +788,14 @@
       "semanticVersion": "v53",
       "proposedDeployVersion": "20260722000124",
       "sha256": "2cf1297c7783aef2312c68c88dacbbb928e1a2ec3169f0d14b1c9800fad2155c"
+    },
+    {
+      "order": 85,
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v53a_wallet_review_url.sql",
+      "semanticVersion": "v53a",
+      "proposedDeployVersion": "20260722000125",
+      "sha256": "90a025a580e6b75dd841e0374957e71f422a47f9ab6a23314f78bc48e747b8c5"
     }
   ]
 }
