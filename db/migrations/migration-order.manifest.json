@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 82,
-  "executableCount": 68,
+  "itemCount": 83,
+  "executableCount": 69,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -103,13 +103,14 @@
     },
     {
       "sourceDeployVersion": "20260723",
-      "count": 5,
+      "count": 6,
       "paths": [
         "db/migrations/20260723_frenly_v50a_sgt_birthdate_guard.sql",
         "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql",
         "db/migrations/20260723_frenly_v51_sale_line_items.sql",
         "db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql",
-        "db/migrations/20260723_frenly_v51b_client_credit_history.sql"
+        "db/migrations/20260723_frenly_v51b_client_credit_history.sql",
+        "db/migrations/20260723_frenly_v52_sgt_date_normalization.sql"
       ]
     }
   ],
@@ -769,6 +770,14 @@
       "semanticVersion": "v51b",
       "proposedDeployVersion": "20260722000122",
       "sha256": "637ac4130c395021fc5590d5ca5ee5ae01642f90457a29ec0b4599cfc7391e6d"
+    },
+    {
+      "order": 83,
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v52_sgt_date_normalization.sql",
+      "semanticVersion": "v52",
+      "proposedDeployVersion": "20260722000123",
+      "sha256": "41ab3a110844b2ca535dafa640e37d6dfda602c06598e6d672a3f0bce0cb663d"
     }
   ]
 }

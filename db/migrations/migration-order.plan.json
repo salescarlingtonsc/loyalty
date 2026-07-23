@@ -83,6 +83,7 @@
     { "kind": "executable", "path": "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql", "semanticVersion": "v50b", "proposedDeployVersion": "20260722000119" },
     { "kind": "executable", "path": "db/migrations/20260723_frenly_v51_sale_line_items.sql", "semanticVersion": "v51", "proposedDeployVersion": "20260722000120" },
     { "kind": "executable", "path": "db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql", "semanticVersion": "v51a", "proposedDeployVersion": "20260722000121" },
-    { "kind": "executable", "path": "db/migrations/20260723_frenly_v51b_client_credit_history.sql", "semanticVersion": "v51b", "proposedDeployVersion": "20260722000122" }
+    { "kind": "executable", "path": "db/migrations/20260723_frenly_v51b_client_credit_history.sql", "semanticVersion": "v51b", "proposedDeployVersion": "20260722000122" },
+    { "kind": "executable", "path": "db/migrations/20260723_frenly_v52_sgt_date_normalization.sql", "semanticVersion": "v52", "proposedDeployVersion": "20260722000123" }
   ]
 }

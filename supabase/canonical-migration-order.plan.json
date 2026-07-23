@@ -88,6 +88,7 @@
     { "kind": "pending", "version": "20260723100000", "name": "frenly_v50b_contact_proof_constraint_repair", "sourcePath": "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql" },
     { "kind": "pending", "version": "20260723120000", "name": "frenly_v51_sale_line_items", "sourcePath": "db/migrations/20260723_frenly_v51_sale_line_items.sql" },
     { "kind": "pending", "version": "20260723121000", "name": "frenly_v51a_idempotent_sell_overloads", "sourcePath": "db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql" },
-    { "kind": "pending", "version": "20260723122000", "name": "frenly_v51b_client_credit_history", "sourcePath": "db/migrations/20260723_frenly_v51b_client_credit_history.sql" }
+    { "kind": "pending", "version": "20260723122000", "name": "frenly_v51b_client_credit_history", "sourcePath": "db/migrations/20260723_frenly_v51b_client_credit_history.sql" },
+    { "kind": "pending", "version": "20260723140000", "name": "frenly_v52_sgt_date_normalization", "sourcePath": "db/migrations/20260723_frenly_v52_sgt_date_normalization.sql" }
   ]
 }
