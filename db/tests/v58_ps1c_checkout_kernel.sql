@@ -375,10 +375,15 @@ begin
   select count(*) into v_before from public.checkout_discount_lines where business_id = v_business;
   perform public.record_quick_sale(v_business, 3300, 'cash', v_client, v_owner_staff, v_branch, 'v58 quick',
     'v58-qs-' || substr(md5(clock_timestamp()::text), 1, 10), true);
-  -- no-token cart (v51 7-arg) is a SAFE WRAPPER: server-priced, no discount.
-  perform public.record_cart_sale(v_business, v_client, v_branch, v_owner_staff, 'cash',
-    'v58-cart7-' || substr(md5(clock_timestamp()::text), 1, 10),
-    jsonb_build_array(jsonb_build_object('item_type', 'service', 'ref_id', v_svc2000, 'qty', 1, 'unit_cents', 2000)));
+  -- no-token cart (v51 7-arg): STRENGTHENED at v59 (PS-1C.1) — the client-priced
+  -- /7 overload is RETIRED (browser execution revoked); the tokenised /9 kernel is
+  -- the only cart entry. Assert the revoke held instead of exercising the old path.
+  begin
+    perform public.record_cart_sale(v_business, v_client, v_branch, v_owner_staff, 'cash',
+      'v58-cart7-' || substr(md5(clock_timestamp()::text), 1, 10),
+      jsonb_build_array(jsonb_build_object('item_type', 'service', 'ref_id', v_svc2000, 'qty', 1, 'unit_cents', 2000)));
+    raise exception 'the retired 7-arg record_cart_sale was still browser-executable';
+  exception when insufficient_privilege then null; end;
   -- phone till (delegates to record_quick_sale).
   perform public.record_sale_by_phone(v_business, '+6590000001', 1500, 'quick_sale', 'v58 phone', v_owner_staff,
     'v58-phone-' || substr(md5(clock_timestamp()::text), 1, 10), v_branch, 'cash');

@@ -211,6 +211,13 @@
       "call_site_finding": "none (v54) — the former HARD finding is closed: EXECUTE on the 3-arg overload is revoked and the app agent migrated the standalone call site to the 4-arg overload"
     },
     {
+      "id": "browser.rpc:app/index.html:evaluate_checkout",
+      "surface": "browser_rpc_binding",
+      "rpc": "evaluate_checkout",
+      "resolves_to": "evaluate_checkout/5 — the PS-1C.1 pricing/evaluation half; returns an authoritative evaluation token, records no value (the arity-9 record_cart_sale finaliser consumes the token)",
+      "call_site_finding": "none — the till cart composer calls it on open and on every sale-line/branch change; no price or discount is computed client-side"
+    },
+    {
       "id": "browser.rpc:app/index.html:issue_campaign_offer",
       "surface": "browser_rpc_binding",
       "rpc": "issue_campaign_offer",

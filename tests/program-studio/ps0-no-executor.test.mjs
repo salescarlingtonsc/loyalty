@@ -208,8 +208,11 @@ test('checkout_discount_lines is written ONLY by the kernel finaliser (record_ca
     .filter(([, sql]) => /insert\s+into\s+(?:public\.)?checkout_discount_lines\b/i.test(sql));
   assert.ok(inserters.length >= 1, 'the kernel finaliser must write checkout_discount_lines');
   for (const [file, sql] of inserters) {
-    assert.match(file, /frenly_v58_ps1c_checkout_kernel/,
-      `${file} must not insert into checkout_discount_lines outside the v58 kernel migration`);
+    // The finaliser lives in the v58 kernel migration and is CREATE-OR-REPLACE'd (with
+    // its checkout_discount_lines insert) by the v59 PS-1C.1 cart-hardening increment.
+    // No other migration may write the table.
+    assert.match(file, /frenly_v5(8_ps1c_checkout_kernel|9_ps1c1_cart_hardening)/,
+      `${file} must not insert into checkout_discount_lines outside the v58/v59 kernel migrations`);
     const finaliserAt = sql.search(/create\s+or\s+replace\s+function\s+public\.record_cart_sale\s*\(/i);
     const evalAt = sql.search(/create\s+or\s+replace\s+function\s+public\.evaluate_checkout\s*\(/i);
     assert.notEqual(finaliserAt, -1, `${file} must define the record_cart_sale finaliser`);

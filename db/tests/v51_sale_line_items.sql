@@ -1,8 +1,22 @@
 -- Rollback-only v51 sale_items / record_cart_sale suite.
 -- Run after the complete canonical chain through v51 in a disposable rehearsal DB.
 -- Every synthetic row is discarded by the closing ROLLBACK.
+-- STRENGTHENED at v59 (PS-1C.1): the client-priced 7-arg record_cart_sale is
+-- RETIRED (browser execution revoked; the tokenised /9 kernel is the only cart
+-- entry). This suite FIRST asserts the revoke, then re-grants INSIDE this
+-- rolled-back transaction so the historical sale_items mechanics it documents
+-- remain fully exercised. The grant never survives the rollback.
 begin;
 \ir fixtures/pristine_chain_fixture.psql
+
+do $v59_retirement$
+begin
+  if has_function_privilege('authenticated',
+       'public.record_cart_sale(uuid,uuid,uuid,uuid,text,text,jsonb)', 'execute') then
+    raise exception 'v59 regression: the retired 7-arg record_cart_sale is browser-executable';
+  end if;
+end $v59_retirement$;
+grant execute on function public.record_cart_sale(uuid,uuid,uuid,uuid,text,text,jsonb) to authenticated;
 
 create or replace function pg_temp.as_user(p_uid uuid) returns void language plpgsql as $$
 begin

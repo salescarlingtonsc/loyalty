@@ -379,6 +379,24 @@ tr.click:hover td{background:#FBFAF8}
 .till-receipt-lines{list-style:none;padding:0;margin:10px 0}
 .till-receipt-lines li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
 .till-receipt-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;letter-spacing:.03em}
+/* PS-1C.1 unified checkout panel — server-priced breakdown (all figures authoritative from evaluate_checkout) */
+.ck-panel{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
+.ck-panel[data-checking]{opacity:.55}
+.ck-checking{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;padding:6px 0}
+.ck-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:14px;font-variant-numeric:tabular-nums}
+.ck-row.ck-gst{color:var(--muted);font-size:12.5px}
+.ck-effect{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:13.5px;color:var(--green);font-variant-numeric:tabular-nums}
+.ck-effect .ck-effect-label{display:inline-flex;align-items:center;gap:6px}
+.ck-effect.ck-effect-off{color:var(--muted)}
+.ck-effect.ck-effect-off .ck-effect-why{font-style:italic}
+.ck-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:1.5rem;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ck-total.ck-stale{color:var(--muted)}
+.ck-extras{list-style:none;padding:0;margin:12px 0 0}
+.ck-extras li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px;font-variant-numeric:tabular-nums}
+.ck-extras .ck-extra-note{color:var(--muted);font-size:12px;display:block;font-weight:400}
+.ck-notice{margin-top:12px;padding:10px 14px;border-radius:var(--r-sm);font-size:13.5px}
+.ck-notice.warn{background:#FBF3E7;color:var(--amber)}
+.ck-notice.info{background:#EFF4F1;color:var(--green)}
 .appointment-layout{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);gap:16px;align-items:start}
 .appointment-form-card{position:sticky;top:82px}
 .appointment-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -3720,23 +3738,47 @@ async function tillPage(){
   const readCartPref=()=>{try{return sessionStorage.getItem(TILL_CART_PREF)==='1'}catch{return false}};
   const writeCartPref=(on)=>{try{sessionStorage.setItem(TILL_CART_PREF,on?'1':'0')}catch{}};
   let cartMode=readCartPref();
-  let cart=[];            // lines: {lineId,type:'service'|'product'|'custom'|'giftcard'|'package'|'membership',ref,label,unit_cents,qty,key?}
-                           // service/product/custom = itemized rows of ONE record_cart_sale (v51);
-                           // giftcard/package/membership = each its own server-idempotent RPC per line.
+  let cart=[];            // lines: {lineId,type:'service'|'product'|'custom'|'giftcard'|'package'|'membership',ref,label,unit_cents,qty,reason?,key?}
+                           // service/product/custom = evaluated by evaluate_checkout, then finalised by ONE record_cart_sale (PS-1C.1);
+                           // custom carries a mandatory staff `reason`; giftcard/package/membership = each its own server-idempotent RPC per line.
   let catalog=null;       // {services,products|null,packages|null,memberships|null} lazy-loaded once
   let catalogLoading=false, catalogError=null;
   let saleCommitted=false, saleResult=null; // once the cart sale succeeds it is LOCKED; a retry never
                                              // re-runs it, only the failed gift/package/membership calls.
-  let checkoutError=null;  // partial-failure banner state on the composer
-  // A cart-sale line (service/product/custom) rolls into the single record_cart_sale; everything
-  // else (giftcard/package/membership) is an "extra" line with its own idempotency key + RPC.
+  let checkoutError=null;  // extras partial-failure banner state (kernel already committed)
+  /* ---- PS-1C.1 unified checkout kernel state (two-step: EVALUATE -> FINALISE) ----
+     evaluate_checkout is the sole pricing authority; the panel below NEVER computes a payable
+     figure or a discount locally. All payable money is copied verbatim from the evaluation. */
+  let evalState='idle';    // 'idle'|'evaluating'|'ready'|'expired'|'error'  (drives the checkout panel)
+  let evalResult=null;     // authoritative response {evaluation_id,expires_at,server_lines,applied_effects,subtotal_cents,discount_total_cents,total_cents,gst_cents}
+  let evalError=null;      // {kind:'zero'|'perm'|'custom'|'generic', message} — evaluate/typed errors; cart stays EDITABLE (fix by changing the cart)
+  let evalSeq=0;           // monotonic guard: only the newest evaluate response is applied
+  let evalTimer=null;      // debounce handle for re-evaluate on a sale-line change
+  let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
+  let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
+  let payError=null;       // {kind:'retry'|'conflict'} — finalise failure (LOCKS the cart so the same idempotency key is reused)
+  const FINALISE_SLOT='frenly.till.cartFinalise'; // sessionStorage slot for the STABLE finalise idempotency key (writeAttemptKey pattern, F2)
+  // The cart is LOCKED (no picker, qty or remove) whenever a finalise is mid-recovery or extras are pending,
+  // so a retry reuses the same idempotency key instead of minting a fresh one and double-charging.
+  const cartLocked=()=>!!(checkoutError||staleConfirm||payError);
+  // A cart-sale line (service/product/custom) is priced by evaluate_checkout and finalised by ONE record_cart_sale;
+  // everything else (giftcard/package/membership) is an "extra" line with its own idempotency key + RPC.
   const isCartSaleLine=l=>l.type==='service'||l.type==='product'||l.type==='custom';
-  // Backend not yet on v51: record_cart_sale / the 4-arg overloads are absent (undefined_function
+  // Backend not yet on the kernel: evaluate_checkout / record_cart_sale absent (undefined_function
   // 42883, or PostgREST 404 / PGRST202). Detect so checkout can say "update needed", never fall back.
   const isBackendMissing=err=>!!err&&(err.code==='42883'||err.code==='PGRST202'||err.status===404
     ||/Could not find the function|does not exist/i.test(err.message||''));
 
+  /* Wipe every trace of a checkout attempt: timers, the evaluation, and the STABLE finalise key.
+     Called on reset, on Back, and when toggling modes — a deliberate cancel per §2. */
+  function clearCheckoutState(){
+    if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
+    if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
+    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;payError=null;
+    clearWriteAttempt(FINALISE_SLOT);
+  }
   function resetToStart(){
+    clearCheckoutState();
     step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;draw();
   }
@@ -3797,7 +3839,7 @@ async function tillPage(){
   }
   function bindCartToggle(){
     const t=$('tModeToggle');if(!t)return;
-    t.onclick=()=>{cartMode=!cartMode;writeCartPref(cartMode);saleIdem=null;checkoutError=null;
+    t.onclick=()=>{cartMode=!cartMode;writeCartPref(cartMode);saleIdem=null;checkoutError=null;clearCheckoutState();
       CUI.announce(cartMode?'Cart mode on':'Simple mode on');draw();};
   }
   function drawInvalid(){
@@ -3936,42 +3978,46 @@ async function tillPage(){
     draw();
   }
   function addCatalogLine(type,item){
-    if(checkoutError)return;
+    if(cartLocked())return;
     const ex=cart.find(l=>l.type===type&&l.ref===item.id);
     if(ex){ex.qty++;}
     else cart.push({lineId:crypto.randomUUID(),type,ref:item.id,label:item.name,unit_cents:item.unit_cents,qty:1});
-    saleIdem=null;CUI.announce(`${item.name} added`);draw();
+    CUI.announce(`${item.name} added`);onSaleLinesChanged();
   }
-  function addCustomLine(cents){
-    if(checkoutError)return;
-    cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1});
-    saleIdem=null;CUI.announce('Item added');draw();
+  // Custom "Other item": a mandatory staff reason (3..200 chars) rides with the line and is sent
+  // to evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates it.
+  function addCustomLine(cents,reason){
+    if(cartLocked())return;
+    cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1,reason});
+    CUI.announce('Item added');onSaleLinesChanged();
   }
   function addGiftLine(cents){
-    if(checkoutError)return;
+    if(cartLocked())return;
     cart.push({lineId:crypto.randomUUID(),type:'giftcard',ref:null,label:'Gift card',unit_cents:cents,qty:1,key:crypto.randomUUID()});
-    CUI.announce('Gift card added');draw();
+    CUI.announce('Gift card added');draw(); // extras are NOT part of the kernel evaluation — no re-evaluate
   }
   /* Package/membership lines mirror gift cards: qty 1, a stable per-line uuid key minted at
      add-time (reused verbatim on retry so the 4-arg overload dedupes), always a NEW line. */
   function addPlanLine(type,plan){
-    if(checkoutError)return;
+    if(cartLocked())return;
     cart.push({lineId:crypto.randomUUID(),type,ref:plan.id,label:plan.name,unit_cents:plan.unit_cents,qty:1,key:crypto.randomUUID()});
-    CUI.announce(`${plan.name} added`);draw();
+    CUI.announce(`${plan.name} added`);draw(); // extras do not affect the kernel total
   }
   function changeQty(lineId,delta){
-    if(checkoutError)return;
+    if(cartLocked())return;
     const l=cart.find(x=>x.lineId===lineId);if(!l||!isCartSaleLine(l))return;
-    l.qty=Math.max(1,l.qty+delta);saleIdem=null;draw();
+    l.qty=Math.max(1,l.qty+delta);onSaleLinesChanged();
   }
   function removeLine(lineId){
-    if(checkoutError)return;
-    cart=cart.filter(x=>x.lineId!==lineId);saleIdem=null;draw();
+    if(cartLocked())return;
+    const l=cart.find(x=>x.lineId===lineId);if(!l)return;
+    const wasSale=isCartSaleLine(l);
+    cart=cart.filter(x=>x.lineId!==lineId);
+    if(wasSale)onSaleLinesChanged();else draw(); // removing an extra does not touch the kernel price
   }
-  function cartSaleLines(){return cart.filter(isCartSaleLine)}   // service/product/custom -> record_cart_sale
+  function cartSaleLines(){return cart.filter(isCartSaleLine)}   // service/product/custom -> evaluate + record_cart_sale
   function extraLines(){return cart.filter(l=>!isCartSaleLine(l))} // giftcard/package/membership -> own RPC
-  function saleSubtotalCents(){return cartSaleLines().reduce((s,l)=>s+l.unit_cents*l.qty,0)}
-  function grandTotalCents(){return cart.reduce((s,l)=>s+l.unit_cents*l.qty,0)}
+  function extrasTotalCents(){return extraLines().reduce((s,l)=>s+l.unit_cents*l.qty,0)} // NOT part of the kernel/evaluation total
   function extraLineBadge(l,succeeded,failed){
     if(l.type==='giftcard')return succeeded?`Issued · <span class="till-receipt-code">${esc(l._code||'')}</span>`:failed?`Not issued — ${esc(l._error||'failed')}`:'Gift card — issued at checkout';
     if(l.type==='package')return succeeded?'Sold':failed?`Not sold — ${esc(l._error||'failed')}`:'Package — charged at checkout';
@@ -3979,17 +4025,146 @@ async function tillPage(){
     return '';
   }
 
+  /* ================= PS-1C.1 EVALUATE (step 1 of the kernel journey) =================
+     evaluate_checkout is AUTHORITATIVE. It is (re-)called whenever the sale-lines (or branch)
+     change while the panel is open, and on demand (expiry refresh). The client sends only line
+     identities + qty (never a price) for service/product, and amount_cents + reason for custom. */
+  function buildEvalLines(){
+    return cartSaleLines().map(l=>{
+      if(l.type==='custom')return {catalog_kind:'custom',description:l.label,amount_cents:l.unit_cents*l.qty,reason:l.reason||''};
+      return {catalog_kind:l.type==='product'?'product':'service',catalog_id:l.ref,qty:l.qty};
+    });
+  }
+  // Fingerprint for the STABLE finalise key: it turns over on any sale-line/branch/client change
+  // (a new logical checkout) but stays constant across a stale/expiry re-evaluate of the SAME cart.
+  function evalFingerprint(){return JSON.stringify({b:tillBranchId||null,c:cust?cust.client_id:null,l:buildEvalLines()});}
+  function clearExpiry(){if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}}
+  function scheduleExpiry(){
+    clearExpiry();
+    if(!evalResult||!evalResult.expires_at)return;
+    const ms=new Date(evalResult.expires_at).getTime()-Date.now();
+    if(!(ms>0)){evalState='expired';return;}
+    evalExpiryTimer=setTimeout(()=>{evalExpiryTimer=null;if(!isTillCurrent())return;if(evalState==='ready'){evalState='expired';draw();}},ms);
+  }
+  // The message tail after a stable "prefix: ..." error token (custom_line_limit / custom_line_invalid).
+  function msgTail(msg){const m=/^\s*[a-z0-9_]+\s*[:\-–]\s*(.+)$/is.exec(msg||'');return (m&&m[1].trim())||(msg||'').trim()||'That custom item is not allowed.';}
+  function applyEvalError(error){
+    const msg=error&&error.message||'';const code=error&&error.code;
+    if(/custom_line_denied/.test(msg))evalError={kind:'perm',message:"You don't have permission for custom prices."};
+    else if(/custom_line_limit|custom_line_invalid/.test(msg))evalError={kind:'custom',message:msgTail(msg)};
+    else if(/total_zero_not_supported/.test(msg))evalError={kind:'zero',message:"Fully discounted carts aren't supported yet — remove a discount or add an item."};
+    else if(code==='42501'||/create_sales/.test(msg))evalError={kind:'perm',message:"You don't have permission to record sales."};
+    else if(isBackendMissing(error))evalError={kind:'generic',message:'Checkout needs the latest system update — ask an owner to update Frenly.'};
+    else evalError={kind:'generic',message:msg||'The price check could not be completed.'};
+    evalState='error';evalResult=null;clearExpiry();
+  }
+  // Reset the evaluation for the current cart and schedule a fresh (debounced) evaluate. A sale-line
+  // change is a deliberate cart-change, so it also clears the stable finalise key (§2).
+  function onSaleLinesChanged(){
+    evalResult=null;evalError=null;staleConfirm=false;payError=null;clearExpiry();
+    clearWriteAttempt(FINALISE_SLOT);
+    const lines=buildEvalLines();
+    evalState=lines.length?'evaluating':'idle';
+    draw();
+    if(lines.length)scheduleEval();
+  }
+  function scheduleEval(){
+    if(evalTimer)clearTimeout(evalTimer);
+    evalTimer=setTimeout(()=>{evalTimer=null;runEvaluate();},200);
+  }
+  // On-demand re-evaluate that PRESERVES the finalise key (used by expiry-refresh and the generic
+  // "Try again"): evaluation keys and finalise keys are independent; the finalise key stays stable.
+  function refreshEval(){if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}evalState='evaluating';draw();runEvaluate();}
+  async function runEvaluate(){
+    const lines=buildEvalLines();
+    if(!lines.length){evalState='idle';evalResult=null;evalError=null;draw();return;}
+    const seq=++evalSeq;
+    evalState='evaluating';evalError=null;
+    const evalKey=crypto.randomUUID(); // a fresh evaluate key per call is fine — independent of the finalise key
+    const {data,error}=await sb.rpc('evaluate_checkout',{p_business:S.biz.id,p_branch:tillBranchId||null,
+      p_client:cust?cust.client_id:null,p_lines:lines,p_idempotency_key:evalKey});
+    if(!isTillCurrent())return;
+    if(seq!==evalSeq)return; // a newer evaluate superseded this one
+    if(error){applyEvalError(error);draw();return false;}
+    evalResult=data;evalError=null;evalState='ready';
+    scheduleExpiry();draw();
+    return true;
+  }
+
+  // One applied/suppressed discount effect from the evaluation. Rule NAMES are not exposed to the
+  // client — we show a neutral "Discount" plus its level (item/whole bill). Suppressed effects are
+  // greyed with a plain-words reason. Field access is defensive so a minor server shape change is safe.
+  function effectRowHtml(e){
+    if(!e||typeof e!=='object')return '';
+    const suppressed=e.suppressed===true||!!e.suppression_reason;
+    const lvl=e.level||e.scope||'';
+    const scopeTxt=lvl==='bill'?' (whole bill)':lvl==='line'?' (item)':'';
+    if(suppressed){
+      const why={stacking:'not stackable with another offer',budget_exhausted:'offer budget used up',no_target:'not applicable'}[e.suppression_reason]||'not applied';
+      return `<li class="ck-effect ck-effect-off"><span class="ck-effect-label">${CUI.icon('info',{size:14})}<span>Discount${scopeTxt}</span></span><span class="ck-effect-why">${esc(why)}</span></li>`;
+    }
+    const amt=e.amount_cents!=null?e.amount_cents:(e.discount_cents!=null?e.discount_cents:(e.amount!=null?e.amount:0));
+    return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:14})}<span>Discount${scopeTxt}</span></span><span>−${money(amt)}</span></li>`;
+  }
+  // The server-priced checkout panel. Every payable figure here is copied verbatim from the last
+  // evaluate_checkout — the client never computes a total or a discount.
+  function checkoutPanelHtml(){
+    if(!cartSaleLines().length)return ''; // no kernel evaluation without service/product/custom lines
+    if(evalState==='evaluating')
+      return `<div class="ck-panel" data-checking><div class="ck-checking" role="status">${CUI.icon('retention',{size:16})}<span>Checking price…</span></div></div>`;
+    if(evalState==='error'&&evalError)
+      return `<div class="ck-notice warn" role="alert">${esc(evalError.message)}</div>`;
+    if(!evalResult)return '';
+    const r=evalResult;
+    const rows=(r.applied_effects||[]).map(effectRowHtml).join('');
+    const gstLine=r.gst_cents>0?`<div class="ck-row ck-gst"><span>incl. GST</span><span>${money(r.gst_cents)}</span></div>`:'';
+    const totalCls=evalState==='expired'?' ck-stale':'';
+    const breakdown=`<div class="ck-panel"${evalState==='expired'?' data-checking':''} aria-label="Amount payable">
+        <div class="ck-row"><span>Subtotal</span><span>${money(r.subtotal_cents)}</span></div>
+        ${rows}${gstLine}
+        <div class="ck-total${totalCls}"><span>Total</span><span>${money(r.total_cents)}</span></div>
+      </div>`;
+    let notice='';
+    if(staleConfirm)notice=`<div class="ck-notice info" role="alert">Price updated — please confirm the new total.</div>`;
+    else if(evalState==='expired')notice=`<div class="ck-notice warn" role="status">Price check expired — refresh to get the current price.</div>`;
+    else if(payError&&payError.kind==='retry')notice=`<div class="ck-notice warn" role="alert">The payment did not go through. Retry — you will not be charged twice.</div>`;
+    else if(payError&&payError.kind==='conflict')notice=`<div class="ck-notice warn" role="alert">This checkout was already used for a different sale. Start a new checkout to continue.</div>`;
+    return breakdown+notice;
+  }
+  // The single primary action for the panel, chosen by the current checkout state.
+  function checkoutActionHtml(){
+    const hasSale=cartSaleLines().length>0, extras=extraLines();
+    if(!hasSale)
+      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Charge · ${money(extrasTotalCents())}</button>`:'';
+    if(staleConfirm)
+      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Confirm new total · ${money(evalResult.total_cents)}</button>`;
+    if(payError&&payError.kind==='retry')
+      return `<button class="btn" id="tPayRetry" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Retry payment</button>`;
+    if(payError&&payError.kind==='conflict')
+      return `<button class="btn" id="tNewCheckout" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Start a new checkout</button>`;
+    if(evalState==='evaluating')
+      return `<button class="btn" id="tEvalWait" style="width:100%;margin-top:16px;padding:18px;font-size:18px" disabled>Checking price…</button>`;
+    if(evalState==='expired')
+      return `<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Refresh price</button>`;
+    if(evalState==='error')
+      return evalError&&evalError.kind==='generic'?`<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Try again</button>`:'';
+    if(evalState==='ready'&&evalResult)
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(evalResult.total_cents)}</button>`;
+    return '';
+  }
+
   function drawCartComposer(){
     if(catalog===null&&!catalogError)loadCatalog();
     const canGift=canWriteModule('giftcards');
     const canPkg=canWriteModule('packages'), canMem=canWriteModule('memberships');
-    const saleSub=saleSubtotalCents(), grand=grandTotalCents();
+    const saleLines=cartSaleLines(), extras=extraLines(), hasSale=saleLines.length>0;
+    const locked=cartLocked();
     const branchPicker=accessibleTillBranches.length>1
-      ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
+      ?`<label for="tBranch">Branch</label><select id="tBranch"${locked?' disabled':''}>${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
       :`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> ${esc(accessibleTillBranches[0].name)}</p>`;
-    // catalog picker (hidden while the partial-failure panel is up)
+    // catalog picker (hidden while a finalise recovery / extras partial-failure panel is up)
     let picker='';
-    if(!checkoutError){
+    if(!locked){
       if(catalogError){
         picker=`<div class="err" role="alert">${esc(catalogError)}</div><button class="btn ghost sm" id="tCatRetry" style="margin-top:8px">${CUI.icon('retention',{size:16})} Try again</button>`;
       }else if(!catalog){
@@ -4008,10 +4183,7 @@ async function tillPage(){
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
         picker=`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}${pkgBtns}${memBtns}
-          <div class="split" style="margin-top:14px;align-items:end">
-            <div><label for="tCustom">Other amount (${S.biz.currency||'SGD'})</label><input id="tCustom" inputmode="decimal" placeholder="0.00"></div>
-            <div><button type="button" class="btn ghost" id="tCustomAdd" style="width:100%">${CUI.icon('add',{size:16})} Add item</button></div>
-          </div>
+          <div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button></div>
           ${canGift?`<div class="split" style="margin-top:10px;align-items:end">
             <div><label for="tGift">Gift card value (${S.biz.currency||'SGD'})</label><input id="tGift" inputmode="decimal" placeholder="0.00"></div>
             <div><button type="button" class="btn ghost" id="tGiftAdd" style="width:100%">${CUI.icon('giftcard',{size:16})} Add card</button></div>
@@ -4019,33 +4191,39 @@ async function tillPage(){
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">Packages and memberships are charged as their own record and do not earn points here.</p>`:''}`;
       }
     }
-    // cart lines
-    const linesHtml=cart.length?`<ul class="till-cart-lines">${cart.map(l=>{
-      const extra=!isCartSaleLine(l);
-      const succeeded=l._status==='issued'||l._status==='done';
-      const failed=l._status==='failed';
-      const badge=extra?`<span class="till-cart-line-sub">${extraLineBadge(l,succeeded,failed)}</span>`
-        :l.type==='custom'?'<span class="till-cart-line-sub">Other item</span>':'';
-      const qtyCtl=(extra||checkoutError)?'':`<div class="till-cart-qty">
+    // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
+    // figures live in the checkout panel below (evaluation-authoritative).
+    const saleLinesHtml=saleLines.length?`<ul class="till-cart-lines">${saleLines.map(l=>{
+      const badge=l.type==='custom'?`<span class="till-cart-line-sub">Other item${l.reason?` · ${esc(l.reason)}`:''}</span>`:'';
+      const qtyCtl=locked?'':`<div class="till-cart-qty">
         <button type="button" class="btn ghost" data-qty="-1" data-line="${l.lineId}" aria-label="Reduce quantity">−</button>
         <output aria-label="Quantity">${l.qty}</output>
         <button type="button" class="btn ghost" data-qty="1" data-line="${l.lineId}" aria-label="Increase quantity">+</button></div>`;
-      const rm=checkoutError?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" aria-label="Remove ${esc(l.label)}">${CUI.icon('close',{size:16})}</button>`;
-      return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1&&!extra?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
-    }).join('')}</ul>
-      <div class="till-cart-total"><span>Total</span><span class="till-cart-total-num">${money(grand)}</span></div>`
-      :`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Cart is empty. Tap a service or add an amount to begin.</p></div>`;
-    // tender (only meaningful when a points-earning sale is part of the cart)
-    const tenderHtml=(cart.length&&!checkoutError)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
+      const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" aria-label="Remove ${esc(l.label)}">${CUI.icon('close',{size:16})}</button>`;
+      return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
+    }).join('')}</ul>`:'';
+    // extras (gift card / package / membership) — charged as their OWN records, NOT part of the
+    // kernel total; shown as "Also processing" so the panel TOTAL matches the evaluation exactly.
+    const extrasHtml=extras.length?`<div style="margin-top:14px"><b class="small">Also processing (charged separately)</b>
+      <ul class="ck-extras">${extras.map(l=>{
+        const succeeded=l._status==='issued'||l._status==='done';const failed=l._status==='failed';
+        const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" aria-label="Remove ${esc(l.label)}" style="margin-left:8px">${CUI.icon('close',{size:15})}</button>`;
+        return `<li><span>${esc(l.label)}<span class="ck-extra-note">${extraLineBadge(l,succeeded,failed)}</span></span><span style="display:inline-flex;align-items:center;gap:6px">${money(l.unit_cents*l.qty)}${rm}</span></li>`;
+      }).join('')}</ul></div>`:'';
+    const emptyHtml=cart.length?'':`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Cart is empty. Tap a service or add an item to begin.</p></div>`;
+    const panelHtml=checkoutPanelHtml();
+    // tender — needed to finalise a kernel sale; frozen while the cart is locked (retry keeps method)
+    const tenderHtml=(cart.length&&!locked)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
       <div class="frontline-tenders" id="tTenders">${[['cash','Cash'],['card','Card'],['paynow','PayNow'],['other','Other']].map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
-      ${saleSub===0?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
-    // partial-failure panel
+      ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
+    // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
       <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted?`Sale recorded${saleResult?.duplicate?' (already recorded earlier)':''} · +${saleResult?.pointsEarned||0} points`:'No points-earning sale in this cart'}</span></div>
       <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:18})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
+    const actionHtml=checkoutError?'':checkoutActionHtml();
 
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Build the cart, choose payment, then charge once. Points are added on the sale total.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn',actions:cartToggleHtml()})}
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Build the cart, choose payment, then charge once. The price shown is checked with your promotions.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn',actions:cartToggleHtml()})}
       <div class="card frontline-card till-cart-card">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
           <div><div style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">${esc(cust.full_name)}</div><p class="muted small" style="margin:0">${esc(cust.phone||'')}</p></div>
@@ -4054,16 +4232,19 @@ async function tillPage(){
         <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
         ${branchPicker}
         ${picker}
-        ${linesHtml}
+        ${saleLinesHtml}
+        ${panelHtml}
+        ${extrasHtml}
+        ${emptyHtml}
         <div id="tcErr"></div>
         ${tenderHtml}
         ${partialHtml}
-        ${(cart.length&&!checkoutError)?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(grand)}</button>`:''}
+        ${actionHtml}
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
     bindCartToggle();
-    $('tBack').onclick=()=>{if(checkoutError){toast('Finish or retry the unfinished items first');return}step=1;cust=null;saleIdem=null;cart=[];draw()};
-    if($('tBranch'))$('tBranch').onchange=()=>{tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;saleIdem=null};
+    $('tBack').onclick=()=>{if(checkoutError){toast('Finish or retry the unfinished items first');return}clearCheckoutState();step=1;cust=null;saleIdem=null;cart=[];draw()};
+    if($('tBranch'))$('tBranch').onchange=()=>{tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;if(cartSaleLines().length)onSaleLinesChanged();};
     if($('tCatRetry'))$('tCatRetry').onclick=()=>{catalogError=null;catalog=null;draw()};
     document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.add, list=type==='service'?catalog.services:catalog.products;
@@ -4073,12 +4254,7 @@ async function tillPage(){
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
-    if($('tCustomAdd'))$('tCustomAdd').onclick=()=>{
-      const raw=($('tCustom').value||'').trim();
-      if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return cartErr('Enter dollars and cents, for example 12.50');
-      const c=Math.round(Number(raw)*100);if(!(c>0)||c>2147483647)return cartErr('Enter an amount between 0.01 and 21,474,836.47');
-      addCustomLine(c);
-    };
+    if($('tCustomOpen'))$('tCustomOpen').onclick=openCustomModal;
     if($('tGiftAdd'))$('tGiftAdd').onclick=()=>{
       const raw=($('tGift').value||'').trim();
       if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return cartErr('Enter a gift-card value, for example 50.00');
@@ -4088,57 +4264,88 @@ async function tillPage(){
     document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>changeQty(b.dataset.line,parseInt(b.dataset.qty,10)));
     document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removeLine(b.dataset.remove));
     document.querySelectorAll('[data-tender]').forEach(button=>button.onclick=()=>{
-      tender=button.dataset.tender;saleIdem=null;
+      tender=button.dataset.tender; // tender is NOT part of the evaluation — do not re-evaluate or rotate the finalise key
       document.querySelectorAll('[data-tender]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
       CUI.announce(`${button.textContent.trim()} selected`);
     });
     if($('tCartConfirm'))$('tCartConfirm').onclick=doCartCheckout;
+    if($('tStaleConfirm'))$('tStaleConfirm').onclick=doCartCheckout;
+    if($('tPayRetry'))$('tPayRetry').onclick=doCartCheckout;
+    if($('tNewCheckout'))$('tNewCheckout').onclick=startNewCheckout;
+    if($('tRefreshEval'))$('tRefreshEval').onclick=refreshEval;
     if($('tRetryGifts'))$('tRetryGifts').onclick=doCartCheckout;
     if($('tFinishPartial'))$('tFinishPartial').onclick=()=>finishCartReceipt();
   }
   function cartErr(msg){const e=$('tcErr');if(e)e.innerHTML=`<div class="err">${esc(msg)}</div>`;else toast(msg)}
+  // Deliberate fresh start after a same-key/different-request conflict (§2): mint a NEW finalise key
+  // (clear the slot) and re-evaluate the current cart.
+  function startNewCheckout(){payError=null;saleCommitted=false;staleConfirm=false;clearWriteAttempt(FINALISE_SLOT);onSaleLinesChanged();}
+  // "Other item" modal — amount + a MANDATORY short reason (3..200). The reason is required by the
+  // kernel for custom (unpriced) lines; the amount is sent as amount_cents and re-validated server-side.
+  function openCustomModal(){
+    if(cartLocked())return;
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tCustomModal" role="dialog" aria-modal="true" aria-labelledby="tCustomTitle" tabindex="-1"><div class="modal-card" style="max-width:460px">
+      <div class="row"><div><h2 id="tCustomTitle">Other item</h2><p class="muted small">A one-off charge that isn't in your catalogue.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tCustomClose">Close</button></div>
+      <label for="tCustomAmt">Amount (${S.biz.currency||'SGD'})</label>
+      <input id="tCustomAmt" inputmode="decimal" placeholder="0.00" style="font-size:22px;text-align:center;height:52px">
+      <label for="tCustomReason">Reason (required, 3–200 characters)</label>
+      <input id="tCustomReason" maxlength="200" placeholder="e.g. item not in list, price adjustment">
+      <div id="tCustomErr"></div>
+      <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:17})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
+    </div></div>`);
+    let deactivate;
+    const close=()=>{if(deactivate)deactivate();else $('tCustomModal')?.remove();};
+    deactivate=CUI.activateDialog($('tCustomModal'),{onClose:close,initialFocus:'#tCustomAmt'});
+    $('tCustomClose').onclick=$('tCustomCancel').onclick=close;
+    const submit=()=>{
+      const raw=($('tCustomAmt').value||'').trim();
+      if(!/^\d+(?:\.\d{1,2})?$/.test(raw)){$('tCustomErr').innerHTML='<div class="err">Enter dollars and cents, for example 12.50</div>';return;}
+      const c=Math.round(Number(raw)*100);
+      if(!(c>0)||c>2147483647){$('tCustomErr').innerHTML='<div class="err">Enter an amount between 0.01 and 21,474,836.47</div>';return;}
+      const reason=($('tCustomReason').value||'').trim();
+      if(reason.length<3||reason.length>200){$('tCustomErr').innerHTML='<div class="err">Write a short reason (3–200 characters)</div>';return;}
+      close();addCustomLine(c,reason);
+    };
+    $('tCustomConfirm').onclick=submit;
+    $('tCustomReason').onkeydown=e=>{if(e.key==='Enter')submit();};
+  }
 
-  /* Honest checkout sequencing + partial-failure handling.
-     Order: (1) ONE record_cart_sale carrying the service/retail/custom line items (only when the
-     subtotal is positive), then (2) one call per extra line — issue_gift_card, the 4-arg
-     sell_package, or the 4-arg enroll_membership_v41. Idempotency: the cart sale reuses `saleIdem`
-     across retries (regenerated only when the cart mutates; the server dedupes on it, ≥8 chars);
-     each extra line carries its own stable uuid `key` (minted at add-time, reused verbatim on
-     retry). If the cart sale fails we STOP — no extra is attempted. If it succeeds it is LOCKED
-     (saleCommitted) and never re-run; a retry re-invokes only the extra calls that failed, with
-     their original keys — never a different call, never a silent replay of the sale. If
-     record_cart_sale is absent (older backend) we say so and stop — never a broken half-checkout. */
+  /* PS-1C.1 FINALISE (step 2 of the kernel journey) + honest extras sequencing.
+     Order: (1) ONE record_cart_sale that CONSUMES the evaluation token (p_evaluation_id; p_lines is
+     null — the token is authoritative), then (2) one call per extra line — issue_gift_card, the
+     4-arg sell_package, or the 4-arg enroll_membership_v41. Idempotency: the finalise reuses ONE
+     STABLE key (writeAttemptKey/FINALISE_SLOT) across retries, cleared only on success or an explicit
+     cancel/cart-change; each extra carries its own stable uuid `key`. If the kernel finalise fails we
+     STOP (no extra attempted) and recover per §2 (stale re-confirm / retry / conflict). If it
+     succeeds it is LOCKED (saleCommitted) and never re-run; a retry re-invokes only the failed extras. */
   async function doCartCheckout(){
     if(busy)return;
-    const saleLines=cartSaleLines(), extras=extraLines(), saleSub=saleSubtotalCents();
+    const saleLines=cartSaleLines(), extras=extraLines(), hasSale=saleLines.length>0;
     if(!cart.length)return cartErr('Add at least one item');
-    if(saleSub>0&&saleSub>2147483647)return cartErr('Sale total is too large');
-    if(saleSub>0&&!tender)return cartErr('Choose how the customer paid');
+    if(hasSale){
+      if(!evalResult||evalState==='evaluating')return cartErr('Wait for the price check to finish');
+      if(evalState==='error')return cartErr('Fix the highlighted item before taking payment');
+      if(!tender)return cartErr('Choose how the customer paid');
+    }
     busy=true;checkoutError=null;
-    const confirmBtn=$('tCartConfirm')||$('tRetryGifts');if(confirmBtn){confirmBtn.disabled=true;confirmBtn.textContent='Working…'}
-    // (1) the itemized cart sale — only if not already committed and there is a positive subtotal
-    if(saleSub>0&&!saleCommitted){
-      if(!saleIdem)saleIdem=crypto.randomUUID();
-      const lines=saleLines.map(l=>{
-        const item_type=l.type==='product'?'retail':l.type; // 'service' | 'retail' | 'custom'
-        const line={item_type,qty:l.qty,unit_cents:l.unit_cents,description:l.label};
-        if(item_type!=='custom')line.ref_id=l.ref; // a custom line carries no typed reference
-        return line;
-      });
+    const confirmBtn=$('tCartConfirm')||$('tStaleConfirm')||$('tPayRetry')||$('tRetryGifts');
+    if(confirmBtn){confirmBtn.disabled=true;confirmBtn.textContent='Working…'}
+    // (1) kernel finalise — only if there is a sale and it is not already committed
+    if(hasSale&&!saleCommitted){
+      const finaliseKey=writeAttemptKey(FINALISE_SLOT,evalFingerprint()); // stable across retries; new only on a cart/branch change
       const {data,error}=await sb.rpc('record_cart_sale',{p_business:S.biz.id,p_client:cust.client_id,
-        p_branch:tillBranchId,p_staff:tillStaffId,p_method:tender,p_idempotency_key:saleIdem,p_lines:lines});
+        p_branch:tillBranchId,p_staff:tillStaffId,p_method:tender,p_idempotency_key:finaliseKey,
+        p_lines:null,p_evaluation_id:evalResult.evaluation_id,p_paid:true});
       if(!isTillCurrent())return;
-      if(error){
-        busy=false;if(confirmBtn){confirmBtn.disabled=false;confirmBtn.textContent='Retry'}
-        return cartErr(isBackendMissing(error)
-          ?'Cart checkout needs the latest system update — ask an owner to update Frenly. Nothing was charged.'
-          :(error.message||'The sale could not be recorded — try again'));
-      }
-      saleCommitted=true;
-      const dup=data.status==='duplicate_ignored';
-      saleResult={items:Array.isArray(data.items)?data.items:[],
-        pointsEarned:dup?0:(data.points_earned||0),duplicate:dup,
-        saleProductId:(data.sale&&data.sale.product_id)||null};
+      if(error){busy=false;payError=null;return handleFinaliseError(error);}
+      // success — including a same-key replay (duplicate_ignored) which is treated as success
+      clearWriteAttempt(FINALISE_SLOT);clearExpiry();
+      saleCommitted=true;staleConfirm=false;payError=null;
+      const duplicate=isReplayResult(data);
+      saleResult={duplicate,pointsEarned:duplicate?0:(data&&data.points_earned||0),
+        lines:saleLines.map(l=>({label:l.label,qty:l.qty,amount:l.unit_cents*l.qty,type:l.type})),
+        subtotal:evalResult.subtotal_cents,discount:evalResult.discount_total_cents,
+        gst:evalResult.gst_cents,total:evalResult.total_cents,effects:(evalResult.applied_effects||[])};
     }
     // (2) extras — each independent and server-idempotent; failures are collected, not thrown
     let anyExtraFailed=false;
@@ -4164,21 +4371,39 @@ async function tillPage(){
     }
     finishCartReceipt();
   }
+  /* §2 token lifecycle at FINALISE — each outcome maps to ONE distinct, low-literacy UI state.
+     The payable amount is NEVER changed silently: a stale token re-evaluates once and then WAITS
+     for an explicit confirm; nothing here loops. */
+  async function handleFinaliseError(error){
+    const msg=error&&error.message||'', code=error&&error.code;
+    if(isBackendMissing(error)){ // kernel not deployed — nothing was charged
+      payError=null;evalError={kind:'generic',message:'Checkout needs the latest system update — ask an owner to update Frenly. Nothing was charged.'};evalState='error';draw();return;}
+    if(/total_zero_not_supported/.test(msg)){ // fully-discounted cart — typed message, NO re-evaluate
+      payError=null;evalError={kind:'zero',message:"Fully discounted carts aren't supported yet — remove a discount or add an item."};evalState='error';draw();return;}
+    if((code==='P0001'&&/stale_evaluation/.test(msg))||(code==='22023'&&/\bstale\b/i.test(msg))){ // re-evaluate ONCE, then confirm
+      payError=null;staleConfirm=false;
+      const ok=await runEvaluate();
+      if(!isTillCurrent())return;
+      if(ok===true&&evalState==='ready')staleConfirm=true; // fresh price is shown; wait for an explicit confirm
+      draw();return;}
+    if(code==='22023'&&/idempotency key conflicts|key conflict/i.test(msg)){ // same key, different request
+      payError={kind:'conflict'};draw();return;}
+    if(code==='42501'||/create_sales/.test(msg)){ // permission denied
+      payError=null;evalError={kind:'perm',message:"You don't have permission to record sales."};evalState='error';draw();return;}
+    payError={kind:'retry'};draw(); // network / timeout / lost response / anything else — keep the key, offer Retry
+  }
   function finishCartReceipt(){
-    const extras=extraLines();
-    const items=(saleResult&&saleResult.items)||[];
-    const stampedProduct=saleResult&&saleResult.saleProductId;
-    const typeLabel={service:'Service',retail:'Retail item',custom:'Other item'};
+    const extras=extraLines(), r=saleResult;
     doneInfo={receipt:true,name:cust.full_name,tender,
-      lines:items.map(it=>({label:it.description||typeLabel[it.item_type]||'Item',qty:it.qty,amount:it.line_cents,
-        stock:it.item_type==='retail'&&!!stampedProduct&&it.product_id===stampedProduct})),
-      extras:extras.map(l=>({type:l.type,label:l.label,amount:l.unit_cents,
+      lines:r?r.lines.map(l=>({label:l.label,qty:l.qty,amount:l.amount})):[],
+      effects:r?(r.effects||[]):[],subtotal:r?r.subtotal:0,discount:r?r.discount:0,gst:r?r.gst:0,total:r?r.total:0,
+      extras:extras.map(l=>({type:l.type,label:l.label,amount:l.unit_cents*l.qty,
         status:l._status==='failed'?'failed':'done',code:l._code||null,error:l._error||null})),
-      hasSale:!!saleResult,grand:grandTotalCents(),
-      pointsEarned:saleResult?saleResult.pointsEarned:0,
-      pointsTotal:(cust.points!=null&&saleResult&&!saleResult.duplicate)?cust.points+saleResult.pointsEarned:null,
-      duplicate:saleResult?saleResult.duplicate:false};
-    checkoutError=null;step=3;draw();
+      hasSale:!!r,extrasTotal:extrasTotalCents(),
+      pointsEarned:r?r.pointsEarned:0,
+      pointsTotal:(cust.points!=null&&r&&!r.duplicate)?cust.points+r.pointsEarned:null,
+      duplicate:r?r.duplicate:false};
+    checkoutError=null;clearCheckoutState();step=3;draw();
   }
   function drawStep3(){
     if(doneInfo&&doneInfo.receipt)return drawCartReceipt();
@@ -4193,13 +4418,20 @@ async function tillPage(){
       </div>`;
     $('tNext').onclick=resetToStart;
   }
-  /* Cart-mode receipt: REAL line items + points_earned from the record_cart_sale response, then the
-     gift-card / package / membership outcomes (failures honestly flagged), then reset. The single-
-     retail "Stock updated" hint is shown only when the server actually stamped that product_id. */
+  /* Cart-mode receipt: line labels (browsing prices) + the EVALUATION-authoritative breakdown
+     (subtotal, applied discounts, GST, TOTAL) captured verbatim at finalise, points_earned from the
+     finalise response, then the gift-card / package / membership outcomes (failures honestly flagged). */
   function drawCartReceipt(){
     const d=doneInfo;
     const anyExtraFailed=d.extras.some(x=>x.status==='failed');
-    const lineRows=d.lines.map(l=>`<li><span>${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}${l.stock?'<span class="till-cart-line-sub">Stock updated</span>':''}</span><span>${money(l.amount)}</span></li>`).join('');
+    const lineRows=d.lines.map(l=>`<li><span>${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}</span><span>${money(l.amount)}</span></li>`).join('');
+    const appliedEffects=(d.effects||[]).filter(e=>!(e&&(e.suppressed===true||e.suppression_reason)));
+    const breakdown=d.hasSale?`<div class="ck-panel" style="text-align:left" aria-label="Amount charged">
+        <div class="ck-row"><span>Subtotal</span><span>${money(d.subtotal)}</span></div>
+        ${appliedEffects.map(effectRowHtml).join('')}
+        ${d.gst>0?`<div class="ck-row ck-gst"><span>incl. GST</span><span>${money(d.gst)}</span></div>`:''}
+        <div class="ck-total"><span>Total</span><span>${money(d.total)}</span></div>
+      </div>`:'';
     const extraRows=d.extras.map(x=>{
       const failed=x.status==='failed';
       const name=x.type==='giftcard'?`Gift card ${failed?'(not issued)':`· <span class="till-receipt-code">${esc(x.code||'')}</span>`}`
@@ -4207,6 +4439,8 @@ async function tillPage(){
         :`${esc(x.label)} ${failed?'(not enrolled)':'· enrolled'}`;
       return `<li><span>${name}</span><span>${failed?'—':money(x.amount)}</span></li>`;
     }).join('');
+    const extrasBlock=d.extras.length?`<div style="margin-top:12px;text-align:left"><b class="small">Also charged (separate records)</b>
+      <ul class="till-receipt-lines">${extraRows}</ul></div>`:'';
     M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:anyExtraFailed?'Sale saved. Some items did not finish.':'Sale saved and points added. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
       <div class="card frontline-card till-cart-card" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
@@ -4215,8 +4449,8 @@ async function tillPage(){
           ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
           :`<p style="font-size:1.5rem;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`)
           :`<p class="muted small">No points-earning items — none earned.</p>`}
-        <ul class="till-receipt-lines" style="text-align:left">${lineRows}${extraRows}</ul>
-        <div class="till-cart-total"><span>Total</span><span class="till-cart-total-num">${money(d.grand)}</span></div>
+        ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
+        ${extrasBlock}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received${d.pointsTotal!=null?` · now ${d.pointsTotal} points total`:''}</p>
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         <button class="btn" id="tNext" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>

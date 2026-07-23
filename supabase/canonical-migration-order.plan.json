@@ -96,6 +96,7 @@
     { "kind": "pending", "version": "20260724100000", "name": "frenly_v55_ps1a_authoring", "sourcePath": "db/migrations/20260724_frenly_v55_ps1a_authoring.sql" },
     { "kind": "pending", "version": "20260724150000", "name": "frenly_v56_ps1b_events_execution", "sourcePath": "db/migrations/20260724_frenly_v56_ps1b_events_execution.sql" },
     { "kind": "pending", "version": "20260724160000", "name": "frenly_v57_ps1b1_price_fail_closed", "sourcePath": "db/migrations/20260724_frenly_v57_ps1b1_price_fail_closed.sql" },
-    { "kind": "pending", "version": "20260724170000", "name": "frenly_v58_ps1c_checkout_kernel", "sourcePath": "db/migrations/20260724_frenly_v58_ps1c_checkout_kernel.sql" }
+    { "kind": "pending", "version": "20260724170000", "name": "frenly_v58_ps1c_checkout_kernel", "sourcePath": "db/migrations/20260724_frenly_v58_ps1c_checkout_kernel.sql" },
+    { "kind": "pending", "version": "20260724180000", "name": "frenly_v59_ps1c1_cart_hardening", "sourcePath": "db/migrations/20260724_frenly_v59_ps1c1_cart_hardening.sql" }
   ]
 }
