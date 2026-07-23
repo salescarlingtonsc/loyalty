@@ -60,16 +60,20 @@ begin
   if (select count(*) from public.benefit_registry where business_id=v_business)<>10 then
     raise exception 'benefit_registry was not seeded with all 10 families';
   end if;
-  -- STRENGTHENED at v56 (PS-1B): authorities are untouched (6 legacy_trigger +
-  -- 4 studio_executor), and the ONLY sanctioned lifecycle advances are
-  -- referral legacy->shadow and recurring unbuilt->studio.
+  -- STRENGTHENED at v56 (PS-1B) and again at v58 (PS-1C): authorities are
+  -- untouched (6 legacy_trigger + 4 studio_executor); the ONLY sanctioned
+  -- lifecycle advances are referral legacy->shadow (v56), recurring
+  -- unbuilt->studio (v56), and checkout unbuilt->studio (v58).
   if (select count(*) from public.benefit_registry where business_id=v_business and execution_authority='legacy_trigger')<>6
      or (select count(*) from public.benefit_registry where business_id=v_business and execution_authority='studio_executor')<>4
      or (select count(*) from public.benefit_registry where business_id=v_business and execution_authority='legacy_trigger' and cutover_status='legacy')<>5
      or (select cutover_status from public.benefit_registry where business_id=v_business and source_engine='referral')<>'shadow'
-     or (select count(*) from public.benefit_registry where business_id=v_business and execution_authority='studio_executor' and cutover_status='unbuilt')<>3
-     or (select cutover_status from public.benefit_registry where business_id=v_business and source_engine='recurring')<>'studio' then
-    raise exception 'benefit_registry authority/cutover split is wrong (expected 5 legacy + referral shadow + 3 unbuilt + recurring studio)';
+     or (select count(*) from public.benefit_registry where business_id=v_business and execution_authority='studio_executor' and cutover_status='unbuilt')<>2
+     or (select cutover_status from public.benefit_registry where business_id=v_business and source_engine='recurring')<>'studio'
+     or (select cutover_status from public.benefit_registry where business_id=v_business and source_engine='checkout')<>'studio'
+     or (select cutover_status from public.benefit_registry where business_id=v_business and source_engine='tier')<>'unbuilt'
+     or (select cutover_status from public.benefit_registry where business_id=v_business and source_engine='stored_value')<>'unbuilt' then
+    raise exception 'benefit_registry authority/cutover split is wrong (expected 5 legacy + referral shadow + 2 unbuilt + recurring/checkout studio)';
   end if;
   if not exists(select 1 from public.benefit_registry where business_id=v_business and source_engine='points_loyalty' and execution_authority='legacy_trigger' and cutover_status='legacy')
      or not exists(select 1 from public.benefit_registry where business_id=v_business and source_engine='stored_value' and execution_authority='studio_executor' and cutover_status='unbuilt') then

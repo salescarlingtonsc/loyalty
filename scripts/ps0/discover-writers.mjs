@@ -113,6 +113,15 @@ const VALUE_TABLES = {
   budget_reservations:                     { category: 'budget',              value: false },
   program_entitlement_operations:          { category: 'idempotency_ledger',  value: false },
   domain_event_execution:                  { category: 'idempotency_ledger',  value: false },
+  // --- Program Studio PS-1C: the unified checkout kernel. checkout_discount_lines
+  //     is the per-effect applied-discount record (VALUE - it reduces the sale and
+  //     is the kernel's authoritative discount provenance). The evaluation token +
+  //     its op-ledger are priced quotes / idempotency (non-value); budget release is
+  //     the reversal side of the v56 budget counters (non-value).
+  checkout_evaluations:                    { category: 'checkout_evaluation', value: false },
+  checkout_evaluation_operations:          { category: 'idempotency_ledger',  value: false },
+  checkout_discount_lines:                 { category: 'checkout_discount',   value: true },
+  budget_commitment_releases:              { category: 'budget',              value: false },
 };
 
 // Stored-value tables that MUST NOT exist yet (PS-2 territory). If discovery

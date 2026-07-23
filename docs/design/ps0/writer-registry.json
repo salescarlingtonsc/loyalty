@@ -175,7 +175,7 @@
   ],
   "kernel_gap_summary": [
     "The kernel candidate record_quick_sale already centralises the sale-spine invariants via the sales-table trigger chain (policy snapshot, config version, commission snapshot, FEFO, loyalty earn, reversal guard). ANY unified writer MUST keep inserting sales rows so on_sale_recorded fires exactly once (single earn/qualify event).",
-    "record_cart_sale is the only line-item writer but wraps record_quick_sale and applies no discounts/tender; PS-1C signed-discount-line extension lands here.",
+    "record_cart_sale/7 is the no-token line-item writer (server-priced, no discount). PS-1C landed the signed-discount-line + evaluation-token extension as the NEW arity-9 overload record_cart_sale/9 (the kernel finaliser); evaluate_checkout/5 is the evaluation half.",
     "Tender is a separate surface from the accrual spine: record_credit_tender (credit) and record_payment (cash/card/paynow/deposit/no_show_fee) exist but are UI-unwired (finance pilot-disabled). The kernel tender step calls these.",
     "Duplicate/overloaded write paths must be collapsed: sell_package/3 vs /4, enroll_membership_v41/3 vs /4, redeem_reward/4 vs /5, refund_sale vs reverse_sale, and the 3-layer reverse_sale wrapper stack (v40→v34→v20).",
     "Non-sale value writers the kernel must reconcile but not necessarily route through checkout: gift-card issue/redeem, points redeem/reward/expiry, birthday entitlements, campaign grants, package session consumption, credit tender.",
@@ -728,7 +728,7 @@
       "reporting": "parent sale carries revenue; sale_items are the receipt breakdown",
       "reversal": "parent sale reversible via reverse_sale; sale_items immutable (trg_sale_items_immutable)",
       "ui": "Till → Cart checkout",
-      "kernel": "NEEDS-WORK — closest thing to a line-item kernel, but it wraps record_quick_sale rather than owning the money write, and it does not itself apply discounts or tender; PS-1C signed-discount-line extension lands here"
+      "kernel": "SAFE WRAPPER — the no-token cart path: server-priced, structurally carries NO studio discount (no token). PS-1C's discount-applying kernel is the arity-9 overload record_cart_sale/9"
     },
     {
       "id": "db.fn:public.record_credit_tender/5",
@@ -1016,24 +1016,24 @@
     },
     {
       "id": "db.fn:public.reverse_sale/6",
-      "surface": "db_delegating_entrypoint",
-      "latest_file": "20260721000020_frenly_v40_staff_reversal_workflows.sql",
-      "rows_written": "(delegates to public.reverse_sale_v34_base)",
+      "surface": "db_function",
+      "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
+      "rows_written": "benefit_fulfilments:INSERT (compensating negative discount fulfilment), budget_commitment_releases:INSERT, budget_periods:UPDATE (committed_cents −= amount); delegates the money/package/sale reversal to public.reverse_sale_v40_base",
       "detected_signals": "idem-signal, for-update",
       "delegates_to": [
-        "public.reverse_sale_v34_base"
+        "public.reverse_sale_v40_base"
       ],
-      "entry_point": "reverse_sale(p_business,p_sale,p_reason,p_idempotency_key,p_reference,p_restock_policy)  [v40 public boundary]",
+      "entry_point": "reverse_sale(p_business,p_sale,p_reason,p_idempotency_key,p_reference,p_restock_policy)  [v58 public boundary; extends the v40 boundary with PS-1C discount compensation]",
       "callers": "browser reversal workflows (staff_get_reversal_workflows surfaces; reverse_customer_birthday_benefit_for_client etc.); refund_sale alias",
-      "reads": "sales (FOR UPDATE), staff (authorization), package_session_reversals",
-      "idempotency": "idem-keyed via the v20 base (financial_operations) + package reversal idem check",
-      "locking": "for-update",
-      "payment": "delegates to reverse_sale_v34_base → reverse_sale_v20_base: append-only reversing sales row + reversing payments + sale_reversal_audits + sale_reversal_payment_links; credit_ledger compensation",
+      "reads": "checkout_discount_lines (of the original sale), budget_reservations, budget_periods (FOR UPDATE)",
+      "idempotency": "the base chain is idem-keyed (financial_operations + package reversal); the compensation is idempotent by the reversal fulfilment canonical key + budget_commitment_releases UNIQUE(reservation_id), so a replayed reversal is a strict no-op",
+      "locking": "for-update (base sale/staff locks) + budget_periods FOR UPDATE for the release",
+      "payment": "delegates to reverse_sale_v40_base → v34 → v20 money core: append-only reversing sales row + reversing payments + sale_reversal_audits + sale_reversal_payment_links; credit_ledger compensation",
       "loyalty": "compensates earned points/credit via the reversing sale (single-count preserved)",
       "package_membership": "restores package sessions (client_packages UPDATE + package_session_reversals) for $0 package sales",
-      "reversal": "THE reversal engine; append-only compensation, never UPDATE/DELETE of the original",
+      "reversal": "THE reversal engine; append-only compensation, never UPDATE/DELETE of the original; PS-1C adds exact budget release + a signed compensating discount fulfilment (committed = Σreservations − Σreleases >= 0)",
       "ui": "Reversal workflows",
-      "kernel": "NEEDS-WORK — the reversal path is a 3-layer wrapper stack (v40 auth → v34 package/provenance → v20 money). The kernel/refund model (REFUND_ARCHITECTURE) must own a single reversal path; keep append-only semantics."
+      "kernel": "NEEDS-WORK — the reversal path is now a 4-layer wrapper stack (v58 discount compensation → v40 auth → v34 package/provenance → v20 money). The kernel/refund model (REFUND_ARCHITECTURE) must own a single reversal path; keep append-only semantics."
     },
     {
       "id": "db.fn:public.run_expiry_now/1",
@@ -1266,6 +1266,54 @@
       "idempotency": "program_entitlement_operations UNIQUE(business,operation_type,idempotency_key); mandatory reason; row FOR UPDATE",
       "value": "PROMISE ONLY — reverses an entitlement promise; NO value movement",
       "kernel": "N/A"
+    },
+    {
+      "id": "db.fn:public.evaluate_checkout/5",
+      "surface": "db_function",
+      "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
+      "rows_written": "checkout_evaluations:INSERT, checkout_evaluation_operations:INSERT",
+      "detected_signals": "idem-signal, advisory-lock",
+      "entry_point": "evaluate_checkout(p_business,p_branch,p_client,p_lines,p_idempotency_key)",
+      "callers": "browser till checkout (server-priced quote; the client holds only the opaque token id)",
+      "reads": "services/products (server prices via app.ps1b_catalog_price), program_rules_compiled (sale.completed discount rules), budget_periods (PROJECTED cap), businesses (active_config_version_id + GST)",
+      "idempotency": "checkout_evaluation_operations UNIQUE(business_id, idempotency_key) + request_hash; advisory xact lock; replay returns the same token while unexpired+unconsumed, else 22023 stale",
+      "value": "NON-VALUE — mints a priced quote only; no money, ledger, tender or discount is applied here",
+      "kernel_migratability": "KERNEL — the server-owned evaluation-token authority; nothing is client-priceable (a price/amount key on any line is a hard error)",
+      "kernel": "KERNEL — PS-1C evaluation half of the unified checkout kernel."
+    },
+    {
+      "id": "db.fn:public.record_cart_sale/9",
+      "surface": "db_function",
+      "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
+      "rows_written": "sale_items:INSERT (server lines + signed studio_discount lines), checkout_discount_lines:INSERT, benefit_fulfilments:INSERT, budget_reservations:INSERT, budget_periods:INSERT/UPDATE, checkout_evaluations:UPDATE (consume)",
+      "detected_signals": "idem-signal, for-update",
+      "entry_point": "record_cart_sale(p_business,p_client,p_branch,p_staff,p_method,p_idempotency_key,p_lines,p_evaluation_id,p_paid)  [the arity-9 TOKEN finaliser]",
+      "callers": "browser till checkout, after evaluate_checkout",
+      "reads": "checkout_evaluations (FOR UPDATE), services/products (price re-resolution → cart_hash), budget_periods (FOR UPDATE re-check), financial_operations (replay proof), program_rules (discount label)",
+      "sale_policy": "INDIRECT — delegates the money write to record_quick_sale; the parent sale carries the discounted total so points/retention/referral earn on it",
+      "config_version": "atomic revalidation asserts businesses.active_config_version_id is UNCHANGED since evaluation",
+      "idempotency": "reuses record_quick_sale's financial_operations op-ledger for the parent sale; the token's single-use (consumed_at write-once) governs the discount/provenance/budget writes; a same-token replay returns duplicate_ignored",
+      "locking": "checkout_evaluations FOR UPDATE (single-use) + budget_periods FOR UPDATE in (rule_id, period_start) order (deadlock-free); any drift → stale_evaluation (P0001)",
+      "payment": "delegates to record_quick_sale (accrual, p_paid); tender is a separate later surface",
+      "loyalty": "INDIRECT via the parent sale trigger on the DISCOUNTED amount_cents (correct)",
+      "reporting": "sales.amount_cents = subtotal − Σ discounts; sale_items reconcile byte-for-byte; get_checkout_discount_report + benefit_fulfilments reconcile",
+      "reversal": "reverse_sale releases the budget commitment and writes a compensating (negative) fulfilment per discount",
+      "value": "VALUE — the ONLY path that applies a Studio discount to money; writes the signed discount line + provenance",
+      "kernel_migratability": "KERNEL — the finalisation half of the unified checkout kernel (v51 record_cart_sale extended with the signed discount line + evaluation token, per architecture §9)",
+      "kernel": "KERNEL — PS-1C finalisation; the single authoritative discount-applying write path."
+    },
+    {
+      "id": "db.fn:public.reverse_sale_v40_base/6",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
+      "rows_written": "(delegates to public.reverse_sale_v34_base)",
+      "detected_signals": "idem-signal, for-update",
+      "delegates_to": ["public.reverse_sale_v34_base"],
+      "entry_point": "reverse_sale_v40_base (the v40 auth/package boundary; renamed from reverse_sale in v58 so the v58 outer reverse_sale can compensate checkout discounts)",
+      "idempotency": "delegates to the v34/v20 base chain (financial_operations + package reversal idem)",
+      "value": "the retained v40 auth/package-reversal boundary; the compensating checkout-discount + budget-release logic lives in the NEW public.reverse_sale wrapper above it",
+      "kernel_migratability": "NEEDS-WORK — one internal layer of the 4-deep reversal stack (v58 wrapper → v40 base → v34 base → v20 money core); the refund model must eventually collapse these into one kernel reversal path",
+      "kernel": "NEEDS-WORK — internal reversal layer; collapse into one kernel reversal path."
     }
   ],
   "allowlist": [

@@ -64,7 +64,7 @@ function parseGateTable(md, heading) {
   return rows;
 }
 
-test('PS-GATES marker authorizes PS-0/PS-1A/PS-1B (PS-1C+ still gated)', async () => {
+test('PS-GATES marker authorizes PS-0/PS-1A/PS-1B/PS-1C (PS-2+ still gated)', async () => {
   const md = await read('docs/design/ps0/PS-GATES.md');
   const phases = Object.fromEntries(
     parseGateTable(md, 'AUTHORIZED PHASES').map(([phase, auth]) => [phase, auth.toLowerCase()]),
@@ -74,7 +74,9 @@ test('PS-GATES marker authorizes PS-0/PS-1A/PS-1B (PS-1C+ still gated)', async (
     'PS-1A is authorized for authoring/projection/validation only (no executor)');
   assert.equal(phases['PS-1B'], 'yes',
     'PS-1B is authorized for the event envelope + entitlement PROMISE execution (no customer-value movement)');
-  for (const p of ['PS-1C', 'PS-2', 'PS-3', 'PS-4', 'PS-5']) {
+  assert.equal(phases['PS-1C'], 'yes',
+    'PS-1C is authorized for the unified checkout kernel (server-owned token + synchronous discount apply)');
+  for (const p of ['PS-2', 'PS-3', 'PS-4', 'PS-5']) {
     assert.equal(phases[p], 'no',
       `${p} must remain unauthorized until the owner approves it — flipping this is a deliberate act`);
   }
@@ -176,18 +178,47 @@ test('the ledger write-guard carries NO studio-executor scope while unauthorized
   }
 });
 
-test('no Program-Studio executor RPC / function surface exists yet', async () => {
+test('no not-yet-authorized executor RPC / function surface exists (PS-2+ stays gated)', async () => {
   const corpus = await readMigrationCorpus();
-  // executor entry points that PS-1B+ would introduce — none may exist at PS-0.
+  // Entry points that only a NOT-yet-authorized phase would introduce. PS-1C is
+  // authorized, so public.evaluate_checkout is now permitted and is NOT forbidden
+  // here; the stored-value (PS-2) executor surface stays forbidden. There is also
+  // no separate 'consume_checkout_evaluation' — the token is finalised through the
+  // record_cart_sale overload, never a bespoke consume RPC.
   const forbiddenFns = [
-    'evaluate_checkout', 'consume_checkout_evaluation', 'execute_rule_effect',
+    'consume_checkout_evaluation', 'execute_rule_effect',
     'sv_topup', 'sv_spend_allocation', 'refund_sv_operation', 'sv_lot_movement',
     'record_domain_event', 'deliver_outbox',
   ];
   for (const fn of forbiddenFns) {
     const re = new RegExp(`function\\s+(public|app)\\.${fn}\\b`, 'i');
     const offenders = Object.entries(corpus).filter(([, sql]) => re.test(sql)).map(([f]) => f);
-    assert.deepEqual(offenders, [], `executor function '${fn}' must not exist at PS-1A`);
+    assert.deepEqual(offenders, [], `executor function '${fn}' must not exist while its phase is gated`);
+  }
+});
+
+test('checkout_discount_lines is written ONLY by the kernel finaliser (record_cart_sale token path)', async () => {
+  const corpus = await readMigrationCorpus();
+  // PS-1C provenance integrity: every checkout discount line traces to a consumed
+  // evaluation token, so the ONLY migration site that INSERTs into
+  // checkout_discount_lines must be the kernel finaliser public.record_cart_sale
+  // (the arity-9 token overload). Any other inserter — a second RPC, a trigger, a
+  // backfill, a browser-reachable path — is a red test.
+  const inserters = Object.entries(corpus)
+    .filter(([, sql]) => /insert\s+into\s+(?:public\.)?checkout_discount_lines\b/i.test(sql));
+  assert.ok(inserters.length >= 1, 'the kernel finaliser must write checkout_discount_lines');
+  for (const [file, sql] of inserters) {
+    assert.match(file, /frenly_v58_ps1c_checkout_kernel/,
+      `${file} must not insert into checkout_discount_lines outside the v58 kernel migration`);
+    const finaliserAt = sql.search(/create\s+or\s+replace\s+function\s+public\.record_cart_sale\s*\(/i);
+    const evalAt = sql.search(/create\s+or\s+replace\s+function\s+public\.evaluate_checkout\s*\(/i);
+    assert.notEqual(finaliserAt, -1, `${file} must define the record_cart_sale finaliser`);
+    for (const m of sql.matchAll(/insert\s+into\s+(?:public\.)?checkout_discount_lines\b/gi)) {
+      assert.ok(m.index > finaliserAt,
+        `${file}: every checkout_discount_lines insert must live inside record_cart_sale, not before it`);
+      assert.ok(evalAt === -1 || m.index > evalAt,
+        `${file}: evaluate_checkout must never insert checkout_discount_lines (it mints tokens only)`);
+    }
   }
 });
 

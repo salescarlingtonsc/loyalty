@@ -14,17 +14,28 @@ authoring/projection/validation (no executor). PS-1B = the event envelope,
 non-checkout entitlement execution (PROMISES only — no customer-value movement),
 the NEW delivery-state outbox with a synthetic-only capture provider, the
 fulfilment registry + budgets, and the referral shadow (referral legacy->shadow;
-recurring unbuilt->studio). PS-1C, stored-value financial execution, and the
-production rollout are NOT yet authorized. Do not edit the AUTHORIZED PHASES table
-without a written owner instruction quoting the phase being authorized.
+recurring unbuilt->studio).
 
-PS-1B authorizes the `## EXECUTOR ARTIFACTS` mapped to PS-1B below. STILL forbidden
-and tripwired: `checkout_evaluations` (PS-1C), `sv_*` (PS-2), every EXECUTOR
-LEDGER-GUARD SCOPE (all DEFERRED to PS-1C — PS-1B moves no customer value, so it
-adds NO ledger scope), and `captured_messages` may NEVER hold a non-synthetic
-recipient. The only sanctioned authority-lifecycle transitions are referral
-legacy->shadow and recurring unbuilt->studio; execution_authority itself is never
-mutated.
+Owner approval of record (2026-07-24, PS-1C authorization): **PS-1C is approved** —
+ONE authoritative server-owned checkout kernel: the `checkout_evaluations`
+evaluation token, atomic revalidation, the synchronous apply of Studio
+apply_discount_pct / apply_discount_amount effects (the ONLY live discount path;
+the executor keeps shadow-logging them), per-effect discount provenance
+(`checkout_discount_lines`), budget commit/release on the v56 counters, and the
+exact compensating reversal. PS-1C moves discount value (it reduces
+sales.amount_cents) but writes NO credit/points ledger — the ledger write-guard is
+untouched and no studio ledger scope is added. Stored-value financial execution
+(PS-2+) and the production rollout are NOT yet authorized. Do not edit the
+AUTHORIZED PHASES table without a written owner instruction quoting the phase being
+authorized.
+
+PS-1B/PS-1C authorize the `## EXECUTOR ARTIFACTS` mapped to them below. STILL
+forbidden and tripwired: `sv_*` (PS-2); the `sv_spend` / `sv_refund` guard scopes
+(PS-2); and `captured_messages` may NEVER hold a non-synthetic recipient. The
+sanctioned authority-lifecycle transitions are referral legacy->shadow, recurring
+unbuilt->studio, and (PS-1C) checkout unbuilt->studio; execution_authority itself is
+never mutated. The kernel finaliser (`record_cart_sale` WITH an evaluation token) is
+the ONLY writer of `checkout_discount_lines`.
 
 ## AUTHORIZED PHASES
 
@@ -33,7 +44,7 @@ mutated.
 | PS-0   | yes        |
 | PS-1A  | yes        |
 | PS-1B  | yes        |
-| PS-1C  | no         |
+| PS-1C  | yes        |
 | PS-2   | no         |
 | PS-3   | no         |
 | PS-4   | no         |
@@ -76,19 +87,26 @@ the highest authorized phase.
 | captured_messages           | PS-1B             |
 | domain_event_execution      | PS-1B             |
 | checkout_evaluations        | PS-1C             |
+| checkout_evaluation_operations | PS-1C          |
+| checkout_discount_lines     | PS-1C             |
+| budget_commitment_releases  | PS-1C             |
 | sv_lots                     | PS-2              |
 | sv_lot_movements            | PS-2              |
 | sv_plans                    | PS-2              |
 | sv_plan_versions            | PS-2              |
 
-## EXECUTOR LEDGER-GUARD SCOPES (must be absent until PS-1C)
+## EXECUTOR LEDGER-GUARD SCOPES (kept out of the guard through PS-1C)
 
 The `app.loyalty_ledger_write_guard()` scope enum must NOT contain any of the
 following studio-executor scopes until their phase is authorized (architecture §17,
-finding S3). **PS-1B DELIBERATELY ADDS NONE**: it moves no customer value, so an
-unused ledger scope would only weaken the guard's "every scope has a validated
-route" story. All studio ledger scopes are therefore deferred to PS-1C, where a
-live discount/tender route consumes them.
+finding S3). **PS-1B and PS-1C DELIBERATELY ADD NONE**: PS-1B moves no customer
+value, and PS-1C moves discount value by *reducing `sales.amount_cents`* (so points/
+retention/referral earn on the discounted total) — it writes NO `credit_ledger` /
+`points_ledger` row, so it needs no studio ledger scope and the write-guard stays
+untouched. `sv_spend` / `sv_refund` remain forbidden until PS-2 introduces a real
+stored-value tender route that consumes them. (Because PS-1C is authorized, the
+`studio_executor` / `studio_discount` rows below no longer gate anything; they are
+retained as documentation of the never-added scopes.)
 
 | scope           | introducing_phase |
 |-----------------|-------------------|
