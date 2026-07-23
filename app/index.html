@@ -531,6 +531,27 @@ tr.click:hover td{background:#FBFAF8}
 .wallet-appt{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--hair)}
 @media(max-width:560px){.wallet-shell{padding:20px 14px 44px}.wallet-head{align-items:flex-start;flex-wrap:wrap}.wallet-metrics{grid-template-columns:1fr}.wallet-section{padding:15px}.wallet-line,.wallet-appt{flex-wrap:wrap}.walletChange{width:100%}}
 .strike{text-decoration:line-through;opacity:.55}
+/* v53 visit feedback & service recovery (shared by the customer wallet and the staff queue) */
+.fb-stars{border:0;padding:0;margin:0;min-width:0}
+.fb-stars-legend{font-weight:600;margin-bottom:8px;padding:0}
+.fb-stars-row{display:flex;gap:4px;flex-wrap:wrap}
+.fb-star{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;cursor:pointer;border-radius:10px}
+.fb-star-glyph{font-size:30px;line-height:1;color:var(--line);transition:color .12s}
+.fb-star:hover .fb-star-glyph{color:#D99400}
+.fb-star.on .fb-star-glyph{color:#C88300}
+.fb-star:focus-within{outline:3px solid rgba(194,65,53,.45);outline-offset:1px}
+.fb-caption{margin-top:6px;font-weight:600;color:var(--amber);min-height:18px}
+.fb-rating{letter-spacing:2px;color:#C88300;font-size:16px;white-space:nowrap}
+.fb-review-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-weight:600;color:var(--coral);text-decoration:underline;overflow-wrap:anywhere;word-break:break-word}
+.fb-share{margin-top:14px;padding:14px;border:1px solid var(--coral);background:var(--tint);border-radius:10px}
+.fb-item{padding:12px 0;border-bottom:1px solid var(--hair)}.fb-item:last-child{border-bottom:0}
+.fb-chips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px}
+.fb-chip{min-height:44px;padding:8px 15px;border:1px solid var(--control-border);background:#fff;border-radius:999px;color:var(--ink);cursor:pointer;font-weight:600;font-size:13px}
+.fb-chip[aria-pressed="true"]{border-color:var(--coral);color:var(--coral);background:var(--tint)}
+.fb-row{padding:14px 0;border-bottom:1px solid var(--hair)}.fb-row:last-child{border-bottom:0}
+.fb-row.open{border-left:3px solid var(--coral);padding-left:12px}
+.fb-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.fb-prov{margin-top:8px;font-size:12px;color:var(--muted)}
 @media print{
   .side,.no-print{display:none !important}
   .shell{display:block}
@@ -1597,12 +1618,21 @@ async function renderCustomerWallet(businessSlug=null){
       ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
       ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
       ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
+      ${walletSectionShell('walletFeedback','Your visit feedback','Share how your visits went — private to this business.')}
       ${customerFeatures.customer_in_app_inbox?`<section class="card wallet-section" id="customerInAppInbox" aria-busy="true" tabindex="-1"><div class="wallet-skeleton"></div></section>`:''}
       ${customerFeatures.customer_birthday_benefits?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>
     ${customerFeatures.customer_notifications?'<div id="customerNotificationPreferences"></div>':''}`;
   let unlinkAttemptId=crypto.randomUUID();
+  /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
+     business summary's own review_url and rendered in the feedback section footer REGARDLESS of
+     rating; a high rating only adds an extra prominent share card. review_url rides the existing
+     customer_get_business_summary business projection (no new call site) — it is https-only.
+     NOTE: today that projection does not yet surface review_url, so this stays empty until the
+     backend adds it; the reachability predicate is `walletReviewUrl` presence only, never rating. */
+  const walletReviewUrl=(b.review_url&&/^https:\/\//.test(String(b.review_url)))?String(b.review_url):'';
+  let feedbackSubmitIdem=null; // consume-once: minted on first submit, reused on retry, cleared on success
   let birthdayActivationAttemptId=crypto.randomUUID();
   const birthdayActivate=$('birthdayBenefitActivate');
   if(birthdayActivate)birthdayActivate.onclick=async()=>{
@@ -1732,7 +1762,66 @@ async function renderCustomerWallet(businessSlug=null){
       renderCustomerWallet(businessSlug);
     };
   };
-  await Promise.all([loadRewards(),loadActivity(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation()]);
+  /* Visit feedback (v53). The wallet exposes no per-visit sale_id (customer_get_appointments_page
+     returns appointment_id, customer_get_loyalty_details has no sale ref), so this uses the
+     general-note path: p_sale=null. The DB caps it at one standing note per (customer, business),
+     so once submitted the prompt collapses to a thank-you and the list shows the recovery status. */
+  const feedbackStatusWord=f=>f.recovery_status==='resolved'?'Sorted out':f.recovery_status==='closed'?'Thanks!':'The team is looking into this';
+  const feedbackStatusTone=f=>f.recovery_status==='resolved'?'on':f.recovery_status==='closed'?'ok':'new';
+  const loadFeedback=async(opts={})=>{
+    const host=$('walletFeedback');if(!host)return;
+    host.setAttribute('aria-busy','true');
+    const {data,error}=await sb.rpc('customer_list_my_feedback',{p_business_slug:businessSlug,p_limit:50});
+    if(!isWalletSectionCurrent(host))return;
+    if(error)return walletSectionError('walletFeedback',walletRpcDenied(error)?'Feedback is not available for this account.':'Feedback could not be loaded.',()=>loadFeedback());
+    const items=Array.isArray(data?.feedback)?data.feedback:[];
+    const general=items.find(f=>!f.sale_id)||null;
+    const stars=n=>'★'.repeat(Number(n)||0)+'☆'.repeat(Math.max(0,5-(Number(n)||0)));
+    const reviewLink=walletReviewUrl?`<p style="margin-top:16px"><a class="fb-review-link" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('loyalty',{size:16})}<span>Leave a public review for ${esc(b.name||'this business')}</span></a></p>`:'';
+    const shareCard=(opts.highlightShare&&walletReviewUrl)?`<div class="fb-share"><b>Thanks for the kind words!</b><p class="muted small" style="margin:4px 0 10px">A quick public review helps ${esc(b.name||'this business')} more than you know.</p><a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer">Share it publicly</a></div>`:'';
+    const words=['','Poor','Not great','Okay','Good','Great'];
+    const promptHtml=general
+      ?`<div class="wallet-line"><div><b>Thanks for sharing your feedback</b><p class="muted small" style="margin-top:4px">You rated this <span class="fb-rating" aria-hidden="true">${stars(general.rating)}</span><span class="sr-only">${general.rating} out of 5</span>. ${esc(feedbackStatusWord(general))}.</p></div></div>`
+      :`<fieldset class="fb-stars" id="fbStars"><legend class="fb-stars-legend">How was your visit to ${esc(b.name||'this business')}?</legend>
+          <div class="fb-stars-row" role="radiogroup" aria-label="Rate from 1 to 5 stars">${[1,2,3,4,5].map(n=>`<label class="fb-star"><input type="radio" class="sr-only" name="fbRating" value="${n}"><span class="fb-star-glyph" aria-hidden="true">★</span><span class="sr-only">${n} star${n===1?'':'s'} — ${words[n]}</span></label>`).join('')}</div>
+          <p class="fb-caption" id="fbCaption" aria-live="polite"></p></fieldset>
+        <label for="fbComment" class="small" style="display:block;margin-top:6px">Anything to add? (optional)</label>
+        <textarea id="fbComment" rows="2" maxlength="2000" placeholder="Tell the team what went well, or what to fix"></textarea>
+        <div class="row" style="margin-top:10px"><button type="button" class="btn" id="fbSubmit" disabled>Send feedback</button></div>
+        <p id="fbStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>`;
+    const listHtml=items.length?`<div style="margin-top:18px"><h3 style="font-size:15px;margin-bottom:4px">Your feedback</h3>${items.map(f=>`<div class="fb-item"><div class="row"><span class="fb-rating" aria-hidden="true">${stars(f.rating)}</span><span class="sr-only">${f.rating} out of 5</span><span class="spacer"></span><span class="pill ${feedbackStatusTone(f)}">${esc(feedbackStatusWord(f))}</span></div>${f.comment?`<p class="muted small" style="margin-top:5px">${esc(f.comment)}</p>`:''}<p class="muted small" style="margin-top:4px">${esc(walletDate(f.created_at,true))}</p></div>`).join('')}</div>`:'';
+    host.setAttribute('aria-busy','false');
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Your visit feedback</h2><p class="muted small">Private to ${esc(b.name||'this business')} — it helps them serve you better.</p></div></div>
+      ${shareCard}${promptHtml}${listHtml}${reviewLink}`;
+    const caption=$('fbCaption'),submit=$('fbSubmit');
+    const paint=()=>{
+      const val=Number(host.querySelector('input[name="fbRating"]:checked')?.value||0);
+      host.querySelectorAll('.fb-star').forEach((label,i)=>label.classList.toggle('on',i<val));
+      if(caption)caption.textContent=val?words[val]:'';
+      if(submit)submit.disabled=!val;
+    };
+    host.querySelectorAll('input[name="fbRating"]').forEach(input=>input.addEventListener('change',paint));
+    if(submit)submit.onclick=async()=>{
+      const val=Number(host.querySelector('input[name="fbRating"]:checked')?.value||0);
+      if(!val)return;
+      const comment=($('fbComment')?.value||'').trim();
+      if(!feedbackSubmitIdem)feedbackSubmitIdem=crypto.randomUUID();
+      submit.disabled=true;
+      const {data:result,error:submitError}=await sb.rpc('customer_submit_visit_feedback',{p_business_slug:businessSlug,p_sale:null,p_rating:val,p_comment:comment||null,p_idempotency_key:feedbackSubmitIdem});
+      if(!isWalletSectionCurrent(host))return;
+      if(submitError){
+        submit.disabled=false;const st=$('fbStatus');
+        if(submitError.code==='23505'){feedbackSubmitIdem=null;if(st)st.textContent='You have already shared feedback here — thank you!';loadFeedback();return;}
+        if(st)st.textContent='Your feedback could not be sent right now. Please try again.';
+        return;
+      }
+      feedbackSubmitIdem=null;
+      const rating=Number(result?.rating||val);
+      toast('Thanks for your feedback');
+      loadFeedback({highlightShare:rating>=4});
+    };
+  };
+  await Promise.all([loadRewards(),loadActivity(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback()]);
   if(!isWalletCurrent())return;
   if(customerFeatures.customer_notifications) renderCustomerNotificationPreferences(businessSlug,isWalletCurrent);
   if(customerFeatures.customer_in_app_inbox===true) renderCustomerInAppInbox(businessSlug,isWalletCurrent,actionableCard);
@@ -2866,7 +2955,10 @@ async function clientsPage(){
   routeMain.innerHTML=`<section id="customersView">${CUI.pageHeader({title:'Customers',subtitle:'Search, review, import, and manage your member base.',iconName:'customers',actions:customerActions,canWrite,moduleLabel:'Customer management'})}
     <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,260px)"><label for="clientSearch" style="margin-top:0">Search customers by name</label><input id="clientSearch" type="search" autocomplete="off" placeholder="Start typing a customer name"></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear',variant:'secondary'})}</div></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
-    <div class="card" id="list"><div class="empty">Loading…</div></div></section>`;
+    <div class="card" id="list"><div class="empty">Loading…</div></div>
+    <div class="card" id="fbQueueCard" style="margin-top:16px"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
+      <div class="fb-chips" id="fbChips" role="group" aria-label="Filter feedback by status"></div>
+      <div id="fbQueue"><div class="empty">Loading…</div></div></div></section>`;
   const customersView=$('customersView');
   const isCustomersCurrent=()=>routeMain.isConnected&&M()===routeMain&&customersView.isConnected&&$('customersView')===customersView;
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
@@ -2961,6 +3053,71 @@ async function clientsPage(){
     $('clPrev').onclick=()=>{if(clientPage>0){clientPage--;load()}};
     $('clNext').onclick=()=>{if(clientPage+1<pages){clientPage++;load()}};
   }
+  /* v53 service-recovery queue — rides the clients module (staff_list_visit_feedback gates on
+     can_module_read('clients'), so no new MODULES key). Owner/manager hold refund_sales (the same
+     admin gate the v40 reversal workflow uses), so only they get Acknowledge/Resolve; frontdesk,
+     staff and bookkeeper see the queue read-only, and a 42501 from a stale role shows a polite denial. */
+  const canResolveFeedback=S.myRole==='owner'||S.myRole==='manager';
+  const feedbackResolveKeys=new Map();
+  const FB_FILTERS=[['open','Open'],['acknowledged','Acknowledged'],['resolved','Resolved'],['closed','Closed'],['','All']];
+  let feedbackFilter='open';
+  const fbStars=n=>'★'.repeat(Number(n)||0)+'☆'.repeat(Math.max(0,5-(Number(n)||0)));
+  const fbStatusLabel={open:'Open case',acknowledged:'Acknowledged',resolved:'Resolved',closed:'Positive'};
+  const fbStatusTone={open:'no',acknowledged:'new',resolved:'on',closed:'ok'};
+  function renderFeedbackChips(){
+    const chips=$('fbChips');if(!chips)return;
+    chips.innerHTML=FB_FILTERS.map(([value,label])=>`<button type="button" class="fb-chip" data-fb-filter="${value}" aria-pressed="${feedbackFilter===value}">${label}</button>`).join('');
+    chips.querySelectorAll('[data-fb-filter]').forEach(btn=>btn.onclick=()=>{feedbackFilter=btn.dataset.fbFilter;renderFeedbackChips();loadFeedbackQueue()});
+  }
+  async function loadFeedbackQueue(){
+    const host=$('fbQueue');if(!host||!isCustomersCurrent())return;
+    const {data,error}=await sb.rpc('staff_list_visit_feedback',{p_business:S.biz.id,p_status:feedbackFilter||null,p_limit:100});
+    if(!isCustomersCurrent()||$('fbQueue')!==host)return;
+    if(error){host.innerHTML=`<div class="err" role="alert">${esc(error.message||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
+    const rows=Array.isArray(data?.feedback)?data.feedback:[];
+    if(!rows.length){host.innerHTML=CUI.emptyState({iconName:'check',title:feedbackFilter==='open'?'No open cases':'Nothing here',body:feedbackFilter==='open'?'Every service-recovery case has been handled.':'No feedback matches this filter yet.'});return}
+    host.innerHTML=rows.map(f=>{
+      const openCase=f.recovery_status==='open'||f.recovery_status==='acknowledged';
+      const prov=(f.recovery_status==='resolved')?`<p class="fb-prov">Resolved${f.resolved_at?' · '+esc(sgt(f.resolved_at)||''):''}${f.resolution_note?' · '+esc(f.resolution_note):''}</p>`:'';
+      const actions=(openCase&&canResolveFeedback)?`<div class="fb-actions">${f.recovery_status==='open'?`<button class="btn ghost sm fbAck" data-id="${esc(f.id)}">Acknowledge</button>`:''}<button class="btn sm fbResolve" data-id="${esc(f.id)}">Resolve</button></div>`:'';
+      return `<div class="fb-row ${openCase?'open':''}"><div class="row"><span class="fb-rating" aria-hidden="true">${fbStars(f.rating)}</span><span class="sr-only">${f.rating} out of 5</span><span class="spacer"></span><span class="pill ${fbStatusTone[f.recovery_status]||''}">${esc(fbStatusLabel[f.recovery_status]||f.recovery_status)}</span></div>
+        <p class="muted small" style="margin-top:5px"><b>${esc(f.customer_name||'Customer')}</b> · ${esc(sgt(f.created_at)||'')} · ${esc(timeAgo(f.created_at))}</p>
+        ${f.comment?`<p style="margin-top:6px">${esc(f.comment)}</p>`:'<p class="muted small" style="margin-top:6px">No written comment.</p>'}
+        ${prov}${actions}</div>`;
+    }).join('');
+    host.querySelectorAll('.fbAck').forEach(btn=>btn.onclick=()=>submitFeedbackResolution(btn.dataset.id,'acknowledged',null));
+    host.querySelectorAll('.fbResolve').forEach(btn=>btn.onclick=()=>openFeedbackResolveDialog(btn.dataset.id));
+  }
+  async function submitFeedbackResolution(fbId,newStatus,note){
+    if(!feedbackResolveKeys.has(fbId))feedbackResolveKeys.set(fbId,crypto.randomUUID());
+    const {error}=await sb.rpc('staff_resolve_feedback',{p_business:S.biz.id,p_feedback:fbId,p_new_status:newStatus,p_note:note||null,p_idempotency_key:feedbackResolveKeys.get(fbId)});
+    if(!isCustomersCurrent())return;
+    if(error){
+      if(error.code==='42501')return toast('You do not have permission to resolve feedback');
+      return fail(error);
+    }
+    feedbackResolveKeys.delete(fbId);
+    toast(newStatus==='resolved'?'Case resolved':'Case acknowledged');
+    loadFeedbackQueue();
+  }
+  function openFeedbackResolveDialog(fbId){
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="fbResolveModal" role="dialog" aria-modal="true" aria-labelledby="fbResolveTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
+      <h2 id="fbResolveTitle" style="margin-bottom:6px">Resolve this case</h2>
+      <p class="muted small">Add an optional note about how you made it right. This closes the service-recovery case.</p>
+      <label for="fbResolveNote" class="small" style="display:block;margin-top:12px">Resolution note (optional)</label>
+      <textarea id="fbResolveNote" rows="3" maxlength="2000" placeholder="e.g. Called the customer and offered a redo"></textarea>
+      <div class="row" style="margin-top:16px"><button class="btn" id="fbResolveConfirm">Confirm resolve</button><button class="btn ghost sm" id="fbResolveCancel">Cancel</button></div></div></div>`);
+    const dialog=$('fbResolveModal');
+    const close=CUI.activateDialog(dialog,{onClose:()=>close(),initialFocus:'#fbResolveNote'});
+    $('fbResolveCancel').onclick=()=>close();
+    $('fbResolveConfirm').onclick=async()=>{
+      const note=($('fbResolveNote')?.value||'').trim();
+      $('fbResolveConfirm').disabled=true;close();
+      await submitFeedbackResolution(fbId,'resolved',note||null);
+    };
+  }
+  renderFeedbackChips();
+  loadFeedbackQueue();
   load();
 }
 
@@ -3021,6 +3178,23 @@ async function clientDetail(id){
   if(!isClientDetailCurrent())return;
   const saleWorkflow=Object.fromEntries((reversalData?.sales||[]).map(x=>[x.id,x]));
   const staffName=Object.fromEntries((stAll||[]).map(s=>[s.id,s.full_name||'Team member']));
+  /* v53 feedback strip — ONE bounded staff_list_visit_feedback call (the same queue RPC),
+     filtered client-side by client_id; no per-client RPC is added (task constraint). Best-effort:
+     a failure never blocks the profile. Resolver name reuses the staffName map built above. */
+  let clientFeedback=[];
+  try{
+    const {data:fbData}=await sb.rpc('staff_list_visit_feedback',{p_business:S.biz.id,p_limit:200});
+    clientFeedback=(fbData?.feedback||[]).filter(f=>f.client_id===id);
+  }catch(e){/* non-fatal: feedback strip is supplementary */}
+  if(!isClientDetailCurrent())return;
+  const feedbackStripMarkup=clientFeedback.length?`<div class="card" id="c360-feedback"><b>Visit feedback</b><p class="muted small" style="margin:5px 0 8px">Recent ratings and any service-recovery cases for this customer.</p>${clientFeedback.slice(0,6).map(f=>{
+    const stars='★'.repeat(Number(f.rating)||0)+'☆'.repeat(Math.max(0,5-(Number(f.rating)||0)));
+    const label={open:'Open case',acknowledged:'Acknowledged',resolved:'Resolved',closed:'Positive'}[f.recovery_status]||f.recovery_status;
+    const tone={open:'no',acknowledged:'new',resolved:'on',closed:'ok'}[f.recovery_status]||'';
+    const resolvedName=f.resolved_by?(staffName[f.resolved_by]||'a teammate'):'';
+    const prov=f.recovery_status==='resolved'?`<p class="fb-prov">Resolved${resolvedName?' by '+esc(resolvedName):''}${f.resolved_at?' · '+esc(sgt(f.resolved_at)||''):''}${f.resolution_note?' · '+esc(f.resolution_note):''}</p>`:'';
+    return `<div class="fb-item"><div class="row"><span class="fb-rating" aria-hidden="true">${stars}</span><span class="sr-only">${f.rating} out of 5</span><span class="spacer"></span><span class="pill ${tone}">${esc(label)}</span></div>${f.comment?`<p class="muted small" style="margin-top:5px">${esc(f.comment)}</p>`:''}<p class="muted small" style="margin-top:4px">${esc(sgt(f.created_at)||'')}</p>${prov}</div>`;
+  }).join('')}</div>`:'';
   const nowIso=new Date().toISOString();
   /* One unified reverse-chronological timeline. Each source keeps its own date field for sorting
      and is rendered from its own shape (they are separate tables, not a union query): sales carry
@@ -3243,7 +3417,7 @@ async function clientDetail(id){
           <span class="muted small">${esc(g.reward_label||'Reward')} · ${g.fulfillment_kind==='credit'?money(g.reward_value):g.fulfillment_kind==='discount_pct'?g.reward_value+'% off':esc(g.reward_item||'free item')} · ${g.granted_at.slice(0,10)}</span></div>`).join('')
           :'<p class="muted small" style="margin-top:6px">None yet — rewards land here automatically when visit goals are hit.</p>'}
       </div>
-      ${birthdayCardMarkup}</div>
+      ${birthdayCardMarkup}${feedbackStripMarkup}</div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
     <div class="card" style="margin-top:16px"><b>Timeline</b><p class="muted small" style="margin:4px 0 8px">Every visit, sale, appointment, reward, membership and package — newest first.</p>
@@ -6950,9 +7124,11 @@ async function settingsPage(){
       <label for="bi">Industry</label><select id="bi">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
       <label for="bc">Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
       <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
+      <label for="bru">Public review link (Google, Facebook, etc.)</label><input id="bru" type="url" inputmode="url" placeholder="https://g.page/your-business/review" value="${esc(S.biz.review_url||'')}" aria-describedby="bruHint">
+      <p class="muted small" id="bruHint" style="margin-top:4px">Optional. Must start with https://. Shown to customers in their wallet — it is offered to everyone, never used to hide low ratings.</p>
       <p class="field-label">Portal link (share with customers)</p>
       <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${location.origin}${location.pathname}#/b/${S.biz.slug}">${location.origin}${location.pathname}#/b/${S.biz.slug}</a></p>
-      <div class="settings-save-row"><button class="btn" id="bsave">Save workspace</button><span class="settings-scope">Saves this workspace's name, industry, brand colour and booking policy.</span></div></div></section>
+      <div class="settings-save-row"><button class="btn" id="bsave">Save workspace</button><span class="settings-scope">Saves this workspace's name, industry, brand colour, booking policy and public review link.</span></div></div></section>
     <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1" hidden><div class="split"><div class="card"><b>Modules</b><p class="muted small" style="margin:6px 0 4px">Toggle what ${esc(S.biz.name)} uses. Dashboard is always on.</p>
       ${mods.map(m=>`<label class="settings-choice">
         <input type="checkbox" style="width:auto;margin-top:2px" data-m="${m}" ${(S.biz.enabled_modules||[]).includes(m)?'checked':''}>
@@ -7023,10 +7199,17 @@ async function settingsPage(){
   const initialSettingsTab=document.getElementById('settab-'+settingsActiveTab);
   if(initialSettingsTab&&initialSettingsTab!==settingsTabs[0])selectSettingsTab(initialSettingsTab,false);
   $('bsave').onclick=async()=>{
+    /* Client-side mirror of the DB CHECK (review_url is null or length<=500 and ~ '^https://').
+       review_url rides this existing businesses UPDATE — no new call site is introduced. */
+    const reviewUrlRaw=($('bru').value||'').trim();
+    if(reviewUrlRaw&&(!/^https:\/\//.test(reviewUrlRaw)||reviewUrlRaw.length>500)){
+      $('bru').focus();return toast('Public review link must start with https:// and be under 500 characters');
+    }
+    const reviewUrl=reviewUrlRaw||null;
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),industry:$('bi').value,
-      brand_color:$('bc').value,booking_policy:$('bp').value||null}).eq('id',S.biz.id);
+      brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl}).eq('id',S.biz.id);
     if(error)return fail(error);
-    Object.assign(S.biz,{name:$('bn').value.trim(),industry:$('bi').value,brand_color:$('bc').value,booking_policy:$('bp').value||null});
+    Object.assign(S.biz,{name:$('bn').value.trim(),industry:$('bi').value,brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl});
     toast('Saved');route();
   };
   $('msave').onclick=async()=>{
