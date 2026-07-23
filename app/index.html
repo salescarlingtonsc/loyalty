@@ -272,6 +272,25 @@ tr.click:hover td{background:#FBFAF8}
 .kpi .v{font-family:var(--sf);font-size:1.75rem;font-weight:680;margin-top:3px;
   letter-spacing:-.035em;font-variant-numeric:tabular-nums}
 .kpi .l{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+/* Waitlist conversion queue — big pictogram rows, one primary action each */
+.wl-add-grid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-top:4px}
+.wl-add-grid .wl-fld{display:flex;flex-direction:column;gap:4px;flex:1 1 150px;min-width:0}
+.wl-add-grid .wl-fld label{font-size:12px;color:var(--muted);font-weight:600}
+.wl-add-grid input,.wl-add-grid select{margin:0}
+.wl-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.wl-row{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}
+.wl-row.contacted{background:#FBFAF8}
+.wl-rank{flex:0 0 auto;width:38px;height:38px;border-radius:100px;display:flex;align-items:center;justify-content:center;background:var(--tint);color:var(--coral);font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.wl-main{flex:1 1 auto;min-width:0}
+.wl-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:1.02rem}
+.wl-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}
+.wl-meta .sep{opacity:.45}
+.wl-wait{font-weight:600}
+.wl-wait.urgent{color:var(--red)}
+.wl-notes{margin-top:3px}
+.wl-actions{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.wl-x{padding:8px 12px}
+@media(max-width:640px){.wl-row{flex-wrap:wrap}.wl-actions{width:100%;justify-content:flex-start}.wl-actions>.btn{flex:1 1 auto}}
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
 .charts .card{min-height:280px}
 .chart-frame{position:relative;block-size:240px;min-block-size:0;margin-top:12px;overflow:hidden}
@@ -6093,38 +6112,179 @@ async function appointmentsPage(){
   loadCalendar().catch(fail);
 }
 
-/* ---------- waitlist ---------- */
+/* ---------- waitlist (conversion queue) ----------
+   Built only on columns v6/v15a actually ship: name, phone, service_id, preferred (free-text
+   window), notes, client_id (nullable), status in ('waiting','contacted','booked','removed'),
+   created_at. There is no party_size, no notified_at/updated_at and no 'seated' status on the
+   waitlist row itself, so: "Called" reuses the existing 'contacted' state; both "Seat now" and
+   "Book instead" resolve to the sole positive terminal 'booked'; "waited" is a duration
+   (now − created_at, timezone-independent); today's cohort is bounded by the SGT day start.
+   Deep-links reuse the shipped consume-once vars (pendingTillPhone / pendingApptClientId). */
 async function waitlistPage(){
-  const {data:sv}=await sb.from('services').select('id,name').eq('business_id',S.biz.id).order('name');
-  M().innerHTML=`<div class="topbar"><div><h1>Waitlist</h1><p class="muted small">Catch demand you can't seat now — recover it when a slot frees up.</p></div></div>
-    <div class="split">
-    <div class="card"><b>Add to waitlist</b>
-      <label>Name</label><input id="wn"><label>Phone</label><input id="wp" placeholder="+65">
-      <label>Service (optional)</label><select id="ws"><option value="">—</option>${(sv||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
-      <label>Preferred window</label><input id="ww" placeholder="e.g. weekday evenings">
-      <label>Notes</label><input id="wo" placeholder="optional">
-      <div style="margin-top:16px"><button class="btn" id="wgo">Add</button></div></div>
-    <div class="card"><b>Waiting</b><div id="wlist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
-  $('wgo').onclick=async()=>{
-    if($('wn').value.trim().length<2) return toast('Name required');
-    const {error}=await sb.from('waitlist').insert({business_id:S.biz.id,name:$('wn').value.trim(),
-      phone:$('wp').value||null,service_id:$('ws').value||null,preferred:$('ww').value||null,notes:$('wo').value||null});
-    if(error) return fail(error);
-    toast('Added to waitlist');$('wn').value='';loadWl();
-  };
-  async function loadWl(){
-    const {data:wl}=await sb.from('waitlist').select('*, services(name)').eq('business_id',S.biz.id)
-      .neq('status','removed').order('created_at',{ascending:false});
-    $('wlist').innerHTML=(wl&&wl.length)?`<table><tr><th>Name</th><th>Contact</th><th>Wants</th><th>When</th><th>Status</th><th></th></tr>
-      ${wl.map(w=>`<tr><td><b>${esc(w.name)}</b></td><td class="small">${esc(w.phone||'—')}</td>
-      <td>${esc(w.services?.name||'—')}</td><td class="small">${esc(w.preferred||'—')}</td>
-      <td><span class="pill ${w.status==='waiting'?'new':w.status==='booked'?'ok':'off'}">${w.status}</span></td>
-      <td>${w.status!=='booked'?`<button class="btn ghost sm" onclick="setWl('${w.id}','contacted')">Contacted</button>
-      <button class="btn sm" onclick="setWl('${w.id}','booked')">Booked</button>`:''}
-      <button class="btn ghost sm" onclick="setWl('${w.id}','removed')">✕</button></td></tr>`).join('')}</table>`
-      :`<div class="empty"><div class="big">⏳</div>Nobody waiting. Add someone when you're fully booked.</div>`;
+  disposeCurrentRoute(); // safe re-entry (autoRefreshIfRelevant re-invokes this outside renderShell)
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  const canWrite=canWriteModule('waitlist');
+  routeMain.innerHTML=CUI.loadingState({title:'Waitlist',iconName:'waitlist',body:'Loading the queue…'});
+  const {data:sv,error:serviceError}=await sb.from('services').select('id,name').eq('business_id',S.biz.id).order('name');
+  if(!isCurrent())return;
+  if(serviceError){
+    routeMain.innerHTML=CUI.errorState({title:'Waitlist unavailable',message:serviceError.message||'Please try again.'});
+    const rb=$('routeRetry');if(rb)rb.onclick=()=>waitlistPage();
+    return;
   }
-  window.setWl=async(id,status)=>{await sb.from('waitlist').update({status}).eq('id',id);toast('Updated');loadWl()};
+  const svOpts=(sv||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  const canBook=canWriteModule('appointments');
+  let currentRows=[]; // queue rows the row-action handlers resolve ids against (reassigned per load)
+
+  routeMain.innerHTML=
+    CUI.pageHeader({title:'Waitlist',subtitle:"Catch demand you can't seat now — win it back when a spot frees up.",iconName:'waitlist',canWrite,moduleLabel:'Waitlist'})
+    +`<div class="kpis" id="wlkpis" style="margin-bottom:18px"><p class="muted small">Loading…</p></div>`
+    +(canWrite?`<section class="card"><div class="cui-card-head"><h2>Add walk-in</h2><p>Fully booked? Add them here and seat them the moment a spot opens.</p></div>
+        <div class="wl-add-grid">
+          <div class="wl-fld" style="flex:1 1 180px"><label for="wn">Name</label><input id="wn" autocomplete="off"></div>
+          <div class="wl-fld"><label for="wp">Phone</label><input id="wp" placeholder="+65" inputmode="tel" autocomplete="off"></div>
+          <div class="wl-fld"><label for="ws">Service</label><select id="ws"><option value="">—</option>${svOpts}</select></div>
+          <div class="wl-fld"><label for="ww">Preferred window</label><input id="ww" placeholder="e.g. weekday eve"></div>
+          <div class="wl-fld" style="flex:2 1 200px"><label for="wo">Notes</label><input id="wo" placeholder="optional"></div>
+          <button class="btn" id="wgo" style="flex:0 0 auto">${CUI.icon('add',{size:17})}<span>Add</span></button>
+        </div></section>`:'')
+    +`<section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Waiting queue</h2><p>Oldest first — seat them before they leave.</p></div><div id="wlist"><p class="muted small">Loading…</p></div></section>`;
+
+  if(canWrite){
+    $('wgo').onclick=async()=>{
+      const name=$('wn').value.trim();
+      if(name.length<2)return toast('Name required');
+      const btn=$('wgo');btn.disabled=true;
+      const {error}=await sb.from('waitlist').insert({business_id:S.biz.id,name,
+        phone:$('wp').value.trim()||null,service_id:$('ws').value||null,
+        preferred:$('ww').value.trim()||null,notes:$('wo').value.trim()||null});
+      if(!isCurrent())return;
+      btn.disabled=false;
+      if(error)return fail(error);
+      toast('Added to waitlist');
+      ['wn','wp','ww','wo'].forEach(id=>{if($(id))$(id).value=''});if($('ws'))$('ws').value='';
+      $('wn').focus();
+      loadWl();
+    };
+  }
+
+  const tillLocalMobile=raw=>{ // mirror Customer 360: fold to an 8-digit SG local the till accepts
+    const d=String(raw||'').replace(/\D/g,'');
+    const local=d.length===10&&d.startsWith('65')?d.slice(2):d.slice(-8);
+    return /^[89]\d{7}$/.test(local)?local:'';
+  };
+  const waitLabel=m=>m<1?'just now':m<60?`${m}m waited`:`${Math.floor(m/60)}h${m%60?' '+(m%60)+'m':''} waited`;
+  const paintWaits=()=>document.querySelectorAll('#wlist .wl-wait[data-since]').forEach(el=>{
+    const m=Math.max(0,Math.round((Date.now()-new Date(el.dataset.since).getTime())/60000));
+    el.textContent=waitLabel(m);el.classList.toggle('urgent',m>=20);
+  });
+
+  async function updateWl(id,status){
+    const {error}=await sb.from('waitlist').update({status}).eq('id',id);
+    if(!isCurrent())return false;
+    if(error){fail(error);return false}
+    return true;
+  }
+  /* Seat now → resolve to 'booked' and, when the phone is a usable SG mobile and the role can
+     ring a sale, deep-link into Quick earn pre-filled (consume-once pendingTillPhone). */
+  window.wlSeat=async id=>{
+    const row=currentRows.find(r=>r.id===id);
+    const local=tillLocalMobile(row?.phone);
+    const canTill=!!local&&canReadModule('till')&&canReadModule('clients')&&hasRoleCapability('create_sales');
+    if(!(await updateWl(id,'booked')))return;
+    if(canTill){pendingTillPhone=local;toast('Seated — ring them up');nav('#/till');return}
+    toast('Seated');loadWl();
+  };
+  /* Book instead → resolve to 'booked' and open the appointment form pre-filled when the row is
+     linked to a real client (pendingApptClientId matches the existing #ac option); a walk-in
+     with no client record falls back to plain navigation. */
+  window.wlBook=async id=>{
+    const row=currentRows.find(r=>r.id===id);
+    if(!(await updateWl(id,'booked')))return;
+    if(canBook){
+      if(row?.client_id){pendingApptClientId=row.client_id;toast('Booked — pick a time');nav('#/appointments');return}
+      toast('Booked — add the customer, then set a time');nav('#/appointments');return;
+    }
+    toast('Booked');loadWl();
+  };
+  window.wlCalled=async id=>{if(await updateWl(id,'contacted')){toast('Marked called');loadWl()}};
+  window.wlRemove=async id=>{
+    const row=currentRows.find(r=>r.id===id);
+    if(!confirm(`Remove ${row?.name||'this person'} from the waitlist? They'll drop out of the queue.`))return;
+    if(await updateWl(id,'removed')){toast('Removed');loadWl()}
+  };
+
+  function actionsHtml(w){
+    if(!canWrite)return '';
+    const seat=`<button class="btn sm" onclick="wlSeat('${w.id}')" title="Seat now — record their sale"><span aria-hidden="true">🪑</span><span>Seat now</span></button>`;
+    const book=canBook?`<button class="btn ghost sm" onclick="wlBook('${w.id}')" title="Book an appointment instead"><span aria-hidden="true">📅</span><span>Book</span></button>`:'';
+    const called=w.status==='waiting'?`<button class="btn ghost sm" onclick="wlCalled('${w.id}')" title="Mark as called"><span aria-hidden="true">📞</span><span>Called</span></button>`:'';
+    const remove=`<button class="btn ghost sm wl-x" onclick="wlRemove('${w.id}')" title="Remove from waitlist" aria-label="Remove ${esc(w.name)} from waitlist"><span aria-hidden="true">✕</span></button>`;
+    return seat+book+called+remove;
+  }
+  function rowHtml(w,pos){
+    const mins=Math.max(0,Math.round((Date.now()-new Date(w.created_at).getTime())/60000));
+    const svc=w.services?.name;
+    const bits=[];
+    if(w.phone)bits.push(esc(w.phone));
+    if(svc)bits.push(esc(svc));
+    const pill=w.status==='contacted'?'<span class="pill off">Called</span>':'<span class="pill new">Waiting</span>';
+    const detail=[w.preferred?`Wants: ${esc(w.preferred)}`:'',w.notes?esc(w.notes):''].filter(Boolean).join(' · ');
+    return `<li class="wl-row ${w.status}">
+      <div class="wl-rank" aria-hidden="true">${pos}</div>
+      <div class="wl-main">
+        <div class="wl-name"><b>${esc(w.name)}</b>${pill}</div>
+        <div class="wl-meta muted small">${bits.map((b,i)=>`${i?'<span class="sep">·</span>':''}<span>${b}</span>`).join('')}${bits.length?'<span class="sep">·</span>':''}<span class="wl-wait" data-since="${esc(w.created_at)}" title="Joined ${esc(sgt(w.created_at)||'')} SGT">${waitLabel(mins)}</span></div>
+        ${detail?`<div class="wl-notes muted small">${detail}</div>`:''}
+      </div>
+      <div class="wl-actions">${actionsHtml(w)}</div>
+    </li>`;
+  }
+
+  async function loadWl(){
+    const wlist=$('wlist');if(!wlist)return;
+    // SGT day boundary via the app's helpers: SGT 'today' 00:00 expressed as a UTC instant.
+    const dayStartMs=new Date(sgIso(sgt(new Date().toISOString()).slice(0,10)+'T00:00')).getTime();
+    const dayStartIso=new Date(dayStartMs).toISOString();
+    const {data:rows,error}=await sb.from('waitlist').select('*, services(name)')
+      .eq('business_id',S.biz.id)
+      .or(`status.in.(waiting,contacted),created_at.gte.${dayStartIso}`)
+      .order('created_at',{ascending:true});
+    if(!isCurrent())return;
+    const kpis=$('wlkpis');
+    if(error){
+      if(kpis)kpis.innerHTML='';
+      const denied=error.code==='42501';
+      wlist.innerHTML=`<div class="err" role="alert"><b>${denied?'Access needed':'Could not load the queue'}</b><p style="margin-top:4px">${esc(denied?'Ask an owner for waitlist access.':(error.message||'Please try again.'))}</p></div>${denied?'':'<button class="btn ghost sm" id="wlRetry" style="margin-top:12px">Try again</button>'}`;
+      const rb=$('wlRetry');if(rb)rb.onclick=loadWl;
+      return;
+    }
+    const all=rows||[];
+    const queue=all.filter(r=>r.status==='waiting'||r.status==='contacted'); // oldest-first ranking
+    const today=all.filter(r=>new Date(r.created_at).getTime()>=dayStartMs);
+    const added=today.length;
+    const seated=today.filter(r=>r.status==='booked').length;
+    const removedToday=today.filter(r=>r.status==='removed').length;
+    const conv=added?Math.round(seated/added*100):0;
+    currentRows=queue;
+    if(kpis)kpis.innerHTML=`
+      <div class="card kpi"><div class="l">Waiting now</div><div class="v">${queue.length}</div></div>
+      <div class="card kpi"><div class="l">Added today</div><div class="v">${added}</div></div>
+      <div class="card kpi"><div class="l">Seated today</div><div class="v">${seated}</div></div>
+      <div class="card kpi"><div class="l">Removed today</div><div class="v">${removedToday}</div></div>
+      <div class="card kpi"><div class="l">Converted</div><div class="v">${added?conv+'%':'—'}</div></div>`;
+    if(!queue.length){
+      wlist.innerHTML=CUI.emptyState({iconName:'waitlist',title:'No one waiting',
+        body:canWrite?"When you're fully booked, add a walk-in above so you can win them back later.":'Nobody is in the queue right now.'});
+      return;
+    }
+    wlist.innerHTML=`<ul class="wl-list">${queue.map((w,i)=>rowHtml(w,i+1)).join('')}</ul>`;
+    paintWaits();
+  }
+
+  // Live "Xm waited" ticker — DOM-only refresh, cleaned up when the route is disposed.
+  const ticker=setInterval(()=>{if(!routeMain.isConnected){clearInterval(ticker);return}paintWaits()},30000);
+  routeDispose=()=>clearInterval(ticker);
   loadWl();
 }
 
