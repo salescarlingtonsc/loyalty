@@ -4883,6 +4883,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null){
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
   routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Versioned return-visit rules with immutable reward behavior and grant history.',iconName:'retention',canWrite:isOwner,moduleLabel:'Retention configuration'})}
+    ${draftVersionId?'':'<section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
     ${versionTools}
     ${draftVersionId&&isOwner?`<div class="card" style="margin-bottom:16px"><b>Quick templates</b><div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
       <button class="qbtn" data-t='{"name":"Weekly regular","g":1,"p":7,"rt":"discount_pct","rv":10}'>1 visit / week → 10% off</button>
@@ -4937,6 +4938,12 @@ async function retentionPage(draftVersionId=null,editProgramId=null){
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');retentionPage(draftVersionId)});
     document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!confirm('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');retentionPage(draftVersionId)});
   }
+  /* Playbooks (v50 campaign/holdout/lift engine) live only in the published view — a campaign
+     binds to a PUBLISHED retention version, so it has no meaning while editing a draft. The
+     section renders progressively into #pbHost after the rule editor paints; every async write
+     back into it is guarded by isRetentionCurrent so a late resolve from an abandoned tab is
+     dropped exactly like the rest of this page. */
+  if(!draftVersionId)renderPlaybooks({isOwner,isCurrent:isRetentionCurrent,currentVersion});
 }
 
 /* ---------- Grow: rewards & bring-backs (combined presentation surface) ----------
@@ -5034,6 +5041,493 @@ async function growPage(routedTab,hashParam){
     };
   });
   return mountGrowTab(routedTab);
+}
+
+/* ---------- Bring-back playbooks (v50 campaign / holdout / incremental-lift engine) ----------
+   The measurement layer over the LIVE v50 RPCs. A playbook finds lapsed regulars (the exact
+   Customer-360 "overdue" predicate: >=M net visits AND no qualifying visit in >N days), sends a
+   PUBLISHED retention rule to most of them, holds a deterministic slice back untouched, then
+   proves repeat-visit lift against that control. New DB surface used here is exactly the seven
+   v50 RPCs + owner-read .from() on retention_campaigns (draft criteria) and
+   retention_campaign_members (treatment roster) + one owner-read .from() on
+   retention_program_versions (the only source of the published version id the create RPC needs)
+   + reuse of the clients/sales reads the app already performs for the audience maths.
+   Every async write back into the page is guarded so a late resolve from an abandoned route or a
+   removed modal is dropped. Idempotency: activation reuses a deterministic key per campaign;
+   offer issuance a deterministic key per (campaign,client) — so retries never double-fire. */
+const pbAudienceCache=new Map();   // business_id -> {clients, byClient} (session cache for the preview maths)
+const pbIssuing=new Set();         // campaign_ids with an issuance loop in flight (double-fire guard)
+const PB_STEPS=['Who','Reward','Safety','Review'];
+const pbCur=()=>S.biz?.currency||'SGD';
+function pbStatusChip(st){
+  const m={draft:['new','Draft'],active:['on','Active'],completed:['ok','Completed'],cancelled:['off','Cancelled']};
+  const [cls,label]=m[st]||['','Unknown'];
+  return `<span class="pill ${cls}">${esc(label)}</span>`;
+}
+function pbRewardLabel(v){
+  return v.fulfillment_kind==='credit'?`${money(v.credit_cents||0)} credit`
+    :v.fulfillment_kind==='discount_pct'?`${v.discount_percent||0}% off`
+    :(v.manual_item||'free item');
+}
+function pbWaNumber(phone){
+  const d=String(phone||'').replace(/\D/g,'');
+  if(!d)return '(no phone on file)';
+  return '+'+(d.length===8?('65'+d):d);
+}
+/* Lazy, cached read of every client + qualifying-visit sale for the business. netVisits and
+   lastVisit reproduce Customer 360 byte-for-byte: each counts_as_visit row is +1, its reversal
+   -1; last visit is the max occurred_at over non-reversal visit rows. Owner-only paths call this. */
+async function pbLoadAudience(){
+  const hit=pbAudienceCache.get(S.biz.id);
+  if(hit)return hit;
+  const [clients,sales]=await Promise.all([
+    fetchAllRows(()=>sb.from('clients').select('id,full_name,phone').eq('business_id',S.biz.id)),
+    fetchAllRows(()=>sb.from('sales').select('client_id,occurred_at,counts_as_visit,reversal_of').eq('business_id',S.biz.id).eq('counts_as_visit',true))
+  ]);
+  const byClient=new Map();
+  for(const s of sales){
+    const e=byClient.get(s.client_id)||{net:0,lastIso:''};
+    e.net+=s.reversal_of?-1:1;
+    if(!s.reversal_of&&(s.occurred_at||'')>e.lastIso)e.lastIso=s.occurred_at;
+    byClient.set(s.client_id,e);
+  }
+  const out={clients,byClient};
+  pbAudienceCache.set(S.biz.id,out);
+  return out;
+}
+function pbComputeCandidates(audience,lapsedDays,minVisits){
+  const now=Date.now(),dayMs=86400000,out=[];
+  for(const c of audience.clients){
+    const e=audience.byClient.get(c.id)||{net:0,lastIso:''};
+    const lastDays=e.lastIso?Math.floor((now-new Date(e.lastIso).getTime())/dayMs):null;
+    if(e.net>=minVisits&&lastDays!=null&&lastDays>lapsedDays)
+      out.push({id:c.id,full_name:c.full_name,phone:c.phone,netVisits:e.net,lastVisitDays:lastDays});
+  }
+  out.sort((a,b)=>b.lastVisitDays-a.lastVisitDays); // most overdue first
+  return out;
+}
+async function pbActivateCampaign(campaignId,clientIds){
+  // Deterministic key: idempotent replay on retry, and the SQL advisory lock is per-campaign,
+  // so a re-run of an already-active campaign returns the frozen split instead of re-splitting.
+  return sb.rpc('activate_retention_campaign',{p_business:S.biz.id,p_campaign:campaignId,p_client_ids:clientIds,p_idempotency_key:'v50-activate:'+campaignId});
+}
+
+async function renderPlaybooks(ctx){
+  const host=$('pbHost');
+  if(!host)return;
+  host.innerHTML=`<div class="card"><div style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:18})}<b>Bring-back playbooks</b></div><p class="muted small" role="status" style="margin-top:8px">Loading playbooks…</p></div>`;
+  const {data,error}=await sb.rpc('list_retention_campaigns',{p_business:S.biz.id});
+  if(!ctx.isCurrent())return;
+  if(error){
+    const denied=error.code==='42501'||/authorization|owner or manager/i.test(error.message||'');
+    host.innerHTML=`<div class="card"><div style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:18})}<b>Bring-back playbooks</b></div>
+      ${denied
+        ?`<p class="muted small" style="margin-top:10px;display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:15})}<span>Playbook results need finance viewing. Ask an owner for retention + finance read access.</span></p>`
+        :`<div class="err" style="margin-top:10px" role="alert">Could not load playbooks. ${esc(error.message||'')}</div><button class="btn ghost sm" id="pbRetry" style="margin-top:10px">Try again</button>`}</div>`;
+    if(!denied&&$('pbRetry'))$('pbRetry').onclick=()=>renderPlaybooks(ctx);
+    return;
+  }
+  const campaigns=Array.isArray(data)?data:[];
+  const newBtn=`<button class="btn sm" id="pbNew">${CUI.icon('add',{size:16})}<span>New playbook</span></button>`;
+  host.innerHTML=`<div class="card">
+    <div class="row"><span style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:18})}<b>Bring-back playbooks</b></span><span class="spacer"></span>${(ctx.isOwner&&campaigns.length)?newBtn:''}</div>
+    <p class="muted small" style="margin-top:6px">Win back customers slipping away — and prove the lift against a held-back control group.</p>
+    ${campaigns.length
+      ?`<div id="pbList" style="margin-top:6px">${campaigns.map(pbCampaignRow).join('')}</div>`
+      :CUI.emptyState({iconName:'retention',title:'No playbooks yet',body:'A playbook rewards lapsing regulars, holds a few back untouched, then proves how many extra came back and how much they spent.',actionHtml:ctx.isOwner?newBtn:''})}
+  </div>`;
+  if($('pbNew'))$('pbNew').onclick=()=>openPlaybookWizard(ctx);
+  host.querySelectorAll('details.pb-item').forEach(d=>{
+    const c=campaigns.find(x=>String(x.campaign_id)===d.dataset.cid);
+    if(!c)return;
+    d.addEventListener('toggle',()=>{
+      if(d.open&&!d.dataset.loaded){d.dataset.loaded='1';pbBuildBody(c,$('pb-body-'+c.campaign_id),ctx);}
+    });
+  });
+}
+function pbCampaignRow(c){
+  const facts=[
+    c.audience_size!=null?`${c.audience_size} customer${c.audience_size===1?'':'s'}`:'audience not frozen',
+    `${c.holdout_percent}% held back`,
+    `${c.offers_issued||0} offer${(c.offers_issued||0)===1?'':'s'} sent`
+  ];
+  return `<details class="pb-item" data-cid="${esc(c.campaign_id)}" style="border-bottom:1px solid var(--line)">
+    <summary style="list-style:none;cursor:pointer;display:flex;gap:10px;align-items:center;padding:11px 2px;min-height:44px">
+      <span style="min-width:0;flex:1"><b style="word-break:break-word">${esc(c.name)}</b><span class="muted small" style="display:block;margin-top:3px">${facts.map(esc).join(' · ')}</span></span>
+      ${pbStatusChip(c.status)}
+      <span class="muted" aria-hidden="true">${CUI.icon('forward',{size:16})}</span>
+    </summary>
+    <div class="pb-body" id="pb-body-${esc(c.campaign_id)}" style="padding:2px 2px 16px"></div>
+  </details>`;
+}
+function pbBuildBody(c,el,ctx){
+  if(!el)return;
+  const owner=ctx.isOwner,st=c.status;
+  if(st==='draft'){
+    el.innerHTML=`<p class="muted small">${owner?'Created but not started. Starting freezes today’s matching audience and holds back a control group.':'Draft — waiting for the owner to start it.'}</p>
+      ${owner?`<div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="btn sm" data-pb-activate>${CUI.icon('check',{size:16})}<span>Start now</span></button><button class="btn ghost sm" data-pb-cancel>Cancel</button></div>`:''}`;
+    if(owner){el.querySelector('[data-pb-activate]').onclick=()=>pbActivateDraft(c,ctx);el.querySelector('[data-pb-cancel]').onclick=()=>pbCancel(c,ctx);}
+    return;
+  }
+  const activated=!!c.activated_at;
+  const actionBar=(owner&&st==='active')?`<div class="row" style="flex-wrap:wrap;gap:8px">
+    <button class="btn sm" data-pb-issue>${CUI.icon('redeem',{size:16})}<span>Reach customers</span></button>
+    <button class="btn ghost sm" data-pb-complete>Mark complete</button>
+    <button class="btn ghost sm" data-pb-cancel>Cancel</button></div>`:'';
+  el.innerHTML=`${actionBar}<div class="pb-results" id="pb-res-${esc(c.campaign_id)}" style="margin-top:${actionBar?'12px':'2px'}">${activated?'<p class="muted small" role="status">Loading results…</p>':'<p class="muted small">Cancelled before it started — no audience was frozen.</p>'}</div>`;
+  if(owner&&st==='active'){
+    el.querySelector('[data-pb-issue]').onclick=()=>pbIssueOffers(c,ctx);
+    el.querySelector('[data-pb-complete]').onclick=()=>pbComplete(c,ctx);
+    el.querySelector('[data-pb-cancel]').onclick=()=>pbCancel(c,ctx);
+  }
+  if(activated)pbRenderResults(c,$('pb-res-'+c.campaign_id),ctx);
+}
+async function pbRenderResults(c,el,ctx){
+  if(!el)return;
+  const {data,error}=await sb.rpc('get_campaign_results',{p_campaign:c.campaign_id});
+  if(!el.isConnected||!ctx.isCurrent())return;
+  if(error){
+    const denied=error.code==='42501';
+    el.innerHTML=denied
+      ?`<p class="muted small" style="display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:15})}<span>Results need finance + retention viewing access.</span></p>`
+      :`<div class="err" role="alert">Could not load results. ${esc(error.message||'')}</div><button class="btn ghost sm" data-pb-resretry style="margin-top:8px">Try again</button>`;
+    const r=el.querySelector('[data-pb-resretry]');if(r)r.onclick=()=>pbRenderResults(c,el,ctx);
+    return;
+  }
+  el.innerHTML=pbResultsHtml(data,ctx);
+  const rec=el.querySelector('[data-pb-record]');
+  if(rec)rec.onclick=()=>pbRecordReturns(c,el,ctx);
+}
+function pbResultsHtml(r,ctx){
+  const t=r.treatment||{},h=r.holdout||{};
+  const hasHoldout=(h.members||0)>0;
+  const tRate=(t.return_rate_bps||0)/100,hRate=(h.return_rate_bps||0)/100;
+  const liftPts=(r.net_lift_bps||0)/100;
+  const incReturns=r.incremental_returns,incRev=r.incremental_revenue_cents;
+  const scale=Math.max(tRate,hRate,1);
+  const bar=(label,rate,colour,extra)=>`<div style="margin-top:8px"><div class="row" style="justify-content:space-between"><span class="small">${esc(label)}</span><b class="small">${rate.toFixed(1)}%${extra?` · ${esc(extra)}`:''}</b></div>
+    <div style="height:12px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:3px"><div style="height:100%;width:${Math.max(rate/scale*100,rate>0?4:0)}%;background:${colour}"></div></div></div>`;
+  let headline,headSub,tone;
+  if(!hasHoldout){headline='No hold-back group';headSub=`No control to compare against. Treatment came back at ${tRate.toFixed(1)}%.`;tone='var(--muted)';}
+  else if(incReturns!=null&&incReturns>0){headline=`+${liftPts.toFixed(1)}% more came back`;headSub=`${incReturns} extra customer${incReturns===1?'':'s'} vs the held-back group.`;tone='var(--green)';}
+  else{headline='No measurable lift yet';headSub=liftPts>0?`Early signal +${liftPts.toFixed(1)}%. Record returns as the window runs.`:`Treatment ${tRate.toFixed(1)}% vs held-back ${hRate.toFixed(1)}%.`;tone='var(--muted)';}
+  let verdict;
+  if(hasHoldout&&incReturns!=null&&incReturns>0)verdict=`This playbook brought back <b>${incReturns} extra customer${incReturns===1?'':'s'}</b> and <b>${money(incRev||0)}</b> in sales for <b>${money(r.grant_cost_cents||0)}</b> in rewards.`;
+  else if(hasHoldout)verdict=`No measurable difference yet. Give it time inside the ${r.attribution_window_days}-day window, then record the latest returns.`;
+  else verdict=`Without a hold-back group there is no control — the lift cannot be proven. Add one on the next playbook.`;
+  const windowEnds=r.attribution_ends_at?String(r.attribution_ends_at).slice(0,10):'—';
+  const canRecord=ctx.isOwner&&(r.status==='active'||r.status==='completed');
+  return `<div style="font-size:1.7rem;font-weight:700;color:${tone};line-height:1.15">${esc(headline)}</div>
+    <p class="muted small" style="margin-top:4px">${esc(headSub)}</p>
+    ${bar('Rewarded group came back',tRate,'var(--green)',`${t.returned||0}/${t.members||0}`)}
+    ${hasHoldout?bar('Held-back group came back',hRate,'var(--coral)',`${h.returned||0}/${h.members||0}`):''}
+    <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(118px,1fr))">
+      <div class="card kpi"><div class="l">Offers sent</div><div class="v">${t.offers_issued||0}</div></div>
+      <div class="card kpi"><div class="l">Reward cost</div><div class="v" style="font-size:1.2rem">${money(r.grant_cost_cents||0)}</div></div>
+      <div class="card kpi"><div class="l">Extra sales</div><div class="v" style="font-size:1.2rem">${incRev!=null?money(incRev):'—'}</div></div>
+      <div class="card kpi"><div class="l">Window ends</div><div class="v" style="font-size:1.05rem">${esc(windowEnds)}</div></div>
+    </div>
+    <div class="imp-note" style="background:var(--tint)">${verdict}</div>
+    ${canRecord?`<button class="btn ghost sm" data-pb-record style="margin-top:12px">${CUI.icon('retention',{size:16})}<span>Record latest returns</span></button>`:''}`;
+}
+async function pbRecordReturns(c,el,ctx){
+  const btn=el.querySelector('[data-pb-record]');
+  if(btn){btn.disabled=true;btn.querySelector('span').textContent='Recording…';}
+  const {data,error}=await sb.rpc('record_campaign_returns',{p_business:S.biz.id,p_campaign:c.campaign_id});
+  if(error){if(btn){btn.disabled=false;btn.querySelector('span').textContent='Record latest returns';}return fail(error);}
+  const n=data?.newly_recorded||0;
+  toast(`${n} new return${n===1?'':'s'} recorded`);
+  pbRenderResults(c,el,ctx);
+}
+async function pbComplete(c,ctx){
+  if(!confirm(`Mark "${c.name}" complete? Results stay viewable, but no new offers can be sent.`))return;
+  const {error}=await sb.rpc('complete_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id});
+  if(error)return fail(error);
+  toast('Playbook completed');
+  if(ctx.isCurrent())renderPlaybooks(ctx);
+}
+async function pbCancel(c,ctx){
+  if(!confirm(`Cancel "${c.name}"? This stops the playbook. Any recorded evidence is kept.`))return;
+  const {error}=await sb.rpc('cancel_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id,p_reason:null});
+  if(error)return fail(error);
+  toast('Playbook cancelled');
+  if(ctx.isCurrent())renderPlaybooks(ctx);
+}
+/* Resume a created-but-not-started draft from the list: re-read its frozen intent (audience
+   criteria), recompute today's matching clients, then activate with the deterministic key. */
+async function pbActivateDraft(c,ctx){
+  const {data:row,error:e1}=await sb.from('retention_campaigns').select('audience_criteria').eq('id',c.campaign_id).eq('business_id',S.biz.id).maybeSingle();
+  if(e1)return fail(e1);
+  const crit=row?.audience_criteria||{};
+  if(crit.segment!=='lapsed')return toast('Open this draft in the wizard to start it');
+  const audience=await pbLoadAudience();
+  const cands=pbComputeCandidates(audience,crit.lapsed_days||45,crit.min_visits||3);
+  if(!cands.length)return toast('No customers currently match this playbook — cancel it or start a fresh one');
+  if(!confirm(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
+  const {error}=await pbActivateCampaign(c.campaign_id,cands.map(x=>x.id));
+  if(error)return fail(error);
+  toast('Playbook started');
+  if(ctx.isCurrent())renderPlaybooks(ctx);
+}
+
+/* Offer issuance: treatment-only. Records one grant per member (idempotent, replay-safe), and —
+   because automated messaging is not live — pairs it with a copyable contact list so the owner
+   reaches people on WhatsApp themselves. Holdout members are never fetched, never attempted. */
+async function pbIssueOffers(c,ctx){
+  const {data:members,error}=await sb.from('retention_campaign_members')
+    .select('client_id,assignment').eq('campaign_id',c.campaign_id).eq('business_id',S.biz.id).eq('assignment','treatment');
+  if(error)return fail(error);
+  if(!members||!members.length)return toast('No treatment customers to reach');
+  const audience=await pbLoadAudience();
+  const byId=new Map(audience.clients.map(x=>[x.id,x]));
+  const targets=members.map(m=>{const info=byId.get(m.client_id)||{};return {client_id:m.client_id,full_name:info.full_name,phone:info.phone};});
+  pbOpenIssueModal(c,targets,ctx);
+}
+function pbContactListText(c,targets){
+  const header=`Bring-back list — ${c.name} (${targets.length} customer${targets.length===1?'':'s'})\nFrenly does not message customers automatically. Reach these people on WhatsApp with your offer.\n\n`;
+  return header+targets.map(t=>`${t.full_name||'Customer'}\t${pbWaNumber(t.phone)}`).join('\n')+'\n';
+}
+function pbOpenIssueModal(c,targets,ctx){
+  const total=targets.length;
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="pbIssueModal" role="dialog" aria-modal="true" aria-labelledby="pbIssueTitle" tabindex="-1"><div class="modal-card" style="max-width:600px">
+    <div class="row"><div><h2 id="pbIssueTitle">Reach the treatment group</h2><p class="muted small">${esc(c.name)} · ${total} customer${total===1?'':'s'} to win back</p></div><span class="spacer"></span><button class="btn ghost sm" id="pbIssueClose">Close</button></div>
+    <div class="imp-note"><b>Messaging isn’t automated yet.</b> "Record offers" logs each offer against the customer so the lift can be measured. To actually reach them, copy the contact list and message them on WhatsApp yourself. Held-back customers are never contacted.</div>
+    <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:8px"><button class="btn ghost sm" id="pbCopyContacts">${CUI.icon('copy',{size:16})}<span>Copy contact list</span></button>
+      <button class="btn" id="pbIssueRun">${CUI.icon('redeem',{size:16})}<span>Record offers for all</span></button></div>
+    <div id="pbIssueProgress" style="margin-top:14px" role="status" aria-live="polite"></div>
+    <div id="pbIssueOutcome" style="margin-top:10px"></div>
+  </div></div>`);
+  const modal=$('pbIssueModal');
+  let deactivate;
+  const close=()=>{deactivate?deactivate():modal.remove();if(ctx.isCurrent())renderPlaybooks(ctx);};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#pbIssueRun'});
+  $('pbIssueClose').onclick=close;
+  $('pbCopyContacts').onclick=()=>{
+    navigator.clipboard.writeText(pbContactListText(c,targets))
+      .then(()=>toast('Contact list copied — paste into WhatsApp or your notes'))
+      .catch(()=>toast('Copy failed — try again'));
+  };
+  async function runIssue(list){
+    if(pbIssuing.has(c.campaign_id))return;
+    pbIssuing.add(c.campaign_id);
+    const runBtn=$('pbIssueRun');if(runBtn)runBtn.disabled=true;
+    const prog=$('pbIssueProgress'),outEl=$('pbIssueOutcome');
+    outEl.innerHTML='';
+    let done=0,ok=0,capped=false;const failed=[];
+    for(const t of list){
+      // Stable per-member key: the DB uniques on (campaign,client) AND (business,key), so a
+      // replay returns the prior grant instead of issuing twice.
+      const {error}=await sb.rpc('issue_campaign_offer',{p_business:S.biz.id,p_campaign:c.campaign_id,p_client:t.client_id,p_idempotency_key:'v50-offer:'+c.campaign_id+':'+t.client_id});
+      done++;
+      if(error){
+        if(error.code==='23514'||/budget cap/i.test(error.message||'')){capped=true;break;}
+        failed.push(t);
+      }else ok++;
+      if(prog)prog.innerHTML=pbProgressBar(done,list.length);
+    }
+    pbIssuing.delete(c.campaign_id);
+    if(runBtn)runBtn.disabled=false;
+    outEl.innerHTML=`<div class="card" style="background:var(--tint);border:none">
+      <b>${ok} offer${ok===1?'':'s'} recorded.</b>
+      ${capped?'<p class="err" style="margin-top:6px">Budget cap reached — stopped before the rest.</p>':''}
+      ${failed.length?`<p class="muted small" style="margin-top:6px">${failed.length} could not be recorded: ${esc(failed.slice(0,6).map(f=>f.full_name||'Customer').join(', '))}${failed.length>6?` and ${failed.length-6} more`:''}.</p><button class="btn ghost sm" id="pbRetryFailed" style="margin-top:8px">Retry failed only</button>`:'<p class="muted small" style="margin-top:6px">Now copy the contact list and message them on WhatsApp.</p>'}
+    </div>`;
+    if($('pbRetryFailed'))$('pbRetryFailed').onclick=()=>runIssue(failed);
+  }
+  $('pbIssueRun').onclick=()=>runIssue(targets);
+}
+function pbProgressBar(done,total){
+  const pct=total?Math.round(done/total*100):0;
+  return `<div class="row" style="justify-content:space-between"><span class="small">Recording offers…</span><b class="small">${done}/${total}</b></div>
+    <div style="height:12px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:4px"><div style="height:100%;width:${pct}%;background:var(--green);transition:width .2s var(--ease)"></div></div>`;
+}
+
+/* Four-step create wizard. Step content is swapped inside one modal; inputs bind live to state so
+   Back/Next never lose a value. The final action creates then activates as a pair under ONE
+   deterministic activation key: a create-succeeded-but-activate-failed partial keeps the campaign
+   id so "Retry start" re-activates the SAME draft rather than creating a second one. */
+function openPlaybookWizard(ctx){
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="pbWizModal" role="dialog" aria-modal="true" aria-labelledby="pbWizTitle" tabindex="-1"><div class="modal-card" style="max-width:640px">
+    <div class="row"><div><h2 id="pbWizTitle">New bring-back playbook</h2><p class="muted small" id="pbWizStepLabel">Loading…</p></div><span class="spacer"></span><button class="btn ghost sm" id="pbWizClose">Close</button></div>
+    <ol id="pbWizSteps" style="display:flex;gap:6px;list-style:none;padding:0;margin:14px 0 4px" aria-hidden="true"></ol>
+    <div id="pbWizBody" style="margin-top:6px"><p class="muted small" role="status">Loading customer data…</p></div>
+    <div id="pbWizNav" class="row" style="margin-top:18px"></div>
+  </div></div>`);
+  const modal=$('pbWizModal');
+  let deactivate;
+  const close=()=>{deactivate?deactivate():modal.remove()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#pbWizClose'});
+  $('pbWizClose').onclick=close;
+  const state={step:0,lapsedDays:45,minVisits:3,candidates:[],audience:null,versions:[],version:null,holdout:10,capDollars:'',windowDays:30,upsideDollars:'',name:'',createdCampaignId:null,busy:false};
+
+  (async()=>{
+    let audience,versions=[];
+    try{
+      const versionsReq=ctx.currentVersion
+        ?sb.from('retention_program_versions').select('id,name,fulfillment_kind,credit_cents,discount_percent,manual_item')
+          .eq('business_id',S.biz.id).eq('config_version_id',ctx.currentVersion).eq('active',true).order('sort')
+        :Promise.resolve({data:[],error:null});
+      const [aud,{data:vs,error:vErr}]=await Promise.all([pbLoadAudience(),versionsReq]);
+      if(vErr)throw vErr;
+      audience=aud;versions=vs||[];
+    }catch(e){
+      if(!modal.isConnected)return;
+      $('pbWizBody').innerHTML=`<div class="err" role="alert">Could not prepare the playbook. ${esc(e.message||String(e))}</div>`;
+      return;
+    }
+    if(!modal.isConnected)return;
+    state.audience=audience;state.versions=versions;
+    state.candidates=pbComputeCandidates(audience,state.lapsedDays,state.minVisits);
+    if(versions.length)state.version=versions[0];
+    state.name=`Bring back lapsed regulars · ${new Date().toISOString().slice(0,10)}`;
+    renderStep();
+  })();
+
+  function treatmentCount(){return Math.round(state.candidates.length*(100-state.holdout)/100)}
+  function expectedCostCents(){return (state.version&&state.version.fulfillment_kind==='credit')?(state.version.credit_cents||0)*treatmentCount():0}
+  function renderStepMeter(){
+    $('pbWizSteps').innerHTML=PB_STEPS.map((s,i)=>`<li style="flex:1;text-align:center;font-size:11px;font-weight:600;padding:6px 4px;border-radius:8px;background:${i===state.step?'var(--tint)':'transparent'};color:${i===state.step?'var(--coral)':i<state.step?'var(--green)':'var(--muted)'}">${i+1}. ${esc(s)}</li>`).join('');
+  }
+  function whoPreview(){
+    const n=state.candidates.length;
+    const names=state.candidates.slice(0,8).map(c=>esc(c.full_name||'Customer')).join(', ');
+    return `<div class="card" style="background:var(--tint);border:none">
+      <div style="font-size:1.5rem;font-weight:700">${n} customer${n===1?'':'s'} match</div>
+      <p class="muted small" style="margin-top:6px">${n?`${names}${n>8?` and ${n-8} more`:''}`:'No customers match yet — widen the days or lower the visit count.'}</p>
+      <p class="muted small" style="margin-top:6px">Regulars with ${state.minVisits}+ past visits and none in over ${state.lapsedDays} days — the same rule a customer profile uses to flag someone as overdue.</p>
+    </div>`;
+  }
+  function rewardInfo(){
+    const v=state.version;if(!v)return '';
+    return `<div class="card" style="background:var(--tint);border:none">
+      <div class="row"><span>Reward sent</span><span class="spacer"></span><b>${esc(pbRewardLabel(v))}</b></div>
+      <div class="row" style="margin-top:6px"><span>Goes to (treatment)</span><span class="spacer"></span><b>${treatmentCount()} customer${treatmentCount()===1?'':'s'}</b></div>
+      <div class="row" style="margin-top:6px"><span>Expected reward cost</span><span class="spacer"></span><b>${v.fulfillment_kind==='credit'?money(expectedCostCents()):'No direct credit cost'}</b></div>
+    </div>`;
+  }
+  function stepWho(){
+    return `<p class="muted small">Find regulars who have stopped coming.</p>
+      <div class="split">
+        <div><label for="pbLapsed">No visit in more than (days)</label><input id="pbLapsed" type="number" min="1" max="365" value="${state.lapsedDays}"></div>
+        <div><label for="pbMinV">At least (past visits)</label><input id="pbMinV" type="number" min="1" max="99" value="${state.minVisits}"></div>
+      </div>
+      <div id="pbWhoPreview" style="margin-top:12px"></div>`;
+  }
+  function stepReward(){
+    if(!state.versions.length)
+      return `<div class="imp-note"><b>No published bring-back rule yet.</b> A playbook sends one of your published rules as its offer. Publish a Bring-back rule below first, then come back.</div>`;
+    return `<label for="pbVersion">Which reward do we send?</label>
+      <select id="pbVersion">${state.versions.map(v=>`<option value="${esc(v.id)}" ${state.version&&state.version.id===v.id?'selected':''}>${esc(v.name)} — ${esc(pbRewardLabel(v))}</option>`).join('')}</select>
+      <div id="pbRewardInfo" style="margin-top:10px"></div>
+      <label for="pbUpside" style="margin-top:12px">Sales you hope to win back (optional, ${esc(pbCur())})</label>
+      <input id="pbUpside" type="number" min="0" step="0.01" value="${esc(state.upsideDollars)}" placeholder="e.g. 500">`;
+  }
+  function stepSafety(){
+    return `<label for="pbHoldout">Hold back for proof (%)</label>
+      <input id="pbHoldout" type="number" min="0" max="90" value="${state.holdout}">
+      <p class="muted small" style="margin-top:6px">We hold some customers back and send them nothing, so you can SEE the difference the campaign made. 10% is a good default.</p>
+      <div class="split" style="margin-top:12px">
+        <div><label for="pbCap">Budget cap (${esc(pbCur())}, 0 = none)</label><input id="pbCap" type="number" min="0" step="0.01" value="${esc(state.capDollars)}"></div>
+        <div><label for="pbWindow">Measure returns for (days)</label><input id="pbWindow" type="number" min="1" max="365" value="${state.windowDays}"></div>
+      </div>
+      <p class="muted small" style="margin-top:8px">A customer counts as "came back" if they make a real visit within the window after the playbook starts.</p>`;
+  }
+  function stepReview(){
+    const v=state.version,treat=treatmentCount(),hold=state.candidates.length-treat;
+    return `<label for="pbName">Playbook name</label><input id="pbName" value="${esc(state.name)}" maxlength="120">
+      <div class="card" style="margin-top:12px">
+        <div class="row"><span>Audience</span><span class="spacer"></span><b>${state.candidates.length} lapsed regular${state.candidates.length===1?'':'s'}</b></div>
+        <div class="row" style="margin-top:6px"><span>Get the offer</span><span class="spacer"></span><b>${treat} customer${treat===1?'':'s'}</b></div>
+        <div class="row" style="margin-top:6px"><span>Held back (proof)</span><span class="spacer"></span><b>${hold} · ${state.holdout}%</b></div>
+        <div class="row" style="margin-top:6px"><span>Offer</span><span class="spacer"></span><b>${v?esc(pbRewardLabel(v)):'—'}</b></div>
+        <div class="row" style="margin-top:6px"><span>Expected reward cost</span><span class="spacer"></span><b>${v&&v.fulfillment_kind==='credit'?money(expectedCostCents()):'No direct credit cost'}</b></div>
+        ${state.upsideDollars&&parseFloat(state.upsideDollars)>0?`<div class="row" style="margin-top:6px"><span>Sales you hope to win back</span><span class="spacer"></span><b>${money(Math.round(parseFloat(state.upsideDollars)*100))}</b></div>`:''}
+        <div class="row" style="margin-top:6px"><span>Measure for</span><span class="spacer"></span><b>${state.windowDays} days</b></div>
+        ${state.capDollars&&parseFloat(state.capDollars)>0?`<div class="row" style="margin-top:6px"><span>Budget cap</span><span class="spacer"></span><b>${money(Math.round(parseFloat(state.capDollars)*100))}</b></div>`:''}
+      </div>
+      <p class="muted small" style="margin-top:10px">Starting freezes this audience and splits the hold-back group now. You’ll reach the treatment group from the playbook’s "Reach customers" action.</p>
+      <div id="pbLaunchOutcome" style="margin-top:8px"></div>`;
+  }
+  function wireStep(){
+    if(state.step===0){
+      const upd=()=>{
+        state.lapsedDays=Math.max(1,Math.min(365,parseInt($('pbLapsed').value||'0')||45));
+        state.minVisits=Math.max(1,Math.min(99,parseInt($('pbMinV').value||'0')||3));
+        state.candidates=pbComputeCandidates(state.audience,state.lapsedDays,state.minVisits);
+        $('pbWhoPreview').innerHTML=whoPreview();
+        const nx=$('pbNext');if(nx)nx.disabled=!state.candidates.length;
+      };
+      $('pbLapsed').oninput=upd;$('pbMinV').oninput=upd;$('pbWhoPreview').innerHTML=whoPreview();
+    }else if(state.step===1&&state.versions.length){
+      $('pbVersion').onchange=()=>{state.version=state.versions.find(v=>v.id===$('pbVersion').value)||state.versions[0];$('pbRewardInfo').innerHTML=rewardInfo()};
+      $('pbUpside').oninput=()=>{state.upsideDollars=$('pbUpside').value};
+      $('pbRewardInfo').innerHTML=rewardInfo();
+    }else if(state.step===2){
+      $('pbHoldout').oninput=()=>{state.holdout=Math.max(0,Math.min(90,parseInt($('pbHoldout').value||'0')||0))};
+      $('pbCap').oninput=()=>{state.capDollars=$('pbCap').value};
+      $('pbWindow').oninput=()=>{state.windowDays=Math.max(1,Math.min(365,parseInt($('pbWindow').value||'0')||30))};
+    }else if(state.step===3){
+      $('pbName').oninput=()=>{state.name=$('pbName').value};
+    }
+  }
+  function renderNav(){
+    const nav=$('pbWizNav');if(!nav)return;
+    const back=state.step>0?`<button class="btn ghost sm" id="pbBack">Back</button>`:'';
+    let right;
+    if(state.step<3){
+      const blocked=(state.step===0&&!state.candidates.length)||(state.step===1&&!state.versions.length);
+      right=`<button class="btn" id="pbNext" ${blocked?'disabled':''}>Next</button>`;
+    }else{
+      right=`<button class="btn" id="pbLaunch">${CUI.icon('check',{size:16})}<span>${state.createdCampaignId?'Retry start':'Create & start'}</span></button>`;
+    }
+    nav.innerHTML=`${back}<span class="spacer"></span>${right}`;
+    if($('pbBack'))$('pbBack').onclick=()=>{state.step--;renderStep()};
+    if($('pbNext'))$('pbNext').onclick=()=>{state.step++;renderStep()};
+    if($('pbLaunch'))$('pbLaunch').onclick=launch;
+  }
+  function renderStep(){
+    renderStepMeter();
+    $('pbWizStepLabel').textContent=`Step ${state.step+1} of 4 — ${PB_STEPS[state.step]}`;
+    $('pbWizBody').innerHTML=[stepWho,stepReward,stepSafety,stepReview][state.step]();
+    wireStep();renderNav();
+  }
+  function resetLaunch(label){const b=$('pbLaunch');if(b){b.disabled=false;b.querySelector('span').textContent=label}}
+  async function launch(){
+    if(state.busy)return;
+    if(!state.version)return toast('Pick a reward first');
+    if(!state.candidates.length)return toast('No customers match the audience');
+    state.busy=true;
+    const b=$('pbLaunch');if(b){b.disabled=true;b.querySelector('span').textContent='Starting…'}
+    const out=$('pbLaunchOutcome');
+    const name=(state.name||'').trim()||`Bring back lapsed regulars · ${new Date().toISOString().slice(0,10)}`;
+    const clientIds=state.candidates.map(c=>c.id);
+    const criteria={segment:'lapsed',lapsed_days:state.lapsedDays,min_visits:state.minVisits,computed_at:new Date().toISOString()};
+    const capCents=Math.round((parseFloat(state.capDollars)||0)*100);
+    const expUpside=state.upsideDollars?Math.round(parseFloat(state.upsideDollars)*100):null;
+    try{
+      if(!state.createdCampaignId){
+        const {data,error}=await sb.rpc('create_retention_campaign',{
+          p_business:S.biz.id,p_program_version_id:state.version.id,p_name:name,p_audience_criteria:criteria,
+          p_holdout_percent:state.holdout,p_budget_cap_cents:capCents,p_attribution_window_days:state.windowDays,
+          p_expected_cost_cents:expectedCostCents(),p_expected_upside_cents:expUpside,p_explanation:null});
+        if(error){out.innerHTML=`<div class="err" role="alert">Could not create: ${esc(error.message||'')}</div>`;resetLaunch('Create & start');state.busy=false;return;}
+        state.createdCampaignId=data.campaign_id;
+      }
+      const {error:actErr}=await pbActivateCampaign(state.createdCampaignId,clientIds);
+      if(actErr){
+        out.innerHTML=`<div class="err" role="alert"><b>Created, but couldn’t start.</b> ${esc(actErr.message||'')} It’s saved as a draft — press Retry start.</div>`;
+        resetLaunch('Retry start');state.busy=false;
+        if(ctx.isCurrent())renderPlaybooks(ctx);
+        return;
+      }
+      toast('Playbook started — audience frozen and split');
+      close();
+      if(ctx.isCurrent())renderPlaybooks(ctx);
+    }catch(e){
+      out.innerHTML=`<div class="err" role="alert">${esc(e.message||String(e))}</div>`;
+      resetLaunch(state.createdCampaignId?'Retry start':'Create & start');state.busy=false;
+    }
+  }
 }
 
 /* ---------- referrals ---------- */
