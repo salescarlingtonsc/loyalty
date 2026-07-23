@@ -1,7 +1,11 @@
-# Frenly Program Studio — architecture (revision 4)
+# Frenly Program Studio — architecture (revision 4, PS-0 active)
 
-Status: **REVISED PROPOSAL — awaiting independent review round-3 verdict + owner
-approval. No implementation until the review returns PASS.**
+Status: **Independent architecture review: PASS (round 3). Owner approval: PS-0
+approved (2026-07-23) — PS-1A/1B/1C, stored-value financial execution, production
+rollout, and customer-value movement through the new engine are NOT yet
+authorized. Implementation status: PS-0 (contracts + exhaustive writer audit) in
+progress. PS-1A does not begin until PS-0 receives its own PASS verdict on the
+exact final PS-0 commit.**
 Author: Fable 5. Date: 2026-07-23. History: rev 2 closed the 14 owner-review
 defects → review round 1 **FAIL** (B1–B3 blocking, S1–S7, N1–N3). Rev 3 closed
 those → review round 2 **FAIL (narrowed)**: all 14 items PASS, but two new
@@ -27,7 +31,7 @@ CHAGEE screenshots remain experience reference only — no branding or copy repr
 | 3 | No event envelope; sync/async undistinguished; comms could conceptually couple to checkout | Immutable `domain_events` envelope + `event_outbox`; hard split of synchronous atomic effects vs asynchronous outbox effects; uniqueness on (event_id, rule_id, effect_index) | Replayability, exactly-once effect execution, checkout can never be rolled back by a notification failure (§6) |
 | 4 | Adapters were projection-only with no execution-authority model → double-grant risk during migration | **Benefit registry** with `source_engine`, `execution_authority`, `canonical_benefit_key`, `cutover_status`; shadow evaluation → comparison → single-authority cutover → rollback, per engine | A legacy trigger and the studio executor can never both grant the same benefit — enforced by registry check + canonical-key uniqueness, not by discipline (§7) |
 | 5 | Rules were "schema-validated jsonb" with no compiler contract | Rule compiler: `rule_schema_version`, per-event field/operator/effect allowlists, publish-time validation, canonical JSON, deterministic sha256 rule hash, complexity + active-rule limits, compiled runtime table, no SQL, no client-supplied prices | Deterministic, bounded, injection-proof rule execution (§8) |
-| 6 | Checkout evaluation token underspecified; no atomicity story; financial effects could ship before checkout unification | Server-side single-use short-TTL token bound to business/branch/customer/server-resolved lines/qty/cart-hash/config-version; atomic revalidation in the sale transaction; full discount/tax/rounding/split-tender ordering; **hard gate: PS-1C cannot ship until the Unified Checkout Kernel audit passes across all seven sale surfaces** | Financial effects only through one proven kernel (§9) |
+| 6 | Checkout evaluation token underspecified; no atomicity story; financial effects could ship before checkout unification | Server-side single-use short-TTL token bound to business/branch/customer/server-resolved lines/qty/cart-hash/config-version; atomic revalidation in the sale transaction; full discount/tax/rounding/split-tender ordering; **hard gate: PS-1C cannot ship until the Unified Checkout Kernel audit passes across every sale, tender, fulfilment and customer-value writer surface discovered by the exhaustive PS-0 writer audit** | Financial effects only through one proven kernel (§9) |
 | 7 | Economics could double-count across effect log / grants / redemptions / birthday / campaigns / SV bonus; points exposure used min credit-per-point | Every effect references **exactly one canonical fulfilment record** (unique); realized cost computed only from fulfilments; six separated reporting measures; cohort-based low/base/high points exposure; nothing labeled an accounting liability until a policy is selected and reviewed ⚖️ | Single-count by construction; honest estimates with confidence (§10) |
 | 8 | Budget caps refused effects but had no commitment semantics → an issued promise could vanish | Commitment matrix per effect class + locked `budget_periods` counters; reservations at grant; issued entitlements keep their reservation forever — exhaustion stops NEW grants only | A promise made to a customer is never revoked by someone else's redemption (§11) |
 | 9 | Tier qualification didn't specify which point sources qualify, threshold-change policy, demotion/grace, entry-reward frequency | Qualifying provenance stamped at write (`qualifying_amount` per ledger entry, per-source defaults, pre-multiplier); explicit threshold-change/grandfathering/demotion/grace/entry-reward/requalification/reversal policies | Deterministic tiering under config change and reversal (§12) |
@@ -51,7 +55,7 @@ CHAGEE screenshots remain experience reference only — no branding or copy repr
 | **S4** proposed outbox vs live v33 `customer_notification_outbox` unreconciled | **One outbox authority**: PS-1B generalizes the v33 table (additive `event_id`/`consumer` columns); v33 consumers become one consumer family; no second outbox is ever created | §6 |
 | **S5** `budget_periods` vs v50's sum()-based cap: dual authority + race | `budget_periods` (row-locked counters) is THE authority for studio effects from PS-1B; v50 campaigns keep their legacy mechanism under legacy execution-authority until that engine's cutover migrates its cap onto `budget_periods` — never two counters over one budget | §11 |
 | **S6** `qualifying_amount` units for stamps businesses | Qualification is denominated in the model's earn unit (points for points models, stamps for stamps); thresholds interpret units per model; backfill maps historical earns per model — documented | §12 |
-| **S7** "seven surfaces" undercounts real sale/value writers | The kernel-audit scope is enumerated from the real writer list (both till paths, cart, appointment completion, packages sell+consume, memberships enroll+renew, gift cards issue+redeem, credit tender, deposits/no-show fees, entitlement redemptions); PS-0's audit output is authoritative and §9 lists this as the minimum | §9 |
+| **S7** a fixed surface count undercounted real sale/value writers | The kernel-audit scope is **every sale, tender, fulfilment and customer-value writer surface discovered by the exhaustive PS-0 writer audit** — the audit output is authoritative and never stops at a predetermined number; §9 lists known writers as a floor only | §9 |
 | **N1** ERD implied 1:1 effect↔fulfilment even for non-value effects | Fulfilment reference is mandatory for value-moving/promising effects, absent for `display_perk`/suppressed outcomes; uniqueness applies when present | §3, §10 |
 | **N2/N3** not-yet-existing tables unlabeled; branch-price safety rationale | New-in-PS-x labels added; token safety under branch overrides rests on server re-resolution at revalidation (config version + price re-resolution both checked) | §3, §9 |
 
@@ -219,6 +223,30 @@ traces to its source operation, so a refund op targets exactly one top-up's lots
 `floor(op_bonus_remaining × X / op_paid_remaining)` — consistent with the
 paid-only-cash rule; cash received is exactly X, never a blended "value" figure.
 
+**Repeated partial-refund rounding requirements (owner correction, PS-0 —
+each is a numbered contract-test case):**
+1. Repeated 1-cent and small partial refunds are permitted and each follows the
+   formula above; the floor-based clawback may lag proportionality between steps
+   but never exceeds it cumulatively.
+2. The **final** refund of the paid remainder always claws back the **entire**
+   bonus remaining of that operation — closing the operation leaves **no stranded
+   bonus cent** (the terminal clawback is `bonus_remaining`, not the floor formula).
+3. Cumulative cash refunded per operation can never exceed that operation's
+   original paid value: enforced by `X ≤ paid_remaining` at every step plus the
+   movement-sum invariant — not by client arithmetic.
+4. After every movement, `Σ movements per lot ≡ cached remaining` (the locked-cache
+   reconciliation) — asserted per step in the suite and by the nightly sweep.
+5. Determinism under retries: every refund op carries an idempotency key; a lost
+   response + retry replays the same movement set (op-ledger pattern), byte-equal.
+6. Determinism under concurrency: refund ops on one customer's stored value
+   serialize on a per-customer advisory lock; two concurrent refund attempts
+   yield exactly one movement set and one replay, never a double payout; a
+   concurrent spend and refund serialize the same way, so allocation and refund
+   always observe consistent remainders.
+7. A repeated-partial-refund sequence always terminates: paid remaining is a
+   strictly decreasing non-negative integer, and step 2 guarantees the bonus
+   reaches exactly zero when paid does.
+
 Purchase accounting unchanged from rev 1, made concrete (rev 3, S1): **PS-2's
 migration explicitly extends the `sales.kind` CHECK with `'topup'` and adds the
 `app.sale_policy_defaults()` row** (`counts_as_revenue=false, counts_as_visit=false,
@@ -234,6 +262,24 @@ reported as paid (deferred revenue) ∥ bonus (promotional) — separately, alwa
 `config_version_id`, `payload` jsonb, `payload_hash` (sha256). Producers: the sale
 pipeline, SV ops, tier engine, cron sweeps, customer RPCs — each writes its event in
 the same transaction as its source fact.
+
+**Canonical event identity (owner correction, PS-0):** a random `event_id` is
+identity for *referencing* an event, never for *deduplicating* one. Every event
+also carries a **producer identity** and the table enforces
+`UNIQUE(business_id, event_type, source_operation_id, schema_version)` — the same
+source fact can never be emitted twice as two economically equivalent events under
+fresh UUIDs. `source_operation_id` is always deterministic from the source fact:
+for transactional producers it is the source row/operation key (sale id, SV
+operation id, redemption id); for **scheduled and period-based producers it is a
+deterministic source key**, e.g. `sweep:{job}:{business}:{sgt_date}` or
+`period:{rule}:{client}:{period_key}` — a re-run of the same sweep or period
+produces the same producer identity and is swallowed by the constraint. Replay
+proof (a PS-0 contract test): re-invoking any producer with the same source fact
+inserts zero new rows (`on conflict do nothing` + the effect-side
+`(event_id, rule_id, effect_index)` uniqueness means neither a duplicate event nor
+a duplicate effect can exist); schema upgrades are NOT a dedup bypass — emitting
+under a new `schema_version` for an already-emitted source fact requires an
+explicit correction event per the correction rules, never a silent re-emit.
 
 **Effect execution uniqueness:** `rule_effect_log` gains
 `unique(event_id, rule_id, effect_index)` — an event can drive each effect of each
@@ -502,7 +548,7 @@ test asserts zero schema changes and zero code deltas were required.
 
 | Phase | Contents | Financial execution? | Exit / acceptance tests |
 |---|---|---|---|
-| **PS-0** | Contracts only: event registry + envelope schema, refund model + matrix, value-domain reconciliation query, economics measure definitions, benefit-registry design, **Unified Checkout Kernel audit** (map all seven sale surfaces), accounting-classification worksheet ⚖️ | none | Contracts review PASS; kernel audit report names every entrypoint + gap list; reconciliation query green on fixtures |
+| **PS-0** | Contracts only: event registry + envelope schema + canonical event identity, refund model + matrix, value-domain reconciliation query, economics measure definitions, benefit-registry design, **exhaustive transaction-writer audit** (every sale, tender, fulfilment and customer-value writer surface — the audit output is authoritative and never stops at a predetermined count), accounting-classification worksheet ⚖️ | none | Contracts review PASS; writer audit is repeatable and complete (discovery re-run diffs clean); reconciliation query green on fixtures; identity/uniqueness/refund-arithmetic contract tests green; no financial executor exists |
 | **PS-1A** | Adapter views + benefit registry (all `legacy`); rule tables + compiler + publish validation; Studio overview (read-only) + draft authoring; NO executor | **none** | Adapters byte-match native config for fixtures; compiler rejects out-of-allowlist rules; hash determinism; overview shows every engine uniformly; drafts publish/immutability hold |
 | **PS-1B** | `domain_events` + **NEW `event_outbox`** (sole delivery-state authority; the v33 notification evidence store is untouched — B4); **`benefit_fulfilments` registry + per-engine adoption inserts (authority-holder-only writes — B5)**; the additive `loyalty_ledger_write_guard` studio scopes (S3); entitlement execution (non-checkout effects: occasions, Member's-Day claimables, tier-entry via shadow) + budget reservation; shadow evaluation + comparator for one engine (referral) | entitlements only (no checkout money) | (event,rule,effect_index) uniqueness under replay; canonical-key double-fulfil attempt fails at the constraint; outbox failure never touches source txns; dead-letter surfaces; promise-keeping under exhausted budget; shadow diff = 0 for referral fixture week |
 | **PS-1C** | Checkout kernel extension (signed discount lines) + `checkout_evaluations` token + atomic revalidation + sync discount effects | **yes — gated on PS-0 kernel audit closed + PS-1B green** | Seven-surface kernel replay reconciles; token single-use/TTL/stale paths; discount order+rounding conservation; split tender; budget atomic commit |
