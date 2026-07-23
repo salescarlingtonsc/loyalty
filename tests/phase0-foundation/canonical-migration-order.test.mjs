@@ -109,12 +109,12 @@ test('materializer creates one byte-preserving 88-file chain and deterministic m
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 43);
-  assert.equal(manifest.itemCount, 88);
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 88);
+  assert.equal(manifest.pendingCount, 44);
+  assert.equal(manifest.itemCount, 89);
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 89);
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
-  assert.equal(manifest.items.at(-1).name, 'frenly_v54_f2_write_hardening');
+  assert.equal(manifest.items.at(-1).name, 'frenly_v55_ps1a_authoring');
   const recovery = JSON.parse(await readFile(path.join(root, recoveryRelativePath), 'utf8'));
   assert.equal(recovery.migrations[0].statementCount, 3);
   assert.equal(recovery.migrations[0].statements.length, 3);

@@ -1346,6 +1346,10 @@
       "reason": "browser RPC 'decide_change' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
+      "id": "browser.rpc:app/index.html:delete_program_rule_draft",
+      "reason": "browser RPC 'delete_program_rule_draft' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+    },
+    {
       "id": "browser.rpc:app/index.html:generate_retention_recommendation",
       "reason": "browser RPC 'generate_retention_recommendation' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
@@ -1392,6 +1396,14 @@
     {
       "id": "browser.rpc:app/index.html:get_notifications",
       "reason": "browser RPC 'get_notifications' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_program_rules_draft",
+      "reason": "browser RPC 'get_program_rules_draft' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_programs_overview",
+      "reason": "browser RPC 'get_programs_overview' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
       "id": "browser.rpc:app/index.html:get_reports_summary",
@@ -1456,6 +1468,10 @@
     {
       "id": "browser.rpc:app/index.html:save_module_template",
       "reason": "browser RPC 'save_module_template' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+    },
+    {
+      "id": "browser.rpc:app/index.html:save_program_rule_draft",
+      "reason": "browser RPC 'save_program_rule_draft' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
       "id": "browser.rpc:app/index.html:save_referral_program",
@@ -1524,6 +1540,10 @@
     {
       "id": "browser.rpc:app/index.html:super_admin_list_businesses",
       "reason": "browser RPC 'super_admin_list_businesses' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+    },
+    {
+      "id": "browser.rpc:app/index.html:validate_program_rule",
+      "reason": "browser RPC 'validate_program_rule' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
       "id": "browser.write:app/index.html:booking_requests:UPDATE",

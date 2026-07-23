@@ -1,15 +1,21 @@
-// PS-0 no-executor static guard — proves NO Program-Studio financial-execution
-// surface exists yet, and turns "someone landed executor schema" into a red test.
+// PS-1A no-executor static guard — proves the AUTHORING/PROJECTION/VALIDATION set
+// is permitted while EVERY Program-Studio financial-EXECUTION surface stays absent,
+// and turns "someone landed executor schema" into a red test.
 //
 // The guard is driven by the machine-readable marker docs/design/ps0/PS-GATES.md:
 //   - it reads which phases are AUTHORIZED,
-//   - it reads which executor artifacts / guard scopes each phase introduces,
+//   - it reads the PS-1A AUTHORING ARTIFACTS (program_rules*, benefit_registry,
+//     rule_schema_versions, allowlist tables) — permitted once PS-1A is authorized,
+//   - it reads the PS-1B+ EXECUTOR ARTIFACTS / guard scopes,
 //   - and it asserts that any artifact whose phase is NOT authorized is ABSENT from
 //     supabase/migrations/ AND db/migrations/.
 //
-// Per the owner's PS-0 approval, ONLY PS-0 is authorized, so every executor artifact
-// must be absent. The moment an engineer lands executor schema without flipping the
-// PS-gate marker for its phase, this test fails — the documented tripwire.
+// Owner authorization of record: PS-0 and PS-1A are authorized (PS-1A = authoring/
+// projection/validation only, no executor). PS-1B+ remain unauthorized, so every
+// EXECUTOR artifact must be absent, no studio-executor ledger-guard scope may exist,
+// and no migration may mutate a legacy benefit-family's execution authority. The
+// moment an engineer lands executor schema without flipping the PS-gate marker for
+// its phase, this test fails — the documented tripwire.
 
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
@@ -58,15 +64,42 @@ function parseGateTable(md, heading) {
   return rows;
 }
 
-test('PS-GATES marker authorizes PS-0 ONLY (no executor phase is authorized yet)', async () => {
+test('PS-GATES marker authorizes PS-0 and PS-1A (no EXECUTOR phase is authorized yet)', async () => {
   const md = await read('docs/design/ps0/PS-GATES.md');
   const phases = Object.fromEntries(
     parseGateTable(md, 'AUTHORIZED PHASES').map(([phase, auth]) => [phase, auth.toLowerCase()]),
   );
   assert.equal(phases['PS-0'], 'yes', 'PS-0 must be authorized');
-  for (const p of ['PS-1A', 'PS-1B', 'PS-1C', 'PS-2', 'PS-3', 'PS-4', 'PS-5']) {
+  assert.equal(phases['PS-1A'], 'yes',
+    'PS-1A is authorized for authoring/projection/validation only (no executor)');
+  for (const p of ['PS-1B', 'PS-1C', 'PS-2', 'PS-3', 'PS-4', 'PS-5']) {
     assert.equal(phases[p], 'no',
       `${p} must remain unauthorized until the owner approves it — flipping this is a deliberate act`);
+  }
+});
+
+test('PS-1A AUTHORING artifacts are permitted and present once PS-1A is authorized', async () => {
+  const md = await read('docs/design/ps0/PS-GATES.md');
+  const authorized = Object.fromEntries(
+    parseGateTable(md, 'AUTHORIZED PHASES').map(([phase, auth]) => [phase, auth.toLowerCase() === 'yes']),
+  );
+  const authoring = parseGateTable(md, 'AUTHORING ARTIFACTS').map(([artifact, phase]) => ({ artifact, phase }));
+  assert.deepEqual(
+    authoring.map((a) => a.artifact).sort(),
+    ['benefit_registry', 'program_rules', 'program_rules_compiled',
+      'rule_condition_allowlist', 'rule_effect_allowlist', 'rule_schema_versions'],
+    'the PS-1A authoring artifact set must be exactly these execution-free surfaces',
+  );
+  for (const { phase } of authoring) assert.equal(phase, 'PS-1A', 'authoring artifacts belong to PS-1A');
+  assert.equal(authorized['PS-1A'], true, 'PS-1A must be authorized for the authoring set to land');
+
+  // Permitted AND present: each authoring table exists in the migration corpus. If
+  // PS-1A is ever de-authorized, this and the marker must be reverted together.
+  const corpus = await readMigrationCorpus();
+  for (const { artifact } of authoring) {
+    const createRe = new RegExp(`create\\s+table\\s+(if\\s+not\\s+exists\\s+)?(public\\.)?${artifact}\\b`, 'i');
+    const present = Object.values(corpus).some((sql) => createRe.test(sql));
+    assert.ok(present, `authoring artifact '${artifact}' must be present once PS-1A has landed`);
   }
 });
 
@@ -131,6 +164,21 @@ test('no Program-Studio executor RPC / function surface exists yet', async () =>
   for (const fn of forbiddenFns) {
     const re = new RegExp(`function\\s+(public|app)\\.${fn}\\b`, 'i');
     const offenders = Object.entries(corpus).filter(([, sql]) => re.test(sql)).map(([f]) => f);
-    assert.deepEqual(offenders, [], `executor function '${fn}' must not exist at PS-0`);
+    assert.deepEqual(offenders, [], `executor function '${fn}' must not exist at PS-1A`);
+  }
+});
+
+test('no migration mutates a legacy benefit-family execution authority (PS-1A metadata-only)', async () => {
+  const corpus = await readMigrationCorpus();
+  // benefit_registry is metadata-only in PS-1A: seeded once, then append-only.
+  // Execution-authority transitions (legacy_trigger -> studio_executor) are future
+  // PS-1B+ cutover migrations, not PS-1A. Any UPDATE of the authority column is the
+  // tripwire for an out-of-phase cutover.
+  for (const [file, sql] of Object.entries(corpus)) {
+    assert.doesNotMatch(
+      sql,
+      /update\s+(public\.)?benefit_registry\s+set[\s\S]{0,240}?execution_authority/i,
+      `${file}: benefit_registry.execution_authority must not be mutated while PS-1A is the highest authorized phase`,
+    );
   }
 });

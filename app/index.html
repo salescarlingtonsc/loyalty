@@ -321,6 +321,36 @@ tr.click:hover td{background:#FBFAF8}
 .retention-taxonomy-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;min-width:0;padding:8px 0;border-bottom:1px solid var(--line)}
 .retention-taxonomy-copy{display:flex;align-items:center;flex:1 1 180px;flex-wrap:wrap;gap:8px;min-width:0}.retention-taxonomy-copy>span:first-child{min-width:0;overflow-wrap:anywhere}
 .retention-taxonomy-actions{display:flex;align-items:center;flex:0 1 auto;flex-wrap:wrap;gap:8px;min-width:0}
+/* Program Studio (PS-1A authoring surface) — theme-aware via existing tokens only */
+.studio-row{padding:12px 0;border-bottom:1px solid var(--line)}
+.studio-row:last-child{border-bottom:none}
+.studio-row-main{min-width:0}
+.studio-authoring-note{font-style:italic;color:var(--muted)}
+.studio-tech{margin-top:8px}
+.studio-tech summary{cursor:pointer;color:var(--coral);font-size:12px;font-weight:600;min-height:32px;display:flex;align-items:center}
+.studio-tech code{overflow-wrap:anywhere}
+.studio-editor{border:1px solid var(--coral)}
+.studio-step{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;margin:12px 0}
+.studio-step legend{font-size:12px;font-weight:700;color:var(--muted);padding:0 6px;text-transform:uppercase;letter-spacing:.05em}
+.stCond,.stEff{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--hair)}
+.stCond:last-child,.stEff:last-child{border-bottom:none}
+.stCond>select,.stEff>select{flex:0 1 auto;min-width:130px;min-height:44px}
+.edCondValCell,.edEffValCell{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1 1 170px;min-width:0}
+.edCondValCell input,.edCondValCell select,.edEffValCell input,.edEffValCell select{min-width:96px;min-height:44px}
+.edEffLbl{font-size:12px;color:var(--muted)}
+.edDowLbl{display:inline-flex;align-items:center;gap:5px;font-size:13px;min-height:44px;padding:6px 10px;border:1px solid var(--line);border-radius:100px}
+.studio-advanced{margin-top:12px;border-top:1px dashed var(--line);padding-top:8px}
+.studio-advanced summary{cursor:pointer;font-weight:600;color:var(--coral);min-height:44px;display:flex;align-items:center}
+.studio-canon{margin-top:10px}
+.studio-pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--tint);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px;font-size:11.5px;max-height:220px;overflow:auto;margin-top:6px}
+.studio-preview{margin-top:12px}
+.studio-preview-card{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;background:var(--tint)}
+.studio-econ{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.studio-econ-line{padding:6px 0;border-bottom:1px solid var(--hair)}
+.studio-econ-line:last-child{border-bottom:none}
+.studio-ok{color:var(--green);font-weight:600}
+@media(max-width:520px){.stCond>select,.stEff>select,.edCondValCell,.edEffValCell{flex:1 1 100%}
+  .edCondValCell input,.edEffValCell input,.edCondValCell select,.edEffValCell select{flex:1 1 auto;width:100%}}
 .spacer{flex:1}
 .frontline-card{max-width:460px;margin:0 auto}
 .frontline-phone{font-size:34px;text-align:center;height:64px;letter-spacing:.04em;font-variant-numeric:tabular-nums}
@@ -1112,6 +1142,13 @@ async function route(){
     }
     if(pageKey==='branches'&&S.myRole!=='owner'){
       toast('Only the owner can manage branches.');
+      return nav('#/dashboard');
+    }
+    /* Program Studio is owner-only authoring (get_programs_overview is owner-gated). It has no
+       MODULES key — it is config authoring like the loyalty/retention editors — so the module
+       guard below never sees it; this explicit owner check fails closed for a typed #/studio. */
+    if(pageKey==='studio'&&S.myRole!=='owner'){
+      toast('Only the owner can open Program Studio.');
       return nav('#/dashboard');
     }
     if(pageKey==='platform'&&!S.isSA){
@@ -2760,7 +2797,7 @@ function renderShell(page){
      only which function that key maps to is new, so the module route-guard above this
      function needs no changes at all. */
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
-    bookings:bookingsPage,loyalty:hashParam=>growPage('rewards',hashParam),retention:hashParam=>growPage('winback',hashParam),referrals:referralsPage,
+    bookings:bookingsPage,loyalty:hashParam=>growPage('rewards',hashParam),retention:hashParam=>growPage('winback',hashParam),studio:hashParam=>growPage('studio',hashParam),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,
     staffperf:staffPerfPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
@@ -5201,27 +5238,40 @@ async function growPage(routedTab,hashParam){
      all, not a Bring-backs tab that would 401 the moment route() itself handled the nav. */
   const myModules=S.myModules||[];
   const canRewards=myModules.includes('loyalty'),canWinback=myModules.includes('retention');
-  /* Single-tab case: render the underlying page directly, with no combined chrome at all —
-     byte-identical to how this route rendered before the merge. */
-  if(routedTab==='rewards'&&!canWinback)return loyaltyPage();
-  if(routedTab==='winback'&&!canRewards)return retentionPage(hashParam||null);
+  /* Program Studio joins as a THIRD tab — owner-only config authoring (no MODULES key, exactly
+     like the loyalty/retention draft editors). Non-owners get canStudio=false, so their tab set
+     and the single-surface collapse below stay byte-identical to before this addition. */
+  const canStudio=S.myRole==='owner';
+  const TABDEFS=[
+    canRewards?{key:'rewards',label:'Everyday rewards',hash:'#/loyalty'}:null,
+    canWinback?{key:'winback',label:'Bring-backs',hash:'#/retention'}:null,
+    canStudio?{key:'studio',label:'Program Studio',hash:'#/studio'}:null
+  ].filter(Boolean);
+  /* Single-surface case: render the underlying page directly, with no combined chrome at all —
+     byte-identical to how a single-module teammate saw this route before the merge. */
+  if(TABDEFS.length===1){
+    const only=TABDEFS[0].key;
+    if(only==='rewards')return loyaltyPage();
+    if(only==='winback')return retentionPage(hashParam||null);
+    return studioPage(hashParam||null);
+  }
   const outerMain=M();
-  outerMain.innerHTML=`${CUI.pageHeader({title:'Grow: rewards & bring-backs',subtitle:'Two systems, reviewed and published separately — pick a tab below.',iconName:'loyalty'})}
+  outerMain.innerHTML=`${CUI.pageHeader({title:'Grow: rewards & bring-backs',subtitle:'Separate systems, reviewed and published on their own — pick a tab below.',iconName:'loyalty'})}
     <div style="margin:-8px 0 18px">
       <p class="muted small" style="line-height:1.6"><b>Everyday rewards</b> — every visit earns automatically for every customer, however you choose to run it.</p>
       <p class="muted small" style="line-height:1.6;margin-top:6px"><b>Bring-backs</b> — measured, versioned rules that win customers back before they drift away, with a full grant history.</p>
+      ${canStudio?`<p class="muted small" style="line-height:1.6;margin-top:6px"><b>Program Studio</b> — author advanced programme rules and check them. Authoring only — nothing here runs until a later activation phase.</p>`:''}
     </div>
     <div class="settings-tabs" role="tablist" aria-label="Grow sections">
-      <button type="button" class="settings-tab" role="tab" id="growtab-rewards" aria-controls="main" aria-selected="false" tabindex="-1" data-growtab="rewards">Everyday rewards</button>
-      <button type="button" class="settings-tab" role="tab" id="growtab-winback" aria-controls="main" aria-selected="false" tabindex="-1" data-growtab="winback">Bring-backs</button>
+      ${TABDEFS.map(t=>`<button type="button" class="settings-tab" role="tab" id="growtab-${t.key}" aria-controls="main" aria-selected="false" tabindex="-1" data-growtab="${t.key}">${esc(t.label)}</button>`).join('')}
     </div>
     <div id="growpanelhost"></div>`;
   /* aria-controls points at "main", not a stable panel id: the mounted panel below IS
      whichever element currently holds id="main" (see mountGrowTab), because that's the only
      way to hand the shared M()/$('main') helper to the active tab's content without touching
-     loyaltyPage()/retentionPage() themselves. Both tabs deliberately point at the same id —
-     at any moment exactly one panel is live, so it always resolves to the right target. */
-  const tabs=[...document.querySelectorAll('#growtab-rewards,#growtab-winback')];
+     loyaltyPage()/retentionPage()/studioPage() themselves. Every tab deliberately points at the
+     same id — at any moment exactly one panel is live, so it always resolves to the right target. */
+  const tabs=[...document.querySelectorAll(TABDEFS.map(t=>'#growtab-'+t.key).join(','))];
   const panelHost=$('growpanelhost');
   let activeGrowTab=null;
   async function mountGrowTab(key,{focus=false}={}){
@@ -5232,18 +5282,21 @@ async function growPage(routedTab,hashParam){
       t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
       if(focus&&on)t.focus();
     });
+    const def=TABDEFS.find(t=>t.key===key)||TABDEFS[0];
     /* replaceState (not location.hash=) keeps the URL honest for refresh/copy-paste without
        firing hashchange — a real route rebuild on every tab click would be jarring and would
        also fight CUI.focusRoute()'s post-route h1 focus, which only fires once per route(). */
-    history.replaceState(null,'',`${location.pathname}${location.search}#/${key==='rewards'?'loyalty':'retention'}`);
-    CUI.announce(key==='rewards'?'Everyday rewards':'Bring-backs');
+    history.replaceState(null,'',`${location.pathname}${location.search}${def.hash}`);
+    CUI.announce(def.label);
     const fresh=document.createElement('section');
     fresh.setAttribute('role','tabpanel');fresh.setAttribute('aria-labelledby','growtab-'+key);fresh.tabIndex=-1;
     panelHost.replaceChildren(fresh); // detaches the previous tab's panel — its isXCurrent() guard now sees isConnected===false
     if(outerMain.id==='main')outerMain.removeAttribute('id');
     fresh.id='main';
+    const deep=key===routedTab?(hashParam||null):null; // the routed draftVersionId only applies to the tab that was actually deep-linked
     if(key==='rewards')await loyaltyPage();
-    else await retentionPage(key===routedTab?(hashParam||null):null); // the routed draftVersionId only applies to the tab that was actually deep-linked
+    else if(key==='winback')await retentionPage(deep);
+    else await studioPage(deep);
   }
   tabs.forEach((tab,i)=>{
     tab.onclick=()=>mountGrowTab(tab.dataset.growtab);
@@ -5256,7 +5309,7 @@ async function growPage(routedTab,hashParam){
       e.preventDefault();mountGrowTab(tabs[ni].dataset.growtab,{focus:true});
     };
   });
-  return mountGrowTab(routedTab);
+  return mountGrowTab(TABDEFS.some(t=>t.key===routedTab)?routedTab:TABDEFS[0].key);
 }
 
 /* ---------- Bring-back playbooks (v50 campaign / holdout / incremental-lift engine) ----------
@@ -5744,6 +5797,790 @@ function openPlaybookWizard(ctx){
       resetLaunch(state.createdCampaignId?'Retry start':'Create & start');state.busy=false;
     }
   }
+}
+
+/* ---------- Program Studio (PS-1A: authoring, projection & validation ONLY) ----------
+   Owner-only surface that lives as a third tab on the Grow page (see growPage). It NEVER
+   executes anything: PS-1A has no rule executor. The overview PROJECTS every live engine +
+   every studio rule into one uniform WHEN/THEN list (get_programs_overview); the authoring
+   editor builds studio rules into a config draft (save/delete_program_rule_draft) that rides
+   the SAME create_loyalty_config_draft / publish_loyalty_config flow the loyalty & retention
+   editors use. Truthfulness (docs/design/ps0/PS-GATES.md): a studio rule's state chip may ONLY
+   read Draft / Validated / Ready for activation / Validation failed — never a claim that the rule
+   is operating or that customers are receiving it (PS-1A has no executor). See studioStateChip()
+   below — its reachable label set is statically those four values, and it is the ONLY chip used
+   for studio rows (legacyStateChip is used ONLY for legacy_trigger engines). Every write is
+   snapshot-hash optimistic-concurrency (40001 => reload) exactly like save_retention_program_draft. */
+
+/* ----- allowlist-driven vocabulary (plain language; never raw JSON to the owner) ----- */
+const STUDIO_EVENT_LABEL={
+  'sale.completed':'When a sale is completed',
+  'points.redeemed':'When points are redeemed',
+  'birthday.activated':"On a customer's birthday",
+  'referral.qualified':'When a referral is completed',
+  'membership.renewed':'When a membership renews'
+};
+const STUDIO_FIELD_LABEL={
+  amount_cents:'Sale amount',kind:'Sale type',branch_id:'Branch',staff_id:'Staff member',
+  counts_as_visit:'Counts as a visit',earns_points:'Earns points',reward_id:'Reward',
+  points_spent:'Points spent',credit_cents:'Credit amount',birthday_year:'Birthday year',
+  fulfillment_kind:'Benefit type',reward_cents:'Referral reward',plan_id:'Membership plan',
+  min_spend_cents:'Minimum spend',visits_in_period:'Visits in the period',points_earned:'Points earned'
+};
+const STUDIO_OP_LABEL={eq:'is',neq:'is not',gt:'is more than',gte:'is at least',lt:'is less than',
+  lte:'is at most',between:'is between',in:'is one of',not_in:'is not one of'};
+const STUDIO_EFFECT_LABEL={
+  earn_bonus_points:{label:'Give bonus points',input:'points'},
+  earn_bonus_stamps:{label:'Give bonus stamps',input:'stamps'},
+  grant_credit:{label:'Give store credit',input:'amount'},
+  apply_discount_pct:{label:'Apply a percentage discount',input:'pct'},
+  apply_discount_amount:{label:'Apply a fixed discount',input:'amount'},
+  grant_free_item:{label:'Give a free item',input:'free_item'},
+  tier_multiplier:{label:'Multiply points earned',input:'multiplier'},
+  display_perk:{label:'Show a perk (nothing is given)',input:'note'},
+  send_notification:{label:'Send a notification',input:'note'}
+};
+const STUDIO_CATALOG_SRC={
+  service:{table:'services',name:'name'},product:{table:'products',name:'name'},
+  branch:{table:'branches',name:'name'},staff:{table:'staff',name:'full_name'},
+  reward:{table:'loyalty_rewards',name:'customer_name'},tier:{table:'loyalty_tiers',name:'name'},
+  membership_plan:{table:'membership_plans',name:'name'}
+};
+const STUDIO_CONDITION_CATALOG={branch_id:'branch',staff_id:'staff',reward_id:'reward',plan_id:'membership_plan'};
+const DOW_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+const studioCatalogCache=new Map();  // business_id -> {byKind,byId}
+const studioSalesAggCache=new Map();  // business_id -> {count30,avgBill,ok}
+
+const shortId=id=>String(id||'').slice(0,8);
+
+/* ----- plain-language summarisers (used by overview rows AND the authoring preview) ----- */
+function studioEventText(ev){return STUDIO_EVENT_LABEL[ev]||('When '+String(ev||'something happens'));}
+function studioMoney(v){return money(Number(v||0));}
+function studioValueText(field,val,cat){
+  const catKind=STUDIO_CONDITION_CATALOG[field];
+  if(catKind){const ids=Array.isArray(val)?val:[val];
+    return ids.map(id=>cat&&cat.byId&&cat.byId[id]?esc(cat.byId[id].name):shortId(id)).join(', ');}
+  if(/_cents$/.test(field)){if(Array.isArray(val))return val.map(studioMoney).join(' and ');return studioMoney(val);}
+  if(typeof val==='boolean')return val?'yes':'no';
+  if(Array.isArray(val))return val.map(v=>esc(String(v))).join(', ');
+  return esc(String(val));
+}
+function studioConditionText(c,cat){
+  return `${esc(STUDIO_FIELD_LABEL[c.field]||c.field)} ${esc(STUDIO_OP_LABEL[c.op]||c.op)} ${studioValueText(c.field,c.value,cat)}`;
+}
+function studioEffectText(e,cat){
+  const t=e.effect_type;
+  switch(t){
+    case 'grant_credit':return `Give ${studioMoney(e.amount_cents)} store credit`;
+    case 'apply_discount_amount':return `Take ${studioMoney(e.amount_cents)} off`;
+    case 'apply_discount_pct':return `Take ${Number(e.discount_pct||0)}% off`;
+    case 'earn_bonus_points':
+      if(e.points_per_dollar!=null)return `Earn ${Number(e.points_per_dollar)} point${Number(e.points_per_dollar)===1?'':'s'} per $1 spent`;
+      return `Give ${Number(e.points||0)} bonus points`;
+    case 'earn_bonus_stamps':
+      if(e.per_cents!=null)return `Earn 1 stamp per ${studioMoney(e.per_cents)} spent`;
+      return `Give ${Number(e.stamps||0)} bonus stamps`;
+    case 'tier_multiplier':return `Multiply points by ${Number(e.multiplier||1)}x`;
+    case 'grant_free_item':{const nm=e.catalog_id&&cat&&cat.byId&&cat.byId[e.catalog_id]?cat.byId[e.catalog_id].name:null;
+      return nm?`Give a free ${esc(nm)}`:'Give a free item';}
+    case 'display_perk':return 'Show a perk (nothing is given)';
+    case 'send_notification':return 'Send a notification';
+    default:return esc(t||'action');
+  }
+}
+function studioWhenText(rule,cat){
+  let s=studioEventText(rule.when_event);
+  const conds=rule.if_conditions||[];
+  if(conds.length)s+=' — only when '+conds.map(c=>studioConditionText(c,cat)).join(', and ');
+  return s;
+}
+function studioThenText(rule,cat){
+  const eff=rule.then_effects||[];
+  if(!eff.length)return 'No action set yet';
+  return eff.map(e=>studioEffectText(e,cat)).join('; ');
+}
+function studioDuringText(during){
+  if(!during||Object.keys(during).length===0)return 'Any time';
+  const parts=[];const dow=during.days_of_week;
+  if(Array.isArray(dow)&&dow.length)parts.push('on '+dow.map(d=>DOW_NAMES[d]||d).join(', '));
+  if(during.start_time||during.end_time)parts.push('between '+(during.start_time||'00:00')+' and '+(during.end_time||'23:59'));
+  if(during.start_date||during.end_date)parts.push('from '+(during.start_date||'today')+' to '+(during.end_date||'no end date'));
+  parts.push('(Singapore time)');
+  return parts.join(' ');
+}
+function studioUsingText(using){
+  if(!using||Object.keys(using).length===0)return 'Standard stacking';
+  const parts=[];
+  if(using.stackable===false)parts.push('cannot combine with other offers');
+  else if(using.stackable===true)parts.push('can combine with other offers');
+  if(using.priority!=null)parts.push('priority '+using.priority);
+  if(using.max_stack!=null)parts.push('up to '+using.max_stack+' time'+(Number(using.max_stack)===1?'':'s'));
+  if(using.exclusive_group)parts.push('group "'+esc(String(using.exclusive_group))+'"');
+  return parts.join(', ')||'Standard stacking';
+}
+
+/* ----- state chips. Two SEPARATE functions so the truthful-state rule is grep-provable. ----- */
+function legacyStateChip(state){
+  const m={live:['on','Live'],paused:['off','Paused'],inactive:['off','Inactive'],disabled:['no','Disabled']};
+  const p=m[state]||['off','Unknown'];
+  return `<span class="pill ${p[0]}">${p[1]}</span>`;
+}
+function studioStateChip(state){
+  /* PS-1A TRUTHFULNESS (docs/design/ps0/PS-GATES.md): a studio rule has NO executor. Its chip may
+     ONLY be one of these four AUTHORING states, and must NEVER claim the rule is operating or that
+     a customer is receiving it. The reachable label set below is statically these four. */
+  const m={draft:['new','Draft'],validated:['ok','Validated'],
+    ready_for_activation:['new','Ready for activation'],validation_failed:['no','Validation failed']};
+  const p=m[state]||['no','Validation failed'];
+  return `<span class="pill ${p[0]}">${p[1]}</span>`;
+}
+
+/* ----- validator error-code -> human message ----- */
+const STUDIO_ERRMAP={
+  rule_not_object:'The rule is empty.',unsupported_rule_field:'The rule has a field we do not support.',
+  invalid_schema_version:'This rule uses an unsupported version.',invalid_event:'Choose when this rule should run.',
+  if_not_array:'The conditions are malformed.',too_many_conditions:'Too many conditions (up to 10).',
+  then_not_array:'The actions are malformed.',too_many_effects:'Too many actions (up to 8).',
+  condition_not_object:'A condition is malformed.',condition_unsupported_key:'A condition has an unsupported field.',
+  in_requires_array:'Choose one or more values for this condition.',between_requires_pair:'Enter both a low and a high value.',
+  effect_not_object:'An action is malformed.',effect_unsupported_key:'An action has an unsupported field.',
+  client_supplied_price:'Prices come from your catalog, not from the rule.',sql_fragment_forbidden:'That value is not allowed.',
+  effect_amount_required:'Enter an amount greater than zero.',effect_discount_pct_range:'Enter a discount between 0 and 100%.',
+  effect_points_required:'Enter a points amount greater than zero.',effect_stamps_required:'Enter a stamps amount greater than zero.',
+  effect_multiplier_range:'The multiplier must be at least 1.',effect_catalog_ref_not_found:'Choose a valid item for the free-item action.',
+  schedule_not_object:'The schedule is malformed.',schedule_unsupported_key:'The schedule has an unsupported setting.',
+  schedule_non_sgt:'The schedule must use Singapore time.',schedule_end_before_start:'The end date is before the start date.',
+  schedule_bad_date:'Check the schedule dates.',schedule_dow_not_array:'Choose valid days of the week.',
+  schedule_dow_range:'Choose valid days of the week.',schedule_bad_time:'Check the schedule times.',
+  stacking_not_object:'The stacking settings are malformed.',stacking_unsupported_key:'The stacking settings have an unsupported option.',
+  stacking_stackable_type:'The "can combine" setting is invalid.',stacking_max_stack_range:'The maximum stack must be at least 1.',
+  stacking_bad_number:'Check the stacking numbers.'
+};
+function studioErrText(code){
+  const parts=String(code||'').split(':');const base=parts[0],arg=parts[1];
+  if(base==='unknown_condition_field')return `"${esc(arg||'')}" is not a valid condition for this event.`;
+  if(base==='invalid_operator')return `"${esc(arg||'')}" is not a valid comparison.`;
+  if(base==='invalid_effect')return `"${esc(arg||'')}" is not a valid action for this event.`;
+  if(base==='catalog_ref_not_found')return `A selected ${esc(arg||'item')} could not be found.`;
+  return STUDIO_ERRMAP[base]||esc(code);
+}
+
+/* ----- catalog + sales reads (reads the app already performs elsewhere; cached per business) ----- */
+async function loadStudioCatalog(guard){
+  const hit=studioCatalogCache.get(S.biz.id);if(hit)return hit;
+  const kinds=Object.keys(STUDIO_CATALOG_SRC);
+  const results=await Promise.all(kinds.map(k=>{
+    const src=STUDIO_CATALOG_SRC[k];
+    return sb.from(src.table).select(`id,${src.name}`).eq('business_id',S.biz.id)
+      .then(r=>({k,rows:r.error?[]:(r.data||[]).map(x=>({id:x.id,name:x[src.name]||'(unnamed)'}))}));
+  }));
+  if(guard&&!guard())return null;
+  const cat={byKind:{},byId:{}};
+  for(const r of results){cat.byKind[r.k]=r.rows;for(const row of r.rows)cat.byId[row.id]={kind:r.k,name:row.name};}
+  studioCatalogCache.set(S.biz.id,cat);return cat;
+}
+async function loadStudioSalesAgg(guard){
+  const hit=studioSalesAggCache.get(S.biz.id);if(hit)return hit;
+  const since=new Date(Date.now()-30*86400000).toISOString();
+  const {data,count,error}=await sb.from('sales').select('amount_cents',{count:'exact'})
+    .eq('business_id',S.biz.id).is('reversal_of',null).gte('occurred_at',since).limit(1000);
+  if(guard&&!guard())return null;
+  let sum=0;const rows=(!error&&data)?data:[];
+  for(const s of rows)sum+=Number(s.amount_cents||0);
+  const agg={count30:error?null:(count||0),avgBill:rows.length?Math.round(sum/rows.length):0,ok:!error};
+  studioSalesAggCache.set(S.biz.id,agg);return agg;
+}
+
+/* ----- HONEST economics: exact face value per trigger; a monthly figure ONLY when the data the
+   app already reads supports it, always labelled "rough estimate"; otherwise "no estimate". ----- */
+function studioEstimate(rule,agg){
+  const eff=rule.then_effects||[];const ev=rule.when_event;
+  const monthly=(ev==='sale.completed'&&agg&&agg.count30!=null)?agg.count30:null;
+  const lines=[];
+  for(const e of eff){
+    const t=e.effect_type;
+    if(t==='grant_credit'||t==='apply_discount_amount'){
+      const per=Number(e.amount_cents||0);
+      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:`${studioMoney(per)} each time this rule gives it`,
+        est:monthly!=null?`Rough estimate: about ${studioMoney(per*monthly)} per month`:null,
+        note:monthly!=null?'Based on the last 30 days of sales; real cost depends on how often this rule matches once activated.'
+          :'No monthly estimate available — it depends on how often this rule matches.'});
+    }else if(t==='apply_discount_pct'){
+      const pct=Number(e.discount_pct||0);const avg=agg&&agg.avgBill?agg.avgBill:null;
+      const perApprox=avg!=null?Math.round(avg*pct/100):null;
+      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:`${pct}% off the bill`,
+        est:(monthly!=null&&perApprox!=null)?`Rough estimate: about ${studioMoney(perApprox*monthly)} per month`:null,
+        note:(monthly!=null&&perApprox!=null)?`Assumes an average bill of ${studioMoney(avg)} over the last 30 days; real cost varies with bill size and match rate.`
+          :'No monthly estimate available — it depends on bill size and how often this rule matches.'});
+    }else{
+      const why={earn_bonus_points:'Points cost depends on future redemption, so no cash estimate is shown.',
+        earn_bonus_stamps:'Stamp cost depends on future redemption, so no cash estimate is shown.',
+        tier_multiplier:'Extra points cost depends on future redemption, so no cash estimate is shown.',
+        grant_free_item:'Item cost depends on your own cost for the item, so no cash estimate is shown.',
+        display_perk:'Shows a message only — no value is given.',
+        send_notification:'Sends a message only — no value is given.'};
+      lines.push({label:(STUDIO_EFFECT_LABEL[t]&&STUDIO_EFFECT_LABEL[t].label)||t,face:null,est:null,
+        note:why[t]||'No estimate available.'});
+    }
+  }
+  return lines;
+}
+
+/* ============================ Program Studio page ============================ */
+async function studioPage(draftVersionId=null){
+  const routeMain=M();
+  const isStudioCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=CUI.loadingState({title:'Program Studio',iconName:'loyalty'});
+  /* Fail closed: get_programs_overview / get_program_rules_draft are owner-gated (42501 otherwise).
+     Non-owners never see the Studio tab (growPage), and route() blocks #/studio for them; this is
+     a last-resort guard so a stale hash renders a clean denied state, never a crash. */
+  if(S.myRole!=='owner'){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio',subtitle:'Owner-only programme authoring.',iconName:'loyalty',canWrite:false,moduleLabel:'Program Studio'})}
+      ${CUI.emptyState({iconName:'loyalty',title:'Owner access only',body:'Program Studio is where the owner authors advanced programme rules. Ask an owner for access.'})}`;
+    return;
+  }
+  if(draftVersionId)return studioDraftEditor(routeMain,isStudioCurrent,draftVersionId);
+  return studioOverview(routeMain,isStudioCurrent);
+}
+
+/* ---------------- Overview: every programme exactly once, uniform WHEN/THEN + truthful state -------------- */
+async function studioOverview(routeMain,isCurrent){
+  const [overviewRes,cat]=await Promise.all([
+    sb.rpc('get_programs_overview',{p_business:S.biz.id}),
+    loadStudioCatalog(isCurrent)
+  ]);
+  if(!isCurrent())return;
+  const {data:overview,error}=overviewRes;
+  if(error){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio',iconName:'loyalty',canWrite:false,moduleLabel:'Program Studio'})}
+      <div class="card"><p class="err" role="alert">${esc(error.message||'Program Studio could not load.')}</p>
+      <button class="btn" id="studioRetry">Try again</button></div>`;
+    if($('studioRetry'))$('studioRetry').onclick=()=>studioPage();
+    return;
+  }
+  const legacy=(overview&&overview.legacy_programs)||[];
+  const studio=(overview&&overview.studio_rules)||[];
+  const registry=(overview&&overview.registry)||[];
+  const currentVersion=overview&&overview.active_config_version_id||null;
+  // resumable draft (same detection as retentionPage): a draft based on the active version.
+  let resumableDraft=null;
+  if(currentVersion){
+    const {data:drafts}=await sb.from('firm_config_versions').select('id,version_no')
+      .eq('business_id',S.biz.id).eq('status','draft').eq('based_on_version_id',currentVersion)
+      .order('version_no',{ascending:false}).limit(1);
+    if(!isCurrent())return;
+    resumableDraft=drafts&&drafts[0]||null;
+  }
+  const authorityByEngine={};for(const r of registry)authorityByEngine[r.source_engine]=r;
+  // Uniform rows: legacy engines first, then studio rules — each programme exactly once.
+  const rowFor=(item,kind)=>{
+    const chip=kind==='studio'?studioStateChip(item.execution_state):legacyStateChip(item.execution_state);
+    const reg=authorityByEngine[item.source_engine];
+    const detail=`<details class="studio-tech"><summary>Technical detail</summary>
+      <div class="muted small" style="margin-top:6px;line-height:1.6">
+        <div>Source engine: <b>${esc(item.source_engine||'—')}</b></div>
+        <div>Execution authority: <b>${esc(item.execution_authority||(reg&&reg.execution_authority)||'—')}</b>${reg?` · registry status <b>${esc(reg.cutover_status)}</b>`:''}</div>
+        ${item.rule_hash?`<div>Rule hash: <code>${esc(String(item.rule_hash).slice(0,16))}…</code></div>`:''}
+        ${item.native_ref?`<div>Native reference: <code>${esc(String(item.native_ref).slice(0,20))}</code></div>`:''}
+        ${reg?`<div>Canonical key: <code>${esc(reg.canonical_benefit_key_template)}</code></div>`:''}
+        <div>When: ${studioWhenText(item,cat)}</div>
+        <div>Then: ${studioThenText(item,cat)}</div>
+        <div>During: ${studioDuringText(item.during_schedule)} · Stacking: ${studioUsingText(item.using_stacking)}</div>
+      </div></details>`;
+    return `<div class="studio-row">
+      <div class="studio-row-main">
+        <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(item.name||'(unnamed)')}</b>${chip}
+          <span class="pill off" title="Where this rule runs from">${kind==='studio'?'Studio rule':'Live engine'}</span></div>
+        <div class="muted small" style="margin-top:4px;line-height:1.5"><b>When:</b> ${studioWhenText(item,cat)}</div>
+        <div class="muted small" style="line-height:1.5"><b>Then:</b> ${studioThenText(item,cat)}</div>
+        ${kind==='studio'?`<p class="muted small studio-authoring-note" style="margin-top:4px">Authoring only — this rule will not run until a later activation phase.</p>`:''}
+        ${detail}
+      </div></div>`;
+  };
+  const legacyRows=legacy.map(x=>rowFor(x,'legacy')).join('');
+  const studioRows=studio.map(x=>rowFor(x,'studio')).join('');
+  const versionTools=`<div class="card" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:10px">
+    <div><b>Authoring drafts</b><div class="muted small">Studio rules are authored inside a configuration draft. Nothing runs at the counter — publishing only records the rules for a later activation phase.</div></div>
+    <span class="spacer"></span>
+    ${resumableDraft?`<a class="btn" href="#/studio/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`
+      :`<button class="btn" id="studioNewDraft">Create authoring draft</button>`}</div></div>`;
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio',subtitle:'One view of every programme — live engines and the rules you author here.',iconName:'loyalty',canWrite:true,moduleLabel:'Program Studio'})}
+    <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
+      <b>Authoring only</b><p>Program Studio lets you write programme rules and check them. It does not run anything yet — a later activation phase will turn published studio rules on. Your live loyalty, retention, referral, birthday and membership engines keep running exactly as before.</p></div></aside>
+    ${versionTools}
+    <section class="card"><div class="cui-card-head"><h2>Live engines</h2><p>These are running now. State comes straight from each engine.</p></div>
+      ${legacy.length?legacyRows:CUI.emptyState({iconName:'loyalty',title:'No live programmes yet',body:'Set up loyalty, retention or other programmes to see them here.'})}</section>
+    <section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Studio rules</h2><p>Rules authored here. These are not running — each shows its authoring state only.</p></div>
+      ${studio.length?studioRows:CUI.emptyState({iconName:'loyalty',title:'No studio rules yet',body:'Create an authoring draft to write your first rule.'})}</section>`;
+  if($('studioNewDraft'))$('studioNewDraft').onclick=async()=>{
+    const btn=$('studioNewDraft');btn.disabled=true;
+    const {data,error:draftError}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_program_studio'});
+    if(!isCurrent())return;
+    if(draftError){btn.disabled=false;return fail(draftError);}
+    nav(`#/studio/${data.version_id}`);
+  };
+}
+
+/* ---------------- Draft editor: Quick Start + Guided + Advanced, live-validated ---------------- */
+let studioEd=null;  // in-flight working rule for the open editor (null = editor closed)
+
+async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
+  const [draftRes,cat,agg]=await Promise.all([
+    sb.rpc('get_program_rules_draft',{p_config_version:draftVersionId}),
+    loadStudioCatalog(isCurrent),
+    loadStudioSalesAgg(isCurrent)
+  ]);
+  if(!isCurrent())return;
+  const {data:draft,error}=draftRes;
+  if(error){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio — draft',iconName:'loyalty',canWrite:false,moduleLabel:'Program Studio'})}
+      <div class="card"><p class="err" role="alert">${esc(error.message||'This draft could not load.')}</p>
+      <div class="row" style="margin-top:12px"><button class="btn" id="studioDraftRetry">Try again</button>
+      <a class="btn ghost" href="#/studio">Back to Program Studio</a></div></div>`;
+    if($('studioDraftRetry'))$('studioDraftRetry').onclick=()=>studioPage(draftVersionId);
+    return;
+  }
+  const allow=draft.allowlists||{conditions:[],effects:[],events:[]};
+  const rules=draft.rules||[];
+  let snapshotHash=draft.snapshot_hash||null;
+  // Group allowlist by event for the editor selects.
+  const condByEvent={},effByEvent={};
+  for(const c of (allow.conditions||[])){(condByEvent[c.event_type]=condByEvent[c.event_type]||[]).push(c);}
+  for(const e of (allow.effects||[])){(effByEvent[e.event_type]=effByEvent[e.event_type]||[]).push(e);}
+  const events=(allow.events||[]).slice();
+  const condDefLookup=(ev,field)=>(condByEvent[ev]||[]).find(c=>c.field===field);
+
+  const editorHost=()=>$('studioEditorHost');
+  const rerender=()=>studioDraftEditor(routeMain,isCurrent,draftVersionId);
+
+  // ----- QUICK START templates (only rules that validate cleanly against the allowlist) -----
+  const TEMPLATES=[
+    {id:'weekday2x',label:'Double points on a weekday',desc:'2x points every Monday',
+      make:()=>({name:'Double points on Mondays',when_event:'sale.completed',if_conditions:[],
+        then_effects:[{effect_type:'tier_multiplier',multiplier:2}],
+        during:{on:true,days_of_week:[1],start_date:'',end_date:'',start_time:'',end_time:''}})},
+    {id:'bigfree',label:'Free item on a big visit',desc:'Free item when a sale is $50 or more',
+      make:()=>({name:'Free item on a $50+ visit',when_event:'sale.completed',
+        if_conditions:[{field:'amount_cents',op:'gte',value:5000}],
+        then_effects:[{effect_type:'grant_free_item',catalog_kind:'service',catalog_id:''}]})},
+    {id:'bday',label:"Birthday % off",desc:'20% off on a birthday',
+      make:()=>({name:'Birthday treat — 20% off',when_event:'birthday.activated',if_conditions:[],
+        then_effects:[{effect_type:'apply_discount_pct',discount_pct:20}]})}
+  ];
+
+  // ----- render the page shell -----
+  const ruleRowHtml=(r)=>{
+    const v=r.validation||{};const errs=(v.errors||[]);
+    return `<div class="studio-row"><div class="studio-row-main">
+      <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(r.name||'(unnamed)')}</b>
+        ${studioStateChip(r.execution_state)}${r.active===false?'<span class="pill off">Off</span>':''}</div>
+      <div class="muted small" style="margin-top:4px;line-height:1.5"><b>When:</b> ${studioWhenText(r,cat)}</div>
+      <div class="muted small" style="line-height:1.5"><b>Then:</b> ${studioThenText(r,cat)}</div>
+      <p class="muted small studio-authoring-note" style="margin-top:4px">Authoring only — this rule will not run until a later activation phase.</p>
+      ${errs.length?`<div class="err small" style="margin-top:6px">${errs.map(e=>esc(studioErrText(e))).join('<br>')}</div>`:''}
+      <div class="row" style="margin-top:8px;gap:8px"><button class="btn ghost sm studioEditRule" data-id="${esc(r.rule_id)}">Edit</button>
+        <button class="btn ghost sm studioDelRule" data-id="${esc(r.rule_id)}" data-name="${esc(r.name||'')}">Delete</button></div>
+    </div></div>`;
+  };
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio — authoring draft',subtitle:`Draft v${draft.version_no}. Author and check rules — nothing runs until a later activation phase.`,iconName:'loyalty',canWrite:true,moduleLabel:'Program Studio'})}
+    <div class="card" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:10px">
+      <div><b>Draft configuration</b><div class="muted small">Every save checks the draft hash. Publishing records these rules for a later activation phase — it does not run them and does not change the counter.</div></div>
+      <span class="spacer"></span>
+      <a class="btn ghost" href="#/studio">Leave draft</a>
+      <button class="btn" id="studioPublish">Publish draft</button></div>
+      <div id="studioPublishStatus" class="small" style="margin-top:8px" role="status" aria-live="polite"></div></div>
+    <div class="card" style="margin-bottom:16px"><b>Quick start</b>
+      <p class="muted small" style="margin:4px 0 10px">Pick a starting point, then adjust it.</p>
+      <div class="row" style="flex-wrap:wrap;gap:8px">${TEMPLATES.map(t=>`<button class="qbtn studioTemplate" data-t="${t.id}" title="${esc(t.desc)}">${esc(t.label)}</button>`).join('')}</div></div>
+    <div id="studioEditorHost"></div>
+    <div class="card" style="margin-top:16px"><div class="row" style="align-items:center"><b>Rules in this draft</b><span class="spacer"></span>
+      <button class="btn sm" id="studioAddRule">New rule</button></div>
+      <div id="studioRuleList" style="margin-top:10px">${rules.length?rules.map(ruleRowHtml).join(''):CUI.emptyState({iconName:'loyalty',title:'No rules yet',body:'Use Quick start or New rule to author your first programme rule.'})}</div></div>`;
+
+  // ----- editor open/close + model helpers -----
+  function openEditor(model){studioEd=model;paintEditor();
+    const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    editorHost().scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});}
+  function closeEditor(){studioEd=null;if(editorHost())editorHost().innerHTML='';}
+
+  function blankModel(){
+    return {ruleId:crypto.randomUUID(),isNew:true,name:'',active:true,when_event:events[0]||'sale.completed',
+      if_conditions:[],then_effects:[],during:{on:false,days_of_week:[],start_date:'',end_date:'',start_time:'',end_time:''},
+      using:{stackable:true,priority:0,max_stack:'',exclusive_group:''},sort:0,notes:'',advanced:false};
+  }
+  function modelFromRule(r){
+    const d=r.during_schedule||{};const u=r.using_stacking||{};
+    return {ruleId:r.rule_id,isNew:false,name:r.name||'',active:r.active!==false,when_event:r.when_event,
+      if_conditions:(r.if_conditions||[]).map(c=>({field:c.field,op:c.op,value:c.value})),
+      then_effects:(r.then_effects||[]).map(e=>Object.assign({},e)),
+      during:{on:!!(d.days_of_week||d.start_date||d.end_date||d.start_time||d.end_time),
+        days_of_week:d.days_of_week||[],start_date:d.start_date||'',end_date:d.end_date||'',start_time:d.start_time||'',end_time:d.end_time||''},
+      using:{stackable:u.stackable!==false,priority:u.priority!=null?u.priority:0,max_stack:u.max_stack!=null?u.max_stack:'',exclusive_group:u.exclusive_group||''},
+      sort:r.sort||0,notes:r.notes||'',advanced:false};
+  }
+
+  // Build the canonical rule payload (dollars->cents, catalog ids, arrays) from the working model.
+  function buildRule(m){
+    const ev=m.when_event;
+    const if_conditions=(m.if_conditions||[]).map(c=>({field:c.field,op:c.op,value:c.value}));
+    const then_effects=(m.then_effects||[]).map(e=>{
+      const t=e.effect_type;const o={effect_type:t};
+      if(t==='grant_credit'||t==='apply_discount_amount')o.amount_cents=Math.round(Number(e.amount_cents||0));
+      else if(t==='apply_discount_pct')o.discount_pct=Number(e.discount_pct||0);
+      else if(t==='earn_bonus_points')o.points=Math.round(Number(e.points||0));
+      else if(t==='earn_bonus_stamps')o.stamps=Math.round(Number(e.stamps||0));
+      else if(t==='tier_multiplier')o.multiplier=Number(e.multiplier||0);
+      else if(t==='grant_free_item'){o.catalog_kind=e.catalog_kind||'service';if(e.catalog_id)o.catalog_id=e.catalog_id;}
+      else if(t==='display_perk'||t==='send_notification'){if(e.note)o.note=e.note;}
+      return o;
+    });
+    const during={};
+    if(m.during.on){
+      during.timezone='Asia/Singapore';
+      if((m.during.days_of_week||[]).length)during.days_of_week=m.during.days_of_week.slice().sort((a,b)=>a-b);
+      if(m.during.start_date)during.start_date=m.during.start_date;
+      if(m.during.end_date)during.end_date=m.during.end_date;
+      if(m.during.start_time)during.start_time=m.during.start_time;
+      if(m.during.end_time)during.end_time=m.during.end_time;
+    }
+    const using={stackable:m.using.stackable!==false,priority:Math.round(Number(m.using.priority||0))};
+    if(m.using.max_stack!==''&&m.using.max_stack!=null)using.max_stack=Math.round(Number(m.using.max_stack));
+    if(m.using.exclusive_group)using.exclusive_group=String(m.using.exclusive_group);
+    return {name:m.name||'',active:m.active!==false,schema_version:1,when_event:ev,
+      if_conditions,then_effects,with_params:{},during_schedule:during,using_stacking:using,
+      sort:Math.round(Number(m.sort||0)),notes:m.notes||null};
+  }
+
+  // Sync editable DOM (name/meta/values) into the model before any structural re-render or validate.
+  function syncEditorDom(){
+    const m=studioEd;if(!m)return;
+    const host=editorHost();if(!host)return;
+    const g=id=>host.querySelector(id);
+    if(g('#edName'))m.name=g('#edName').value;
+    if(g('#edActive'))m.active=g('#edActive').checked;
+    if(g('#edSort'))m.sort=g('#edSort').value;
+    if(g('#edNotes'))m.notes=g('#edNotes').value;
+    // conditions
+    host.querySelectorAll('.stCond').forEach((row,i)=>{
+      const c=m.if_conditions[i];if(!c)return;
+      const def=condDefLookup(m.when_event,c.field)||{};
+      c.value=readCondValue(row,def,c.op,c.field);
+    });
+    // effects
+    host.querySelectorAll('.stEff').forEach((row,i)=>{
+      const e=m.then_effects[i];if(!e)return;
+      readEffInto(row,e);
+    });
+    // schedule
+    if(g('#edSchedOn'))m.during.on=g('#edSchedOn').checked;
+    m.during.days_of_week=[...host.querySelectorAll('.edDow:checked')].map(x=>Number(x.value));
+    if(g('#edStartDate'))m.during.start_date=g('#edStartDate').value;
+    if(g('#edEndDate'))m.during.end_date=g('#edEndDate').value;
+    if(g('#edStartTime'))m.during.start_time=g('#edStartTime').value;
+    if(g('#edEndTime'))m.during.end_time=g('#edEndTime').value;
+    // stacking
+    if(g('#edStackable'))m.using.stackable=g('#edStackable').checked;
+    if(g('#edPriority'))m.using.priority=g('#edPriority').value;
+    if(g('#edMaxStack'))m.using.max_stack=g('#edMaxStack').value;
+    if(g('#edExclGroup'))m.using.exclusive_group=g('#edExclGroup').value;
+  }
+
+  // ---- value cell rendering / reading (typed by allowlist value_type + operator) ----
+  function condValueCellHtml(def,op,field,value){
+    const vt=def.value_type;
+    const catKind=STUDIO_CONDITION_CATALOG[field];
+    if(vt==='catalog_ref'&&catKind){
+      const opts=(cat&&cat.byKind[catKind])||[];
+      const multi=(op==='in'||op==='not_in');
+      const sel=multi?(Array.isArray(value)?value:[]):(value||'');
+      return `<select class="edCondVal" ${multi?'multiple size="3"':''}>${multi?'':'<option value="">Choose…</option>'}${opts.map(o=>`<option value="${esc(o.id)}" ${multi?(sel.includes(o.id)?'selected':''):(sel===o.id?'selected':'')}>${esc(o.name)}</option>`).join('')}</select>`;
+    }
+    if(vt==='boolean')
+      return `<select class="edCondVal"><option value="true" ${value===true?'selected':''}>yes</option><option value="false" ${value===false?'selected':''}>no</option></select>`;
+    const isMoney=/_cents$/.test(field);
+    const step=isMoney?'0.01':'1';
+    if(op==='between'){const a=Array.isArray(value)?value[0]:'';const b=Array.isArray(value)?value[1]:'';
+      return `<input class="edCondVal edCondValA" type="number" step="${step}" value="${isMoney&&a!==''?(Number(a)/100):esc(a)}" placeholder="low"> <input class="edCondVal edCondValB" type="number" step="${step}" value="${isMoney&&b!==''?(Number(b)/100):esc(b)}" placeholder="high">`;}
+    if(op==='in'||op==='not_in'){const list=Array.isArray(value)?value.join(', '):'';
+      return `<input class="edCondVal" type="text" value="${esc(list)}" placeholder="comma-separated">`;}
+    if(vt==='integer'||vt==='numeric')
+      return `<input class="edCondVal" type="number" step="${step}" value="${isMoney&&value!==''&&value!=null?(Number(value)/100):esc(value)}" placeholder="value">`;
+    return `<input class="edCondVal" type="text" value="${esc(value==null?'':value)}" placeholder="value">`;
+  }
+  function readCondValue(row,def,op,field){
+    const vt=def.value_type;const catKind=STUDIO_CONDITION_CATALOG[field];const isMoney=/_cents$/.test(field);
+    if(vt==='catalog_ref'&&catKind){const el=row.querySelector('.edCondVal');
+      if(op==='in'||op==='not_in')return [...el.selectedOptions].map(o=>o.value).filter(Boolean);
+      return el.value||null;}
+    if(vt==='boolean'){return row.querySelector('.edCondVal').value==='true';}
+    if(op==='between'){const a=row.querySelector('.edCondValA').value,b=row.querySelector('.edCondValB').value;
+      const n=x=>isMoney?Math.round(Number(x||0)*100):Number(x||0);return [n(a),n(b)];}
+    if(op==='in'||op==='not_in'){return row.querySelector('.edCondVal').value.split(',').map(s=>s.trim()).filter(Boolean);}
+    const raw=row.querySelector('.edCondVal').value;
+    if(vt==='integer'||vt==='numeric')return isMoney?Math.round(Number(raw||0)*100):Number(raw||0);
+    return raw;
+  }
+  function effInputHtml(e){
+    const t=e.effect_type;const kind=STUDIO_EFFECT_LABEL[t]?STUDIO_EFFECT_LABEL[t].input:'note';
+    if(kind==='amount')return `<label class="sr-only" for="">Amount</label><span class="edEffLbl">Amount (${S.biz.currency||'SGD'})</span><input class="edEffVal" data-f="amount_cents" type="number" min="0" step="0.01" value="${e.amount_cents!=null?(Number(e.amount_cents)/100):''}" placeholder="e.g. 5.00">`;
+    if(kind==='pct')return `<span class="edEffLbl">Discount %</span><input class="edEffVal" data-f="discount_pct" type="number" min="0" max="100" step="1" value="${e.discount_pct!=null?e.discount_pct:''}" placeholder="e.g. 20">`;
+    if(kind==='points')return `<span class="edEffLbl">Points</span><input class="edEffVal" data-f="points" type="number" min="0" step="1" value="${e.points!=null?e.points:''}" placeholder="e.g. 100">`;
+    if(kind==='stamps')return `<span class="edEffLbl">Stamps</span><input class="edEffVal" data-f="stamps" type="number" min="0" step="1" value="${e.stamps!=null?e.stamps:''}" placeholder="e.g. 1">`;
+    if(kind==='multiplier')return `<span class="edEffLbl">Multiplier</span><input class="edEffVal" data-f="multiplier" type="number" min="1" step="0.5" value="${e.multiplier!=null?e.multiplier:''}" placeholder="e.g. 2">`;
+    if(kind==='free_item'){const kinds=['service','product'];
+      return `<span class="edEffLbl">Free item</span><select class="edEffVal" data-f="catalog_kind">${kinds.map(k=>`<option value="${k}" ${e.catalog_kind===k?'selected':''}>${k}</option>`).join('')}</select>
+        <select class="edEffVal" data-f="catalog_id">${effItemOptions(e.catalog_kind||'service',e.catalog_id)}</select>`;}
+    return `<span class="edEffLbl">Message (optional)</span><input class="edEffVal" data-f="note" type="text" value="${esc(e.note||'')}" placeholder="short note">`;
+  }
+  function effItemOptions(kind,selected){
+    const opts=(cat&&cat.byKind[kind])||[];
+    return `<option value="">Choose…</option>`+opts.map(o=>`<option value="${esc(o.id)}" ${selected===o.id?'selected':''}>${esc(o.name)}</option>`).join('');
+  }
+  function readEffInto(row,e){
+    row.querySelectorAll('.edEffVal').forEach(el=>{
+      const f=el.dataset.f;
+      if(f==='amount_cents')e.amount_cents=Math.round(Number(el.value||0)*100);
+      else if(f==='discount_pct')e.discount_pct=Number(el.value||0);
+      else if(f==='points')e.points=Number(el.value||0);
+      else if(f==='stamps')e.stamps=Number(el.value||0);
+      else if(f==='multiplier')e.multiplier=Number(el.value||0);
+      else if(f==='catalog_kind')e.catalog_kind=el.value;
+      else if(f==='catalog_id')e.catalog_id=el.value||'';
+      else if(f==='note')e.note=el.value;
+    });
+  }
+
+  // ---- paint the editor from the working model ----
+  function paintEditor(){
+    const m=studioEd;const host=editorHost();if(!host)return;
+    if(!m){host.innerHTML='';return;}
+    const condOpts=(condByEvent[m.when_event]||[]);
+    const effOpts=(effByEvent[m.when_event]||[]);
+    const condRows=m.if_conditions.map((c,i)=>{
+      const def=condDefLookup(m.when_event,c.field)||condOpts[0]||{};
+      const field=c.field||def.field;
+      const ops=(condDefLookup(m.when_event,field)||{}).operators||[];
+      return `<div class="stCond" data-i="${i}">
+        <select class="edCondField">${condOpts.map(o=>`<option value="${esc(o.field)}" ${o.field===field?'selected':''}>${esc(STUDIO_FIELD_LABEL[o.field]||o.field)}</option>`).join('')}</select>
+        <select class="edCondOp">${ops.map(o=>`<option value="${o}" ${o===c.op?'selected':''}>${esc(STUDIO_OP_LABEL[o]||o)}</option>`).join('')}</select>
+        <span class="edCondValCell">${condValueCellHtml(condDefLookup(m.when_event,field)||{},c.op,field,c.value)}</span>
+        <button class="btn ghost sm edCondDel" type="button" aria-label="Remove condition">Remove</button></div>`;
+    }).join('');
+    const effRows=m.then_effects.map((e,i)=>{
+      return `<div class="stEff" data-i="${i}">
+        <select class="edEffType">${effOpts.map(o=>`<option value="${esc(o.effect_type)}" ${o.effect_type===e.effect_type?'selected':''}>${esc((STUDIO_EFFECT_LABEL[o.effect_type]&&STUDIO_EFFECT_LABEL[o.effect_type].label)||o.effect_type)}</option>`).join('')}</select>
+        <span class="edEffValCell">${effInputHtml(e)}</span>
+        <button class="btn ghost sm edEffDel" type="button" aria-label="Remove action">Remove</button></div>`;
+    }).join('');
+    host.innerHTML=`<div class="card studio-editor"><div class="row" style="align-items:center">
+      <b>${m.isNew?'New rule':'Edit rule'}</b><span class="spacer"></span><button class="btn ghost sm" id="edClose" type="button">Close</button></div>
+      <label for="edName">Step 1 — Name this rule</label><input id="edName" value="${esc(m.name)}" placeholder="e.g. Double points on Mondays">
+      <label style="margin-top:10px"><input type="checkbox" id="edActive" ${m.active?'checked':''}> Include this rule when the draft is published (it still will not run until a later activation phase)</label>
+
+      <fieldset class="studio-step"><legend>Step 2 — When (the trigger)</legend>
+        <select id="edWhen">${events.map(ev=>`<option value="${esc(ev)}" ${ev===m.when_event?'selected':''}>${esc(studioEventText(ev))}</option>`).join('')}</select></fieldset>
+
+      <fieldset class="studio-step"><legend>Step 3 — If (conditions, optional)</legend>
+        <div id="edConds">${condRows||'<p class="muted small">No conditions — the rule matches every time the trigger happens.</p>'}</div>
+        ${condOpts.length?'<button class="btn ghost sm" id="edAddCond" type="button">Add condition</button>':'<p class="muted small">This trigger has no conditions to add.</p>'}</fieldset>
+
+      <fieldset class="studio-step"><legend>Step 4 — Then (what happens)</legend>
+        <div id="edEffs">${effRows||'<p class="muted small">Add at least one action.</p>'}</div>
+        ${effOpts.length?'<button class="btn ghost sm" id="edAddEff" type="button">Add action</button>':''}</fieldset>
+
+      <fieldset class="studio-step"><legend>Step 5 — During (schedule, optional)</legend>
+        <label><input type="checkbox" id="edSchedOn" ${m.during.on?'checked':''}> Limit this rule to certain days or times</label>
+        <div id="edSchedBody" style="${m.during.on?'':'display:none'};margin-top:8px">
+          <div class="muted small">All times are Singapore time.</div>
+          <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:6px">${DOW_NAMES.map((d,i)=>`<label class="edDowLbl"><input type="checkbox" class="edDow" value="${i}" ${(m.during.days_of_week||[]).includes(i)?'checked':''}> ${d}</label>`).join('')}</div>
+          <div class="split" style="margin-top:8px"><div><label for="edStartDate">Start date</label><input type="date" id="edStartDate" value="${esc(m.during.start_date)}"></div>
+            <div><label for="edEndDate">End date</label><input type="date" id="edEndDate" value="${esc(m.during.end_date)}"></div></div>
+          <div class="split"><div><label for="edStartTime">Start time</label><input type="time" id="edStartTime" value="${esc(m.during.start_time)}"></div>
+            <div><label for="edEndTime">End time</label><input type="time" id="edEndTime" value="${esc(m.during.end_time)}"></div></div>
+        </div></fieldset>
+
+      <details class="studio-advanced" ${m.advanced?'open':''}><summary>Advanced — limits, stacking &amp; technical detail</summary>
+        <fieldset class="studio-step"><legend>Limits &amp; stacking</legend>
+          <label><input type="checkbox" id="edStackable" ${m.using.stackable?'checked':''}> Can combine with other offers</label>
+          <div class="split" style="margin-top:8px"><div><label for="edPriority">Priority (higher runs first)</label><input type="number" id="edPriority" value="${esc(m.using.priority)}"></div>
+            <div><label for="edMaxStack">Maximum stack (optional)</label><input type="number" id="edMaxStack" min="1" value="${esc(m.using.max_stack)}"></div></div>
+          <label for="edExclGroup">Exclusive group (optional)</label><input id="edExclGroup" value="${esc(m.using.exclusive_group)}" placeholder="e.g. birthday-offers"></fieldset>
+        <div class="split"><div><label for="edSort">Sort order</label><input type="number" id="edSort" value="${esc(m.sort)}"></div>
+          <div><label for="edNotes">Internal notes (optional)</label><input id="edNotes" value="${esc(m.notes)}" placeholder="not shown to customers"></div></div>
+        <div class="studio-canon"><b class="muted small">Canonical form &amp; hash</b><pre id="edCanon" class="studio-pre">—</pre></div>
+      </details>
+
+      <div id="edPreview" class="studio-preview"></div>
+      <div id="edStatus" class="small" style="margin-top:8px" role="status" aria-live="polite"></div>
+      <div class="row" style="margin-top:12px;gap:8px"><button class="btn" id="edSave" type="button">${m.isNew?'Save rule to draft':'Save changes'}</button>
+        <button class="btn ghost" id="edCancel" type="button">Cancel</button></div>
+    </div>`;
+    wireEditor();
+    liveValidate();
+  }
+
+  // ---- editor event wiring ----
+  function wireEditor(){
+    const host=editorHost();if(!host)return;const m=studioEd;
+    host.querySelector('#edClose').onclick=()=>{closeEditor();};
+    host.querySelector('#edCancel').onclick=()=>{closeEditor();};
+    host.querySelector('#edWhen').onchange=e=>{syncEditorDom();m.when_event=e.target.value;m.if_conditions=[];m.then_effects=[];paintEditor();};
+    const addCond=host.querySelector('#edAddCond');
+    if(addCond)addCond.onclick=()=>{syncEditorDom();const first=(condByEvent[m.when_event]||[])[0];
+      if(first)m.if_conditions.push({field:first.field,op:(first.operators||['eq'])[0],value:defaultCondValue(first)});paintEditor();};
+    const addEff=host.querySelector('#edAddEff');
+    if(addEff)addEff.onclick=()=>{syncEditorDom();const first=(effByEvent[m.when_event]||[])[0];
+      if(first)m.then_effects.push(defaultEffect(first.effect_type));paintEditor();};
+    host.querySelectorAll('.stCond').forEach((row,i)=>{
+      row.querySelector('.edCondField').onchange=e=>{syncEditorDom();const def=condDefLookup(m.when_event,e.target.value)||{};
+        m.if_conditions[i]={field:e.target.value,op:(def.operators||['eq'])[0],value:defaultCondValue(def)};paintEditor();};
+      row.querySelector('.edCondOp').onchange=e=>{syncEditorDom();m.if_conditions[i].op=e.target.value;
+        m.if_conditions[i].value=defaultCondValue(condDefLookup(m.when_event,m.if_conditions[i].field)||{},e.target.value);paintEditor();};
+      row.querySelector('.edCondDel').onclick=()=>{syncEditorDom();m.if_conditions.splice(i,1);paintEditor();};
+    });
+    host.querySelectorAll('.stEff').forEach((row,i)=>{
+      row.querySelector('.edEffType').onchange=e=>{syncEditorDom();m.then_effects[i]=defaultEffect(e.target.value);paintEditor();};
+      row.querySelector('.edEffDel').onclick=()=>{syncEditorDom();m.then_effects.splice(i,1);paintEditor();};
+      const kindSel=row.querySelector('.edEffVal[data-f="catalog_kind"]');
+      if(kindSel)kindSel.onchange=()=>{syncEditorDom();paintEditor();};
+    });
+    const schedOn=host.querySelector('#edSchedOn');
+    if(schedOn)schedOn.onchange=e=>{const body=host.querySelector('#edSchedBody');if(body)body.style.display=e.target.checked?'':'none';liveValidate();};
+    const adv=host.querySelector('.studio-advanced');
+    if(adv)adv.addEventListener('toggle',()=>{m.advanced=adv.open;});
+    host.querySelector('#edSave').onclick=saveRule;
+  }
+  function defaultCondValue(def,op){
+    if(!def)return '';
+    if(def.value_type==='boolean')return true;
+    if(op==='between')return [0,0];
+    if(op==='in'||op==='not_in')return [];
+    if(def.value_type==='catalog_ref')return (op==='in'||op==='not_in')?[]:'';
+    return '';
+  }
+  function defaultEffect(t){
+    const o={effect_type:t};const kind=STUDIO_EFFECT_LABEL[t]?STUDIO_EFFECT_LABEL[t].input:'note';
+    if(kind==='amount')o.amount_cents=0;else if(kind==='pct')o.discount_pct=0;else if(kind==='points')o.points=0;
+    else if(kind==='stamps')o.stamps=0;else if(kind==='multiplier')o.multiplier=1;
+    else if(kind==='free_item'){o.catalog_kind='service';o.catalog_id='';}else o.note='';
+    return o;
+  }
+
+  // ---- live validation + preview (dry-run RPC; never invents numbers) ----
+  let validateTimer=null;let validateSeq=0;
+  function debouncedValidate(){clearTimeout(validateTimer);validateTimer=setTimeout(liveValidate,350);}
+  async function liveValidate(){
+    if(!studioEd)return;syncEditorDom();
+    const m=studioEd;const rule=buildRule(m);const seq=++validateSeq;
+    const canonEl=editorHost()&&editorHost().querySelector('#edCanon');
+    const {data,error}=await sb.rpc('validate_program_rule',{p_business:S.biz.id,p_rule:rule});
+    if(!isCurrent()||seq!==validateSeq||studioEd!==m)return;
+    const preview=editorHost()&&editorHost().querySelector('#edPreview');
+    const saveBtn=editorHost()&&editorHost().querySelector('#edSave');
+    if(error){if(preview)preview.innerHTML=`<div class="err small">Could not check this rule right now.</div>`;return;}
+    if(canonEl)canonEl.textContent=JSON.stringify(data.canonical,null,2)+'\n\nhash: '+(data.rule_hash||'—');
+    const valid=data.valid&&(rule.name||'').trim().length>0&&rule.then_effects.length>0;
+    const nameErr=(rule.name||'').trim().length===0?['Give the rule a name.']:[];
+    const effErr=rule.then_effects.length===0?['Add at least one action.']:[];
+    const errs=(data.errors||[]).map(studioErrText).concat(nameErr,effErr);
+    const est=studioEstimate(rule,agg);
+    if(preview)preview.innerHTML=`<div class="studio-preview-card">
+      <b>Preview</b>
+      <div class="muted small" style="margin-top:6px"><b>When:</b> ${studioWhenText(rule,cat)}</div>
+      <div class="muted small"><b>Then:</b> ${studioThenText(rule,cat)}</div>
+      <div class="muted small"><b>During:</b> ${studioDuringText(rule.during_schedule)}</div>
+      <div class="muted small"><b>Stacking:</b> ${studioUsingText(rule.using_stacking)}</div>
+      <div style="margin-top:8px">${(valid?studioStateChip('validated'):studioStateChip('validation_failed'))} <span class="muted small">authoring state — this rule does not run yet</span></div>
+      ${errs.length?`<div class="err small" style="margin-top:8px">${errs.map(e=>esc(e)).join('<br>')}</div>`:''}
+      <div class="studio-econ"><b class="muted small">Estimated economics</b>
+        ${est.length?est.map(l=>`<div class="studio-econ-line"><div>${esc(l.label)}</div>${l.face?`<div class="small">${esc(l.face)}</div>`:''}${l.est?`<div class="small"><b>${esc(l.est)}</b></div>`:''}<div class="muted small">${esc(l.note)}</div></div>`).join(''):'<div class="muted small">No actions to estimate yet.</div>'}
+      </div></div>`;
+    if(saveBtn)saveBtn.disabled=!valid;
+  }
+
+  function setStatus(state,msg,extraHtml){
+    const el=editorHost()&&editorHost().querySelector('#edStatus');if(!el)return;
+    const cls={loading:'muted',success:'studio-ok',validation:'err',denied:'err',conflict:'err',error:'err'}[state]||'muted';
+    el.innerHTML=`<span class="${cls}">${esc(msg)}</span>${extraHtml||''}`;
+    CUI.announce(msg,{assertive:state==='denied'||state==='error'||state==='conflict'});
+  }
+
+  // ---- save (snapshot-hash optimistic concurrency; six visible button states) ----
+  const retryKey=()=>`frenly:studio-rule:${S.biz.id}:${draftVersionId}`;
+  async function saveRule(){
+    if(!studioEd)return;syncEditorDom();
+    const m=studioEd;const rule=buildRule(m);
+    if((rule.name||'').trim().length===0){setStatus('validation','Give the rule a name first.');return;}
+    if(rule.then_effects.length===0){setStatus('validation','Add at least one action first.');return;}
+    // retry-safe stable id for a brand-new rule
+    let ruleId=m.ruleId;
+    if(m.isNew){const saved=sessionStorage.getItem(retryKey());if(saved)ruleId=saved;else sessionStorage.setItem(retryKey(),ruleId);}
+    const btn=editorHost().querySelector('#edSave');btn.disabled=true;btn.setAttribute('aria-busy','true');
+    setStatus('loading','Saving…');
+    const {data,error}=await sb.rpc('save_program_rule_draft',{p_config_version:draftVersionId,p_rule_id:ruleId,p_rule:rule,p_expected_snapshot_hash:snapshotHash});
+    if(!isCurrent())return;
+    btn.removeAttribute('aria-busy');
+    if(error){
+      btn.disabled=false;
+      const code=error.code;
+      if(code==='42501'){setStatus('denied','You do not have access to save this rule.');}
+      else if(code==='40001'){setStatus('conflict','This draft changed in another tab. ',`<button class="btn ghost sm" id="edReload" type="button">Reload draft</button>`);
+        const rl=editorHost().querySelector('#edReload');if(rl)rl.onclick=()=>{studioEd=null;rerender();};}
+      else if(code==='22023'){setStatus('validation',error.message||'This rule is not valid yet.');}
+      else{setStatus('error',error.message||'Could not save. Please try again.');}
+      return;
+    }
+    if(m.isNew)sessionStorage.removeItem(retryKey());
+    setStatus('success','Saved.');
+    studioEd=null;
+    toast('Rule saved to draft');
+    rerender();
+  }
+
+  // ---- top-level wiring (templates, list actions, publish) ----
+  document.querySelectorAll('.studioTemplate').forEach(b=>b.onclick=()=>{
+    const t=TEMPLATES.find(x=>x.id===b.dataset.t);if(!t)return;
+    const seed=t.make();const m=blankModel();
+    m.name=seed.name;m.when_event=seed.when_event;m.if_conditions=seed.if_conditions||[];m.then_effects=seed.then_effects||[];
+    if(seed.during)m.during=Object.assign(m.during,seed.during);
+    openEditor(m);
+  });
+  if($('studioAddRule'))$('studioAddRule').onclick=()=>openEditor(blankModel());
+  // Delegated live-validate: attach ONCE to the persistent editor host (paintEditor only replaces
+  // its children, so re-painting never accumulates listeners here).
+  if(editorHost()){editorHost().addEventListener('input',debouncedValidate);editorHost().addEventListener('change',debouncedValidate);}
+  document.querySelectorAll('.studioEditRule').forEach(b=>b.onclick=()=>{
+    const r=rules.find(x=>x.rule_id===b.dataset.id);if(r)openEditor(modelFromRule(r));});
+  document.querySelectorAll('.studioDelRule').forEach(b=>b.onclick=async()=>{
+    if(!confirm(`Delete rule "${b.dataset.name||''}"? This only changes the draft.`))return;
+    b.disabled=true;
+    const {error}=await sb.rpc('delete_program_rule_draft',{p_config_version:draftVersionId,p_rule_id:b.dataset.id,p_expected_snapshot_hash:snapshotHash});
+    if(!isCurrent())return;
+    if(error){b.disabled=false;
+      if(error.code==='40001'){toast('Draft changed in another tab — reloading');return rerender();}
+      if(error.code==='42501')return toast('You do not have access to delete this rule.');
+      return fail(error);}
+    toast('Rule deleted from draft');rerender();
+  });
+  if($('studioPublish'))$('studioPublish').onclick=async()=>{
+    if(!confirm('Publish this authoring draft? This records the rules for a later activation phase. It does NOT run them and does not change the counter.'))return;
+    const btn=$('studioPublish');btn.disabled=true;btn.setAttribute('aria-busy','true');
+    const st=$('studioPublishStatus');if(st)st.innerHTML='<span class="muted">Publishing…</span>';
+    const {error}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
+    if(!isCurrent())return;
+    btn.removeAttribute('aria-busy');
+    if(error){btn.disabled=false;
+      const msg=error.code==='23514'?(error.message||'One or more rules are not valid — fix them before publishing.'):(error.message||'Could not publish.');
+      if(st)st.innerHTML=`<span class="err">${esc(msg)}</span>`;
+      CUI.announce(msg,{assertive:true});return;}
+    toast('Authoring draft published (recorded for a later activation phase)');
+    nav('#/studio');
+  };
+
+  // Re-open the editor if one was in flight before this re-render (e.g. after save/delete we clear it,
+  // but a live-validate re-render mid-edit should keep the editor visible).
+  if(studioEd)paintEditor();
 }
 
 /* ---------- referrals ---------- */
