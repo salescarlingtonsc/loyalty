@@ -91,7 +91,7 @@ declare
 
   v_exp_before int; v_ops_before int; v_audit_before int;
   v_sb_before int; v_exp_recur_before int; v_exp_recur_after int;
-  v_n int; v_qty int;
+  v_n int; v_qty int; v_pay_base int;
 begin
   -- =========================================================================
   -- 0. Seed the two pristine tenants plus role/module/product/plan fixtures.
@@ -139,6 +139,12 @@ begin
 
   perform pg_temp.as_user(v_owner_a);
   v_mplan := (public.save_membership_plan(v_biz_a, null, 'V54 Gold', 5000, 'monthly', 500, 0, true)::jsonb->>'plan_id')::uuid;
+
+  -- v54 F2-1: baseline payments count. None of the F2 writers (expense/receiving) nor the
+  -- package/membership /4 paths touch public.payments (tender is a separate, UI-unwired
+  -- surface owned by record_payment/record_credit_tender), so this must hold flat throughout.
+  reset role;
+  select count(*)::int into v_pay_base from public.payments where business_id = v_biz_a;
 
   -- =========================================================================
   -- 1. create_expense success (owner). Exact counts: +1 expense, +1 op ledger,
@@ -247,6 +253,11 @@ begin
     (select count(*)::int from public.audit_log where entity_id = v_batch_id and action = 'stock_receive'),
     1, 'exactly one semantic stock_receive audit row');
 
+  -- v54 F2-1: expense + receiving (success/replay/conflict) never touch payments (+0).
+  perform pg_temp.assert_eq(
+    (select count(*)::int from public.payments where business_id = v_biz_a), v_pay_base,
+    'create_expense and receive_stock created zero payments rows');
+
   -- =========================================================================
   -- 5. receive_stock exact replay -> duplicate_ignored, same batch id, ZERO new rows.
   -- =========================================================================
@@ -331,6 +342,13 @@ begin
   perform pg_temp.assert_eq(
     (select count(*)::int from public.memberships where business_id = v_biz_a and client_id = v_client_m), 1,
     'membership conflict created no second membership');
+
+  -- v54 F2-1: the package + membership /4 enrolments write sales + client_packages/
+  -- memberships + membership credit_ledger, but the exact v51a-semantics payments delta is 0
+  -- (enroll_membership/3 and sell_package/3 never insert payments).
+  perform pg_temp.assert_eq(
+    (select count(*)::int from public.payments where business_id = v_biz_a), v_pay_base,
+    'package and membership /4 enrolments created zero payments rows (exact +0 delta)');
 
   -- =========================================================================
   -- 8. Malformed payloads -> 22023 (owner-authenticated so only validation fires).
@@ -488,5 +506,168 @@ begin
 
   raise notice 'v54 F2 write-hardening suite passed';
 end $v54$;
+
+-- ===========================================================================
+-- F2-1 DB-FAILURE INJECTION: prove atomicity — a mid-transaction failure of the
+-- audit insert (injection A on audit_log) OR the op-ledger insert (injection B on
+-- f2_write_operations) inside create_expense / receive_stock persists ZERO rows in
+-- expenses / stock_batches / audit_log / f2_write_operations (the owner's "creates no
+-- partial record when validation or audit insertion fails" bullet, exercised not just
+-- structural). Each injected call is wrapped in a nested BEGIN/EXCEPTION block so the
+-- injected failure rolls back to that block's savepoint and the suite continues.
+-- The two injection functions raise only for a marker idempotency key (GUC f2.inject_key),
+-- so they are surgical; both are dropped, then a normal call is proven to still succeed.
+-- ===========================================================================
+reset role;
+create function public.f2_inject_audit_raise() returns trigger
+language plpgsql as $fn$
+begin
+  if new.action in ('expense_create', 'stock_receive')
+     and new.detail->>'idempotency_key' = current_setting('f2.inject_key', true) then
+    raise exception 'F2 injected audit-insert failure' using errcode = 'P0001';
+  end if;
+  return new;
+end $fn$;
+create function public.f2_inject_op_raise() returns trigger
+language plpgsql as $fn$
+begin
+  if new.idempotency_key::text = current_setting('f2.inject_key', true) then
+    raise exception 'F2 injected op-ledger-insert failure' using errcode = 'P0001';
+  end if;
+  return new;
+end $fn$;
+
+do $f2_inject$
+declare
+  v_biz uuid; v_owner uuid; v_branch uuid; v_prod uuid;
+  v_exp0 int; v_sb0 int; v_audit0 int; v_ops0 int;
+  v_key uuid; v_raised boolean;
+begin
+  reset role;
+  select b.id into v_biz from public.businesses b where b.name = 'Pristine chain fixture A';
+  select s.user_id into v_owner from public.staff s
+    where s.business_id = v_biz and s.role = 'owner' and s.active and s.user_id is not null limit 1;
+  select id into v_branch from public.branches where business_id = v_biz and is_default;
+  select id into v_prod from public.products where business_id = v_biz and name = 'V54 Widget' limit 1;
+  if v_biz is null or v_owner is null or v_branch is null or v_prod is null then
+    raise exception 'F2-1 injection needs the v54 fixtures (tenant A owner/branch/product)';
+  end if;
+
+  -- Snapshot for a wholesale "nothing persisted" comparison across the whole injection phase.
+  select count(*)::int into v_exp0 from public.expenses where business_id = v_biz;
+  select count(*)::int into v_sb0 from public.stock_batches sb
+    join public.products p on p.id = sb.product_id where p.business_id = v_biz;
+  select count(*)::int into v_audit0 from public.audit_log where business_id = v_biz;
+  select count(*)::int into v_ops0 from public.f2_write_operations where business_id = v_biz;
+
+  -- ========== Injection A: the audit_log insert fails mid-transaction ==========
+  execute 'create trigger f2_inject_audit before insert on public.audit_log '
+       || 'for each row execute function public.f2_inject_audit_raise()';
+
+  -- A1. create_expense: the explicit semantic audit insert fails -> whole RPC rolls back.
+  v_key := gen_random_uuid();
+  perform set_config('f2.inject_key', v_key::text, true);
+  perform pg_temp.as_user(v_owner);
+  v_raised := false;
+  begin
+    perform public.create_expense(v_biz, v_branch, 'Inject Audit Expense', 12345,
+      null, null, null, null, v_key);
+  exception when others then v_raised := true;
+  end;
+  reset role;
+  perform pg_temp.assert_true(v_raised, 'create_expense surfaced the injected audit-insert failure');
+  perform pg_temp.assert_eq((select count(*)::int from public.expenses where business_id = v_biz),
+    v_exp0, 'audit failure left no expense row');
+  perform pg_temp.assert_eq((select count(*)::int from public.audit_log where business_id = v_biz),
+    v_audit0, 'audit failure left no audit rows');
+  perform pg_temp.assert_eq((select count(*)::int from public.f2_write_operations where business_id = v_biz),
+    v_ops0, 'audit failure left no op-ledger row');
+
+  -- A2. receive_stock: the explicit semantic audit insert fails -> whole RPC rolls back.
+  v_key := gen_random_uuid();
+  perform set_config('f2.inject_key', v_key::text, true);
+  perform pg_temp.as_user(v_owner);
+  v_raised := false;
+  begin
+    perform public.receive_stock(v_biz, v_prod, 4, null, null, v_key);
+  exception when others then v_raised := true;
+  end;
+  reset role;
+  perform pg_temp.assert_true(v_raised, 'receive_stock surfaced the injected audit-insert failure');
+  perform pg_temp.assert_eq((select count(*)::int from public.stock_batches sb
+    join public.products p on p.id = sb.product_id where p.business_id = v_biz),
+    v_sb0, 'audit failure left no stock batch');
+  perform pg_temp.assert_eq((select count(*)::int from public.audit_log where business_id = v_biz),
+    v_audit0, 'audit failure left no audit rows (receiving)');
+  perform pg_temp.assert_eq((select count(*)::int from public.f2_write_operations where business_id = v_biz),
+    v_ops0, 'audit failure left no op-ledger row (receiving)');
+
+  execute 'drop trigger f2_inject_audit on public.audit_log';
+
+  -- ========== Injection B: the f2_write_operations insert fails mid-transaction ==========
+  -- Distinct from injection A: here the value row AND the audit row are written first, then
+  -- the FINAL op-ledger insert fails; the whole RPC must still roll back to zero rows.
+  execute 'create trigger f2_inject_op before insert on public.f2_write_operations '
+       || 'for each row execute function public.f2_inject_op_raise()';
+
+  -- B1. create_expense: op-ledger insert fails -> whole RPC rolls back.
+  v_key := gen_random_uuid();
+  perform set_config('f2.inject_key', v_key::text, true);
+  perform pg_temp.as_user(v_owner);
+  v_raised := false;
+  begin
+    perform public.create_expense(v_biz, v_branch, 'Inject Op Expense', 23456,
+      null, null, null, null, v_key);
+  exception when others then v_raised := true;
+  end;
+  reset role;
+  perform pg_temp.assert_true(v_raised, 'create_expense surfaced the injected op-ledger failure');
+  perform pg_temp.assert_eq((select count(*)::int from public.expenses where business_id = v_biz),
+    v_exp0, 'op-ledger failure left no expense row');
+  perform pg_temp.assert_eq((select count(*)::int from public.audit_log where business_id = v_biz),
+    v_audit0, 'op-ledger failure left no audit rows');
+  perform pg_temp.assert_eq((select count(*)::int from public.f2_write_operations where business_id = v_biz),
+    v_ops0, 'op-ledger failure left no op-ledger row');
+
+  -- B2. receive_stock: op-ledger insert fails -> whole RPC rolls back.
+  v_key := gen_random_uuid();
+  perform set_config('f2.inject_key', v_key::text, true);
+  perform pg_temp.as_user(v_owner);
+  v_raised := false;
+  begin
+    perform public.receive_stock(v_biz, v_prod, 6, null, null, v_key);
+  exception when others then v_raised := true;
+  end;
+  reset role;
+  perform pg_temp.assert_true(v_raised, 'receive_stock surfaced the injected op-ledger failure');
+  perform pg_temp.assert_eq((select count(*)::int from public.stock_batches sb
+    join public.products p on p.id = sb.product_id where p.business_id = v_biz),
+    v_sb0, 'op-ledger failure left no stock batch');
+  perform pg_temp.assert_eq((select count(*)::int from public.audit_log where business_id = v_biz),
+    v_audit0, 'op-ledger failure left no audit rows (receiving)');
+  perform pg_temp.assert_eq((select count(*)::int from public.f2_write_operations where business_id = v_biz),
+    v_ops0, 'op-ledger failure left no op-ledger row (receiving)');
+
+  execute 'drop trigger f2_inject_op on public.f2_write_operations';
+
+  -- ========== Post-injection: with both injections dropped, normal calls succeed. ==========
+  perform pg_temp.as_user(v_owner);
+  perform public.create_expense(v_biz, v_branch, 'Post Inject Expense', 100,
+    null, null, null, null, gen_random_uuid());
+  perform public.receive_stock(v_biz, v_prod, 3, null, null, gen_random_uuid());
+  reset role;
+  perform pg_temp.assert_eq((select count(*)::int from public.expenses where business_id = v_biz),
+    v_exp0 + 1, 'a normal create_expense succeeds once the injection is dropped');
+  perform pg_temp.assert_eq((select count(*)::int from public.stock_batches sb
+    join public.products p on p.id = sb.product_id where p.business_id = v_biz),
+    v_sb0 + 1, 'a normal receive_stock succeeds once the injection is dropped');
+  perform pg_temp.assert_eq((select count(*)::int from public.f2_write_operations where business_id = v_biz),
+    v_ops0 + 2, 'the two post-injection successes each wrote one op-ledger row');
+
+  raise notice 'v54 F2-1 failure-injection cases passed';
+end $f2_inject$;
+
+drop function public.f2_inject_audit_raise();
+drop function public.f2_inject_op_raise();
 
 rollback;
