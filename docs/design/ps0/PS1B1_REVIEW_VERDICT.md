@@ -122,3 +122,114 @@ truthfully documents the fail-closed behaviour and the new latest_file.
 4. Re-run the v57 + v56 suites, the concurrency harness, and
    `EXPECTED_SUPABASE_PROJECT_REF=gadpooereceldfpfxsod npm run validate` against the
    persisted UAT database and capture output as Round 2 evidence.
+
+---
+
+## Round 2 — persisted UAT journey & formal verdict
+
+**Frozen state:** repo HEAD `1ee25b0` (round-1 verdict commit) on top of the reviewed
+commit `5fe5508`; `git status` clean; v57 migration byte-hash unchanged
+(`e0afb92…7a15f6`). **UAT:** `gadpooereceldfpfxsod` (verified via `get_project_url` on
+the sanctioned MCP server; the other two Supabase servers were never touched), ledger 91,
+v57 applied. Synthetic tenant `bcd24ddd-9614-4384-9f83-a6e6da31f700`
+(`ZZ-SYNTHETIC PS1B1 UAT Journey` / `zz-synthetic-ps1b1`). All queries below were
+read-only; I deliberately avoided the pricing error path so nothing was written to UAT.
+
+### Formal verdict: **PASS PS-1B.1**
+
+PS-1B.1 §1 (catalog price fail-closed hardening) is fully realised in code, enforced by
+the live UAT schema, exercised at the live function level, and demonstrated end-to-end by
+the persisted synthetic journey with zero silent-zeros and complete isolation. No owner
+requirement is unmet; no forbidden surface appeared.
+
+### Live-UAT evidence I independently re-verified
+
+**Schema post-apply (live):** `app.ps1b_catalog_price` is `volatile` returning `jsonb`;
+`rule_effect_log.failure_reason text` present; four CHECKs exactly as designed —
+`effect_index >= 0` (preserved, not collateral-dropped),
+`(outcome='fulfilled') = (benefit_fulfilment_id IS NOT NULL)`,
+`(outcome='failed') = (failure_reason IS NOT NULL)`, and the 8-value outcome allowlist
+including `'failed'`.
+
+**Typed contract, live + read-only** (called directly against the synthetic tenant):
+- real granted service `74a68be4…` → `{status:ok, price_cents:500}`
+- null reference → `{status:not_applicable, price_cents:null}`
+- kind `bundle` → `{status:invalid_kind, price_cents:null}`
+- missing row → `{status:not_found, price_cents:null}`
+No non-ok status ever yields a numeric price. Three of the four fail-closed statuses are
+thus confirmed on the live UAT function, not only in rehearsal.
+
+**No silent-zero — the definitive tie:** the persisted `benefit_fulfilments` recurring row
+carries `face_value_cents = 500`, which equals the live `ps1b_catalog_price` result for the
+same granted item (`ok`/500). The promise was priced at the TRUE catalog value, not 0.
+Platform-wide `face_value_cents = 0` fulfilments: **0**. Platform-wide
+`PS1B_PRICING_ERROR` audit rows: **0** (pricing stayed healthy).
+
+**rule_effect_log row integrity (persisted):** `fulfilled` carries a fulfilment ref and no
+reason; both `notified` and the `budget_exhausted` rows carry neither ref nor reason — every
+row satisfies all three CHECKs; no orphan `failure_reason`; no `failed` rows (healthy run).
+
+**§2 single path / §3 budget preservation:** effects `{fulfilled:1, notified:2,
+budget_exhausted:1}`; entitlements `{reversed:1, available:1}`; one 500-face fulfilment;
+one reservation; `budget_periods committed=500=cap=500` (client B's budget_exhausted was
+logged while A's reservation + committed counter stayed intact); outbox `{delivered:2}`.
+
+**§4 redeem/reverse:** entitlement ops `{redeem:1, reverse:1}`; audit
+`{REDEEM_ENTITLEMENT:1, REVERSE_ENTITLEMENT:1}`; the recurring entitlement shows
+`redeemed`→`reversed` (the v57-sanctioned post-terminal transition) with its
+`budget_reservation_id` retained (promise preserved). No financial ledger touched: `points`
+rows 0; the only `credit_ledger` row is the legacy referral reward.
+
+**§5 comms safety:** `captured_messages` = 2, recipients both
+`synthetic:<uuid>@example.test`; outbox all `delivered`. (The real-recipient
+`check_violation` was proven in the coordinator's rolled-back probe; the live CHECK on
+`captured_messages.recipient` is the same structural guard from v56.)
+
+**§6 referral shadow:** persisted comparator
+`{clean:true, matched:1, shadow_only:0, live_only:0, mismatches:0}`; the referral
+fulfilment (`engine=referral, basis=credit_face, conf=high, face=300`) was written by the
+legacy trigger, the shadow evaluator wrote exactly one `benefit_shadow_evaluations` row
+(face 300) and NO fulfilment/value. The referral `+300` credit is the single financial row
+in the tenant and is legacy-attributed.
+
+**§7 final state + isolation:** independently reproduced every claimed figure
+(events `{sale.completed:2, referral.qualified:1}`, fulfilments `{recurring:1, referral:1}`,
+shadow_evals 1, sales 2, points 0). Platform-wide `domain_events` = 3, all 3 in the
+synthetic tenant, **0 in any other tenant** — complete isolation. Append-only guards intact
+(v56, untouched by v57); nothing deleted; no real customer data.
+
+**Forbidden-in-this-pass items — all absent:** no checkout financial effects (checkout
+family shadow-logged, no `checkout_evaluations`), no stored value / `sv_*`, no top-ups, no
+real comms (synthetic-only), no points movement (0 rows), no studio-driven credit movement
+(only legacy referral), no new activation surface (v57 adds no table — only an ALTER of the
+existing PS-1B `rule_effect_log` — and both functions remain revoked from
+public/anon/authenticated).
+
+### Notes carried forward (do NOT block PASS)
+
+- **N1 — internal-SQL-error path not persisted on UAT (accepted).** Because pricing stayed
+  healthy, the `WHEN OTHERS` → `status:'error'` + `PS1B_PRICING_ERROR` audit row +
+  executor `'failed'` outcome was NOT persisted on UAT. It is directly runtime-proven in
+  the v57 acceptance suite (cases g/h/i, ALL PASS) on a full 91-chain replay whose v57
+  bytes are hash-identical to UAT, and the live UAT schema demonstrably supports the outcome
+  (allowlist includes `'failed'`, `failure_reason` present, `failed⟺reason` CHECK enforced).
+  The audit-write mechanism (SECURITY DEFINER owner bypassing RLS) is the same pattern used
+  by numerous existing functions. Risk of divergent UAT behaviour: negligible. The
+  coordinator offered to persist one via a deliberately-dangling catalog id — a worthwhile
+  OPTIONAL confirmatory artifact, but not a gate given the identical-hash rehearsal proof
+  and the three fail-closed statuses I confirmed live above.
+- **N2 — §6 harness artifacts, not defects.** The first `run_referral_shadow` executed
+  inside a rolled-back transaction (its shadow row rolled back; re-run persistently after —
+  final state has exactly the required 1 shadow row), and one comparator call issued in the
+  same statement as the sweep saw STABLE-function snapshot visibility (expected Postgres
+  MVCC; a fresh-statement re-read showed the true state — which is the normal operational
+  pattern, since the comparator runs as a separate monitoring call). Neither affects the
+  integrity of the final persisted evidence, which I re-verified clean (comparator
+  `clean:true` in its own statement). Benign operational reminder: run
+  `app.compare_shadow_vs_live` in a statement separate from the executor sweep.
+
+### Standing gate reminder
+This PASS clears PS-1B.1 §1 on the UAT database only. Production apply to
+`gadpooereceldfpfxsod` as the live surface remains blocked until the owner writes
+`RELEASE APPROVED` (CLAUDE.md standing gate). PS-1C / stored-value / any value-moving
+executor path remain forbidden and tripwired.
