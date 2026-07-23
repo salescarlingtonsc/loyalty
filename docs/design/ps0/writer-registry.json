@@ -1194,6 +1194,77 @@
       "inventory": "FEFO auto-deduct from stock_batches when the sale carries product_id/qty",
       "idempotency": "inherits the sales-insert idempotency boundary",
       "kernel": "SAFE — inventory movement stays a sale subscriber."
+    },
+    {
+      "id": "db.fn:app.trg_emit_referral_qualified/0",
+      "surface": "db_trigger_function",
+      "latest_file": "20260724150000_frenly_v56_ps1b_events_execution.sql",
+      "rows_written": "domain_events:INSERT (via emit_domain_event), benefit_fulfilments:INSERT",
+      "entry_point": "AFTER INSERT on credit_ledger WHEN entry_type=referral_reward",
+      "idempotency": "domain_events producer-identity unique + benefit_fulfilments UNIQUE(business,canonical_key), both ON CONFLICT DO NOTHING",
+      "value": "PROMISE ONLY — writes the referral adoption fulfilment (legacy authority holder in shadow, B5); moves no NEW value (the reward credit is the legacy engine's own write)",
+      "kernel": "N/A — PS-1B fulfilment registry write, not a sale/tender path; the kernel reconciles it as the referral engine's single-count record"
+    },
+    {
+      "id": "db.trigger:credit_ledger:trg_ps1b_referral_fulfilment",
+      "surface": "db_trigger",
+      "table": "credit_ledger",
+      "timing": "after",
+      "events": [
+        "insert"
+      ],
+      "function": "app.trg_emit_referral_qualified",
+      "latest_file": "20260724150000_frenly_v56_ps1b_events_execution.sql"
+    },
+    {
+      "id": "db.fn:app.ps1b_execute_event/1",
+      "surface": "db_function",
+      "latest_file": "20260724150000_frenly_v56_ps1b_events_execution.sql",
+      "rows_written": "program_entitlements:INSERT, benefit_fulfilments:INSERT, rule_effect_log:INSERT, benefit_shadow_evaluations:INSERT, event_outbox:INSERT, budget_periods:INSERT/UPDATE, budget_reservations:INSERT, domain_event_execution:INSERT",
+      "entry_point": "app.run_studio_executor sweep (cron frenly-studio-executor + test-invoked)",
+      "idempotency": "rule_effect_log UNIQUE(event_id,rule_id,effect_index), program_entitlements lazy UNIQUE(business,client,rule,period_key), domain_event_execution marker — all ON CONFLICT DO NOTHING",
+      "value": "PROMISE ONLY — materialises claimable entitlements + their fulfilment rows; consults benefit_registry authority and REFUSES (shadow-logs) unless studio-active; NO credit_ledger/points_ledger/discount/tender write",
+      "kernel": "N/A in PS-1B (no money moves). PS-1C will route any value-moving effect (grant_credit/discount) through the checkout kernel; here they are shadow-logged only"
+    },
+    {
+      "id": "db.fn:app.ps1b_materialise_entitlement/13",
+      "surface": "db_function",
+      "latest_file": "20260724150000_frenly_v56_ps1b_events_execution.sql",
+      "rows_written": "budget_periods:INSERT/UPDATE, program_entitlements:INSERT, budget_reservations:INSERT",
+      "entry_point": "app.ps1b_execute_event (grant_free_item path)",
+      "idempotency": "lazy UNIQUE(business,client,rule,period_key) + budget_reservations UNIQUE(period,entitlement); budget row FOR UPDATE serialises the cap check",
+      "value": "PROMISE ONLY — an issued entitlement keeps its reservation permanently; exhaustion refuses only NEW grants (budget_exhausted)",
+      "kernel": "N/A — entitlement promise, not a tender; reconciled via benefit_fulfilments"
+    },
+    {
+      "id": "db.fn:app.run_studio_executor/1",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260724150000_frenly_v56_ps1b_events_execution.sql",
+      "rows_written": "(delegates to app.ps1b_execute_event)",
+      "entry_point": "cron frenly-studio-executor (*/5) + test-invoked",
+      "delegates_to": "app.ps1b_execute_event",
+      "value": "PROMISE ONLY — bounded sweep of unexecuted sale.completed/birthday.activated/membership.renewed events",
+      "kernel": "N/A in PS-1B"
+    },
+    {
+      "id": "db.fn:public.redeem_program_entitlement/2",
+      "surface": "db_function",
+      "latest_file": "20260724150000_frenly_v56_ps1b_events_execution.sql",
+      "rows_written": "program_entitlements:UPDATE (status→redeemed), program_entitlement_operations:INSERT, audit_log:INSERT",
+      "entry_point": "staff RPC redeem_program_entitlement(uuid,uuid) — member + loyalty module",
+      "idempotency": "program_entitlement_operations UNIQUE(business,operation_type,idempotency_key); row FOR UPDATE",
+      "value": "PROMISE ONLY — flips a claimable entitlement to redeemed; NO ledger/tender/discount write (staff-driven claim, no checkout integration)",
+      "kernel": "N/A — entitlement claim is not a sale; the redeemed item, if it becomes a $0 line, would route through the kernel in a later phase"
+    },
+    {
+      "id": "db.fn:public.reverse_program_entitlement/3",
+      "surface": "db_function",
+      "latest_file": "20260724150000_frenly_v56_ps1b_events_execution.sql",
+      "rows_written": "program_entitlements:UPDATE (status→reversed), program_entitlement_operations:INSERT, audit_log:INSERT",
+      "entry_point": "owner RPC reverse_program_entitlement(uuid,text,uuid)",
+      "idempotency": "program_entitlement_operations UNIQUE(business,operation_type,idempotency_key); mandatory reason; row FOR UPDATE",
+      "value": "PROMISE ONLY — reverses an entitlement promise; NO value movement",
+      "kernel": "N/A"
     }
   ],
   "allowlist": [
@@ -1748,6 +1819,18 @@
     {
       "id": "db.backfill:20260721000017_frenly_v37b_versioned_retention_taxonomy.sql:reward_grants",
       "reason": "one-time migration backfill (reward_grants:UPDATE) in 20260721000017_frenly_v37b_versioned_retention_taxonomy.sql; guarded by app.sales_backfill / column whitelist where applicable; NOT a runtime writer"
+    },
+    {
+      "id": "db.fn:app.emit_domain_event/8",
+      "reason": "PS-1B event-envelope producer: writes ONLY domain_events (append-only immutable log; non-value), deduped by producer identity UNIQUE(business,event_type,source_operation_id,schema_version). Not a customer-value writer."
+    },
+    {
+      "id": "db.fn:app.run_outbox_sweep/1",
+      "reason": "PS-1B delivery sweep: writes ONLY event_outbox (delivery state) + captured_messages (synthetic-recipient capture/test provider, hard CHECK forbids real recipients). No real message delivery; non-value."
+    },
+    {
+      "id": "db.fn:app.run_referral_shadow/1",
+      "reason": "PS-1B referral SHADOW evaluator: writes ONLY benefit_shadow_evaluations (would-be effects). Never benefit_fulfilments, never a value table. Comparator diffs it vs the live referral fulfilment rows."
     }
   ]
 }

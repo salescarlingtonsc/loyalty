@@ -64,7 +64,7 @@ function parseGateTable(md, heading) {
   return rows;
 }
 
-test('PS-GATES marker authorizes PS-0 and PS-1A (no EXECUTOR phase is authorized yet)', async () => {
+test('PS-GATES marker authorizes PS-0/PS-1A/PS-1B (PS-1C+ still gated)', async () => {
   const md = await read('docs/design/ps0/PS-GATES.md');
   const phases = Object.fromEntries(
     parseGateTable(md, 'AUTHORIZED PHASES').map(([phase, auth]) => [phase, auth.toLowerCase()]),
@@ -72,9 +72,32 @@ test('PS-GATES marker authorizes PS-0 and PS-1A (no EXECUTOR phase is authorized
   assert.equal(phases['PS-0'], 'yes', 'PS-0 must be authorized');
   assert.equal(phases['PS-1A'], 'yes',
     'PS-1A is authorized for authoring/projection/validation only (no executor)');
-  for (const p of ['PS-1B', 'PS-1C', 'PS-2', 'PS-3', 'PS-4', 'PS-5']) {
+  assert.equal(phases['PS-1B'], 'yes',
+    'PS-1B is authorized for the event envelope + entitlement PROMISE execution (no customer-value movement)');
+  for (const p of ['PS-1C', 'PS-2', 'PS-3', 'PS-4', 'PS-5']) {
     assert.equal(phases[p], 'no',
       `${p} must remain unauthorized until the owner approves it — flipping this is a deliberate act`);
+  }
+});
+
+test('captured_messages can never carry a non-synthetic recipient (no real delivery)', async () => {
+  const corpus = await readMigrationCorpus();
+  const defs = Object.entries(corpus).filter(([, sql]) => /create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?captured_messages\b/i.test(sql));
+  assert.ok(defs.length >= 1, 'captured_messages must be defined once PS-1B lands');
+  for (const [file, sql] of defs) {
+    // The recipient column CHECK must constrain to synthetic patterns ONLY, so a
+    // real address/number is structurally UNINSERTABLE.
+    assert.match(sql, /recipient\s+text\s+not\s+null\s+check[\s\S]{0,240}?@example\.test/i,
+      `${file}: captured_messages.recipient must be synthetic-only (%@example.test)`);
+    assert.match(sql, /\+65990000%/, `${file}: captured_messages must restrict SG numbers to the synthetic range`);
+  }
+  // No migration may write a captured_messages row with a hard-coded real recipient.
+  for (const [file, sql] of Object.entries(corpus)) {
+    for (const m of sql.matchAll(/insert\s+into\s+(?:public\.)?captured_messages\b/gi)) {
+      const block = sql.slice(m.index, m.index + 1200);
+      assert.doesNotMatch(block, /'[^']*@(?:gmail|yahoo|hotmail|outlook|icloud)\.[a-z]+'/i,
+        `${file}: a captured_messages insert must never carry a real recipient literal`);
+    }
   }
 });
 

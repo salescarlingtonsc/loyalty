@@ -88,6 +88,7 @@
     { "kind": "executable", "path": "db/migrations/20260723_frenly_v53_visit_feedback.sql", "semanticVersion": "v53", "proposedDeployVersion": "20260722000124" },
     { "kind": "executable", "path": "db/migrations/20260723_frenly_v53a_wallet_review_url.sql", "semanticVersion": "v53a", "proposedDeployVersion": "20260722000125" },
     { "kind": "executable", "path": "db/migrations/20260723_frenly_v54_f2_write_hardening.sql", "semanticVersion": "v54", "proposedDeployVersion": "20260722000126" },
-    { "kind": "executable", "path": "db/migrations/20260724_frenly_v55_ps1a_authoring.sql", "semanticVersion": "v55", "proposedDeployVersion": "20260722000127" }
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v55_ps1a_authoring.sql", "semanticVersion": "v55", "proposedDeployVersion": "20260722000127" },
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v56_ps1b_events_execution.sql", "semanticVersion": "v56", "proposedDeployVersion": "20260722000128" }
   ]
 }

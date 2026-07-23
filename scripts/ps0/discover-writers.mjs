@@ -96,6 +96,23 @@ const VALUE_TABLES = {
   gift_card_issue_operations:              { category: 'idempotency_ledger', value: false },
   customer_birthday_activation_operations: { category: 'idempotency_ledger', value: false },
   f2_write_operations:                     { category: 'idempotency_ledger', value: false },
+  // --- Program Studio PS-1B: entitlement PROMISES + fulfilment cost registry.
+  //     These MOVE/PROMISE value (kernel must reconcile). The studio executor
+  //     writes only promises here; NO ledger/tender/discount write exists yet.
+  benefit_fulfilments:                     { category: 'benefit_fulfilment',  value: true },
+  program_entitlements:                    { category: 'entitlement',         value: true },
+  // --- PS-1B execution/idempotency/log surfaces (tracked, non-value): the event
+  //     envelope, delivery outbox, capture provider, shadow log, effect log,
+  //     budget counters, and op/marker ledgers.
+  domain_events:                           { category: 'domain_event',        value: false },
+  event_outbox:                            { category: 'outbox',              value: false },
+  captured_messages:                       { category: 'captured_message',    value: false },
+  benefit_shadow_evaluations:              { category: 'shadow_log',          value: false },
+  rule_effect_log:                         { category: 'effect_log',          value: false },
+  budget_periods:                          { category: 'budget',              value: false },
+  budget_reservations:                     { category: 'budget',              value: false },
+  program_entitlement_operations:          { category: 'idempotency_ledger',  value: false },
+  domain_event_execution:                  { category: 'idempotency_ledger',  value: false },
 };
 
 // Stored-value tables that MUST NOT exist yet (PS-2 territory). If discovery

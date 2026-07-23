@@ -8,20 +8,23 @@ executor schema for an *un-authorized* phase appears in `supabase/migrations/` o
 `db/migrations/`. Landing that schema therefore requires flipping the phase to
 `authorized: yes` here in the same change — a deliberate, reviewed, auditable act.
 
-Owner approval of record (2026-07-23, `PROGRAM_STUDIO_ARCHITECTURE.md` header +
-PS-1A authorization): **PS-0 is approved. PS-1A is approved for AUTHORING /
-PROJECTION / VALIDATION schema landing only (F2 PASS precondition met, no
-executor).** PS-1B / PS-1C, stored-value financial execution, and the production
-rollout are NOT yet authorized. Do not edit the AUTHORIZED PHASES table without a
-written owner instruction quoting the phase being authorized.
+Owner approval of record (2026-07-24, `PROGRAM_STUDIO_ARCHITECTURE.md` header +
+PS-1A/PS-1B authorization): **PS-0, PS-1A and PS-1B are approved.** PS-1A =
+authoring/projection/validation (no executor). PS-1B = the event envelope,
+non-checkout entitlement execution (PROMISES only — no customer-value movement),
+the NEW delivery-state outbox with a synthetic-only capture provider, the
+fulfilment registry + budgets, and the referral shadow (referral legacy->shadow;
+recurring unbuilt->studio). PS-1C, stored-value financial execution, and the
+production rollout are NOT yet authorized. Do not edit the AUTHORIZED PHASES table
+without a written owner instruction quoting the phase being authorized.
 
-PS-1A authorizes ONLY the authoring/projection/validation artifacts listed under
-`## AUTHORING ARTIFACTS` below (program_rules, program_rules_compiled,
-benefit_registry, rule_schema_versions, rule_condition_allowlist,
-rule_effect_allowlist). It does NOT authorize any executor surface: the
-`## EXECUTOR ARTIFACTS` set and the `## EXECUTOR LEDGER-GUARD SCOPES` remain
-forbidden and tripwired, and no migration may modify a legacy benefit-family's
-execution authority.
+PS-1B authorizes the `## EXECUTOR ARTIFACTS` mapped to PS-1B below. STILL forbidden
+and tripwired: `checkout_evaluations` (PS-1C), `sv_*` (PS-2), every EXECUTOR
+LEDGER-GUARD SCOPE (all DEFERRED to PS-1C — PS-1B moves no customer value, so it
+adds NO ledger scope), and `captured_messages` may NEVER hold a non-synthetic
+recipient. The only sanctioned authority-lifecycle transitions are referral
+legacy->shadow and recurring unbuilt->studio; execution_authority itself is never
+mutated.
 
 ## AUTHORIZED PHASES
 
@@ -29,7 +32,7 @@ execution authority.
 |--------|------------|
 | PS-0   | yes        |
 | PS-1A  | yes        |
-| PS-1B  | no         |
+| PS-1B  | yes        |
 | PS-1C  | no         |
 | PS-2   | no         |
 | PS-3   | no         |
@@ -59,29 +62,37 @@ artifacts are NOT in this table (they are execution-free) — see `## AUTHORING
 ARTIFACTS`. Everything below is PS-1B or later and stays forbidden while PS-1A is
 the highest authorized phase.
 
-| artifact              | introducing_phase |
-|-----------------------|-------------------|
-| domain_events         | PS-1B             |
-| rule_effect_log       | PS-1B             |
-| event_outbox          | PS-1B             |
-| benefit_fulfilments   | PS-1B             |
-| budget_periods        | PS-1B             |
-| program_entitlements  | PS-1B             |
-| checkout_evaluations  | PS-1C             |
-| sv_lots               | PS-2              |
-| sv_lot_movements      | PS-2              |
-| sv_plans              | PS-2              |
-| sv_plan_versions      | PS-2              |
+| artifact                    | introducing_phase |
+|-----------------------------|-------------------|
+| domain_events               | PS-1B             |
+| rule_effect_log             | PS-1B             |
+| event_outbox                | PS-1B             |
+| benefit_fulfilments         | PS-1B             |
+| budget_periods              | PS-1B             |
+| budget_reservations         | PS-1B             |
+| program_entitlements        | PS-1B             |
+| program_entitlement_operations | PS-1B          |
+| benefit_shadow_evaluations  | PS-1B             |
+| captured_messages           | PS-1B             |
+| domain_event_execution      | PS-1B             |
+| checkout_evaluations        | PS-1C             |
+| sv_lots                     | PS-2              |
+| sv_lot_movements            | PS-2              |
+| sv_plans                    | PS-2              |
+| sv_plan_versions            | PS-2              |
 
-## EXECUTOR LEDGER-GUARD SCOPES (must be absent until PS-1B/1C)
+## EXECUTOR LEDGER-GUARD SCOPES (must be absent until PS-1C)
 
 The `app.loyalty_ledger_write_guard()` scope enum must NOT contain any of the
-following studio-executor scopes until PS-1B/PS-1C is authorized (architecture §17,
-finding S3):
+following studio-executor scopes until their phase is authorized (architecture §17,
+finding S3). **PS-1B DELIBERATELY ADDS NONE**: it moves no customer value, so an
+unused ledger scope would only weaken the guard's "every scope has a validated
+route" story. All studio ledger scopes are therefore deferred to PS-1C, where a
+live discount/tender route consumes them.
 
 | scope           | introducing_phase |
 |-----------------|-------------------|
-| studio_executor | PS-1B             |
+| studio_executor | PS-1C             |
 | studio_discount | PS-1C             |
 | sv_spend        | PS-2              |
 | sv_refund       | PS-2              |
