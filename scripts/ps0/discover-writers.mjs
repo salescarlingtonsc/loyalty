@@ -95,6 +95,7 @@ const VALUE_TABLES = {
   sale_intent_operations:                  { category: 'idempotency_ledger', value: false },
   gift_card_issue_operations:              { category: 'idempotency_ledger', value: false },
   customer_birthday_activation_operations: { category: 'idempotency_ledger', value: false },
+  f2_write_operations:                     { category: 'idempotency_ledger', value: false },
 };
 
 // Stored-value tables that MUST NOT exist yet (PS-2 territory). If discovery

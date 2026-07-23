@@ -76,7 +76,6 @@ begin
     'save_referral_program(uuid,boolean,integer,integer)',
     'save_membership_plan(uuid,uuid,text,integer,text,integer,numeric,boolean)',
     'set_membership_status(uuid,uuid,text)',
-    'enroll_membership_v41(uuid,uuid,uuid)',
     'redeem_gift_card_v41(uuid,text,uuid,integer)'
   ] loop
     if to_regprocedure('public.' || v_signature) is null then
@@ -87,6 +86,29 @@ begin
       raise exception 'v41 RPC ACL is not authenticated-only: %', v_signature;
     end if;
   end loop;
+  -- v54 (F2 write-hardening) STRENGTHENS the enroll_membership_v41 ACL contract: the
+  -- non-idempotent 3-arg overload is now fully EXECUTE-revoked, and the idempotent
+  -- 4-arg overload is the authenticated path. (Formerly the /3 overload was in the
+  -- authenticated-only loop above.)
+  if to_regprocedure('public.enroll_membership_v41(uuid,uuid,uuid)') is null
+     or has_function_privilege('anon',
+          'public.enroll_membership_v41(uuid,uuid,uuid)'::regprocedure, 'execute')
+     or has_function_privilege('authenticated',
+          'public.enroll_membership_v41(uuid,uuid,uuid)'::regprocedure, 'execute')
+     or exists (
+       select 1 from pg_proc p
+         cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+        where p.oid = 'public.enroll_membership_v41(uuid,uuid,uuid)'::regprocedure
+          and a.grantee = 0 and a.privilege_type = 'EXECUTE') then
+    raise exception 'v54: enroll_membership_v41/3 must retain no anon/authenticated/PUBLIC execute';
+  end if;
+  if to_regprocedure('public.enroll_membership_v41(uuid,uuid,uuid,uuid)') is null
+     or has_function_privilege('anon',
+          'public.enroll_membership_v41(uuid,uuid,uuid,uuid)'::regprocedure, 'execute')
+     or not has_function_privilege('authenticated',
+          'public.enroll_membership_v41(uuid,uuid,uuid,uuid)'::regprocedure, 'execute') then
+    raise exception 'v54: enroll_membership_v41/4 must be authenticated-only';
+  end if;
   if has_function_privilege('authenticated',
        'public.issue_gift_card(uuid,integer,uuid,text)'::regprocedure, 'execute')
      or has_function_privilege('authenticated',

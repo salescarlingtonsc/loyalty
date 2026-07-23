@@ -43,6 +43,10 @@
       "category": "expense_pl",
       "value": true
     },
+    "f2_write_operations": {
+      "category": "idempotency_ledger",
+      "value": false
+    },
     "financial_operations": {
       "category": "idempotency_ledger",
       "value": false
@@ -143,25 +147,26 @@
   "stored_value_tables_present": [],
   "stored_value_absent_confirmed": true,
   "counts": {
-    "db_function_writers": 41,
-    "db_function_writers_value": 38,
+    "db_function_writers": 43,
+    "db_function_writers_value": 40,
     "db_delegating_entrypoints": 12,
-    "db_triggers_total": 131,
+    "db_triggers_total": 132,
     "db_triggers_reaching_value": 4,
     "migration_backfills": 25,
     "edge_functions": 4,
     "edge_direct_value_writes": 0,
-    "browser_direct_writes": 28,
-    "browser_direct_value_writes": 2,
-    "browser_rpc_call_sites": 101,
-    "browser_rpc_reaching_value": 19,
-    "identities_total": 211,
-    "identities_value_impact": 100
+    "browser_direct_writes": 26,
+    "browser_direct_value_writes": 0,
+    "browser_rpc_call_sites": 103,
+    "browser_rpc_reaching_value": 21,
+    "identities_total": 213,
+    "identities_value_impact": 102,
+    "counts_note": "v54 adds public.create_expense/9 and public.receive_stock/6 as keyed idempotent value writers (db_function_writers 41->43, value 38->40). db_triggers_total 131->132 counts the new f2_write_operations immutability guard (reuses app.v41_operation_immutable_guard; no value write, so db_triggers_reaching_value is unchanged). The two former browser-direct value writes to expenses/stock_batches are GONE (browser_direct_writes 28->26, browser_direct_value_writes 2->0): the parallel app agent rewired app/index.html to the new keyed RPCs, so discovery now surfaces browser.rpc:create_expense and browser.rpc:receive_stock instead (browser_rpc_call_sites 101->103, browser_rpc_reaching_value 19->21). identities_total holds at 213 (two browser.write ids removed, two db.fn writers added) and identities_value_impact at 102."
   },
   "hard_findings": [
-    "sell_package/3 (non-idempotent, no advisory lock) is execute-granted to authenticated AND called directly by the standalone Packages UI (app/index.html:6539); double-submit duplicates a package sale + client_packages + loyalty earn.",
-    "enroll_membership_v41/3 (non-idempotent passthrough to enroll_membership/3) is granted AND called directly by the standalone Memberships UI (app/index.html:5816); double-submit duplicates a membership + sale.",
-    "Browser-direct value writes: app/index.html inserts expenses (P&L) at :7003 and stock_batches (inventory) at :6500 with no RPC and no idempotency (RLS-gated, owner-side)."
+    "sell_package/3 (non-idempotent, no advisory lock) is execute-granted to authenticated AND called directly by the standalone Packages UI (app/index.html:6539); double-submit duplicates a package sale + client_packages + loyalty earn. [DB-CLOSED by v54: EXECUTE on sell_package(uuid,uuid,uuid) revoked from public/anon/authenticated; only the definer-owned /4 wrapper legitimately calls /3. The standalone UI 3-arg call must be migrated to /4 by the app agent.]",
+    "enroll_membership_v41/3 (non-idempotent passthrough to enroll_membership/3) is granted AND called directly by the standalone Memberships UI (app/index.html:5816); double-submit duplicates a membership + sale. [DB-CLOSED by v54: EXECUTE on enroll_membership_v41(uuid,uuid,uuid) revoked from public/anon/authenticated; only the definer-owned /4 wrapper legitimately calls /3. The standalone UI 3-arg call must be migrated to /4 by the app agent.]",
+    "Browser-direct value writes: app/index.html inserts expenses (P&L) at :7003 and stock_batches (inventory) at :6500 with no RPC and no idempotency (RLS-gated, owner-side). [DB-CLOSED by v54: INSERT/UPDATE/DELETE grants + write-permitting FOR ALL policies revoked/replaced with SELECT-only on both tables; keyed idempotent replacements public.create_expense/9 and public.receive_stock/6 added. The app agent rewires the two call sites to the RPCs.]"
   ],
   "medium_findings": [
     "redeem_gift_card/4 (and its v41 wrapper called at :5892) has no idempotency key; relies on FOR UPDATE + balance decrement — a retry within remaining balance re-issues credit.",
@@ -202,8 +207,8 @@
       "id": "browser.rpc:app/index.html:enroll_membership_v41",
       "surface": "browser_rpc_binding",
       "rpc": "enroll_membership_v41",
-      "resolves_to": "enroll_membership_v41/3 (NON-idempotent) via standalone UI 5816; /4 (idempotent) via cart 4092",
-      "call_site_finding": "HARD — standalone Memberships page calls the 3-arg non-idempotent overload"
+      "resolves_to": "enroll_membership_v41/4 (idempotent) — both the cart (4113/4115) and the standalone Memberships page (5841) now pass p_idempotency_key",
+      "call_site_finding": "none (v54) — the former HARD finding is closed: EXECUTE on the 3-arg overload is revoked and the app agent migrated the standalone call site to the 4-arg overload"
     },
     {
       "id": "browser.rpc:app/index.html:issue_campaign_offer",
@@ -286,8 +291,8 @@
       "id": "browser.rpc:app/index.html:sell_package",
       "surface": "browser_rpc_binding",
       "rpc": "sell_package",
-      "resolves_to": "sell_package/3 (NON-idempotent) via standalone UI 6539; sell_package/4 (idempotent) via cart 4090",
-      "call_site_finding": "HARD — standalone Packages page calls the 3-arg non-idempotent overload"
+      "resolves_to": "sell_package/4 (idempotent) — both the cart (4113) and the standalone Packages page (6581) now pass p_idempotency_key",
+      "call_site_finding": "none (v54) — the former HARD finding is closed: EXECUTE on the 3-arg overload is revoked and the app agent migrated the standalone call site to the 4-arg overload"
     },
     {
       "id": "browser.rpc:app/index.html:set_expense_void",
@@ -311,29 +316,18 @@
       "call_site_finding": "none"
     },
     {
-      "id": "browser.write:app/index.html:expenses:INSERT",
-      "surface": "browser_write",
-      "table": "expenses",
-      "op": "INSERT",
-      "entry_point": "app/index.html:7003 sb.from('expenses').insert(...)",
-      "idempotency": "NONE — direct PostgREST insert; RLS-gated (owner/manager)",
-      "payment": "creates an expenses (P&L cost) row directly from the browser, bypassing any RPC",
-      "reporting": "P&L cost side",
-      "reversal": "set_expense_void",
-      "ui": "Expenses → Add expense",
-      "kernel": "SAFE (out of money-kernel scope) — HARD FINDING (browser-direct value write): expenses are written client-side with no RPC/idempotency; owner-entered P&L, RLS-protected, not customer value. Acceptable but should move behind an RPC for idempotency + audit parity."
+      "id": "browser.rpc:app/index.html:create_expense",
+      "surface": "browser_rpc_binding",
+      "rpc": "create_expense",
+      "resolves_to": "public.create_expense/9 (idempotent, keyed, audited)",
+      "call_site_finding": "none — v54 CLOSED the former browser-direct expenses INSERT. The write-permitting grant + FOR ALL policy on public.expenses are revoked/replaced with SELECT-only; the parallel app agent rewired app/index.html:7054 to sb.rpc('create_expense', {p_business, p_branch, p_category, p_amount_cents, p_occurred_on, p_supplier, p_description, p_note, p_idempotency_key}) passing a stable idempotency key. This replaces the former browser.write:app/index.html:expenses:INSERT hard finding."
     },
     {
-      "id": "browser.write:app/index.html:stock_batches:INSERT",
-      "surface": "browser_write",
-      "table": "stock_batches",
-      "op": "INSERT",
-      "entry_point": "app/index.html:6500 sb.from('stock_batches').insert(...)",
-      "idempotency": "NONE — direct PostgREST insert; RLS-gated",
-      "inventory": "creates a stock_batches receiving row directly from the browser (opening/received stock), bypassing commit_import_job",
-      "reversal": "none (append batch)",
-      "ui": "Inventory → Receive stock / add product stock",
-      "kernel": "SAFE (out of money-kernel scope) — HARD FINDING (browser-direct value write): inventory value written client-side with no RPC/idempotency; double-tap duplicates a stock batch (FEFO then over-counts on-hand). Should move behind an RPC."
+      "id": "browser.rpc:app/index.html:receive_stock",
+      "surface": "browser_rpc_binding",
+      "rpc": "receive_stock",
+      "resolves_to": "public.receive_stock/6 (idempotent, keyed, audited, cross-tenant-gated via product ownership)",
+      "call_site_finding": "none — v54 CLOSED the former browser-direct stock_batches INSERT. The write-permitting (default-privilege) grant + FOR ALL policy on public.stock_batches are revoked/replaced with SELECT-only; the parallel app agent rewired app/index.html:6533 to sb.rpc('receive_stock', {p_business, p_product, p_qty, p_expires_on, p_received_on, p_idempotency_key}) passing a stable idempotency key. This replaces the former browser.write:app/index.html:stock_batches:INSERT hard finding."
     },
     {
       "id": "db.fn:app.on_appointment_completed/0",
@@ -528,6 +522,42 @@
       "kernel": "SAFE — bulk import of opening stock; inventory value only, idempotent per job."
     },
     {
+      "id": "db.fn:public.create_expense/9",
+      "surface": "db_function",
+      "latest_file": "20260723180000_frenly_v54_f2_write_hardening.sql",
+      "rows_written": "audit_log:INSERT, expenses:INSERT, f2_write_operations:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, for-update",
+      "entry_point": "create_expense(p_business,p_branch,p_category,p_amount_cents,p_occurred_on,p_supplier,p_description,p_note,p_idempotency_key)",
+      "callers": "browser Expenses -> Add expense (the app/index.html:7003 direct write is being replaced by this RPC by the parallel app agent)",
+      "reads": "staff (active), branches (tenant/active), f2_write_operations (replay)",
+      "idempotency": "advisory lock on (business, key) + f2_write_operations op-ledger keyed on (business, idempotency_key); exact replay returns duplicate_ignored; same key + different request_hash -> 23505",
+      "locking": "advisory + for-update",
+      "authz": "auth.uid() -> active staff of the business + app.can_module_write(business,'expenses') + app.has_perm(business,'view_finance')",
+      "payment": "inserts one expenses (P&L cost) row atomically with an audit_log row; created_by = actor",
+      "reporting": "P&L cost side; SGT-defaulted occurred_on; sane date window",
+      "reversal": "set_expense_void (void flag)",
+      "ui": "Expenses -> Add expense",
+      "kernel": "SAFE (out of money-kernel scope) — v54 replacement for the browser-direct expenses insert (PS-0 hard finding 3a): server-mediated, idempotent, audited. The direct table write grant is revoked in the same migration."
+    },
+    {
+      "id": "db.fn:public.receive_stock/6",
+      "surface": "db_function",
+      "latest_file": "20260723180000_frenly_v54_f2_write_hardening.sql",
+      "rows_written": "audit_log:INSERT, f2_write_operations:INSERT, stock_batches:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, for-update",
+      "entry_point": "receive_stock(p_business,p_product,p_qty,p_expires_on,p_received_on,p_idempotency_key)",
+      "callers": "browser Inventory -> Receive stock (the app/index.html:6500 direct write is being replaced by this RPC by the parallel app agent)",
+      "reads": "staff (active), products (tenant/active — THE cross-tenant gate, since stock_batches has no business_id), f2_write_operations (replay)",
+      "idempotency": "advisory lock on (business, key) + f2_write_operations op-ledger keyed on (business, idempotency_key); exact replay returns duplicate_ignored; same key + different request_hash -> 23505",
+      "locking": "advisory + for-update on the staff row; batches are append-only so receiving needs no extra row lock (FEFO deduction locks its own rows)",
+      "authz": "auth.uid() -> active staff of the business + app.can_module_write(business,'inventory')",
+      "inventory": "inserts one stock_batches (received batch) row atomically with an audit_log row; SGT-defaulted received_on; expires_on strictly after received_on when both set",
+      "reporting": "opening/received inventory; FEFO on-hand",
+      "reversal": "none (append batch); a full inventory-movement ledger is out of F2 scope (schema has no unit-cost/batch-ref/branch columns)",
+      "ui": "Inventory -> Receive stock",
+      "kernel": "SAFE (out of money-kernel scope) — v54 replacement for the browser-direct stock_batches insert (PS-0 hard finding 3b): server-mediated, idempotent, audited. The direct table write grant is revoked in the same migration."
+    },
+    {
       "id": "db.fn:public.customer_activate_birthday_benefit/2",
       "surface": "db_function",
       "latest_file": "20260721163000_frenly_c45_birthday_benefits.sql",
@@ -557,7 +587,7 @@
       "callers": "browser Memberships page enrol button (app/index.html:5816) — DIRECT 3-arg call",
       "idempotency": "NONE — thin passthrough to enroll_membership/3, no key, no lock",
       "package_membership": "via enroll_membership/3",
-      "kernel": "MUST-NOT (as-is) — HARD FINDING: non-idempotent membership enrol still granted AND called directly by the standalone UI (5816). Double-tap = duplicate membership + duplicate sale. Move UI to the 4-arg overload; revoke /3 grant."
+      "kernel": "EXECUTE-REVOKED by v54 — EXECUTE on public.enroll_membership_v41(uuid,uuid,uuid) is revoked from public/anon/authenticated (PS-0 hard finding 2). The only legitimate remaining caller is its own idempotent /4 wrapper (SECURITY DEFINER, owner-executed, unaffected by the grant). The standalone Memberships UI 3-arg call site (app/index.html:5816) must migrate to the /4 overload (parallel app agent, app/ scope)."
     },
     {
       "id": "db.fn:public.enroll_membership_v41/4",
@@ -1035,7 +1065,7 @@
       "reporting": "books package revenue upfront",
       "reversal": "sale reversible via reverse_sale (compensates client_packages via reverse_sale_v34_base)",
       "ui": "Packages → Sell package (standalone)",
-      "kernel": "MUST-NOT (as-is) — HARD FINDING: non-idempotent value writer still execute-granted to authenticated AND still called directly by the standalone UI (6539). The kernel must absorb this; the /3 grant should be revoked and the UI moved to sell_package/4."
+      "kernel": "EXECUTE-REVOKED by v54 — EXECUTE on public.sell_package(uuid,uuid,uuid) is revoked from public/anon/authenticated (PS-0 hard finding 1). The only legitimate remaining caller is its own idempotent /4 wrapper (SECURITY DEFINER, owner-executed, unaffected by the grant). The standalone Packages UI 3-arg call site (app/index.html:6539) must migrate to the /4 overload (parallel app agent, app/ scope)."
     },
     {
       "id": "db.fn:public.sell_package/4",

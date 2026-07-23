@@ -91,6 +91,7 @@
     { "kind": "pending", "version": "20260723122000", "name": "frenly_v51b_client_credit_history", "sourcePath": "db/migrations/20260723_frenly_v51b_client_credit_history.sql" },
     { "kind": "pending", "version": "20260723140000", "name": "frenly_v52_sgt_date_normalization", "sourcePath": "db/migrations/20260723_frenly_v52_sgt_date_normalization.sql" },
     { "kind": "pending", "version": "20260723160000", "name": "frenly_v53_visit_feedback", "sourcePath": "db/migrations/20260723_frenly_v53_visit_feedback.sql" },
-    { "kind": "pending", "version": "20260723170000", "name": "frenly_v53a_wallet_review_url", "sourcePath": "db/migrations/20260723_frenly_v53a_wallet_review_url.sql" }
+    { "kind": "pending", "version": "20260723170000", "name": "frenly_v53a_wallet_review_url", "sourcePath": "db/migrations/20260723_frenly_v53a_wallet_review_url.sql" },
+    { "kind": "pending", "version": "20260723180000", "name": "frenly_v54_f2_write_hardening", "sourcePath": "db/migrations/20260723_frenly_v54_f2_write_hardening.sql" }
   ]
 }

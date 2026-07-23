@@ -857,6 +857,29 @@ const showToast=message=>{
 };
 const toast=m=>{const message=String(m??'');showToast(message);CUI.announce(message)};
 const fail=e=>{console.error(e);const message=e?.message||String(e);showToast(message);CUI.announce(message,{assertive:true})};
+/* --- Idempotent write-attempt key (survives a full page re-render) -------------------------
+   Safety-remediation house pattern — the same discipline as the Quick-earn cart's `saleIdem`
+   / per-line uuid keys and retentionPage's sessionStorage retry key. One stable uuid per
+   LOGICAL write attempt: minted when an attempt's fingerprint first appears, then reused
+   VERBATIM on every retry (double-tap, timeout, lost response, route re-render, reconnect),
+   and regenerated ONLY when the user deliberately changes the inputs (the fingerprint changes)
+   or after the attempt settles — clearWriteAttempt() on success or on a same-key/different-
+   payload conflict, so the next deliberate attempt is fresh. It rides in sessionStorage — the
+   one storage primitive this stack allows (localStorage is prohibited) — so the key outlives
+   both the click closure AND a full page-function re-invocation, unlike a page-scoped `let`.
+   Button-disabling is UI polish, NOT the idempotency story; the server dedupes on this key. */
+const writeAttemptKey=(slot,fingerprint)=>{
+  let a=null;try{a=JSON.parse(sessionStorage.getItem(slot)||'null')}catch{}
+  if(!a||a.fingerprint!==fingerprint){
+    a={fingerprint,key:crypto.randomUUID()};
+    try{sessionStorage.setItem(slot,JSON.stringify(a))}catch{}
+  }
+  return a.key;
+};
+const clearWriteAttempt=slot=>{try{sessionStorage.removeItem(slot)}catch{}};
+/* Server replay signal, collision-safe: never keys off a bare `status` (a membership's result
+   status is 'active', a package's has no such field) — only explicit idempotency sentinels. */
+const isReplayResult=r=>!!(r&&(r.replayed===true||r.already_recorded===true||r.status==='duplicate_ignored'||r.status==='replayed'));
 /* Singapore-fixed-offset (UTC+8) display helper: shows a stored UTC instant as SGT wall-clock
    text, regardless of the viewer's own browser/system timezone. Frenly is SG-first — bookings
    are always shown in SGT so "what the customer picked is what staff see". */
@@ -5812,11 +5835,17 @@ async function membershipsPage(){
   };
   if(canEnroll&&$('ego'))$('ego').onclick=async()=>{
     if(!$('ec').value||!$('ep').value) return toast('Pick a customer and a plan');
+    const enrollSlot=`frenly:membership-enroll:${S.biz.id}`;
+    const enrollKey=writeAttemptKey(enrollSlot,`${$('ec').value}|${$('ep').value}`);
     const enrollButton=$('ego');enrollButton.disabled=true;
-    const {error}=await sb.rpc('enroll_membership_v41',{p_business:S.biz.id,p_client:$('ec').value,p_plan:$('ep').value});
+    const {data,error}=await sb.rpc('enroll_membership_v41',{p_business:S.biz.id,p_client:$('ec').value,p_plan:$('ep').value,p_idempotency_key:enrollKey});
     if(!isMembershipsCurrent())return;
-    if(error){fail(error);enrollButton.disabled=false;return}
-    toast('Enrolled — first charge booked, credits dropped 🎉');membershipsPage();
+    if(error){
+      if(error.code==='23505'||error.code==='40001'){clearWriteAttempt(enrollSlot);enrollButton.disabled=false;return toast('That enrollment clashed with another — check the member list, then start a fresh one')}
+      fail(error);enrollButton.disabled=false;return;
+    }
+    clearWriteAttempt(enrollSlot);
+    toast(isReplayResult(data)?'Already enrolled — no duplicate created':'Enrolled — first charge booked, credits dropped 🎉');membershipsPage();
   };
   $('plist').innerHTML=(plans&&plans.length)?plans.map(p=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">
     <div><b>${esc(p.name)}</b><div class="muted small">${money(p.price_cents)}/${p.cadence==='annual'?'yr':'mo'} → ${money(p.credit_cents)} credit each period</div></div>
@@ -6497,9 +6526,19 @@ async function inventoryPage(){
   };
   $('badd2').onclick=async()=>{
     if(!$('bp2').value) return toast('Pick a product');
-    const {error}=await sb.from('stock_batches').insert({product_id:$('bp2').value,
-      qty:parseInt($('bq2').value||'1'),expires_on:$('be2').value||null});
-    if(error) return fail(error);toast('Stock received');loadInv();
+    const product=$('bp2').value,qty=parseInt($('bq2').value||'1'),expiresOn=$('be2').value||null;
+    const stockSlot=`frenly:stock-receive:${S.biz.id}`;
+    const stockKey=writeAttemptKey(stockSlot,JSON.stringify([product,qty,expiresOn]));
+    const recvButton=$('badd2');recvButton.disabled=true;
+    const {data,error}=await sb.rpc('receive_stock',{p_business:S.biz.id,p_product:product,p_qty:qty,
+      p_expires_on:expiresOn,p_received_on:null,p_idempotency_key:stockKey});
+    if(error){
+      recvButton.disabled=false;
+      if(error.code==='23505'||error.code==='40001'){clearWriteAttempt(stockSlot);return toast('That batch clashed with another — check stock on hand, then start a fresh one')}
+      return fail(error);
+    }
+    clearWriteAttempt(stockSlot);recvButton.disabled=false;
+    toast(isReplayResult(data)?'Already received — no duplicate batch':'Stock received');loadInv();
   };
   loadInv();
 }
@@ -6536,9 +6575,17 @@ async function packagesPage(){
   };
   $('ksell').onclick=async()=>{
     if(!$('kc').value||!$('kk').value) return toast('Pick customer + package');
-    const {error}=await sb.rpc('sell_package',{p_business:S.biz.id,p_client:$('kc').value,p_plan:$('kk').value});
-    if(error) return fail(error);
-    toast('Package sold — revenue booked, loyalty earned 🎉');packagesPage();
+    const sellSlot=`frenly:package-sell:${S.biz.id}`;
+    const sellKey=writeAttemptKey(sellSlot,`${$('kc').value}|${$('kk').value}`);
+    const sellButton=$('ksell');sellButton.disabled=true;
+    const {data,error}=await sb.rpc('sell_package',{p_business:S.biz.id,p_client:$('kc').value,p_plan:$('kk').value,p_idempotency_key:sellKey});
+    if(error){
+      sellButton.disabled=false;
+      if(error.code==='23505'||error.code==='40001'){clearWriteAttempt(sellSlot);return toast('That sale clashed with another — check the customer’s packages, then start a fresh one')}
+      return fail(error);
+    }
+    clearWriteAttempt(sellSlot);
+    toast(isReplayResult(data)?'Already recorded — no duplicate package created':'Package sold — revenue booked, loyalty earned 🎉');packagesPage();
   };
   const [{data:cps,error:cpError},workflow]=await Promise.all([
     sb.from('client_packages').select('*, clients(full_name), package_plans(name,sessions)')
@@ -7000,11 +7047,21 @@ async function expensesPage(){
     const category=$('exCat').value.trim(),amt=Math.round(parseFloat($('exAmt').value||'0')*100);
     if(category.length<2) return toast('Category required');
     if(!(amt>0)) return toast('Enter an amount');
-    const {error}=await sb.from('expenses').insert({business_id:S.biz.id,category,
-      supplier:$('exSup').value||null,description:$('exDesc').value||null,
-      amount_cents:amt,currency:'SGD',occurred_on:$('exDate').value||todayIso});
-    if(error) return fail(error);
-    toast('Expense added');$('exCat').value='';$('exSup').value='';$('exDesc').value='';$('exAmt').value='';load();
+    const supplier=$('exSup').value||null,description=$('exDesc').value||null,occurredOn=$('exDate').value||todayIso;
+    const expenseSlot=`frenly:expense-add:${S.biz.id}`;
+    const expenseKey=writeAttemptKey(expenseSlot,JSON.stringify([category,amt,supplier,description,occurredOn]));
+    const addButton=$('exAdd');addButton.disabled=true;
+    const {data,error}=await sb.rpc('create_expense',{p_business:S.biz.id,p_branch:null,p_category:category,
+      p_amount_cents:amt,p_occurred_on:occurredOn,p_supplier:supplier,p_description:description,p_note:null,
+      p_idempotency_key:expenseKey});
+    if(error){
+      addButton.disabled=false;
+      if(error.code==='23505'||error.code==='40001'){clearWriteAttempt(expenseSlot);return toast('That expense clashed with another — check the list, then start a fresh one')}
+      return fail(error);
+    }
+    clearWriteAttempt(expenseSlot);addButton.disabled=false;
+    toast(isReplayResult(data)?'Already added — no duplicate expense':'Expense added');
+    $('exCat').value='';$('exSup').value='';$('exDesc').value='';$('exAmt').value='';load();
   };
   async function load(){
     const {data:ex,error}=await sb.from('expenses').select('*').eq('business_id',S.biz.id).order('occurred_on',{ascending:false}).limit(200);

@@ -549,8 +549,12 @@ begin
     biz_a, 'V20 Monthly', 8000, 'monthly', 6000, true
   ) returning id into membership_plan;
   perform pg_temp.as_user(owner_a);
+  -- v54 (F2 write-hardening): the zero-key enroll_membership_v41/3 overload is now
+  -- EXECUTE-revoked for authenticated principals. Use the idempotent 4-arg overload
+  -- (a fixture idempotency key) — the delegated /3 work, and thus the membership +
+  -- credit_ledger + sale rows the assertions below check, are identical.
   result := public.enroll_membership_v41(
-    biz_a, client_membership, membership_plan
+    biz_a, client_membership, membership_plan, gen_random_uuid()
   )::jsonb;
   perform pg_temp.assert_true(
     exists (

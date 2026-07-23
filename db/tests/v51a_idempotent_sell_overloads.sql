@@ -1,5 +1,12 @@
 -- Rollback-only v51a suite: server-idempotent sell_package / enroll_membership_v41 overloads.
--- Run after the complete canonical chain through v51a in a disposable rehearsal DB.
+-- Run after the complete canonical chain (including v54) in a disposable rehearsal DB.
+--
+-- NOTE (v54 supersession): section 3 below originally asserted that the zero-key /3
+-- overloads were "untouched and still create rows". v54 (F2 write-hardening) EXECUTE-revoked
+-- both /3 overloads from every browser principal, so that legacy-unaffected guarantee no
+-- longer holds. Section 3 is inverted accordingly: an authenticated /3 call now raises 42501,
+-- while the idempotent /4 overloads still succeed (proving the definer wrappers' internal
+-- delegation to /3, as the function owner, is unaffected by the browser revoke).
 begin;
 \ir fixtures/pristine_chain_fixture.psql
 
@@ -121,20 +128,29 @@ begin
     1, 'replay booked no second membership sale');
 
   -- ========================================================================
-  -- 3. The zero-key legacy signatures are untouched and still create rows.
+  -- 3. v54 SUPERSEDES the "legacy /3 unaffected" guarantee: the zero-key /3 overloads
+  --    are now EXECUTE-revoked for authenticated principals. The idempotent /4 overloads
+  --    still create rows (the definer wrappers delegate to /3 as the function owner).
   -- ========================================================================
   perform pg_temp.as_user(v_owner_a);
-  v_r3 := public.sell_package(v_biz_a, v_client_a, v_pkg);        -- 3-arg, un-deduped
-  perform pg_temp.assert_eq((v_r3->>'remaining')::int, 10, '3-arg sell_package still works');
-  perform public.enroll_membership_v41(v_biz_a, v_client_m2, v_mplan);  -- 3-arg
+  perform pg_temp.expect_state(
+    format('select public.sell_package(%L::uuid,%L::uuid,%L::uuid)', v_biz_a, v_client_a, v_pkg),
+    '3-arg sell_package now execute-revoked for authenticated', '42501');
+  perform pg_temp.expect_state(
+    format('select public.enroll_membership_v41(%L::uuid,%L::uuid,%L::uuid)', v_biz_a, v_client_m2, v_mplan),
+    '3-arg enroll_membership_v41 now execute-revoked for authenticated', '42501');
+  -- The /4 overloads still create rows despite /3 being revoked (definer delegation).
+  v_r3 := public.sell_package(v_biz_a, v_client_a, v_pkg, gen_random_uuid());  -- 4-arg
+  perform pg_temp.assert_eq((v_r3->>'remaining')::int, 10, '4-arg sell_package still works with /3 revoked');
+  perform public.enroll_membership_v41(v_biz_a, v_client_m2, v_mplan, gen_random_uuid());  -- 4-arg
   reset role;
   perform pg_temp.assert_eq(
     (select count(*)::int from public.client_packages
       where business_id = v_biz_a and client_id = v_client_a and plan_id = v_pkg),
-    2, '3-arg sell_package added an un-deduped second package');
+    2, '4-arg sell_package added a second package (client already had one from section 1)');
   perform pg_temp.assert_eq(
     (select count(*)::int from public.memberships where business_id = v_biz_a and client_id = v_client_m2),
-    1, '3-arg enroll_membership_v41 still enrolls');
+    1, '4-arg enroll_membership_v41 enrolled client m2');
 
   -- ========================================================================
   -- 4. Reusing a key for a different immutable request is rejected.

@@ -179,7 +179,6 @@ begin
     to_regprocedure('public.save_referral_program(uuid,boolean,integer,integer)'),
     to_regprocedure('public.save_membership_plan(uuid,uuid,text,integer,text,integer,numeric,boolean)'),
     to_regprocedure('public.set_membership_status(uuid,uuid,text)'),
-    to_regprocedure('public.enroll_membership_v41(uuid,uuid,uuid)'),
     to_regprocedure('public.redeem_gift_card_v41(uuid,text,uuid,integer)'),
     to_regprocedure('public.lookup_client_by_phone(uuid,text)'),
     to_regprocedure('public.record_sale_by_phone(uuid,text,integer,text,text,uuid,text,uuid,text)')
@@ -190,6 +189,29 @@ begin
       raise exception 'v41 RPC ACL is not authenticated-only: %', v_proc;
     end if;
   end loop;
+  -- v54 (F2 write-hardening) STRENGTHENS the enroll_membership_v41 ACL contract: the
+  -- non-idempotent 3-arg overload is now fully EXECUTE-revoked (formerly in the
+  -- authenticated-only loop above), and the idempotent 4-arg overload is the
+  -- authenticated path.
+  if to_regprocedure('public.enroll_membership_v41(uuid,uuid,uuid)') is null
+     or has_function_privilege('anon',
+          'public.enroll_membership_v41(uuid,uuid,uuid)'::regprocedure, 'EXECUTE')
+     or has_function_privilege('authenticated',
+          'public.enroll_membership_v41(uuid,uuid,uuid)'::regprocedure, 'EXECUTE')
+     or exists (
+       select 1 from pg_proc p
+         cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+        where p.oid = 'public.enroll_membership_v41(uuid,uuid,uuid)'::regprocedure
+          and a.grantee = 0 and a.privilege_type = 'EXECUTE') then
+    raise exception 'v54: enroll_membership_v41/3 must retain no anon/authenticated/PUBLIC execute';
+  end if;
+  if to_regprocedure('public.enroll_membership_v41(uuid,uuid,uuid,uuid)') is null
+     or has_function_privilege('anon',
+          'public.enroll_membership_v41(uuid,uuid,uuid,uuid)'::regprocedure, 'EXECUTE')
+     or not has_function_privilege('authenticated',
+          'public.enroll_membership_v41(uuid,uuid,uuid,uuid)'::regprocedure, 'EXECUTE') then
+    raise exception 'v54: enroll_membership_v41/4 must be authenticated-only';
+  end if;
   if has_function_privilege(
        'authenticated',
        'public.issue_gift_card(uuid,integer,uuid,text)'::regprocedure,
@@ -783,7 +805,10 @@ begin
     v_business,null,'V41 module plan',2500,'monthly',1000,0,true
   );
   v_plan := (v_result->>'plan_id')::uuid;
-  v_result := public.enroll_membership_v41(v_business,v_referred,v_plan)::jsonb;
+  -- v54: enroll via the idempotent 4-arg overload (the /3 overload is now
+  -- EXECUTE-revoked for authenticated principals); the membership + sale + audit rows
+  -- the assertions below check are unchanged by the /4 wrapper's delegation.
+  v_result := public.enroll_membership_v41(v_business,v_referred,v_plan,gen_random_uuid())::jsonb;
   v_membership := (v_result->>'id')::uuid;
   v_result := public.set_membership_status(v_business,v_membership,'paused');
   if v_result->>'membership_status' <> 'paused'
