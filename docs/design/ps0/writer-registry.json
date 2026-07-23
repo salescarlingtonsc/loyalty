@@ -1473,6 +1473,22 @@
       "reason": "browser RPC 'decide_change' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
+      "id": "browser.rpc:app/index.html:emergency_pause_studio_rule",
+      "reason": "browser RPC 'emergency_pause_studio_rule' (PS-1C.2) is the owner-only studio-rule emergency pause; it writes only the studio_rule_emergency_pauses control table + audit_log and moves NO customer value (the pause merely stops NEW effects in the kernel/executor)"
+    },
+    {
+      "id": "browser.rpc:app/index.html:lift_emergency_pause",
+      "reason": "browser RPC 'lift_emergency_pause' (PS-1C.2) is the owner-only lift of a studio-rule emergency pause; it writes only the studio_rule_emergency_pauses control table + audit_log and moves NO customer value"
+    },
+    {
+      "id": "browser.rpc:app/index.html:preview_publish_impact",
+      "reason": "browser RPC 'preview_publish_impact' (PS-1C.2) is a read-only owner publish preview; it performs no DML and moves NO customer value"
+    },
+    {
+      "id": "browser.rpc:app/index.html:set_studio_rule_active",
+      "reason": "browser RPC 'set_studio_rule_active' (PS-1C.2) is the owner-only normal versioned pause/resume; it clones+publishes an immutable config version (config tables only) and moves NO customer value"
+    },
+    {
       "id": "browser.rpc:app/index.html:delete_program_rule_draft",
       "reason": "browser RPC 'delete_program_rule_draft' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },

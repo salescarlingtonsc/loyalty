@@ -37,6 +37,20 @@ unbuilt->studio, and (PS-1C) checkout unbuilt->studio; execution_authority itsel
 never mutated. The kernel finaliser (`record_cart_sale` WITH an evaluation token) is
 the ONLY writer of `checkout_discount_lines`.
 
+PS-1C.2 (v60, truthfulness + control increment under the standing PS-1C authorization —
+no new phase, no new financial-execution engine): the studio-rule execution state is now
+SERVER-DERIVED from the effect's real execution engine. Because the checkout and recurring
+families genuinely execute since PS-1C, a published studio rule may now truthfully read
+**live / partially_live / shadow_testing / ready_for_activation / paused / retired** (the
+PS-1A "NEVER claim a studio rule is operating" posture is SUPERSEDED for the studio-
+authoritative families ONLY — the state is the server's `execution_state`, never a browser-
+computed label). PS-1C.2 also adds the NON-executor control table
+`public.studio_rule_emergency_pauses` (an owner-only, write-once/lift-once pause that stops
+a live rule from producing NEW effects inside `app.ps1c_plan_checkout` and
+`app.ps1b_execute_event` while deleting NO historical value row). It is a control surface,
+not a financial-execution artifact, so it is deliberately NOT in the `## EXECUTOR ARTIFACTS`
+table below; it moves no value and adds no ledger/guard scope.
+
 ## AUTHORIZED PHASES
 
 | phase  | authorized |

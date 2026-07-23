@@ -174,13 +174,19 @@ begin
     raise exception 'the draft editor did not return the allowlist vocabulary';
   end if;
 
-  -- ---- 7. Publish compiles the rules; a published studio rule NEVER reports live/active. ----
+  -- ---- 7. Publish compiles the rules; the published state is now SERVER-DERIVED TRUTH
+  --         (PS-1C.2, v60). This rule's only effect is earn_bonus_points -> the
+  --         points_loyalty family, which the studio executor SHADOW-LOGS (the legacy
+  --         engine remains authoritative), so its truthful published state is
+  --         'shadow_testing'. Under PS-1A this same rule reported the placeholder
+  --         'ready_for_activation'; v60 corrects that lie. What must STILL hold: a
+  --         shadow-only rule never falsely reports 'live'/'active'. ----
   perform public.publish_loyalty_config(v_draft);
   v_result := public.get_programs_overview(v_business);
   select s->>'execution_state' into v_state from jsonb_array_elements(v_result->'studio_rules') s where (s->>'rule_id')::uuid=v_rule;
-  if v_state<>'ready_for_activation' then raise exception 'a published studio rule must report ready_for_activation, got %', v_state; end if;
+  if v_state<>'shadow_testing' then raise exception 'a published earn_bonus_points rule must report shadow_testing (server-derived, v60), got %', v_state; end if;
   if exists(select 1 from jsonb_array_elements(v_result->'studio_rules') s where s->>'execution_state' in ('live','active')) then
-    raise exception 'a studio rule reported live/active - forbidden in PS-1A';
+    raise exception 'a shadow-only studio rule reported live/active - it moves no value';
   end if;
   if not exists(select 1 from public.program_rules_compiled c
       join public.program_rules pr on pr.id=c.program_rule_id

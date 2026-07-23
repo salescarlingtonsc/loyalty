@@ -349,6 +349,19 @@ tr.click:hover td{background:#FBFAF8}
 .studio-econ-line{padding:6px 0;border-bottom:1px solid var(--hair)}
 .studio-econ-line:last-child{border-bottom:none}
 .studio-ok{color:var(--green);font-weight:600}
+/* PS-1C.2 execution-truth surfaces: per-effect state breakdown, rule controls, publish preview */
+.studio-effect-states{margin-top:8px;border-top:1px solid var(--hair);padding-top:6px}
+.studio-effect-state{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:4px 0;flex-wrap:wrap}
+.studio-effect-state>span{font-size:13px}
+.studio-rule-controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.studio-emg-banner{margin-top:8px;border:1px solid var(--red);background:var(--tint);border-radius:var(--r-sm);padding:8px 10px;font-size:13px}
+.studio-impact-rule{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-top:10px}
+.studio-impact-eff{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:5px 0;flex-wrap:wrap;border-top:1px solid var(--hair)}
+.studio-impact-eff:first-of-type{border-top:none}
+.studio-impact-flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.studio-tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:100px;border:1px solid var(--line);color:var(--muted)}
+.studio-tag.fin{border-color:var(--red);color:var(--red)}
+.studio-tag.cust{border-color:var(--coral);color:var(--coral)}
 @media(max-width:520px){.stCond>select,.stEff>select,.edCondValCell,.edEffValCell{flex:1 1 100%}
   .edCondValCell input,.edEffValCell input,.edCondValCell select,.edEffValCell select{flex:1 1 auto;width:100%}}
 .spacer{flex:1}
@@ -4157,6 +4170,11 @@ async function tillPage(){
     if(catalog===null&&!catalogError)loadCatalog();
     const canGift=canWriteModule('giftcards');
     const canPkg=canWriteModule('packages'), canMem=canWriteModule('memberships');
+    // §6 custom-price ('Other item') entry is OWNER AND MANAGER ONLY (Option A). This is a role,
+    // not an individually grantable permission — granting it means promoting the employee to
+    // manager, which also carries the broader finance/refund permissions. The server enforces this
+    // (custom_line_denied); the UI only shows the entry to owner/manager and labels it honestly.
+    const canCustomLine=S.myRole==='owner'||S.myRole==='manager';
     const saleLines=cartSaleLines(), extras=extraLines(), hasSale=saleLines.length>0;
     const locked=cartLocked();
     const branchPicker=accessibleTillBranches.length>1
@@ -4183,7 +4201,8 @@ async function tillPage(){
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
         picker=`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}${pkgBtns}${memBtns}
-          <div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button></div>
+          ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
+            <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${canGift?`<div class="split" style="margin-top:10px;align-items:end">
             <div><label for="tGift">Gift card value (${S.biz.currency||'SGD'})</label><input id="tGift" inputmode="decimal" placeholder="0.00"></div>
             <div><button type="button" class="btn ghost" id="tGiftAdd" style="width:100%">${CUI.icon('giftcard',{size:16})} Add card</button></div>
@@ -4285,7 +4304,7 @@ async function tillPage(){
   function openCustomModal(){
     if(cartLocked())return;
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tCustomModal" role="dialog" aria-modal="true" aria-labelledby="tCustomTitle" tabindex="-1"><div class="modal-card" style="max-width:460px">
-      <div class="row"><div><h2 id="tCustomTitle">Other item</h2><p class="muted small">A one-off charge that isn't in your catalogue.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tCustomClose">Close</button></div>
+      <div class="row"><div><h2 id="tCustomTitle">Other item</h2><p class="muted small">A one-off charge that isn't in your catalogue. Owner and manager only.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tCustomClose">Close</button></div>
       <label for="tCustomAmt">Amount (${S.biz.currency||'SGD'})</label>
       <input id="tCustomAmt" inputmode="decimal" placeholder="0.00" style="font-size:22px;text-align:center;height:52px">
       <label for="tCustomReason">Reason (required, 3–200 characters)</label>
@@ -5494,7 +5513,7 @@ async function growPage(routedTab,hashParam){
     <div style="margin:-8px 0 18px">
       <p class="muted small" style="line-height:1.6"><b>Everyday rewards</b> — every visit earns automatically for every customer, however you choose to run it.</p>
       <p class="muted small" style="line-height:1.6;margin-top:6px"><b>Bring-backs</b> — measured, versioned rules that win customers back before they drift away, with a full grant history.</p>
-      ${canStudio?`<p class="muted small" style="line-height:1.6;margin-top:6px"><b>Program Studio</b> — author advanced programme rules and check them. Authoring only — nothing here runs until a later activation phase.</p>`:''}
+      ${canStudio?`<p class="muted small" style="line-height:1.6;margin-top:6px"><b>Program Studio</b> — author advanced programme rules, check them, and turn them on. Published checkout and recurring rules genuinely run; each rule shows its real execution state.</p>`:''}
     </div>
     <div class="settings-tabs" role="tablist" aria-label="Grow sections">
       ${TABDEFS.map(t=>`<button type="button" class="settings-tab" role="tab" id="growtab-${t.key}" aria-controls="main" aria-selected="false" tabindex="-1" data-growtab="${t.key}">${esc(t.label)}</button>`).join('')}
@@ -6033,18 +6052,21 @@ function openPlaybookWizard(ctx){
   }
 }
 
-/* ---------- Program Studio (PS-1A: authoring, projection & validation ONLY) ----------
-   Owner-only surface that lives as a third tab on the Grow page (see growPage). It NEVER
-   executes anything: PS-1A has no rule executor. The overview PROJECTS every live engine +
-   every studio rule into one uniform WHEN/THEN list (get_programs_overview); the authoring
-   editor builds studio rules into a config draft (save/delete_program_rule_draft) that rides
-   the SAME create_loyalty_config_draft / publish_loyalty_config flow the loyalty & retention
-   editors use. Truthfulness (docs/design/ps0/PS-GATES.md): a studio rule's state chip may ONLY
-   read Draft / Validated / Ready for activation / Validation failed — never a claim that the rule
-   is operating or that customers are receiving it (PS-1A has no executor). See studioStateChip()
-   below — its reachable label set is statically those four values, and it is the ONLY chip used
-   for studio rows (legacyStateChip is used ONLY for legacy_trigger engines). Every write is
-   snapshot-hash optimistic-concurrency (40001 => reload) exactly like save_retention_program_draft. */
+/* ---------- Program Studio (PS-1A authoring + PS-1B/1C execution truth) ----------
+   Owner-only surface that lives as a third tab on the Grow page (see growPage). The overview
+   PROJECTS every live engine + every studio rule into one uniform WHEN/THEN list
+   (get_programs_overview); the authoring editor builds studio rules into a config draft
+   (save/delete_program_rule_draft) that rides the SAME create_loyalty_config_draft /
+   publish_loyalty_config flow the loyalty & retention editors use. Every write is snapshot-hash
+   optimistic-concurrency (40001 => reload) exactly like save_retention_program_draft.
+   PS-1C.2 TRUTHFULNESS: checkout and recurring studio rules genuinely EXECUTE now (PS-1B/PS-1C),
+   so the old PS-1A rule ("a studio chip may never claim the rule is operating") is SUPERSEDED.
+   The chip label is the server's execution_state VERBATIM — one of nine states (draft /
+   validation_failed / validated / live / partially_live / shadow_testing / ready_for_activation /
+   paused / retired). The browser NEVER computes or infers state; it only renders what
+   get_programs_overview returns per rule (execution_state == aggregate_state, plus effect_states
+   for the per-effect breakdown). See studioStateChip() below; it is the ONLY chip used for studio
+   rows (legacyStateChip is used ONLY for legacy_trigger engines). */
 
 /* ----- allowlist-driven vocabulary (plain language; never raw JSON to the owner) ----- */
 const STUDIO_EVENT_LABEL={
@@ -6074,6 +6096,10 @@ const STUDIO_EFFECT_LABEL={
   display_perk:{label:'Show a perk (nothing is given)',input:'note'},
   send_notification:{label:'Send a notification',input:'note'}
 };
+/* PS-1C.2 per-effect execution words — the server's effect state (live|shadow|unbuilt) rendered
+   verbatim as plain language; the browser never derives which engine runs an effect. */
+const STUDIO_EFFECT_STATE_WORDS={live:'running now',shadow:'shadow test only',unbuilt:'not built yet'};
+const STUDIO_EFFECT_STATE_PILL={live:'ok',shadow:'new',unbuilt:'off'};
 const STUDIO_CATALOG_SRC={
   service:{table:'services',name:'name'},product:{table:'products',name:'name'},
   branch:{table:'branches',name:'name'},staff:{table:'staff',name:'full_name'},
@@ -6161,13 +6187,121 @@ function legacyStateChip(state){
   return `<span class="pill ${p[0]}">${p[1]}</span>`;
 }
 function studioStateChip(state){
-  /* PS-1A TRUTHFULNESS (docs/design/ps0/PS-GATES.md): a studio rule has NO executor. Its chip may
-     ONLY be one of these four AUTHORING states, and must NEVER claim the rule is operating or that
-     a customer is receiving it. The reachable label set below is statically these four. */
-  const m={draft:['new','Draft'],validated:['ok','Validated'],
-    ready_for_activation:['new','Ready for activation'],validation_failed:['no','Validation failed']};
+  /* PS-1C.2 TRUTHFULNESS: the label is the server's execution_state VERBATIM. The browser NEVER
+     computes or infers this state — it only renders the value get_programs_overview / preview
+     returns. Checkout and recurring studio rules genuinely execute now (PS-1B/PS-1C), so Live /
+     Partially live / Shadow testing are truthful, server-derived facts (this SUPERSEDES the old
+     PS-1A rule that a studio chip may never claim the rule is operating). The reachable set is
+     exactly these nine server states; an unknown value fails closed to Validation failed. */
+  const m={draft:['new','Draft'],validation_failed:['no','Validation failed'],
+    validated:['ok','Validated'],live:['ok','Live'],partially_live:['new','Partially live'],
+    shadow_testing:['new','Shadow testing'],ready_for_activation:['new','Ready for activation'],
+    paused:['off','Paused'],retired:['off','Retired']};
   const p=m[state]||['no','Validation failed'];
   return `<span class="pill ${p[0]}">${p[1]}</span>`;
+}
+/* PS-1C.2 per-effect breakdown — renders each effect_state {effect_index, effect_type, state}
+   the server returns, so a partially-executing rule is NEVER shown as a bare 'Live'. State words
+   are the server's verbatim (live -> running now / shadow -> shadow test only / unbuilt -> not
+   built yet); nothing is inferred client-side. */
+function studioEffectStateChip(st){
+  const pill=STUDIO_EFFECT_STATE_PILL[st]||'off';const word=STUDIO_EFFECT_STATE_WORDS[st]||'not built yet';
+  return `<span class="pill ${pill}">${esc(word)}</span>`;
+}
+function studioEffectBreakdownHtml(effectStates){
+  const list=Array.isArray(effectStates)?effectStates.slice():[];
+  if(!list.length)return '';
+  list.sort((a,b)=>(Number(a.effect_index)||0)-(Number(b.effect_index)||0));
+  const rows=list.map(es=>{
+    const label=(STUDIO_EFFECT_LABEL[es.effect_type]&&STUDIO_EFFECT_LABEL[es.effect_type].label)||es.effect_type||'Action';
+    return `<div class="studio-effect-state"><span>${esc(label)}</span>${studioEffectStateChip(es.state)}</div>`;
+  }).join('');
+  return `<div class="studio-effect-states" role="group" aria-label="What each action is doing right now">
+    <div class="muted small">What each action is doing right now:</div>${rows}</div>`;
+}
+/* Show the per-effect breakdown whenever the rule is not uniformly one state — always for
+   partially_live / shadow_testing, and for any rule whose effects disagree (mixed). */
+function studioShouldBreakdown(item){
+  const list=Array.isArray(item&&item.effect_states)?item.effect_states:[];
+  if(!list.length)return false;
+  const st=item.execution_state;
+  if(st==='partially_live'||st==='shadow_testing')return true;
+  return new Set(list.map(e=>e.state)).size>1;
+}
+/* Read an ACTIVE emergency pause off an overview row, whatever shape the RPC exposes. Defensive:
+   accepts a nested object (lifted_at IS NULL => active), or flat *_reason/*_at/*_by fields. */
+function studioActiveEmergencyPause(item){
+  if(!item)return null;
+  const ep=item.emergency_pause||item.active_emergency_pause||null;
+  if(ep&&typeof ep==='object'){if(ep.lifted_at)return null;return ep;}
+  if(item.emergency_pause_active===true||item.emergency_paused===true){
+    return {reason:item.emergency_pause_reason||item.pause_reason||null,
+      paused_at:item.emergency_paused_at||item.paused_at||null,
+      actor:item.emergency_paused_by_name||item.emergency_paused_by||item.paused_by||null};
+  }
+  return null;
+}
+
+/* ----- PS-1C.2 published-rule controls: normal pause/resume + emergency pause/lift -----
+   Every control is a VERSIONED, audited server change. Normal pause/resume publishes a new config
+   version (set_studio_rule_active); emergency pause/lift writes an append-only pause row and stops
+   NEW effects without deleting any historical fulfilment/discount/reservation. The chip that
+   re-renders afterwards is the server's fresh state — no client guessing. */
+function studioSetRuleActive(item,active,onDone){
+  if(!item||!item.rule_id)return toast('This rule cannot be changed from here.');
+  const verb=active?'Resume':'Pause';
+  if(!confirm(`${verb} "${item.name||'this rule'}"? This publishes a NEW configuration version and takes effect at the counter immediately.`))return;
+  sb.rpc('set_studio_rule_active',{p_business:S.biz.id,p_rule_id:item.rule_id,p_active:active}).then(({error})=>{
+    if(error){
+      if(error.code==='42501')return toast('Only the owner can pause or resume a rule.');
+      return fail(error);
+    }
+    toast(active?'Rule resumed — new version published':'Rule paused — new version published');
+    if(onDone)onDone();
+  });
+}
+/* Shared reason modal for emergency pause (kind='pause') and lift (kind='lift'). Reason is
+   MANDATORY (server requires btrim >= 3). Reactivation is deliberately explicit — a lift is its
+   own confirmed action with its own reason, never automatic. */
+function openStudioEmergencyDialog(kind,item,onDone){
+  if(!item||!item.rule_id)return toast('This rule cannot be changed from here.');
+  const isLift=kind==='lift';
+  const title=isLift?'Lift emergency pause':'Emergency pause';
+  const intro=isLift
+    ?`Reactivate "${esc(item.name||'this rule')}". It will start running again immediately — record why you are lifting the pause.`
+    :`Immediately stop "${esc(item.name||'this rule')}" from applying any new discount, benefit or message. History is kept; only new effects stop. Record why.`;
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="studioEmgModal" role="dialog" aria-modal="true" aria-labelledby="studioEmgTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
+    <div class="row"><div><h2 id="studioEmgTitle">${esc(title)}</h2><p class="muted small">${intro}</p></div><span class="spacer"></span><button class="btn ghost sm" id="studioEmgClose" type="button">Close</button></div>
+    <label for="studioEmgReason">Reason (required, at least 3 characters)</label>
+    <textarea id="studioEmgReason" rows="3" placeholder="${isLift?'Why is it safe to resume?':'What is wrong and who asked for this stop?'}"></textarea>
+    <div id="studioEmgErr"></div>
+    <div class="row" style="margin-top:16px"><button class="btn ${isLift?'':'danger'}" id="studioEmgSubmit" type="button">${isLift?'Lift pause and resume':'Emergency pause now'}</button><button class="btn ghost sm" id="studioEmgCancel" type="button">Cancel</button></div>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('studioEmgModal')?.remove();};
+  deactivate=CUI.activateDialog($('studioEmgModal'),{onClose:close,initialFocus:'#studioEmgReason'});
+  $('studioEmgClose').onclick=$('studioEmgCancel').onclick=close;
+  $('studioEmgSubmit').onclick=async()=>{
+    const reason=($('studioEmgReason').value||'').trim();
+    if(reason.length<3){$('studioEmgErr').innerHTML='<div class="err">Write a short reason (at least 3 characters).</div>';return;}
+    const btn=$('studioEmgSubmit');btn.disabled=true;btn.setAttribute('aria-busy','true');
+    // String-literal RPC names (not a variable) so the PS-0 writer-discovery audit and the v21
+    // authenticated-RPC grant check both SEE these two writer surfaces — hiding an authenticated
+    // RPC behind a variable would defeat the exhaustiveness contract.
+    const args={p_business:S.biz.id,p_rule_id:item.rule_id,p_reason:reason};
+    const {error}=isLift
+      ? await sb.rpc('lift_emergency_pause',args)
+      : await sb.rpc('emergency_pause_studio_rule',args);
+    btn.removeAttribute('aria-busy');
+    if(error){
+      btn.disabled=false;
+      if(error.code==='42501'){$('studioEmgErr').innerHTML='<div class="err">Only the owner can do this.</div>';return;}
+      $('studioEmgErr').innerHTML=`<div class="err">${esc(error.message||'Could not complete this. Try again.')}</div>`;return;
+    }
+    close();
+    toast(isLift?'Emergency pause lifted — rule resumed':'Rule emergency-paused — new effects stopped');
+    if(onDone)onDone();
+  };
 }
 
 /* ----- validator error-code -> human message ----- */
@@ -6322,30 +6456,53 @@ async function studioOverview(routeMain,isCurrent){
         <div>Then: ${studioThenText(item,cat)}</div>
         <div>During: ${studioDuringText(item.during_schedule)} · Stacking: ${studioUsingText(item.using_stacking)}</div>
       </div></details>`;
+    // PS-1C.2: studio rows show the per-effect breakdown (so a partly-executing rule is never a
+    // bare 'Live') and the published-rule controls (pause/resume + emergency pause/lift).
+    let studioExtra='';
+    if(kind==='studio'){
+      const ep=studioActiveEmergencyPause(item);
+      const st=item.execution_state;
+      const controllable=!!item.rule_id&&['live','partially_live','shadow_testing','ready_for_activation','paused'].includes(st);
+      const breakdown=studioShouldBreakdown(item)?studioEffectBreakdownHtml(item.effect_states):'';
+      const banner=ep?`<div class="studio-emg-banner" role="alert"><b>Emergency paused.</b> ${ep.reason?`Reason: ${esc(String(ep.reason))}. `:''}${ep.actor?`By ${esc(String(ep.actor))}. `:''}${ep.paused_at?`At ${esc(String(ep.paused_at).slice(0,16).replace('T',' '))} (server time). `:''}New effects are stopped; every past record is kept.</div>`:'';
+      let controls='';
+      if(controllable){
+        if(ep){
+          controls=`<button class="btn ghost sm" type="button" data-studio-lift="${esc(item.rule_id)}">Lift emergency pause</button>`;
+        }else if(item.active===false){
+          controls=`<button class="btn ghost sm" type="button" data-studio-active="${esc(item.rule_id)}" data-active="true">Resume rule</button>`;
+        }else{
+          controls=`<button class="btn ghost sm" type="button" data-studio-active="${esc(item.rule_id)}" data-active="false">Pause rule</button>
+            <button class="btn ghost sm danger" type="button" data-studio-emg="${esc(item.rule_id)}">Emergency pause</button>`;
+        }
+      }
+      studioExtra=`${breakdown}${banner}${controls?`<div class="studio-rule-controls">${controls}</div>`:''}`;
+    }
     return `<div class="studio-row">
       <div class="studio-row-main">
         <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(item.name||'(unnamed)')}</b>${chip}
           <span class="pill off" title="Where this rule runs from">${kind==='studio'?'Studio rule':'Live engine'}</span></div>
         <div class="muted small" style="margin-top:4px;line-height:1.5"><b>When:</b> ${studioWhenText(item,cat)}</div>
         <div class="muted small" style="line-height:1.5"><b>Then:</b> ${studioThenText(item,cat)}</div>
-        ${kind==='studio'?`<p class="muted small studio-authoring-note" style="margin-top:4px">Authoring only — this rule will not run until a later activation phase.</p>`:''}
+        ${studioExtra}
         ${detail}
       </div></div>`;
   };
+  const rerender=()=>studioPage();
   const legacyRows=legacy.map(x=>rowFor(x,'legacy')).join('');
   const studioRows=studio.map(x=>rowFor(x,'studio')).join('');
   const versionTools=`<div class="card" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:10px">
-    <div><b>Authoring drafts</b><div class="muted small">Studio rules are authored inside a configuration draft. Nothing runs at the counter — publishing only records the rules for a later activation phase.</div></div>
+    <div><b>Authoring drafts</b><div class="muted small">Studio rules are authored inside a configuration draft. Publishing a draft can turn rules on immediately — the publish preview shows exactly what will run before you confirm.</div></div>
     <span class="spacer"></span>
     ${resumableDraft?`<a class="btn" href="#/studio/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`
       :`<button class="btn" id="studioNewDraft">Create authoring draft</button>`}</div></div>`;
   routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio',subtitle:'One view of every programme — live engines and the rules you author here.',iconName:'loyalty',canWrite:true,moduleLabel:'Program Studio'})}
     <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
-      <b>Authoring only</b><p>Program Studio lets you write programme rules and check them. It does not run anything yet — a later activation phase will turn published studio rules on. Your live loyalty, retention, referral, birthday and membership engines keep running exactly as before.</p></div></aside>
+      <b>Real execution state</b><p>Program Studio lets you write programme rules, check them, and turn them on. Published checkout and recurring rules genuinely run — each rule below shows its state straight from the server (Live, Partially live, Shadow testing, Paused and so on). Your loyalty, retention, referral, birthday and membership engines keep running as before.</p></div></aside>
     ${versionTools}
     <section class="card"><div class="cui-card-head"><h2>Live engines</h2><p>These are running now. State comes straight from each engine.</p></div>
       ${legacy.length?legacyRows:CUI.emptyState({iconName:'loyalty',title:'No live programmes yet',body:'Set up loyalty, retention or other programmes to see them here.'})}</section>
-    <section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Studio rules</h2><p>Rules authored here. These are not running — each shows its authoring state only.</p></div>
+    <section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Studio rules</h2><p>Each rule shows its real execution state from the server. When a rule only partly executes, the actions below it show what is running now, what is shadow-testing, and what is not built yet.</p></div>
       ${studio.length?studioRows:CUI.emptyState({iconName:'loyalty',title:'No studio rules yet',body:'Create an authoring draft to write your first rule.'})}</section>`;
   if($('studioNewDraft'))$('studioNewDraft').onclick=async()=>{
     const btn=$('studioNewDraft');btn.disabled=true;
@@ -6354,6 +6511,19 @@ async function studioOverview(routeMain,isCurrent){
     if(draftError){btn.disabled=false;return fail(draftError);}
     nav(`#/studio/${data.version_id}`);
   };
+  // PS-1C.2 published-rule controls (studio rows only) — each re-renders to the fresh server state.
+  document.querySelectorAll('[data-studio-active]').forEach(b=>b.onclick=()=>{
+    const item=studio.find(x=>x.rule_id===b.dataset.studioActive);
+    if(item)studioSetRuleActive(item,b.dataset.active==='true',rerender);
+  });
+  document.querySelectorAll('[data-studio-emg]').forEach(b=>b.onclick=()=>{
+    const item=studio.find(x=>x.rule_id===b.dataset.studioEmg);
+    if(item)openStudioEmergencyDialog('pause',item,rerender);
+  });
+  document.querySelectorAll('[data-studio-lift]').forEach(b=>b.onclick=()=>{
+    const item=studio.find(x=>x.rule_id===b.dataset.studioLift);
+    if(item)openStudioEmergencyDialog('lift',item,rerender);
+  });
 }
 
 /* ---------------- Draft editor: Quick Start + Guided + Advanced, live-validated ---------------- */
@@ -6411,15 +6581,15 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
         ${studioStateChip(r.execution_state)}${r.active===false?'<span class="pill off">Off</span>':''}</div>
       <div class="muted small" style="margin-top:4px;line-height:1.5"><b>When:</b> ${studioWhenText(r,cat)}</div>
       <div class="muted small" style="line-height:1.5"><b>Then:</b> ${studioThenText(r,cat)}</div>
-      <p class="muted small studio-authoring-note" style="margin-top:4px">Authoring only — this rule will not run until a later activation phase.</p>
+      <p class="muted small studio-authoring-note" style="margin-top:4px">Draft — not running yet. The publish preview shows exactly what will run once you publish.</p>
       ${errs.length?`<div class="err small" style="margin-top:6px">${errs.map(e=>esc(studioErrText(e))).join('<br>')}</div>`:''}
       <div class="row" style="margin-top:8px;gap:8px"><button class="btn ghost sm studioEditRule" data-id="${esc(r.rule_id)}">Edit</button>
         <button class="btn ghost sm studioDelRule" data-id="${esc(r.rule_id)}" data-name="${esc(r.name||'')}">Delete</button></div>
     </div></div>`;
   };
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio — authoring draft',subtitle:`Draft v${draft.version_no}. Author and check rules — nothing runs until a later activation phase.`,iconName:'loyalty',canWrite:true,moduleLabel:'Program Studio'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio — authoring draft',subtitle:`Draft v${draft.version_no}. Author and check rules — the publish preview shows what will run before anything goes live.`,iconName:'loyalty',canWrite:true,moduleLabel:'Program Studio'})}
     <div class="card" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:10px">
-      <div><b>Draft configuration</b><div class="muted small">Every save checks the draft hash. Publishing records these rules for a later activation phase — it does not run them and does not change the counter.</div></div>
+      <div><b>Draft configuration</b><div class="muted small">Every save checks the draft hash. Publishing can turn rules on immediately — you will see a preview of exactly what begins running, what stays shadow-only, and what stays off before you confirm.</div></div>
       <span class="spacer"></span>
       <a class="btn ghost" href="#/studio">Leave draft</a>
       <button class="btn" id="studioPublish">Publish draft</button></div>
@@ -6610,7 +6780,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
     host.innerHTML=`<div class="card studio-editor"><div class="row" style="align-items:center">
       <b>${m.isNew?'New rule':'Edit rule'}</b><span class="spacer"></span><button class="btn ghost sm" id="edClose" type="button">Close</button></div>
       <label for="edName">Step 1 — Name this rule</label><input id="edName" value="${esc(m.name)}" placeholder="e.g. Double points on Mondays">
-      <label style="margin-top:10px"><input type="checkbox" id="edActive" ${m.active?'checked':''}> Include this rule when the draft is published (it still will not run until a later activation phase)</label>
+      <label style="margin-top:10px"><input type="checkbox" id="edActive" ${m.active?'checked':''}> Include this rule when the draft is published (the publish preview shows whether it will run, shadow-test, or stay off)</label>
 
       <fieldset class="studio-step"><legend>Step 2 — When (the trigger)</legend>
         <select id="edWhen">${events.map(ev=>`<option value="${esc(ev)}" ${ev===m.when_event?'selected':''}>${esc(studioEventText(ev))}</option>`).join('')}</select></fieldset>
@@ -6725,7 +6895,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
       <div class="muted small"><b>Then:</b> ${studioThenText(rule,cat)}</div>
       <div class="muted small"><b>During:</b> ${studioDuringText(rule.during_schedule)}</div>
       <div class="muted small"><b>Stacking:</b> ${studioUsingText(rule.using_stacking)}</div>
-      <div style="margin-top:8px">${(valid?studioStateChip('validated'):studioStateChip('validation_failed'))} <span class="muted small">authoring state — this rule does not run yet</span></div>
+      <div style="margin-top:8px">${(valid?studioStateChip('validated'):studioStateChip('validation_failed'))} <span class="muted small">draft check — not running until you publish it</span></div>
       ${errs.length?`<div class="err small" style="margin-top:8px">${errs.map(e=>esc(e)).join('<br>')}</div>`:''}
       <div class="studio-econ"><b class="muted small">Estimated economics</b>
         ${est.length?est.map(l=>`<div class="studio-econ-line"><div>${esc(l.label)}</div>${l.face?`<div class="small">${esc(l.face)}</div>`:''}${l.est?`<div class="small"><b>${esc(l.est)}</b></div>`:''}<div class="muted small">${esc(l.note)}</div></div>`).join(''):'<div class="muted small">No actions to estimate yet.</div>'}
@@ -6797,20 +6967,78 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
       return fail(error);}
     toast('Rule deleted from draft');rerender();
   });
-  if($('studioPublish'))$('studioPublish').onclick=async()=>{
-    if(!confirm('Publish this authoring draft? This records the rules for a later activation phase. It does NOT run them and does not change the counter.'))return;
+  /* PS-1C.2 PUBLISH TRUTHFULNESS: never publish blind. First ask the server what publishing THIS
+     draft would actually do (preview_publish_impact) — which effects begin executing (live), which
+     stay shadow-only, which stay unbuilt, and whether money or customers are touched. When the
+     server flags requires_confirmation (a live financial or customer-facing effect will activate),
+     the owner must EXPLICITLY confirm by typing PUBLISH before publish_loyalty_config runs. */
+  if($('studioPublish'))$('studioPublish').onclick=openPublishFlow;
+  async function openPublishFlow(){
     const btn=$('studioPublish');btn.disabled=true;btn.setAttribute('aria-busy','true');
-    const st=$('studioPublishStatus');if(st)st.innerHTML='<span class="muted">Publishing…</span>';
-    const {error}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
+    const st=$('studioPublishStatus');if(st)st.innerHTML='<span class="muted">Checking exactly what will happen…</span>';
+    const {data:impact,error}=await sb.rpc('preview_publish_impact',{p_config_version_id:draftVersionId});
     if(!isCurrent())return;
-    btn.removeAttribute('aria-busy');
-    if(error){btn.disabled=false;
-      const msg=error.code==='23514'?(error.message||'One or more rules are not valid — fix them before publishing.'):(error.message||'Could not publish.');
-      if(st)st.innerHTML=`<span class="err">${esc(msg)}</span>`;
-      CUI.announce(msg,{assertive:true});return;}
-    toast('Authoring draft published (recorded for a later activation phase)');
-    nav('#/studio');
-  };
+    btn.removeAttribute('aria-busy');btn.disabled=false;
+    if(error){
+      const msg=error.code==='42501'?'Only the owner can publish.':(error.message||'Could not check what publishing would do.');
+      if(st)st.innerHTML=`<span class="err">${esc(msg)}</span>`;CUI.announce(msg,{assertive:true});return;
+    }
+    if(st)st.innerHTML='';
+    renderPublishImpactDialog(impact||{});
+  }
+  function studioEffLabel(e){return (STUDIO_EFFECT_LABEL[e.effect_type]&&STUDIO_EFFECT_LABEL[e.effect_type].label)||e.effect_type||'Action';}
+  function renderPublishImpactDialog(impact){
+    const rules=Array.isArray(impact.rules)?impact.rules:[];
+    let live=0,shadow=0,unbuilt=0;
+    for(const r of rules)for(const e of (r.effects||[])){
+      if(e.state_after_publish==='live')live++;else if(e.state_after_publish==='shadow')shadow++;else unbuilt++;
+    }
+    const needConfirm=impact.requires_confirmation===true;
+    const summary=`<div class="imp-note"><b>What publishing does:</b>
+      <div class="muted small" style="margin-top:4px;line-height:1.6">
+        <div>${live} action${live===1?'':'s'} start running now · ${shadow} shadow-test only · ${unbuilt} stay off (not built yet)</div>
+        <div>Money at checkout: <b>${impact.will_activate_live_financial?'a live rule will change totals now':'no live money change from this publish'}</b></div>
+        <div>Customers: <b>${impact.will_activate_customer_facing?'can see or receive something as soon as you publish':'nothing new reaches customers from this publish'}</b></div>
+      </div></div>`;
+    const ruleBlocks=rules.length?rules.map(r=>`<div class="studio-impact-rule">
+      <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(r.name||'(unnamed)')}</b>${studioStateChip(r.aggregate_state_after_publish)}${r.active===false?'<span class="pill off">Off</span>':''}</div>
+      ${(r.effects||[]).map(e=>`<div class="studio-impact-eff"><span>${esc(studioEffLabel(e))}</span>
+        <span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">${studioEffectStateChip(e.state_after_publish)}${e.financial?'<span class="studio-tag fin">changes money</span>':''}${e.customer_facing?'<span class="studio-tag cust">customer sees it</span>':''}</span></div>`).join('')||'<div class="muted small" style="padding:5px 0">No actions on this rule.</div>'}
+    </div>`).join(''):'<p class="muted small">This draft has no rules to publish.</p>';
+    const confirmBlock=needConfirm?`<div class="studio-emg-banner" role="alert" style="margin-top:14px"><b>This turns on a live rule that affects money or customers.</b> Type <b>PUBLISH</b> below to confirm you have reviewed the impact above.</div>
+      <label for="studioPubType" class="sr-only">Type PUBLISH to confirm</label>
+      <input id="studioPubType" autocomplete="off" placeholder="PUBLISH" style="margin-top:8px">`:'';
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="studioPubModal" role="dialog" aria-modal="true" aria-labelledby="studioPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px">
+      <div class="row"><div><h2 id="studioPubTitle">Review before publishing</h2><p class="muted small">Exactly what happens when you publish draft v${draft.version_no}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="studioPubClose" type="button">Close</button></div>
+      ${summary}
+      <div style="margin-top:10px">${ruleBlocks}</div>
+      ${confirmBlock}
+      <div id="studioPubErr"></div>
+      <div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="studioPubConfirm" type="button" ${needConfirm?'disabled':''}>Publish now</button><button class="btn ghost sm" id="studioPubCancel" type="button">Cancel</button></div>
+    </div></div>`);
+    let deactivate;
+    const close=()=>{if(deactivate)deactivate();else $('studioPubModal')?.remove();};
+    deactivate=CUI.activateDialog($('studioPubModal'),{onClose:close,initialFocus:needConfirm?'#studioPubType':'#studioPubConfirm'});
+    $('studioPubClose').onclick=$('studioPubCancel').onclick=close;
+    if(needConfirm&&$('studioPubType'))$('studioPubType').oninput=e=>{
+      $('studioPubConfirm').disabled=(e.target.value||'').trim().toUpperCase()!=='PUBLISH';
+    };
+    $('studioPubConfirm').onclick=async()=>{
+      if(needConfirm&&(($('studioPubType').value||'').trim().toUpperCase()!=='PUBLISH')){
+        $('studioPubErr').innerHTML='<div class="err">Type PUBLISH to confirm.</div>';return;
+      }
+      const cbtn=$('studioPubConfirm');cbtn.disabled=true;cbtn.setAttribute('aria-busy','true');
+      const {error}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
+      if(!isCurrent())return;
+      cbtn.removeAttribute('aria-busy');
+      if(error){cbtn.disabled=false;
+        const msg=error.code==='23514'?(error.message||'One or more rules are not valid — fix them before publishing.'):error.code==='42501'?'Only the owner can publish.':(error.message||'Could not publish.');
+        $('studioPubErr').innerHTML=`<div class="err">${esc(msg)}</div>`;CUI.announce(msg,{assertive:true});return;}
+      close();
+      toast('Published — each rule now shows its live state');
+      nav('#/studio');
+    };
+  }
 
   // Re-open the editor if one was in flight before this re-render (e.g. after save/delete we clear it,
   // but a live-validate re-render mid-edit should keep the editor visible).
