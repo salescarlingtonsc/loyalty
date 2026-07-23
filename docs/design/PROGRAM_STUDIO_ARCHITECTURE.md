@@ -52,7 +52,7 @@ CHAGEE screenshots remain experience reference only — no branding or copy repr
 | **S1** `topup` sale kind + policy row nonexistent | PS-2 explicitly extends `sales.kind` CHECK and adds the `app.sale_policy_defaults()` row (`revenue=false, visit=false, points=false`) | §5, §17 |
 | **S2** multi-top-up / partial refund scope undefined | Refunds are **per-top-up operation** (lots trace to their source op); whole-balance refunds iterate operations newest-first; partial refund of one operation allowed, split proportionally across that operation's remaining classes | §5 |
 | **S3** `app.loyalty_ledger_write_guard` scope enum would reject studio writes | PS-1B/1C include the additive guard-scope extension migration (`studio_executor` scopes), listed as an explicit deliverable | §17 |
-| **S4** proposed outbox vs live v33 `customer_notification_outbox` unreconciled | **One outbox authority**: PS-1B generalizes the v33 table (additive `event_id`/`consumer` columns); v33 consumers become one consumer family; no second outbox is ever created | §6 |
+| **S4** proposed outbox vs live v33 `customer_notification_outbox` unreconciled | ~~One outbox authority: PS-1B generalizes the v33 table~~ **[HISTORICAL — this rev-3 decision was proven impossible and superseded by B4 in §1b: a NEW `event_outbox` owns delivery state; v33 is untouched. §6 is authoritative.]** | §6 |
 | **S5** `budget_periods` vs v50's sum()-based cap: dual authority + race | `budget_periods` (row-locked counters) is THE authority for studio effects from PS-1B; v50 campaigns keep their legacy mechanism under legacy execution-authority until that engine's cutover migrates its cap onto `budget_periods` — never two counters over one budget | §11 |
 | **S6** `qualifying_amount` units for stamps businesses | Qualification is denominated in the model's earn unit (points for points models, stamps for stamps); thresholds interpret units per model; backfill maps historical earns per model — documented | §12 |
 | **S7** a fixed surface count undercounted real sale/value writers | The kernel-audit scope is **every sale, tender, fulfilment and customer-value writer surface discovered by the exhaustive PS-0 writer audit** — the audit output is authoritative and never stops at a predetermined number; §9 lists known writers as a floor only | §9 |
@@ -490,7 +490,8 @@ evaluations; existing standings are **grandfathered until their period end**
 only at period end + `grace_days`. Mid-period reversals can reduce progress but
 trigger demotion only at the next scheduled evaluation (no yo-yo). Entry rewards:
 **once ever per tier** by default (`canonical_benefit_key =
-tier_entry:{business}:{client}:{tier}`), opt-in once-per-requalification.
+tier_entry:{client}:{tier}` — §3 canonical form; the business scope lives in the
+UNIQUE constraint, not the key), opt-in once-per-requalification.
 Requalification = achieving the threshold in a new period.
 
 ## 13. Plan versioning (mandatory)

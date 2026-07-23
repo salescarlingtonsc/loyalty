@@ -1,0 +1,136 @@
+// PS-0 no-executor static guard — proves NO Program-Studio financial-execution
+// surface exists yet, and turns "someone landed executor schema" into a red test.
+//
+// The guard is driven by the machine-readable marker docs/design/ps0/PS-GATES.md:
+//   - it reads which phases are AUTHORIZED,
+//   - it reads which executor artifacts / guard scopes each phase introduces,
+//   - and it asserts that any artifact whose phase is NOT authorized is ABSENT from
+//     supabase/migrations/ AND db/migrations/.
+//
+// Per the owner's PS-0 approval, ONLY PS-0 is authorized, so every executor artifact
+// must be absent. The moment an engineer lands executor schema without flipping the
+// PS-gate marker for its phase, this test fails — the documented tripwire.
+
+import assert from 'node:assert/strict';
+import { readFile, readdir } from 'node:fs/promises';
+import test from 'node:test';
+
+const root = new URL('../../', import.meta.url);
+const read = (rel) => readFile(new URL(rel, root), 'utf8');
+
+async function readMigrationCorpus() {
+  const dirs = ['supabase/migrations', 'db/migrations'];
+  const files = [];
+  for (const dir of dirs) {
+    let entries;
+    try {
+      entries = await readdir(new URL(`${dir}/`, root), { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const ent of entries) {
+      if (ent.isFile() && ent.name.endsWith('.sql')) {
+        files.push(`${dir}/${ent.name}`);
+      }
+    }
+  }
+  const corpus = {};
+  for (const f of files) corpus[f] = await read(f);
+  return corpus;
+}
+
+// --- tiny markdown-table parser for the PS-GATES marker ---
+function parseGateTable(md, heading) {
+  const lines = md.split('\n');
+  const start = lines.findIndex((l) => l.trim().toUpperCase().startsWith(`## ${heading.toUpperCase()}`));
+  assert.notEqual(start, -1, `PS-GATES.md is missing the '## ${heading}' section`);
+  const rows = [];
+  let seenHeader = false;
+  for (let i = start + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('## ')) break;               // next section
+    if (!line.startsWith('|')) continue;
+    const cells = line.split('|').slice(1, -1).map((c) => c.trim());
+    if (cells.every((c) => /^:?-+:?$/.test(c))) continue; // separator row
+    if (!seenHeader) { seenHeader = true; continue; }     // header row
+    if (cells.length >= 2) rows.push(cells);
+  }
+  return rows;
+}
+
+test('PS-GATES marker authorizes PS-0 ONLY (no executor phase is authorized yet)', async () => {
+  const md = await read('docs/design/ps0/PS-GATES.md');
+  const phases = Object.fromEntries(
+    parseGateTable(md, 'AUTHORIZED PHASES').map(([phase, auth]) => [phase, auth.toLowerCase()]),
+  );
+  assert.equal(phases['PS-0'], 'yes', 'PS-0 must be authorized');
+  for (const p of ['PS-1A', 'PS-1B', 'PS-1C', 'PS-2', 'PS-3', 'PS-4', 'PS-5']) {
+    assert.equal(phases[p], 'no',
+      `${p} must remain unauthorized until the owner approves it — flipping this is a deliberate act`);
+  }
+});
+
+test('no executor TABLE exists in the migration set while its phase is unauthorized', async () => {
+  const md = await read('docs/design/ps0/PS-GATES.md');
+  const authorized = Object.fromEntries(
+    parseGateTable(md, 'AUTHORIZED PHASES').map(([phase, auth]) => [phase, auth.toLowerCase() === 'yes']),
+  );
+  const artifacts = parseGateTable(md, 'EXECUTOR ARTIFACTS').map(([artifact, phase]) => ({ artifact, phase }));
+  assert.ok(artifacts.length >= 10, 'the marker must enumerate the executor artifacts');
+
+  const corpus = await readMigrationCorpus();
+  assert.ok(Object.keys(corpus).length > 50, 'expected the real migration corpus to be present');
+
+  for (const { artifact, phase } of artifacts) {
+    if (authorized[phase]) continue; // an authorized phase MAY land its schema
+    // match `create table [if not exists] [public.]<artifact>` and bare identifier use.
+    const createRe = new RegExp(`create\\s+table\\s+(if\\s+not\\s+exists\\s+)?(public\\.)?${artifact}\\b`, 'i');
+    const identRe = new RegExp(`\\b${artifact}\\b`, 'i');
+    const offenders = [];
+    for (const [file, sql] of Object.entries(corpus)) {
+      if (createRe.test(sql) || identRe.test(sql)) offenders.push(file);
+    }
+    assert.deepEqual(offenders, [],
+      `executor artifact '${artifact}' (phase ${phase}, unauthorized) must not appear in migrations; ` +
+      `to land it, authorize ${phase} in docs/design/ps0/PS-GATES.md`);
+  }
+});
+
+test('the ledger write-guard carries NO studio-executor scope while unauthorized', async () => {
+  const md = await read('docs/design/ps0/PS-GATES.md');
+  const authorized = Object.fromEntries(
+    parseGateTable(md, 'AUTHORIZED PHASES').map(([phase, auth]) => [phase, auth.toLowerCase() === 'yes']),
+  );
+  const scopes = parseGateTable(md, 'EXECUTOR LEDGER-GUARD SCOPES').map(([scope, phase]) => ({ scope, phase }));
+  assert.ok(scopes.length >= 3, 'the marker must enumerate the guard scopes');
+
+  const corpus = await readMigrationCorpus();
+  // only inspect files that actually define the guard, to avoid incidental token hits.
+  const guardFiles = Object.entries(corpus).filter(([, sql]) => /loyalty_ledger_write_guard/i.test(sql));
+  assert.ok(guardFiles.length >= 1, 'expected the ledger write-guard to be defined in the corpus');
+
+  for (const { scope, phase } of scopes) {
+    if (authorized[phase]) continue;
+    for (const [file, sql] of guardFiles) {
+      // a guard scope literal appears as a quoted string, e.g. v_scope = 'studio_executor'.
+      const re = new RegExp(`'${scope}'`, 'i');
+      assert.ok(!re.test(sql),
+        `guard scope '${scope}' (phase ${phase}, unauthorized) must not appear in ${file}`);
+    }
+  }
+});
+
+test('no Program-Studio executor RPC / function surface exists yet', async () => {
+  const corpus = await readMigrationCorpus();
+  // executor entry points that PS-1B+ would introduce — none may exist at PS-0.
+  const forbiddenFns = [
+    'evaluate_checkout', 'consume_checkout_evaluation', 'execute_rule_effect',
+    'sv_topup', 'sv_spend_allocation', 'refund_sv_operation', 'sv_lot_movement',
+    'record_domain_event', 'deliver_outbox',
+  ];
+  for (const fn of forbiddenFns) {
+    const re = new RegExp(`function\\s+(public|app)\\.${fn}\\b`, 'i');
+    const offenders = Object.entries(corpus).filter(([, sql]) => re.test(sql)).map(([f]) => f);
+    assert.deepEqual(offenders, [], `executor function '${fn}' must not exist at PS-0`);
+  }
+});
