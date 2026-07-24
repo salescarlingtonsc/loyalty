@@ -18,7 +18,7 @@
 --      the till checkout path (create_sales, contract §5: no extra grant) drive the SAME engine.
 --      NO parallel allocation/spend/balance code - allocation stays app.sv_allocate_spend, balance
 --      stays app.sv_available_balance. The public sv_reserve/sv_spend/sv_release are CREATE OR
---      REPLACE'd to KEEP the owner check then delegate to their core; owner-facing behaviour is
+--      REPLACEd to KEEP the owner check then delegate to their core; owner-facing behaviour is
 --      byte-identical (owner-only, same authority-live + pause gates, same idempotency, same result).
 --   3. public.reserve_checkout_sv_tender - the till "opt into stored value" step. create_sales +
 --      can_see_branch + tenant only. Gated (authority live, synthetic-on-live refused, redeem
@@ -42,6 +42,17 @@
 -- reservations/tenders. Reservations NEVER write sv_lot_movements; app.sv_total_outstanding is
 -- unchanged by reserve/release. The v66 mint tripwire (only record_sv_topup_sale mints a paid lot)
 -- still holds - v67 adds no minter.
+--
+-- ACCOUNTING (§10, grounded in v11b/v20 + PS-0 §4/§8): an sv-tendered checkout finalises the parent
+-- sale at the FULL discounted total with p_paid=false, so record_quick_sale writes NO full-amount
+-- payment (no cash double-count); only the non-sv cash remainder is a public.payments row. The sv
+-- portion writes NO payment (spending stored value collects no new cash - that cash was taken at
+-- top-up and stays a liability in sv_topup_payments). checkout_sv_tenders (status='consumed') is the
+-- SETTLEMENT MARKER, and public.sale_balance + public.get_revenue_summary are re-created (CREATE OR REPLACE) to
+-- read it so an sv sale is NOT phantom accounts-receivable (balance nets to 0, payment_status='paid')
+-- and is cash-basis revenue (revenue_cash == accrual), while cash_collected excludes the sv portion.
+-- Non-sv sales are byte-unchanged. Paid/bonus revenue split is recorded on the tender for a future
+-- contra-revenue increment (PS-0 "bonus is promotional exposure, never revenue"), documented not invented.
 
 begin;
 
@@ -130,6 +141,9 @@ create trigger checkout_sv_tenders_guard
 alter table public.checkout_sv_tenders enable row level security;
 create policy checkout_sv_tenders_owner_read on public.checkout_sv_tenders for select to authenticated using (app.is_salon_owner(business_id));
 create policy checkout_sv_tenders_sa_read on public.checkout_sv_tenders for select to authenticated using (app.is_super_admin());
+-- view_finance staff must read the settlement marker so the security_invoker sale_balance view (§10)
+-- nets an sv-tendered sale to zero for them too (not just owners); definer reports bypass RLS anyway.
+create policy checkout_sv_tenders_finance_read on public.checkout_sv_tenders for select to authenticated using (app.has_perm(business_id, 'view_finance'));
 revoke all on public.checkout_sv_tenders from public, anon, authenticated;
 grant select on public.checkout_sv_tenders to authenticated;
 
@@ -336,7 +350,7 @@ grant execute on function public.sv_spend(uuid, uuid, integer, uuid) to authenti
 -- =====================================================================
 -- 4. app.sv_release_core - the v63 public.sv_release body MINUS the owner check. sv_release is
 --    DELIBERATELY not pause-gated (contract D §8: release returns held value, it is the redeem
---    family's "undo", never a new redemption). Same authority-live gate, same idempotency,
+--    redeem-family undo, never a new redemption). Same authority-live gate, same idempotency,
 --    same result. Only the owner check moves up to the public wrapper.
 -- =====================================================================
 create or replace function app.sv_release_core(
@@ -460,7 +474,7 @@ end $$;
 revoke all on function app.sv_checkout_tender_gate(uuid, uuid, text) from public, anon, authenticated;
 
 -- app.sv_evaluate_quote - the compact server-authoritative stored_value block for evaluate_checkout.
--- Resolves the client's account (nullable) and reuses the v63 pure app.sv_checkout_quote. spendable
+-- Resolves the client account (nullable) and reuses the v63 pure app.sv_checkout_quote. spendable
 -- is ALWAYS the live check (false in prod), so the UI structurally never offers the tender there.
 create or replace function app.sv_evaluate_quote(p_business uuid, p_client uuid, p_total_cents integer)
 returns jsonb language plpgsql stable security definer
@@ -604,7 +618,7 @@ grant execute on function public.reserve_checkout_sv_tender(uuid, uuid, integer,
 -- =====================================================================
 -- 7. public.evaluate_checkout - CREATE OR REPLACE. Byte-identical to v59 EXCEPT the two OK
 --    responses (replay + fresh) now carry a server-authoritative 'stored_value' quote block for
---    the token's client so the UI can offer "Use stored value" ONLY when spendable balance > 0.
+--    the token client so the UI can offer "Use stored value" ONLY when spendable balance > 0.
 --    No new persisted column, no change to pricing / token minting / idempotency.
 -- =====================================================================
 create or replace function public.evaluate_checkout(
@@ -971,7 +985,7 @@ begin
     end if;
   end loop;
 
-  -- 8.9b Stored-value tender consumption (v67). Release the token's hold, then spend the SV portion
+  -- 8.9b Stored-value tender consumption (v67). Release the token hold, then spend the SV portion
   --      via the v63 engine (paid/bonus split per PS-0), record tender evidence, and record only the
   --      non-SV remainder as a payment. All within this atomic transaction with the sale.
   if v_has_sv then
@@ -1069,5 +1083,239 @@ begin
 end $$;
 revoke all on function public.sv_release_expired_checkout_tenders(uuid, integer) from public, anon, authenticated;
 grant execute on function public.sv_release_expired_checkout_tenders(uuid, integer) to authenticated;
+
+-- =====================================================================
+-- 10. ACCOUNTING REPRESENTATION - close the phantom-A/R risk of the p_paid=false finalise.
+--     A consumed stored-value tender SETTLES its sale but writes NO public.payments row (spending
+--     stored value collects no new cash; the cash was collected at top-up and lives as a liability
+--     in sv_topup_payments - v11b/v20 keep the top-up cash-collected/liability, and v67 must not
+--     re-count it). So checkout_sv_tenders (status='consumed') is the SETTLEMENT MARKER, and the two
+--     v20 finance surfaces are re-created (CREATE OR REPLACE) to read it (additive; a sale with no tender is
+--     byte-unchanged):
+--       * public.sale_balance: settled = payments + sv_settled, so balance_cents nets to 0 and
+--         payment_status reads 'paid' for a fully sv-tendered sale (no phantom accounts-receivable);
+--         a new sv_settled_cents column exposes the marker. (grounds: v20 sale_balance + PS-0 §8.)
+--       * public.get_revenue_summary: revenue_cash_cents now includes the sv settlement (a settled
+--         sale is cash-basis realised: accrual == cash for a fully-tendered sale), while
+--         cash_collected_cents (real cash) is UNCHANGED - the sv portion is not a payment, so it is
+--         naturally excluded (spending stored value collects no new cash, contract §4). unpaid_
+--         balance_cents auto-corrects because it reads the now-sv-aware sale_balance.
+--     Bonus-vs-paid revenue nuance: PS-0 §4 marks bonus-lot spend as promotional exposure, never
+--     revenue; the existing v20 surfaces count the FULL sale as revenue (a promo is not modelled as
+--     contra-revenue for ANY tender), and v67 must NOT change the sale total / earn base, so the
+--     paid/bonus split is recorded on checkout_sv_tenders (sv_paid_cents/sv_bonus_cents) for a future
+--     contra-revenue increment and documented here rather than invented (contract §4 "document").
+-- =====================================================================
+create or replace view public.sale_balance
+with (security_invoker = on) as
+with reversal_totals as (
+  select r.business_id,
+         r.reversal_of as sale_id,
+         coalesce(sum(r.amount_cents), 0)::integer as reversal_cents
+    from public.sales r
+   where r.reversal_of is not null
+   group by r.business_id, r.reversal_of
+),
+payment_totals as (
+  select s.business_id,
+         s.id as sale_id,
+         coalesce(sum(p.amount_cents), 0)::integer as paid_cents
+    from public.sales s
+    left join public.payments p
+      on p.business_id = s.business_id
+     and (
+       p.sale_id = s.id
+       or (
+         p.sale_id is null
+         and s.appointment_id is not null
+         and p.appointment_id = s.appointment_id
+       )
+     )
+   where s.reversal_of is null
+   group by s.business_id, s.id
+),
+sv_tender_totals as (
+  -- v67 settlement marker: a consumed stored-value tender settles its sale with NO payments row.
+  select t.business_id,
+         t.sale_id,
+         coalesce(sum(t.reserved_cents), 0)::integer as sv_settled_cents
+    from public.checkout_sv_tenders t
+   where t.status = 'consumed'
+     and t.sale_id is not null
+   group by t.business_id, t.sale_id
+)
+select s.id as sale_id,
+       s.business_id,
+       s.branch_id,
+       s.client_id,
+       s.appointment_id,
+       s.kind,
+       s.counts_as_revenue,
+       (s.amount_cents + coalesce(rt.reversal_cents, 0))::integer as amount_cents,
+       s.occurred_at,
+       coalesce(pt.paid_cents, 0)::integer as paid_cents,
+       ((s.amount_cents + coalesce(rt.reversal_cents, 0)) - coalesce(pt.paid_cents, 0) - coalesce(st.sv_settled_cents, 0))::integer as balance_cents,
+       case
+         when (s.amount_cents + coalesce(rt.reversal_cents, 0)) = 0
+              and coalesce(pt.paid_cents, 0) + coalesce(st.sv_settled_cents, 0) = 0 then 'paid'
+         when coalesce(pt.paid_cents, 0) + coalesce(st.sv_settled_cents, 0) <= 0 then 'unpaid'
+         when coalesce(pt.paid_cents, 0) + coalesce(st.sv_settled_cents, 0) < (s.amount_cents + coalesce(rt.reversal_cents, 0)) then 'partial'
+         when coalesce(pt.paid_cents, 0) + coalesce(st.sv_settled_cents, 0) = (s.amount_cents + coalesce(rt.reversal_cents, 0)) then 'paid'
+         else 'overpaid'
+       end as payment_status,
+       s.amount_cents as gross_amount_cents,
+       coalesce(-rt.reversal_cents, 0)::integer as reversed_cents,
+       coalesce(st.sv_settled_cents, 0)::integer as sv_settled_cents
+  from public.sales s
+  left join reversal_totals rt
+    on rt.business_id = s.business_id
+   and rt.sale_id = s.id
+  left join payment_totals pt
+    on pt.business_id = s.business_id
+   and pt.sale_id = s.id
+  left join sv_tender_totals st
+    on st.business_id = s.business_id
+   and st.sale_id = s.id
+ where s.reversal_of is null
+   and app.has_perm(s.business_id, 'view_finance');
+
+revoke all on public.sale_balance from anon;
+grant select on public.sale_balance to authenticated;
+
+create or replace function public.get_revenue_summary(
+  p_business uuid,
+  p_from date,
+  p_to date,
+  p_branch uuid default null::uuid)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_accrual bigint;
+  v_cash bigint;
+  v_sv_cash bigint;
+  v_expenses bigint;
+  v_unpaid bigint;
+  v_collected bigint;
+  v_from_ts timestamptz;
+  v_to_ts timestamptz;
+begin
+  if p_from is null or p_to is null or p_from > p_to then
+    raise exception 'p_from and p_to are required and p_from must be on or before p_to';
+  end if;
+
+  if not app.has_perm(p_business, 'view_finance') then
+    raise exception 'you do not have permission to view finance for this business (view_finance)'
+      using errcode = '42501';
+  end if;
+
+  if p_branch is not null and not exists (
+    select 1
+      from public.branches b
+     where b.id = p_branch
+       and b.business_id = p_business
+  ) then
+    raise exception 'branch does not belong to this business';
+  end if;
+
+  if not app.can_see_branch(p_business, p_branch) then
+    raise exception 'you are not permitted to view this branch scope for this business (branch_visibility)'
+      using errcode = '42501';
+  end if;
+
+  v_from_ts := p_from::timestamp at time zone 'Asia/Singapore';
+  v_to_ts := (p_to + 1)::timestamp at time zone 'Asia/Singapore';
+
+  select coalesce(sum(s.amount_cents), 0)
+    into v_accrual
+    from public.sales s
+   where s.business_id = p_business
+     and s.counts_as_revenue
+     and s.occurred_at >= v_from_ts
+     and s.occurred_at < v_to_ts
+     and (p_branch is null or s.branch_id = p_branch);
+
+  select coalesce(sum(p.amount_cents), 0)
+    into v_cash
+    from public.payments p
+    join public.sales s
+      on s.business_id = p.business_id
+     and s.reversal_of is null
+     and (
+       s.id = p.sale_id
+       or (
+         p.sale_id is null
+         and p.appointment_id is not null
+         and s.appointment_id = p.appointment_id
+       )
+     )
+   where p.business_id = p_business
+     and s.counts_as_revenue
+     and p.occurred_at >= v_from_ts
+     and p.occurred_at < v_to_ts
+     and (p_branch is null or p.branch_id = p_branch);
+
+  -- v67: a consumed stored-value tender settles its sale (no payments row). Recognise it as
+  -- cash-basis revenue at the SALE occurred_at, so a settled sv sale is revenue_cash == accrual.
+  -- cash_collected_cents (v_collected) is deliberately NOT touched: the sv portion is no new cash.
+  select coalesce(sum(t.reserved_cents), 0)
+    into v_sv_cash
+    from public.checkout_sv_tenders t
+    join public.sales s
+      on s.business_id = t.business_id
+     and s.id = t.sale_id
+     and s.reversal_of is null
+   where t.business_id = p_business
+     and t.status = 'consumed'
+     and s.counts_as_revenue
+     and s.occurred_at >= v_from_ts
+     and s.occurred_at < v_to_ts
+     and (p_branch is null or s.branch_id = p_branch);
+  v_cash := v_cash + v_sv_cash;
+
+  select coalesce(sum(p.amount_cents), 0)
+    into v_collected
+    from public.payments p
+   where p.business_id = p_business
+     and p.method not in ('credit', 'gift_card')
+     and p.occurred_at >= v_from_ts
+     and p.occurred_at < v_to_ts
+     and (p_branch is null or p.branch_id = p_branch);
+
+  select coalesce(sum(b.balance_cents), 0)
+    into v_unpaid
+    from public.sale_balance b
+   where b.business_id = p_business
+     and b.counts_as_revenue
+     and b.balance_cents > 0
+     and b.occurred_at >= v_from_ts
+     and b.occurred_at < v_to_ts
+     and (p_branch is null or b.branch_id = p_branch);
+
+  select coalesce(sum(round(e.amount_cents::numeric * e.fx_rate_to_base::numeric)), 0)::bigint
+    into v_expenses
+    from public.expenses e
+   where e.business_id = p_business
+     and e.voided_at is null
+     and e.occurred_on between p_from and p_to
+     and (p_branch is null or e.branch_id = p_branch);
+
+  return json_build_object(
+    'from', p_from,
+    'to', p_to,
+    'branch_id', p_branch,
+    'revenue_accrual_cents', v_accrual,
+    'revenue_cash_cents', v_cash,
+    'cash_collected_cents', v_collected,
+    'unpaid_balance_cents', v_unpaid,
+    'expenses_cents', v_expenses,
+    'net_accrual_cents', v_accrual - v_expenses,
+    'net_cash_cents', v_cash - v_expenses
+  );
+end $$;
+revoke all on function public.get_revenue_summary(uuid, date, date, uuid) from public, anon, authenticated;
+grant execute on function public.get_revenue_summary(uuid, date, date, uuid) to authenticated;
 
 commit;

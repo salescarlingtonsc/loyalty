@@ -31,7 +31,7 @@
 // This tool NEVER connects to a database and NEVER executes SQL.
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -168,7 +168,7 @@ const VALUE_TABLE_NAMES = new Set(Object.keys(VALUE_TABLES));
 // ---------------------------------------------------------------------------
 // 2. Low-level SQL lexing helpers.
 // ---------------------------------------------------------------------------
-function stripSqlComments(s) {
+export function stripSqlComments(s) {
   let out = '';
   let i = 0;
   const n = s.length;
@@ -273,9 +273,15 @@ const RENAME_SCAN = /alter\s+function\s+([a-z0-9_]+)\.([a-z0-9_]+)\s*(\([^;]*?\)
 const SETSCHEMA_SCAN = /alter\s+function\s+([a-z0-9_]+)\.([a-z0-9_]+)\s*(\([^;]*?\))\s*set\s+schema\s+([a-z0-9_]+)/gi;
 const DROPFN_SCAN = /drop\s+function\s+(?:if\s+exists\s+)?([a-z0-9_]+)\.([a-z0-9_]+)\s*(\([^;]*?\))/gi;
 
-function extractFileEvents(raw) {
+export function extractFileEvents(raw) {
   const events = [];
-  const cleaned = raw; // dollar/string aware routines handle literals themselves
+  // Strip `--` line and `/* */` block comments (string-literal aware) BEFORE the dollar/arity/body
+  // walkers run. Those walkers treat `'` as a string delimiter but are otherwise comment-blind, so a
+  // single apostrophe in a comment (e.g. `-- don't`) would flip them into string mode, desync the
+  // `$$` body-close scan, and mis-key or drop a function's classification. Comments never carry real
+  // DML, so stripping them first is loss-free and makes the exhaustiveness oracle un-foolable by a
+  // comment. (See tests/program-studio/ps0-writer-registry.test.mjs regression: `-- don't` in a body.)
+  const cleaned = stripSqlComments(raw);
 
   let m;
   FN_HEADER_SCAN.lastIndex = 0;
@@ -448,23 +454,25 @@ function scanMigrations() {
     // triggers (latest file wins per table:trigger)
     for (const tr of extractTriggers(raw)) triggerMap.set(`${tr.table}:${tr.trigger}`, { ...tr, file });
 
-    // migration-time backfills: DML OUTSIDE any function body.
-    for (const m of raw.matchAll(FN_HEADER_SCAN)) { /* prime */ break; }
+    // migration-time backfills: DML OUTSIDE any function body. Computed on comment-stripped code so a
+    // comment apostrophe cannot desync the $$-body scan and mis-attribute in-body DML (e.g. a kernel
+    // finaliser's inserts) as a top-level "backfill" (see the hardening note in extractFileEvents).
+    const code = stripSqlComments(raw);
     FN_HEADER_SCAN.lastIndex = 0;
     let mm;
-    while ((mm = FN_HEADER_SCAN.exec(raw)) !== null) {
+    while ((mm = FN_HEADER_SCAN.exec(code)) !== null) {
       let i = mm.index + mm[0].length;
-      while (i < raw.length) {
-        if (raw[i] === "'") { i++; while (i < raw.length) { if (raw[i] === "'" && raw[i + 1] === "'") { i += 2; continue; } if (raw[i] === "'") { i++; break; } i++; } continue; }
-        if (raw[i] === '$') { const tag = readDollarTagAt(raw, i); if (tag) { const close = findDollarClose(raw, i, tag); if (close < 0) break; bodyRanges.push([i, close]); break; } }
-        if (raw[i] === ';') break;
+      while (i < code.length) {
+        if (code[i] === "'") { i++; while (i < code.length) { if (code[i] === "'" && code[i + 1] === "'") { i += 2; continue; } if (code[i] === "'") { i++; break; } i++; } continue; }
+        if (code[i] === '$') { const tag = readDollarTagAt(code, i); if (tag) { const close = findDollarClose(code, i, tag); if (close < 0) break; bodyRanges.push([i, close]); break; } }
+        if (code[i] === ';') break;
         i++;
       }
     }
     let outside = '';
     let cursor = 0;
-    for (const [s, e] of bodyRanges.sort((a, b) => a[0] - b[0])) { outside += raw.slice(cursor, s); cursor = e; }
-    outside += raw.slice(cursor);
+    for (const [s, e] of bodyRanges.sort((a, b) => a[0] - b[0])) { outside += code.slice(cursor, s); cursor = e; }
+    outside += code.slice(cursor);
     const bfWrites = findValueWrites(outside);
     for (const w of writesToArray(bfWrites)) backfills.push({ id: `db.backfill:${file}:${w.table}`, file, ...w });
   }
@@ -666,4 +674,8 @@ function main() {
   process.stdout.write(JSON.stringify(inventory, null, 2) + '\n');
 }
 
-main();
+// Run as a CLI, but stay importable (the writer-registry regression test imports the pure
+// comment/body walkers without triggering a full corpus scan).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

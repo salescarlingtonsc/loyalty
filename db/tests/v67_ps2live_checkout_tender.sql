@@ -56,7 +56,7 @@ begin
     (B,'v67 vec A','+6590000201'),(B,'v67 vec B','+6590000202'),(B,'v67 vec C','+6590000203'),
     (B,'v67 split','+6590000204'),(B,'v67 zero','+6590000205'),(B,'v67 drift','+6590000206'),(B,'v67 atom','+6590000207');
   insert into public.services(business_id,name,price_cents,duration_min) values
-    (B,'v67 s1200',1200,30),(B,'v67 s5600',5600,30),(B,'v67 s3000',3000,30),(B,'v67 s20000',20000,30),(B,'v67 s8000',8000,30);
+    (B,'v67 s1200',1200,30),(B,'v67 s5600',5600,30),(B,'v67 s3000',3000,30),(B,'v67 s20000',20000,30),(B,'v67 s8000',8000,30),(B,'v67 s5000',5000,30);
 
   ---------------------------------------------------------------- SECURITY-DEFINER HARDENING (v67 fns)
   assert not exists (
@@ -76,10 +76,11 @@ declare
   A uuid; A_owner uuid; B uuid; B_owner uuid; A_client uuid; A_branch uuid; B_branch uuid;
   cli_a uuid; cli_b uuid; cli_c uuid; cli_split uuid; cli_zero uuid; cli_drift uuid; cli_atom uuid;
   ver_big uuid; ver_small uuid;
-  svc1200 uuid; svc5600 uuid; svc3000 uuid; svc20000 uuid; svc8000 uuid;
+  svc1200 uuid; svc5600 uuid; svc3000 uuid; svc20000 uuid; svc8000 uuid; svc5000 uuid;
   ev jsonb; tok uuid; tnd jsonb; res json; sale uuid; topup jsonb; topop uuid; acct uuid;
   outstanding0 int; moves0 int; avail0 int; k uuid; tbl text; cnt int; ref jsonb;
-  lines1200 jsonb; lines5600 jsonb; lines3000 jsonb; lines20000 jsonb; lines8000 jsonb;
+  lines1200 jsonb; lines5600 jsonb; lines3000 jsonb; lines20000 jsonb; lines8000 jsonb; lines5000 jsonb;
+  cli_acct1 uuid; cli_acct2 uuid; ver_p5000 uuid; rs0 json; rs1 json; sb record;
 begin
   reset role;
   select s.business_id, s.user_id into A, A_owner from public.staff s join public.businesses b on b.id=s.business_id
@@ -101,6 +102,8 @@ begin
   select id into svc3000 from public.services where business_id=B and name='v67 s3000';
   select id into svc20000 from public.services where business_id=B and name='v67 s20000';
   select id into svc8000 from public.services where business_id=B and name='v67 s8000';
+  select id into svc5000 from public.services where business_id=B and name='v67 s5000';
+  lines5000  := jsonb_build_array(jsonb_build_object('catalog_kind','service','catalog_id',svc5000,'qty',1));
   lines1200  := jsonb_build_array(jsonb_build_object('catalog_kind','service','catalog_id',svc1200,'qty',1));
   lines5600  := jsonb_build_array(jsonb_build_object('catalog_kind','service','catalog_id',svc5600,'qty',1));
   lines3000  := jsonb_build_array(jsonb_build_object('catalog_kind','service','catalog_id',svc3000,'qty',1));
@@ -296,6 +299,52 @@ begin
     raise exception 'non-owner sv_reserve allowed'; exception when others then assert sqlstate='42501','sv_reserve must stay owner-only 42501, got '||sqlstate; end;
   begin perform public.sv_spend(B, acct, 1, gen_random_uuid());
     raise exception 'non-owner sv_spend allowed'; exception when others then assert sqlstate='42501','sv_spend must stay owner-only 42501'; end;
+
+  ---------------------------------------------------------------- ACCOUNTING REPRESENTATION (§10): no phantom A/R; cash excludes SV; revenue_cash == accrual
+  -- Paid-only plan so the settled amount is unambiguous (no bonus). B_owner has view_finance.
+  perform pg_temp.as_v67(B_owner,'authenticated');
+  ver_p5000 := pg_temp.v67_publish_plan(B, 5000, 0);
+  reset role;
+  insert into public.clients(business_id,full_name,phone) values (B,'v67 acct1','+6590000211') returning id into cli_acct1;
+  insert into public.clients(business_id,full_name,phone) values (B,'v67 acct2','+6590000212') returning id into cli_acct2;
+  perform pg_temp.as_v67(B_owner,'authenticated');
+  perform public.record_sv_topup_sale(B,B_branch,cli_acct1,ver_p5000,jsonb_build_object('method','cash','amount_cents',5000,'currency','SGD'),gen_random_uuid());
+  perform public.record_sv_topup_sale(B,B_branch,cli_acct2,ver_p5000,jsonb_build_object('method','cash','amount_cents',5000,'currency','SGD'),gen_random_uuid());
+
+  -- (a) SV-ONLY sale of 5000: settles fully with NO payment row -> not phantom A/R.
+  rs0 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
+  ev := public.evaluate_checkout(B,B_branch,cli_acct1,lines5000,gen_random_uuid()); tok := (ev->>'evaluation_id')::uuid;
+  perform public.reserve_checkout_sv_tender(B,tok,5000,gen_random_uuid());
+  res := public.record_cart_sale(B,cli_acct1,B_branch,null,'cash','v67-acctA-'||substr(md5(clock_timestamp()::text),1,8),null,tok,true);
+  sale := (res->>'sale_id')::uuid;
+  select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale and business_id=B;
+  assert sb.balance_cents = 0, 'SV-only sale must NOT be phantom A/R (balance_cents=0), got '||sb.balance_cents;
+  assert sb.paid_cents = 0, 'SV-only sale must have zero cash payments, got '||sb.paid_cents;
+  assert sb.sv_settled_cents = 5000, 'SV-only sale sv_settled_cents must be 5000, got '||sb.sv_settled_cents;
+  assert sb.payment_status = 'paid', 'SV-only sale payment_status must be paid, got '||sb.payment_status;
+  rs1 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
+  assert (rs1->>'revenue_accrual_cents')::int - (rs0->>'revenue_accrual_cents')::int = 5000, 'SV-only: accrual delta must be 5000';
+  assert (rs1->>'revenue_cash_cents')::int - (rs0->>'revenue_cash_cents')::int = 5000, 'SV-only: revenue_cash delta must be 5000 (settled = cash-basis realised)';
+  assert (rs1->>'cash_collected_cents')::int - (rs0->>'cash_collected_cents')::int = 0, 'SV-only: cash_collected delta must be 0 (spending SV collects no new cash)';
+  assert (rs1->>'unpaid_balance_cents')::int - (rs0->>'unpaid_balance_cents')::int = 0, 'SV-only: unpaid_balance delta must be 0 (NO phantom A/R)';
+
+  -- (b) SPLIT sale of 8000 = SV 5000 + cash 3000: settles fully; cash_collected counts ONLY the cash remainder.
+  rs0 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
+  ev := public.evaluate_checkout(B,B_branch,cli_acct2,lines8000,gen_random_uuid()); tok := (ev->>'evaluation_id')::uuid;
+  perform public.reserve_checkout_sv_tender(B,tok,1000000,gen_random_uuid());   -- capped to min(bal 5000, total 8000)
+  res := public.record_cart_sale(B,cli_acct2,B_branch,null,'cash','v67-acctB-'||substr(md5(clock_timestamp()::text),1,8),null,tok,true);
+  sale := (res->>'sale_id')::uuid;
+  assert (res->'stored_value'->>'sv_spend_cents')::int = 5000 and (res->'stored_value'->>'cash_collected_cents')::int = 3000, 'split acct sale SV 5000 + cash 3000';
+  select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale and business_id=B;
+  assert sb.balance_cents = 0, 'split sale must settle fully (balance_cents=0), got '||sb.balance_cents;
+  assert sb.paid_cents = 3000, 'split sale cash payment must be 3000, got '||sb.paid_cents;
+  assert sb.sv_settled_cents = 5000, 'split sale sv_settled_cents must be 5000, got '||sb.sv_settled_cents;
+  assert sb.payment_status = 'paid', 'split sale payment_status must be paid';
+  rs1 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
+  assert (rs1->>'revenue_accrual_cents')::int - (rs0->>'revenue_accrual_cents')::int = 8000, 'split: accrual delta must be 8000';
+  assert (rs1->>'revenue_cash_cents')::int - (rs0->>'revenue_cash_cents')::int = 8000, 'split: revenue_cash delta must be 8000 (settled full)';
+  assert (rs1->>'cash_collected_cents')::int - (rs0->>'cash_collected_cents')::int = 3000, 'split: cash_collected delta must be ONLY the 3000 cash remainder (SV excluded)';
+  assert (rs1->>'unpaid_balance_cents')::int - (rs0->>'unpaid_balance_cents')::int = 0, 'split: unpaid_balance delta must be 0 (no phantom A/R)';
 
   reset role;
   raise notice 'V67 SUITE PASS (all assertions)';

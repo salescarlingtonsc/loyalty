@@ -21,6 +21,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { extractFileEvents, stripSqlComments } from '../../scripts/ps0/discover-writers.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
@@ -34,6 +35,35 @@ function runDiscovery() {
 
 const first = runDiscovery();
 const registry = JSON.parse(readFileSync(REGISTRY, 'utf8'));
+
+// Regression: a comment apostrophe inside a function body must NOT desync the $$ body scanner.
+// Before the hardening, `-- don't` flipped the comment-blind walker into string mode, truncated the
+// body (dropping its real value-write) and could swallow the NEXT function's boundary — which is
+// exactly how a kernel finaliser vanished from the writer set and its inserts were mis-read as a
+// migration backfill. The scanner is the exhaustiveness oracle; it must be un-foolable by a comment.
+test('body-scanner strips comments and is un-foolable by an apostrophe in a `-- don\'t` comment', () => {
+  assert.equal(stripSqlComments("x -- don't touch\ny").replace(/\s+/g, ' ').trim(), 'x y',
+    'stripSqlComments must remove a `--` comment containing an apostrophe');
+
+  const sql = [
+    "create or replace function public.demo_writer(p uuid)",
+    "returns void language plpgsql security definer set search_path = public as $$",
+    "begin",
+    "  -- don't let this comment apostrophe desync the body scan",
+    "  insert into public.credit_ledger(business_id, amount_cents) values (p, 1);",
+    "end $$;",
+    "create or replace function public.after_writer(q uuid)",
+    "returns void language sql as $$ select 1 $$;",
+  ].join('\n');
+
+  const events = extractFileEvents(sql).filter((e) => e.kind === 'create');
+  assert.deepEqual(events.map((e) => `${e.schema}.${e.name}/${e.arity}`),
+    ['public.demo_writer/1', 'public.after_writer/1'],
+    'both functions must be extracted; the odd apostrophe must not cascade past demo_writer');
+  const demo = events.find((e) => e.name === 'demo_writer');
+  assert.match(demo.bodyInner, /insert\s+into\s+public\.credit_ledger/i,
+    'the real value-write after the `-- don\'t` comment must remain inside the extracted body');
+});
 
 test('discovery output is deterministic', () => {
   const second = runDiscovery();
