@@ -1,0 +1,232 @@
+-- Rolled-back reinstate of the pre-v66 stored-value mint RPCs (sv_topup/sv_grant). v66 retires these
+-- to fail-closed stubs (mint-path closure); the PS-2A foundation suites (v61-v64) re-create the exact
+-- pre-retirement functions inside their own rolled-back transaction so they still validate what v61-v64
+-- shipped. Dumped from a v65b chain (functions unchanged since v64). Nothing commits.
+CREATE OR REPLACE FUNCTION public.sv_topup(p_business uuid, p_client uuid, p_plan_version uuid, p_idempotency_key uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public', 'app', 'pg_temp'
+AS $function$
+declare
+  v_actor uuid := auth.uid();
+  v_hash text;
+  v_existing public.sv_operations%rowtype;
+  v_pv public.sv_plan_versions%rowtype;
+  v_state text;
+  v_account uuid;
+  v_op uuid := gen_random_uuid();
+  v_paid_lot uuid := gen_random_uuid();
+  v_bonus_lot uuid;
+  v_paid_seq bigint;
+  v_bonus_seq bigint;
+  v_paid_expiry timestamptz;
+  v_bonus_expiry timestamptz;
+  v_result jsonb;
+begin
+  if not app.is_salon_owner(p_business) then
+    raise exception 'owner only' using errcode = '42501';
+  end if;
+  if p_idempotency_key is null then
+    raise exception 'a stored-value top-up idempotency key is required' using errcode = '22023';
+  end if;
+
+  -- Canonical request: business + client + plan version. A different plan version or client
+  -- under the same key is a hash conflict -> fail closed.
+  v_hash := app.ps1b_sha256(jsonb_build_object(
+    'op', 'topup', 'business_id', p_business, 'client_id', p_client,
+    'plan_version_id', p_plan_version)::text);
+
+  perform pg_advisory_xact_lock(hashtextextended(
+    'v61:sv_topup:' || p_business::text || ':' || p_idempotency_key::text, 0));
+
+  select * into v_existing from public.sv_operations o
+   where o.business_id = p_business and o.operation_type = 'topup' and o.idempotency_key = p_idempotency_key
+   for update;
+  if found then
+    if v_existing.request_hash <> v_hash then
+      raise exception 'idempotency key conflicts with a different stored-value top-up' using errcode = '22023';
+    end if;
+    return v_existing.result;
+  end if;
+
+  -- Validate the plan version belongs to this business (BEFORE any write, so a bad reference
+  -- leaves no op/lot/movement row - the whole function is one statement in the caller txn).
+  select * into v_pv from public.sv_plan_versions
+   where id = p_plan_version and business_id = p_business;
+  if not found then
+    raise exception 'stored-value plan version does not belong to this business' using errcode = '22023';
+  end if;
+  if not exists (select 1 from public.clients c where c.id = p_client and c.business_id = p_business) then
+    raise exception 'stored-value top-up client does not belong to this business' using errcode = '22023';
+  end if;
+
+  -- Authority earn gate (sv_pauses arrives in Increment D). unbuilt/shadow_testing/
+  -- reconciliation_blocked/ready_for_cutover all permit minting into the shadow ledger;
+  -- paused/retired refuse. A missing row fails closed to refuse.
+  select state into v_state from public.sv_authority
+   where business_id = p_business and asset = 'stored_value';
+  if v_state is null then
+    raise exception 'stored-value authority is not initialised for this business' using errcode = '22023';
+  end if;
+  if v_state in ('paused', 'retired') then
+    raise exception 'stored-value earning is % for this business', v_state using errcode = '22023';
+  end if;
+
+  -- PS-2A Increment D pause gate (contract D §1/§8): an active 'all' or 'earn' sv_pause blocks
+  -- new earns. This block is the ONLY addition over the v61 body; everything else is byte-identical.
+  if app.sv_pause_active(p_business, 'stored_value', 'earn') then
+    raise exception 'sv_paused: stored-value earns are paused' using errcode = '22023';
+  end if;
+
+  v_account := app.sv_ensure_account(p_business, p_client);
+
+  -- Expiry computed per class independently from the plan snapshot (same term here, stored
+  -- as its own key on each lot so a future differential-expiry plan and the expiry sweep
+  -- treat paid and bonus independently - PS-0 expiry independence).
+  v_paid_expiry := case when v_pv.expiry_days is null then null
+                        else now() + (v_pv.expiry_days || ' days')::interval end;
+  v_bonus_expiry := case when v_pv.expiry_days is null then null
+                         else now() + (v_pv.expiry_days || ' days')::interval end;
+  v_paid_seq := nextval('app.sv_earned_seq');
+
+  -- Build the cached result FIRST (lot ids pre-generated) so the op row stores it once and
+  -- an identical retry replays it verbatim.
+  if v_pv.bonus_cents > 0 then
+    v_bonus_lot := gen_random_uuid();
+    v_bonus_seq := nextval('app.sv_earned_seq');
+  end if;
+
+  v_result := jsonb_build_object(
+    'status', 'ok',
+    'operation_id', v_op,
+    'account_id', v_account,
+    'asset', 'stored_value',
+    'plan_version_id', p_plan_version,
+    'paid_lot', jsonb_build_object(
+      'lot_id', v_paid_lot, 'class', 'paid', 'minted_cents', v_pv.price_cents,
+      'expiry_key', v_paid_expiry, 'earned_seq', v_paid_seq),
+    'bonus_lot', case when v_pv.bonus_cents > 0 then jsonb_build_object(
+      'lot_id', v_bonus_lot, 'class', 'bonus', 'minted_cents', v_pv.bonus_cents,
+      'expiry_key', v_bonus_expiry, 'earned_seq', v_bonus_seq) else null end,
+    'minted', jsonb_build_object(
+      'paid_cents', v_pv.price_cents, 'bonus_cents', v_pv.bonus_cents,
+      'total_cents', v_pv.price_cents + v_pv.bonus_cents));
+
+  insert into public.sv_operations(id, business_id, operation_type, idempotency_key, request_hash, actor, result)
+  values (v_op, p_business, 'topup', p_idempotency_key, v_hash, v_actor, v_result);
+
+  insert into public.sv_lots(id, business_id, account_id, operation_id, class, minted_cents, expiry_key, earned_seq, plan_version_id)
+  values (v_paid_lot, p_business, v_account, v_op, 'paid', v_pv.price_cents, v_paid_expiry, v_paid_seq, p_plan_version);
+  insert into public.sv_lot_movements(business_id, account_id, lot_id, operation_id, kind, cents)
+  values (p_business, v_account, v_paid_lot, v_op, 'issue', v_pv.price_cents);
+
+  if v_pv.bonus_cents > 0 then
+    insert into public.sv_lots(id, business_id, account_id, operation_id, class, minted_cents, expiry_key, earned_seq, plan_version_id)
+    values (v_bonus_lot, p_business, v_account, v_op, 'bonus', v_pv.bonus_cents, v_bonus_expiry, v_bonus_seq, p_plan_version);
+    insert into public.sv_lot_movements(business_id, account_id, lot_id, operation_id, kind, cents)
+    values (p_business, v_account, v_bonus_lot, v_op, 'issue', v_pv.bonus_cents);
+  end if;
+
+  insert into public.audit_log(business_id, actor, action, entity, entity_id, detail)
+  values (p_business, v_actor, 'SV_TOPUP', 'sv_accounts', v_account, jsonb_build_object(
+    'operation_id', v_op, 'plan_version_id', p_plan_version,
+    'paid_cents', v_pv.price_cents, 'bonus_cents', v_pv.bonus_cents));
+
+  return v_result;
+end $function$
+;
+grant execute on function public.sv_topup(uuid,uuid,uuid,uuid) to authenticated;
+CREATE OR REPLACE FUNCTION public.sv_grant(p_business uuid, p_client uuid, p_cents integer, p_reason text, p_idempotency_key uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public', 'app', 'pg_temp'
+AS $function$
+declare
+  v_actor uuid := auth.uid();
+  v_reason text := btrim(coalesce(p_reason, ''));
+  v_hash text;
+  v_existing public.sv_operations%rowtype;
+  v_state text;
+  v_account uuid;
+  v_op uuid := gen_random_uuid();
+  v_lot uuid := gen_random_uuid();
+  v_seq bigint;
+  v_result jsonb;
+begin
+  if not app.is_salon_owner(p_business) then
+    raise exception 'owner only' using errcode = '42501';
+  end if;
+  if p_idempotency_key is null then
+    raise exception 'a stored-value grant idempotency key is required' using errcode = '22023';
+  end if;
+  if p_cents is null or p_cents < 1 then
+    raise exception 'a stored-value grant must be a whole number of at least 1 cent' using errcode = '22023';
+  end if;
+  if char_length(v_reason) < 3 then
+    raise exception 'a stored-value grant requires a reason of at least 3 characters' using errcode = '22023';
+  end if;
+
+  v_hash := app.ps1b_sha256(jsonb_build_object(
+    'op', 'grant', 'business_id', p_business, 'client_id', p_client,
+    'cents', p_cents, 'reason', v_reason)::text);
+
+  perform pg_advisory_xact_lock(hashtextextended(
+    'v61:sv_grant:' || p_business::text || ':' || p_idempotency_key::text, 0));
+
+  select * into v_existing from public.sv_operations o
+   where o.business_id = p_business and o.operation_type = 'grant' and o.idempotency_key = p_idempotency_key
+   for update;
+  if found then
+    if v_existing.request_hash <> v_hash then
+      raise exception 'idempotency key conflicts with a different stored-value grant' using errcode = '22023';
+    end if;
+    return v_existing.result;
+  end if;
+
+  if not exists (select 1 from public.clients c where c.id = p_client and c.business_id = p_business) then
+    raise exception 'stored-value grant client does not belong to this business' using errcode = '22023';
+  end if;
+  select state into v_state from public.sv_authority
+   where business_id = p_business and asset = 'stored_value';
+  if v_state is null then
+    raise exception 'stored-value authority is not initialised for this business' using errcode = '22023';
+  end if;
+  if v_state in ('paused', 'retired') then
+    raise exception 'stored-value earning is % for this business', v_state using errcode = '22023';
+  end if;
+
+  -- PS-2A Increment D pause gate (contract D §1/§8): an active 'all' or 'earn' sv_pause blocks
+  -- new earns. This block is the ONLY addition over the v61 body; everything else is byte-identical.
+  if app.sv_pause_active(p_business, 'stored_value', 'earn') then
+    raise exception 'sv_paused: stored-value earns are paused' using errcode = '22023';
+  end if;
+
+  v_account := app.sv_ensure_account(p_business, p_client);
+  v_seq := nextval('app.sv_earned_seq');
+  v_result := jsonb_build_object(
+    'status', 'ok',
+    'operation_id', v_op,
+    'account_id', v_account,
+    'asset', 'stored_value',
+    'bonus_lot', jsonb_build_object(
+      'lot_id', v_lot, 'class', 'bonus', 'minted_cents', p_cents,
+      'expiry_key', null, 'earned_seq', v_seq),
+    'minted', jsonb_build_object('paid_cents', 0, 'bonus_cents', p_cents, 'total_cents', p_cents),
+    'reason', v_reason);
+
+  insert into public.sv_operations(id, business_id, operation_type, idempotency_key, request_hash, actor, result)
+  values (v_op, p_business, 'grant', p_idempotency_key, v_hash, v_actor, v_result);
+  insert into public.sv_lots(id, business_id, account_id, operation_id, class, minted_cents, expiry_key, earned_seq, plan_version_id)
+  values (v_lot, p_business, v_account, v_op, 'bonus', p_cents, null, v_seq, null);
+  insert into public.sv_lot_movements(business_id, account_id, lot_id, operation_id, kind, cents)
+  values (p_business, v_account, v_lot, v_op, 'issue', p_cents);
+  insert into public.audit_log(business_id, actor, action, entity, entity_id, detail)
+  values (p_business, v_actor, 'SV_GRANT', 'sv_accounts', v_account, jsonb_build_object(
+    'operation_id', v_op, 'cents', p_cents, 'reason', v_reason));
+
+  return v_result;
+end $function$
+;
+grant execute on function public.sv_grant(uuid,uuid,integer,text,uuid) to authenticated;

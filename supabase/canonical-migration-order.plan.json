@@ -105,6 +105,7 @@
     { "kind": "pending", "version": "20260724230000", "name": "frenly_v64_ps2d_pause_controls", "sourcePath": "db/migrations/20260724_frenly_v64_ps2d_pause_controls.sql" },
     { "kind": "pending", "version": "20260725000000", "name": "frenly_v65_ps2live_plan_config", "sourcePath": "db/migrations/20260724_frenly_v65_ps2live_plan_config.sql" },
     { "kind": "pending", "version": "20260725010000", "name": "frenly_v65a_ps2live_plan_config_hardening", "sourcePath": "db/migrations/20260724_frenly_v65a_ps2live_plan_config_hardening.sql" },
-    { "kind": "pending", "version": "20260725020000", "name": "frenly_v65b_ps2live_numeric_range_guard", "sourcePath": "db/migrations/20260724_frenly_v65b_ps2live_numeric_range_guard.sql" }
+    { "kind": "pending", "version": "20260725020000", "name": "frenly_v65b_ps2live_numeric_range_guard", "sourcePath": "db/migrations/20260724_frenly_v65b_ps2live_numeric_range_guard.sql" },
+    { "kind": "pending", "version": "20260725030000", "name": "frenly_v66_ps2live_topup_sale", "sourcePath": "db/migrations/20260724_frenly_v66_ps2live_topup_sale.sql" }
   ]
 }

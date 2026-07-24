@@ -184,27 +184,16 @@
   ],
   "writers": [
     {
-      "id": "db.fn:public.sv_topup/4",
+      "id": "db.fn:public.record_sv_topup_sale/6",
       "surface": "db_function",
-      "latest_file": "20260724200000_frenly_v61_ps2a_stored_value_foundation.sql",
-      "rows_written": "sv_operations:INSERT, sv_lots:INSERT, sv_lot_movements:INSERT",
+      "latest_file": "20260725030000_frenly_v66_ps2live_topup_sale.sql",
+      "rows_written": "sv_operations:INSERT, sv_lots:INSERT, sv_lot_movements:INSERT, sv_topup_payments:INSERT, sv_topup_payment_events:INSERT, audit_log:INSERT",
       "detected_signals": "idem-signal, advisory-lock, row-lock",
-      "entry_point": "public.sv_topup(business, client, plan_version, idempotency_key) — PS-2A owner-only MINT RPC",
-      "idempotency": "sv_operations unique(business, operation_type='topup', idempotency_key) + request_hash of {business,client,plan_version} + advisory xact lock on (business,key) + cached-result replay; conflicting hash → 22023",
-      "value": "MINT ONLY — mints two immutable sv_lots (paid=price_cents, bonus=bonus_cents; bonus skipped when 0) and one 'issue' sv_lot_movement per lot from a pinned sv_plan_versions snapshot. No spend/redeem/refund path exists (Increment C+). Balances are DERIVED; no mutable balance column.",
-      "authority": "refuses while sv_authority is 'paused'/'retired'; sv_authority is 'unbuilt' for every tenant in PS-2A and can never reach 'live' (no function sets it; guard rejects the transition), so nothing minted here is spendable",
-      "kernel": "SEPARATE-LEDGER — stored value is its own append-only authority (sv_lot_movements); it reuses the house op-ledger/idempotency but shares no rows with credit_ledger/points_ledger/sales and writes none of them"
-    },
-    {
-      "id": "db.fn:public.sv_grant/5",
-      "surface": "db_function",
-      "latest_file": "20260724200000_frenly_v61_ps2a_stored_value_foundation.sql",
-      "rows_written": "sv_operations:INSERT, sv_lots:INSERT, sv_lot_movements:INSERT",
-      "detected_signals": "idem-signal, advisory-lock, row-lock",
-      "entry_point": "public.sv_grant(business, client, cents, reason, idempotency_key) — PS-2A owner-only operator/promotional grant RPC",
-      "idempotency": "sv_operations unique(business, operation_type='grant', idempotency_key) + request_hash of {business,client,cents,reason} + advisory xact lock + cached-result replay; conflicting hash → 22023",
-      "value": "MINT ONLY — mints ONE 'bonus' sv_lot (no expiry) + one 'issue' movement; requires reason ≥ 3 chars; audited with actor + reason (the manual-adjustment-as-append-only-ledger-event rule). No editable balance field. Not spendable while authority ≠ 'live' (always, in PS-2A).",
-      "kernel": "SEPARATE-LEDGER — same append-only stored-value authority as sv_topup; writes no credit_ledger/points_ledger/sales row"
+      "entry_point": "public.record_sv_topup_sale(business, branch, client, plan_version, payment, idempotency_key) — v66 THE sole authoritative staff-assisted top-up-sale MINT. The v61 sv_topup/sv_grant browser mint paths are RETIRED to fail-closed stubs (execute revoked + raise), so this is the only live function that inserts a paid stored-value lot (tripwire-tested).",
+      "idempotency": "sv_operations unique(business, operation_type='topup', idempotency_key) + request_hash of {business,branch,client,plan_version,method,amount,currency,canonical-reference} + advisory xact lock on (business,key) + cached-result replay; conflicting hash → 22023; a partial unique index on sv_topup_payments(business,method,reference_norm) WHERE method<>'cash' blocks non-cash reference double-funding",
+      "value": "MINT ONLY — mints a paid sv_lot (price_cents, paid_expiry_days) + a bonus sv_lot when bonus>0 (bonus_expiry_days), one 'issue' movement each, from the immutable v65 sv_plan_versions snapshot; records append-only payment evidence (cash collected, NOT revenue — writes NO sales row) + a 'confirmed' payment event. Balances DERIVED; no mutable balance column. No spend/redeem/refund path (v67+).",
+      "authority": "GATED BY STATE (v66 safety contract): refuses when 'unbuilt'; 'shadow_testing'/'ready_for_cutover' permit ONLY structurally-synthetic business+customer with method='test'; real cash/card_terminal/paynow/manual only when 'live' (unreachable outside a future authorized cutover). Earn pause blocks it. Authority + current-sellable-version are re-validated at finalisation under the account lock (TOCTOU-closed).",
+      "kernel": "SEPARATE-LEDGER — stored value is its own append-only authority (sv_lot_movements); reuses the house op-ledger/idempotency but shares no rows with credit_ledger/points_ledger/sales and writes none of them; the PS-1C checkout kernel is byte-UNCHANGED and consumes no sv tender in v66"
     },
     {
       "id": "db.fn:app.sv_ensure_account/2",

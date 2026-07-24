@@ -25,6 +25,7 @@
 -- The including transaction owns BEGIN/ROLLBACK; nothing commits.
 begin;
 \ir fixtures/pristine_chain_fixture.psql
+\ir fixtures/sv_mint_reinstate.psql
 
 create or replace function pg_temp.as_v62_principal(p_uid uuid, p_role text)
 returns void language plpgsql as $$

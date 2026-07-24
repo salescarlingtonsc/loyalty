@@ -108,13 +108,16 @@ test('PS-2A stored-value FOUNDATION is present; the mutable-balance / alternate-
     'a mutable-balance / alternate-naming stored-value table appeared; that anti-pattern is forbidden');
   assert.equal(registry.stored_value_absent_confirmed, false,
     'PS-2A introduced the stored-value foundation, so stored_value_absent_confirmed must be false');
-  // The two owner-only mint RPCs are discovered value writers and curated in writers[].
+  // v66 mint-path closure: the v61 sv_topup/sv_grant browser mint RPCs are RETIRED to fail-closed stubs
+  // (execute revoked + raise, writing nothing), so discovery no longer finds them as value writers; the
+  // sole authoritative stored-value mint is now record_sv_topup_sale (staff-assisted top-up sale).
   const ids = new Set(first.json.discovered_identities.map((i) => i.id));
-  assert.ok(ids.has('db.fn:public.sv_topup/4'), 'sv_topup must be discovered as a value writer');
-  assert.ok(ids.has('db.fn:public.sv_grant/5'), 'sv_grant must be discovered as a value writer');
+  assert.ok(!ids.has('db.fn:public.sv_topup/4'), 'sv_topup is retired in v66 and must no longer be a discovered value writer');
+  assert.ok(!ids.has('db.fn:public.sv_grant/5'), 'sv_grant is retired in v66 and must no longer be a discovered value writer');
+  assert.ok(ids.has('db.fn:public.record_sv_topup_sale/6'), 'record_sv_topup_sale must be discovered as the stored-value mint writer');
   const writerIds = new Set(registry.writers.map((w) => w.id));
-  assert.ok(writerIds.has('db.fn:public.sv_topup/4') && writerIds.has('db.fn:public.sv_grant/5'),
-    'the stored-value mint RPCs must be curated writers (not merely allowlisted)');
+  assert.ok(writerIds.has('db.fn:public.record_sv_topup_sale/6'),
+    'the authoritative top-up-sale mint RPC must be a curated writer (not merely allowlisted)');
 });
 
 test('the named kernel candidate and the minimum inspection set are present as writers', () => {

@@ -63,7 +63,8 @@ const sqlTestByVersion = new Map([
   ['v64', 'db/tests/v64_ps2d_pause_controls.sql'],
   ['v65', 'db/tests/v65_ps2live_plan_config.sql'],
   ['v65a', 'db/tests/v65a_ps2live_plan_config_hardening.sql'],
-  ['v65b', 'db/tests/v65b_ps2live_numeric_range_guard.sql']
+  ['v65b', 'db/tests/v65b_ps2live_numeric_range_guard.sql'],
+  ['v66', 'db/tests/v66_ps2live_topup_sale.sql']
 ]);
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -77,7 +78,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 56);
+  assert.equal(pending.length, 57);
   assert.equal(sqlTestByVersion.size, pending.length);
 
   for (const migration of pending) {
