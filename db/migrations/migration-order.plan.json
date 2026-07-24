@@ -93,6 +93,7 @@
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v57_ps1b1_price_fail_closed.sql", "semanticVersion": "v57", "proposedDeployVersion": "20260722000129" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v58_ps1c_checkout_kernel.sql", "semanticVersion": "v58", "proposedDeployVersion": "20260722000130" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v59_ps1c1_cart_hardening.sql", "semanticVersion": "v59", "proposedDeployVersion": "20260722000131" },
-    { "kind": "executable", "path": "db/migrations/20260724_frenly_v60_ps1c2_execution_state.sql", "semanticVersion": "v60", "proposedDeployVersion": "20260722000132" }
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v60_ps1c2_execution_state.sql", "semanticVersion": "v60", "proposedDeployVersion": "20260722000132" },
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v61_ps2a_stored_value_foundation.sql", "semanticVersion": "v61", "proposedDeployVersion": "20260722000133" }
   ]
 }

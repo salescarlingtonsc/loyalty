@@ -37,7 +37,7 @@ its 26 arithmetic vectors + 2 000-iteration property test are the acceptance ora
 | **Asset / value type** | The kind of value in an account. PS-2A ships exactly one: `stored_value` (prepaid). Points and promotional credit are **separate legacy assets in their own ledgers** and are out of scope. |
 | **Class** | A partition *within* stored value: `paid` (customer cash; refundable; deferred revenue) or `bonus` (promotional; never cash-out). Per PS-0 §2. |
 | **Lot** | `sv_lots`: an immutable minted parcel of one class from one top-up operation, with its own `expiry_key`. |
-| **Ledger entry / movement** | `sv_lot_movements`: **the authority.** Append-only signed rows. |
+| **Ledger entry / movement** | `sv_lot_movements`: **the authority.** Append-only signed rows. **Kind vocabulary is PS-0 §2's frozen 8-kind set** — `issue`,`spend`,`expiry`,`reversal`,`refund`,`clawback`,`correction`,`bad_debt` — so the frozen PS-0 arithmetic oracle applies to the later increments with no schema change (reconciled from the earlier draft's `mint`/`adjust`). Increment A writes only `issue`. Note `sv_operations.operation_type` is a *distinct* axis (the caller's intent: `topup`/`grant`/`spend`/… ) and legitimately retains `adjust`. |
 | **Grant** | An operator/promotional increase (bonus class) with actor + reason. |
 | **Earn** | A rule- or purchase-driven increase. In PS-2A: top-up only. |
 | **Top-up** | The purchase operation minting one paid lot + one bonus lot. |

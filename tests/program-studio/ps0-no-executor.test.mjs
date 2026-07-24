@@ -64,7 +64,7 @@ function parseGateTable(md, heading) {
   return rows;
 }
 
-test('PS-GATES marker authorizes PS-0/PS-1A/PS-1B/PS-1C (PS-2+ still gated)', async () => {
+test('PS-GATES marker authorizes PS-0/PS-1A/PS-1B/PS-1C/PS-2 (PS-3+ still gated)', async () => {
   const md = await read('docs/design/ps0/PS-GATES.md');
   const phases = Object.fromEntries(
     parseGateTable(md, 'AUTHORIZED PHASES').map(([phase, auth]) => [phase, auth.toLowerCase()]),
@@ -76,7 +76,9 @@ test('PS-GATES marker authorizes PS-0/PS-1A/PS-1B/PS-1C (PS-2+ still gated)', as
     'PS-1B is authorized for the event envelope + entitlement PROMISE execution (no customer-value movement)');
   assert.equal(phases['PS-1C'], 'yes',
     'PS-1C is authorized for the unified checkout kernel (server-owned token + synchronous discount apply)');
-  for (const p of ['PS-2', 'PS-3', 'PS-4', 'PS-5']) {
+  assert.equal(phases['PS-2'], 'yes',
+    'PS-2 is authorized for the PS-2A stored-value FOUNDATION only (mint + authority; no spend, no cutover, no real value)');
+  for (const p of ['PS-3', 'PS-4', 'PS-5']) {
     assert.equal(phases[p], 'no',
       `${p} must remain unauthorized until the owner approves it — flipping this is a deliberate act`);
   }
@@ -178,23 +180,73 @@ test('the ledger write-guard carries NO studio-executor scope while unauthorized
   }
 });
 
-test('no not-yet-authorized executor RPC / function surface exists (PS-2+ stays gated)', async () => {
+test('no not-yet-authorized executor RPC / function surface exists (PS-2 SPEND path stays gated)', async () => {
   const corpus = await readMigrationCorpus();
-  // Entry points that only a NOT-yet-authorized phase would introduce. PS-1C is
-  // authorized, so public.evaluate_checkout is now permitted and is NOT forbidden
-  // here; the stored-value (PS-2) executor surface stays forbidden. There is also
-  // no separate 'consume_checkout_evaluation' — the token is finalised through the
-  // record_cart_sale overload, never a bespoke consume RPC.
+  // Entry points that only a NOT-yet-authorized increment would introduce. PS-1C is
+  // authorized, so public.evaluate_checkout is permitted. PS-2A (v61) is authorized for
+  // the stored-value FOUNDATION, so sv_topup + the sv_lot_movements authority now
+  // legitimately exist and are NOT forbidden here. The stored-value SPEND/REFUND surface
+  // (Increment C, unbuilt) stays forbidden: sv_spend_allocation + refund_sv_operation.
+  // There is also no separate 'consume_checkout_evaluation' — the token is finalised
+  // through the record_cart_sale overload, never a bespoke consume RPC.
   const forbiddenFns = [
     'consume_checkout_evaluation', 'execute_rule_effect',
-    'sv_topup', 'sv_spend_allocation', 'refund_sv_operation', 'sv_lot_movement',
+    'sv_spend_allocation', 'refund_sv_operation',
     'record_domain_event', 'deliver_outbox',
   ];
   for (const fn of forbiddenFns) {
     const re = new RegExp(`function\\s+(public|app)\\.${fn}\\b`, 'i');
     const offenders = Object.entries(corpus).filter(([, sql]) => re.test(sql)).map(([f]) => f);
-    assert.deepEqual(offenders, [], `executor function '${fn}' must not exist while its phase is gated`);
+    assert.deepEqual(offenders, [], `executor function '${fn}' must not exist while its increment is gated`);
   }
+});
+
+test('no migration function can set sv_authority to live or ready_for_cutover (PS-2A: cutover is unreachable)', async () => {
+  const corpus = await readMigrationCorpus();
+  const svFiles = Object.entries(corpus).filter(([, sql]) => /\bsv_authority\b/i.test(sql));
+  assert.ok(svFiles.length >= 1, 'PS-2A must define sv_authority');
+  for (const [file, sql] of svFiles) {
+    // An UPDATE that sets sv_authority.state to a forbidden state literal.
+    assert.doesNotMatch(
+      sql,
+      /update\s+(?:public\.)?sv_authority\b[\s\S]{0,600}?\bstate\b[\s\S]{0,80}?=\s*'(?:live|ready_for_cutover)'/i,
+      `${file}: no UPDATE may set sv_authority.state to live/ready_for_cutover`);
+    // A plpgsql assignment of the forbidden states (e.g. new.state := 'live').
+    assert.doesNotMatch(
+      sql,
+      /\bstate\s*:=\s*'(?:live|ready_for_cutover)'/i,
+      `${file}: no assignment may set state := live/ready_for_cutover`);
+    // An INSERT into sv_authority carrying a forbidden state literal.
+    for (const m of sql.matchAll(/insert\s+into\s+(?:public\.)?sv_authority\b/gi)) {
+      const block = sql.slice(m.index, m.index + 600);
+      assert.doesNotMatch(
+        block,
+        /'(?:live|ready_for_cutover)'/i,
+        `${file}: no INSERT into sv_authority may carry a live/ready_for_cutover literal`);
+    }
+  }
+});
+
+test('no sv_* table carries a mutable balance column (balances are derived from movements)', async () => {
+  const corpus = await readMigrationCorpus();
+  const seen = [];
+  for (const [file, sql] of Object.entries(corpus)) {
+    // Slice each `create table [public.]sv_<name> ( ... );` body and forbid a
+    // balance / balance_cents column definition. The append-only sv_lot_movements ledger
+    // is the sole authority; a cached mutable balance is the anti-pattern this forbids.
+    for (const m of sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?(sv_[a-z_]+)\s*\(/gi)) {
+      const bodyStart = m.index + m[0].length;
+      const close = sql.indexOf('\n);', bodyStart);
+      const body = sql.slice(bodyStart, close === -1 ? bodyStart + 4000 : close);
+      seen.push(m[1]);
+      assert.doesNotMatch(
+        body,
+        /(^|,)\s*balance(_cents)?\b/im,
+        `${file}: sv table '${m[1]}' must not declare a mutable balance/balance_cents column`);
+    }
+  }
+  assert.ok(seen.includes('sv_lot_movements') && seen.includes('sv_accounts'),
+    'the PS-2A foundation tables must be present for the mutable-balance tripwire to be meaningful');
 });
 
 test('checkout_discount_lines is written ONLY by the kernel finaliser (record_cart_sale token path)', async () => {

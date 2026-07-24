@@ -145,7 +145,8 @@
     }
   },
   "stored_value_tables_present": [],
-  "stored_value_absent_confirmed": true,
+  "stored_value_absent_confirmed": false,
+  "stored_value_foundation": "PS-2A (v61) introduces the lot-based stored-value FOUNDATION: sv_lots (immutable minted parcels) + sv_lot_movements (append-only ledger AUTHORITY, both curated VALUE_TABLES), sv_operations (idempotency envelope) and sv_accounts (balance-free container, non-value). Balances are DERIVED from movements; NO mutable balance column exists. sv_topup and sv_grant are the only value writers (owner-only mint); no spend/refund/reserve/expire path exists yet (Increments C+), and sv_authority ships every tenant at 'unbuilt' so nothing minted is spendable. The FORBIDDEN_STORED_VALUE_TABLES tripwire still bans a single-balance stored_value table, an sv_balances cache, and gift_card_lots.",
   "counts": {
     "db_function_writers": 43,
     "db_function_writers_value": 40,
@@ -179,9 +180,42 @@
     "Tender is a separate surface from the accrual spine: record_credit_tender (credit) and record_payment (cash/card/paynow/deposit/no_show_fee) exist but are UI-unwired (finance pilot-disabled). The kernel tender step calls these.",
     "Duplicate/overloaded write paths must be collapsed: sell_package/3 vs /4, enroll_membership_v41/3 vs /4, redeem_reward/4 vs /5, refund_sale vs reverse_sale, and the 3-layer reverse_sale wrapper stack (v40→v34→v20).",
     "Non-sale value writers the kernel must reconcile but not necessarily route through checkout: gift-card issue/redeem, points redeem/reward/expiry, birthday entitlements, campaign grants, package session consumption, credit tender.",
-    "Stored value does NOT exist yet (confirmed) — PS-2 introduces it; gift_cards today is single-balance credit, not lot-based."
+    "Stored value FOUNDATION now exists (PS-2A / v61): lot-based sv_lots + append-only sv_lot_movements authority with DERIVED balances (no mutable balance column), owner-only mint via sv_topup/sv_grant, and a dedicated sv_authority shipped at 'unbuilt' so nothing is spendable yet. No spend/refund/reserve/expire path (Increments C+) and no cutover. gift_cards remains the legacy single-balance credit instrument (not lot-based); its migration into stored value is explicitly out of PS-2A scope."
   ],
   "writers": [
+    {
+      "id": "db.fn:public.sv_topup/4",
+      "surface": "db_function",
+      "latest_file": "20260724200000_frenly_v61_ps2a_stored_value_foundation.sql",
+      "rows_written": "sv_operations:INSERT, sv_lots:INSERT, sv_lot_movements:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, row-lock",
+      "entry_point": "public.sv_topup(business, client, plan_version, idempotency_key) — PS-2A owner-only MINT RPC",
+      "idempotency": "sv_operations unique(business, operation_type='topup', idempotency_key) + request_hash of {business,client,plan_version} + advisory xact lock on (business,key) + cached-result replay; conflicting hash → 22023",
+      "value": "MINT ONLY — mints two immutable sv_lots (paid=price_cents, bonus=bonus_cents; bonus skipped when 0) and one 'mint' sv_lot_movement per lot from a pinned sv_plan_versions snapshot. No spend/redeem/refund path exists (Increment C+). Balances are DERIVED; no mutable balance column.",
+      "authority": "refuses while sv_authority is 'paused'/'retired'; sv_authority is 'unbuilt' for every tenant in PS-2A and can never reach 'live' (no function sets it; guard rejects the transition), so nothing minted here is spendable",
+      "kernel": "SEPARATE-LEDGER — stored value is its own append-only authority (sv_lot_movements); it reuses the house op-ledger/idempotency but shares no rows with credit_ledger/points_ledger/sales and writes none of them"
+    },
+    {
+      "id": "db.fn:public.sv_grant/5",
+      "surface": "db_function",
+      "latest_file": "20260724200000_frenly_v61_ps2a_stored_value_foundation.sql",
+      "rows_written": "sv_operations:INSERT, sv_lots:INSERT, sv_lot_movements:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, row-lock",
+      "entry_point": "public.sv_grant(business, client, cents, reason, idempotency_key) — PS-2A owner-only operator/promotional grant RPC",
+      "idempotency": "sv_operations unique(business, operation_type='grant', idempotency_key) + request_hash of {business,client,cents,reason} + advisory xact lock + cached-result replay; conflicting hash → 22023",
+      "value": "MINT ONLY — mints ONE 'bonus' sv_lot (no expiry) + one 'mint' movement; requires reason ≥ 3 chars; audited with actor + reason (the manual-adjustment-as-append-only-ledger-event rule). No editable balance field. Not spendable while authority ≠ 'live' (always, in PS-2A).",
+      "kernel": "SEPARATE-LEDGER — same append-only stored-value authority as sv_topup; writes no credit_ledger/points_ledger/sales row"
+    },
+    {
+      "id": "db.fn:app.sv_ensure_account/2",
+      "surface": "db_function",
+      "latest_file": "20260724200000_frenly_v61_ps2a_stored_value_foundation.sql",
+      "rows_written": "sv_accounts:INSERT",
+      "detected_signals": "idem-signal",
+      "entry_point": "app.sv_ensure_account(business, client) — definer helper called only by sv_topup / sv_grant",
+      "idempotency": "insert ... on conflict (business_id, client_id, asset) do nothing, then select; safe under the callers' advisory lock",
+      "value": "NON-VALUE — creates the balance-free (business, client) stored_value container. sv_accounts carries NO balance column; all balances are derived from sv_lot_movements. Revoked from public/anon/authenticated."
+    },
     {
       "id": "browser.rpc:app/index.html:adjust_points",
       "surface": "browser_rpc_binding",

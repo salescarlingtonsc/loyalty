@@ -122,13 +122,25 @@ const VALUE_TABLES = {
   checkout_evaluation_operations:          { category: 'idempotency_ledger',  value: false },
   checkout_discount_lines:                 { category: 'checkout_discount',   value: true },
   budget_commitment_releases:              { category: 'budget',              value: false },
+  // --- Program Studio PS-2A (v61) stored-value FOUNDATION. sv_lot_movements is the
+  //     append-only ledger AUTHORITY and sv_lots the immutable minted parcels (VALUE - the
+  //     mint moves stored value). sv_operations is the idempotency envelope and sv_accounts
+  //     the balance-free container (non-value). No spend/refund path exists yet (Increment
+  //     C+); balances are DERIVED (no mutable balance column anywhere).
+  sv_lots:                                 { category: 'stored_value_lot',     value: true },
+  sv_lot_movements:                        { category: 'stored_value_ledger',  value: true },
+  sv_operations:                           { category: 'idempotency_ledger',   value: false },
+  sv_accounts:                             { category: 'stored_value_account', value: false },
 };
 
-// Stored-value tables that MUST NOT exist yet (PS-2 territory). If discovery
-// ever finds a CREATE TABLE for one of these, the "no stored value yet" claim is
-// falsified and this list surfaces it.
+// Mutable-balance / alternate-naming stored-value tables that MUST NEVER exist. PS-2A
+// (v61) legitimately introduces the lot-based FOUNDATION (sv_lots / sv_lot_movements /
+// sv_plans / sv_plan_versions / sv_accounts / sv_operations / sv_authority) whose balances
+// are DERIVED, so those are now curated VALUE_TABLES above rather than forbidden. This list
+// keeps the anti-pattern tripwire: a single-balance stored_value table, an sv_balances cache,
+// or a gift_card_lots shadow would falsify the "no mutable stored-value balance" claim.
 const FORBIDDEN_STORED_VALUE_TABLES = [
-  'stored_value', 'sv_lots', 'sv_lot_movements', 'sv_plans', 'sv_balances',
+  'stored_value', 'sv_balances',
   'stored_value_lots', 'stored_value_movements', 'gift_card_lots',
 ];
 

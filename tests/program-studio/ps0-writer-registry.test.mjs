@@ -99,9 +99,22 @@ test('every value-impacting discovered identity is a curated writer (not merely 
   }
 });
 
-test('no stored-value tables exist yet (PS-0 precondition for PS-2)', () => {
-  assert.deepEqual(first.json.stored_value_tables_present, [], 'a stored-value table appeared; the PS-0 "no stored value yet" claim is falsified');
-  assert.equal(registry.stored_value_absent_confirmed, true);
+test('PS-2A stored-value FOUNDATION is present; the mutable-balance / alternate-naming tables stay absent', () => {
+  // PS-2A (v61) builds the lot-based foundation, so the "no stored value yet" precondition
+  // is deliberately lifted. What must NEVER appear is a single-balance stored_value table,
+  // an sv_balances cache, or a gift_card_lots shadow — the mutable-balance anti-pattern the
+  // discovery tool still guards (FORBIDDEN_STORED_VALUE_TABLES).
+  assert.deepEqual(first.json.stored_value_tables_present, [],
+    'a mutable-balance / alternate-naming stored-value table appeared; that anti-pattern is forbidden');
+  assert.equal(registry.stored_value_absent_confirmed, false,
+    'PS-2A introduced the stored-value foundation, so stored_value_absent_confirmed must be false');
+  // The two owner-only mint RPCs are discovered value writers and curated in writers[].
+  const ids = new Set(first.json.discovered_identities.map((i) => i.id));
+  assert.ok(ids.has('db.fn:public.sv_topup/4'), 'sv_topup must be discovered as a value writer');
+  assert.ok(ids.has('db.fn:public.sv_grant/5'), 'sv_grant must be discovered as a value writer');
+  const writerIds = new Set(registry.writers.map((w) => w.id));
+  assert.ok(writerIds.has('db.fn:public.sv_topup/4') && writerIds.has('db.fn:public.sv_grant/5'),
+    'the stored-value mint RPCs must be curated writers (not merely allowlisted)');
 });
 
 test('the named kernel candidate and the minimum inspection set are present as writers', () => {

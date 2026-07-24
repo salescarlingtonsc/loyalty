@@ -51,6 +51,23 @@ a live rule from producing NEW effects inside `app.ps1c_plan_checkout` and
 not a financial-execution artifact, so it is deliberately NOT in the `## EXECUTOR ARTIFACTS`
 table below; it moves no value and adds no ledger/guard scope.
 
+PS-2A (v61, stored-value FOUNDATION under a new owner authorization 2026-07-24, per
+`docs/design/ps2/PS2A_STORED_VALUE_CONTRACT.md` and the frozen
+`docs/design/ps0/STORED_VALUE_CONTRACT.md`): PS-2 is flipped to `yes` for the INCREMENT-A
+FOUNDATION ONLY — sv_accounts / sv_plans / sv_plan_versions / immutable sv_lots /
+append-only sv_lot_movements authority / the sv_operations idempotency envelope /
+derived-balance functions / the dedicated `sv_authority` table shipped at 'unbuilt' for
+every tenant, plus the owner-only mint RPCs `sv_topup` / `sv_grant` and the read RPC
+`get_sv_account`. NO stored value is spendable and NO customer value moves: `sv_authority`
+never reaches 'live' (no function can set 'live' or 'ready_for_cutover', and its guard
+rejects those transitions unconditionally), so `get_sv_account.spendable` is always false.
+There is NO spend / redeem / reserve / reverse / refund / expire path (Increments B/C/D), NO
+cutover, NO real communications, and NO UI in Increment A. The checkout kernel is unmodified.
+The tripwire (`tests/program-studio/ps0-no-executor.test.mjs`) is re-scoped, not deleted:
+`sv_spend_allocation` and `refund_sv_operation` stay forbidden (Increment C, not built), and
+two new assertions forbid any function setting `sv_authority` to live/ready_for_cutover and
+any sv table carrying a mutable `balance`/`balance_cents` column.
+
 ## AUTHORIZED PHASES
 
 | phase  | authorized |
@@ -59,7 +76,7 @@ table below; it moves no value and adds no ledger/guard scope.
 | PS-1A  | yes        |
 | PS-1B  | yes        |
 | PS-1C  | yes        |
-| PS-2   | no         |
+| PS-2   | yes        |
 | PS-3   | no         |
 | PS-4   | no         |
 | PS-5   | no         |
@@ -108,6 +125,9 @@ the highest authorized phase.
 | sv_lot_movements            | PS-2              |
 | sv_plans                    | PS-2              |
 | sv_plan_versions            | PS-2              |
+| sv_accounts                 | PS-2              |
+| sv_operations               | PS-2              |
+| sv_authority                | PS-2              |
 
 ## EXECUTOR LEDGER-GUARD SCOPES (kept out of the guard through PS-1C)
 
