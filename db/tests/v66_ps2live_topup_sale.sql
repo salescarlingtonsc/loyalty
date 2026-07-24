@@ -209,7 +209,7 @@ begin
   res := public.record_sv_topup_sale(B,B_branch,B_client,verB,jsonb_build_object('method','cash','amount_cents',8000,'currency','SGD'),gen_random_uuid());
   assert res->>'status'='ok' and (res->>'spendable')::boolean=true, 'live cash mint spendable';
   assert (select confirmation_mode from public.sv_topup_payments where operation_id=(res->>'operation_id')::uuid)='cash_received', 'cash_received';
-  -- live: a synthetic customer refused
+  -- live: a fresh REAL (is_synthetic=false) customer for the non-cash reference + staff-confirmation checks below
   reset role; insert into public.clients(business_id,full_name,phone,is_synthetic) values (B,'synth on live','+6590000033',false) returning id into B_client;
   perform pg_temp.as_v66(B_owner,'authenticated');
   perform pg_temp.as_v66(B_owner,'authenticated');

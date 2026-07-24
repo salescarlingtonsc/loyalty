@@ -303,20 +303,24 @@ test('no stored-value cutover ACTION exists; get_sv_authority_overview.can_cutov
   }
 });
 
-test('the PS-1C checkout kernel (plan / finalise / evaluate) is byte-UNCHANGED by every PS-2 increment', async () => {
-  // PS-2A must not touch the synchronous checkout money path. The kernel functions are last
-  // defined by v51 (base cart)/v58 (kernel)/v59 (cart hardening)/v60 (execution-state); NO PS-2
-  // increment (v61/v62/v63) may (re)define them, so the checkout financial logic is provably
-  // byte-unchanged (a predecessor diff would be empty).
+test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 increment; the finaliser/evaluator change only at the sanctioned v67 tender wiring', async () => {
+  // The PS-2A shadow increments (v61/v62/v63/v64) must not touch the synchronous checkout money
+  // path at all. app.ps1c_plan_checkout (pricing) is last defined by v51 (base cart)/v58 (kernel)/
+  // v59 (cart hardening)/v60 (execution-state) and NEVER by a PS-2 increment. record_cart_sale and
+  // evaluate_checkout are additionally (re)defined by v67 (PS-2 LIVE), the SANCTIONED point where
+  // stored value is wired into the finaliser + evaluator as a tender (contract §4/§5). No PS-2A
+  // shadow increment (v61-v64) may redefine any of the three.
   const corpus = await readMigrationCorpus();
   const kernelFns = ['app.ps1c_plan_checkout', 'public.record_cart_sale', 'public.evaluate_checkout'];
-  const allowed = /frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)/;
+  const allowedPlan = /frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)/;
+  const allowedTender = /frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)/;
   for (const fn of kernelFns) {
+    const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;
     const re = new RegExp(`create\\s+or\\s+replace\\s+function\\s+${fn.replace('.', '\\.')}\\s*\\(`, 'i');
     for (const [file, sql] of Object.entries(corpus)) {
       if (re.test(sql)) {
         assert.match(file, allowed,
-          `${file}: the checkout kernel function ${fn} may only be defined in v51/v58/v59/v60, never a PS-2 increment (byte-unchanged)`);
+          `${file}: the checkout kernel function ${fn} may only be (re)defined in v51/v58/v59/v60${fn === 'app.ps1c_plan_checkout' ? '' : '/v67'}, never a PS-2A shadow increment`);
       }
     }
   }
@@ -397,10 +401,11 @@ test('checkout_discount_lines is written ONLY by the kernel finaliser (record_ca
   assert.ok(inserters.length >= 1, 'the kernel finaliser must write checkout_discount_lines');
   for (const [file, sql] of inserters) {
     // The finaliser lives in the v58 kernel migration and is CREATE-OR-REPLACE'd (with
-    // its checkout_discount_lines insert) by the v59 PS-1C.1 cart-hardening increment.
-    // No other migration may write the table.
-    assert.match(file, /frenly_v5(8_ps1c_checkout_kernel|9_ps1c1_cart_hardening)/,
-      `${file} must not insert into checkout_discount_lines outside the v58/v59 kernel migrations`);
+    // its checkout_discount_lines insert) by the v59 PS-1C.1 cart-hardening increment and
+    // the v67 PS-2 LIVE stored-value-tender increment. No other migration may write the table;
+    // every insert still lives inside record_cart_sale and traces to a consumed token.
+    assert.match(file, /frenly_v(58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|67_ps2live_checkout_tender)/,
+      `${file} must not insert into checkout_discount_lines outside the v58/v59/v67 kernel migrations`);
     const finaliserAt = sql.search(/create\s+or\s+replace\s+function\s+public\.record_cart_sale\s*\(/i);
     const evalAt = sql.search(/create\s+or\s+replace\s+function\s+public\.evaluate_checkout\s*\(/i);
     assert.notEqual(finaliserAt, -1, `${file} must define the record_cart_sale finaliser`);

@@ -3781,6 +3781,12 @@ async function tillPage(){
   let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
   let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
   let payError=null;       // {kind:'retry'|'conflict'} — finalise failure (LOCKS the cart so the same idempotency key is reused)
+  // v67 stored-value tender: reserve_checkout_sv_tender result bound to the CURRENT evaluation token.
+  // Structurally never offered in prod (the server reports stored_value.spendable=false). All figures
+  // (available/reserved/remaining) are server-authoritative; the client computes nothing. A new
+  // evaluation (fresh token) always clears this so a stale tender can never ride a re-priced cart.
+  let svTender=null;       // null | {reservation_id,reserved_cents,remaining_due_cents,requested_cents}
+  let svBusy=false;
   const FINALISE_SLOT='frenly.till.cartFinalise'; // sessionStorage slot for the STABLE finalise idempotency key (writeAttemptKey pattern, F2)
   // The cart is LOCKED (no picker, qty or remove) whenever a finalise is mid-recovery or extras are pending,
   // so a retry reuses the same idempotency key instead of minting a fresh one and double-charging.
@@ -3798,7 +3804,7 @@ async function tillPage(){
   function clearCheckoutState(){
     if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
     if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
-    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;payError=null;
+    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;payError=null;svTender=null;svBusy=false;
     clearWriteAttempt(FINALISE_SLOT);
   }
   function resetToStart(){
@@ -4110,7 +4116,7 @@ async function tillPage(){
     if(!isTillCurrent())return;
     if(seq!==evalSeq)return; // a newer evaluate superseded this one
     if(error){applyEvalError(error);draw();return false;}
-    evalResult=data;evalError=null;evalState='ready';
+    evalResult=data;evalError=null;evalState='ready';svTender=null; // a fresh token invalidates any prior SV hold
     scheduleExpiry();draw();
     return true;
   }
@@ -4148,12 +4154,27 @@ async function tillPage(){
         ${rows}${gstLine}
         <div class="ck-total${totalCls}"><span>Total</span><span>${money(r.total_cents)}</span></div>
       </div>`;
+    // v67 stored-value tender — offered ONLY when the server reports a spendable balance > 0 (never
+    // in prod this phase). Every amount is server-rendered; the client never sizes the SV portion.
+    let svHtml='';
+    const sv=r.stored_value;
+    if(sv&&sv.spendable===true&&(sv.available_cents||0)>0&&!staleConfirm&&evalState==='ready'&&!payError){
+      if(svTender)
+        svHtml=`<div class="ck-panel" style="margin-top:10px" aria-label="Stored value applied">
+          <div class="ck-row"><span>${CUI.icon('loyalty',{size:14})} Stored value</span><span>−${money(svTender.reserved_cents)}</span></div>
+          <div class="ck-total"><span>Cash due</span><span>${money(svTender.remaining_due_cents)}</span></div>
+          <button type="button" class="btn ghost sm" id="tSvRemove" style="width:100%;margin-top:8px">Remove stored value</button></div>`;
+      else
+        svHtml=`<div class="ck-panel" style="margin-top:10px" aria-label="Stored value available">
+          <p class="muted small" style="margin:0 0 8px">Stored value available: <b>${money(sv.available_cents)}</b></p>
+          <button type="button" class="btn ghost" id="tSvUse" style="width:100%"${svBusy?' disabled':''}>${CUI.icon('loyalty',{size:16})} ${svBusy?'Applying…':'Use stored value'}</button></div>`;
+    }
     let notice='';
     if(staleConfirm)notice=`<div class="ck-notice info" role="alert">Price updated — please confirm the new total.</div>`;
     else if(evalState==='expired')notice=`<div class="ck-notice warn" role="status">Price check expired — refresh to get the current price.</div>`;
     else if(payError&&payError.kind==='retry')notice=`<div class="ck-notice warn" role="alert">The payment did not go through. Retry — you will not be charged twice.</div>`;
     else if(payError&&payError.kind==='conflict')notice=`<div class="ck-notice warn" role="alert">This checkout was already used for a different sale. Start a new checkout to continue.</div>`;
-    return breakdown+notice;
+    return breakdown+svHtml+notice;
   }
   // The single primary action for the panel, chosen by the current checkout state.
   function checkoutActionHtml(){
@@ -4173,7 +4194,7 @@ async function tillPage(){
     if(evalState==='error')
       return evalError&&evalError.kind==='generic'?`<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Try again</button>`:'';
     if(evalState==='ready'&&evalResult)
-      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(evalResult.total_cents)}</button>`;
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(svTender?svTender.remaining_due_cents:evalResult.total_cents)}</button>`;
     return '';
   }
 
@@ -4305,7 +4326,27 @@ async function tillPage(){
     if($('tRefreshEval'))$('tRefreshEval').onclick=refreshEval;
     if($('tRetryGifts'))$('tRetryGifts').onclick=doCartCheckout;
     if($('tFinishPartial'))$('tFinishPartial').onclick=()=>finishCartReceipt();
+    if($('tSvUse'))$('tSvUse').onclick=applySvTender;
+    if($('tSvRemove'))$('tSvRemove').onclick=removeSvTender;
   }
+  // v67: bind the customer's stored value to the CURRENT evaluation token. The server sizes the hold
+  // (min of the request, the spendable balance, and the bill after discounts) and returns every figure;
+  // the panel re-renders from svTender. Requests the full bill total — the server caps it.
+  async function applySvTender(){
+    if(svBusy||!evalResult||evalState!=='ready'||svTender)return;
+    svBusy=true;draw();
+    const {data,error}=await sb.rpc('reserve_checkout_sv_tender',{p_business:S.biz.id,
+      p_evaluation_id:evalResult.evaluation_id,p_requested_cents:evalResult.total_cents,p_idempotency_key:crypto.randomUUID()});
+    if(!isTillCurrent())return;
+    svBusy=false;
+    if(error){svTender=null;cartErr(isBackendMissing(error)?'Stored value needs the latest system update':(error.message||'Could not apply stored value'));draw();return;}
+    svTender={reservation_id:data.reservation_id,reserved_cents:data.reserved_cents,
+      remaining_due_cents:data.remaining_due_cents,requested_cents:data.requested_cents};
+    draw();
+  }
+  // Removing stored value re-evaluates the cart: a fresh token orphans the reservation (the server
+  // sweep releases it) so the finalise can never silently consume a removed hold.
+  function removeSvTender(){svTender=null;refreshEval();}
   function cartErr(msg){const e=$('tcErr');if(e)e.innerHTML=`<div class="err">${esc(msg)}</div>`;else toast(msg)}
   // Deliberate fresh start after a same-key/different-request conflict (§2): mint a NEW finalise key
   // (clear the slot) and re-evaluate the current cart.
@@ -4375,7 +4416,8 @@ async function tillPage(){
       saleResult={duplicate,pointsEarned:duplicate?0:(data&&data.points_earned||0),
         lines:saleLines.map(l=>({label:l.label,qty:l.qty,amount:l.unit_cents*l.qty,type:l.type})),
         subtotal:evalResult.subtotal_cents,discount:evalResult.discount_total_cents,
-        gst:evalResult.gst_cents,total:evalResult.total_cents,effects:(evalResult.applied_effects||[])};
+        gst:evalResult.gst_cents,total:evalResult.total_cents,effects:(evalResult.applied_effects||[]),
+        sv:(data&&data.stored_value)||null};
     }
     // (2) extras — each independent and server-idempotent; failures are collected, not thrown
     let anyExtraFailed=false;

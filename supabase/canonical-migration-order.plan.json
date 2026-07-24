@@ -108,6 +108,7 @@
     { "kind": "pending", "version": "20260725020000", "name": "frenly_v65b_ps2live_numeric_range_guard", "sourcePath": "db/migrations/20260724_frenly_v65b_ps2live_numeric_range_guard.sql" },
     { "kind": "pending", "version": "20260725030000", "name": "frenly_v66_ps2live_topup_sale", "sourcePath": "db/migrations/20260724_frenly_v66_ps2live_topup_sale.sql" },
     { "kind": "pending", "version": "20260725040000", "name": "frenly_v66a_ps2live_billing_view_secinvoker", "sourcePath": "db/migrations/20260724_frenly_v66a_ps2live_billing_view_secinvoker.sql" },
-    { "kind": "pending", "version": "20260725050000", "name": "frenly_v66b_program_rules_secinvoker", "sourcePath": "db/migrations/20260724_frenly_v66b_program_rules_secinvoker.sql" }
+    { "kind": "pending", "version": "20260725050000", "name": "frenly_v66b_program_rules_secinvoker", "sourcePath": "db/migrations/20260724_frenly_v66b_program_rules_secinvoker.sql" },
+    { "kind": "pending", "version": "20260725060000", "name": "frenly_v67_ps2live_checkout_tender", "sourcePath": "db/migrations/20260724_frenly_v67_ps2live_checkout_tender.sql" }
   ]
 }
