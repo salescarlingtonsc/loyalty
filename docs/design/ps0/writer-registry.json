@@ -331,6 +331,13 @@
       "call_site_finding": "none"
     },
     {
+      "id": "browser.rpc:app/index.html:record_sv_topup_sale",
+      "surface": "browser_rpc_binding",
+      "rpc": "record_sv_topup_sale",
+      "resolves_to": "record_sv_topup_sale/6 (idempotent, keyed) — the sole stored-value mint; v66 Till top-up flow in the owner-only Stored value surface",
+      "call_site_finding": "none — one idempotency key per confirmation (crypto.randomUUID minted at preview, reused on retry); authority-state, permission, amount and currency gates are all server-side; the UI computes no value"
+    },
+    {
       "id": "browser.rpc:app/index.html:redeem_customer_birthday_benefit",
       "surface": "browser_rpc_binding",
       "rpc": "redeem_customer_birthday_benefit",
@@ -1386,7 +1393,9 @@
       "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
       "rows_written": "(delegates to public.reverse_sale_v34_base)",
       "detected_signals": "idem-signal, for-update",
-      "delegates_to": ["public.reverse_sale_v34_base"],
+      "delegates_to": [
+        "public.reverse_sale_v34_base"
+      ],
       "entry_point": "reverse_sale_v40_base (the v40 auth/package boundary; renamed from reverse_sale in v58 so the v58 outer reverse_sale can compensate checkout discounts)",
       "idempotency": "delegates to the v34/v20 base chain (financial_operations + package reversal idem)",
       "value": "the retained v40 auth/package-reversal boundary; the compensating checkout-discount + budget-release logic lives in the NEW public.reverse_sale wrapper above it",
@@ -1548,12 +1557,20 @@
       "reason": "browser RPC 'emergency_pause_studio_rule' (PS-1C.2) is the owner-only studio-rule emergency pause; it writes only the studio_rule_emergency_pauses control table + audit_log and moves NO customer value (the pause merely stops NEW effects in the kernel/executor)"
     },
     {
+      "id": "browser.rpc:app/index.html:get_sellable_sv_topup_plans",
+      "reason": "browser RPC 'get_sellable_sv_topup_plans' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+    },
+    {
       "id": "browser.rpc:app/index.html:lift_emergency_pause",
       "reason": "browser RPC 'lift_emergency_pause' (PS-1C.2) is the owner-only lift of a studio-rule emergency pause; it writes only the studio_rule_emergency_pauses control table + audit_log and moves NO customer value"
     },
     {
       "id": "browser.rpc:app/index.html:preview_publish_impact",
       "reason": "browser RPC 'preview_publish_impact' (PS-1C.2) is a read-only owner publish preview; it performs no DML and moves NO customer value"
+    },
+    {
+      "id": "browser.rpc:app/index.html:preview_sv_topup_sale",
+      "reason": "browser RPC 'preview_sv_topup_sale' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
       "id": "browser.rpc:app/index.html:set_studio_rule_active",
