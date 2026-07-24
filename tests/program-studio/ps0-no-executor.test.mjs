@@ -225,6 +225,84 @@ test('every PS-2A stored-value value-moving RPC carries the authority=live gate 
   }
 });
 
+test('every PS-2A value RPC redefined in v64 carries the sv_pauses gate (sv_paused) alongside its predecessor gate', async () => {
+  // Increment D (v64) gives the pause TEETH by CREATE OR REPLACE-ing the Increment-A/C value RPCs
+  // to add ONLY a second, independent pause gate. Assert each redefined RPC body carries the
+  // app.sv_pause_active call + the 22023 'sv_paused' raise, AND still carries its predecessor gate
+  // (the v63 sv_not_live gate for the Increment-C RPCs; the v61 authority-state refusal for
+  // sv_topup/sv_grant). Both gates independent (contract D §1). sv_release is intentionally NOT
+  // gated (it returns held value — the redeem family's undo, not a new redemption).
+  const corpus = await readMigrationCorpus();
+  const gated = ['sv_topup', 'sv_grant', 'sv_spend', 'sv_reserve', 'sv_reverse_spend', 'refund_sv_operation', 'sv_expire_due'];
+  const incrementC = new Set(['sv_spend', 'sv_reserve', 'sv_reverse_spend', 'refund_sv_operation', 'sv_expire_due']);
+  const v64 = Object.entries(corpus).filter(([f]) => /frenly_v64_ps2d_pause_controls/.test(f));
+  assert.ok(v64.length >= 2, 'the v64 pause-controls migration (canonical + byte-identical mirror) must be present');
+  for (const [file, sql] of v64) {
+    const chunks = sql.split(/create\s+or\s+replace\s+function\s+/i);
+    for (const fn of gated) {
+      const chunk = chunks.find((c) => new RegExp(`^public\\.${fn}\\s*\\(`, 'i').test(c));
+      assert.ok(chunk, `${file}: value RPC public.${fn} must be redefined in v64 with the pause gate`);
+      assert.match(chunk, /app\.sv_pause_active\s*\(/i, `${file}: public.${fn} must consult app.sv_pause_active`);
+      assert.match(chunk, /raise\s+exception\s+'sv_paused/i,
+        `${file}: public.${fn} must hard-refuse with 22023 'sv_paused' when its family is paused`);
+      if (incrementC.has(fn)) {
+        assert.match(chunk, /raise\s+exception\s+'sv_not_live/i,
+          `${file}: public.${fn} must keep its v63 sv_not_live gate as the first, independent check`);
+      } else {
+        assert.match(chunk, /stored-value earning is/i,
+          `${file}: public.${fn} must keep its v61 authority-state earn gate`);
+      }
+    }
+    // sv_release is deliberately NOT redefined in v64 (contract D §1 omits it): it stays byte-v63.
+    assert.ok(!chunks.some((c) => /^public\.sv_release\s*\(/i.test(c)),
+      `${file}: sv_release must NOT be redefined in v64 (a release returns held value; it is not gated)`);
+  }
+});
+
+test('an sv pause is lifted ONLY by public.sv_lift_pause (no implicit lift by config publish or any other path)', async () => {
+  // Contract D §1 / parent §8: NO implicit lift. Every UPDATE that sets sv_pauses.lifted_at must
+  // live inside public.sv_lift_pause. A config publish, an authority transition, or any other
+  // surface implicitly lifting a stored-value pause would be a red test.
+  const corpus = await readMigrationCorpus();
+  let sawLift = false;
+  for (const [file, sql] of Object.entries(corpus)) {
+    for (const m of sql.matchAll(/update\s+(?:public\.)?sv_pauses\b[\s\S]{0,200}?lifted_at/gi)) {
+      sawLift = true;
+      const before = sql.slice(0, m.index);
+      const lastFn = [...before.matchAll(/create\s+or\s+replace\s+function\s+(public|app)\.([a-z0-9_]+)\s*\(/gi)].pop();
+      assert.ok(lastFn, `${file}: an sv_pauses.lifted_at update outside any function`);
+      assert.equal(`${lastFn[1]}.${lastFn[2]}`.toLowerCase(), 'public.sv_lift_pause',
+        `${file}: sv_pauses.lifted_at may be set ONLY by public.sv_lift_pause, found in ${lastFn[1]}.${lastFn[2]}`);
+    }
+  }
+  assert.ok(sawLift, 'v64 must define the sv_lift_pause update path for this tripwire to be meaningful');
+});
+
+test('no stored-value cutover ACTION exists; get_sv_authority_overview.can_cutover and preview_sv_cutover.ready are false', async () => {
+  // PS-2A ships a cutover PREVIEW only. NO function performs a cutover (any of these names would be
+  // one), and the two owner reads HARDCODE the negative: can_cutover:false / ready:false.
+  const corpus = await readMigrationCorpus();
+  const forbidden = ['perform_sv_cutover', 'execute_sv_cutover', 'sv_cutover', 'commit_sv_cutover',
+    'do_sv_cutover', 'cutover_stored_value', 'cutover_sv', 'finalize_sv_cutover', 'apply_sv_cutover'];
+  for (const fn of forbidden) {
+    const re = new RegExp(`function\\s+(public|app)\\.${fn}\\b`, 'i');
+    const offenders = Object.entries(corpus).filter(([, sql]) => re.test(sql)).map(([f]) => f);
+    assert.deepEqual(offenders, [], `a stored-value cutover action function '${fn}' must not exist in PS-2A`);
+  }
+  const v64 = Object.entries(corpus).filter(([f]) => /frenly_v64_ps2d_pause_controls/.test(f));
+  assert.ok(v64.length >= 2, 'v64 (canonical + mirror) must be present');
+  for (const [file, sql] of v64) {
+    const chunks = sql.split(/create\s+or\s+replace\s+function\s+/i);
+    const overview = chunks.find((c) => /^public\.get_sv_authority_overview\s*\(/i.test(c));
+    assert.ok(overview, `${file}: get_sv_authority_overview must be defined in v64`);
+    assert.match(overview, /'can_cutover'\s*,\s*false/i,
+      `${file}: get_sv_authority_overview must hardcode can_cutover:false`);
+    const preview = chunks.find((c) => /^public\.preview_sv_cutover\s*\(/i.test(c));
+    assert.ok(preview, `${file}: preview_sv_cutover must be defined in v64`);
+    assert.match(preview, /'ready'\s*,\s*false/i, `${file}: preview_sv_cutover must hardcode ready:false`);
+  }
+});
+
 test('the PS-1C checkout kernel (plan / finalise / evaluate) is byte-UNCHANGED by every PS-2 increment', async () => {
   // PS-2A must not touch the synchronous checkout money path. The kernel functions are last
   // defined by v51 (base cart)/v58 (kernel)/v59 (cart hardening)/v60 (execution-state); NO PS-2

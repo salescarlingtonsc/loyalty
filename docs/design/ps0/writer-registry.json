@@ -2001,6 +2001,42 @@
     {
       "id": "db.fn:public.sv_release/3",
       "reason": "PS-2A Increment C (v63) stored-value HOLD release (non-value): transitions an active sv_reservations hold to 'released' (returning it to available) + writes its sv_operations idempotency row; never touches sv_lot_movements. Owner-only + HARD-GATED on authority='live' (unreachable in PS-2A); idempotent (a same-key retry replays, an already-released hold is a no-op)."
+    },
+    {
+      "id": "db.fn:public.sv_pause/4",
+      "reason": "PS-2A Increment D (v64) stored-value PAUSE writer (non-value): inserts ONE append-only sv_pauses row (+ an audit_log SV_PAUSE row); moves NO customer value and deletes no history. Owner-only, idempotent (an active pause of a scope is returned replayed:true via ON CONFLICT against the one-active-per-(business,asset,scope) partial unique index). A pause only STOPS new operations of its family through app.sv_pause_active, which the value RPCs READ; it writes no ledger/lot/reservation row."
+    },
+    {
+      "id": "db.fn:public.sv_lift_pause/4",
+      "reason": "PS-2A Increment D (v64) stored-value pause LIFT (non-value): sets lifted_at/lifted_by on the ACTIVE sv_pauses row of a scope (frozen thereafter by the write-once guard) + an audit_log SV_PAUSE_LIFTED row. This is the ONLY path that lifts an sv pause (no implicit lift — a configuration publish cannot lift it). Owner-only, idempotent (a lift-of-none is a no-op replayed:true). Writes no value row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_sv_authority_overview",
+      "reason": "browser RPC 'get_sv_authority_overview' is a PS-2A Increment D owner/super-admin READ binding (authority_state, spendable=(state='live'), shadow_testing, reconciliation summary, active pauses, can_cutover:false). Read-only; resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:preview_sv_cutover",
+      "reason": "browser RPC 'preview_sv_cutover' is a PS-2A Increment D owner-only READ binding describing cutover blockers with ready:false. Read-only; there is no cutover action and it resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:sv_pause",
+      "reason": "browser RPC 'sv_pause' is a PS-2A Increment D owner-only control binding to public.sv_pause (non-value): it writes only the append-only sv_pauses control table + audit_log, never a ledger/lot/reservation row, so it resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:sv_lift_pause",
+      "reason": "browser RPC 'sv_lift_pause' is a PS-2A Increment D owner-only control binding to public.sv_lift_pause (non-value): it only lifts an sv_pauses row + writes audit_log, never a value row, so it resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_sv_reconciliation",
+      "reason": "browser RPC 'get_sv_reconciliation' is a PS-2A owner/super-admin READ binding (latest reconciliation snapshot + discrepancies + authority state) wired into the Increment D UI. Read-only; resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:run_sv_reconciliation",
+      "reason": "browser RPC 'run_sv_reconciliation' is a PS-2A owner-only control binding wired into the Increment D UI: the reconciliation engine reads gift_cards READ-ONLY and writes ONLY the append-only sv_reconciliation_snapshots/discrepancies evidence rows (non-value) and drives sv_authority to reconciliation_blocked via the internal path; it moves no value and auto-corrects nothing."
+    },
+    {
+      "id": "browser.rpc:app/index.html:set_sv_authority_state",
+      "reason": "browser RPC 'set_sv_authority_state' is a PS-2A owner-only control binding wired into the Increment D UI: it transitions sv_authority across the SAFE subset only (unbuilt/shadow_testing/reconciliation_blocked; 'live'/'ready_for_cutover' raise 22023) and writes no customer-value row, so it resolves to no value writer."
     }
   ]
 }

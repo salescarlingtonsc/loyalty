@@ -356,6 +356,9 @@ tr.click:hover td{background:#FBFAF8}
 .studio-rule-controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .studio-emg-banner{margin-top:8px;border:1px solid var(--red);background:var(--tint);border-radius:var(--r-sm);padding:8px 10px;font-size:13px}
 .studio-impact-rule{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-top:10px}
+.sv-discrep-list,.sv-pause-list{margin-top:4px}
+.sv-discrep{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-top:10px}
+.sv-discrep code{overflow-wrap:anywhere}
 .studio-impact-eff{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:5px 0;flex-wrap:wrap;border-top:1px solid var(--hair)}
 .studio-impact-eff:first-of-type{border-top:none}
 .studio-impact-flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
@@ -1180,6 +1183,14 @@ async function route(){
        guard below never sees it; this explicit owner check fails closed for a typed #/studio. */
     if(pageKey==='studio'&&S.myRole!=='owner'){
       toast('Only the owner can open Program Studio.');
+      return nav('#/dashboard');
+    }
+    /* Stored value (PS-2A) is owner-only stored-value authority/pause controls. Like Studio it has
+       no MODULES key (it is not a per-staff module), so the module guard below never sees it; this
+       explicit owner check fails closed for a typed #/storedvalue. The RPCs are owner-gated
+       server-side regardless — this only keeps the surface out of a non-owner's reach. */
+    if(pageKey==='storedvalue'&&S.myRole!=='owner'){
+      toast('Only the owner can open Stored value.');
       return nav('#/dashboard');
     }
     if(pageKey==='platform'&&!S.isSA){
@@ -2828,7 +2839,7 @@ function renderShell(page){
      only which function that key maps to is new, so the module route-guard above this
      function needs no changes at all. */
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
-    bookings:bookingsPage,loyalty:hashParam=>growPage('rewards',hashParam),retention:hashParam=>growPage('winback',hashParam),studio:hashParam=>growPage('studio',hashParam),referrals:referralsPage,
+    bookings:bookingsPage,loyalty:hashParam=>growPage('rewards',hashParam),retention:hashParam=>growPage('winback',hashParam),studio:hashParam=>growPage('studio',hashParam),storedvalue:hashParam=>growPage('storedvalue',hashParam),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,
     staffperf:staffPerfPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
@@ -5495,10 +5506,17 @@ async function growPage(routedTab,hashParam){
      like the loyalty/retention draft editors). Non-owners get canStudio=false, so their tab set
      and the single-surface collapse below stay byte-identical to before this addition. */
   const canStudio=S.myRole==='owner';
+  /* Stored value (PS-2A Increment D) joins as a FOURTH tab — owner-only stored-value authority,
+     reconciliation and pause controls (no MODULES key, exactly like Program Studio). Non-owners
+     get canStoredValue=false, so their tab set stays byte-identical to before this addition. An
+     owner always has BOTH canStudio and canStoredValue, so the single-surface collapse below is
+     never reached with stored value as the sole tab. */
+  const canStoredValue=S.myRole==='owner';
   const TABDEFS=[
     canRewards?{key:'rewards',label:'Everyday rewards',hash:'#/loyalty'}:null,
     canWinback?{key:'winback',label:'Bring-backs',hash:'#/retention'}:null,
-    canStudio?{key:'studio',label:'Program Studio',hash:'#/studio'}:null
+    canStudio?{key:'studio',label:'Program Studio',hash:'#/studio'}:null,
+    canStoredValue?{key:'storedvalue',label:'Stored value',hash:'#/storedvalue'}:null
   ].filter(Boolean);
   /* Single-surface case: render the underlying page directly, with no combined chrome at all —
      byte-identical to how a single-module teammate saw this route before the merge. */
@@ -5506,6 +5524,7 @@ async function growPage(routedTab,hashParam){
     const only=TABDEFS[0].key;
     if(only==='rewards')return loyaltyPage();
     if(only==='winback')return retentionPage(hashParam||null);
+    if(only==='storedvalue')return storedValuePage(hashParam||null);
     return studioPage(hashParam||null);
   }
   const outerMain=M();
@@ -5514,6 +5533,7 @@ async function growPage(routedTab,hashParam){
       <p class="muted small" style="line-height:1.6"><b>Everyday rewards</b> — every visit earns automatically for every customer, however you choose to run it.</p>
       <p class="muted small" style="line-height:1.6;margin-top:6px"><b>Bring-backs</b> — measured, versioned rules that win customers back before they drift away, with a full grant history.</p>
       ${canStudio?`<p class="muted small" style="line-height:1.6;margin-top:6px"><b>Program Studio</b> — author advanced programme rules, check them, and turn them on. Published checkout and recurring rules genuinely run; each rule shows its real execution state.</p>`:''}
+      ${canStoredValue?`<p class="muted small" style="line-height:1.6;margin-top:6px"><b>Stored value</b> — the owner-only foundation for prepaid stored value. It is not live and no customer can use it yet; this surface shows its real authority state straight from the server, reconciliation against gift cards, and safety pause controls.</p>`:''}
     </div>
     <div class="settings-tabs" role="tablist" aria-label="Grow sections">
       ${TABDEFS.map(t=>`<button type="button" class="settings-tab" role="tab" id="growtab-${t.key}" aria-controls="main" aria-selected="false" tabindex="-1" data-growtab="${t.key}">${esc(t.label)}</button>`).join('')}
@@ -5549,6 +5569,7 @@ async function growPage(routedTab,hashParam){
     const deep=key===routedTab?(hashParam||null):null; // the routed draftVersionId only applies to the tab that was actually deep-linked
     if(key==='rewards')await loyaltyPage();
     else if(key==='winback')await retentionPage(deep);
+    else if(key==='storedvalue')await storedValuePage(deep);
     else await studioPage(deep);
   }
   tabs.forEach((tab,i)=>{
@@ -7043,6 +7064,282 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
   // Re-open the editor if one was in flight before this re-render (e.g. after save/delete we clear it,
   // but a live-validate re-render mid-edit should keep the editor visible).
   if(studioEd)paintEditor();
+}
+
+/* ============================ Stored value (PS-2A Increment D) ============================
+   The FIRST owner-only stored-value surface. Truthfulness is the whole point (STORED_VALUE_CONTRACT
+   §10 + INCREMENT_D_CONTRACT §4):
+   - authority_state and reconciliation status are rendered VERBATIM from the server; the browser
+     NEVER infers, computes or upgrades them.
+   - stored value is NEVER presented as usable while authority != 'live' — and 'live' is unreachable
+     in PS-2A, so the state is always unbuilt / shadow_testing / reconciliation_blocked / paused.
+     There is NO customer spend/top-up/grant UI here; nothing moves real value.
+   - reconciliation discrepancies are SHOWN, never hidden, with categories in plain words + cents.
+   - every dangerous action (run reconciliation, change authority, pause, lift) is explicitly
+     confirmed; the server requires a reason (>=3 chars) where noted.
+   - it FAILS CLOSED: if get_sv_authority_overview OR get_sv_reconciliation errors, an error state
+     renders and NO control is drawn — nothing is ever assumed live/clean/usable.
+   RPCs consumed: get_sv_authority_overview, get_sv_reconciliation, preview_sv_cutover (reads);
+   set_sv_authority_state, sv_pause, sv_lift_pause, run_sv_reconciliation (owner-only writes). */
+const SV_ASSET='stored_value';
+const SV_SCOPE_WORDS={all:'everything',earn:'top-ups & grants',redeem:'spending'};
+const SV_AUTHORITY_WORDS={
+  unbuilt:'Not built for this business yet — nothing is live.',
+  shadow_testing:'Shadow testing only — simulated. No customer can use this value.',
+  reconciliation_blocked:'Blocked by a reconciliation difference — not usable until it is cleared.',
+  ready_for_cutover:'Reconciled, awaiting a future authorized cutover — not usable yet.',
+  live:'Live.',
+  paused:'Paused — no customer can use this value right now.',
+  retired:'Retired — superseded; history is preserved.'
+};
+/* Plain-language names for the six reconciliation discrepancy categories (contract §7). The raw
+   category is also shown verbatim beside the plain words — nothing is invented or hidden. */
+const SV_DISCREPANCY_WORDS={
+  missing_in_studio:'in gift cards, not yet in stored value',
+  missing_in_legacy:'in stored value, not in gift cards',
+  amount_mismatch:'amounts differ',
+  invalid_legacy_balance:'legacy balance invalid',
+  duplicate_legacy_event:'duplicate legacy record',
+  orphan_legacy_record:'legacy record inconsistent'
+};
+const svTime=v=>v?esc(String(v).slice(0,16).replace('T',' '))+' (server time)':'';
+/* The chip LABEL is the server's authority_state VERBATIM. The browser never computes or infers
+   it — only get_sv_authority_overview.authority_state is shown. Only 'live' is ever an affirmative
+   pill, and 'live' is unreachable in PS-2A; an unknown value fails closed to a red pill and is
+   still shown as-is. Deliberately a SEPARATE function from studioStateChip/legacyStateChip so the
+   truthful-state rule stays grep-provable. */
+function svAuthorityChip(state){
+  const cls=state==='live'?'on'
+    :(state==='shadow_testing'||state==='ready_for_cutover')?'new'
+    :state==='reconciliation_blocked'?'no'
+    :['unbuilt','paused','retired'].includes(state)?'off':'no';
+  return `<span class="pill ${cls}">${esc(state==null?'unknown':String(state))}</span>`;
+}
+/* Reconciliation status rendered verbatim: clean/blocked from the latest snapshot, else not-run. */
+function svReconStatusChip(status,hasRun){
+  if(!hasRun)return `<span class="pill off">not run yet</span>`;
+  const cls=status==='clean'?'ok':status==='blocked'?'no':'off';
+  return `<span class="pill ${cls}">${esc(status==null?'unknown':String(status))}</span>`;
+}
+/* Shared confirm-with-reason modal for the stored-value owner actions. Every dangerous action is
+   explicit: the owner must confirm, and — where reasonLabel is set — type a reason (>=3 chars, to
+   match sv_apply_authority_state / sv_pause). onSubmit({reason}) performs exactly one RPC and
+   returns its {error}; a 42501 surfaces as an owner-only message. String-literal RPC names are used
+   at the call sites (not a variable) so writer-discovery audits SEE each writer surface. */
+function svOpenActionModal({title,intro,reasonLabel,reasonPlaceholder='',submitLabel,danger=false,onSubmit,onDone}){
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="svActionModal" role="dialog" aria-modal="true" aria-labelledby="svActionTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
+    <div class="row"><div><h2 id="svActionTitle">${esc(title)}</h2><p class="muted small">${esc(intro)}</p></div><span class="spacer"></span><button class="btn ghost sm" id="svActionClose" type="button">Close</button></div>
+    ${reasonLabel?`<label for="svActionReason">${esc(reasonLabel)}</label><textarea id="svActionReason" rows="3" placeholder="${esc(reasonPlaceholder)}"></textarea>`:''}
+    <div id="svActionErr"></div>
+    <div class="row" style="margin-top:16px"><button class="btn ${danger?'danger':''}" id="svActionSubmit" type="button">${esc(submitLabel)}</button><button class="btn ghost sm" id="svActionCancel" type="button">Cancel</button></div>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('svActionModal')?.remove();};
+  deactivate=CUI.activateDialog($('svActionModal'),{onClose:close,initialFocus:reasonLabel?'#svActionReason':'#svActionSubmit'});
+  $('svActionClose').onclick=$('svActionCancel').onclick=close;
+  $('svActionSubmit').onclick=async()=>{
+    let reason=null;
+    if(reasonLabel){
+      reason=($('svActionReason').value||'').trim();
+      if(reason.length<3){$('svActionErr').innerHTML='<div class="err">Write a short reason (at least 3 characters).</div>';return;}
+    }
+    const btn=$('svActionSubmit');btn.disabled=true;btn.setAttribute('aria-busy','true');
+    let res;
+    try{res=await onSubmit({reason});}
+    catch(e){res={error:{message:e&&e.message||String(e)}};}
+    btn.removeAttribute('aria-busy');
+    const error=res&&res.error;
+    if(error){
+      btn.disabled=false;
+      if(error.code==='42501'){$('svActionErr').innerHTML='<div class="err">Only the owner can do this.</div>';return;}
+      $('svActionErr').innerHTML=`<div class="err">${esc(error.message||'Could not complete this. Try again.')}</div>`;return;
+    }
+    close();
+    if(onDone)onDone();
+  };
+}
+
+async function storedValuePage(){
+  const routeMain=M();
+  const isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=CUI.loadingState({title:'Stored value',iconName:'wallet'});
+  /* Fail closed: every stored-value read is owner-gated (42501 otherwise). Non-owners never see the
+     tab and route() blocks a typed #/storedvalue; this is the last-resort denied state. */
+  if(S.myRole!=='owner'){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Stored value',subtitle:'Owner-only stored-value controls.',iconName:'wallet',canWrite:false,moduleLabel:'Stored value'})}
+      ${CUI.emptyState({iconName:'wallet',title:'Owner access only',body:'Stored value is the owner-only foundation for prepaid value. Ask an owner for access.'})}`;
+    return;
+  }
+  const [ovRes,rcRes,cutRes]=await Promise.all([
+    sb.rpc('get_sv_authority_overview',{p_business:S.biz.id}),
+    sb.rpc('get_sv_reconciliation',{p_business:S.biz.id}),
+    sb.rpc('preview_sv_cutover',{p_business:S.biz.id})
+  ]);
+  if(!isCurrent())return;
+  /* FAIL CLOSED: if the authority OR reconciliation read fails, show an error and render NO
+     controls at all — never assume the state is live/clean/usable from a missing read. The cutover
+     preview is allowed to fail softly below because it can only ever render a DISABLED affordance. */
+  if(ovRes.error||rcRes.error){
+    const msg=(ovRes.error&&ovRes.error.message)||(rcRes.error&&rcRes.error.message)||'Stored value could not load.';
+    const denied=(ovRes.error&&ovRes.error.code==='42501')||(rcRes.error&&rcRes.error.code==='42501');
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Stored value',subtitle:'The stored-value state could not be confirmed.',iconName:'wallet',canWrite:false,moduleLabel:'Stored value'})}
+      <div class="card"><div class="err" role="alert"><b>Stored value is unavailable.</b> ${esc(denied?'Only the owner can view stored value.':msg)} No controls are shown until the live server state can be read — nothing is assumed live, clean or usable.</div>
+      <div style="margin-top:12px"><button class="btn" id="svRetry" type="button">Try again</button></div></div>`;
+    if($('svRetry'))$('svRetry').onclick=()=>storedValuePage();
+    return;
+  }
+  const ov=ovRes.data||{};
+  const rc=rcRes.data||{};
+  const state=ov.authority_state||'unbuilt';               // rendered VERBATIM; never inferred
+  const shadowTesting=ov.shadow_testing===true;
+  const pauses=Array.isArray(ov.active_pauses)?ov.active_pauses:[];
+  const activeScopes=new Set(pauses.map(p=>p.scope));
+  const rerender=()=>storedValuePage();
+
+  // ----- Authority: chip verbatim + owner change control (unbuilt <-> shadow_testing only) -----
+  const authChangeable=['unbuilt','shadow_testing','reconciliation_blocked'].includes(state);
+  const authTargets=state==='reconciliation_blocked'
+    ? [['shadow_testing','Shadow testing (simulated)']]
+    : [['unbuilt','Unbuilt (nothing built)'],['shadow_testing','Shadow testing (simulated)']];
+  const authDefault=state==='shadow_testing'?'unbuilt':'shadow_testing';
+  const authControlHtml=authChangeable
+    ? `<div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap;align-items:center">
+         <label for="svAuthTarget" class="muted small">Change state to</label>
+         <select id="svAuthTarget" style="max-width:280px">${authTargets.map(([v,l])=>`<option value="${v}"${v===authDefault?' selected':''}>${esc(l)}</option>`).join('')}</select>
+         <button class="btn sm" id="svAuthChange" type="button">Change authority</button>
+       </div>
+       <p class="muted small" style="margin-top:6px">Only unbuilt and shadow testing can be chosen here. Live and ready-for-cutover do not exist in this phase — the server refuses them.</p>`
+    : `<p class="muted small" style="margin-top:12px">This state cannot be changed from here.</p>`;
+  const authorityCard=`<section class="card"><div class="cui-card-head"><h2>Authority</h2><p>The source of truth for stored value, shown exactly as the server reports it.</p></div>
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>Current state:</b> ${svAuthorityChip(state)}${shadowTesting?'<span class="pill new">shadow testing</span>':''}</div>
+    <p class="muted small" style="margin-top:6px">${esc(SV_AUTHORITY_WORDS[state]||'Unknown state — treated as not usable.')}</p>
+    ${authControlHtml}</section>`;
+
+  // ----- Reconciliation: latest snapshot status + every discrepancy (never hidden) -----
+  const snap=rc.latest_snapshot||null;
+  const hasRun=rc.has_run===true;
+  const discreps=Array.isArray(rc.discrepancies)?rc.discrepancies:[];
+  const discrepHtml=discreps.length
+    ? `<div class="sv-discrep-list">${discreps.map(d=>{
+        const word=SV_DISCREPANCY_WORDS[d.category]||String(d.category||'difference');
+        return `<div class="sv-discrep"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span class="pill no">${esc(String(d.category||'difference'))}</span><b>${esc(word)}</b></div>
+          <div class="muted small" style="margin-top:4px;line-height:1.5">
+            ${d.legacy_ref?`Record: <code>${esc(String(d.legacy_ref))}</code><br>`:''}
+            Gift cards: <b>${money(Number(d.legacy_cents||0))}</b> · Stored value: <b>${money(Number(d.studio_cents||0))}</b> · Difference: <b>${money(Number(d.delta_cents||0))}</b>
+            ${d.detail?`<br>${esc(String(d.detail))}`:''}
+          </div></div>`;
+      }).join('')}</div>`
+    : (hasRun?`<p class="muted small" style="margin-top:10px">No differences found in the latest run.</p>`:'');
+  const snapHtml=snap
+    ? `<div class="muted small" style="margin-top:8px;line-height:1.6">
+         <div>Last run: ${svTime(snap.captured_at)}</div>
+         <div>Gift-card total: <b>${money(Number(snap.legacy_total_cents||0))}</b> · Stored-value total: <b>${money(Number(snap.studio_total_cents||0))}</b></div>
+         <div>Differences found: <b>${Number(snap.discrepancy_count||0)}</b></div>
+       </div>`
+    : `<p class="muted small" style="margin-top:8px">Reconciliation has not been run for this business yet.</p>`;
+  const reconCard=`<section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Reconciliation</h2><p>Stored value is checked against your gift-card records (read-only). Differences are shown here, never hidden, and are never auto-corrected.</p></div>
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>Latest status:</b> ${svReconStatusChip(snap&&snap.status,hasRun)}</div>
+    ${snapHtml}
+    ${discrepHtml}
+    <div class="row" style="margin-top:14px"><button class="btn sm" id="svReconRun" type="button">Run reconciliation</button></div></section>`;
+
+  // ----- Pause & safety: active pauses (scope/reason/actor/time) + pause / lift controls -----
+  const pauseListHtml=pauses.length
+    ? `<div class="sv-pause-list">${pauses.map(p=>`<div class="sv-pause studio-emg-banner" role="note">
+        <b>Paused: ${esc(SV_SCOPE_WORDS[p.scope]||String(p.scope||''))}</b>
+        <div class="muted small" style="margin-top:4px;line-height:1.5">
+          ${p.reason?`Reason: ${esc(String(p.reason))}<br>`:''}
+          ${p.actor?`By: ${esc(String(p.actor))}<br>`:''}
+          ${p.paused_at?`Since: ${svTime(p.paused_at)}`:''}
+        </div>
+        <div class="studio-rule-controls"><button class="btn ghost sm" type="button" data-sv-lift="${esc(String(p.scope))}">Lift this pause</button></div>
+      </div>`).join('')}</div>`
+    : `<p class="muted small" style="margin-top:10px">No active pauses.</p>`;
+  const pauseScopeOpts=[['all','Everything'],['earn','Top-ups & grants'],['redeem','Spending']]
+    .map(([v,l])=>`<option value="${v}">${esc(l)}${activeScopes.has(v)?' — already paused':''}</option>`).join('');
+  const pauseCard=`<section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Pause &amp; safety</h2><p>Emergency stop for stored value. History is always kept — a pause only stops new operations. Lifting a pause is a separate, confirmed action.</p></div>
+    ${pauseListHtml}
+    <div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap;align-items:center">
+      <label for="svPauseScope" class="muted small">Pause</label>
+      <select id="svPauseScope" style="max-width:260px">${pauseScopeOpts}</select>
+      <button class="btn sm danger" id="svPauseBtn" type="button">Pause stored value</button>
+    </div>
+    <p class="muted small" style="margin-top:6px">A pause on top-ups &amp; grants does not stop spending; only a pause on everything or on spending stops a customer using value they already hold.</p></section>`;
+
+  // ----- Cutover: PREVIEW ONLY, permanently disabled (preview_sv_cutover.ready is always false) --
+  const cut=cutRes.error?null:(cutRes.data||{});
+  const blocking=cut&&Array.isArray(cut.blocking_reasons)?cut.blocking_reasons:[];
+  const cutReady=cut&&cut.ready===true; // always false in PS-2A; rendered from the server value
+  const cutBodyHtml=cutRes.error
+    ? `<p class="err" role="alert" style="margin-top:8px">The cutover preview could not be loaded (${esc(cutRes.error.message||'unavailable')}). Cutover stays unavailable.</p>`
+    : `<p class="muted small" style="margin-top:8px">Cutover would make stored value the source of truth. It is a future authorized phase — there is no action to perform it here, and it cannot run in this phase.</p>
+       ${blocking.length?`<div class="muted small" style="margin-top:8px;line-height:1.6"><b>What cutover would require (all currently blocking):</b><ul style="margin:6px 0 0 18px">${blocking.map(r=>`<li>${esc(String(r))}</li>`).join('')}</ul></div>`:''}`;
+  const cutCard=`<section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Cutover</h2><p>Preview only. Cutover is not part of this phase.</p></div>
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>Ready:</b> ${cutReady?'<span class="pill on">yes</span>':'<span class="pill no">no</span>'}</div>
+    ${cutBodyHtml}
+    <div class="row" style="margin-top:14px"><button class="btn sm" type="button" disabled aria-disabled="true" title="Cutover is not available in this phase">Cutover (not available)</button></div></section>`;
+
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Stored value',subtitle:'Owner-only stored-value authority, reconciliation and safety controls. Simulated in this phase — nothing is live.',iconName:'wallet',canWrite:true,moduleLabel:'Stored value'})}
+    <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
+      <b>Simulated foundation — not live</b><p>This is the first stored-value surface. Stored value is not switched on for any customer: nothing here moves real money or can be used to pay. Every state below comes straight from the server.</p></div></aside>
+    ${authorityCard}
+    ${reconCard}
+    ${pauseCard}
+    ${cutCard}`;
+
+  // ----- wire the owner controls (only reached when the reads succeeded → fail-closed holds) -----
+  const authBtn=$('svAuthChange'),authSel=$('svAuthTarget');
+  if(authBtn&&authSel){
+    const syncAuthBtn=()=>{authBtn.disabled=authSel.value===state;};
+    authSel.onchange=syncAuthBtn;syncAuthBtn();
+    authBtn.onclick=()=>{
+      const target=authSel.value;
+      if(!target||target===state)return;
+      svOpenActionModal({
+        title:'Change stored-value authority',
+        intro:`Move stored-value authority from "${state}" to "${target}". This is simulated only — it can never make value usable in this phase. Record why.`,
+        reasonLabel:'Reason (required, at least 3 characters)',
+        reasonPlaceholder:'Why change the authority state?',
+        submitLabel:`Change to ${target}`,
+        onSubmit:({reason})=>sb.rpc('set_sv_authority_state',{p_business:S.biz.id,p_asset:SV_ASSET,p_state:target,p_reason:reason}),
+        onDone:()=>{toast('Stored-value authority updated');rerender();}
+      });
+    };
+  }
+  if($('svReconRun'))$('svReconRun').onclick=()=>{
+    svOpenActionModal({
+      title:'Run reconciliation',
+      intro:'Compare stored value against your gift-card records (read-only — no gift card is changed and no value moves). Any difference is recorded and, if found, drives the authority to reconciliation_blocked. Nothing is auto-corrected.',
+      submitLabel:'Run reconciliation now',
+      onSubmit:()=>sb.rpc('run_sv_reconciliation',{p_business:S.biz.id}),
+      onDone:()=>{toast('Reconciliation complete');rerender();}
+    });
+  };
+  if($('svPauseBtn'))$('svPauseBtn').onclick=()=>{
+    const scope=$('svPauseScope')?$('svPauseScope').value:'all';
+    svOpenActionModal({
+      title:'Pause stored value',
+      intro:`Immediately stop ${SV_SCOPE_WORDS[scope]||scope} for stored value. History is kept; only new operations of this kind are stopped. Record why.`,
+      reasonLabel:'Reason (required, at least 3 characters)',
+      reasonPlaceholder:'What is wrong and who asked for this stop?',
+      submitLabel:'Pause now',
+      danger:true,
+      onSubmit:({reason})=>sb.rpc('sv_pause',{p_business:S.biz.id,p_asset:SV_ASSET,p_scope:scope,p_reason:reason}),
+      onDone:()=>{toast('Stored value paused');rerender();}
+    });
+  };
+  document.querySelectorAll('[data-sv-lift]').forEach(b=>b.onclick=()=>{
+    const scope=b.dataset.svLift;
+    svOpenActionModal({
+      title:'Lift stored-value pause',
+      intro:`Lift the pause on ${SV_SCOPE_WORDS[scope]||scope}. That operation family can run again once lifted (still only when authority is live, which is not possible in this phase). Record why it is safe to lift.`,
+      reasonLabel:'Reason (required, at least 3 characters)',
+      reasonPlaceholder:'Why is it safe to lift this pause?',
+      submitLabel:'Lift pause',
+      onSubmit:({reason})=>sb.rpc('sv_lift_pause',{p_business:S.biz.id,p_asset:SV_ASSET,p_scope:scope,p_reason:reason}),
+      onDone:()=>{toast('Stored-value pause lifted');rerender();}
+    });
+  });
 }
 
 /* ---------- referrals ---------- */

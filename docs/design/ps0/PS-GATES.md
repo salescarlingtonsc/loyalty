@@ -101,6 +101,25 @@ real comms, NO UI. Tested via the pure planners directly + the gated RPCs under 
 `authority='live'` shim (trigger-disable inside BEGIN/ROLLBACK — never in a migration, never
 persisted).
 
+PS-2A Increment D (v64, pause/kill controls + cutover PREVIEW under the same PS-2 authorization —
+still no new phase, no cutover action, no spendable value, no real comms; the first stored-value
+UI lands in app/index.html): adds the DEDICATED append-only, write-once pause table
+`sv_pauses` (scope `all`/`earn`/`redeem`, one active per (business,asset,scope)), distinct from
+the rule pause `studio_rule_emergency_pauses`; the owner-only audited RPCs `sv_pause` /
+`sv_lift_pause` (idempotent, no implicit lift); and the gate helper `app.sv_pause_active`. It gives
+the pause TEETH by CREATE OR REPLACE-ing the Increment-A/C value RPCs to add ONLY a second,
+independent pause gate (the v63 `sv_not_live` gate stays first): an `all`/`earn` pause blocks
+`sv_topup`/`sv_grant`/`refund_sv_operation`; an `all`/`redeem` pause blocks
+`sv_spend`/`sv_reserve`/`sv_reverse_spend`; an `all` pause alone blocks `sv_expire_due`. Pinned
+policy (contract §8): an `earn` pause does NOT block spend (`sv_release` is likewise not gated — it
+returns held value, the redeem family's undo). Adds owner reads `get_sv_authority_overview`
+(`can_cutover` HARDCODED false) and `preview_sv_cutover` (`ready` HARDCODED false, enumerating the
+real blockers). NO function performs a cutover; `sv_authority` is only READ (never transitioned).
+The tripwire keeps forbidding a real cutover function + the live-setter / mutable-balance-column /
+gift_cards-read-only assertions, and ADDS: an sv pause is lifted ONLY by `sv_lift_pause` (no
+implicit lift by config publish), and `can_cutover` / `ready` are false. Tested via the pure gate
+helper + the gated RPCs under the rolled-back `authority='live'` shim.
+
 ## AUTHORIZED PHASES
 
 | phase  | authorized |
@@ -165,6 +184,7 @@ the highest authorized phase.
 | sv_reconciliation_snapshots | PS-2              |
 | sv_reconciliation_discrepancies | PS-2          |
 | sv_reservations             | PS-2              |
+| sv_pauses                   | PS-2              |
 
 ## EXECUTOR LEDGER-GUARD SCOPES (kept out of the guard through PS-1C)
 

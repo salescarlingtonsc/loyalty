@@ -144,6 +144,12 @@ const VALUE_TABLES = {
   //     so it is tracked non-value. The spend/reverse/refund/expire RPCs write the sv_lot_movements
   //     value ledger (already curated value:true above) - they are curated writers in the registry.
   sv_reservations:                         { category: 'stored_value_reservation',      value: false },
+  // --- Program Studio PS-2A (v64) Increment D: pause/kill controls. sv_pauses is the append-only
+  //     write-once stored-value pause table - a pause STOPS new operations of its family but moves
+  //     NO value and deletes NO historical row, so it is tracked non-value. sv_pause / sv_lift_pause
+  //     are its only writers (owner-only, audited); the value RPCs merely READ it via
+  //     app.sv_pause_active. No mutable balance column anywhere.
+  sv_pauses:                               { category: 'stored_value_pause',            value: false },
 };
 
 // Mutable-balance / alternate-naming stored-value tables that MUST NEVER exist. PS-2A
