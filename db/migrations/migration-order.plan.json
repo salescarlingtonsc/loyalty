@@ -98,6 +98,7 @@
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v62_ps2b_shadow_reconciliation.sql", "semanticVersion": "v62", "proposedDeployVersion": "20260722000134" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v63_ps2c_redemption_mechanics.sql", "semanticVersion": "v63", "proposedDeployVersion": "20260722000135" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v64_ps2d_pause_controls.sql", "semanticVersion": "v64", "proposedDeployVersion": "20260722000136" },
-    { "kind": "executable", "path": "db/migrations/20260724_frenly_v65_ps2live_plan_config.sql", "semanticVersion": "v65", "proposedDeployVersion": "20260722000137" }
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v65_ps2live_plan_config.sql", "semanticVersion": "v65", "proposedDeployVersion": "20260722000137" },
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v65a_ps2live_plan_config_hardening.sql", "semanticVersion": "v65a", "proposedDeployVersion": "20260722000138" }
   ]
 }

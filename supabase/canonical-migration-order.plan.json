@@ -103,6 +103,7 @@
     { "kind": "pending", "version": "20260724210000", "name": "frenly_v62_ps2b_shadow_reconciliation", "sourcePath": "db/migrations/20260724_frenly_v62_ps2b_shadow_reconciliation.sql" },
     { "kind": "pending", "version": "20260724220000", "name": "frenly_v63_ps2c_redemption_mechanics", "sourcePath": "db/migrations/20260724_frenly_v63_ps2c_redemption_mechanics.sql" },
     { "kind": "pending", "version": "20260724230000", "name": "frenly_v64_ps2d_pause_controls", "sourcePath": "db/migrations/20260724_frenly_v64_ps2d_pause_controls.sql" },
-    { "kind": "pending", "version": "20260725000000", "name": "frenly_v65_ps2live_plan_config", "sourcePath": "db/migrations/20260724_frenly_v65_ps2live_plan_config.sql" }
+    { "kind": "pending", "version": "20260725000000", "name": "frenly_v65_ps2live_plan_config", "sourcePath": "db/migrations/20260724_frenly_v65_ps2live_plan_config.sql" },
+    { "kind": "pending", "version": "20260725010000", "name": "frenly_v65a_ps2live_plan_config_hardening", "sourcePath": "db/migrations/20260724_frenly_v65a_ps2live_plan_config_hardening.sql" }
   ]
 }
