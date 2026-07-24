@@ -201,11 +201,12 @@ an oracle for "is 8xxxxxxx your customer" (PDPA). `app.norm_phone()` folds
 `(business_id, phone_norm)`. Till: `lookup_client_by_phone` → `record_sale_by_phone`
 with `sales.idem_key` (double-tap → `duplicate_ignored`, one sale). The till writes ONE
 `sales` row and no ledger — v10 triggers still own earning.
-**⚖️ Open risks from v14:** `join_program` is anon with NO rate limiting (mass-junk-insert
-vector; needs captcha/edge limit before scale). Pre-existing, NOT fixed:
-`businesses.salons_insert` is `WITH CHECK (true)` (any authed user can create an orphan
-business, bypassing `create_business` → no owner row, no subscription = billing evasion);
-Supabase leaked-password protection is OFF.
+**⚖️ Open risks from v14 — ALL THREE CLOSED (verified against prod 2026-07-25):**
+`join_program` is no longer anon-callable (0 anon EXECUTE); the public join/booking path is the
+Turnstile-gated edge gateway (v19+, rate-limited on cf-connecting-ip). `businesses` has NO
+INSERT policy at all any more (the `salons_insert WITH CHECK (true)` billing-evasion vector is
+gone; SECURITY DEFINER `create_business` is the only path). Supabase leaked-password protection
+has been ON since 2026-07-19 (with Auth CAPTCHA + Site/redirect URLs configured).
 Next candidates: verify+apply v11a/v11b; wire UI to `get_sale_policy` (revenue KPI
 still hardcodes `!== 'gift_card'`); Pass 2/3 of the parity audit; member-facing portal
 balance, Supabase Auth Site URL config, custom domain, role-scoped UI permissions.
