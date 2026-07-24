@@ -82,6 +82,25 @@ spendable. Still NO spend/refund path (`sv_spend_allocation` / `refund_sv_operat
 forbidden, Increment C), NO cutover, NO customer value movement, NO real comms, NO UI. The
 tripwire adds an assertion that `run_sv_reconciliation` contains no DML against `gift_cards`.
 
+PS-2A Increment C (v63, redemption/spend/reverse/refund/expiry mechanics under the same PS-2
+authorization — still no new phase, no cutover, no spendable value): builds the COMPLETE
+redemption machinery and its exact PS-0 §3–§6 arithmetic, but every value-moving path is
+HARD-GATED so it can only ever run when `sv_authority.state = 'live'`, which is UNREACHABLE in
+PS-2A. Adds the append-only hold ledger `sv_reservations`; the PURE (authority-free, no-DML)
+planners `app.sv_allocate_spend` (aggregate-proportional cross-op FEFO) / `app.sv_plan_refund`
+(SF2 per-op refund) / `app.sv_checkout_quote` (inert shadow tender quote); and the owner-only,
+authority=live-gated RPCs `sv_reserve` / `sv_release` / `sv_spend` / `sv_reverse_spend` /
+`refund_sv_operation` / `sv_expire_due`. `app.sv_available_balance` now nets active holds. The
+spend/refund names that were forbidden in Increment B (`sv_spend_allocation` /
+`refund_sv_operation`) are now BUILT and removed from the tripwire's forbidden set; in their
+place the tripwire ADDS an assertion that no value RPC lacks the `authority='live'`
+(`sv_not_live`) gate, plus an assertion that the PS-1C checkout kernel (`record_cart_sale` /
+`ps1c_plan_checkout` / `evaluate_checkout`) is byte-UNCHANGED by every PS-2 increment. Still NO
+cutover, NO customer value movement (default tenant is `unbuilt` → all value RPCs refuse), NO
+real comms, NO UI. Tested via the pure planners directly + the gated RPCs under a rolled-back
+`authority='live'` shim (trigger-disable inside BEGIN/ROLLBACK — never in a migration, never
+persisted).
+
 ## AUTHORIZED PHASES
 
 | phase  | authorized |
@@ -145,6 +164,7 @@ the highest authorized phase.
 | sv_shadow_evaluations       | PS-2              |
 | sv_reconciliation_snapshots | PS-2              |
 | sv_reconciliation_discrepancies | PS-2          |
+| sv_reservations             | PS-2              |
 
 ## EXECUTOR LEDGER-GUARD SCOPES (kept out of the guard through PS-1C)
 

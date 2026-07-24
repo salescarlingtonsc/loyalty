@@ -180,24 +180,67 @@ test('the ledger write-guard carries NO studio-executor scope while unauthorized
   }
 });
 
-test('no not-yet-authorized executor RPC / function surface exists (PS-2 SPEND path stays gated)', async () => {
+test('no not-yet-authorized executor RPC / function surface exists (PS-2 spend path now BUILT + gated)', async () => {
   const corpus = await readMigrationCorpus();
   // Entry points that only a NOT-yet-authorized increment would introduce. PS-1C is
-  // authorized, so public.evaluate_checkout is permitted. PS-2A (v61) is authorized for
-  // the stored-value FOUNDATION, so sv_topup + the sv_lot_movements authority now
-  // legitimately exist and are NOT forbidden here. The stored-value SPEND/REFUND surface
-  // (Increment C, unbuilt) stays forbidden: sv_spend_allocation + refund_sv_operation.
-  // There is also no separate 'consume_checkout_evaluation' — the token is finalised
-  // through the record_cart_sale overload, never a bespoke consume RPC.
+  // authorized, so public.evaluate_checkout is permitted. PS-2A is authorized for the
+  // stored-value FOUNDATION (v61: sv_topup + the sv_lot_movements authority), the shadow +
+  // reconciliation layer (v62), AND the REDEMPTION mechanics (v63 Increment C): spend /
+  // reverse / refund / expire now legitimately exist, HARD-GATED on authority='live' (see the
+  // dedicated gate assertion below). So sv_spend_allocation / refund_sv_operation are REMOVED
+  // from this forbidden set. What stays gated: the cross-domain event executor + outbox
+  // delivery (future phases). There is no separate 'consume_checkout_evaluation' — the token
+  // is finalised through the record_cart_sale overload, never a bespoke consume RPC.
   const forbiddenFns = [
     'consume_checkout_evaluation', 'execute_rule_effect',
-    'sv_spend_allocation', 'refund_sv_operation',
     'record_domain_event', 'deliver_outbox',
   ];
   for (const fn of forbiddenFns) {
     const re = new RegExp(`function\\s+(public|app)\\.${fn}\\b`, 'i');
     const offenders = Object.entries(corpus).filter(([, sql]) => re.test(sql)).map(([f]) => f);
     assert.deepEqual(offenders, [], `executor function '${fn}' must not exist while its increment is gated`);
+  }
+});
+
+test('every PS-2A stored-value value-moving RPC carries the authority=live gate (sv_not_live)', async () => {
+  // Increment C (v63) ships the COMPLETE redemption machinery, but the single hard safety
+  // property is that NO real value can move: every value-moving entry point must hard-refuse
+  // unless sv_authority.state='live' (unreachable in PS-2A). Assert each RPC body carries the
+  // 22023 'sv_not_live' gate — the replacement, in this tripwire, for forbidding the surface.
+  const corpus = await readMigrationCorpus();
+  const valueRpcs = ['sv_reserve', 'sv_release', 'sv_spend', 'sv_reverse_spend', 'refund_sv_operation', 'sv_expire_due'];
+  const v63 = Object.entries(corpus).filter(([f]) => /frenly_v63_ps2c_redemption_mechanics/.test(f));
+  assert.ok(v63.length >= 2, 'the v63 redemption migration (canonical + byte-identical mirror) must be present');
+  for (const [file, sql] of v63) {
+    // split on the function-definition delimiter so each chunk holds one full function body.
+    const chunks = sql.split(/create\s+or\s+replace\s+function\s+/i);
+    for (const fn of valueRpcs) {
+      const chunk = chunks.find((c) => new RegExp(`^public\\.${fn}\\s*\\(`, 'i').test(c));
+      assert.ok(chunk, `${file}: value RPC public.${fn} must be defined in v63`);
+      assert.match(chunk, /<>\s*'live'/i,
+        `${file}: public.${fn} must compare sv_authority.state against 'live'`);
+      assert.match(chunk, /raise\s+exception\s+'sv_not_live/i,
+        `${file}: public.${fn} must hard-refuse with 22023 'sv_not_live' unless authority='live'`);
+    }
+  }
+});
+
+test('the PS-1C checkout kernel (plan / finalise / evaluate) is byte-UNCHANGED by every PS-2 increment', async () => {
+  // PS-2A must not touch the synchronous checkout money path. The kernel functions are last
+  // defined by v51 (base cart)/v58 (kernel)/v59 (cart hardening)/v60 (execution-state); NO PS-2
+  // increment (v61/v62/v63) may (re)define them, so the checkout financial logic is provably
+  // byte-unchanged (a predecessor diff would be empty).
+  const corpus = await readMigrationCorpus();
+  const kernelFns = ['app.ps1c_plan_checkout', 'public.record_cart_sale', 'public.evaluate_checkout'];
+  const allowed = /frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)/;
+  for (const fn of kernelFns) {
+    const re = new RegExp(`create\\s+or\\s+replace\\s+function\\s+${fn.replace('.', '\\.')}\\s*\\(`, 'i');
+    for (const [file, sql] of Object.entries(corpus)) {
+      if (re.test(sql)) {
+        assert.match(file, allowed,
+          `${file}: the checkout kernel function ${fn} may only be defined in v51/v58/v59/v60, never a PS-2 increment (byte-unchanged)`);
+      }
+    }
   }
 });
 

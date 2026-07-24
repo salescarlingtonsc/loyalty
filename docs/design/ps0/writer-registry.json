@@ -217,6 +217,54 @@
       "value": "NON-VALUE — creates the balance-free (business, client) stored_value container. sv_accounts carries NO balance column; all balances are derived from sv_lot_movements. Revoked from public/anon/authenticated."
     },
     {
+      "id": "db.fn:public.sv_spend/4",
+      "surface": "db_function",
+      "latest_file": "20260724220000_frenly_v63_ps2c_redemption_mechanics.sql",
+      "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, row-lock",
+      "entry_point": "public.sv_spend(business, account, cents, idempotency_key) - PS-2A Increment C owner-only SPEND RPC, HARD-GATED on authority='live'",
+      "idempotency": "sv_operations unique(business, operation_type='spend', idempotency_key) + request_hash of {business,account,cents} + per-account advisory xact lock + cached-result replay; a duplicate same-key spend has ONE effect",
+      "value": "PS-0 s3 aggregate-proportional cross-operation FEFO spend: bonus_draw=floor(spend*total_bonus/total), paid_draw=spend-bonus_draw; writes one 'spend' movement per lot the PURE app.sv_allocate_spend plans; refuses cents>available (post-reservation) with NO partial write; one-winner via the per-account advisory lock + FEFO FOR UPDATE row locks.",
+      "authority": "HARD-GATED: raises 22023 sv_not_live unless sv_authority.state='live', which is UNREACHABLE in PS-2A (no setter; v61 guard + v62 CHECK + ps0-no-executor tripwire) - so NO real value moves; the machinery + arithmetic ship and are proven via the pure planner and a rolled-back authority='live' test shim",
+      "kernel": "SEPARATE-LEDGER - stored value is its own append-only authority (sv_lot_movements); shares no rows with credit_ledger/points_ledger/sales; the PS-1C checkout kernel is byte-UNCHANGED and consumes no sv tender in PS-2A"
+    },
+    {
+      "id": "db.fn:public.sv_reverse_spend/3",
+      "surface": "db_function",
+      "latest_file": "20260724220000_frenly_v63_ps2c_redemption_mechanics.sql",
+      "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
+      "detected_signals": "idem-signal, advisory-lock",
+      "entry_point": "public.sv_reverse_spend(business, spend_operation, idempotency_key) - PS-2A Increment C owner-only spend-REVERSAL RPC, HARD-GATED on authority='live'",
+      "idempotency": "sv_operations unique(business, operation_type='reverse', idempotency_key); same-key replay returns the cached result; a spend op is reversible AT MOST ONCE (a second reverse under a different key raises 22023 over-reversal)",
+      "value": "PS-0 s6 restore-then-expire: writes a 'reversal' (+) per lot restoring the exact per-lot allocation the spend drew; if a restored lot is now past its expiry_key, immediately writes a '-expiry' for the restored amount (both recorded - an expired lot is never silently resurrected). Case (f) trail sums to 0.",
+      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live' (unreachable in PS-2A); tested via a rolled-back authority='live' shim",
+      "kernel": "SEPARATE-LEDGER - writes only the sv_lot_movements authority; no credit_ledger/points_ledger/sales rows"
+    },
+    {
+      "id": "db.fn:public.refund_sv_operation/4",
+      "surface": "db_function",
+      "latest_file": "20260724220000_frenly_v63_ps2c_redemption_mechanics.sql",
+      "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, row-lock",
+      "entry_point": "public.refund_sv_operation(business, topup_operation, cash_cents|null=whole, idempotency_key) - PS-2A Increment C owner-only SF2 per-op REFUND RPC, HARD-GATED on authority='live'",
+      "idempotency": "sv_operations unique(business, operation_type='refund', idempotency_key) + request_hash of {business,topup_operation,cash_cents} + per-account advisory lock + cached-result replay",
+      "value": "PS-0 s4 SF2 per top-up operation: writes the paid 'refund' (-X) and bonus 'clawback' movements the PURE app.sv_plan_refund plans; partial non-final clawback=floor(bonus_rem*X/paid_rem); FINAL (X==paid_rem) claws the ENTIRE bonus_rem (terminal sweep - no stranded bonus cent).",
+      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live' (unreachable in PS-2A); tested via a rolled-back authority='live' shim",
+      "kernel": "SEPARATE-LEDGER - writes only sv_lot_movements; cash refund is paid-class only, bonus is never cashed out"
+    },
+    {
+      "id": "db.fn:public.sv_expire_due/2",
+      "surface": "db_function",
+      "latest_file": "20260724220000_frenly_v63_ps2c_redemption_mechanics.sql",
+      "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
+      "detected_signals": "advisory-lock, row-lock",
+      "entry_point": "public.sv_expire_due(business, limit) - PS-2A Increment C owner/service EXPIRY sweep, HARD-GATED on authority='live'",
+      "idempotency": "idempotent BY CONSTRUCTION (remaining-based): each sweep writes a '-expiry' of EXACTLY the lot's remaining (Sum of movements); a rerun finds remaining 0 and expires nothing. Anchored by one fresh 'expire' sv_operations row per call.",
+      "value": "PS-0 s6 expiry independence: for each lot past its expiry_key with remaining>0, writes a '-expiry' of exactly remaining; cannot expire spent value (excluded from remaining) nor already-expired value (remaining 0). Per-account advisory locks (account order) + FEFO FOR UPDATE row locks keep it one-winner and deadlock-free vs spends.",
+      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live' (unreachable in PS-2A); tested via a rolled-back authority='live' shim",
+      "kernel": "SEPARATE-LEDGER - writes only sv_lot_movements; independent of credit/points expiry"
+    },
+    {
       "id": "browser.rpc:app/index.html:adjust_points",
       "surface": "browser_rpc_binding",
       "rpc": "adjust_points",
@@ -1945,6 +1993,14 @@
     {
       "id": "db.fn:public.run_sv_reconciliation/1",
       "reason": "PS-2A Increment B (v62) reconciliation engine: reads gift_cards READ-ONLY and writes ONLY the append-only sv_reconciliation_snapshots + sv_reconciliation_discrepancies evidence rows (and drives sv_authority to reconciliation_blocked via the internal state path). Never writes/updates/deletes a gift_cards row, never sv_lot_movements - reconciliation moves no value and auto-corrects nothing."
+    },
+    {
+      "id": "db.fn:public.sv_reserve/4",
+      "reason": "PS-2A Increment C (v63) stored-value HOLD writer (non-value): writes ONLY the append-only sv_reservations hold ledger + its sv_operations idempotency row. Never sv_lot_movements. A hold subtracts from available balance (available = Sum movements - Sum active holds) but moves NO value. Owner-only + HARD-GATED on authority='live' (unreachable in PS-2A); per-account advisory-lock serialized."
+    },
+    {
+      "id": "db.fn:public.sv_release/3",
+      "reason": "PS-2A Increment C (v63) stored-value HOLD release (non-value): transitions an active sv_reservations hold to 'released' (returning it to available) + writes its sv_operations idempotency row; never touches sv_lot_movements. Owner-only + HARD-GATED on authority='live' (unreachable in PS-2A); idempotent (a same-key retry replays, an already-released hold is a no-op)."
     }
   ]
 }

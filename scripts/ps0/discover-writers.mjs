@@ -138,6 +138,12 @@ const VALUE_TABLES = {
   sv_shadow_evaluations:                   { category: 'stored_value_shadow_log',       value: false },
   sv_reconciliation_snapshots:             { category: 'stored_value_reconciliation',   value: false },
   sv_reconciliation_discrepancies:         { category: 'stored_value_reconciliation',   value: false },
+  // --- Program Studio PS-2A (v63) Increment C: redemption / spend / reverse / refund / expiry.
+  //     sv_reservations is the append-only HOLD ledger - a hold subtracts from available balance
+  //     but moves NO value itself (the amount is an immutable hold size, not a mutable balance),
+  //     so it is tracked non-value. The spend/reverse/refund/expire RPCs write the sv_lot_movements
+  //     value ledger (already curated value:true above) - they are curated writers in the registry.
+  sv_reservations:                         { category: 'stored_value_reservation',      value: false },
 };
 
 // Mutable-balance / alternate-naming stored-value tables that MUST NEVER exist. PS-2A

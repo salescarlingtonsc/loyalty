@@ -95,6 +95,7 @@
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v59_ps1c1_cart_hardening.sql", "semanticVersion": "v59", "proposedDeployVersion": "20260722000131" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v60_ps1c2_execution_state.sql", "semanticVersion": "v60", "proposedDeployVersion": "20260722000132" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v61_ps2a_stored_value_foundation.sql", "semanticVersion": "v61", "proposedDeployVersion": "20260722000133" },
-    { "kind": "executable", "path": "db/migrations/20260724_frenly_v62_ps2b_shadow_reconciliation.sql", "semanticVersion": "v62", "proposedDeployVersion": "20260722000134" }
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v62_ps2b_shadow_reconciliation.sql", "semanticVersion": "v62", "proposedDeployVersion": "20260722000134" },
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v63_ps2c_redemption_mechanics.sql", "semanticVersion": "v63", "proposedDeployVersion": "20260722000135" }
   ]
 }
