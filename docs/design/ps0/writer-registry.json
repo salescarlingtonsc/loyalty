@@ -191,7 +191,7 @@
       "detected_signals": "idem-signal, advisory-lock, row-lock",
       "entry_point": "public.sv_topup(business, client, plan_version, idempotency_key) — PS-2A owner-only MINT RPC",
       "idempotency": "sv_operations unique(business, operation_type='topup', idempotency_key) + request_hash of {business,client,plan_version} + advisory xact lock on (business,key) + cached-result replay; conflicting hash → 22023",
-      "value": "MINT ONLY — mints two immutable sv_lots (paid=price_cents, bonus=bonus_cents; bonus skipped when 0) and one 'mint' sv_lot_movement per lot from a pinned sv_plan_versions snapshot. No spend/redeem/refund path exists (Increment C+). Balances are DERIVED; no mutable balance column.",
+      "value": "MINT ONLY — mints two immutable sv_lots (paid=price_cents, bonus=bonus_cents; bonus skipped when 0) and one 'issue' sv_lot_movement per lot from a pinned sv_plan_versions snapshot. No spend/redeem/refund path exists (Increment C+). Balances are DERIVED; no mutable balance column.",
       "authority": "refuses while sv_authority is 'paused'/'retired'; sv_authority is 'unbuilt' for every tenant in PS-2A and can never reach 'live' (no function sets it; guard rejects the transition), so nothing minted here is spendable",
       "kernel": "SEPARATE-LEDGER — stored value is its own append-only authority (sv_lot_movements); it reuses the house op-ledger/idempotency but shares no rows with credit_ledger/points_ledger/sales and writes none of them"
     },
@@ -203,7 +203,7 @@
       "detected_signals": "idem-signal, advisory-lock, row-lock",
       "entry_point": "public.sv_grant(business, client, cents, reason, idempotency_key) — PS-2A owner-only operator/promotional grant RPC",
       "idempotency": "sv_operations unique(business, operation_type='grant', idempotency_key) + request_hash of {business,client,cents,reason} + advisory xact lock + cached-result replay; conflicting hash → 22023",
-      "value": "MINT ONLY — mints ONE 'bonus' sv_lot (no expiry) + one 'mint' movement; requires reason ≥ 3 chars; audited with actor + reason (the manual-adjustment-as-append-only-ledger-event rule). No editable balance field. Not spendable while authority ≠ 'live' (always, in PS-2A).",
+      "value": "MINT ONLY — mints ONE 'bonus' sv_lot (no expiry) + one 'issue' movement; requires reason ≥ 3 chars; audited with actor + reason (the manual-adjustment-as-append-only-ledger-event rule). No editable balance field. Not spendable while authority ≠ 'live' (always, in PS-2A).",
       "kernel": "SEPARATE-LEDGER — same append-only stored-value authority as sv_topup; writes no credit_ledger/points_ledger/sales row"
     },
     {
