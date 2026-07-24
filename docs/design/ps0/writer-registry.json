@@ -1937,6 +1937,14 @@
     {
       "id": "db.fn:app.run_referral_shadow/1",
       "reason": "PS-1B referral SHADOW evaluator: writes ONLY benefit_shadow_evaluations (would-be effects). Never benefit_fulfilments, never a value table. Comparator diffs it vs the live referral fulfilment rows."
+    },
+    {
+      "id": "db.fn:app.sv_write_shadow_evaluation/8",
+      "reason": "PS-2A Increment B (v62) stored-value SHADOW writer: writes ONLY the append-only sv_shadow_evaluations log (a would-be movement projection). Never sv_lot_movements, never a value table - a shadow evaluation moves no value. Internal (revoked from all browser roles)."
+    },
+    {
+      "id": "db.fn:public.run_sv_reconciliation/1",
+      "reason": "PS-2A Increment B (v62) reconciliation engine: reads gift_cards READ-ONLY and writes ONLY the append-only sv_reconciliation_snapshots + sv_reconciliation_discrepancies evidence rows (and drives sv_authority to reconciliation_blocked via the internal state path). Never writes/updates/deletes a gift_cards row, never sv_lot_movements - reconciliation moves no value and auto-corrects nothing."
     }
   ]
 }

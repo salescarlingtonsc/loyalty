@@ -68,6 +68,20 @@ The tripwire (`tests/program-studio/ps0-no-executor.test.mjs`) is re-scoped, not
 two new assertions forbid any function setting `sv_authority` to live/ready_for_cutover and
 any sv table carrying a mutable `balance`/`balance_cents` column.
 
+PS-2A Increment B (v62, shadow operations + reconciliation under the same PS-2 authorization —
+no new phase, no spendable value): adds the append-only shadow log `sv_shadow_evaluations`
+(a PROPOSED/would-be movement plan, computed without asserting authority and writing ZERO value
+rows), the reconciliation evidence tables `sv_reconciliation_snapshots` /
+`sv_reconciliation_discrepancies`, and the owner-only RPCs `set_sv_authority_state`
+(safe-subset transitions only — a hard CHECK forbids naming `live`/`ready_for_cutover`, 22023),
+`run_sv_reconciliation` (reads `gift_cards` READ-ONLY — never INSERT/UPDATE/DELETEs a gift-card
+row — writes only evidence, auto-corrects nothing, tolerance 0, and drives
+`reconciliation_blocked` on any discrepancy) and `get_sv_reconciliation`. `get_sv_account` gains
+`shadow_testing` + a `disclaimer` field so the future UI never presents shadow value as
+spendable. Still NO spend/refund path (`sv_spend_allocation` / `refund_sv_operation` stay
+forbidden, Increment C), NO cutover, NO customer value movement, NO real comms, NO UI. The
+tripwire adds an assertion that `run_sv_reconciliation` contains no DML against `gift_cards`.
+
 ## AUTHORIZED PHASES
 
 | phase  | authorized |
@@ -128,6 +142,9 @@ the highest authorized phase.
 | sv_accounts                 | PS-2              |
 | sv_operations               | PS-2              |
 | sv_authority                | PS-2              |
+| sv_shadow_evaluations       | PS-2              |
+| sv_reconciliation_snapshots | PS-2              |
+| sv_reconciliation_discrepancies | PS-2          |
 
 ## EXECUTOR LEDGER-GUARD SCOPES (kept out of the guard through PS-1C)
 

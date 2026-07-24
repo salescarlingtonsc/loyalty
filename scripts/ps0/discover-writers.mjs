@@ -131,6 +131,13 @@ const VALUE_TABLES = {
   sv_lot_movements:                        { category: 'stored_value_ledger',  value: true },
   sv_operations:                           { category: 'idempotency_ledger',   value: false },
   sv_accounts:                             { category: 'stored_value_account', value: false },
+  // --- Program Studio PS-2A (v62) Increment B: shadow operations + reconciliation. These are
+  //     EVIDENCE/LOG surfaces that move NO value - the shadow log records a would-be movement
+  //     plan, and the reconciliation snapshot/discrepancy rows are read-only diffs against the
+  //     gift_cards analog. Tracked (non-value) so their writers stay in the exhaustive registry.
+  sv_shadow_evaluations:                   { category: 'stored_value_shadow_log',       value: false },
+  sv_reconciliation_snapshots:             { category: 'stored_value_reconciliation',   value: false },
+  sv_reconciliation_discrepancies:         { category: 'stored_value_reconciliation',   value: false },
 };
 
 // Mutable-balance / alternate-naming stored-value tables that MUST NEVER exist. PS-2A
