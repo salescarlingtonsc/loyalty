@@ -7170,10 +7170,11 @@ async function storedValuePage(){
       ${CUI.emptyState({iconName:'wallet',title:'Owner access only',body:'Stored value is the owner-only foundation for prepaid value. Ask an owner for access.'})}`;
     return;
   }
-  const [ovRes,rcRes,cutRes]=await Promise.all([
+  const [ovRes,rcRes,cutRes,brRes]=await Promise.all([
     sb.rpc('get_sv_authority_overview',{p_business:S.biz.id}),
     sb.rpc('get_sv_reconciliation',{p_business:S.biz.id}),
-    sb.rpc('preview_sv_cutover',{p_business:S.biz.id})
+    sb.rpc('preview_sv_cutover',{p_business:S.biz.id}),
+    sb.from('branches').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
   ]);
   if(!isCurrent())return;
   /* FAIL CLOSED: if the authority OR reconciliation read fails, show an error and render NO
@@ -7279,10 +7280,33 @@ async function storedValuePage(){
     ${cutBodyHtml}
     <div class="row" style="margin-top:14px"><button class="btn sm" type="button" disabled aria-disabled="true" title="Cutover is not available in this phase">Cutover (not available)</button></div></section>`;
 
+  // ----- Top-ups: staff-assisted top-up sale (v66). Server-authoritative; the UI computes NO value. -----
+  /* Truthfulness rules (contract §13): top-ups are hidden/disabled unless the server would permit them.
+     unbuilt → nothing sellable; shadow_testing/ready_for_cutover → only a labelled SYNTHETIC TEST top-up
+     (test method, value NOT spendable); live → real top-ups. Every price/bonus/expiry/limit shown comes
+     from get_sellable_sv_topup_plans / preview_sv_topup_sale / record_sv_topup_sale — never recomputed here. */
+  const svBranches=(brRes&&!brRes.error&&Array.isArray(brRes.data))?brRes.data:[];
+  const topupTestOnly=(state==='shadow_testing'||state==='ready_for_cutover');
+  const topupSellable=(state==='live'||topupTestOnly);
+  const topupNote=state==='unbuilt'
+    ? 'Top-ups are not on sale. Stored value is unbuilt for this business — nothing can be sold or issued.'
+    : topupTestOnly
+      ? 'Testing only. In this state a top-up is accepted for a structurally-synthetic test customer using the test method, and the value issued is NOT spendable. No real money is collected and no spendable value is created.'
+      : state==='live'
+        ? 'Live. A top-up collects payment and issues spendable stored value to the customer.'
+        : 'Stored value is '+state+' for this business. Top-ups are not available.';
+  const topupCard=`<section class="card" id="svTopupCard" style="margin-top:16px"><div class="cui-card-head"><h2>Top-ups</h2><p>Sell a prepaid stored-value plan to a customer. Every figure — price, bonus, expiry, limits — comes straight from the server; this screen never calculates value.</p></div>
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>Selling state:</b> ${svAuthorityChip(state)}${topupTestOnly?'<span class="pill new">test only</span>':''}</div>
+    <p class="muted small" style="margin-top:6px">${esc(topupNote)}</p>
+    ${topupSellable&&!svBranches.length?'<p class="muted small">No active branch is configured, so a top-up cannot be recorded.</p>':''}
+    <div class="row" style="margin-top:12px"><button class="btn sm" id="svTopupStart" type="button"${(!topupSellable||!svBranches.length)?' disabled aria-disabled="true"':''}>${topupTestOnly?'Record a synthetic test top-up':'Record a top-up'}</button></div>
+    <div id="svTopupFlow" style="margin-top:14px"></div></section>`;
+
   routeMain.innerHTML=`${CUI.pageHeader({title:'Stored value',subtitle:'Owner-only stored-value authority, reconciliation and safety controls. Simulated in this phase — nothing is live.',iconName:'wallet',canWrite:true,moduleLabel:'Stored value'})}
     <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
       <b>Simulated foundation — not live</b><p>This is the first stored-value surface. Stored value is not switched on for any customer: nothing here moves real money or can be used to pay. Every state below comes straight from the server.</p></div></aside>
     ${authorityCard}
+    ${topupCard}
     ${reconCard}
     ${pauseCard}
     ${cutCard}`;
@@ -7340,6 +7364,167 @@ async function storedValuePage(){
       onDone:()=>{toast('Stored-value pause lifted');rerender();}
     });
   });
+  const svTopupStartBtn=$('svTopupStart');
+  if(svTopupStartBtn&&!svTopupStartBtn.disabled)svTopupStartBtn.onclick=()=>svRunTopupFlow({branches:svBranches,state,testOnly:topupTestOnly});
+}
+
+/* ============================ Stored value — staff-assisted top-up sale (v66) ============================
+   A fully SERVER-AUTHORITATIVE inline wizard rendered into #svTopupFlow. The client NEVER computes a
+   price, bonus, expiry, discount or balance: it identifies the customer (lookup_client_by_phone), lists
+   sellable plans (get_sellable_sv_topup_plans), shows a server preview (preview_sv_topup_sale), and, only
+   on explicit confirmation, records the sale (record_sv_topup_sale) with a single idempotency key. It
+   surfaces every server blocker/refusal verbatim and never says value is "available to spend" unless the
+   server's own `spendable` flag is true (only ever in `live`). In shadow_testing/ready_for_cutover the
+   only offered method is `test` and the copy states plainly that nothing real is collected or spendable. */
+async function svRunTopupFlow({branches,state,testOnly}){
+  const host=$('svTopupFlow'); if(!host)return;
+  const methodOpts=testOnly
+    ? [['test','Test (no real money)']]
+    : [['cash','Cash'],['card_terminal','Card terminal'],['paynow','PayNow'],['manual','Manual']];
+  const st={step:'customer',branchId:(branches[0]&&branches[0].id)||null,phone:'',cust:null,plans:[],
+    versionId:null,method:methodOpts[0][0],reference:'',staffConfirmed:false,preview:null,idemKey:null,
+    result:null,busy:false,err:null};
+  const alive=()=>host.isConnected&&$('svTopupFlow')===host;
+  const selPlan=()=>st.plans.find(p=>p&&p.version_id===st.versionId)||null;
+  const needsReference=()=>['card_terminal','paynow','manual'].includes(st.method);
+  const paymentObj=p=>{ // p = the plan projection whose amount/currency we must match exactly
+    const o={method:st.method,amount_cents:p?Number(p.price_cents):0,currency:(p&&p.currency)||S.biz.currency||'SGD'};
+    const ref=st.reference.trim(); if(ref)o.reference=ref;
+    o.staff_confirmed=needsReference()?!!st.staffConfirmed:true;
+    return o;
+  };
+
+  async function loadPlans(){
+    st.busy=true;st.err=null;render();
+    const {data,error}=await sb.rpc('get_sellable_sv_topup_plans',{p_business:S.biz.id,p_branch:st.branchId,p_client:st.cust.client_id});
+    if(!alive())return; st.busy=false;
+    if(error){st.err=error.message||'Plans could not be loaded.';render();return;}
+    st.plans=(data&&Array.isArray(data.plans))?data.plans:[];
+    const firstOk=st.plans.find(p=>p&&p.ok); st.versionId=firstOk?firstOk.version_id:(st.plans[0]&&st.plans[0].version_id)||null;
+    st.step='plan';render();
+  }
+  async function findCustomer(){
+    const phone=(($('svtPhone')||{}).value||'').trim();
+    if(!phone){st.err='Enter the customer mobile number.';render();return;}
+    st.phone=phone;st.busy=true;st.err=null;render();
+    const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:phone});
+    if(!alive())return; st.busy=false;
+    if(error){st.err=error.message||'Lookup failed.';render();return;}
+    if(data.status==='found'){st.cust={client_id:data.client_id,full_name:data.full_name,phone:data.phone||phone};loadPlans();return;}
+    if(data.status==='not_found'){st.cust=null;st.err='No customer with that number. A top-up needs an existing customer; add them first from Customers or Quick earn.';render();return;}
+    st.err=(data&&data.message)||'Enter a valid Singapore number.';render();
+  }
+  async function doPreview(){
+    const p=selPlan(); if(!p){st.err='Choose a plan first.';render();return;}
+    if(needsReference()&&!st.reference.trim()){st.err='A payment reference is required for this method.';render();return;}
+    if(needsReference()&&!st.staffConfirmed){st.err='Tick the confirmation box before previewing this method.';render();return;}
+    st.busy=true;st.err=null;render();
+    const {data,error}=await sb.rpc('preview_sv_topup_sale',{p_business:S.biz.id,p_branch:st.branchId,p_client:st.cust.client_id,p_plan_version:st.versionId,p_payment:paymentObj(p)});
+    if(!alive())return; st.busy=false;
+    if(error){st.err=error.message||'Preview failed.';render();return;}
+    st.preview=data;st.idemKey=crypto.randomUUID();st.step='confirm';render();
+  }
+  async function doRecord(){
+    const p=selPlan(); if(!p||!st.idemKey)return;
+    st.busy=true;st.err=null;render();
+    const {data,error}=await sb.rpc('record_sv_topup_sale',{p_business:S.biz.id,p_branch:st.branchId,p_client:st.cust.client_id,p_plan_version:st.versionId,p_payment:paymentObj(p),p_idempotency_key:st.idemKey});
+    if(!alive())return; st.busy=false;
+    if(error){st.err=error.message||'The top-up could not be recorded.';render();return;}
+    if(data&&data.status&&data.status!=='ok'){st.err='The top-up was not completed: '+String(data.reason||data.status)+'.';render();return;}
+    st.result=data;st.step='done';render();
+  }
+
+  function blockersHtml(list){
+    const b=Array.isArray(list)?list:[];
+    return b.length?`<div class="muted small" style="margin-top:6px;line-height:1.6"><b>Not sellable right now:</b><ul style="margin:6px 0 0 18px">${b.map(x=>`<li>${esc(String(x))}</li>`).join('')}</ul></div>`:'';
+  }
+  function expiryWords(days){return days==null?'no expiry':days+' day'+(Number(days)===1?'':'s');}
+
+  function render(){
+    if(!alive())return;
+    const busyAttr=st.busy?' disabled aria-busy="true"':'';
+    const errHtml=st.err?`<div class="err" role="alert" style="margin-top:10px">${esc(st.err)}</div>`:'';
+    const branchPicker=branches.length>1?`<div><label for="svtBranch" class="muted small">Branch</label><br><select id="svtBranch" style="max-width:280px">${branches.map(b=>`<option value="${esc(b.id)}"${b.id===st.branchId?' selected':''}>${esc(b.name||'Branch')}</option>`).join('')}</select></div>`:'';
+    let body='';
+    if(st.step==='customer'){
+      body=`<div class="cui-card-head"><h3>Who is this top-up for?</h3></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:end">
+          ${branchPicker}
+          <div><label for="svtPhone" class="muted small">Customer mobile</label><br><input id="svtPhone" type="tel" inputmode="tel" autocomplete="off" value="${esc(st.phone)}" placeholder="e.g. 8123 4567" style="max-width:220px"></div>
+          <button class="btn sm" id="svtFind" type="button"${busyAttr}>${st.busy?'Finding…':'Find customer'}</button>
+        </div>${errHtml}`;
+    } else if(st.step==='plan'){
+      const p=selPlan();
+      const planRadios=st.plans.length?st.plans.map(pl=>{
+        const dis=!pl.ok?' disabled':'';
+        return `<label class="row" style="gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px${pl.ok?'':';opacity:.7'}">
+          <input type="radio" name="svtPlan" value="${esc(pl.version_id)}"${pl.version_id===st.versionId?' checked':''}${dis} style="margin-top:4px">
+          <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(pl.plan_name||'Plan')}</div>
+            <div class="muted small" style="margin-top:2px">Pay <b>${money(Number(pl.price_cents||0))}</b>${Number(pl.bonus_cents||0)>0?` · bonus <b>${money(Number(pl.bonus_cents))}</b>`:''} · total value <b>${money(Number(pl.total_usable_cents||0))}</b></div>
+            <div class="muted small">Paid value expiry: ${esc(expiryWords(pl.paid_expiry_days))}${Number(pl.bonus_cents||0)>0?` · bonus expiry: ${esc(expiryWords(pl.bonus_expiry_days))}`:''}</div>
+            ${blockersHtml(pl.blockers)}</div></label>`;
+      }).join(''):`<p class="muted small" style="margin-top:8px">No sellable plans for this customer at this branch. ${state==='unbuilt'?'Stored value is unbuilt.':'Publish a top-up plan first, or check the plan restrictions.'}</p>`;
+      const methodSel=`<div><label for="svtMethod" class="muted small">Payment method</label><br><select id="svtMethod" style="max-width:220px"${testOnly?' disabled':''}>${methodOpts.map(([v,l])=>`<option value="${v}"${v===st.method?' selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
+      const refField=needsReference()?`<div><label for="svtRef" class="muted small">Payment reference (required)</label><br><input id="svtRef" type="text" value="${esc(st.reference)}" placeholder="e.g. terminal approval code" style="max-width:260px"></div>`:'';
+      const confirmBox=needsReference()?`<label class="row small" style="gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="svtConfirm"${st.staffConfirmed?' checked':''} style="margin-top:3px"><span>I confirm the customer has paid${p?` ${money(Number(p.price_cents||0))}`:''}. <b>Frenly has not verified this payment</b> — you are attesting it was received.</span></label>`:'';
+      body=`<div class="cui-card-head"><h3>${esc(st.cust.full_name||'Customer')} · ${esc(st.cust.phone||'')}</h3><p>Choose the plan and payment. Amounts are set by the plan and cannot be edited here.</p></div>
+        ${planRadios}
+        <div class="row" style="gap:10px;flex-wrap:wrap;align-items:end;margin-top:14px">${methodSel}${refField}</div>
+        ${confirmBox}${errHtml}
+        <div class="row" style="gap:8px;margin-top:14px"><button class="btn ghost sm" id="svtBack" type="button">Back</button><button class="btn sm" id="svtPreview" type="button"${(!p||!p.ok)?' disabled aria-disabled="true"':''}${busyAttr}>${st.busy?'Checking…':'Preview'}</button></div>`;
+    } else if(st.step==='confirm'){
+      const pv=st.preview||{};
+      const cash=Number(pv.price_cents||0), bonus=Number(pv.bonus_cents||0), total=Number(pv.total_usable_cents||0);
+      const cur=(pv.currency||S.biz.currency||'SGD');
+      const blocked=Array.isArray(pv.blockers)&&pv.blockers.length>0;
+      const spendable=pv.spendable===true;
+      body=`<div class="cui-card-head"><h3>Confirm this top-up</h3></div>
+        <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
+          <b>You are collecting ${esc(cur)} ${(cash/100).toFixed(2)} and issuing ${esc(cur)} ${(cash/100).toFixed(2)} paid value${bonus>0?` plus ${esc(cur)} ${(bonus/100).toFixed(2)} promotional bonus`:''}.</b>
+          <p>${spendable?'This value will be spendable by the customer.':'This is a test in this phase — the value is <b>not</b> spendable and no real money is collected.'}</p></div></aside>
+        <dl class="cui-readonly-list" style="margin-top:12px">
+          <div class="cui-readonly-row"><dt>Customer</dt><dd>${esc(st.cust.full_name||'')} · ${esc(st.cust.phone||'')}</dd></div>
+          <div class="cui-readonly-row"><dt>Plan</dt><dd>${esc(pv.plan_name||'')}</dd></div>
+          <div class="cui-readonly-row"><dt>Collect</dt><dd><b>${money(cash)}</b> · ${esc((methodOpts.find(m=>m[0]===st.method)||['',st.method])[1])}</dd></div>
+          <div class="cui-readonly-row"><dt>Paid value issued</dt><dd>${money(cash)}</dd></div>
+          ${bonus>0?`<div class="cui-readonly-row"><dt>Bonus value issued</dt><dd>${money(bonus)}</dd></div>`:''}
+          <div class="cui-readonly-row"><dt>Total value</dt><dd><b>${money(total)}</b></dd></div>
+          <div class="cui-readonly-row"><dt>Paid value expiry</dt><dd>${esc(expiryWords(pv.paid_expiry_days))}</dd></div>
+          ${bonus>0?`<div class="cui-readonly-row"><dt>Bonus value expiry</dt><dd>${esc(expiryWords(pv.bonus_expiry_days))}</dd></div>`:''}
+          ${st.reference.trim()?`<div class="cui-readonly-row"><dt>Reference</dt><dd>${esc(st.reference.trim())}</dd></div>`:''}
+          <div class="cui-readonly-row"><dt>Projected balance after</dt><dd>${money(Number(pv.projected_account_total_cents||0))}${spendable?'':' (not spendable)'}</dd></div>
+        </dl>
+        ${blockersHtml(pv.blockers)}${errHtml}
+        <div class="row" style="gap:8px;margin-top:14px"><button class="btn ghost sm" id="svtBack" type="button">Back</button><button class="btn sm" id="svtRecord" type="button"${blocked?' disabled aria-disabled="true"':''}${busyAttr}>${st.busy?'Recording…':'Confirm & record'}</button></div>`;
+    } else if(st.step==='done'){
+      const r=st.result||{};
+      const spendable=r.spendable===true;
+      body=`<div class="cui-card-head"><h3>Top-up recorded</h3></div>
+        <div class="ok" role="status" style="margin-top:6px"><b>Done.</b> ${spendable?'The value is now available to the customer.':'This was a test — the value is recorded but is <b>not</b> available to spend.'}</div>
+        <dl class="cui-readonly-list" style="margin-top:12px">
+          <div class="cui-readonly-row"><dt>Cash collected</dt><dd>${money(Number(r.cash_collected_cents||0))}</dd></div>
+          <div class="cui-readonly-row"><dt>Paid value issued</dt><dd>${money(Number(r.paid_value_issued_cents||0))}</dd></div>
+          ${Number(r.bonus_value_issued_cents||0)>0?`<div class="cui-readonly-row"><dt>Bonus value issued</dt><dd>${money(Number(r.bonus_value_issued_cents))}</dd></div>`:''}
+          <div class="cui-readonly-row"><dt>Total account value</dt><dd><b>${money(Number(r.account_total_after_cents||0))}</b>${spendable?'':' (not spendable)'}</dd></div>
+          <div class="cui-readonly-row"><dt>Spendable</dt><dd>${spendable?'Yes':'No — '+esc(String(r.authority_state||state))}</dd></div>
+          ${r.operation_id?`<div class="cui-readonly-row"><dt>Reference</dt><dd><code>${esc(String(r.operation_id))}</code></dd></div>`:''}
+        </dl>
+        <div class="row" style="gap:8px;margin-top:14px"><button class="btn sm" id="svtAgain" type="button">Record another</button></div>`;
+    }
+    host.innerHTML=`<div class="card" style="border-color:var(--line)">${body}</div>`;
+    if($('svtBranch'))$('svtBranch').onchange=e=>{st.branchId=e.target.value;};
+    if($('svtFind'))$('svtFind').onclick=findCustomer;
+    if($('svtPhone'))$('svtPhone').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();findCustomer();}};
+    host.querySelectorAll('input[name="svtPlan"]').forEach(r=>r.onchange=()=>{st.versionId=r.value;st.err=null;render();});
+    if($('svtMethod'))$('svtMethod').onchange=e=>{st.method=e.target.value;st.err=null;render();};
+    if($('svtRef'))$('svtRef').oninput=e=>{st.reference=e.target.value;};
+    if($('svtConfirm'))$('svtConfirm').onchange=e=>{st.staffConfirmed=e.target.checked;};
+    if($('svtPreview'))$('svtPreview').onclick=doPreview;
+    if($('svtRecord'))$('svtRecord').onclick=doRecord;
+    if($('svtBack'))$('svtBack').onclick=()=>{st.err=null;st.step=(st.step==='confirm')?'plan':'customer';if(st.step==='customer'){st.plans=[];}render();};
+    if($('svtAgain'))$('svtAgain').onclick=()=>{st.step='customer';st.cust=null;st.phone='';st.plans=[];st.versionId=null;st.preview=null;st.idemKey=null;st.result=null;st.reference='';st.staffConfirmed=false;st.err=null;render();};
+  }
+  render();
 }
 
 /* ---------- referrals ---------- */
