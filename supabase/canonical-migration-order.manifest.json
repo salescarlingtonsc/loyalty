@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 55,
-  "itemCount": 100,
+  "pendingCount": 56,
+  "itemCount": 101,
   "items": [
     {
       "order": 1,
@@ -1007,6 +1007,16 @@
       "path": "supabase/migrations/20260725010000_frenly_v65a_ps2live_plan_config_hardening.sql",
       "octetLength": 22493,
       "sha256": "b13e9a2c9c3c4ba8c94bcae1f46b20deb52233e3746f247a743bd58995e0b245",
+      "provenance": "local-source"
+    },
+    {
+      "order": 101,
+      "kind": "pending",
+      "version": "20260725020000",
+      "name": "frenly_v65b_ps2live_numeric_range_guard",
+      "path": "supabase/migrations/20260725020000_frenly_v65b_ps2live_numeric_range_guard.sql",
+      "octetLength": 7374,
+      "sha256": "8192c611e41730b43d0cddb13c4eb7e9233bb81e48400c3f6c9ec0d5dedee276",
       "provenance": "local-source"
     }
   ]

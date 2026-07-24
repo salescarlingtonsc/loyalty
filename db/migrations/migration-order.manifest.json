@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 98,
-  "executableCount": 84,
+  "itemCount": 99,
+  "executableCount": 85,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -118,7 +118,7 @@
     },
     {
       "sourceDeployVersion": "20260724",
-      "count": 12,
+      "count": 13,
       "paths": [
         "db/migrations/20260724_frenly_v55_ps1a_authoring.sql",
         "db/migrations/20260724_frenly_v56_ps1b_events_execution.sql",
@@ -131,7 +131,8 @@
         "db/migrations/20260724_frenly_v63_ps2c_redemption_mechanics.sql",
         "db/migrations/20260724_frenly_v64_ps2d_pause_controls.sql",
         "db/migrations/20260724_frenly_v65_ps2live_plan_config.sql",
-        "db/migrations/20260724_frenly_v65a_ps2live_plan_config_hardening.sql"
+        "db/migrations/20260724_frenly_v65a_ps2live_plan_config_hardening.sql",
+        "db/migrations/20260724_frenly_v65b_ps2live_numeric_range_guard.sql"
       ]
     }
   ],
@@ -919,6 +920,14 @@
       "semanticVersion": "v65a",
       "proposedDeployVersion": "20260722000138",
       "sha256": "b13e9a2c9c3c4ba8c94bcae1f46b20deb52233e3746f247a743bd58995e0b245"
+    },
+    {
+      "order": 99,
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v65b_ps2live_numeric_range_guard.sql",
+      "semanticVersion": "v65b",
+      "proposedDeployVersion": "20260722000139",
+      "sha256": "8192c611e41730b43d0cddb13c4eb7e9233bb81e48400c3f6c9ec0d5dedee276"
     }
   ]
 }
