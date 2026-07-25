@@ -235,14 +235,14 @@
     {
       "id": "db.fn:public.refund_sv_operation/4",
       "surface": "db_function",
-      "latest_file": "20260724230000_frenly_v64_ps2d_pause_controls.sql",
-      "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
+      "latest_file": "20260725070000_frenly_v68a_chargeback_correction.sql",
+      "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT, sv_topup_cash_refunds:INSERT (one row per cash-bearing refund, carrying the running cumulative cash), audit_log:INSERT",
       "detected_signals": "idem-signal, advisory-lock, row-lock",
-      "entry_point": "public.refund_sv_operation(business, topup_operation, cash_cents|null=whole, idempotency_key) - PS-2A Increment C owner-only SF2 per-op REFUND RPC, HARD-GATED on authority='live'. v64 re-created it to add the earn-pause gate (the registry previously still credited v63).",
+      "entry_point": "public.refund_sv_operation(business, topup_operation, cash_cents|null=whole, idempotency_key) - PS-2A Increment C owner-only SF2 per-op REFUND RPC, HARD-GATED on authority='live'. v64 re-created it to add the earn-pause gate; v68a re-created it again to add the target/payment-evidence/charged-back/refund-policy refusals and the structural cash-refund cap (the registry previously still credited v63, then v64).",
       "idempotency": "sv_operations unique(business, operation_type='refund', idempotency_key) + request_hash of {business,topup_operation,cash_cents} + per-account advisory lock + cached-result replay",
-      "value": "PS-0 s4 SF2 per top-up operation: writes the paid 'refund' (-X) and bonus 'clawback' movements the PURE app.sv_plan_refund plans; partial non-final clawback=floor(bonus_rem*X/paid_rem); FINAL (X==paid_rem) claws the ENTIRE bonus_rem (terminal sweep - no stranded bonus cent).",
-      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live', and (v64) refuses under an active 'all'/'earn' sv_pause. As of PS-2 LIVE, 'live' is a reachable state of the programme (v69 cutover); it is prod authority staying 'unbuilt' this phase that keeps the RPC unreachable in production. Exercised via a rolled-back authority='live' shim.",
-      "kernel": "REMAINDER-ONLY, SETTLEMENT-SAFE (v67). Writes only sv_lot_movements; cash refund is paid-class only and bonus is never cashed out. It is now reachable on a top-up whose value was partly consumed by a v67 CHECKOUT SETTLEMENT, and it needs no gate for that: the plan is computed from the lot REMAINING, so already-settled cents are structurally out of reach and every movement it writes is negative (nothing is restored). v67's suite pins the arithmetic - refunded paid + settled paid == the whole top-up's paid price - and asserts the settled sale's sale_balance and tender marker are untouched."
+      "value": "PS-0 s4 SF2 per top-up operation: writes the paid 'refund' (-X) and bonus 'clawback' movements the PURE app.sv_plan_refund plans; partial non-final clawback=floor(bonus_rem*X/paid_rem); FINAL (X==paid_rem) claws the ENTIRE bonus_rem (terminal sweep - no stranded bonus cent). v68a adds a CASH CAP: cumulative cash refunded for the operation may never exceed sv_topup_payments.amount_cents, materialised as an append-only public.sv_topup_cash_refunds row whose CHECK (cumulative <= collected), unique running total and single-valued cash_basis='payment_evidence' enforce it structurally, not merely in code.",
+      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live', and (v64) refuses under an active 'all'/'earn' sv_pause. v68a adds four typed 22023 refusals, all BEFORE the first write so a refused attempt reserves no idempotency key: 'is not a top-up operation' (target symmetry with sv_chargeback_topup), sv_no_payment_evidence (no sv_topup_payments row = no cash was ever collected, so none may be paid out - the cap fails CLOSED, never open), sv_charged_back (the bank already clawed the funding back), sv_refund_not_permitted / sv_refund_unused_only / sv_refund_policy_unimplemented (the paid lot's immutable v65 plan-version refund_policy; 'full_unused' has no pinned semantics and refuses rather than silently meaning 'proportional'), and sv_cash_refund_cap. As of PS-2 LIVE, 'live' is a reachable state of the programme (v69 cutover); it is prod authority staying 'unbuilt' this phase that keeps the RPC unreachable in production. Exercised via a rolled-back authority='live' shim.",
+      "kernel": "REMAINDER-ONLY, SETTLEMENT-SAFE (v67), CASH-CAPPED (v68a). Writes sv_lot_movements plus the sv_topup_cash_refunds cap row; cash refund is paid-class only and bonus is never cashed out. It is reachable on a top-up whose value was partly consumed by a v67 CHECKOUT SETTLEMENT, and it needs no gate for that: the plan is computed from the lot REMAINING, so already-settled cents are structurally out of reach and every movement it writes is negative (nothing is restored). v67's suite pins the arithmetic - refunded paid + settled paid == the whole top-up's paid price - and asserts the settled sale's sale_balance and tender marker are untouched. The kernel inherits one hard rule from v68a: cash out is bounded by recorded payment evidence, never by minted value."
     },
     {
       "id": "db.fn:public.sv_expire_due/2",
@@ -1303,8 +1303,8 @@
     {
       "id": "db.fn:app.ps1b_execute_event/1",
       "surface": "db_function",
-      "latest_file": "20260724160000_frenly_v57_ps1b1_price_fail_closed.sql",
-      "rows_written": "program_entitlements:INSERT, benefit_fulfilments:INSERT, rule_effect_log:INSERT, benefit_shadow_evaluations:INSERT, event_outbox:INSERT, budget_periods:INSERT/UPDATE, budget_reservations:INSERT, domain_event_execution:INSERT",
+      "latest_file": "20260724190000_frenly_v60_ps1c2_execution_state.sql",
+      "rows_written": "benefit_fulfilments:INSERT, rule_effect_log:INSERT, benefit_shadow_evaluations:INSERT, event_outbox:INSERT, domain_event_execution:INSERT; via app.ps1b_materialise_entitlement: program_entitlements:INSERT/UPDATE, budget_periods:INSERT/UPDATE, budget_reservations:INSERT",
       "entry_point": "app.run_studio_executor sweep (cron frenly-studio-executor + test-invoked)",
       "idempotency": "rule_effect_log UNIQUE(event_id,rule_id,effect_index), program_entitlements lazy UNIQUE(business,client,rule,period_key), domain_event_execution marker — all ON CONFLICT DO NOTHING",
       "fail_closed": "v57 (PS-1B.1): the grant_free_item path consults the TYPED app.ps1b_catalog_price {status,price_cents,reason}; an invalid_kind/not_found/error price (or not_applicable with no amount_cents) logs rule_effect_log outcome 'failed' (failure_reason set) with NO entitlement/fulfilment/reservation — never a silent-zero promise. Each effect runs in its own subtransaction so one poisoned rule fails CLOSED without wedging siblings or the domain_event_execution marker.",
@@ -1315,7 +1315,7 @@
       "id": "db.fn:app.ps1b_materialise_entitlement/13",
       "surface": "db_function",
       "latest_file": "20260724150000_frenly_v56_ps1b_events_execution.sql",
-      "rows_written": "budget_periods:INSERT/UPDATE, program_entitlements:INSERT, budget_reservations:INSERT",
+      "rows_written": "budget_periods:INSERT/UPDATE, program_entitlements:INSERT/UPDATE (the UPDATE stamps budget_reservation_id after the reservation is taken), budget_reservations:INSERT",
       "entry_point": "app.ps1b_execute_event (grant_free_item path)",
       "idempotency": "lazy UNIQUE(business,client,rule,period_key) + budget_reservations UNIQUE(period,entitlement); budget row FOR UPDATE serialises the cap check",
       "value": "PROMISE ONLY — an issued entitlement keeps its reservation permanently; exhaustion refuses only NEW grants (budget_exhausted)",
@@ -1354,7 +1354,7 @@
     {
       "id": "db.fn:public.evaluate_checkout/5",
       "surface": "db_function",
-      "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
+      "latest_file": "20260725060000_frenly_v67_ps2live_checkout_tender.sql",
       "rows_written": "checkout_evaluations:INSERT, checkout_evaluation_operations:INSERT",
       "detected_signals": "idem-signal, advisory-lock",
       "entry_point": "evaluate_checkout(p_business,p_branch,p_client,p_lines,p_idempotency_key)",
@@ -1389,13 +1389,13 @@
     {
       "id": "db.fn:public.reverse_sale_v40_base/6",
       "surface": "db_delegating_entrypoint",
-      "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
+      "latest_file": "20260721000020_frenly_v40_staff_reversal_workflows.sql",
       "rows_written": "(delegates to public.reverse_sale_v34_base)",
       "detected_signals": "idem-signal, for-update",
       "delegates_to": [
         "public.reverse_sale_v34_base"
       ],
-      "entry_point": "reverse_sale_v40_base (the v40 auth/package boundary; renamed from reverse_sale in v58 so the v58 outer reverse_sale can compensate checkout discounts)",
+      "entry_point": "reverse_sale_v40_base (the v40 auth/package boundary; v58 RENAMED public.reverse_sale to this name so the v58 outer reverse_sale can compensate checkout discounts - the rename carried the v40 body forward unchanged, so latest_file is the v40 file that defines that body)",
       "idempotency": "delegates to the v34/v20 base chain (financial_operations + package reversal idem)",
       "value": "the retained v40 auth/package-reversal boundary; the compensating checkout-discount + budget-release logic lives in the NEW public.reverse_sale wrapper above it",
       "kernel_migratability": "NEEDS-WORK — one internal layer of the 4-deep reversal stack (v58 wrapper → v40 base → v34 base → v20 money core); the refund model must eventually collapse these into one kernel reversal path",

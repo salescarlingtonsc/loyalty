@@ -6,9 +6,11 @@
 #     result; still exactly one chargeback row, one correction per lot, one bad_debt record.
 #   Round B (chargeback racing a refund on ONE top-up): one winner, the loser typed, and the lot is
 #     never over-voided. Either serialization is legal and the chargeback's reported
-#     cash_already_refunded_cents must agree with the movement ledger in BOTH orders. Round B2 pins
-#     the OTHER order explicitly (chargeback given a head start) so both branches are exercised on
-#     every run, not just whichever one the scheduler happens to pick.
+#     cash_already_refunded_cents must agree with the movement ledger in BOTH orders. Rounds B2 and
+#     B3 pin BOTH orders explicitly - B2 gives the chargeback the head start (chargeback wins, the
+#     refund is typed sv_charged_back), B3 gives the REFUND the head start (refund wins, the
+#     chargeback still materialises and must report the 10000 already refunded) - so neither branch
+#     depends on whichever order the scheduler happens to pick in the opportunistic round B.
 #   Round C (two whole-op refunds, DIFFERENT keys): cumulative cash never exceeds the cash collected
 #     and exactly one cap-ledger row materialises (PS-0 §7 case (c-var) / §10.2).
 # A real (non-synthetic) business is forced to authority='live' by direct UPDATE (postgres bypasses
@@ -45,6 +47,8 @@ insert into public.clients(business_id, full_name, phone)
   select id, 'cC', '+6590000904' from public.businesses where slug='$slug';
 insert into public.clients(business_id, full_name, phone)
   select id, 'cB2', '+6590000905' from public.businesses where slug='$slug';
+insert into public.clients(business_id, full_name, phone)
+  select id, 'cB3', '+6590000906' from public.businesses where slug='$slug';
 select public.publish_sv_plan_version((select id from public.businesses where slug='$slug'),
   (public.create_sv_plan_draft((select id from public.businesses where slug='$slug'),
      jsonb_build_object('customer_facing_name','Conc','price_cents',10000,'bonus_cents',1200,'customer_terms','1y'),
@@ -58,7 +62,8 @@ cA2="$(q -c "select id from public.clients where business_id='$biz' and full_nam
 cB="$(q -c "select id from public.clients where business_id='$biz' and full_name='cB'")"
 cC="$(q -c "select id from public.clients where business_id='$biz' and full_name='cC'")"
 cB2="$(q -c "select id from public.clients where business_id='$biz' and full_name='cB2'")"
-for v in "$biz" "$branch" "$ver" "$cA" "$cA2" "$cB" "$cB2" "$cC"; do case "$v" in ????????-????-????-????-????????????) ;; *) echo "setup failed ($v)" >&2; exit 1;; esac; done
+cB3="$(q -c "select id from public.clients where business_id='$biz' and full_name='cB3'")"
+for v in "$biz" "$branch" "$ver" "$cA" "$cA2" "$cB" "$cB2" "$cB3" "$cC"; do case "$v" in ????????-????-????-????-????????????) ;; *) echo "setup failed ($v)" >&2; exit 1;; esac; done
 
 jwt="select set_config('request.jwt.claim.sub','$owner',false); select set_config('request.jwt.claims', json_build_object('sub','$owner','role','authenticated')::text, false);"
 sql1() { q -c "$jwt $1" | tail -1; }   # run one authenticated statement, print only the final scalar
@@ -72,8 +77,9 @@ rem() { q -c "select coalesce(sum(cents),0) from public.sv_lot_movements where l
 cbcount() { q -c "select count(*) from public.sv_chargebacks where business_id='$biz' and topup_operation_id='$1'"; }
 kindcount() { q -c "select count(*) from public.sv_lot_movements where lot_id='$1' and kind='$2'"; }
 
-opA="$(mint "$cA")"; opA2="$(mint "$cA2")"; opB="$(mint "$cB")"; opB2="$(mint "$cB2")"; opC="$(mint "$cC")"
-for v in "$opA" "$opA2" "$opB" "$opB2" "$opC"; do case "$v" in ????????-????-????-????-????????????) ;; *) echo "mint failed ($v)" >&2; exit 1;; esac; done
+opA="$(mint "$cA")"; opA2="$(mint "$cA2")"; opB="$(mint "$cB")"; opB2="$(mint "$cB2")"
+opB3="$(mint "$cB3")"; opC="$(mint "$cC")"
+for v in "$opA" "$opA2" "$opB" "$opB2" "$opB3" "$opC"; do case "$v" in ????????-????-????-????-????????????) ;; *) echo "mint failed ($v)" >&2; exit 1;; esac; done
 fail=0
 
 fire() { # $1 = sql expression printing a scalar; writes stdout+stderr to $2; optional $3 = extra delay
@@ -163,6 +169,28 @@ echo "$refout2" | grep -q 'sv_charged_back' || { echo "FAIL B2: the following re
 [ "$(q -c "select cash_already_refunded_cents from public.sv_chargebacks where business_id='$biz' and topup_operation_id='$opB2'")" = "0" ] \
   || { echo "FAIL B2: no cash was refunded, so the chargeback must report 0" >&2; fail=1; }
 
+# ---------- Round B3: the MIRROR of B2, pinned (the REFUND gets the head start) ----------
+cbB3="select coalesce((public.sv_chargeback_topup('$biz'::uuid,'$opB3'::uuid,'v68a refund first', gen_random_uuid()))->>'status','err');"
+rfB3="select coalesce((public.refund_sv_operation('$biz'::uuid,'$opB3'::uuid, null, gen_random_uuid()))->>'status','err');"
+START="$(q -c 'select extract(epoch from now())+2')"
+fire "$rfB3" /tmp/v68a_B5.out
+fire "$cbB3" /tmp/v68a_B6.out 0.75
+wait
+pB3="$(paidlot "$opB3")"; bB3="$(bonuslot "$opB3")"
+refout3="$(cat /tmp/v68a_B5.out)"; cbout3="$(cat /tmp/v68a_B6.out)"
+cbrep3="$(q -c "select coalesce(max(cash_already_refunded_cents),0) from public.sv_chargebacks where business_id='$biz' and topup_operation_id='$opB3'")"
+capped3="$(q -c "select coalesce(max(cumulative_cash_cents),0) from public.sv_topup_cash_refunds where business_id='$biz' and topup_operation_id='$opB3'")"
+echo "round B3: chargebacks=$(cbcount "$opB3") refund_movements=$(kindcount "$pB3" refund) cb_reported=$cbrep3 capped=$capped3 paid_rem=$(rem "$pB3") bonus_rem=$(rem "$bB3")"
+echo "$refout3" | grep -q '^ok$' || { echo "FAIL B3: the head-start refund must report ok, got: $refout3" >&2; fail=1; }
+[ "$(kindcount "$pB3" refund)" = "1" ] || { echo "FAIL B3: the winning refund must have written exactly one refund movement" >&2; fail=1; }
+[ "$capped3" = "10000" ] || { echo "FAIL B3: the cap ledger must record the full 10000, got $capped3" >&2; fail=1; }
+echo "$cbout3" | grep -q '^ok$' || { echo "FAIL B3: the following chargeback must still materialise, got: $cbout3" >&2; fail=1; }
+[ "$(cbcount "$opB3")" = "1" ] || { echo "FAIL B3: expected exactly one chargeback row" >&2; fail=1; }
+[ "$cbrep3" = "10000" ] || { echo "FAIL B3: the refund won, so the chargeback must report 10000 already refunded, got $cbrep3" >&2; fail=1; }
+[ "$(kindcount "$pB3" correction)" -le 1 ] || { echo "FAIL B3: the paid lot was over-voided" >&2; fail=1; }
+[ "$(rem "$pB3")" = "0" ] && [ "$(rem "$bB3")" = "0" ] || { echo "FAIL B3: both lots must end at 0" >&2; fail=1; }
+[ "$(kindcount "$pB3" bad_debt)" = "1" ] || { echo "FAIL B3: expected exactly one bad_debt record" >&2; fail=1; }
+
 # ---------- Round C: two whole-op refunds, DIFFERENT keys ----------
 rfC="select coalesce((public.refund_sv_operation('$biz'::uuid,'$opC'::uuid, null, gen_random_uuid()))->>'status','err');"
 START="$(q -c 'select extract(epoch from now())+2')"
@@ -191,7 +219,8 @@ echo "invariants: out_of_range_lots=$bad over_cap_rows=$badcap nonzero_bad_debt=
 [ "$badbd" = "0" ] || { echo "FAIL: a bad_debt movement carried non-zero cents" >&2; fail=1; }
 
 rm -f /tmp/v68a_A1.out /tmp/v68a_A2.out /tmp/v68a_A3.out /tmp/v68a_A4.out \
-      /tmp/v68a_B1.out /tmp/v68a_B2.out /tmp/v68a_B3.out /tmp/v68a_B4.out /tmp/v68a_C1.out /tmp/v68a_C2.out
+      /tmp/v68a_B1.out /tmp/v68a_B2.out /tmp/v68a_B3.out /tmp/v68a_B4.out /tmp/v68a_B5.out /tmp/v68a_B6.out \
+      /tmp/v68a_C1.out /tmp/v68a_C2.out
 if [ "$fail" = "0" ]; then
   echo "v68a chargeback/correction concurrency: PASS (one chargeback effect; refund race one-winner + typed loser; cash cap never breached)"
 else exit 1; fi

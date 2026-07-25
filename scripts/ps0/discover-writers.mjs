@@ -160,6 +160,20 @@ const VALUE_TABLES = {
   //     exhaustive writer set and adds checkout_sv_tenders:UPDATE to record_cart_sale's
   //     machine-checked rows_written. (Found by independent review of v67 rev-4, finding F3.)
   checkout_sv_tenders:                     { category: 'stored_value_tender',           value: true },
+  // --- Program Studio PS-2 LIVE (v66/v68a): the stored-value CASH surfaces. sv_topup_payments is the
+  //     immutable record of cash actually COLLECTED for a top-up - the exact analogue of `payments`
+  //     above, and (from v68a) the single authority the cash-refund cap is bounded by, so it is
+  //     value:true. sv_topup_payment_events / sv_chargebacks / sv_topup_cash_refunds are append-only
+  //     EVIDENCE beside it: the payment event log, the chargeback report record, and the materialised
+  //     running cash-refund total. None of the three moves value itself - the movement authority stays
+  //     sv_lot_movements (negative 'correction' for a chargeback void, 'refund' for cash out) - so they
+  //     are tracked non-value. Registering all four puts them into the machine-checked rows_written of
+  //     record_sv_topup_sale / sv_chargeback_topup / refund_sv_operation, which is what stops the
+  //     registry drifting again (v68a rev-2 finding D2; same reason v67 registered checkout_sv_tenders).
+  sv_topup_payments:                       { category: 'stored_value_cash',             value: true },
+  sv_topup_payment_events:                 { category: 'stored_value_cash_event',       value: false },
+  sv_chargebacks:                          { category: 'stored_value_chargeback',       value: false },
+  sv_topup_cash_refunds:                   { category: 'stored_value_cash_refund_cap',  value: false },
 };
 
 // Mutable-balance / alternate-naming stored-value tables that MUST NEVER exist. PS-2A

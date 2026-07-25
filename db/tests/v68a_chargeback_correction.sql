@@ -150,6 +150,27 @@ begin
   assert not has_table_privilege('anon','public.sv_chargebacks','select'), 'sv_chargebacks leaked to anon';
   assert not has_table_privilege('anon','public.sv_topup_cash_refunds','select'), 'sv_topup_cash_refunds leaked to anon';
 
+  -- CASH CAP IS STRUCTURALLY FAIL-CLOSED: the cap ledger admits exactly one basis, no function
+  -- anywhere carries a fail-open substitute, and the cash-out path itself carries the refusal.
+  assert exists (select 1 from pg_constraint c
+                  where c.conrelid='public.sv_topup_cash_refunds'::regclass and c.contype='c'
+                    and pg_get_constraintdef(c.oid) like '%cash_basis%'
+                    and pg_get_constraintdef(c.oid) like '%payment_evidence%'),
+    'the sv_topup_cash_refunds cash_basis CHECK is missing';
+  select string_agg(n.nspname||'.'||p.proname, ', ' order by n.nspname||'.'||p.proname) into v_names
+    from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname in ('public','app') and p.prosrc like '%minted_paid_fallback%';
+  assert v_names is null, 'a fail-open cash-collected fallback survives in: '||coalesce(v_names,'');
+  assert position('sv_no_payment_evidence' in
+    pg_get_functiondef('public.refund_sv_operation(uuid,uuid,integer,uuid)'::regprocedure)) > 0,
+    'refund_sv_operation does not refuse a payment-evidence-free top-up';
+  assert position('sv_no_payment_evidence' in
+    pg_get_functiondef('public.sv_chargeback_topup(uuid,uuid,text,uuid)'::regprocedure)) > 0,
+    'sv_chargeback_topup lost its payment-evidence refusal';
+  assert position('sv_refund_policy_unimplemented' in
+    pg_get_functiondef('public.refund_sv_operation(uuid,uuid,integer,uuid)'::regprocedure)) > 0,
+    'refund_sv_operation does not refuse the unpinned full_unused variant';
+
   -- the operation_type vocabulary widened, and only by the two intended values
   assert (select pg_get_constraintdef(c.oid) like '%chargeback%'
             from pg_constraint c where c.conrelid='public.sv_operations'::regclass and c.contype='c'
@@ -208,9 +229,12 @@ declare
   ver_e uuid; ver_f uuid; ver_arb uuid; ver_cap uuid; ver_unused uuid; ver_norefund uuid; ver_gate uuid;
   cli_e uuid; cli_del uuid; cli_pr uuid; cli_arb uuid; cli_cap uuid; cli_un1 uuid; cli_un2 uuid;
   cli_nr uuid; cli_corr uuid; cli_exp uuid; cli_gate uuid; cli_atom uuid; cli_syn uuid;
+  cli_fu uuid; cli_noev uuid;
+  ver_fullunused uuid;
   svc5000 uuid; lines5000 jsonb;
   topup jsonb; op_e uuid; op_del uuid; op_pr uuid; op_arb uuid; op_cap uuid; op_un1 uuid; op_un2 uuid;
   op_nr uuid; op_corr uuid; op_gate uuid; op_atom uuid; op_syn uuid; syn_lot uuid;
+  op_fu uuid; op_noev uuid; acct_noev uuid; lot_noev uuid;
   acct uuid; acct_e uuid; acct_corr uuid; acct_exp uuid; acct_atom uuid;
   paid_lot uuid; bonus_lot uuid; corr_paid uuid; corr_bonus uuid;
   spend jsonb; spend_op uuid; plan jsonb; cb jsonb; cb2 jsonb; ref jsonb; corr jsonb;
@@ -230,7 +254,7 @@ begin
     (B,'v68a arb','+6590000804'),(B,'v68a cap','+6590000805'),(B,'v68a un1','+6590000806'),
     (B,'v68a un2','+6590000807'),(B,'v68a nr','+6590000808'),(B,'v68a corr','+6590000809'),
     (B,'v68a exp','+6590000810'),(B,'v68a gate','+6590000811'),(B,'v68a atom','+6590000812'),
-    (B,'v68a syn','+6590000813');
+    (B,'v68a syn','+6590000813'),(B,'v68a fullunused','+6590000814'),(B,'v68a noevidence','+6590000815');
   insert into public.services(business_id,name,price_cents,duration_min) values (B,'v68a s5000',5000,30);
   select id into svc5000 from public.services where business_id=B and name='v68a s5000';
   lines5000 := jsonb_build_array(jsonb_build_object('catalog_kind','service','catalog_id',svc5000,'qty',1));
@@ -247,6 +271,8 @@ begin
   select id into cli_gate from public.clients where business_id=B and full_name='v68a gate';
   select id into cli_atom from public.clients where business_id=B and full_name='v68a atom';
   select id into cli_syn  from public.clients where business_id=B and full_name='v68a syn';
+  select id into cli_fu   from public.clients where business_id=B and full_name='v68a fullunused';
+  select id into cli_noev from public.clients where business_id=B and full_name='v68a noevidence';
 
   ---------------------------------------------------------------- AUTHORITY MATRIX (before forcing live)
   perform pg_temp.as_v68a(B_owner,'authenticated');
@@ -269,6 +295,7 @@ begin
   ver_unused   := pg_temp.v68a_plan(B, jsonb_build_object('customer_facing_name','v68a unused','price_cents',5000,'bonus_cents',500,'refund_policy','unused_only','customer_terms','1y'));
   ver_norefund := pg_temp.v68a_plan(B, jsonb_build_object('customer_facing_name','v68a norefund','price_cents',4000,'bonus_cents',0,'refund_policy','no_refund','customer_terms','1y'));
   ver_gate     := pg_temp.v68a_plan(B, jsonb_build_object('customer_facing_name','v68a gate','price_cents',5000,'bonus_cents',500,'customer_terms','1y'));
+  ver_fullunused := pg_temp.v68a_plan(B, jsonb_build_object('customer_facing_name','v68a fullunused','price_cents',3000,'bonus_cents',0,'refund_policy','full_unused','customer_terms','1y'));
 
   ---------------------------------------------------------------- PS-0 CASE (e): $100 + $12 bonus, $80 spend
   topup := public.record_sv_topup_sale(B,B_branch,cli_e,ver_e,jsonb_build_object('method','cash','amount_cents',10000,'currency','SGD'),gen_random_uuid());
@@ -510,6 +537,86 @@ begin
     assert position('sv_refund_not_permitted' in sqlerrm)=1, 'expected sv_refund_not_permitted, got: '||sqlerrm; end;
   assert (select count(*) from public.sv_topup_cash_refunds where topup_operation_id=op_nr) = 0,
     'a refused no_refund attempt wrote a cap-ledger row';
+
+  ---------------------------------------------------------------- full_unused MAY ONLY BE STRICTER (PS-0 §4)
+  -- The v65 catalog accepts four refund_policy values. 'full_unused' has no pinned semantics, so
+  -- mapping it onto the proportional path would make a supposedly stricter owner setting the LOOSEST
+  -- one available (it would permit a PARTIAL cash refund after a spend, which even the product
+  -- default only permits because it IS the default). v68a therefore refuses it outright.
+  topup := public.record_sv_topup_sale(B,B_branch,cli_fu,ver_fullunused,jsonb_build_object('method','cash','amount_cents',3000,'currency','SGD'),gen_random_uuid());
+  op_fu := (topup->>'operation_id')::uuid; acct := (topup->>'account_id')::uuid;
+  paid_lot := (topup->'paid_lot'->>'lot_id')::uuid;
+  reset role;   -- app.* helpers are revoked from browser roles, so read the pinned policy as owner-of-schema
+  assert app.sv_operation_refund_policy(B, op_fu) = 'full_unused', 'the fixture plan must pin full_unused';
+  perform pg_temp.as_v68a(B_owner,'authenticated');
+  -- (a) wholly unspent -> still refused (it is not silently 'unused_only' either)
+  begin perform public.refund_sv_operation(B, op_fu, null, gen_random_uuid());
+    raise exception 'full_unused permitted a whole refund' using errcode='XX000';
+  exception when others then
+    assert sqlstate='22023','the full_unused refusal must be 22023, got '||sqlstate;
+    assert position('sv_refund_policy_unimplemented' in sqlerrm)=1, 'expected sv_refund_policy_unimplemented, got: '||sqlerrm; end;
+  -- (b) THE REGRESSION THAT MATTERS: a PARTIAL cash refund after a spend - the behaviour an inert
+  --     full_unused silently allowed - must be refused too.
+  perform public.sv_spend(B, acct, 1000, gen_random_uuid());
+  begin perform public.refund_sv_operation(B, op_fu, 500, gen_random_uuid());
+    raise exception 'full_unused permitted a PARTIAL cash refund after a spend (looser than unused_only)' using errcode='XX000';
+  exception when others then
+    assert sqlstate='22023','the full_unused partial refusal must be 22023, got '||sqlstate;
+    assert position('sv_refund_policy_unimplemented' in sqlerrm)=1, 'expected sv_refund_policy_unimplemented, got: '||sqlerrm; end;
+  assert pg_temp.v68a_rem(paid_lot) = 2000, 'a refused full_unused refund moved value';
+  assert (select count(*) from public.sv_topup_cash_refunds where topup_operation_id=op_fu) = 0,
+    'a refused full_unused attempt wrote a cap-ledger row';
+
+  ---------------------------------------------------------------- CASH CAP FAILS CLOSED, NOT OPEN
+  -- Reviewer attack A10: a PAID lot carrying NO sv_topup_payments evidence - the retired pre-v66
+  -- sv_topup / sv_grant mint shape, which collected NO CASH AT ALL - on a LIVE, REAL business. The
+  -- read-only path (chargeback) and the path that PAYS CASH OUT must be EQUALLY strict; substituting
+  -- the lot's minted_cents for cash collected would have paid out 10000 real cents against zero
+  -- evidence, on exactly the operations where plan price and cash collected differ.
+  reset role;
+  acct_noev := app.sv_ensure_account(B, cli_noev);
+  op_noev := gen_random_uuid(); lot_noev := gen_random_uuid();
+  insert into public.sv_operations(id,business_id,operation_type,idempotency_key,request_hash,actor,result)
+  values (op_noev,B,'topup',gen_random_uuid(),app.ps1b_sha256('v68a-legacy-mint-no-evidence'),null,jsonb_build_object('status','ok'));
+  insert into public.sv_lots(id,business_id,account_id,operation_id,class,minted_cents,expiry_key,earned_seq,plan_version_id)
+  values (lot_noev,B,acct_noev,op_noev,'paid',10000,null,nextval('app.sv_earned_seq'),null);
+  insert into public.sv_lot_movements(business_id,account_id,lot_id,operation_id,kind,cents)
+  values (B,acct_noev,lot_noev,op_noev,'issue',10000);
+  assert (select count(*) from public.sv_topup_payments where business_id=B and operation_id=op_noev) = 0,
+    'the A10 fixture must carry NO payment evidence';
+  -- the helper reports the absence honestly instead of inventing a figure
+  assert (app.sv_cash_collected_cents(B, op_noev)->>'basis') = 'none',
+    'app.sv_cash_collected_cents must report basis=none with no payment evidence';
+  assert (app.sv_cash_collected_cents(B, op_noev)->>'collected_cents') is null,
+    'app.sv_cash_collected_cents must report a NULL figure with no payment evidence';
+  perform pg_temp.as_v68a(B_owner,'authenticated');
+  begin perform public.refund_sv_operation(B, op_noev, null, gen_random_uuid());
+    raise exception 'A10: a payment-evidence-free top-up paid out cash' using errcode='XX000';
+  exception when others then
+    assert sqlstate='22023','the payment-evidence refusal must be 22023, got '||sqlstate;
+    assert position('sv_no_payment_evidence' in sqlerrm)=1, 'expected sv_no_payment_evidence, got: '||sqlerrm; end;
+  -- ...and a PARTIAL cash refund is refused identically (the cap has no fail-open branch at all)
+  begin perform public.refund_sv_operation(B, op_noev, 100, gen_random_uuid());
+    raise exception 'A10: a payment-evidence-free top-up paid out partial cash' using errcode='XX000';
+  exception when others then
+    assert position('sv_no_payment_evidence' in sqlerrm)=1, 'expected sv_no_payment_evidence, got: '||sqlerrm; end;
+  -- the chargeback refuses the IDENTICAL operation with the IDENTICAL type: the two paths agree
+  begin perform public.sv_chargeback_topup(B, op_noev, 'a10 symmetry probe', gen_random_uuid());
+    raise exception 'A10: a payment-evidence-free top-up was charged back' using errcode='XX000';
+  exception when others then
+    assert position('sv_no_payment_evidence' in sqlerrm)=1, 'expected sv_no_payment_evidence, got: '||sqlerrm; end;
+  assert pg_temp.v68a_rem(lot_noev) = 10000, 'the refused evidence-free refund moved value';
+  assert (select count(*) from public.sv_topup_cash_refunds where topup_operation_id=op_noev) = 0,
+    'the refused evidence-free refund wrote a cap-ledger row';
+  assert (select count(*) from public.sv_operations where business_id=B and operation_type='refund'
+            and (result->>'topup_operation_id')::uuid = op_noev) = 0,
+    'the refused evidence-free refund reserved an idempotency key';
+  -- TARGET SYMMETRY (D4): a non-'topup' operation is refused by BOTH per-operation owner paths.
+  begin perform public.refund_sv_operation(B, spend_op, null, gen_random_uuid());
+    raise exception 'a spend operation was refunded' using errcode='XX000';
+  exception when others then
+    assert sqlstate='22023','the non-topup refusal must be 22023, got '||sqlstate;
+    assert position('is not a top-up operation' in sqlerrm) > 0, 'expected a not-a-top-up refusal, got: '||sqlerrm; end;
 
   ---------------------------------------------------------------- CORRECTION (contract §4)
   topup := public.record_sv_topup_sale(B,B_branch,cli_corr,ver_gate,jsonb_build_object('method','cash','amount_cents',5000,'currency','SGD'),gen_random_uuid());

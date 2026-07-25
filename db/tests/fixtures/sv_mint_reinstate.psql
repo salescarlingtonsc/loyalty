@@ -2,6 +2,16 @@
 -- to fail-closed stubs (mint-path closure); the PS-2A foundation suites (v61-v64) re-create the exact
 -- pre-retirement functions inside their own rolled-back transaction so they still validate what v61-v64
 -- shipped. Dumped from a v65b chain (functions unchanged since v64). Nothing commits.
+--
+-- ONE DELIBERATE DEVIATION FROM THE DUMP (v68a): public.sv_topup below also writes the
+-- public.sv_topup_payments evidence row that v66's record_sv_topup_sale writes. The real pre-v66
+-- sv_topup never wrote one - the table did not exist yet - which is precisely why v68a's cash-refund
+-- cap now REFUSES (typed sv_no_payment_evidence) any cash refund of a top-up with no recorded funding
+-- payment. Without this line the v63/v64 suites would be asserting refunds of top-ups that collected
+-- no cash, i.e. the fail-open hole v68a closes. The amount recorded is the plan's own price_cents, so
+-- every cents-exact assertion in v61-v64 is unchanged; only the evidence that the cash existed is
+-- added. This is a ROLLED-BACK TEST FIXTURE ONLY - it ships in no migration and changes no production
+-- behaviour, and the cap is NOT relaxed to suit it. Guarded so the file still loads on a pre-v66 chain.
 CREATE OR REPLACE FUNCTION public.sv_topup(p_business uuid, p_client uuid, p_plan_version uuid, p_idempotency_key uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -126,6 +136,21 @@ begin
     values (v_bonus_lot, p_business, v_account, v_op, 'bonus', v_pv.bonus_cents, v_bonus_expiry, v_bonus_seq, p_plan_version);
     insert into public.sv_lot_movements(business_id, account_id, lot_id, operation_id, kind, cents)
     values (p_business, v_account, v_bonus_lot, v_op, 'issue', v_pv.bonus_cents);
+  end if;
+
+  -- v68a TEST-FIXTURE ADDITION (see the file header): the funding-payment evidence row, so a
+  -- fixture-minted top-up carries the same cash proof v66's record_sv_topup_sale writes and the
+  -- v68a cash-refund cap can bound a refund by real collected cash instead of refusing it.
+  if to_regclass('public.sv_topup_payments') is not null and v_pv.price_cents > 0 then
+    insert into public.sv_topup_payments(
+      business_id, branch_id, client_id, operation_id, plan_version_id,
+      amount_cents, currency, method, confirmation_mode, actor)
+    select p_business,
+           (select b.id from public.branches b where b.business_id = p_business
+             order by b.is_default desc nulls last, b.id asc limit 1),
+           p_client, v_op, p_plan_version, v_pv.price_cents,
+           coalesce(nullif(btrim(bz.currency), ''), 'SGD'), 'test', 'synthetic_test', v_actor
+      from public.businesses bz where bz.id = p_business;
   end if;
 
   insert into public.audit_log(business_id, actor, action, entity, entity_id, detail)

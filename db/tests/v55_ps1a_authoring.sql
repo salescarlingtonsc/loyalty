@@ -27,6 +27,29 @@ begin
 end $$;
 grant execute on function pg_temp.as_v55_principal(uuid,text) to authenticated, anon;
 
+-- v66b COMPATIBILITY SHIM (test-only; no migration changed). v66b set security_invoker=true on
+-- public.v_program_rules_all. Its migration header documents the measured, deliberate consequence:
+-- birthday_program_versions carries no authenticated table grant, so any DIRECT read of the view by
+-- an API role now fails 42501 - and that fail-closed outcome IS the intent, because the view's only
+-- sanctioned consumers are the SECURITY DEFINER RPCs (get_program_rules_draft, get_programs_overview)
+-- inside which it evaluates as the function owner. This suite predates v66b and read the view
+-- directly as the tenant owner; §3 below now (a) asserts the new typed denial and (b) re-runs the
+-- SAME projection assertions through this SECURITY DEFINER helper, which reproduces the sanctioned
+-- RPC path exactly: the privilege check passes as the function owner while the view's own
+-- `is_salon_owner(business_id) or is_super_admin()` predicate still evaluates against the CALLER's
+-- JWT (a GUC, unaffected by the role switch) - so the cross-tenant isolation assertion keeps its
+-- teeth. Nothing here weakens v66b; the v55 MIGRATION is untouched.
+create or replace function pg_temp.v55_rules_via_definer(p_business uuid)
+returns table(business_id uuid, source_engine text, rule_key text, native_config jsonb)
+language sql stable security definer
+set search_path to 'pg_catalog','public','app','pg_temp'
+as $$
+  select a.business_id, a.source_engine, a.rule_key, a.native_config
+    from public.v_program_rules_all a
+   where a.business_id = p_business
+$$;
+grant execute on function pg_temp.v55_rules_via_definer(uuid) to authenticated;
+
 do $v55_test$
 declare
   v_business uuid; v_owner uuid; v_owner_staff uuid; v_client uuid; v_branch uuid;
@@ -35,7 +58,7 @@ declare
   v_hash text; v_hash_b text; v_result jsonb; v_valid jsonb;
   v_rule uuid; v_rule2 uuid; v_manager uuid := gen_random_uuid();
   v_h1 text; v_h2 text; v_h3 text; v_relkind "char";
-  v_native jsonb; v_before text; v_after text; v_state text;
+  v_native jsonb; v_before text; v_after text; v_state text; v_reloptions text;
 begin
   reset role;
   select s.business_id,s.user_id,s.id into v_business,v_owner,v_owner_staff
@@ -87,17 +110,35 @@ begin
   exception when restrict_violation then null; end;
 
   -- ---- 3. Adapter equivalence: earn row is 1:1 with native config; every row carries native_config. ----
+  -- v66b: a DIRECT read of the adapter view by an API role is now denied outright (42501). Assert
+  -- that new behaviour, then make every original projection assertion through the sanctioned
+  -- SECURITY DEFINER path (see the shim above the DO block).
+  select coalesce(array_to_string(c.reloptions,','),'') into v_reloptions
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace
+   where n.nspname='public' and c.relname='v_program_rules_all';
   perform pg_temp.as_v55_principal(v_owner,'authenticated');
-  select native_config into v_native from public.v_program_rules_all
-   where business_id=v_business and source_engine='points_loyalty' and rule_key like 'points_loyalty:%' limit 1;
+  if position('security_invoker=true' in v_reloptions) > 0 then
+    -- v66b onwards: fail-closed by design.
+    begin
+      perform 1 from public.v_program_rules_all where business_id=v_business;
+      raise exception 'v66b: a direct API-role read of v_program_rules_all unexpectedly succeeded';
+    exception when insufficient_privilege then null; end;
+  else
+    -- pre-v66b (definer view): the direct read must still work, as v55 originally asserted.
+    perform 1 from public.v_program_rules_all where business_id=v_business;
+  end if;
+
+  select native_config into v_native from pg_temp.v55_rules_via_definer(v_business)
+   where source_engine='points_loyalty' and rule_key like 'points_loyalty:%' limit 1;
   if v_native is distinct from (select to_jsonb(lp) from public.loyalty_program_versions lp where lp.config_version_id=v_base) then
     raise exception 'earn adapter row is not byte-equivalent to native loyalty_program_versions';
   end if;
-  if exists(select 1 from public.v_program_rules_all where business_id=v_business and native_config is null) then
+  if exists(select 1 from pg_temp.v55_rules_via_definer(v_business) where native_config is null) then
     raise exception 'an adapter row is missing its native_config projection';
   end if;
-  -- cross-tenant isolation: owner A never sees business B rows.
-  if exists(select 1 from public.v_program_rules_all where business_id=v_biz_b) then
+  -- cross-tenant isolation: owner A never sees business B rows (the view's own owner-or-SA predicate
+  -- still evaluates against owner A's JWT inside the definer helper).
+  if exists(select 1 from pg_temp.v55_rules_via_definer(v_biz_b)) then
     raise exception 'adapter view leaked another tenant to owner A';
   end if;
 

@@ -18,7 +18,10 @@
 --   2. public.sv_topup_cash_refunds - append-only materialised CASH-REFUND CAP ledger. Carries the
 --      running cumulative cash per top-up operation with a table CHECK bounding it by the cash
 --      actually collected, plus a unique index on the running total so two concurrent refunds can
---      never both write the same cumulative. STRUCTURAL enforcement, not just a code branch.
+--      never both write the same cumulative. STRUCTURAL enforcement, not just a code branch. The
+--      bound is ALWAYS sv_topup_payments.amount_cents (contract §5's single source); cash_basis is
+--      CHECK-constrained to the single value 'payment_evidence', so no row can ever record cash
+--      against anything other than a recorded funding payment.
 --   3. app.sv_cash_collected_cents / app.sv_cash_refunded_cents / app.sv_operation_net_spent /
 --      app.sv_operation_refund_policy - pure read helpers over the EXISTING ledger authority.
 --   4. app.sv_chargeback_plan - PURE planner (no DML, no gate), mirroring app.sv_plan_refund's shape:
@@ -28,9 +31,10 @@
 --      chargeback (PS-0 §6, case (e)).
 --   6. public.sv_correct_lot(business, lot, cents, reason, idempotency_key) - owner-gated business
 --      correction (PS-0 §6), reason mandatory, both directions, fully audited.
---   7. public.refund_sv_operation - CREATE OR REPLACE over its v64 predecessor. THREE additions and
---      nothing else (see §7 below): the charged-back refusal, the plan-version refund policy
---      (unused_only / no_refund), and the cash-refund cap + its structural ledger row.
+--   7. public.refund_sv_operation - CREATE OR REPLACE over its v64 predecessor. FOUR additions and
+--      nothing else (see §8 below): the top-up-target + payment-evidence refusals (symmetric with
+--      sv_chargeback_topup), the charged-back refusal, the plan-version refund policy
+--      (unused_only / no_refund / full_unused), and the cash-refund cap + its structural ledger row.
 --   8. sv_operations.operation_type gains 'chargeback' and 'correction'. NO new MOVEMENT kind: the
 --      PS-0 8-kind vocab stays closed and v68a introduces the FIRST WRITERS for the two kinds that
 --      had none - 'correction' and 'bad_debt' (verified against the applied catalog: before v68a the
@@ -79,6 +83,37 @@
 -- the reversal path (restore-then-expire); an owner correction is not an automatic restore, so
 -- v68a fails CLOSED rather than inventing either a silent resurrection or a self-cancelling
 -- correct-then-expire pair. NEGATIVE corrections on an expired lot remain available.
+--
+-- CASH-REFUND CAP IS FAIL-CLOSED, NOT FAIL-OPEN (contract §5, single source =
+-- sv_topup_payments.amount_cents): public.refund_sv_operation REFUSES with a typed
+-- `sv_no_payment_evidence` (22023) when the target top-up carries no sv_topup_payments row, EXACTLY
+-- mirroring public.sv_chargeback_topup. There is deliberately NO "minted_paid_fallback": the ONLY
+-- paths that mint a paid lot without payment evidence are the retired pre-v66 sv_topup / sv_grant
+-- RPCs, which collected NO CASH AT ALL, so substituting the lot's minted_cents for cash collected
+-- would have made the cap fail OPEN on precisely the operations where plan price and cash collected
+-- differ - a payment-evidence-free paid lot could have been cashed out in full. The read-only path
+-- (chargeback) and the path that PAYS CASH OUT are now equally strict. app.sv_cash_collected_cents
+-- reports basis='none' with a null figure when no evidence exists, and the cap ledger's cash_basis
+-- CHECK admits only 'payment_evidence', so the refusal cannot be bypassed by any future code path.
+--
+-- REFUND POLICY VARIANTS may only ever be STRICTER than the product default (PS-0 §4). The v65
+-- catalog offers four values; v68a resolves them as:
+--   * 'proportional' (product default)  - the v63 engine's behaviour, unchanged.
+--   * 'unused_only'                     - STRICTER: refused unless the operation is wholly unspent.
+--   * 'no_refund'                       - STRICTEST: refused outright.
+--   * 'full_unused'                     - typed refusal `sv_refund_policy_unimplemented` (22023).
+-- 'full_unused' is DELIBERATELY not mapped onto any existing behaviour. Its wording is ambiguous
+-- ("full refund of the unused portion" vs "full refund only while unused") and mapping it onto the
+-- proportional path - as a bare pass-through would - makes a supposedly stricter owner setting the
+-- LOOSEST one available, since it would then permit a partial cash refund after a spend. v68a fails
+-- CLOSED instead of guessing: selecting it refuses every refund until an owner ruling pins the
+-- semantics. The v65 catalog is NOT changed (no migration before v68a is touched); a published plan
+-- may still carry the value, it simply cannot silently mean 'proportional'.
+--
+-- TARGET SYMMETRY: refund_sv_operation now also refuses a non-'topup' target operation, the same
+-- check sv_chargeback_topup carries. It is not exploitable today (no other operation_type owns a
+-- paid lot, so the pre-existing "no paid lot to refund" refusal already covered it) - it removes an
+-- asymmetry between the two owner-gated per-operation paths rather than closing a live hole.
 --
 -- PAUSE MAPPING (contract §7, stated explicitly): chargeback and correction are REDEMPTION-FAMILY
 -- corrections - they remove value that a customer currently holds - so an active 'all' OR 'redeem'
@@ -189,11 +224,12 @@ grant select on public.sv_chargebacks to authenticated;
 --          that both computed the same running total cannot both commit;
 --      (c) unique refund_operation_id - one cap row per refund operation, so a replayed refund
 --          cannot double-count.
---    `cash_basis` records WHICH figure bounded the row: 'payment_evidence' is the contract's
---    sv_topup_payments.amount_cents; 'minted_paid_fallback' is the paid lot's minted_cents, used
---    only for operations that carry no payment-evidence row at all (the retired pre-v66 sv_topup /
---    sv_grant mint paths, which cannot be reached in production and mint exactly price_cents into
---    the paid lot, so the fallback equals the collected cash by construction).
+--    `cash_basis` records WHICH figure bounded the row, and its CHECK admits exactly ONE value -
+--    'payment_evidence', the contract §5 single source sv_topup_payments.amount_cents. There is no
+--    fallback basis: an operation with no payment-evidence row collected no cash, so it cannot be
+--    cash-refunded at all (typed sv_no_payment_evidence), and no row can be written here for it.
+--    Keeping the column single-valued rather than dropping it makes that a STRUCTURAL fact a future
+--    increment cannot quietly widen without amending this CHECK.
 -- =====================================================================
 create table public.sv_topup_cash_refunds (
   id uuid primary key default gen_random_uuid(),
@@ -205,7 +241,7 @@ create table public.sv_topup_cash_refunds (
   cash_cents integer not null check (cash_cents > 0),
   cumulative_cash_cents integer not null check (cumulative_cash_cents > 0),
   cash_collected_cents integer not null check (cash_collected_cents >= 0),
-  cash_basis text not null check (cash_basis in ('payment_evidence', 'minted_paid_fallback')),
+  cash_basis text not null check (cash_basis = 'payment_evidence'),
   actor uuid,
   created_at timestamptz not null default now(),
   constraint sv_topup_cash_refunds_id_business_uk unique (id, business_id),
@@ -241,23 +277,23 @@ grant select on public.sv_topup_cash_refunds to authenticated;
 --    app.sv_available_balance / app.sv_lot_remaining / app.sv_plan_refund).
 -- =====================================================================
 
--- The cash actually collected for a top-up operation, and WHICH figure that came from.
--- Contract §5 names sv_topup_payments.amount_cents; the fallback exists only for lots minted by the
--- retired pre-v66 paths, which carry no payment-evidence row (see §3 above).
+-- The cash actually collected for a top-up operation. Contract §5 pins ONE source:
+-- sv_topup_payments.amount_cents. There is NO fallback - an operation with no payment-evidence row
+-- collected nothing, and basis='none' (with a NULL figure) is what every caller must fail closed on.
+-- Substituting minted_cents here would make the cap fail OPEN on exactly the operations where plan
+-- price and cash collected differ (see the header).
 create or replace function app.sv_cash_collected_cents(p_business uuid, p_topup_operation uuid)
 returns jsonb language plpgsql stable security definer
 set search_path to 'pg_catalog', 'public', 'app', 'pg_temp'
 as $$
-declare v_amount integer; v_minted integer;
+declare v_amount integer;
 begin
   select amount_cents into v_amount from public.sv_topup_payments
    where business_id = p_business and operation_id = p_topup_operation;
-  if v_amount is not null then
-    return jsonb_build_object('collected_cents', v_amount, 'basis', 'payment_evidence');
+  if v_amount is null then
+    return jsonb_build_object('collected_cents', null, 'basis', 'none');
   end if;
-  select coalesce(sum(minted_cents), 0)::integer into v_minted from public.sv_lots
-   where business_id = p_business and operation_id = p_topup_operation and class = 'paid';
-  return jsonb_build_object('collected_cents', v_minted, 'basis', 'minted_paid_fallback');
+  return jsonb_build_object('collected_cents', v_amount, 'basis', 'payment_evidence');
 end $$;
 revoke all on function app.sv_cash_collected_cents(uuid, uuid) from public, anon, authenticated;
 
@@ -735,9 +771,18 @@ grant execute on function public.sv_correct_lot(uuid, uuid, integer, text, uuid)
 
 -- =====================================================================
 -- 8. public.refund_sv_operation - CREATE OR REPLACE over its v64 predecessor (v63 body + v64's earn
---    pause gate). The body below is byte-identical to that predecessor EXCEPT for three additions,
---    all placed after the idempotency-envelope lookup and the FEFO row locks and BEFORE the first
---    write, so a refused attempt mutates nothing and reserves no idempotency key:
+--    pause gate). The body below is byte-identical to that predecessor EXCEPT for four additions,
+--    every one of them placed BEFORE the first write, so a refused attempt mutates nothing and
+--    reserves no idempotency key:
+--
+--      (0) TARGET + PAYMENT-EVIDENCE REFUSALS, placed with the other entity-resolution checks
+--          (before the advisory locks), in the SAME ORDER sv_chargeback_topup uses so the two
+--          owner-gated per-operation paths are symmetric:
+--            - the target operation must be a 'topup' (typed, 22023);
+--            - the target must carry an sv_topup_payments row, else typed `sv_no_payment_evidence`
+--              (22023). No payment evidence means no cash was ever collected, so no cash may be
+--              paid out. This is the cap failing CLOSED; the cap figure is re-read and re-checked
+--              under the locks below (TOCTOU pattern) before it bounds anything.
 --
 --      (a) CHARGED-BACK REFUSAL - refunding cash on a top-up whose funding the bank already clawed
 --          back would pay the customer twice for money the business no longer has. Typed
@@ -745,13 +790,15 @@ grant execute on function public.sv_correct_lot(uuid, uuid, integer, text, uuid)
 --          refund -> one winner, the loser typed" true rather than a silent zero-cash no-op.
 --      (b) PLAN-VERSION REFUND POLICY (contract §5, reusing the v65 config - no parallel config
 --          table): 'no_refund' refuses outright; 'unused_only' refuses unless the operation is
---          WHOLLY UNSPENT (app.sv_operation_net_spent = 0). The product default 'proportional' and
---          the existing 'full_unused' value both keep today's behaviour exactly, so the stricter
---          variant is OFF unless a business published it.
+--          WHOLLY UNSPENT (app.sv_operation_net_spent = 0); 'full_unused' refuses with
+--          `sv_refund_policy_unimplemented` rather than silently meaning 'proportional' (see the
+--          header - a variant may only ever be STRICTER). Only the product default 'proportional'
+--          keeps today's behaviour, so an unconfigured business is unaffected.
 --      (c) CASH-REFUND CAP (contract §5): cumulative cash refunded for the operation may never
---          exceed the cash actually collected for it. The typed refusal is `sv_cash_refund_cap`
---          (22023); the STRUCTURAL enforcement is the public.sv_topup_cash_refunds row written
---          alongside the movements (CHECK cumulative <= collected + unique running total).
+--          exceed the cash actually collected for it - always sv_topup_payments.amount_cents, never
+--          a substitute. The typed refusal is `sv_cash_refund_cap` (22023); the STRUCTURAL
+--          enforcement is the public.sv_topup_cash_refunds row written alongside the movements
+--          (CHECK cumulative <= collected + unique running total + single-valued cash_basis).
 --          The "never exceeds paid remaining" half of the cap is already structural in the v63
 --          planner (app.sv_plan_refund refuses X > paid_remaining) and is unchanged here.
 --
@@ -806,12 +853,25 @@ begin
   if v_topup_type is null then
     raise exception 'stored-value top-up operation not found in this business' using errcode = '22023';
   end if;
+  -- v68a (0): target symmetry with sv_chargeback_topup - only a top-up can be refunded.
+  if v_topup_type <> 'topup' then
+    raise exception 'stored-value refund target is not a top-up operation' using errcode = '22023';
+  end if;
 
   select account_id into v_account from public.sv_lots
    where business_id = p_business and operation_id = p_topup_operation and class = 'paid'
    order by earned_seq asc, id asc limit 1;
   if v_account is null then
     raise exception 'stored-value operation has no paid lot to refund' using errcode = '22023';
+  end if;
+
+  -- v68a (0): payment evidence is MANDATORY before any cash can leave. No sv_topup_payments row
+  -- means no cash was ever collected for this operation, so there is nothing to refund and no
+  -- honest bound for the cap. Fails CLOSED, exactly as sv_chargeback_topup does.
+  v_collected := app.sv_cash_collected_cents(p_business, p_topup_operation);
+  if coalesce(v_collected->>'basis', 'none') <> 'payment_evidence' then
+    raise exception 'sv_no_payment_evidence: this top-up carries no recorded funding payment, so no cash can be refunded'
+      using errcode = '22023';
   end if;
 
   perform pg_advisory_xact_lock(hashtextextended('v63:sv_acct:' || p_business::text || ':' || v_account::text, 0));
@@ -849,6 +909,12 @@ begin
     raise exception 'sv_refund_not_permitted: the plan version for this top-up does not permit refunds'
       using errcode = '22023';
   end if;
+  -- A variant may only ever be STRICTER than 'proportional' (PS-0 §4). 'full_unused' has no pinned
+  -- semantics, so it fails CLOSED rather than silently resolving to the looser proportional path.
+  if v_policy = 'full_unused' then
+    raise exception 'sv_refund_policy_unimplemented: the plan version pins refund_policy=full_unused, whose semantics are not pinned; use unused_only or proportional'
+      using errcode = '22023';
+  end if;
   if v_policy = 'unused_only' then
     v_net_spent := app.sv_operation_net_spent(p_business, p_topup_operation);
     if v_net_spent > 0 then
@@ -862,9 +928,15 @@ begin
     raise exception 'stored-value refund failed: %', coalesce(v_plan->>'reason', 'unknown') using errcode = '22023';
   end if;
 
-  -- v68a (c): the cumulative cash cap. Prior cash comes from the MOVEMENT AUTHORITY, so the cap is
-  -- correct even for operations refunded before v68a existed.
+  -- v68a (c): the cumulative cash cap, bounded by sv_topup_payments.amount_cents and nothing else.
+  -- Re-read under the locks (TOCTOU pattern) and re-assert the evidence, so the bound the writes use
+  -- is the one checked here. Prior cash comes from the MOVEMENT AUTHORITY, so the cap is correct
+  -- even for operations refunded before v68a existed.
   v_collected := app.sv_cash_collected_cents(p_business, p_topup_operation);
+  if coalesce(v_collected->>'basis', 'none') <> 'payment_evidence' then
+    raise exception 'sv_no_payment_evidence: this top-up carries no recorded funding payment, so no cash can be refunded'
+      using errcode = '22023';
+  end if;
   v_collected_cents := (v_collected->>'collected_cents')::int;
   v_prior_cash := app.sv_cash_refunded_cents(p_business, p_topup_operation);
   v_cash := (v_plan->>'cash_cents')::int;
@@ -912,11 +984,31 @@ grant execute on function public.refund_sv_operation(uuid, uuid, integer, uuid) 
 
 -- =====================================================================
 -- 9. POST-CONDITIONS. v68a must not have weakened the two v67 reversal refusals, must not have
---    created a second paid-lot minter, and must not have opened either new RPC to anon.
+--    created a second paid-lot minter, and must not have opened either new RPC to anon. Plus the
+--    cash cap must be structurally fail-closed: the refusal is in the function, the cap ledger
+--    admits only evidence-backed rows, and no function anywhere carries a fallback basis.
 -- =====================================================================
 do $v68a_postconditions$
 declare v_bad text;
 begin
+  -- The cash cap fails CLOSED in the function that pays cash out...
+  if position('sv_no_payment_evidence' in
+      pg_get_functiondef('public.refund_sv_operation(uuid,uuid,integer,uuid)'::regprocedure)) = 0 then
+    raise exception 'v68a: refund_sv_operation does not refuse a payment-evidence-free top-up';
+  end if;
+  -- ...and STRUCTURALLY in the cap ledger, which admits exactly one basis.
+  if not exists (select 1 from pg_constraint c
+                  where c.conrelid = 'public.sv_topup_cash_refunds'::regclass and c.contype = 'c'
+                    and pg_get_constraintdef(c.oid) like '%cash_basis%'
+                    and pg_get_constraintdef(c.oid) like '%payment_evidence%') then
+    raise exception 'v68a: the sv_topup_cash_refunds cash_basis CHECK is missing';
+  end if;
+  select string_agg(n.nspname || '.' || p.proname, ', ' order by n.nspname || '.' || p.proname) into v_bad
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname in ('public', 'app') and p.prosrc like '%minted_paid_fallback%';
+  if v_bad is not null then
+    raise exception 'v68a: a fail-open cash-collected fallback survives in: %', v_bad;
+  end if;
   if position('sv_tendered_sale_unsupported' in
       pg_get_functiondef('public.reverse_sale_v20_base(uuid,uuid,text,text,text,text)'::regprocedure)) = 0 then
     raise exception 'v68a: the v67 §11a sale-leg reversal refusal is missing';

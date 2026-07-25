@@ -98,6 +98,106 @@ test('registry has no stale identities that no longer exist in code', () => {
   );
 });
 
+// ---------------------------------------------------------------------------
+// REGISTRY TRUTH (not merely registry EXHAUSTIVENESS).
+//
+// The tests above compare only the identity SET, which is why the curated
+// `latest_file` / `rows_written` fields have silently rotted three times now
+// (v67 rev-4 finding F3; v68a rev-2 finding D2). A registry that names the wrong
+// defining migration, or omits a table the writer demonstrably inserts into, is
+// worse than no registry: reviewers read it as fact. These fields are mechanically
+// derivable from the discovery tool, so they are now mechanically checked.
+//
+// `rows_written` stays human prose (it carries per-kind notes discovery cannot
+// know, and names untracked tables such as audit_log). The machine-checked part is
+// the claims it makes about tables in the discovery tool's own VALUE_TABLES
+// registry: those must be EXACTLY the direct writes discovery found. A write
+// performed by a helper the writer calls is legitimate to document, but must be
+// marked indirect with a `via` annotation - either `; via <fn>: t:OP, ...` or an
+// inline `(via <fn>)` - so it is never mistaken for a direct write.
+const trackedTables = new Set(Object.keys(first.json.value_table_registry));
+
+function parseRowsWritten(text) {
+  const claims = [];
+  for (const clause of String(text || '').split(';')) {
+    // Any `identifier:` is a boundary (so `audit_log:INSERT` terminates the
+    // preceding table's op-spec), but only tracked tables become claims.
+    const re = /\b([a-z_][a-z0-9_]*)\s*:/g;
+    const hits = [];
+    let m;
+    while ((m = re.exec(clause))) hits.push({ table: m[1], start: m.index, end: re.lastIndex });
+    const prefix = hits.length ? clause.slice(0, hits[0].start) : clause;
+    const clauseIndirect = /\bvia\b/i.test(prefix);
+    for (let i = 0; i < hits.length; i++) {
+      if (!trackedTables.has(hits[i].table)) continue;
+      const spec = clause.slice(hits[i].end, i + 1 < hits.length ? hits[i + 1].start : clause.length);
+      const ops = [...new Set((spec.match(/\b(INSERT|UPDATE|DELETE)\b/gi) || []).map((o) => o.toUpperCase()))];
+      claims.push({ table: hits[i].table, ops, indirect: clauseIndirect || /\bvia\b/i.test(spec) });
+    }
+  }
+  return claims;
+}
+
+const discoveryById = new Map();
+for (const w of [...first.json.db_writers, ...first.json.db_delegating_entrypoints]) {
+  discoveryById.set(w.id, { latest_file: w.latest_file, writes: w.writes });
+}
+for (const t of first.json.triggers) discoveryById.set(t.id, { latest_file: t.file, writes: null });
+
+test('every curated writer names the migration that actually defines it (latest_file)', () => {
+  const wrong = [];
+  for (const w of registry.writers) {
+    const disc = discoveryById.get(w.id);
+    if (!disc) continue;   // browser.rpc / edge ids carry no defining migration
+    if (w.latest_file !== disc.latest_file) {
+      wrong.push(`${w.id}: registry says ${w.latest_file}, discovery says ${disc.latest_file}`);
+    }
+  }
+  assert.deepEqual(
+    wrong, [],
+    'Curated latest_file disagrees with scripts/ps0/discover-writers.mjs. A later migration re-created\n' +
+    'these writers and the registry was not updated (or a rename moved the body):\n  - ' + wrong.join('\n  - '),
+  );
+});
+
+test('every curated writer names the value tables it actually writes (rows_written)', () => {
+  const fmt = (map) => [...map.entries()]
+    .map(([t, ops]) => `${t}:${[...ops].sort().join('/')}`).sort().join(', ') || '(none)';
+  const wrong = [];
+  for (const w of registry.writers) {
+    const disc = discoveryById.get(w.id);
+    if (!disc || !disc.writes) continue;   // triggers are checked by their function's entry
+    const claimed = new Map();
+    for (const c of parseRowsWritten(w.rows_written)) {
+      if (c.indirect) continue;
+      claimed.set(c.table, new Set([...(claimed.get(c.table) || []), ...c.ops]));
+    }
+    const found = new Map(disc.writes.map((x) => [x.table, new Set(x.ops)]));
+    const a = fmt(claimed);
+    const b = fmt(found);
+    if (a !== b) wrong.push(`${w.id}\n      registry claims:  ${a}\n      discovery finds:  ${b}`);
+  }
+  assert.deepEqual(
+    wrong, [],
+    'Curated rows_written disagrees with scripts/ps0/discover-writers.mjs for tracked value tables.\n' +
+    'Name every direct write; mark writes performed by a called helper with a `via` annotation:\n  - ' + wrong.join('\n  - '),
+  );
+});
+
+test('the rows_written parser distinguishes direct writes from `via` helper writes', () => {
+  // Guard the guard: if this parser silently stopped finding claims, both checks above
+  // would pass vacuously — which is exactly how the fields rotted in the first place.
+  const direct = parseRowsWritten('sv_operations:INSERT, sv_lot_movements:INSERT, audit_log:INSERT');
+  assert.deepEqual(direct.map((c) => `${c.table}:${c.ops.join('/')}:${c.indirect}`),
+    ['sv_operations:INSERT:false', 'sv_lot_movements:INSERT:false'],
+    'a plain list must yield direct claims, and the untracked audit_log must not leak into the previous op-spec');
+  const viaClause = parseRowsWritten('event_outbox:INSERT; via app.helper: program_entitlements:INSERT/UPDATE');
+  assert.deepEqual(viaClause.map((c) => `${c.table}:${c.indirect}`),
+    ['event_outbox:false', 'program_entitlements:true'], '`; via <fn>:` must mark the whole clause indirect');
+  const viaInline = parseRowsWritten('sv_operations:INSERT (via app.sv_reserve_core)');
+  assert.deepEqual(viaInline.map((c) => c.indirect), [true], 'an inline `(via ...)` must mark that claim indirect');
+});
+
 test('registry writers and allowlist ids are unique and disjoint', () => {
   const writerIds = registry.writers.map((w) => w.id);
   const allowIds = registry.allowlist.map((a) => a.id);
