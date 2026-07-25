@@ -82,6 +82,10 @@ declare
   lines1200 jsonb; lines5600 jsonb; lines3000 jsonb; lines20000 jsonb; lines8000 jsonb; lines5000 jsonb;
   cli_acct1 uuid; cli_acct2 uuid; ver_p5000 uuid; rs0 json; rs1 json; sb record;
   sale_svonly uuid; sale_split uuid; sale_plain uuid; cli_plain uuid; cnt0 jsonb; cnt1 jsonb; rvj json;
+  sale_b uuid; acct_b uuid; tnd_b record; refop uuid; svspendop uuid;
+  bal0 jsonb; bal1 jsonb; mv0 int; mv1 int; rev0 int; rev1 int;
+  cli_rev uuid; acct_rev uuid; plainop uuid; plainrev jsonb;
+  cli_grd uuid; tnd_grd uuid; grd_sale uuid; grd_spend uuid;
 begin
   reset role;
   select s.business_id, s.user_id into A, A_owner from public.staff s join public.businesses b on b.id=s.business_id
@@ -171,6 +175,7 @@ begin
   perform public.reserve_checkout_sv_tender(B,tok,5600,gen_random_uuid());
   res := public.record_cart_sale(B,cli_b,B_branch,null,'cash','v67-vecB-'||substr(md5(clock_timestamp()::text),1,8),null,tok,true);
   assert (res->'stored_value'->>'sv_paid_cents')::int = 5000 and (res->'stored_value'->>'sv_bonus_cents')::int = 600, 'PS-0 vector B: paid 5000 / bonus 600';
+  sale_b := (res->>'sale_id')::uuid;   -- kept for the refund-interplay arithmetic below
 
   ---------------------------------------------------------------- VECTOR C (multi-op FEFO): 10000/1200 + 5000/500 = 15000/1700, spend 5600 -> bonus 570 / paid 5030
   perform public.record_sv_topup_sale(B,B_branch,cli_c,ver_big,jsonb_build_object('method','cash','amount_cents',10000,'currency','SGD'),gen_random_uuid());
@@ -300,10 +305,36 @@ begin
     join public.sv_lots l on l.operation_id=o.id and l.business_id=o.business_id
     join public.sv_accounts a on a.id=l.account_id and a.client_id=cli_b
    where o.business_id=B and o.operation_type='topup' order by o.created_at limit 1;
+  select id into acct_b from public.sv_accounts where business_id=B and client_id=cli_b;
+  select * into tnd_b from public.checkout_sv_tenders where business_id=B and account_id=acct_b and status='consumed';
+  -- The spend this top-up already lost was a CHECKOUT SETTLEMENT, not a plain owner spend. That is
+  -- the case the reviewer flagged as unprobed: a refund of the top-up must not be able to hand back
+  -- value that has already settled a sale (which is still on the books as paid + realised revenue).
+  assert tnd_b.sale_id = sale_b and tnd_b.spend_operation_id is not null,
+    'vector B spend must be bound to its checkout tender (settlement, not a plain spend)';
+  assert tnd_b.sv_paid_cents = 5000 and tnd_b.sv_bonus_cents = 600, 'vector B tender split must be 5000/600';
   ref := public.refund_sv_operation(B, topop, null, gen_random_uuid());
   assert (ref->>'status')='ok', 'refund_sv_operation on a partially-spent top-up failed';
   -- whole-op refund cash = paid remaining of that op (paid 10000 minus the 5000 paid already spent = 5000)
   assert (ref->>'cash_cents')::int = 5000, 'refund cash must equal the paid remaining (5000), got '||(ref->>'cash_cents');
+  -- ARITHMETIC PROOF that no SETTLED cent came back: refunded paid + settled paid == the whole
+  -- top-up's paid price, so the refund reached ONLY the unspent remainder.
+  assert (ref->>'cash_cents')::int + tnd_b.sv_paid_cents = 10000,
+    'refunded paid ('||(ref->>'cash_cents')||') + settled paid ('||tnd_b.sv_paid_cents||') must equal the 10000 top-up';
+  assert (ref->>'clawback_cents')::int = 600 and (ref->>'final')::boolean,
+    'final whole-op refund must claw the entire remaining bonus (1200 - 600 settled = 600)';
+  refop := (ref->>'operation_id')::uuid;
+  -- A refund only REMOVES value: every movement it wrote is negative, so nothing was restored.
+  assert not exists (select 1 from public.sv_lot_movements where business_id=B and operation_id=refop and cents >= 0),
+    'the refund wrote a non-negative movement (settled value was restored)';
+  -- Ledger closes at zero and the settlement is untouched: the sale stays paid, the tender consumed.
+  assert (pg_temp.v67_bal(B,acct_b)->>'outstanding')::int = 0, 'vector B account must be fully drained after the whole-op refund';
+  assert (select coalesce(sum(cents),0) from public.sv_lot_movements where business_id=B and account_id=acct_b) = 0,
+    'vector B movement trail must sum to zero (issue 11200 - spend 5600 - refund 5600)';
+  assert (select status from public.checkout_sv_tenders where id=tnd_b.id) = 'consumed', 'the refund disturbed the settlement marker';
+  select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale_b and business_id=B;
+  assert sb.balance_cents = 0 and sb.paid_cents = 0 and sb.sv_settled_cents = 5600 and sb.payment_status = 'paid',
+    'refunding the top-up must not disturb the sale its spend settled';
 
   ---------------------------------------------------------------- OWNER sv_reserve/sv_spend UNCHANGED: still owner-only 42501 for a browser non-owner
   -- a create_sales-only staff (non-owner) cannot call the owner-facing sv_reserve/sv_spend
@@ -428,6 +459,122 @@ begin
   assert nullif(rvj->>'reversal_sale_id','') is not null, 'non-SV reversal must create the reversing sale row';
   select balance_cents, payment_status into sb from public.sale_balance where sale_id=sale_plain and business_id=B;
   assert sb.balance_cents = 0 and sb.payment_status = 'paid', 'a reversed non-SV sale must net to zero';
+
+  ------------------------------------------------- SETTLEMENT-SPEND REVERSAL REFUSAL (§11b)
+  -- The OTHER door into the same mis-settlement. public.sv_reverse_spend takes a spend OPERATION,
+  -- is granted to `authenticated`, and never funnels through reverse_sale_v20_base - so §11a's gate
+  -- cannot see it, while §8.9b makes the checkout settlement exactly such a spend operation.
+  -- Pre-fix, as the business owner: sv_reverse_spend returned ok / restored 5000, the account went
+  -- available+outstanding 0 -> 5000 (value handed back), and sale_balance + get_revenue_summary
+  -- stayed 'paid' / cash-basis-realised, i.e. the customer kept the goods AND the money.
+  select spend_operation_id into svspendop from public.checkout_sv_tenders where business_id=B and sale_id=sale_svonly;
+  assert svspendop is not null, 'the SV-only sale must carry a settlement spend operation';
+  select id into acct from public.sv_accounts where business_id=B and client_id=cli_acct1;
+  bal0 := pg_temp.v67_bal(B,acct);
+  select count(*) into mv0 from public.sv_lot_movements where business_id=B;
+  select count(*) into rev0 from public.sv_operations where business_id=B and operation_type='reverse';
+  rs0 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
+  begin
+    perform public.sv_reverse_spend(B, svspendop, gen_random_uuid());
+    raise exception 'reversing a checkout SETTLEMENT spend was ALLOWED' using errcode='XX000';
+  exception when others then
+    assert sqlstate = '22023', 'settlement-spend refusal must follow the sv family 22023, got '||sqlstate;
+    assert position('sv_tendered_spend_unsupported:' in sqlerrm) = 1,
+      'settlement-spend refusal must be typed sv_tendered_spend_unsupported, got: '||sqlerrm;
+  end;
+  -- It mutated NOTHING: no value returned, no movements, no reverse operation, marker intact.
+  bal1 := pg_temp.v67_bal(B,acct);
+  select count(*) into mv1 from public.sv_lot_movements where business_id=B;
+  select count(*) into rev1 from public.sv_operations where business_id=B and operation_type='reverse';
+  assert bal1 = bal0, 'a refused settlement-spend reversal moved the stored-value balance: '||bal0::text||' -> '||bal1::text;
+  assert mv1 = mv0, 'a refused settlement-spend reversal wrote sv_lot_movements';
+  assert rev1 = rev0, 'a refused settlement-spend reversal wrote an sv_operations reverse row';
+  assert (select status from public.checkout_sv_tenders where business_id=B and sale_id=sale_svonly) = 'consumed',
+    'a refused settlement-spend reversal disturbed the tender status';
+  select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale_svonly and business_id=B;
+  assert sb.balance_cents = 0 and sb.paid_cents = 0 and sb.sv_settled_cents = 5000 and sb.payment_status = 'paid',
+    'a refused settlement-spend reversal disturbed the SV-only sale_balance row';
+  assert public.get_revenue_summary(B, current_date-1, current_date+1, null)::jsonb = rs0::jsonb,
+    'a refused settlement-spend reversal changed get_revenue_summary';
+
+  -- NO OVER-REFUSAL: a plain (non-checkout) owner sv_spend is STILL reversible by v63's engine.
+  reset role;
+  insert into public.clients(business_id,full_name,phone) values (B,'v67 plainspend','+6590000214') returning id into cli_rev;
+  perform pg_temp.as_v67(B_owner,'authenticated');
+  perform public.record_sv_topup_sale(B,B_branch,cli_rev,ver_p5000,jsonb_build_object('method','cash','amount_cents',5000,'currency','SGD'),gen_random_uuid());
+  select id into acct_rev from public.sv_accounts where business_id=B and client_id=cli_rev;
+  plainop := (public.sv_spend(B, acct_rev, 1500, gen_random_uuid())->>'operation_id')::uuid;
+  assert not exists (select 1 from public.checkout_sv_tenders where business_id=B and spend_operation_id=plainop),
+    'the control spend must not be bound to any checkout tender';
+  plainrev := public.sv_reverse_spend(B, plainop, gen_random_uuid());
+  assert (plainrev->>'status') = 'ok' and (plainrev->>'restored_cents')::int = 1500,
+    'a plain non-checkout sv_spend must STAY reversible (no over-refusal), got: '||plainrev::text;
+  assert (pg_temp.v67_bal(B,acct_rev)->>'outstanding')::int = 5000, 'the control reversal must restore the full 1500';
+
+  ------------------------------------------------- TENDER STATE MACHINE enforced by the TRIGGER, not by the ACL
+  -- checkout_sv_tenders.status / sale_id / spend_operation_id are what §10 and §11 read. Before this
+  -- fix they were outside the guard's immutability list and were safe only because `authenticated`
+  -- holds no UPDATE grant. These probes run as postgres (bypassing RLS and grants entirely) so they
+  -- prove the TRIGGER refuses each illegal move on its own.
+  reset role;
+  insert into public.clients(business_id,full_name,phone) values (B,'v67 guard','+6590000215') returning id into cli_grd;
+  perform pg_temp.as_v67(B_owner,'authenticated');
+  perform public.record_sv_topup_sale(B,B_branch,cli_grd,ver_p5000,jsonb_build_object('method','cash','amount_cents',5000,'currency','SGD'),gen_random_uuid());
+  ev := public.evaluate_checkout(B,B_branch,cli_grd,lines5000,gen_random_uuid()); tok := (ev->>'evaluation_id')::uuid;
+  tnd := public.reserve_checkout_sv_tender(B,tok,5000,gen_random_uuid());
+  select id into tnd_grd from public.checkout_sv_tenders where business_id=B and evaluation_id=tok;
+  reset role;
+  -- (1) a RESERVED tender may not bind a sale/spend before it is consumed
+  begin update public.checkout_sv_tenders set sale_id=sale_plain where id=tnd_grd;
+    raise exception 'reserved tender bound a sale' using errcode='XX000';
+  exception when others then assert sqlstate='23001','reserved+sale_id must be restrict_violation, got '||sqlstate; end;
+  begin update public.checkout_sv_tenders set spend_operation_id=svspendop where id=tnd_grd;
+    raise exception 'reserved tender bound a spend op' using errcode='XX000';
+  exception when others then assert sqlstate='23001','reserved+spend_operation_id must be restrict_violation, got '||sqlstate; end;
+  -- (2) reserved -> consumed must write BOTH bindings
+  begin update public.checkout_sv_tenders set status='consumed' where id=tnd_grd;
+    raise exception 'consumed without bindings' using errcode='XX000';
+  exception when others then assert sqlstate='23001','consumed needs sale+spend, got '||sqlstate; end;
+  begin update public.checkout_sv_tenders set status='consumed', sale_id=sale_plain where id=tnd_grd;
+    raise exception 'consumed without a spend op' using errcode='XX000';
+  exception when others then assert sqlstate='23001','consumed needs the spend op too, got '||sqlstate; end;
+  -- (3) reserved -> released must bind nothing
+  begin update public.checkout_sv_tenders set status='released', sale_id=sale_plain where id=tnd_grd;
+    raise exception 'released tender bound a sale' using errcode='XX000';
+  exception when others then assert sqlstate='23001','released+sale_id must be restrict_violation, got '||sqlstate; end;
+  assert (select status from public.checkout_sv_tenders where id=tnd_grd) = 'reserved', 'the refused updates moved the tender';
+  -- (4) a CONSUMED tender is terminal in status AND in both settlement bindings
+  select id, sale_id, spend_operation_id into tnd_grd, grd_sale, grd_spend
+    from public.checkout_sv_tenders where business_id=B and sale_id=sale_svonly;
+  begin update public.checkout_sv_tenders set status='reserved' where id=tnd_grd;
+    raise exception 'consumed -> reserved allowed' using errcode='XX000';
+  exception when others then assert sqlstate='23001','consumed->reserved must be restrict_violation, got '||sqlstate; end;
+  begin update public.checkout_sv_tenders set status='released' where id=tnd_grd;
+    raise exception 'consumed -> released allowed' using errcode='XX000';
+  exception when others then assert sqlstate='23001','consumed->released must be restrict_violation, got '||sqlstate; end;
+  begin update public.checkout_sv_tenders set sale_id=sale_plain where id=tnd_grd;
+    raise exception 'consumed tender re-pointed its sale' using errcode='XX000';
+  exception when others then assert sqlstate='23001','consumed sale_id must be frozen, got '||sqlstate; end;
+  begin update public.checkout_sv_tenders set spend_operation_id=plainop where id=tnd_grd;
+    raise exception 'consumed tender re-pointed its spend op' using errcode='XX000';
+  exception when others then assert sqlstate='23001','consumed spend_operation_id must be frozen, got '||sqlstate; end;
+  begin update public.checkout_sv_tenders set sale_id=null, spend_operation_id=null where id=tnd_grd;
+    raise exception 'consumed tender cleared its bindings' using errcode='XX000';
+  exception when others then assert sqlstate='23001','consumed bindings must not be nullable, got '||sqlstate; end;
+  begin delete from public.checkout_sv_tenders where id=tnd_grd;
+    raise exception 'a tender was deleted' using errcode='XX000';
+  exception when others then assert sqlstate='23001','tenders are append-only, got '||sqlstate; end;
+  assert (select status='consumed' and sale_id=grd_sale and spend_operation_id=grd_spend
+            from public.checkout_sv_tenders where id=tnd_grd),
+    'the refused updates disturbed the consumed tender';
+  -- (5) a RELEASED tender is terminal too (a superseded one exists: cli_split rebound twice)
+  select id into tnd_grd from public.checkout_sv_tenders where business_id=B and status='released' limit 1;
+  begin update public.checkout_sv_tenders set status='consumed', sale_id=sale_plain, spend_operation_id=plainop where id=tnd_grd;
+    raise exception 'released -> consumed allowed' using errcode='XX000';
+  exception when others then assert sqlstate='23001','released->consumed must be restrict_violation, got '||sqlstate; end;
+  -- POSITIVE control: the legal reserved -> released move (the sweep's shape) still works.
+  perform pg_temp.as_v67(B_owner,'authenticated');
+  assert (public.sv_release_expired_checkout_tenders(B,1000)->>'status') = 'ok', 'the legal reserved->released sweep must still run';
 
   reset role;
   raise notice 'V67 SUITE PASS (all assertions)';

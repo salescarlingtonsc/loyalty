@@ -193,7 +193,7 @@
       "idempotency": "sv_operations unique(business, operation_type='topup', idempotency_key) + request_hash of {business,branch,client,plan_version,method,amount,currency,canonical-reference} + advisory xact lock on (business,key) + cached-result replay; conflicting hash → 22023; a partial unique index on sv_topup_payments(business,method,reference_norm) WHERE method<>'cash' blocks non-cash reference double-funding",
       "value": "MINT ONLY — mints a paid sv_lot (price_cents, paid_expiry_days) + a bonus sv_lot when bonus>0 (bonus_expiry_days), one 'issue' movement each, from the immutable v65 sv_plan_versions snapshot; records append-only payment evidence (cash collected, NOT revenue — writes NO sales row) + a 'confirmed' payment event. Balances DERIVED; no mutable balance column. No spend/redeem/refund path (v67+).",
       "authority": "GATED BY STATE (v66 safety contract): refuses when 'unbuilt'; 'shadow_testing'/'ready_for_cutover' permit ONLY structurally-synthetic business+customer with method='test'; real cash/card_terminal/paynow/manual only when 'live' (unreachable outside a future authorized cutover). Earn pause blocks it. Authority + current-sellable-version are re-validated at finalisation under the account lock (TOCTOU-closed).",
-      "kernel": "SEPARATE-LEDGER — stored value is its own append-only authority (sv_lot_movements); reuses the house op-ledger/idempotency but shares no rows with credit_ledger/points_ledger/sales and writes none of them; the PS-1C checkout kernel is byte-UNCHANGED and consumes no sv tender in v66"
+      "kernel": "SEPARATE-LEDGER — stored value is its own append-only authority (sv_lot_movements); reuses the house op-ledger/idempotency but shares no rows with credit_ledger/points_ledger/sales and writes none of them; the PS-1C checkout kernel was byte-UNCHANGED and consumed no sv tender in v66 - v67 changes that half (evaluate_checkout/record_cart_sale gain the tender path), but NOT this one: the mint still writes no sales row and remains the sole paid-lot minter"
     },
     {
       "id": "db.fn:app.sv_ensure_account/2",
@@ -218,43 +218,43 @@
       "idempotency": "via app.sv_spend_core: sv_operations unique(business, operation_type='spend', idempotency_key) + request_hash of {business,account,cents} + per-account advisory xact lock + FEFO row locks + cached-result replay; a duplicate same-key spend has ONE effect",
       "value": "NON-WRITING ENTRY POINT — the PS-0 §3 aggregate-proportional cross-operation FEFO spend (bonus_draw=floor(spend*total_bonus/total), paid_draw=spend-bonus_draw, one 'spend' movement per lot app.sv_allocate_spend plans, refuse-before-write when cents>available) now lives entirely in app.sv_spend_core, which is curated separately.",
       "authority": "HARD-GATED in the core: raises 22023 sv_not_live unless sv_authority.state='live' (unreachable in prod) and refuses under an active 'all'/'redeem' pause. This wrapper adds the 42501 owner check it has always had.",
-      "kernel": "SEPARATE-LEDGER - stored value is its own append-only authority (sv_lot_movements); shares no rows with credit_ledger/points_ledger/sales. The PS-1C checkout kernel reaches the same core through record_cart_sale/9's v67 tender path, never through this owner RPC."
+      "kernel": "SETTLEMENT-BEARING (v67) - stored value is still its own append-only authority (sv_lot_movements) and this path writes no credit_ledger/points_ledger row, but it no longer shares NOTHING with sales: when the PS-1C checkout kernel reaches app.sv_spend_core through record_cart_sale/9's v67 tender path, the resulting spend operation is recorded on checkout_sv_tenders.spend_operation_id and that consumed tender SETTLES a public.sales row for sale_balance / get_revenue_summary (§10). The owner RPC itself still writes no sales row. Reversing such a settlement spend is refused by v67 §11b."
     },
     {
       "id": "db.fn:public.sv_reverse_spend/3",
       "surface": "db_function",
-      "latest_file": "20260724220000_frenly_v63_ps2c_redemption_mechanics.sql",
+      "latest_file": "20260724230000_frenly_v64_ps2d_pause_controls.sql",
       "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
       "detected_signals": "idem-signal, advisory-lock",
-      "entry_point": "public.sv_reverse_spend(business, spend_operation, idempotency_key) - PS-2A Increment C owner-only spend-REVERSAL RPC, HARD-GATED on authority='live'",
+      "entry_point": "public.sv_reverse_spend(business, spend_operation, idempotency_key) - PS-2A Increment C owner-only spend-REVERSAL RPC, HARD-GATED on authority='live'. v64 re-created it to add the redeem-pause gate (the registry previously still credited v63). v67 §11b splices a typed checkout-settlement refusal into it.",
       "idempotency": "sv_operations unique(business, operation_type='reverse', idempotency_key); same-key replay returns the cached result; a spend op is reversible AT MOST ONCE (a second reverse under a different key raises 22023 over-reversal)",
       "value": "PS-0 s6 restore-then-expire: writes a 'reversal' (+) per lot restoring the exact per-lot allocation the spend drew; if a restored lot is now past its expiry_key, immediately writes a '-expiry' for the restored amount (both recorded - an expired lot is never silently resurrected). Case (f) trail sums to 0.",
-      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live' (unreachable in PS-2A); tested via a rolled-back authority='live' shim",
-      "kernel": "SEPARATE-LEDGER - writes only the sv_lot_movements authority; no credit_ledger/points_ledger/sales rows"
+      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live', and (v64) refuses under an active 'all'/'redeem' sv_pause. 'live' is NO LONGER a merely theoretical state - PS-2 LIVE (v65-v67) builds the path to it and the v69 cutover is what reaches it; the accurate statement as of v67 is that prod authority stays 'unbuilt' for every real business this phase, so the RPC is unreachable in PRODUCTION rather than unreachable in principle. Exercised via a rolled-back authority='live' shim.",
+      "kernel": "SETTLEMENT-AWARE (v67) - the old 'SEPARATE-LEDGER' rationale no longer holds. This function still writes ONLY the sv_lot_movements authority (no credit_ledger/points_ledger/sales rows), but v67 §10 ends the ledger separation: a consumed public.checkout_sv_tenders row is the SETTLEMENT of a public.sales row, which public.sale_balance and public.get_revenue_summary read as paid + cash-basis realised revenue. Because this RPC reverses a spend OPERATION and never funnels through reverse_sale_v20_base, §11a's sale-side gate cannot see it - so v67 §11b splices a typed refusal in (after all authorization/existence checks and both advisory locks, before the first write): reversing a spend operation that a CONSUMED checkout tender points at raises 22023 'sv_tendered_spend_unsupported:'. Without it, this RPC handed the stored value back while the sale kept reading paid and revenue-recognised. Plain non-checkout sv_spend operations stay fully reversible (no over-refusal). Coherent restitution is the v68 refund/reversal matrix; lifting either §11 refusal requires netting sale_balance.sv_tender_totals and get_revenue_summary.v_sv_cash in the same increment."
     },
     {
       "id": "db.fn:public.refund_sv_operation/4",
       "surface": "db_function",
-      "latest_file": "20260724220000_frenly_v63_ps2c_redemption_mechanics.sql",
+      "latest_file": "20260724230000_frenly_v64_ps2d_pause_controls.sql",
       "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
       "detected_signals": "idem-signal, advisory-lock, row-lock",
-      "entry_point": "public.refund_sv_operation(business, topup_operation, cash_cents|null=whole, idempotency_key) - PS-2A Increment C owner-only SF2 per-op REFUND RPC, HARD-GATED on authority='live'",
+      "entry_point": "public.refund_sv_operation(business, topup_operation, cash_cents|null=whole, idempotency_key) - PS-2A Increment C owner-only SF2 per-op REFUND RPC, HARD-GATED on authority='live'. v64 re-created it to add the earn-pause gate (the registry previously still credited v63).",
       "idempotency": "sv_operations unique(business, operation_type='refund', idempotency_key) + request_hash of {business,topup_operation,cash_cents} + per-account advisory lock + cached-result replay",
       "value": "PS-0 s4 SF2 per top-up operation: writes the paid 'refund' (-X) and bonus 'clawback' movements the PURE app.sv_plan_refund plans; partial non-final clawback=floor(bonus_rem*X/paid_rem); FINAL (X==paid_rem) claws the ENTIRE bonus_rem (terminal sweep - no stranded bonus cent).",
-      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live' (unreachable in PS-2A); tested via a rolled-back authority='live' shim",
-      "kernel": "SEPARATE-LEDGER - writes only sv_lot_movements; cash refund is paid-class only, bonus is never cashed out"
+      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live', and (v64) refuses under an active 'all'/'earn' sv_pause. As of PS-2 LIVE, 'live' is a reachable state of the programme (v69 cutover); it is prod authority staying 'unbuilt' this phase that keeps the RPC unreachable in production. Exercised via a rolled-back authority='live' shim.",
+      "kernel": "REMAINDER-ONLY, SETTLEMENT-SAFE (v67). Writes only sv_lot_movements; cash refund is paid-class only and bonus is never cashed out. It is now reachable on a top-up whose value was partly consumed by a v67 CHECKOUT SETTLEMENT, and it needs no gate for that: the plan is computed from the lot REMAINING, so already-settled cents are structurally out of reach and every movement it writes is negative (nothing is restored). v67's suite pins the arithmetic - refunded paid + settled paid == the whole top-up's paid price - and asserts the settled sale's sale_balance and tender marker are untouched."
     },
     {
       "id": "db.fn:public.sv_expire_due/2",
       "surface": "db_function",
-      "latest_file": "20260724220000_frenly_v63_ps2c_redemption_mechanics.sql",
+      "latest_file": "20260724230000_frenly_v64_ps2d_pause_controls.sql",
       "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
       "detected_signals": "advisory-lock, row-lock",
-      "entry_point": "public.sv_expire_due(business, limit) - PS-2A Increment C owner/service EXPIRY sweep, HARD-GATED on authority='live'",
+      "entry_point": "public.sv_expire_due(business, limit) - PS-2A Increment C owner/service EXPIRY sweep, HARD-GATED on authority='live'. v64 re-created it to add the pause gate (the registry previously still credited v63).",
       "idempotency": "idempotent BY CONSTRUCTION (remaining-based): each sweep writes a '-expiry' of EXACTLY the lot's remaining (Sum of movements); a rerun finds remaining 0 and expires nothing. Anchored by one fresh 'expire' sv_operations row per call.",
       "value": "PS-0 s6 expiry independence: for each lot past its expiry_key with remaining>0, writes a '-expiry' of exactly remaining; cannot expire spent value (excluded from remaining) nor already-expired value (remaining 0). Per-account advisory locks (account order) + FEFO FOR UPDATE row locks keep it one-winner and deadlock-free vs spends.",
-      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live' (unreachable in PS-2A); tested via a rolled-back authority='live' shim",
-      "kernel": "SEPARATE-LEDGER - writes only sv_lot_movements; independent of credit/points expiry"
+      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live', and (v64) refuses under an active sv_pause. As of PS-2 LIVE, 'live' is a reachable state of the programme (v69 cutover); it is prod authority staying 'unbuilt' this phase that keeps the sweep unreachable in production. Exercised via a rolled-back authority='live' shim.",
+      "kernel": "SETTLEMENT-SAFE - writes only sv_lot_movements, independent of credit/points expiry. Expiry cannot reach value a v67 checkout settlement already spent: spent cents are excluded from a lot's remaining, so a settled sale's stored value can never be expired out from under it."
     },
     {
       "id": "browser.rpc:app/index.html:adjust_points",
@@ -1073,7 +1073,7 @@
       "idempotency": "financial_operations op-ledger",
       "locking": "for-update",
       "payment": "append-only reversing sales + payments + sale_reversal_audits + sale_reversal_payment_links; credit_ledger compensation",
-      "reversal": "the arithmetic core of compensation",
+      "reversal": "the arithmetic core of compensation. v67 §11a splices a typed refusal into it (pg_get_functiondef, v49a idiom): a sale settled by a consumed public.checkout_sv_tenders row raises P0001 'sv_tendered_sale_unsupported:' before the first write, because the core knows only payments + credit_ledger and would otherwise report ok while restoring none of the spent stored value. Gated here so no wrapper (reverse_sale, refund_sale, the v34/v40 layers) can bypass it. Non-sv sales are byte-unchanged.",
       "kernel": "NEEDS-WORK — money reversal core; kernel must own it."
     },
     {

@@ -14,6 +14,16 @@
 // Both are "a CREATE OR REPLACE regressed hardening that the applied catalog already had". These
 // guards make that class statically detectable BEFORE apply. Each checker is a pure function so it
 // can be, and is, proven to FAIL on a deliberately broken fixture below.
+//
+// v67 rev-3 → rev-4 (independent review D-B): GUARD 1 matched only `create … function public.…`,
+// so every `app.*` SECURITY DEFINER function was invisible to it — including the SV money cores
+// (app.sv_reserve_core / sv_spend_core / sv_release_core) and every trigger guard, which is exactly
+// where a search_path hijack matters most. A reviewer rewrote v67's `app.checkout_sv_tenders_guard`
+// to `set search_path to 'attacker','public'` and BOTH guards stayed green. The header regex now
+// covers `public.` AND `app.`. Widening also exposed a defect in the guard's OWN parser: the
+// search_path capture ran to end-of-line, so a definition that puts `as $$` on the same line as the
+// pin (app.on_sale_recorded in v29/v37b) parsed as the junk schema `pg_temp' as $$` — a canonical
+// pin read as a violation. The capture is now terminated at the first non-list keyword.
 
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -42,11 +52,45 @@ const KNOWN_SEARCH_PATH_SUPERSETS = [
   'frenly_v48_calendar_details_reschedule :: public.reschedule_appointment_v48 :: extensions',
 ];
 
+// Pinned inventory of pending definer functions whose search_path is a strict canonical SUBSET —
+// NARROWER than the v21 canon, i.e. more hardened, not less. Surfaced by the rev-4 widening to
+// `app.*`: both v46 helpers are pure, schema-qualify everything they touch, and resolve nothing
+// from `public`/`app` unqualified, so omitting those two schemas is deliberate. They are recorded
+// (not rewritten — they are historical migrations) so a NEW narrower pin is a reviewed act.
+// A pin is honoured ONLY when the path is a canonical subset in canonical order, so it can never
+// launder a genuinely dangerous path such as `'attacker','public'`.
+const KNOWN_SEARCH_PATH_SUBSETS = [
+  'frenly_v46_customer_in_app_inbox :: app.c46_iana_timezone_allowed :: pg_catalog, pg_temp',
+  'frenly_v46_customer_in_app_inbox :: app.c46_in_quiet_hours :: pg_catalog, pg_temp',
+];
+
+// A pinned search_path list ends at the first token that cannot be part of it. Without this the
+// `[^\n;]+` capture swallows a trailing `as $$` / `language sql` written on the same line.
+const SEARCH_PATH_TAIL =
+  /\s+(?:as|language|stable|immutable|volatile|strict|security|returns|parallel|cost|rows|leakproof|window|set|support|transform)\b[\s\S]*$/i;
+
 const splitSearchPath = (raw) =>
   raw
+    .replace(SEARCH_PATH_TAIL, '')
     .split(',')
     .map((entry) => entry.trim().replace(/^["']|["']$/g, '').toLowerCase())
     .filter(Boolean);
+
+/** The pinned search_path entries of a `create function` header, or null when none is pinned. */
+export function pinnedSearchPath(header) {
+  const pinned = header.match(/set\s+search_path\s*(?:to|=)\s*([^\n;]+)/i);
+  return pinned ? splitSearchPath(pinned[1]) : null;
+}
+
+/** True when `entries` is the canon or a strict, correctly-ordered subset of it (never a superset). */
+export function isCanonicalSubset(entries) {
+  if (entries.length === 0) return false;
+  if (entries.some((entry) => !CANONICAL_SEARCH_PATH.includes(entry))) return false;
+  if (entries[0] !== 'pg_catalog') return false;
+  if (entries[entries.length - 1] !== 'pg_temp') return false;
+  const ranks = entries.map((entry) => CANONICAL_SEARCH_PATH.indexOf(entry));
+  return ranks.every((rank, index) => index === 0 || rank > ranks[index - 1]);
+}
 
 /**
  * Why an entry list is not a canonical pin, or null when it is.
@@ -65,26 +109,27 @@ export function searchPathProblem(entries) {
   return null;
 }
 
-/** Every `create [or replace] function public.X ... as $tag$` HEADER in `sql`, comments removed. */
-export function publicFunctionHeaders(sql) {
+/**
+ * Every `create [or replace] function public.X|app.X ... as $tag$` HEADER in `sql`, comments removed.
+ * `app.` is in scope because that is where the definer money cores and trigger guards live.
+ */
+export function definerFunctionHeaders(sql) {
   return [...stripSqlComments(sql).matchAll(
-    /create\s+(?:or\s+replace\s+)?function\s+(public\.[a-z0-9_]+)[\s\S]*?\$[a-z0-9_]*\$/gi
+    /create\s+(?:or\s+replace\s+)?function\s+((?:public|app)\.[a-z0-9_]+)[\s\S]*?\$[a-z0-9_]*\$/gi
   )];
 }
 
-/** GUARD 1 — every SECURITY DEFINER public function defined in `sql` must pin the canonical path. */
+/** GUARD 1 — every SECURITY DEFINER public/app function defined in `sql` must pin the canonical path. */
 export function definerSearchPathViolations(sql) {
   const violations = [];
-  const definitions = publicFunctionHeaders(sql);
-  for (const definition of definitions) {
+  for (const definition of definerFunctionHeaders(sql)) {
     const header = definition[0];
     if (!/security\s+definer/i.test(header)) continue;
-    const pinned = header.match(/set\s+search_path\s*(?:to|=)\s*([^\n;]+)/i);
-    if (!pinned) {
+    const entries = pinnedSearchPath(header);
+    if (!entries) {
       violations.push({ name: definition[1], searchPath: null, problem: 'no search_path pinned' });
       continue;
     }
-    const entries = splitSearchPath(pinned[1]);
     const problem = searchPathProblem(entries);
     if (problem) violations.push({ name: definition[1], searchPath: entries.join(', '), problem });
   }
@@ -169,18 +214,34 @@ async function orderedMigrations() {
   );
 }
 
-test('pending SECURITY DEFINER public functions pin the CANONICAL v21 search_path', async () => {
+test('pending SECURITY DEFINER public/app functions pin the CANONICAL v21 search_path', async () => {
   const failures = [];
   const supersets = [];
+  const subsets = [];
+  let definerCount = 0;
+  let appDefinerCount = 0;
   for (const migration of (await orderedMigrations()).filter(({ kind }) => kind === 'pending')) {
     for (const violation of definerSearchPathViolations(migration.sql)) {
+      const pin = `${migration.name} :: ${violation.name} :: ${violation.searchPath}`;
+      // A NARROWER-than-canonical path is more hardened, not less; it is allowed only when it is a
+      // true canonical subset AND recorded in the pinned inventory.
+      if (
+        violation.searchPath &&
+        isCanonicalSubset(violation.searchPath.split(', ')) &&
+        KNOWN_SEARCH_PATH_SUBSETS.includes(pin)
+      ) {
+        subsets.push(pin);
+        continue;
+      }
       failures.push(`${migration.name}: ${violation.name} has search_path [${violation.searchPath}] — ${violation.problem}`);
     }
-    for (const definition of publicFunctionHeaders(migration.sql)) {
+    for (const definition of definerFunctionHeaders(migration.sql)) {
       if (!/security\s+definer/i.test(definition[0])) continue;
-      const pinned = definition[0].match(/set\s+search_path\s*(?:to|=)\s*([^\n;]+)/i);
-      if (!pinned) continue;
-      for (const extra of splitSearchPath(pinned[1]).filter((entry) => !CANONICAL_SEARCH_PATH.includes(entry))) {
+      definerCount += 1;
+      if (definition[1].startsWith('app.')) appDefinerCount += 1;
+      const entries = pinnedSearchPath(definition[0]);
+      if (!entries) continue;
+      for (const extra of entries.filter((entry) => !CANONICAL_SEARCH_PATH.includes(entry))) {
         supersets.push(`${migration.name} :: ${definition[1]} :: ${extra}`);
       }
     }
@@ -199,6 +260,17 @@ test('pending SECURITY DEFINER public functions pin the CANONICAL v21 search_pat
     'A definer function added a non-canonical schema to its search_path. Justify it and pin it in ' +
       'KNOWN_SEARCH_PATH_SUPERSETS, or drop the extra schema.'
   );
+  assert.deepEqual(
+    subsets.sort(),
+    [...KNOWN_SEARCH_PATH_SUBSETS].sort(),
+    'A definer function pinned a NARROWER-than-canonical search_path. That is more hardened, not ' +
+      'less, but it must be a deliberate reviewed choice — justify it and pin it in ' +
+      'KNOWN_SEARCH_PATH_SUBSETS, or use the canonical path.'
+  );
+  // The rev-4 widening is load-bearing: if the `app.` half of the regex is ever dropped, the guard
+  // silently stops covering the SV money cores and every trigger guard. Assert it still sees them.
+  assert.ok(appDefinerCount >= 50, `GUARD 1 must cover app.* definer functions (saw ${appDefinerCount})`);
+  assert.ok(definerCount > appDefinerCount, 'GUARD 1 must still cover public.* definer functions');
 });
 
 test('a pending `create or replace view` never drops an applied security_invoker reloption', async () => {
@@ -250,6 +322,57 @@ test('GUARD 1 fails on a deliberately broken fixture', () => {
   assert.deepEqual(definerSearchPathViolations(canonical), []);
   const invoker = regressed.replace('security definer', 'security invoker');
   assert.deepEqual(definerSearchPathViolations(invoker), []);
+});
+
+test('GUARD 1 fires on an app.* definer function (the rev-4 widening)', () => {
+  // The EXACT mutation the independent reviewer used: v67's tender guard rewritten to a hijacked
+  // search_path. Under the rev-3 `public.`-only regex this was invisible and both guards stayed green.
+  const hijacked = [
+    'create or replace function app.checkout_sv_tenders_guard()',
+    'returns trigger language plpgsql security definer',
+    "set search_path to 'attacker', 'public'",
+    'as $$ begin return new; end $$;',
+  ].join('\n');
+  assert.deepEqual(
+    definerSearchPathViolations(hijacked),
+    [{
+      name: 'app.checkout_sv_tenders_guard',
+      searchPath: 'attacker, public',
+      problem: 'missing "pg_catalog"',
+    }],
+    'GUARD 1 must reject a hijacked search_path on an app.* definer function'
+  );
+  // …and an `attacker` schema can never be laundered through the subset inventory.
+  assert.equal(isCanonicalSubset(['attacker', 'public']), false);
+  assert.equal(isCanonicalSubset(['pg_catalog', 'attacker', 'pg_temp']), false);
+
+  // The v67 SV money cores are app.* definers too — canonical, so no violation.
+  const core = hijacked
+    .replace('app.checkout_sv_tenders_guard()', 'app.sv_spend_core(p_business uuid)')
+    .replace("set search_path to 'attacker', 'public'", "set search_path to 'pg_catalog', 'public', 'app', 'pg_temp'");
+  assert.deepEqual(definerSearchPathViolations(core), []);
+
+  // Parser fix: a pin written on the SAME line as `as $$` is canonical, not the junk schema
+  // `pg_temp' as $$` (app.on_sale_recorded in v29/v37b reads exactly like this).
+  const inlineTag = [
+    'create or replace function app.on_sale_recorded()',
+    'returns trigger language plpgsql security definer',
+    "set search_path to 'pg_catalog', 'public', 'app', 'pg_temp' as $$",
+    'begin return new; end $$;',
+  ].join('\n');
+  assert.deepEqual(definerSearchPathViolations(inlineTag), []);
+  assert.deepEqual(pinnedSearchPath(inlineTag), ['pg_catalog', 'public', 'app', 'pg_temp']);
+
+  // A NARROWER-than-canonical path is still reported by the checker (the test pins it separately);
+  // it is a real subset, so the inventory may honour it.
+  assert.equal(
+    definerSearchPathViolations(
+      inlineTag.replace("'pg_catalog', 'public', 'app', 'pg_temp' as $$", "'pg_catalog', 'pg_temp' as $$")
+    )[0].problem,
+    'missing "public"'
+  );
+  assert.equal(isCanonicalSubset(['pg_catalog', 'pg_temp']), true);
+  assert.equal(isCanonicalSubset(['pg_catalog', 'app', 'public', 'pg_temp']), false);
 });
 
 test('GUARD 2 fails on a deliberately broken fixture', () => {

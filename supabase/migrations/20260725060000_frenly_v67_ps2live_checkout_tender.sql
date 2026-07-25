@@ -37,10 +37,13 @@
 --      unchanged). All SV gates re-validated after the token lock (TOCTOU).
 --   6. public.sv_release_expired_checkout_tenders - owner/service sweep that releases (via
 --      app.sv_release_core) reservations bound to expired/consumed-by-another tokens. No new cron.
---   7. A TYPED REVERSAL REFUSAL (§11): reversing an sv-tendered sale is OUT OF v67 SCOPE (coherent
---      stored-value restitution is the v68 refund/reversal matrix), so v67 makes it REFUSE rather
---      than silently mis-settle. The gate is spliced into public.reverse_sale_v20_base - the money
---      core every reversal entry point funnels through - using the v49a pg_get_functiondef idiom.
+--   7. TWO TYPED REVERSAL REFUSALS (§11): unwinding an sv-tendered checkout is OUT OF v67 SCOPE
+--      (coherent stored-value restitution is the v68 refund/reversal matrix), so v67 makes BOTH
+--      halves REFUSE rather than silently mis-settle. §11a gates the SALE leg in
+--      public.reverse_sale_v20_base - the money core every reversal entry point funnels through;
+--      §11b gates the SETTLEMENT leg in public.sv_reverse_spend, which reverses a spend OPERATION
+--      directly and therefore never passes through the sale core at all. Both use the v49a
+--      pg_get_functiondef splice idiom.
 --
 -- SAFETY: applying v67 to a clean chain creates ZERO sv_lots/sv_lot_movements/sv_topup_payments/
 -- reservations/tenders. Reservations NEVER write sv_lot_movements; app.sv_total_outstanding is
@@ -58,7 +61,11 @@
 -- Non-sv sales are byte-unchanged. Paid/bonus revenue split is recorded on the tender for a future
 -- contra-revenue increment (PS-0 "bonus is promotional exposure, never revenue"), documented not invented.
 -- Both §10 surfaces read the settlement marker WITHOUT netting it out against a reversal; that is sound
--- only because §11 makes an sv-settled sale unreversible. Lifting §11 (v68) REQUIRES netting both legs.
+-- only because §11 makes an sv settlement unreversible from BOTH directions - §11a refuses reversing the
+-- SALE (public.reverse_sale_v20_base) and §11b refuses reversing the SETTLEMENT SPEND
+-- (public.sv_reverse_spend, which bypasses the sale core entirely). Lifting EITHER refusal in v68
+-- REQUIRES netting the settlement legs out of sale_balance.sv_tender_totals AND
+-- get_revenue_summary.v_sv_cash in the same increment.
 
 begin;
 
@@ -112,7 +119,17 @@ create index checkout_sv_tenders_eval_idx on public.checkout_sv_tenders (busines
 create index checkout_sv_tenders_business_idx on public.checkout_sv_tenders (business_id, created_at);
 
 -- Guard: identity + economics immutable; status is a one-way reserved -> consumed|released; no
--- DELETE. Terminal (consumed|released) is frozen.
+-- DELETE. Terminal (consumed|released) is frozen INCLUDING its settlement bindings.
+--
+-- The settlement columns (status, sale_id, spend_operation_id) are what §10 and §11 read to decide
+-- that a sale is settled, cash-basis revenue and unreversible. Leaving them out of the immutability
+-- list made that correctness ACL-dependent (safe only because `authenticated` holds no UPDATE grant)
+-- rather than trigger-enforced; a future grant, a definer helper, or a service-role write would have
+-- been able to flip 'consumed' back to 'reserved' or re-point sale_id at another sale. The trigger
+-- now enforces the transition machine itself, in the same append-only spirit as the rest of the
+-- chain: reserved -> consumed | released is the ONLY move, terminal rows never move again, and
+-- sale_id / spend_operation_id are WRITE-ONCE - settable exactly on the reserved -> consumed
+-- settlement, null on every other shape, and frozen thereafter.
 create or replace function app.checkout_sv_tenders_guard()
 returns trigger language plpgsql security definer
 set search_path to 'pg_catalog', 'public', 'app', 'pg_temp'
@@ -136,6 +153,29 @@ begin
   end if;
   if old.status <> 'reserved' and new.status is distinct from old.status then
     raise exception 'checkout_sv_tenders is already % (single-transition)', old.status using errcode = 'restrict_violation';
+  end if;
+  if old.status <> 'reserved' then
+    -- Terminal: the settlement bindings §10/§11 read are frozen with the status.
+    if new.sale_id is distinct from old.sale_id
+       or new.spend_operation_id is distinct from old.spend_operation_id then
+      raise exception 'checkout_sv_tenders is already % (settlement bindings are frozen)', old.status
+        using errcode = 'restrict_violation';
+    end if;
+  elsif new.status = 'consumed' then
+    -- The ONE transition that may write them, and it must write BOTH.
+    if old.sale_id is not null or old.spend_operation_id is not null then
+      raise exception 'checkout_sv_tenders sale/spend bindings are write-once' using errcode = 'restrict_violation';
+    end if;
+    if new.sale_id is null or new.spend_operation_id is null then
+      raise exception 'a consumed checkout_sv_tender must record both its sale and its spend operation'
+        using errcode = 'restrict_violation';
+    end if;
+  else
+    -- Still reserved, or reserved -> released: nothing settled, so nothing binds.
+    if new.sale_id is not null or new.spend_operation_id is not null then
+      raise exception 'only a consumed checkout_sv_tender may bind a sale and a spend operation'
+        using errcode = 'restrict_violation';
+    end if;
   end if;
   return new;
 end $$;
@@ -1126,6 +1166,13 @@ grant execute on function public.sv_release_expired_checkout_tenders(uuid, integ
 --     contra-revenue for ANY tender), and v67 must NOT change the sale total / earn base, so the
 --     paid/bonus split is recorded on checkout_sv_tenders (sv_paid_cents/sv_bonus_cents) for a future
 --     contra-revenue increment and documented here rather than invented (contract §4 "document").
+--
+--     COUPLING (read with §11). Neither surface nets the settlement marker out against a compensating
+--     movement, because in v67 no such compensation can exist: §11a refuses reversing the SALE and
+--     §11b refuses reversing the SETTLEMENT SPEND, so a 'consumed' tender is terminal in both
+--     directions and sv_settled_cents / v_sv_cash can never go stale. v68 (the refund/reversal
+--     matrix) must net BOTH legs - sv_tender_totals here and v_sv_cash below - in the SAME increment
+--     that lifts either refusal; lifting one alone reproduces exactly the defect §11 closes.
 -- =====================================================================
 create or replace view public.sale_balance
 with (security_invoker = on) as
@@ -1343,7 +1390,7 @@ revoke all on function public.get_revenue_summary(uuid, date, date, uuid) from p
 grant execute on function public.get_revenue_summary(uuid, date, date, uuid) to authenticated;
 
 -- =====================================================================
--- 11. TYPED REVERSAL REFUSAL FOR STORED-VALUE-TENDERED SALES.
+-- 11a. TYPED REVERSAL REFUSAL FOR STORED-VALUE-TENDERED SALES (the SALE leg).
 --     §10 gives an sv-tendered sale a NON-payment settlement (the consumed
 --     checkout_sv_tenders row). The v20 money core knows only public.payments and
 --     public.credit_ledger, so on such a sale reverse_sale would return 'ok' while
@@ -1362,10 +1409,15 @@ grant execute on function public.get_revenue_summary(uuid, date, date, uuid) to 
 --     refuses, mirroring the family's existing unsupported-scope refusal for
 --     gift_card/package/membership kinds: a plain RAISE (SQLSTATE P0001, no errcode
 --     override, exactly like its neighbour) with a typed message prefix.
---     NOTE the coupling: the §10 surfaces stay correct under reversal ONLY because this
---     gate makes an sv-settled sale unreversible. v68 must net the settlement leg out
+--     NOTE the coupling: the §10 surfaces stay correct under reversal ONLY because an
+--     sv settlement is unreversible from BOTH directions - this gate refuses reversing
+--     the SALE, and §11b refuses reversing the SETTLEMENT SPEND. Neither gate alone is
+--     sufficient: public.sv_reverse_spend takes a spend OPERATION and never funnels
+--     through this money core, so with only this gate in place the settlement could be
+--     unwound (value restored to the customer) while the sale kept reading paid and
+--     cash-basis revenue. v68 must net the settlement leg out
 --     (sale_balance.sv_tender_totals and get_revenue_summary's v_sv_cash) at the same
---     time it lifts this refusal.
+--     time it lifts EITHER refusal.
 --
 --     PLACEMENT - the single layer EVERY entry point funnels through. The live chain is
 --       public.refund_sale/6  ->  public.reverse_sale/6            (v58: discount compensation)
@@ -1437,5 +1489,132 @@ begin
   end if;
 end
 $v67_reversal_gate$;
+
+-- =====================================================================
+-- 11b. TYPED REVERSAL REFUSAL FOR THE SETTLEMENT SPEND (the STORED-VALUE leg).
+--     §11a closes the SALE door. public.sv_reverse_spend (v63, pause-gated in v64) is the
+--     OTHER door, and it does not open onto the same corridor: it takes a spend OPERATION
+--     id, is granted to `authenticated`, and reverses that operation directly through the
+--     lot ledger. It never calls reverse_sale_v20_base, so §11a's gate cannot see it - and
+--     §8.9b makes the checkout tender's settlement exactly such a spend operation
+--     (app.sv_spend_core, recorded as checkout_sv_tenders.spend_operation_id).
+--
+--     Observed on the §11a-only chain, as the business owner on a forced-live business,
+--     against the suite's SV-only 5000 sale:
+--         sv_reverse_spend -> {"status":"ok","restored_cents":5000,"net_restored_cents":5000}
+--         sv balance:   available 0 -> 5000, outstanding 0 -> 5000        (value returned)
+--         sale_balance: amount=5000 paid=0 sv_settled=5000 balance=0 status=paid  (UNCHANGED)
+--         revenue_cash 5000, accrual 5100                                (UNCHANGED)
+--         tender status still 'consumed'                                 (UNCHANGED)
+--     i.e. the customer keeps the goods AND gets the stored value back while the books
+--     still report the sale fully paid and count it as realised cash-basis revenue. That
+--     falsifies §10/§11a's own correctness argument: the SALE was unreversible, the
+--     SETTLEMENT was not. Latent (authority='live' is unreachable in prod until v69), but
+--     the reasoning ships now, so the gate ships now.
+--
+--     SCOPE - identical to §11a and deliberately narrow: v67 REFUSES, it does not net the
+--     legs. Netting the settlement out of sale_balance.sv_tender_totals and
+--     get_revenue_summary.v_sv_cash is the v68 refund/reversal matrix, and both refusals
+--     must be lifted together with that netting.
+--
+--     NON-CHECKOUT SPENDS STAY REVERSIBLE. The predicate is not "this account has a
+--     tender" nor "stored value moved" - it is exactly "a CONSUMED checkout tender of this
+--     business points at THIS spend operation". A plain owner-driven public.sv_spend
+--     writes no tender row, so v63's reversal remains available to it unchanged
+--     (asserted in db/tests/v67_ps2live_checkout_tender.sql).
+--
+--     ERROR SHAPE - the same typed-prefix idiom as §11a, with the sibling prefix
+--     `sv_tendered_spend_unsupported:`. The SQLSTATE follows the LOCAL family, exactly as
+--     §11a's did: every refusal already inside this body (sv_not_live, sv_paused,
+--     over-reversal, target-not-a-spend) raises 22023, so this one does too. §11a chose
+--     P0001 for the same reason - it is what ITS neighbours in reverse_sale_v20_base use.
+--
+--     PLACEMENT - after every authorization/existence check, after both advisory locks and
+--     after the idempotent-replay lookup, immediately before the over-reversal bound and
+--     therefore before the first write (the sv_operations insert). A refused attempt
+--     mutates nothing and reserves no idempotency key.
+--
+--     METHOD - the v49a / §11a pg_get_functiondef splice, not a transcribed body. The
+--     predecessor is v63's 130-line restore-then-expire money core as amended by v64's
+--     pause gate; transcribing it to add four lines is exactly the "rebuilt from an older
+--     source" class of defect the pending-migration guards exist to catch. Splicing
+--     preserves every unrelated byte BY CONSTRUCTION and fails closed on a drifted
+--     predecessor. Post-conditions differ from §11a in ONE place: sv_reverse_spend is an
+--     owner-facing RPC that legitimately holds EXECUTE for `authenticated`, so the ACL
+--     assertion is that the grant SURVIVED and that anon still has none.
+-- =====================================================================
+do $v67_sv_reverse_gate$
+declare
+  v_identity constant text := 'public.sv_reverse_spend(uuid,uuid,uuid)';
+  v_definition text;
+  v_needle text;
+  v_replacement text;
+  v_occurrences integer;
+  v_config text[];
+  v_secdef boolean;
+begin
+  select pg_get_functiondef(v_identity::regprocedure) into strict v_definition;
+
+  if position('checkout_sv_tenders' in v_definition) > 0 then
+    raise exception 'sv_reverse_spend already carries a checkout-tender settlement gate';
+  end if;
+
+  -- The needle carries the over-reversal bound's OWN comment so the splice lands ABOVE it and
+  -- cannot leave that comment annotating the newly inserted block (comment desync).
+  v_needle :=
+    '  -- BOUND: a spend op is reversed at most once. Any prior reverse of THIS spend op (under a' || E'\n' ||
+    '  -- different key) is over-reversal -> fail.' || E'\n' ||
+    '  if exists (' || E'\n' ||
+    '    select 1 from public.sv_operations o' || E'\n' ||
+    '     where o.business_id = p_business and o.operation_type = ''reverse''' || E'\n' ||
+    '       and o.result->>''spend_operation_id'' = p_spend_operation::text) then';
+  v_occurrences := (length(v_definition) - length(replace(v_definition, v_needle, '')))
+                   / length(v_needle);
+  if v_occurrences <> 1 then
+    raise exception 'unexpected sv_reverse_spend predecessor definition (needle occurrences: %)',
+      v_occurrences;
+  end if;
+
+  v_replacement :=
+    '  -- v67 §11b: a spend operation that SETTLED a checkout sale is not independently' || E'\n' ||
+    '  -- reversible (§10 keeps reading the consumed tender as settlement + cash-basis' || E'\n' ||
+    '  -- revenue); restitution is the v68 refund/reversal matrix.' || E'\n' ||
+    '  if exists (' || E'\n' ||
+    '    select 1' || E'\n' ||
+    '      from public.checkout_sv_tenders t' || E'\n' ||
+    '     where t.business_id = p_business' || E'\n' ||
+    '       and t.spend_operation_id = p_spend_operation' || E'\n' ||
+    '       and t.status = ''consumed''' || E'\n' ||
+    '  ) then' || E'\n' ||
+    '    raise exception ''sv_tendered_spend_unsupported: stored-value operation % settled a' ||
+    ' checkout sale; that sale stays paid and cash-basis revenue, so reversing the settlement' ||
+    ' alone is refused'', p_spend_operation' || E'\n' ||
+    '      using errcode = ''22023'';' || E'\n' ||
+    '  end if;' || E'\n' || E'\n' ||
+    v_needle;
+
+  execute replace(v_definition, v_needle, v_replacement);
+
+  -- The replace must not have relaxed the v21 hardening, dropped SECURITY DEFINER, or moved
+  -- the ACL in EITHER direction (CREATE OR REPLACE keeps grants, but assert rather than assume).
+  select p.proconfig, p.prosecdef into v_config, v_secdef
+    from pg_proc p where p.oid = v_identity::regprocedure;
+  if v_config is distinct from array['search_path=pg_catalog, public, app, pg_temp'] then
+    raise exception 'sv_reverse_spend lost its v21 hardened search_path: %', v_config;
+  end if;
+  if not v_secdef then
+    raise exception 'sv_reverse_spend is no longer SECURITY DEFINER';
+  end if;
+  if not has_function_privilege('authenticated', v_identity, 'execute') then
+    raise exception 'sv_reverse_spend lost the owner-RPC EXECUTE grant it has held since v63';
+  end if;
+  if has_function_privilege('anon', v_identity, 'execute') then
+    raise exception 'sv_reverse_spend must stay closed to anon';
+  end if;
+  if position('sv_tendered_spend_unsupported' in pg_get_functiondef(v_identity::regprocedure)) = 0 then
+    raise exception 'sv_reverse_spend checkout-tender settlement gate was not installed';
+  end if;
+end
+$v67_sv_reverse_gate$;
 
 commit;
