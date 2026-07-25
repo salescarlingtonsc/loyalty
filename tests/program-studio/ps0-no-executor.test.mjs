@@ -395,13 +395,20 @@ test('run_sv_reconciliation reads gift_cards READ-ONLY (no DML against the legac
   const corpus = await readMigrationCorpus();
   // PS-2A Increment B hard requirement: the reconciliation engine reads gift_cards as the
   // designated read-only legacy analog and must NEVER INSERT/UPDATE/DELETE a gift-card row
-  // (moving real customer value is out of PS-2A scope). v62 is the ONLY migration that defines
-  // run_sv_reconciliation, and it contains no gift_cards DML anywhere; assert that byte-for-byte.
+  // (moving real customer value is out of PS-2A scope). The check is scoped to the
+  // run_sv_reconciliation FUNCTION BODY, not the whole file: v70 legitimately co-locates the
+  // legacy gift-card ISSUER (public.issue_gift_card, which inserts gift_cards) with the v70
+  // replacement of run_sv_reconciliation, so a whole-file scan would wrongly attribute the
+  // issuer's insert to the reconciler. Every file that defines run_sv_reconciliation is checked.
   const recFiles = Object.entries(corpus).filter(([, sql]) => /function\s+public\.run_sv_reconciliation\b/i.test(sql));
   assert.ok(recFiles.length >= 1, 'PS-2A Increment B must define run_sv_reconciliation');
   for (const [file, sql] of recFiles) {
-    for (const m of sql.matchAll(/\b(insert\s+into|update|delete\s+from)\s+(?:only\s+)?(?:public\.)?gift_cards\b/gi)) {
-      assert.fail(`${file}: the PS-2A reconciliation migration must never write gift_cards (matched: ${m[0]})`);
+    const start = sql.search(/create\s+or\s+replace\s+function\s+public\.run_sv_reconciliation\s*\(/i);
+    // The reconciliation body runs from its CREATE to its own revoke line (the next statement).
+    const revokeAt = sql.indexOf('revoke all on function public.run_sv_reconciliation', start);
+    const body = sql.slice(start, revokeAt === -1 ? sql.length : revokeAt);
+    for (const m of body.matchAll(/\b(insert\s+into|update|delete\s+from)\s+(?:only\s+)?(?:public\.)?gift_cards\b/gi)) {
+      assert.fail(`${file}: run_sv_reconciliation must never write gift_cards (matched: ${m[0]})`);
     }
   }
 });

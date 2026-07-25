@@ -108,6 +108,7 @@
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v68a_chargeback_correction.sql", "semanticVersion": "v68a", "proposedDeployVersion": "20260722000144" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v68b_sv_reversal_netting.sql", "semanticVersion": "v68b", "proposedDeployVersion": "20260722000145" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v68c_customer_gift_cards.sql", "semanticVersion": "v68c", "proposedDeployVersion": "20260722000146" },
-    { "kind": "executable", "path": "db/migrations/20260724_frenly_v69_controlled_cutover.sql", "semanticVersion": "v69", "proposedDeployVersion": "20260722000147" }
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v69_controlled_cutover.sql", "semanticVersion": "v69", "proposedDeployVersion": "20260722000147" },
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v70_legacy_non_overlap.sql", "semanticVersion": "v70", "proposedDeployVersion": "20260722000148" }
   ]
 }

@@ -771,17 +771,17 @@
     {
       "id": "db.fn:public.issue_gift_card/4",
       "surface": "db_function",
-      "latest_file": "20260718175936_frenly_v9_giftcard_revenue.sql",
+      "latest_file": "20260725110000_frenly_v70_legacy_non_overlap.sql",
       "rows_written": "gift_cards:INSERT, sales:INSERT",
       "detected_signals": "none",
       "entry_point": "issue_gift_card(p_business,p_amount,p_purchaser,p_recipient_email)  [legacy, EXECUTE REVOKED v41]",
       "idempotency": "NONE (legacy)",
-      "kernel": "SAFE (dead path) \u2014 execute revoked v41; superseded by /5."
+      "kernel": "SAFE (dead path) \u2014 execute revoked v41; superseded by /5. v70: gated by sv_legacy_issue_guard (refuses new legacy value when the business is live on stored value)."
     },
     {
       "id": "db.fn:public.issue_gift_card/5",
       "surface": "db_function",
-      "latest_file": "20260721074441_frenly_v41_customer_module_hardening.sql",
+      "latest_file": "20260725110000_frenly_v70_legacy_non_overlap.sql",
       "rows_written": "gift_card_issue_operations:INSERT, gift_cards:INSERT, sales:INSERT",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "entry_point": "issue_gift_card(p_business,p_amount,p_purchaser,p_recipient_email,p_idempotency_key)  [idempotent]",
