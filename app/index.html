@@ -1754,8 +1754,8 @@ async function renderCustomerWallet(businessSlug=null){
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
      rating; a high rating only adds an extra prominent share card. review_url rides the existing
      customer_get_business_summary business projection (no new call site) — it is https-only.
-     NOTE: today that projection does not yet surface review_url, so this stays empty until the
-     backend adds it; the reachability predicate is `walletReviewUrl` presence only, never rating. */
+     The projection DOES surface review_url (added by v53a and verified live in prod), so this is
+     wired end to end; the reachability predicate is `walletReviewUrl` presence only, never rating. */
   const walletReviewUrl=(b.review_url&&/^https:\/\//.test(String(b.review_url)))?String(b.review_url):'';
   let feedbackSubmitIdem=null; // consume-once: minted on first submit, reused on retry, cleared on success
   let birthdayActivationAttemptId=crypto.randomUUID();
