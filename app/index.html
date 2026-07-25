@@ -1740,6 +1740,7 @@ async function renderCustomerWallet(businessSlug=null){
       ${capabilities.booking_request?`<section class="card wallet-section" id="walletBook" aria-busy="false"><div class="wallet-section-head"><div><h2>Book</h2><p class="muted small">Request your next visit with ${esc(b.name||'this business')}.</p></div><span class="spacer"></span><a class="btn sm" href="#/b/${encodeURIComponent(b.slug)}">Book now</a></div></section>`:''}
       ${capabilities.rewards?walletSectionShell('walletRewards','Rewards','Browse rewards and ask the team to claim at the counter.'):''}
       ${capabilities.activity?walletSectionShell('walletActivity','Activity','Your loyalty history with this business.'):''}
+      ${walletSectionShell('walletGiftCards','Gift cards','Money left on your gift cards from this business.')}
       ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
       ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
       ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
@@ -1825,6 +1826,28 @@ async function renderCustomerWallet(businessSlug=null){
       <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0);return `<div class="wallet-line"><div><b>${esc(item.title||'Loyalty activity')}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${item.detail?`<p class="muted small" style="margin-top:3px">${esc(item.detail)}</p>`:''}</div><span class="spacer"></span><span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':''}${delta} ${unit}</span></div>`}).join('')}</div>
       ${activityState.nextCursor?'<button class="btn ghost sm" id="walletActivityMore" style="margin-top:12px">Load more</button>':''}`;
     if($('walletActivityMore'))$('walletActivityMore').onclick=()=>{ $('walletActivityMore').disabled=true;loadActivity(activityState.nextCursor) };
+  };
+  /* Gift cards (v68c). Balance VISIBILITY only — never redemption, and the RPC deliberately never
+     returns the card code (it is a bearer instrument), so this section can only ever show a 4-char
+     display hint. There is no customer_portal_capabilities flag for gift cards, so the section is
+     shelled unconditionally and REMOVED when the customer holds none, per the pinned contract's
+     "rendered ONLY when the section returns >=1 card". Four states: loading (the shell's skeleton +
+     aria-busy), denied, error, empty (removal + the wallet-level empty state). */
+  const loadGiftCards=async()=>{
+    const host=$('walletGiftCards');if(!host)return;
+    host.setAttribute('aria-busy','true');
+    const {data,error}=await sb.rpc('customer_get_gift_cards',args);
+    if(!isWalletSectionCurrent(host))return;
+    if(error)return walletSectionError('walletGiftCards',walletRpcDenied(error)?'Gift cards are not available for this account.':'Gift cards could not be loaded.',loadGiftCards);
+    const cards=Array.isArray(data?.cards)?data.cards:[];
+    if(!cards.length){host.remove();ensureWalletEmptyState(businessSlug);return}
+    const giftCurrency=String(data?.business?.currency||currency);
+    const giftMoney=cents=>`${giftCurrency} ${(Number(cents||0)/100).toFixed(2)}`;
+    const giftState={active:'Ready to use',redeemed:'All used up',void:'Not valid'};
+    host.setAttribute('aria-busy','false');
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Gift cards</h2><p class="muted small">Show this screen at the counter — the team uses your card there. We never show the full card number.</p></div><span class="spacer"></span><span class="pill">${esc(giftMoney(data?.total_balance_cents))} left</span></div>
+      ${cards.map(card=>`<div class="wallet-line"><div><b>${esc(giftMoney(card.balance_cents))} left</b><p class="muted small" style="margin-top:3px">Card ····${esc(card.code_suffix||'')} · started at ${esc(giftMoney(card.initial_cents))}${card.created_at?' · '+esc(walletDate(card.created_at)):''}</p></div><span class="spacer"></span><span class="pill">${esc(giftState[card.status]||String(card.status||'').replaceAll('_',' '))}</span></div>`).join('')}
+      ${data?.truncated?`<p class="muted small" style="margin-top:10px">Showing your ${cards.length} newest cards. The total above counts every card you have.</p>`:''}`;
   };
   const packageState={items:[],nextCursor:null};
   const loadPackages=async(cursor=null)=>{
@@ -1946,7 +1969,7 @@ async function renderCustomerWallet(businessSlug=null){
       loadFeedback({highlightShare:rating>=4});
     };
   };
-  await Promise.all([loadRewards(),loadActivity(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback()]);
+  await Promise.all([loadRewards(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback()]);
   if(!isWalletCurrent())return;
   if(customerFeatures.customer_notifications) renderCustomerNotificationPreferences(businessSlug,isWalletCurrent);
   if(customerFeatures.customer_in_app_inbox===true) renderCustomerInAppInbox(businessSlug,isWalletCurrent,actionableCard);
