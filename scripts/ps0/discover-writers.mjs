@@ -150,6 +150,16 @@ const VALUE_TABLES = {
   //     are its only writers (owner-only, audited); the value RPCs merely READ it via
   //     app.sv_pause_active. No mutable balance column anywhere.
   sv_pauses:                               { category: 'stored_value_pause',            value: false },
+  // --- Program Studio PS-2 LIVE (v67): stored value as a CHECKOUT TENDER. checkout_sv_tenders is
+  //     the exact analogue of the v58 credit_tenders row already registered value:true above: a
+  //     'consumed' tender IS the settlement marker public.sale_balance reads as "this sale is paid"
+  //     (no phantom A/R) and public.get_revenue_summary reads as REALISED cash-basis revenue, and
+  //     §11 reads as "this settlement is unreversible". A write here therefore moves customer value
+  //     and hits the P&L surfaces, so it is value:true. Registering it puts
+  //     public.reserve_checkout_sv_tender and public.sv_release_expired_checkout_tenders into the
+  //     exhaustive writer set and adds checkout_sv_tenders:UPDATE to record_cart_sale's
+  //     machine-checked rows_written. (Found by independent review of v67 rev-4, finding F3.)
+  checkout_sv_tenders:                     { category: 'stored_value_tender',           value: true },
 };
 
 // Mutable-balance / alternate-naming stored-value tables that MUST NEVER exist. PS-2A

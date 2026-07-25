@@ -543,6 +543,41 @@ begin
     raise exception 'released tender bound a sale' using errcode='XX000';
   exception when others then assert sqlstate='23001','released+sale_id must be restrict_violation, got '||sqlstate; end;
   assert (select status from public.checkout_sv_tenders where id=tnd_grd) = 'reserved', 'the refused updates moved the tender';
+  -- (3b) ONE SETTLEMENT PER SALE AND PER SPEND OP (rev-5, review finding F2). The guard above only
+  --      enforces that a consumed row carries BOTH bindings - not that they are unclaimed. A direct
+  --      service_role UPDATE could therefore consume a SECOND reserved tender onto an already-settled
+  --      sale + spend op and inflate the §10 settlement surfaces (observed pre-fix: sale_svonly
+  --      sv_settled_cents 5000 -> 6000, revenue_cash with it). Two partial unique indexes on
+  --      status='consumed' close it structurally. Probed as postgres, one index at a time.
+  assert (select count(*) from pg_index i join pg_class c on c.oid=i.indexrelid
+           where c.relname in ('checkout_sv_tenders_settled_spend_uk','checkout_sv_tenders_settled_sale_uk')
+             and i.indisunique and i.indpred is not null) = 2,
+    'both settlement uniqueness indexes must exist, be UNIQUE and be PARTIAL';
+  select sv_settled_cents into sb from public.sale_balance where sale_id=sale_svonly and business_id=B;
+  begin update public.checkout_sv_tenders
+            set status='consumed', sale_id=sale_plain, spend_operation_id=svspendop where id=tnd_grd;
+    raise exception 'a second tender claimed an already-settled SPEND OP' using errcode='XX000';
+  exception when others then
+    assert sqlstate='23505','a duplicate settlement spend_operation_id must be a unique_violation, got '||sqlstate;
+    assert position('checkout_sv_tenders_settled_spend_uk' in sqlerrm) > 0,
+      'the spend-op settlement index must be the one that fires, got: '||sqlerrm;
+  end;
+  begin update public.checkout_sv_tenders
+            set status='consumed', sale_id=sale_svonly, spend_operation_id=plainop where id=tnd_grd;
+    raise exception 'a second tender claimed an already-settled SALE' using errcode='XX000';
+  exception when others then
+    assert sqlstate='23505','a duplicate settlement sale_id must be a unique_violation, got '||sqlstate;
+    assert position('checkout_sv_tenders_settled_sale_uk' in sqlerrm) > 0,
+      'the sale settlement index must be the one that fires, got: '||sqlerrm;
+  end;
+  assert (select status from public.checkout_sv_tenders where id=tnd_grd) = 'reserved',
+    'the refused double-settlement updates moved the tender';
+  assert (select sv_settled_cents from public.sale_balance where sale_id=sale_svonly and business_id=B) = sb.sv_settled_cents,
+    'a refused double-settlement inflated sale_balance.sv_settled_cents';
+  -- ...and the indexes are PARTIAL, so reserved/released rows (bindings NULL) stay outside them:
+  -- the fixture already carries several of each and the suite got here without a unique violation.
+  assert (select count(*) from public.checkout_sv_tenders where business_id=B and status<>'consumed') > 1,
+    'the partial-index control needs more than one non-consumed tender in the fixture';
   -- (4) a CONSUMED tender is terminal in status AND in both settlement bindings
   select id, sale_id, spend_operation_id into tnd_grd, grd_sale, grd_spend
     from public.checkout_sv_tenders where business_id=B and sale_id=sale_svonly;

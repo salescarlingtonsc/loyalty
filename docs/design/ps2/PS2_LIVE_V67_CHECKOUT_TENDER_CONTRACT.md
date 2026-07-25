@@ -89,6 +89,18 @@ partially-spent top-up still matches v63 suite). Chain gates: fresh full replay 
 suites green (reinstate fixture updated only if v67 retires something — avoid retiring); validate;
 build; writer registry (curate any new/changed writer identities + browser bindings); git diff --check.
 
+**rev-5 additions.** (a) `db/tests/v67_prod_shape_splice.sh` — the PRODUCTION-SHAPE splice parity
+harness (see §9.1): rebuild through v66b, strip the full-line `--` comments out of the live
+`public.sv_reverse_spend` body to reproduce prod's shape, then apply v67 and re-run the whole suite
+against it. It also asserts the rev-4 comment-anchored needle drops to **0** occurrences in that
+shape while the rev-5 needle stays at **1**. (b) Two partial unique indexes on
+`checkout_sv_tenders (business_id, spend_operation_id)` and `(business_id, sale_id)` `where status =
+'consumed'` make the settlement 1:1 that §10 and §11 both assume STRUCTURAL rather than conventional
+(review finding F2: the guard trigger required a consumed row to carry both bindings but not that
+they were unclaimed, so a direct `service_role` UPDATE could settle a second tender onto an
+already-settled sale + spend op and inflate `sv_settled_cents` / `revenue_cash`). Both indexes are
+probed one at a time in the suite, by index name.
+
 ## 9. Registration + release
 Pending version `20260725060000` (canonical 104→105, pending 59→60, db manifest 102→103, collision
 20260724 16→17, preflight map += v67, fixture deploy-version bump if colliding). Freeze → independent
@@ -96,3 +108,25 @@ adversarial review on the exact SHA → **PASS V67** → apply to prod (byte-fid
 rehearsal, normalized-comment fallback documented) → normalize ledger → reconcile main → verify
 /api/build → §10-style safety catalog (real businesses: authority unbuilt, 0 real
 lots/movements/payments/reservations; canary: synthetic evidence only).
+
+### 9.1 STANDING RULE — splice needles anchor on comment-free code, validated against prod
+**Every `pg_get_functiondef` splice (the v49a idiom, used by §11a and §11b) MUST anchor its needle
+on COMMENT-FREE code, MUST splice in a comment-free block, and MUST have its needle validated
+against PRODUCTION's live catalog before the migration is frozen.**
+
+Why: the local rehearsal chain replays `db/migrations/*.sql` through `psql`, which preserves comments
+verbatim. Production was built through the Supabase MCP `apply_migration`, which **condenses full-line
+`--` comments out of large function bodies** (observed on v66's `record_sv_topup_sale` and across the
+v60 wave; prod's live `sv_reverse_spend` body keeps only its 2 trailing `--` markers and none of its
+10 full-line comments). **The rehearsal DB is therefore not byte-faithful to production for function
+bodies.** A comment-anchored needle matches once in rehearsal and **zero times in prod**, so the
+splice raises `unexpected <fn> predecessor definition (needle occurrences: 0)` and rolls the ENTIRE
+migration back. This is exactly what v67 rev-4's §11b needle would have done; it passed every local
+gate and was caught only by reading the production catalog. No amount of local rehearsal finds it.
+
+Enforcement: `tests/phase0-foundation/pending-migration-hardening-guards.test.mjs` **GUARD 3** fails
+any pending migration whose splice needle or spliced-in block contains `--` (and fails closed when a
+needle cannot be parsed); `db/tests/v67_prod_shape_splice.sh` rehearses the apply against a
+production-shaped predecessor by stripping the full-line comments out of the live body first.
+A pre-freeze read of prod's `pg_get_functiondef` for the target function remains mandatory — the
+guard proves the needle *can* match a comment-stripped body, only prod proves it *does*.

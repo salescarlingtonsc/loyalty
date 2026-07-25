@@ -45,6 +45,21 @@
 --      directly and therefore never passes through the sale core at all. Both use the v49a
 --      pg_get_functiondef splice idiom.
 --
+-- STANDING RULE FOR EVERY pg_get_functiondef SPLICE IN THIS REPO (learned the hard way at v67
+-- rev-4/rev-5): a splice needle MUST anchor on COMMENT-FREE code, and it MUST be validated
+-- against PRODUCTION's live catalog (pg_get_functiondef on the target) before the migration is
+-- frozen. The local rehearsal chain is replayed from repo files through psql, which preserves
+-- comments verbatim; PRODUCTION was built through the Supabase MCP `apply_migration`, which
+-- CONDENSES `--` comments out of large function bodies (observed on v66's record_sv_topup_sale
+-- and across the v60 wave). The rehearsal DB is therefore NOT byte-faithful to prod for function
+-- bodies. A comment-anchored needle passes every local gate and then matches ZERO times in prod,
+-- raising `unexpected <fn> predecessor definition (needle occurrences: 0)` and rolling back the
+-- ENTIRE migration - which is exactly what rev-4's §11b needle would have done. No amount of local
+-- rehearsal catches this; only a prod catalog read does. The rule is machine-enforced by
+-- tests/phase0-foundation/pending-migration-hardening-guards.test.mjs (GUARD 3) and rehearsed by
+-- db/tests/v67_prod_shape_splice.sh, which strips the comments out of the predecessor body to
+-- reproduce the production shape before applying v67.
+--
 -- SAFETY: applying v67 to a clean chain creates ZERO sv_lots/sv_lot_movements/sv_topup_payments/
 -- reservations/tenders. Reservations NEVER write sv_lot_movements; app.sv_total_outstanding is
 -- unchanged by reserve/release. The v66 mint tripwire (only record_sv_topup_sale mints a paid lot)
@@ -117,6 +132,23 @@ create unique index checkout_sv_tenders_active_uk
   on public.checkout_sv_tenders (business_id, account_id) where status = 'reserved';
 create index checkout_sv_tenders_eval_idx on public.checkout_sv_tenders (business_id, evaluation_id, status);
 create index checkout_sv_tenders_business_idx on public.checkout_sv_tenders (business_id, created_at);
+-- One SETTLEMENT per sale and per spend operation. A 'consumed' row is the settlement marker §10
+-- reads as "paid + realised cash revenue" and §11 reads as "unreversible", and BOTH read it 1:1:
+-- §11a asks "is there a consumed tender for THIS sale", §11b "for THIS spend operation". The guard
+-- trigger above enforces that a consumed row carries BOTH bindings, but not that no OTHER consumed
+-- row already claims the same sale or the same spend operation - so a direct service_role UPDATE
+-- could consume a second reserved tender onto an ALREADY-settled sale + spend op and INFLATE
+-- sale_balance.sv_tender_totals / get_revenue_summary.v_sv_cash (observed on the rev-4 chain:
+-- sv_settled_cents 5000 -> 6000, revenue_cash with it). These two partial unique indexes make the
+-- 1:1 STRUCTURAL rather than a convention the readers assume. Neither can fire on the legitimate
+-- path: record_cart_sale consumes exactly ONE tender per invocation and that invocation creates
+-- exactly ONE new sale, so a consumed row's (sale_id, spend_operation_id) pair is fresh by
+-- construction. Both are partial on status='consumed', so reserved/released rows (whose bindings
+-- are NULL) are outside the index entirely.
+create unique index checkout_sv_tenders_settled_spend_uk
+  on public.checkout_sv_tenders (business_id, spend_operation_id) where status = 'consumed';
+create unique index checkout_sv_tenders_settled_sale_uk
+  on public.checkout_sv_tenders (business_id, sale_id) where status = 'consumed';
 
 -- Guard: identity + economics immutable; status is a one-way reserved -> consumed|released; no
 -- DELETE. Terminal (consumed|released) is frozen INCLUDING its settlement bindings.
@@ -1530,8 +1562,9 @@ $v67_reversal_gate$;
 --     P0001 for the same reason - it is what ITS neighbours in reverse_sale_v20_base use.
 --
 --     PLACEMENT - after every authorization/existence check, after both advisory locks and
---     after the idempotent-replay lookup, immediately before the over-reversal bound and
---     therefore before the first write (the sv_operations insert). A refused attempt
+--     after the idempotent-replay lookup, immediately AFTER the over-reversal bound (see
+--     NEEDLE ANCHORING below) and therefore still before the first write - the sv_operations
+--     insert; only the read-only restore-plan loop sits between them. A refused attempt
 --     mutates nothing and reserves no idempotency key.
 --
 --     METHOD - the v49a / §11a pg_get_functiondef splice, not a transcribed body. The
@@ -1542,6 +1575,35 @@ $v67_reversal_gate$;
 --     predecessor. Post-conditions differ from §11a in ONE place: sv_reverse_spend is an
 --     owner-facing RPC that legitimately holds EXECUTE for `authenticated`, so the ACL
 --     assertion is that the grant SURVIVED and that anon still has none.
+--
+--     NEEDLE ANCHORING (rev-5, and a STANDING RULE for every future splice - see the header
+--     note). The rev-4 needle opened on the over-reversal bound's OWN `-- BOUND:` comment so
+--     the gate would land ABOVE it. That needle occurs ONCE in a psql-replayed rehearsal DB
+--     and ZERO times in production: prod's catalog was built through the Supabase MCP
+--     `apply_migration`, which CONDENSES `--` comments out of large function bodies (first
+--     observed on v66's record_sv_topup_sale and across the v60 wave). The rehearsal cluster
+--     is therefore NOT byte-faithful to prod for function bodies, and a comment-anchored
+--     needle passes every local gate while raising
+--     `unexpected sv_reverse_spend predecessor definition (needle occurrences: 0)` against
+--     prod - rolling the whole migration back. The needle is now the LAST TWO LINES of the
+--     completed over-reversal construct (its raise + its `end if;`), which is pure code,
+--     byte-identical in the v64 source and in prod's live definition, and occurs exactly once
+--     in both. The gate is spliced AFTER that construct rather than before it, so no comment
+--     - present in rehearsal, absent in prod - can be orphaned or re-annotated in either
+--     environment, and the INSERTED block carries no `--` of its own for the same reason
+--     (v67 is the only migration in the repo that ever put `--` inside a single-quoted
+--     literal; that is now forbidden by
+--     tests/phase0-foundation/pending-migration-hardening-guards.test.mjs GUARD 3).
+--
+--     PLACEMENT CONSEQUENCE of moving from before to after that construct: the gate still sits
+--     after every authz/existence check, after both advisory locks, after the idempotent-replay
+--     lookup, and BEFORE the first write (the sv_operations insert; the restore plan loop between
+--     them is read-only) - so a refused attempt still mutates nothing and reserves no idempotency
+--     key. The only behavioural difference is ordering between two refusals: an operation that is
+--     BOTH already-reversed AND a checkout settlement now reports the over-reversal first. Both
+--     are 22023 refusals that write nothing, so no caller-visible outcome changes beyond the
+--     message, and the settlement refusal is still the only reachable one for a real settlement
+--     spend (which by construction has never been reversed).
 -- =====================================================================
 do $v67_sv_reverse_gate$
 declare
@@ -1559,15 +1621,15 @@ begin
     raise exception 'sv_reverse_spend already carries a checkout-tender settlement gate';
   end if;
 
-  -- The needle carries the over-reversal bound's OWN comment so the splice lands ABOVE it and
-  -- cannot leave that comment annotating the newly inserted block (comment desync).
+  -- COMMENT-FREE NEEDLE (rev-5). The last two lines of the COMPLETED over-reversal construct:
+  -- pure code, byte-identical in the v64 source and in production's live catalog (where the MCP
+  -- apply has condensed every `--` comment out of this body), single-occurrence in both. The gate
+  -- is spliced AFTER this construct, so nothing can orphan or re-annotate a comment that exists in
+  -- one environment and not the other. The inserted block is comment-free for the same reason.
   v_needle :=
-    '  -- BOUND: a spend op is reversed at most once. Any prior reverse of THIS spend op (under a' || E'\n' ||
-    '  -- different key) is over-reversal -> fail.' || E'\n' ||
-    '  if exists (' || E'\n' ||
-    '    select 1 from public.sv_operations o' || E'\n' ||
-    '     where o.business_id = p_business and o.operation_type = ''reverse''' || E'\n' ||
-    '       and o.result->>''spend_operation_id'' = p_spend_operation::text) then';
+    '    raise exception ''stored-value spend operation is already reversed (over-reversal refused)''' ||
+    ' using errcode = ''22023'';' || E'\n' ||
+    '  end if;';
   v_occurrences := (length(v_definition) - length(replace(v_definition, v_needle, '')))
                    / length(v_needle);
   if v_occurrences <> 1 then
@@ -1576,9 +1638,7 @@ begin
   end if;
 
   v_replacement :=
-    '  -- v67 §11b: a spend operation that SETTLED a checkout sale is not independently' || E'\n' ||
-    '  -- reversible (§10 keeps reading the consumed tender as settlement + cash-basis' || E'\n' ||
-    '  -- revenue); restitution is the v68 refund/reversal matrix.' || E'\n' ||
+    v_needle || E'\n' || E'\n' ||
     '  if exists (' || E'\n' ||
     '    select 1' || E'\n' ||
     '      from public.checkout_sv_tenders t' || E'\n' ||
@@ -1590,8 +1650,7 @@ begin
     ' checkout sale; that sale stays paid and cash-basis revenue, so reversing the settlement' ||
     ' alone is refused'', p_spend_operation' || E'\n' ||
     '      using errcode = ''22023'';' || E'\n' ||
-    '  end if;' || E'\n' || E'\n' ||
-    v_needle;
+    '  end if;';
 
   execute replace(v_definition, v_needle, v_replacement);
 

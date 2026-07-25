@@ -1055,8 +1055,8 @@
       "version": "20260725060000",
       "name": "frenly_v67_ps2live_checkout_tender",
       "path": "supabase/migrations/20260725060000_frenly_v67_ps2live_checkout_tender.sql",
-      "octetLength": 91938,
-      "sha256": "eef16b23ff41920d31628b699fbb1da8748ea1baf42c517688c50fd91fc7dc1f",
+      "octetLength": 96991,
+      "sha256": "71423f959b3dd1892b32c5f637a25de9cbab5e3b5f67a033df1268efec2eb959",
       "provenance": "local-source"
     }
   ]

@@ -15,6 +15,19 @@
 // guards make that class statically detectable BEFORE apply. Each checker is a pure function so it
 // can be, and is, proven to FAIL on a deliberately broken fixture below.
 //
+// GUARD 3 closes a THIRD instance of the same family, found during the v67 rev-4 production
+// pre-apply check. §11b patches public.sv_reverse_spend with the v49a `pg_get_functiondef` splice
+// idiom: read the APPLIED definition, locate a single-occurrence needle, re-execute the definition
+// with a gate spliced in. The rev-4 needle anchored on the over-reversal bound's OWN `-- BOUND:`
+// comment lines. Occurrences: ONE in a rehearsal cluster, ZERO in production — because the two are
+// built differently. Rehearsal replays db/migrations/*.sql through psql, which preserves comments;
+// production was built through the Supabase MCP `apply_migration`, which CONDENSES full-line `--`
+// comments out of large function bodies (observed on v66's record_sv_topup_sale and across the v60
+// wave). The rehearsal DB is NOT byte-faithful to prod for function bodies, so the migration passed
+// every local gate and would have raised `unexpected sv_reverse_spend predecessor definition
+// (needle occurrences: 0)` against prod, rolling the ENTIRE migration back. Rule, now enforced:
+// a splice needle (and the block it splices in) must anchor on COMMENT-FREE code.
+//
 // v67 rev-3 → rev-4 (independent review D-B): GUARD 1 matched only `create … function public.…`,
 // so every `app.*` SECURITY DEFINER function was invisible to it — including the SV money cores
 // (app.sv_reserve_core / sv_spend_core / sv_release_core) and every trigger guard, which is exactly
@@ -201,6 +214,80 @@ export function viewReloptionViolations(files) {
   return violations;
 }
 
+// ---------------------------------------------------------------------------
+// GUARD 3 — dynamic `pg_get_functiondef` splices must anchor on comment-free code.
+// ---------------------------------------------------------------------------
+
+// The idiom's only executable form in this repo: `execute replace(<definition>, <needle>, <repl>)`.
+// The third argument may be an empty literal (v49a deletes a fragment that way).
+const SPLICE_EXECUTE = /execute\s+replace\s*\(\s*([a-z0-9_]+)\s*,\s*([a-z0-9_]+)\s*,\s*([a-z0-9_]+|''|'')\s*\)/gi;
+
+/**
+ * The single-quoted string literals that a plpgsql assignment `<variable> := …;` concatenates.
+ * Walks to the terminating `;` while respecting `''` escapes, so a `;` inside a literal (every
+ * spliced statement ends with one) does not truncate the scan. `E'\n'` yields the literal `\n`.
+ */
+export function assignedLiterals(code, variable) {
+  // `<var> :=` in a body, and `<var> [constant] <type> :=` in a DECLARE block (v50a/v52/v53a
+  // initialise their needles there). The bounded `[^:;=]` run cannot cross a statement boundary,
+  // so a bare `v_needle text;` declaration is not mistaken for an assignment.
+  const anchor = new RegExp(`(?:^|[^a-z0-9_])(${variable})[^:;=]{0,40}:=`, 'gi');
+  const assignments = [];
+  let match;
+  while ((match = anchor.exec(code)) !== null) {
+    const literals = [];
+    let i = anchor.lastIndex;
+    let current = null;
+    for (; i < code.length; i++) {
+      const c = code[i];
+      if (current === null) {
+        if (c === ';') break;
+        if (c === "'") current = '';
+        continue;
+      }
+      if (c === "'" && code[i + 1] === "'") { current += "'"; i += 1; continue; }
+      if (c === "'") { literals.push(current); current = null; continue; }
+      current += c;
+    }
+    assignments.push({ variable: match[1], literals, terminated: current === null && i < code.length });
+  }
+  return assignments;
+}
+
+/**
+ * GUARD 3 — for every `pg_get_functiondef` splice in `sql`, the needle AND the spliced-in
+ * replacement must be free of `--`. A needle carrying a comment matches a psql-replayed rehearsal
+ * DB and NOT production (whose function bodies lost their full-line comments to the MCP apply);
+ * a replacement carrying one is the same divergence in the other direction, and would additionally
+ * be truncated into an unterminated literal by any comment stripper that is not string-aware.
+ * Fails CLOSED: a splice whose needle variable has no discoverable assignment is a violation too,
+ * because an unparsed needle cannot be shown to be comment-free.
+ */
+export function spliceNeedleViolations(sql) {
+  const code = stripSqlComments(sql);
+  if (!/pg_get_functiondef/i.test(code)) return [];
+  const violations = [];
+  SPLICE_EXECUTE.lastIndex = 0;
+  let call;
+  while ((call = SPLICE_EXECUTE.exec(code)) !== null) {
+    for (const [role, variable] of [['needle', call[2]], ['replacement', call[3]]]) {
+      if (variable.startsWith("'")) continue; // an inline empty literal deletes rather than splices
+      const assignments = assignedLiterals(code, variable);
+      if (assignments.length === 0) {
+        violations.push({ role, variable, problem: 'no parsable assignment (cannot prove it is comment-free)' });
+        continue;
+      }
+      for (const assignment of assignments) {
+        const offending = assignment.literals.filter((literal) => literal.includes('--'));
+        if (offending.length > 0) {
+          violations.push({ role, variable, problem: `contains a "--" comment: ${JSON.stringify(offending[0].trim().slice(0, 72))}` });
+        }
+      }
+    }
+  }
+  return violations;
+}
+
 async function orderedMigrations() {
   const plan = JSON.parse(await readFile(planPath, 'utf8'));
   return Promise.all(
@@ -373,6 +460,109 @@ test('GUARD 1 fires on an app.* definer function (the rev-4 widening)', () => {
   );
   assert.equal(isCanonicalSubset(['pg_catalog', 'pg_temp']), true);
   assert.equal(isCanonicalSubset(['pg_catalog', 'app', 'public', 'pg_temp']), false);
+});
+
+test('pending pg_get_functiondef splices anchor on COMMENT-FREE code', async () => {
+  const failures = [];
+  let spliceCount = 0;
+  for (const migration of (await orderedMigrations()).filter(({ kind }) => kind === 'pending')) {
+    const code = stripSqlComments(migration.sql);
+    SPLICE_EXECUTE.lastIndex = 0;
+    spliceCount += [...code.matchAll(SPLICE_EXECUTE)].length;
+    for (const violation of spliceNeedleViolations(migration.sql)) {
+      failures.push(`${migration.name}: ${violation.role} ${violation.variable} — ${violation.problem}`);
+    }
+  }
+
+  assert.deepEqual(
+    failures,
+    [],
+    'A pending migration splices a function definition using a needle (or inserts a block) that ' +
+      'carries a "--" comment. Production function bodies lose their full-line comments to the ' +
+      'Supabase MCP apply, so a comment-anchored needle matches the rehearsal cluster and NOT ' +
+      'production — the splice then raises "needle occurrences: 0" and rolls the whole migration ' +
+      `back. Anchor on comment-free code:\n  - ${failures.join('\n  - ')}`
+  );
+  // The scanner is load-bearing: if the SPLICE_EXECUTE shape ever stops matching, this guard goes
+  // silently blind. v49a(x2) + v49b + v50a(x2) + v52(x3) + v53a + v67(x2) = 11 parsed splices, plus
+  // v49a's one delete-form `replace(v_definition, v_needle, '')` which is counted but not spliced.
+  assert.ok(spliceCount >= 11, `GUARD 3 must still see the splice idiom (saw ${spliceCount})`);
+});
+
+test('GUARD 3 fails on a deliberately broken fixture', () => {
+  // The EXACT v67 rev-4 needle: anchored on the over-reversal bound's own `-- BOUND:` comment.
+  // It occurs once in a psql-replayed rehearsal DB and zero times in production.
+  const rev4 = [
+    'do $gate$',
+    'declare v_definition text; v_needle text; v_replacement text;',
+    'begin',
+    "  select pg_get_functiondef('public.sv_reverse_spend(uuid,uuid,uuid)'::regprocedure) into strict v_definition;",
+    '  v_needle :=',
+    "    '  -- BOUND: a spend op is reversed at most once. Any prior reverse of THIS spend op (under a' || E'\\n' ||",
+    "    '  -- different key) is over-reversal -> fail.' || E'\\n' ||",
+    "    '  if exists (';",
+    "  v_replacement := '  if exists (select 1 from public.checkout_sv_tenders) then raise; end if;' || E'\\n' || v_needle;",
+    '  execute replace(v_definition, v_needle, v_replacement);',
+    'end',
+    '$gate$;',
+  ].join('\n');
+  const violations = spliceNeedleViolations(rev4);
+  assert.deepEqual(violations.map((v) => `${v.role}:${v.variable}`), ['needle:v_needle']);
+  assert.match(violations[0].problem, /contains a "--" comment/);
+  assert.match(violations[0].problem, /BOUND: a spend op is reversed/);
+
+  // The rev-5 shape: needle = the last two lines of the completed over-reversal construct, gate
+  // spliced AFTER it, no comment anywhere in either literal.
+  const rev5 = [
+    'do $gate$',
+    'declare v_definition text; v_needle text; v_replacement text;',
+    'begin',
+    "  select pg_get_functiondef('public.sv_reverse_spend(uuid,uuid,uuid)'::regprocedure) into strict v_definition;",
+    '  v_needle :=',
+    "    '    raise exception ''stored-value spend operation is already reversed (over-reversal refused)''' ||",
+    "    ' using errcode = ''22023'';' || E'\\n' ||",
+    "    '  end if;';",
+    "  v_replacement := v_needle || E'\\n' || E'\\n' || '  if exists (select 1 from public.checkout_sv_tenders) then' || E'\\n' || '  end if;';",
+    '  execute replace(v_definition, v_needle, v_replacement);',
+    'end',
+    '$gate$;',
+  ].join('\n');
+  assert.deepEqual(spliceNeedleViolations(rev5), [], 'the comment-free rev-5 shape must pass');
+
+  // A `--` hidden only in the SPLICED-IN block is the same divergence, and is caught too.
+  const commentedReplacement = rev5.replace(
+    "'  if exists (select 1 from public.checkout_sv_tenders) then'",
+    "'  -- v67: refuse' || E'\\n' || '  if exists (select 1 from public.checkout_sv_tenders) then'"
+  );
+  assert.deepEqual(
+    spliceNeedleViolations(commentedReplacement).map((v) => v.role),
+    ['replacement'],
+    'GUARD 3 must reject a comment inside the block being spliced INTO a function body'
+  );
+
+  // A `--` in ordinary SQL commentary around the splice is not a violation (only literals count),
+  // and a file with no splice at all is out of scope.
+  assert.deepEqual(spliceNeedleViolations(`-- BOUND: prose about the needle\n${rev5}`), []);
+  assert.deepEqual(spliceNeedleViolations("select 1; -- v_needle := '  -- not a splice';"), []);
+
+  // Fails CLOSED: a splice whose needle is built somewhere this parser cannot see is a violation,
+  // because an unparsed needle cannot be shown to be comment-free.
+  const opaque = rev5.replace(/ {2}v_needle :=[\s\S]*?';\n/, '  perform pg_temp.build_needle();\n');
+  assert.deepEqual(
+    spliceNeedleViolations(opaque).map((v) => `${v.role}:${v.problem}`),
+    ['needle:no parsable assignment (cannot prove it is comment-free)']
+  );
+
+  // The literal walker must not stop at the `;` that ends a spliced STATEMENT inside a literal.
+  assert.deepEqual(
+    assignedLiterals("v_needle := '  end if;' || E'\\n' || '  raise;';", 'v_needle')[0].literals,
+    ['  end if;', '\\n', '  raise;']
+  );
+  // …and `''` inside a literal is an escaped quote, not a terminator.
+  assert.deepEqual(
+    assignedLiterals("v_needle := '  x = ''consumed'';';", 'v_needle')[0].literals,
+    ["  x = 'consumed';"]
+  );
 });
 
 test('GUARD 2 fails on a deliberately broken fixture', () => {

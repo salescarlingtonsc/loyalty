@@ -320,6 +320,14 @@
       "call_site_finding": "none"
     },
     {
+      "id": "browser.rpc:app/index.html:reserve_checkout_sv_tender",
+      "surface": "browser_rpc_binding",
+      "rpc": "reserve_checkout_sv_tender",
+      "resolves_to": "reserve_checkout_sv_tender/4 (idempotent, keyed) — v67 Till \"Use stored value\" opt-in, between evaluate_checkout and record_cart_sale",
+      "call_site_finding": "none — the browser sends only (business, evaluation_id, requested_cents, key); the server clamps to min(requested, available, token total), and every gate (authority live, no synthetic customer on live, redeem pause, currency, create_sales, branch scope, tenant) is server-side. Re-classified from allowlist to writers in v67 rev-5 (review finding F3): once checkout_sv_tenders is registered as a value table this binding reaches a value writer, and value-impacting identities must be curated, not excused.",
+      "prior_allowlist_reason": "v67 Till 'Use stored value' opt-in: binds the customer's stored-value HOLD (non-value) to the current evaluation token via app.sv_reserve_core. Reserves against available balance (no sv_lot_movement, no value moved); the value spend happens only at record_cart_sale finalisation. create_sales + can_see_branch + tenant gated; HARD-GATED on authority='live' (structurally unreachable in prod, so the UI never offers it) + redeem-pause + no-synthetic-on-live + currency. Server-authoritative amounts; the browser computes nothing."
+    },
+    {
       "id": "browser.rpc:app/index.html:record_quick_sale",
       "surface": "browser_rpc_binding",
       "rpc": "record_quick_sale",
@@ -1360,8 +1368,8 @@
     {
       "id": "db.fn:public.record_cart_sale/9",
       "surface": "db_function",
-      "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
-      "rows_written": "sale_items:INSERT (server lines + signed studio_discount lines), checkout_discount_lines:INSERT, benefit_fulfilments:INSERT, budget_reservations:INSERT, budget_periods:INSERT/UPDATE, checkout_evaluations:UPDATE (consume)",
+      "latest_file": "20260725060000_frenly_v67_ps2live_checkout_tender.sql",
+      "rows_written": "sale_items:INSERT (server lines + signed studio_discount lines), checkout_discount_lines:INSERT, benefit_fulfilments:INSERT, budget_reservations:INSERT, budget_periods:INSERT/UPDATE, checkout_evaluations:UPDATE (consume), checkout_sv_tenders:UPDATE (reserved -> consumed, binding sale_id + spend_operation_id)",
       "detected_signals": "idem-signal, for-update",
       "entry_point": "record_cart_sale(p_business,p_client,p_branch,p_staff,p_method,p_idempotency_key,p_lines,p_evaluation_id,p_paid)  [the arity-9 TOKEN finaliser]",
       "callers": "browser till checkout, after evaluate_checkout",
@@ -1428,6 +1436,37 @@
       "value": "NON-VALUE HOLD release: transitions an active sv_reservations hold to 'released' (returning it to available) + writes its sv_operations idempotency row; never touches sv_lot_movements.",
       "authority": "HARD-GATED on authority='live' (unreachable in prod); idempotent.",
       "kernel": "SEPARATE-LEDGER hold machinery reused by the PS-1C checkout tender (v67)."
+    },
+    {
+      "id": "db.fn:public.reserve_checkout_sv_tender/4",
+      "surface": "db_function",
+      "latest_file": "20260725060000_frenly_v67_ps2live_checkout_tender.sql",
+      "rows_written": "checkout_sv_tenders:INSERT (status reserved) + UPDATE (prior active -> released, reason superseded), audit_log:INSERT; via app.sv_reserve_core/app.sv_release_core: sv_operations:INSERT, sv_reservations:INSERT/UPDATE",
+      "detected_signals": "idem-signal, advisory-lock, row-lock",
+      "entry_point": "public.reserve_checkout_sv_tender(business, evaluation_id, requested_cents, idempotency_key) — the till \"Use stored value\" opt-in. SECURITY DEFINER, granted to authenticated; create_sales + can_see_branch + tenant only (contract §5: spending SV at the till needs no extra grant).",
+      "callers": "browser till checkout (app/index.html), between evaluate_checkout and record_cart_sale",
+      "reads": "checkout_evaluations (FOR UPDATE, single-use/expiry/consumed), sv_accounts, app.sv_available_balance, app.sv_checkout_tender_gate (authority live + no-synthetic-on-live + redeem pause + currency)",
+      "idempotency": "advisory xact lock on (business, evaluation); an active tender for THIS token under THIS key replays unchanged; a re-bind supersedes the prior active tender (release + status released) before inserting; the two unique constraints (checkout_sv_tenders_reservation_uk, checkout_sv_tenders_active_uk) are re-raised as the typed sv_tender_conflict refusal instead of a raw 23505",
+      "locking": "checkout_evaluations FOR UPDATE + the prior-tender scan FOR UPDATE + the per-account advisory lock inside app.sv_reserve_core",
+      "value": "VALUE — writes the checkout_sv_tenders row that public.sale_balance and public.get_revenue_summary later read as settlement. The RESERVED state itself moves no value (a hold writes no sv_lot_movements and does not change app.sv_total_outstanding); the row becomes value-bearing at finalisation, when record_cart_sale flips it to 'consumed'. Amount is server-authoritative: min(requested, available balance, discounted token total).",
+      "authority": "HARD-GATED on sv_authority='live' (structurally unreachable in production until an authorized cutover), plus no-synthetic-customer-on-live, redeem pause, and business currency. Re-validated after the token lock at finalisation (TOCTOU).",
+      "kernel": "KERNEL — the tender-selection half of the PS-1C checkout kernel; the stored-value analogue of the v58 credit tender. Writes no ledger itself: allocation stays app.sv_allocate_spend, balance stays app.sv_available_balance.",
+      "kernel_migratability": "KERNEL — already inside the unified checkout kernel; the tender binding is keyed to the evaluation token, not to a parallel sale path."
+    },
+    {
+      "id": "db.fn:public.sv_release_expired_checkout_tenders/2",
+      "surface": "db_function",
+      "latest_file": "20260725060000_frenly_v67_ps2live_checkout_tender.sql",
+      "rows_written": "checkout_sv_tenders:UPDATE (reserved -> released, reason expired/consumed-token), audit_log:INSERT; via app.sv_release_core: sv_operations:INSERT, sv_reservations:UPDATE (active -> released)",
+      "detected_signals": "idem-signal, row-lock",
+      "entry_point": "public.sv_release_expired_checkout_tenders(business, limit) — owner/service sweep that releases holds bound to expired or otherwise-consumed evaluation tokens. SECURITY DEFINER, granted to authenticated, owner-gated. No new cron job.",
+      "callers": "owner-triggered maintenance / service role; also exercised by the v67 suite as the positive control for the legal reserved -> released transition",
+      "reads": "checkout_sv_tenders joined to checkout_evaluations (expired_at / consumed_at)",
+      "idempotency": "each release runs through app.sv_release_core with a fresh key; an already-released hold is a no-op, and the append-only tender guard refuses any second transition, so a repeated sweep is idempotent by construction",
+      "value": "NON-VALUE in effect: it only returns HELD (never spent) stored value to available. It writes no sv_lot_movements and can never touch a consumed tender — the guard trigger makes terminal rows immutable. Curated as a writer because it writes the value-bearing checkout_sv_tenders table.",
+      "authority": "operates only on reserved holds; a business that never went 'live' has none, so the sweep is a no-op there.",
+      "kernel": "SEPARATE-LEDGER hold machinery supporting the PS-1C checkout tender; the release side of reserve_checkout_sv_tender.",
+      "kernel_migratability": "KERNEL-ADJACENT — hold hygiene for the unified checkout kernel; no parallel money path."
     }
   ],
   "allowlist": [
@@ -2022,10 +2061,6 @@
     {
       "id": "browser.rpc:app/index.html:set_sv_authority_state",
       "reason": "browser RPC 'set_sv_authority_state' is a PS-2A owner-only control binding wired into the Increment D UI: it transitions sv_authority across the SAFE subset only (unbuilt/shadow_testing/reconciliation_blocked; 'live'/'ready_for_cutover' raise 22023) and writes no customer-value row, so it resolves to no value writer."
-    },
-    {
-      "id": "browser.rpc:app/index.html:reserve_checkout_sv_tender",
-      "reason": "v67 Till 'Use stored value' opt-in: binds the customer's stored-value HOLD (non-value) to the current evaluation token via app.sv_reserve_core. Reserves against available balance (no sv_lot_movement, no value moved); the value spend happens only at record_cart_sale finalisation. create_sales + can_see_branch + tenant gated; HARD-GATED on authority='live' (structurally unreachable in prod, so the UI never offers it) + redeem-pause + no-synthetic-on-live + currency. Server-authoritative amounts; the browser computes nothing."
     }
   ]
 }
