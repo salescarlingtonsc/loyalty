@@ -262,6 +262,28 @@ tr.click:hover td{background:#FBFAF8}
 .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
 .reward-context{width:auto;min-width:110px;max-width:160px;margin:0;padding:7px 28px 7px 9px;font-size:12px}
 @media(max-width:700px){.field-grid,.reward-editor .field-grid,.eligibility-grid{grid-template-columns:1fr}}
+/* --- Grow recommender: give-back meter + suggestion panels (see app/grow-recommender.js) --- */
+.gb-meter{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 13px;background:#FBFAF8}
+.gb-meter-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.gb-meter-figure{font-size:1.45rem;font-weight:700;letter-spacing:-.02em;line-height:1}
+.gb-meter-bar{margin-top:10px;height:9px;border-radius:100px;background:#EFEAE3;overflow:hidden}
+.gb-meter-fill{display:block;height:100%;border-radius:100px;transition:width .22s var(--ease),background-color .22s var(--ease)}
+.gb-meter.is-good .gb-meter-figure{color:var(--green)} .gb-meter.is-good .gb-meter-fill{background:var(--green)}
+.gb-meter.is-watch .gb-meter-figure{color:var(--amber)} .gb-meter.is-watch .gb-meter-fill{background:var(--amber)}
+.gb-meter.is-high .gb-meter-figure{color:var(--red)} .gb-meter.is-high .gb-meter-fill{background:var(--red)}
+.gb-meter.is-blank .gb-meter-figure{color:var(--muted)} .gb-meter.is-blank .gb-meter-fill{background:var(--muted)}
+.gb-meter p{margin-top:8px;line-height:1.5}
+.gb-scale{display:flex;justify-content:space-between;margin-top:6px;font-size:11.5px;color:var(--muted)}
+.rec-panel{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+.rec-figures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.rec-figure{border:1px solid var(--hair);border-radius:var(--r-sm);background:#FBFAF8;padding:11px 12px}
+.rec-figure b{display:block;font-size:1.2rem;letter-spacing:-.02em}
+.rec-figure span{display:block;margin-top:3px;font-size:11.5px;color:var(--muted)}
+.rec-why{margin-top:12px;padding-left:18px;line-height:1.6;font-size:12.5px;color:var(--ink2)}
+.rec-why li{margin-top:5px}
+input[type=range]{min-height:auto;padding:0;border:none;background:none;accent-color:var(--coral);width:100%}
+input[type=range]:focus{box-shadow:none}
+@media(max-width:700px){.rec-figures{grid-template-columns:1fr}}
 .main{padding:26px 34px 46px;max-width:1240px;width:100%}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
 .topbar h1{font-size:1.85rem;font-weight:700}
@@ -634,6 +656,7 @@ tr.click:hover td{background:#FBFAF8}
 <script src="/runtime-config.js"></script>
 <script src="/runtime-config-loader.js"></script>
 <script src="/customer-ui.js"></script>
+<script src="/grow-recommender.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
@@ -4916,6 +4939,45 @@ async function bookingsPage(){
   };
 }
 
+/* ---------- grow recommender (UI glue for app/grow-recommender.js) ----------
+   NO AI and NO new backend surface: every suggestion is a deterministic heuristic computed in
+   the browser from the firm's OWN priced services + products, shown together with the arithmetic
+   that produced it. Nothing here writes, publishes, blocks or caps anything — the buttons only
+   PREFILL editable fields, and the owner still saves/publishes through the normal flow.
+   The only reads are the two catalogue selects below (no extra RPC). */
+const GROWREC=()=>window.FrenlyGrowRec;
+const growMoney=cents=>money(Math.round(cents||0));
+const growPctText=value=>`${Number(value).toFixed(2)}%`;
+/* Reads the firm's own price list and reduces it to catalogMetrics(). Returns a plain result
+   object instead of throwing, so each caller can render its own loading/empty/error/denied state. */
+async function growCatalogMetrics(){
+  const [{data:services,error:servicesError},{data:products,error:productsError}]=await Promise.all([
+    sb.from('services').select('name,price_cents').eq('business_id',S.biz.id),
+    sb.from('products').select('name,retail_price_cents').eq('business_id',S.biz.id)]);
+  const error=servicesError||productsError;
+  if(error)return {ok:false,denied:error.code==='42501'||error.code==='PGRST301',error,metrics:null};
+  const items=[
+    ...(services||[]).map(s=>({name:s.name,price_cents:s.price_cents})),
+    ...(products||[]).map(p=>({name:p.name,price_cents:p.retail_price_cents}))
+  ].filter(item=>Number.isFinite(item.price_cents)&&item.price_cents>0);
+  return {ok:true,denied:false,error:null,metrics:GROWREC().catalogMetrics(items)};
+}
+/* Shared markup: the reasoning trail, the labelled lift RANGE, and the standing estimate note. */
+const growWhyList=(reasoning)=>(reasoning||[]).length
+  ?`<b class="small" style="display:block;margin-top:14px">Why these numbers</b><ul class="rec-why">${reasoning.map(line=>`<li>${esc(line)}</li>`).join('')}</ul>`
+  :'';
+const growLiftNote=(programType)=>{
+  const lift=GROWREC().estimateRetentionLift(programType);
+  if(lift.lowPct==null)return `<div class="imp-note">${esc(lift.disclaimer)}</div>`;
+  return `<div class="imp-note"><b>Come-back rate: about ${lift.lowPct}–${lift.highPct}% better.</b><br>${esc(lift.disclaimer)}</div>`;
+};
+const growEstimateNote='All figures are estimates from your own prices. Change any number before you save — you decide.';
+/* One error/denied renderer so all three surfaces read the same. */
+const growErrorState=(result,retryId)=>`<div class="err" role="alert">${result.denied
+  ?'Your access does not include prices, so suggestions cannot be worked out. Ask an owner for access.'
+  :esc(result.error?.message||'Your prices could not be read.')}</div>
+  <button class="btn ghost sm" id="${retryId}" style="margin-top:12px">Try again</button>`;
+
 /* ---------- loyalty config ----------
    The firm picks ONE model and tunes every number itself (nothing hardcoded):
    classic      — fixed: N points -> $X credit (the original one-tap redeem).
@@ -5112,7 +5174,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         :`<label>Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>`}
       ${model==='classic'
         ?`<label>Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}"${loyaltyControlDisabled}>
-          <label>Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}"${loyaltyControlDisabled}>`:''}
+          <label>Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}"${loyaltyControlDisabled}>
+          <div class="gb-meter is-blank" id="gbMeter"></div>`:''}
       <label>${model==='stamps'?'Stamp':'Points'} expiry</label><select id="lx" aria-controls="lxdField"${loyaltyControlDisabled}>
         <option value="none" ${firmExpiryMode==='none'?'selected':''}>Never expire</option>
         <option value="inactivity" ${p?.expiry_mode==='inactivity'?'selected':''}>Expire after inactivity (clock resets on every earn)</option>
@@ -5122,11 +5185,110 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       ${canManageLoyalty?`<div style="margin-top:16px"><button class="btn" id="lsave">${p?.configuration_status==='draft'?'Publish program':'Save program'}</button></div>`:''}</div>
     <div class="card">
       ${model==='classic'
-        ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">Every sale earns points automatically. At ${p?.redeem_points??800} points, one tap converts them into ${money(p?.reward_credit_cents??2000)} of real in-store credit. Switch models above any time — balances carry over.</p>`
+        ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">Every sale earns points automatically. At ${p?.redeem_points??800} points, one tap converts them into ${money(p?.reward_credit_cents??2000)} of real in-store credit. Switch models above any time — balances carry over.</p>
+          ${canManageLoyalty?`<div class="rec-panel"><b>Not sure what numbers to use?</b>
+            <p class="muted small" style="margin-top:6px">Frenly can suggest a starting point from your own service and product prices. Nothing is saved until you say so.</p>
+            <div style="margin-top:12px">${CUI.action({id:'growRecOpen',label:'Recommend my numbers',iconName:'info',variant:'secondary'})}</div>
+            <div id="growRecBody"></div></div>`:''}`
         :model==='stamps'
         ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.</p>${rewardRows('Your milestones')}`
         :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
     </div></div>${birthdayEditor}`;
+  /* --- live give-back meter -------------------------------------------------------------
+     Classic is the only model whose form holds all three numbers (earn / redeem / credit);
+     stamps and the reward-catalog model price each reward individually, so the meter is
+     deliberately absent there rather than showing a number the form cannot back up.
+     The meter is a WARNING, never a gate: red still saves and still publishes. */
+  const givebackMeter=$('gbMeter');
+  if(givebackMeter){
+    const renderGivebackMeter=()=>{
+      const creditDollars=parseFloat($('lc').value);
+      const pct=GROWREC().givebackPct({
+        earnPointsPerDollar:parseFloat($('le').value),
+        redeemPoints:parseInt($('lr').value,10),
+        rewardCreditCents:Number.isFinite(creditDollars)?Math.round(creditDollars*100):NaN});
+      if(pct===null){
+        givebackMeter.className='gb-meter is-blank';
+        givebackMeter.innerHTML=`<div class="gb-meter-head"><span class="gb-meter-figure">—</span><span class="pill off">Give-back</span></div>
+          <div class="gb-meter-bar"><span class="gb-meter-fill" style="width:0%"></span></div>
+          <p class="muted small">Fill in all three numbers above to see what you give back.</p>`;
+        return;
+      }
+      const tone=pct<=8?'is-good':pct<=15?'is-watch':'is-high';
+      const pillTone=pct<=8?'on':pct<=15?'new':'no';
+      const label=pct<=8?'Normal':pct<=15?'Generous':'Very generous';
+      givebackMeter.className=`gb-meter ${tone}`;
+      givebackMeter.innerHTML=`<div class="gb-meter-head"><span class="gb-meter-figure">${esc(growPctText(pct))}</span><span class="pill ${pillTone}">${esc(label)}</span></div>
+        <div class="gb-meter-bar"><span class="gb-meter-fill" style="width:${Math.min(100,Math.max(2,pct/20*100)).toFixed(1)}%"></span></div>
+        <div class="gb-scale"><span>0%</span><span>20% or more</span></div>
+        <p class="small">At these numbers you give back <b>${esc(growMoney(Math.round(pct*100)))}</b> for every ${esc(money(10000))} spent. <span class="muted">Most shops stay under 8%.</span></p>
+        ${pct>15?'<p class="small" style="color:var(--red)">Unusually generous — double-check this is intended. You can still save it.</p>':''}`;
+    };
+    ['le','lr','lc'].forEach(id=>{const input=$(id);if(input)input.addEventListener('input',renderGivebackMeter)});
+    renderGivebackMeter();
+  }
+  /* --- "Recommend my numbers" panel (owner-only; Apply prefills, never publishes) --------- */
+  const growRecOpen=$('growRecOpen');
+  if(growRecOpen){
+    const growRecBody=$('growRecBody');
+    let growRecMetrics=null;
+    const renderGrowRecResult=()=>{
+      const target=parseFloat($('growRecTarget').value);
+      const rec=GROWREC().recommendPoints({avgTicketCents:growRecMetrics.avgTicketCents,targetGivebackPct:target});
+      const out=$('growRecOut');
+      if(!out)return;
+      $('growRecTargetOut').textContent=growPctText(target);
+      out.innerHTML=`<div class="rec-figures">
+          <div class="rec-figure"><b>${rec.earnPointsPerDollar}</b><span>points per $1 spent</span></div>
+          <div class="rec-figure"><b>${rec.redeemPoints}</b><span>points to redeem</span></div>
+          <div class="rec-figure"><b>${esc(growMoney(rec.rewardCreditCents))}</b><span>credit they get</span></div>
+        </div>
+        <p class="small" style="margin-top:12px">That works out to <b>${esc(growPctText(rec.actualGivebackPct))}</b> give-back — about <b>${esc(growMoney(rec.costPerVisitCents))}</b> a visit, or <b>${esc(growMoney(rec.costPer100VisitsCents))}</b> per 100 visits.</p>
+        ${growRecMetrics.sampleItems.length?`<b class="small" style="display:block;margin-top:14px">On your own prices</b>
+          <ul class="rec-why">${growRecMetrics.sampleItems.map(item=>`<li>${esc(growPctText(rec.actualGivebackPct))} of your ${esc(growMoney(item.price_cents))} ${esc(item.name||'item')} ≈ ${esc(growMoney(Math.round(item.price_cents*rec.actualGivebackPct/100)))} per visit.</li>`).join('')}</ul>`:''}
+        ${growWhyList(rec.reasoning)}
+        ${growLiftNote('points')}
+        <p class="muted small" style="margin-top:10px">${esc(growEstimateNote)}</p>
+        <div class="row" style="margin-top:14px;flex-wrap:wrap">${CUI.action({id:'growRecApply',label:'Fill these into the form',iconName:'check'})}<span class="muted small">Nothing is saved yet — review, then press Save program.</span></div>`;
+      const applyButton=$('growRecApply');
+      if(applyButton)applyButton.onclick=()=>{
+        $('le').value=rec.earnPointsPerDollar;
+        $('lr').value=rec.redeemPoints;
+        $('lc').value=(rec.rewardCreditCents/100).toFixed(2);
+        if(givebackMeter)['le','lr','lc'].forEach(id=>$(id).dispatchEvent(new Event('input')));
+        toast('Numbers filled in — check them, then Save program');
+      };
+    };
+    const loadGrowRec=async()=>{
+      growRecBody.innerHTML='<p class="muted small" style="margin-top:12px" role="status">Reading your prices…</p>';
+      const result=await growCatalogMetrics();
+      if(!isLoyaltyCurrent())return;
+      if(!result.ok){
+        growRecBody.innerHTML=growErrorState(result,'growRecRetry');
+        $('growRecRetry').onclick=loadGrowRec;return;
+      }
+      growRecMetrics=result.metrics;
+      if(growRecMetrics.avgTicketCents===null){
+        growRecBody.innerHTML=CUI.emptyState({iconName:'services',title:'Add your prices first',
+          body:'Frenly works the suggestion out from your own services and products. Add at least one with a price, then come back.'});
+        return;
+      }
+      growRecBody.innerHTML=`<div style="margin-top:14px">
+          <p class="small">Based on <b>${growRecMetrics.count}</b> priced item${growRecMetrics.count===1?'':'s'}. Your typical sale is <b>${esc(growMoney(growRecMetrics.avgTicketCents))}</b>.</p>
+          <label for="growRecTarget" style="margin-top:14px">How much do you want to give back? <span id="growRecTargetOut">5.00%</span></label>
+          <input id="growRecTarget" type="range" min="2" max="8" step="0.5" value="5">
+          <div class="gb-scale"><span>2%</span><span>Typical café 2–8%</span><span>8%</span></div>
+          <div id="growRecOut" style="margin-top:12px"></div>
+        </div>`;
+      $('growRecTarget').addEventListener('input',renderGrowRecResult);
+      renderGrowRecResult();
+    };
+    growRecOpen.onclick=()=>{
+      if(growRecBody.innerHTML.trim()){growRecBody.innerHTML='';growRecOpen.querySelector('span').textContent='Recommend my numbers';return}
+      growRecOpen.querySelector('span').textContent='Hide suggestion';
+      loadGrowRec();
+    };
+  }
   if(!canManageLoyalty)return;
   const birthdayStartDraft=$('birthdayStartDraft');
   if(birthdayStartDraft)birthdayStartDraft.onclick=async()=>{
@@ -7644,7 +7806,46 @@ async function membershipsPage(){
       <div id="plist" style="margin-top:18px"></div></div>
     <div class="card"><div class="cui-card-head"><h2>${canEnroll?'Enroll a member':'Current memberships'}</h2></div>
       ${enrollmentEditor}
-      <div id="mlist" style="margin-top:18px"><p class="muted small">Loading members…</p></div></div></div>`;
+      <div id="mlist" style="margin-top:18px"><p class="muted small">Loading members…</p></div></div></div>
+    <div class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Suggest a plan</h2><p>Worked out from your own service and product prices — an estimate, not a rule.</p></div>
+      <div id="growPlanHint"></div></div>`;
+  /* Plan-price suggestion: deterministic heuristic, display-only until the owner presses Apply. */
+  const loadPlanHint=async()=>{
+    const hint=$('growPlanHint');
+    if(!hint)return;
+    hint.innerHTML='<p class="muted small" role="status">Reading your prices…</p>';
+    const result=await growCatalogMetrics();
+    if(!isMembershipsCurrent())return;
+    if(!result.ok){
+      hint.innerHTML=growErrorState(result,'growPlanRetry');
+      $('growPlanRetry').onclick=loadPlanHint;return;
+    }
+    const metrics=result.metrics;
+    if(metrics.avgTicketCents===null){
+      hint.innerHTML=CUI.emptyState({iconName:'services',title:'Add your prices first',
+        body:'Add at least one service or product with a price and Frenly can suggest a monthly plan price.'});
+      return;
+    }
+    const plan=GROWREC().recommendMembership({avgTicketCents:metrics.avgTicketCents});
+    hint.innerHTML=`<div class="rec-figures">
+        <div class="rec-figure"><b>${esc(growMoney(plan.monthlyPriceCents))}</b><span>a month</span></div>
+        <div class="rec-figure"><b>${plan.breakevenVisits}</b><span>visits to break even</span></div>
+        <div class="rec-figure"><b>${esc(growMoney(metrics.avgTicketCents))}</b><span>your typical sale</span></div>
+      </div>
+      ${growWhyList(plan.reasoning)}
+      ${growLiftNote('membership')}
+      <p class="muted small" style="margin-top:10px">${esc(growEstimateNote)}</p>
+      ${$('mp')?`<div class="row" style="margin-top:14px;flex-wrap:wrap">${CUI.action({id:'growPlanApply',label:'Use this price',iconName:'check',variant:'secondary'})}<span class="muted small">Fills the price box above — nothing is created until you press Create plan.</span></div>`:''}`;
+    const applyButton=$('growPlanApply');
+    if(applyButton)applyButton.onclick=()=>{
+      const priceInput=$('mp');
+      if(!priceInput)return toast('The price box is not available');
+      priceInput.value=(plan.monthlyPriceCents/100).toFixed(2);
+      priceInput.focus();
+      toast('Price filled in — change it if you like, then Create plan');
+    };
+  };
+  loadPlanHint();
   if($('madd'))$('madd').onclick=async()=>{
     const name=$('mn').value.trim();
     if(name.length<2) return toast('Name the plan');
@@ -7723,7 +7924,35 @@ async function giftcardsPage(){
   routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'Issue and redeem spendable credit through one auditable ledger.',iconName:'giftcard',canWrite:canTransact,moduleLabel:'Gift card transactions'})}
     <div class="split">
     <div class="card">${giftCardWorkspace}</div>
-    <div class="card"><div class="cui-card-head"><h2>Cards on the books</h2></div><div id="glist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+    <div class="card"><div class="cui-card-head"><h2>Cards on the books</h2></div><div id="glist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>
+    <div class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Suggested amounts</h2><p>Worked out from your own service and product prices — an estimate, not a rule.</p></div>
+      <div id="growGiftHint"></div></div>`;
+  /* Denomination suggestion: display-only. Sellers still type any amount they want above. */
+  const loadGiftHint=async()=>{
+    const hint=$('growGiftHint');
+    if(!hint)return;
+    hint.innerHTML='<p class="muted small" role="status">Reading your prices…</p>';
+    const result=await growCatalogMetrics();
+    if(!isGiftCardsCurrent())return;
+    if(!result.ok){
+      hint.innerHTML=growErrorState(result,'growGiftRetry');
+      $('growGiftRetry').onclick=loadGiftHint;return;
+    }
+    const metrics=result.metrics;
+    if(metrics.avgTicketCents===null){
+      hint.innerHTML=CUI.emptyState({iconName:'services',title:'Add your prices first',
+        body:'Add at least one service or product with a price and Frenly can suggest gift card amounts.'});
+      return;
+    }
+    const gift=GROWREC().recommendGiftCards({avgTicketCents:metrics.avgTicketCents});
+    hint.innerHTML=`<div class="rec-figures">
+        ${gift.denominationsCents.map((cents,index)=>`<div class="rec-figure"><b>${esc(growMoney(cents))}</b><span>${index===0?'one visit':index===1?'a few visits':'a real gift'}</span></div>`).join('')}
+      </div>
+      ${growWhyList(gift.reasoning)}
+      ${growLiftNote('giftcard')}
+      <p class="muted small" style="margin-top:10px">${esc(growEstimateNote)} Type any amount you like when you sell a card.</p>`;
+  };
+  loadGiftHint();
   if(canTransact&&$('gsell'))$('gsell').onclick=async()=>{
     const amt=Math.round(parseFloat($('ga').value||'0')*100);
     if(!(amt>0)) return toast('Enter an amount');
