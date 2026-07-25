@@ -27,6 +27,22 @@ today: legacy 5000¢ vs SV 0¢ ⇒ a `missing_in_studio` discrepancy. v69 refuse
 outstanding and unreconciled.** This is a live blocker on the pilot, not a hypothetical. v70 must
 make the intended relationship explicit and machine-checked.
 
+## A2. OWNER DECISION (2026-07-26) — kopi tiam gift card acknowledged
+The owner has ruled: **kopi tiam's outstanding legacy gift card (the single `active` card, balance
+5000¢) is known, accepted, and honoured to extinction.** kopi tiam is classified **`pilot`**. This is
+the concrete acknowledgement §2 exists to record.
+- The acknowledgement TABLE/RPC does not exist until v70 is applied, so this ruling cannot be written
+  to prod today. v70 must (a) build the acknowledgement mechanism, and (b) its go-live runbook / the
+  pilot-cutover step must record an acknowledgement of **exactly 5000¢** for kopi tiam's
+  `stored_value` asset, with reason "owner ruling 2026-07-26: pilot legacy card honoured to
+  extinction", so kopi tiam's reconciliation reads clean and v69 readiness can pass.
+- The acknowledgement is amount-specific (§2): if kopi tiam's legacy gift-card balance later moves
+  beyond 5000¢ (a new card issued — which non-overlap §1 blocks once live — or a partial redemption
+  changing the outstanding figure), reconciliation must re-dirty until re-acknowledged. The suite must
+  assert exactly this with the 5000¢ figure.
+- v70 itself still writes NO acknowledgement row to prod on apply; the kopi-tiam acknowledgement is a
+  pilot-cutover-time act, gated on v69 being applied and kopi tiam being the designated business.
+
 ## 1. Decide and encode the relationship (the core of v70)
 The two legacy value systems (`gift_cards` balances, `credit_ledger` store credit) and stored value
 must have a stated, enforced relationship. Implement **non-overlap**, the safe default:
@@ -76,3 +92,17 @@ re-dirties it, inventory matches a hand-computed table, and every prior suite st
 Ceremony: freeze → independent adversarial review → **PASS V70** → dry-run gate (exactly one pending,
 no `--include-all`) → `db push --linked` → post-apply verification (**every real business still
 `unbuilt`; kopi tiam's $50 card still active and untouched**) → reconcile + deploy.
+
+## 6. OWNER RULINGS (2026-07-26, recorded verbatim intent)
+- **kopi tiam's outstanding gift card is ACKNOWLEDGED by the owner** ("acknowledge the kopi tiam gift
+  card"). Execution: v70 ships the acknowledgement mechanism; immediately after PASS V70 + apply, the
+  orchestrator records the acknowledgement for kopi tiam at the amount MEASURED AT EXECUTION TIME
+  (5000¢ as of 2026-07-26 — re-measure before recording; if the balance moved, STOP and re-confirm
+  with the owner), reason "owner instruction 2026-07-26: honour to extinction; pilot candidate",
+  via the sanctioned RPC with full audit. The card itself stays active and redeemable.
+- **Classification under §3:** kopi tiam = `pilot`. QA Test Cafe + QA Go-Live Cafe = `qa_reset`
+  CANDIDATES (recorded only; no reset — any actual clearing remains a separate owner-authorised act).
+  ZZ-SYNTHETIC PS1B1 UAT Journey = mark structurally synthetic per §4 unless the builder finds a
+  projection it would break (then report).
+- These rulings are decisions of record; the builder implements the mechanism, never pre-seeds the
+  kopi tiam acknowledgement inside the migration (data decisions stay out
