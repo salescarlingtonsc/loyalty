@@ -19,8 +19,11 @@
 --             re-lift -> restrict_violation); NO implicit lift (publishing a loyalty config leaves
 --             the sv pause active); owner-only (frontdesk 42501, anon insufficient_privilege);
 --             cross-tenant denied (42501).
---   UI READ : get_sv_authority_overview surfaces authority_state + active_pauses + can_cutover
---             HARDCODED false; preview_sv_cutover has ready HARDCODED false with real blockers.
+--   UI READ : get_sv_authority_overview surfaces authority_state + active_pauses + can_cutover;
+--             preview_sv_cutover reports ready with real blockers. (v69 flipped both forward: the
+--             two values are now COMPUTED rather than hardcoded false, and the retired PS-2A
+--             "future authorized phase" blocker must no longer be emitted. They are still false
+--             for this unbuilt, undesignated, never-reconciled tenant.)
 --   HOUSE   : sv_pauses RLS + zero browser DML + no mutable balance column; definer + pinned
 --             search_path + revocation on every new function; v61/v62/v63 regression; the PS-1C
 --             checkout kernel + the PS-1C.2 rule emergency pause are BYTE-untouched.
@@ -397,8 +400,15 @@ begin
   v_res := public.preview_sv_cutover(v_business);
   if (v_res->>'ready')::boolean is not false then raise exception 'v64 preview: ready is not false'; end if;
   if jsonb_array_length(v_res->'blocking_reasons') < 1 then raise exception 'v64 preview: no blocking reasons'; end if;
-  if position('future authorized phase' in (v_res->'blocking_reasons')::text) = 0 then
-    raise exception 'v64 preview: missing the standing "future authorized phase" blocker'; end if;
+  -- FLIPPED FORWARD BY v69 (as the v67 suite was flipped by v68b). The standing PS-2A blocker
+  -- 'cutover is a future authorized phase - no cutover action exists' is RETIRED: a cutover action
+  -- now exists, so continuing to emit it would be a lie and would pin ready=false forever. `ready`
+  -- is still false here, for real reasons: this tenant is unbuilt, undesignated and never
+  -- reconciled. The retired string must be GONE, and the designation blocker must be present.
+  if position('future authorized phase' in (v_res->'blocking_reasons')::text) <> 0 then
+    raise exception 'v64 preview: the retired PS-2A "future authorized phase" blocker is still emitted'; end if;
+  if position('sv_not_designated' in (v_res->'blocking_codes')::text) = 0 then
+    raise exception 'v64 preview: missing the v69 super-admin designation blocker'; end if;
   if position('unbuilt' in (v_res->'blocking_reasons')::text) = 0 then
     raise exception 'v64 preview: missing the "authority is unbuilt" blocker'; end if;
   perform public.sv_lift_pause(v_business, 'stored_value', 'redeem', 'v64 overview off');

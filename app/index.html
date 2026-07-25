@@ -7307,7 +7307,10 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
    - it FAILS CLOSED: if get_sv_authority_overview OR get_sv_reconciliation errors, an error state
      renders and NO control is drawn — nothing is ever assumed live/clean/usable.
    RPCs consumed: get_sv_authority_overview, get_sv_reconciliation, preview_sv_cutover (reads);
-   set_sv_authority_state, sv_pause, sv_lift_pause, run_sv_reconciliation (owner-only writes). */
+   set_sv_authority_state, sv_pause, sv_lift_pause, run_sv_reconciliation, sv_cutover_business
+   (owner-only writes). v69: 'live' IS reachable now, for one super-admin-designated business, via
+   sv_cutover_business - so the copy on this screen is state-driven rather than asserting that
+   nothing is ever live. preview_sv_cutover.ready is a server computation; the browser renders it. */
 const SV_ASSET='stored_value';
 const SV_SCOPE_WORDS={all:'everything',earn:'top-ups & grants',redeem:'spending'};
 const SV_AUTHORITY_WORDS={
@@ -7494,18 +7497,29 @@ async function storedValuePage(){
     </div>
     <p class="muted small" style="margin-top:6px">A pause on top-ups &amp; grants does not stop spending; only a pause on everything or on spending stops a customer using value they already hold.</p></section>`;
 
-  // ----- Cutover: PREVIEW ONLY, permanently disabled (preview_sv_cutover.ready is always false) --
+  /* ----- Cutover (v69). The `ready` flag and every blocking reason are rendered VERBATIM from
+     preview_sv_cutover; the browser never decides readiness and never re-derives a reason. The
+     button is enabled ONLY when the server says ready, and even then it opens a modal that requires
+     the owner to type this business's slug exactly plus a reason of at least 10 characters, because
+     going live is a one-way, one-time act: it cannot be undone by any RPC (pause is the emergency
+     control). If the preview fails to load, nothing is offered. ----- */
   const cut=cutRes.error?null:(cutRes.data||{});
   const blocking=cut&&Array.isArray(cut.blocking_reasons)?cut.blocking_reasons:[];
-  const cutReady=cut&&cut.ready===true; // always false in PS-2A; rendered from the server value
+  const cutReady=cut&&cut.ready===true;              // server value, never inferred here
+  const cutLive=(cut&&cut.authority_state==='live')||state==='live';
   const cutBodyHtml=cutRes.error
     ? `<p class="err" role="alert" style="margin-top:8px">The cutover preview could not be loaded (${esc(cutRes.error.message||'unavailable')}). Cutover stays unavailable.</p>`
-    : `<p class="muted small" style="margin-top:8px">Cutover would make stored value the source of truth. It is a future authorized phase — there is no action to perform it here, and it cannot run in this phase.</p>
-       ${blocking.length?`<div class="muted small" style="margin-top:8px;line-height:1.6"><b>What cutover would require (all currently blocking):</b><ul style="margin:6px 0 0 18px">${blocking.map(r=>`<li>${esc(String(r))}</li>`).join('')}</ul></div>`:''}`;
-  const cutCard=`<section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Cutover</h2><p>Preview only. Cutover is not part of this phase.</p></div>
+    : cutLive
+      ? `<p class="muted small" style="margin-top:8px">This business is already live. Cutover happens once and cannot be undone here — if something is wrong, use <b>Pause &amp; safety</b> above to stop stored value immediately.</p>`
+      : `<p class="muted small" style="margin-top:8px">Cutover makes stored value real for this business: customers can top up and spend actual money. It happens once, it cannot be undone from this screen, and it needs a super admin to designate this business first.</p>
+       ${blocking.length?`<div class="muted small" style="margin-top:8px;line-height:1.6"><b>Still blocking:</b><ul style="margin:6px 0 0 18px">${blocking.map(r=>`<li>${esc(String(r))}</li>`).join('')}</ul></div>`:''}`;
+  const cutBtnHtml=(cutRes.error||cutLive)
+    ? ''
+    : `<div class="row" style="margin-top:14px"><button class="btn sm danger" id="svCutoverBtn" type="button"${cutReady?'':' disabled aria-disabled="true" title="The server has not confirmed this business is ready"'}>Go live with stored value</button></div>`;
+  const cutCard=`<section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Cutover</h2><p>${cutLive?'Stored value is live for this business.':'One-time, one-way. Everything below comes straight from the server.'}</p></div>
     <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>Ready:</b> ${cutReady?'<span class="pill on">yes</span>':'<span class="pill no">no</span>'}</div>
     ${cutBodyHtml}
-    <div class="row" style="margin-top:14px"><button class="btn sm" type="button" disabled aria-disabled="true" title="Cutover is not available in this phase">Cutover (not available)</button></div></section>`;
+    ${cutBtnHtml}</section>`;
 
   // ----- Top-ups: staff-assisted top-up sale (v66). Server-authoritative; the UI computes NO value. -----
   /* Truthfulness rules (contract §13): top-ups are hidden/disabled unless the server would permit them.
@@ -7529,9 +7543,15 @@ async function storedValuePage(){
     <div class="row" style="margin-top:12px"><button class="btn sm" id="svTopupStart" type="button"${(!topupSellable||!svBranches.length)?' disabled aria-disabled="true"':''}>${topupTestOnly?'Record a synthetic test top-up':'Record a top-up'}</button></div>
     <div id="svTopupFlow" style="margin-top:14px"></div></section>`;
 
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Stored value',subtitle:'Owner-only stored-value authority, reconciliation and safety controls. Simulated in this phase — nothing is live.',iconName:'wallet',canWrite:true,moduleLabel:'Stored value'})}
+  /* The banner is state-driven, never a fixed claim: since v69 a business CAN be live, and telling a
+     live firm that "nothing here moves real money" would be false. Both variants are rendered from
+     the server's authority_state, which the browser never infers. */
+  const svLive=state==='live';
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Stored value',subtitle:svLive?'Owner-only stored-value authority, reconciliation and safety controls. Stored value is LIVE for this business.':'Owner-only stored-value authority, reconciliation and safety controls. Not live for this business.',iconName:'wallet',canWrite:true,moduleLabel:'Stored value'})}
     <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
-      <b>Simulated foundation — not live</b><p>This is the first stored-value surface. Stored value is not switched on for any customer: nothing here moves real money or can be used to pay. Every state below comes straight from the server.</p></div></aside>
+      ${svLive
+        ? `<b>Live — this is real customer money</b><p>Customers can top up and spend stored value at this business. Every figure below comes straight from the server. If anything looks wrong, use <b>Pause &amp; safety</b> to stop new operations immediately — history is always kept.</p>`
+        : `<b>Not live — nothing moves real money yet</b><p>Stored value is not switched on for any customer here: nothing on this screen moves real money or can be used to pay. Every state below comes straight from the server.</p>`}</div></aside>
     ${authorityCard}
     ${topupCard}
     ${reconCard}
@@ -7591,6 +7611,49 @@ async function storedValuePage(){
       onDone:()=>{toast('Stored-value pause lifted');rerender();}
     });
   });
+  /* Cutover (v69). Deliberately NOT the shared svOpenActionModal: this is the only irreversible
+     action on the screen, so it demands a typed match of the business slug in addition to a reason,
+     and it replays the exact evidence hash the preview returned (a stale hash is refused server-side
+     with sv_evidence_stale rather than acting on evidence that has moved). One idempotency key is
+     generated per attempt, so a lost response can be retried without a second transition. */
+  const svCutoverBtn=$('svCutoverBtn');
+  if(svCutoverBtn&&!svCutoverBtn.disabled)svCutoverBtn.onclick=()=>{
+    const slug=String(S.biz&&S.biz.slug||'');
+    const evidence=String((cut&&cut.evidence_hash)||'');
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="svCutModal" role="dialog" aria-modal="true" aria-labelledby="svCutTitle" tabindex="-1"><div class="modal-card" style="max-width:560px">
+      <div class="row"><div><h2 id="svCutTitle">Go live with stored value</h2><p class="muted small">This makes stored value real money for <b>${esc(S.biz&&S.biz.name||slug)}</b>. It happens once and cannot be undone from this app. If something goes wrong afterwards, use Pause &amp; safety.</p></div><span class="spacer"></span><button class="btn ghost sm" id="svCutClose" type="button">Close</button></div>
+      <label for="svCutSlug">Type <b>${esc(slug)}</b> to confirm</label>
+      <input id="svCutSlug" type="text" autocomplete="off" spellcheck="false" placeholder="${esc(slug)}">
+      <label for="svCutReason">Reason (required, at least 10 characters)</label>
+      <textarea id="svCutReason" rows="3" placeholder="Who authorised this go-live, and on what evidence?"></textarea>
+      <div id="svCutErr"></div>
+      <div class="row" style="margin-top:16px"><button class="btn danger" id="svCutSubmit" type="button">Go live now</button><button class="btn ghost sm" id="svCutCancel" type="button">Cancel</button></div>
+    </div></div>`);
+    let deactivate;
+    const close=()=>{if(deactivate)deactivate();else $('svCutModal')?.remove();};
+    deactivate=CUI.activateDialog($('svCutModal'),{onClose:close,initialFocus:'#svCutSlug'});
+    $('svCutClose').onclick=$('svCutCancel').onclick=close;
+    $('svCutSubmit').onclick=async()=>{
+      const typed=($('svCutSlug').value||'').trim();
+      const reason=($('svCutReason').value||'').trim();
+      if(typed!==slug){$('svCutErr').innerHTML='<div class="err">Type the business name exactly as shown to confirm.</div>';return;}
+      if(reason.length<10){$('svCutErr').innerHTML='<div class="err">Write a reason of at least 10 characters. This is a financial go-live.</div>';return;}
+      if(!evidence){$('svCutErr').innerHTML='<div class="err">The readiness evidence is missing. Reload this page and try again.</div>';return;}
+      const btn=$('svCutSubmit');btn.disabled=true;btn.setAttribute('aria-busy','true');
+      let res;
+      try{res=await sb.rpc('sv_cutover_business',{p_business:S.biz.id,p_reason:reason,p_evidence_hash:evidence,p_idempotency_key:crypto.randomUUID()});}
+      catch(e){res={error:{message:e&&e.message||String(e)}};}
+      btn.removeAttribute('aria-busy');
+      if(res&&res.error){
+        btn.disabled=false;
+        $('svCutErr').innerHTML=res.error.code==='42501'
+          ? '<div class="err">Only the owner of this business can do this.</div>'
+          : `<div class="err">${esc(res.error.message||'Could not go live. Nothing was changed.')}</div>`;
+        return;
+      }
+      close();toast('Stored value is live');rerender();
+    };
+  };
   const svTopupStartBtn=$('svTopupStart');
   if(svTopupStartBtn&&!svTopupStartBtn.disabled)svTopupStartBtn.onclick=()=>svRunTopupFlow({branches:svBranches,state,testOnly:topupTestOnly});
 }

@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 63,
-  "itemCount": 108,
+  "pendingCount": 64,
+  "itemCount": 109,
   "items": [
     {
       "order": 1,
@@ -1087,6 +1087,16 @@
       "path": "supabase/migrations/20260725090000_frenly_v68c_customer_gift_cards.sql",
       "octetLength": 10853,
       "sha256": "23f88d2fa995d26e45cd84001972efdc9663336713457951175ba1aa08689539",
+      "provenance": "local-source"
+    },
+    {
+      "order": 109,
+      "kind": "pending",
+      "version": "20260725100000",
+      "name": "frenly_v69_controlled_cutover",
+      "path": "supabase/migrations/20260725100000_frenly_v69_controlled_cutover.sql",
+      "octetLength": 77988,
+      "sha256": "3689206e009aa6f7569d6b9ac3c617f43c13b87626787e2e52b2e69d7225487a",
       "provenance": "local-source"
     }
   ]

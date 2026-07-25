@@ -326,22 +326,29 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
   }
 });
 
-test('no migration function can set sv_authority to live or ready_for_cutover (PS-2A: cutover is unreachable)', async () => {
+// FLIPPED FORWARD BY v69 (controlled cutover). The PS-2A form of this test asserted that NOTHING
+// anywhere could set sv_authority.state to 'live' - which was true while cutover did not exist. v69
+// makes 'live' reachable on purpose, for exactly one owner-designated business, through exactly one
+// function. So the invariant is no longer "nobody" but "exactly one, and it is the audited,
+// evidence-gated cutover RPC". 'ready_for_cutover' remains unreachable everywhere: readiness is
+// derived evidence (app.sv_cutover_readiness), never a stored state.
+test('sv_authority can reach live through EXACTLY ONE cutover RPC, and ready_for_cutover nowhere', async () => {
   const corpus = await readMigrationCorpus();
   const svFiles = Object.entries(corpus).filter(([, sql]) => /\bsv_authority\b/i.test(sql));
   assert.ok(svFiles.length >= 1, 'PS-2A must define sv_authority');
+
+  const liveUpdates = [];
   for (const [file, sql] of svFiles) {
-    // An UPDATE that sets sv_authority.state to a forbidden state literal.
+    // 'ready_for_cutover' is still unreachable by every route.
     assert.doesNotMatch(
       sql,
-      /update\s+(?:public\.)?sv_authority\b[\s\S]{0,600}?\bstate\b[\s\S]{0,80}?=\s*'(?:live|ready_for_cutover)'/i,
-      `${file}: no UPDATE may set sv_authority.state to live/ready_for_cutover`);
-    // A plpgsql assignment of the forbidden states (e.g. new.state := 'live').
+      /update\s+(?:public\.)?sv_authority\b[\s\S]{0,600}?\bstate\b[\s\S]{0,80}?=\s*'ready_for_cutover'/i,
+      `${file}: no UPDATE may set sv_authority.state to ready_for_cutover`);
     assert.doesNotMatch(
       sql,
       /\bstate\s*:=\s*'(?:live|ready_for_cutover)'/i,
       `${file}: no assignment may set state := live/ready_for_cutover`);
-    // An INSERT into sv_authority carrying a forbidden state literal.
+    // An sv_authority row is never BORN live or ready_for_cutover.
     for (const m of sql.matchAll(/insert\s+into\s+(?:public\.)?sv_authority\b/gi)) {
       const block = sql.slice(m.index, m.index + 600);
       assert.doesNotMatch(
@@ -349,7 +356,39 @@ test('no migration function can set sv_authority to live or ready_for_cutover (P
         /'(?:live|ready_for_cutover)'/i,
         `${file}: no INSERT into sv_authority may carry a live/ready_for_cutover literal`);
     }
+    for (const m of sql.matchAll(
+      /update\s+(?:public\.)?sv_authority\b[\s\S]{0,600}?\bstate\b[\s\S]{0,80}?=\s*'live'/gi)) {
+      liveUpdates.push({ file, at: m.index, text: sql.slice(m.index, m.index + 400) });
+    }
   }
+
+  // The corpus carries both the db/ source and its byte-identical supabase/ mirror, so the
+  // invariant is "exactly one live transition PER FILE, and only in the v69 controlled-cutover
+  // migration" - not "one across the corpus".
+  const liveFiles = [...new Set(liveUpdates.map((u) => u.file))].sort();
+  for (const file of liveFiles) {
+    assert.match(file, /frenly_v69_controlled_cutover\.sql$/,
+      `${file}: only the v69 controlled-cutover migration may set sv_authority.state to live`);
+    assert.equal(liveUpdates.filter((u) => u.file === file).length, 1,
+      `${file}: exactly one statement may set sv_authority.state to live`);
+  }
+  assert.equal(liveFiles.length, 2,
+    `expected the v69 migration and its mirror to be the only live-transition files, got ${liveFiles.join(', ')}`);
+  const only = liveUpdates.find((u) => u.file.startsWith('db/migrations/'));
+  assert.ok(only, 'the db/migrations copy of the v69 migration must carry the live transition');
+  // It is per-business: keyed by the single p_business argument, never a set/loop/wildcard.
+  assert.match(only.text, /where\s+business_id\s*=\s*p_business\b/i,
+    'the live transition must be keyed to the single p_business argument');
+  assert.doesNotMatch(only.text, /business_id\s+in\s*\(/i,
+    'the live transition must not target a set of businesses');
+  // ...and it is inside the cutover RPC, whose body contains no loop at all.
+  const v69 = corpus[only.file];
+  const fnStart = v69.indexOf('create or replace function public.sv_cutover_business');
+  assert.ok(fnStart >= 0 && fnStart < only.at,
+    'the live transition must sit inside public.sv_cutover_business');
+  const fnBody = v69.slice(fnStart, v69.indexOf('revoke all on function public.sv_cutover_business'));
+  assert.doesNotMatch(fnBody, /(^|[^a-z_])loop([^a-z_]|$)/i,
+    'sv_cutover_business must contain no loop: one call transitions at most one business');
 });
 
 test('run_sv_reconciliation reads gift_cards READ-ONLY (no DML against the legacy analog)', async () => {

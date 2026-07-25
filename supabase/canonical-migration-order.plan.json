@@ -112,6 +112,7 @@
     { "kind": "pending", "version": "20260725060000", "name": "frenly_v67_ps2live_checkout_tender", "sourcePath": "db/migrations/20260724_frenly_v67_ps2live_checkout_tender.sql" },
     { "kind": "pending", "version": "20260725070000", "name": "frenly_v68a_chargeback_correction", "sourcePath": "db/migrations/20260724_frenly_v68a_chargeback_correction.sql" },
     { "kind": "pending", "version": "20260725080000", "name": "frenly_v68b_sv_reversal_netting", "sourcePath": "db/migrations/20260724_frenly_v68b_sv_reversal_netting.sql" },
-    { "kind": "pending", "version": "20260725090000", "name": "frenly_v68c_customer_gift_cards", "sourcePath": "db/migrations/20260724_frenly_v68c_customer_gift_cards.sql" }
+    { "kind": "pending", "version": "20260725090000", "name": "frenly_v68c_customer_gift_cards", "sourcePath": "db/migrations/20260724_frenly_v68c_customer_gift_cards.sql" },
+    { "kind": "pending", "version": "20260725100000", "name": "frenly_v69_controlled_cutover", "sourcePath": "db/migrations/20260724_frenly_v69_controlled_cutover.sql" }
   ]
 }
