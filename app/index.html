@@ -777,10 +777,21 @@ const AUTH_TURNSTILE_SITE_KEY='0x4AAAAAAD4_7rnuzB3ug-NF';
 const CUSTOMER_FEATURES_EMERGENCY_DISABLED=false;
 /* Phone OTP is an explicit non-production test seam. It is disabled unless a
    test build sets this public boolean deliberately, and it can never run in a
-   production runtime configuration. No provider secret is present in the app. */
+   production runtime configuration. No provider secret is present in the app.
+   DEMO EXCEPTION (owner instruction 2026-07-26): the numbers listed in
+   DEMO_CUSTOMER_PHONE_NUMBERS may use phone OTP in production. Each demo number
+   must have a matching Supabase Auth test OTP, so no SMS is ever sent; every
+   other number keeps the fail-closed "not available" behaviour below. */
+const DEMO_CUSTOMER_PHONE_NUMBERS=['+6581234567'];
 const CUSTOMER_PHONE_OTP_RUNTIME_ENABLED=(
-  RUNTIME_CONFIG.environment!=='production'
-  && window.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__===true
+  (RUNTIME_CONFIG.environment!=='production'
+    && window.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__===true)
+  || DEMO_CUSTOMER_PHONE_NUMBERS.length>0
+);
+const customerPhoneBlockedInProduction=(phone)=>(
+  RUNTIME_CONFIG.environment==='production'
+  && window.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__!==true
+  && !DEMO_CUSTOMER_PHONE_NUMBERS.includes(phone)
 );
 const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=(
   CUSTOMER_PHONE_OTP_RUNTIME_ENABLED
@@ -1409,6 +1420,9 @@ async function renderCustomerRegistration(){
     const phone=normalizeSingaporeCustomerPhone($('customerPhone').value);
     const channel=document.querySelector('input[name="customerOtpChannel"]:checked')?.value||'sms';
     if(!phone){$('customerOtpError').innerHTML='<div class="err">Enter a valid 8-digit Singapore number.</div>';return;}
+    if(customerPhoneBlockedInProduction(phone)){
+      $('customerOtpError').innerHTML='<div class="err">Mobile sign-up is not available right now. Please try again later.</div>';return;
+    }
     if(!(await customerPhoneOtpAvailable(channel))||!captchaToken){
       $('customerOtpError').innerHTML='<div class="err">Customer mobile verification is unavailable. Please try again later.</div>';return;
     }
