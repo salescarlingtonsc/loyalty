@@ -105,6 +105,7 @@
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v66a_ps2live_billing_view_secinvoker.sql", "semanticVersion": "v66a", "proposedDeployVersion": "20260722000141" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v66b_program_rules_secinvoker.sql", "semanticVersion": "v66b", "proposedDeployVersion": "20260722000142" },
     { "kind": "executable", "path": "db/migrations/20260724_frenly_v67_ps2live_checkout_tender.sql", "semanticVersion": "v67", "proposedDeployVersion": "20260722000143" },
-    { "kind": "executable", "path": "db/migrations/20260724_frenly_v68a_chargeback_correction.sql", "semanticVersion": "v68a", "proposedDeployVersion": "20260722000144" }
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v68a_chargeback_correction.sql", "semanticVersion": "v68a", "proposedDeployVersion": "20260722000144" },
+    { "kind": "executable", "path": "db/migrations/20260724_frenly_v68b_sv_reversal_netting.sql", "semanticVersion": "v68b", "proposedDeployVersion": "20260722000145" }
   ]
 }

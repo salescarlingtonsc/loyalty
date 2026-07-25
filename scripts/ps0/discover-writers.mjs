@@ -160,6 +160,14 @@ const VALUE_TABLES = {
   //     exhaustive writer set and adds checkout_sv_tenders:UPDATE to record_cart_sale's
   //     machine-checked rows_written. (Found by independent review of v67 rev-4, finding F3.)
   checkout_sv_tenders:                     { category: 'stored_value_tender',           value: true },
+  // --- Program Studio PS-2 LIVE (v68b): the settlement-REVERSAL marker. Append-only, one row per
+  //     reversed checkout settlement. It moves NO value itself (the movement authority stays
+  //     sv_lot_movements, restored by app.sv_reverse_spend_core) - it is the EVIDENCE the two §10
+  //     surfaces (sale_balance.sv_tender_totals + get_revenue_summary.v_sv_cash) NOT-EXISTS against to
+  //     net a reversed settlement out, exactly analogous to sv_chargebacks beside a chargeback. So it
+  //     is tracked non-value. Registering it puts app.sv_record_settlement_reversal into the exhaustive
+  //     writer set and adds checkout_sv_tender_reversals:INSERT to its machine-checked rows_written.
+  checkout_sv_tender_reversals:            { category: 'stored_value_tender_reversal',   value: false },
   // --- Program Studio PS-2 LIVE (v66/v68a): the stored-value CASH surfaces. sv_topup_payments is the
   //     immutable record of cash actually COLLECTED for a top-up - the exact analogue of `payments`
   //     above, and (from v68a) the single authority the cash-refund cap is bounded by, so it is

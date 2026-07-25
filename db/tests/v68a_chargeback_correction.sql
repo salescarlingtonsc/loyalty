@@ -22,8 +22,9 @@
 --   * Envelope: idempotent replay (zero new movements) + changed-request same-key typed conflict.
 --   * Gate matrices: authority, pause family mapping, synthetic-on-live, owner-only, anon.
 --   * Per-write-step atomic rollback injection: zero partial records at every write table.
---   * The v67 §11a/§11b reversal refusals STILL REFUSE (v68a must not weaken them), and an
---     SV-tendered sale already delivered STANDS through a chargeback of its funding top-up.
+--   * An SV-tendered sale already delivered STANDS through a chargeback of its funding top-up; on the
+--     v68b chain the v67 §11a/§11b refusals are LIFTED, so reversing a sale whose funding was charged
+--     back is now refused with the chargeback-specific sv_settlement_charged_back (no resurrection).
 --   * v66 mint tripwire green; sv_total_outstanding + reservation invariants intact.
 --
 -- THE authority='live' SHIM: the v61 sv_authority guard rejects any transition into 'live'. Inside
@@ -202,13 +203,18 @@ begin
      and p.proname not in ('sv_chargeback_plan','sv_chargeback_topup','sv_correct_lot');
   assert v_names is null, 'unexpected correction writers: '||coalesce(v_names,'');
 
-  -- v67 refusals present and unweakened
+  -- v67 refusals LIFTED by v68b: the sale core now funnels restitution through the shared helper and
+  -- the settlement door delegates to the extracted restore core (assertions flipped when v68b landed;
+  -- v68b is the coupled increment that lifts what v67 refused, so this v68a suite tracks it here).
   assert position('sv_tendered_sale_unsupported' in
+    pg_get_functiondef('public.reverse_sale_v20_base(uuid,uuid,text,text,text,text)'::regprocedure)) = 0,
+    'the v67 §11a refusal must be lifted by v68b';
+  assert position('sv_reverse_settlement_for_sale' in
     pg_get_functiondef('public.reverse_sale_v20_base(uuid,uuid,text,text,text,text)'::regprocedure)) > 0,
-    'the v67 §11a sale-leg refusal is gone';
+    'the sale core must funnel restitution through the v68b helper';
   assert position('sv_tendered_spend_unsupported' in
-    pg_get_functiondef('public.sv_reverse_spend(uuid,uuid,uuid)'::regprocedure)) > 0,
-    'the v67 §11b settlement-leg refusal is gone';
+    pg_get_functiondef('public.sv_reverse_spend(uuid,uuid,uuid)'::regprocedure)) = 0,
+    'the v67 §11b refusal must be lifted by v68b';
 
   -- v66 mint tripwire: still exactly one paid-lot minter in the shipped schemas (this suite's own
   -- rolled-back pg_temp seeding helper is deliberately outside the scope, as it is in v63's).
@@ -414,18 +420,20 @@ begin
   assert (select count(*) from public.sale_reversal_audits where business_id=B) = m, 'the chargeback reversed a sale';
   select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale_sv and business_id=B;
   assert sb.balance_cents=0 and sb.sv_settled_cents=5000 and sb.payment_status='paid', 'the delivered sale must STAND after a chargeback';
-  -- v67 §11a still refuses the sale leg
-  begin perform public.reverse_sale(B, sale_sv, 'v68a probe: sv-tendered sale', 'v68a-rev-'||substr(md5(clock_timestamp()::text),1,8));
-    raise exception 'v68a weakened the §11a sale-leg refusal' using errcode='XX000';
+  -- v68b lifted §11a/§11b, but this sale's FUNDING top-up was just charged back, so reversing it via
+  -- either door must be refused with the chargeback-specific error - restoring the spent value would
+  -- resurrect what the bank clawed back (contract §4 chargeback-then-reversal ordering; the delivered
+  -- sale still STANDS, unchanged, as asserted just above).
+  begin perform public.reverse_sale(B, sale_sv, 'v68a/v68b probe: reverse after chargeback', 'v68a-rev-'||substr(md5(clock_timestamp()::text),1,8));
+    raise exception 'a charged-back settlement sale was reversed (door A)' using errcode='XX000';
   exception when others then
-    assert sqlstate='P0001','§11a refusal must stay P0001, got '||sqlstate;
-    assert position('sv_tendered_sale_unsupported:' in sqlerrm)=1, '§11a must stay typed, got: '||sqlerrm; end;
-  -- v67 §11b still refuses the settlement leg
+    assert sqlstate='22023','door-A chargeback refusal must be 22023, got '||sqlstate;
+    assert position('sv_settlement_charged_back' in sqlerrm)>0, 'door A must be sv_settlement_charged_back, got: '||sqlerrm; end;
   begin perform public.sv_reverse_spend(B, settle_spend, gen_random_uuid());
-    raise exception 'v68a weakened the §11b settlement-leg refusal' using errcode='XX000';
+    raise exception 'a charged-back settlement spend was reversed (door B)' using errcode='XX000';
   exception when others then
-    assert sqlstate='22023','§11b refusal must stay 22023, got '||sqlstate;
-    assert position('sv_tendered_spend_unsupported:' in sqlerrm)=1, '§11b must stay typed, got: '||sqlerrm; end;
+    assert sqlstate='22023','door-B chargeback refusal must be 22023, got '||sqlstate;
+    assert position('sv_settlement_charged_back' in sqlerrm)>0, 'door B must be sv_settlement_charged_back, got: '||sqlerrm; end;
 
   ---------------------------------------------------------------- §3 PRIOR REFUND THEN CHARGEBACK (pinned default)
   topup := public.record_sv_topup_sale(B,B_branch,cli_pr,ver_e,jsonb_build_object('method','cash','amount_cents',10000,'currency','SGD'),gen_random_uuid());

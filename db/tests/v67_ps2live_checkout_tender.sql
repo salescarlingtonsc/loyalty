@@ -391,60 +391,46 @@ begin
   assert (rs1->>'cash_collected_cents')::int - (rs0->>'cash_collected_cents')::int = 3000, 'split: cash_collected delta must be ONLY the 3000 cash remainder (SV excluded)';
   assert (rs1->>'unpaid_balance_cents')::int - (rs0->>'unpaid_balance_cents')::int = 0, 'split: unpaid_balance delta must be 0 (no phantom A/R)';
 
-  ---------------------------------------------------------------- REVERSAL REFUSAL (§11): an SV-tendered sale is REFUSED, never silently mis-settled
-  -- v67 settles an sv sale with a NON-payment marker; the v20 money core restores only payments and
-  -- credit_ledger. Pre-fix, reverse_sale returned ok while restoring NOTHING of the spent stored value
-  -- (SV-only 5000 -> reversed_cents=5000, refunded_payment_cents=0, credit_restored_cents=0, no
-  -- compensating movement; both originals then read balance_cents=-5000 / payment_status='overpaid').
-  -- Restitution is v68; v67 must REFUSE. Typed message + the family's plain-RAISE P0001, gated in the
-  -- money core so no wrapper (public.reverse_sale, public.refund_sale) can bypass it.
-  cnt0 := jsonb_build_object(
-    'sales',      (select count(*) from public.sales                 where business_id=B),
-    'payments',   (select count(*) from public.payments              where business_id=B),
-    'movements',  (select count(*) from public.sv_lot_movements      where business_id=B),
-    'sv_ops',     (select count(*) from public.sv_operations         where business_id=B),
-    'fin_ops',    (select count(*) from public.financial_operations  where business_id=B),
-    'rev_audits', (select count(*) from public.sale_reversal_audits  where business_id=B));
+  ---------------------------------------------------------------- REVERSAL NETTING (§11 LIFTED by v68b)
+  -- v67 refused reversing an sv-settled sale from BOTH directions because coherent restitution did not
+  -- exist and §10 never netted the settlement back out. v68b lifts BOTH refusals and nets BOTH legs:
+  -- a reversal now restores the exact lots, records a checkout_sv_tender_reversals marker, and the §10
+  -- surfaces net the settlement out. These assertions were FLIPPED from "refuses" to the coherent
+  -- lifted behaviour when v68b landed (a sanctioned prior-suite edit; v68b lifts what v67 refused).
   rs0 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
 
-  -- (a) SV-ONLY sale via public.reverse_sale
-  begin
-    perform public.reverse_sale(B, sale_svonly, 'v67 refusal probe: sv-only tendered sale', 'v67-rev-svonly-key');
-    raise exception 'reversing an SV-only tendered sale was ALLOWED' using errcode='XX000';
-  exception when others then
-    assert sqlstate = 'P0001', 'sv reversal refusal must be P0001 (family convention), got '||sqlstate;
-    assert position('sv_tendered_sale_unsupported:' in sqlerrm) = 1, 'sv reversal refusal must be typed, got: '||sqlerrm;
-  end;
-  -- (b) SPLIT (SV 5000 + cash 3000) sale via public.refund_sale - the OTHER public entry point.
-  begin
-    perform public.refund_sale(B, sale_split, 'v67 refusal probe: split sv/cash tendered sale', 'v67-rev-split-key');
-    raise exception 'reversing a split SV/cash tendered sale was ALLOWED' using errcode='XX000';
-  exception when others then
-    assert sqlstate = 'P0001', 'split sv reversal refusal must be P0001, got '||sqlstate;
-    assert position('sv_tendered_sale_unsupported:' in sqlerrm) = 1, 'refund_sale must hit the same typed refusal, got: '||sqlerrm;
-  end;
+  -- (a) SV-ONLY sale via public.reverse_sale: restitution + netting, no cash refunded.
+  select id into acct from public.sv_accounts where business_id=B and client_id=cli_acct1;
+  select spend_operation_id into svspendop from public.checkout_sv_tenders where business_id=B and sale_id=sale_svonly;
+  assert svspendop is not null, 'the SV-only sale must carry a settlement spend operation';
+  rvj := public.reverse_sale(B, sale_svonly, 'v67/v68b: reverse an sv-only tendered sale', 'v67-rev-svonly-key');
+  assert (rvj->>'reversed_cents')::int = 5000, 'sv-only reversal must reverse 5000, got '||(rvj->>'reversed_cents');
+  assert (rvj->>'refunded_payment_cents')::int = 0, 'sv-only reversal refunds no cash';
+  assert exists (select 1 from public.checkout_sv_tender_reversals where business_id=B and sale_id=sale_svonly),
+    'sv-only reversal must record a settlement-reversal marker';
+  assert (pg_temp.v67_bal(B,acct)->>'outstanding')::int = 5000, 'sv-only reversal must restore the 5000 to the lots';
+  select balance_cents, sv_settled_cents into sb from public.sale_balance where sale_id=sale_svonly and business_id=B;
+  assert sb.sv_settled_cents = 0 and sb.balance_cents = 0, 'sv-only reversed sale must net sv_settled+balance to 0';
 
-  -- A refused attempt mutates NOTHING and reserves no idempotency key.
-  cnt1 := jsonb_build_object(
-    'sales',      (select count(*) from public.sales                 where business_id=B),
-    'payments',   (select count(*) from public.payments              where business_id=B),
-    'movements',  (select count(*) from public.sv_lot_movements      where business_id=B),
-    'sv_ops',     (select count(*) from public.sv_operations         where business_id=B),
-    'fin_ops',    (select count(*) from public.financial_operations  where business_id=B),
-    'rev_audits', (select count(*) from public.sale_reversal_audits  where business_id=B));
-  assert cnt1 = cnt0, 'a refused sv reversal mutated rows: '||cnt0::text||' -> '||cnt1::text;
-  select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale_svonly and business_id=B;
-  assert sb.balance_cents = 0 and sb.paid_cents = 0 and sb.sv_settled_cents = 5000 and sb.payment_status = 'paid',
-    'refused reversal disturbed the SV-only sale_balance row';
-  select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale_split and business_id=B;
-  assert sb.balance_cents = 0 and sb.paid_cents = 3000 and sb.sv_settled_cents = 5000 and sb.payment_status = 'paid',
-    'refused reversal disturbed the split sale_balance row';
-  assert public.get_revenue_summary(B, current_date-1, current_date+1, null)::jsonb = rs0::jsonb,
-    'a refused sv reversal changed get_revenue_summary';
+  -- (b) SPLIT (SV 5000 + cash 3000) via public.refund_sale: SV restored + cash refunded ONCE.
+  select id into acct_b from public.sv_accounts where business_id=B and client_id=cli_acct2;
+  rvj := public.refund_sale(B, sale_split, 'v67/v68b: reverse a split sv/cash tendered sale', 'v67-rev-split-key');
+  assert (rvj->>'reversed_cents')::int = 8000, 'split reversal must reverse 8000';
+  assert (rvj->>'refunded_payment_cents')::int = 3000, 'split reversal must refund the 3000 cash remainder ONCE';
+  assert (select coalesce(sum(amount_cents),0) from public.payments where business_id=B and sale_id=sale_split and kind='refund') = -3000,
+    'split reversal must create exactly one -3000 refund payment (no double refund)';
+  assert (pg_temp.v67_bal(B,acct_b)->>'outstanding')::int = 5000, 'split reversal must restore the 5000 sv to the lots';
+  select balance_cents, sv_settled_cents into sb from public.sale_balance where sale_id=sale_split and business_id=B;
+  assert sb.sv_settled_cents = 0 and sb.balance_cents = 0, 'split reversed sale must net to zero';
 
-  -- (c) A NON-SV sale still reverses exactly as before. It deliberately REUSES the idempotency key the
-  --     SV-only refusal rejected: had the refused attempt reserved a financial_operations row, this
-  --     would raise the 23505 immutable-request conflict instead of succeeding.
+  -- both §10 legs netted: revenue_cash dropped by 5000+8000=13000, cash_collected only by the 3000.
+  rs1 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
+  assert (rs0->>'revenue_cash_cents')::int - (rs1->>'revenue_cash_cents')::int = 13000,
+    'revenue_cash must net DOWN by 13000 (sv-only 5000 + split 8000)';
+  assert (rs0->>'cash_collected_cents')::int - (rs1->>'cash_collected_cents')::int = 3000,
+    'cash_collected must move by ONLY the 3000 cash remainder';
+
+  -- (c) A non-SV sale still reverses (its own fresh key; 'v67-rev-svonly-key' is now the sv-only one).
   reset role;
   insert into public.clients(business_id,full_name,phone) values (B,'v67 revplain','+6590000213') returning id into cli_plain;
   perform pg_temp.as_v67(B_owner,'authenticated');
@@ -452,52 +438,39 @@ begin
   res := public.record_cart_sale(B,cli_plain,B_branch,null,'cash','v67-revplain-'||substr(md5(clock_timestamp()::text),1,8),null,tok,true);
   sale_plain := (res->>'sale_id')::uuid;
   assert (res->>'stored_value') is null, 'the control sale must carry no sv tender';
-  rvj := public.reverse_sale(B, sale_plain, 'v67 control: a plain cash sale still reverses', 'v67-rev-svonly-key');
-  assert (rvj->>'reversed_cents')::int = 5000, 'non-SV sale must still reverse exactly as before, got '||(rvj->>'reversed_cents');
-  assert (rvj->>'refunded_payment_cents')::int = 5000, 'non-SV cash sale must refund its full cash payment';
-  assert (rvj->>'credit_restored_cents')::int = 0, 'non-SV cash sale restores no credit';
+  rvj := public.reverse_sale(B, sale_plain, 'v67 control: a plain cash sale still reverses', 'v67-rev-plain-key');
+  assert (rvj->>'reversed_cents')::int = 5000 and (rvj->>'refunded_payment_cents')::int = 5000,
+    'non-SV cash sale must still reverse + refund its cash';
   assert nullif(rvj->>'reversal_sale_id','') is not null, 'non-SV reversal must create the reversing sale row';
   select balance_cents, payment_status into sb from public.sale_balance where sale_id=sale_plain and business_id=B;
   assert sb.balance_cents = 0 and sb.payment_status = 'paid', 'a reversed non-SV sale must net to zero';
 
-  ------------------------------------------------- SETTLEMENT-SPEND REVERSAL REFUSAL (§11b)
-  -- The OTHER door into the same mis-settlement. public.sv_reverse_spend takes a spend OPERATION,
-  -- is granted to `authenticated`, and never funnels through reverse_sale_v20_base - so §11a's gate
-  -- cannot see it, while §8.9b makes the checkout settlement exactly such a spend operation.
-  -- Pre-fix, as the business owner: sv_reverse_spend returned ok / restored 5000, the account went
-  -- available+outstanding 0 -> 5000 (value handed back), and sale_balance + get_revenue_summary
-  -- stayed 'paid' / cash-basis-realised, i.e. the customer kept the goods AND the money.
-  select spend_operation_id into svspendop from public.checkout_sv_tenders where business_id=B and sale_id=sale_svonly;
-  assert svspendop is not null, 'the SV-only sale must carry a settlement spend operation';
-  select id into acct from public.sv_accounts where business_id=B and client_id=cli_acct1;
-  bal0 := pg_temp.v67_bal(B,acct);
-  select count(*) into mv0 from public.sv_lot_movements where business_id=B;
-  select count(*) into rev0 from public.sv_operations where business_id=B and operation_type='reverse';
+  ------------------------------------------------- SETTLEMENT-SPEND REVERSAL (§11b LIFTED) - door B
+  -- Door B (public.sv_reverse_spend) on a FRESH checkout settlement: restores the sv + records the
+  -- marker + nets §10; the sale itself re-opens as A/R (door B does not reverse the sale row).
+  reset role;
+  insert into public.clients(business_id,full_name,phone) values (B,'v67 doorb','+6590000216') returning id into cli_rev;
+  perform pg_temp.as_v67(B_owner,'authenticated');
+  perform public.record_sv_topup_sale(B,B_branch,cli_rev,ver_p5000,jsonb_build_object('method','cash','amount_cents',5000,'currency','SGD'),gen_random_uuid());
+  ev := public.evaluate_checkout(B,B_branch,cli_rev,lines5000,gen_random_uuid()); tok := (ev->>'evaluation_id')::uuid;
+  perform public.reserve_checkout_sv_tender(B,tok,5000,gen_random_uuid());
+  res := public.record_cart_sale(B,cli_rev,B_branch,null,'cash','v67-doorb-'||substr(md5(clock_timestamp()::text),1,8),null,tok,true);
+  sale_b := (res->>'sale_id')::uuid;
+  select spend_operation_id into refop from public.checkout_sv_tenders where business_id=B and sale_id=sale_b;
+  select id into acct_b from public.sv_accounts where business_id=B and client_id=cli_rev;
   rs0 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
-  begin
-    perform public.sv_reverse_spend(B, svspendop, gen_random_uuid());
-    raise exception 'reversing a checkout SETTLEMENT spend was ALLOWED' using errcode='XX000';
-  exception when others then
-    assert sqlstate = '22023', 'settlement-spend refusal must follow the sv family 22023, got '||sqlstate;
-    assert position('sv_tendered_spend_unsupported:' in sqlerrm) = 1,
-      'settlement-spend refusal must be typed sv_tendered_spend_unsupported, got: '||sqlerrm;
-  end;
-  -- It mutated NOTHING: no value returned, no movements, no reverse operation, marker intact.
-  bal1 := pg_temp.v67_bal(B,acct);
-  select count(*) into mv1 from public.sv_lot_movements where business_id=B;
-  select count(*) into rev1 from public.sv_operations where business_id=B and operation_type='reverse';
-  assert bal1 = bal0, 'a refused settlement-spend reversal moved the stored-value balance: '||bal0::text||' -> '||bal1::text;
-  assert mv1 = mv0, 'a refused settlement-spend reversal wrote sv_lot_movements';
-  assert rev1 = rev0, 'a refused settlement-spend reversal wrote an sv_operations reverse row';
-  assert (select status from public.checkout_sv_tenders where business_id=B and sale_id=sale_svonly) = 'consumed',
-    'a refused settlement-spend reversal disturbed the tender status';
-  select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale_svonly and business_id=B;
-  assert sb.balance_cents = 0 and sb.paid_cents = 0 and sb.sv_settled_cents = 5000 and sb.payment_status = 'paid',
-    'a refused settlement-spend reversal disturbed the SV-only sale_balance row';
-  assert public.get_revenue_summary(B, current_date-1, current_date+1, null)::jsonb = rs0::jsonb,
-    'a refused settlement-spend reversal changed get_revenue_summary';
+  plainrev := public.sv_reverse_spend(B, refop, gen_random_uuid());
+  assert (plainrev->>'status')='ok' and (plainrev->>'restored_cents')::int = 5000, 'door B must restore 5000';
+  assert exists (select 1 from public.checkout_sv_tender_reversals where business_id=B and sale_id=sale_b),
+    'door B must record a settlement-reversal marker';
+  assert (pg_temp.v67_bal(B,acct_b)->>'outstanding')::int = 5000, 'door B must restore the sv balance';
+  select sv_settled_cents, balance_cents, payment_status into sb from public.sale_balance where sale_id=sale_b and business_id=B;
+  assert sb.sv_settled_cents=0 and sb.balance_cents=5000 and sb.payment_status='unpaid', 'door B: the sale re-opens as A/R';
+  rs1 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
+  assert (rs0->>'revenue_cash_cents')::int - (rs1->>'revenue_cash_cents')::int = 5000, 'door B: revenue_cash nets down 5000';
+  assert (rs1->>'cash_collected_cents')::int = (rs0->>'cash_collected_cents')::int, 'door B: cash_collected unmoved';
 
-  -- NO OVER-REFUSAL: a plain (non-checkout) owner sv_spend is STILL reversible by v63's engine.
+  -- NO OVER-REFUSAL: a plain (non-checkout) owner sv_spend is STILL reversible by the engine.
   reset role;
   insert into public.clients(business_id,full_name,phone) values (B,'v67 plainspend','+6590000214') returning id into cli_rev;
   perform pg_temp.as_v67(B_owner,'authenticated');

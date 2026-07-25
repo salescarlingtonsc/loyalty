@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 61,
-  "itemCount": 106,
+  "pendingCount": 62,
+  "itemCount": 107,
   "items": [
     {
       "order": 1,
@@ -1067,6 +1067,16 @@
       "path": "supabase/migrations/20260725070000_frenly_v68a_chargeback_correction.sql",
       "octetLength": 63237,
       "sha256": "4f83bd5b21e72cc538b6602e43be1002c7f1e054c07ee92e35272490f62680bc",
+      "provenance": "local-source"
+    },
+    {
+      "order": 107,
+      "kind": "pending",
+      "version": "20260725080000",
+      "name": "frenly_v68b_sv_reversal_netting",
+      "path": "supabase/migrations/20260725080000_frenly_v68b_sv_reversal_netting.sql",
+      "octetLength": 45722,
+      "sha256": "55a95c0598278d89b0dac04257843f97570344ddd3eb539b6fb7f236ee42a124",
       "provenance": "local-source"
     }
   ]

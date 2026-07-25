@@ -162,7 +162,7 @@
     "browser_rpc_reaching_value": 21,
     "identities_total": 213,
     "identities_value_impact": 102,
-    "counts_note": "v54 adds public.create_expense/9 and public.receive_stock/6 as keyed idempotent value writers (db_function_writers 41->43, value 38->40). db_triggers_total 131->132 counts the new f2_write_operations immutability guard (reuses app.v41_operation_immutable_guard; no value write, so db_triggers_reaching_value is unchanged). The two former browser-direct value writes to expenses/stock_batches are GONE (browser_direct_writes 28->26, browser_direct_value_writes 2->0): the parallel app agent rewired app/index.html to the new keyed RPCs, so discovery now surfaces browser.rpc:create_expense and browser.rpc:receive_stock instead (browser_rpc_call_sites 101->103, browser_rpc_reaching_value 19->21). identities_total holds at 213 (two browser.write ids removed, two db.fn writers added) and identities_value_impact at 102."
+    "counts_note": "v68b lifts the v67 §11a/§11b SV-settlement reversal refusals and nets both §10 legs. It adds three writers - app.sv_reverse_spend_core (extracted restore engine, value), app.sv_record_settlement_reversal (the settlement-reversal marker, non-value) and app.sv_reverse_settlement_for_sale (sale-leg delegator) - and re-creates public.sv_reverse_spend as a delegator (its latest_file moves v64->v68b; its direct writes move to its called cores). The new public.checkout_sv_tender_reversals evidence table is tracked non-value in scripts/ps0/discover-writers.mjs. v54 adds public.create_expense/9 and public.receive_stock/6 as keyed idempotent value writers (db_function_writers 41->43, value 38->40). db_triggers_total 131->132 counts the new f2_write_operations immutability guard (reuses app.v41_operation_immutable_guard; no value write, so db_triggers_reaching_value is unchanged). The two former browser-direct value writes to expenses/stock_batches are GONE (browser_direct_writes 28->26, browser_direct_value_writes 2->0): the parallel app agent rewired app/index.html to the new keyed RPCs, so discovery now surfaces browser.rpc:create_expense and browser.rpc:receive_stock instead (browser_rpc_call_sites 101->103, browser_rpc_reaching_value 19->21). identities_total holds at 213 (two browser.write ids removed, two db.fn writers added) and identities_value_impact at 102."
   },
   "hard_findings": [
     "sell_package/3 (non-idempotent, no advisory lock) was execute-granted to authenticated AND called directly by the standalone Packages UI (app/index.html:6539); double-submit duplicated a package sale + client_packages + loyalty earn. [CLOSED by v54: EXECUTE on sell_package(uuid,uuid,uuid) revoked from public/anon/authenticated; only the definer-owned /4 wrapper legitimately calls /3. The standalone UI call has been migrated to the 4-arg overload (now app/index.html:6581, passing a stable idempotency key).]",
@@ -222,15 +222,51 @@
     },
     {
       "id": "db.fn:public.sv_reverse_spend/3",
-      "surface": "db_function",
-      "latest_file": "20260724230000_frenly_v64_ps2d_pause_controls.sql",
-      "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260725080000_frenly_v68b_sv_reversal_netting.sql",
+      "rows_written": "(no direct writes); via app.sv_reverse_spend_core: sv_operations:INSERT, sv_lot_movements:INSERT; via app.sv_record_settlement_reversal: checkout_sv_tender_reversals:INSERT",
       "detected_signals": "idem-signal, advisory-lock",
-      "entry_point": "public.sv_reverse_spend(business, spend_operation, idempotency_key) - PS-2A Increment C owner-only spend-REVERSAL RPC, HARD-GATED on authority='live'. v64 re-created it to add the redeem-pause gate (the registry previously still credited v63). v67 §11b splices a typed checkout-settlement refusal into it.",
+      "entry_point": "public.sv_reverse_spend(business, spend_operation, idempotency_key) - owner-only spend-REVERSAL RPC. v68b re-created it as a DELEGATOR: owner check, then app.sv_reverse_spend_core (restore-then-expire), then app.sv_record_settlement_reversal (the settlement-reversal marker when the reversed spend was a checkout settlement). v68b LIFTS the v67 §11b refusal by simply not reproducing it.",
       "idempotency": "sv_operations unique(business, operation_type='reverse', idempotency_key); same-key replay returns the cached result; a spend op is reversible AT MOST ONCE (a second reverse under a different key raises 22023 over-reversal)",
       "value": "PS-0 s6 restore-then-expire: writes a 'reversal' (+) per lot restoring the exact per-lot allocation the spend drew; if a restored lot is now past its expiry_key, immediately writes a '-expiry' for the restored amount (both recorded - an expired lot is never silently resurrected). Case (f) trail sums to 0.",
       "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live', and (v64) refuses under an active 'all'/'redeem' sv_pause. 'live' is NO LONGER a merely theoretical state - PS-2 LIVE (v65-v67) builds the path to it and the v69 cutover is what reaches it; the accurate statement as of v67 is that prod authority stays 'unbuilt' for every real business this phase, so the RPC is unreachable in PRODUCTION rather than unreachable in principle. Exercised via a rolled-back authority='live' shim.",
-      "kernel": "SETTLEMENT-AWARE (v67) - the old 'SEPARATE-LEDGER' rationale no longer holds. This function still writes ONLY the sv_lot_movements authority (no credit_ledger/points_ledger/sales rows), but v67 §10 ends the ledger separation: a consumed public.checkout_sv_tenders row is the SETTLEMENT of a public.sales row, which public.sale_balance and public.get_revenue_summary read as paid + cash-basis realised revenue. Because this RPC reverses a spend OPERATION and never funnels through reverse_sale_v20_base, §11a's sale-side gate cannot see it - so v67 §11b splices a typed refusal in (after all authorization/existence checks and both advisory locks, before the first write): reversing a spend operation that a CONSUMED checkout tender points at raises 22023 'sv_tendered_spend_unsupported:'. Without it, this RPC handed the stored value back while the sale kept reading paid and revenue-recognised. Plain non-checkout sv_spend operations stay fully reversible (no over-refusal). Coherent restitution is the v68 refund/reversal matrix; lifting either §11 refusal requires netting sale_balance.sv_tender_totals and get_revenue_summary.v_sv_cash in the same increment."
+      "kernel": "SETTLEMENT-NETTING (v68b) - the v67 §11b refusal is LIFTED and BOTH §10 legs now net. Door B: reversing a checkout settlement restores the exact lots via the shared core and records a public.checkout_sv_tender_reversals marker; sale_balance.sv_tender_totals and get_revenue_summary.v_sv_cash NOT-EXISTS against that marker, so the sale re-opens as A/R and revenue_cash nets down (cash_collected unmoved). A plain non-checkout sv_spend writes no marker and stays reversible. The chargeback interaction is fail-closed in the core (sv_settlement_charged_back) so a later reversal never resurrects clawed-back value."
+    },
+    {
+      "id": "db.fn:app.sv_reverse_spend_core/3",
+      "surface": "db_function",
+      "latest_file": "20260725080000_frenly_v68b_sv_reversal_netting.sql",
+      "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT (a 'reversal' per lot, plus a '-expiry' for a restored lot now past expiry_key), audit_log:INSERT",
+      "detected_signals": "idem-signal, advisory-lock",
+      "entry_point": "app.sv_reverse_spend_core(business, spend_operation, idempotency_key) - v68b extraction of the v64 public.sv_reverse_spend body MINUS the owner check (the same pattern v67 used for sv_reserve_core/sv_spend_core/sv_release_core). public.sv_reverse_spend and app.sv_reverse_settlement_for_sale both delegate here. Revoked from browsers.",
+      "idempotency": "sv_operations unique(business, operation_type='reverse', idempotency_key) + request_hash + per-account advisory xact lock + cached-result replay; a spend op is reversible AT MOST ONCE (a second reverse under a different key raises 22023 over-reversal).",
+      "value": "PS-0 §6 restore-then-expire: restores the EXACT per-lot allocation the spend drew (paid->paid lot, bonus->bonus lot); if a target lot is now past its expiry_key, immediately writes a '-expiry' for the restored amount (both recorded). Case (f) trail sums to 0; sv_total_outstanding returns exactly to pre-spend for a full reversal.",
+      "authority": "HARD-GATED: raises 22023 sv_not_live unless authority='live' (prod stays 'unbuilt' this phase); refuses under an active 'all'/'redeem' sv_pause; synthetic-on-live refused; currency validated; all gates re-validated after the locks (TOCTOU). Also refuses (sv_settlement_charged_back) when a source top-up of the spend has been charged back, so a reversal never resurrects clawed-back value.",
+      "kernel": "SETTLEMENT-NETTING restore engine (v68b): the ONLY restitution path. Writes only the sv_lot_movements authority + its sv_operations envelope; the settlement-reversal marker is written by the caller (app.sv_record_settlement_reversal), so both reversal doors funnel through this one engine."
+    },
+    {
+      "id": "db.fn:app.sv_record_settlement_reversal/6",
+      "surface": "db_function",
+      "latest_file": "20260725080000_frenly_v68b_sv_reversal_netting.sql",
+      "rows_written": "checkout_sv_tender_reversals:INSERT (ON CONFLICT on the tender -> no-op on replay), audit_log:INSERT",
+      "detected_signals": "idem-signal",
+      "entry_point": "app.sv_record_settlement_reversal(business, spend_operation, reverse_result, reversed_via, reversal_sale_id, reason) - v68b append-only MARKER writer. Both reversal doors call it after the restore engine. Revoked from browsers.",
+      "idempotency": "one marker per reversed settlement, structurally: unique(tender_id) AND unique(business, spend_operation_id); the insert is ON CONFLICT on the tender uniqueness -> a replay writes nothing.",
+      "value": "NON-VALUE EVIDENCE writer: records that a consumed checkout settlement was reversed. Moves NO value itself (the movement authority stays sv_lot_movements, restored by app.sv_reverse_spend_core). Returns false and writes nothing for a plain (non-checkout) spend reversal.",
+      "authority": "No gate of its own (called only from the owner/refund-gated doors after the core's full gate set); revoked from browsers, RLS owner/finance/super-admin read.",
+      "kernel": "SETTLEMENT-NETTING marker (v68b): the row the two §10 surfaces (sale_balance.sv_tender_totals + get_revenue_summary.v_sv_cash) NOT-EXISTS against to net a reversed settlement out. Append-only (v61 immutability guard), the exact analogue of sv_chargebacks beside a chargeback."
+    },
+    {
+      "id": "db.fn:app.sv_reverse_settlement_for_sale/4",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260725080000_frenly_v68b_sv_reversal_netting.sql",
+      "rows_written": "(no direct writes); via app.sv_reverse_spend_core: sv_operations:INSERT, sv_lot_movements:INSERT; via app.sv_record_settlement_reversal: checkout_sv_tender_reversals:INSERT",
+      "detected_signals": "advisory-lock",
+      "entry_point": "app.sv_reverse_settlement_for_sale(business, sale, reversal_sale_id, reason) - v68b SALE-leg (§11a) restitution entry, called from inside public.reverse_sale_v20_base (the single money core) for any sale carrying a consumed sv tender. Revoked from browsers.",
+      "idempotency": "finds the consumed tender for the sale; a no-op (returns null) when there is none (the ONLY reachable shape in prod); skips (already_reversed) when a marker already exists (door B ran first); otherwise calls the core with a deterministic per-tender key. Serialized on the per-account advisory lock.",
+      "value": "Delegates restitution to app.sv_reverse_spend_core and records the marker via app.sv_record_settlement_reversal; writes nothing directly. In production no consumed sv tender can exist until v69, so it is a no-op there and every ordinary sale reversal stays byte-behaviour-identical.",
+      "authority": "Inherits the money core's refund_sales authorization (reverse_sale_v20_base) and the restore core's full authority/pause/synthetic/currency/chargeback gate set; adds none of its own.",
+      "kernel": "SETTLEMENT-NETTING sale-leg entry (v68b): the §11a lift. Splice-installed as a single `perform` call in reverse_sale_v20_base, so restitution + marker recording happen inside the same atomic reversal transaction as the sale row and cash refund."
     },
     {
       "id": "db.fn:public.refund_sv_operation/4",

@@ -34,8 +34,12 @@ export PGCONNECT_TIMEOUT="${PGCONNECT_TIMEOUT:-10}"
 here="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 repo="$(CDPATH= cd -- "$here/../.." && pwd)"
 MIGRATION="${V67_MIGRATION:-$repo/db/migrations/20260724_frenly_v67_ps2live_checkout_tender.sql}"
+V68A_MIGRATION="${V68A_MIGRATION:-$repo/db/migrations/20260724_frenly_v68a_chargeback_correction.sql}"
+V68B_MIGRATION="${V68B_MIGRATION:-$repo/db/migrations/20260724_frenly_v68b_sv_reversal_netting.sql}"
 SUITE="${V67_SUITE:-$here/v67_ps2live_checkout_tender.sql}"
 [ -f "$MIGRATION" ] || { echo "migration not found: $MIGRATION" >&2; exit 2; }
+[ -f "$V68A_MIGRATION" ] || { echo "migration not found: $V68A_MIGRATION" >&2; exit 2; }
+[ -f "$V68B_MIGRATION" ] || { echo "migration not found: $V68B_MIGRATION" >&2; exit 2; }
 [ -f "$SUITE" ] || { echo "suite not found: $SUITE" >&2; exit 2; }
 
 q() { psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 "$@"; }
@@ -110,10 +114,43 @@ chk "anon still has none" "f" "$(q -c "select has_function_privilege('anon','pub
 chk "v64 pause gate preserved" "1" "$(q -c "select case when position('sv_pause_active' in pg_get_functiondef('public.sv_reverse_spend(uuid,uuid,uuid)'::regprocedure)) > 0 then 1 else 0 end")"
 chk "v63 restore-then-expire core preserved" "1" "$(q -c "select case when position('re_expired_cents' in pg_get_functiondef('public.sv_reverse_spend(uuid,uuid,uuid)'::regprocedure)) > 0 then 1 else 0 end")"
 
-echo "step 4 — the §11b behavioural assertions against the production-shaped chain"
-# The full v67 suite (rollback-only) carries them: settlement-spend refusal is typed 22023 +
-# sv_tendered_spend_unsupported:, mutates nothing, leaves sale_balance/get_revenue_summary intact,
-# and a plain non-checkout sv_spend stays reversible (no over-refusal).
+echo "step 3b — production-shape reverse_sale_v20_base, then apply the COUPLED lift v68a + v68b"
+# v68b re-splices reverse_sale_v20_base (§11a) and full-replaces sv_reverse_spend (§11b). Its §11a
+# needles are comment-free (the v67 §11a block + the two set_config resets), so they must land on the
+# production shape too. Strip the sale core's full-line comments (every code byte preserved) and prove
+# the v67 §11a block survives (it is comment-free), then apply v68a and the coupled v68b lift. The v67
+# suite that runs in step 4 was flipped to the lifted behaviour when v68b landed, so it needs v68b.
+q <<'SQL' >/dev/null
+do $prodshape2$
+declare v_def text; v_out text;
+begin
+  select pg_get_functiondef('public.reverse_sale_v20_base(uuid,uuid,text,text,text,text)'::regprocedure) into strict v_def;
+  v_out := regexp_replace(v_def, '^[ \t]*--[^\n]*\n', '', 'gn');
+  if v_out = v_def then
+    raise exception 'prod-shape rewrite of reverse_sale_v20_base stripped nothing';
+  end if;
+  execute v_out;
+end
+$prodshape2$;
+SQL
+chk "§11a refusal survives comment-strip (v67 block is comment-free)" "1" "$(q -c "select case when position('sv_tendered_sale_unsupported' in pg_get_functiondef('public.reverse_sale_v20_base(uuid,uuid,text,text,text,text)'::regprocedure)) > 0 then 1 else 0 end")"
+if ! psql "$DATABASE_URL" -X -q -v ON_ERROR_STOP=1 -f "$V68A_MIGRATION" >/tmp/v67_prodshape_v68a.out 2>&1; then
+  echo "  FAIL v68a did not apply:" >&2; tail -20 /tmp/v67_prodshape_v68a.out >&2; exit 1
+fi
+echo "  ok   v68a applied"
+if ! psql "$DATABASE_URL" -X -q -v ON_ERROR_STOP=1 -f "$V68B_MIGRATION" >/tmp/v67_prodshape_v68b.out 2>&1; then
+  echo "  FAIL v68b did not apply to a production-shaped sale core:" >&2; tail -20 /tmp/v67_prodshape_v68b.out >&2; exit 1
+fi
+echo "  ok   v68b applied (its §11a splice landed on the production-shaped reverse_sale_v20_base)"
+chk "§11a refusal lifted by v68b" "0" "$(q -c "select case when position('sv_tendered_sale_unsupported' in pg_get_functiondef('public.reverse_sale_v20_base(uuid,uuid,text,text,text,text)'::regprocedure)) > 0 then 1 else 0 end")"
+chk "v68b restitution call installed" "1" "$(q -c "select case when position('sv_reverse_settlement_for_sale' in pg_get_functiondef('public.reverse_sale_v20_base(uuid,uuid,text,text,text,text)'::regprocedure)) > 0 then 1 else 0 end")"
+chk "§11b refusal lifted by v68b" "0" "$(q -c "select case when position('sv_tendered_spend_unsupported' in pg_get_functiondef('public.sv_reverse_spend(uuid,uuid,uuid)'::regprocedure)) > 0 then 1 else 0 end")"
+if [ "$fail" != "0" ]; then echo "prod-shape harness: FAIL (v68b lift)" >&2; exit 1; fi
+
+echo "step 4 — the §11 behavioural assertions against the production-shaped, fully-lifted chain"
+# The full v67 suite (rollback-only), FLIPPED by v68b to the lifted behaviour: reversing an sv-settled
+# sale restores the exact lots, records a marker, and nets BOTH §10 legs (door A and door B), while a
+# plain non-checkout sv_spend stays reversible.
 if ! psql "$DATABASE_URL" -X -q -v ON_ERROR_STOP=1 -f "$SUITE" >/tmp/v67_prodshape_suite.out 2>&1; then
   echo "  FAIL the v67 suite failed on a production-shaped chain:" >&2; tail -30 /tmp/v67_prodshape_suite.out >&2; exit 1
 fi
@@ -122,7 +159,7 @@ if ! grep -q 'V67 SUITE PASS' /tmp/v67_prodshape_suite.out; then
 fi
 echo "  ok   V67 SUITE PASS on the production-shaped chain"
 
-rm -f /tmp/v67_prodshape_apply.out /tmp/v67_prodshape_suite.out
+rm -f /tmp/v67_prodshape_apply.out /tmp/v67_prodshape_suite.out /tmp/v67_prodshape_v68a.out /tmp/v67_prodshape_v68b.out
 if [ "$fail" = "0" ]; then
-  echo "v67 prod-shape splice parity: PASS (rev-4 needle -> 0 occurrences in prod shape; rev-5 needle -> 1; gate installed, pre-write, behaviour intact)"
+  echo "v67 prod-shape splice parity: PASS (rev-4 needle -> 0 occurrences in prod shape; rev-5 needle -> 1; v67 gate installed; v68b §11a splice lands on the prod-shaped sale core; both refusals lifted; behaviour intact)"
 else exit 1; fi
