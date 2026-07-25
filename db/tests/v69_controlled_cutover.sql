@@ -583,10 +583,15 @@ begin
   v_res2 := public.set_sv_cutover_designation(A, true, 'v69 rehearsal pilot designation for business A');
   assert (v_res2->>'unchanged')::boolean is true and (v_res2->>'designation_id') = (v_res->>'designation_id'),
     'v69: re-designation was not idempotent';
-  -- SINGLETON: while A holds the active designation, B cannot be designated (the pilot is ONE firm)
+  -- SINGLETON (rev-2, review D2): while A holds the active designation, B cannot be designated (the
+  -- pilot is ONE firm). The collision is now a TYPED refusal raised under the global advisory lock,
+  -- not a raw 23505 surfaced from the singleton index.
   begin perform public.set_sv_cutover_designation(B, true, 'a second pilot firm designation attempt');
     raise exception 'v69: two businesses were designated for cutover at once';
-  exception when sqlstate '23505' then null; end;
+  exception when sqlstate '22023' then
+    assert position('sv_pilot_already_designated' in sqlerrm) > 0,
+      'v69: the second-designation collision is not the typed sv_pilot_already_designated: ' || sqlerrm;
+  end;
 
   ---------------------------------------------------------------- sv_not_ready (precedence 4)
   perform pg_temp.as_v69(A_owner, 'authenticated');
@@ -786,7 +791,47 @@ begin
   perform public.sv_lift_pause(A, 'stored_value', 'all', 'v69 lifts the live-business pause');
   assert (select state from public.sv_authority where business_id = A and asset = 'stored_value') = 'live',
     'v69: pausing/lifting changed the authority state';
-  raise notice 'v69 PART 3 (the cutover, replay, conflict, irreversibility): PASS';
+
+  ---------------------------------------------------------------- rev-2 D1: ONE live business platform-wide
+  -- With A already live, no OTHER business can be cut over. The SA (B_owner_sa) hands the pilot slot
+  -- to B (revoke A, designate B - which also proves the slot is reusable once freed); B enters
+  -- shadow_testing and reconciles CLEAN, so it is otherwise fully ready - yet its readiness is blocked
+  -- by sv_pilot_already_live and sv_cutover_business raises exactly that typed error. Exactly one
+  -- business stays live platform-wide. (The direct-UPDATE unique-index backstop is proven in the
+  -- rehearsal D1 proof and db/tests/v69_cutover_concurrency.sh Round A2, where the guard can be
+  -- cleanly suspended in a rolled-back probe.)
+  perform pg_temp.as_v69(B_owner_sa, 'authenticated');
+  perform public.set_sv_cutover_designation(A, false, 'v69 D1 releases A''s pilot slot to probe the one-live bound');
+  v_res := public.set_sv_cutover_designation(B, true, 'v69 D1 designates B to probe the one-live bound');
+  assert (v_res->>'designated')::boolean is true and (v_res->>'unchanged')::boolean is false,
+    'v69 D1: designating B failed after A''s slot was released (the singleton slot is not reusable)';
+  perform public.set_sv_authority_state(B, 'stored_value', 'shadow_testing', 'v69 D1 puts B in shadow testing');
+  v_res := public.run_sv_reconciliation(B);
+  assert (v_res->>'reconciliation_status') = 'clean',
+    'v69 D1: B (a fresh tenant with no gift cards) did not reconcile clean: ' || v_res::text;
+  v_prev := public.preview_sv_cutover(B);
+  assert (v_prev->>'ready')::boolean is false, 'v69 D1: B previewed ready while A is live platform-wide';
+  assert (pg_temp.v69_ready(B)->>'pilot_already_live')::boolean is true,
+    'v69 D1: the readiness oracle does not surface pilot_already_live=true';
+  assert (v_prev->'blocking_codes'->>0) = 'sv_pilot_already_live',
+    'v69 D1: B''s first blocking code is not sv_pilot_already_live (codes '
+      || (v_prev->'blocking_codes')::text || ', reasons ' || (v_prev->'blocking_reasons')::text || ')';
+  v_key := gen_random_uuid();
+  begin
+    perform public.sv_cutover_business(B, 'v69 D1: B attempts go-live while A is already live', v_prev->>'evidence_hash', v_key);
+    raise exception 'v69 D1: B was cut over while A is already live platform-wide';
+  exception when sqlstate '22023' then
+    assert position('sv_pilot_already_live' in sqlerrm) > 0,
+      'v69 D1: B''s cutover raised the wrong error (expected sv_pilot_already_live): ' || sqlerrm;
+  end;
+  assert not exists (select 1 from public.sv_operations
+                      where business_id = B and operation_type = 'cutover' and idempotency_key = v_key),
+    'v69 D1: a sv_pilot_already_live refusal reserved B''s idempotency key';
+  assert (select count(*) from jsonb_each_text(pg_temp.v69_census()) v where v.value = 'live') = 1,
+    'v69 D1: more than one business is live platform-wide: ' || pg_temp.v69_census()::text;
+  assert (pg_temp.v69_census() ->> B::text) <> 'live', 'v69 D1: B became live';
+  perform pg_temp.as_v69(A_owner, 'authenticated');   -- restore A's owner for PART 4 (D1 probe used B's SA)
+  raise notice 'v69 PART 3 (the cutover, replay, conflict, irreversibility, one-live-platform-wide): PASS';
 
   -- =======================================================================================
   -- PART 4 - LIVE BEHAVIOUR ON A GENUINELY LIVE BUSINESS (no shim anywhere below this line)

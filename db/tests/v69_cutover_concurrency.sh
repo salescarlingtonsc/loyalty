@@ -1,12 +1,22 @@
 #!/bin/sh
 # v69 CONTROLLED-CUTOVER concurrency harness: two connections race the go-live.
 #
-#   Round A  (two cutovers of ONE business, DIFFERENT keys): fired together -> exactly ONE
+#   Round A   (two cutovers of ONE business, DIFFERENT keys): fired together -> exactly ONE
 #     transition. One caller gets ok, the other the typed sv_already_live; exactly one
 #     sv_cutover_events row, one 'cutover' sv_operations row and one SV_CUTOVER audit row exist.
 #     This is the load-bearing round: a business must go live at most once, ever.
-#   Round A2 (two cutovers of ANOTHER business, SAME key): fired together -> both ok (one
-#     materialises, the other replays the cached envelope result); still exactly one event/op/audit.
+#   Round A-replay (two cutovers of the SAME now-live business, reusing the WINNING key + reason
+#     from Round A): fired together -> BOTH ok, each replaying the cached envelope; still exactly one
+#     event/op/audit. This preserves the genuine same-key idempotent-replay-under-concurrency
+#     assertion WITHOUT minting a second live business (which rev-2's one-live bound now forbids).
+#   Round A2 (rev-2, review D1 - ONE live business platform-wide): with b1 already live from Round A,
+#     the super admin hands the pilot slot to b2 and b2 reconciles CLEAN, so it is otherwise fully
+#     ready - yet a concurrent SAME-key pair of cutovers on b2 is BOTH refused with the typed
+#     sv_pilot_already_live, and a privileged direct UPDATE of b2 to live (guard suspended, in a
+#     rolled-back probe) is refused by the sv_authority(asset) WHERE state='live' unique index
+#     (23505). b2 never goes live; exactly one business is live platform-wide. The OLD Round A2 made
+#     a SECOND business live after revoking the first designation - that is now structurally
+#     forbidden and is exactly the defect this round now guards against.
 #   Round B  (PS-0 §9 case (b): concurrent spend vs refund on the genuinely live business from
 #     Round A). $100 paid + $12 bonus, a $30 spend racing a $100 whole-refund. Either order is
 #     legal and the invariant is the same in both: cumulative cash-out <= the 10 000 paid, no lot
@@ -14,9 +24,11 @@
 #     Spend-first leaves paid 7 321 (bonus draw floor(3000*1200/11200)=321, paid draw 2 679) and a
 #     follow-up whole refund pays exactly $73.21; refund-first leaves the spend refused.
 #
-# UNLIKE db/tests/v68b_reversal_concurrency.sh THIS HARNESS NEVER FORCES 'live'. The whole point of
-# v69 is that 'live' is reachable only through public.sv_cutover_business, so the businesses here go
-# live by actually being designated by a super admin and cut over by their owner.
+# UNLIKE db/tests/v68b_reversal_concurrency.sh THIS HARNESS NEVER FORCES 'live' as an outcome. The
+# whole point of v69 is that 'live' is reachable only through public.sv_cutover_business, so the
+# businesses here go live by actually being designated by a super admin and cut over by their owner.
+# (The one place a direct UPDATE is attempted - Round A2's index probe - is DELIBERATELY refused and
+# rolled back, proving the structural backstop; it never leaves a business live.)
 #
 # The harness COMMITS (it needs two connections), so run it ONLY against a disposable rehearsal
 # cluster that has been replayed through v69. It revokes each designation when a round is done, so
@@ -109,10 +121,36 @@ echo "round A: oks=$oksA already_live=$liveA state=$(state "$b1") events=$(event
 [ "$(events "$b1")" = "1" ] || { echo "FAIL A: expected exactly ONE cutover event (one transition)" >&2; fail=1; }
 [ "$(ops "$b1")" = "1" ] || { echo "FAIL A: expected exactly one cutover operation" >&2; fail=1; }
 [ "$(audits "$b1")" = "1" ] || { echo "FAIL A: expected exactly one SV_CUTOVER audit row" >&2; fail=1; }
+
+# ---------- Round A-replay: two cutovers of the SAME live b1, WINNING key + reason ----------
+# The idempotent-replay path returns the cached envelope before any readiness/evidence check, so a
+# concurrent pair reusing the winning key (and Round A's exact reason, so the request hash matches)
+# both return ok and add NO new event/op/audit - one transition, replayed twice under concurrency.
+KW="$(q -c "select idempotency_key from public.sv_operations where business_id='$b1' and operation_type='cutover'")"
+case "$KW" in ????????-????-????-????-????????????) ;; *) echo "FAIL A-replay: could not read the winning key ($KW)" >&2; exit 1;; esac
+cutRep="select coalesce((public.sv_cutover_business('$b1'::uuid,'v69 concurrency round A go-live','$h1','$KW'::uuid))->>'status','err');"
+START="$(q -c 'select extract(epoch from now())+2')"
+fire "$jwt_o1" "$cutRep" /tmp/v69_R1.out
+fire "$jwt_o1" "$cutRep" /tmp/v69_R2.out
+wait
+oksR="$(cat /tmp/v69_R1.out /tmp/v69_R2.out | grep -c '^ok$' || true)"
+echo "round A-replay: oks=$oksR events=$(events "$b1") ops=$(ops "$b1") audits=$(audits "$b1")"
+[ "$oksR" = "2" ] || { echo "FAIL A-replay: a same-key concurrent replay must return ok twice, got $oksR" >&2; fail=1; }
+[ "$(events "$b1")" = "1" ] || { echo "FAIL A-replay: the replay wrote a second cutover event" >&2; fail=1; }
+[ "$(ops "$b1")" = "1" ] || { echo "FAIL A-replay: the replay wrote a second cutover operation" >&2; fail=1; }
+[ "$(audits "$b1")" = "1" ] || { echo "FAIL A-replay: the replay wrote a second SV_CUTOVER audit row" >&2; fail=1; }
 undesignate "$b1"
 
-# ---------- Round A2: two cutovers of ANOTHER business, SAME key ----------
+# ---------- Round A2 (rev-2, D1): a SECOND business CANNOT go live while one already is ----------
+# Hand the pilot slot to b2 and bring it to clean readiness. Because b1 is already live, b2's
+# readiness is (correctly) blocked by sv_pilot_already_live, and both racers of a concurrent same-key
+# cutover on b2 must be refused with exactly that typed code - never made live.
 prepare "$b2" "$jwt_o2"
+readyB2="$(ready_for "$jwt_o2" "$b2")"
+codeB2="$(q -c "$jwt_o2 select (public.preview_sv_cutover('$b2'::uuid))->'blocking_codes'->>0;" | tail -1)"
+echo "round A2 preview: b2_ready=$readyB2 first_code=$codeB2"
+[ "$readyB2" = "false" ] || { echo "FAIL A2: b2 previewed ready while b1 is already live" >&2; fail=1; }
+[ "$codeB2" = "sv_pilot_already_live" ] || { echo "FAIL A2: b2 first blocking code is '$codeB2', expected sv_pilot_already_live" >&2; fail=1; }
 h2="$(hash_for "$jwt_o2" "$b2")"
 K2="$(q -c 'select gen_random_uuid()')"
 cutA2="select coalesce((public.sv_cutover_business('$b2'::uuid,'v69 concurrency round A2 go-live','$h2','$K2'::uuid))->>'status','err');"
@@ -121,12 +159,32 @@ fire "$jwt_o2" "$cutA2" /tmp/v69_A3.out
 fire "$jwt_o2" "$cutA2" /tmp/v69_A4.out
 wait
 oksA2="$(cat /tmp/v69_A3.out /tmp/v69_A4.out | grep -c '^ok$' || true)"
-echo "round A2: oks=$oksA2 state=$(state "$b2") events=$(events "$b2") ops=$(ops "$b2") audits=$(audits "$b2")"
-[ "$oksA2" = "2" ] || { echo "FAIL A2: a same-key replay must also return ok, got $oksA2" >&2; fail=1; }
-[ "$(state "$b2")" = "live" ] || { echo "FAIL A2: the business is not live" >&2; fail=1; }
-[ "$(events "$b2")" = "1" ] || { echo "FAIL A2: expected exactly ONE cutover event" >&2; fail=1; }
-[ "$(ops "$b2")" = "1" ] || { echo "FAIL A2: expected exactly one cutover operation" >&2; fail=1; }
-[ "$(audits "$b2")" = "1" ] || { echo "FAIL A2: expected exactly one SV_CUTOVER audit row" >&2; fail=1; }
+refA2="$(cat /tmp/v69_A3.out /tmp/v69_A4.out | grep -c 'sv_pilot_already_live' || true)"
+echo "round A2: oks=$oksA2 pilot_already_live=$refA2 state=$(state "$b2") events=$(events "$b2")"
+[ "$oksA2" = "0" ] || { echo "FAIL A2: a second business was cut over while one is already live (oks=$oksA2)" >&2; fail=1; }
+[ "$refA2" = "2" ] || { echo "FAIL A2: expected BOTH racers refused with sv_pilot_already_live, got $refA2" >&2; fail=1; }
+[ "$(state "$b2")" != "live" ] || { echo "FAIL A2: b2 became live via the sanctioned path" >&2; fail=1; }
+[ "$(events "$b2")" = "0" ] || { echo "FAIL A2: a refused cutover wrote a b2 cutover event" >&2; fail=1; }
+
+# Structural backstop: with the guard suspended, a privileged direct UPDATE of b2 to live is refused
+# by the one-live unique index (23505). Done inside a rolled-back transaction so b2 never lives.
+idxprobe="$(q <<SQL 2>&1 || true
+begin;
+alter table public.sv_authority disable trigger sv_authority_guard;
+do \$p\$ begin
+  update public.sv_authority set state='live' where business_id='$b2' and asset='stored_value';
+  raise exception 'INDEX_PROBE_FAIL direct update to live succeeded while another business is live';
+exception when unique_violation then raise notice 'INDEX_PROBE_OK the one-live unique index refused the second live row';
+end \$p\$;
+rollback;
+SQL
+)"
+echo "round A2 index probe: $(echo "$idxprobe" | grep -o 'INDEX_PROBE_[A-Z]*' | head -1)"
+echo "$idxprobe" | grep -q 'INDEX_PROBE_OK'   || { echo "FAIL A2: the one-live unique index did not refuse a direct UPDATE of b2 to live: $idxprobe" >&2; fail=1; }
+echo "$idxprobe" | grep -q 'INDEX_PROBE_FAIL' && { echo "FAIL A2: a direct UPDATE forced b2 live past the unique index" >&2; fail=1; }
+[ "$(state "$b2")" != "live" ] || { echo "FAIL A2: b2 is live after the rolled-back index probe" >&2; fail=1; }
+onelive="$(q -c "select count(*) from public.sv_authority where state='live'")"
+[ "$onelive" = "1" ] || { echo "FAIL A2: expected exactly one live business platform-wide, got $onelive" >&2; fail=1; }
 undesignate "$b2"
 
 # ---------- Round B: PS-0 case (b) - concurrent spend vs refund on the live business ----------
@@ -186,7 +244,7 @@ echo "invariants: out_of_range_lots=$bad businesses_with_two_cutovers=$dupev unr
 [ "$dupev" = "0" ] || { echo "FAIL: a business recorded more than one cutover" >&2; fail=1; }
 [ "$extralive" = "0" ] || { echo "FAIL: an unrelated business went live" >&2; fail=1; }
 
-rm -f /tmp/v69_A1.out /tmp/v69_A2.out /tmp/v69_A3.out /tmp/v69_A4.out /tmp/v69_B1.out /tmp/v69_B2.out
+rm -f /tmp/v69_A1.out /tmp/v69_A2.out /tmp/v69_A3.out /tmp/v69_A4.out /tmp/v69_R1.out /tmp/v69_R2.out /tmp/v69_B1.out /tmp/v69_B2.out
 if [ "$fail" = "0" ]; then
-  echo "v69 controlled-cutover concurrency: PASS (two concurrent cutovers -> exactly one transition; same-key replay -> one transition, two oks; PS-0 case (b) invariants hold)"
+  echo "v69 controlled-cutover concurrency: PASS (two concurrent cutovers -> exactly one transition; same-key concurrent replay -> one transition, two oks; a SECOND business is refused go-live with sv_pilot_already_live AND the one-live unique index while one is already live; PS-0 case (b) invariants hold)"
 else exit 1; fi

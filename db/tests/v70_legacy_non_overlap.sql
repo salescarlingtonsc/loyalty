@@ -228,6 +228,13 @@ begin
   if (select balance_cents from public.gift_cards where business_id=v_biz_l and code=v_gc_l_code) <> 3000 then
     raise exception 'v70-1: redemption on a live business did not reduce the balance to 3000'; end if;
 
+  -- rev-2 (v69 review D1): stored value now permits only ONE live business platform-wide. PART 1's
+  -- non-overlap refusals are proven, so release L from 'live' before the PART 2 readiness proof -
+  -- otherwise L's liveness (correctly) blocks K with sv_pilot_already_live, which would mask the
+  -- thing PART 2 exists to prove: that acknowledgement netting makes K's reconciliation CLEAN and its
+  -- readiness pass. This is a suite-setup fix; no v70 migration bytes change.
+  perform pg_temp.v70_force_state(v_biz_l,'shadow_testing');
+
   -- ============================ PART 2: acknowledgement + netting (kopi 5000c) ============================
   -- K enters shadow_testing and holds one active $50 legacy card.
   perform pg_temp.as_v70(v_owner_k,'authenticated');

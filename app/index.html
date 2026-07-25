@@ -7614,8 +7614,12 @@ async function storedValuePage(){
   /* Cutover (v69). Deliberately NOT the shared svOpenActionModal: this is the only irreversible
      action on the screen, so it demands a typed match of the business slug in addition to a reason,
      and it replays the exact evidence hash the preview returned (a stale hash is refused server-side
-     with sv_evidence_stale rather than acting on evidence that has moved). One idempotency key is
-     generated per attempt, so a lost response can be retried without a second transition. */
+     with sv_evidence_stale rather than acting on evidence that has moved). A FRESH idempotency key is
+     generated per attempt: this does NOT replay a cached envelope, so a genuinely lost response is
+     not idempotently re-served. It is still safe against a double transition - a retry re-takes the
+     cutover locks and, because the first attempt already made the business live, is refused with
+     sv_already_live, so no second transition can occur. (An exact idempotent replay would require
+     reusing the same key, which this control does not do.) */
   const svCutoverBtn=$('svCutoverBtn');
   if(svCutoverBtn&&!svCutoverBtn.disabled)svCutoverBtn.onclick=()=>{
     const slug=String(S.biz&&S.biz.slug||'');

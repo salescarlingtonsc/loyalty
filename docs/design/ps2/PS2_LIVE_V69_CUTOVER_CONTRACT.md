@@ -42,13 +42,26 @@ a business must not go live into that state. Assert both the jobs' existence and
 - Refuses unless EVERY condition holds, each with its own typed error:
   `sv_not_ready` (preview not ready), `sv_reconciliation_unclean`, `sv_paused`,
   `sv_automation_missing` (§2), `sv_synthetic_business` (a synthetic business may never go live),
-  `sv_already_live` (idempotent replay returns the stored result, does not re-transition).
+  `sv_already_live` (idempotent replay returns the stored result, does not re-transition),
+  `sv_pilot_already_live` (rev-2, review D1 — a DIFFERENT business already holds
+  `sv_authority.state='live'` for the asset; the pilot is one business at a time platform-wide).
 - Records: actor, business, prior state, new state, reason, evidence hash, timestamp — in `audit_log`
   AND as an append-only cutover record (reuse `sv_plan_status_events`-style append-only shape or a new
   `sv_cutover_events` table; justify the choice).
 - `sv_operations` idempotency envelope (unique key + request hash + advisory lock + cached replay).
 - **NEVER global**: takes exactly one business id; no "all", no loop, no wildcard. A tripwire test must
   assert no function anywhere can transition more than one business per call.
+- **ONE live business platform-wide (rev-2, review D1).** The PS-2 LIVE "one pilot business" mandate is
+  enforced on the AUTHORITY, structurally and by typed code, NOT by the designation singleton (which
+  bounds concurrent *designations* only — revoke-A / designate-B / cutover-B would otherwise reach two
+  live businesses). Two mechanisms, belt-and-braces: (a) a partial unique index
+  `public.sv_authority (asset) WHERE state='live'` allows at most one live row per asset and makes a
+  second live transition fail with 23505 even under a true race between two businesses (they take
+  DIFFERENT per-business advisory locks, so they do not serialise); (b) `app.sv_cutover_readiness`
+  emits `sv_pilot_already_live` so preview and act agree via the precedence→raise path in the common
+  serialised case. Super-admin designation is still recorded, and a second concurrent designation is
+  refused with the typed `sv_pilot_already_designated` under the global advisory lock (rev-2, review
+  D2), not a raw 23505 on the designation singleton index.
 
 ## 4. Truthful readiness
 Replace `preview_sv_cutover`'s hardcoded `ready:false` with a real computation over §3's conditions,
@@ -75,7 +88,11 @@ outcome in the reversal RPCs' contract. State which you chose and test it.
 Full refusal matrix (every typed error in §3, each proven to mutate nothing and reserve no key);
 preview↔act agreement (§4); automation-missing refusal with a job disabled (§2); synthetic business
 refused; idempotent replay + changed-request conflict; two-connection concurrent cutover → exactly one
-transition; pause still works post-live; the v66 mint tripwire, v67 tender gates and v68a/v68b
+transition; **one live business platform-wide (rev-2, review D1): with one business already live, a
+second is refused go-live via the typed `sv_pilot_already_live` (sanctioned path, incl. a concurrent
+same-key pair) AND via 23505 on the one-live unique index (privileged direct UPDATE, guard suspended);
+and the typed `sv_pilot_already_designated` designation collision (D2)**; pause still works post-live;
+the v66 mint tripwire, v67 tender gates and v68a/v68b
 refusal/lift behaviour all still hold on a live business; **and the whole PS-0 lettered-case oracle
 re-run against a LIVE business** (this is the first time the arithmetic runs outside a forced-live
 shim — it must be cents-exact there too). Chain gates: fresh replay v61→v69; ALL prior suites; validate;

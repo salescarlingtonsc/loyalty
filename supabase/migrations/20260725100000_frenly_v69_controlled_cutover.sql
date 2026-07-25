@@ -36,13 +36,39 @@
 --   still refuses the same two states, and now additionally refuses to LEAVE 'live'.
 --   The v61 table guard is the tripwire and it stays a tripwire: an UPDATE that sets state='live'
 --   is rejected unless a public.sv_cutover_events row for that exact (business_id, asset) was
---   inserted by the SAME transaction (matched on a stored top-level transaction id). The ONLY
---   writer of sv_cutover_events is public.sv_cutover_business - that table has RLS on, every
+--   inserted by the SAME transaction (matched on a stored top-level transaction id). The only
+--   FUNCTION writer of sv_cutover_events is public.sv_cutover_business - that table has RLS on, every
 --   browser privilege revoked, an append-only trigger, and a UNIQUE(business_id, asset) that makes
---   a second cutover of the same business structurally impossible. So the reachability chain is
---   exactly one function long, and a stolen owner session that could somehow UPDATE sv_authority
---   directly still cannot reach 'live'. An INSERT can never be 'live' either (a business is never
---   born live).
+--   a second cutover of the same business structurally impossible. (rev-2, review D3: the "one
+--   writer" claim is precisely "exactly one catalog FUNCTION writer", which the postcondition
+--   machine-checks. service_role - BYPASSRLS, not a browser role - can still DML these v69 tables
+--   directly via SQL, consistent with its chain-wide DML posture; the append-only/immutable triggers
+--   still bite it, and the browser roles anon/authenticated cannot write at all.) So the reachability
+--   chain is exactly one function long, and a stolen owner session that could somehow UPDATE
+--   sv_authority directly still cannot reach 'live'. An INSERT can never be 'live' either (a business
+--   is never born live).
+--
+-- =====================================================================================
+-- §1a ONE LIVE BUSINESS PLATFORM-WIDE - THE STRUCTURAL EXPRESSION OF THE PS-2 LIVE "ONE PILOT"
+--     MANDATE (rev-2, review D1). The mandate is "one pilot business is live at a time", and it is
+--     enforced on the AUTHORITY, not on designations:
+--       * STRUCTURAL BOUND: a partial unique index public.sv_authority (asset) WHERE state = 'live'
+--         (§10a) allows at most one live row per asset across the WHOLE platform. Because 'live' is
+--         irreversible (§5), a mistaken second cutover would be unrecoverable, so this makes a second
+--         live transition fail at the constraint (23505) even under a true race between two DIFFERENT
+--         businesses cutting over concurrently (they take DIFFERENT per-business advisory locks, so
+--         they do not serialise against each other; the index is the backstop that does). Prod has 0
+--         live rows, so the index applies cleanly.
+--       * TYPED CODE: app.sv_cutover_readiness emits sv_pilot_already_live (§12) when a DIFFERENT
+--         business already holds sv_authority.state='live' for the asset; readiness is then false and
+--         sv_cutover_business raises that typed error through the same precedence->raise path every
+--         other refusal uses, so preview and act AGREE. The typed code is the normal, serialised
+--         answer (the other business is already committed-live); the unique index is the belt-and-
+--         braces answer for the uncommitted-race window.
+--     The designation singleton index (§8) is NOT this enforcement: it bounds concurrent
+--     DESIGNATIONS only (at most one active designation at a time, so the SA hands the pilot slot to
+--     one firm), which is a weaker property - revoke-A / designate-B / cutover-B could otherwise
+--     reach two live businesses. The one-live invariant above is what actually forbids that.
 --
 -- =====================================================================================
 -- §2 SV AUTOMATION MUST EXIST BEFORE ANYONE GOES LIVE (contract §2)
@@ -76,6 +102,14 @@
 --   Contract §5 pins the opposite: live is not reversible by RPC and pause is the emergency
 --   control. Both halves of the fix are belt-and-braces: the reconciliation skips the downgrade,
 --   and app.sv_apply_authority_state refuses to leave 'live' at all.
+--
+--   POST-APPLY CANARY NOTE (rev-2, review D5). run_sv_reconciliation_sweep runs nightly over EVERY
+--   business whose stored value is not 'unbuilt', and each run_sv_reconciliation call APPENDS one
+--   public.sv_reconciliation_snapshots row plus one SV_RECONCILIATION_RUN audit_log row for that
+--   business. So the sweep is expected to grow those two append-only tables by one row per
+--   non-unbuilt business per day. "Canary unchanged" after apply therefore means authority STATE and
+--   value rows (sv_authority states, sv_lots/sv_lot_movements) are unchanged - NOT that no new
+--   snapshot/audit rows appear; those daily rows are the monitoring signal working as designed.
 --
 -- =====================================================================================
 -- §3 THE CUTOVER RPC (contract §3)
@@ -436,10 +470,16 @@ $v69_cron$;
 --    Append-only-ish: revoked_at/revoked_by are settable exactly once and identity is immutable.
 --    TWO partial unique indexes:
 --      * one ACTIVE designation per (business, asset);
---      * at most ONE active designation platform-wide, which is the structural expression of the
---        PS-2 LIVE mandate "one pilot business". A later increment that widens the pilot drops
---        this index deliberately and visibly.
---    Owner + super-admin READ, browser writes revoked (definer RPC only).
+--      * at most ONE active designation platform-wide. This bounds concurrent DESIGNATIONS only (it
+--        hands the pilot slot to one firm at a time); it is NOT the one-live-business enforcement -
+--        revoke-A / designate-B / cutover-B would otherwise slip a second business to live past it
+--        (rev-2, review D1). The actual "one pilot live" mandate is enforced on the AUTHORITY: the
+--        sv_authority (asset) WHERE state='live' unique index (§10a) plus the sv_pilot_already_live
+--        readiness code (§12); see header §1a. A later increment that widens the pilot drops these
+--        deliberately and visibly.
+--    Owner + super-admin READ, browser writes revoked (definer RPC only). A second concurrent
+--    designation is refused with the typed sv_pilot_already_designated under the global advisory lock
+--    (rev-2, review D2), not a raw 23505 on the singleton index.
 -- =====================================================================
 create table public.sv_cutover_designations (
   id uuid primary key default gen_random_uuid(),
@@ -593,6 +633,18 @@ end $$;
 revoke all on function app.sv_authority_guard() from public, anon, authenticated;
 
 -- =====================================================================
+-- 10a. ONE LIVE BUSINESS PLATFORM-WIDE (rev-2, review D1; see header §1a). A partial unique index
+--      allows at most one live authority row per asset across the whole platform. This is the
+--      STRUCTURAL half of the one-pilot-live mandate: two DIFFERENT businesses cutting over
+--      concurrently take DIFFERENT per-business advisory locks and therefore do not serialise, so a
+--      race could otherwise slip two rows to 'live'; this index makes the second commit fail with
+--      23505. The typed, serialised half is app.sv_cutover_readiness -> sv_pilot_already_live (§12).
+--      Prod (and the freeze) carry 0 live rows, so it applies cleanly, and the postcondition census
+--      proves v69 apply leaves 0 live rows.
+create unique index sv_authority_one_live_per_asset_uk
+  on public.sv_authority (asset) where state = 'live';
+
+-- =====================================================================
 -- 11. public.set_sv_cutover_designation - SUPER ADMIN ONLY. A firm cannot designate itself, so a
 --     business owner (however privileged inside their tenant) cannot put themselves live.
 -- =====================================================================
@@ -633,6 +685,18 @@ begin
     if found then
       return jsonb_build_object('status', 'ok', 'business_id', p_business, 'designated', true,
         'designation_id', v_existing.id, 'unchanged', true);
+    end if;
+    -- rev-2, review D2: the designation singleton (sv_cutover_designations_singleton_uk) allows at
+    -- most one active designation platform-wide. Rather than let a second concurrent designation hit
+    -- a raw 23505, pre-check it under the global advisory lock already held above and raise a typed
+    -- error the caller can act on. (This bounds concurrent DESIGNATIONS; the one-live-business
+    -- mandate is enforced separately on the authority - see §10a / sv_pilot_already_live.)
+    if exists (
+      select 1 from public.sv_cutover_designations d
+       where d.asset = 'stored_value' and d.revoked_at is null and d.business_id <> p_business)
+    then
+      raise exception 'sv_pilot_already_designated: another business is already designated for stored-value cutover; revoke it first'
+        using errcode = '22023';
     end if;
     insert into public.sv_cutover_designations(business_id, asset, designated_by, reason)
     values (p_business, 'stored_value', v_actor, v_reason)
@@ -683,6 +747,7 @@ declare
   v_paused boolean;
   v_synth boolean;
   v_designation uuid;
+  v_pilot_live boolean;
   v_automation jsonb;
   v_reasons jsonb := '[]'::jsonb;
   v_codes jsonb := '[]'::jsonb;
@@ -703,6 +768,13 @@ begin
   v_synth := coalesce(v_synth, true);   -- unknown business fails closed
   select d.id into v_designation from public.sv_cutover_designations d
    where d.business_id = p_business and d.asset = v_asset and d.revoked_at is null;
+  -- rev-2, review D1: is a DIFFERENT business already live on this asset platform-wide? The pilot is
+  -- one business at a time, and 'live' is irreversible, so this must block cutover of anyone else.
+  select exists (
+    select 1 from public.sv_authority a2
+     where a2.asset = v_asset and a2.state = 'live' and a2.business_id <> p_business)
+    into v_pilot_live;
+  v_pilot_live := coalesce(v_pilot_live, false);
   v_automation := app.sv_automation_status();
 
   -- PRECEDENCE ORDER. The three PS-2A reason strings that still hold are byte-identical.
@@ -715,6 +787,14 @@ begin
     v_codes := v_codes || jsonb_build_array('sv_already_live');
     v_reasons := v_reasons || jsonb_build_array(
       'authority is live (this business has already been cut over)');
+  end if;
+  -- rev-2, review D1: at-most-one-live-per-asset platform-wide. Placed just after this business's own
+  -- already-live check: a business that is not itself live but faces an existing platform pilot is
+  -- blocked here, so preview and act agree on sv_pilot_already_live via the precedence->raise path.
+  if v_pilot_live then
+    v_codes := v_codes || jsonb_build_array('sv_pilot_already_live');
+    v_reasons := v_reasons || jsonb_build_array(
+      'another business is already live on stored value; the pilot is one business at a time platform-wide');
   end if;
   if v_designation is null then
     v_codes := v_codes || jsonb_build_array('sv_not_designated');
@@ -759,6 +839,7 @@ begin
     'discrepancy_count', v_disc,
     'designation_id', v_designation,
     'is_synthetic', v_synth,
+    'pilot_already_live', v_pilot_live,
     'all_scope_pause_active', v_paused,
     'automation', v_automation,
     'blocking_reasons', v_reasons,
@@ -769,6 +850,7 @@ begin
       'reconciliation_snapshot_id', case when v_has_run then v_snapshot.id else null end,
       'reconciliation_status', v_rec_status, 'discrepancy_count', v_disc,
       'designation_id', v_designation, 'is_synthetic', v_synth,
+      'pilot_already_live', v_pilot_live,
       'all_scope_pause_active', v_paused,
       'automation_scheduled', v_automation->'scheduled',
       'blocking_codes', v_codes)::text));
@@ -1447,6 +1529,26 @@ begin
      or has_function_privilege('authenticated', 'app.sv_automation_begin(text)', 'execute')
      or has_function_privilege('authenticated', 'app.sv_cutover_readiness(uuid)', 'execute') then
     raise exception 'v69: a v69 function has the wrong browser-role ACL';
+  end if;
+
+  -- (8) rev-2, review D1/D2: the one-live-per-asset structural bound exists as a PARTIAL UNIQUE
+  --     index; the readiness oracle emits sv_pilot_already_live; the designation RPC raises the typed
+  --     sv_pilot_already_designated. (Applying v69 still leaves 0 live rows, proven at (1) above, so
+  --     the index applies cleanly.)
+  if not exists (
+    select 1 from pg_index i join pg_class c on c.oid = i.indexrelid
+     where i.indrelid = 'public.sv_authority'::regclass
+       and c.relname = 'sv_authority_one_live_per_asset_uk'
+       and i.indisunique and i.indpred is not null) then
+    raise exception 'v69: the one-live-per-asset partial unique index is missing';
+  end if;
+  v_def := pg_get_functiondef('app.sv_cutover_readiness(uuid)'::regprocedure);
+  if position('sv_pilot_already_live' in v_def) = 0 then
+    raise exception 'v69: the readiness oracle no longer emits sv_pilot_already_live';
+  end if;
+  v_def := pg_get_functiondef('public.set_sv_cutover_designation(uuid,boolean,text)'::regprocedure);
+  if position('sv_pilot_already_designated' in v_def) = 0 then
+    raise exception 'v69: set_sv_cutover_designation no longer raises the typed designation collision';
   end if;
 end
 $v69_postconditions$;

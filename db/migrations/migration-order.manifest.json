@@ -1000,7 +1000,7 @@
       "path": "db/migrations/20260724_frenly_v69_controlled_cutover.sql",
       "semanticVersion": "v69",
       "proposedDeployVersion": "20260722000147",
-      "sha256": "3689206e009aa6f7569d6b9ac3c617f43c13b87626787e2e52b2e69d7225487a"
+      "sha256": "f0226000041d16144928362683a67f4d389b95a9e2028043e721bc4948bff6f9"
     },
     {
       "order": 108,

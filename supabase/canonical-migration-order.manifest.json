@@ -1095,8 +1095,8 @@
       "version": "20260725100000",
       "name": "frenly_v69_controlled_cutover",
       "path": "supabase/migrations/20260725100000_frenly_v69_controlled_cutover.sql",
-      "octetLength": 77988,
-      "sha256": "3689206e009aa6f7569d6b9ac3c617f43c13b87626787e2e52b2e69d7225487a",
+      "octetLength": 85696,
+      "sha256": "f0226000041d16144928362683a67f4d389b95a9e2028043e721bc4948bff6f9",
       "provenance": "local-source"
     },
     {
