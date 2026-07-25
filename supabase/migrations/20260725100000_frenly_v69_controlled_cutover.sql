@@ -131,6 +131,31 @@
 --   no idempotency key (every refusal precedes the envelope insert).
 --
 -- =====================================================================================
+-- §3a THE ATTRIBUTION READ IS ATOMIC WITH DESIGNATE/REVOKE (rev-3, review MEDIUM-1)
+--   sv_cutover_business reads the active super-admin designation TWICE: once inside
+--   app.sv_cutover_readiness (which is what AUTHORIZES the go-live) and once again for the values it
+--   writes into the PERMANENT record - sv_cutover_events (immutable trigger, no UPDATE/DELETE for any
+--   role, UNIQUE(business_id, asset)) and audit_log. Rev-2 took no lock for the second read, so under
+--   READ COMMITTED a legitimate revoke committed between the two left it empty; plpgsql then left the
+--   row variable NULL and the cutover completed with designation_id = NULL, designated_by = NULL - a
+--   PERMANENT, UNREPAIRABLE hole in "who authorized this business going live", on the one irreversible
+--   action in the system. The window is not theoretical: this call blocks on the sv_authority row lock
+--   just before that read, and app.sv_apply_authority_state (driven nightly by frenly-sv-reconciliation)
+--   holds exactly that lock.
+--   FIX: take the SAME global mutex the designate/revoke path takes (pg_advisory_xact_lock on
+--   'v69:sv_designation', §11) immediately before the attribution read, re-read under it, and FAIL
+--   CLOSED with the typed sv_designation_revoked if the designation is gone. Pinning the readiness-time
+--   id and proceeding was rejected: that would complete a go-live attributed to an authority the super
+--   admin had, by the time of completion, actively withdrawn - worse than refusing. The refusal is a
+--   legitimate, RETRIABLE race outcome (nothing is mutated, no idempotency key is reserved, the same
+--   key stays usable), not a system failure.
+--   LOCK ORDER. public.set_sv_cutover_designation takes ONLY this global lock (never the per-business
+--   cutover lock, never a sv_authority row lock), so the two paths cannot form a cycle: cutover goes
+--   per-business advisory -> per-key advisory -> sv_operations row -> sv_authority row -> designation
+--   mutex, and designate/revoke goes designation mutex -> sv_cutover_designations row. Nothing else in
+--   the catalog takes 'v69:sv_designation'.
+--
+-- =====================================================================================
 -- §4 WHY A NEW sv_cutover_events TABLE RATHER THAN sv_plan_status_events
 --   sv_plan_status_events is FK-bound to (plan_id, business_id) in public.sv_plans, CHECKs
 --   new_status in ('active','retired'), and carries no evidence hash, no operation link and no
@@ -914,8 +939,9 @@ grant execute on function public.preview_sv_cutover(uuid) to authenticated;
 -- =====================================================================
 -- 15. public.sv_cutover_business - THE cutover. One business, no loop, no wildcard.
 --     Gate order: owner -> arguments -> advisory locks -> idempotency envelope -> readiness ->
---     evidence freshness -> write. Every refusal happens BEFORE the envelope insert, so a refused
---     attempt writes nothing and reserves no idempotency key.
+--     evidence freshness -> designation mutex + attribution re-read (rev-3, MEDIUM-1: see §3a) ->
+--     write. Every refusal happens BEFORE the envelope insert, so a refused attempt writes nothing
+--     and reserves no idempotency key.
 --     WHY READINESS IS EVALUATED AFTER THE ENVELOPE, unlike v66/v67/v68a. Those gates (authority is
 --     live, no pause) are still TRUE after the operation succeeds, so a replay passes them. This
 --     gate is inverted: a successful cutover itself makes sv_already_live true. Checking readiness
@@ -975,8 +1001,10 @@ begin
   end if;
 
   -- Readiness, evaluated under the locks on the SAME oracle preview_sv_cutover renders. Being under
-  -- the locks makes it a TOCTOU-safe check as well: a cutover, pause, designation revocation or
-  -- reconciliation committed by another session cannot slip a transition through.
+  -- the locks makes it a TOCTOU-safe check for everything the per-business lock serialises: a
+  -- concurrent cutover of THIS business cannot slip a second transition through. It is NOT by itself
+  -- TOCTOU-safe against designate/revoke, which serialise on a different (global) mutex - that is
+  -- what the attribution re-read below closes (rev-3, MEDIUM-1, §3a).
   v_readiness := app.sv_cutover_readiness(p_business);
   perform app.sv_cutover_raise(v_readiness);
   if (v_readiness->>'evidence_hash') <> v_evidence then
@@ -986,8 +1014,25 @@ begin
 
   select state into v_prior from public.sv_authority
    where business_id = p_business and asset = 'stored_value' for update;
+
+  -- rev-3, review MEDIUM-1 (§3a). The values below are the PERMANENT attribution: sv_cutover_events
+  -- is immutable and UNIQUE(business_id, asset), so a NULL written here can never be repaired. Take
+  -- the SAME global mutex public.set_sv_cutover_designation takes for BOTH designate and revoke (§11)
+  -- so this read is mutually exclusive with them, then re-read under it. The window being closed is
+  -- widest exactly here: the sv_authority row lock taken immediately above is also held by
+  -- app.sv_apply_authority_state, which the nightly frenly-sv-reconciliation sweep drives, so this
+  -- call can sit blocked for as long as that sweep's transaction runs while a revoke commits.
+  perform pg_advisory_xact_lock(hashtextextended('v69:sv_designation', 0));
   select * into v_designation from public.sv_cutover_designations
    where business_id = p_business and asset = 'stored_value' and revoked_at is null;
+  if not found then
+    -- FAIL CLOSED, and deliberately NOT "pin the readiness-time id and proceed": completing a go-live
+    -- attributed to a designation the super admin has since withdrawn is worse than refusing. This is
+    -- a legitimate, retriable race outcome - nothing was mutated, no idempotency key was reserved
+    -- (the envelope insert is below), and the caller may re-preview and retry with the same key.
+    raise exception 'sv_designation_revoked: the super-admin designation for this business was revoked while the cutover was in flight; re-run preview_sv_cutover and retry'
+      using errcode = '22023';
+  end if;
 
   v_result := jsonb_build_object(
     'status', 'ok',
@@ -1541,6 +1586,32 @@ begin
        and c.relname = 'sv_authority_one_live_per_asset_uk'
        and i.indisunique and i.indpred is not null) then
     raise exception 'v69: the one-live-per-asset partial unique index is missing';
+  end if;
+  -- rev-3, review INFO-1: assert WHICH column the index is keyed on, not just that it is unique and
+  -- partial. An index on (business_id, asset) would satisfy every check above while silently
+  -- degrading the platform-wide bound back to the per-business one D1 was raised about.
+  if not exists (
+    select 1 from pg_index i join pg_class c on c.oid = i.indexrelid
+     where i.indrelid = 'public.sv_authority'::regclass
+       and c.relname = 'sv_authority_one_live_per_asset_uk'
+       and i.indnkeyatts = 1
+       and i.indkey[0] = (select a.attnum from pg_attribute a
+                           where a.attrelid = 'public.sv_authority'::regclass
+                             and a.attname = 'asset' and not a.attisdropped)) then
+    raise exception 'v69: sv_authority_one_live_per_asset_uk is not keyed on exactly (asset) - the one-live bound has degraded (indexdef: %)',
+      (select pg_get_indexdef(i.indexrelid) from pg_index i join pg_class c on c.oid = i.indexrelid
+        where i.indrelid = 'public.sv_authority'::regclass
+          and c.relname = 'sv_authority_one_live_per_asset_uk');
+  end if;
+  -- rev-3, review MEDIUM-1: the attribution re-read must happen under the SAME global designation
+  -- mutex the designate/revoke path takes, and must fail closed with the typed code.
+  v_def := pg_get_functiondef('public.sv_cutover_business(uuid,text,text,uuid)'::regprocedure);
+  if position('v69:sv_designation' in v_def) = 0 or position('sv_designation_revoked' in v_def) = 0 then
+    raise exception 'v69: sv_cutover_business no longer re-reads the designation under the designation mutex / no longer raises sv_designation_revoked';
+  end if;
+  v_def := pg_get_functiondef('public.set_sv_cutover_designation(uuid,boolean,text)'::regprocedure);
+  if position('v69:sv_designation' in v_def) = 0 then
+    raise exception 'v69: set_sv_cutover_designation no longer takes the global designation mutex - the cutover attribution read is no longer serialised against revoke';
   end if;
   v_def := pg_get_functiondef('app.sv_cutover_readiness(uuid)'::regprocedure);
   if position('sv_pilot_already_live' in v_def) = 0 then

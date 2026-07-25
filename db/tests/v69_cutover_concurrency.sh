@@ -1,6 +1,13 @@
 #!/bin/sh
-# v69 CONTROLLED-CUTOVER concurrency harness: two connections race the go-live.
+# v69 CONTROLLED-CUTOVER concurrency harness: concurrent connections race the go-live.
 #
+#   Round A0  (rev-3, review MEDIUM-1 - a revoke committed INSIDE the cutover window): a parked
+#     session holds the sv_authority row lock (what app.sv_apply_authority_state holds, driven nightly
+#     by frenly-sv-reconciliation), so the cutover blocks there AFTER readiness validated the
+#     designation; the super admin revokes mid-flight. The cutover must REFUSE with the typed
+#     sv_designation_revoked - never complete and record designation_id/designated_by NULL in the
+#     IMMUTABLE sv_cutover_events row - and the burnt-nothing claim is checked (state unchanged, no
+#     event, no audit row, key not reserved, same key still retriable after re-designation).
 #   Round A   (two cutovers of ONE business, DIFFERENT keys): fired together -> exactly ONE
 #     transition. One caller gets ok, the other the typed sv_already_live; exactly one
 #     sv_cutover_events row, one 'cutover' sv_operations row and one SV_CUTOVER audit row exist.
@@ -102,6 +109,74 @@ fire() { # $1 = jwt block, $2 = sql expression printing a scalar, $3 = out file
   ( q -c "select pg_sleep(greatest(0,$START-extract(epoch from clock_timestamp())));" >/dev/null 2>&1 || true
     q -c "$1 $2" >"$3" 2>&1 || echo error >>"$3" ) &
 }
+
+# ---------- Round A0 (rev-3, review MEDIUM-1): a revoke committed INSIDE the cutover window ----------
+# sv_cutover_business reads the active designation TWICE: once inside app.sv_cutover_readiness (the
+# read that AUTHORIZES the go-live) and once for the values written into the IMMUTABLE
+# sv_cutover_events row and audit_log. Rev-2 took no lock for the second read, so a legitimate revoke
+# committed in the gap produced a COMPLETED cutover recorded with designation_id=NULL
+# designated_by=NULL - a permanent, unrepairable hole in "who authorized this business going live".
+# This round reproduces that exact window with two extra connections: a PARKER holds the sv_authority
+# row lock (precisely what app.sv_apply_authority_state holds, and the nightly frenly-sv-reconciliation
+# sweep drives it), so the cutover blocks there AFTER readiness has already validated the designation;
+# the super admin then revokes mid-flight. Rev-3 must REFUSE with the typed sv_designation_revoked,
+# leave b1 in shadow_testing, write no event and no audit row, and burn no idempotency key - and the
+# same key must still work once the business is re-designated.
+prepare "$b1" "$jwt_o1"
+[ "$(ready_for "$jwt_o1" "$b1")" = "true" ] || { echo "FAIL A0: the preview is not ready before the revoke race" >&2; exit 1; }
+h0="$(hash_for "$jwt_o1" "$b1")"
+K0="$(q -c 'select gen_random_uuid()')"
+( q >/dev/null 2>&1 <<SQL
+begin;
+select state from public.sv_authority where business_id='$b1' and asset='stored_value' for update;
+select pg_sleep(8);
+commit;
+SQL
+) &
+sleep 1
+( q -c "$jwt_o1 select coalesce((public.sv_cutover_business('$b1'::uuid,'v69 round A0 cutover racing a designation revoke','$h0','$K0'::uuid))->>'status','err');" >/tmp/v69_A0.out 2>&1 || echo error >>/tmp/v69_A0.out ) &
+# Do not guess the timing: revoke only once the cutover is DEMONSTRABLY parked on the authority row
+# lock, which is strictly after its readiness check passed with the designation still in place.
+blocked=0
+i=0
+while [ "$i" -lt 5 ]; do
+  n="$(q -c "select count(*) from pg_stat_activity where wait_event_type='Lock' and query like '%sv_cutover_business%'")"
+  if [ "${n:-0}" -ge 1 ]; then blocked=1; break; fi
+  i=$((i+1)); sleep 1
+done
+[ "$blocked" = "1" ] || { echo "FAIL A0: the cutover never blocked on the authority row lock; the window was not reproduced" >&2; fail=1; }
+undesignate "$b1"          # commits WHILE the cutover sits between its two designation reads
+wait
+out0="$(cat /tmp/v69_A0.out)"
+keyA0="$(q -c "select count(*) from public.sv_operations where business_id='$b1' and operation_type='cutover' and idempotency_key='$K0'")"
+nullattr="$(q -c "select count(*) from public.sv_cutover_events where designation_id is null or designated_by is null")"
+echo "round A0: out=$out0 state=$(state "$b1") events=$(events "$b1") audits=$(audits "$b1") key_reserved=$keyA0 null_authorizer_events=$nullattr"
+echo "$out0" | grep -q 'sv_designation_revoked' || { echo "FAIL A0: expected the typed sv_designation_revoked, got: $out0" >&2; fail=1; }
+[ "$(state "$b1")" = "shadow_testing" ] || { echo "FAIL A0: the refused cutover moved the authority to $(state "$b1")" >&2; fail=1; }
+[ "$(events "$b1")" = "0" ] || { echo "FAIL A0: the refused cutover wrote a permanent cutover event" >&2; fail=1; }
+[ "$(audits "$b1")" = "0" ] || { echo "FAIL A0: the refused cutover claimed a cutover in audit_log" >&2; fail=1; }
+[ "$keyA0" = "0" ] || { echo "FAIL A0: the refused cutover reserved its idempotency key" >&2; fail=1; }
+[ "$nullattr" = "0" ] || { echo "FAIL A0: a cutover event exists with a NULL authorizer - this is the defect" >&2; fail=1; }
+# Retriable, not fatal: re-designate and the SAME key still goes through. Run inside a transaction that
+# is rolled back, so Round A below is still the FIRST and only real cutover of b1.
+q >/dev/null <<SQL
+$jwt_sa
+select public.set_sv_cutover_designation('$b1', true, 'v69 round A0 re-designates b1 so the refused cutover can be retried');
+SQL
+h0b="$(hash_for "$jwt_o1" "$b1")"
+retry0="$(q <<SQL 2>&1 || true
+$jwt_o1
+begin;
+select coalesce((public.sv_cutover_business('$b1'::uuid,'v69 round A0 cutover racing a designation revoke','$h0b','$K0'::uuid))->>'status','err');
+rollback;
+SQL
+)"
+retry0="$(echo "$retry0" | tail -1)"
+echo "round A0 retry (rolled back): $retry0"
+[ "$retry0" = "ok" ] || { echo "FAIL A0: the same idempotency key was not retriable after re-designation: $retry0" >&2; fail=1; }
+[ "$(state "$b1")" = "shadow_testing" ] || { echo "FAIL A0: the rolled-back retry left b1 live" >&2; fail=1; }
+[ "$(events "$b1")" = "0" ] || { echo "FAIL A0: the rolled-back retry left a cutover event behind" >&2; fail=1; }
+undesignate "$b1"
 
 # ---------- Round A: two cutovers of ONE business, DIFFERENT keys ----------
 prepare "$b1" "$jwt_o1"
@@ -244,7 +319,7 @@ echo "invariants: out_of_range_lots=$bad businesses_with_two_cutovers=$dupev unr
 [ "$dupev" = "0" ] || { echo "FAIL: a business recorded more than one cutover" >&2; fail=1; }
 [ "$extralive" = "0" ] || { echo "FAIL: an unrelated business went live" >&2; fail=1; }
 
-rm -f /tmp/v69_A1.out /tmp/v69_A2.out /tmp/v69_A3.out /tmp/v69_A4.out /tmp/v69_R1.out /tmp/v69_R2.out /tmp/v69_B1.out /tmp/v69_B2.out
+rm -f /tmp/v69_A0.out /tmp/v69_A1.out /tmp/v69_A2.out /tmp/v69_A3.out /tmp/v69_A4.out /tmp/v69_R1.out /tmp/v69_R2.out /tmp/v69_B1.out /tmp/v69_B2.out
 if [ "$fail" = "0" ]; then
-  echo "v69 controlled-cutover concurrency: PASS (two concurrent cutovers -> exactly one transition; same-key concurrent replay -> one transition, two oks; a SECOND business is refused go-live with sv_pilot_already_live AND the one-live unique index while one is already live; PS-0 case (b) invariants hold)"
+  echo "v69 controlled-cutover concurrency: PASS (a revoke inside the cutover window is refused with sv_designation_revoked and burns nothing; two concurrent cutovers -> exactly one transition; same-key concurrent replay -> one transition, two oks; a SECOND business is refused go-live with sv_pilot_already_live AND the one-live unique index while one is already live; PS-0 case (b) invariants hold)"
 else exit 1; fi

@@ -44,7 +44,9 @@ a business must not go live into that state. Assert both the jobs' existence and
   `sv_automation_missing` (§2), `sv_synthetic_business` (a synthetic business may never go live),
   `sv_already_live` (idempotent replay returns the stored result, does not re-transition),
   `sv_pilot_already_live` (rev-2, review D1 — a DIFFERENT business already holds
-  `sv_authority.state='live'` for the asset; the pilot is one business at a time platform-wide).
+  `sv_authority.state='live'` for the asset; the pilot is one business at a time platform-wide),
+  `sv_designation_revoked` (rev-3, review MEDIUM-1 — the designation was revoked between the readiness
+  read and the permanent attribution read; retriable, see the last bullet of this section).
 - Records: actor, business, prior state, new state, reason, evidence hash, timestamp — in `audit_log`
   AND as an append-only cutover record (reuse `sv_plan_status_events`-style append-only shape or a new
   `sv_cutover_events` table; justify the choice).
@@ -62,6 +64,27 @@ a business must not go live into that state. Assert both the jobs' existence and
   serialised case. Super-admin designation is still recorded, and a second concurrent designation is
   refused with the typed `sv_pilot_already_designated` under the global advisory lock (rev-2, review
   D2), not a raw 23505 on the designation singleton index.
+- **The attribution read is atomic with designate/revoke (rev-3, review MEDIUM-1).** `sv_cutover_business`
+  reads the active designation twice: once inside `app.sv_cutover_readiness` (the read that AUTHORIZES
+  the go-live) and once for the values written into the PERMANENT record — `sv_cutover_events`
+  (immutable trigger, `UNIQUE(business_id, asset)`) and `audit_log`. Rev-2 took no lock for the second
+  read, so under READ COMMITTED a legitimate revoke committed in the gap left it empty, plpgsql left the
+  row variable NULL, and the cutover COMPLETED recording `designation_id = NULL, designated_by = NULL` —
+  a permanent, unrepairable hole in "who authorized this business going live", on the one irreversible
+  action in the system. (Not an authorization bypass: a real designation existed when readiness
+  validated it, and the one-live bound is unaffected. It is an audit-integrity defect.) The window is
+  not theoretical — the call blocks on the `sv_authority` row lock immediately before that read, and
+  `app.sv_apply_authority_state`, driven nightly by `frenly-sv-reconciliation`, holds exactly that lock.
+  FIX: take the SAME global mutex `pg_advisory_xact_lock(hashtextextended('v69:sv_designation', 0))`
+  that `set_sv_cutover_designation` takes for BOTH designate and revoke, re-read under it, and FAIL
+  CLOSED with a new typed `sv_designation_revoked` (22023) if it is gone. Pinning the readiness-time id
+  and proceeding was rejected: completing a go-live attributed to an authority the super admin has since
+  withdrawn is worse than refusing. The refusal is a legitimate RETRIABLE race outcome — nothing is
+  mutated, no idempotency key is reserved, the same key still works after re-designation. Lock order is
+  acyclic: the designation path takes ONLY the global mutex (never the per-business cutover lock, never
+  an `sv_authority` row lock), so no cross-lock cycle exists. A postcondition now also asserts the
+  one-live index is keyed on exactly `(asset)` (rev-3, review INFO-1) — `(business_id, asset)` would
+  still be unique+partial and silently degrade D1's platform-wide bound to a per-business one.
 
 ## 4. Truthful readiness
 Replace `preview_sv_cutover`'s hardcoded `ready:false` with a real computation over §3's conditions,
@@ -91,7 +114,14 @@ refused; idempotent replay + changed-request conflict; two-connection concurrent
 transition; **one live business platform-wide (rev-2, review D1): with one business already live, a
 second is refused go-live via the typed `sv_pilot_already_live` (sanctioned path, incl. a concurrent
 same-key pair) AND via 23505 on the one-live unique index (privileged direct UPDATE, guard suspended);
-and the typed `sv_pilot_already_designated` designation collision (D2)**; pause still works post-live;
+and the typed `sv_pilot_already_designated` designation collision (D2)**; **a designation revoked
+INSIDE the cutover window is refused with the typed `sv_designation_revoked` (rev-3, review MEDIUM-1) —
+deterministically in the rolled-back suite (readiness frozen to its pre-revoke object, then really
+revoked) and as a real three-connection race in the harness (Round A0: a parked session holds the
+`sv_authority` row lock, the cutover blocks there after readiness passed, the SA revokes mid-flight),
+asserting state unchanged, no `sv_cutover_events` row, no `SV_CUTOVER` audit row, no idempotency key
+burned, no cutover event anywhere with a NULL authorizer, and the same key still retriable**;
+pause still works post-live;
 the v66 mint tripwire, v67 tender gates and v68a/v68b
 refusal/lift behaviour all still hold on a live business; **and the whole PS-0 lettered-case oracle
 re-run against a LIVE business** (this is the first time the arithmetic runs outside a forced-live

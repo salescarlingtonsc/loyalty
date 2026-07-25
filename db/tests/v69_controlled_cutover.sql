@@ -23,7 +23,10 @@
 --           with its original message; sv_authority is still undeletable and browser-unwritable.
 --   PART 2  the full refusal matrix with PREVIEW<->ACT AGREEMENT: for every blocked configuration
 --           the preview's first blocking code IS the typed error the RPC raises, nothing is
---           mutated, and no idempotency key is reserved.
+--           mutated, and no idempotency key is reserved; plus (rev-3, review MEDIUM-1) a designation
+--           REVOKED between the readiness read and the permanent attribution read makes the cutover
+--           refuse with the typed sv_designation_revoked instead of recording a NULL authorizer in an
+--           immutable sv_cutover_events row - and the refusal stays retriable with the same key.
 --   PART 3  the cutover itself: preview ready => cutover succeeds; idempotent replay; changed-request
 --           conflict; a second cutover is refused; live is not reversible; the singleton designation.
 --   PART 4  live behaviour: mint, spend, tender reserve/finalise, chargeback, settlement reversal,
@@ -422,7 +425,7 @@ declare
   v_acct uuid; v_op uuid; v_opA uuid; v_opB uuid; v_seed jsonb; v_seedA jsonb; v_seedB jsonb;
   v_paid_lot uuid; v_bonus_lot uuid; v_ver uuid; v_ver2 uuid; v_tok uuid; v_spend_op uuid;
   v_gc uuid; v_cash int; v_claw int; v_cash_total int; v_claw_total int; i int;
-  v_before int; v_after int; v_marker uuid; v_trail text;
+  v_before int; v_after int; v_marker uuid; v_trail text; v_fndef text;
 begin
   reset role;
   select b.id into A from public.businesses b where b.slug like 'pristine-a-%';
@@ -716,7 +719,88 @@ begin
     'v69: a stale-evidence refusal reserved its idempotency key';
   assert (select state from public.sv_authority where business_id = A and asset = 'stored_value') = 'shadow_testing',
     'v69: a stale-evidence refusal moved the authority';
-  raise notice 'v69 PART 2 (refusal matrix + preview<->act agreement): PASS';
+
+  ------------------------------------------- rev-3, review MEDIUM-1: sv_designation_revoked
+  -- THE DEFECT. sv_cutover_business reads the active designation TWICE: once inside
+  -- app.sv_cutover_readiness (the read that AUTHORIZES the go-live) and once again for the values it
+  -- writes into the PERMANENT record - sv_cutover_events (immutable, UNIQUE(business_id, asset)) and
+  -- audit_log. Rev-2 took no lock for the second read, so under READ COMMITTED a legitimate revoke
+  -- committed in the gap left it empty, plpgsql left the row variable NULL, and the cutover completed
+  -- writing designation_id = NULL / designated_by = NULL - a permanent, unrepairable hole in "who
+  -- authorized this business going live". Rev-3 re-reads under the SAME global designation mutex the
+  -- designate/revoke path takes and REFUSES with the typed sv_designation_revoked if it is gone.
+  --
+  -- DETERMINISTIC SINGLE-CONNECTION REPRODUCTION. The real race needs two connections (that half is
+  -- db/tests/v69_cutover_concurrency.sh Round A0). Here the identical STATE is produced without one:
+  -- freeze the readiness oracle to the object it returned WHILE the designation was live, then really
+  -- revoke the designation. sv_cutover_business then observes exactly what it observes when a revoke
+  -- commits inside the window - readiness says ready and names a designation, the catalog no longer
+  -- has one. DDL is transactional, and the original oracle is restored from pg_get_functiondef
+  -- immediately afterwards (the outer ROLLBACK is the second net).
+  perform pg_temp.as_v69(A_owner, 'authenticated');
+  v_prev := public.preview_sv_cutover(A);
+  assert (v_prev->>'ready')::boolean is true,
+    'v69 MEDIUM-1: A is not ready immediately before the revoked-designation probe';
+  v_hash  := v_prev->>'evidence_hash';
+  v_ready := pg_temp.v69_ready(A);
+  assert (v_ready->>'designation_id') is not null,
+    'v69 MEDIUM-1: the frozen readiness object carries no designation, so the probe would prove nothing';
+  perform pg_temp.as_v69(B_owner_sa, 'authenticated');
+  perform public.set_sv_cutover_designation(A, false, 'v69 MEDIUM-1 revokes A while a cutover is in flight');
+  reset role;
+  v_fndef := pg_get_functiondef('app.sv_cutover_readiness(uuid)'::regprocedure);
+  execute format(
+    'create or replace function app.sv_cutover_readiness(p_business uuid) returns jsonb '
+    || 'language sql stable security definer '
+    || 'set search_path to ''pg_catalog'', ''public'', ''app'', ''pg_temp'' '
+    || 'as $frozen$ select %L::jsonb $frozen$', v_ready::text);
+  perform pg_temp.as_v69(A_owner, 'authenticated');
+  assert (public.preview_sv_cutover(A)->>'ready')::boolean is true,
+    'v69 MEDIUM-1: the frozen oracle does not still report ready - the probe is not reproducing the window';
+  v_key := gen_random_uuid();
+  begin
+    perform public.sv_cutover_business(A, 'v69 MEDIUM-1 cutover racing a designation revoke', v_hash, v_key);
+    raise exception 'v69 MEDIUM-1: a cutover COMPLETED with its designation revoked (rev-2 behaviour: it would have written designation_id/designated_by NULL into an immutable record)';
+  exception when sqlstate '22023' then
+    assert position('sv_designation_revoked' in sqlerrm) > 0,
+      'v69 MEDIUM-1: wrong revoked-designation error: ' || sqlerrm; end;
+  reset role;
+  execute v_fndef;                                    -- the real oracle is back
+  assert position('sv_pilot_already_live' in pg_get_functiondef('app.sv_cutover_readiness(uuid)'::regprocedure)) > 0,
+    'v69 MEDIUM-1: the readiness oracle was not restored after the probe';
+
+  -- Fail-closed means fail-CLOSED: nothing moved, nothing permanent was written, no key was burned.
+  assert (select state from public.sv_authority where business_id = A and asset = 'stored_value') = 'shadow_testing',
+    'v69 MEDIUM-1: the refused cutover moved the authority';
+  assert not exists (select 1 from public.sv_cutover_events where business_id = A),
+    'v69 MEDIUM-1: the refused cutover wrote a permanent cutover event';
+  assert not exists (select 1 from public.audit_log where business_id = A and action = 'SV_CUTOVER'),
+    'v69 MEDIUM-1: the refused cutover claimed a cutover in the audit log';
+  assert not exists (select 1 from public.sv_operations
+                      where business_id = A and operation_type = 'cutover' and idempotency_key = v_key),
+    'v69 MEDIUM-1: the refused cutover reserved its idempotency key';
+
+  -- ...and the refusal is RETRIABLE: re-designate, re-preview, and the SAME key still works. Proven
+  -- inside a plpgsql subtransaction that is deliberately unwound, so PART 3 below still performs the
+  -- FIRST and only cutover of A.
+  perform pg_temp.as_v69(B_owner_sa, 'authenticated');
+  perform public.set_sv_cutover_designation(A, true, 'v69 MEDIUM-1 re-designates A so the refused cutover can be retried');
+  perform pg_temp.as_v69(A_owner, 'authenticated');
+  begin
+    v_res := public.sv_cutover_business(A, 'v69 MEDIUM-1 cutover racing a designation revoke',
+      public.preview_sv_cutover(A)->>'evidence_hash', v_key);
+    assert (v_res->>'status') = 'ok' and (v_res->>'new_state') = 'live'
+       and (v_res->>'designation_id') is not null and (v_res->>'designated_by') is not null,
+      'v69 MEDIUM-1: the retry after re-designation did not succeed with a recorded designation: ' || v_res::text;
+    raise exception 'V69_MEDIUM1_UNWIND' using errcode = 'P0001';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'V69_MEDIUM1_UNWIND' then raise; end if; end;
+  assert (select state from public.sv_authority where business_id = A and asset = 'stored_value') = 'shadow_testing',
+    'v69 MEDIUM-1: the unwound retry left A live - PART 3 would no longer be the first cutover';
+  assert not exists (select 1 from public.sv_cutover_events where business_id = A),
+    'v69 MEDIUM-1: the unwound retry left a cutover event behind';
+
+  raise notice 'v69 PART 2 (refusal matrix + preview<->act agreement, incl. rev-3 sv_designation_revoked): PASS';
 
   -- =======================================================================================
   -- PART 3 - THE CUTOVER
