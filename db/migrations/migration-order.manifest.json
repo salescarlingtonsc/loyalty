@@ -963,7 +963,7 @@
       "path": "db/migrations/20260724_frenly_v67_ps2live_checkout_tender.sql",
       "semanticVersion": "v67",
       "proposedDeployVersion": "20260722000143",
-      "sha256": "5147e07aa00013b18946794430d9c97799bb91e7f2c2ae4183e245bcc6d4375e"
+      "sha256": "592926e708b36c34965895ecf96a8171a6539d1df96528cf537bbfdeca501135"
     }
   ]
 }

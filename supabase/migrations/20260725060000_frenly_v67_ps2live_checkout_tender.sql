@@ -37,6 +37,10 @@
 --      unchanged). All SV gates re-validated after the token lock (TOCTOU).
 --   6. public.sv_release_expired_checkout_tenders - owner/service sweep that releases (via
 --      app.sv_release_core) reservations bound to expired/consumed-by-another tokens. No new cron.
+--   7. A TYPED REVERSAL REFUSAL (§11): reversing an sv-tendered sale is OUT OF v67 SCOPE (coherent
+--      stored-value restitution is the v68 refund/reversal matrix), so v67 makes it REFUSE rather
+--      than silently mis-settle. The gate is spliced into public.reverse_sale_v20_base - the money
+--      core every reversal entry point funnels through - using the v49a pg_get_functiondef idiom.
 --
 -- SAFETY: applying v67 to a clean chain creates ZERO sv_lots/sv_lot_movements/sv_topup_payments/
 -- reservations/tenders. Reservations NEVER write sv_lot_movements; app.sv_total_outstanding is
@@ -53,6 +57,8 @@
 -- and is cash-basis revenue (revenue_cash == accrual), while cash_collected excludes the sv portion.
 -- Non-sv sales are byte-unchanged. Paid/bonus revenue split is recorded on the tender for a future
 -- contra-revenue increment (PS-0 "bonus is promotional exposure, never revenue"), documented not invented.
+-- Both §10 surfaces read the settlement marker WITHOUT netting it out against a reversal; that is sound
+-- only because §11 makes an sv-settled sale unreversible. Lifting §11 (v68) REQUIRES netting both legs.
 
 begin;
 
@@ -593,13 +599,28 @@ begin
 
   v_reserve := app.sv_reserve_core(p_business, v_account, v_amount, p_idempotency_key);
 
-  insert into public.checkout_sv_tenders(
-    id, business_id, evaluation_id, account_id, reservation_id, reserve_operation_id, idempotency_key,
-    requested_cents, reserved_cents, currency, status)
-  values (
-    v_row_id, p_business, p_evaluation_id, v_account,
-    (v_reserve->>'reservation_id')::uuid, (v_reserve->>'operation_id')::uuid, p_idempotency_key,
-    p_requested_cents, v_amount, v_currency, 'reserved');
+  -- The two unique constraints that can fire here are both "this customer's checkout hold is
+  -- already spoken for", and both must reach the till as a TYPED refusal rather than a raw 23505:
+  --   * checkout_sv_tenders_reservation_uk - reusing a reserve idempotency key across tokens.
+  --     app.sv_reserve_core replays the stored result, so the SUPERSEDED (already released)
+  --     reservation_id comes back and collides. Deterministic, not a race.
+  --   * checkout_sv_tenders_active_uk - two tokens binding the same account concurrently, where the
+  --     loser's supersede scan ran before the winner committed.
+  -- Catching here changes nothing else: the idempotent-replay path returned long before this point,
+  -- and both advisory locks are transaction-scoped, so the handler perturbs no lock or replay
+  -- semantics - it only re-labels an error that already aborted the transaction.
+  begin
+    insert into public.checkout_sv_tenders(
+      id, business_id, evaluation_id, account_id, reservation_id, reserve_operation_id, idempotency_key,
+      requested_cents, reserved_cents, currency, status)
+    values (
+      v_row_id, p_business, p_evaluation_id, v_account,
+      (v_reserve->>'reservation_id')::uuid, (v_reserve->>'operation_id')::uuid, p_idempotency_key,
+      p_requested_cents, v_amount, v_currency, 'reserved');
+  exception when unique_violation then
+    raise exception 'sv_tender_conflict: this customer''s stored value is already held by another checkout or tender key; re-evaluate and bind with a fresh key'
+      using errcode = '22023';
+  end;
 
   insert into public.audit_log(business_id, actor, action, entity, entity_id, detail)
   values (p_business, v_actor, 'SV_CHECKOUT_TENDER_RESERVED', 'checkout_sv_tenders', v_row_id, jsonb_build_object(
@@ -1190,7 +1211,10 @@ create or replace function public.get_revenue_summary(
 returns json
 language plpgsql
 security definer
-set search_path = public
+-- v21 hardened EVERY security-definer function to this exact search_path. The v20 source
+-- this body is grounded in predates that sweep ('set search_path = public'), so re-creating
+-- it verbatim would SILENTLY DOWNGRADE the applied catalog. Pin the hardened path.
+set search_path to 'pg_catalog', 'public', 'app', 'pg_temp'
 as $$
 declare
   v_accrual bigint;
@@ -1317,5 +1341,101 @@ begin
 end $$;
 revoke all on function public.get_revenue_summary(uuid, date, date, uuid) from public, anon, authenticated;
 grant execute on function public.get_revenue_summary(uuid, date, date, uuid) to authenticated;
+
+-- =====================================================================
+-- 11. TYPED REVERSAL REFUSAL FOR STORED-VALUE-TENDERED SALES.
+--     §10 gives an sv-tendered sale a NON-payment settlement (the consumed
+--     checkout_sv_tenders row). The v20 money core knows only public.payments and
+--     public.credit_ledger, so on such a sale reverse_sale would return 'ok' while
+--     restoring NOTHING of the spent stored value - observed on the pre-fix chain:
+--     an SV-only 5000 sale reversed with reversed_cents=5000, refunded_payment_cents=0,
+--     credit_restored_cents=0 and zero compensating sv_lot_movements (the customer paid
+--     real cash at top-up and afterwards holds neither goods nor value); a split
+--     5000 SV + 3000 cash sale refunded only the 3000; both originals then read
+--     balance_cents=-5000 / payment_status='overpaid'; and get_revenue_summary kept
+--     counting the settlement as cash-basis revenue because its sv leg filters
+--     reversal_of on the ORIGINAL sale, which a reversal never sets.
+--
+--     Coherent stored-value restitution (compensating movements, lot/expiry semantics,
+--     bonus clawback interaction) is the v68 refund/reversal matrix and is deliberately
+--     OUT OF v67 SCOPE. Out of scope must mean REFUSED, never silently wrong - so v67
+--     refuses, mirroring the family's existing unsupported-scope refusal for
+--     gift_card/package/membership kinds: a plain RAISE (SQLSTATE P0001, no errcode
+--     override, exactly like its neighbour) with a typed message prefix.
+--     NOTE the coupling: the §10 surfaces stay correct under reversal ONLY because this
+--     gate makes an sv-settled sale unreversible. v68 must net the settlement leg out
+--     (sale_balance.sv_tender_totals and get_revenue_summary's v_sv_cash) at the same
+--     time it lifts this refusal.
+--
+--     PLACEMENT - the single layer EVERY entry point funnels through. The live chain is
+--       public.refund_sale/6  ->  public.reverse_sale/6            (v58: discount compensation)
+--                             ->  public.reverse_sale_v40_base/6   (v40: package-reference idempotency)
+--                             ->  public.reverse_sale_v34_base/6   (v34: provenance)
+--                             ->  public.reverse_sale_v20_base/6   (v20: the money core)
+--     so the gate goes in reverse_sale_v20_base: no present or future wrapper can bypass
+--     it. Inside that body it sits immediately BEFORE the unsupported-kind refusal - after
+--     every authorization check and row lock, but before the first write - so a refused
+--     attempt mutates nothing and reserves no idempotency key.
+--
+--     METHOD - the repo's own v49a idiom: patch the EXACT applied catalog definition via
+--     pg_get_functiondef under a single-occurrence needle guard. Every unrelated byte
+--     (the v21-hardened search_path, the v49a uuid[] repair, the whole 680-line money
+--     core) is preserved BY CONSTRUCTION, and a drifted predecessor fails closed instead
+--     of being silently overwritten by a transcribed copy.
+-- =====================================================================
+do $v67_reversal_gate$
+declare
+  v_identity constant text := 'public.reverse_sale_v20_base(uuid,uuid,text,text,text,text)';
+  v_definition text;
+  v_needle text;
+  v_replacement text;
+  v_occurrences integer;
+  v_config text[];
+begin
+  select pg_get_functiondef(v_identity::regprocedure) into strict v_definition;
+
+  if position('checkout_sv_tenders' in v_definition) > 0 then
+    raise exception 'reverse_sale_v20_base already carries a stored-value tender gate';
+  end if;
+
+  v_needle := '  if o.kind not in (''service'', ''retail'', ''quick_sale'') then';
+  v_occurrences := (length(v_definition) - length(replace(v_definition, v_needle, '')))
+                   / length(v_needle);
+  if v_occurrences <> 1 then
+    raise exception 'unexpected reverse_sale_v20_base predecessor definition (needle occurrences: %)',
+      v_occurrences;
+  end if;
+
+  v_replacement :=
+    '  if exists (' || E'\n' ||
+    '    select 1' || E'\n' ||
+    '      from public.checkout_sv_tenders t' || E'\n' ||
+    '     where t.business_id = o.business_id' || E'\n' ||
+    '       and t.sale_id = o.id' || E'\n' ||
+    '       and t.status = ''consumed''' || E'\n' ||
+    '  ) then' || E'\n' ||
+    '    raise exception ''sv_tendered_sale_unsupported: sale % was settled with stored value;' ||
+    ' stored-value restitution has no proven correction path, so this reversal is refused'',' || E'\n' ||
+    '      o.id;' || E'\n' ||
+    '  end if;' || E'\n' ||
+    v_needle;
+
+  execute replace(v_definition, v_needle, v_replacement);
+
+  -- The replace must not have relaxed the v21 hardening or re-opened the closed ACL
+  -- (CREATE OR REPLACE keeps grants, but assert rather than assume).
+  select p.proconfig into v_config from pg_proc p where p.oid = v_identity::regprocedure;
+  if v_config is distinct from array['search_path=pg_catalog, public, app, pg_temp'] then
+    raise exception 'reverse_sale_v20_base lost its v21 hardened search_path: %', v_config;
+  end if;
+  if has_function_privilege('authenticated', v_identity, 'execute')
+     or has_function_privilege('anon', v_identity, 'execute') then
+    raise exception 'reverse_sale_v20_base must stay closed to the browser roles';
+  end if;
+  if position('sv_tendered_sale_unsupported' in pg_get_functiondef(v_identity::regprocedure)) = 0 then
+    raise exception 'reverse_sale_v20_base stored-value tender gate was not installed';
+  end if;
+end
+$v67_reversal_gate$;
 
 commit;

@@ -81,6 +81,7 @@ declare
   outstanding0 int; moves0 int; avail0 int; k uuid; tbl text; cnt int; ref jsonb;
   lines1200 jsonb; lines5600 jsonb; lines3000 jsonb; lines20000 jsonb; lines8000 jsonb; lines5000 jsonb;
   cli_acct1 uuid; cli_acct2 uuid; ver_p5000 uuid; rs0 json; rs1 json; sb record;
+  sale_svonly uuid; sale_split uuid; sale_plain uuid; cli_plain uuid; cnt0 jsonb; cnt1 jsonb; rvj json;
 begin
   reset role;
   select s.business_id, s.user_id into A, A_owner from public.staff s join public.businesses b on b.id=s.business_id
@@ -249,6 +250,19 @@ begin
   tnd := public.reserve_checkout_sv_tender(B,tok,1200,k);
   assert (public.reserve_checkout_sv_tender(B,tok,1200,k)->>'replayed')::boolean = true, 'bind replay must return replayed:true';
   assert (select count(*) from public.checkout_sv_tenders where evaluation_id=tok) = 1, 'bind replay created a second tender';
+  -- Same-key REBIND across tokens: the supersede releases the prior hold, then app.sv_reserve_core
+  -- replays the stored result for that key and hands back the now-released reservation, colliding on
+  -- checkout_sv_tenders_reservation_uk. It must surface TYPED, never as a raw 23505.
+  ev := public.evaluate_checkout(B,B_branch,cli_split,lines1200,gen_random_uuid());
+  begin
+    perform public.reserve_checkout_sv_tender(B,(ev->>'evaluation_id')::uuid,1200,k);
+    raise exception 'same-key rebind across tokens was ALLOWED' using errcode='XX000';
+  exception when others then
+    assert sqlstate = '22023', 'same-key rebind must fail typed 22023, got '||sqlstate;
+    assert position('sv_tender_conflict:' in sqlerrm) = 1, 'same-key rebind must be typed sv_tender_conflict, got: '||sqlerrm;
+  end;
+  assert (select count(*) from public.checkout_sv_tenders where evaluation_id=tok and status='reserved') = 1,
+    'the refused same-key rebind disturbed the original tender';
   res := public.record_cart_sale(B,cli_split,B_branch,null,'cash','v67-idem-fin-key',null,tok,true);
   sale := (res->>'sale_id')::uuid;
   assert (public.record_cart_sale(B,cli_split,B_branch,null,'cash','v67-idem-fin-key',null,tok,true)->>'status') = 'duplicate_ignored', 'double-finalise must be duplicate_ignored';
@@ -316,7 +330,7 @@ begin
   ev := public.evaluate_checkout(B,B_branch,cli_acct1,lines5000,gen_random_uuid()); tok := (ev->>'evaluation_id')::uuid;
   perform public.reserve_checkout_sv_tender(B,tok,5000,gen_random_uuid());
   res := public.record_cart_sale(B,cli_acct1,B_branch,null,'cash','v67-acctA-'||substr(md5(clock_timestamp()::text),1,8),null,tok,true);
-  sale := (res->>'sale_id')::uuid;
+  sale := (res->>'sale_id')::uuid; sale_svonly := sale;
   select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale and business_id=B;
   assert sb.balance_cents = 0, 'SV-only sale must NOT be phantom A/R (balance_cents=0), got '||sb.balance_cents;
   assert sb.paid_cents = 0, 'SV-only sale must have zero cash payments, got '||sb.paid_cents;
@@ -333,7 +347,7 @@ begin
   ev := public.evaluate_checkout(B,B_branch,cli_acct2,lines8000,gen_random_uuid()); tok := (ev->>'evaluation_id')::uuid;
   perform public.reserve_checkout_sv_tender(B,tok,1000000,gen_random_uuid());   -- capped to min(bal 5000, total 8000)
   res := public.record_cart_sale(B,cli_acct2,B_branch,null,'cash','v67-acctB-'||substr(md5(clock_timestamp()::text),1,8),null,tok,true);
-  sale := (res->>'sale_id')::uuid;
+  sale := (res->>'sale_id')::uuid; sale_split := sale;
   assert (res->'stored_value'->>'sv_spend_cents')::int = 5000 and (res->'stored_value'->>'cash_collected_cents')::int = 3000, 'split acct sale SV 5000 + cash 3000';
   select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale and business_id=B;
   assert sb.balance_cents = 0, 'split sale must settle fully (balance_cents=0), got '||sb.balance_cents;
@@ -345,6 +359,75 @@ begin
   assert (rs1->>'revenue_cash_cents')::int - (rs0->>'revenue_cash_cents')::int = 8000, 'split: revenue_cash delta must be 8000 (settled full)';
   assert (rs1->>'cash_collected_cents')::int - (rs0->>'cash_collected_cents')::int = 3000, 'split: cash_collected delta must be ONLY the 3000 cash remainder (SV excluded)';
   assert (rs1->>'unpaid_balance_cents')::int - (rs0->>'unpaid_balance_cents')::int = 0, 'split: unpaid_balance delta must be 0 (no phantom A/R)';
+
+  ---------------------------------------------------------------- REVERSAL REFUSAL (§11): an SV-tendered sale is REFUSED, never silently mis-settled
+  -- v67 settles an sv sale with a NON-payment marker; the v20 money core restores only payments and
+  -- credit_ledger. Pre-fix, reverse_sale returned ok while restoring NOTHING of the spent stored value
+  -- (SV-only 5000 -> reversed_cents=5000, refunded_payment_cents=0, credit_restored_cents=0, no
+  -- compensating movement; both originals then read balance_cents=-5000 / payment_status='overpaid').
+  -- Restitution is v68; v67 must REFUSE. Typed message + the family's plain-RAISE P0001, gated in the
+  -- money core so no wrapper (public.reverse_sale, public.refund_sale) can bypass it.
+  cnt0 := jsonb_build_object(
+    'sales',      (select count(*) from public.sales                 where business_id=B),
+    'payments',   (select count(*) from public.payments              where business_id=B),
+    'movements',  (select count(*) from public.sv_lot_movements      where business_id=B),
+    'sv_ops',     (select count(*) from public.sv_operations         where business_id=B),
+    'fin_ops',    (select count(*) from public.financial_operations  where business_id=B),
+    'rev_audits', (select count(*) from public.sale_reversal_audits  where business_id=B));
+  rs0 := public.get_revenue_summary(B, current_date-1, current_date+1, null);
+
+  -- (a) SV-ONLY sale via public.reverse_sale
+  begin
+    perform public.reverse_sale(B, sale_svonly, 'v67 refusal probe: sv-only tendered sale', 'v67-rev-svonly-key');
+    raise exception 'reversing an SV-only tendered sale was ALLOWED' using errcode='XX000';
+  exception when others then
+    assert sqlstate = 'P0001', 'sv reversal refusal must be P0001 (family convention), got '||sqlstate;
+    assert position('sv_tendered_sale_unsupported:' in sqlerrm) = 1, 'sv reversal refusal must be typed, got: '||sqlerrm;
+  end;
+  -- (b) SPLIT (SV 5000 + cash 3000) sale via public.refund_sale - the OTHER public entry point.
+  begin
+    perform public.refund_sale(B, sale_split, 'v67 refusal probe: split sv/cash tendered sale', 'v67-rev-split-key');
+    raise exception 'reversing a split SV/cash tendered sale was ALLOWED' using errcode='XX000';
+  exception when others then
+    assert sqlstate = 'P0001', 'split sv reversal refusal must be P0001, got '||sqlstate;
+    assert position('sv_tendered_sale_unsupported:' in sqlerrm) = 1, 'refund_sale must hit the same typed refusal, got: '||sqlerrm;
+  end;
+
+  -- A refused attempt mutates NOTHING and reserves no idempotency key.
+  cnt1 := jsonb_build_object(
+    'sales',      (select count(*) from public.sales                 where business_id=B),
+    'payments',   (select count(*) from public.payments              where business_id=B),
+    'movements',  (select count(*) from public.sv_lot_movements      where business_id=B),
+    'sv_ops',     (select count(*) from public.sv_operations         where business_id=B),
+    'fin_ops',    (select count(*) from public.financial_operations  where business_id=B),
+    'rev_audits', (select count(*) from public.sale_reversal_audits  where business_id=B));
+  assert cnt1 = cnt0, 'a refused sv reversal mutated rows: '||cnt0::text||' -> '||cnt1::text;
+  select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale_svonly and business_id=B;
+  assert sb.balance_cents = 0 and sb.paid_cents = 0 and sb.sv_settled_cents = 5000 and sb.payment_status = 'paid',
+    'refused reversal disturbed the SV-only sale_balance row';
+  select balance_cents, paid_cents, sv_settled_cents, payment_status into sb from public.sale_balance where sale_id=sale_split and business_id=B;
+  assert sb.balance_cents = 0 and sb.paid_cents = 3000 and sb.sv_settled_cents = 5000 and sb.payment_status = 'paid',
+    'refused reversal disturbed the split sale_balance row';
+  assert public.get_revenue_summary(B, current_date-1, current_date+1, null)::jsonb = rs0::jsonb,
+    'a refused sv reversal changed get_revenue_summary';
+
+  -- (c) A NON-SV sale still reverses exactly as before. It deliberately REUSES the idempotency key the
+  --     SV-only refusal rejected: had the refused attempt reserved a financial_operations row, this
+  --     would raise the 23505 immutable-request conflict instead of succeeding.
+  reset role;
+  insert into public.clients(business_id,full_name,phone) values (B,'v67 revplain','+6590000213') returning id into cli_plain;
+  perform pg_temp.as_v67(B_owner,'authenticated');
+  ev := public.evaluate_checkout(B,B_branch,cli_plain,lines5000,gen_random_uuid()); tok := (ev->>'evaluation_id')::uuid;
+  res := public.record_cart_sale(B,cli_plain,B_branch,null,'cash','v67-revplain-'||substr(md5(clock_timestamp()::text),1,8),null,tok,true);
+  sale_plain := (res->>'sale_id')::uuid;
+  assert (res->>'stored_value') is null, 'the control sale must carry no sv tender';
+  rvj := public.reverse_sale(B, sale_plain, 'v67 control: a plain cash sale still reverses', 'v67-rev-svonly-key');
+  assert (rvj->>'reversed_cents')::int = 5000, 'non-SV sale must still reverse exactly as before, got '||(rvj->>'reversed_cents');
+  assert (rvj->>'refunded_payment_cents')::int = 5000, 'non-SV cash sale must refund its full cash payment';
+  assert (rvj->>'credit_restored_cents')::int = 0, 'non-SV cash sale restores no credit';
+  assert nullif(rvj->>'reversal_sale_id','') is not null, 'non-SV reversal must create the reversing sale row';
+  select balance_cents, payment_status into sb from public.sale_balance where sale_id=sale_plain and business_id=B;
+  assert sb.balance_cents = 0 and sb.payment_status = 'paid', 'a reversed non-SV sale must net to zero';
 
   reset role;
   raise notice 'V67 SUITE PASS (all assertions)';

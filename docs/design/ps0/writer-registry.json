@@ -207,15 +207,18 @@
     },
     {
       "id": "db.fn:public.sv_spend/4",
-      "surface": "db_function",
-      "latest_file": "20260724220000_frenly_v63_ps2c_redemption_mechanics.sql",
-      "rows_written": "sv_operations:INSERT, sv_lot_movements:INSERT",
-      "detected_signals": "idem-signal, advisory-lock, row-lock",
-      "entry_point": "public.sv_spend(business, account, cents, idempotency_key) - PS-2A Increment C owner-only SPEND RPC, HARD-GATED on authority='live'",
-      "idempotency": "sv_operations unique(business, operation_type='spend', idempotency_key) + request_hash of {business,account,cents} + per-account advisory xact lock + cached-result replay; a duplicate same-key spend has ONE effect",
-      "value": "PS-0 s3 aggregate-proportional cross-operation FEFO spend: bonus_draw=floor(spend*total_bonus/total), paid_draw=spend-bonus_draw; writes one 'spend' movement per lot the PURE app.sv_allocate_spend plans; refuses cents>available (post-reservation) with NO partial write; one-winner via the per-account advisory lock + FEFO FOR UPDATE row locks.",
-      "authority": "HARD-GATED: raises 22023 sv_not_live unless sv_authority.state='live', which is UNREACHABLE in PS-2A (no setter; v61 guard + v62 CHECK + ps0-no-executor tripwire) - so NO real value moves; the machinery + arithmetic ship and are proven via the pure planner and a rolled-back authority='live' test shim",
-      "kernel": "SEPARATE-LEDGER - stored value is its own append-only authority (sv_lot_movements); shares no rows with credit_ledger/points_ledger/sales; the PS-1C checkout kernel is byte-UNCHANGED and consumes no sv tender in PS-2A"
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260725060000_frenly_v67_ps2live_checkout_tender.sql",
+      "rows_written": "(delegates to app.sv_spend_core)",
+      "detected_signals": "idem-signal",
+      "delegates_to": [
+        "app.sv_spend_core"
+      ],
+      "entry_point": "public.sv_spend(business, account, cents, idempotency_key) — owner-only SPEND entry point. v67 moved the v63/v64 body into app.sv_spend_core so the till checkout tender drives the SAME engine without an extra grant; this wrapper is now ONLY the owner check plus delegation and writes NO rows itself. Owner-facing behaviour (owner-only, gates, idempotency, result) is unchanged. Its siblings sv_reserve/4 and sv_release/3 became pure delegators too and left the registry because their cores write no VALUE table; sv_spend/4 stays because discovery still reaches a value writer through it.",
+      "idempotency": "via app.sv_spend_core: sv_operations unique(business, operation_type='spend', idempotency_key) + request_hash of {business,account,cents} + per-account advisory xact lock + FEFO row locks + cached-result replay; a duplicate same-key spend has ONE effect",
+      "value": "NON-WRITING ENTRY POINT — the PS-0 §3 aggregate-proportional cross-operation FEFO spend (bonus_draw=floor(spend*total_bonus/total), paid_draw=spend-bonus_draw, one 'spend' movement per lot app.sv_allocate_spend plans, refuse-before-write when cents>available) now lives entirely in app.sv_spend_core, which is curated separately.",
+      "authority": "HARD-GATED in the core: raises 22023 sv_not_live unless sv_authority.state='live' (unreachable in prod) and refuses under an active 'all'/'redeem' pause. This wrapper adds the 42501 owner check it has always had.",
+      "kernel": "SEPARATE-LEDGER - stored value is its own append-only authority (sv_lot_movements); shares no rows with credit_ledger/points_ledger/sales. The PS-1C checkout kernel reaches the same core through record_cart_sale/9's v67 tender path, never through this owner RPC."
     },
     {
       "id": "db.fn:public.sv_reverse_spend/3",
