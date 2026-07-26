@@ -61,15 +61,16 @@ test('owners cannot see or mutate a disabled module while owner-only special pag
   assert.match(global,/canViewAppts\?`<button[\s\S]*canNewAppt\?'New appointment':'View calendar'/);
 });
 
-test('staff-only multi-workspace root and shell use the same complete stable list',()=>{
+test('staff-only multi-workspace business entry and shell use the same complete stable list',()=>{
   const route=section('async function route(){','/* ---------- customer wallet ---------- */');
-  assert.match(route,/!hasCustomerDestination&&staffPersonas\.length>1\)\{renderPersonaChoice\(rootPersonas\)/);
+  assert.match(route,/if\(h==='#\/business'\)[\s\S]*const staff=sortStaffWorkspaces\(businessPersonas\?\.staff\|\|\[\]\)/);
+  assert.match(route,/if\(staff\.length>1\)return renderPersonaChoice\(businessPersonas,\{includeCustomer:false\}\)/);
   assert.doesNotMatch(route,/from\('staff'\)\.select\('business_id'\)[\s\S]*?limit\(1\)/);
-  assert.match(route,/S\.staffWorkspaces=sortStaffWorkspaces\(staffPersonas\)/);
-  const persona=section('function renderPersonaChoice(personas){','function renderAuth(');
+  assert.match(route,/S\.staffWorkspaces=staff/);
+  const persona=section('function renderPersonaChoice(personas,{includeCustomer=true}={})','function renderAuth(');
   assert.match(persona,/const staff=sortStaffWorkspaces/);
   assert.match(persona,/staff\.map\(workspace=>/);
-  assert.match(persona,/const hasCustomer=/);
+  assert.match(persona,/const hasCustomer=includeCustomer&&/);
   const shell=section('function renderShell(page){','const M=');
   assert.match(shell,/customerWorkspaceSwitchHtml\(S\.staffWorkspaces\)/);
 });

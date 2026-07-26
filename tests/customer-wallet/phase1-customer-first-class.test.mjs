@@ -5,6 +5,10 @@ import test from 'node:test';
 const root=new URL('../../',import.meta.url);
 const app=await readFile(new URL('app/index.html',root),'utf8');
 const brand=await readFile(new URL('app/brand-config.js',root),'utf8');
+const manifest=JSON.parse(await readFile(new URL('app/manifest.webmanifest',root),'utf8'));
+const vercel=JSON.parse(await readFile(new URL('app/vercel.json',root),'utf8'));
+const vercelTemplate=JSON.parse(await readFile(new URL('config/runtime/vercel.template.json',root),'utf8'));
+const entryRoutingDoc=await readFile(new URL('docs/release/entry-routing-and-super-admin-login.md',root),'utf8');
 
 const section=(start,end)=>{
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -13,35 +17,66 @@ const section=(start,end)=>{
   return app.slice(from,to);
 };
 
-test('business and customer are equal first-class entry paths before authentication',()=>{
+test('root is customer-first and business sign-in is a separate clean entry path',()=>{
   assert.match(brand,/productName:\s*'Nestly'/);
   assert.match(brand,/customerLabel:\s*'My Nestly'/);
-  const entry=section('function renderEntryChoice()','function renderPersonaChoice(personas)');
-  assert.match(entry,/class="entry-choice-grid"/);
-  assert.match(entry,/class="entry-choice" href="#\/business"/);
-  assert.match(entry,/class="entry-choice" href="#\/customer"/);
-  assert.match(entry,/<h2>Business<\/h2>/);
-  assert.match(entry,/<h2>Customer<\/h2>/);
-  assert.match(entry,/CUI\.icon\('branch'/);
-  assert.match(entry,/CUI\.icon\('customers'/);
-  assert.match(entry,/<main[^>]*id="main"[^>]*tabindex="-1"/);
+  const entry=section('function customerRegistrationShell(body)','function renderCustomerOtpVerification');
+  assert.match(entry,/class="customer-entry-footer"/);
+  assert.match(entry,/class="customer-business-link" href="\/business">Business sign in<\/a>/);
+  assert.doesNotMatch(entry,/Choose account type|id="customerBack"/);
 
-  const auth=section("function renderAuth(mode='in')",'function validNewPassword');
+  const auth=section("function renderAuth(mode='in',{admin=false}={})",'function validNewPassword');
   assert.match(auth,/class="entry-path-switch" aria-label="Account type"/);
-  assert.match(auth,/href="#\/business" aria-current="page"/);
-  assert.match(auth,/href="#\/customer" id="customerAuth"/);
+  assert.match(auth,/href="\/business" aria-current="page"/);
+  assert.match(auth,/href="\/"/);
+
+  const routing=section('function entryRouteForLocation','/* ---------- customer wallet ---------- */');
+  assert.match(routing,/if\(cleanPath==='\/business'\)return '#\/business'/);
+  assert.match(routing,/if\(h==='#\/'\|\|h==='#\/customer'/);
+  assert.match(routing,/if\(!S\.user\)return renderAuth\('in',\{admin:/);
+  assert.doesNotMatch(app,/function renderEntryChoice\(/);
+
+  assert.deepEqual(manifest.shortcuts.map(({url})=>url),['/','/business']);
+  const expectedRewrites=[
+    {source:'/business',destination:'/index.html'},
+    {source:'/admin',destination:'/index.html'}
+  ];
+  assert.deepEqual(vercel.rewrites,expectedRewrites);
+  assert.deepEqual(vercelTemplate.rewrites,expectedRewrites);
 });
 
-test('dual-role root presents an explicit destination choice and direct deep links remain authoritative',()=>{
+test('business entry resolves workspaces while customer and workspace deep links remain authoritative',()=>{
   const routing=section('async function route()','/* ---------- customer wallet ---------- */');
-  assert.match(routing,/hasCustomerDestination&&staffPersonas\.length\)\{renderPersonaChoice\(\{\.\.\.rootPersonas/);
-  assert.doesNotMatch(routing,/customerPersonas\.length&&staffPersonas\.length\)\{nav\(rootPersonas\.default_route/);
+  assert.match(routing,/if\(h==='#\/business'\)\{/);
+  assert.match(routing,/if\(staff\.length>1\)return renderPersonaChoice\(businessPersonas,\{includeCustomer:false\}\)/);
+  assert.match(routing,/preferredRoute\.startsWith\('#\/workspace\/'\)\?preferredRoute:workspaceRoute/);
+  assert.match(routing,/if\(h==='#\/wallet'\|\|h\.startsWith\('#\/wallet\/'\)\)/);
+  assert.match(routing,/if\(h\.startsWith\('#\/workspace\/'\)\)/);
 
-  const chooser=section('function renderPersonaChoice(personas)','function renderAuth');
+  const chooser=section('function renderPersonaChoice(personas,{includeCustomer=true}={})','function renderAuth');
+  assert.match(chooser,/const hasCustomer=includeCustomer&&/);
   assert.match(chooser,/<h2 id="personaWorkspacesTitle">Business workspaces<\/h2>/);
   assert.match(chooser,/<h2>\$\{esc\(BRAND\.customerLabel\)\}<\/h2>/);
   assert.match(chooser,/staff\.map\(workspace=>`<a class="btn ghost sm" href="#\/workspace\/\$\{encodeURIComponent\(workspace\.business_slug\)\}\/dashboard"/);
   assert.match(chooser,/href="#\/wallet"/);
+});
+
+test('hidden admin entry uses normal auth and resolves Platform before tenant discovery',()=>{
+  const routing=section('function entryRouteForLocation','/* ---------- customer wallet ---------- */');
+  assert.match(routing,/if\(cleanPath==='\/admin'\)return '#\/platform'/);
+  assert.match(routing,/renderAuth\('in',\{admin:h==='#\/platform'\|\|h\.startsWith\('#\/platform\/'\)\}\)/);
+  const platformAt=routing.indexOf('if(platformConsole?.isRoute(h))');
+  const businessAt=routing.indexOf("if(h==='#/business')");
+  const discoveryAt=routing.indexOf("if(h.startsWith('#/workspace/'))");
+  assert.ok(platformAt>=0&&businessAt>platformAt&&discoveryAt>businessAt,
+    'Platform must resolve before business workspace discovery or onboarding');
+  assert.doesNotMatch(app,/<a[^>]+href="\/admin"/);
+  const auth=section("function renderAuth(mode='in',{admin=false}={})",'function validNewPassword');
+  assert.match(auth,/admin\?'Super admin sign in'/);
+  assert.match(auth,/admin\?'':`<nav class="entry-path-switch"/);
+  assert.match(auth,/admin\?'':`<span class="spacer"><\/span><button class="btn ghost sm" id="sw"/);
+  assert.match(entryRoutingDoc,/uses the normal business email\/password authentication method/);
+  assert.match(entryRoutingDoc,/does not create an Auth user/);
 });
 
 test('customer secondary routes are namespaced and cannot intercept merchant Bookings',()=>{

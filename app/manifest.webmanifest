@@ -39,12 +39,12 @@
     {
       "name": "Customer home",
       "short_name": "Customer",
-      "url": "/#/customer"
+      "url": "/"
     },
     {
       "name": "Business sign in",
       "short_name": "Business",
-      "url": "/#/login"
+      "url": "/business"
     }
   ]
 }

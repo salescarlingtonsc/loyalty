@@ -15,7 +15,7 @@ test('customer UI helpers initialize in browser and windowless runtime contexts'
   assert.equal(typeof context.FrenlyCustomerUI?.focusRoute,'function');
 });
 
-async function runRootRoute({capabilities,profileResult,hash='#/',sessionUser={id:'customer-root'}}){
+async function runRootRoute({capabilities,profileResult,hash='#/',pathname='/',sessionUser={id:'customer-root'}}){
   const calls={retry:[],onboard:0,profile:0,navigate:[],registration:[],auth:0};
   const context={
     beginRouteInvocation:()=>()=>true,
@@ -36,7 +36,15 @@ async function runRootRoute({capabilities,profileResult,hash='#/',sessionUser={i
       return /^#\/wallet\/[a-z0-9][a-z0-9-]{1,62}$/.test(value)?value:'';
     },
     history:{replaceState:()=>{}},
-    location:{hash,pathname:'/index.html',search:''},
+    location:{hash,pathname,search:''},
+    entryRouteForLocation:()=>{
+      const requested=String(hash||'').trim();
+      if(requested&&requested!=='#'&&requested!=='#/')return requested;
+      const cleanPath=(String(pathname||'/').replace(/\/+$/,'')||'/').toLowerCase();
+      if(cleanPath==='/business')return '#/business';
+      if(cleanPath==='/admin')return '#/platform';
+      return '#/';
+    },
     S:{user:null,biz:null,staffWorkspaces:[]},
     sb:{
       auth:{getSession:async()=>({data:{session:sessionUser?{user:sessionUser}:null}})},
@@ -86,25 +94,28 @@ async function runRootRoute({capabilities,profileResult,hash='#/',sessionUser={i
   return calls;
 }
 
-test('root capability lookup failure remains in customer account retry and never reaches business onboarding',async()=>{
+test('root always opens the customer entry for a signed-in session without resolving a business workspace',async()=>{
   const calls=await runRootRoute({
     capabilities:{_load_error:true,customer_phone_registration:false},
     profileResult:{data:null,error:null}
   });
-  assert.deepEqual(calls.retry,['We could not check your customer access. Please try again.']);
+  assert.deepEqual(calls.registration,[{destination:'',business:''}]);
+  assert.deepEqual(calls.retry,[]);
   assert.equal(calls.profile,0);
   assert.equal(calls.onboard,0);
   assert.deepEqual(calls.navigate,[]);
 });
 
-test('root customer profile failure remains in customer profile retry and never reaches business onboarding',async()=>{
+test('clean business path remains separate and reaches business onboarding only after authentication',async()=>{
   const calls=await runRootRoute({
+    pathname:'/business',
     capabilities:{_load_error:false,customer_phone_registration:true},
     profileResult:{data:null,error:{message:'temporary profile failure'}}
   });
-  assert.deepEqual(calls.retry,['We could not load your customer profile. Please try again.']);
-  assert.equal(calls.profile,1);
-  assert.equal(calls.onboard,0);
+  assert.deepEqual(calls.registration,[]);
+  assert.deepEqual(calls.retry,[]);
+  assert.equal(calls.profile,0);
+  assert.equal(calls.onboard,1);
   assert.deepEqual(calls.navigate,[]);
 });
 
@@ -142,4 +153,17 @@ test('unauthenticated customer deep links keep their destination and never fall 
     assert.deepEqual(calls.registration,[],`${hash} must remain outside the customer auth flow`);
     assert.equal(calls.auth,1,`${hash} must retain the business auth flow`);
   }
+
+  const cleanBusiness=await runRootRoute({
+    pathname:'/business',hash:'',sessionUser:null,capabilities:null,profileResult:null
+  });
+  assert.deepEqual(cleanBusiness.registration,[]);
+  assert.equal(cleanBusiness.auth,1,'/business must open the business auth flow');
+
+  const deepCustomer=await runRootRoute({
+    pathname:'/business',hash:'#/wallet/kopi-tiam',sessionUser:null,capabilities:null,profileResult:null
+  });
+  assert.deepEqual(deepCustomer.registration,[{destination:'#/wallet/kopi-tiam',business:'kopi-tiam'}],
+    'an explicit customer deep link must override the clean business entry path');
+  assert.equal(deepCustomer.auth,0);
 });

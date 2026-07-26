@@ -112,6 +112,13 @@ test('manifest has a stable install identity and real maskable icons', async () 
   assert.equal(manifest.name, 'Nestly');
   assert.equal(manifest.short_name, 'Nestly');
   assert.deepEqual(
+    manifest.shortcuts.map(({ name, url }) => ({ name, url })),
+    [
+      { name: 'Customer home', url: '/' },
+      { name: 'Business sign in', url: '/business' }
+    ]
+  );
+  assert.deepEqual(
     manifest.icons.map(({ src, sizes, type, purpose }) => ({ src, sizes, type, purpose })),
     [
       {
@@ -190,7 +197,7 @@ test('cold offline navigation returns the self-contained fallback, not a broken 
   assert.deepEqual(harness.matchedPaths, ['/offline.html']);
 });
 
-test('online navigation stays network-first and is never persisted by the service worker', async () => {
+test('customer, business and admin navigation stay network-first and are never persisted by the service worker', async () => {
   const onlineResponse = Object.freeze({ kind: 'network-document' });
   let fetchCount = 0;
   const harness = serviceWorkerHarness(await text('sw.js'), {
@@ -200,13 +207,14 @@ test('online navigation stays network-first and is never persisted by the servic
     }
   });
 
-  const response = await dispatchFetch(
-    harness.listeners.get('fetch'),
-    request('https://www.nestly.asia/#/wallet', { mode: 'navigate' })
-  );
-
-  assert.equal(response, onlineResponse);
-  assert.equal(fetchCount, 1);
+  for (const route of ['/#/wallet', '/business', '/admin']) {
+    const response = await dispatchFetch(
+      harness.listeners.get('fetch'),
+      request(`https://www.nestly.asia${route}`, { mode: 'navigate' })
+    );
+    assert.equal(response, onlineResponse);
+  }
+  assert.equal(fetchCount, 3);
   assert.deepEqual(harness.matchedPaths, []);
 });
 

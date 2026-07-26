@@ -386,7 +386,7 @@ test('public write forms render and reset explicit Turnstile widgets under exact
 
 test('staff auth submit stays disabled until Turnstile returns a token', async () => {
   const app = await read('app/index.html');
-  const authStart = app.indexOf("function renderAuth(mode='in')");
+  const authStart = app.indexOf("function renderAuth(mode='in',{admin=false}={})");
   const authEnd = app.indexOf('function validNewPassword', authStart);
   const auth = app.slice(authStart, authEnd);
   assert.match(auth, /<button class="btn" id="go" disabled>/);

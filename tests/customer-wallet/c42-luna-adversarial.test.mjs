@@ -135,8 +135,10 @@ test('Luna C42: staff email/password authentication remains a separate path', ()
   const auth = appBlock('function renderAuth(', 'function validNewPassword(');
   assert.match(auth, /sb\.auth\.signUp\(\{email,password,options:\{captchaToken\}\}\)/);
   assert.match(auth, /sb\.auth\.signInWithPassword\(\{email,password,options:\{captchaToken\}\}\)/);
-  assert.match(auth, /id="customerAuth"/);
+  assert.match(auth, /href="\/business" aria-current="page"/);
+  assert.match(auth, /href="\/"/);
   assert.match(auth, /I’m a customer/);
+  assert.match(app, /if\(cleanPath==='\/business'\)return '#\/business'/);
   assert.doesNotMatch(auth, /signInWithOtp/i,
     'business sign-in must not silently switch to the customer OTP transport');
 });

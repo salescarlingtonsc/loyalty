@@ -130,6 +130,7 @@
     { "kind": "pending", "version": "20260726180000", "name": "nestly_v83_customer_intelligence", "sourcePath": "db/migrations/20260726_nestly_v83_customer_intelligence.sql" },
     { "kind": "pending", "version": "20260726190000", "name": "nestly_v84_fast_sale_corrections", "sourcePath": "db/migrations/20260726_nestly_v84_fast_sale_corrections.sql" },
     { "kind": "pending", "version": "20260726200000", "name": "nestly_v85_conversion_guard_repair", "sourcePath": "db/migrations/20260726_nestly_v85_conversion_guard_repair.sql" },
-    { "kind": "pending", "version": "20260726210000", "name": "nestly_v86_enterprise_sme_crm", "sourcePath": "db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql" }
+    { "kind": "pending", "version": "20260726210000", "name": "nestly_v86_enterprise_sme_crm", "sourcePath": "db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql" },
+    { "kind": "pending", "version": "20260726220000", "name": "nestly_v87_overdue_appointment_amendments", "sourcePath": "db/migrations/20260726_nestly_v87_overdue_appointment_amendments.sql" }
   ]
 }

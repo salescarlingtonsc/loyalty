@@ -106,9 +106,10 @@ test('C42 phone claim is slug-led, exact-one, generic, rate-limited, and cannot 
 test('customer registration UI is a mobile phone OTP path with an explicit fail-closed provider seam', () => {
   const customerRoute = block(app, /let customerRegistrationState=[\s\S]*?async function renderCustomerClaim\(/i);
   const auth = block(app, /function renderAuth\([\s\S]*?function validNewPassword\(/i);
-  assert.match(auth, /id="customerAuth"/);
+  assert.match(auth, /href="\/"/);
   assert.match(auth, /I’m a customer/);
-  assert.match(app, /h==='#\/customer'\|\|h==='#\/customer\/register'\|\|h\.startsWith\('#\/customer\?'\)/);
+  assert.match(app, /h==='#\/'\|\|h==='#\/customer'\|\|h==='#\/customer\/register'\|\|h\.startsWith\('#\/customer\?'\)/);
+  assert.match(app, /href="\/business">Business sign in<\/a>/);
   assert.match(app, /CUSTOMER_PHONE_OTP_RUNTIME_ENABLED[\s\S]*RUNTIME_CONFIG\.environment!=='production'/);
   assert.match(app, /window\.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__===true/);
   assert.match(customerRoute, /normalizeSingaporeCustomerPhone/);

@@ -125,6 +125,7 @@
     { "kind": "executable", "path": "db/migrations/20260726_nestly_v83_customer_intelligence.sql", "semanticVersion": "v83", "proposedDeployVersion": "20260722000201" },
     { "kind": "executable", "path": "db/migrations/20260726_nestly_v84_fast_sale_corrections.sql", "semanticVersion": "v84", "proposedDeployVersion": "20260722000202" },
     { "kind": "executable", "path": "db/migrations/20260726_nestly_v85_conversion_guard_repair.sql", "semanticVersion": "v85", "proposedDeployVersion": "20260722000203" },
-    { "kind": "executable", "path": "db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql", "semanticVersion": "v86", "proposedDeployVersion": "20260722000204" }
+    { "kind": "executable", "path": "db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql", "semanticVersion": "v86", "proposedDeployVersion": "20260722000204" },
+    { "kind": "executable", "path": "db/migrations/20260726_nestly_v87_overdue_appointment_amendments.sql", "semanticVersion": "v87", "proposedDeployVersion": "20260722000205" }
   ]
 }

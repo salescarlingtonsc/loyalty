@@ -124,6 +124,9 @@ tr.click:hover td{background:#FBFAF8}
   color:var(--muted);font-size:11.5px;min-width:0;max-width:100%}
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
   color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.customer-entry-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:14px;color:var(--muted);font-size:11.5px}
+.customer-entry-footer>.customer-business-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
 .challenge-retry{background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
@@ -477,7 +480,7 @@ input[type=range]:focus{box-shadow:none}
 .calendar-day:last-child{border-right:0}
 .calendar-event{position:absolute;left:4px;right:4px;display:block;width:calc(100% - 8px);min-height:44px;overflow:hidden;padding:6px 7px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 13%,#fff);color:var(--ink);text-align:left;font-size:11px;line-height:1.28;z-index:2}
 .calendar-event:hover,.calendar-event:focus-visible{box-shadow:var(--shadow);z-index:3}.calendar-event b,.calendar-event-time{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-event-time{font-variant-numeric:tabular-nums;font-weight:650;margin-top:2px}
-.calendar-agenda{display:none}.calendar-agenda-item{display:grid;grid-template-columns:minmax(112px,auto) 1fr;gap:12px;min-height:44px;padding:12px 4px;border:0;border-bottom:1px solid var(--hair);border-radius:8px;color:inherit;cursor:pointer}.calendar-agenda-item:hover,.calendar-agenda-item:focus-visible{background:#FBF7F3}.calendar-agenda-time{font-variant-numeric:tabular-nums;line-height:1.45}
+.calendar-agenda{display:none}.calendar-agenda-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;border-bottom:1px solid var(--hair)}.calendar-agenda-row>.btn{min-height:44px}.calendar-agenda-item{display:grid;grid-template-columns:minmax(112px,auto) 1fr;gap:12px;min-height:44px;padding:12px 4px;border:0;border-radius:8px;color:inherit;cursor:pointer}.calendar-agenda-item:hover,.calendar-agenda-item:focus-visible{background:#FBF7F3}.calendar-agenda-time{font-variant-numeric:tabular-nums;line-height:1.45}
 .appointment-detail-modal .modal-card{width:min(760px,100%)}.appointment-detail-head{align-items:flex-start}.appointment-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px;margin-top:18px}.appointment-detail-section{border-top:1px solid var(--line);padding-top:16px;margin-top:18px}.appointment-detail-section h3{font-size:15px;margin-bottom:9px}.appointment-detail-list{display:grid;gap:8px;margin:0}.appointment-detail-list>div{display:grid;grid-template-columns:minmax(105px,34%) 1fr;gap:12px}.appointment-detail-list dt{color:var(--muted);font-size:12px;font-weight:700}.appointment-detail-list dd{margin:0;overflow-wrap:anywhere}.appointment-detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.appointment-reschedule-form{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}.appointment-reschedule-form[hidden]{display:none}.appointment-reschedule-feedback{margin-top:12px}.appointment-reschedule-feedback .schedule-suggestion{margin-top:0}
 /* Customer 360 (competitive audit §10 Phase 2): one header, one next-best-action, one timeline.
    Pictogram-first, big tap targets, numbers over words — low-literacy-first per CLAUDE.md. */
@@ -1249,6 +1252,14 @@ async function loadCustomerFeatureCapabilities({refresh=false}={}){
 }
 
 /* ---------- routing ---------- */
+function entryRouteForLocation(pathname=location.pathname,hash=location.hash){
+  const requested=String(hash||'').trim();
+  if(requested&&requested!=='#'&&requested!=='#/')return requested;
+  const cleanPath=(String(pathname||'/').replace(/\/+$/,'')||'/').toLowerCase();
+  if(cleanPath==='/business')return '#/business';
+  if(cleanPath==='/admin')return '#/platform';
+  return '#/';
+}
 async function route(){
   const isRouteCurrent=beginRouteInvocation();
   dashboardRenderEpoch+=1;
@@ -1263,7 +1274,8 @@ async function route(){
     killCharts();
     if(passwordRecoveryError) return renderRecoveryInvalid();
     if(passwordRecoveryActive) return renderPasswordUpdate();
-    let h=location.hash||'#/';
+    let h=entryRouteForLocation();
+    if(h==='#/login')h='#/business';
     if(h.startsWith('#/claim?')){
       const claimRouteParams=new URLSearchParams(h.split('?')[1]||'');
       const invite=claimRouteParams.get('invite')||'';
@@ -1286,7 +1298,7 @@ async function route(){
     if(!isRouteCurrent())return;
     S.user=session?.user||null;
     if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
-    if(h==='#/customer'||h==='#/customer/register'||h.startsWith('#/customer?')) return renderCustomerRegistration(isRouteCurrent);
+    if(h==='#/'||h==='#/customer'||h==='#/customer/register'||h.startsWith('#/customer?')) return renderCustomerRegistration(isRouteCurrent);
     const directCustomerDestination=normalizeCustomerDestination(h);
     if(!S.user&&directCustomerDestination){
       pendingCustomerDestination=directCustomerDestination;
@@ -1295,7 +1307,7 @@ async function route(){
         :'';
       return renderCustomerRegistration(isRouteCurrent);
     }
-    if(!S.user) return h==='#/'?renderEntryChoice():renderAuth();
+    if(!S.user)return renderAuth('in',{admin:h==='#/platform'||h.startsWith('#/platform/')});
     /* Platform routes are resolved before workspace discovery/onboarding. The platform
        console performs its authoritative check by loading the guarded super-admin roster,
        so a legitimate platform operator does not need to own a tenant workspace first. */
@@ -1311,6 +1323,21 @@ async function route(){
         }
       });
     }
+    if(h==='#/business'){
+      const {data:businessPersonas,error:businessPersonaError}=await sb.rpc('get_my_personas');
+      if(!isRouteCurrent())return;
+      if(businessPersonaError)return renderPersonaResolutionUnavailable();
+      const staff=sortStaffWorkspaces(businessPersonas?.staff||[]);
+      S.staffWorkspaces=staff;
+      if(staff.length>1)return renderPersonaChoice(businessPersonas,{includeCustomer:false});
+      if(staff.length===1){
+        const workspaceRoute=`#/workspace/${encodeURIComponent(staff[0].business_slug)}/dashboard`;
+        const preferredRoute=String(businessPersonas?.default_route||'');
+        nav(preferredRoute.startsWith('#/workspace/')?preferredRoute:workspaceRoute);
+        return;
+      }
+      return renderOnboard();
+    }
     if(h==='#/claim'||h.startsWith('#/claim?')) return renderCustomerClaim();
     if(h==='#/customer/programmes')return renderCustomerProgrammes();
     if(h==='#/customer/bookings')return renderCustomerBookings();
@@ -1322,36 +1349,6 @@ async function route(){
       if(customerCapabilities._load_error)return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');
       if(!customerCapabilities.customer_wallet) return renderCustomerWalletUnavailable();
       return renderCustomerWallet(h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null);
-    }
-    if(h==='#/'){
-      const {data:rootPersonas,error:rootPersonaError}=await sb.rpc('get_my_personas');
-      if(!isRouteCurrent()||location.hash&&location.hash!=='#/')return;
-      if(rootPersonaError)return renderPersonaResolutionUnavailable();
-      const staffPersonas=rootPersonas?.staff||[],customerPersonas=rootPersonas?.customer||[];
-      S.staffWorkspaces=sortStaffWorkspaces(staffPersonas);
-      let registeredCustomerProfile=false;
-      if(!customerPersonas.length){
-        const rootCapabilities=await loadCustomerFeatureCapabilities();
-        if(!isRouteCurrent()||location.hash&&location.hash!=='#/')return;
-        if(rootCapabilities._load_error){
-          return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');
-        }
-        if(rootCapabilities.customer_phone_registration===true){
-          const {data:rootProfile,error:rootProfileError}=await sb.rpc('customer_get_profile');
-          if(!isRouteCurrent()||location.hash&&location.hash!=='#/')return;
-          if(rootProfileError){
-            return renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');
-          }
-          registeredCustomerProfile=rootProfile?.profile!==null&&rootProfile?.profile!==undefined;
-        }
-      }
-      const hasCustomerDestination=customerPersonas.length>0||registeredCustomerProfile;
-      if(hasCustomerDestination&&!staffPersonas.length){nav('#/wallet');return}
-      if(hasCustomerDestination&&staffPersonas.length){renderPersonaChoice({...rootPersonas,registered_customer_profile:registeredCustomerProfile});return}
-      if(!hasCustomerDestination&&staffPersonas.length>1){renderPersonaChoice(rootPersonas);return}
-      if(!hasCustomerDestination&&staffPersonas.length===1){
-        nav(rootPersonas?.default_route||`#/workspace/${encodeURIComponent(staffPersonas[0].business_slug)}/dashboard`);return;
-      }
     }
     let workspacePage=null,workspaceStaffPersona=null;
     if(h.startsWith('#/workspace/')){
@@ -1547,10 +1544,8 @@ async function customerPhoneOtpAvailable(channel='sms'){
 function customerRegistrationShell(body){
   destroyMountedTurnstiles();
   root.innerHTML=`<main class="wallet-shell" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
-    <div class="logo">${brandWordmark()}</div><span class="spacer"></span>
-    <button class="btn ghost sm" id="customerBack" type="button">${CUI.icon('back',{size:17})}<span>Choose account type</span></button>
-    </header>${body}</div></main>`;
-  $('customerBack').onclick=()=>{pendingCustomerBusinessSlug='';pendingCustomerDestination='';nav('#/')};
+    <a class="logo" href="/" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
+    </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks()}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
@@ -1790,7 +1785,6 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
     ${smsAvailable?`<div style="margin-top:14px">${authChallengeHtml()}</div>`:`<p class="err" role="status" style="margin-top:16px">Mobile sign-up is not available right now. Please try again later.</p>`}
     <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Send verification code</span></button>
-    <p class="muted small" style="margin-top:12px">Already have a business account? Use Business sign in above.</p>
   </section>`);
   if(!smsAvailable)return;
   let captchaToken='',captchaControl=null;
@@ -3027,22 +3021,9 @@ function renderWorkspaceAccessUnavailable(){
 }
 
 /* ---------- auth ---------- */
-function renderEntryChoice(){
-  destroyMountedTurnstiles();
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card entry-choice-card" aria-labelledby="entryChoiceTitle">
-    <div class="logo">${brandWordmark()}</div>
-    <h1 id="entryChoiceTitle" style="font-size:clamp(1.8rem,5vw,2.5rem);margin-top:18px">How are you using ${esc(BRAND.productName)}?</h1>
-    <p class="muted" style="margin-top:7px;line-height:1.55">Choose your destination. Business and customer accounts stay separate, and you can switch later if your account has both.</p>
-    <div class="entry-choice-grid">
-      <a class="entry-choice" href="#/business"><span class="entry-choice-icon">${CUI.icon('branch',{size:25})}</span><div><h2>Business</h2><p class="muted">Run your workspace, customers, bookings, sales, and programmes.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Business sign in ${CUI.icon('forward',{size:17})}</span></a>
-      <a class="entry-choice" href="#/customer"><span class="entry-choice-icon">${CUI.icon('customers',{size:25})}</span><div><h2>Customer</h2><p class="muted">See your programmes, rewards, value, visits, bookings, and messages.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Customer sign in ${CUI.icon('forward',{size:17})}</span></a>
-    </div>${legalLinks()}</section></main>`;
-  CUI.focusRoute($('main'),{enhanceContent:true});
-}
-
-function renderPersonaChoice(personas){
+function renderPersonaChoice(personas,{includeCustomer=true}={}){
   const staff=sortStaffWorkspaces(personas?.staff);
-  const hasCustomer=(personas?.customer||[]).length>0||personas?.registered_customer_profile===true;
+  const hasCustomer=includeCustomer&&((personas?.customer||[]).length>0||personas?.registered_customer_profile===true);
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card entry-choice-card" aria-labelledby="personaChoiceTitle">
     <div class="logo">${brandWordmark()}</div>
     <h1 id="personaChoiceTitle" style="font-size:clamp(1.8rem,5vw,2.5rem);margin-top:18px">Where would you like to go?</h1>
@@ -3057,7 +3038,7 @@ function renderPersonaChoice(personas){
   $('personaChoiceSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
 
-function renderAuth(mode='in'){
+function renderAuth(mode='in',{admin=false}={}){
   destroyMountedTurnstiles();
   if(mode==='forgot'){
     root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
@@ -3075,7 +3056,7 @@ function renderAuth(mode='in'){
       retry:'authTurnstileRetry',action:'frenly_auth',
       onToken:(token)=>{authToken=token;$('resetRequest').disabled=!token}})
       .then(control=>authControl=control);
-    $('backSignIn').onclick=()=>renderAuth('in');
+    $('backSignIn').onclick=()=>renderAuth('in',{admin});
     $('resetRequest').onclick=async()=>{
       const email=$('em').value.trim();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
@@ -3094,18 +3075,17 @@ function renderAuth(mode='in'){
   }
   root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    <nav class="entry-path-switch" aria-label="Account type"><a href="#/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="#/customer" id="customerAuth">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>
-    <p class="muted" style="margin-bottom:8px">Loyalty & retention for every business — real rewards, not vanity points.</p>
-    <h2 style="margin:14px 0 2px">${mode==='in'?'Sign in':'Create your account'}</h2>
+    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
+    <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Nestly administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
+    <h2 style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h2>
     <label for="em">Email</label><input id="em" type="email" placeholder="you@business.com">
     <label for="pw">Password</label><input id="pw" type="password" placeholder="••••••••">
     <div id="autherr"></div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
     ${authChallengeHtml()}
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="go" disabled>${mode==='in'?'Sign in':'Sign up'}</button>
-      <span class="spacer"></span>
-      <button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>
+      <button class="btn" id="go" disabled>${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
+      ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
     </div>
     ${legalLinks()}</div></div>`;
   let authToken='',authControl=null;
@@ -3113,9 +3093,8 @@ function renderAuth(mode='in'){
     retry:'authTurnstileRetry',action:'frenly_auth',
     onToken:(token)=>{authToken=token;$('go').disabled=!token}})
     .then(control=>authControl=control);
-  $('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
-  $('customerAuth').onclick=()=>nav('#/customer');
-  if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot');
+  if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
+  if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
   $('go').onclick=async()=>{
     const email=$('em').value.trim(),password=$('pw').value;
     if(!authToken) return;
@@ -3165,7 +3144,7 @@ function renderPasswordUpdate(){
     if(error){$('autherr').innerHTML='<div class="err">This reset link is invalid or expired. Request a new one.</div>';$('savePw').disabled=false;return}
     await sb.auth.signOut();passwordRecoveryActive=false;resetClientSessionState();
     history.replaceState(null,'',location.pathname+'#/');
-    renderAuth('in');
+    renderAuth('in',{admin:entryRouteForLocation().startsWith('#/platform')});
     $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Password updated. Sign in with your new password.</div>';
   };
 }
@@ -9142,9 +9121,9 @@ async function appointmentsPage(){
     {data:branches,error:branchError},{data:staffBranches,error:staffBranchError},
     {data:serviceBranches,error:serviceBranchError}
   ]=await Promise.all([
-    sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
+    sb.from('clients').select('id,full_name,phone,phone_norm,email').eq('business_id',S.biz.id).order('full_name'),
     sb.from('services').select('id,name,price_cents,duration_min').eq('business_id',S.biz.id).eq('active',true).order('name'),
-    sb.from('staff').select('id,full_name,user_id,calendar_color').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
+    sb.from('staff').select('id,full_name,user_id,calendar_color,phone,email').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
     sb.from('branches').select('id,name,is_default,timezone').eq('business_id',S.biz.id).eq('active',true).order('name'),
     sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id),
     sb.from('service_branches').select('service_id,branch_id').eq('business_id',S.biz.id)
@@ -9152,8 +9131,29 @@ async function appointmentsPage(){
   if(!isCurrent())return;
   const loadError=clientError||serviceError||staffError||branchError||staffBranchError||serviceBranchError;
   if(loadError)throw loadError;
-  const staff=stf||[];
-  const staffName=Object.fromEntries(staff.map(s=>[s.id,s.full_name||'Staff']));
+  const clients=cl||[],staff=stf||[];
+  const customerPhone=client=>String(client?.phone||client?.phone_norm||'').trim();
+  const customerLabel=client=>{
+    const name=String(client?.full_name||'Customer').trim()||'Customer',phone=customerPhone(client),email=String(client?.email||'').trim();
+    return `${name} · ${phone||email||'no phone'}`;
+  };
+  const customerMatches=(client,query)=>{
+    const needle=String(query||'').trim().toLocaleLowerCase(),digits=needle.replace(/\D/g,'');
+    if(!needle)return true;
+    const text=[client?.full_name,client?.phone,client?.phone_norm,client?.email].filter(Boolean).join(' ').toLocaleLowerCase();
+    return text.includes(needle)||(digits.length>=3&&customerPhone(client).replace(/\D/g,'').includes(digits));
+  };
+  const staffNameCounts=staff.reduce((counts,person)=>{
+    const key=String(person.full_name||'Staff').trim().toLocaleLowerCase();
+    counts[key]=(counts[key]||0)+1;return counts;
+  },{});
+  const staffLabel=person=>{
+    const name=String(person?.full_name||'Staff').trim()||'Staff',key=name.toLocaleLowerCase();
+    if((staffNameCounts[key]||0)<2)return name;
+    const contact=String(person?.phone||person?.email||'').trim();
+    return `${name} · ${contact||`staff ${String(person?.id||'').slice(-4)}`}`;
+  };
+  const staffName=Object.fromEntries(staff.map(s=>[s.id,staffLabel(s)]));
   const staffColor=Object.fromEntries(staff.map(s=>[s.id,s.calendar_color||'#7C9CBF']));
   const myStaff=staff.find(s=>s.user_id===S.user.id);
   const canSeeAll=S.myRole==='owner'||S.myRole==='manager';
@@ -9177,13 +9177,15 @@ async function appointmentsPage(){
     return !configured||(serviceBranches||[]).some(x=>x.service_id===service.id&&x.branch_id===id);
   });
   const staffOpts=(sel,id)=>`${canSeeAll?`<option value="all" ${sel==='all'?'selected':''}>Everyone</option>`:''}`+
-    branchStaff(id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(s.full_name||'Staff')}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
+    branchStaff(id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(staffLabel(s))}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
   routeMain.innerHTML=`${CUI.pageHeader({title:'Appointments',subtitle:`See everyone at once, prevent clashes, and let ${BRAND.productName} share new jobs fairly.`,iconName:'appointments',canWrite,moduleLabel:'Appointment scheduling'})}
     ${!visibleBranches.length?CUI.card({title:'No available branch',description:'Assign this staff account to an active branch before using the calendar.'}):`
     <div class="appointment-layout">
       ${canWrite?`<section class="card appointment-form-card" aria-labelledby="newAppointmentTitle"><h2 id="newAppointmentTitle" style="font-size:17px">Add appointment</h2>
         <label for="apBranch">Branch</label><select id="apBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select>
-        <label for="ac">Customer</label><select id="ac">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">Add a customer first</option>'}</select>
+        <label for="appointmentCustomerSearch">Customer</label><input id="appointmentCustomerSearch" type="search" inputmode="search" autocomplete="off" placeholder="Search name or phone" aria-controls="ac" aria-describedby="appointmentCustomerHelp">
+        <select id="ac" aria-label="Matching customer" aria-describedby="appointmentCustomerHelp"></select>
+        <p class="muted small" id="appointmentCustomerHelp" aria-live="polite" style="margin-top:6px">Names may repeat — use the phone number to confirm the right customer.</p>
         <label for="as">Service</label><select id="as"></select>
         <div id="generalDuration" hidden><label for="apDuration">Duration (minutes)</label><input id="apDuration" type="number" min="15" max="720" step="15" value="60"></div>
         <label for="astf">Assign to</label><select id="astf"></select>
@@ -9205,11 +9207,21 @@ async function appointmentsPage(){
       </section>
     </div>`}`;
   if(!visibleBranches.length)return;
+  function renderCustomerOptions(query='',selectedId=''){
+    if(!canWrite||!$('ac'))return;
+    const matches=clients.filter(client=>customerMatches(client,query));
+    $('ac').innerHTML=`<option value="">${clients.length?'Choose a customer':'Add a customer first'}</option>${matches.map(client=>`<option value="${client.id}">${esc(customerLabel(client))}</option>`).join('')}`;
+    $('ac').value=matches.some(client=>client.id===selectedId)?selectedId:'';
+    const help=$('appointmentCustomerHelp');
+    if(help)help.textContent=query
+      ?`${matches.length} matching customer${matches.length===1?'':'s'}. Names may repeat — confirm the phone number.`
+      :'Names may repeat — use the phone number to confirm the right customer.';
+  }
   function syncFormOptions(){
     if(!canWrite)return;
     const services=branchServices(branchId),people=branchStaff(branchId);
     $('as').innerHTML=`<option value="">General visit</option>${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}">${esc(s.name)} · ${s.duration_min} min</option>`).join('')}`;
-    $('astf').innerHTML=`<option value="auto">Best available · fair rotation</option>${people.map(s=>`<option value="${s.id}">${esc(s.full_name||'Staff')}</option>`).join('')}`;
+    $('astf').innerHTML=`<option value="auto">Best available · fair rotation</option>${people.map(s=>`<option value="${s.id}">${esc(staffLabel(s))}</option>`).join('')}`;
     $('generalDuration').hidden=$('as').value!=='';
   }
   const selectedDuration=()=>Number($('as')?.selectedOptions?.[0]?.dataset?.duration||$('apDuration')?.value||60);
@@ -9231,10 +9243,10 @@ async function appointmentsPage(){
     host.innerHTML=`<div class="schedule-suggestion">
       <h3>${conflict||!selectedFree?'That person is not free':'Availability checked'}</h3>
       <p class="muted small" style="margin-top:5px">${available.length
-        ?`${esc(recommended.staff_name)} is the fairest available choice now. Showing ${available.length} eligible staff member${available.length===1?'':'s'}.`
+        ?`${esc(staffName[recommended.staff_id]||recommended.staff_name)} is the fairest available choice now. Showing ${available.length} eligible staff member${available.length===1?'':'s'}.`
         :'No eligible staff member is free at this time.'}</p>
-      ${available.length?`<div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm suggestionStaff" data-staff="${person.staff_id}">${CUI.icon('staff',{size:16})} ${esc(person.staff_name)} · ${person.recent_appointments} recent</button>`).join('')}</div>`:''}
-      ${next.length?`<p class="muted small" style="margin-top:11px">Next best times today</p><div class="schedule-suggestion-actions">${next.map(slot=>`<button type="button" class="btn ghost sm suggestionTime" data-start="${esc(slot.starts_at)}" data-staff="${slot.staff_id}">${esc(sgt(slot.starts_at))} · ${esc(slot.staff_name)}</button>`).join('')}</div>`:''}
+      ${available.length?`<div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm suggestionStaff" data-staff="${person.staff_id}">${CUI.icon('staff',{size:16})} ${esc(staffName[person.staff_id]||person.staff_name)} · ${person.recent_appointments} recent</button>`).join('')}</div>`:''}
+      ${next.length?`<p class="muted small" style="margin-top:11px">Next best times today</p><div class="schedule-suggestion-actions">${next.map(slot=>`<button type="button" class="btn ghost sm suggestionTime" data-start="${esc(slot.starts_at)}" data-staff="${slot.staff_id}">${esc(sgt(slot.starts_at))} · ${esc(staffName[slot.staff_id]||slot.staff_name)}</button>`).join('')}</div>`:''}
     </div>`;
     host.querySelectorAll('.suggestionStaff').forEach(button=>button.onclick=()=>{
       invalidateFormRequests();$('astf').value=button.dataset.staff;
@@ -9261,6 +9273,7 @@ async function appointmentsPage(){
     renderSuggestions(data||{});return data;
   }
   if(canWrite){
+    renderCustomerOptions();
     syncFormOptions();
     /* Customer 360 deep-link: a customer handed in via pendingApptClientId (captured above as
        apptPrefillClient) pre-selects that customer in the existing #ac dropdown — same select,
@@ -9272,6 +9285,11 @@ async function appointmentsPage(){
         clientSelect.closest('.appointment-form-card')?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
       }
     }
+    $('appointmentCustomerSearch').oninput=()=>{
+      const selected=$('ac').value;
+      renderCustomerOptions($('appointmentCustomerSearch').value,selected);
+      invalidateFormRequests({clearSuggestions:false,availability:false});
+    };
     $('as').onchange=()=>{$('generalDuration').hidden=$('as').value!=='';invalidateFormRequests()};
     ['ad','at','astf','apDuration'].forEach(id=>$(id).onchange=()=>invalidateFormRequests());
     $('ac').onchange=()=>invalidateFormRequests({clearSuggestions:false,availability:false});
@@ -9336,8 +9354,8 @@ async function appointmentsPage(){
   function renderRescheduleSuggestions(host,payload){
     const available=payload?.available_staff||[],next=payload?.next_best_slots||[];
     host.innerHTML=`<div class="schedule-suggestion"><h3>That time is not available</h3><p class="muted small" style="margin-top:5px">Choose another available staff member or one of the next times below. The appointment has not changed.</p>
-      ${available.length?`<p class="muted small" style="margin-top:11px">Available at your requested time</p><div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm rescheduleStaffSuggestion" data-staff="${person.staff_id}">${esc(person.staff_name)}</button>`).join('')}</div>`:''}
-      ${next.length?`<p class="muted small" style="margin-top:11px">Next best times today</p><div class="schedule-suggestion-actions">${next.map(slot=>`<button type="button" class="btn ghost sm rescheduleTimeSuggestion" data-start="${esc(slot.starts_at)}" data-staff="${slot.staff_id}">${esc(appointmentTimeRange(slot))} · ${esc(slot.staff_name)}</button>`).join('')}</div>`:''}</div>`;
+      ${available.length?`<p class="muted small" style="margin-top:11px">Available at your requested time</p><div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm rescheduleStaffSuggestion" data-staff="${person.staff_id}">${esc(staffName[person.staff_id]||person.staff_name)}</button>`).join('')}</div>`:''}
+      ${next.length?`<p class="muted small" style="margin-top:11px">Next best times today</p><div class="schedule-suggestion-actions">${next.map(slot=>`<button type="button" class="btn ghost sm rescheduleTimeSuggestion" data-start="${esc(slot.starts_at)}" data-staff="${slot.staff_id}">${esc(appointmentTimeRange(slot))} · ${esc(staffName[slot.staff_id]||slot.staff_name)}</button>`).join('')}</div>`:''}</div>`;
     host.querySelectorAll('.rescheduleStaffSuggestion').forEach(button=>button.onclick=()=>{
       $('appointmentEditStaff').value=button.dataset.staff;rescheduleAttempt=null;host.innerHTML='';$('appointmentEditStaff').focus();
     });
@@ -9346,7 +9364,7 @@ async function appointmentsPage(){
       $('appointmentEditStaff').value=button.dataset.staff;rescheduleAttempt=null;host.innerHTML='';$('appointmentEditTime').focus();
     });
   }
-  async function openAppointmentDetails(summary){
+  async function openAppointmentDetails(summary,{startEditing=false}={}){
     closeAppointmentDetails();
     const loading=document.createElement('div');loading.className='modal appointment-detail-modal';loading.setAttribute('role','dialog');loading.setAttribute('aria-modal','true');loading.setAttribute('aria-labelledby','appointmentDetailLoadingTitle');loading.tabIndex=-1;
     loading.innerHTML=`<div class="modal-card"><div class="row"><div><h2 id="appointmentDetailLoadingTitle">Appointment details</h2><p class="muted small" style="margin-top:4px">Loading customer and service information…</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentLoadingClose" aria-label="Close appointment details">Close</button></div><div class="empty" role="status" style="margin-top:18px">Loading…</div></div>`;
@@ -9364,15 +9382,15 @@ async function appointmentsPage(){
     if(!stillCurrent()||!loading.isConnected){removeLoading({restoreFocus:false});return}
     if(error||!data){
       loading.querySelector('.modal-card').innerHTML=`<div class="row"><div><h2 id="appointmentDetailLoadingTitle">Unable to load details</h2><p class="muted small" style="margin-top:4px">The appointment may no longer be available in your branch scope.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentLoadingClose" aria-label="Close appointment details">Close</button></div><div class="err" role="alert" style="margin-top:18px">Appointment details could not be loaded. Try again.</div><button type="button" class="btn" id="appointmentDetailRetry" style="margin-top:14px">Try again</button>`;
-      $('appointmentLoadingClose').onclick=close;$('appointmentDetailRetry').onclick=()=>openAppointmentDetails(summary);
+      $('appointmentLoadingClose').onclick=close;$('appointmentDetailRetry').onclick=()=>openAppointmentDetails(summary,{startEditing});
       requestAnimationFrame(()=>$('appointmentDetailRetry')?.focus());return;
     }
-    removeLoading();renderAppointmentDetails(data);
+    removeLoading();renderAppointmentDetails(data,{startEditing});
   }
-  function renderAppointmentDetails(item){
+  function renderAppointmentDetails(item,{startEditing=false}={}){
     closeAppointmentDetails();statusGate.invalidate();
     const outcomeIsDue=appointmentOutcomeIsDue(item),duration=appointmentDuration(item),callNumber=safeCallNumber(item);
-    const futureBooked=item.status==='booked'&&!outcomeIsDue&&canWrite;
+    const amendableBooked=item.status==='booked'&&canWrite;
     const local=sgInput(item.starts_at),service=item.services||{},client=item.clients||{};
     const bookedPriceCents=resolveBookedPriceCents(item.total_cents,service.price_cents);
     const dialog=document.createElement('div');dialog.className='modal appointment-detail-modal';dialog.id='appointmentDetailDialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','appointmentDetailTitle');dialog.tabIndex=-1;
@@ -9380,20 +9398,21 @@ async function appointmentsPage(){
       <div class="appointment-detail-grid"><section aria-labelledby="appointmentServiceTitle"><h3 id="appointmentServiceTitle">Service</h3><dl class="appointment-detail-list"><div><dt>Service</dt><dd>${esc(service.name||'General visit')}</dd></div><div><dt>Duration</dt><dd>${duration} minutes</dd></div><div><dt>Booked price</dt><dd>${bookedPriceCents===null?'Not available':esc(money(bookedPriceCents))}</dd></div><div><dt>Appointment note</dt><dd>${esc(item.note||'None')}</dd></div></dl></section>
       <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p>${esc(client.notes||'None')}</p></div></section></div>
       <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd>${esc(visibleBranches.find(b=>b.id===item.branch_id)?.name||'Branch')}</dd></div><div><dt>Staff</dt><dd>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
-      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">Call customer</a>`:''}${futureBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Change appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
-      ${futureBooked?`<p class="muted small" style="margin-top:12px">Complete and No-show become available after the appointment starts.</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Change date, time or staff</h3><p class="muted small" style="margin-top:4px">${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(person.full_name||'Staff')}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm change</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
+      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">Call customer</a>`:''}${amendableBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Amend appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
     const close=()=>closeAppointmentDetails();
     closeAppointmentDialog=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#appointmentDialogClose'});
     $('appointmentDialogClose').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
     dialog.querySelectorAll('.statusAction').forEach(action=>action.onclick=async()=>{if(await setStatus(item.id,action.dataset.status))close()});
-    if(!futureBooked)return;
+    if(!amendableBooked)return;
     const editForm=$('appointmentRescheduleForm'),toggle=$('appointmentEditToggle'),feedback=$('appointmentRescheduleFeedback');
     const setReschedulePending=pending=>{
       editForm.setAttribute('aria-busy',String(pending));
       [...editForm.elements].forEach(control=>{control.disabled=pending});
     };
     toggle.onclick=()=>{const open=editForm.hidden;editForm.hidden=!open;toggle.setAttribute('aria-expanded',String(open));if(open)$('appointmentEditDate').focus()};
+    if(startEditing){editForm.hidden=false;toggle.setAttribute('aria-expanded','true');requestAnimationFrame(()=>$('appointmentEditDate')?.focus())}
     $('appointmentRescheduleCancel').onclick=()=>{editForm.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus()};
     const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
     ['appointmentEditDate','appointmentEditTime','appointmentEditDuration','appointmentEditStaff','appointmentEditNote'].forEach(id=>{
@@ -9425,6 +9444,10 @@ async function appointmentsPage(){
       const item=calendarItems.find(a=>a.id===button.dataset.appointment);if(!item)return;
       openAppointmentDetails(item);
     });
+    routeMain.querySelectorAll('[data-appointment-amend]').forEach(button=>button.onclick=()=>{
+      const item=calendarItems.find(a=>a.id===button.dataset.appointmentAmend);if(!item)return;
+      openAppointmentDetails(item,{startEditing:true});
+    });
     routeMain.querySelectorAll('.statusAction[data-id]').forEach(button=>button.onclick=()=>setStatus(button.dataset.id,button.dataset.status));
   }
   async function setStatus(id,status){
@@ -9454,7 +9477,7 @@ async function appointmentsPage(){
       .eq('business_id',S.biz.id).eq('branch_id',branchId).order('starts_at',{ascending:false}).limit(100));
     if(!stillCurrent())return;if(error)throw error;calendarItems=data||[];
     $('alist').innerHTML=calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Action</th></tr></thead><tbody>
-      ${calendarItems.map(a=>`<tr><td data-label="When">${esc(sgt(a.starts_at)?.slice(0,10))}<br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} min</span></td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff">${esc(staffName[a.staff_id]||'—')}</td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Action"><button type="button" class="btn ghost sm" data-appointment="${a.id}" aria-label="View details for ${esc(a.clients?.full_name||'appointment')}">Details</button>${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete</button>`:''}</td></tr>`).join('')}</tbody></table></div>`
+      ${calendarItems.map(a=>`<tr><td data-label="When">${esc(sgt(a.starts_at)?.slice(0,10))}<br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} min</span></td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff">${esc(staffName[a.staff_id]||'—')}</td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Action"><button type="button" class="btn ghost sm" data-appointment="${a.id}" aria-label="View details for ${esc(a.clients?.full_name||'appointment')}">Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" aria-label="Amend appointment for ${esc(a.clients?.full_name||'customer')}">Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete</button>`:''}</td></tr>`).join('')}</tbody></table></div>`
       :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`;
     wireAppointmentActions();
   }
@@ -9490,7 +9513,7 @@ async function appointmentsPage(){
     const bodyHeight=(endHour-startHour)*hourHeight;
     const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const dayEvents=days.map(day=>layoutCalendarDay(calendarItems.filter(a=>eventParts(a.starts_at).date===day)));
-    const agenda=calendarItems.map(a=>`<button type="button" class="calendar-agenda-item" data-appointment="${a.id}" style="width:100%;background:transparent;text-align:left" aria-label="View ${esc(a.services?.name||'appointment')} for ${esc(a.clients?.full_name||'customer')}, ${esc(calendarDayLabel(a.starts_at))}, ${esc(appointmentTimeRange(a))}, ${appointmentDuration(a)} minutes"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(a.starts_at))}</b><br><span>${esc(appointmentTimeRange(a))}</span><br><span class="muted small">${appointmentDuration(a)} min</span></span><span><b>${esc(a.clients?.full_name||'—')}</b><br><span class="muted small">${esc(a.services?.name||'General visit')} · ${esc(staffName[a.staff_id]||'Unassigned')}</span></span></button>`).join('');
+    const agenda=calendarItems.map(a=>`<div class="calendar-agenda-row"><button type="button" class="calendar-agenda-item" data-appointment="${a.id}" style="width:100%;background:transparent;text-align:left" aria-label="View ${esc(a.services?.name||'appointment')} for ${esc(a.clients?.full_name||'customer')}, ${esc(calendarDayLabel(a.starts_at))}, ${esc(appointmentTimeRange(a))}, ${appointmentDuration(a)} minutes"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(a.starts_at))}</b><br><span>${esc(appointmentTimeRange(a))}</span><br><span class="muted small">${appointmentDuration(a)} min</span></span><span><b>${esc(a.clients?.full_name||'—')}</b><br><span class="muted small">${esc(a.services?.name||'General visit')} · ${esc(staffName[a.staff_id]||'Unassigned')}</span></span></button>${a.status==='booked'&&canWrite?`<button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" aria-label="Amend appointment for ${esc(a.clients?.full_name||'customer')}">Amend</button>`:''}</div>`).join('');
     $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · Singapore time</p>
       <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div aria-hidden="true"></div>${days.map((day,i)=>`<div class="${day===todaySg?'is-today':''}" ${day===todaySg?'aria-current="date"':''}><span>${dayNames[i]}</span><br><span class="calendar-date">${Number(day.slice(8))}</span></div>`).join('')}</div>
       <div class="calendar-week-body" style="height:${bodyHeight}px"><div class="calendar-time-axis" style="height:${bodyHeight}px">${[...Array(endHour-startHour+1)].map((_,i)=>`<span class="calendar-time-label" style="top:${i*hourHeight}px">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>

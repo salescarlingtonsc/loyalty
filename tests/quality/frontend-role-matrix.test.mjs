@@ -122,7 +122,7 @@ test('multi-workspace choices are stable, complete, and never pick staff zero',(
     {business_name:'Alpha',business_slug:'alpha'}
   ]);
   assert.equal(JSON.stringify(sorted.map(item=>item.business_slug)),JSON.stringify(['alpha','beta','zulu']));
-  const persona=section('function renderPersonaChoice(personas){','function renderAuth(');
+  const persona=section('function renderPersonaChoice(personas,{includeCustomer=true}={})','function renderAuth(');
   const customerSwitch=section('function customerWorkspaceSwitchHtml(','function renderNoCustomerDestination(');
   assert.match(persona,/staff\.map\(workspace=>/);
   assert.doesNotMatch(persona,/staff\[0\]/);
