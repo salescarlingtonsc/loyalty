@@ -127,6 +127,20 @@ test('partially customized admins keep enterprise onboarding, firms and reports 
   assert.match(source,/if\(context\.canWrite\)return;[\s\S]*stripPlatformWriteControls\(context\.root\)/);
 });
 
+test('owner-only onboarding decisions are hidden from delegated admins',async()=>{
+  const api=await loadConsole();
+  assert.equal(api.superAdminOnly(false,'owner control'),'');
+  assert.equal(api.superAdminOnly(true,'owner control'),'owner control');
+  const source=await read('app/platform-console.js');
+  assert.match(source,/context\.access\?\.role==='super_admin'/);
+  assert.match(source,/function onboardingPanelHtml\(payload,error,CUI,isSuperAdmin=false\)/);
+  assert.match(source,/superAdminOnly\(isSuperAdmin,checklist\.blocked_at[\s\S]*data-onboarding-unblock[\s\S]*data-onboarding-block/);
+  assert.match(source,/superAdminOnly\(isSuperAdmin,`<button type="button" class="btn sm" data-onboarding-activate/);
+  assert.match(source,/superAdminOnly\(isSuperAdmin&&canWaive,`<button type="button" class="btn ghost sm" data-onboarding-waive/);
+  assert.match(source,/superAdminOnly\(isSuperAdmin,item\.status==='blocked'[\s\S]*data-onboarding-item-unblock[\s\S]*data-onboarding-item-block/);
+  assert.match(source,/Final waivers, blocking decisions, and firm activation are completed by a super admin/);
+});
+
 test('super-admin grant editor resolves a named/email user and never asks for a pasted auth UUID',async()=>{
   const source=await read('app/platform-console.js');
   const editor=source.slice(source.indexOf('function accessGrantModal'),source.indexOf('async function renderPlatformAccess'));

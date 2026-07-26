@@ -777,6 +777,12 @@
       "path": "db/migrations/20260727_nestly_v89_customer_qr_redemption_platform_access.sql",
       "semanticVersion": "v89",
       "proposedDeployVersion": "20260722000207"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260727_nestly_v90_production_readiness.sql",
+      "semanticVersion": "v90",
+      "proposedDeployVersion": "20260722000208"
     }
   ]
 }

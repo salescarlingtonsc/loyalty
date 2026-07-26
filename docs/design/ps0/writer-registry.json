@@ -2275,8 +2275,12 @@
       "reason": "browser RPC 'sv_cutover_business' is the v69 controlled-cutover call site on the owner-only Stored value screen, binding to public.sv_cutover_business(uuid,text,text,uuid), which is curated as a writer in its own right (db.fn:public.sv_cutover_business/4). The call site itself performs no DML and computes nothing: it forwards the business id, a typed reason, the evidence hash preview_sv_cutover returned verbatim, and a fresh crypto.randomUUID() idempotency key. The button is enabled only when the SERVER reports ready, and it is additionally gated behind a modal that requires the owner to type the business slug exactly - so the one irreversible action in the app cannot be triggered by a stray click. Allowlisted because the call site resolves to an already-curated writer that moves no value itself (its effect is authority, not a ledger row)."
     },
     {
-      "id": "browser.rpc:app/index.html:business_create_customer_join_qr_v89",
-      "reason": "browser RPC 'business_create_customer_join_qr_v89' issues an owner/super-admin scoped opaque enrolment token, stores only its hash and expiry in business_customer_join_qr_v89, and appends audit evidence. It creates no customer relationship and writes no sale, payment, points, reward, credit, stored-value, or other economic row."
+      "id": "browser.rpc:app/index.html:business_revoke_customer_join_qrs_v90",
+      "reason": "browser RPC 'business_revoke_customer_join_qrs_v90' is an owner/super-admin scoped safety control that revokes active opaque enrolment tokens and appends audit evidence. It creates no customer relationship and writes no sale, payment, points, reward, credit, stored-value, or other economic row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_rotate_customer_join_qr_v90",
+      "reason": "browser RPC 'business_rotate_customer_join_qr_v90' atomically revokes prior enrolment tokens, issues one owner/super-admin scoped opaque replacement, stores only token hashes and expiry, and appends audit evidence. It creates no customer relationship and writes no sale, payment, points, reward, credit, stored-value, or other economic row."
     },
     {
       "id": "browser.rpc:app/index.html:business_get_customer_capabilities_v89",

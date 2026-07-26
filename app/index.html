@@ -759,7 +759,7 @@ input[type=range]:focus{box-shadow:none}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
 <script>
 /* ============ Nestly app (legacy runtime/API identifiers remain compatible) ============ */
 const RUNTIME_CONFIG=(()=>{try{return window.FrenlyRuntimeConfig.require(window)}catch{
@@ -2052,7 +2052,8 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
       <label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" ${whatsappAvailable?'':'disabled'} style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp ${whatsappAvailable?'':'— coming soon'}</span></label>
     </fieldset>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
-    ${smsAvailable?`<div style="margin-top:14px">${authChallengeHtml()}</div>`:`<p class="err" role="status" style="margin-top:16px">Mobile sign-up is not available right now. Please try again later.</p>`}
+    <div style="margin-top:14px">${authChallengeHtml()}</div>
+    ${smsAvailable?'':`<p class="err" role="status" style="margin-top:16px">Mobile sign-up is not available right now. You can still use a registered passkey.</p>`}
     <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Send verification code</span></button>
     <div class="row" style="margin:18px 0 0" aria-hidden="true"><span style="height:1px;background:var(--line);flex:1"></span><span class="muted small">or</span><span style="height:1px;background:var(--line);flex:1"></span></div>
     <button class="btn ghost" id="customerPasskeySignIn" type="button" style="width:100%;margin-top:12px">${CUI.icon('scan',{size:18})}<span>Use Face ID, Touch ID or passkey</span></button>
@@ -2060,32 +2061,40 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
   </section>`);
   const passkeyButton=$('customerPasskeySignIn'),passkeyStatus=$('customerPasskeyStatus');
   const passkeySupported=isSecureContext&&'PublicKeyCredential' in globalThis&&typeof sb.auth.signInWithPasskey==='function';
-  passkeyButton.disabled=!passkeySupported;
+  let captchaToken='',captchaControl=null;
+  passkeyButton.disabled=true;
   if(!passkeySupported)passkeyStatus.textContent='Passkeys are not supported in this browser. Use your mobile verification code.';
   passkeyButton.onclick=async()=>{
+    if(!passkeySupported||!captchaToken){
+      passkeyStatus.textContent='Complete the security check before using your passkey.';return;
+    }
+    const passkeyCaptchaToken=captchaToken;
+    captchaToken='';
     passkeyButton.disabled=true;passkeyStatus.textContent='Waiting for your device…';
-    const {data,error}=await sb.auth.signInWithPasskey();
+    const send=$('customerOtpSend');if(send)send.disabled=true;
+    const {data,error}=await sb.auth.signInWithPasskey({options:{captchaToken:passkeyCaptchaToken}});
     if(!isRouteCurrent()||!passkeyButton.isConnected)return;
+    captchaControl?.reset();
     if(error||!data?.user){
-      passkeyButton.disabled=false;
       passkeyStatus.textContent=error?.code==='passkey_disabled'
         ?'Face ID and Touch ID need to be enabled for this Nestly environment first.'
-        :'Passkey sign-in was not completed. Try again or use your mobile code.';
+        :'Passkey sign-in was not completed. Complete the security check again, or use your mobile code.';
       return;
     }
     S.user=data.user;passkeyStatus.textContent='Signed in.';renderCustomerRegistration(isRouteCurrent);
   };
-  if(!smsAvailable)return;
-  let captchaToken='',captchaControl=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
     onToken:(token)=>{
       const send=$('customerOtpSend');
-      if(!isRouteCurrent()||!send?.isConnected)return;
-      captchaToken=token;send.disabled=!token;
+      if(!isRouteCurrent()||!passkeyButton?.isConnected)return;
+      captchaToken=token;
+      passkeyButton.disabled=!passkeySupported||!token;
+      if(send?.isConnected)send.disabled=!smsAvailable||!token;
     }}).then(control=>{
-      if(!isRouteCurrent()||!$('customerOtpSend')?.isConnected){control?.destroy();return}
+      if(!isRouteCurrent()||!passkeyButton?.isConnected){control?.destroy();return}
       captchaControl=control;
     });
+  if(!smsAvailable)return;
   const send=$('customerOtpSend'),phoneInput=$('customerPhone'),otpError=$('customerOtpError');
   send.onclick=async()=>{
     const phone=normalizeSingaporeCustomerPhone(phoneInput.value);
@@ -11538,14 +11547,15 @@ async function loadSignupConfig(){
     <p class="small portal-link-row" id="joinQrLink" style="margin-top:12px"></p>
     <div class="row" style="margin-top:10px"><button class="btn sm" id="createJoinQr">${CUI.icon('scan',{size:17})}<span>Generate join QR</span></button>
     <button class="btn ghost sm" id="cpJoin" disabled>Copy link</button>
-    <button class="btn ghost sm" id="dlQr" disabled>Download QR</button></div>
+    <button class="btn ghost sm" id="dlQr" disabled>Download QR</button>
+    <button class="btn danger sm" id="revokeJoinQr">Revoke all QRs</button></div>
     <p class="muted small" id="joinQrStatus" role="status" aria-live="polite" style="margin-top:8px">The raw join token is shown only in this browser session. Download the QR before leaving this page.</p>
     <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
       <input type="checkbox" id="joinEnabled" style="width:auto" ${S.biz.join_enabled!==false?'checked':''}> Accept new sign-ups</label>`;
   let url='';
   $('createJoinQr').onclick=async()=>{
     const button=$('createJoinQr');button.disabled=true;$('joinQrStatus').textContent='Creating a business-bound QR…';
-    const {data,error}=await sb.rpc('business_create_customer_join_qr_v89',{p_business:S.biz.id});
+    const {data,error}=await sb.rpc('business_rotate_customer_join_qr_v90',{p_business:S.biz.id});
     if(!button.isConnected)return;
     button.disabled=false;
     if(error||!data?.join_token){
@@ -11557,7 +11567,8 @@ async function loadSignupConfig(){
     const qrEl=$('joinQr');qrEl.innerHTML='';new QRCode(qrEl,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
     $('joinQrLink').innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a>`;
     $('cpJoin').disabled=false;$('dlQr').disabled=false;
-    $('joinQrStatus').textContent=`QR ready${data.expires_at?` · expires ${sgt(data.expires_at)}`:''}. Download it before leaving this page.`;
+    button.querySelector('span').textContent='Replace join QR';
+    $('joinQrStatus').textContent=`QR ready${data.expires_at?` · expires ${sgt(data.expires_at)}`:''}${Number(data.replaced_count)>0?` · ${Number(data.replaced_count)} older QR${Number(data.replaced_count)===1?'':'s'} revoked`:''}. Download it before leaving this page.`;
   };
   $('cpJoin').onclick=()=>{if(!url)return;navigator.clipboard.writeText(url);toast('Sign-up link copied')};
   $('dlQr').onclick=()=>{
@@ -11566,6 +11577,19 @@ async function loadSignupConfig(){
     const a=document.createElement('a');
     a.href=img.tagName==='CANVAS'?img.toDataURL('image/png'):img.src;
     a.download=`${BRAND.downloadPrefix}-signup-qr-${S.biz.slug}.png`;a.click();
+  };
+  $('revokeJoinQr').onclick=async()=>{
+    if(!confirm('Revoke every active customer join QR for this business? Printed and saved copies will stop working.'))return;
+    const button=$('revokeJoinQr');button.disabled=true;
+    $('joinQrStatus').textContent='Revoking active join QRs…';
+    const {data,error}=await sb.rpc('business_revoke_customer_join_qrs_v90',{p_business:S.biz.id});
+    if(!button.isConnected)return;
+    button.disabled=false;
+    if(error){$('joinQrStatus').textContent='Active join QRs could not be revoked. Try again.';return}
+    url='';$('joinQr').innerHTML='<span class="muted small">No active QR in this session</span>';
+    $('joinQrLink').textContent='';$('cpJoin').disabled=true;$('dlQr').disabled=true;
+    $('createJoinQr').querySelector('span').textContent='Generate join QR';
+    $('joinQrStatus').textContent=`${Number(data?.revoked_count||0)} active QR${Number(data?.revoked_count||0)===1?'':'s'} revoked.`;
   };
   $('joinEnabled').onchange=async()=>{
     const to=$('joinEnabled').checked;

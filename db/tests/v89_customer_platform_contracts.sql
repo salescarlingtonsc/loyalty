@@ -836,52 +836,15 @@ begin
     reset role;
   end;
 
-  -- The PG_CONTEXT compatibility dispatcher must preserve independent r/rw/off
-  -- controls for every legacy module family.
-  for v_module,v_probe in
-    select * from (values
-      ('reports','reports'),
-      ('billing','billing'),
-      ('commissions','commissions'),
-      ('sectors','sectors'),
-      ('automation','automation'),
-      ('firms','enterprise'),
-      ('onboarding','onboarding')
-    ) mapping(module_key,probe_key)
-  loop
-    update public.platform_access_grants_v89
-       set module_perms=jsonb_build_object(v_module,'r'),updated_by=v_sa,
-           updated_at=now()
-     where user_id=v_admin;
-    perform pg_temp.as_v89_user(v_admin);
-    execute format('select pg_temp.platform_%s_read_probe()',v_probe)
-      into v_read_allowed;
-    execute format('select pg_temp.platform_%s_update_probe()',v_probe)
-      into v_write_allowed;
-    reset role;
-    if not v_read_allowed or v_write_allowed then
-      raise exception 'PG_CONTEXT r-mode failed for module %: read %, write %',
-        v_module,v_read_allowed,v_write_allowed;
-    end if;
-
-    update public.platform_access_grants_v89
-       set module_perms=jsonb_build_object(v_module,'rw'),updated_by=v_sa,
-           updated_at=now()
-     where user_id=v_admin;
-    perform pg_temp.as_v89_user(v_admin);
-    execute format('select pg_temp.platform_%s_read_probe()',v_probe)
-      into v_read_allowed;
-    execute format('select pg_temp.platform_%s_update_probe()',v_probe)
-      into v_write_allowed;
-    reset role;
-    if not v_read_allowed or not v_write_allowed then
-      raise exception 'PG_CONTEXT rw-mode failed for module %: read %, write %',
-        v_module,v_read_allowed,v_write_allowed;
-    end if;
-
-    update public.platform_access_grants_v89
-       set module_perms='{}'::jsonb,updated_by=v_sa,updated_at=now()
-     where user_id=v_admin;
+  -- v90 replaced the verb heuristic with an exact public-caller allowlist.
+  -- Even a wildcard admin grant cannot make an untrusted pg_temp probe valid.
+  update public.platform_access_grants_v89
+     set module_perms='{"*":"rw"}'::jsonb,updated_by=v_sa,updated_at=now()
+   where user_id=v_admin;
+  foreach v_probe in array array[
+    'reports','billing','commissions','sectors','automation','enterprise',
+    'onboarding'
+  ] loop
     perform pg_temp.as_v89_user(v_admin);
     execute format('select pg_temp.platform_%s_read_probe()',v_probe)
       into v_read_allowed;
@@ -889,8 +852,8 @@ begin
       into v_write_allowed;
     reset role;
     if v_read_allowed or v_write_allowed then
-      raise exception 'PG_CONTEXT off-mode failed for module %: read %, write %',
-        v_module,v_read_allowed,v_write_allowed;
+      raise exception 'untrusted PG_CONTEXT probe was accepted for %: read %, write %',
+        v_probe,v_read_allowed,v_write_allowed;
     end if;
   end loop;
 

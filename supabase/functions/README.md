@@ -15,7 +15,8 @@ migration stream from `supabase/migrations`.
 Required secrets:
 
 - `PUBLIC_GATEWAY_ALLOWED_ORIGINS`: comma-separated exact origins, for example
-  `https://loyalty-pi-seven.vercel.app`.
+  `https://nestly.asia,https://www.nestly.asia`. Keep preview or legacy origins
+  only when they are deliberately supported and included in release smoke tests.
 - `PUBLIC_GATEWAY_IP_PEPPER`: at least 32 random characters. Rotating it resets rate-limit buckets.
 - `PUBLIC_GATEWAY_TOKEN_SECRET`: at least 32 random characters. It deterministically derives a
   256-bit booking management capability from the business slug and submission ID, allowing the

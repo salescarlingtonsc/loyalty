@@ -55,7 +55,7 @@ test('scanned QR outranks wallet destinations after passkey sign-in and is consu
 
   const registration=section(app,'async function renderCustomerRegistration','async function renderCustomerClaim');
   assert.match(registration,/if\(S\.user\)\{[\s\S]{0,180}customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]{0,140}nav\('#\/join'\);return;/);
-  assert.match(registration,/signInWithPasskey\(\)[\s\S]*S\.user=data\.user[\s\S]*renderCustomerRegistration\(isRouteCurrent\)/);
+  assert.match(registration,/signInWithPasskey\(\{options:\{captchaToken:passkeyCaptchaToken\}\}\)[\s\S]*captchaControl\?\.reset\(\)[\s\S]*S\.user=data\.user[\s\S]*renderCustomerRegistration\(isRouteCurrent\)/);
   assert.match(app,/if\(h==='#\/join'\)return renderCustomerQrJoin\(\)/);
   const consume=section(app,'async function renderCustomerQrJoin','async function renderCustomerClaim');
   assert.match(consume,/customer_join_business_from_qr_v89/);
@@ -65,7 +65,9 @@ test('scanned QR outranks wallet destinations after passkey sign-in and is consu
 test('passkey sign-in and complete customer passkey management are capability gated',async()=>{
   const app=await read('app/index.html');
   assert.match(app,/experimental:\{passkey:true\}/);
-  assert.match(app,/sb\.auth\.signInWithPasskey\(\)/);
+  assert.match(app,/sb\.auth\.signInWithPasskey\(\{options:\{captchaToken:passkeyCaptchaToken\}\}\)/);
+  assert.match(app,/if\(!passkeySupported\|\|!captchaToken\)[\s\S]*Complete the security check before using your passkey/);
+  assert.match(app,/captchaToken='';[\s\S]*signInWithPasskey[\s\S]*captchaControl\?\.reset\(\)/);
   assert.match(app,/sb\.auth\.registerPasskey\(\)/);
   assert.match(app,/sb\.auth\.passkey\.list\(\)/);
   assert.match(app,/sb\.auth\.passkey\.update\(\{passkeyId:button\.dataset\.passkeyRename,friendlyName:name\}\)/);

@@ -22,6 +22,7 @@ const oldPublishableKey = 'sb_publishable_hOMgvuulHY0iSs7nmbqt3Q_RD0df_p7';
 const cdnHosts = new Set([
   'cdn.jsdelivr.net',
   'cdnjs.cloudflare.com',
+  'cdn.sheetjs.com',
   'unpkg.com',
   'esm.sh',
   'cdn.skypack.dev'
@@ -44,8 +45,8 @@ const expectedScriptIntegrity = new Map([
     'sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx'
   ],
   [
-    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-    'sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw'
+    'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+    'sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT'
   ]
 ]);
 
@@ -147,6 +148,10 @@ function cdnVersionFor(url) {
   if (url.host === 'cdnjs.cloudflare.com' && url.pathname.startsWith('/ajax/libs/')) {
     const parts = url.pathname.split('/').filter(Boolean);
     return parts[3] || null;
+  }
+
+  if (url.host === 'cdn.sheetjs.com') {
+    return /^\/xlsx-(\d+\.\d+\.\d+)\//.exec(url.pathname)?.[1] ?? null;
   }
 
   if (url.host === 'unpkg.com') {
@@ -451,7 +456,7 @@ export async function checkVercelSecurityHeaders(root = repoRoot) {
   expectDirectiveValues(directives, 'object-src', ["'none'"]);
   expectDirectiveValues(directives, 'frame-ancestors', ["'none'"]);
   expectDirectiveValues(directives, 'form-action', ["'self'"]);
-  expectDirectiveValues(directives, 'script-src', ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://challenges.cloudflare.com']);
+  expectDirectiveValues(directives, 'script-src', ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://cdn.sheetjs.com', 'https://challenges.cloudflare.com']);
   expectDirectiveValues(directives, 'frame-src', ['https://challenges.cloudflare.com']);
   expectDirectiveValues(directives, 'style-src', ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']);
   expectDirectiveValues(directives, 'font-src', ["'self'", 'https://fonts.gstatic.com', 'data:']);
@@ -477,6 +482,12 @@ export async function checkVercelSecurityHeaders(root = repoRoot) {
   assert.match(hsts, /\bincludeSubDomains\b/, 'Strict-Transport-Security must include subdomains.');
 
   assert.equal(headers.get('x-content-type-options'), 'nosniff', 'X-Content-Type-Options must be nosniff.');
+  assert.equal(headers.get('x-frame-options'), 'DENY', 'X-Frame-Options must deny framing.');
+  assert.equal(
+    headers.get('x-permitted-cross-domain-policies'),
+    'none',
+    'Legacy cross-domain policy discovery must be disabled.'
+  );
   assert.equal(headers.get('referrer-policy'), 'strict-origin-when-cross-origin', 'Referrer-Policy must be strict-origin-when-cross-origin.');
   const permissions = headers.get('permissions-policy') || '';
   for (const policy of ['camera=(self)', 'microphone=()', 'geolocation=()', 'payment=()', 'usb=()', 'clipboard-write=(self)']) {

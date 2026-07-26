@@ -144,6 +144,7 @@
   }
   const canAccessModule=(access,moduleKey)=>modulePermission(access,moduleKey)!=='off';
   const canWriteModule=(access,moduleKey)=>modulePermission(access,moduleKey)==='rw';
+  const superAdminOnly=(isSuperAdmin,content)=>isSuperAdmin?content:'';
   const reportSectionAccess=access=>Object.freeze({
     onboarding:canAccessModule(access,'onboarding'),
     billing:canAccessModule(access,'billing')
@@ -1814,7 +1815,9 @@
     if(!overlay.isConnected)return detail;
     const prospect=asObject(detail.prospect);
     overlay.querySelector('#prospectDetailTitle').textContent=prospectCompany({...prospect,...asObject(detail.company)});
-    overlay.querySelector('[data-detail]').innerHTML=prospectDetailHtml(detail,CUI);
+    overlay.querySelector('[data-detail]').innerHTML=prospectDetailHtml(
+      detail,CUI,context.access?.role==='super_admin'
+    );
     wireProspectDetail(detail,context);
     return detail;
   }
@@ -1846,7 +1849,7 @@
   function sectionHeader(title,action='') {
     return`<div class="platform-list-row"><h2>${escapeHtml(title)}</h2>${action}</div>`;
   }
-  function onboardingPanelHtml(payload,error,CUI) {
+  function onboardingPanelHtml(payload,error,CUI,isSuperAdmin=false) {
     if(error)return CUI.card({
       title:'Evidence-backed onboarding',
       body:error.platformUpdateRequired
@@ -1889,11 +1892,12 @@
         ${facts.status==='not_started'?`<button type="button" class="btn sm" data-onboarding-start${canStart?'':' disabled title="The workspace owner must accept access first."'}>${CUI.icon('forward',{size:16})}<span>Start onboarding</span></button>`:''}
         <button type="button" class="btn ghost sm" data-onboarding-refresh>${CUI.icon('retention',{size:16})}<span>Refresh evidence</span></button>
         <button type="button" class="btn ghost sm" data-onboarding-reissue>${CUI.icon('customers',{size:16})}<span>Reissue owner invite</span></button>
-        ${checklist.blocked_at
+        ${superAdminOnly(isSuperAdmin,checklist.blocked_at
           ?'<button type="button" class="btn ghost sm" data-onboarding-unblock>Unblock onboarding</button>'
-          :'<button type="button" class="btn danger sm" data-onboarding-block>Block onboarding</button>'}
-        <button type="button" class="btn sm" data-onboarding-activate${activationReady?'':' disabled title="Complete every mandatory item and super-admin go-live approval first."'}>${CUI.icon('check',{size:16})}<span>Activate firm</span></button>
+          :'<button type="button" class="btn danger sm" data-onboarding-block>Block onboarding</button>')}
+        ${superAdminOnly(isSuperAdmin,`<button type="button" class="btn sm" data-onboarding-activate${activationReady?'':' disabled title="Complete every mandatory item and super-admin go-live approval first."'}>${CUI.icon('check',{size:16})}<span>Activate firm</span></button>`)}
       </div>`}
+      ${!facts.activated&&!isSuperAdmin?'<p class="muted small" data-super-admin-onboarding-note>Final waivers, blocking decisions, and firm activation are completed by a super admin.</p>':''}
       <h3 style="font-size:14px;margin-top:16px">Checklist</h3>
       <div>${items.map(item=>{
         const canRecord=!facts.activated&&['manual','sa_approval'].includes(item.verification_mode)&&item.status!=='blocked';
@@ -1908,10 +1912,10 @@
           <div><div style="text-align:right">${CUI.status(plainLabel(item.status),item.status==='satisfied'?'ok':item.status==='blocked'?'no':'off')}</div>
             ${facts.activated?'':`<div class="platform-actions" style="justify-content:flex-end;margin-top:6px">
               ${canRecord?`<button type="button" class="btn ghost sm" data-onboarding-evidence="${escapeHtml(item.item_key)}">${item.status==='satisfied'?'Update evidence':'Record evidence'}</button>`:''}
-              ${canWaive?`<button type="button" class="btn ghost sm" data-onboarding-waive="${escapeHtml(item.item_key)}">Waive</button>`:''}
-              ${item.status==='blocked'
+              ${superAdminOnly(isSuperAdmin&&canWaive,`<button type="button" class="btn ghost sm" data-onboarding-waive="${escapeHtml(item.item_key)}">Waive</button>`)}
+              ${superAdminOnly(isSuperAdmin,item.status==='blocked'
                 ?`<button type="button" class="btn ghost sm" data-onboarding-item-unblock="${escapeHtml(item.item_key)}">Unblock</button>`
-                :`<button type="button" class="btn danger sm" data-onboarding-item-block="${escapeHtml(item.item_key)}">Block</button>`}
+                :`<button type="button" class="btn danger sm" data-onboarding-item-block="${escapeHtml(item.item_key)}">Block</button>`)}
             </div>`}
           </div>
         </article>`;
@@ -1922,7 +1926,7 @@
       </div>
     </section>`;
   }
-  function prospectDetailHtml(detail,CUI) {
+  function prospectDetailHtml(detail,CUI,isSuperAdmin=false) {
     const prospect=asObject(detail.prospect),company=asObject(detail.company),assignment=asObject(detail.assignment);
     const contacts=asArray(detail.contacts),activities=asArray(detail.activities),tasks=asArray(detail.tasks);
     const stage=prospectStage(prospect),converted=Boolean(prospect.converted_business_id);
@@ -2066,7 +2070,7 @@
       ])}
       ${converted?'':`<p class="platform-route-note small">Current stage: ${escapeHtml(plainLabel(stage))}. ${escapeHtml(stage==='client'?(termsAccepted?'Commercial terms are ready for account creation.':'Accepted commercial terms are required before account creation.'):'Complete the evidence-backed Client gate first.')}</p>`}
     </section>
-    <section class="platform-detail-section" id="detail-onboarding">${converted?onboardingPanelHtml(detail.onboarding,detail.onboarding_error,CUI):CUI.card({title:'Onboarding checklist',body:'<p class="muted small">The evidence checklist is created during transactional account conversion.</p>'})}</section>
+    <section class="platform-detail-section" id="detail-onboarding">${converted?onboardingPanelHtml(detail.onboarding,detail.onboarding_error,CUI,isSuperAdmin):CUI.card({title:'Onboarding checklist',body:'<p class="muted small">The evidence checklist is created during transactional account conversion.</p>'})}</section>
     <section class="card platform-detail-section" id="detail-audit">
       ${sectionHeader('Audit and stage history')}
       <div class="platform-detail-grid"><div><h3>Stage history</h3>${asArray(detail.stage_history).length?asArray(detail.stage_history).map(history=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(history.to_stage_key))}</b><p class="muted small">${escapeHtml(history.reason_code?plainLabel(history.reason_code):'Stage transition')}</p></div><span class="muted small">${escapeHtml(dateTime(history.occurred_at))}</span></div>`).join(''):detailObjectHtml(null)}</div>
@@ -4022,14 +4026,14 @@
 
   globalObject.NestlyPlatformConsole = Object.freeze({
     isRoute,routeKey,render,routes,prospectStages,operationalLanes,
-    normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
+    normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,superAdminOnly,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
     operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
     firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       isRoute,routeKey,routes,prospectStages,operationalLanes,
-      normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
+      normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,superAdminOnly,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
       operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
       firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions
     };

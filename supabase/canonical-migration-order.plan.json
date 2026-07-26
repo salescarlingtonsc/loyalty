@@ -778,6 +778,12 @@
       "version": "20260727010000",
       "name": "nestly_v89_customer_qr_redemption_platform_access",
       "sourcePath": "db/migrations/20260727_nestly_v89_customer_qr_redemption_platform_access.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260727020000",
+      "name": "nestly_v90_production_readiness",
+      "sourcePath": "db/migrations/20260727_nestly_v90_production_readiness.sql"
     }
   ]
 }

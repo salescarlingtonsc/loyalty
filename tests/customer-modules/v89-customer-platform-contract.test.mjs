@@ -9,11 +9,15 @@ const sourcePath =
 const rollbackPath = "db/tests/v89_customer_platform_contracts.sql";
 const concurrencyPath =
   "db/tests/v89_customer_qr_redemption_concurrency.sh";
+const v90Path = "db/migrations/20260727_nestly_v90_production_readiness.sql";
+const v90RollbackPath = "db/tests/v90_production_readiness.sql";
 
 const canonical = await readFile(canonicalPath, "utf8");
 const source = await readFile(sourcePath, "utf8");
 const rollback = await readFile(rollbackPath, "utf8");
 const concurrency = await readFile(concurrencyPath, "utf8");
+const v90 = await readFile(v90Path, "utf8");
+const v90Rollback = await readFile(v90RollbackPath, "utf8");
 
 test("v89 source and canonical migration are byte-identical", () => {
   assert.equal(source, canonical);
@@ -220,8 +224,23 @@ test("v89 rollback evidence exercises role boundaries and leaves no fixture data
   assert.match(rollback, /classic merchant receipt\/value is inconsistent/i);
   assert.match(
     rollback,
-    /PG_CONTEXT r-mode failed for module %[\s\S]*?PG_CONTEXT rw-mode failed for module %[\s\S]*?PG_CONTEXT off-mode failed for module %/i,
+    /untrusted PG_CONTEXT probe was accepted for %/i,
   );
+});
+
+test("v90 replaces the legacy verb heuristic with positive readers and denied writers", () => {
+  assert.match(v90, /unknown caller is denied/i);
+  assert.match(v90, /else\s+return false;\s+end if;/i);
+  assert.match(v90Rollback, /read-only admin lost the legacy onboarding reader/i);
+  for (const deniedWriter of [
+    "read-only admin reached prospect conversion",
+    "read-only admin reached invite reissue",
+    "read-only admin reached onboarding start",
+    "read-only admin reached import analysis",
+  ]) {
+    assert.match(v90Rollback, new RegExp(deniedWriter, "i"));
+  }
+  assert.match(v90Rollback, /trusted legacy allowlist/i);
 });
 
 test("v89 disposable concurrency evidence races claims and scans at stress volume", () => {
