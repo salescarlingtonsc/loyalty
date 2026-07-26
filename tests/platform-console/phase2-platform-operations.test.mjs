@@ -12,20 +12,28 @@ const officialStages = [
   'account_created','onboarding','activated','lost'
 ];
 
-test('onboarding exposes all 17 official stages and keeps Unmapped separate', async () => {
+test('onboarding exposes all 17 official stages and maps them into five operational lanes', async () => {
   const source = await read('app/platform-console.js');
   const context = { Object };
   context.globalThis = context;
   vm.runInNewContext(source, context, { filename:'platform-console.js' });
 
   const stages = Array.from(context.NestlyPlatformConsole.prospectStages, stage => stage.key);
+  const lanes = Array.from(context.NestlyPlatformConsole.operationalLanes, lane => ({
+    key:lane.key,label:lane.label,stages:Array.from(lane.stages)
+  }));
   assert.deepEqual(stages, officialStages);
   assert.doesNotMatch(JSON.stringify(stages), /unmapped/i);
-  assert.match(source, /const columns=\[\.\.\.prospectStages,\{key:'unmapped',label:'Unmapped'\}\]/);
+  assert.equal(lanes.length,5);
+  assert.deepEqual(lanes.find(lane=>lane.key==='case_won')?.stages,[
+    'client','account_created','onboarding','activated'
+  ]);
+  assert.equal(lanes.find(lane=>lane.key==='case_won')?.label,'Case won');
+  assert.deepEqual(lanes.flatMap(lane=>lane.stages).sort(),[...officialStages,'unmapped'].sort());
   assert.match(source, /\['account_created','onboarding','activated'\]\.includes\(option\.key\)\?' disabled'/);
   assert.match(source, /evidence-backed onboarding gates and an auditable launch decision/);
   assert.doesNotMatch(source, /Activated remains unavailable until the real launch checklist is connected/);
-  assert.match(source, /data-drop-stage/);
+  assert.doesNotMatch(source, /data-drop-stage/);
   assert.match(source, /data-move-select/);
 });
 
@@ -40,7 +48,7 @@ test('platform console wires v75 sector mutations through dry-run previews', asy
   ]) assert.match(source, new RegExp(rpc));
 
   assert.match(source, /platform_create_sector_bundle_v75',args/);
-  assert.match(source, /platform_publish_sector_bundle_v75',\{p_bundle_version:created\.bundle_version_id,p_dry_run:true\}/);
+  assert.match(source, /platform_publish_sector_bundle_v75',\{p_bundle_version:createdBundleId,p_dry_run:true\}/);
   assert.match(source, /platform_assign_business_sector_v75',args/);
   assert.match(source, /platform_set_business_sector_override_v75',args/);
   assert.match(source, /previewThenConfirm/);
@@ -110,8 +118,8 @@ test('responsive pipeline keeps a mobile list and accessible dialogs', async () 
     read('app/index.html')
   ]);
   assert.match(source, /aria-modal/);
-  assert.match(source, /aria-grabbed/);
-  assert.match(source, /Keyboard-complete pipeline/);
+  assert.doesNotMatch(source, /aria-grabbed/);
+  assert.match(source, /Five clear operating lanes/);
   assert.match(styles, /\.platform-kanban\{display:none\}/);
   assert.match(styles, /\.platform-prospect-list\{display:grid/);
   assert.match(styles, /min-height:44px/);

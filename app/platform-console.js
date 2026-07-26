@@ -18,6 +18,31 @@
     ['pending_decision','Pending Decision'],['client','Client / Deal Won'],['account_created','Account Created'],
     ['onboarding','Onboarding in Progress'],['activated','Activated'],['lost','Lost']
   ].map(([key,label])=>Object.freeze({key,label})));
+  const operationalLanes = Object.freeze([
+    Object.freeze({key:'inbox',label:'New & unassigned',description:'New leads and records that need triage',
+      stages:Object.freeze(['unmapped','new_lead'])}),
+    Object.freeze({key:'contacting',label:'Contact & meeting',description:'Outreach, callbacks and scheduled conversations',
+      stages:Object.freeze(['appt_set','npu_1','npu_2','npu_3','npu_4','npu_5','npu_6','call_back','reschedule','meeting_sent'])}),
+    Object.freeze({key:'decision',label:'Decision',description:'Qualified firms considering the proposal',
+      stages:Object.freeze(['pending_decision'])}),
+    Object.freeze({key:'case_won',label:'Case won',description:'Signed, website-signup and onboarded firms',
+      stages:Object.freeze(['client','account_created','onboarding','activated'])}),
+    Object.freeze({key:'closed',label:'Closed',description:'Opportunities closed without activation',
+      stages:Object.freeze(['lost'])})
+  ]);
+  const sectorModuleCatalog = Object.freeze([
+    ['dashboard','Dashboard','Essentials'],['till','Quick earn','Essentials'],
+    ['clients','Customers','Essentials'],['appointments','Appointments','Customer operations'],
+    ['sales','Sales','Customer operations'],['services','Services','Customer operations'],
+    ['bookings','Bookings','Customer operations'],['waitlist','Waitlist','Customer operations'],
+    ['inventory','Inventory','Commerce'],['packages','Packages','Commerce'],
+    ['loyalty','Loyalty','Growth'],['retention','Retention','Growth'],
+    ['referrals','Referrals','Growth'],['memberships','Memberships','Growth'],
+    ['giftcards','Gift cards','Growth'],['reports','Reports','Insights'],
+    ['staffperf','Staff performance','Insights'],['dailyreport','Daily report','Insights'],
+    ['pnl','P&L','Finance'],['expenses','Expenses','Finance']
+  ].map(([key,label,group])=>Object.freeze({key,label,group})));
+  const sectorModuleByKey = new Map(sectorModuleCatalog.map(module=>[module.key,module]));
   const lostReasons = Object.freeze([
     'no_response','not_interested','no_budget','timing','chose_competitor',
     'missing_required_feature','procurement_security_blocker','price',
@@ -84,6 +109,42 @@
   }
   function plainLabel(value) {
     return String(value || '—').replace(/_/g,' ').replace(/\b\w/g,letter=>letter.toUpperCase());
+  }
+  function moduleLabel(value) {
+    const key=String(value||'');
+    return sectorModuleByKey.get(key)?.label||plainLabel(key);
+  }
+  function operationalLaneFor(item) {
+    if(item&&typeof item==='object'){
+      const explicit=operationalLanes.find(lane=>lane.key===item.lane_key);
+      if(explicit)return explicit.key;
+    }
+    const stage=typeof item==='string'?item:(item?.source_stage_key||item?.lane_key||prospectStage(item));
+    return operationalLanes.find(lane=>lane.stages.includes(stage))?.key||'inbox';
+  }
+  function normalizePlatformPhone(value) {
+    let source=String(value||'').trim();
+    if(!source)return null;
+    const international=source.startsWith('+')||source.startsWith('00');
+    let digits=source.replace(/\D/g,'');
+    if(source.startsWith('00'))digits=digits.slice(2);
+    if(!international&&digits.length===8)digits=`65${digits}`;
+    if(digits.length<10||digits.length>15)return null;
+    return Object.freeze({tel:`+${digits}`,wa:digits,display:`+${digits}`});
+  }
+  function platformContactActions(value,CUI,{compact=false}={}) {
+    const phone=normalizePlatformPhone(value);
+    if(!phone)return'';
+    const label=compact?'':'<span>Call</span>';
+    const whatsappLabel=compact?'':'<span>WhatsApp</span>';
+    return `<div class="platform-contact-actions" data-card-actions>
+      <a class="btn ghost sm" href="tel:${escapeHtml(phone.tel)}" title="Call" aria-label="Call ${escapeHtml(phone.display)}">${CUI.icon('till',{size:16})}${label}</a>
+      <a class="btn ghost sm" href="https://wa.me/${escapeHtml(phone.wa)}" target="_blank" rel="noopener" title="WhatsApp" aria-label="Open WhatsApp chat with ${escapeHtml(phone.display)}">${CUI.icon('customers',{size:16})}${whatsappLabel}</a>
+    </div>`;
+  }
+  function firmOwnerPhone(firm) {
+    return firm.boss_phone||firm.owner_phone||firm.primary_owner_phone
+      ||firm.primary_contact_phone||firm.primary_contact?.phone||'';
   }
   function systemUpdateRequired(CUI,title='This platform area') {
     return unavailable(CUI,{
@@ -377,6 +438,50 @@
       ...asObject(payload.pagination),returned_firms:firms.length,has_more:false,next_cursor:null
     }};
   }
+  async function fetchFirmDirectoryV88(sb,filters,{required=false}={}) {
+    const items=[],seen=new Set(),seenCursors=new Set();
+    let snapshot=null,cursor=null,totalCount=0,attentionSummary={};
+    try{
+      do{
+        const payload=asObject(await rpc(sb,'platform_list_firm_onboarding_v88',{
+          p_filters:{
+            search:filters.search||null,
+            sector:filters.sector||null,
+            lane:filters.lane||null
+          },
+          p_snapshot_at:snapshot,
+          p_limit:100,
+          p_after_updated_at:cursor?.updated_at||null,
+          p_after_id:cursor?.id||null
+        }));
+        snapshot=snapshot||payload.snapshot_at;
+        totalCount=Number(payload.total_count||0);
+        if(!Object.keys(attentionSummary).length)attentionSummary=asObject(payload.attention_summary);
+        asArray(payload,['items']).forEach(item=>{
+          const id=firmId(item);
+          if(id&&!seen.has(id)){seen.add(id);items.push(item)}
+        });
+        const next=asObject(payload.next_cursor);
+        if(next.id){
+          const token=`${next.updated_at||''}:${next.id}`;
+          if(seenCursors.has(token))throw new Error('Firm directory paging did not advance.');
+          seenCursors.add(token);cursor=next;
+        }else cursor=null;
+      }while(cursor);
+      return{items,total_count:totalCount,snapshot_at:snapshot,attention_summary:attentionSummary};
+    }catch(error){
+      if(missingRpc(error)&&!required)return null;
+      throw error;
+    }
+  }
+  function mergeFirmDirectoryData(firms,directoryItems) {
+    const directoryByBusiness=new Map(asArray(directoryItems)
+      .filter(item=>item.business_id)
+      .map(item=>[String(item.business_id),item]));
+    return firms.map(firm=>({...firm,...asObject(directoryByBusiness.get(firmId(firm))),
+      summary:firm.summary,branches:firm.branches,currency:firm.currency
+    }));
+  }
   async function fetchEnterpriseCustomerPage(sb,filters,snapshot,cursor=null) {
     return asObject(await rpc(sb,'platform_list_enterprise_customers_v82',{
       ...enterpriseArgs(filters),p_limit:500,p_snapshot_at:snapshot||null,
@@ -404,12 +509,32 @@
     return customers;
   }
   function firmId(firm) {
-    return String(firm.business_id||firm.id||'');
+    return String(firm.business_id||firm.id||firm.row_id||firm.prospect_id||'');
+  }
+  function resolveEnterpriseSearchBusinessIds(directoryItems,hierarchyFirms,selectedBusinesses=[]) {
+    const selected=new Set(asArray(selectedBusinesses).map(String));
+    const resolved=new Set([
+      ...asArray(directoryItems).filter(item=>item.business_id).map(item=>String(item.business_id)),
+      ...asArray(hierarchyFirms).map(firmId).filter(Boolean)
+    ]);
+    return [...resolved].filter(id=>!selected.size||selected.has(id));
+  }
+  function firmRegistrationNumber(firm) {
+    return firm.registration_number||firm.uen||firm.company_registration_number||'';
+  }
+  function firmOwnerName(firm) {
+    return firm.boss_name||firm.owner_name||firm.primary_owner_name||firm.primary_contact_name||'';
+  }
+  function firmOwnerEmail(firm) {
+    return firm.boss_email||firm.owner_email||firm.primary_owner_email||firm.primary_contact_email||'';
   }
   function enterpriseFirmRows(firms,CUI) {
     return firms.map(firm=>[
-      `<button type="button" class="platform-link-button" data-enterprise-firm="${escapeHtml(firmId(firm))}"><b>${escapeHtml(firm.name||'Unnamed firm')}</b></button>`,
-      escapeHtml(plainLabel(firm.industry)),
+      `<button type="button" class="platform-link-button" data-enterprise-firm="${escapeHtml(firmId(firm))}"><b>${escapeHtml(firm.name||firm.legal_name||'Unnamed firm')}</b></button>
+        ${firmRegistrationNumber(firm)?`<span class="muted small platform-firm-secondary">${escapeHtml(firmRegistrationNumber(firm))}</span>`:''}`,
+      escapeHtml(plainLabel(firm.sector_key||firm.industry)),
+      `<span>${escapeHtml(firmOwnerName(firm)||'—')}</span>${firmOwnerEmail(firm)?`<span class="muted small platform-firm-secondary">${escapeHtml(firmOwnerEmail(firm))}</span>`:''}`,
+      platformContactActions(firmOwnerPhone(firm),CUI,{compact:true})||'<span class="muted small">No phone</span>',
       String(firm.branch_count??asArray(firm.branches).length),
       String(firm.customer_count??asArray(firm.customers).length),
       currency(firm.summary?.net_revenue_cents,firm.currency||'SGD'),
@@ -434,7 +559,9 @@
     })}
       <form class="card platform-enterprise-filters" id="enterpriseFilters">
         <div class="platform-enterprise-filter-grid">
-          ${CUI.field({id:'enterpriseSearch',label:'Search',type:'search',value:filters.search,placeholder:'Firm, branch or customer'})}
+          <div class="platform-enterprise-search">${CUI.field({id:'enterpriseSearch',label:'Find a firm or customer',type:'search',value:filters.search,placeholder:'Name, sector, UEN, owner phone or email'})}
+            <p class="muted small">Search is applied on the server across the complete directory, so it remains usable as the platform grows.</p>
+          </div>
           ${CUI.field({id:'enterpriseSector',label:'Sector',control:'select',options:enterpriseSectors.map(([value,label])=>({value,label,selected:value===filters.sector}))})}
           <div class="cui-field platform-enterprise-firms"><label for="enterpriseBusinesses">Firm scope <span class="muted small">(select one or more)</span></label>
             <select id="enterpriseBusinesses" multiple size="5">${catalog.map(firm=>`<option value="${escapeHtml(firmId(firm))}"${filters.businesses.includes(firmId(firm))?' selected':''}>${escapeHtml(firm.name)} · ${escapeHtml(plainLabel(firm.industry))}</option>`).join('')}</select>
@@ -449,7 +576,7 @@
         <div class="platform-actions">
           <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>Apply scope</span></button>
           <button class="btn ghost" type="button" id="enterpriseClear">Clear</button>
-          <button class="btn ghost" type="button" id="enterpriseGenerateReport">${CUI.icon('reports',{size:17})}<span>Generate detailed report</span></button>
+          <button class="btn ghost" type="button" id="enterpriseGenerateReport"${firms.length?'':' disabled title="No matching firms are available to report."'}>${CUI.icon('reports',{size:17})}<span>Generate detailed report</span></button>
         </div>
       </form>
       <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Complete snapshot</b><p class="small">${escapeHtml(pagination.total_firms??firms.length)} matching firm${Number(pagination.total_firms??firms.length)===1?'':'s'} as at ${escapeHtml(dateTime(payload.snapshot_at))}. Search applies consistently to the directory and report.</p></div></div>
@@ -458,7 +585,7 @@
         description:firms.length?`${firms.length} firm${firms.length===1?'':'s'} in this scope. Open a firm for branch and customer detail.`:'No firms match this scope.',
         body:firms.length?CUI.table({
           caption:'Enterprise firm directory',
-          headers:['Firm','Sector','Branches','Customers','Net revenue','Returning','Transactions',''],
+          headers:['Firm / UEN','Sector','Owner','Contact','Branches','Customers','Net revenue','Returning','Transactions',''],
           rows:enterpriseFirmRows(firms,CUI),
           className:'platform-firms-table platform-enterprise-table'
         }):CUI.emptyState({iconName:'branch',title:'No matching firms',body:'Change the sector, firm, branch, date or search scope.'})
@@ -467,6 +594,7 @@
   }
   function enterpriseDetailTable(firm,CUI,customers=[],pagination={}) {
     const branches=asArray(firm.branches);
+    const ownerPhone=firmOwnerPhone(firm);
     return `<div class="platform-detail-grid">
       ${CUI.card({title:'Scope summary',body:`<dl class="platform-context-list">
         <div><dt>Net revenue</dt><dd>${escapeHtml(currency(firm.summary?.net_revenue_cents,firm.currency||'SGD'))}</dd></div>
@@ -475,11 +603,15 @@
         <div><dt>Returning customers</dt><dd>${escapeHtml(firm.summary?.returning_customers??0)}</dd></div>
       </dl>`})}
       ${CUI.card({title:'Firm record',body:`<dl class="platform-context-list">
-        <div><dt>Sector</dt><dd>${escapeHtml(plainLabel(firm.industry))}</dd></div>
+        <div><dt>Legal name</dt><dd>${escapeHtml(firm.legal_name||firm.name||'—')}</dd></div>
+        <div><dt>UEN</dt><dd>${escapeHtml(firmRegistrationNumber(firm)||'—')}</dd></div>
+        <div><dt>Sector</dt><dd>${escapeHtml(plainLabel(firm.sector_key||firm.industry))}</dd></div>
+        <div><dt>Owner / boss</dt><dd>${escapeHtml(firmOwnerName(firm)||'—')}</dd></div>
+        <div><dt>Owner email</dt><dd>${firmOwnerEmail(firm)?`<a href="mailto:${escapeHtml(firmOwnerEmail(firm))}">${escapeHtml(firmOwnerEmail(firm))}</a>`:'—'}</dd></div>
         <div><dt>Branches</dt><dd>${escapeHtml(firm.branch_count??branches.length)}</dd></div>
         <div><dt>Staff</dt><dd>${escapeHtml(firm.staff_count??0)}</dd></div>
         <div><dt>Customers</dt><dd>${escapeHtml(firm.customer_count??pagination.total_customers??customers.length)}</dd></div>
-      </dl>`})}
+      </dl>${platformContactActions(ownerPhone,CUI)}`})}
     </div>
     <section class="platform-detail-section"><h2>Branches</h2>${branches.length?CUI.table({
       caption:`${firm.name} branches`,
@@ -640,9 +772,27 @@
     const {main,CUI,sb,generation,isCurrent}=context;
     main.innerHTML=loading(CUI,'Enterprise data','Loading firm, branch and customer truth…','branch');
     try{
-      const payload=await fetchEnterpriseFirmPages(sb,filters);
+      const directory=await fetchFirmDirectoryV88(sb,filters);
+      let rawPayload,resolvedScopeFilters=filters;
+      if(filters.search){
+        const hierarchyMatches=await fetchEnterpriseFirmPages(sb,filters);
+        const resolvedIds=resolveEnterpriseSearchBusinessIds(
+          directory?.items,asArray(hierarchyMatches,['firms']),filters.businesses
+        );
+        resolvedScopeFilters={...filters,businesses:resolvedIds,search:''};
+        rawPayload=resolvedIds.length
+          ?await fetchEnterpriseFirmPages(sb,resolvedScopeFilters)
+          :{
+            snapshot_at:directory?.snapshot_at||hierarchyMatches.snapshot_at,
+            firms:[],pagination:{total_firms:0,returned_firms:0,has_more:false,next_cursor:null}
+          };
+      }else rawPayload=await fetchEnterpriseFirmPages(sb,filters);
+      const firms=mergeFirmDirectoryData(asArray(rawPayload,['firms']),directory?.items);
+      const payload={...rawPayload,firms,pagination:{
+        ...asObject(rawPayload.pagination),
+        total_firms:firms.length,returned_firms:firms.length
+      }};
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
-      const firms=asArray(payload,['firms']);
       if(!context.enterpriseCatalog||(!filters.sector&&!filters.businesses.length&&!filters.branch&&!filters.search)){
         context.enterpriseCatalog=firms;
       }
@@ -670,11 +820,12 @@
         });
       };
       main.querySelector('#enterpriseClear').onclick=()=>renderEnterprise(context,enterpriseDefaults());
-      main.querySelector('#enterpriseGenerateReport').onclick=()=>renderEnterpriseReport(context,filters);
+      const reportButton=main.querySelector('#enterpriseGenerateReport');
+      if(firms.length)reportButton.onclick=()=>renderEnterpriseReport(context,resolvedScopeFilters);
       main.querySelectorAll('[data-enterprise-firm]').forEach(button=>{
         button.onclick=()=>{
           const firm=firms.find(row=>firmId(row)===button.dataset.enterpriseFirm);
-          if(firm)openEnterpriseFirm(firm,context,filters);
+          if(firm)openEnterpriseFirm(firm,context,{...filters,search:''});
         };
       });
       CUI.focusRoute(main);
@@ -838,10 +989,12 @@
   function prospectContact(item) {
     return item.primary_contact_name||item.primary_contact?.full_name
       ||item.primary_contact?.name||item.contact_name||item.primary_contact?.email
+      ||item.boss_name||item.boss_email
       ||'No primary contact';
   }
   function prospectStage(item) {
-    return item.current_stage_key||item.stage_key||item.stage||item.current_stage||'unmapped';
+    return item.source_stage_key||item.current_stage_key||item.stage_key||item.stage
+      ||item.current_stage||(item.lane_key==='case_won'?'activated':item.lane_key)||'unmapped';
   }
   function prospectVersion(item) {
     return Number(item.version??item.lock_version??item.prospect_version??0);
@@ -914,6 +1067,40 @@
   function onboardingTone(status) {
     return ['ready','activated'].includes(status)?'ok':status==='blocked'?'no':status==='in_progress'?'new':'off';
   }
+  function mergeFirmOnboardingItems(directoryItems,prospects) {
+    const prospectsById=new Map(prospects.map(item=>[
+      String(item.prospect_id||item.id||''),item
+    ]).filter(([id])=>id));
+    return asArray(directoryItems).map(row=>{
+      const prospectId=String(row.prospect_id||''),base=asObject(prospectsById.get(prospectId));
+      const sourceStage=row.source_stage_key||base.current_stage_key||base.stage_key||base.stage||'';
+      return {
+        ...row,...base,
+        platform_row_id:row.row_id||null,
+        id:base.id||row.prospect_id||row.row_id||row.business_id,
+        prospect_id:row.prospect_id||base.prospect_id||null,
+        business_id:row.business_id||base.business_id||base.converted_business_id||null,
+        converted_business_id:base.converted_business_id||row.business_id||null,
+        company_name:base.company_name||row.name||row.legal_name||'Unnamed firm',
+        legal_name:base.legal_name||row.legal_name||row.name||'',
+        registration_number:base.registration_number||row.registration_number||'',
+        primary_contact_name:base.primary_contact_name||row.boss_name||'',
+        primary_contact_email:base.primary_contact_email||row.boss_email||'',
+        primary_contact_phone:base.primary_contact_phone||row.boss_phone||'',
+        current_stage_key:sourceStage||(row.lane_key==='case_won'?'activated':'unmapped'),
+        source_stage_key:sourceStage||null,
+        lane_key:row.lane_key||operationalLaneFor(base),
+        lane_label:row.lane_label||'',
+        onboarding_status:row.onboarding_status||base.onboarding_status||'',
+        subscription_status:row.subscription_status||base.subscription_status||'',
+        attention_severity:row.attention_severity||base.attention_severity||'',
+        attention_due:row.attention_due??base.attention_due??false,
+        next_action_at:row.next_action_at||base.next_action_at||null,
+        last_activity_at:row.last_activity_at||base.last_activity_at||base.updated_at||null,
+        _has_prospect_detail:Boolean(row.prospect_id||base.id||base.prospect_id)
+      };
+    });
+  }
   async function hydrateOnboardingCards(sb,items) {
     const businessIds=[...new Set(items.map(item=>item.converted_business_id).filter(Boolean))];
     if(!businessIds.length)return items;
@@ -932,35 +1119,48 @@
     });
   }
   function prospectCardHtml(item,CUI,{mobile=false}={}) {
-    const stage=prospectStage(item),id=item.id||item.prospect_id;
-    const stale=item.stale===true||item.is_stale===true;
+    const stage=prospectStage(item),id=item.id||item.prospect_id||item.row_id||item.business_id;
+    const stale=prospectIsStale(item);
     const overdue=item.next_action_overdue===true||item.overdue===true||Number(item.overdue_task_count||0)>0;
+    const attentionSeverity=String(item.attention_severity||'none').toLowerCase();
     const completeness=Number(item.data_completeness_percent??item.completeness_percent??item.completeness??0);
     const summary=asObject(item.onboarding_summary);
     const onboarding=item.onboarding_status||summary.status||asObject(item.onboarding).checklist?.status||'';
-    const managed=Boolean(item.converted_business_id)||['account_created','onboarding','activated'].includes(stage);
+    const managed=Boolean(item.converted_business_id||item.business_id)||['account_created','onboarding','activated'].includes(stage);
     const contactTitle=prospectValue(item,'primary_contact_title','primary_contact.title','primary_contact.job_title');
-    const contactPhone=prospectValue(item,'primary_contact_phone','primary_contact.phone','contact_phone');
-    const source=prospectSource(item),region=prospectValue(item,'region','company.region')||'Region not set';
+    const contactPhone=prospectValue(item,'primary_contact_phone','primary_contact.phone','contact_phone','boss_phone');
     const priority=String(item.priority||'normal'),fit=prospectFit(item);
-    const lastActivity=prospectValue(item,'last_activity_at','last_contacted_at','updated_at');
     const nextAction=prospectValue(item,'next_action_at','next_activity_at');
     const stageDays=Math.max(0,dayDelta(item.stage_entered_at)??0),tags=prospectTags(item);
     const progress=onboardingPercent(item),warnings=prospectWarningFlags(item);
-    return `<article class="platform-prospect-card" draggable="${mobile?'false':'true'}" data-prospect="${escapeHtml(id)}" data-version="${prospectVersion(item)}" data-stage="${escapeHtml(stage)}" tabindex="0" role="button" aria-label="Open ${escapeHtml(prospectCompany(item))}" aria-grabbed="false">
+    const contactActions=platformContactActions(contactPhone,CUI,{compact:true});
+    const canOpenDetail=item._has_prospect_detail!==false;
+    const stageLabel=!canOpenDetail&&operationalLaneFor(item)==='case_won'
+      ?(item.lane_label||'Website signup / live firm')
+      :(prospectStages.find(option=>option.key===stage)?.label||plainLabel(stage));
+    return `<article class="platform-prospect-card" draggable="false" data-prospect="${escapeHtml(id)}" data-version="${prospectVersion(item)}" data-stage="${escapeHtml(stage)}" data-lane="${escapeHtml(operationalLaneFor(item))}" data-has-prospect="${canOpenDetail?'true':'false'}" tabindex="0" role="button" aria-label="${canOpenDetail?'Open':'View firm record for'} ${escapeHtml(prospectCompany(item))}">
       <div class="platform-prospect-name">${escapeHtml(prospectCompany(item))}</div>
       <div class="platform-prospect-contact"><b>${escapeHtml(prospectContact(item))}</b>${contactTitle?`<span>${escapeHtml(contactTitle)}</span>`:''}${contactPhone?`<span>${escapeHtml(contactPhone)}</span>`:''}</div>
       <dl class="platform-card-facts">
-        <div><dt>Owner</dt><dd>${escapeHtml(item.consultant_name||item.owner_name||'Unassigned')}</dd></div>
-        <div><dt>Source</dt><dd>${escapeHtml(source)}</dd></div>
-        <div><dt>Region</dt><dd>${escapeHtml(region)}</dd></div>
-        <div><dt>Priority / fit</dt><dd>${escapeHtml(`${plainLabel(priority)} · ${plainLabel(fit)}`)}</dd></div>
-        <div><dt>Last contact</dt><dd>${escapeHtml(relativeActivity(lastActivity))}</dd></div>
-        <div><dt>Next action</dt><dd>${escapeHtml(relativeActivity(nextAction,{future:true}))}</dd></div>
-        <div><dt>Stage age</dt><dd>${stageDays} day${stageDays===1?'':'s'}</dd></div>
+        <div><dt>Owner</dt><dd>${escapeHtml(item.consultant_name||item.owner_name||(item.assigned_consultant_id?'Assigned':'Unassigned'))}</dd></div>
+        ${canOpenDetail
+          ?`<div><dt>Priority / fit</dt><dd>${escapeHtml(`${plainLabel(priority)} · ${plainLabel(fit)}`)}</dd></div>`
+          :`<div><dt>Sector</dt><dd>${escapeHtml(plainLabel(item.sector_key||item.industry))}</dd></div>`}
+        ${canOpenDetail
+          ?`<div><dt>Next action</dt><dd>${escapeHtml(relativeActivity(nextAction,{future:true}))}</dd></div>`
+          :`<div><dt>Subscription</dt><dd>${escapeHtml(plainLabel(item.subscription_status||'Not recorded'))}</dd></div>`}
+        ${canOpenDetail
+          ?`<div><dt>Stage age</dt><dd>${stageDays} day${stageDays===1?'':'s'}</dd></div>`
+          :`<div><dt>Last activity</dt><dd>${escapeHtml(relativeActivity(item.last_activity_at))}</dd></div>`}
       </dl>
       <div class="platform-card-badges">
+        ${CUI.status(stageLabel,'off')}
+        ${item.attention_due===true?CUI.status('Due now','no'):''}
+        ${attentionSeverity==='critical'?CUI.status('Critical','no'):''}
+        ${attentionSeverity==='warning'?CUI.status('Warning','new'):''}
+        ${attentionSeverity==='info'?CUI.status('Monitor','off'):''}
         ${stale?CUI.status('Stale','off'):''}${overdue?CUI.status('Overdue','no'):''}
+        ${prospectAttentionMatches(item,'clean')?CUI.status('Clean','ok'):''}
         ${completeness?CUI.status(`${Math.max(0,Math.min(100,completeness))}% complete`,completeness>=80?'ok':'new'):''}
         ${progress!==null?CUI.status(`${Math.max(0,Math.min(100,progress))}% onboarded`,progress===100?'ok':'new'):''}
         ${onboarding?CUI.status(plainLabel(onboarding),onboardingTone(onboarding)):''}
@@ -970,7 +1170,10 @@
         ${stage==='unmapped'?CUI.status('Unmapped','no'):''}
       </div>
       ${tags.length?`<div class="platform-card-tags" aria-label="Tags">${tags.slice(0,4).map(tag=>`<span>${escapeHtml(tag)}</span>`).join('')}</div>`:''}
-      ${managed?`<div class="platform-card-actions" data-card-actions><span class="muted small">Evidence-managed lifecycle</span></div>`:`<div class="platform-card-actions" data-card-actions>
+      ${contactActions}
+      ${managed?`<div class="platform-card-actions platform-card-managed" data-card-actions>${canOpenDetail
+        ?'<span class="muted small">Evidence-managed lifecycle</span>'
+        :'<a class="btn ghost sm" href="#/platform/firms">Open firm directory</a>'}</div>`:`<div class="platform-card-actions" data-card-actions>
         <label class="sr-only" for="move-${escapeHtml(id)}">Move ${escapeHtml(prospectCompany(item))} to stage</label>
         <select id="move-${escapeHtml(id)}" data-move-select>
           ${prospectStages.map(option=>`<option value="${option.key}"${option.key===stage?' selected':''}${['account_created','onboarding','activated'].includes(option.key)?' disabled':''}>${escapeHtml(option.label)}</option>`).join('')}
@@ -1024,13 +1227,38 @@
     if(['account_created','onboarding','activated'].includes(prospectStage(item)))return'on_track';
     return'not_started';
   }
+  function prospectIsStale(item) {
+    if(item.stale===true||item.is_stale===true)return true;
+    if(Object.prototype.hasOwnProperty.call(item,'attention_reason'))
+      return String(item.attention_reason||'').includes('stale');
+    return Number(item.days_unattended||0)>=7;
+  }
+  function prospectAttentionMatches(item,filter) {
+    if(!filter)return true;
+    const severity=String(item.attention_severity||'none').toLowerCase();
+    if(filter==='due')return item.attention_due===true;
+    if(['critical','warning','info'].includes(filter))return severity===filter;
+    if(filter==='stale')return prospectIsStale(item);
+    if(filter==='clean')return item.attention_due!==true
+      &&severity==='none'
+      &&!prospectIsStale(item)
+      &&onboardingHealth(item)!=='blocked';
+    return false;
+  }
+  function attentionFilterLabel(value) {
+    return{
+      due:'Due now',critical:'Critical',warning:'Warning',
+      info:'Monitor',stale:'Stale',clean:'Clean'
+    }[value]||plainLabel(value);
+  }
   function prospectMatchesFilters(item,filters) {
     const search=String(filters.search||'').toLowerCase();
     const searchable=[
       prospectCompany(item),prospectContact(item),
       prospectValue(item,'registration_number','company.registration_number'),
-      prospectValue(item,'primary_contact.email','contact_email'),
-      prospectValue(item,'primary_contact.phone','contact_phone'),
+      prospectValue(item,'sector_key','industry','company.industry'),
+      prospectValue(item,'boss_name','primary_contact.email','contact_email','boss_email'),
+      prospectValue(item,'boss_phone','primary_contact.phone','contact_phone'),
       prospectValue(item,'notes','qualification.notes')
     ].join(' ').toLowerCase();
     const consultant=prospectValue(item,'assigned_consultant_id','consultant_id','assigned_consultant','consultant.id');
@@ -1038,6 +1266,8 @@
     const segment=prospectValue(item,'segment','company.segment','industry','company.industry');
     return(!search||searchable.includes(search))
       &&(!filters.consultant||String(consultant)===filters.consultant)
+      &&(!filters.lane||operationalLaneFor(item)===filters.lane)
+      &&prospectAttentionMatches(item,filters.attention)
       &&(!filters.stage||prospectStage(item)===filters.stage)
       &&(!filters.source||source===filters.source)
       &&(!filters.region||String(region)===filters.region)
@@ -1049,33 +1279,54 @@
   }
   function onboardingFilterSummary(filters,CUI) {
     const labels={
-      consultant:'Owner',stage:'Stage',source:'Source',region:'Region',segment:'Segment',
+      lane:'Operational status',attention:'Attention',consultant:'Owner',stage:'Stage',source:'Source',region:'Region',segment:'Segment',
       priority:'Priority',qualification:'Qualification',nextAction:'Next action',health:'Health'
     };
     const active=Object.entries(labels).filter(([key])=>filters[key]);
     if(!active.length)return'';
-    return `<div class="platform-active-filters" aria-label="Active filters">${CUI.icon('search',{size:16})}<span>Active:</span>${active.map(([key,label])=>`<span class="chip">${escapeHtml(label)} · ${escapeHtml(plainLabel(filters[key]))}</span>`).join('')}</div>`;
+    return `<div class="platform-active-filters" aria-label="Active filters">${CUI.icon('search',{size:16})}<span>Active:</span>${active.map(([key,label])=>`<span class="chip">${escapeHtml(label)} · ${escapeHtml(key==='attention'?attentionFilterLabel(filters[key]):plainLabel(filters[key]))}</span>`).join('')}</div>`;
   }
-  function onboardingHtml({board,items,CUI,filters}) {
+  function onboardingHtml({board,items,CUI,filters,attentionSummary={}}) {
     const filtered=sortProspects(items.filter(item=>prospectMatchesFilters(item,filters)),filters.sort);
-    const byStage=Object.fromEntries([...prospectStages.map(stage=>stage.key),'unmapped'].map(stage=>[
-      stage,filtered.filter(item=>prospectStage(item)===stage)
+    const byLane=Object.fromEntries(operationalLanes.map(lane=>[
+      lane.key,filtered.filter(item=>operationalLaneFor(item)===lane.key)
     ]));
-    const columns=[...prospectStages,{key:'unmapped',label:'Unmapped'}];
     const owners=optionRows(items,item=>prospectValue(item,'assigned_consultant_id','consultant_id'),
       (_value,item)=>item.consultant_name||item.owner_name||'Assigned owner');
     const sources=optionRows(items,prospectSource),regions=optionRows(items,item=>prospectValue(item,'region','company.region'));
     const segments=optionRows(items,item=>prospectValue(item,'segment','company.segment','industry','company.industry'));
     const qualifications=optionRows(items,prospectFit,value=>plainLabel(value));
+    const attention=asObject(attentionSummary);
+    const attentionCounts={
+      due:Number(attention.due??items.filter(item=>prospectAttentionMatches(item,'due')).length),
+      critical:Number(attention.critical??items.filter(item=>prospectAttentionMatches(item,'critical')).length),
+      warning:Number(attention.warning??items.filter(item=>prospectAttentionMatches(item,'warning')).length),
+      info:Number(attention.info??items.filter(item=>prospectAttentionMatches(item,'info')).length),
+      stale:items.filter(item=>prospectAttentionMatches(item,'stale')).length,
+      clean:items.filter(item=>prospectAttentionMatches(item,'clean')).length
+    };
     return `${CUI.pageHeader({
       title:'Onboarding',
       subtitle:'Move from first contact to activation with evidence-backed onboarding gates and an auditable launch decision.',
       iconName:'setup',
       actions:`<button type="button" class="btn ghost" id="platformImportProspects">${CUI.icon('import',{size:17})}<span>Import</span></button><button type="button" class="btn" id="platformNewProspect">${CUI.icon('add',{size:17})}<span>New prospect</span></button>`
     })}
+      <section class="platform-attention-summary" aria-label="Onboarding attention queue">
+        ${[
+          ['due','Due now','no'],['critical','Critical','no'],['warning','Warning','new'],
+          ['info','Monitor','off'],['stale','Stale','off'],['clean','Clean','ok']
+        ].map(([key,label,tone])=>`<button type="button" class="platform-attention-card ${tone}" data-attention-quick="${key}" aria-label="Show ${escapeHtml(label.toLowerCase())} firms">
+          <span>${escapeHtml(label)}</span><b>${escapeHtml(attentionCounts[key])}</b>
+        </button>`).join('')}
+      </section>
       <form class="card platform-filter-panel" id="platformBoardFilters">
         <div class="platform-filter-primary">
           ${CUI.field({id:'platformProspectSearch',label:'Search every firm field',type:'search',value:filters.search,placeholder:'Company, UEN, contact, phone, email or notes'})}
+          ${CUI.field({id:'platformLaneFilter',label:'Operational status',control:'select',options:[{value:'',label:'All statuses'},...operationalLanes.map(lane=>({value:lane.key,label:lane.label}))].map(option=>({...option,selected:option.value===filters.lane}))})}
+          ${CUI.field({id:'platformAttentionFilter',label:'Attention',control:'select',options:[
+            ['','All firms'],['due','Due now'],['critical','Critical'],['warning','Warning'],
+            ['info','Monitor'],['stale','Stale'],['clean','Clean']
+          ].map(([value,label])=>({value,label,selected:value===filters.attention}))})}
           ${CUI.field({id:'platformProspectSort',label:'Sort',control:'select',options:[
             ['next_action','Next action'],['stage_age','Stage age'],['priority','Priority'],
             ['newest','Newest'],['oldest','Oldest'],['overdue','Overdue first'],['stale','Stale first'],['complete','Completeness']
@@ -1098,30 +1349,31 @@
         </details>
         ${onboardingFilterSummary(filters,CUI)}
       </form>
-      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Keyboard-complete pipeline</b><p class="small">Open a card for full detail, or use its stage menu and Move button. Drag and drop is an additional desktop shortcut. Unmapped is an import bucket, not an official stage.</p></div></div>
-      <div class="platform-kanban" aria-label="SME onboarding Kanban">${columns.map(column=>`<section class="platform-kanban-column" data-drop-stage="${column.key}" aria-labelledby="stage-${column.key}">
-        <header class="platform-kanban-head"><h2 id="stage-${column.key}">${escapeHtml(column.label)}</h2><span class="platform-count">${byStage[column.key].length}</span></header>
-        <div class="platform-card-list">${byStage[column.key].map(item=>prospectCardHtml(item,CUI)).join('')||`<p class="muted small" style="padding:10px 5px">No prospects</p>`}</div>
+      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Five clear operating lanes</b><p class="small">The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.</p></div></div>
+      <div class="platform-kanban" aria-label="SME onboarding Kanban">${operationalLanes.map(lane=>`<section class="platform-kanban-column" aria-labelledby="lane-${lane.key}">
+        <header class="platform-kanban-head"><div><h2 id="lane-${lane.key}">${escapeHtml(lane.label)}</h2><p>${escapeHtml(lane.description)}</p></div><span class="platform-count">${byLane[lane.key].length}</span></header>
+        <div class="platform-card-list">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI)).join('')||`<p class="muted small platform-lane-empty">No firms</p>`}</div>
       </section>`).join('')}</div>
       <div class="platform-prospect-list" aria-label="SME onboarding list">${filtered.map(item=>prospectCardHtml(item,CUI,{mobile:true})).join('')||CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>`;
   }
 
   function defaultOnboardingFilters(){
-    return{search:'',consultant:'',stage:'',source:'',region:'',segment:'',priority:'',
+    return{search:'',lane:'',attention:'',consultant:'',stage:'',source:'',region:'',segment:'',priority:'',
       qualification:'',nextAction:'',health:'',sort:'next_action'};
   }
   async function renderOnboarding(context,filters=defaultOnboardingFilters()) {
     const {main,CUI,sb,generation,isCurrent}=context;
     main.innerHTML=loading(CUI,'Onboarding','Loading the SME pipeline…','setup');
     try{
-      const [board,list]=await Promise.all([
+      const [directory,board,list]=await Promise.all([
+        fetchFirmDirectoryV88(sb,filters,{required:true}),
         rpc(sb,'platform_get_sme_board_v76',{p_consultant:filters.consultant||null}),
         rpc(sb,'platform_list_prospects_v76',{p_stage:null,p_consultant:filters.consultant||null,p_search:filters.search||null,p_limit:250,p_before:null})
       ]);
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
-      const items=await hydrateOnboardingCards(sb,flattenBoard(board,list));
+      const items=mergeFirmOnboardingItems(directory.items,flattenBoard(board,list));
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
-      main.innerHTML=onboardingHtml({board,items,CUI,filters});
+      main.innerHTML=onboardingHtml({board,items,CUI,filters,attentionSummary:directory.attention_summary});
       wireOnboarding({...context,board,items,filters});
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Onboarding')}
@@ -1132,6 +1384,8 @@
       event.preventDefault();
       renderOnboarding(context,{
         search:main.querySelector('#platformProspectSearch').value.trim(),
+        lane:main.querySelector('#platformLaneFilter').value,
+        attention:main.querySelector('#platformAttentionFilter').value,
         consultant:main.querySelector('#platformConsultantFilter').value,
         stage:main.querySelector('#platformStageFilter').value,
         source:main.querySelector('#platformSourceFilter').value,
@@ -1145,26 +1399,22 @@
       });
     };
     main.querySelector('#platformBoardClear').onclick=()=>renderOnboarding(context,defaultOnboardingFilters());
+    main.querySelectorAll('[data-attention-quick]').forEach(button=>button.onclick=()=>renderOnboarding(context,{
+      ...filters,attention:button.dataset.attentionQuick
+    }));
     main.querySelector('#platformNewProspect').onclick=()=>newProspectModal(context);
     main.querySelector('#platformImportProspects').onclick=()=>prospectImportModal(context);
     main.querySelectorAll('[data-prospect]').forEach(card=>{
       const item=items.find(row=>String(row.id||row.prospect_id)===card.dataset.prospect);
-      card.onclick=event=>{if(event.target.closest('[data-card-actions]'))return;openProspectDetail(item,context)};
-      card.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('[data-card-actions]')){event.preventDefault();openProspectDetail(item,context)}};
+      const open=()=>{
+        if(item?._has_prospect_detail===false)globalObject.location.hash='#/platform/firms';
+        else openProspectDetail(item,context);
+      };
+      card.onclick=event=>{if(event.target.closest('[data-card-actions]'))return;open()};
+      card.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('[data-card-actions]')){event.preventDefault();open()}};
       const moveButton=card.querySelector('[data-move]');
       if(moveButton)moveButton.onclick=event=>{
         event.stopPropagation();requestStageMove(item,card.querySelector('[data-move-select]').value,context);
-      };
-      card.ondragstart=event=>{card.setAttribute('aria-grabbed','true');event.dataTransfer.setData('text/prospect',card.dataset.prospect)};
-      card.ondragend=()=>card.setAttribute('aria-grabbed','false');
-    });
-    main.querySelectorAll('[data-drop-stage]').forEach(column=>{
-      column.ondragover=event=>{if(['account_created','onboarding','activated'].includes(column.dataset.dropStage))return;event.preventDefault();column.dataset.dragActive='true'};
-      column.ondragleave=()=>delete column.dataset.dragActive;
-      column.ondrop=event=>{
-        event.preventDefault();delete column.dataset.dragActive;
-        const item=items.find(row=>String(row.id||row.prospect_id)===event.dataTransfer.getData('text/prospect'));
-        if(item)requestStageMove(item,column.dataset.dropStage,context);
       };
     });
   }
@@ -1566,6 +1816,7 @@
     const termsAccepted=['accepted','signed'].includes(terms.contract_status);
     const primaryRow=contacts.find(row=>contactBase(row).is_primary)||contacts[0]||{},primary=contactBase(primaryRow);
     const whatsapp=contactExtended(primaryRow).whatsapp_e164||contactExtended(primaryRow).whatsapp_original||primary.phone;
+    const callPhone=normalizePlatformPhone(primary.phone),whatsappPhone=normalizePlatformPhone(whatsapp);
     return `<nav class="platform-detail-nav" aria-label="Prospect detail sections">
       ${[
         ['detail-overview','Overview'],['detail-company','Company'],['detail-contacts','Contacts'],
@@ -1575,8 +1826,8 @@
       ].map(([id,label])=>`<button type="button" data-detail-section="${id}">${escapeHtml(label)}</button>`).join('')}
     </nav>
     <div class="platform-actions platform-detail-shortcuts">
-      ${primary.phone?`<a class="btn ghost sm" href="tel:${escapeHtml(primary.phone)}">${CUI.icon('till',{size:16})}<span>Call</span></a>`:''}
-      ${whatsapp?`<a class="btn ghost sm" href="https://wa.me/${escapeHtml(String(whatsapp).replace(/\D/g,''))}" target="_blank" rel="noopener">${CUI.icon('customers',{size:16})}<span>WhatsApp</span></a>`:''}
+      ${callPhone?`<a class="btn ghost sm" href="tel:${escapeHtml(callPhone.tel)}">${CUI.icon('till',{size:16})}<span>Call</span></a>`:''}
+      ${whatsappPhone?`<a class="btn ghost sm" href="https://wa.me/${escapeHtml(whatsappPhone.wa)}" target="_blank" rel="noopener">${CUI.icon('customers',{size:16})}<span>WhatsApp</span></a>`:''}
       ${primary.email?`<a class="btn ghost sm" href="mailto:${escapeHtml(primary.email)}">${CUI.icon('empty',{size:16})}<span>Email</span></a>`:''}
       <button type="button" class="btn ghost sm" data-add-activity="meeting">${CUI.icon('appointments',{size:16})}<span>Schedule meeting</span></button>
       ${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>${CUI.icon('edit',{size:16})}<span>Edit</span></button>
@@ -2520,7 +2771,9 @@
         const published=asObject(profile.published_version);
         return CUI.card({title:profile.label||profile.sector_key,description:`${profile.sector_key} · ${profile.active?'Active':'Inactive'}`,body:published.id?`
           <div class="platform-sector-card-head"><div><b>Published version ${escapeHtml(published.version)}</b><p class="muted small">${escapeHtml(published.label||'')}</p></div>${CUI.status('Published','ok')}</div>
-          <div class="platform-module-list">${asArray(published.modules).map(module=>`<span class="chip on">${escapeHtml(module)}</span>`).join('')}</div>`:CUI.emptyState({iconName:'packages',title:'No published version',body:'Create and publish a bundle before assigning firms.'})});
+          <div class="platform-module-list" aria-label="${escapeHtml(profile.label||profile.sector_key)} modules">${asArray(published.modules).map(module=>`<span class="chip on" title="${escapeHtml(module)}">${escapeHtml(moduleLabel(module))}</span>`).join('')}</div>
+          <div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('edit',{size:16})}<span>Edit modules</span></button></div>`
+          :`${CUI.emptyState({iconName:'packages',title:'No published version',body:'Choose the standard modules and publish the first bundle.'})}<div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('add',{size:16})}<span>Choose modules</span></button></div>`});
       }).join('')||CUI.emptyState({iconName:'packages',title:'No sector profiles',body:'The platform returned no active sector profiles.'})}</div>
       <section class="card" style="margin-top:16px"><div class="platform-list-row"><div><h2 style="font-size:16px">Firm entitlements</h2><p class="muted small">${assignments.length} of ${businesses.length} firm${businesses.length===1?'':'s'} assigned.</p></div></div>
         ${businesses.length?CUI.table({caption:'Firm sector entitlements',headers:['Firm','Sector','Bundle','Assignment','Effective modules','Actions'],rows:businesses.map(firm=>[
@@ -2528,34 +2781,100 @@
           firm.sector_key?escapeHtml(firm.sector_key):CUI.status('Unassigned','off'),
           firm.bundle_version?`v${escapeHtml(firm.bundle_version)}`:'—',
           firm.assignment_version?`v${escapeHtml(firm.assignment_version)}`:'—',
-          firm.assignment_version?escapeHtml(asArray(firm.effective_modules).join(', ')):'—',
+          firm.assignment_version?escapeHtml(asArray(firm.effective_modules).map(moduleLabel).join(', ')):'—',
           `<div class="platform-actions"><button type="button" class="btn ghost sm" data-assign-firm="${escapeHtml(firm.business_id)}">${firm.assignment_version?'Reassign':'Assign'}</button>${firm.assignment_version?`<button type="button" class="btn ghost sm" data-override-firm="${escapeHtml(firm.business_id)}">Override</button>`:''}</div>`
         ])}):CUI.emptyState({iconName:'branch',title:'No firms',body:'No firms are available for sector assignment.'})}
       </section>`;
       main.querySelector('#platformNewBundle').onclick=()=>sectorBundleModal({profiles,context});
+      main.querySelectorAll('[data-edit-sector]').forEach(button=>button.onclick=()=>sectorBundleModal({
+        profiles,context,profile:profiles.find(item=>item.sector_key===button.dataset.editSector)
+      }));
       main.querySelectorAll('[data-assign-firm]').forEach(button=>button.onclick=()=>assignSectorModal(businesses.find(item=>item.business_id===button.dataset.assignFirm),profiles,context));
       main.querySelectorAll('[data-override-firm]').forEach(button=>button.onclick=()=>sectorOverrideModal(businesses.find(item=>item.business_id===button.dataset.overrideFirm),context));
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Sector modules')}
   }
-  function sectorBundleModal({profiles,context}) {
+  function modulePickerHtml(selectedModules=[]) {
+    const selected=new Set(asArray(selectedModules));
+    const groups=[...new Set(sectorModuleCatalog.map(module=>module.group))];
+    return `<fieldset class="platform-module-picker"><legend>Choose the standard modules</legend>
+      <p class="muted small">These modules become the sector template. Existing published versions remain unchanged.</p>
+      ${groups.map(group=>`<section class="platform-module-group" aria-labelledby="module-group-${group.toLowerCase().replace(/\W+/g,'-')}">
+        <h2 id="module-group-${group.toLowerCase().replace(/\W+/g,'-')}">${escapeHtml(group)}</h2>
+        <div class="platform-module-options">${sectorModuleCatalog.filter(module=>module.group===group).map(module=>`
+          <label class="platform-module-option">
+            <input type="checkbox" name="modules" value="${escapeHtml(module.key)}"${selected.has(module.key)?' checked':''}>
+            <span><b>${escapeHtml(module.label)}</b><small>${escapeHtml(module.key)}</small></span>
+          </label>`).join('')}</div>
+      </section>`).join('')}
+      <div class="platform-module-selection" aria-live="polite"><b data-module-count>${selected.size} selected</b><span data-module-summary>${selected.size?escapeHtml([...selected].map(moduleLabel).join(', ')):'Choose at least one module.'}</span></div>
+    </fieldset>`;
+  }
+  function sectorBundleReviewModal({profile,args,preview,context}) {
     const {CUI,sb}=context;
-    modal({title:'Create sector bundle version',submitLabel:'Preview version',CUI,body:`<div class="platform-form-grid">
-      ${CUI.field({id:'bundleSector',label:'Sector',control:'select',options:profiles.map(profile=>({value:profile.sector_key,label:profile.label||profile.sector_key})),attributes:'name="sector_key"'})}
-      ${CUI.field({id:'bundleLabel',label:'Version label',required:true,attributes:'name="label"'})}
-      <div class="wide">${CUI.field({id:'bundleModules',label:'Modules',hint:'Comma-separated module keys. Required dependencies are resolved by the backend.',required:true,attributes:'name="modules"'})}</div>
-    </div>`,onSubmit:async(form,controls)=>{
-      const args={p_sector_key:form.get('sector_key'),p_label:form.get('label'),p_modules:String(form.get('modules')).split(',').map(value=>value.trim()).filter(Boolean),p_dry_run:true};
-      const preview=await rpc(sb,'platform_create_sector_bundle_v75',args);controls.close();
-      previewThenConfirm({title:'Confirm new bundle version',preview,CUI,onConfirm:async(confirmControls)=>{
-        const created=await rpc(sb,'platform_create_sector_bundle_v75',{...args,p_dry_run:false});confirmControls.close();
-        const publishPreview=await rpc(sb,'platform_publish_sector_bundle_v75',{p_bundle_version:created.bundle_version_id,p_dry_run:true});
-        previewThenConfirm({title:'Publish bundle version',preview:publishPreview,CUI,onConfirm:async(publishControls)=>{
-          await rpc(sb,'platform_publish_sector_bundle_v75',{p_bundle_version:created.bundle_version_id,p_dry_run:false});
-          publishControls.close();await renderSectors(context);CUI.announce('Sector bundle published.');
-        }});
+    const current=asArray(profile?.published_version?.modules);
+    const requested=asArray(preview?.requested_modules).length?asArray(preview.requested_modules):args.p_modules;
+    const resolved=asArray(preview?.resolved_modules).length?asArray(preview.resolved_modules):requested;
+    const added=resolved.filter(module=>!current.includes(module));
+    const removed=current.filter(module=>!resolved.includes(module));
+    const version=preview?.next_version??preview?.version??'next';
+    let createdBundleId=null;
+    modal({title:`Review ${profile?.label||args.p_sector_key} bundle`,submitLabel:'Create and publish',CUI,body:`
+      <div class="platform-bundle-review">
+        <div class="platform-route-note">${CUI.icon('info',{size:19})}<div><b>New immutable version ${escapeHtml(version)}</b><p class="small">Publishing changes the default module template for future firm assignments. Previous versions stay available for audit.</p></div></div>
+        <dl class="platform-context-list">
+          <div><dt>Sector</dt><dd>${escapeHtml(profile?.label||plainLabel(args.p_sector_key))}</dd></div>
+          <div><dt>Version label</dt><dd>${escapeHtml(args.p_label)}</dd></div>
+          <div><dt>Modules after dependencies</dt><dd>${escapeHtml(resolved.length)}</dd></div>
+        </dl>
+        <section><h2>Included modules</h2><div class="platform-module-list">${resolved.map(module=>`<span class="chip on" title="${escapeHtml(module)}">${escapeHtml(moduleLabel(module))}</span>`).join('')}</div></section>
+        <div class="platform-bundle-diff">
+          <section><h2>Added</h2>${added.length?`<ul>${added.map(module=>`<li>${escapeHtml(moduleLabel(module))}</li>`).join('')}</ul>`:'<p class="muted small">No modules added.</p>'}</section>
+          <section><h2>Removed</h2>${removed.length?`<ul>${removed.map(module=>`<li>${escapeHtml(moduleLabel(module))}</li>`).join('')}</ul>`:'<p class="muted small">No modules removed.</p>'}</section>
+        </div>
+        ${resolved.length!==requested.length?`<p class="muted small">Nestly added ${escapeHtml(resolved.length-requested.length)} required dependenc${resolved.length-requested.length===1?'y':'ies'} automatically.</p>`:''}
+        <label class="platform-review-confirm"><input type="checkbox" name="reviewed" value="yes"><span>I reviewed the module list and understand this publishes a new immutable version.</span></label>
+      </div>`,onSubmit:async(form,controls)=>{
+        if(form.get('reviewed')!=='yes')throw new Error('Review the module list and tick the confirmation before publishing.');
+        if(!createdBundleId){
+          const created=await rpc(sb,'platform_create_sector_bundle_v75',{...args,p_dry_run:false});
+          createdBundleId=created.bundle_version_id;
+        }
+        await rpc(sb,'platform_publish_sector_bundle_v75',{p_bundle_version:createdBundleId,p_dry_run:true});
+        await rpc(sb,'platform_publish_sector_bundle_v75',{p_bundle_version:createdBundleId,p_dry_run:false});
+        controls.close();await renderSectors(context);CUI.announce(`${profile?.label||plainLabel(args.p_sector_key)} module bundle published.`);
       }});
+  }
+  function sectorBundleModal({profiles,context,profile=null}) {
+    const {CUI,sb}=context;
+    const initial=profile||profiles[0]||{},published=asObject(initial.published_version);
+    const defaultLabel=`${initial.label||plainLabel(initial.sector_key)} · ${new Date().toLocaleDateString('en-SG',{year:'numeric',month:'short',day:'2-digit'})}`;
+    const overlay=modal({title:published.id?`Edit ${initial.label||initial.sector_key} modules`:'Create sector bundle version',submitLabel:'Review version',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'bundleSector',label:'Sector',control:'select',options:profiles.map(item=>({value:item.sector_key,label:item.label||item.sector_key,selected:item.sector_key===initial.sector_key})),attributes:'name="sector_key"'})}
+      ${CUI.field({id:'bundleLabel',label:'Version label',required:true,value:defaultLabel,attributes:'name="label"'})}
+      <div class="wide" data-module-picker-host>${modulePickerHtml(asArray(published.modules))}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      const selected=form.getAll('modules').map(String);
+      if(!selected.length)throw new Error('Choose at least one module for this sector.');
+      const selectedProfile=profiles.find(item=>item.sector_key===form.get('sector_key'))||initial;
+      const args={p_sector_key:form.get('sector_key'),p_label:String(form.get('label')).trim(),p_modules:selected,p_dry_run:true};
+      const preview=await rpc(sb,'platform_create_sector_bundle_v75',args);
+      controls.close();sectorBundleReviewModal({profile:selectedProfile,args,preview,context});
     }});
+    const sectorSelect=overlay.querySelector('#bundleSector'),pickerHost=overlay.querySelector('[data-module-picker-host]');
+    const wirePicker=()=>{
+      const checkboxes=[...pickerHost.querySelectorAll('input[name="modules"]')];
+      const selected=checkboxes.filter(input=>input.checked).map(input=>input.value);
+      pickerHost.querySelector('[data-module-count]').textContent=`${selected.length} selected`;
+      pickerHost.querySelector('[data-module-summary]').textContent=selected.length?selected.map(moduleLabel).join(', '):'Choose at least one module.';
+    };
+    pickerHost.addEventListener('change',wirePicker);
+    sectorSelect.onchange=()=>{
+      const next=profiles.find(item=>item.sector_key===sectorSelect.value);
+      pickerHost.innerHTML=modulePickerHtml(asArray(next?.published_version?.modules));
+      overlay.querySelector('#bundleLabel').value=`${next?.label||plainLabel(sectorSelect.value)} · ${new Date().toLocaleDateString('en-SG',{year:'numeric',month:'short',day:'2-digit'})}`;
+      wirePicker();
+    };
   }
   function assignSectorModal(firm,profiles,context) {
     const {CUI,sb}=context;
@@ -3020,8 +3339,16 @@
     main.innerHTML=disconnectedRouteHtml(activeKey,CUI);CUI.focusRoute(main);
   }
 
-  globalObject.NestlyPlatformConsole = Object.freeze({isRoute,routeKey,render,routes,prospectStages});
+  globalObject.NestlyPlatformConsole = Object.freeze({
+    isRoute,routeKey,render,routes,prospectStages,operationalLanes,
+    operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
+    firmId,resolveEnterpriseSearchBusinessIds
+  });
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {isRoute,routeKey,routes,prospectStages};
+    module.exports = {
+      isRoute,routeKey,routes,prospectStages,operationalLanes,
+      operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
+      firmId,resolveEnterpriseSearchBusinessIds
+    };
   }
 })(typeof window !== 'undefined' ? window : globalThis);
