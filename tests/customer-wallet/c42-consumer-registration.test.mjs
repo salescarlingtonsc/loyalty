@@ -133,10 +133,11 @@ test('customer registration UI is a mobile phone OTP path with an explicit fail-
   assert.match(customerRoute, /This does not opt me into messages from any business/i);
   assert.match(customerRoute, /Resend available in 30 seconds/);
   assert.match(customerRoute, /customer_register_verified_phone/);
-  assert.match(app, /customer_claim_link_by_verified_phone/);
+  assert.match(app, /customer_join_business_from_qr_v89/);
   assert.match(customerRoute, /data\?\.outcome!=='registered'/);
-  assert.match(customerRoute, /if\(intent\)\{[\s\S]*nav\('#\/claim\?business='\+encodeURIComponent\(intent\)\)[\s\S]*takePendingCustomerDestination\(businesses\.length\?'#\/wallet':'#\/claim'\)/);
-  assert.match(customerRoute, /if\(S\.user\)[\s\S]*customer_get_profile[\s\S]*profile\?\.profile!==null[\s\S]*if\(!pendingCustomerBusinessSlug\)\{[\s\S]*nav\(takePendingCustomerDestination\('#\/wallet'\)\);return;\s*\}/i);
+  assert.match(customerRoute, /customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]*nav\('#\/join'\);return 'navigated'/);
+  assert.match(customerRoute, /nav\(takePendingCustomerDestination\('#\/wallet'\)\)/);
+  assert.match(customerRoute, /if\(S\.user\)[\s\S]*customer_get_profile[\s\S]*profile\?\.profile!==null[\s\S]*nav\(takePendingCustomerDestination\('#\/wallet'\)\);return;/i);
   assert.doesNotMatch(customerRoute, /[🎉🎁📱]/u);
 });
 

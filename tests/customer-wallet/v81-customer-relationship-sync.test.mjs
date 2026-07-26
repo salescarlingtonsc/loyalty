@@ -137,7 +137,7 @@ test('customer relationship sync retries a transient failure and caches only the
   assert.equal(harness.calls(), 2, 'a successful recovery may be reused for this user session');
 });
 
-test('customer relationship sync keeps schema-unavailable fallback terminal and refreshes personas after a linked retry', async () => {
+test('legacy relationship sync fallback remains bounded but customer surfaces never invoke it automatically', async () => {
   const app = await read('app/index.html');
   const harness = customerSyncHarness(customerSyncUiBlock(app), [
     { data: null, error: { code: 'PGRST202', message: 'function is not in the schema cache' } }
@@ -154,21 +154,21 @@ test('customer relationship sync keeps schema-unavailable fallback terminal and 
   const contextStart = app.indexOf('async function loadCustomerSurfaceContext');
   const contextEnd = app.indexOf('async function renderCustomerProgrammes', contextStart);
   const context = app.slice(contextStart, contextEnd);
-  const linkedAt = context.indexOf('if(relationshipSync.linked)');
-  const refreshAt = context.indexOf("await sb.rpc('get_my_personas')", linkedAt);
-  const qualifyAt = context.indexOf('customerSurfaceQualifies(profile,customer)', refreshAt);
-  assert.ok(linkedAt >= 0 && refreshAt > linkedAt && qualifyAt > refreshAt,
-    'a linked retry must refresh personas/programmes before destination qualification');
+  assert.doesNotMatch(context,/syncVerifiedCustomerRelationshipsOnce|customer_sync_verified_relationships_v81/);
+  assert.match(context,/customerSurfaceQualifies\(profile,customer\)/);
+  assert.match(context,/renderNoCustomerDestination\(staff\)/);
 
   const noDestination = app.slice(
     app.indexOf('function renderNoCustomerDestination'),
     app.indexOf('function customerSurfaceQualifies')
   );
-  assert.match(noDestination, /customerRelationshipSyncCanRecover\(\)/);
-  assert.match(noDestination, /customerRelationshipCheckActionHtml\(\)/);
-  assert.match(noDestination, /wireCustomerRelationshipCheck\(\(\)=>route\(\)\)/);
-  assert.ok((app.match(/customerRelationshipCheckActionHtml\(\)/g) || []).length >= 5,
-    'recoverable programme-empty states must expose the shared retry action');
+  assert.match(noDestination,/const relationshipRetry=customerRelationshipSyncCanRecover\(\)/);
+  assert.match(noDestination,/\$\{relationshipRetry\?[\s\S]*customerRelationshipCheckActionHtml\(\)/);
+  assert.match(noDestination,/if\(relationshipRetry\)wireCustomerRelationshipCheck/);
+  assert.match(app,/participating business[\s\S]{0,100}scan[\s\S]{0,50}Nestly QR/i,
+    'customer guidance must direct an in-person participating-business QR join without coupling the contract to exact copy');
+  assert.ok((app.match(/customerRelationshipCheckActionHtml\(\)/g)||[]).length<=2,
+    'the legacy retry helper may remain as a dormant compatibility fallback but not across customer programme surfaces');
 });
 
 test('v81 rollback suite covers ambiguity, historical evidence, replay, isolation, and pagination', async () => {

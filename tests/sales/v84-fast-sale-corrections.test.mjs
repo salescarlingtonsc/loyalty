@@ -96,14 +96,15 @@ test('workspace navigation cannot horizontally clip and route focus no longer sc
   assert.match(app,/target\.focus\(\{preventScroll:true\}\)/);
 });
 
-test('customer UI performs one verified relationship sync and exposes paginated transaction truth',()=>{
-  assert.match(app,/customerRelationshipSyncState=\{userId:null,attempted:false,result:null\}/);
-  assert.match(app,/customer_sync_verified_relationships_v81/);
-  assert.match(app,/if\(customerRelationshipSyncState\.attempted\)/);
-  assert.match(app,/error\.code==='PGRST202'\|\|error\.code==='42883'/);
-  assert.match(app,/if\(relationshipSync\.linked\)[\s\S]*sb\.rpc\('get_my_personas'\)/);
-  assert.match(app,/id="customerRelationshipCheck"/);
-  assert.match(app,/customerRelationshipSyncState=\{userId,attempted:false,result:null\}/);
+test('customer UI uses QR-authorized joining and exposes paginated transaction truth',()=>{
+  const surface=app.slice(
+    app.indexOf('async function loadCustomerSurfaceContext'),
+    app.indexOf('async function renderCustomerProgrammes')
+  );
+  assert.doesNotMatch(surface,/customer_sync_verified_relationships_v81|syncVerifiedCustomerRelationshipsOnce/);
+  assert.match(app,/customer_join_business_from_qr_v89/);
+  assert.match(app,/pendingCustomerJoinToken/);
+  assert.match(app,/No verified business links yet/);
   assert.match(app,/customer_get_transaction_history_v81/);
   assert.match(app,/p_business_slug:businessSlug,p_cursor:requestedCursor/);
   assert.match(app,/walletTransactionsMore/);

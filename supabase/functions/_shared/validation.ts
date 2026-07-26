@@ -17,6 +17,15 @@ export function validJoinPayload(body) {
     && (!body.email || (String(body.email).length <= 254 && EMAIL_PATTERN.test(String(body.email))));
 }
 
+export function validJoinTokenPayload(body) {
+  return !!body && TOKEN_PATTERN.test(String(body.join_token || ''))
+    && String(body.name || '').trim().length >= 2
+    && String(body.name || '').trim().length <= 100
+    && /^[3689][0-9]{7}$/.test(String(body.phone || ''))
+    && (body.consent === undefined || typeof body.consent === 'boolean')
+    && (!body.email || (String(body.email).length <= 254 && EMAIL_PATTERN.test(String(body.email))));
+}
+
 export function validBookingPayload(body) {
   const party = Number(body?.party);
   const preferred = Date.parse(String(body?.preferred || ''));

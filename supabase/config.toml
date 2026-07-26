@@ -59,5 +59,16 @@ verify_enabled = true
 enroll_enabled = false
 verify_enabled = false
 
+[auth.passkey]
+enabled = true
+
+[auth.webauthn]
+rp_display_name = "Nestly"
+rp_id = "nestly.asia"
+rp_origins = [
+  "https://nestly.asia",
+  "https://www.nestly.asia"
+]
+
 [auth.sms.test_otp]
 6581234567 = "888888"

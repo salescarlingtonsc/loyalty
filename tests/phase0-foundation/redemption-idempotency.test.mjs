@@ -40,7 +40,11 @@ test('every shipped redemption call sends a stable retry key', async () => {
   assert.match(app, /rewardRedemptionIdem\.has\(b\.dataset\.r\)/);
   const tillStart = app.indexOf('async function tillPage(){');
   const tillEnd = app.indexOf('async function salesPage(){',tillStart);
-  assert.doesNotMatch(app.slice(tillStart,tillEnd),/redeem_points|redeem_reward|redemptionIdem/);
+  const till=app.slice(tillStart,tillEnd);
+  assert.doesNotMatch(till,/redeem_points|redeem_reward(?:_at_context)?|redemptionIdem/);
+  assert.match(till,/openMerchantRedemptionScanner/,
+    'Quick earn may open only the merchant scanner for an already-pending customer QR redemption');
+  assert.match(app,/merchant_scan_redemption_qr_v89/);
 });
 
 test('operation table is RLS-protected and has no client write grant', async () => {

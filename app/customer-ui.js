@@ -40,6 +40,7 @@
     empty:'M4 5h16v14H4zM8 9h8M8 13h5',
     close:'M6 6l12 12M18 6 6 18',
     copy:'M8 8h12v12H8zM4 16H3V4h12v1',
+    scan:'M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4M7 12h10',
     edit:'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4'
   };
 

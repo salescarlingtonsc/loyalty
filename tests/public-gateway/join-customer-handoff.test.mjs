@@ -11,7 +11,7 @@ const app=await readFile(path.join(repoRoot,'app/index.html'),'utf8');
 const brand=await readFile(path.join(repoRoot,'app/brand-config.js'),'utf8');
 
 function extractedCustomerHandoffUrl(){
-  const source=join.match(/function customerHandoffUrl\(slug,currentUrl=location\.href\)\{[\s\S]*?\n\}/)?.[0];
+  const source=join.match(/function customerHandoffUrl\(joinToken,currentUrl=location\.href\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(source,'join page must expose its customer handoff URL builder');
   return vm.runInNewContext(`(${source})`,{URL,encodeURIComponent});
 }
@@ -22,20 +22,23 @@ function extractedBusinessIntentNormalizer(){
   return vm.runInNewContext(`(${source})`,{URL,URLSearchParams,decodeURIComponent});
 }
 
-test('successful public join links to customer registration with an encoded business intent',()=>{
+function extractedDestinationPriority(){
+  const source=app.match(/function customerRegistrationDestinationPriority\(joinToken,businessSlug\)\{[\s\S]*?\n\}/)?.[0];
+  assert.ok(source,'SPA must expose its post-auth customer destination priority');
+  return vm.runInNewContext(`(${source})`);
+}
+
+test('successful public join hands the opaque QR token to customer registration',()=>{
   assert.match(brand,/customerLabel:\s*'My Nestly'/);
   const customerHandoffUrl=extractedCustomerHandoffUrl();
-  const normalizeCustomerBusinessIntent=extractedBusinessIntentNormalizer();
-
-  const handoff=customerHandoffUrl('kopi-tiam','https://frenly.example/join.html?s=kopi-tiam');
-  assert.equal(handoff,'https://frenly.example/index.html#/customer?business=kopi-tiam');
-  assert.equal(normalizeCustomerBusinessIntent(handoff,'https://frenly.example/index.html'),'kopi-tiam',
-    'the SPA must consume the exact URL emitted by the join page');
+  const token='A'.repeat(43);
+  const handoff=customerHandoffUrl(token,'https://frenly.example/join.html?token=ignored');
+  assert.equal(handoff,`https://frenly.example/index.html#/join?token=${token}`);
   assert.equal(
-    customerHandoffUrl('shop / loyalty?x=1&y=2','https://frenly.example/tenant/app/join.html?s=ignored'),
-    'https://frenly.example/tenant/app/index.html#/customer?business=shop%20%2F%20loyalty%3Fx%3D1%26y%3D2'
+    customerHandoffUrl('token_with-safe_chars_12345678901234567890','https://frenly.example/tenant/app/join.html?token=ignored'),
+    'https://frenly.example/tenant/app/index.html#/join?token=token_with-safe_chars_12345678901234567890'
   );
-  assert.match(join,/renderSuccess\(\(data&&data\.business_name\)\|\|page\.name,slug\)/);
+  assert.match(join,/renderSuccess\(\(data&&data\.business_name\)\|\|page\.name,joinToken\)/);
   assert.match(join,/id="openMyFrenly"[\s\S]*Create or open \$\{esc\(BRAND\.customerLabel\)\}/);
 });
 
@@ -55,25 +58,17 @@ test('SPA normalizes only the canonical business slug contract from raw, join, p
   assert.match(app,/return \/\^\[a-z0-9\]\[a-z0-9-\]\{1,62\}\$\/\.test\(normalized\)\?normalized:''/);
 });
 
-test('SPA preserves the join intent through registration and requires deliberate claim confirmation',()=>{
+test('SPA preserves opaque join authority through registration and removes typed-slug claiming',()=>{
   const route=app.match(/async function route\(\)\{[\s\S]*?\/\* ---------- customer wallet ---------- \*\//)?.[0]||'';
   const registration=app.match(/async function runCustomerRegistrationProfileSubmission\([^\n]*\)[\s\S]*?(?=const CUSTOMER_PRIMARY_NAV)/)?.[0]||'';
   const claim=app.match(/async function renderCustomerClaim\(\)[\s\S]*?(?=function renderCustomerWalletUnavailable)/)?.[0]||'';
 
-  assert.match(route,/h\.startsWith\('#\/customer\?'\)[\s\S]*pendingCustomerBusinessSlug=normalizeCustomerBusinessIntent/);
-  assert.match(route,/h==='#\/customer'[\s\S]*h\.startsWith\('#\/customer\?'\)\) return renderCustomerRegistration\(isRouteCurrent\)/);
-  assert.match(registration,/pendingCustomerBusinessSlug[\s\S]*nav\('#\/claim\?business='\+encodeURIComponent\(intent\)\)/);
-  assert.match(registration,/businesses\.some\(persona=>persona\.business_slug===intent\)[\s\S]*takePendingCustomerDestination\('#\/wallet\/'\+encodeURIComponent\(intent\)\)[\s\S]*nav\(destination\)/);
-  assert.match(claim,/value="\$\{esc\(businessIntent\)\}"/);
-  assert.match(claim,/normalizeCustomerBusinessIntent\(\$\('claimSlug'\)\.value\)/);
-  assert.match(claim,/\$\('claimStart'\)\.onclick=async\(\)=>\{/,
-    'prefilling must not auto-claim without the customer pressing Claim');
-  assert.match(claim,/const isClaimCurrent=\(\)=>customerWalletRenderEpoch===claimRenderEpoch/);
-  assert.ok((claim.match(/if\(!isClaimCurrent\(\)\)return;/g)||[]).length>=4,
-    'late intent/persona/claim responses must not redirect or repaint a newer route');
-  assert.match(claim,/outcome==='linked'[\s\S]*nav\('#\/wallet\/'\+encodeURIComponent\(slug\)\);return/);
-  assert.match(claim,/some\(persona=>persona\.business_slug===businessIntent\)[\s\S]*nav\('#\/wallet\/'\+encodeURIComponent\(businessIntent\)\);return/);
-  assert.match(claim,/if\(invitationToken\)\{[\s\S]*history\.replaceState\(null,'',`\$\{location\.pathname\}\$\{location\.search\}#\/claim`\)/);
+  assert.match(route,/h\.startsWith\('#\/join\?'\)[\s\S]*rememberPendingCustomerJoinToken\(joinToken\)/);
+  assert.match(route,/if\(!S\.user&&h==='#\/join'\)return renderCustomerRegistration/);
+  assert.match(registration,/customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]*nav\('#\/join'\)/);
+  assert.match(app,/customer_join_business_from_qr_v89/);
+  assert.match(app,/CUSTOMER_JOIN_SESSION_KEY='nestly\.customer\.pendingJoinToken'/);
+  assert.match(claim,/if\(!invitationToken\)[\s\S]*Customers cannot search for or manually link a business/);
 });
 
 test('a delayed QR destination response cannot redirect after a newer route starts',async()=>{
@@ -86,7 +81,9 @@ test('a delayed QR destination response cannot redirect after a newer route star
   const navigations=[];
   const context={
     S:{user:{id:'customer-1'}},
+    customerRegistrationDestinationPriority:extractedDestinationPriority(),
     pendingCustomerBusinessSlug:'kopi-tiam',
+    pendingCustomerJoinToken:'',
     loadCustomerFeatureCapabilities:async()=>({customer_phone_registration:true,_load_error:false}),
     sb:{rpc:async(name)=>{
       if(name==='customer_get_profile')return {data:{profile:{full_name:'Demo Customer'}},error:null};
@@ -145,7 +142,9 @@ test('post-registration destination retry never issues a second registration RPC
       throw new Error(`unexpected RPC ${name}`);
     }},
     pendingCustomerBusinessSlug:'kopi-tiam',
+    pendingCustomerJoinToken:'',
     pendingCustomerDestination:'',
+    customerRegistrationDestinationPriority:extractedDestinationPriority(),
     takePendingCustomerDestination:fallback=>fallback,
     nav:value=>navigations.push(value),
     encodeURIComponent
@@ -184,7 +183,9 @@ test('successful customer profile setup returns to the requested customer destin
       throw new Error(`unexpected RPC ${name}`);
     }},
     pendingCustomerBusinessSlug:'',
+    pendingCustomerJoinToken:'',
     pendingCustomerDestination:'#/customer/bookings',
+    customerRegistrationDestinationPriority:extractedDestinationPriority(),
     takePendingCustomerDestination(fallback=''){
       const destination=context.pendingCustomerDestination;
       context.pendingCustomerDestination='';
@@ -247,5 +248,5 @@ test('join request, consent, Turnstile and guest isolation contracts stay unchan
   assert.doesNotMatch(join,/<input[^>]+id="f_consent"[^>]+\bchecked\b/);
   assert.match(join,/action:'public_join'/);
   assert.match(join,/turnstile_token:turnstileToken/);
-  assert.match(join,/publicJoin\(\{body:\{slug,name:nameEl\.value\.trim\(\),phone:cleanPhone\(\),\s*email:emailEl\.value\.trim\(\)\|\|null,consent:consentEl\.checked,\s*turnstile_token:turnstileToken\}\}\)/);
+  assert.match(join,/publicJoin\(\{body:\{join_token:joinToken,name:nameEl\.value\.trim\(\),phone:cleanPhone\(\),\s*email:emailEl\.value\.trim\(\)\|\|null,consent:consentEl\.checked,\s*turnstile_token:turnstileToken\}\}\)/);
 });

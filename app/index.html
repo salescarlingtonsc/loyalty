@@ -645,6 +645,8 @@ input[type=range]:focus{box-shadow:none}
 .customer-home-quick b{display:block;font-size:14px}.customer-home-quick p{margin-top:3px;line-height:1.4}
 .customer-programme-list,.customer-booking-list{display:grid;gap:12px}
 .customer-programme-card{display:block;min-height:44px}
+.customer-programme-guide{display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid var(--hair);border-radius:13px;background:#fff}
+.customer-programme-guide .cui-icon{flex:0 0 auto;color:var(--coral)}
 .customer-booking-business{padding:18px}
 .customer-booking-business .wallet-appt:last-child{border-bottom:0}
 .customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.55fr);gap:14px;align-items:start}
@@ -669,6 +671,14 @@ input[type=range]:focus{box-shadow:none}
 .wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .wallet-rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
 .wallet-reward{border:1px solid var(--hair);border-radius:7px;padding:14px;background:#fff;min-width:0}
+.wallet-reward-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.redemption-qr{display:grid;place-items:center;min-height:220px;margin:16px auto;padding:16px;border:1px solid var(--hair);border-radius:14px;background:#fff}
+.redemption-qr img,.redemption-qr canvas{max-width:100%;height:auto}
+.scanner-video{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#17161a}
+.scanner-frame{position:relative;margin-top:14px}.scanner-frame::after{content:'';position:absolute;inset:14%;border:3px solid rgba(255,255,255,.9);border-radius:16px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.2)}
+.scanner-fallback{margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
+.checkrow{display:flex;align-items:flex-start;gap:12px;min-height:48px;margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;color:var(--ink);cursor:pointer}
+.checkrow input[type="checkbox"]{width:22px;min-width:22px;min-height:22px;margin-top:1px;accent-color:var(--coral)}
 .wallet-reward img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:5px;margin-bottom:10px;background:var(--bg)}
 .wallet-line{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--hair)}
 .wallet-line:last-child{border-bottom:0}
@@ -744,10 +754,11 @@ input[type=range]:focus{box-shadow:none}
 <script src="/customer-ui.js"></script>
 <script src="/grow-recommender.js"></script>
 <script src="/platform-crm-utils.js"></script>
-<script src="/platform-console.js?v=20260726-v88"></script>
+<script src="/platform-console.js?v=20260727-v89"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 <script>
 /* ============ Nestly app (legacy runtime/API identifiers remain compatible) ============ */
@@ -764,7 +775,8 @@ const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
    SPA, which is why a browser refresh was silently losing the current route ("refresh does
    nothing unless I retype the URL"). We don't use Supabase's own hash-based OAuth redirect
    flow here, so it's safe to turn off. */
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit'}});
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit',
+  experimental:{passkey:true}}});
 let buildIdentity=Object.freeze({available:false});
 const buildIdentityLabel=()=>buildIdentity.available
   ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';
@@ -1026,6 +1038,7 @@ let routeDispose=()=>{};
 function disposeCurrentRoute(){
   const dispose=routeDispose;routeDispose=()=>{};
   dispose({restoreFocus:false});
+  activeMerchantScannerCleanup();
   document.querySelectorAll('.appointment-detail-modal').forEach(dialog=>dialog.remove());
 }
 /* realtime notifications (bell) — module-level, plain JS vars only (no localStorage) */
@@ -1059,6 +1072,18 @@ let customerRelationshipSyncState={userId:null,attempted:false,result:null};
 let pendingCustomerInvitationToken='';
 let pendingCustomerBusinessSlug='';
 let pendingCustomerDestination='';
+const CUSTOMER_JOIN_SESSION_KEY='nestly.customer.pendingJoinToken';
+let pendingCustomerJoinToken=(()=>{try{
+  const token=sessionStorage.getItem(CUSTOMER_JOIN_SESSION_KEY)||'';
+  return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
+}catch{return ''}})();
+function rememberPendingCustomerJoinToken(token){
+  pendingCustomerJoinToken=/^[A-Za-z0-9_-]{20,512}$/.test(String(token||''))?String(token):'';
+  try{
+    if(pendingCustomerJoinToken)sessionStorage.setItem(CUSTOMER_JOIN_SESSION_KEY,pendingCustomerJoinToken);
+    else sessionStorage.removeItem(CUSTOMER_JOIN_SESSION_KEY);
+  }catch{}
+}
 function normalizeCustomerBusinessIntent(value,currentUrl=location.href){
   const raw=String(value??'').trim();
   if(!raw)return '';
@@ -1105,10 +1130,17 @@ function takePendingCustomerDestination(fallback=''){
   pendingCustomerDestination='';
   return destination||fallback;
 }
+function customerRegistrationDestinationPriority(joinToken,businessSlug){
+  if(String(joinToken||''))return 'join';
+  if(String(businessSlug||''))return 'business';
+  return 'customer';
+}
 function resetClientSessionState({preserveInvitation=false}={}){
   const invitation=preserveInvitation?pendingCustomerInvitationToken:'';
+  const joinToken=preserveInvitation?pendingCustomerJoinToken:'';
+  if(!preserveInvitation)rememberPendingCustomerJoinToken('');
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[]};
-  customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;pendingCustomerBusinessSlug='';pendingCustomerDestination='';selectedBranchId=null;profileOpen=false;
+  customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';pendingCustomerDestination='';selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';settingsActiveTab='workspace';
 }
 const $=(id)=>document.getElementById(id);
@@ -1135,6 +1167,226 @@ const showToast=message=>{
 };
 const toast=m=>{const message=String(m??'');showToast(message);CUI.announce(message)};
 const fail=e=>{console.error(e);const message=e?.message||String(e);showToast(message);CUI.announce(message,{assertive:true})};
+function redemptionTokenFromQr(value,currentUrl=location.href){
+  const raw=String(value??'').trim();
+  if(!raw)return '';
+  if(/^[A-Za-z0-9_-]{20,512}$/.test(raw))return raw;
+  const prefixed=raw.match(/^nestly:redemption:([A-Za-z0-9_-]{20,512})$/i);
+  if(prefixed)return prefixed[1];
+  try{
+    const url=new URL(raw,currentUrl);
+    const hashParams=new URLSearchParams((url.hash.split('?')[1]||''));
+    const token=url.searchParams.get('redemption')||url.searchParams.get('token')
+      ||hashParams.get('redemption')||hashParams.get('token')||'';
+    return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
+  }catch{return ''}
+}
+let activeMerchantScannerCleanup=()=>{};
+function merchantRedemptionReceiptView(data={}){
+  const kind=data.redemption_kind==='classic_points'?'classic_points':'catalog_reward';
+  const creditCents=Math.max(0,Number(data.credit_cents||0));
+  return {
+    kind,
+    customerName:String(data.customer_name||'Customer'),
+    rewardLabel:String(data.reward_label||(kind==='classic_points'?'Points to store credit':'Reward')),
+    pointsSpent:Math.max(0,Number(data.points_spent||0)),
+    creditCents,
+    operationId:String(data.operation_id||data.intent_id||''),
+    fulfilment:kind==='classic_points'
+      ?`Store credit of ${money(creditCents)} has been added to the customer’s programme.`
+      :'Provide the reward shown above to the customer now. The scan records the points redemption but does not hand over a physical item.'
+  };
+}
+function merchantRedemptionReceiptHtml(data={}){
+  const receipt=merchantRedemptionReceiptView(data);
+  return `<div class="row"><div><h2 id="merchantScannerTitle">Redemption confirmed</h2><p class="muted small" style="margin-top:5px">Server receipt for this completed scan.</p></div><span class="spacer"></span><span class="pill ok">Completed</span></div>
+    <dl class="receipt-detail" style="margin-top:16px">
+      <div><dt>Customer</dt><dd>${esc(receipt.customerName)}</dd></div>
+      <div><dt>Reward</dt><dd>${esc(receipt.rewardLabel)}</dd></div>
+      <div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>
+      ${receipt.creditCents?`<div><dt>Store credit</dt><dd>${esc(money(receipt.creditCents))}</dd></div>`:''}
+      <div><dt>Operation reference</dt><dd><code>${esc(receipt.operationId||'Unavailable')}</code></dd></div>
+    </dl>
+    <div class="platform-route-note" style="margin-top:14px">${CUI.icon('info',{size:18})}<p class="small">${esc(receipt.fulfilment)}</p></div>
+    <button class="btn" id="merchantScannerReceiptClose" type="button" style="width:100%;margin-top:16px">Close receipt</button>`;
+}
+function customerRewardCanRedeem(reward,redemptionEnabled){
+  if(redemptionEnabled!==true||reward?.availability!=='available_at_counter')return false;
+  return reward?.redemption_kind==='classic_points'
+    ||(reward?.redemption_kind==='catalog_reward'&&!!reward?.id);
+}
+function customerRedemptionIntentArgsV89({businessId,reward,idempotencyKey}){
+  const kind=reward?.redemption_kind==='classic_points'?'classic_points':'catalog_reward';
+  return {
+    p_business:businessId,
+    p_reward:kind==='classic_points'?null:reward?.id,
+    p_idempotency_key:idempotencyKey,
+    p_redemption_kind:kind
+  };
+}
+function openMerchantRedemptionScanner({businessId,isCurrent=()=>true,onComplete=()=>{}}={}){
+  activeMerchantScannerCleanup();
+  const overlay=document.createElement('div');
+  overlay.className='modal appointment-detail-modal';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','merchantScannerTitle');
+  overlay.innerHTML=`<section class="modal-card" style="width:520px"><div class="row"><div><h2 id="merchantScannerTitle">Scan customer redemption</h2><p class="muted small" style="margin-top:5px">The reward remains pending until this business confirms the customer’s QR.</p></div><span class="spacer"></span><button class="btn ghost sm" id="merchantScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
+    <div class="scanner-frame" id="merchantScannerFrame" hidden><video class="scanner-video" id="merchantScannerVideo" playsinline muted aria-label="Camera preview for customer redemption QR"></video></div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="merchantScannerCamera" type="button">${CUI.icon('scan',{size:18})}<span>Use camera</span></button><span class="muted small" id="merchantScannerCapability"></span></div>
+    <div class="scanner-fallback"><label for="merchantScannerImage">Or choose a QR image</label><input id="merchantScannerImage" type="file" accept="image/*" capture="environment">
+      <details style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="merchantScannerToken">Paste the QR content</label><input id="merchantScannerToken" type="text" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="merchantScannerConfirm" type="button" style="margin-top:10px">Confirm redemption</button></details>
+    </div><p id="merchantScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
+  document.body.appendChild(overlay);
+  const video=overlay.querySelector('#merchantScannerVideo');
+  const frame=overlay.querySelector('#merchantScannerFrame');
+  const status=overlay.querySelector('#merchantScannerStatus');
+  const camera=overlay.querySelector('#merchantScannerCamera');
+  const decoderAvailable=typeof globalThis.jsQR==='function';
+  const cameraAvailable=!!navigator.mediaDevices?.getUserMedia;
+  const scanCanvas=document.createElement('canvas'),scanContext=scanCanvas.getContext('2d',{willReadFrequently:true});
+  let stream=null,frameHandle=0,submitting=false,closed=false;
+  const stopCamera=()=>{
+    if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;
+    if(stream)stream.getTracks().forEach(track=>track.stop());
+    stream=null;if(video)video.srcObject=null;
+  };
+  const close=()=>{
+    if(closed)return;closed=true;stopCamera();overlay.remove();
+    if(activeMerchantScannerCleanup===close)activeMerchantScannerCleanup=()=>{};
+  };
+  activeMerchantScannerCleanup=close;
+  const submit=async value=>{
+    if(submitting||closed||!isCurrent())return;
+    const token=redemptionTokenFromQr(value);
+    if(!token){status.textContent='That is not a Nestly redemption QR. Ask the customer to open Redeem again.';return}
+    submitting=true;status.textContent='Confirming this redemption…';
+    const {data,error}=await sb.rpc('merchant_scan_redemption_qr_v89',{
+      p_business:businessId,p_qr_token:token,p_idempotency_key:crypto.randomUUID()
+    });
+    if(closed||!isCurrent())return;
+    submitting=false;
+    if(error){status.textContent=error.code==='PGRST202'||error.code==='42883'
+      ?'Redemption scanning needs the latest Nestly service update.'
+      :'This redemption could not be confirmed. It may be expired, already used, or for another business.';return}
+    if(data?.status!=='completed'&&data?.status!=='redeemed'){
+      status.textContent=`Redemption was not completed (${String(data?.status||'unknown').replaceAll('_',' ')}).`;return;
+    }
+    stopCamera();
+    const panel=overlay.querySelector('.modal-card');
+    panel.innerHTML=merchantRedemptionReceiptHtml(data);
+    panel.querySelector('#merchantScannerReceiptClose').onclick=close;
+    panel.querySelector('#merchantScannerReceiptClose').focus();
+    toast(data?.replayed===true?'Redemption already confirmed':'Redemption confirmed');onComplete(data);
+  };
+  const decodeSource=(source,width,height)=>{
+    if(!decoderAvailable||!scanContext||!width||!height)return '';
+    const scale=Math.min(1,1200/Math.max(width,height));
+    scanCanvas.width=Math.max(1,Math.round(width*scale));scanCanvas.height=Math.max(1,Math.round(height*scale));
+    scanContext.drawImage(source,0,0,scanCanvas.width,scanCanvas.height);
+    const pixels=scanContext.getImageData(0,0,scanCanvas.width,scanCanvas.height);
+    return globalThis.jsQR(pixels.data,pixels.width,pixels.height,{inversionAttempts:'attemptBoth'})?.data||'';
+  };
+  const detectFrame=async()=>{
+    if(closed||!stream||submitting)return;
+    try{
+      const value=decodeSource(video,video.videoWidth,video.videoHeight);
+      if(value){
+        await submit(value);
+        if(!closed&&stream)frameHandle=requestAnimationFrame(detectFrame);
+        return;
+      }
+    }catch{}
+    frameHandle=requestAnimationFrame(detectFrame);
+  };
+  overlay.querySelector('#merchantScannerClose').onclick=close;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+  camera.disabled=!(decoderAvailable&&cameraAvailable);
+  overlay.querySelector('#merchantScannerCapability').textContent=camera.disabled
+    ?'Live scanning is not supported by this browser. Choose a QR image instead.':'Point the camera at the customer’s QR.';
+  camera.onclick=async()=>{
+    if(camera.disabled)return;
+    camera.disabled=true;status.textContent='Starting camera…';
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+      if(closed){stopCamera();return}
+      video.srcObject=stream;await video.play();frame.hidden=false;status.textContent='Hold the QR inside the frame.';
+      detectFrame();
+    }catch{
+      camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image or paste the QR content.';
+    }
+  };
+  overlay.querySelector('#merchantScannerImage').onchange=async event=>{
+    const file=event.target.files?.[0];if(!file)return;
+    if(!decoderAvailable){status.textContent='This browser cannot read QR images. Paste the QR content instead.';return}
+    status.textContent='Reading QR image…';
+    try{
+      let source=null,revoke='';
+      if(typeof createImageBitmap==='function')source=await createImageBitmap(file);
+      else{
+        revoke=URL.createObjectURL(file);source=new Image();
+        await new Promise((resolve,reject)=>{source.onload=resolve;source.onerror=reject;source.src=revoke});
+      }
+      const value=decodeSource(source,source.width,source.height);
+      source.close?.();if(revoke)URL.revokeObjectURL(revoke);
+      if(!value)throw new Error('not found');
+      await submit(value);
+    }catch{status.textContent='No Nestly redemption QR was found in that image.'}
+  };
+  overlay.querySelector('#merchantScannerConfirm').onclick=()=>submit(overlay.querySelector('#merchantScannerToken').value);
+  overlay.querySelector('#merchantScannerToken').addEventListener('keydown',event=>{if(event.key==='Enter')submit(event.currentTarget.value)});
+  overlay.querySelector('#merchantScannerClose').focus();
+}
+function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}={}){
+  const token=String(intent?.qr_token||'');
+  if(!token)return;
+  const overlay=document.createElement('div');
+  overlay.className='modal appointment-detail-modal';overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerRedemptionQrTitle');
+  overlay.innerHTML=`<section class="modal-card" style="width:460px;text-align:center"><div class="row"><div style="text-align:left"><h2 id="customerRedemptionQrTitle">${esc(rewardName||'Redeem reward')}</h2><p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code to complete the redemption.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerRedemptionQrClose" type="button" aria-label="Close redemption QR">${CUI.icon('close',{size:18})}</button></div>
+    <div class="redemption-qr" id="customerRedemptionQr" aria-label="Pending redemption QR code"></div>
+    <span class="pill new" id="customerRedemptionQrState">Pending merchant scan</span>
+    <p class="muted small" id="customerRedemptionQrStatus" role="status" aria-live="polite" style="margin-top:10px">Your points are not redeemed until the business scans and confirms this QR.${intent?.expires_at?` This code expires ${esc(walletDate(intent.expires_at,true))}.`:''}</p>
+    <div class="row" style="margin-top:16px"><button class="btn danger" id="customerRedemptionQrCancel" type="button">Cancel redemption</button><button class="btn ghost" id="customerRedemptionQrDone" type="button">Close — keep pending</button></div></section>`;
+  document.body.appendChild(overlay);
+  const qrValue=`${location.origin}${location.pathname}#/redeem?token=${encodeURIComponent(token)}`;
+  new QRCode(overlay.querySelector('#customerRedemptionQr'),{text:qrValue,width:220,height:220,correctLevel:QRCode.CorrectLevel.M});
+  const close=()=>{overlay.remove();onClose()};
+  overlay.querySelector('#customerRedemptionQrClose').onclick=close;
+  overlay.querySelector('#customerRedemptionQrDone').onclick=close;
+  const cancel=overlay.querySelector('#customerRedemptionQrCancel');
+  cancel.onclick=async()=>{
+    if(!intent?.intent_id||!confirm('Cancel this pending redemption QR? No points will be redeemed.'))return;
+    cancel.disabled=true;
+    const status=overlay.querySelector('#customerRedemptionQrStatus');
+    status.textContent='Cancelling this redemption…';
+    const slot='nestly.customer.cancelRedemption';
+    const {data,error}=await sb.rpc('customer_cancel_redemption_intent_v89',{
+      p_intent:intent.intent_id,
+      p_idempotency_key:writeAttemptKey(slot,String(intent.intent_id))
+    });
+    if(!overlay.isConnected)return;
+    if(error){
+      cancel.disabled=false;
+      status.textContent='This redemption could not be cancelled. It may already be completed or expired. Refresh your programme before trying again.';
+      return;
+    }
+    const state=String(data?.status||'');
+    if(state!=='cancelled'){
+      cancel.disabled=false;
+      status.textContent=`This redemption is ${state.replaceAll('_',' ')||'no longer pending'}.`;
+      return;
+    }
+    clearWriteAttempt(slot);
+    overlay.querySelector('#customerRedemptionQr').replaceChildren();
+    overlay.querySelector('#customerRedemptionQrState').className='pill off';
+    overlay.querySelector('#customerRedemptionQrState').textContent='Cancelled';
+    status.textContent='Redemption cancelled. No points were redeemed.';
+    cancel.remove();
+    overlay.querySelector('#customerRedemptionQrDone').textContent='Close';
+  };
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+  overlay.querySelector('#customerRedemptionQrClose').focus();
+}
 /* --- Idempotent write-attempt key (survives a full page re-render) -------------------------
    Safety-remediation house pattern — the same discipline as the Quick-earn cart's `saleIdem`
    / per-line uuid keys and retentionPage's sessionStorage retry key. One stable uuid per
@@ -1294,6 +1546,13 @@ async function route(){
         pendingCustomerDestination='';
       }
     }
+    if(h.startsWith('#/join?')){
+      const joinParams=new URLSearchParams(h.split('?')[1]||'');
+      const joinToken=String(joinParams.get('token')||'').trim();
+      rememberPendingCustomerJoinToken(joinToken);
+      history.replaceState(null,'',`${location.pathname}${location.search}#/join`);
+      h='#/join';
+    }
     const {data:{session}}=await sb.auth.getSession();
     if(!isRouteCurrent())return;
     S.user=session?.user||null;
@@ -1307,10 +1566,11 @@ async function route(){
         :'';
       return renderCustomerRegistration(isRouteCurrent);
     }
+    if(!S.user&&h==='#/join')return renderCustomerRegistration(isRouteCurrent);
     if(!S.user)return renderAuth('in',{admin:h==='#/platform'||h.startsWith('#/platform/')});
     /* Platform routes are resolved before workspace discovery/onboarding. The platform
-       console performs its authoritative check by loading the guarded super-admin roster,
-       so a legitimate platform operator does not need to own a tenant workspace first. */
+       console derives the active role, module rights and sales scope from auth.uid() through
+       v89 before it renders navigation or data, so tenant ownership is not required. */
     const platformConsole=globalThis.NestlyPlatformConsole;
     if(platformConsole?.isRoute(h)){
       const workspaceHash=S.biz?.slug
@@ -1339,6 +1599,7 @@ async function route(){
       return renderOnboard();
     }
     if(h==='#/claim'||h.startsWith('#/claim?')) return renderCustomerClaim();
+    if(h==='#/join')return renderCustomerQrJoin();
     if(h==='#/customer/programmes')return renderCustomerProgrammes();
     if(h==='#/customer/bookings')return renderCustomerBookings();
     if(h==='#/customer/messages')return renderCustomerMessages();
@@ -1646,6 +1907,10 @@ function renderCustomerRegistrationDestinationRetry(isRouteCurrent=()=>true){
 }
 async function resolveCustomerRegistrationDestination(isRouteCurrent=()=>true,origin=null){
   const isCurrent=()=>isRouteCurrent()&&(!origin||origin.isConnected);
+  if(customerRegistrationDestinationPriority(pendingCustomerJoinToken,pendingCustomerBusinessSlug)==='join'){
+    if(!isCurrent())return 'stale';
+    nav('#/join');return 'navigated';
+  }
   const {data:personas,error:personasError}=await sb.rpc('get_my_personas');
   if(!isCurrent())return 'stale';
   if(personasError){
@@ -1668,7 +1933,7 @@ async function resolveCustomerRegistrationDestination(isRouteCurrent=()=>true,or
   if(intent){
     nav('#/claim?business='+encodeURIComponent(intent));
   }else{
-    nav(takePendingCustomerDestination(businesses.length?'#/wallet':'#/claim'));
+    nav(takePendingCustomerDestination('#/wallet'));
   }
   return 'navigated';
 }
@@ -1721,6 +1986,10 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
 }
 async function renderCustomerRegistration(isRouteCurrent=()=>true){
   if(S.user){
+    if(customerRegistrationDestinationPriority(pendingCustomerJoinToken,pendingCustomerBusinessSlug)==='join'){
+      if(!isRouteCurrent())return;
+      nav('#/join');return;
+    }
     const customerFeatures=await loadCustomerFeatureCapabilities();
     if(!isRouteCurrent())return;
     if(customerFeatures._load_error){
@@ -1785,7 +2054,27 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
     ${smsAvailable?`<div style="margin-top:14px">${authChallengeHtml()}</div>`:`<p class="err" role="status" style="margin-top:16px">Mobile sign-up is not available right now. Please try again later.</p>`}
     <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Send verification code</span></button>
+    <div class="row" style="margin:18px 0 0" aria-hidden="true"><span style="height:1px;background:var(--line);flex:1"></span><span class="muted small">or</span><span style="height:1px;background:var(--line);flex:1"></span></div>
+    <button class="btn ghost" id="customerPasskeySignIn" type="button" style="width:100%;margin-top:12px">${CUI.icon('scan',{size:18})}<span>Use Face ID, Touch ID or passkey</span></button>
+    <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
   </section>`);
+  const passkeyButton=$('customerPasskeySignIn'),passkeyStatus=$('customerPasskeyStatus');
+  const passkeySupported=isSecureContext&&'PublicKeyCredential' in globalThis&&typeof sb.auth.signInWithPasskey==='function';
+  passkeyButton.disabled=!passkeySupported;
+  if(!passkeySupported)passkeyStatus.textContent='Passkeys are not supported in this browser. Use your mobile verification code.';
+  passkeyButton.onclick=async()=>{
+    passkeyButton.disabled=true;passkeyStatus.textContent='Waiting for your device…';
+    const {data,error}=await sb.auth.signInWithPasskey();
+    if(!isRouteCurrent()||!passkeyButton.isConnected)return;
+    if(error||!data?.user){
+      passkeyButton.disabled=false;
+      passkeyStatus.textContent=error?.code==='passkey_disabled'
+        ?'Face ID and Touch ID need to be enabled for this Nestly environment first.'
+        :'Passkey sign-in was not completed. Try again or use your mobile code.';
+      return;
+    }
+    S.user=data.user;passkeyStatus.textContent='Signed in.';renderCustomerRegistration(isRouteCurrent);
+  };
   if(!smsAvailable)return;
   let captchaToken='',captchaControl=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
@@ -1953,17 +2242,6 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true){
   }
   const profile=profileResult.error?null:(profileResult.data?.profile??null);
   const registeredCustomer=profile!==null;
-  const relationshipSync=await syncVerifiedCustomerRelationshipsOnce(isCurrent);
-  if(!isCurrent())return null;
-  if(relationshipSync.linked){
-    const refreshed=await sb.rpc('get_my_personas');
-    if(!isCurrent())return null;
-    if(!refreshed.error){
-      personas=refreshed.data;
-      staff=sortStaffWorkspaces(personas?.staff||[]);
-      customer=personas?.customer||[];
-    }
-  }
   if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
   S.hasCustomerPersona=true;
   return {features,profile,registeredCustomer,staff,customer,staffWorkspaces:staff};
@@ -1973,27 +2251,26 @@ async function renderCustomerProgrammes(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
   renderCustomerShell({active:'programmes',staffWorkspaces:context.staffWorkspaces,body:'<div class="card"><p class="muted">Loading your programmes…</p></div>'});
-  const addAction=context.features.customer_claims
-    ?`<a class="btn" href="#/claim">${CUI.icon('add',{size:17})}<span>Add programme</span></a>`:'';
+  const scanGuide=`<div class="customer-programme-guide" role="note">${CUI.icon('scan',{size:22})}<div><b>Joining a new programme</b><p class="muted small" style="margin-top:4px">Visit the business and scan its Nestly QR. After you sign in, the verified programme appears here automatically.</p></div></div>`;
   if(context.features.customer_actionable_wallet===true){
     const {data,error}=await sb.rpc('customer_get_actionable_wallet');
     if(!isCurrent())return;
     if(error)return renderCustomerWalletRetry('Your programmes are temporarily unavailable.',null,()=>renderCustomerProgrammes());
     const cards=Array.isArray(data?.cards)?data.cards:[];
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Programmes</h1><p class="muted">Every business stays separate, with its own rewards, value, visits, and terms.</p></div>${addAction}</header>
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Programmes</h1><p class="muted">Every verified business stays separate, with its own rewards, value, visits, and terms.</p></div></header>${scanGuide}
       ${data?.truncated?'<div class="card" role="status"><p class="muted small">Showing the 100 highest-priority linked programmes.</p></div>':''}
       ${cards.length?`<div class="customer-programme-list">${cards.map(card=>`<a class="customer-programme-card" href="#/wallet/${encodeURIComponent(card?.business?.slug||'')}" aria-label="Open ${esc(card?.business?.name||'business')} programme">${actionableWalletCardMarkup(card)}</a>`).join('')}</div>`
-        :`<section class="card"><h2>No programmes yet</h2><p class="muted small" style="margin-top:6px">If a business already has your verified phone number or email, Nestly can connect it automatically. You can still add one from its QR code or invitation.</p><div class="row" style="margin-top:14px">${customerRelationshipCheckActionHtml()}${addAction}</div></section>`}`;
-    wireCustomerRelationshipCheck(()=>renderCustomerProgrammes());focusCustomerRoute();return;
+        :`<section class="card"><h2>No programmes yet</h2><p class="muted small" style="margin-top:6px">Your programme will appear after you scan a participating business’s Nestly QR and finish its join flow.</p></section>`}`;
+    focusCustomerRoute();return;
   }
   const {data,error}=await sb.rpc('customer_get_wallet');
   if(!isCurrent())return;
   if(error)return renderCustomerWalletRetry('Your programmes are temporarily unavailable.',null,()=>renderCustomerProgrammes());
   const cards=Array.isArray(data)?data:[];
-  $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Programmes</h1><p class="muted">Every business keeps its rewards and balances separate.</p></div>${addAction}</header>
+  $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Programmes</h1><p class="muted">Every verified business keeps its rewards and balances separate.</p></div></header>${scanGuide}
     ${cards.length?`<div class="customer-programme-list">${cards.map(card=>{const b=card?.business||{},loyalty=card?.loyalty||{};return `<a class="card customer-programme-card" href="#/wallet/${encodeURIComponent(b.slug||'')}"><h2>${esc(b.name||'Business')}</h2><p class="muted small" style="margin-top:4px">${esc(b.industry||'Local business')}</p><div class="wallet-metrics"><div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'Points')}</span><b>${Number(loyalty.balance||0)}</b></div><div class="wallet-metric"><span class="muted small">Upcoming bookings</span><b>${Number(card?.upcoming_appointments?.count||0)}</b></div></div></a>`}).join('')}</div>`
-      :`<section class="card"><h2>No programmes yet</h2><p class="muted small" style="margin-top:6px">If a business already has your verified phone number or email, Nestly can connect it automatically. You can still add one from its QR code or invitation.</p><div class="row" style="margin-top:14px">${customerRelationshipCheckActionHtml()}${addAction}</div></section>`}`;
-  wireCustomerRelationshipCheck(()=>renderCustomerProgrammes());focusCustomerRoute();
+      :`<section class="card"><h2>No programmes yet</h2><p class="muted small" style="margin-top:6px">Your programme will appear after you scan a participating business’s Nestly QR and finish its join flow.</p></section>`}`;
+  focusCustomerRoute();
 }
 
 const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES=new Set(['pending','waitlisted','new']);
@@ -2002,13 +2279,14 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
   const groups=new Map();
   const ensure=(slug,name='Business')=>{
     const key=String(slug||'');
-    if(!groups.has(key))groups.set(key,{business_slug:key,business_name:name||'Business',requests:[],activeRequests:[],recentRequests:[],appointments:[]});
+    if(!groups.has(key))groups.set(key,{business_slug:key,business_name:name||'Business',bookingEnabled:false,requests:[],activeRequests:[],recentRequests:[],appointments:[]});
     else if(name&&groups.get(key).business_name==='Business')groups.get(key).business_name=name;
     return groups.get(key);
   };
   for(const card of programmes){
     const business=card?.business||{};
-    ensure(business.slug,business.name);
+    const group=ensure(business.slug,business.name);
+    group.bookingEnabled=card?.booking_enabled===true||card?.booking?.enabled===true;
   }
   const seenRequests=new Set();
   for(const request of Array.isArray(requestPayload?.items)?requestPayload.items:[]){
@@ -2029,7 +2307,7 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
       seenAppointments.add(id);group.appointments.push(appointment);
     }
   }
-  return [...groups.values()].filter(group=>group.requests.length||group.appointments.length)
+  return [...groups.values()].filter(group=>group.bookingEnabled||group.requests.length||group.appointments.length)
     .sort((a,b)=>a.business_name.localeCompare(b.business_name,undefined,{sensitivity:'base'})
       ||a.business_slug.localeCompare(b.business_slug));
 }
@@ -2037,13 +2315,28 @@ async function renderCustomerBookings(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
   renderCustomerShell({active:'bookings',staffWorkspaces:context.staffWorkspaces,body:'<div class="card"><p class="muted">Loading your bookings…</p></div>'});
-  const [walletResult,requestResult]=await Promise.all([
+  const [walletResult,programmeResult,requestResult]=await Promise.all([
     sb.rpc('customer_get_wallet'),
+    sb.rpc('customer_list_programmes_v89'),
     sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null})
   ]);
   if(!isCurrent())return;
-  const programmes=(walletResult.error?[]:(Array.isArray(walletResult.data)?walletResult.data:[]))
-    .filter(card=>card?.upcoming_appointments?.enabled===true);
+  const legacyProgrammes=walletResult.error?[]:(Array.isArray(walletResult.data)?walletResult.data:[]);
+  const linkedProgrammes=programmeResult.error
+    ?legacyProgrammes
+    :(Array.isArray(programmeResult.data?.programmes)?programmeResult.data.programmes:[]);
+  const actionResults=await Promise.all(linkedProgrammes.map(async card=>{
+    const business=card?.business||{};
+    const response=business.id
+      ?await sb.rpc('customer_get_business_actions_v89',{p_business:business.id})
+      :{data:null,error:{message:'Missing business identity'}};
+    return {card,response};
+  }));
+  if(!isCurrent())return;
+  const programmes=actionResults.map(({card,response})=>({
+    ...card,booking_enabled:!response.error&&response.data?.booking?.enabled===true,
+    booking:response.error?{enabled:false}:response.data?.booking
+  }));
   const results=await Promise.all(programmes.map(async card=>{
     const slug=card?.business?.slug||'';
     const response=await sb.rpc('customer_get_appointments_page',{p_business_slug:slug,p_cursor:{limit:20}});
@@ -2052,7 +2345,7 @@ async function renderCustomerBookings(){
   if(!isCurrent())return;
   const failedAppointments=results.filter(result=>result.error);
   let requestPayload=requestResult.error?null:requestResult.data,requestLoadMoreError='';
-  if(walletResult.error&&requestResult.error){
+  if(walletResult.error&&programmeResult.error&&requestResult.error){
     return renderCustomerWalletRetry('Your booking requests and appointments are temporarily unavailable.',null,()=>renderCustomerBookings());
   }
   const paintBookings=()=>{
@@ -2060,6 +2353,8 @@ async function renderCustomerBookings(){
     const groups=composeCustomerBookingGroups(programmes,requestPayload,results);
     const partialMessages=[
       walletResult.error?'Confirmed appointments could not be discovered from your programmes.':'',
+      programmeResult.error?'Current linked-business booking availability could not be checked. New booking actions are hidden.':'',
+      actionResults.some(result=>result.response.error)?'Some businesses could not confirm whether new customer bookings are enabled. Their booking actions are hidden.':'',
       requestResult.error?'Pending and waitlisted booking requests are temporarily unavailable.':'',
       failedAppointments.length?`${failedAppointments.length} programme appointment feed${failedAppointments.length===1?' is':'s are'} temporarily unavailable.`:'',
       requestLoadMoreError
@@ -2071,7 +2366,7 @@ async function renderCustomerBookings(){
     $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1><p class="muted">Active requests, confirmed appointments, and recent request outcomes stay separate and grouped by business.</p></div>${partialMessages.length?'<button class="btn ghost sm" id="customerBookingsRetry">Retry unavailable bookings</button>':''}</header>
     ${partialMessages.length?`<div class="err" role="status">${partialMessages.map(esc).join(' ')}</div>`:''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">More request history exists but a continuation is unavailable.</span>'}</div></div>`:''}
-    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head"><div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.activeRequests.length} active request${group.activeRequests.length===1?'':'s'} · ${group.appointments.length} appointment${group.appointments.length===1?'':'s'}${group.recentRequests.length?` · ${group.recentRequests.length} recent update${group.recentRequests.length===1?'':'s'}`:''}</p></div><span class="spacer"></span>${group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
+    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head"><div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.activeRequests.length} active request${group.activeRequests.length===1?'':'s'} · ${group.appointments.length} appointment${group.appointments.length===1?'':'s'}${group.recentRequests.length?` · ${group.recentRequests.length} recent update${group.recentRequests.length===1?'':'s'}`:''}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<a class="btn sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Book now</a>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
       ${group.activeRequests.length?`<h3 style="font-size:1rem;margin-top:14px">Awaiting the business</h3>${group.activeRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${item.status==='waitlisted'?'new':'off'}">${esc(item.status==='waitlisted'?'Waitlisted':'Pending')}</span></div>`).join('')}`:''}
       ${group.appointments.length?`<h3 style="font-size:1rem;margin-top:14px">Appointments</h3>${group.appointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span><span class="pill ok">Appointment</span></div>`).join('')}`:''}
       ${group.recentRequests.length?`<h3 style="font-size:1rem;margin-top:14px">Recent request updates</h3>${group.recentRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Request update')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'updated').replaceAll('_',' '))}</p></div><span class="spacer"></span><span class="pill no">${esc(String(item.status||'updated').replaceAll('_',' '))}</span></div>`).join('')}`:''}
@@ -2120,7 +2415,8 @@ async function renderCustomerProfile(){
       <label for="customerProfileLanguage">Preferred language</label><select id="customerProfileLanguage" autocomplete="language"><option value="en" ${profile.preferred_language==='en'?'selected':''}>English</option><option value="zh" ${profile.preferred_language==='zh'?'selected':''}>中文</option><option value="ms" ${profile.preferred_language==='ms'?'selected':''}>Bahasa Melayu</option><option value="ta" ${profile.preferred_language==='ta'?'selected':''}>தமிழ்</option></select>
       <div id="customerProfileSaveStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save profile</span></button>
-    </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>`;
+    </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>
+    <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:17})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>`;
   let profileAttempt=null;
   $('customerProfileSave').onclick=async()=>{
     const fullName=$('customerProfileName').value.trim(),language=$('customerProfileLanguage').value;
@@ -2135,7 +2431,95 @@ async function renderCustomerProfile(){
     if(error||data?.outcome!=='updated'){status.innerHTML='<div class="err">Your profile could not be saved. Please try again.</div>';return}
     profileAttempt=null;status.innerHTML='<p class="muted small" style="margin-top:10px;color:var(--green)">Profile saved.</p>';CUI.announce('Profile saved.');
   };
+  const passkeyHost=$('customerPasskeys'),passkeyList=$('customerPasskeyList'),passkeyStatus=$('customerPasskeyManageStatus');
+  const passkeyAdd=$('customerPasskeyAdd');
+  const passkeySupported=isSecureContext&&'PublicKeyCredential' in globalThis
+    &&typeof sb.auth.registerPasskey==='function'&&typeof sb.auth.passkey?.list==='function';
+  const formatPasskeyDate=value=>{
+    const date=value?new Date(value):null;
+    return date&&!Number.isNaN(date.getTime())?new Intl.DateTimeFormat(undefined,{dateStyle:'medium'}).format(date):'Date unavailable';
+  };
+  const loadPasskeys=async()=>{
+    if(!passkeySupported){
+      passkeyHost.setAttribute('aria-busy','false');passkeyAdd.disabled=true;
+      passkeyList.innerHTML='<p class="muted small">Passkeys are not supported in this browser. Your mobile verification code still works.</p>';return;
+    }
+    const {data,error}=await sb.auth.passkey.list();
+    if(!isCurrent()||!passkeyHost.isConnected)return;
+    passkeyHost.setAttribute('aria-busy','false');
+    if(error){
+      passkeyAdd.disabled=error.code==='passkey_disabled';
+      passkeyList.innerHTML=`<p class="muted small">${error.code==='passkey_disabled'?'Face ID and Touch ID need to be enabled for this Nestly environment first.':'Registered passkeys could not be loaded.'}</p>`;return;
+    }
+    const passkeys=Array.isArray(data)?data:(Array.isArray(data?.passkeys)?data.passkeys:[]);
+    passkeyList.innerHTML=passkeys.length?passkeys.map(item=>`<div class="wallet-line"><div><b>${esc(item.friendly_name||'Passkey')}</b><p class="muted small" style="margin-top:3px">Added ${esc(formatPasskeyDate(item.created_at))}${item.last_used_at?` · last used ${esc(formatPasskeyDate(item.last_used_at))}`:''}</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" data-passkey-rename="${esc(item.id)}" data-passkey-name="${esc(item.friendly_name||'Passkey')}" aria-label="Rename ${esc(item.friendly_name||'passkey')}">Rename</button><button class="btn danger sm" type="button" data-passkey-delete="${esc(item.id)}" aria-label="Remove ${esc(item.friendly_name||'passkey')}">Remove</button></div>`).join('')
+      :'<p class="muted small">No passkeys registered yet. Add one on a private device you control.</p>';
+    passkeyList.querySelectorAll('[data-passkey-rename]').forEach(button=>button.onclick=async()=>{
+      const friendlyName=prompt('Name this passkey (for example, Personal iPhone):',button.dataset.passkeyName||'Passkey');
+      if(friendlyName===null){passkeyStatus.textContent='Passkey rename cancelled.';return}
+      const name=friendlyName.trim();
+      if(!name||name.length>120){passkeyStatus.textContent='Passkey name must be between 1 and 120 characters.';return}
+      button.disabled=true;passkeyStatus.textContent='Renaming passkey…';
+      const {error:updateError}=await sb.auth.passkey.update({passkeyId:button.dataset.passkeyRename,friendlyName:name});
+      if(!isCurrent()||!passkeyHost.isConnected)return;
+      if(updateError){button.disabled=false;passkeyStatus.textContent='Passkey could not be renamed. Try again.';return}
+      passkeyStatus.textContent='Passkey renamed.';loadPasskeys();
+    });
+    passkeyList.querySelectorAll('[data-passkey-delete]').forEach(button=>button.onclick=async()=>{
+      if(!confirm('Remove this passkey? You will need another passkey or mobile verification code to sign in.'))return;
+      button.disabled=true;passkeyStatus.textContent='Removing passkey…';
+      const {error:deleteError}=await sb.auth.passkey.delete({passkeyId:button.dataset.passkeyDelete});
+      if(!isCurrent()||!passkeyHost.isConnected)return;
+      if(deleteError){button.disabled=false;passkeyStatus.textContent='Passkey could not be removed. Try again.';return}
+      passkeyStatus.textContent='Passkey removed.';loadPasskeys();
+    });
+  };
+  passkeyAdd.onclick=async()=>{
+    if(!passkeySupported)return;
+    passkeyAdd.disabled=true;passkeyStatus.textContent='Follow your device prompt to add a passkey…';
+    const {error}=await sb.auth.registerPasskey();
+    if(!isCurrent()||!passkeyAdd.isConnected)return;
+    passkeyAdd.disabled=false;
+    if(error){
+      passkeyStatus.textContent=error.code==='passkey_disabled'
+        ?'Face ID and Touch ID need to be enabled for this Nestly environment first.'
+        :'Passkey registration was not completed. Try again on a private device.';
+      return;
+    }
+    passkeyStatus.textContent='Passkey added. You can use it at your next sign-in.';loadPasskeys();
+  };
+  loadPasskeys();
   focusCustomerRoute();
+}
+
+async function renderCustomerQrJoin(){
+  const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
+  const token=pendingCustomerJoinToken;
+  if(!token){
+    renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR</h1><p class="muted small" style="margin-top:7px">This join link is missing or invalid. Return to the participating business and scan its Nestly QR again.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});
+    focusCustomerRoute();return;
+  }
+  renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Nestly is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
+  focusCustomerRoute();
+  const attemptKey=writeAttemptKey('nestly.customer.joinQr',token);
+  const {data,error}=await sb.rpc('customer_join_business_from_qr_v89',{
+    p_join_token:token,p_idempotency_key:attemptKey
+  });
+  if(!isCurrent())return;
+  const status=$('customerQrJoinStatus');
+  if(error){
+    if(error.code!=='PGRST202'&&error.code!=='42883')rememberPendingCustomerJoinToken('');
+    status.innerHTML=`<span class="err">${error.code==='PGRST202'||error.code==='42883'?'QR joining needs the latest Nestly service update.':'This QR is expired, paused, or no longer valid. Ask the business for its current Nestly QR.'}</span><br><a class="btn ghost sm" href="#/customer/programmes" style="margin-top:12px">Back to programmes</a>`;
+    status.closest('.card')?.setAttribute('aria-busy','false');return;
+  }
+  if(!['joined','already_joined','completed','linked'].includes(String(data?.outcome||data?.status||''))){
+    status.textContent='This programme could not be joined. Ask the business to check its sign-up settings.';
+    status.closest('.card')?.setAttribute('aria-busy','false');return;
+  }
+  clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
+  const slug=normalizeCustomerBusinessIntent(data?.business?.slug||data?.business_slug||'');
+  status.textContent='Programme joined. Opening your wallet…';
+  nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');
 }
 
 async function renderCustomerClaim(){
@@ -2150,6 +2534,10 @@ async function renderCustomerClaim(){
   if(invitationToken){
     pendingCustomerBusinessSlug='';
     history.replaceState(null,'',`${location.pathname}${location.search}#/claim`);
+  }
+  if(!invitationToken){
+    renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR to join</h1><p class="muted small" style="margin-top:7px">Customers cannot search for or manually link a business from this portal. Visit the participating business and scan its current Nestly QR.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});
+    focusCustomerRoute();return;
   }
   const customerCapabilities=await loadCustomerFeatureCapabilities();
   if(!isClaimCurrent())return;
@@ -2308,12 +2696,12 @@ async function walletSectionEmpty(id,title,message,businessSlug,capability,retry
   $(`${id}EmptyRetry`).onclick=retry;
 }
 
-function renderWalletAppointments(host,businessSlug,state,customerFeatures){
+function renderWalletAppointments(host,businessSlug,state,customerFeatures,{appointmentChangesEnabled=false}={}){
   host.setAttribute('aria-busy','false');
   host.innerHTML=`<div class="wallet-section-head"><div><h2>Appointments</h2><p class="muted small">Upcoming and recent visits</p></div></div>
     <div>${state.items.map(a=>`<div class="wallet-appt"><div><b>${esc(walletDate(a.starts_at,true))}</b>
       <p class="muted small" style="margin-top:3px">${esc(a.service_name||'Appointment')}${a.branch_name?' · '+esc(a.branch_name):''} · ${esc(String(a.status||'').replaceAll('_',' '))}</p></div><span class="spacer"></span>
-      ${customerFeatures.customer_actions&&a.status==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(a.appointment_id)}">Change</button>`:''}</div>`).join('')}</div>
+      ${customerFeatures.customer_actions&&appointmentChangesEnabled&&a.status==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(a.appointment_id)}">Change</button>`:''}</div>`).join('')}</div>
     ${state.nextCursor?'<button class="btn ghost sm" id="walletAppointmentsMore" style="margin-top:12px">Load more</button>':''}`;
   wireWalletAppointmentActions(businessSlug);
 }
@@ -2413,12 +2801,11 @@ function renderActionableWalletHome(payload){
     <div class="customer-home-grid"><div class="customer-home-stack">
       <section class="card customer-home-nba"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>Next best action</span></p>
         ${next?`<h2 style="margin-top:12px">${esc(nextBusiness.name||'Your programme')}</h2><p style="margin-top:6px;font-weight:650">${esc(actionableWalletActionText(next))}</p><p class="muted small" style="margin-top:6px">Based only on your current programme status.</p><a class="btn sm" href="#/wallet/${encodeURIComponent(nextBusiness.slug||'')}" style="margin-top:14px">Open programme</a>`
-          :customerHomeOverview.claimsAvailable?`<h2 style="margin-top:12px">Add your first programme</h2><p class="muted small" style="margin-top:6px">Use the business link from its QR code or invitation. ${esc(BRAND.productName)} will not search or guess a business record.</p><a class="btn sm" href="#/claim" style="margin-top:14px">Add programme</a>`
-            :'<h2 style="margin-top:12px">No programmes yet</h2><p class="muted small" style="margin-top:6px">Programme linking is not available right now. No business record has been searched or guessed.</p>'}
+          :`<h2 style="margin-top:12px">No programmes yet</h2><p class="muted small" style="margin-top:6px">At a participating business, scan its Nestly QR and complete the join flow. The verified programme will then appear here.</p>`}
       </section>
       ${payload?.truncated?`<div class="card" role="status"><p class="muted small">Showing the 100 highest-priority linked businesses. Ask ${esc(BRAND.productName)} support to help locate another programme.</p></div>`:''}
       <section aria-labelledby="homeProgrammesTitle"><div class="customer-page-head"><div><h2 id="homeProgrammesTitle">Rewards, value &amp; visits</h2><p class="muted small">Balances are never combined across businesses.</p></div><a class="btn ghost sm" href="#/customer/programmes">All programmes</a></div>
-        ${cards.length?`<div class="wallet-firms">${cards.slice(0,4).map(card=>`<a class="wallet-firm" href="#/wallet/${encodeURIComponent(card?.business?.slug||'')}" aria-label="Open ${esc(card?.business?.name||'business')} rewards">${actionableWalletCardMarkup(card)}</a>`).join('')}</div>`:`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">If a business already has your verified phone number or email, check for it now. You can also use its QR code.</p><div class="row" style="margin-top:14px">${customerRelationshipCheckActionHtml()}<a class="btn sm" href="#/claim">Add programme</a></div></div>`}
+        ${cards.length?`<div class="wallet-firms">${cards.slice(0,4).map(card=>`<a class="wallet-firm" href="#/wallet/${encodeURIComponent(card?.business?.slug||'')}" aria-label="Open ${esc(card?.business?.name||'business')} rewards">${actionableWalletCardMarkup(card)}</a>`).join('')}</div>`:`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Nestly QR during your visit. Nestly does not let customers search for or self-link a business from this portal.</p></div>`}
       </section>
     </div><aside class="customer-home-stack">
       <section class="card"><h2>At a glance</h2><div class="wallet-line"><div><b>Rewards</b><p class="muted small">${rewardsReady?`${rewardsReady} ready to use at the counter`:'No reward is marked ready right now.'}</p></div></div><div class="wallet-line"><div><b>Visits</b><p class="muted small">${visitGoals?`${visitGoals} programme${visitGoals===1?' has':'s have'} visit progress`:'No active visit goal is available.'}</p></div></div></section>
@@ -2428,7 +2815,6 @@ function renderActionableWalletHome(payload){
         <a href="#/customer/profile">${CUI.icon('customers',{size:20})}<div><b>Profile</b><p class="muted small">Your account details</p></div></a>
       </div>
     </aside></div>`;
-  wireCustomerRelationshipCheck(()=>renderCustomerWallet());
 }
 async function renderCustomerWallet(businessSlug=null){
   const walletRenderEpoch=++customerWalletRenderEpoch;
@@ -2464,7 +2850,7 @@ async function renderCustomerWallet(businessSlug=null){
         bookingsAvailable:!legacyResult.error||!bookingRequestResult.error,
         messageCount:messageResult.error?null:Math.max(0,Number(messageResult.data?.unread_count||0)),
         messagesAvailable:customerFeatures.customer_in_app_inbox===true,
-        claimsAvailable:customerFeatures.customer_claims===true
+        claimsAvailable:false
       };
       renderActionableWalletHome(data);
       const inboxSlot=$('customerInboxBellSlot');
@@ -2508,9 +2894,8 @@ async function renderCustomerWallet(businessSlug=null){
           <div class="wallet-metrics"><div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'points')}</span><b>${Number(loyalty.balance||0)}</b></div>
           <div class="wallet-metric"><span class="muted small">Credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents||0)/100).toFixed(2)}</b></div></div>
           <p class="muted small" style="margin-top:12px">${Number(appointments.count||0)} upcoming</p></button>`}).join('')}</div>
-      ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">If a business already has your verified phone number or email, check for it now.</p><div class="row" style="margin-top:14px">${customerRelationshipCheckActionHtml()}<a class="btn sm" href="#/claim">Add programme</a></div></div>`}`;
+      ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Nestly QR during your visit. Nestly does not let customers search for or self-link a business from this portal.</p></div>`}`;
     document.querySelectorAll('.wallet-firm').forEach(button=>button.onclick=()=>nav('#/wallet/'+encodeURIComponent(button.dataset.slug)));
-    wireCustomerRelationshipCheck(()=>renderCustomerWallet());
     focusCustomerRoute();
     return;
   }
@@ -2520,6 +2905,11 @@ async function renderCustomerWallet(businessSlug=null){
   if(!isWalletCurrent())return;
   if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
   const b=summary.business||{},loyalty=summary.loyalty||{},packages=summary.packages||{},membership=summary.membership||{};
+  const businessActionsResult=await sb.rpc('customer_get_business_actions_v89',{p_business:b.id});
+  if(!isWalletCurrent())return;
+  const businessActions=businessActionsResult.error?null:businessActionsResult.data;
+  const bookingEnabled=businessActions?.booking?.enabled===true;
+  const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
   const hasWalletSection=true;
   $('walletBody').innerHTML=`<div class="row"><div><h1>${esc(b.name||'My rewards')}</h1><p class="muted small" style="margin-top:4px">${esc(b.industry||'')}</p></div><span class="spacer"></span>${customerFeatures.customer_claims?'<button class="btn danger sm" id="walletUnlink">Disconnect</button>':''}</div>
@@ -2531,7 +2921,7 @@ async function renderCustomerWallet(businessSlug=null){
       ${capabilities.membership?`<div class="wallet-metric"><span class="muted small">Membership</span><b>${membership.active?'Active':'Inactive'}</b></div>`:''}
     </div>`}
     <div class="wallet-sections" id="walletSections">
-      ${capabilities.booking_request?`<section class="card wallet-section" id="walletBook" aria-busy="false"><div class="wallet-section-head"><div><h2>Book</h2><p class="muted small">Request your next visit with ${esc(b.name||'this business')}.</p></div><span class="spacer"></span><a class="btn sm" href="#/b/${encodeURIComponent(b.slug)}">Book now</a></div></section>`:''}
+      ${capabilities.booking_request&&bookingEnabled?`<section class="card wallet-section" id="walletBook" aria-busy="false"><div class="wallet-section-head"><div><h2>Book</h2><p class="muted small">Request your next visit with ${esc(b.name||'this business')}.</p></div><span class="spacer"></span><a class="btn sm" href="#/b/${encodeURIComponent(b.slug)}">Book now</a></div></section>`:''}
       ${capabilities.rewards?walletSectionShell('walletRewards','Rewards','Browse rewards and ask the team to claim at the counter.'):''}
       ${walletSectionShell('walletTransactions','Transactions & points','Every purchase, reversal, correction, and points event kept in time order.')}
       ${capabilities.activity?walletSectionShell('walletActivity','Activity','Your loyalty history with this business.'):''}
@@ -2592,12 +2982,41 @@ async function renderCustomerWallet(businessSlug=null){
   const loadRewards=async()=>{
     const host=$('walletRewards');if(!host)return;
     host.setAttribute('aria-busy','true');
-    const {data,error}=await sb.rpc('customer_get_reward_catalog',args);
+    const [catalogResult,actionsResult]=await Promise.all([
+      sb.rpc('customer_get_reward_catalog',args),
+      sb.rpc('customer_get_business_actions_v89',{p_business:b.id})
+    ]);
+    const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletRewards',walletRpcDenied(error)?'Rewards are not available for this account.':'Rewards could not be loaded.',loadRewards);
-    const rewards=Array.isArray(data)?data:[];
+    const classicAction=!actionsResult.error&&actionsResult.data?.redemption?.classic
+      ?actionsResult.data.redemption.classic:null;
+    const actionRewards=actionsResult.error?[]:[
+      ...(classicAction?[classicAction]:[]),
+      ...(Array.isArray(actionsResult.data?.rewards)?actionsResult.data.rewards:[])
+    ];
+    const catalog=Array.isArray(data)?data:[];
+    const rewards=actionRewards.length?actionRewards.map(actionReward=>{
+      if(actionReward.redemption_kind==='classic_points'){
+        return {...actionReward,customer_name:actionReward.name||'Redeem points',
+          action_key:'classic_points'};
+      }
+      const match=catalog.find(item=>(item.customer_name||item.name)===actionReward.name
+        &&Number(item.cost_points||0)===Number(actionReward.cost_points||0))||{};
+      return {...match,...actionReward,customer_name:actionReward.name||match.customer_name,
+        redemption_kind:'catalog_reward',action_key:`catalog:${actionReward.id}`};
+    }):catalog.map(reward=>({...reward,redemption_kind:'catalog_reward',
+      action_key:`catalog:${reward.id}`}));
+    const redemptionEnabled=!actionsResult.error&&actionsResult.data?.redemption?.enabled===true;
     if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards','No rewards are available right now.',businessSlug,'rewards',loadRewards,isWalletCurrent);
-    const availability={available_at_counter:'Available at counter',insufficient_balance:'More points needed',not_started:'Available soon',ended:'Offer ended',limit_reached:'Claim limit reached'};
+    const availability={
+      available_at_counter:'Available at counter',
+      disabled:'QR redemption is not enabled by this business',
+      insufficient_balance:'More points needed',
+      not_started:'Available soon',
+      ended:'Offer ended',
+      limit_reached:'Claim limit reached'
+    };
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Rewards</h2><p class="muted small">Claims are completed with the team at the counter.</p></div></div><div class="wallet-rewards">${rewards.map(r=>`<article class="wallet-reward">
       ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b>${esc(r.customer_name||'Reward')}</b><span class="spacer"></span><span class="pill">${Number(r.cost_points||0)} ${esc(loyalty.unit||'points')}</span></div>
@@ -2605,7 +3024,38 @@ async function renderCustomerWallet(businessSlug=null){
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
-      ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}</article>`).join('')}</div>`;
+      ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}
+      <div class="wallet-reward-actions">${r.action_key&&customerRewardCanRedeem(r,redemptionEnabled)
+        ?`<button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('redeem',{size:17})}<span>Redeem</span></button>`
+        :r.availability==='available_at_counter'?'<span class="muted small">Ask the business to enable QR redemption.</span>':''}</div></article>`).join('')}</div>`;
+    let redemptionAttempt=null;
+    host.querySelectorAll('[data-customer-redeem]').forEach(button=>button.onclick=async()=>{
+      const reward=rewards.find(item=>item.action_key===button.dataset.customerRedeem);
+      if(!reward)return;
+      if(!redemptionAttempt||redemptionAttempt.actionKey!==reward.action_key){
+        redemptionAttempt={actionKey:reward.action_key,key:crypto.randomUUID()};
+      }
+      button.disabled=true;button.querySelector('span').textContent='Preparing QR…';
+      const {data:intent,error:intentError}=await sb.rpc('customer_create_redemption_intent_v89',
+        customerRedemptionIntentArgsV89({
+          businessId:b.id,reward,idempotencyKey:redemptionAttempt.key
+        }));
+      if(!isWalletSectionCurrent(host)||!button.isConnected)return;
+      button.disabled=false;button.querySelector('span').textContent='Redeem';
+      if(intentError){
+        toast(intentError.code==='PGRST202'||intentError.code==='42883'
+          ?'QR redemption needs the latest Nestly service update.'
+          :'This reward could not be prepared. Refresh its balance and try again.');
+        return;
+      }
+      if(intent?.status==='completed'||intent?.status==='redeemed'){
+        redemptionAttempt=null;toast('This reward is already redeemed');loadRewards();loadTransactions(null);return;
+      }
+      if(intent?.status!=='pending'||!intent?.qr_token){
+        toast(`Redemption is ${String(intent?.status||'unavailable').replaceAll('_',' ')}.`);return;
+      }
+      showPendingRedemptionQr({intent,businessName:b.name,rewardName:reward.customer_name||reward.name,onClose:()=>loadRewards()});
+    });
   };
   const activityState={items:[],nextCursor:null};
   const loadActivity=async(cursor=null)=>{
@@ -2728,7 +3178,7 @@ async function renderCustomerWallet(businessSlug=null){
     const next=Array.isArray(data?.items)?data.items:[];
     appointmentState.items=cursor?[...appointmentState.items,...next]:next;appointmentState.nextCursor=data?.next_cursor||null;
     if(!appointmentState.items.length)return walletSectionEmpty('walletAppointments','Appointments','No appointments are available yet.',businessSlug,'appointments',()=>loadAppointments(null),isWalletCurrent);
-    renderWalletAppointments(host,businessSlug,appointmentState,customerFeatures);
+    renderWalletAppointments(host,businessSlug,appointmentState,customerFeatures,{appointmentChangesEnabled});
     if($('walletAppointmentsMore'))$('walletAppointmentsMore').onclick=()=>{ $('walletAppointmentsMore').disabled=true;loadAppointments(appointmentState.nextCursor) };
   };
   const loadBirthdayParticipation=async()=>{
@@ -4689,11 +5139,19 @@ function renderHistPage(history,n){
    tablet till: Step 1 number entry (with on-screen keypad), Step 2 customer card + amount,
    Step 3 done. All UI state is local to this closure — nothing persisted, resets on reload
    (no localStorage in this stack) and resets itself on "Next customer". */
+function canScanCustomerRedemption({createSales,clientsReadable,loyaltyWritable}={}){
+  return createSales===true&&clientsReadable===true&&loyaltyWritable===true;
+}
 async function tillPage(){
   const routeMain=M();
   const isTillCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canAddClient=canWriteModule('clients');
   const canRecordSales=hasRoleCapability('create_sales')&&canReadModule('clients');
+  const canScanRedemption=canScanCustomerRedemption({
+    createSales:hasRoleCapability('create_sales'),
+    clientsReadable:canReadModule('clients'),
+    loyaltyWritable:canWriteModule('loyalty')
+  });
   if(!canRecordSales){
     routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Customer lookup and purchase recording are unavailable for this role.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Additional access required',description:'Quick earn requires customer read access and permission to record purchases.',body:'<p class="muted small">Ask an owner to review your Customers and Quick earn assignments.</p>'})}`;
     return;
@@ -4801,7 +5259,7 @@ async function tillPage(){
   }
 
   function drawStep1(){
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:"Type the customer's phone number. Nothing else is needed on this step.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:canScanRedemption?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn',actions:canScanRedemption?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="8186 3833" value="${esc(phone)}">
@@ -4811,12 +5269,16 @@ async function tillPage(){
           ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" aria-label="${k==='⌫'?'Delete one digit':k==='✕'?'Clear phone number':'Digit '+k}">${k}</button>`).join('')}
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
+        ${canScanRedemption?'':'<p class="muted small">Redemption scanning requires Loyalty write access.</p>'}
       </div>`;
     const inp=$('tPhone');
     inp.focus();
     inp.oninput=()=>{phone=inp.value.replace(/\D/g,'').slice(0,8);inp.value=phone};
     inp.onkeydown=(e)=>{if(e.key==='Enter') doFind();};
     $('tFind').onclick=doFind;
+    if(canScanRedemption)$('tScanRedemption').onclick=()=>openMerchantRedemptionScanner({
+      businessId:S.biz.id,isCurrent:isTillCurrent,onComplete:()=>resetToStart()
+    });
     document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
       const k=b.dataset.k;
       if(k==='⌫') phone=phone.slice(0,-1);
@@ -5751,6 +6213,17 @@ async function servicesPage(){
 
 /* ---------- bookings ---------- */
 const STAFF_BOOKING_DECISION_STATUSES=new Set(['new','pending','waitlisted']);
+async function saveCustomerRedemptionCapabilityV89({businessId,redemptionEnabled}){
+  const current=await sb.rpc('business_get_customer_capabilities_v89',{p_business:businessId});
+  if(current.error)return current;
+  const value=current.data||{};
+  return sb.rpc('business_set_customer_capabilities_v89',{
+    p_business:businessId,
+    p_booking_enabled:value.booking_enabled===true,
+    p_redemption_enabled:redemptionEnabled===true,
+    p_appointment_changes_enabled:value.appointment_changes_enabled===true
+  });
+}
 function bookingDecisionNotice(result,decision){
   const outcome=String(result?.outcome||'unknown');
   const actual=String(result?.actual_status||'unknown').replaceAll('_',' ');
@@ -5772,6 +6245,11 @@ async function bookingsPage(){
     <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
       <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
       <p class="small portal-link-row"><a class="portal-link" href="${portal}" target="_blank" rel="noopener noreferrer">${portal}</a></p></div>
+    ${isOwner?`<section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Nestly supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
+      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Nestly programme.</span></span></label>
+      <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
+      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
+      <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>`:''}
     <div class="card" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
       ${isOwner?`<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
@@ -5808,6 +6286,38 @@ async function bookingsPage(){
       </div>
     </div>`:''}`;
   $('cp').onclick=()=>{navigator.clipboard.writeText(portal);toast('Portal link copied')};
+  if(isOwner){
+    const controls=['customerBookingEnabled','customerRedemptionEnabled','customerAppointmentChangesEnabled'];
+    const status=$('customerCapabilitiesStatus'),save=$('saveCustomerCapabilities');
+    const capabilityResult=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
+    if(!isCurrent())return;
+    $('businessCustomerCapabilities').setAttribute('aria-busy','false');
+    if(capabilityResult.error){
+      status.textContent=capabilityResult.error.code==='PGRST202'||capabilityResult.error.code==='42883'
+        ?'These controls need the latest Nestly service update. All three remain off.'
+        :'Customer action settings could not be loaded. Nothing was changed.';
+    }else{
+      const value=capabilityResult.data||{};
+      $('customerBookingEnabled').checked=value.booking_enabled===true;
+      $('customerRedemptionEnabled').checked=value.redemption_enabled===true;
+      $('customerAppointmentChangesEnabled').checked=value.appointment_changes_enabled===true;
+      controls.forEach(id=>$(id).disabled=false);save.disabled=false;status.textContent='All customer actions start off until you enable them.';
+      save.onclick=async()=>{
+        save.disabled=true;controls.forEach(id=>$(id).disabled=true);status.textContent='Saving customer actions…';
+        const {data,error}=await sb.rpc('business_set_customer_capabilities_v89',{
+          p_business:S.biz.id,
+          p_booking_enabled:$('customerBookingEnabled').checked,
+          p_redemption_enabled:$('customerRedemptionEnabled').checked,
+          p_appointment_changes_enabled:$('customerAppointmentChangesEnabled').checked
+        });
+        if(!isCurrent())return;
+        controls.forEach(id=>$(id).disabled=false);save.disabled=false;
+        if(error){status.textContent='Customer actions were not changed. Review the settings and try again.';return}
+        status.textContent='Customer actions saved. Existing bookings, redemptions, and appointment history remain visible.';
+        toast(data?.replayed===true?'Customer actions were already saved':'Customer actions saved');
+      };
+    }
+  }
   if(isOwner)$('aac').onchange=async()=>{
     const to=$('aac').checked;
     const {error}=await sb.from('businesses').update({auto_approve_changes:to}).eq('id',S.biz.id);
@@ -6208,6 +6718,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     :'';
   routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:canManageLoyalty?'Choose the model and publish deliberate, versioned changes.':'Review the current program, rewards, tiers, and branch settings.',iconName:'loyalty',actions:loyaltyActions,canWrite:canManageLoyalty,moduleLabel:'Loyalty configuration'})}
     ${p?.configuration_status==='draft'?`<div class="imp-note" style="margin-bottom:16px"><b>Draft recommendation</b><br>${recommendation?esc(recommendation.rationale):'Nothing is earning or redeeming yet.'} Review every number below, then publish only when it fits your business.</div>`:''}
+    <section class="card" id="loyaltyCustomerRedemption" style="margin-bottom:16px" aria-busy="true">
+      <div class="row"><div><b>Customer app redemption</b><p class="muted small" style="margin-top:5px">Customers prepare a pending reward QR. Points change only after your team scans and confirms it in Quick earn.</p></div><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="saveLoyaltyCustomerRedemption" type="button" disabled>Save</button>':'<span class="pill off">Owner only</span>'}</div>
+      <label class="checkrow" for="loyaltyCustomerRedemptionEnabled"><input id="loyaltyCustomerRedemptionEnabled" type="checkbox" disabled><span><b>Enable customer redemption QR</b><br><span class="muted small">Available to loyalty firms even when online bookings are not part of their modules.</span></span></label>
+      <p id="loyaltyCustomerRedemptionStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading redemption setting…</p>
+    </section>
     <div class="split"><div class="card"><b>Program settings</b>
       <label>Status</label><select id="la"${loyaltyControlDisabled}><option value="true" ${p?.active?'selected':''}>Active</option><option value="false" ${!p?.active?'selected':''}>Paused</option></select>
       <label>Loyalty model</label><select id="lm"${loyaltyControlDisabled}>
@@ -6240,6 +6755,37 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.</p>${rewardRows('Your milestones')}`
         :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
     </div></div>${birthdayEditor}`;
+  const redemptionToggle=$('loyaltyCustomerRedemptionEnabled');
+  const redemptionStatus=$('loyaltyCustomerRedemptionStatus');
+  const redemptionSave=$('saveLoyaltyCustomerRedemption');
+  const redemptionCapability=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
+  if(!isLoyaltyCurrent())return;
+  $('loyaltyCustomerRedemption').setAttribute('aria-busy','false');
+  if(redemptionCapability.error){
+    redemptionStatus.textContent=redemptionCapability.error.code==='PGRST202'||redemptionCapability.error.code==='42883'
+      ?'Customer redemption needs the latest Nestly service update.'
+      :'Customer redemption setting could not be loaded. Nothing was changed.';
+  }else{
+    redemptionToggle.checked=redemptionCapability.data?.redemption_enabled===true;
+    redemptionStatus.textContent=canManageLoyalty
+      ?'This switch affects customer QR redemption only. Booking settings are preserved.'
+      :`Customer QR redemption is ${redemptionToggle.checked?'enabled':'off'}.`;
+    if(canManageLoyalty){
+      redemptionToggle.disabled=false;redemptionSave.disabled=false;
+      redemptionSave.onclick=async()=>{
+        redemptionToggle.disabled=true;redemptionSave.disabled=true;
+        redemptionStatus.textContent='Saving customer QR redemption…';
+        const result=await saveCustomerRedemptionCapabilityV89({
+          businessId:S.biz.id,redemptionEnabled:redemptionToggle.checked
+        });
+        if(!isLoyaltyCurrent())return;
+        redemptionToggle.disabled=false;redemptionSave.disabled=false;
+        redemptionStatus.textContent=result.error
+          ?'Customer QR redemption was not changed. Refresh and try again.'
+          :`Customer QR redemption is ${result.data?.redemption_enabled===true?'enabled':'off'}. Booking and appointment settings were preserved.`;
+      };
+    }
+  }
   /* --- live give-back meter -------------------------------------------------------------
      Classic is the only model whose form holds all three numbers (earn / redeem / credit);
      stamps and the reward-catalog model price each reward individually, so the meter is
@@ -10986,20 +11532,36 @@ async function loadBillingConfig(){
 }
 /* ---------- customer sign-up QR ---------- */
 async function loadSignupConfig(){
-  const url=`${location.origin}${location.pathname.replace(/[^/]*$/,'')}join.html?s=${S.biz.slug}`;
   $('signupWrap').innerHTML=`<b>Customer sign-up</b>
-    <p class="muted small" style="margin:6px 0 10px">Print this QR for your counter. Customers scan it to join your loyalty programme.</p>
-    <div id="joinQr" style="width:180px;height:180px;margin:0 auto"></div>
-    <p class="small portal-link-row" style="margin-top:12px"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a></p>
-    <div class="row" style="margin-top:10px"><button class="btn ghost sm" id="cpJoin">Copy link</button>
-    <button class="btn ghost sm" id="dlQr">Download QR</button></div>
+    <p class="muted small" style="margin:6px 0 10px">Generate and print this business QR for your counter. Customers can join only by scanning a valid QR or accepting a private invitation.</p>
+    <div id="joinQr" style="width:180px;min-height:180px;margin:0 auto;display:grid;place-items:center"><span class="muted small">Generate a QR to begin</span></div>
+    <p class="small portal-link-row" id="joinQrLink" style="margin-top:12px"></p>
+    <div class="row" style="margin-top:10px"><button class="btn sm" id="createJoinQr">${CUI.icon('scan',{size:17})}<span>Generate join QR</span></button>
+    <button class="btn ghost sm" id="cpJoin" disabled>Copy link</button>
+    <button class="btn ghost sm" id="dlQr" disabled>Download QR</button></div>
+    <p class="muted small" id="joinQrStatus" role="status" aria-live="polite" style="margin-top:8px">The raw join token is shown only in this browser session. Download the QR before leaving this page.</p>
     <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
       <input type="checkbox" id="joinEnabled" style="width:auto" ${S.biz.join_enabled!==false?'checked':''}> Accept new sign-ups</label>`;
-  const qrEl=$('joinQr');qrEl.innerHTML='';
-  new QRCode(qrEl,{text:url,width:180,height:180});
-  $('cpJoin').onclick=()=>{navigator.clipboard.writeText(url);toast('Sign-up link copied')};
+  let url='';
+  $('createJoinQr').onclick=async()=>{
+    const button=$('createJoinQr');button.disabled=true;$('joinQrStatus').textContent='Creating a business-bound QR…';
+    const {data,error}=await sb.rpc('business_create_customer_join_qr_v89',{p_business:S.biz.id});
+    if(!button.isConnected)return;
+    button.disabled=false;
+    if(error||!data?.join_token){
+      $('joinQrStatus').textContent=error?.code==='PGRST202'||error?.code==='42883'
+        ?'QR joining needs the latest Nestly service update.'
+        :'A join QR could not be generated. Try again.';return;
+    }
+    url=`${location.origin}${location.pathname}#/join?token=${encodeURIComponent(data.join_token)}`;
+    const qrEl=$('joinQr');qrEl.innerHTML='';new QRCode(qrEl,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
+    $('joinQrLink').innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a>`;
+    $('cpJoin').disabled=false;$('dlQr').disabled=false;
+    $('joinQrStatus').textContent=`QR ready${data.expires_at?` · expires ${sgt(data.expires_at)}`:''}. Download it before leaving this page.`;
+  };
+  $('cpJoin').onclick=()=>{if(!url)return;navigator.clipboard.writeText(url);toast('Sign-up link copied')};
   $('dlQr').onclick=()=>{
-    const img=qrEl.querySelector('img')||qrEl.querySelector('canvas');
+    const qrEl=$('joinQr'),img=qrEl.querySelector('img')||qrEl.querySelector('canvas');
     if(!img) return toast('QR still rendering — try again');
     const a=document.createElement('a');
     a.href=img.tagName==='CANVAS'?img.toDataURL('image/png'):img.src;
@@ -11415,7 +11977,7 @@ async function renderPortal(slug){
     }else if(personaResult?.error){
       slot.innerHTML=`<div class="card" style="margin-bottom:16px"><b>Signed in</b><p class="muted small" style="margin-top:4px">The programme link could not be displayed here. Your verified relationship will be validated securely when you submit.</p></div>`;
     }else{
-      slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="row"><div><b>Booking as an unlinked guest</b><p class="muted small" style="margin-top:4px">This business is not in ${esc(BRAND.customerLabel)} yet. Your booking can still be submitted safely.</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/claim?business=${encodeURIComponent(slug)}">Add programme</a></div></div>`;
+      slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div><b>Booking as an unlinked guest</b><p class="muted small" style="margin-top:4px">This business is not in ${esc(BRAND.customerLabel)} yet. Your booking can still be submitted safely. To join its programme, visit the participating business and scan its current Nestly QR.</p></div></div>`;
     }
   }).catch(()=>{});
 }

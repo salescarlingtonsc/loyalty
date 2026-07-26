@@ -9,8 +9,17 @@
     {key:'billing',label:'Billing',shortLabel:'Billing',hash:'#/platform/billing',icon:'reports'},
     {key:'commissions',label:'Commission payable',shortLabel:'Commission',hash:'#/platform/commissions',icon:'staff'},
     {key:'sectors',label:'Sector modules',shortLabel:'Sectors',hash:'#/platform/sectors',icon:'packages'},
-    {key:'automation',label:'Automation',shortLabel:'Automate',hash:'#/platform/automation',icon:'retention'}
+    {key:'automation',label:'Automation',shortLabel:'Automate',hash:'#/platform/automation',icon:'retention'},
+    {key:'access',label:'Platform access',shortLabel:'Access',hash:'#/platform/access',icon:'staff',superAdminOnly:true}
   ]);
+  const platformModuleKeys=Object.freeze([
+    'overview','onboarding','firms','reports','billing','commissions','sectors','automation'
+  ]);
+  const platformModuleLabels=Object.freeze({
+    overview:'Overview',onboarding:'Onboarding',firms:'Firms',reports:'Reports',
+    billing:'Billing',commissions:'Commission payable',sectors:'Sector modules',
+    automation:'Automation'
+  });
   const prospectStages = Object.freeze([
     ['new_lead','New Lead'],['appt_set','Appointment Set'],
     ['npu_1','NPU 1'],['npu_2','NPU 2'],['npu_3','NPU 3'],['npu_4','NPU 4'],['npu_5','NPU 5'],['npu_6','NPU 6'],
@@ -71,6 +80,25 @@
   });
   let renderGeneration = 0;
   let activeContext = null;
+  let readOnlyObserver = null;
+  const platformWriteSelector=[
+    '#platformNewProspect','#platformImportProspects','#platformScopedNewProspect',
+    '[data-move]','[data-move-select]','[data-edit-prospect]','[data-assign-prospect]','[data-scoped-assign]',
+    '[data-add-note]','[data-add-npu]','[data-add-activity]','[data-add-task]',
+    '[data-add-contact]','[data-edit-contact-profile]','[data-edit-company-profile]',
+    '[data-edit-qualification]','[data-edit-commercial-detail]','[data-edit-conversion-config]',
+    '[data-refresh-quality]','[data-upload-document]','[data-lost]','[data-convert]',
+    '[data-create-account]','[data-complete-task]','[data-onboarding-start]',
+    '[data-onboarding-refresh]','[data-onboarding-reissue]','[data-onboarding-block]',
+    '[data-onboarding-unblock]','[data-onboarding-activate]','[data-onboarding-evidence]',
+    '[data-onboarding-waive]','[data-onboarding-item-block]','[data-onboarding-item-unblock]',
+    '#platformNewBundle','[data-edit-sector]','[data-assign-firm]','[data-override-firm]',
+    '#platformNewBillingPrice','[data-billing-command]',
+    '#platformNewConsultant','#platformAttributeConsultant','#platformNewPolicy',
+    '#platformNewPayout','[data-edit-consultant]','[data-forfeit-consultant]',
+    '[data-approve-accrual]','[data-add-payout-line]','[data-approve-payout]',
+    '[data-record-payout]','[data-automation-write]'
+  ].join(',');
 
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -81,6 +109,61 @@
   const idempotencyKey = () => globalObject.crypto?.randomUUID?.()
     || `platform-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const asObject = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  function normalizePlatformAccess(payload) {
+    const value=asObject(payload),role=String(value.role||'');
+    if(!['super_admin','admin','sales_staff'].includes(role))return null;
+    const modulePerms=asObject(value.module_perms);
+    return Object.freeze({
+      role,modulePerms,
+      scope:value.scope==='own_created_or_assigned'?'own_created_or_assigned':'all'
+    });
+  }
+  function modulePermission(access,moduleKey) {
+    if(!access)return'off';
+    if(access.role==='super_admin')return'rw';
+    const value=access.modulePerms[moduleKey]??access.modulePerms['*'];
+    return value==='rw'?'rw':value==='r'?'r':'off';
+  }
+  function stripPlatformWriteControls(host) {
+    if(!host?.querySelectorAll)return;
+    host.querySelectorAll(platformWriteSelector).forEach(control=>control.remove());
+  }
+  function installReadOnlyGuard(context) {
+    readOnlyObserver?.disconnect();readOnlyObserver=null;
+    if(context.canWrite)return;
+    stripPlatformWriteControls(context.root);
+    if(typeof MutationObserver==='undefined')return;
+    readOnlyObserver=new MutationObserver(records=>{
+      records.forEach(record=>record.addedNodes.forEach(node=>{
+        if(node.nodeType!==1)return;
+        if(node.matches?.(platformWriteSelector))node.remove();
+        else stripPlatformWriteControls(node);
+      }));
+    });
+    readOnlyObserver.observe(document.body,{childList:true,subtree:true});
+  }
+  const canAccessModule=(access,moduleKey)=>modulePermission(access,moduleKey)!=='off';
+  const canWriteModule=(access,moduleKey)=>modulePermission(access,moduleKey)==='rw';
+  const reportSectionAccess=access=>Object.freeze({
+    onboarding:canAccessModule(access,'onboarding'),
+    billing:canAccessModule(access,'billing')
+  });
+  const isFullLegacyAdmin=access=>access?.role==='admin'
+    &&Object.keys(access.modulePerms).length===1
+    &&access.modulePerms['*']==='rw';
+  function visibleRoutes(access) {
+    return routes.filter(route=>route.key==='access'
+      ?access?.role==='super_admin'
+      :canAccessModule(access,route.key));
+  }
+  function roleLabel(role) {
+    return role==='super_admin'?'Super admin':role==='sales_staff'?'Sales staff':'Admin';
+  }
+  function scopeLabel(scope) {
+    return scope==='own_created_or_assigned'
+      ?'Only firms you created or are assigned to'
+      :'All platform records';
+  }
   function asArray(payload, keys = []) {
     if (Array.isArray(payload)) return payload;
     for (const key of keys) if (Array.isArray(payload?.[key])) return payload[key];
@@ -202,7 +285,7 @@
   }
 
   function isRoute(hash) {
-    return /^#\/platform(?:\/(?:onboarding|firms|reports|billing|commissions|sectors|automation))?\/?$/.test(String(hash || '').split('?')[0]);
+    return /^#\/platform(?:\/(?:onboarding|firms|reports|billing|commissions|sectors|automation|access))?\/?$/.test(String(hash || '').split('?')[0]);
   }
 
   function routeKey(hash) {
@@ -212,28 +295,28 @@
     return routes.some(route => route.key === requested) ? requested : 'overview';
   }
 
-  function navigationHtml(CUI, activeKey, mobile = false) {
+  function navigationHtml(CUI, activeKey, allowedRoutes, mobile = false) {
     const className = mobile ? 'platform-mobile-nav' : 'platform-nav';
     const label = mobile ? 'Platform sections' : 'Platform navigation';
     if(mobile){
-      const primary=routes.filter(route=>['overview','onboarding','firms','reports'].includes(route.key));
-      const secondary=routes.filter(route=>!primary.includes(route));
+      const primary=allowedRoutes.filter(route=>['overview','onboarding','firms','reports'].includes(route.key)).slice(0,4);
+      const secondary=allowedRoutes.filter(route=>!primary.includes(route));
       const moreActive=secondary.some(route=>route.key===activeKey);
-      return `<nav class="${className}" aria-label="${label}">
+      return `<nav class="${className}" aria-label="${label}" style="--platform-mobile-count:${Math.min(primary.length+(secondary.length?1:0),5)}">
         ${primary.map(route=>{
           const active=route.key===activeKey;
           return `<a href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:19})}<span>${escapeHtml(route.shortLabel)}</span></a>`;
         }).join('')}
-        <details class="platform-mobile-more"${moreActive?' data-active="true"':''}>
+        ${secondary.length?`<details class="platform-mobile-more"${moreActive?' data-active="true"':''}>
           <summary${moreActive?' aria-current="page"':''}>${CUI.icon('setup',{size:19})}<span>More</span></summary>
           <div class="platform-mobile-more-menu" role="list">${secondary.map(route=>{
             const active=route.key===activeKey;
             return `<a role="listitem" href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:18})}<span>${escapeHtml(route.label)}</span></a>`;
           }).join('')}</div>
-        </details>
+        </details>`:''}
       </nav>`;
     }
-    return `<nav class="${className}" aria-label="${label}">${routes.map(route => {
+    return `<nav class="${className}" aria-label="${label}">${allowedRoutes.map(route => {
       const active = route.key === activeKey;
       return `<a href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:19})}<span>${escapeHtml(mobile?route.shortLabel:route.label)}</span></a>`;
     }).join('')}</nav>`;
@@ -245,13 +328,17 @@
     return `${escapeHtml(dot ? wordmark.slice(0,-1) : wordmark)}${dot}`;
   }
 
-  function shellHtml({CUI,brand,activeKey,workspaceHash}) {
+  function shellHtml({CUI,brand,activeKey,workspaceHash,access,allowedRoutes}) {
     const route = routes.find(item => item.key === activeKey) || routes[0];
     return `<div class="platform-console">
       <a class="skip-link" href="#platformMain">Skip to platform content</a>
       <aside class="platform-rail" aria-label="Platform console">
         <div class="platform-brand"><a href="#/platform" class="logo" aria-label="${escapeHtml(brand.productName)} platform home">${wordmarkHtml(brand)}</a><span class="platform-tag">Platform</span></div>
-        ${navigationHtml(CUI,activeKey)}
+        <div class="platform-access-summary" aria-label="Current platform access">
+          <b>${escapeHtml(roleLabel(access.role))}</b>
+          <span>${escapeHtml(scopeLabel(access.scope))} · ${activeKey==='access'||modulePermission(access,activeKey)==='rw'?'Read and write':'Read only'}</span>
+        </div>
+        ${navigationHtml(CUI,activeKey,allowedRoutes)}
         <div class="platform-rail-foot"><a class="platform-back" href="${escapeHtml(workspaceHash)}">${CUI.icon('back',{size:17})}<span>Back to workspace</span></a></div>
       </aside>
       <div class="platform-column">
@@ -264,8 +351,22 @@
         </header>
         <main class="platform-main" id="platformMain" tabindex="-1"></main>
       </div>
-      ${navigationHtml(CUI,activeKey,true)}
+      ${navigationHtml(CUI,activeKey,allowedRoutes,true)}
     </div>`;
+  }
+
+  function platformAccessDeniedHtml({CUI,brand,workspaceHash,onSignOut}) {
+    return `<main class="platform-denied" id="platformMain" tabindex="-1">
+      <div class="platform-denied-brand logo">${wordmarkHtml(brand||{})}</div>
+      ${CUI.errorState({
+        title:'Platform access unavailable',
+        message:'This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.'
+      })}
+      <div class="platform-actions">
+        <a class="btn ghost" href="${escapeHtml(workspaceHash)}">Back to workspace</a>
+        <button type="button" class="btn ghost" id="platformDeniedSignOut">Sign out</button>
+      </div>
+    </main>`;
   }
 
   function currency(cents, currencyCode = 'SGD') {
@@ -549,7 +650,7 @@
     const firm=catalog.find(row=>firmId(row)===selected[0]);
     return asArray(firm?.branches);
   }
-  function enterpriseHtml(payload,CUI,filters,catalog) {
+  function enterpriseHtml(payload,CUI,filters,catalog,canGenerateReport=false) {
     const firms=asArray(payload,['firms']),pagination=asObject(payload.pagination);
     const branches=enterpriseBranchOptions(filters,catalog);
     return `${CUI.pageHeader({
@@ -576,7 +677,7 @@
         <div class="platform-actions">
           <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>Apply scope</span></button>
           <button class="btn ghost" type="button" id="enterpriseClear">Clear</button>
-          <button class="btn ghost" type="button" id="enterpriseGenerateReport"${firms.length?'':' disabled title="No matching firms are available to report."'}>${CUI.icon('reports',{size:17})}<span>Generate detailed report</span></button>
+          ${canGenerateReport?`<button class="btn ghost" type="button" id="enterpriseGenerateReport"${firms.length?'':' disabled title="No matching firms are available to report."'}>${CUI.icon('reports',{size:17})}<span>Generate detailed report</span></button>`:''}
         </div>
       </form>
       <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Complete snapshot</b><p class="small">${escapeHtml(pagination.total_firms??firms.length)} matching firm${Number(pagination.total_firms??firms.length)===1?'':'s'} as at ${escapeHtml(dateTime(payload.snapshot_at))}. Search applies consistently to the directory and report.</p></div></div>
@@ -798,7 +899,8 @@
       }
       const catalog=context.enterpriseCatalog||firms;
       context.enterpriseSnapshot=payload.snapshot_at;
-      main.innerHTML=enterpriseHtml(asObject(payload),CUI,filters,catalog);
+      const canGenerateReport=canAccessModule(context.access,'reports');
+      main.innerHTML=enterpriseHtml(asObject(payload),CUI,filters,catalog,canGenerateReport);
       const form=main.querySelector('#enterpriseFilters'),businessSelect=main.querySelector('#enterpriseBusinesses');
       const refreshBranches=()=>{
         const ids=selectedOptions(businessSelect),branchSelect=main.querySelector('#enterpriseBranch');
@@ -821,7 +923,7 @@
       };
       main.querySelector('#enterpriseClear').onclick=()=>renderEnterprise(context,enterpriseDefaults());
       const reportButton=main.querySelector('#enterpriseGenerateReport');
-      if(firms.length)reportButton.onclick=()=>renderEnterpriseReport(context,resolvedScopeFilters);
+      if(reportButton&&firms.length)reportButton.onclick=()=>renderEnterpriseReport(context,resolvedScopeFilters);
       main.querySelectorAll('[data-enterprise-firm]').forEach(button=>{
         button.onclick=()=>{
           const firm=firms.find(row=>firmId(row)===button.dataset.enterpriseFirm);
@@ -877,7 +979,10 @@
     asArray(reconciliation.items).forEach(item=>output.push(['reconciliation','latest_run',item.provider_object_id||item.object_type,item.business_id,item.result,JSON.stringify(item.detail||{}),'',filters.from,filters.to,snapshot]));
     return output;
   }
-  function crossDomainReportHtml({report,customers,customerPage,analytics,billing,reconciliation},CUI,filters) {
+  function crossDomainReportHtml({
+    report,customers,customerPage,analytics,billing,reconciliation,
+    analyticsAvailable=false,billingAvailable=false
+  },CUI,filters) {
     const summary=asObject(report.summary),crm=asObject(analytics.summary);
     const billingExceptions=billing.filter(row=>row.status==='past_due'||row.payment_status==='past_due'||Number(row.failed_event_count||0)>0);
     const runs=asArray(reconciliation.runs),items=asArray(reconciliation.items);
@@ -888,20 +993,22 @@
       <section class="platform-kpis" aria-label="Cross-domain report summary">${[
         ['Active customers',summary.active_customers??0,'customers'],
         ['Returning rate',`${Number(summary.returning_rate_pct||0).toFixed(1)}%`,'retention'],
-        ['Pipeline leads',crm.leads_created??0,'setup'],
-        ['Deals won',crm.won??0,'check'],
-        ['Activated',crm.activated??0,'branch'],
-        ['Billing exceptions',billingExceptions.length,'info']
+        ...(analyticsAvailable?[
+          ['Pipeline leads',crm.leads_created??0,'setup'],
+          ['Deals won',crm.won??0,'check'],
+          ['Activated',crm.activated??0,'branch']
+        ]:[]),
+        ...(billingAvailable?[['Billing exceptions',billingExceptions.length,'info']]:[])
       ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       <section class="platform-detail-section"><h3>Customer and firm performance</h3>${reportHtml(report,CUI,customers,customerPage,false).replace('id="enterpriseReportSheet"','')}</section>
-      <section class="platform-detail-section"><div class="platform-list-row"><div><h3>SME acquisition and onboarding</h3><p class="muted small">All visible prospects · ${escapeHtml(crmScope.from||filters.from)} to ${escapeHtml(crmScope.to||filters.to)}. Firm/branch filters do not apply to this prospect pipeline contract.</p></div></div>
+      ${analyticsAvailable?`<section class="platform-detail-section"><div class="platform-list-row"><div><h3>SME acquisition and onboarding</h3><p class="muted small">All visible prospects · ${escapeHtml(crmScope.from||filters.from)} to ${escapeHtml(crmScope.to||filters.to)}. Firm/branch filters do not apply to this prospect pipeline contract.</p></div></div>
         <div class="platform-detail-grid">
           ${CUI.card({title:'Stage performance',body:asArray(analytics.stages).length?CUI.table({caption:'SME stage performance',headers:['Stage','Current','Entries','Median age (days)'],rows:asArray(analytics.stages).map(stage=>[escapeHtml(stage.label||plainLabel(stage.stage_key)),String(stage.current_count??0),String(stage.entries??0),Number(stage.median_age_days||0).toFixed(1)])}):'<p class="muted small">No stage data.</p>'})}
           ${CUI.card({title:'Source conversion',body:asArray(analytics.source_page).length?CUI.table({caption:'SME source conversion',headers:['Source','Leads','Converted','Rate'],rows:asArray(analytics.source_page).map(source=>[escapeHtml(plainLabel(source.source_type)),String(source.leads??0),String(source.converted??0),`${Number(source.leads?Number(source.converted||0)*100/Number(source.leads):0).toFixed(1)}%`])}):'<p class="muted small">No source attribution data.</p>'})}
         </div>
         ${asArray(analytics.loss_reasons).length?CUI.card({title:'Loss reasons',body:CUI.table({caption:'Loss reasons',headers:['Reason','Prospects'],rows:asArray(analytics.loss_reasons).map(row=>[escapeHtml(plainLabel(row.reason_code)),String(row.count??0)])})}):''}
-      </section>
-      <section class="platform-detail-section"><div class="platform-list-row"><div><h3>Subscription billing and reconciliation</h3><p class="muted small">${billing.length} subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue.</p></div>${latestRun.id?CUI.status(plainLabel(latestRun.status),latestRun.status==='completed'?'ok':'off'):CUI.status('No reconciliation run','off')}</div>
+      </section>`:'<div class="platform-route-note"><b>SME acquisition and onboarding omitted</b><p class="small">This account does not have Onboarding access. The customer and firm report above remains complete for the selected scope.</p></div>'}
+      ${billingAvailable?`<section class="platform-detail-section"><div class="platform-list-row"><div><h3>Subscription billing and reconciliation</h3><p class="muted small">${billing.length} subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue.</p></div>${latestRun.id?CUI.status(plainLabel(latestRun.status),latestRun.status==='completed'?'ok':'off'):CUI.status('No reconciliation run','off')}</div>
         ${billing.length?CUI.table({caption:'Selected firm billing',headers:['Firm','Subscription','Payment','Cadence','Subtotal','GST','Total','Next payment','Failures'],rows:billing.map(row=>[
           escapeHtml(row.business_name),CUI.status(row.status||'—',statusTone(row.status)),CUI.status(row.payment_status||'—',row.payment_status==='paid'?'ok':row.payment_status==='past_due'?'no':'off'),escapeHtml(plainLabel(row.cadence)),currency(row.period_subtotal_cents,row.currency),currency(row.period_tax_cents,row.currency),currency(row.period_total_cents,row.currency),escapeHtml(dateTime(row.next_payment_at)),String(row.failed_event_count||0)
         ])}):'<p class="muted small">No billing rows in this firm scope.</p>'}
@@ -909,7 +1016,7 @@
           ${CUI.card({title:'Billing exception queue',description:billingExceptions.length?`${billingExceptions.length} firms need attention.`:'No firm-level payment exceptions.',body:billingExceptions.length?billingExceptions.map(row=>`<div class="platform-action-item"><div><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(plainLabel(row.payment_status||row.status))} · ${escapeHtml(dateTime(row.next_payment_at))}</p></div>${CUI.status(`${Number(row.failed_event_count||0)} failures`,'no')}</div>`).join(''):'<p class="muted small">No overdue or failed subscription records.</p>'})}
           ${CUI.card({title:'Latest reconciliation',description:latestRun.started_at?`${dateTime(latestRun.started_at)} · ${plainLabel(latestRun.run_mode)}`:'No reconciliation run was returned.',body:items.length?items.map(item=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(item.object_type))}</b><p class="muted small">${escapeHtml(item.provider_object_id||'Provider object')}</p></div>${CUI.status(plainLabel(item.result),item.result==='matched'?'ok':'no')}</div>`).join(''):'<p class="muted small">No mismatch items in the latest returned run.</p>'})}
         </div>
-      </section>
+      </section>`:'<div class="platform-route-note"><b>Subscription billing omitted</b><p class="small">This account does not have Billing access. No billing or reconciliation reader was called.</p></div>'}
     </article>`;
   }
   async function renderCrossDomainReport(context,filters) {
@@ -917,20 +1024,28 @@
     if(!host)return;
     host.innerHTML=loading(CUI,'Enterprise report','Building firm, customer, pipeline and billing sections…','reports');
     try{
+      const sectionAccess=reportSectionAccess(context.access);
       const [report,customerPayload,analytics,billingPayload,reconciliationRuns]=await Promise.all([
         rpc(sb,'platform_generate_improvement_report_v82',enterpriseArgs(filters)),
         fetchEnterpriseCustomerPage(sb,filters,null),
-        rpc(sb,'platform_get_sme_analytics_v86',{p_from:filters.from,p_to:filters.to,p_snapshot_at:null,p_consultant:null,p_limit:200,p_after_source:null}),
-        rpc(sb,'get_platform_billing_v77',{p_business:null,p_limit:250}),
-        rpc(sb,'get_billing_reconciliation_v77',{p_run:null,p_limit:50})
+        sectionAccess.onboarding
+          ?rpc(sb,'platform_get_sme_analytics_v86',{p_from:filters.from,p_to:filters.to,p_snapshot_at:null,p_consultant:null,p_limit:200,p_after_source:null})
+          :Promise.resolve(null),
+        sectionAccess.billing?rpc(sb,'platform_get_billing_v89',{p_business:null,p_limit:250}):Promise.resolve(null),
+        sectionAccess.billing?rpc(sb,'platform_get_billing_reconciliation_v89',{p_run:null,p_limit:50}):Promise.resolve(null)
       ]);
       const reportObject=asObject(report),allowedIds=new Set(asArray(reportObject.businesses).map(firmId));
       const billing=asArray(billingPayload).filter(row=>!allowedIds.size||allowedIds.has(String(row.business_id)));
       const runPayload=asObject(reconciliationRuns),latestRun=asArray(runPayload.runs)[0];
-      const reconciliation=latestRun?.id
-        ?asObject(await rpc(sb,'get_billing_reconciliation_v77',{p_run:latestRun.id,p_limit:50}))
+      const reconciliation=sectionAccess.billing&&latestRun?.id
+        ?asObject(await rpc(sb,'platform_get_billing_reconciliation_v89',{p_run:latestRun.id,p_limit:50}))
         :runPayload;
-      const payload={report:reportObject,customers:asArray(customerPayload,['customers']),customerPage:asObject(customerPayload.pagination),analytics:asObject(analytics),billing,reconciliation};
+      const payload={
+        report:reportObject,customers:asArray(customerPayload,['customers']),
+        customerPage:asObject(customerPayload.pagination),analytics:asObject(analytics),
+        billing,reconciliation,analyticsAvailable:sectionAccess.onboarding,
+        billingAvailable:sectionAccess.billing
+      };
       if(!host.isConnected)return;
       host.innerHTML=crossDomainReportHtml(payload,CUI,filters);
       host.querySelector('[data-cross-report-print]').onclick=()=>globalObject.print();
@@ -943,8 +1058,8 @@
           const convertLegacy=row=>[row[0],row[1]||row[2]||row[3]||'',row[3]||row[1]||'',row[4]||'',row[6],row[7],row[5],row[8],row[9],row[10]];
           downloadCsv(`${context.brand?.downloadPrefix||'nestly'}-enterprise-cross-domain-${filters.from}-${filters.to}.csv`,[
             extendedHeader,...legacy.slice(1).map(convertLegacy),
-            ...analyticsReportRows(asObject(analytics)).slice(1),
-            ...billingReportRows(billing,reconciliation,filters,reportObject.snapshot_at).slice(1)
+            ...(sectionAccess.onboarding?analyticsReportRows(asObject(analytics)).slice(1):[]),
+            ...(sectionAccess.billing?billingReportRows(billing,reconciliation,filters,reportObject.snapshot_at).slice(1):[])
           ]);
           button.textContent=`Downloaded ${customers.length} customer rows`;
         }catch(error){button.disabled=false;button.textContent='Retry complete CSV';button.title=error.message}
@@ -1118,7 +1233,7 @@
       return {...item,onboarding,onboarding_status:facts.status,onboarding_summary:facts};
     });
   }
-  function prospectCardHtml(item,CUI,{mobile=false}={}) {
+  function prospectCardHtml(item,CUI,{mobile=false,canWrite=true}={}) {
     const stage=prospectStage(item),id=item.id||item.prospect_id||item.row_id||item.business_id;
     const stale=prospectIsStale(item);
     const overdue=item.next_action_overdue===true||item.overdue===true||Number(item.overdue_task_count||0)>0;
@@ -1171,7 +1286,7 @@
       </div>
       ${tags.length?`<div class="platform-card-tags" aria-label="Tags">${tags.slice(0,4).map(tag=>`<span>${escapeHtml(tag)}</span>`).join('')}</div>`:''}
       ${contactActions}
-      ${managed?`<div class="platform-card-actions platform-card-managed" data-card-actions>${canOpenDetail
+      ${managed||!canWrite?`<div class="platform-card-actions platform-card-managed" data-card-actions>${canOpenDetail
         ?'<span class="muted small">Evidence-managed lifecycle</span>'
         :'<a class="btn ghost sm" href="#/platform/firms">Open firm directory</a>'}</div>`:`<div class="platform-card-actions" data-card-actions>
         <label class="sr-only" for="move-${escapeHtml(id)}">Move ${escapeHtml(prospectCompany(item))} to stage</label>
@@ -1286,7 +1401,7 @@
     if(!active.length)return'';
     return `<div class="platform-active-filters" aria-label="Active filters">${CUI.icon('search',{size:16})}<span>Active:</span>${active.map(([key,label])=>`<span class="chip">${escapeHtml(label)} · ${escapeHtml(key==='attention'?attentionFilterLabel(filters[key]):plainLabel(filters[key]))}</span>`).join('')}</div>`;
   }
-  function onboardingHtml({board,items,CUI,filters,attentionSummary={}}) {
+  function onboardingHtml({board,items,CUI,filters,attentionSummary={},canWrite=true}) {
     const filtered=sortProspects(items.filter(item=>prospectMatchesFilters(item,filters)),filters.sort);
     const byLane=Object.fromEntries(operationalLanes.map(lane=>[
       lane.key,filtered.filter(item=>operationalLaneFor(item)===lane.key)
@@ -1309,7 +1424,7 @@
       title:'Onboarding',
       subtitle:'Move from first contact to activation with evidence-backed onboarding gates and an auditable launch decision.',
       iconName:'setup',
-      actions:`<button type="button" class="btn ghost" id="platformImportProspects">${CUI.icon('import',{size:17})}<span>Import</span></button><button type="button" class="btn" id="platformNewProspect">${CUI.icon('add',{size:17})}<span>New prospect</span></button>`
+      actions:canWrite?`<button type="button" class="btn ghost" id="platformImportProspects">${CUI.icon('import',{size:17})}<span>Import</span></button><button type="button" class="btn" id="platformNewProspect">${CUI.icon('add',{size:17})}<span>New prospect</span></button>`:''
     })}
       <section class="platform-attention-summary" aria-label="Onboarding attention queue">
         ${[
@@ -1352,9 +1467,9 @@
       <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Five clear operating lanes</b><p class="small">The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.</p></div></div>
       <div class="platform-kanban" aria-label="SME onboarding Kanban">${operationalLanes.map(lane=>`<section class="platform-kanban-column" aria-labelledby="lane-${lane.key}">
         <header class="platform-kanban-head"><div><h2 id="lane-${lane.key}">${escapeHtml(lane.label)}</h2><p>${escapeHtml(lane.description)}</p></div><span class="platform-count">${byLane[lane.key].length}</span></header>
-        <div class="platform-card-list">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI)).join('')||`<p class="muted small platform-lane-empty">No firms</p>`}</div>
+        <div class="platform-card-list">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI,{canWrite})).join('')||`<p class="muted small platform-lane-empty">No firms</p>`}</div>
       </section>`).join('')}</div>
-      <div class="platform-prospect-list" aria-label="SME onboarding list">${filtered.map(item=>prospectCardHtml(item,CUI,{mobile:true})).join('')||CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>`;
+      <div class="platform-prospect-list" aria-label="SME onboarding list">${filtered.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>`;
   }
 
   function defaultOnboardingFilters(){
@@ -1373,7 +1488,7 @@
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       const items=mergeFirmOnboardingItems(directory.items,flattenBoard(board,list));
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
-      main.innerHTML=onboardingHtml({board,items,CUI,filters,attentionSummary:directory.attention_summary});
+      main.innerHTML=onboardingHtml({board,items,CUI,filters,attentionSummary:directory.attention_summary,canWrite:context.canWrite});
       wireOnboarding({...context,board,items,filters});
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Onboarding')}
@@ -1402,8 +1517,10 @@
     main.querySelectorAll('[data-attention-quick]').forEach(button=>button.onclick=()=>renderOnboarding(context,{
       ...filters,attention:button.dataset.attentionQuick
     }));
-    main.querySelector('#platformNewProspect').onclick=()=>newProspectModal(context);
-    main.querySelector('#platformImportProspects').onclick=()=>prospectImportModal(context);
+    const newProspect=main.querySelector('#platformNewProspect');
+    if(newProspect)newProspect.onclick=()=>newProspectModal(context);
+    const importProspects=main.querySelector('#platformImportProspects');
+    if(importProspects)importProspects.onclick=()=>prospectImportModal(context);
     main.querySelectorAll('[data-prospect]').forEach(card=>{
       const item=items.find(row=>String(row.id||row.prospect_id)===card.dataset.prospect);
       const open=()=>{
@@ -2527,11 +2644,21 @@
       controls.close();context.close?.();await renderOnboarding(context);CUI.announce('Prospect updated.');
     }});
   }
-  function assignProspectModal(prospect,context) {
+  async function assignProspectModal(prospect,context) {
     const {CUI,sb}=context;
-    modal({title:'Assign consultant',submitLabel:'Assign',CUI,body:CUI.field({id:'assignConsultant',label:'Consultant ID',value:prospect.assigned_consultant_id||'',hint:'Leave blank to unassign.',attributes:'name="consultant"'}),
+    const payload=asObject(await rpc(sb,'platform_list_assignment_consultants_v89'));
+    const consultants=scopedConsultantOptions(asArray(payload,['items']));
+    modal({title:'Assign consultant',submitLabel:'Assign',CUI,body:`${CUI.field({
+      id:'assignConsultant',label:'Sales consultant',control:'select',
+      options:[{value:'',label:'Unassigned'},...consultants].map(option=>({
+        ...option,selected:String(option.value)===String(prospect.assigned_consultant_id||'')
+      })),attributes:'name="consultant"'
+    })}<p class="muted small">Choose by consultant name. Assignment changes are recorded in the prospect history.</p>`,
       onSubmit:async(form,controls)=>{
-        await rpc(sb,'platform_assign_prospect_v76',{p_prospect:prospect.id,p_consultant:form.get('consultant')||null,p_expected_version:prospectVersion(prospect),p_idempotency_key:idempotencyKey()});
+        await rpc(sb,'platform_assign_prospect_v89',{
+          p_prospect:prospect.id,p_consultant:form.get('consultant')||null,
+          p_reason:'admin assignment from enterprise onboarding'
+        });
         controls.close();context.close?.();await renderOnboarding(context);CUI.announce('Prospect assignment updated.');
       }});
   }
@@ -2740,7 +2867,7 @@
     try{
       const [sectorPayload,rosterPayload]=await Promise.all([
         rpc(sb,'platform_list_sector_entitlements_v75'),
-        rpc(sb,'super_admin_list_businesses')
+        rpc(sb,'platform_list_sector_firms_v89')
       ]);
       const payload=asObject(sectorPayload),profiles=asArray(payload.profiles);
       const assignments=asArray(payload.businesses);
@@ -2909,15 +3036,15 @@
     main.innerHTML=loading(CUI,'Billing','Loading platform billing truth…','reports');
     try{
       const [billingPayload,catalogPayload,reconciliationPayload]=await Promise.all([
-        rpc(sb,'get_platform_billing_v77',{p_business:null,p_limit:250}),
+        rpc(sb,'platform_get_billing_v89',{p_business:null,p_limit:250}),
         rpc(sb,'get_billing_price_catalog_v77',{p_currency:null}),
-        rpc(sb,'get_billing_reconciliation_v77',{p_run:null,p_limit:50})
+        rpc(sb,'platform_get_billing_reconciliation_v89',{p_run:null,p_limit:50})
       ]);
       const rows=asArray(billingPayload);
       const catalog=asArray(catalogPayload);
       const reconciliationRuns=asArray(reconciliationPayload?.runs);
       const latestReconciliation=reconciliationRuns[0]?.id
-        ?asObject(await rpc(sb,'get_billing_reconciliation_v77',{p_run:reconciliationRuns[0].id,p_limit:50}))
+        ?asObject(await rpc(sb,'platform_get_billing_reconciliation_v89',{p_run:reconciliationRuns[0].id,p_limit:50}))
         :asObject(reconciliationPayload);
       const reconciliationItems=asArray(latestReconciliation.items);
       const exceptions=rows.filter(row=>row.status==='past_due'||row.payment_status==='past_due'||Number(row.failed_event_count||0)>0);
@@ -3053,7 +3180,7 @@
       const [dashboard,policiesPayload,directoryPayload]=await Promise.all([
         rpc(sb,'get_consultant_commission_dashboard_v78',{p_consultant:null,p_limit:100}),
         rpc(sb,'get_consultant_commission_policies_v78'),
-        rpc(sb,'platform_list_consultants_v75')
+        rpc(sb,'platform_list_commission_consultants_v89')
       ]);
       const view=asObject(dashboard),totals=asObject(view.totals);
       const directory=asArray(directoryPayload,['consultants','items']);
@@ -3112,7 +3239,7 @@
       ${CUI.field({id:'consultantEmploymentStart',label:'Employment started',type:'date',value:consultant?.employment_started_on||'',required:true,attributes:'name="employment_started_on"'})}
     </div>${consultant?.active===false?'<p class="platform-route-note small">This consultant is departed. Editing preserves that status; record a deliberate reactivation as a separate reviewed policy decision.</p>':''}`,
     onSubmit:async(form,controls)=>{
-      await rpc(sb,'platform_upsert_consultant_v75',{
+      await rpc(sb,'platform_upsert_commission_consultant_v89',{
         p_consultant:consultant?.consultant_id||consultant?.id||null,
         p_user:form.get('user_id'),p_display_name:form.get('display_name'),
         p_tier:form.get('tier'),p_employment_started_on:form.get('employment_started_on'),
@@ -3191,8 +3318,8 @@
     main.innerHTML=loading(CUI,'Automation','Loading reconciliation and billing event health…','retention');
     try{
       const [reconciliation,billing]=await Promise.all([
-        rpc(sb,'get_billing_reconciliation_v77',{p_run:null,p_limit:50}),
-        rpc(sb,'get_platform_billing_v77',{p_business:null,p_limit:250})
+        rpc(sb,'platform_get_automation_reconciliation_v89',{p_run:null,p_limit:50}),
+        rpc(sb,'platform_get_automation_billing_v89',{p_business:null,p_limit:250})
       ]);
       const runs=asArray(reconciliation?.runs),items=asArray(reconciliation?.items),rows=asArray(billing);
       const failedEvents=rows.reduce((value,row)=>value+Number(row.failed_event_count||0),0);
@@ -3284,6 +3411,521 @@
     CUI.focusRoute(main);
   }
 
+  function accessPermissionRows(grant={}) {
+    const perms=asObject(grant.module_perms),role=grant.role||'admin';
+    return platformModuleKeys.map(key=>{
+      const current=perms[key]??perms['*']??(role==='admin'?'rw':'off');
+      return `<label class="platform-permission-row" data-access-module="${key}">
+        <span><b>${escapeHtml(platformModuleLabels[key])}</b><small>${key==='onboarding'?'CRM and onboarding workflow':key==='reports'?'Scoped analytics and report generation':'Platform console module'}</small></span>
+        <select name="permission_${key}" aria-label="${escapeHtml(platformModuleLabels[key])} permission">
+          <option value="off"${current!=='r'&&current!=='rw'?' selected':''}>Off</option>
+          <option value="r"${current==='r'?' selected':''}>Read only</option>
+          <option value="rw"${current==='rw'?' selected':''}>Read and write</option>
+        </select>
+      </label>`;
+    }).join('');
+  }
+
+  function accessGrantModal(grant,context) {
+    const {CUI,sb}=context,isEdit=Boolean(grant?.user_id);
+    const seed=grant||{role:'admin',module_perms:Object.fromEntries(platformModuleKeys.map(key=>[key,'rw'])),active:true};
+    const userPicker=isEdit
+      ?`<div class="platform-route-note"><b>${escapeHtml(seed.display_name||seed.email||'Platform user')}</b><p class="small">${escapeHtml(seed.email||'Email unavailable')}</p></div><input type="hidden" name="user_id" value="${escapeHtml(seed.user_id)}">`
+      :`${CUI.field({
+        id:'platformAccessUserQuery',label:'Find user by email or name',required:true,
+        hint:'Search an existing Nestly sign-in. You will confirm the matched person before granting access.',
+        attributes:'autocomplete="off" minlength="3" maxlength="160"'
+      })}
+      <button type="button" class="btn ghost" id="platformAccessUserLookup">${CUI.icon('search',{size:17})}<span>Find user</span></button>
+      <label for="platformAccessUser" style="margin-top:12px">Selected user</label>
+      <select id="platformAccessUser" name="user_id" disabled required><option value="">Search by email or name first</option></select>
+      <p id="platformAccessUserStatus" class="muted small" role="status" aria-live="polite" style="margin-top:7px"></p>`;
+    const overlay=modal({
+      title:isEdit?'Edit platform access':'Add platform access',
+      submitLabel:isEdit?'Save access':'Grant access',CUI,
+      body:`${userPicker}
+      ${CUI.field({
+        id:'platformAccessRole',label:'Role',control:'select',
+        options:[
+          {value:'admin',label:'Admin',selected:seed.role==='admin'},
+          {value:'sales_staff',label:'Sales staff',selected:seed.role==='sales_staff'}
+        ],attributes:'name="role"'
+      })}
+      <label class="platform-active-toggle"><input type="checkbox" name="active" value="yes"${seed.active!==false?' checked':''}><span><b>Active access</b><small>Turning this off removes platform access immediately without deleting history.</small></span></label>
+      <fieldset class="platform-permission-editor"><legend>Module permissions</legend>
+        <p class="muted small">Off modules are hidden and blocked. Read-only modules never show editing controls.</p>
+        <div data-permission-rows>${accessPermissionRows(seed)}</div>
+      </fieldset>`,
+      onSubmit:async(form,controls)=>{
+        const role=String(form.get('role')||''),perms={};
+        const selectedUser=String(form.get('user_id')||'').trim();
+        if(!selectedUser)throw new Error('Find and select an existing Nestly user first.');
+        platformModuleKeys.forEach(key=>{
+          const value=String(form.get(`permission_${key}`)||'off');
+          if(value==='r'||value==='rw')perms[key]=value;
+        });
+        if(role==='sales_staff'){
+          perms.onboarding='rw';perms.firms='r';
+          if(!['r','rw'].includes(perms.reports))perms.reports='r';
+          Object.keys(perms).forEach(key=>{
+            if(!['onboarding','firms','reports'].includes(key))delete perms[key];
+          });
+        }else if(platformModuleKeys.every(key=>perms[key]==='rw')){
+          Object.keys(perms).forEach(key=>delete perms[key]);
+          perms['*']='rw';
+        }
+        await rpc(sb,'platform_upsert_access_grant_v89',{
+          p_user:selectedUser,
+          p_role:role,p_module_perms:perms,p_active:form.get('active')==='yes'
+        });
+        controls.close();await renderPlatformAccess(context);
+        CUI.announce(isEdit?'Platform access updated.':'Platform access granted.');
+      }
+    });
+    if(!isEdit){
+      const query=overlay.querySelector('#platformAccessUserQuery');
+      const lookup=overlay.querySelector('#platformAccessUserLookup');
+      const picker=overlay.querySelector('#platformAccessUser');
+      const lookupStatus=overlay.querySelector('#platformAccessUserStatus');
+      lookup.onclick=async()=>{
+        const value=String(query.value||'').trim();
+        if(value.length<3){lookupStatus.textContent='Enter at least 3 characters of a name or email.';return}
+        lookup.disabled=true;picker.disabled=true;lookupStatus.textContent='Searching existing Nestly users…';
+        try{
+          const payload=asObject(await rpc(sb,'platform_lookup_access_user_v89',{p_query:value}));
+          const items=asArray(payload,['items']);
+          picker.innerHTML=items.length
+            ?`${payload.status==='ambiguous'?'<option value="" selected>Choose the correct user</option>':''}${items.map(item=>`<option value="${escapeHtml(item.user_id)}">${escapeHtml(item.display_name||'Unnamed user')} · ${escapeHtml(item.email||'Email unavailable')}</option>`).join('')}`
+            :'<option value="">No matching user</option>';
+          picker.disabled=!items.length;
+          if(payload.status==='matched'&&items.length===1){
+            picker.value=items[0].user_id;
+            lookupStatus.textContent=`Selected ${items[0].display_name||items[0].email||'matched user'}.`;
+          }else if(payload.status==='ambiguous'&&items.length){
+            lookupStatus.textContent='More than one user matched. Choose the correct name and email.';
+          }else{
+            lookupStatus.textContent='No existing Nestly sign-in matched that search.';
+          }
+          picker.onchange=()=>{
+            const item=items.find(row=>String(row.user_id)===picker.value);
+            if(item)lookupStatus.textContent=`Selected ${item.display_name||item.email||'user'} · ${item.email||'Email unavailable'}.`;
+          };
+        }catch(error){
+          picker.innerHTML='<option value="">Search unavailable</option>';
+          lookupStatus.textContent=error.message||'User search is unavailable.';
+        }finally{lookup.disabled=false}
+      };
+    }
+    const roleSelect=overlay.querySelector('#platformAccessRole');
+    const updateRoleHelp=()=>{
+      const sales=roleSelect.value==='sales_staff';
+      overlay.querySelectorAll('[data-access-module]').forEach(row=>{
+        const key=row.dataset.accessModule,select=row.querySelector('select');
+        if(!sales){select.disabled=false;return}
+        if(key==='onboarding'){select.value='rw';select.disabled=true}
+        else if(key==='firms'||key==='reports'){
+          if(key==='firms')select.value='r';
+          else if(!['r','rw'].includes(select.value))select.value='r';
+          select.disabled=key==='firms';
+        }else{select.value='off';select.disabled=true}
+      });
+    };
+    roleSelect.onchange=updateRoleHelp;updateRoleHelp();
+  }
+
+  async function renderPlatformAccess(context) {
+    const {main,CUI,sb}=context;
+    main.innerHTML=loading(CUI,'Platform access','Loading administrators and sales staff…','staff');
+    try{
+      const payload=asObject(await rpc(sb,'platform_list_access_grants_v89'));
+      const grants=asArray(payload,['items']);
+      main.innerHTML=`${CUI.pageHeader({
+        title:'Platform access',
+        subtitle:'Super-admin control of platform roles, module permissions and active access.',
+        iconName:'staff',
+        actions:`<button type="button" class="btn" id="platformAddAccess">${CUI.icon('add',{size:17})}<span>Add access</span></button>`
+      })}
+      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div>
+        <b>Super admin remains implicit</b>
+        <p class="small">Your account always has every module with read and write access. Admins default to full access and can be customized here. Sales staff are restricted to their own-created or assigned CRM records and scoped reports.</p>
+      </div></div>
+      <section class="platform-access-list" aria-label="Platform access grants">
+        ${grants.map(grant=>`<article class="card platform-access-card">
+          <div class="platform-access-card-head"><div><h2>${escapeHtml(grant.email||grant.user_id)}</h2>
+            <p class="muted small">${escapeHtml(grant.user_id)}</p></div>
+            ${CUI.status(grant.active?'Active':'Inactive',grant.active?'ok':'off')}
+          </div>
+          <dl class="platform-access-facts">
+            <div><dt>Role</dt><dd>${escapeHtml(roleLabel(grant.role))}</dd></div>
+            <div><dt>Scope</dt><dd>${escapeHtml(grant.role==='sales_staff'?'Own-created or assigned firms':'All permitted records')}</dd></div>
+            <div><dt>Updated</dt><dd>${escapeHtml(dateTime(grant.updated_at))}</dd></div>
+          </dl>
+          <div class="platform-module-list" aria-label="Module permissions">${platformModuleKeys.map(key=>{
+            const permission=grant.module_perms?.[key]??grant.module_perms?.['*']??'off';
+            return permission==='off'?'':`<span class="chip ${permission==='rw'?'on':''}">${escapeHtml(platformModuleLabels[key])} · ${permission==='rw'?'write':'read'}</span>`;
+          }).join('')||'<span class="muted small">No modules enabled</span>'}</div>
+          <div class="platform-actions platform-access-actions"><button type="button" class="btn ghost" data-edit-access="${escapeHtml(grant.user_id)}">${CUI.icon('edit',{size:17})}<span>Edit access</span></button></div>
+        </article>`).join('')||CUI.emptyState({iconName:'staff',title:'No delegated platform users',body:'Add an admin or sales staff account when you are ready.'})}
+      </section>`;
+      main.querySelector('#platformAddAccess').onclick=()=>accessGrantModal(null,context);
+      main.querySelectorAll('[data-edit-access]').forEach(button=>{
+        button.onclick=()=>accessGrantModal(grants.find(grant=>String(grant.user_id)===button.dataset.editAccess),context);
+      });
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Platform access')}
+  }
+
+  function scopedScopeNote(access,CUI) {
+    return `<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div>
+      <b>${escapeHtml(roleLabel(access.role))} · ${escapeHtml(scopeLabel(access.scope))}</b>
+      <p class="small">${access.scope==='own_created_or_assigned'
+        ?'Search, counts, details and reports use the same server-enforced scope. Other sales staff records are never included.'
+        :'This module covers every record permitted by your platform role.'}</p>
+    </div></div>`;
+  }
+
+  async function fetchScopedFirms(sb,search='') {
+    return asObject(await rpc(sb,'platform_list_my_firms_v89',{
+      p_search:search||null,p_limit:250
+    }));
+  }
+
+  function canAssignScopedProspect(context) {
+    return context?.canWrite===true&&context?.access?.role==='admin'
+      &&context?.access?.scope==='all';
+  }
+
+  function scopedConsultantOptions(rows=[]) {
+    const unique=new Map();
+    asArray(rows).forEach(row=>{
+      const id=String(row.id||row.consultant_id||row.assigned_consultant_id||'');
+      const name=String(row.display_name||row.consultant_name||row.owner_name||'').trim();
+      if(id&&name&&row.active!==false)unique.set(id,{value:id,label:name});
+    });
+    return [...unique.values()].sort((left,right)=>left.label.localeCompare(right.label));
+  }
+
+  async function fetchScopedConsultants(sb,firmRows=[]) {
+    const payload=asObject(await rpc(sb,'platform_list_assignment_consultants_v89'));
+    const directory=asArray(payload,['items']);
+    return scopedConsultantOptions([...directory,...asArray(firmRows)]);
+  }
+
+  function scopedFirmTable(items,CUI) {
+    return CUI.table({
+      caption:'Firms in your access scope',
+      headers:['Firm','Stage','Owner','Contact','Attention','Updated'],
+      rows:items.map(item=>[
+        `<b>${escapeHtml(item.name||item.legal_name||'Unnamed firm')}</b>${item.registration_number?`<span class="muted small platform-firm-secondary">${escapeHtml(item.registration_number)}</span>`:''}`,
+        escapeHtml(plainLabel(prospectStage(item))),
+        escapeHtml(item.consultant_name||item.owner_name||(item.assigned_consultant_id?'Assigned':'Unassigned')),
+        `<span>${escapeHtml(item.boss_name||item.primary_contact_name||'—')}</span>${platformContactActions(item.boss_phone||item.primary_contact_phone,CUI,{compact:true})}`,
+        item.attention_due?CUI.status('Due now','no'):CUI.status(plainLabel(item.attention_severity||'Clear'),item.attention_severity==='critical'?'no':'off'),
+        escapeHtml(dateTime(item.updated_at))
+      ]),className:'platform-scoped-firms-table'
+    });
+  }
+
+  async function renderScopedFirms(context,search='') {
+    const {main,CUI,sb,access}=context;
+    main.innerHTML=loading(CUI,'Firms','Loading firms in your access scope…','branch');
+    try{
+      const payload=await fetchScopedFirms(sb,search),items=asArray(payload,['items']);
+      main.innerHTML=`${CUI.pageHeader({title:'Firms',subtitle:'Search the firms available to your platform role.',iconName:'branch'})}
+        ${scopedScopeNote(access,CUI)}
+        <form class="card platform-scoped-search" id="platformScopedFirmSearch">
+          ${CUI.field({id:'platformScopedFirmQuery',label:'Search firms',type:'search',value:search,placeholder:'Company, UEN, owner, email or phone'})}
+          <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>Search</span></button>
+        </form>
+        ${payload.truncated?`<p class="platform-route-note">Showing the first 250 matches. Refine the search to narrow the list.</p>`:''}
+        <section class="card">${items.length?scopedFirmTable(items,CUI):CUI.emptyState({iconName:'branch',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</section>`;
+      main.querySelector('#platformScopedFirmSearch').onsubmit=event=>{
+        event.preventDefault();renderScopedFirms(context,main.querySelector('#platformScopedFirmQuery').value.trim());
+      };
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Firms')}
+  }
+
+  function scopedActivityModal(prospectId,context,onSaved) {
+    const {CUI,sb}=context;
+    modal({
+      title:'Record CRM activity',submitLabel:'Save activity',CUI,
+      body:`${CUI.field({id:'scopedActivityType',label:'Activity type',control:'select',options:[
+        'note','call','email','whatsapp','meeting','demo','proposal_sent','contract_sent'
+      ].map(value=>({value,label:plainLabel(value)})),attributes:'name="activity_type"'})}
+      ${CUI.field({id:'scopedActivitySummary',label:'Summary',required:true,attributes:'name="summary" minlength="2" maxlength="240"'})}
+      ${CUI.field({id:'scopedActivityDetail',label:'Detail',control:'textarea',attributes:'name="detail" rows="4"'})}`,
+      onSubmit:async(form,controls)=>{
+        await rpc(sb,'platform_add_my_prospect_activity_v89',{
+          p_prospect:prospectId,p_activity_type:form.get('activity_type'),
+          p_summary:form.get('summary'),p_detail:form.get('detail')||null,
+          p_occurred_at:new Date().toISOString()
+        });
+        controls.close();await onSaved?.();CUI.announce('Activity saved.');
+      }
+    });
+  }
+
+  function scopedProspectCreateModal(context,onSaved) {
+    const {CUI,sb}=context;
+    modal({
+      title:'Add firm to CRM',submitLabel:'Create firm',CUI,
+      body:`${CUI.field({id:'scopedNewCompany',label:'Company name',required:true,attributes:'name="company_name" minlength="2" maxlength="200"'})}
+      ${CUI.field({id:'scopedNewContact',label:'Boss / primary contact name',attributes:'name="contact_name" maxlength="200"'})}
+      ${CUI.field({id:'scopedNewPhone',label:'Phone number',type:'tel',hint:'Add a phone number or email address.',attributes:'name="phone" autocomplete="tel"'})}
+      ${CUI.field({id:'scopedNewEmail',label:'Email',type:'email',attributes:'name="email" autocomplete="email"'})}
+      ${CUI.field({id:'scopedNewSector',label:'Sector key (optional)',hint:'For example: fnb, facial, salon or fitness. Leave blank if undecided.',attributes:'name="sector_key" autocapitalize="none"'})}`,
+      onSubmit:async(form,controls)=>{
+        if(!String(form.get('phone')||'').trim()&&!String(form.get('email')||'').trim()){
+          throw new Error('Add a phone number or email address.');
+        }
+        await rpc(sb,'platform_create_my_prospect_v89',{
+          p_company_name:form.get('company_name'),
+          p_sector_key:String(form.get('sector_key')||'').trim()||null,
+          p_phone:String(form.get('phone')||'').trim()||null,
+          p_email:String(form.get('email')||'').trim()||null,
+          p_contact_name:String(form.get('contact_name')||'').trim()||null
+        });
+        controls.close();await onSaved?.();CUI.announce('Firm added to your CRM.');
+      }
+    });
+  }
+
+  function scopedTaskModal(prospectId,context,onSaved) {
+    const {CUI,sb}=context;
+    modal({
+      title:'Add follow-up task',submitLabel:'Create task',CUI,
+      body:`${CUI.field({id:'scopedTaskTitle',label:'Task',required:true,attributes:'name="title" minlength="2" maxlength="240"'})}
+      ${CUI.field({id:'scopedTaskDue',label:'Due at',type:'datetime-local',required:true,attributes:'name="due_at"'})}`,
+      onSubmit:async(form,controls)=>{
+        await rpc(sb,'platform_create_my_prospect_task_v89',{
+          p_prospect:prospectId,p_title:form.get('title'),
+          p_due_at:new Date(form.get('due_at')).toISOString()
+        });
+        controls.close();await onSaved?.();CUI.announce('Task created.');
+      }
+    });
+  }
+
+  function scopedProspectAssignmentModal(prospect,consultants,context,onSaved) {
+    if(!canAssignScopedProspect(context))return;
+    const current=String(prospect.assigned_consultant_id||prospect.consultant_id||'');
+    modal({
+      title:'Assign sales consultant',submitLabel:'Save assignment',CUI:context.CUI,
+      body:`${context.CUI.field({
+        id:'scopedAssignmentConsultant',label:'Sales consultant',control:'select',
+        options:[{value:'',label:'Unassigned'},...consultants].map(option=>({
+          ...option,selected:String(option.value)===current
+        })),attributes:'name="consultant"'
+      })}
+      <p class="muted small">Choose by consultant name. Sales staff continue to see only firms they created or are assigned to.</p>`,
+      onSubmit:async(form,controls)=>{
+        await rpc(context.sb,'platform_assign_prospect_v89',{
+          p_prospect:prospect.id||prospect.prospect_id,
+          p_consultant:String(form.get('consultant')||'')||null,
+          p_reason:'admin assignment from scoped onboarding'
+        });
+        controls.close();await onSaved?.();context.CUI.announce('Consultant assignment updated.');
+      }
+    });
+  }
+
+  async function openScopedProspect(item,context,consultants=[]) {
+    const {CUI,sb}=context,prospectId=item.prospect_id||item.id;
+    if(!prospectId)return;
+    const overlay=document.createElement('div');
+    overlay.className='platform-drawer';overlay.tabIndex=-1;
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','scopedProspectTitle');
+    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head">
+      <div><h1 id="scopedProspectTitle" style="font-size:1.45rem">${escapeHtml(prospectCompany(item))}</h1>
+      <p class="muted small">${escapeHtml(scopeLabel(context.access.scope))}</p></div>
+      <button type="button" class="btn ghost sm platform-drawer-close" aria-label="Close detail">${CUI.icon('close',{size:18})}</button>
+      </div><div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading scoped contacts, activity and tasks…',iconName:'customers'})}</div></section>`;
+    document.body.appendChild(overlay);
+    let deactivate;
+    const close=()=>closeOverlay(overlay,deactivate);
+    overlay.querySelector('.platform-drawer-close').onclick=close;
+    deactivate=CUI.activateDialog(overlay,{onClose:close});
+    const renderDetail=async()=>{
+      const host=overlay.querySelector('[data-detail]');
+      try{
+        const detail=asObject(await rpc(sb,'platform_get_my_prospect_v89',{p_prospect:prospectId}));
+        const prospect=asObject(detail.prospect),company=asObject(detail.company);
+        const assignment=asObject(detail.assignment);
+        const contacts=asArray(detail.contacts),activities=asArray(detail.activities),tasks=asArray(detail.tasks);
+        host.innerHTML=`<div class="platform-detail-shortcuts platform-actions">
+          ${context.canWrite?`<button type="button" class="btn" data-add-note>${CUI.icon('add',{size:16})}<span>Add activity</span></button>
+          <button type="button" class="btn ghost" data-add-task>${CUI.icon('appointments',{size:16})}<span>Add task</span></button>`:''}
+          ${canAssignScopedProspect(context)?`<button type="button" class="btn ghost" data-scoped-assign>${CUI.icon('staff',{size:16})}<span>${prospect.assigned_consultant_id?'Reassign consultant':'Assign consultant'}</span></button>`:''}
+        </div>
+        <div class="platform-detail-grid">
+          ${CUI.card({title:'Company',body:detailObjectHtml({
+            legal_name:company.legal_name||company.trading_name,
+            registration_number:company.registration_number,
+            stage:plainLabel(prospectStage(prospect)),
+            priority:plainLabel(prospect.priority||'normal'),
+            sales_consultant:assignment.display_name||assignment.consultant_name||prospect.consultant_name||'Unassigned'
+          })})}
+          ${CUI.card({title:'Primary contact',body:contacts.length?contacts.map(contact=>`<div class="platform-action-item"><div><b>${escapeHtml(contact.full_name||contact.name||'Contact')}</b><p class="muted small">${escapeHtml(contact.email||contact.phone||'No contact detail')}</p></div>${platformContactActions(contact.phone,CUI,{compact:true})}</div>`).join(''):'<p class="muted small">No active contacts.</p>'})}
+        </div>
+        <section class="card platform-detail-section"><h2>Activity</h2>${activities.length?activities.map(activity=>`<div class="platform-timeline-item"><span class="platform-timeline-marker"></span><div><b>${escapeHtml(activity.summary||plainLabel(activity.activity_type))}</b><p class="muted small">${escapeHtml(dateTime(activity.occurred_at))}</p></div></div>`).join(''):'<p class="muted small">No activity recorded.</p>'}</section>
+        <section class="card platform-detail-section"><h2>Tasks</h2>${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title)}</b><p class="muted small">${escapeHtml(plainLabel(task.status||'open'))} · due ${escapeHtml(dateTime(task.due_at))}</p></div>${context.canWrite&&task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">Complete</button>`:''}</div>`).join(''):'<p class="muted small">No tasks.</p>'}</section>`;
+        host.querySelector('[data-add-note]')?.addEventListener('click',()=>scopedActivityModal(prospectId,context,renderDetail));
+        host.querySelector('[data-add-task]')?.addEventListener('click',()=>scopedTaskModal(prospectId,context,renderDetail));
+        host.querySelector('[data-scoped-assign]')?.addEventListener('click',()=>
+          scopedProspectAssignmentModal(prospect,consultants,context,renderDetail)
+        );
+        host.querySelectorAll('[data-complete-task]').forEach(button=>button.onclick=()=>modal({
+          title:'Complete task',submitLabel:'Mark complete',CUI,
+          body:CUI.field({id:'scopedTaskOutcome',label:'Outcome',control:'textarea',required:true,attributes:'name="outcome" rows="4" minlength="2"'}),
+          onSubmit:async(form,controls)=>{
+            await rpc(sb,'platform_complete_my_prospect_task_v89',{p_task:button.dataset.completeTask,p_outcome:form.get('outcome')});
+            controls.close();await renderDetail();CUI.announce('Task completed.');
+          }
+        }));
+      }catch(error){host.innerHTML=CUI.errorState({title:'Prospect unavailable',message:error.message||'Try again.'})}
+    };
+    await renderDetail();
+  }
+
+  async function renderScopedOnboarding(context,search='') {
+    const {main,CUI,sb,access}=context;
+    main.innerHTML=loading(CUI,'Onboarding','Loading your scoped CRM pipeline…','setup');
+    try{
+      const payload=await fetchScopedFirms(sb,search),items=asArray(payload,['items']);
+      const consultants=canAssignScopedProspect(context)
+        ?await fetchScopedConsultants(sb,items):[];
+      main.innerHTML=`${CUI.pageHeader({
+        title:'Onboarding',subtitle:access.scope==='own_created_or_assigned'
+          ?'Manage only the firms you created or are assigned to.'
+          :'Manage the firms available to your platform role.',
+        iconName:'setup',
+        actions:context.canWrite?`<button type="button" class="btn" id="platformScopedNewProspect">${CUI.icon('add',{size:17})}<span>Add firm</span></button>`:''
+      })}${scopedScopeNote(access,CUI)}
+      <form class="card platform-scoped-search" id="platformScopedOnboardingSearch">
+        ${CUI.field({id:'platformScopedOnboardingQuery',label:'Search your CRM',type:'search',value:search,placeholder:'Company, owner, email, phone or UEN'})}
+        <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>Search</span></button>
+      </form>
+      <div class="platform-kanban" aria-label="Scoped onboarding Kanban">${operationalLanes.map(lane=>{
+        const laneItems=items.filter(item=>operationalLaneFor(item)===lane.key);
+        return `<section class="platform-kanban-column" aria-labelledby="scoped-lane-${lane.key}">
+          <header class="platform-kanban-head"><div><h2 id="scoped-lane-${lane.key}">${escapeHtml(lane.label)}</h2><p>${escapeHtml(lane.description)}</p></div><span class="platform-count">${laneItems.length}</span></header>
+          <div class="platform-card-list">${laneItems.map(item=>prospectCardHtml(item,CUI,{canWrite:context.canWrite})).join('')||'<p class="muted small platform-lane-empty">No firms</p>'}</div>
+        </section>`;
+      }).join('')}</div>
+      <div class="platform-prospect-list" aria-label="Scoped onboarding list">${items.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite:context.canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</div>`;
+      main.querySelector('#platformScopedOnboardingSearch').onsubmit=event=>{
+        event.preventDefault();renderScopedOnboarding(context,main.querySelector('#platformScopedOnboardingQuery').value.trim());
+      };
+      main.querySelector('#platformScopedNewProspect')?.addEventListener('click',()=>
+        scopedProspectCreateModal(context,()=>renderScopedOnboarding(context,search))
+      );
+      main.querySelectorAll('[data-move]').forEach(button=>{
+        button.onclick=async event=>{
+          event.stopPropagation();
+          const card=button.closest('[data-prospect]'),item=items.find(row=>String(row.id||row.prospect_id||row.row_id||row.business_id)===card.dataset.prospect);
+          button.disabled=true;
+          try{
+            await rpc(sb,'platform_move_my_prospect_stage_v89',{
+              p_prospect:item.prospect_id||item.id,
+              p_to_stage:card.querySelector('[data-move-select]').value,
+              p_expected_version:prospectVersion(item),p_reason:null
+            });
+            await renderScopedOnboarding(context,search);CUI.announce('Prospect stage updated.');
+          }catch(error){button.disabled=false;CUI.announce(error.message||'Stage could not be updated.',{assertive:true})}
+        };
+      });
+      main.querySelectorAll('[data-prospect]').forEach(card=>{
+        const item=items.find(row=>String(row.id||row.prospect_id||row.row_id||row.business_id)===card.dataset.prospect);
+        const open=()=>openScopedProspect(item,context,consultants);
+        card.onclick=event=>{if(event.target.closest('[data-card-actions]'))return;open()};
+        card.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('[data-card-actions]')){event.preventDefault();open()}};
+      });
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Onboarding')}
+  }
+
+  function scopedReportHtml(report,CUI) {
+    const summary=asObject(report.summary);
+    return `<article class="card platform-report-sheet">
+      <header><h2>Scoped performance report</h2><p class="muted small">${escapeHtml(dateTime(report.scope?.generated_at))}</p></header>
+      <section class="platform-kpis" aria-label="Report summary">${[
+        ['Businesses',summary.business_count||0,'branch'],
+        ['Customers',summary.customer_count||0,'customers'],
+        ['Sales',summary.sales_count||0,'till'],
+        ['Revenue',currency(summary.revenue_cents||0),'reports']
+      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+      ${CUI.table({caption:'Business performance',headers:['Business','Sector','Customers','Revenue'],rows:asArray(report.businesses).map(row=>[
+        escapeHtml(row.name),escapeHtml(plainLabel(row.industry)),String(row.customers||0),currency(row.revenue_cents||0)
+      ])})}
+    </article>`;
+  }
+
+  async function renderScopedReports(context) {
+    const {main,CUI,sb,access}=context;
+    main.innerHTML=loading(CUI,'Reports','Loading your report scope…','reports');
+    try{
+      const firms=asArray(await fetchScopedFirms(sb),['items']).filter(item=>item.business_id);
+      main.innerHTML=`${CUI.pageHeader({title:'Reports',subtitle:'Generate analysis using only firms inside your platform scope.',iconName:'reports'})}
+        ${scopedScopeNote(access,CUI)}
+        <form class="card platform-scoped-report-form" id="platformScopedReportForm">
+          <fieldset><legend>Select firms</legend><p class="muted small">Only converted firms can be included.</p>
+            <div class="platform-scoped-report-options">${firms.map(item=>`<label><input type="checkbox" name="business" value="${escapeHtml(item.business_id)}"><span><b>${escapeHtml(item.name||item.legal_name)}</b><small>${escapeHtml(plainLabel(item.sector_key||item.industry))}</small></span></label>`).join('')}</div>
+          </fieldset>
+          <button class="btn" type="submit">${CUI.icon('reports',{size:17})}<span>Generate report</span></button>
+        </form>
+        <section id="platformScopedReportResult" class="platform-report-host" aria-live="polite">${CUI.emptyState({iconName:'reports',title:'Choose firms to report on',body:'The server verifies the same own-created or assigned scope before calculating any totals.'})}</section>`;
+      main.querySelector('#platformScopedReportForm').onsubmit=async event=>{
+        event.preventDefault();
+        const selected=[...event.currentTarget.querySelectorAll('input[name="business"]:checked')].map(input=>input.value);
+        const host=main.querySelector('#platformScopedReportResult');
+        if(!selected.length){CUI.announce('Select at least one firm.',{assertive:true});return}
+        host.innerHTML=CUI.loadingState({title:'Generating report',body:'Calculating scoped metrics…',iconName:'reports'});
+        try{
+          const report=asObject(await rpc(sb,'platform_generate_my_report_v89',{p_business_ids:selected}));
+          host.innerHTML=scopedReportHtml(report,CUI);
+        }catch(error){host.innerHTML=CUI.errorState({title:'Report unavailable',message:error.message||'Try again.'})}
+      };
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Reports')}
+  }
+
+  async function renderScopedOverview(context) {
+    const {main,CUI,sb,access}=context;
+    main.innerHTML=loading(CUI,'Platform overview','Loading your permitted firm summary…','platform');
+    try{
+      const payload=await fetchScopedFirms(sb),items=asArray(payload,['items']);
+      const prospects=items.filter(item=>item.prospect_id);
+      const active=items.filter(item=>['activated','client','account_created','onboarding'].includes(prospectStage(item)));
+      const due=items.filter(item=>item.attention_due===true);
+      main.innerHTML=`${CUI.pageHeader({
+        title:'Platform overview',
+        subtitle:'A role-aware summary built from the same server-enforced firm scope as search and reports.',
+        iconName:'platform'
+      })}${scopedScopeNote(access,CUI)}
+      <section class="platform-kpis" aria-label="Scoped platform summary">${[
+        ['Firms in scope',items.length,'branch'],
+        ['CRM records',prospects.length,'customers'],
+        ['Case won / onboarding',active.length,'setup'],
+        ['Need attention',due.length,'info']
+      ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+      <div class="platform-detail-grid">
+        ${CUI.card({title:'Next actions',body:`<div class="platform-action-queue">
+          <a class="platform-action-item" href="#/platform/onboarding"><span>Review attention queue</span><b>${due.length}</b></a>
+          <a class="platform-action-item" href="#/platform/firms"><span>Open firm directory</span><b>${items.length}</b></a>
+          ${canAccessModule(access,'reports')?'<a class="platform-action-item" href="#/platform/reports"><span>Generate scoped report</span><b>Open</b></a>':''}
+        </div>`})}
+        ${CUI.card({title:'Access',body:detailObjectHtml({
+          role:roleLabel(access.role),
+          data_scope:scopeLabel(access.scope),
+          overview_permission:modulePermission(access,'overview')
+        })})}
+      </div>`;
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Platform overview')}
+  }
+
   async function loadRoster({sb,CUI,main,key,generation,isCurrent}) {
     if(key==='overview')return loadOverview({sb,CUI,main,key,generation,isCurrent});
     main.innerHTML = loading(
@@ -3313,42 +3955,83 @@
   async function render({root,sb,CUI,brand,hash,isCurrent,onSignOut,workspaceHash='#/'} = {}) {
     if (!root || !sb || !CUI) throw new Error('Platform console dependencies are unavailable.');
     const generation = ++renderGeneration;
-    const activeKey = routeKey(hash);
+    readOnlyObserver?.disconnect();readOnlyObserver=null;
+    let access;
+    try{
+      access=normalizePlatformAccess(await rpc(sb,'platform_list_my_access_v89'));
+      if(!access)throw new Error('Platform access is required.');
+    }catch(error){
+      root.innerHTML=platformAccessDeniedHtml({
+        CUI,brand:brand||globalObject.NestlyBrand||{},workspaceHash,onSignOut
+      });
+      const deniedSignOut=root.querySelector('#platformDeniedSignOut');
+      if(deniedSignOut)deniedSignOut.onclick=()=>onSignOut?.();
+      CUI.focusRoute(root.querySelector('#platformMain'));
+      return;
+    }
+    const allowedRoutes=visibleRoutes(access);
+    const requestedKey=routeKey(hash);
+    const activeRoute=allowedRoutes.find(route=>route.key===requestedKey)||allowedRoutes[0];
+    if(!activeRoute){
+      root.innerHTML=platformAccessDeniedHtml({
+        CUI,brand:brand||globalObject.NestlyBrand||{},workspaceHash,onSignOut
+      });return;
+    }
+    const activeKey=activeRoute.key;
+    if(activeKey!==requestedKey&&globalObject.history?.replaceState){
+      globalObject.history.replaceState(null,'',activeRoute.hash);
+    }
     root.innerHTML = shellHtml({
       CUI,
       brand:brand || globalObject.NestlyBrand || {},
       activeKey,
-      workspaceHash
+      workspaceHash,access,allowedRoutes
     });
     const signOut = root.querySelector('#platformSignOut');
     if (signOut) signOut.onclick = () => onSignOut?.();
     const main = root.querySelector('#platformMain');
-    const context={root,main,sb,CUI,brand:brand||globalObject.NestlyBrand||{},hash,isCurrent,onSignOut,workspaceHash,generation};
+    const context={
+      root,main,sb,CUI,brand:brand||globalObject.NestlyBrand||{},hash,isCurrent,
+      onSignOut,workspaceHash,generation,access,activeKey,
+      canWrite:activeKey==='access'||canWriteModule(access,activeKey)
+    };
     activeContext=context;
+    let task;
+    const useScopedV89=access.role==='sales_staff';
+    if(activeKey==='access')task=renderPlatformAccess(context);
+    else if(useScopedV89&&activeKey==='onboarding')task=renderScopedOnboarding(context);
+    else if(useScopedV89&&activeKey==='firms')task=renderScopedFirms(context);
+    else if(useScopedV89&&activeKey==='reports')task=renderScopedReports(context);
     if (activeKey === 'overview') {
-      await loadRoster({sb,CUI,main,key:activeKey,generation,isCurrent});
-      return;
+      task=access.role==='super_admin'
+        ?loadRoster({sb,CUI,main,key:activeKey,generation,isCurrent})
+        :renderScopedOverview(context);
     }
-    if(activeKey==='firms')return renderEnterprise(context);
-    if(activeKey==='reports')return renderPlatformReports(context);
-    if(activeKey==='onboarding')return renderOnboarding(context);
-    if(activeKey==='billing')return renderBilling(context);
-    if(activeKey==='commissions')return renderCommission(context);
-    if(activeKey==='sectors')return renderSectors(context);
-    if(activeKey==='automation')return renderAutomation(context);
-    main.innerHTML=disconnectedRouteHtml(activeKey,CUI);CUI.focusRoute(main);
+    if(!task&&activeKey==='firms')task=renderEnterprise(context);
+    if(!task&&activeKey==='reports')task=renderPlatformReports(context);
+    if(!task&&activeKey==='onboarding')task=renderOnboarding(context);
+    if(!task&&activeKey==='billing')task=renderBilling(context);
+    if(!task&&activeKey==='commissions')task=renderCommission(context);
+    if(!task&&activeKey==='sectors')task=renderSectors(context);
+    if(!task&&activeKey==='automation')task=renderAutomation(context);
+    if(!task){
+      main.innerHTML=disconnectedRouteHtml(activeKey,CUI);CUI.focusRoute(main);
+    }else await task;
+    installReadOnlyGuard(context);
   }
 
   globalObject.NestlyPlatformConsole = Object.freeze({
     isRoute,routeKey,render,routes,prospectStages,operationalLanes,
+    normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
     operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
-    firmId,resolveEnterpriseSearchBusinessIds
+    firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       isRoute,routeKey,routes,prospectStages,operationalLanes,
+      normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
       operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
-      firmId,resolveEnterpriseSearchBusinessIds
+      firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

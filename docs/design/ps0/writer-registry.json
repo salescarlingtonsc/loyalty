@@ -1623,6 +1623,30 @@
       "resolves_to": "public.correct_quick_sale_amount_v84/5 (idempotent append-only amount correction with exact unspent-point compensation and fail-closed unsupported payments)",
       "call_site_finding": "none - the modal requires an edited positive amount, an explicit first confirmation, a final native confirmation, and reuses one crypto.randomUUID idempotency key for retries of the same request fingerprint",
       "kernel_migratability": "UI binding only - keep pointed at the compound correction command until it is absorbed by the unified checkout/reversal kernel"
+    },
+    {
+      "id": "db.fn:public.merchant_scan_redemption_qr_v89/3",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260727010000_nestly_v89_customer_qr_redemption_platform_access.sql",
+      "rows_written": "customer_redemption_intents_v89:UPDATE, customer_redemption_events_v89:INSERT (non-value workflow evidence); via public.redeem_reward/app.redeem_reward_core: credit_ledger:INSERT, loyalty_operations:INSERT/UPDATE, loyalty_redemption_batch_drains:INSERT, loyalty_redemption_provenance:INSERT, loyalty_redemptions:INSERT, points_batches:UPDATE, points_ledger:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, for-update",
+      "delegates_to": [
+        "public.redeem_reward"
+      ],
+      "entry_point": "merchant_scan_redemption_qr_v89(business,qr_token,idempotency_key) - merchant confirmation boundary for a customer-created pending redemption intent",
+      "callers": "browser Quick earn QR scanner; authenticated merchant staff with loyalty write and create-sales permission",
+      "idempotency": "an advisory transaction lock and FOR UPDATE lock serialize the opaque QR token; public.redeem_reward receives deterministic key 'v89:'||intent_id, completed intents return the stored completion result, and event uniqueness makes scan retries single-effect even when the scanner supplies a new request key",
+      "loyalty": "the pending intent moves no points; only a valid, unexpired merchant scan invokes the canonical config-versioned app.redeem_reward_core chain to burn points and append the redemption/provenance rows",
+      "kernel": "SAFE ORCHESTRATOR - adds merchant confirmation and intent lifecycle around the existing canonical reward-redemption writer; it contains no parallel points or credit arithmetic",
+      "kernel_migratability": "KERNEL-ADJACENT - retain the scan/intent orchestration boundary, but continue routing the economic effect through the unified canonical redemption kernel rather than introducing a second redemption implementation"
+    },
+    {
+      "id": "browser.rpc:app/index.html:merchant_scan_redemption_qr_v89",
+      "surface": "browser_rpc_binding",
+      "rpc": "merchant_scan_redemption_qr_v89",
+      "resolves_to": "public.merchant_scan_redemption_qr_v89/3 (serialized, replay-safe merchant confirmation delegating to canonical redeem_reward)",
+      "call_site_finding": "none - Quick earn submits the scanned opaque token with a per-scan idempotency key; server-side business scope, permissions, expiry, intent state, locking, and canonical redemption remain authoritative",
+      "kernel_migratability": "UI binding only - keep pointed at the merchant-confirmation orchestrator while the economic effect remains exclusively inside the canonical reward-redemption kernel"
     }
   ],
   "allowlist": [
@@ -2249,6 +2273,38 @@
     {
       "id": "browser.rpc:app/index.html:sv_cutover_business",
       "reason": "browser RPC 'sv_cutover_business' is the v69 controlled-cutover call site on the owner-only Stored value screen, binding to public.sv_cutover_business(uuid,text,text,uuid), which is curated as a writer in its own right (db.fn:public.sv_cutover_business/4). The call site itself performs no DML and computes nothing: it forwards the business id, a typed reason, the evidence hash preview_sv_cutover returned verbatim, and a fresh crypto.randomUUID() idempotency key. The button is enabled only when the SERVER reports ready, and it is additionally gated behind a modal that requires the owner to type the business slug exactly - so the one irreversible action in the app cannot be triggered by a stray click. Allowlisted because the call site resolves to an already-curated writer that moves no value itself (its effect is authority, not a ledger row)."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_create_customer_join_qr_v89",
+      "reason": "browser RPC 'business_create_customer_join_qr_v89' issues an owner/super-admin scoped opaque enrolment token, stores only its hash and expiry in business_customer_join_qr_v89, and appends audit evidence. It creates no customer relationship and writes no sale, payment, points, reward, credit, stored-value, or other economic row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_get_customer_capabilities_v89",
+      "reason": "browser RPC 'business_get_customer_capabilities_v89' is a stable staff-scoped read of the merchant's customer booking, redemption, and appointment-change switches. It performs no DML and resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_set_customer_capabilities_v89",
+      "reason": "browser RPC 'business_set_customer_capabilities_v89' is an owner/super-admin control-plane writer for default-closed customer action switches plus audit evidence. It changes feature availability only; it cannot create a booking, redemption, sale, payment, ledger movement, or other customer-value row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_create_redemption_intent_v89",
+      "reason": "browser RPC 'customer_create_redemption_intent_v89' creates only a five-minute pending customer_redemption_intents_v89 row and append-only workflow event after checking the verified relationship, merchant switch, reward window, and current balance. It deliberately performs no redemption and moves no points or credit; value changes only later through the separately curated merchant_scan_redemption_qr_v89 writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_get_business_actions_v89",
+      "reason": "browser RPC 'customer_get_business_actions_v89' is a stable, verified-customer reader of merchant-enabled actions, public booking availability, rewards, and derived points balance. It performs no DML and resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_join_business_from_qr_v89",
+      "reason": "browser RPC 'customer_join_business_from_qr_v89' consumes a merchant-issued opaque join token after verified mobile authentication and idempotently creates or reuses the business client/customer_link relationship plus non-economic claim/audit evidence. It writes no sale, payment, points, reward, credit, stored-value, or other customer-value table."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_cancel_redemption_intent_v89",
+      "reason": "browser RPC 'customer_cancel_redemption_intent_v89' is a verified-customer workflow control that can move only the caller's still-pending, unexpired redemption intent to cancelled and append non-economic intent lifecycle evidence. It cannot cancel a completed intent, invoke either canonical redeemer, or write sales, payments, points, rewards, credit, stored value, or any other customer-value row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_list_programmes_v89",
+      "reason": "browser RPC 'customer_list_programmes_v89' is a stable, verified-customer reader that returns one canonical programme card per linked business with effective merchant capabilities, derived loyalty balance, and upcoming appointment count. It performs no DML and resolves to no value writer."
     }
   ]
 }

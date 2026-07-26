@@ -341,8 +341,11 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
     'manual balance adjustment must remain owner-only');
 
   const tillPage = appSection(app, 'async function tillPage(){', 'async function salesPage(){');
-  assert.doesNotMatch(tillPage, /redeem_points|redeem_reward|tRedeem|can_redeem/i,
-    'Quick earn must stay a single-purpose phone-and-spend flow without redemption choices');
+  assert.doesNotMatch(tillPage, /redeem_points|redeem_reward(?:_at_context)?/i,
+    'Quick earn must never expose direct classic or catalog reward redemption');
+  assert.match(tillPage, /openMerchantRedemptionScanner/i,
+    'Quick earn must open the merchant scanner for a customer-created pending redemption QR');
+  assert.match(app, /merchant_scan_redemption_qr_v89/i);
   assert.match(tillPage, /record_sale_by_phone/i,
     'Quick earn must retain the atomic sale-and-points path');
 

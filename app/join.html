@@ -155,8 +155,8 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
   await render();
   return control;
 }
-async function publicJoin({method='POST',body=null,slug=null}={}){
-  const query=slug?`?slug=${encodeURIComponent(slug)}`:'';
+async function publicJoin({method='POST',body=null,joinToken=null}={}){
+  const query=joinToken?`?token=${encodeURIComponent(joinToken)}`:'';
   const response=await fetch(`${SB_URL}/functions/v1/public-join${query}`,{
     method,headers:body?{'content-type':'application/json'}:undefined,
     body:body?JSON.stringify(body):undefined,credentials:'omit'});
@@ -170,23 +170,20 @@ const $=(id)=>document.getElementById(id);
 const root=$('root');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-/* slug: ?s=<slug> is primary (QR codes encode this); #/<slug> is a fallback for shared links */
-function getSlug(){
+function getJoinToken(){
   const qs=new URLSearchParams(location.search);
-  const fromQuery=(qs.get('s')||'').trim();
+  const fromQuery=(qs.get('token')||'').trim();
   if(fromQuery) return fromQuery;
-  const h=location.hash||'';
-  if(h.startsWith('#/')){
-    const fromHash=h.slice(2).split('?')[0].trim();
-    if(fromHash) return fromHash;
-  }
+  const hashParams=new URLSearchParams((location.hash.split('?')[1]||''));
+  const fromHash=(hashParams.get('token')||'').trim();
+  if(fromHash)return fromHash;
   return null;
 }
 
-function customerHandoffUrl(slug,currentUrl=location.href){
+function customerHandoffUrl(joinToken,currentUrl=location.href){
   const target=new URL('index.html',currentUrl);
   target.search='';
-  target.hash=`#/customer?business=${encodeURIComponent(String(slug??'').trim())}`;
+  target.hash=`#/join?token=${encodeURIComponent(String(joinToken??'').trim())}`;
   return target.href;
 }
 
@@ -239,7 +236,7 @@ function renderLoadError(){
 }
 
 /* ---- state: success ---- */
-function renderSuccess(bizName,slug){
+function renderSuccess(bizName,joinToken){
   const cardEl=document.querySelector('.join .card');
   if(!cardEl) return;
   destroyMountedTurnstiles();
@@ -249,7 +246,7 @@ function renderSuccess(bizName,slug){
     <p style="margin-bottom:6px;font-size:16px;color:var(--ink)"><b>${esc(bizName)}</b></p>
     <p class="muted">Keep this programme with your other rewards in ${esc(BRAND.customerLabel)}.</p>
     <div class="success-actions">
-      <a class="btn" id="openMyFrenly" href="${esc(customerHandoffUrl(slug))}">
+      <a class="btn" id="openMyFrenly" href="${esc(customerHandoffUrl(joinToken))}">
         ${icon('wallet',20)}<span>Create or open ${esc(BRAND.customerLabel)}</span>
       </a>
     </div>
@@ -259,7 +256,7 @@ function renderSuccess(bizName,slug){
 }
 
 /* ---- state: form (page loaded, ready for input) ---- */
-function renderForm(page, slug){
+function renderForm(page, joinToken){
   destroyMountedTurnstiles();
   const bc=/^#[0-9A-Fa-f]{6}$/.test(page.brand_color||'')?page.brand_color:'#FF6B5E';
   document.title=(page.name||'Join')+` — ${BRAND.productName}`;
@@ -325,10 +322,10 @@ function renderForm(page, slug){
     errBox.innerHTML='';
     setBusy(true);
     try{
-      const data=await publicJoin({body:{slug,name:nameEl.value.trim(),phone:cleanPhone(),
+      const data=await publicJoin({body:{join_token:joinToken,name:nameEl.value.trim(),phone:cleanPhone(),
         email:emailEl.value.trim()||null,consent:consentEl.checked,
         turnstile_token:turnstileToken}});
-      renderSuccess((data&&data.business_name)||page.name,slug);
+      renderSuccess((data&&data.business_name)||page.name,joinToken);
     }catch(err){
       errBox.innerHTML=`<div class="err">${esc(err.message||'Something went wrong. Please try again.')}</div>`;
       turnstileControl?.reset();
@@ -342,14 +339,14 @@ function renderForm(page, slug){
 /* ---- boot ---- */
 async function init(){
   renderLoading();
-  const slug=getSlug();
-  if(!slug){ renderInvalidLink(); return; }
+  const joinToken=getJoinToken();
+  if(!joinToken){ renderInvalidLink(); return; }
   let data;
   try{
-    data=await publicJoin({method:'GET',slug});
+    data=await publicJoin({method:'GET',joinToken});
   }catch{renderLoadError();return}
   if(!data){ renderInvalidLink(); return; }
-  renderForm(data, slug);
+  renderForm(data, joinToken);
 }
 
 init();

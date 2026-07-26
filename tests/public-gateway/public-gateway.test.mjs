@@ -268,7 +268,7 @@ test('malformed public writes consume only broad abuse limits, not narrow shared
     read('supabase/functions/public-join/index.ts'), read('supabase/functions/public-booking/index.ts'),
   ]);
   for (const [source, prefix, validator, action, rpcName] of [
-    [joinFn, 'join', 'validJoinPayload', 'public_join', 'internal_public_join'],
+    [joinFn, 'join', 'validJoinTokenPayload', 'public_join', 'internal_public_join_v89'],
     [bookingFn, 'booking', 'validBookingPayload', 'public_booking', 'internal_public_booking_submit'],
   ]) {
     const abuse = source.indexOf(`enforceRateLimit(req, '${prefix}-submit-abuse'`);

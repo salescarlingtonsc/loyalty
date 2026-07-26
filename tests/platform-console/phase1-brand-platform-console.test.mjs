@@ -77,12 +77,13 @@ test('platform console exposes the required namespaced routes', async () => {
   assert.equal(consoleApi.isRoute('#/platform/commissions'),true);
   assert.equal(consoleApi.isRoute('#/platform/sectors'),true);
   assert.equal(consoleApi.isRoute('#/platform/automation'),true);
+  assert.equal(consoleApi.isRoute('#/platform/access'),true);
   assert.equal(consoleApi.isRoute('#/platform/unknown'),false);
   assert.equal(consoleApi.routeKey('#/platform'),'overview');
   assert.equal(consoleApi.routeKey('#/platform/commissions'),'commissions');
   assert.deepEqual(
     Array.from(consoleApi.routes,route=>route.label),
-    ['Overview','Onboarding','Firms','Reports','Billing','Commission payable','Sector modules','Automation']
+    ['Overview','Onboarding','Firms','Reports','Billing','Commission payable','Sector modules','Automation','Platform access']
   );
 });
 
@@ -100,13 +101,18 @@ test('platform console is routed before workspace onboarding and uses versioned 
   assert.ok(platformRoute > 0);
   assert.ok(onboardingFallback > platformRoute);
   assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css">/);
-  assert.match(index,/<script src="\/platform-console\.js\?v=20260726-v88"><\/script>/);
+  assert.match(index,/<script src="\/platform-console\.js\?v=20260727-v89"><\/script>/);
   assert.match(consoleSource,/sb\.rpc\('super_admin_list_businesses'\)/);
   assert.match(consoleSource,/platform_get_sme_board_v76/);
   assert.match(consoleSource,/platform_list_sector_entitlements_v75/);
   assert.match(consoleSource,/get_platform_billing_v77/);
+  assert.match(consoleSource,/platform_get_billing_v89/);
+  assert.match(consoleSource,/platform_get_billing_reconciliation_v89/);
+  assert.match(consoleSource,/platform_get_automation_billing_v89/);
+  assert.match(consoleSource,/platform_get_automation_reconciliation_v89/);
   assert.match(consoleSource,/get_consultant_commission_dashboard_v78/);
-  assert.match(consoleSource,/get_billing_reconciliation_v77/);
+  assert.doesNotMatch(consoleSource,/get_billing_reconciliation_v77/);
+  assert.match(consoleSource,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v89'/);
   assert.match(consoleSource,/System update required/);
   assert.doesNotMatch(consoleSource,/[\u{1F300}-\u{1FAFF}]/u);
   assert.match(styles,/min-height:44px/);

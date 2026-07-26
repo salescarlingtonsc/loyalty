@@ -40,6 +40,10 @@ const expectedScriptIntegrity = new Map([
     'sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU'
   ],
   [
+    'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
+    'sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx'
+  ],
+  [
     'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
     'sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw'
   ]
@@ -475,7 +479,7 @@ export async function checkVercelSecurityHeaders(root = repoRoot) {
   assert.equal(headers.get('x-content-type-options'), 'nosniff', 'X-Content-Type-Options must be nosniff.');
   assert.equal(headers.get('referrer-policy'), 'strict-origin-when-cross-origin', 'Referrer-Policy must be strict-origin-when-cross-origin.');
   const permissions = headers.get('permissions-policy') || '';
-  for (const policy of ['camera=()', 'microphone=()', 'geolocation=()', 'payment=()', 'usb=()', 'clipboard-write=(self)']) {
+  for (const policy of ['camera=(self)', 'microphone=()', 'geolocation=()', 'payment=()', 'usb=()', 'clipboard-write=(self)']) {
     assert.ok(permissions.includes(policy), `Permissions-Policy must include ${policy}.`);
   }
 }

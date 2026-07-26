@@ -63,6 +63,9 @@ const ALLOWED_EXTRA_SCHEMAS = new Set(['extensions']);
 // new one is a deliberate act that must be reviewed, so it has to be recorded here.
 const KNOWN_SEARCH_PATH_SUPERSETS = [
   'frenly_v48_calendar_details_reschedule :: public.reschedule_appointment_v48 :: extensions',
+  'nestly_v89_customer_qr_redemption_platform_access :: app.v89_redemption_token :: extensions',
+  'nestly_v89_customer_qr_redemption_platform_access :: public.business_create_customer_join_qr_v89 :: extensions',
+  'nestly_v89_customer_qr_redemption_platform_access :: public.customer_create_redemption_intent_v89 :: extensions',
 ];
 
 // Pinned inventory of pending definer functions whose search_path is a strict canonical SUBSET —

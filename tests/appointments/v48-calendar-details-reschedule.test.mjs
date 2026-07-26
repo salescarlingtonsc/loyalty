@@ -115,8 +115,10 @@ test('route changes dispose loaded and pending appointment dialogs without PII, 
   const lifecycle=app.match(/let routeDispose=\(\)=>\{\};[\s\S]*?function disposeCurrentRoute\(\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(lifecycle,'route-owned disposer must be defined');
   const dialogs=[];
+  let scannerDisposed=0;
   const document={querySelectorAll:selector=>selector==='.appointment-detail-modal'?dialogs.filter(dialog=>dialog.isConnected):[]};
-  const hooks=Function('document',`${lifecycle};return {setCleanup:cleanup=>{routeDispose=cleanup},disposeCurrentRoute}`)(document);
+  const activeMerchantScannerCleanup=()=>{scannerDisposed+=1};
+  const hooks=Function('document','activeMerchantScannerCleanup',`${lifecycle};return {setCleanup:cleanup=>{routeDispose=cleanup},disposeCurrentRoute}`)(document,activeMerchantScannerCleanup);
   const exerciseRouteChange=html=>{
     let trapActive=true,restoreAttempted=false;
     const dialog={isConnected:true,innerHTML:html,remove(){this.isConnected=false}};dialogs.push(dialog);
@@ -130,6 +132,7 @@ test('route changes dispose loaded and pending appointment dialogs without PII, 
   };
   exerciseRouteChange('<div class="appointment-detail-modal">Customer notes Date of birth <form id="appointmentRescheduleForm">Confirm change</form></div>');
   exerciseRouteChange('<div class="appointment-detail-modal">Loading customer and service information…</div>');
+  assert.equal(scannerDisposed,2,'route cleanup must also close any active merchant redemption scanner');
   assert.match(app,/async function route\(\)\{[\s\S]{0,320}disposeCurrentRoute\(\)/);
   assert.match(app,/function renderShell\(page\)\{[\s\S]{0,160}disposeCurrentRoute\(\)/);
   assert.match(calendar,/async function appointmentsPage\(\)\{\s*disposeCurrentRoute\(\);\s*const routeMain=M\(\)/,

@@ -55,7 +55,8 @@ test('portal identity copy and prefill stay linked-business scoped and generatio
   assert.ok(linked>=0&&prefill>linked&&prefill<unlinked,'contact prefill must exist only inside the linked-programme branch');
   assert.match(portal,/if\(!isPortalCurrent\(\)\|\|!slot\.isConnected\)return;\s*prefillEmptyPortalDetails/);
   assert.match(portal,/Booking as an unlinked guest/);
-  assert.match(portal,/Add programme/);
+  assert.match(portal,/visit the participating business and scan its current Nestly QR/i);
+  assert.doesNotMatch(portal,/Add programme|href="#\/claim\?business=/);
   assert.match(portal,/verified relationship will be validated securely when you submit/i);
   assert.match(portal,/After secure validation, this booking will be attached/i);
 });

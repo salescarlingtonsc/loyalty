@@ -118,8 +118,14 @@ test('enterprise reports and billing expose cross-domain exports and reconciliat
   assert.match(source,/activeKey==='reports'.*renderPlatformReports/);
   for(const rpc of [
     'platform_generate_improvement_report_v82','platform_get_sme_analytics_v86',
-    'get_platform_billing_v77','get_billing_reconciliation_v77'
+    'platform_get_billing_v89','platform_get_billing_reconciliation_v89',
+    'platform_get_automation_billing_v89','platform_get_automation_reconciliation_v89'
   ])assert.match(source,new RegExp(rpc));
+  assert.doesNotMatch(source,/get_billing_reconciliation_v77/);
+  assert.match(source,/sectionAccess\.onboarding[\s\S]*platform_get_sme_analytics_v86[\s\S]*Promise\.resolve\(null\)/);
+  assert.match(source,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v89'[\s\S]*Promise\.resolve\(null\)/);
+  assert.match(source,/SME acquisition and onboarding omitted/);
+  assert.match(source,/Subscription billing omitted/);
   assert.match(source,/Enterprise performance report/);
   assert.match(source,/Download complete CSV/);
   assert.match(source,/Billing exception queue/);
@@ -134,7 +140,7 @@ test('mobile platform navigation exposes four primary routes and an accessible M
   assert.match(source,/\['overview','onboarding','firms','reports'\]/);
   assert.match(source,/class="platform-mobile-more"/);
   assert.match(source,/role="list"/);
-  assert.match(styles,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(styles,/grid-template-columns:repeat\(var\(--platform-mobile-count,5\),minmax\(0,1fr\)\)/);
   assert.match(styles,/\.platform-mobile-more-menu/);
   assert.match(styles,/width:44px;min-width:44px;height:44px/);
   assert.doesNotMatch(styles,/\.platform-mobile-nav\{[^}]*overflow-x:auto/);

@@ -142,8 +142,9 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/p_cursor:\{limit:20\}/);
   assert.match(surfaces,/renderCustomerWalletRetry\('Your programmes are temporarily unavailable\.',null,\(\)=>renderCustomerProgrammes\(\)\)/);
   assert.match(surfaces,/Your booking requests and appointments are temporarily unavailable/);
-  assert.match(surfaces,/Add programme/);
-  assert.match(surfaces,/href="#\/claim"/);
+  assert.match(surfaces,/Visit the business and scan its Nestly QR/);
+  assert.match(surfaces,/No programmes yet/);
+  assert.doesNotMatch(surfaces,/href="#\/claim"/);
   assert.match(surfaces,/Active requests, confirmed appointments, and recent request outcomes stay separate/);
   assert.match(surfaces,/Messages are not available yet/);
   assert.match(surfaces,/Profile editing is not available/);
@@ -157,13 +158,16 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(home,/>Visits</);
   assert.match(home,/Booking summary is temporarily unavailable/);
   assert.match(home,/Message count is temporarily unavailable/);
-  assert.match(home,/customerHomeOverview\.claimsAvailable\?[\s\S]*href="#\/claim"/);
-  assert.match(home,/Programme linking is not available right now/);
+  assert.match(home,/scan its Nestly QR and complete the join flow/);
+  assert.match(home,/does not let customers search for or self-link a business/);
+  assert.doesNotMatch(home,/href="#\/claim"/);
 
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   assert.match(wallet,/const context=await loadCustomerSurfaceContext\(isWalletCurrent\)/);
   const syncAt=wallet.indexOf("const syncRpc='customer_sync_in_app_inbox_global'");
   const countAt=wallet.indexOf("return sb.rpc('customer_get_in_app_inbox_global_count')");
   assert.ok(syncAt>=0&&countAt>syncAt,'home must sync the global inbox before claiming a current unread count');
-  assert.match(wallet,/claimsAvailable:customerFeatures\.customer_claims===true/);
+  assert.match(wallet,/claimsAvailable:false/);
+  assert.match(wallet,/customer_create_redemption_intent_v89/);
+  assert.match(wallet,/intent\?\.status!=='pending'\|\|!intent\?\.qr_token/);
 });
