@@ -30,13 +30,20 @@ test('all public policy pages are responsive, accessible and mutually linked', (
   for (const [name, html] of Object.entries(pages)) {
     assert.match(html, /<!DOCTYPE html>/i, `${name} lacks an HTML doctype`);
     assert.match(html, /<html lang="en">/i, `${name} lacks a page language`);
-    assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1\.0">/i);
+    assert.match(
+      html,
+      /<meta name="viewport" content="width=device-width, initial-scale=1\.0, viewport-fit=cover">/i,
+    );
     assert.match(html, /<a class="skip" href="#main">Skip to content<\/a>/i);
     assert.match(html, /<main id="main">/i);
     assert.match(html, /<nav[^>]+aria-label="Policy navigation"/i);
     assert.match(html, /@media\(max-width:/i, `${name} lacks a responsive breakpoint`);
     assert.match(html, /:focus-visible/i, `${name} lacks visible keyboard focus styles`);
-    assert.doesNotMatch(html, /<script\b/i, `${name} must remain script-free`);
+    assert.deepEqual(
+      html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || [],
+      ['<script src="/pwa.js" defer></script>'],
+      `${name} may load only the reviewed PWA lifecycle script`,
+    );
 
     for (const path of ['privacy.html', 'terms.html', 'data-request.html']) {
       assert.match(html, new RegExp(`href=["']${path}(?:#[^"']*)?["']`), `${name} does not link to ${path}`);
@@ -88,9 +95,9 @@ test('terms set merchant obligations and do not claim regulated payment processi
     'Merchant obligations',
     'Do Not Call',
     'loyalty points',
-    'merchant, not Frenly',
+    'merchant, not Nestly',
     'not proof of payment settlement',
-    'does not mean Frenly collected',
+    'does not mean Nestly collected',
     'laws of Singapore',
     'account closure',
     'Intellectual property'
@@ -99,7 +106,7 @@ test('terms set merchant obligations and do not claim regulated payment processi
   }
 
   assert.match(html, /mailto:leechuanseng\.biz@gmail\.com/i);
-  assert.doesNotMatch(text, /Frenly is (?:a|the) payment processor/i);
+  assert.doesNotMatch(text, /Nestly is (?:a|the) payment processor/i);
   assert.match(text, /it is not:.*a guarantee.*increase revenue/i);
 });
 
@@ -122,7 +129,7 @@ test('data request page provides a usable, minimised manual process', () => {
     assert.match(text, new RegExp(phrase, 'i'), `data request page missing: ${phrase}`);
   }
 
-  assert.match(html, /mailto:leechuanseng\.biz@gmail\.com\?subject=Frenly%20data%20request/i);
+  assert.match(html, /mailto:leechuanseng\.biz@gmail\.com\?subject=Nestly%20data%20request/i);
   assert.match(text, /Do not send your password, one-time code, full payment-card number/i);
   assert.doesNotMatch(text, /we (?:guarantee|promise) (?:a )?response within/i);
   assert.doesNotMatch(html, /type=["']file["']/i);

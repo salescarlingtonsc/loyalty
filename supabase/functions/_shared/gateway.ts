@@ -1,10 +1,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.110.7';
 import { normalizeOriginList } from './validation.ts';
-import { authoritativeClientIp, deriveManagementToken, sha256Hex } from './security.ts';
+import { authoritativeClientIp, deriveManagementToken, gatewayAuthorization, sha256Hex } from './security.ts';
 
 import { turnstileBindingValid } from './security.ts';
 
-export { authoritativeClientIp, bookingChangeFingerprint, bookingRequestFingerprint, deriveManagementToken, sha256Hex, turnstileBindingValid } from './security.ts';
+export { authoritativeClientIp, bookingChangeFingerprint, bookingRequestFingerprint, deriveManagementToken, gatewayAuthorization, sha256Hex, turnstileBindingValid } from './security.ts';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 
@@ -21,7 +21,7 @@ export function corsFor(req) {
   if (!origin || !allowedOrigins().includes(origin)) return null;
   return {
     'access-control-allow-origin': origin,
-    'access-control-allow-headers': 'content-type, x-client-info',
+    'access-control-allow-headers': 'content-type, x-client-info, authorization, apikey',
     'access-control-allow-methods': 'GET, POST, OPTIONS',
     'access-control-max-age': '600',
     'vary': 'Origin',
@@ -68,6 +68,22 @@ export function adminClient() {
   const url = env('SUPABASE_URL');
   if (!url) throw new Error('gateway unavailable');
   return createClient(url, secretKey(), { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+export async function optionalAuthenticatedUserId(req) {
+  const authorization = gatewayAuthorization(req.headers.get('authorization'), [
+    env('SUPABASE_ANON_KEY'),
+    env('SUPABASE_PUBLISHABLE_KEY'),
+    env('PUBLIC_GATEWAY_PUBLISHABLE_KEY'),
+  ]);
+  if (authorization.kind === 'guest') return null;
+  if (authorization.kind !== 'user') throw new Error('invalid authorization');
+  const { data, error } = await adminClient().auth.getUser(authorization.token);
+  const userId = data?.user?.id || '';
+  if (error || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
+    throw new Error('invalid authorization');
+  }
+  return userId;
 }
 
 function turnstileConfig() {

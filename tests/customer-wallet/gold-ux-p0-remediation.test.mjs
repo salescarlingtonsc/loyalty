@@ -5,16 +5,17 @@ import test from 'node:test';
 const app = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
 
 test('customer capability and profile failures stay retryable and never masquerade as missing registration', () => {
-  const registration = app.match(/async function renderCustomerRegistration\(\)[\s\S]*?(?=async function renderCustomerClaim)/)?.[0] || '';
+  const registration = app.match(/async function renderCustomerRegistration\([^\n]*\)[\s\S]*?(?=const CUSTOMER_PRIMARY_NAV|async function renderCustomerClaim)/)?.[0] || '';
+  const context = app.match(/async function loadCustomerSurfaceContext\([^\n]*\)[\s\S]*?(?=async function renderCustomerProgrammes)/)?.[0] || '';
   const wallet = app.match(/async function renderCustomerWallet\([\s\S]*?(?=async function renderCustomerNotificationPreferences)/)?.[0] || '';
   assert.match(app, /if\(error\)return unavailableCustomerCapabilities\(true\)/);
   assert.match(app, /_load_error:loadError/);
   assert.match(app, /customerCapabilities\._load_error\)return renderCustomerCapabilityRetry/);
-  assert.match(app, /customerFeatures\._load_error\)return renderCustomerCapabilityRetry/);
-  assert.match(registration, /if\(profileError\)return renderCustomerCapabilityRetry\('We could not load your customer profile/);
+  assert.match(app, /customerFeatures\._load_error\)\{[\s\S]{0,160}return renderCustomerCapabilityRetry/);
+  assert.match(registration, /if\(profileError\)\{[\s\S]*renderCustomerCapabilityRetry\('We could not load your customer profile/);
   assert.doesNotMatch(registration, /profileError[\s\S]*renderCustomerWalletUnavailable/);
-  assert.match(wallet, /if\(profileError\)return renderCustomerCapabilityRetry\('We could not load your customer profile/);
-  assert.match(wallet, /if\(profile\?\.profile===null\)\{\s*nav\('#\/customer'\)/);
+  assert.match(context, /profileResult\.error&&!customer\.length[\s\S]*renderCustomerCapabilityRetry\('We could not load your customer profile/);
+  assert.match(context, /customerSurfaceQualifies\(profile,customer\)/);
   assert.doesNotMatch(app, /profileReady=!profileError/,
     'a network error must not be treated as an absent profile');
   assert.match(app, /id="customerCapabilityRetry"/);

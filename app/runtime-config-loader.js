@@ -1,6 +1,7 @@
 (function initFrenlyRuntimeConfig(globalObject) {
   'use strict';
 
+  const PRODUCT_NAME = globalObject.NestlyBrand?.productName || 'Nestly';
   const PRODUCTION_PROJECT_REF = 'gadpooereceldfpfxsod';
   const ENVIRONMENTS = new Set(['development', 'test', 'staging', 'production']);
   const REMOTE_HOST = /^(?<ref>[a-z0-9]{20})\.supabase\.co$/;
@@ -9,7 +10,7 @@
 
   class RuntimeConfigError extends Error {
     constructor(code) {
-      super('Frenly runtime configuration is unavailable.');
+      super(`${PRODUCT_NAME} runtime configuration is unavailable.`);
       this.name = 'RuntimeConfigError';
       this.code = code;
     }
@@ -109,7 +110,7 @@
     if (!root) return;
     root.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">'
       + '<div role="alert" style="max-width:440px;padding:24px;border:1px solid #EAE6DF;border-radius:18px;background:#fff;text-align:center">'
-      + '<h1 style="font:650 24px system-ui;margin:0 0 8px">Frenly is unavailable</h1>'
+      + `<h1 style="font:650 24px system-ui;margin:0 0 8px">${PRODUCT_NAME} is unavailable</h1>`
       + '<p style="font:14px/1.5 system-ui;color:#6f6b75;margin:0">The application is not configured for this environment.</p>'
       + '</div></div>';
   }

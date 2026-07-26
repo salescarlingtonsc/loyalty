@@ -58,8 +58,10 @@ be 0 — every suite owns its own `begin;`…`rollback;`.
 `service_role` / `authenticator` roles, the `auth` schema (`users`, `uid()`, `jwt()`,
 `role()`), the `extensions` schema (real pgcrypto / uuid-ossp / pg_stat_statements),
 a `cron` schema with `schedule()` / `unschedule()` equivalents (stub for pg_cron), a
-`vault.secrets` table (stub for supabase_vault), and the `supabase_realtime` publication.
-Nothing else in the chain is altered — 81/81 files apply byte-for-byte otherwise.
+`vault.secrets` table (stub for supabase_vault), the `storage.buckets` metadata table
+used by the private SME document migration, and the `supabase_realtime` publication.
+Storage object APIs remain platform-owned and are not emulated. Nothing else in the
+chain is altered — 81/81 files apply byte-for-byte otherwise.
 
 ## What this harness is NOT
 

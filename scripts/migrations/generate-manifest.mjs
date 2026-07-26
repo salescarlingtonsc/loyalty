@@ -26,7 +26,7 @@ function exactKeys(value, expected, label) {
 
 function semanticVersion(fileName) {
   if (/^\d+_frenly_init\.sql$/.test(fileName)) return 'v1';
-  const match = fileName.match(/^\d+_frenly_v(?<major>\d+)(?:(?:_(?<minor>\d+))|(?<letter>[a-z]))?(?:_[a-z0-9_]+)?\.sql$/);
+  const match = fileName.match(/^\d+_(?:frenly|nestly)_v(?<major>\d+)(?:(?:_(?<minor>\d+))|(?<letter>[a-z]))?(?:_[a-z0-9_]+)?\.sql$/);
   assert.ok(match, `Cannot derive semantic version from ${fileName}`);
   if (match.groups.minor) return `v${match.groups.major}.${match.groups.minor}`;
   return `v${match.groups.major}${match.groups.letter || ''}`;

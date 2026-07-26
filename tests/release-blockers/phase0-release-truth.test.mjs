@@ -76,7 +76,8 @@ test('Gift Cards route and role contract is explicit for every canonical role',(
       `${expectation.role}:${expectation.permission??'denied'} Gift Cards access drifted`);
   }
   assert.match(app,/memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage/);
-  assert.match(app,/const canReadModule=module=>S\.myRole==='owner'\|\|S\.myModules\?\.includes\(module\)===true/);
+  assert.match(app,/const canReadModule=module=>S\.myModules\?\.includes\(module\)===true/);
+  assert.match(app,/const canWriteModule=module=>S\.myModules\?\.includes\(module\)===true\s*&&roleCanUseModule\(S\.myRole,module\)\s*&&\(S\.myRole==='owner'\|\|S\.myModulePerms\?\.\[module\]==='rw'\)/);
   assert.match(app,/const canWrite=canWriteModule\('giftcards'\);\s*const canTransact=canWrite&&hasRoleCapability\('create_sales'\)/);
 });
 

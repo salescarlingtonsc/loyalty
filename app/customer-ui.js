@@ -39,7 +39,8 @@
     info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 11v6M12 7h.01',
     empty:'M4 5h16v14H4zM8 9h8M8 13h5',
     close:'M6 6l12 12M18 6 6 18',
-    copy:'M8 8h12v12H8zM4 16H3V4h12v1'
+    copy:'M8 8h12v12H8zM4 16H3V4h12v1',
+    edit:'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4'
   };
 
   function icon(name,{size=20,label='',className=''}={}){
@@ -90,7 +91,8 @@
   }
 
   function loadingState({title='Loading',iconName='info',body='Loading the latest information…'}={}){
-    return `<section class="cui-route-state" aria-busy="true" aria-labelledby="route-loading-title">${pageHeader({title,subtitle:body,iconName})}<div class="card empty" role="status"><h2 id="route-loading-title">Loading…</h2><p class="muted small">Please wait while Frenly prepares this page.</p></div></section>`;
+    const productName=global.NestlyBrand?.productName||'Nestly';
+    return `<section class="cui-route-state" aria-busy="true" aria-labelledby="route-loading-title">${pageHeader({title,subtitle:body,iconName})}<div class="card empty" role="status"><h2 id="route-loading-title">Loading…</h2><p class="muted small">Please wait while ${escapeHtml(productName)} prepares this page.</p></div></section>`;
   }
 
   function errorState({title='Unable to load this page',message='Try again.',retryId='routeRetry'}={}){
@@ -169,7 +171,7 @@
     if(!target)return;
     if(!target.id)target.id='route-title';
     target.tabIndex=-1;
-    requestAnimationFrame(()=>target.focus({preventScroll:false}));
+    requestAnimationFrame(()=>target.focus({preventScroll:true}));
   }
 
   const liveRegionState=new WeakMap();
@@ -213,4 +215,4 @@
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
     associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog
   });
-})(window);
+})(typeof window !== 'undefined' ? window : globalThis);

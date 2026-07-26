@@ -15,19 +15,20 @@ const section=(start,end)=>{
 test('authenticated root resolves customer-only and dual-role personas before merchant onboarding',()=>{
   const routing=section('async function route()','/* ---------- customer wallet ---------- */');
   const rootPersona=routing.indexOf("if(h==='#/'){\n      const {data:rootPersonas,error:rootPersonaError}=await sb.rpc('get_my_personas')");
-  const staffLookup=routing.indexOf("if(!S.biz){\n      const {data:st}=await sb.from('staff')");
+  const staffLookup=routing.indexOf("if(!S.biz){\n      const {data:personas,error:personaError}=await sb.rpc('get_my_personas')");
   const onboarding=routing.indexOf('if(!S.biz) return renderOnboard()');
 
   assert.ok(rootPersona>=0&&rootPersona<staffLookup&&staffLookup<onboarding,
     'persona routing must run before the legacy staff lookup and merchant onboarding');
   assert.match(routing,/if\(rootPersonaError\)return renderPersonaResolutionUnavailable\(\)/);
-  assert.match(routing,/customerPersonas\.length&&!staffPersonas\.length\)\{nav\('#\/wallet'\);return\}/);
-  assert.match(routing,/customerPersonas\.length&&staffPersonas\.length\)\{nav\(rootPersonas\.default_route/);
+  assert.match(routing,/hasCustomerDestination&&!staffPersonas\.length\)\{nav\('#\/wallet'\);return\}/);
+  assert.match(routing,/hasCustomerDestination&&staffPersonas\.length\)\{renderPersonaChoice/);
+  assert.match(app,/function renderPersonaChoice\(personas\)[\s\S]*Business workspaces[\s\S]*href="#\/wallet"[\s\S]*BRAND\.customerLabel/);
   assert.match(app,/function renderPersonaResolutionUnavailable\(\)[\s\S]*id="accountAccessRetry"[\s\S]*id="accountAccessSignOut"/);
 });
 
 test('an older deferred root-persona route cannot redirect over newer navigation',async()=>{
-  const guardSource=app.match(/let routeRenderEpoch=0;[^\n]*\nconst beginRouteInvocation=\(\)=>\{[\s\S]*?\n\};/)?.[0];
+  const guardSource=app.match(/let routeRenderEpoch=0;[^\n]*\n(?:let [^\n]+\n)*const beginRouteInvocation=\(\)=>\{[\s\S]*?\n\};/)?.[0];
   assert.ok(guardSource,'route generation guard must be defined');
   const {beginRouteInvocation}=new Function(`${guardSource};return {beginRouteInvocation};`)();
   let releaseOlder;
@@ -65,7 +66,7 @@ test('Turnstile controls are destroyed before route and direct-render replacemen
 
   assert.match(turnstile,/const destroy=\(\)=>\{[\s\S]*destroyed=true[\s\S]*retryEl\.onclick=null[\s\S]*removeWidget\(\)/);
   assert.match(turnstile,/return control/);
-  assert.match(route,/customerWalletRenderEpoch\+=1;\n  destroyMountedTurnstiles\(\)/);
+  assert.match(route,/customerWalletRenderEpoch\+=1;\n  portalRenderEpoch\+=1;\n  destroyMountedTurnstiles\(\)/);
   assert.match(auth,/destroyMountedTurnstiles\(\)/);
   assert.match(registration,/destroyMountedTurnstiles\(\)/);
   assert.match(portal,/const draw=\(\)=>\{\n    destroyMountedTurnstiles\(\)/);

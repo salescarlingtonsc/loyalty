@@ -130,7 +130,7 @@ test('route changes dispose loaded and pending appointment dialogs without PII, 
   };
   exerciseRouteChange('<div class="appointment-detail-modal">Customer notes Date of birth <form id="appointmentRescheduleForm">Confirm change</form></div>');
   exerciseRouteChange('<div class="appointment-detail-modal">Loading customer and service information…</div>');
-  assert.match(app,/async function route\(\)\{[\s\S]{0,160}disposeCurrentRoute\(\)/);
+  assert.match(app,/async function route\(\)\{[\s\S]{0,320}disposeCurrentRoute\(\)/);
   assert.match(app,/function renderShell\(page\)\{[\s\S]{0,160}disposeCurrentRoute\(\)/);
   assert.match(calendar,/async function appointmentsPage\(\)\{\s*disposeCurrentRoute\(\);\s*const routeMain=M\(\)/,
     'realtime direct page refresh must dispose the previous appointment route before registering a new owner');

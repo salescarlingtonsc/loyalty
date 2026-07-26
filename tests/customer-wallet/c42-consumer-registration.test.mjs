@@ -108,7 +108,7 @@ test('customer registration UI is a mobile phone OTP path with an explicit fail-
   const auth = block(app, /function renderAuth\([\s\S]*?function validNewPassword\(/i);
   assert.match(auth, /id="customerAuth"/);
   assert.match(auth, /I’m a customer/);
-  assert.match(app, /h==='#\/customer'\|\|h==='#\/customer\/register'/);
+  assert.match(app, /h==='#\/customer'\|\|h==='#\/customer\/register'\|\|h\.startsWith\('#\/customer\?'\)/);
   assert.match(app, /CUSTOMER_PHONE_OTP_RUNTIME_ENABLED[\s\S]*RUNTIME_CONFIG\.environment!=='production'/);
   assert.match(app, /window\.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__===true/);
   assert.match(customerRoute, /normalizeSingaporeCustomerPhone/);
@@ -134,8 +134,8 @@ test('customer registration UI is a mobile phone OTP path with an explicit fail-
   assert.match(customerRoute, /customer_register_verified_phone/);
   assert.match(app, /customer_claim_link_by_verified_phone/);
   assert.match(customerRoute, /data\?\.outcome!=='registered'/);
-  assert.match(customerRoute, /nav\(businesses\.length\?'#\/wallet':'#\/claim'\)/);
-  assert.match(customerRoute, /if\(S\.user\)[\s\S]*customer_get_profile[\s\S]*profile\?\.profile!==null[\s\S]*nav\('#\/wallet'\)/i);
+  assert.match(customerRoute, /if\(intent\)\{[\s\S]*nav\('#\/claim\?business='\+encodeURIComponent\(intent\)\)[\s\S]*takePendingCustomerDestination\(businesses\.length\?'#\/wallet':'#\/claim'\)/);
+  assert.match(customerRoute, /if\(S\.user\)[\s\S]*customer_get_profile[\s\S]*profile\?\.profile!==null[\s\S]*if\(!pendingCustomerBusinessSlug\)\{[\s\S]*nav\(takePendingCustomerDestination\('#\/wallet'\)\);return;\s*\}/i);
   assert.doesNotMatch(customerRoute, /[🎉🎁📱]/u);
 });
 
@@ -168,8 +168,8 @@ test('production phone OTP permits only the explicit demo number unless the runt
 
 test('initial OTP render, initial send, and resend all use fresh server capability checks', () => {
   const customerRoute = block(app, /let customerRegistrationState=[\s\S]*?async function renderCustomerClaim\(/i);
-  const registration = block(customerRoute, /async function renderCustomerRegistration\(\)[\s\S]*$/i);
-  const verification = block(customerRoute, /function renderCustomerOtpVerification\(\)[\s\S]*?(?=function renderCustomerRegistrationProfile)/i);
+  const registration = block(customerRoute, /async function renderCustomerRegistration\([^\n]*\)[\s\S]*$/i);
+  const verification = block(customerRoute, /function renderCustomerOtpVerification\([^\n]*\)[\s\S]*?(?=async function runCustomerRegistrationProfileSubmission)/i);
 
   assert.match(registration,
     /loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)[\s\S]*await customerPhoneOtpAvailable\(channel\)/i,
@@ -184,11 +184,13 @@ test('initial OTP render, initial send, and resend all use fresh server capabili
 });
 
 test('wallet gates a phone-registration-enabled session on a completed private profile', () => {
-  const wallet = block(app,
-    /async function renderCustomerWallet\([\s\S]*?async function renderCustomerNotificationPreferences\(/i);
-  assert.match(wallet, /customer_phone_registration===true/i);
-  assert.match(wallet, /sb\.rpc\('customer_get_profile'\)/i);
-  assert.match(wallet, /nav\('#\/customer'\)[\s\S]*renderCustomerRegistrationProfile\(\)/i);
-  assert.ok(wallet.indexOf("sb.rpc('customer_get_profile')") < wallet.indexOf("sb.rpc('customer_get_wallet')"),
-    'profile completion must be checked before the aggregate wallet reader');
+  const context = block(app,
+    /async function loadCustomerSurfaceContext\([\s\S]*?async function renderCustomerProgrammes\(/i);
+  const wallet = block(app,/async function renderCustomerWallet\([\s\S]*?async function renderCustomerNotificationPreferences\(/i);
+  assert.match(context, /customer_phone_registration===true/i);
+  assert.match(context, /sb\.rpc\('customer_get_profile'\)/i);
+  assert.match(context, /customerSurfaceQualifies\(profile,customer\)/i);
+  assert.match(context, /renderNoCustomerDestination\(staff\)/i);
+  assert.doesNotMatch(context, /renderCustomerRegistrationProfile\(\)/i);
+  assert.match(wallet,/loadCustomerSurfaceContext\(isWalletCurrent\)/);
 });

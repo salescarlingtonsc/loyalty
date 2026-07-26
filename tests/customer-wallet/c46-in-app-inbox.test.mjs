@@ -245,7 +245,7 @@ test('Terra C46: customer wallet UI has an accessible stale-guarded bell and inb
   assert.match(inbox, /aria-label="Open inbox"/i);
   assert.match(inbox, /aria-live="polite"/i);
   assert.match(inbox, /data-route-key="wallet_business"/i);
-  assert.match(inbox, /My Frenly inbox/i);
+  assert.match(inbox, /\$\{esc\(BRAND\.customerLabel\)\} inbox/i);
   assert.match(inbox, /customerInboxSyncRetry/i);
   assert.match(inbox, /A list is never loaded after a failed C46 sync/i);
   assert.match(inbox, /globalThis\.navigator\?\.onLine===false/i);

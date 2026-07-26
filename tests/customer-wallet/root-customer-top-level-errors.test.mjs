@@ -1,0 +1,145 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import test from 'node:test';
+import vm from 'node:vm';
+
+const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const customerUi=await readFile(new URL('../../app/customer-ui.js',import.meta.url),'utf8');
+const routeSource=app.match(/async function route\(\)\{[\s\S]*?\n\}\n\n\/\* ---------- customer wallet ---------- \*\//)?.[0];
+assert.ok(routeSource,'root route must be extractable');
+
+test('customer UI helpers initialize in browser and windowless runtime contexts',()=>{
+  const context={};
+  vm.runInNewContext(customerUi,context);
+  assert.equal(typeof context.FrenlyCustomerUI?.icon,'function');
+  assert.equal(typeof context.FrenlyCustomerUI?.focusRoute,'function');
+});
+
+async function runRootRoute({capabilities,profileResult,hash='#/',sessionUser={id:'customer-root'}}){
+  const calls={retry:[],onboard:0,profile:0,navigate:[],registration:[],auth:0};
+  const context={
+    beginRouteInvocation:()=>()=>true,
+    dashboardRenderEpoch:0,
+    customerWalletRenderEpoch:0,
+    portalRenderEpoch:0,
+    destroyMountedTurnstiles:()=>{},
+    disposeCurrentRoute:()=>{},
+    killCharts:()=>{},
+    passwordRecoveryError:false,
+    passwordRecoveryActive:false,
+    pendingCustomerInvitationToken:'',
+    pendingCustomerBusinessSlug:'',
+    pendingCustomerDestination:'',
+    normalizeCustomerBusinessIntent:value=>value||'',
+    normalizeCustomerDestination:value=>{
+      if(['#/wallet','#/customer/programmes','#/customer/bookings','#/customer/messages','#/customer/profile'].includes(value))return value;
+      return /^#\/wallet\/[a-z0-9][a-z0-9-]{1,62}$/.test(value)?value:'';
+    },
+    history:{replaceState:()=>{}},
+    location:{hash,pathname:'/index.html',search:''},
+    S:{user:null,biz:null,staffWorkspaces:[]},
+    sb:{
+      auth:{getSession:async()=>({data:{session:sessionUser?{user:sessionUser}:null}})},
+      rpc:async name=>{
+        if(name==='get_my_personas')return {data:{staff:[],customer:[],default_route:null},error:null};
+        if(name==='customer_get_profile'){
+          calls.profile+=1;
+          return profileResult;
+        }
+        throw new Error(`unexpected RPC ${name}`);
+      }
+    },
+    sortStaffWorkspaces:rows=>rows||[],
+    loadCustomerFeatureCapabilities:async()=>capabilities,
+    renderCustomerCapabilityRetry:message=>{calls.retry.push(message)},
+    renderOnboard:()=>{calls.onboard+=1},
+    nav:value=>{calls.navigate.push(value)},
+    renderRecoveryInvalid:()=>{},
+    renderPasswordUpdate:()=>{},
+    renderPortal:()=>{},
+    renderCustomerRegistration:()=>{
+      calls.registration.push({
+        destination:context.pendingCustomerDestination,
+        business:context.pendingCustomerBusinessSlug
+      });
+    },
+    renderEntryChoice:()=>{},
+    renderAuth:()=>{calls.auth+=1},
+    renderCustomerClaim:()=>{},
+    renderCustomerProgrammes:()=>{},
+    renderCustomerBookings:()=>{},
+    renderCustomerMessages:()=>{},
+    renderCustomerProfile:()=>{},
+    renderCustomerWalletUnavailable:()=>{},
+    renderCustomerWallet:()=>{},
+    renderPersonaResolutionUnavailable:()=>{},
+    renderPersonaChoice:()=>{},
+    renderWorkspaceInactive:()=>{},
+    resetClientSessionState:()=>{},
+    decodeURIComponent,
+    encodeURIComponent,
+    URLSearchParams,
+    console
+  };
+  const route=vm.runInNewContext(`(()=>{${routeSource};return route})()`,context);
+  await route();
+  return calls;
+}
+
+test('root capability lookup failure remains in customer account retry and never reaches business onboarding',async()=>{
+  const calls=await runRootRoute({
+    capabilities:{_load_error:true,customer_phone_registration:false},
+    profileResult:{data:null,error:null}
+  });
+  assert.deepEqual(calls.retry,['We could not check your customer access. Please try again.']);
+  assert.equal(calls.profile,0);
+  assert.equal(calls.onboard,0);
+  assert.deepEqual(calls.navigate,[]);
+});
+
+test('root customer profile failure remains in customer profile retry and never reaches business onboarding',async()=>{
+  const calls=await runRootRoute({
+    capabilities:{_load_error:false,customer_phone_registration:true},
+    profileResult:{data:null,error:{message:'temporary profile failure'}}
+  });
+  assert.deepEqual(calls.retry,['We could not load your customer profile. Please try again.']);
+  assert.equal(calls.profile,1);
+  assert.equal(calls.onboard,0);
+  assert.deepEqual(calls.navigate,[]);
+});
+
+test('programmatic route focus suppresses the generic outline while interactive controls retain focus rings',()=>{
+  const selector=':where(a,button,input,select,textarea,[tabindex]:not([tabindex="-1"])):focus-visible';
+  assert.match(app,new RegExp(selector.replaceAll(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\{outline:3px solid var\\(--coral\\);outline-offset:3px\\}'));
+  assert.match(app,/:where\(main,h1,h2,h3\)\[tabindex="-1"\]:focus\{outline:none\}/,
+    'programmatically focused route landmarks and headings must suppress the browser default outline');
+  assert.doesNotMatch(app,/:where\([^)]*,\[tabindex\]\):focus-visible/,
+    'the generic focus rule must not target route headings and landmarks with tabindex=-1');
+  const resetTargets=app.match(/:where\(([^)]*)\)\[tabindex="-1"\]:focus\{outline:none\}/)?.[1].split(',');
+  assert.deepEqual(resetTargets,['main','h1','h2','h3'],
+    'the reset must remain limited to non-interactive route landmarks and headings');
+  for(const control of ['a','button','input','select','textarea']){
+    assert.ok(selector.includes(control),`${control} must keep its visible keyboard focus ring`);
+  }
+});
+
+test('unauthenticated customer deep links keep their destination and never fall into business sign in',async()=>{
+  for(const [hash,destination,business] of [
+    ['#/wallet','#/wallet',''],
+    ['#/wallet/kopi-tiam','#/wallet/kopi-tiam','kopi-tiam'],
+    ['#/customer/programmes','#/customer/programmes',''],
+    ['#/customer/bookings','#/customer/bookings',''],
+    ['#/customer/messages','#/customer/messages',''],
+    ['#/customer/profile','#/customer/profile','']
+  ]){
+    const calls=await runRootRoute({hash,sessionUser:null,capabilities:null,profileResult:null});
+    assert.deepEqual(calls.registration,[{destination,business}],`${hash} must open mobile customer verification`);
+    assert.equal(calls.auth,0,`${hash} must not open business email/password sign in`);
+  }
+
+  for(const hash of ['#/business','#/workspace/kopi-tiam/dashboard']){
+    const calls=await runRootRoute({hash,sessionUser:null,capabilities:null,profileResult:null});
+    assert.deepEqual(calls.registration,[],`${hash} must remain outside the customer auth flow`);
+    assert.equal(calls.auth,1,`${hash} must retain the business auth flow`);
+  }
+});

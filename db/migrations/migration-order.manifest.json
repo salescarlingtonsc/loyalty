@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 109,
-  "executableCount": 95,
+  "itemCount": 124,
+  "executableCount": 110,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -142,6 +142,28 @@
         "db/migrations/20260724_frenly_v68c_customer_gift_cards.sql",
         "db/migrations/20260724_frenly_v69_controlled_cutover.sql",
         "db/migrations/20260724_frenly_v70_legacy_non_overlap.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260726",
+      "count": 16,
+      "paths": [
+        "db/migrations/20260726_frenly_v71_customer_legal_manifest.sql",
+        "db/migrations/20260726_frenly_v72_booking_identity_sync.sql",
+        "db/migrations/20260726_frenly_v73_booking_lifecycle.sql",
+        "db/migrations/20260726_frenly_v74_staff_module_permissions.sql",
+        "db/migrations/20260726_nestly_v75_sector_entitlements.sql",
+        "db/migrations/20260726_nestly_v76_sme_crm.sql",
+        "db/migrations/20260726_nestly_v77_stripe_billing.sql",
+        "db/migrations/20260726_nestly_v78_consultant_commissions.sql",
+        "db/migrations/20260726_nestly_v79_conversion_onboarding.sql",
+        "db/migrations/20260726_nestly_v80_customer_legal_manifest.sql",
+        "db/migrations/20260726_nestly_v81_customer_relationship_sync.sql",
+        "db/migrations/20260726_nestly_v82_enterprise_intelligence.sql",
+        "db/migrations/20260726_nestly_v83_customer_intelligence.sql",
+        "db/migrations/20260726_nestly_v84_fast_sale_corrections.sql",
+        "db/migrations/20260726_nestly_v85_conversion_guard_repair.sql",
+        "db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql"
       ]
     }
   ],
@@ -1017,6 +1039,126 @@
       "semanticVersion": "v71",
       "proposedDeployVersion": "20260722000149",
       "sha256": "1cc263b4e0bff38bb567908cfc6fe1dcd0bb53eb3bd13b9d6473c71b49b36062"
+    },
+    {
+      "order": 110,
+      "kind": "executable",
+      "path": "db/migrations/20260726_frenly_v72_booking_identity_sync.sql",
+      "semanticVersion": "v72",
+      "proposedDeployVersion": "20260722000150",
+      "sha256": "6bcb87758d27c99f773585e6fb7143f9f5790b1e50d25e4d0fde517b98c1495d"
+    },
+    {
+      "order": 111,
+      "kind": "executable",
+      "path": "db/migrations/20260726_frenly_v73_booking_lifecycle.sql",
+      "semanticVersion": "v73",
+      "proposedDeployVersion": "20260722000151",
+      "sha256": "db33680ef5bc4dbdc3f5d45a6b93cedaa677b0215cb6edf8ea1d385f2202987a"
+    },
+    {
+      "order": 112,
+      "kind": "executable",
+      "path": "db/migrations/20260726_frenly_v74_staff_module_permissions.sql",
+      "semanticVersion": "v74",
+      "proposedDeployVersion": "20260722000152",
+      "sha256": "6ec8dd7315a05a20411a9b3bd00e73a900b6d3d44baa620f739c5364a4dbd348"
+    },
+    {
+      "order": 113,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v75_sector_entitlements.sql",
+      "semanticVersion": "v75",
+      "proposedDeployVersion": "20260722000153",
+      "sha256": "d9167c1360be7df3eb74868d44c26786f15d523efb7c6db67ee3692292fa8014"
+    },
+    {
+      "order": 114,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v76_sme_crm.sql",
+      "semanticVersion": "v76",
+      "proposedDeployVersion": "20260722000154",
+      "sha256": "4e790ca453bc0180ceaa6bd517daa35c9adc0e46a0c278860f21c6f32c553f6c"
+    },
+    {
+      "order": 115,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v77_stripe_billing.sql",
+      "semanticVersion": "v77",
+      "proposedDeployVersion": "20260722000155",
+      "sha256": "54301ed63dd38b5c41c057eb71209e3be7cab37c407366afea87c4441ad7076d"
+    },
+    {
+      "order": 116,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v78_consultant_commissions.sql",
+      "semanticVersion": "v78",
+      "proposedDeployVersion": "20260722000156",
+      "sha256": "3f1c9f92bf2444c831ba2826cab357552ad76d814a680bb70a6fd01aab1ea1f9"
+    },
+    {
+      "order": 117,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v79_conversion_onboarding.sql",
+      "semanticVersion": "v79",
+      "proposedDeployVersion": "20260722000157",
+      "sha256": "603cd148467e1f99bdd855836a0efd78cfdf846924b7f36cd29c4af6a49802f8"
+    },
+    {
+      "order": 118,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v80_customer_legal_manifest.sql",
+      "semanticVersion": "v80",
+      "proposedDeployVersion": "20260722000158",
+      "sha256": "12470012285974ae699ec53abfae6146b01f44180945192bb4c6ab36e6694d1d"
+    },
+    {
+      "order": 119,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v81_customer_relationship_sync.sql",
+      "semanticVersion": "v81",
+      "proposedDeployVersion": "20260722000159",
+      "sha256": "786a8335708e5a4a97e69f53b3468dab2714f636a8fba177f95d740e2ec005e7"
+    },
+    {
+      "order": 120,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v82_enterprise_intelligence.sql",
+      "semanticVersion": "v82",
+      "proposedDeployVersion": "20260722000200",
+      "sha256": "aae9bc99022a1c629359125d60c551ffbd80c0122b5d813c2d6c5c143d9c2463"
+    },
+    {
+      "order": 121,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v83_customer_intelligence.sql",
+      "semanticVersion": "v83",
+      "proposedDeployVersion": "20260722000201",
+      "sha256": "6c3803ee79b526d5409bb9bc6b971922ecc05c7abf2d4ecb356758ff68d34063"
+    },
+    {
+      "order": 122,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v84_fast_sale_corrections.sql",
+      "semanticVersion": "v84",
+      "proposedDeployVersion": "20260722000202",
+      "sha256": "a2693a287f80f8975f3fd6eae6d7985bba48f953c089f22514201a3c2abfe603"
+    },
+    {
+      "order": 123,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v85_conversion_guard_repair.sql",
+      "semanticVersion": "v85",
+      "proposedDeployVersion": "20260722000203",
+      "sha256": "75c1d837823ced40a7492f33fd489c5ebe8f146522282316a05f903cf726e1d1"
+    },
+    {
+      "order": 124,
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql",
+      "semanticVersion": "v86",
+      "proposedDeployVersion": "20260722000204",
+      "sha256": "72bc0c929cf8129b2cfcf569031d5608c1464f537ac84a7f52e8258fb5392851"
     }
   ]
 }

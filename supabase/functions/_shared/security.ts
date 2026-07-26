@@ -48,8 +48,21 @@ export function canonicalBookingChange(input: Record<string, unknown>) {
   };
 }
 
-export async function bookingRequestFingerprint(input: Record<string, unknown>) {
-  return sha256Hex(`frenly:booking-request:v1\0${JSON.stringify(canonicalBookingRequest(input))}`);
+export async function bookingRequestFingerprint(
+  input: Record<string, unknown>,
+  authenticatedUserId: string | null = null,
+) {
+  const request = canonicalBookingRequest(input);
+  // Keep the v1 guest fingerprint byte-for-byte so pre-v72 guest retries remain
+  // valid. Authenticated requests use a domain-separated v2 fingerprint whose
+  // identity is supplied only after server-side bearer validation.
+  if (!authenticatedUserId) {
+    return sha256Hex(`frenly:booking-request:v1\0${JSON.stringify(request)}`);
+  }
+  return sha256Hex(`frenly:booking-request:v2\0${JSON.stringify({
+    ...request,
+    authenticated_user_id: authenticatedUserId,
+  })}`);
 }
 
 export async function bookingChangeFingerprint(input: Record<string, unknown>) {
@@ -58,6 +71,20 @@ export async function bookingChangeFingerprint(input: Record<string, unknown>) {
 
 export function idempotencyDecision(storedFingerprint: string, incomingFingerprint: string) {
   return storedFingerprint === incomingFingerprint ? 'replay' : 'conflict';
+}
+
+export function gatewayAuthorization(header: string | null, guestBearerKeys: string[] = []) {
+  if (header === null) return { kind: 'guest' as const, token: null };
+  if (header.length > 4096) return { kind: 'invalid' as const, token: null };
+  const prefix = 'Bearer ';
+  if (!header.startsWith(prefix)) return { kind: 'invalid' as const, token: null };
+  const token = header.slice(prefix.length);
+  const configuredGuests = new Set(guestBearerKeys.filter((key) => typeof key === 'string' && key.length > 0));
+  if (configuredGuests.has(token)) return { kind: 'guest' as const, token: null };
+  if (!/^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){2}$/.test(token)) {
+    return { kind: 'invalid' as const, token: null };
+  }
+  return { kind: 'user' as const, token };
 }
 
 export function turnstileBindingValid(

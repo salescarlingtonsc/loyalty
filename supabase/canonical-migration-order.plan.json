@@ -115,6 +115,21 @@
     { "kind": "pending", "version": "20260725090000", "name": "frenly_v68c_customer_gift_cards", "sourcePath": "db/migrations/20260724_frenly_v68c_customer_gift_cards.sql" },
     { "kind": "pending", "version": "20260725100000", "name": "frenly_v69_controlled_cutover", "sourcePath": "db/migrations/20260724_frenly_v69_controlled_cutover.sql" },
     { "kind": "pending", "version": "20260725110000", "name": "frenly_v70_legacy_non_overlap", "sourcePath": "db/migrations/20260724_frenly_v70_legacy_non_overlap.sql" },
-    { "kind": "pending", "version": "20260725120000", "name": "frenly_v71_customer_legal_manifest", "sourcePath": "db/migrations/20260726_frenly_v71_customer_legal_manifest.sql" }
+    { "kind": "pending", "version": "20260725120000", "name": "frenly_v71_customer_legal_manifest", "sourcePath": "db/migrations/20260726_frenly_v71_customer_legal_manifest.sql" },
+    { "kind": "pending", "version": "20260725130000", "name": "frenly_v72_booking_identity_sync", "sourcePath": "db/migrations/20260726_frenly_v72_booking_identity_sync.sql" },
+    { "kind": "pending", "version": "20260725140000", "name": "frenly_v73_booking_lifecycle", "sourcePath": "db/migrations/20260726_frenly_v73_booking_lifecycle.sql" },
+    { "kind": "pending", "version": "20260725150000", "name": "frenly_v74_staff_module_permissions", "sourcePath": "db/migrations/20260726_frenly_v74_staff_module_permissions.sql" },
+    { "kind": "pending", "version": "20260726100000", "name": "nestly_v75_sector_entitlements", "sourcePath": "db/migrations/20260726_nestly_v75_sector_entitlements.sql" },
+    { "kind": "pending", "version": "20260726110000", "name": "nestly_v76_sme_crm", "sourcePath": "db/migrations/20260726_nestly_v76_sme_crm.sql" },
+    { "kind": "pending", "version": "20260726120000", "name": "nestly_v77_stripe_billing", "sourcePath": "db/migrations/20260726_nestly_v77_stripe_billing.sql" },
+    { "kind": "pending", "version": "20260726130000", "name": "nestly_v78_consultant_commissions", "sourcePath": "db/migrations/20260726_nestly_v78_consultant_commissions.sql" },
+    { "kind": "pending", "version": "20260726140000", "name": "nestly_v79_conversion_onboarding", "sourcePath": "db/migrations/20260726_nestly_v79_conversion_onboarding.sql" },
+    { "kind": "pending", "version": "20260726150000", "name": "nestly_v80_customer_legal_manifest", "sourcePath": "db/migrations/20260726_nestly_v80_customer_legal_manifest.sql" },
+    { "kind": "pending", "version": "20260726160000", "name": "nestly_v81_customer_relationship_sync", "sourcePath": "db/migrations/20260726_nestly_v81_customer_relationship_sync.sql" },
+    { "kind": "pending", "version": "20260726170000", "name": "nestly_v82_enterprise_intelligence", "sourcePath": "db/migrations/20260726_nestly_v82_enterprise_intelligence.sql" },
+    { "kind": "pending", "version": "20260726180000", "name": "nestly_v83_customer_intelligence", "sourcePath": "db/migrations/20260726_nestly_v83_customer_intelligence.sql" },
+    { "kind": "pending", "version": "20260726190000", "name": "nestly_v84_fast_sale_corrections", "sourcePath": "db/migrations/20260726_nestly_v84_fast_sale_corrections.sql" },
+    { "kind": "pending", "version": "20260726200000", "name": "nestly_v85_conversion_guard_repair", "sourcePath": "db/migrations/20260726_nestly_v85_conversion_guard_repair.sql" },
+    { "kind": "pending", "version": "20260726210000", "name": "nestly_v86_enterprise_sme_crm", "sourcePath": "db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql" }
   ]
 }

@@ -76,3 +76,67 @@ supabase functions deploy manage-booking --no-verify-jwt
 ```
 
 Do not deploy the frontend until the migration and all three functions are live and smoke-tested.
+
+## Nestly platform billing functions
+
+The v77 billing pipeline uses three separate functions:
+
+- `stripe-billing-webhook` verifies Stripe events and is the only path that
+  turns an `invoice.paid` event into paid subscription truth.
+- `stripe-billing-command` executes owner/super-admin checkout, portal and
+  cadence commands. A redirect is never treated as payment.
+- `stripe-billing-reconcile` is the scheduled independent check. It compares
+  Stripe subscription and invoice snapshots against Nestly, records a bounded
+  reconciliation run and its mismatches, and never fabricates or repairs paid
+  state.
+
+Required billing secrets are `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
+`BILLING_RETURN_ORIGIN`, and a random `BILLING_RECONCILIATION_SECRET` of at
+least 32 characters. The reconciliation scheduler must send that last value in
+`x-nestly-reconciliation-secret`. Configure the schedule only after deploying
+the function; recommended frequency is daily during trial and every six hours
+once live. Store the value in the scheduler's secret store, never in SQL,
+frontend code or repository files.
+
+Deploy the billing functions during the reviewed release sequence:
+
+```sh
+supabase functions deploy stripe-billing-webhook --no-verify-jwt
+supabase functions deploy stripe-billing-command
+supabase functions deploy stripe-billing-reconcile --no-verify-jwt
+```
+
+Then register Stripe webhook delivery for the event allowlist documented by
+v77, invoke one test-mode reconciliation, and retain its run ID as launch
+evidence. A `mismatch` or `failed` result blocks billing launch.
+
+## Nestly private SME documents
+
+The v86 document flow keeps the `sme-private` bucket private. An authorized
+platform user first reserves an upload or requests a read through the v86
+browser RPC. The browser then invokes `sme-document-signer` to exchange the
+one-time request token:
+
+- `{"action":"exchange","request_id":"...","exchange_token":"..."}` returns
+  either a signed upload token plus its exact bucket/path, or a five-minute
+  private read URL.
+- After `uploadToSignedUrl` succeeds, `{"action":"finalize","request_id":"..."}`
+  makes the trusted function re-resolve the actor-bound target, download the
+  stored object, enforce the reserved size, calculate SHA-256 itself, and
+  finalize the database record.
+
+The browser never supplies a checksum, observed size, bucket or path to the
+finalize action. The one-time database request expires after ten minutes for
+uploads and five minutes for reads. Supabase signed upload tokens have their
+own platform validity window, so the UI must upload and finalize before the
+shorter database reservation expires; a failed/expired reservation is never
+reported as uploaded.
+
+Deploy only after v86 has passed independent review:
+
+```sh
+supabase functions deploy sme-document-signer
+```
+
+`PUBLIC_GATEWAY_ALLOWED_ORIGINS` must include the exact Nestly web origin.
+Retain a private-bucket upload/read/finalize acceptance run as launch evidence.

@@ -60,8 +60,23 @@ test('generator emits a frozen public config and an exact-origin CSP in an isola
   assert.match(runtime, /window\.__FRENLY_RUNTIME_CONFIG__ = Object\.freeze\(/);
   assert.match(runtime, new RegExp(`"projectRef": "${NON_PRODUCTION_REF}"`));
   assert.match(csp, new RegExp(`connect-src 'self' https:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co wss:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co https:\/\/challenges\\.cloudflare\\.com;`));
+  assert.match(csp, /worker-src 'self';/);
   assert.doesNotMatch(csp, /connect-src[^;]*\*/);
   assert.doesNotMatch(csp, /\{\{SUPABASE_/);
+  assert.deepEqual(
+    vercel.headers.find(({ source }) => source === '/sw.js')?.headers,
+    [
+      { key:'Cache-Control', value:'no-cache, no-store, must-revalidate' },
+      { key:'Service-Worker-Allowed', value:'/' },
+    ],
+  );
+  assert.deepEqual(
+    vercel.headers.find(({ source }) => source === '/manifest.webmanifest')?.headers,
+    [
+      { key:'Content-Type', value:'application/manifest+json; charset=utf-8' },
+      { key:'Cache-Control', value:'public, max-age=3600' },
+    ],
+  );
 
   const checked = runGenerator(root, ['--config', configPath, '--check']);
   assert.equal(checked.status, 0, checked.stderr);

@@ -1,0 +1,115 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+import vm from 'node:vm';
+
+const root = new URL('../..', import.meta.url);
+const read = relativePath => readFile(new URL(relativePath, root), 'utf8');
+
+test('visible Nestly brand configuration is immutable and canonical', async () => {
+  const source = await read('app/brand-config.js');
+  const context = { Object };
+  context.globalThis = context;
+  vm.runInNewContext(source, context, { filename:'brand-config.js' });
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.NestlyBrand)),
+    {
+      productName:'Nestly',
+      wordmark:'nestly.',
+      customerLabel:'My Nestly',
+      canonicalPublicDomain:'https://www.nestly.asia',
+      downloadPrefix:'nestly'
+    }
+  );
+  assert.equal(Object.isFrozen(context.NestlyBrand), true);
+});
+
+test('deployable public surfaces use Nestly while compatibility identifiers remain intact', async () => {
+  const [index,join,terms,privacy,dataRequest,customerUi,runtimeLoader] = await Promise.all([
+    read('app/index.html'),
+    read('app/join.html'),
+    read('app/terms.html'),
+    read('app/privacy.html'),
+    read('app/data-request.html'),
+    read('app/customer-ui.js'),
+    read('app/runtime-config-loader.js')
+  ]);
+
+  assert.match(index, /<title>Nestly —/);
+  assert.match(join, /<title>Join — Nestly<\/title>/);
+  assert.match(index, /<script src="\/brand-config\.js"><\/script>[\s\S]*<script src="\/runtime-config\.js"><\/script>/);
+  assert.match(join, /<script src="\/brand-config\.js"><\/script>[\s\S]*<script src="\/runtime-config\.js"><\/script>/);
+  assert.match(index, /BRAND\.downloadPrefix}-customers\.csv/);
+  assert.match(index, /BRAND\.downloadPrefix}-appointments\.csv/);
+  assert.match(index, /BRAND\.downloadPrefix}-signup-qr-/);
+
+  for (const [name,source] of [
+    ['terms',terms],['privacy',privacy],['data request',dataRequest]
+  ]) {
+    assert.doesNotMatch(source,/frenly/i,`${name} still exposes the legacy product name`);
+    assert.match(source,/Nestly/);
+    assert.match(source,/nestly<span>\.<\/span>/);
+  }
+
+  assert.match(index,/window\.FrenlyRuntimeConfig/);
+  assert.match(index,/window\.FrenlyCustomerUI/);
+  assert.match(join,/window\.FrenlyRuntimeConfig/);
+  assert.match(customerUi,/global\.FrenlyCustomerUI/);
+  assert.match(runtimeLoader,/globalObject\.FrenlyRuntimeConfig/);
+  assert.match(runtimeLoader,/target && target\.__FRENLY_RUNTIME_CONFIG__/);
+  assert.doesNotMatch(customerUi,/Please wait while Frenly prepares this page/);
+  assert.doesNotMatch(runtimeLoader,/>Frenly is unavailable</);
+});
+
+test('platform console exposes the required namespaced routes', async () => {
+  const source = await read('app/platform-console.js');
+  const context = { Object };
+  context.globalThis = context;
+  vm.runInNewContext(source, context, { filename:'platform-console.js' });
+
+  const consoleApi = context.NestlyPlatformConsole;
+  assert.equal(consoleApi.isRoute('#/platform'),true);
+  assert.equal(consoleApi.isRoute('#/platform/onboarding'),true);
+  assert.equal(consoleApi.isRoute('#/platform/firms'),true);
+  assert.equal(consoleApi.isRoute('#/platform/reports'),true);
+  assert.equal(consoleApi.isRoute('#/platform/billing'),true);
+  assert.equal(consoleApi.isRoute('#/platform/commissions'),true);
+  assert.equal(consoleApi.isRoute('#/platform/sectors'),true);
+  assert.equal(consoleApi.isRoute('#/platform/automation'),true);
+  assert.equal(consoleApi.isRoute('#/platform/unknown'),false);
+  assert.equal(consoleApi.routeKey('#/platform'),'overview');
+  assert.equal(consoleApi.routeKey('#/platform/commissions'),'commissions');
+  assert.deepEqual(
+    Array.from(consoleApi.routes,route=>route.label),
+    ['Overview','Onboarding','Firms','Reports','Billing','Commission payable','Sector modules','Automation']
+  );
+});
+
+test('platform console is routed before workspace onboarding and uses versioned platform contracts', async () => {
+  const [index,consoleSource,styles] = await Promise.all([
+    read('app/index.html'),
+    read('app/platform-console.js'),
+    read('app/platform-console.css')
+  ]);
+  const platformBinding = index.indexOf('const platformConsole=globalThis.NestlyPlatformConsole');
+  const platformRoute = index.indexOf('if(platformConsole?.isRoute(h))');
+  const onboardingFallback = index.indexOf('if(!S.biz) return renderOnboard()');
+
+  assert.ok(platformBinding > 0&&platformBinding < platformRoute);
+  assert.ok(platformRoute > 0);
+  assert.ok(onboardingFallback > platformRoute);
+  assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css">/);
+  assert.match(index,/<script src="\/platform-console\.js"><\/script>/);
+  assert.match(consoleSource,/sb\.rpc\('super_admin_list_businesses'\)/);
+  assert.match(consoleSource,/platform_get_sme_board_v76/);
+  assert.match(consoleSource,/platform_list_sector_entitlements_v75/);
+  assert.match(consoleSource,/get_platform_billing_v77/);
+  assert.match(consoleSource,/get_consultant_commission_dashboard_v78/);
+  assert.match(consoleSource,/get_billing_reconciliation_v77/);
+  assert.match(consoleSource,/System update required/);
+  assert.doesNotMatch(consoleSource,/[\u{1F300}-\u{1FAFF}]/u);
+  assert.match(styles,/min-height:44px/);
+  assert.match(styles,/@media\(max-width:760px\)/);
+  assert.match(styles,/\.platform-mobile-nav/);
+});

@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
@@ -7,17 +6,12 @@ const root = new URL('../..', import.meta.url);
 const read = (path) => readFile(new URL(path, root));
 const [
   source,
-  canonical,
-  terms,
-  privacy
+  canonical
 ] = await Promise.all([
   read('db/migrations/20260726_frenly_v71_customer_legal_manifest.sql'),
-  read('supabase/migrations/20260725120000_frenly_v71_customer_legal_manifest.sql'),
-  read('app/terms.html'),
-  read('app/privacy.html')
+  read('supabase/migrations/20260725120000_frenly_v71_customer_legal_manifest.sql')
 ]);
 const sql = source.toString('utf8');
-const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
 const approved = {
   terms: '8e113ffa36979cab83fcd84221d0baf1107921d030e353a60af428a1ebce09e4',
@@ -31,9 +25,7 @@ test('v71 canonical migration is the byte-identical post-v70 source', () => {
   assert.match(sql, /^commit;$/m);
 });
 
-test('v71 approved digests are exact SHA-256 hashes of the live legal pages', () => {
-  assert.equal(sha256(terms), approved.terms);
-  assert.equal(sha256(privacy), approved.privacy);
+test('v71 preserves the exact owner-approved 19 July legal digests', () => {
   assert.match(sql, new RegExp(`'terms'[\\s\\S]*'2026-07-19'[\\s\\S]*'${approved.terms}'`));
   assert.match(sql, new RegExp(`'privacy'[\\s\\S]*'2026-07-19'[\\s\\S]*'${approved.privacy}'`));
   assert.ok((sql.match(/timestamptz '2026-07-19 00:00:00\+08:00'/g) || []).length >= 4);

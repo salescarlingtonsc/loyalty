@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 66,
-  "itemCount": 111,
+  "pendingCount": 81,
+  "itemCount": 126,
   "items": [
     {
       "order": 1,
@@ -1117,6 +1117,156 @@
       "path": "supabase/migrations/20260725120000_frenly_v71_customer_legal_manifest.sql",
       "octetLength": 3043,
       "sha256": "1cc263b4e0bff38bb567908cfc6fe1dcd0bb53eb3bd13b9d6473c71b49b36062",
+      "provenance": "local-source"
+    },
+    {
+      "order": 112,
+      "kind": "pending",
+      "version": "20260725130000",
+      "name": "frenly_v72_booking_identity_sync",
+      "path": "supabase/migrations/20260725130000_frenly_v72_booking_identity_sync.sql",
+      "octetLength": 27627,
+      "sha256": "6bcb87758d27c99f773585e6fb7143f9f5790b1e50d25e4d0fde517b98c1495d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 113,
+      "kind": "pending",
+      "version": "20260725140000",
+      "name": "frenly_v73_booking_lifecycle",
+      "path": "supabase/migrations/20260725140000_frenly_v73_booking_lifecycle.sql",
+      "octetLength": 17714,
+      "sha256": "db33680ef5bc4dbdc3f5d45a6b93cedaa677b0215cb6edf8ea1d385f2202987a",
+      "provenance": "local-source"
+    },
+    {
+      "order": 114,
+      "kind": "pending",
+      "version": "20260725150000",
+      "name": "frenly_v74_staff_module_permissions",
+      "path": "supabase/migrations/20260725150000_frenly_v74_staff_module_permissions.sql",
+      "octetLength": 14303,
+      "sha256": "6ec8dd7315a05a20411a9b3bd00e73a900b6d3d44baa620f739c5364a4dbd348",
+      "provenance": "local-source"
+    },
+    {
+      "order": 115,
+      "kind": "pending",
+      "version": "20260726100000",
+      "name": "nestly_v75_sector_entitlements",
+      "path": "supabase/migrations/20260726100000_nestly_v75_sector_entitlements.sql",
+      "octetLength": 34655,
+      "sha256": "d9167c1360be7df3eb74868d44c26786f15d523efb7c6db67ee3692292fa8014",
+      "provenance": "local-source"
+    },
+    {
+      "order": 116,
+      "kind": "pending",
+      "version": "20260726110000",
+      "name": "nestly_v76_sme_crm",
+      "path": "supabase/migrations/20260726110000_nestly_v76_sme_crm.sql",
+      "octetLength": 65742,
+      "sha256": "4e790ca453bc0180ceaa6bd517daa35c9adc0e46a0c278860f21c6f32c553f6c",
+      "provenance": "local-source"
+    },
+    {
+      "order": 117,
+      "kind": "pending",
+      "version": "20260726120000",
+      "name": "nestly_v77_stripe_billing",
+      "path": "supabase/migrations/20260726120000_nestly_v77_stripe_billing.sql",
+      "octetLength": 86983,
+      "sha256": "54301ed63dd38b5c41c057eb71209e3be7cab37c407366afea87c4441ad7076d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 118,
+      "kind": "pending",
+      "version": "20260726130000",
+      "name": "nestly_v78_consultant_commissions",
+      "path": "supabase/migrations/20260726130000_nestly_v78_consultant_commissions.sql",
+      "octetLength": 59979,
+      "sha256": "3f1c9f92bf2444c831ba2826cab357552ad76d814a680bb70a6fd01aab1ea1f9",
+      "provenance": "local-source"
+    },
+    {
+      "order": 119,
+      "kind": "pending",
+      "version": "20260726140000",
+      "name": "nestly_v79_conversion_onboarding",
+      "path": "supabase/migrations/20260726140000_nestly_v79_conversion_onboarding.sql",
+      "octetLength": 63894,
+      "sha256": "603cd148467e1f99bdd855836a0efd78cfdf846924b7f36cd29c4af6a49802f8",
+      "provenance": "local-source"
+    },
+    {
+      "order": 120,
+      "kind": "pending",
+      "version": "20260726150000",
+      "name": "nestly_v80_customer_legal_manifest",
+      "path": "supabase/migrations/20260726150000_nestly_v80_customer_legal_manifest.sql",
+      "octetLength": 4234,
+      "sha256": "12470012285974ae699ec53abfae6146b01f44180945192bb4c6ab36e6694d1d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 121,
+      "kind": "pending",
+      "version": "20260726160000",
+      "name": "nestly_v81_customer_relationship_sync",
+      "path": "supabase/migrations/20260726160000_nestly_v81_customer_relationship_sync.sql",
+      "octetLength": 18798,
+      "sha256": "786a8335708e5a4a97e69f53b3468dab2714f636a8fba177f95d740e2ec005e7",
+      "provenance": "local-source"
+    },
+    {
+      "order": 122,
+      "kind": "pending",
+      "version": "20260726170000",
+      "name": "nestly_v82_enterprise_intelligence",
+      "path": "supabase/migrations/20260726170000_nestly_v82_enterprise_intelligence.sql",
+      "octetLength": 55561,
+      "sha256": "aae9bc99022a1c629359125d60c551ffbd80c0122b5d813c2d6c5c143d9c2463",
+      "provenance": "local-source"
+    },
+    {
+      "order": 123,
+      "kind": "pending",
+      "version": "20260726180000",
+      "name": "nestly_v83_customer_intelligence",
+      "path": "supabase/migrations/20260726180000_nestly_v83_customer_intelligence.sql",
+      "octetLength": 27550,
+      "sha256": "6c3803ee79b526d5409bb9bc6b971922ecc05c7abf2d4ecb356758ff68d34063",
+      "provenance": "local-source"
+    },
+    {
+      "order": 124,
+      "kind": "pending",
+      "version": "20260726190000",
+      "name": "nestly_v84_fast_sale_corrections",
+      "path": "supabase/migrations/20260726190000_nestly_v84_fast_sale_corrections.sql",
+      "octetLength": 28033,
+      "sha256": "a2693a287f80f8975f3fd6eae6d7985bba48f953c089f22514201a3c2abfe603",
+      "provenance": "local-source"
+    },
+    {
+      "order": 125,
+      "kind": "pending",
+      "version": "20260726200000",
+      "name": "nestly_v85_conversion_guard_repair",
+      "path": "supabase/migrations/20260726200000_nestly_v85_conversion_guard_repair.sql",
+      "octetLength": 2037,
+      "sha256": "75c1d837823ced40a7492f33fd489c5ebe8f146522282316a05f903cf726e1d1",
+      "provenance": "local-source"
+    },
+    {
+      "order": 126,
+      "kind": "pending",
+      "version": "20260726210000",
+      "name": "nestly_v86_enterprise_sme_crm",
+      "path": "supabase/migrations/20260726210000_nestly_v86_enterprise_sme_crm.sql",
+      "octetLength": 151609,
+      "sha256": "72bc0c929cf8129b2cfcf569031d5608c1464f537ac84a7f52e8258fb5392851",
       "provenance": "local-source"
     }
   ]

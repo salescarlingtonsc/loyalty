@@ -156,7 +156,7 @@ test('C45 wallet UI has a truthful separate consent seam, no DOB disclosure, acc
   assert.match(app, /renderCustomerWallet\(businessSlug\)/i, 'consent success must refresh the actionable card');
   assert.match(app, /walletDate\(validity\.available_until,true\)/i, 'exclusive end must include an instant, not a misleading date');
   assert.match(app, /Show this screen to the team at the counter\. No birthday details are shared with the business\./i);
-  assert.match(app, /Your date of birth is used by Frenly[\s\S]*not shown to businesses[\s\S]*separate from marketing/i);
+  assert.match(app, /Your date of birth is used by \$\{esc\(BRAND\.productName\)\}[\s\S]*not shown to businesses[\s\S]*separate from marketing/i);
   assert.match(wallet, /walletSectionStillCurrent\(host,isWalletCurrent\)/i);
   assert.match(wallet, /if\(!walletSectionStillCurrent\(host,isWalletCurrent\)\|\|!toggle\.isConnected\)return;/i);
   assert.match(app, /birthdayBenefitActivate[\s\S]*if\(!isWalletCurrent\(\)\|\|!birthdayActivate\.isConnected\)return;/i);

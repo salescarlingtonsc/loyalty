@@ -123,7 +123,7 @@ test('target customer routes use SVG icons instead of raw structural glyphs',()=
 test('shell and route accessibility provide skip, focus, landmarks, and one announcement per event',()=>{
   assert.match(app,/<a class="skip-link" href="#main">Skip to main content<\/a>/);
   assert.match(app,/<main class="main" id="main" tabindex="-1">/);
-  assert.match(app,/:where\(a,button,input,select,textarea,\[tabindex\]\):focus-visible/);
+  assert.match(app,/:where\(a,button,input,select,textarea,\[tabindex\]:not\(\[tabindex="-1"\]\)\):focus-visible/);
   assert.match(app,/CUI\.focusRoute\(main,\{enhanceContent:enhanceCustomerUi\}\)/);
   assert.match(app,/id="appStatus"[^>]*aria-live="polite"/);
   assert.match(app,/id="appAlert"[^>]*aria-live="assertive"/);
@@ -247,8 +247,8 @@ test('read-only referral, membership, and gift-card views omit editable transact
 });
 
 test('financial UI actions require module rights plus server-mirrored create-sales capability',()=>{
-  assert.match(app,/owner:new Set\(\['create_sales'\]\),manager:new Set\(\['create_sales'\]\),staff:new Set\(\['create_sales'\]\)/);
-  assert.match(app,/frontdesk:new Set\(\['create_sales'\]\),bookkeeper:new Set\(\)/);
+  assert.match(app,/owner:new Set\(\['create_sales','view_finance'\]\),manager:new Set\(\['create_sales','view_finance'\]\),staff:new Set\(\['create_sales'\]\)/);
+  assert.match(app,/frontdesk:new Set\(\['create_sales'\]\),bookkeeper:new Set\(\['view_finance'\]\)/);
   assert.match(detail,/const canWriteLoyalty=canWriteModule\('loyalty'\)&&hasRoleCapability\('create_sales'\)/);
   assert.match(memberships,/const canEnroll=canWrite&&hasRoleCapability\('create_sales'\)/);
   assert.match(giftcards,/const canTransact=canWrite&&hasRoleCapability\('create_sales'\)/);

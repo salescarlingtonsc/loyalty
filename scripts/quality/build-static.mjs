@@ -10,6 +10,7 @@ export const requiredStaticHtmlEntries = Object.freeze([
   'data-request.html',
   'index.html',
   'join.html',
+  'offline.html',
   'privacy.html',
   'terms.html'
 ]);

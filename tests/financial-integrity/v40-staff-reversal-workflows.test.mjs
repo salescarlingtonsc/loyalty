@@ -77,14 +77,14 @@ test('bounded read model is stable-compatible, branch filtered, and exposes only
   assert.match(reader,/else coalesce\(original\.amount_cents, 0\) \+ s\.amount_cents/i);
 });
 
-test('staff UI requires reason, stable key, confirmation, explicit reference and shows replay/conflict/result',()=>{
+test('staff UI keeps stable keys and confirmation while sale reversal notes are optional',()=>{
   assert.match(app,/const reversalKeys=new Map\(\)/);
   assert.match(app,/crypto\.randomUUID\(\)/);
+  assert.match(app,/Correction note \(optional\)/);
   assert.match(app,/Reason \(required, at least 10 characters\)/);
-  assert.match(app,/Reference \(required\)/);
-  assert.match(app,/p_restock_policy:'none'/);
+  assert.match(app,/p_note:reason\|\|null/);
   assert.match(app,/if\(!isReplay&&!confirm\(/);
-  assert.match(app,/reverse_sale':'reverse_loyalty_redemption/);
+  assert.match(app,/reverse_sale_fast_v84':'reverse_loyalty_redemption/);
   assert.match(app,/Changed-request conflict/);
   assert.match(app,/Verify exact replay/);
   assert.match(app,/No payment refund was created/);

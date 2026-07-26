@@ -73,7 +73,22 @@ const sqlTestByVersion = new Map([
   ['v68c', 'db/tests/v68c_customer_gift_cards.sql'],
   ['v69', 'db/tests/v69_controlled_cutover.sql'],
   ['v70', 'db/tests/v70_legacy_non_overlap.sql'],
-  ['v71', 'db/tests/v71_customer_legal_manifest.sql']
+  ['v71', 'db/tests/v71_customer_legal_manifest.sql'],
+  ['v72', 'db/tests/v72_booking_identity_sync.sql'],
+  ['v73', 'db/tests/v73_booking_lifecycle.sql'],
+  ['v74', 'db/tests/v74_staff_module_permissions.sql'],
+  ['v75', 'db/tests/v75_sector_entitlements.sql'],
+  ['v76', 'db/tests/v76_sme_crm.sql'],
+  ['v77', 'db/tests/v77_stripe_billing.sql'],
+  ['v78', 'db/tests/v78_consultant_commissions.sql'],
+  ['v79', 'db/tests/v79_conversion_onboarding.sql'],
+  ['v80', 'db/tests/v80_customer_legal_manifest.sql'],
+  ['v81', 'db/tests/v81_customer_relationship_sync.sql'],
+  ['v82', 'db/tests/v82_enterprise_intelligence.sql'],
+  ['v83', 'db/tests/v83_customer_intelligence.sql'],
+  ['v84', 'db/tests/v84_fast_sale_corrections.sql'],
+  ['v85', 'db/tests/v85_conversion_guard_repair.sql'],
+  ['v86', 'db/tests/v86_enterprise_sme_crm.sql']
 ]);
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -87,7 +102,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 66);
+  assert.equal(pending.length, 81);
   assert.equal(sqlTestByVersion.size, pending.length);
 
   for (const migration of pending) {
@@ -95,7 +110,7 @@ test('all pending migrations and SQL acceptance suites have atomic boundaries', 
     assert.equal(statementCount(migrationSql, 'begin'), 1, `${migration.name} must begin one transaction`);
     assert.equal(statementCount(migrationSql, 'commit'), 1, `${migration.name} must commit one transaction`);
 
-    const semanticVersion = migration.name.match(/^frenly_(v\d+[a-z]?|c\d+)(?:_|$)/)?.[1];
+    const semanticVersion = migration.name.match(/^(?:frenly|nestly)_(v\d+[a-z]?|c\d+)(?:_|$)/)?.[1];
     const testPath = sqlTestByVersion.get(semanticVersion);
     assert.ok(testPath, `${semanticVersion} must have a mapped rollback suite`);
     const testSql = await readFile(path.join(repoRoot, testPath), 'utf8');

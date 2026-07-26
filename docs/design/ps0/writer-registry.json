@@ -1575,6 +1575,54 @@
       "authority": "same app.sv_automation_context() authorization as the expiry sweep; actor NULL.",
       "kernel": "SEPARATE-LEDGER hold machinery supporting the PS-1C checkout tender.",
       "kernel_migratability": "KERNEL-ADJACENT - hold hygiene for the unified checkout kernel; no parallel money path."
+    },
+    {
+      "id": "db.fn:public.correct_quick_sale_amount_v84/5",
+      "surface": "db_function",
+      "latest_file": "20260726190000_nestly_v84_fast_sale_corrections.sql",
+      "rows_written": "points_batches:UPDATE, points_ledger:INSERT; sale_amount_corrections_v84:INSERT, audit_log:INSERT; via public.reverse_sale/public.record_quick_sale: sales:INSERT, payments:INSERT, financial_operations:INSERT/UPDATE",
+      "detected_signals": "idem-signal, advisory-lock, for-update",
+      "delegates_to": [
+        "public.reverse_sale",
+        "public.record_quick_sale"
+      ],
+      "entry_point": "correct_quick_sale_amount_v84(business,sale,corrected_amount_cents,idempotency_key,note) - staff fast-correction boundary for a positive original quick sale",
+      "callers": "browser Sales recent-sales correction modal; authenticated only",
+      "reads": "original immutable sale; current net payments grouped by method; original sale-linked points_ledger earn; exact points_batches source cache; financial_operations quick-sale creation evidence",
+      "idempotency": "unique (business_id,idempotency_key) correction evidence + request hash + business/key advisory lock; exact replay verifies the sale chain and loyalty compensation row before returning cached result, while changed requests raise 23505",
+      "locking": "original sale FOR UPDATE, customer FOR UPDATE, and exact original points batches FOR UPDATE before any compensation; called reversal/replacement writers retain their own locks",
+      "payment": "derives CURRENT payment truth from the append-only payments journal. Supports only net-unpaid or fully-paid single-method cash because record_quick_sale cannot faithfully reproduce partial, mixed, credit, or provider-settled tenders; every unsupported state refuses before reversal",
+      "loyalty": "v84-only exact correction: normal reverse_sale still preserves earned points, but this compound writer requires the source earn to be wholly unspent, appends one negative adjust linked to the reversal sale, zeroes only the source sale's unspent FEFO batch cache, then lets the replacement sale earn once. Spent or inconsistent source points fail closed before any side effect",
+      "reversal": "append-only original -> reversal -> point-removal -> replacement chain; the original sale and points ledger rows are never mutated",
+      "ui": "Sales -> Recent sales -> Correct amount",
+      "kernel": "COMPOUND CORRECTION - composes the canonical reversal and quick-sale writers in one transaction and adds only the missing exact point-removal edge; no parallel sale/payment implementation",
+      "kernel_migratability": "KERNEL-ADJACENT - retain as an orchestration boundary over the unified checkout/reversal kernel; its v84-only loyalty compensation should become a first-class correction effect when the kernel gains a general amendment command"
+    },
+    {
+      "id": "db.fn:public.reverse_sale_fast_v84/4",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260726190000_nestly_v84_fast_sale_corrections.sql",
+      "rows_written": "no direct tracked write; via public.reverse_sale: sales:INSERT, payments:INSERT, credit_ledger:INSERT, benefit_fulfilments:INSERT, budget_periods:UPDATE",
+      "detected_signals": "idem-signal",
+      "delegates_to": [
+        "public.reverse_sale"
+      ],
+      "entry_point": "reverse_sale_fast_v84(business,sale,note,idempotency_key) - optional-note UI adapter over the canonical reversal engine",
+      "callers": "browser Sales recent-sales Reverse action; authenticated only",
+      "idempotency": "delegates the supplied stable idempotency key unchanged to public.reverse_sale; replay/conflict behavior is entirely canonical",
+      "payment": "delegates all payment validation and append-only refund evidence to public.reverse_sale",
+      "loyalty": "preserves the established normal reverse_sale launch policy: earned points are observed but not clawed back. Only the separate compound amount-correction RPC adds a replacement and therefore performs v84-specific exact point compensation",
+      "reversal": "no direct DML; supplies an auditable default reason when the optional staff note is blank and delegates everything else",
+      "kernel": "THIN ADAPTER - no alternate economic logic; removable once the canonical reversal command accepts optional UI notes directly",
+      "kernel_migratability": "SAFE TO COLLAPSE - fold its default-reason presentation behavior into the future unified reversal command without changing the underlying economic writer"
+    },
+    {
+      "id": "browser.rpc:app/index.html:correct_quick_sale_amount_v84",
+      "surface": "browser_rpc_binding",
+      "rpc": "correct_quick_sale_amount_v84",
+      "resolves_to": "public.correct_quick_sale_amount_v84/5 (idempotent append-only amount correction with exact unspent-point compensation and fail-closed unsupported payments)",
+      "call_site_finding": "none - the modal requires an edited positive amount, an explicit first confirmation, a final native confirmation, and reuses one crypto.randomUUID idempotency key for retries of the same request fingerprint",
+      "kernel_migratability": "UI binding only - keep pointed at the compound correction command until it is absorbed by the unified checkout/reversal kernel"
     }
   ],
   "allowlist": [
@@ -1585,10 +1633,6 @@
     {
       "id": "browser.rpc:app/index.html:activate_retention_campaign",
       "reason": "browser RPC 'activate_retention_campaign' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
-    },
-    {
-      "id": "browser.rpc:app/index.html:apply_module_template",
-      "reason": "browser RPC 'apply_module_template' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
       "id": "browser.rpc:app/index.html:book_appointment_smart_v47",
@@ -1603,8 +1647,8 @@
       "reason": "browser RPC 'complete_retention_campaign' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
-      "id": "browser.rpc:app/index.html:convert_booking_request",
-      "reason": "browser RPC 'convert_booking_request' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+      "id": "browser.rpc:app/index.html:staff_decide_booking_request_v73",
+      "reason": "browser RPC 'staff_decide_booking_request_v73' atomically decides a booking lifecycle request and may create its appointment; it changes booking/appointment workflow state but does not write loyalty, stored value, payment, or other customer value"
     },
     {
       "id": "browser.rpc:app/index.html:create_business",
@@ -1653,6 +1697,14 @@
     {
       "id": "browser.rpc:app/index.html:customer_get_appointments_page",
       "reason": "browser RPC 'customer_get_appointments_page' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_get_booking_requests",
+      "reason": "browser RPC 'customer_get_booking_requests' is the v72 authenticated, self-scoped, keyset-paginated active-request reader. It performs no DML, returns only the reviewed customer-safe booking projection, and resolves to no transaction or value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_get_in_app_inbox_global_count",
+      "reason": "browser RPC 'customer_get_in_app_inbox_global_count' is the C46 self-scoped unread-count getter used by My Frenly home. It is read-only and performs no DML or customer-value movement."
     },
     {
       "id": "browser.rpc:app/index.html:customer_get_birthday_participation",
@@ -1721,6 +1773,10 @@
     {
       "id": "browser.rpc:app/index.html:customer_unlink_business_link",
       "reason": "browser RPC 'customer_unlink_business_link' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_update_profile",
+      "reason": "browser RPC 'customer_update_profile' is the C42 self-scoped, idempotent customer profile editor used by My Frenly Profile. It updates private identity configuration only and performs no sale, balance, benefit, or other customer-value movement."
     },
     {
       "id": "browser.rpc:app/index.html:decide_change",
@@ -1899,12 +1955,12 @@
       "reason": "browser RPC 'set_booking_settings' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
-      "id": "browser.rpc:app/index.html:set_business_modules",
-      "reason": "browser RPC 'set_business_modules' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+      "id": "browser.rpc:app/index.html:set_staff_module_permissions_v74",
+      "reason": "browser RPC 'set_staff_module_permissions_v74' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
-      "id": "browser.rpc:app/index.html:set_staff_modules",
-      "reason": "browser RPC 'set_staff_modules' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+      "id": "browser.rpc:app/index.html:set_staff_role_v74",
+      "reason": "browser RPC 'set_staff_role_v74' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
       "id": "browser.rpc:app/index.html:staff_create_client",
@@ -1949,10 +2005,6 @@
     {
       "id": "browser.rpc:app/index.html:validate_program_rule",
       "reason": "browser RPC 'validate_program_rule' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
-    },
-    {
-      "id": "browser.write:app/index.html:booking_requests:UPDATE",
-      "reason": "browser direct write to non-value catalog/config table booking_requests (UPDATE); RLS-gated setup data, not customer value"
     },
     {
       "id": "browser.write:app/index.html:booking_tables:DELETE",
@@ -2173,6 +2225,26 @@
     {
       "id": "browser.rpc:app/index.html:customer_get_gift_cards",
       "reason": "browser RPC 'customer_get_gift_cards' is the v68c customer-facing gift-card BALANCE VIEW, binding to public.customer_get_gift_cards(text): a STABLE, read-only SECURITY DEFINER getter scoped by app.v32_customer_wallet_context (the same verified-customer-link resolver customer_get_business_summary uses). It performs NO DML of any kind - no ledger, sale, idempotency, operation or audit row - reads public.gift_cards only, matches solely on purchaser_client_id (never the unverified recipient_email) within the linked business, and never projects the bearer code (right(code,4) display hint only). It resolves to no value writer, so it is allowlisted rather than curated as a writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_get_transaction_history_v81",
+      "reason": "browser RPC 'customer_get_transaction_history_v81' is the v81 verified-link customer history reader. It is STABLE and performs no DML; it projects bounded cursor-paginated sale, reversal, line-item, and points facts from immutable journals through the caller's app.v32_customer_wallet_context. It resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_sync_verified_relationships_v81",
+      "reason": "browser RPC 'customer_sync_verified_relationships_v81' is the v81 self-scoped relationship reconciliation binding. It may append verified customer_links and non-economic audit/idempotency evidence after an exact unique verified phone/email match, but writes no sale, payment, ledger, benefit, stored-value, or other customer-value table. It therefore resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_customer_intelligence_v83",
+      "reason": "browser RPC 'get_customer_intelligence_v83' is the v83 owner/manager customer-intelligence reader. It performs no DML; business, branch, Singapore date window, generated-at cutoff, limit and complete customer_since/client_id keyset cursor are server-authoritative. Period revenue/returning facts, lifetime-as-of-end inactivity, payment truth and complete-week forecast values are derived from existing immutable facts at one cutoff. It resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:create_customer_intelligence_export_v83",
+      "reason": "browser RPC 'create_customer_intelligence_export_v83' materialises a caller-scoped 24-hour v83 report snapshot for complete CSV paging. The SECURITY DEFINER RPC re-checks view_finance/branch scope, deletes only that caller's expired non-economic export cache, and inserts report metadata plus derived customer JSON into customer_intelligence_exports_v83/customer_intelligence_export_rows_v83. It never writes sales, payments, points, benefits, stored value or any other customer-value table, so it resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_customer_intelligence_export_page_v83",
+      "reason": "browser RPC 'get_customer_intelligence_export_page_v83' is the read-only page binding for a caller-owned, unexpired v83 export snapshot. It re-checks current finance and branch visibility and returns ordinal-keyset pages from already materialised non-economic report rows. It performs no DML and resolves to no value writer."
     },
     {
       "id": "browser.rpc:app/index.html:sv_cutover_business",

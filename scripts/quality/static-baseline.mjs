@@ -385,7 +385,7 @@ function parseMigrationFilename(fileName) {
   assert.equal(date.getUTCMonth(), month - 1, `Migration filename has invalid month: ${fileName}`);
   assert.equal(date.getUTCDate(), day, `Migration filename has invalid day: ${fileName}`);
 
-  const version = match.groups.slug.match(/\bfrenly_v(?<major>\d+)(?:(?<letter>[a-z])|_(?<minor>\d+))?/);
+  const version = match.groups.slug.match(/\b(?:frenly|nestly)_v(?<major>\d+)(?:(?<letter>[a-z])|_(?<minor>\d+))?/);
   const semantic = version
     ? {
         major: Number(version.groups.major),

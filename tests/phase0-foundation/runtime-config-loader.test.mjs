@@ -109,7 +109,7 @@ test('test mode refuses the production project before browser boot', () => {
 
   assert.equal(error.name, 'RuntimeConfigError');
   assert.equal(error.code, 'CONFIG_ENVIRONMENT_BOUNDARY');
-  assert.equal(error.message, 'Frenly runtime configuration is unavailable.');
+  assert.equal(error.message, 'Nestly runtime configuration is unavailable.');
 });
 
 test('Supabase URL must be an exact origin whose hostname matches projectRef', () => {
@@ -168,7 +168,7 @@ test('validation errors and failure UI never disclose supplied configuration mat
   assert.doesNotMatch(`${error.name}\n${error.message}\n${error.stack}`, new RegExp(canary));
   assert.doesNotMatch(rendered.innerHTML, new RegExp(canary));
   assert.doesNotMatch(rendered.innerHTML, /supabase|projectRef|publishable|service_role|sb_secret/i);
-  assert.match(rendered.innerHTML, /Frenly is unavailable/);
+  assert.match(rendered.innerHTML, /Nestly is unavailable/);
   assert.match(rendered.innerHTML, /role="alert"/);
 });
 
@@ -219,7 +219,7 @@ for (const page of ['app/index.html', 'app/join.html']) {
     };
 
     assert.throws(() => vm.runInNewContext(bootstrapThroughClient(source), context),
-      /Frenly runtime configuration is unavailable/);
+      /Nestly runtime configuration is unavailable/);
     assert.equal(renderCount, 1);
     assert.equal(clientCount, 0);
   });

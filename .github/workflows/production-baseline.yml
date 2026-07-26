@@ -13,6 +13,8 @@ permissions:
 jobs:
   static-production-baseline:
     runs-on: ubuntu-latest
+    env:
+      EXPECTED_SUPABASE_PROJECT_REF: gadpooereceldfpfxsod
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,7 +22,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install

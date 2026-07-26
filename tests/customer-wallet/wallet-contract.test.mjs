@@ -256,7 +256,7 @@ test('v38 adds server-side personas, claim route, and private customer gates', a
   const invitationScrub=routeBlock.search(/history\.replaceState/i);
   assert.ok(invitationCapture >= 0 && invitationScrub > invitationCapture && invitationScrub < firstAwait,
     'invitation secrets must leave browser history before routing awaits authentication');
-  assert.match(app, /dualRoleWorkspace[\s\S]*#\/workspace/i);
+  assert.match(app, /function renderPersonaChoice[\s\S]*sortStaffWorkspaces[\s\S]*#\/workspace/i);
   assert.match(app, /S\.hasCustomerPersona\?`<a href="#\/wallet"/i);
   assert.match(app, /function resetClientSessionState/i);
   assert.match(app, /renderCustomerWalletRetry[\s\S]*walletRetry/i);

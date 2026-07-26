@@ -7,3 +7,18 @@ verify_jwt = false
 [functions.manage-booking]
 verify_jwt = false
 
+[functions.stripe-billing-webhook]
+verify_jwt = false
+
+[functions.stripe-billing-command]
+verify_jwt = true
+
+[functions.stripe-billing-reconcile]
+verify_jwt = false
+
+[functions.sme-document-signer]
+verify_jwt = true
+
+# Local/demo Auth only. Hosted environments keep their own dashboard settings.
+[auth.sms.test_otp]
+6581234567 = "888888"

@@ -1,4 +1,4 @@
-import { adminClient, bookingRequestFingerprint, conflictError, deriveBookingManagementToken, enforceRateLimit, json, preflight, publicError, readJson, requireOrigin, sha256Hex, turnstileSiteKey, verifyTurnstile } from '../_shared/gateway.ts';
+import { adminClient, bookingRequestFingerprint, conflictError, deriveBookingManagementToken, enforceRateLimit, json, optionalAuthenticatedUserId, preflight, publicError, readJson, requireOrigin, sha256Hex, turnstileSiteKey, verifyTurnstile } from '../_shared/gateway.ts';
 import { SLUG_PATTERN, validBookingPayload } from '../_shared/validation.ts';
 
 Deno.serve(async (req) => {
@@ -21,13 +21,19 @@ Deno.serve(async (req) => {
     const abuseLimit = await enforceRateLimit(req, 'booking-submit-abuse', 80, 600);
     if (!abuseLimit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: abuseLimit.retry_after });
     if (!validBookingPayload(body) || !await verifyTurnstile(req, body.turnstile_token, 'public_booking')) return publicError(req);
+    let authenticatedUserId = null;
+    try {
+      authenticatedUserId = await optionalAuthenticatedUserId(req);
+    } catch {
+      return publicError(req, 401);
+    }
     const writeLimit = await enforceRateLimit(req, 'booking-submit', 10, 600);
     if (!writeLimit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: writeLimit.retry_after });
 
     const manageToken = await deriveBookingManagementToken(body.slug, body.submission_id);
     const tokenHash = await sha256Hex(manageToken);
     const idempotencyHash = await sha256Hex(String(body.submission_id));
-    const requestFingerprint = await bookingRequestFingerprint(body);
+    const requestFingerprint = await bookingRequestFingerprint(body, authenticatedUserId);
     const { data, error } = await adminClient().rpc('internal_public_booking_submit', {
       p_slug: body.slug,
       p_name: String(body.name).trim(),
@@ -42,6 +48,7 @@ Deno.serve(async (req) => {
       p_token_hash: tokenHash,
       p_idempotency_hash: idempotencyHash,
       p_request_fingerprint: requestFingerprint,
+      p_authenticated_user: authenticatedUserId,
     });
     if (error || !data) return publicError(req);
     if (data.conflict) return conflictError(req);

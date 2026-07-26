@@ -123,7 +123,7 @@ test('the SPA has no raw customer-module writes and carries stable retry keys', 
   assert.doesNotMatch(app, /sb\.rpc\('quick_add_client'/i);
   assert.doesNotMatch(app, /sb\.rpc\('enroll_membership'/i);
   assert.doesNotMatch(app, /sb\.rpc\('redeem_gift_card'/i);
-  assert.match(app, /const canWriteModule=module=>S\.myRole==='owner'\|\|S\.myModulePerms\?\.\[module\]==='rw'/i);
+  assert.match(app, /const canWriteModule=module=>S\.myModules\?\.includes\(module\)===true\s*&&roleCanUseModule\(S\.myRole,module\)\s*&&\(S\.myRole==='owner'\|\|S\.myModulePerms\?\.\[module\]==='rw'\)/i);
   assert.match(app, /mm\.module_perms[\s\S]*?S\.myModulePerms/i);
   for (const module of ['clients', 'referrals', 'memberships', 'giftcards']) {
     assert.match(app, new RegExp(`canWriteModule\\('${module}'\\)`, 'i'),

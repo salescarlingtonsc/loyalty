@@ -142,11 +142,13 @@ test('Luna C42: staff email/password authentication remains a separate path', ()
 });
 
 test('Luna C42 blocker: wallet access must require completed registration, not merely a wallet feature flag', () => {
+  const context = appBlock('async function loadCustomerSurfaceContext(', 'async function renderCustomerProgrammes(');
   const wallet = appBlock('async function renderCustomerWallet(', 'async function renderCustomerNotificationPreferences(');
-  assert.match(wallet, /customer_get_profile/i,
-    'C42 must check a completed profile before calling customer_get_wallet or business wallet readers');
-  assert.match(wallet, /profile_ready|customer profile is unavailable|renderCustomerRegistrationProfile/i,
-    'an authenticated but unregistered phone user needs a registration route, not a wallet request');
+  assert.match(context, /customer_get_profile/i,
+    'C42 must resolve a completed profile or a legacy persona before wallet readers');
+  assert.match(context, /customerSurfaceQualifies\(profile,customer\)[\s\S]*renderNoCustomerDestination\(staff\)/i,
+    'an account with neither registration nor a legacy customer persona must get a truthful no-customer destination');
+  assert.match(wallet,/loadCustomerSurfaceContext\(isWalletCurrent\)/);
 });
 
 test('Luna C42 blocker: WhatsApp must have a server capability/configuration gate, not only a mutable browser flag', () => {
@@ -178,7 +180,7 @@ test('Luna C42 remediation: initial render, initial send, and resend require all
   assert.match(app, /const customerPhoneBlockedInProduction=\(phone\)=>\([\s\S]*RUNTIME_CONFIG\.environment===['"]production['"][\s\S]*!DEMO_CUSTOMER_PHONE_NUMBERS\.includes\(phone\)/i);
   assert.match(app, /const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=\(\s*CUSTOMER_PHONE_OTP_RUNTIME_ENABLED/i);
   assert.match(registrationUi, /async function customerPhoneOtpAvailable\(channel='sms'\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i);
-  assert.match(registrationUi, /async function renderCustomerRegistration\(\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i,
+  assert.match(registrationUi, /async function renderCustomerRegistration\([^\n]*\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i,
     'opening the registration route must not reuse a stale pre-auth capability cache');
   assert.ok((registrationUi.match(/await customerPhoneOtpAvailable\(channel\)/g) || []).length >= 2,
     'both initial send and resend must check the server capability immediately before transport');
@@ -189,16 +191,15 @@ test('Luna C42 remediation: initial render, initial send, and resend require all
 });
 
 test('Luna C42 remediation: completed and incomplete registration routes terminate without a loop and preserve legacy wallet access', () => {
-  const registrationUi = appBlock('async function renderCustomerRegistration()', 'async function renderCustomerClaim(');
-  const wallet = appBlock('async function renderCustomerWallet(', 'async function renderCustomerNotificationPreferences(');
-  const profileCheck = wallet.slice(wallet.indexOf("if(customerFeatures.customer_phone_registration===true)"), wallet.indexOf("const {data:walletPersonas}"));
+  const registrationUi = appBlock('async function renderCustomerRegistration(', 'async function renderCustomerClaim(');
+  const context = appBlock('async function loadCustomerSurfaceContext(', 'async function renderCustomerProgrammes(');
 
-  assert.match(registrationUi, /if\(profile\?\.profile!==null\)\{\s*nav\('#\/wallet'\);return;\s*\}/i,
-    'an already-complete customer visiting registration must end at the wallet');
-  assert.match(profileCheck, /customer_get_profile[\s\S]*if\(profileError\)return renderCustomerCapabilityRetry[\s\S]*if\(profile\?\.profile===null\)\{\s*nav\('#\/customer'\);\s*return renderCustomerRegistrationProfile\(\);\s*\}/i,
-    'an incomplete customer must end at the profile form, rather than reach wallet readers');
-  assert.ok(wallet.indexOf('customer_get_profile') < wallet.indexOf("sb.rpc('customer_get_wallet')"),
-    'the registration gate must precede customer wallet reads');
-  assert.match(wallet, /if\(customerFeatures\.customer_phone_registration===true\)\{[\s\S]*customer_get_profile/i,
+  assert.match(registrationUi, /if\(profile\?\.profile!==null&&profile\?\.profile!==undefined\)\{\s*if\(!pendingCustomerBusinessSlug\)\{[\s\S]*nav\(takePendingCustomerDestination\('#\/wallet'\)\);return;\s*\}/i,
+    'an already-complete customer must return to a validated customer destination, defaulting to the wallet');
+  assert.match(context, /customer_phone_registration===true\?sb\.rpc\('customer_get_profile'\)[\s\S]*customerSurfaceQualifies\(profile,customer\)/i,
+    'qualification must resolve registration while preserving the legacy customer path');
+  assert.match(context, /profileResult\.error&&!customer\.length[\s\S]*renderCustomerCapabilityRetry/i,
+    'profile failure may fall back only to a real legacy customer persona');
+  assert.match(context, /features\.customer_phone_registration===true\?sb\.rpc\('customer_get_profile'\)/i,
     'existing email-wallet users remain on the prior wallet path while phone registration is disabled');
 });

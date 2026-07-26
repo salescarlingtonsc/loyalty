@@ -8,11 +8,12 @@ import {
 } from '../../scripts/quality/build-static.mjs';
 import { repoRoot } from '../../scripts/quality/static-baseline.mjs';
 
-test('release artifact contract contains exactly the five public HTML pages', () => {
+test('release artifact contract contains the public pages and offline fallback', () => {
   assert.deepEqual(requiredStaticHtmlEntries, [
     'data-request.html',
     'index.html',
     'join.html',
+    'offline.html',
     'privacy.html',
     'terms.html'
   ]);

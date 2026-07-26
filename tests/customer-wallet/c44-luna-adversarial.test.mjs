@@ -78,7 +78,7 @@ test('Luna C44: 101/100 truncation is value-first, home firms stay separate, and
   for (const reader of ['customer_get_reward_catalog', 'customer_get_loyalty_details', 'customer_get_packages', 'customer_get_memberships', 'customer_get_appointments_page']) {
     assert.match(app, new RegExp(reader, 'i'), `C44 detail must retain ${reader}`);
   }
-  assert.match(app, /<h1>My Frenly<\/h1>[\s\S]*<h2>No verified business links yet<\/h2>/i);
+  assert.match(app, /<h1>\$\{esc\(BRAND\.customerLabel\)\}<\/h1>[\s\S]*<h2>No verified business links yet<\/h2>/i);
   assert.match(app, /href="#\/wallet\/\$\{encodeURIComponent\(card\?\.business\?\.slug\|\|''\)\}"/i);
   assert.match(app, /customerWalletRenderEpoch[\s\S]*if\(!isWalletCurrent\(\)\)return;/i);
   assert.match(app, /Showing the 100 highest-priority linked businesses/i);

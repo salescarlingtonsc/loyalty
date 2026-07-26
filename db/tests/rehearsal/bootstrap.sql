@@ -1,8 +1,9 @@
 -- Local rehearsal bootstrap: minimal Supabase-compatible surface for the Frenly
 -- canonical chain. Mirrors what the hosted platform provides before migration 1.
--- Documented deviations from production (both platform-provided there):
+-- Documented deviations from production (all platform-provided there):
 --   1. pg_cron   -> cron schema + job table + schedule()/unschedule() equivalents
 --   2. supabase_vault -> vault schema + secrets table
+--   3. Storage -> storage schema + bucket metadata table
 -- The two CREATE EXTENSION statements for those are skipped at apply time.
 
 -- API roles (cluster-level; idempotent)
@@ -24,6 +25,7 @@ grant anon, authenticated, service_role to postgres;
 create schema if not exists extensions;
 create schema if not exists vault;
 create schema if not exists auth;
+create schema if not exists storage;
 grant usage on schema extensions to anon, authenticated, service_role;
 
 -- pg_cron equivalent (stub): the chain calls cron.schedule(...) in 4 migrations
@@ -103,6 +105,16 @@ $$;
 
 grant usage on schema auth to anon, authenticated, service_role;
 grant execute on function auth.uid(), auth.jwt(), auth.role() to public;
+
+-- Supabase Storage bucket metadata used by the private document migration.
+-- Object APIs and storage.objects remain platform-owned and are not emulated.
+create table if not exists storage.buckets (
+  id text primary key,
+  name text not null,
+  public boolean not null default false,
+  file_size_limit bigint,
+  allowed_mime_types text[]
+);
 
 -- Realtime publication the chain alters
 do $$ begin
