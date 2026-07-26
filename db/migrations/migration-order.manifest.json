@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 108,
-  "executableCount": 94,
+  "itemCount": 109,
+  "executableCount": 95,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -1009,6 +1009,14 @@
       "semanticVersion": "v70",
       "proposedDeployVersion": "20260722000148",
       "sha256": "8ea9790aafd1c03ed84c643cc179e3200a662664f1dec8e92da1327d994052d9"
+    },
+    {
+      "order": 109,
+      "kind": "executable",
+      "path": "db/migrations/20260726_frenly_v71_customer_legal_manifest.sql",
+      "semanticVersion": "v71",
+      "proposedDeployVersion": "20260722000149",
+      "sha256": "1cc263b4e0bff38bb567908cfc6fe1dcd0bb53eb3bd13b9d6473c71b49b36062"
     }
   ]
 }
