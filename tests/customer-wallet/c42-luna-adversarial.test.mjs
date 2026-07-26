@@ -170,14 +170,20 @@ test('Luna C42 remediation: anonymous pre-auth capability RPC is a two-boolean, 
   assert.match(canonical, /revoke all on function public\.get_customer_phone_otp_capabilities\(\) from public, anon, authenticated;\s*grant execute on function public\.get_customer_phone_otp_capabilities\(\) to anon;\s*grant execute on function public\.get_customer_phone_otp_capabilities\(\) to authenticated;/i);
 });
 
-test('Luna C42 remediation: both initial send and resend require non-production runtime and fresh server gates', () => {
+test('Luna C42 remediation: initial render, initial send, and resend require allowlisted runtime and fresh server gates', () => {
   const registrationUi = appBlock('let customerRegistrationState=', 'async function renderCustomerClaim(');
 
-  assert.match(app, /const CUSTOMER_PHONE_OTP_RUNTIME_ENABLED=\(\s*RUNTIME_CONFIG\.environment!==['"]production['"]/i);
+  assert.match(app, /const DEMO_CUSTOMER_PHONE_NUMBERS=\['\+6581234567'\]/i);
+  assert.match(app, /const CUSTOMER_PHONE_OTP_RUNTIME_ENABLED=\([\s\S]*RUNTIME_CONFIG\.environment!==['"]production['"][\s\S]*DEMO_CUSTOMER_PHONE_NUMBERS\.length>0/i);
+  assert.match(app, /const customerPhoneBlockedInProduction=\(phone\)=>\([\s\S]*RUNTIME_CONFIG\.environment===['"]production['"][\s\S]*!DEMO_CUSTOMER_PHONE_NUMBERS\.includes\(phone\)/i);
   assert.match(app, /const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=\(\s*CUSTOMER_PHONE_OTP_RUNTIME_ENABLED/i);
   assert.match(registrationUi, /async function customerPhoneOtpAvailable\(channel='sms'\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i);
+  assert.match(registrationUi, /async function renderCustomerRegistration\(\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i,
+    'opening the registration route must not reuse a stale pre-auth capability cache');
   assert.ok((registrationUi.match(/await customerPhoneOtpAvailable\(channel\)/g) || []).length >= 2,
     'both initial send and resend must check the server capability immediately before transport');
+  assert.ok((registrationUi.match(/customerPhoneBlockedInProduction\(phone\)/g) || []).length >= 2,
+    'both initial send and resend must independently enforce the production phone allowlist');
   assert.ok((registrationUi.match(/sb\.auth\.signInWithOtp\(\{phone,options\}\)/g) || []).length >= 2,
     'the test must cover both initial and resend OTP transports');
 });

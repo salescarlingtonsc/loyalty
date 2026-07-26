@@ -139,6 +139,50 @@ test('customer registration UI is a mobile phone OTP path with an explicit fail-
   assert.doesNotMatch(customerRoute, /[🎉🎁📱]/u);
 });
 
+test('production phone OTP permits only the explicit demo number unless the runtime provider seam is enabled', () => {
+  const allowlistSource = block(app, /const DEMO_CUSTOMER_PHONE_NUMBERS=\[[^\n]*\];/);
+  const productionGuardSource = block(app, /const customerPhoneBlockedInProduction=\(phone\)=>\([\s\S]*?\n\);/);
+  assert.equal(allowlistSource, "const DEMO_CUSTOMER_PHONE_NUMBERS=['+6581234567'];");
+  assert.match(productionGuardSource, /RUNTIME_CONFIG\.environment==='production'/);
+  assert.match(productionGuardSource, /window\.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__!==true/);
+  assert.match(productionGuardSource, /!DEMO_CUSTOMER_PHONE_NUMBERS\.includes\(phone\)/);
+
+  const buildGuard = ({environment, runtimeEnabled}) => new Function(
+    'RUNTIME_CONFIG',
+    'window',
+    `${allowlistSource}\n${productionGuardSource}\nreturn customerPhoneBlockedInProduction;`
+  )({environment}, {__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__:runtimeEnabled});
+
+  const productionDefault = buildGuard({environment:'production', runtimeEnabled:false});
+  assert.equal(productionDefault('+6581234567'), false,
+    'the owner-approved demo mobile must be allowed in production');
+  assert.equal(productionDefault('+6587654321'), true,
+    'every other production mobile must stay blocked by default');
+  assert.equal(buildGuard({environment:'production', runtimeEnabled:true})('+6587654321'), false,
+    'the explicit runtime provider seam may enable other production mobiles');
+  assert.equal(buildGuard({environment:'development', runtimeEnabled:false})('+6587654321'), false,
+    'non-production transport remains governed by its separate runtime capability gate');
+  assert.doesNotMatch(app, /888888/,
+    'the Auth test OTP must remain provider configuration, never a client-side bypass');
+});
+
+test('initial OTP render, initial send, and resend all use fresh server capability checks', () => {
+  const customerRoute = block(app, /let customerRegistrationState=[\s\S]*?async function renderCustomerClaim\(/i);
+  const registration = block(customerRoute, /async function renderCustomerRegistration\(\)[\s\S]*$/i);
+  const verification = block(customerRoute, /function renderCustomerOtpVerification\(\)[\s\S]*?(?=function renderCustomerRegistrationProfile)/i);
+
+  assert.match(registration,
+    /loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)[\s\S]*await customerPhoneOtpAvailable\(channel\)/i,
+    'each pre-auth page visit and its initial send must use current server flags');
+  assert.match(verification,
+    /resend\.onclick=async\(\)=>\{[\s\S]*customerPhoneBlockedInProduction\(phone\)[\s\S]*await customerPhoneOtpAvailable\(channel\)[\s\S]*signInWithOtp\(\{phone,options\}\)/i,
+    'resend must independently re-check both the production allowlist and current server flags');
+  assert.ok((customerRoute.match(/loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/g) || []).length >= 2,
+    'the render path and transport availability helper must both force a fresh capability read');
+  assert.ok((customerRoute.match(/await customerPhoneOtpAvailable\(channel\)/g) || []).length >= 2,
+    'initial send and resend must both refresh immediately before calling Auth');
+});
+
 test('wallet gates a phone-registration-enabled session on a completed private profile', () => {
   const wallet = block(app,
     /async function renderCustomerWallet\([\s\S]*?async function renderCustomerNotificationPreferences\(/i);

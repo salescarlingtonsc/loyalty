@@ -775,9 +775,11 @@ const AUTH_TURNSTILE_SITE_KEY='0x4AAAAAAD4_7rnuzB3ug-NF';
    switch exists only for an emergency fail-closed build; it must never enable a
    server-disabled feature. */
 const CUSTOMER_FEATURES_EMERGENCY_DISABLED=false;
-/* Phone OTP is an explicit non-production test seam. It is disabled unless a
-   test build sets this public boolean deliberately, and it can never run in a
-   production runtime configuration. No provider secret is present in the app.
+/* Phone OTP is an explicit runtime provider seam. Outside production it is
+   disabled unless a test build sets the public boolean deliberately. In
+   production, that same explicit seam may enable the configured provider;
+   otherwise only the allowlisted demo numbers below can reach the transport.
+   No provider secret is present in the app.
    DEMO EXCEPTION (owner instruction 2026-07-26): the numbers listed in
    DEMO_CUSTOMER_PHONE_NUMBERS may use phone OTP in production. Each demo number
    must have a matching Supabase Auth test OTP, so no SMS is ever sent; every
@@ -1319,6 +1321,9 @@ function renderCustomerOtpVerification(){
     renderCustomerRegistration();
   };
   resend.onclick=async()=>{
+    if(customerPhoneBlockedInProduction(phone)){
+      $('customerOtpError').innerHTML='<div class="err">Customer mobile verification is unavailable. Please return and try again later.</div>';return;
+    }
     if(!(await customerPhoneOtpAvailable(channel))||!resendCaptcha){
       $('customerOtpError').innerHTML='<div class="err">Customer mobile verification is unavailable. Please return and try again later.</div>';return;
     }
@@ -1391,7 +1396,9 @@ async function renderCustomerRegistration(){
     }
     return renderCustomerRegistrationProfile();
   }
-  const serverCapabilities=await loadCustomerPhoneOtpCapabilities();
+  /* This is a pre-auth release gate, so every visit must reflect the current
+     server flags instead of reusing a capability cached by an earlier route. */
+  const serverCapabilities=await loadCustomerPhoneOtpCapabilities({refresh:true});
   const customerCapabilities={
     customer_phone_otp:serverCapabilities.sms===true,
     customer_whatsapp_otp:serverCapabilities.whatsapp===true
