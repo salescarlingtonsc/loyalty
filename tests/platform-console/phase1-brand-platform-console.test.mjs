@@ -100,7 +100,7 @@ test('platform console is routed before workspace onboarding and uses versioned 
   assert.ok(platformRoute > 0);
   assert.ok(onboardingFallback > platformRoute);
   assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css">/);
-  assert.match(index,/<script src="\/platform-console\.js"><\/script>/);
+  assert.match(index,/<script src="\/platform-console\.js\?v=20260726-v88"><\/script>/);
   assert.match(consoleSource,/sb\.rpc\('super_admin_list_businesses'\)/);
   assert.match(consoleSource,/platform_get_sme_board_v76/);
   assert.match(consoleSource,/platform_list_sector_entitlements_v75/);
