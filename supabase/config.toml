@@ -19,6 +19,45 @@ verify_jwt = false
 [functions.sme-document-signer]
 verify_jwt = true
 
-# Local/demo Auth only. Hosted environments keep their own dashboard settings.
+[auth]
+enabled = true
+site_url = "https://www.nestly.asia"
+additional_redirect_urls = [
+  "https://www.nestly.asia",
+  "https://www.nestly.asia/**",
+  "https://nestly.asia",
+  "https://nestly.asia/**",
+  "https://frenly-app.vercel.app",
+  "https://frenly-app.vercel.app/**",
+  "https://loyalty-pi-seven.vercel.app",
+  "https://loyalty-pi-seven.vercel.app/**"
+]
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+secure_password_change = true
+max_frequency = "1m0s"
+otp_length = 6
+otp_expiry = 3600
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = false
+template = "Your code is {{ .Code }}"
+max_frequency = "5s"
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+
 [auth.sms.test_otp]
 6581234567 = "888888"
