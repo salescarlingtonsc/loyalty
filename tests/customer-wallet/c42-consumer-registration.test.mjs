@@ -103,7 +103,7 @@ test('C42 phone claim is slug-led, exact-one, generic, rate-limited, and cannot 
   assert.doesNotMatch(canonical, /grant execute on function public\.customer_claim_link_by_verified_phone\(text, text\) to anon/i);
 });
 
-test('customer registration UI is a mobile phone OTP path with an explicit fail-closed provider seam', () => {
+test('customer authentication defaults to password while signup and recovery alone use OTP', () => {
   const customerRoute = block(app, /let customerRegistrationState=[\s\S]*?async function renderCustomerClaim\(/i);
   const auth = block(app, /function renderAuth\([\s\S]*?function validNewPassword\(/i);
   assert.match(auth, /href="\/"/);
@@ -116,11 +116,14 @@ test('customer registration UI is a mobile phone OTP path with an explicit fail-
   assert.match(customerRoute, /\?`\+65\$\{local\}`:null/);
   assert.match(customerRoute, /preAuthSb\.rpc\('get_customer_phone_otp_capabilities'\)/);
   assert.match(customerRoute, /await customerPhoneOtpAvailable\(channel\)/);
-  assert.match(customerRoute, /customerCapabilities\.customer_whatsapp_otp===true/);
-  assert.match(customerRoute, /signInWithOtp\(\{phone,options\}\)/);
+  assert.match(customerRoute, /serverCapabilities\.whatsapp===true/);
+  assert.match(customerRoute, /signInWithPassword\(\{phone,password,options:\{captchaToken:challenge\}\}\)/);
+  assert.match(customerRoute, /signUp\(\{phone,password,options\}\)/);
+  assert.match(customerRoute, /signInWithOtp\(\{phone,options:\{\.\.\.options,shouldCreateUser:false\}\}\)/);
+  assert.match(customerRoute, /auth\.resend\(\{type:'sms',phone,options\}\)/);
   assert.match(customerRoute, /verifyOtp\(\{phone,token,type:'sms'\}\)/);
   assert.match(customerRoute, /WhatsApp \$\{whatsappAvailable\?'':'— coming soon'\}/);
-  assert.match(customerRoute, /Mobile sign-up is not available right now\. Please try again later\./);
+  assert.match(customerRoute, /Mobile verification is not available right now\./);
   assert.match(customerRoute, /id="customerOtpSend" type="button" disabled/,
     'the primary OTP action must start disabled in both available and unavailable states');
   assert.doesNotMatch(customerRoute, /id="customerOtpSend"[^>]*\$\{smsAvailable\?'disabled':''\}/,
@@ -176,16 +179,16 @@ test('pre-auth OTP capability checks cannot inherit a stale persisted session', 
   );
 });
 
-test('initial OTP render, initial send, and resend all use fresh server capability checks', () => {
+test('signup/recovery OTP initial send and resend use fresh server capability checks', () => {
   const customerRoute = block(app, /let customerRegistrationState=[\s\S]*?async function renderCustomerClaim\(/i);
-  const registration = block(customerRoute, /async function renderCustomerRegistration\([^\n]*\)[\s\S]*$/i);
+  const otpStart = block(customerRoute, /async function renderCustomerOtpStart\([^\n]*\)[\s\S]*?(?=async function runCustomerRegistrationProfileSubmission)/i);
   const verification = block(customerRoute, /function renderCustomerOtpVerification\([^\n]*\)[\s\S]*?(?=async function runCustomerRegistrationProfileSubmission)/i);
 
-  assert.match(registration,
+  assert.match(otpStart,
     /loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)[\s\S]*await customerPhoneOtpAvailable\(channel\)/i,
-    'each pre-auth page visit and its initial send must use current server flags');
+    'each explicit signup/recovery page visit and initial send must use current server flags');
   assert.match(verification,
-    /resend\.onclick=async\(\)=>\{[\s\S]*customerPhoneBlockedInProduction\(phone\)[\s\S]*await customerPhoneOtpAvailable\(channel\)[\s\S]*signInWithOtp\(\{phone,options\}\)/i,
+    /resend\.onclick=async\(\)=>\{[\s\S]*customerPhoneBlockedInProduction\(phone\)[\s\S]*await customerPhoneOtpAvailable\(channel\)[\s\S]*auth\.resend\(\{type:'sms',phone,options\}\)/i,
     'resend must independently re-check both the production allowlist and current server flags');
   assert.ok((customerRoute.match(/loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/g) || []).length >= 2,
     'the render path and transport availability helper must both force a fresh capability read');

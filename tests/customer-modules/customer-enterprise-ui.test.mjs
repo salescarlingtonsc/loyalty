@@ -208,6 +208,9 @@ test('customer sign-up join URL is a safe 44px target without 390px overflow',()
   assert.match(signup,/\$\('joinQrLink'\)\.innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="\$\{esc\(url\)\}">\$\{esc\(url\)\}<\/a>`/);
   assert.match(signup,/business_rotate_customer_join_qr_v90/);
   assert.match(signup,/business_revoke_customer_join_qrs_v90/);
+  assert.match(signup,/business_get_customer_join_qr_status_v91/);
+  assert.match(signup,/business_ensure_customer_join_qr_v91/);
+  assert.match(signup,/statusResult\.data\?\.created===true&&statusResult\.data\?\.join_token[\s\S]*showJoinQr\(statusResult\.data\)/);
   assert.match(signup,/#\/join\?token=\$\{encodeURIComponent\(data\.join_token\)\}/);
   assert.match(app,/\.portal-link\{[^}]*display:flex[^}]*width:100%[^}]*max-width:100%[^}]*min-height:44px[^}]*overflow-wrap:anywhere[^}]*word-break:break-word/s);
   assert.match(mobile,/\.portal-link-row,\.portal-link\{[^}]*width:100%[^}]*max-width:100%[^}]*min-width:0/s);

@@ -217,10 +217,11 @@ function renderLoading(){
 
 /* ---- state: empty / invalid link (unknown or disabled slug) ---- */
 function renderInvalidLink(){
+  const legacySlug=(new URLSearchParams(location.search).get('s')||'').trim();
   shellOpen(`<div class="card"><div class="empty">
     <div class="state-icon" aria-hidden="true">${icon('link',26)}</div>
-    <h2 style="margin-bottom:8px">This link isn't active</h2>
-    <p class="muted">Please check with the shop for the correct QR code or link.</p>
+    <h2 style="margin-bottom:8px">${legacySlug?'This QR was replaced':'This link isn’t active'}</h2>
+    <p class="muted">${legacySlug?'This is an older Nestly QR. Please ask the business to display its current “Customer sign-up” QR.':'Please check with the business for its current Nestly QR code.'}</p>
   </div></div>`);
 }
 

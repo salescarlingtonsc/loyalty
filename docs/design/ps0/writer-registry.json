@@ -2283,6 +2283,14 @@
       "reason": "browser RPC 'business_rotate_customer_join_qr_v90' atomically revokes prior enrolment tokens, issues one owner/super-admin scoped opaque replacement, stores only token hashes and expiry, and appends audit evidence. It creates no customer relationship and writes no sale, payment, points, reward, credit, stored-value, or other economic row."
     },
     {
+      "id": "browser.rpc:app/index.html:business_get_customer_join_qr_status_v91",
+      "reason": "browser RPC 'business_get_customer_join_qr_status_v91' is a read-only owner/super-admin scoped projection of the active customer join QR count and latest expiry. It performs no DML and resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_ensure_customer_join_qr_v91",
+      "reason": "browser RPC 'business_ensure_customer_join_qr_v91' takes the same business advisory lock as rotation, reuses an active opaque enrolment QR without revoking it, and creates one only when none exists. It creates no customer relationship and writes no sale, payment, points, reward, credit, stored-value, or other economic row."
+    },
+    {
       "id": "browser.rpc:app/index.html:business_get_customer_capabilities_v89",
       "reason": "browser RPC 'business_get_customer_capabilities_v89' is a stable staff-scoped read of the merchant's customer booking, redemption, and appointment-change switches. It performs no DML and resolves to no value writer."
     },

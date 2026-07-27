@@ -126,7 +126,7 @@ test('Luna C42: OTP UI has labelled numeric entry, generic failure copy, challen
   assert.match(registrationUi, /action:'frenly_customer_otp'/);
   assert.match(registrationUi, /<button[^>]*id="customerOtpResend"[^>]*disabled[^>]*>Resend available in 30 seconds<\/button>/);
   assert.match(registrationUi, /That code could not be verified\. Check it and try again\./);
-  assert.match(registrationUi, /We could not send a code\. Please check the number and try again\./);
+  assert.match(registrationUi, /We could not (?:start account creation|resend a code)/);
   assert.doesNotMatch(registrationUi, /(?:existing account|new account|phone is already|customer found)/i,
     'OTP UI must not disclose whether the phone already has an account');
 });
@@ -158,7 +158,7 @@ test('Luna C42 blocker: WhatsApp must have a server capability/configuration gat
   assert.match(canonical, /'customer_whatsapp_otp', false/i,
     'WhatsApp must remain disabled unless the private platform capability is explicitly enabled');
   assert.match(sqlBlock('get_customer_feature_capabilities'), /'customer_whatsapp_otp', app\.platform_feature_enabled\('customer_whatsapp_otp'\)/i);
-  assert.match(registrationUi, /customerCapabilities\.customer_whatsapp_otp===true/i,
+  assert.match(registrationUi, /serverCapabilities\.whatsapp===true/i,
     'the UI must require server authority before offering WhatsApp delivery');
 });
 
@@ -174,7 +174,7 @@ test('Luna C42 remediation: anonymous pre-auth capability RPC is a two-boolean, 
   assert.match(canonical, /revoke all on function public\.get_customer_phone_otp_capabilities\(\) from public, anon, authenticated;\s*grant execute on function public\.get_customer_phone_otp_capabilities\(\) to anon;\s*grant execute on function public\.get_customer_phone_otp_capabilities\(\) to authenticated;/i);
 });
 
-test('Luna C42 remediation: initial render, initial send, and resend require allowlisted runtime and fresh server gates', () => {
+test('Luna C42 remediation: explicit OTP flows require allowlisted runtime and fresh server gates', () => {
   const registrationUi = appBlock('let customerRegistrationState=', 'async function renderCustomerClaim(');
 
   assert.doesNotMatch(app, /DEMO_CUSTOMER_PHONE_NUMBERS/i);
@@ -183,21 +183,28 @@ test('Luna C42 remediation: initial render, initial send, and resend require all
   assert.match(app, /const customerPhoneBlockedInProduction=\(\)=>\([\s\S]*RUNTIME_CONFIG\.environment===['"]production['"][\s\S]*!customerPhoneOtpRuntimeConfigured\(\)/i);
   assert.match(app, /const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=\(\s*CUSTOMER_PHONE_OTP_RUNTIME_ENABLED/i);
   assert.match(registrationUi, /async function customerPhoneOtpAvailable\(channel='sms'\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i);
-  assert.match(registrationUi, /async function renderCustomerRegistration\([^\n]*\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i,
-    'opening the registration route must not reuse a stale pre-auth capability cache');
+  assert.match(registrationUi, /async function renderCustomerOtpStart\([^\n]*\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i,
+    'opening an explicit signup/recovery route must not reuse a stale pre-auth capability cache');
+  const passwordLogin=appBlock('function renderCustomerPasswordSignIn(', 'async function renderCustomerOtpStart(');
+  assert.doesNotMatch(passwordLogin, /loadCustomerPhoneOtpCapabilities|customerPhoneOtpAvailable|signInWithOtp|signUp/,
+    'normal password login must not query or spend the OTP transport');
   assert.ok((registrationUi.match(/await customerPhoneOtpAvailable\(channel\)/g) || []).length >= 2,
     'both initial send and resend must check the server capability immediately before transport');
   assert.ok((registrationUi.match(/customerPhoneBlockedInProduction\(phone\)/g) || []).length >= 2,
     'both initial send and resend must independently enforce the production phone allowlist');
-  assert.ok((registrationUi.match(/sb\.auth\.signInWithOtp\(\{phone,options\}\)/g) || []).length >= 2,
-    'the test must cover both initial and resend OTP transports');
+  assert.match(registrationUi, /sb\.auth\.signUp\(\{phone,password,options\}\)/,
+    'account creation must use phone/password signup');
+  assert.match(registrationUi, /sb\.auth\.resend\(\{type:'sms',phone,options\}\)/,
+    'signup resend must use the dedicated confirmation resend operation');
+  assert.ok((registrationUi.match(/shouldCreateUser:false/g) || []).length >= 2,
+    'initial and resent recovery OTPs must never create accounts');
 });
 
 test('Luna C42 remediation: completed and incomplete registration routes terminate without a loop and preserve legacy wallet access', () => {
   const registrationUi = appBlock('async function renderCustomerRegistration(', 'async function renderCustomerClaim(');
   const context = appBlock('async function loadCustomerSurfaceContext(', 'async function renderCustomerProgrammes(');
 
-  assert.match(registrationUi, /if\(profile\?\.profile!==null&&profile\?\.profile!==undefined\)\{\s*if\(!pendingCustomerBusinessSlug\)\{[\s\S]*nav\(takePendingCustomerDestination\('#\/wallet'\)\);return;\s*\}/i,
+  assert.match(registrationUi, /if\(profile\?\.profile!==null&&profile\?\.profile!==undefined\)\{[\s\S]*if\(!pendingCustomerBusinessSlug\)\{[\s\S]*nav\(takePendingCustomerDestination\('#\/wallet'\)\);return;\s*\}/i,
     'an already-complete customer must return to a validated customer destination, defaulting to the wallet');
   assert.match(context, /customer_phone_registration===true\?sb\.rpc\('customer_get_profile'\)[\s\S]*customerSurfaceQualifies\(profile,customer\)/i,
     'qualification must resolve registration while preserving the legacy customer path');

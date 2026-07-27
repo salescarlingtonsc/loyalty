@@ -84,6 +84,7 @@ test('a delayed QR destination response cannot redirect after a newer route star
     customerRegistrationDestinationPriority:extractedDestinationPriority(),
     pendingCustomerBusinessSlug:'kopi-tiam',
     pendingCustomerJoinToken:'',
+    customerRecoveryVerified:()=>false,
     loadCustomerFeatureCapabilities:async()=>({customer_phone_registration:true,_load_error:false}),
     sb:{rpc:async(name)=>{
       if(name==='customer_get_profile')return {data:{profile:{full_name:'Demo Customer'}},error:null};

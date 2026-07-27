@@ -783,6 +783,12 @@
       "path": "db/migrations/20260727_nestly_v90_production_readiness.sql",
       "semanticVersion": "v90",
       "proposedDeployVersion": "20260722000208"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260727_nestly_v91_customer_game_notifications.sql",
+      "semanticVersion": "v91",
+      "proposedDeployVersion": "20260722000209"
     }
   ]
 }

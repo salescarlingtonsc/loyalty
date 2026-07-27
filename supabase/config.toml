@@ -44,7 +44,7 @@ otp_expiry = 3600
 
 [auth.sms]
 enable_signup = true
-enable_confirmations = false
+enable_confirmations = true
 template = "Your code is {{ .Code }}"
 max_frequency = "5s"
 

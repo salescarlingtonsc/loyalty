@@ -624,14 +624,30 @@ input[type=range]:focus{box-shadow:none}
 .wallet-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
 .customer-shell .wallet-inner{width:min(1040px,100%)}
 .customer-shell .wallet-head{min-height:48px}
-.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;
+.customer-primary-nav{position:sticky;top:10px;z-index:35;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;
   margin:0 0 24px;padding:6px;border:1px solid var(--hair);border-radius:16px;background:rgba(255,255,255,.88);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:var(--shadow)}
-.customer-primary-nav a{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border-radius:11px;
+.customer-primary-nav a,.customer-primary-nav button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:48px;padding:8px 9px;border:0;border-radius:11px;
   color:var(--ink2);font-size:12.5px;font-weight:650;text-align:center;transition:background .14s var(--ease),color .14s var(--ease),transform .18s var(--spring)}
-.customer-primary-nav a:hover{background:#F2EFEA;color:var(--ink);transform:translateY(-1px)}
+.customer-primary-nav button{font-family:inherit;background:transparent;cursor:pointer}
+.customer-primary-nav a:hover,.customer-primary-nav button:hover{background:#F2EFEA;color:var(--ink);transform:translateY(-1px)}
 .customer-primary-nav a[aria-current="page"]{background:var(--tint);color:var(--coral)}
-.customer-primary-nav a span{min-width:0;overflow-wrap:anywhere}
+.customer-primary-nav a span,.customer-primary-nav button span{min-width:0;overflow-wrap:anywhere}
+.customer-account-menu{position:relative}.customer-account-menu summary{list-style:none}.customer-account-menu summary::-webkit-details-marker{display:none}
+.customer-account-menu .menu{right:0;left:auto;min-width:210px;padding:7px}.customer-account-menu .menu a,.customer-account-menu .menu button{display:flex;width:100%;align-items:center;gap:9px;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-weight:600;text-align:left;cursor:pointer}
+.customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover{background:var(--bg)}
+.customer-avatar{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--coral);cursor:pointer}
+.customer-first-quest{overflow:hidden;padding:0;background:linear-gradient(145deg,#fff 30%,#fff1e9);border-color:rgba(194,65,53,.2)}
+.customer-first-quest-copy{padding:clamp(24px,6vw,48px);text-align:center}.customer-first-quest-icon{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(145deg,var(--coral),#f58c55);color:#fff;box-shadow:0 16px 34px rgba(194,65,53,.25)}
+.customer-first-quest h1{font-size:clamp(1.9rem,7vw,3rem)}.customer-first-quest p{max-width:520px;margin:10px auto 0;line-height:1.6}
+.customer-first-quest .btn{margin-top:22px;min-height:54px;padding-inline:24px;font-size:16px}
+.customer-quest-kicker{color:var(--coral);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.customer-scan-modal .modal-card{width:min(520px,calc(100vw - 24px))}
+.customer-programme-switcher{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity}
+.customer-programme-switcher a{flex:0 0 auto;min-height:44px;padding:10px 15px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-weight:700;scroll-snap-align:start}
+.customer-programme-switcher a[aria-current="true"]{border-color:var(--coral);background:var(--tint);color:var(--coral)}
+.customer-game-card{position:relative;overflow:hidden;border:0;background:linear-gradient(145deg,#211d2a,#443451);color:#fff;box-shadow:0 18px 42px rgba(38,29,48,.2)}
+.customer-game-card .muted{color:rgba(255,255,255,.72)}.customer-game-card::after{content:'';position:absolute;width:190px;height:190px;right:-70px;top:-90px;border-radius:50%;background:rgba(255,255,255,.08)}
 .customer-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .customer-page-head h1{font-size:clamp(1.75rem,4vw,2.3rem)}
 .customer-page-head p{line-height:1.55;margin-top:5px;max-width:64ch}
@@ -1043,6 +1059,7 @@ function disposeCurrentRoute(){
   const dispose=routeDispose;routeDispose=()=>{};
   dispose({restoreFocus:false});
   activeMerchantScannerCleanup();
+  activeCustomerJoinScannerCleanup({restoreFocus:false});
   document.querySelectorAll('.appointment-detail-modal').forEach(dialog=>dialog.remove());
 }
 /* realtime notifications (bell) — module-level, plain JS vars only (no localStorage) */
@@ -1077,6 +1094,7 @@ let pendingCustomerInvitationToken='';
 let pendingCustomerBusinessSlug='';
 let pendingCustomerDestination='';
 const CUSTOMER_JOIN_SESSION_KEY='nestly.customer.pendingJoinToken';
+const CUSTOMER_RECOVERY_SESSION_KEY='nestly.customer.passwordRecoveryVerified';
 let pendingCustomerJoinToken=(()=>{try{
   const token=sessionStorage.getItem(CUSTOMER_JOIN_SESSION_KEY)||'';
   return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
@@ -1086,6 +1104,15 @@ function rememberPendingCustomerJoinToken(token){
   try{
     if(pendingCustomerJoinToken)sessionStorage.setItem(CUSTOMER_JOIN_SESSION_KEY,pendingCustomerJoinToken);
     else sessionStorage.removeItem(CUSTOMER_JOIN_SESSION_KEY);
+  }catch{}
+}
+function customerRecoveryVerified(){
+  try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)==='true'}catch{return false}
+}
+function rememberCustomerRecoveryVerified(verified){
+  try{
+    if(verified)sessionStorage.setItem(CUSTOMER_RECOVERY_SESSION_KEY,'true');
+    else sessionStorage.removeItem(CUSTOMER_RECOVERY_SESSION_KEY);
   }catch{}
 }
 function normalizeCustomerBusinessIntent(value,currentUrl=location.href){
@@ -1143,6 +1170,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   const invitation=preserveInvitation?pendingCustomerInvitationToken:'';
   const joinToken=preserveInvitation?pendingCustomerJoinToken:'';
   if(!preserveInvitation)rememberPendingCustomerJoinToken('');
+  rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[]};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';pendingCustomerDestination='';selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';settingsActiveTab='workspace';
@@ -1784,7 +1812,7 @@ async function route(){
 }
 
 /* ---------- customer wallet ---------- */
-let customerRegistrationState={phone:'',channel:'sms'};
+let customerRegistrationState={phone:'',channel:'sms',purpose:'signup'};
 function normalizeSingaporeCustomerPhone(value){
   const digits=String(value??'').replace(/[^0-9]/g,'');
   const local=digits.startsWith('65')&&digits.length===10?digits.slice(2):digits;
@@ -1814,19 +1842,20 @@ function customerRegistrationShell(body){
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
-  const {phone,channel}=customerRegistrationState;
+  const {phone,channel,purpose}=customerRegistrationState;
+  const recovering=purpose==='recovery';
   if(!phone){
     if(!isRouteCurrent())return;
     return renderCustomerRegistration(isRouteCurrent);
   }
   if(!isRouteCurrent())return;
   customerRegistrationShell(`<section class="card" aria-labelledby="customerOtpTitle">
-    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpTitle">Enter your code</h1><p class="muted small" style="margin-top:5px">Enter the one-time code sent to your mobile number.</p></div></div>
+    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpTitle">Enter your code</h1><p class="muted small" style="margin-top:5px">${recovering?'Verify your mobile number once to choose a new password.':'Verify your mobile number to finish creating your account.'}</p></div></div>
     <label for="customerOtp">One-time code</label>
     <input id="customerOtp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" aria-describedby="customerOtpHelp" required>
     <p class="muted small" id="customerOtpHelp" style="margin-top:6px">The code expires according to your authentication provider’s policy.</p>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
-    <button class="btn" id="customerOtpVerify" type="button" style="width:100%;margin-top:16px">${CUI.icon('check',{size:18})}<span>Verify and continue</span></button>
+    <button class="btn" id="customerOtpVerify" type="button" style="width:100%;margin-top:16px">${CUI.icon('check',{size:18})}<span>${recovering?'Verify and reset password':'Verify and create account'}</span></button>
     <div style="margin-top:14px">${authChallengeHtml()}</div>
     <button class="btn ghost" id="customerOtpResend" type="button" disabled style="width:100%;margin-top:10px">Resend available in 30 seconds</button>
   </section>`);
@@ -1858,8 +1887,10 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     }
     S.user=data.user;
     if(!isRouteCurrent()||!button.isConnected)return;
-    await maybeOfferCustomerPasskeySetup({isCurrent:isRouteCurrent});
-    if(!isRouteCurrent())return;
+    if(recovering){
+      rememberCustomerRecoveryVerified(true);
+      return renderCustomerRecoveryPasswordSetup(isRouteCurrent);
+    }
     renderCustomerRegistration(isRouteCurrent);
   };
   resend.onclick=async()=>{
@@ -1874,7 +1905,9 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     }
     resend.disabled=true;
     const options={captchaToken:resendCaptcha};if(channel==='whatsapp')options.channel='whatsapp';
-    const {error}=await sb.auth.signInWithOtp({phone,options});
+    const {error}=recovering
+      ?await sb.auth.signInWithOtp({phone,options:{...options,shouldCreateUser:false}})
+      :await sb.auth.resend({type:'sms',phone,options});
     if(!isRouteCurrent()||!resend.isConnected||!otpError.isConnected)return;
     resendCaptcha='';resendControl?.reset();
     if(error){resend.disabled=false;otpError.innerHTML='<div class="err">We could not resend a code. Please try again.</div>';return;}
@@ -1885,6 +1918,183 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
       if(seconds>0)resend.textContent=`Resend available in ${seconds} seconds`;
       else {resend.disabled=false;resend.textContent='Resend code';clearInterval(nextCountdown);}
     },1000);
+  };
+}
+function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
+  if(!isRouteCurrent())return;
+  customerRegistrationShell(`<section class="card" aria-labelledby="customerRecoveryPasswordTitle">
+    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerRecoveryPasswordTitle">Choose a new password</h1><p class="muted small" style="margin-top:5px">Use this password for normal Nestly sign-in. No OTP is sent when you sign in with it.</p></div></div>
+    <label for="customerRecoveryPassword">New password</label>
+    <input id="customerRecoveryPassword" type="password" autocomplete="new-password" minlength="12" aria-describedby="customerRecoveryPasswordHelp">
+    <p class="muted small" id="customerRecoveryPasswordHelp" style="margin-top:6px">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p>
+    <label for="customerRecoveryPasswordConfirm">Confirm new password</label>
+    <input id="customerRecoveryPasswordConfirm" type="password" autocomplete="new-password" minlength="12">
+    <div id="customerRecoveryPasswordError" role="alert" aria-live="assertive"></div>
+    <button class="btn" id="customerRecoveryPasswordSave" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:18})}<span>Save new password</span></button>
+  </section>`);
+  const save=$('customerRecoveryPasswordSave'),password=$('customerRecoveryPassword');
+  const confirmPassword=$('customerRecoveryPasswordConfirm'),errorHost=$('customerRecoveryPasswordError');
+  save.onclick=async()=>{
+    if(!validNewPassword(password.value)){
+      errorHost.innerHTML='<div class="err">Use at least 12 characters with uppercase, lowercase, a number, and a symbol.</div>';return;
+    }
+    if(password.value!==confirmPassword.value){
+      errorHost.innerHTML='<div class="err">Passwords do not match.</div>';return;
+    }
+    save.disabled=true;
+    const {error}=await sb.auth.updateUser({password:password.value});
+    if(!isRouteCurrent()||!save.isConnected)return;
+    if(error){
+      save.disabled=false;errorHost.innerHTML='<div class="err">Your password could not be changed. Request another reset code.</div>';return;
+    }
+    const phone=customerRegistrationState.phone;
+    rememberCustomerRecoveryVerified(false);
+    await sb.auth.signOut();
+    resetClientSessionState({preserveInvitation:true});
+    customerRegistrationState={phone,channel:'sms',purpose:'signup'};
+    renderCustomerPasswordSignIn(isRouteCurrent,{notice:'Password updated. Sign in with your mobile number and new password.'});
+  };
+}
+function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice=''}={}){
+  if(!isRouteCurrent())return;
+  customerRegistrationShell(`<section class="card" aria-labelledby="customerPasswordTitle">
+    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerPasswordTitle">Welcome to ${esc(BRAND.productName)}</h1><p class="muted small" style="margin-top:5px">Sign in with your mobile number and password. Normal sign-in does not send an OTP.</p></div></div>
+    <label for="customerPasswordPhone">Singapore mobile number</label>
+    <input id="customerPasswordPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
+    <label for="customerPassword">Password</label>
+    <input id="customerPassword" type="password" autocomplete="current-password">
+    <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px;color:var(--green)">${esc(notice)}</p>`:''}</div>
+    <div style="margin-top:14px">${authChallengeHtml()}</div>
+    <button class="btn" id="customerPasswordSignIn" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Sign in</span></button>
+    <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
+    <div class="row" style="margin:18px 0 0" aria-hidden="true"><span style="height:1px;background:var(--line);flex:1"></span><span class="muted small">or</span><span style="height:1px;background:var(--line);flex:1"></span></div>
+    <button class="btn ghost" id="customerPasskeySignIn" type="button" disabled style="width:100%;margin-top:12px">${CUI.icon('scan',{size:18})}<span>Use Face ID, Touch ID or passkey</span></button>
+    <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
+  </section>`);
+  const signIn=$('customerPasswordSignIn'),phoneInput=$('customerPasswordPhone');
+  const passwordInput=$('customerPassword'),errorHost=$('customerPasswordError');
+  const passkeyButton=$('customerPasskeySignIn'),passkeyStatus=$('customerPasskeyStatus');
+  const passkeySupported=isSecureContext&&'PublicKeyCredential' in globalThis&&typeof sb.auth.signInWithPasskey==='function';
+  let captchaToken='',captchaControl=null;
+  if(!passkeySupported)passkeyStatus.textContent='Passkeys are not supported in this browser. Sign in with your password.';
+  $('customerCreateAccount').onclick=()=>renderCustomerOtpStart(isRouteCurrent,'signup');
+  $('customerForgotPassword').onclick=()=>renderCustomerOtpStart(isRouteCurrent,'recovery');
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_password',
+    onToken:(token)=>{
+      if(!isRouteCurrent()||!signIn.isConnected)return;
+      captchaToken=token;signIn.disabled=!token;passkeyButton.disabled=!passkeySupported||!token;
+    }}).then(control=>{
+      if(!isRouteCurrent()||!signIn.isConnected){control?.destroy();return}
+      captchaControl=control;
+    });
+  signIn.onclick=async()=>{
+    const phone=normalizeSingaporeCustomerPhone(phoneInput.value),password=passwordInput.value;
+    if(!phone||!password){
+      errorHost.innerHTML='<div class="err">Enter your Singapore mobile number and password.</div>';return;
+    }
+    if(!captchaToken)return;
+    signIn.disabled=true;
+    const challenge=captchaToken;captchaToken='';
+    const {data,error}=await sb.auth.signInWithPassword({phone,password,options:{captchaToken:challenge}});
+    if(!isRouteCurrent()||!signIn.isConnected)return;
+    captchaControl?.reset();
+    if(error||!data?.user){
+      signIn.disabled=false;
+      errorHost.innerHTML='<div class="err">The mobile number or password is incorrect. If this account previously used OTP-only sign-in, choose Forgot password once to create a password.</div>';return;
+    }
+    customerRegistrationState={phone,channel:'sms',purpose:'signup'};
+    resetClientSessionState({preserveInvitation:true});
+    route();
+  };
+  passkeyButton.onclick=async()=>{
+    if(!passkeySupported||!captchaToken){
+      passkeyStatus.textContent='Complete the security check before using your passkey.';return;
+    }
+    const challenge=captchaToken;captchaToken='';passkeyButton.disabled=true;signIn.disabled=true;
+    passkeyStatus.textContent='Waiting for your device…';
+    const {data,error}=await sb.auth.signInWithPasskey({options:{captchaToken:challenge}});
+    if(!isRouteCurrent()||!passkeyButton.isConnected)return;
+    captchaControl?.reset();
+    if(error||!data?.user){
+      passkeyStatus.textContent=error?.code==='passkey_disabled'
+        ?'Face ID and Touch ID need to be enabled for this Nestly environment first.'
+        :customerPasskeyErrorMessage(error,{action:'sign-in'});return;
+    }
+    resetClientSessionState({preserveInvitation:true});route();
+  };
+}
+async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
+  const recovering=purpose==='recovery';
+  const serverCapabilities=await loadCustomerPhoneOtpCapabilities({refresh:true});
+  if(!isRouteCurrent())return;
+  const smsAvailable=CUSTOMER_PHONE_OTP_RUNTIME_ENABLED&&serverCapabilities.sms===true;
+  const whatsappAvailable=CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED&&serverCapabilities.whatsapp===true;
+  customerRegistrationShell(`<section class="card" aria-labelledby="customerOtpStartTitle">
+    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpStartTitle">${recovering?'Reset your password':'Create your account'}</h1><p class="muted small" style="margin-top:5px">${recovering?'We send one OTP to verify that you own this mobile number.':'Choose your password, then verify your mobile number with one OTP.'}</p></div></div>
+    <label for="customerPhone">Singapore mobile number</label>
+    <input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
+    ${recovering?'':`<label for="customerSignupPassword">Password</label><input id="customerSignupPassword" type="password" autocomplete="new-password" minlength="12" aria-describedby="customerSignupPasswordHelp"><p class="muted small" id="customerSignupPasswordHelp" style="margin-top:6px">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p><label for="customerSignupPasswordConfirm">Confirm password</label><input id="customerSignupPasswordConfirm" type="password" autocomplete="new-password" minlength="12">`}
+    <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Send the verification code by</legend>
+      <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS</span></label>
+      <label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" ${whatsappAvailable?'':'disabled'} style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp ${whatsappAvailable?'':'— coming soon'}</span></label>
+    </fieldset>
+    <div id="customerOtpError" role="alert" aria-live="assertive"></div>
+    <div style="margin-top:14px">${authChallengeHtml()}</div>
+    ${smsAvailable?'':`<p class="err" role="status" style="margin-top:16px">Mobile verification is not available right now.</p>`}
+    <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>${recovering?'Send password reset code':'Send account verification code'}</span></button>
+    <button class="btn ghost" id="customerOtpBack" type="button" style="width:100%;margin-top:10px">Back to sign in</button>
+  </section>`);
+  $('customerOtpBack').onclick=()=>renderCustomerPasswordSignIn(isRouteCurrent);
+  if(!smsAvailable)return;
+  const send=$('customerOtpSend'),phoneInput=$('customerPhone'),errorHost=$('customerOtpError');
+  let captchaToken='',captchaControl=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
+    onToken:(token)=>{if(isRouteCurrent()&&send.isConnected){captchaToken=token;send.disabled=!token}}})
+    .then(control=>{
+      if(!isRouteCurrent()||!send.isConnected){control?.destroy();return}
+      captchaControl=control;
+    });
+  send.onclick=async()=>{
+    const phone=normalizeSingaporeCustomerPhone(phoneInput.value);
+    const channel=document.querySelector('input[name="customerOtpChannel"]:checked')?.value||'sms';
+    if(!phone){errorHost.innerHTML='<div class="err">Enter a valid 8-digit Singapore number.</div>';return}
+    if(customerPhoneBlockedInProduction(phone)){
+      errorHost.innerHTML='<div class="err">Mobile verification is unavailable right now.</div>';return;
+    }
+    const available=await customerPhoneOtpAvailable(channel);
+    if(!isRouteCurrent()||!send.isConnected)return;
+    if(!available||!captchaToken){
+      errorHost.innerHTML='<div class="err">Mobile verification is unavailable right now.</div>';return;
+    }
+    let password='';
+    if(!recovering){
+      password=$('customerSignupPassword').value;
+      if(!validNewPassword(password)){
+        errorHost.innerHTML='<div class="err">Use at least 12 characters with uppercase, lowercase, a number, and a symbol.</div>';return;
+      }
+      if(password!==$('customerSignupPasswordConfirm').value){
+        errorHost.innerHTML='<div class="err">Passwords do not match.</div>';return;
+      }
+    }
+    send.disabled=true;
+    const challenge=captchaToken;captchaToken='';
+    const options={captchaToken:challenge};if(channel==='whatsapp')options.channel='whatsapp';
+    const result=recovering
+      ?await sb.auth.signInWithOtp({phone,options:{...options,shouldCreateUser:false}})
+      :await sb.auth.signUp({phone,password,options});
+    if(!isRouteCurrent()||!send.isConnected)return;
+    captchaControl?.reset();
+    if(result.error||(recovering&&result.data?.session)){
+      send.disabled=false;
+      errorHost.innerHTML=`<div class="err">${recovering?'If an account exists for this number, a reset code could not be sent. Try again later.':'We could not start account creation. If you already have an account, return and sign in or reset your password.'}</div>`;return;
+    }
+    if(!recovering&&result.data?.session){
+      await sb.auth.signOut();
+      send.disabled=false;
+      errorHost.innerHTML='<div class="err">Mobile verification must be enabled before customer accounts can be created.</div>';return;
+    }
+    customerRegistrationState={phone,channel,purpose};
+    renderCustomerOtpVerification(isRouteCurrent);
   };
 }
 async function runCustomerRegistrationProfileSubmission({registerRequest,resolveDestination,isCurrent,onRegistrationError}){
@@ -1992,10 +2202,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
 }
 async function renderCustomerRegistration(isRouteCurrent=()=>true){
   if(S.user){
-    if(customerRegistrationDestinationPriority(pendingCustomerJoinToken,pendingCustomerBusinessSlug)==='join'){
-      if(!isRouteCurrent())return;
-      nav('#/join');return;
-    }
+    if(customerRecoveryVerified())return renderCustomerRecoveryPasswordSetup(isRouteCurrent);
     const customerFeatures=await loadCustomerFeatureCapabilities();
     if(!isRouteCurrent())return;
     if(customerFeatures._load_error){
@@ -2013,7 +2220,12 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
       return renderCustomerCapabilityRetry('We could not load your customer profile. Please try again.');
     }
     if(profile?.profile!==null&&profile?.profile!==undefined){
+      if(customerRegistrationDestinationPriority(pendingCustomerJoinToken,pendingCustomerBusinessSlug)==='join'){
+        if(!isRouteCurrent())return;
+        nav('#/join');return;
+      }
       if(!pendingCustomerBusinessSlug){
+        await maybeOfferCustomerPasskeySetup({isCurrent:isRouteCurrent});
         if(!isRouteCurrent())return;
         nav(takePendingCustomerDestination('#/wallet'));return;
       }
@@ -2037,106 +2249,92 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
     if(!isRouteCurrent())return;
     return renderCustomerRegistrationProfile(isRouteCurrent);
   }
-  /* This is a pre-auth release gate, so every visit must reflect the current
-     server flags instead of reusing a capability cached by an earlier route. */
-  const serverCapabilities=await loadCustomerPhoneOtpCapabilities({refresh:true});
-  if(!isRouteCurrent())return;
-  const customerCapabilities={
-    customer_phone_otp:serverCapabilities.sms===true,
-    customer_whatsapp_otp:serverCapabilities.whatsapp===true
-  };
-  const smsAvailable=CUSTOMER_PHONE_OTP_RUNTIME_ENABLED&&customerCapabilities.customer_phone_otp===true;
-  const whatsappAvailable=CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED&&customerCapabilities.customer_whatsapp_otp===true;
-  if(!isRouteCurrent())return;
-  customerRegistrationShell(`<section class="card" aria-labelledby="customerStartTitle">
-    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerStartTitle">Join ${esc(BRAND.productName)}</h1><p class="muted small" style="margin-top:5px">Verify your Singapore mobile number to keep your programmes in one place.</p></div></div>
-    <label for="customerPhone">Singapore mobile number</label>
-    <input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8123 4567" aria-describedby="customerPhoneHelp" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
-    <p id="customerPhoneHelp" class="muted small" style="margin-top:6px">We’ll format this as +65. Your number is used for verification, not marketing consent.</p>
-    <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">How should we send your code?</legend>
-      <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS (recommended)</span></label>
-      <label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" ${whatsappAvailable?'':'disabled'} style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp ${whatsappAvailable?'':'— coming soon'}</span></label>
-    </fieldset>
-    <div id="customerOtpError" role="alert" aria-live="assertive"></div>
-    <div style="margin-top:14px">${authChallengeHtml()}</div>
-    ${smsAvailable?'':`<p class="err" role="status" style="margin-top:16px">Mobile sign-up is not available right now. You can still use a registered passkey.</p>`}
-    <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Send verification code</span></button>
-    <div class="row" style="margin:18px 0 0" aria-hidden="true"><span style="height:1px;background:var(--line);flex:1"></span><span class="muted small">or</span><span style="height:1px;background:var(--line);flex:1"></span></div>
-    <button class="btn ghost" id="customerPasskeySignIn" type="button" style="width:100%;margin-top:12px">${CUI.icon('scan',{size:18})}<span>Use Face ID, Touch ID or passkey</span></button>
-    <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
-  </section>`);
-  const passkeyButton=$('customerPasskeySignIn'),passkeyStatus=$('customerPasskeyStatus');
-  const passkeySupported=isSecureContext&&'PublicKeyCredential' in globalThis&&typeof sb.auth.signInWithPasskey==='function';
-  let captchaToken='',captchaControl=null;
-  passkeyButton.disabled=true;
-  if(!passkeySupported)passkeyStatus.textContent='Passkeys are not supported in this browser. Use your mobile verification code.';
-  passkeyButton.onclick=async()=>{
-    if(!passkeySupported||!captchaToken){
-      passkeyStatus.textContent='Complete the security check before using your passkey.';return;
-    }
-    const passkeyCaptchaToken=captchaToken;
-    captchaToken='';
-    passkeyButton.disabled=true;passkeyStatus.textContent='Waiting for your device…';
-    const send=$('customerOtpSend');if(send)send.disabled=true;
-    const {data,error}=await sb.auth.signInWithPasskey({options:{captchaToken:passkeyCaptchaToken}});
-    if(!isRouteCurrent()||!passkeyButton.isConnected)return;
-    captchaControl?.reset();
-    if(error||!data?.user){
-      passkeyStatus.textContent=error?.code==='passkey_disabled'
-        ?'Face ID and Touch ID need to be enabled for this Nestly environment first.'
-        :customerPasskeyErrorMessage(error,{action:'sign-in'});
-      return;
-    }
-    S.user=data.user;passkeyStatus.textContent='Signed in.';renderCustomerRegistration(isRouteCurrent);
-  };
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
-    onToken:(token)=>{
-      const send=$('customerOtpSend');
-      if(!isRouteCurrent()||!passkeyButton?.isConnected)return;
-      captchaToken=token;
-      passkeyButton.disabled=!passkeySupported||!token;
-      if(send?.isConnected)send.disabled=!smsAvailable||!token;
-    }}).then(control=>{
-      if(!isRouteCurrent()||!passkeyButton?.isConnected){control?.destroy();return}
-      captchaControl=control;
-    });
-  if(!smsAvailable)return;
-  const send=$('customerOtpSend'),phoneInput=$('customerPhone'),otpError=$('customerOtpError');
-  send.onclick=async()=>{
-    const phone=normalizeSingaporeCustomerPhone(phoneInput.value);
-    const channel=document.querySelector('input[name="customerOtpChannel"]:checked')?.value||'sms';
-    if(!phone){otpError.innerHTML='<div class="err">Enter a valid 8-digit Singapore number.</div>';return;}
-    if(customerPhoneBlockedInProduction(phone)){
-      otpError.innerHTML='<div class="err">Mobile sign-up is not available right now. Please try again later.</div>';return;
-    }
-    const available=await customerPhoneOtpAvailable(channel);
-    if(!isRouteCurrent()||!send.isConnected||!otpError.isConnected)return;
-    if(!available||!captchaToken){
-      otpError.innerHTML='<div class="err">Customer mobile verification is unavailable. Please try again later.</div>';return;
-    }
-    const button=send;button.disabled=true;
-    const options={captchaToken};if(channel==='whatsapp')options.channel='whatsapp';
-    const {error}=await sb.auth.signInWithOtp({phone,options});
-    if(!isRouteCurrent()||!button.isConnected||!otpError.isConnected)return;
-    captchaToken='';captchaControl?.reset();
-    if(error){button.disabled=false;otpError.innerHTML='<div class="err">We could not send a code. Please check the number and try again.</div>';return;}
-    customerRegistrationState={phone,channel};
-    if(!isRouteCurrent()||!button.isConnected)return;
-    renderCustomerOtpVerification(isRouteCurrent);
-  };
+  return renderCustomerPasswordSignIn(isRouteCurrent);
 }
 
 const CUSTOMER_PRIMARY_NAV=Object.freeze([
   {key:'home',href:'#/wallet',icon:'home',label:'Home'},
   {key:'programmes',href:'#/customer/programmes',icon:'loyalty',label:'Programmes'},
   {key:'bookings',href:'#/customer/bookings',icon:'bookings',label:'Bookings'},
-  {key:'messages',href:'#/customer/messages',icon:'bell',label:'Messages'},
-  {key:'profile',href:'#/customer/profile',icon:'customers',label:'Profile'}
+  {key:'scan',icon:'scan',label:'Scan QR'}
 ]);
 function customerPrimaryNavigation(active){
   return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
-    ${CUSTOMER_PRIMARY_NAV.map(item=>`<a href="${item.href}"${item.key===active?' aria-current="page"':''}>${CUI.icon(item.icon,{size:19})}<span>${item.label}</span></a>`).join('')}
+    ${CUSTOMER_PRIMARY_NAV.map(item=>item.key==='scan'
+      ?`<button type="button" id="customerNavScan">${CUI.icon(item.icon,{size:19})}<span>${item.label}</span></button>`
+      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''}>${CUI.icon(item.icon,{size:19})}<span>${item.label}</span></a>`).join('')}
   </nav>`;
+}
+function customerJoinTokenFromQr(value,currentUrl=location.href){
+  const raw=String(value??'').trim();
+  if(!raw)return '';
+  if(/^[A-Za-z0-9_-]{20,512}$/.test(raw))return raw;
+  try{
+    const url=new URL(raw,currentUrl);
+    const hashParams=new URLSearchParams((url.hash.split('?')[1]||''));
+    const token=url.searchParams.get('token')||hashParams.get('token')||'';
+    return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
+  }catch{return ''}
+}
+let activeCustomerJoinScannerCleanup=()=>{};
+function openCustomerJoinScanner(){
+  activeCustomerJoinScannerCleanup();
+  const overlay=document.createElement('div');
+  overlay.className='modal appointment-detail-modal customer-scan-modal';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add a programme</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Nestly QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
+    <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
+    <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
+    <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*" capture="environment">
+      <details style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
+    </div><p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
+  document.body.appendChild(overlay);
+  const video=overlay.querySelector('#customerJoinScannerVideo');
+  const frame=overlay.querySelector('#customerJoinScannerFrame');
+  const status=overlay.querySelector('#customerJoinScannerStatus');
+  const camera=overlay.querySelector('#customerJoinScannerCamera');
+  const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
+  let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
+  const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
+  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
+  activeCustomerJoinScannerCleanup=close;
+  const accept=value=>{
+    const token=customerJoinTokenFromQr(value);
+    if(!token){status.textContent='That is not an active Nestly business QR. Ask the business to generate its latest join QR.';return false}
+    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});nav('#/join');return true;
+  };
+  const decode=(source,width,height)=>{
+    if(typeof globalThis.jsQR!=='function'||!context||!width||!height)return '';
+    canvas.width=width;canvas.height=height;context.drawImage(source,0,0,width,height);
+    return globalThis.jsQR(context.getImageData(0,0,width,height).data,width,height)?.data||'';
+  };
+  const scan=()=>{
+    if(closed||!stream)return;
+    if(video.readyState>=2&&accept(decode(video,video.videoWidth,video.videoHeight)))return;
+    frameHandle=requestAnimationFrame(scan);
+  };
+  camera.onclick=async()=>{
+    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image instead.';return}
+    camera.disabled=true;status.textContent='Starting camera…';
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+      video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
+    }catch{camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image instead.'}
+  };
+  overlay.querySelector('#customerJoinScannerImage').onchange=async event=>{
+    const file=event.target.files?.[0];if(!file)return;
+    status.textContent='Reading QR image…';
+    try{
+      const bitmap=await createImageBitmap(file);
+      const value=decode(bitmap,bitmap.width,bitmap.height);bitmap.close?.();
+      if(!accept(value))status.textContent='No active Nestly join QR was found in that image.';
+    }catch{status.textContent='That image could not be read. Try a clearer QR image.'}
+  };
+  overlay.querySelector('#customerJoinScannerConfirm').onclick=()=>accept(overlay.querySelector('#customerJoinScannerValue').value);
+  overlay.querySelector('#customerJoinScannerClose').onclick=close;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+  dialogCleanup=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerJoinScannerCamera'});
 }
 function sortStaffWorkspaces(staff){
   return [...(Array.isArray(staff)?staff:[])].sort((a,b)=>{
@@ -2173,13 +2371,17 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
   root.innerHTML=`<div class="wallet-shell customer-shell"><div class="wallet-inner"><header class="wallet-head">
     ${businessSlug?`<button class="btn ghost sm" id="walletBack" aria-label="Back to all businesses" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
     <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    <span class="spacer"></span><span id="customerInboxBellSlot"></span>
+    <span class="spacer"></span><span id="customerInboxBellSlot"><a class="customer-inbox-bell" href="#/customer/messages" aria-label="Open notifications" title="Notifications">${CUI.icon('bell',{size:19})}</a></span>
     ${customerWorkspaceSwitchHtml(staffWorkspaces)}
-    <button class="btn ghost sm" id="walletSignOut" type="button" aria-label="Sign out of ${esc(BRAND.customerLabel)}">${CUI.icon('back',{size:17})}<span>Sign out</span></button>
+    <details class="customer-account-menu"><summary class="customer-avatar" aria-label="Open account menu">${CUI.icon('customers',{size:20})}</summary><div class="menu">
+      <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>Profile &amp; passkeys</span></a>
+      <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>Sign out</span></button>
+    </div></details>
     </header>${customerPrimaryNavigation(active)}
     <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
     ${legalLinks()}</div></div>`;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
   if($('walletBack'))$('walletBack').onclick=()=>nav('#/customer/programmes');
 }
 function focusCustomerRoute(){
@@ -2194,11 +2396,11 @@ function customerPasskeyErrorMessage(error,{action='setup'}={}){
   const code=String(error?.code||'');
   if(code==='passkey_disabled')return 'Face ID and Touch ID need to be enabled for this Nestly environment first.';
   if(code==='webauthn_credential_exists')return 'This device already has a passkey for this account.';
-  if(code==='webauthn_credential_not_found')return 'This passkey is not linked to the current Nestly domain. Sign in with your mobile code, remove it, then add a new passkey.';
-  if(code==='webauthn_verification_failed')return 'This passkey could not be verified for the current Nestly domain. Sign in with your mobile code and add a new passkey.';
-  if(code==='phone_not_confirmed'||code==='email_not_confirmed')return 'Confirm your account with your mobile code before using Face ID or Touch ID.';
+  if(code==='webauthn_credential_not_found')return 'This passkey is not linked to the current Nestly domain. Sign in with your password, remove it, then add a new passkey.';
+  if(code==='webauthn_verification_failed')return 'This passkey could not be verified for the current Nestly domain. Sign in with your password and add a new passkey.';
+  if(code==='phone_not_confirmed'||code==='email_not_confirmed')return 'Finish account verification before using Face ID or Touch ID.';
   return action==='sign-in'
-    ?'Passkey sign-in was not completed. Try again, or use your mobile code.'
+    ?'Passkey sign-in was not completed. Try again, or use your password.'
     :'Passkey setup was not completed. You can add it later from Profile.';
 }
 async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
@@ -2217,7 +2419,7 @@ async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
     overlay.className='modal appointment-detail-modal';overlay.tabIndex=-1;
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
     overlay.setAttribute('aria-labelledby','customerPasskeyPromptTitle');
-    overlay.innerHTML=`<section class="modal-card" style="max-width:500px"><div class="row appointment-detail-head"><div><h2 id="customerPasskeyPromptTitle">Enable Face ID or Touch ID?</h2><p class="muted small" style="margin-top:5px">Add a passkey on this device so next time you can sign in without waiting for an SMS code.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPasskeyPromptClose" type="button" aria-label="Close passkey setup">${CUI.icon('close',{size:18})}</button></div>
+    overlay.innerHTML=`<section class="modal-card" style="max-width:500px"><div class="row appointment-detail-head"><div><h2 id="customerPasskeyPromptTitle">Enable Face ID or Touch ID?</h2><p class="muted small" style="margin-top:5px">Add a passkey on this device so next time you can sign in without typing your password.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPasskeyPromptClose" type="button" aria-label="Close passkey setup">${CUI.icon('close',{size:18})}</button></div>
       <div class="appointment-detail-section"><p class="muted small">Your face or fingerprint stays on your device. Nestly only stores the public passkey needed to recognise this login.</p><p id="customerPasskeyPromptStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px"></p></div>
       <div class="appointment-detail-actions"><button class="btn" id="customerPasskeyPromptAdd" type="button">${CUI.icon('add',{size:17})}<span>Enable now</span></button><button class="btn ghost" id="customerPasskeyPromptSkip" type="button">Not now</button></div></section>`;
     document.body.appendChild(overlay);
@@ -2496,6 +2698,12 @@ async function renderCustomerProfile(){
       <div id="customerProfileSaveStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save profile</span></button>
     </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>
+    <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
+      <label for="customerProfilePassword">New password</label><input id="customerProfilePassword" type="password" autocomplete="new-password" minlength="12">
+      <label for="customerProfilePasswordConfirm">Confirm new password</label><input id="customerProfilePasswordConfirm" type="password" autocomplete="new-password" minlength="12">
+      <div id="customerProfilePasswordStatus" role="status" aria-live="polite"></div>
+      <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Update password</span></button>
+    </section>
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:17})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>`;
   let profileAttempt=null;
   $('customerProfileSave').onclick=async()=>{
@@ -2511,6 +2719,27 @@ async function renderCustomerProfile(){
     if(error||data?.outcome!=='updated'){status.innerHTML='<div class="err">Your profile could not be saved. Please try again.</div>';return}
     profileAttempt=null;status.innerHTML='<p class="muted small" style="margin-top:10px;color:var(--green)">Profile saved.</p>';CUI.announce('Profile saved.');
   };
+  $('customerProfilePasswordSave').onclick=async()=>{
+    const password=$('customerProfilePassword').value;
+    const confirmation=$('customerProfilePasswordConfirm').value;
+    const status=$('customerProfilePasswordStatus'),button=$('customerProfilePasswordSave');
+    if(!validNewPassword(password)){
+      status.innerHTML='<div class="err">Use at least 12 characters with uppercase, lowercase, a number, and a symbol.</div>';return;
+    }
+    if(password!==confirmation){
+      status.innerHTML='<div class="err">Passwords do not match.</div>';return;
+    }
+    button.disabled=true;
+    const {error}=await sb.auth.updateUser({password});
+    if(!isCurrent()||!button.isConnected)return;
+    button.disabled=false;
+    if(error){
+      status.innerHTML='<div class="err">Your password could not be changed. Sign out and use Forgot password if this continues.</div>';return;
+    }
+    $('customerProfilePassword').value='';$('customerProfilePasswordConfirm').value='';
+    status.innerHTML='<p class="muted small" style="margin-top:10px;color:var(--green)">Password updated.</p>';
+    CUI.announce('Password updated.');
+  };
   const passkeyHost=$('customerPasskeys'),passkeyList=$('customerPasskeyList'),passkeyStatus=$('customerPasskeyManageStatus');
   const passkeyAdd=$('customerPasskeyAdd');
   const passkeySupported=customerPasskeySupported({management:true});
@@ -2521,7 +2750,7 @@ async function renderCustomerProfile(){
   const loadPasskeys=async()=>{
     if(!passkeySupported){
       passkeyHost.setAttribute('aria-busy','false');passkeyAdd.disabled=true;
-      passkeyList.innerHTML='<p class="muted small">Passkeys are not supported in this browser. Your mobile verification code still works.</p>';return;
+      passkeyList.innerHTML='<p class="muted small">Passkeys are not supported in this browser. Sign in with your mobile number and password.</p>';return;
     }
     const {data,error}=await sb.auth.passkey.list();
     if(!isCurrent()||!passkeyHost.isConnected)return;
@@ -2545,7 +2774,7 @@ async function renderCustomerProfile(){
       passkeyStatus.textContent='Passkey renamed.';loadPasskeys();
     });
     passkeyList.querySelectorAll('[data-passkey-delete]').forEach(button=>button.onclick=async()=>{
-      if(!confirm('Remove this passkey? You will need another passkey or mobile verification code to sign in.'))return;
+      if(!confirm('Remove this passkey? You will need another passkey or your password to sign in.'))return;
       button.disabled=true;passkeyStatus.textContent='Removing passkey…';
       const {error:deleteError}=await sb.auth.passkey.delete({passkeyId:button.dataset.passkeyDelete});
       if(!isCurrent()||!passkeyHost.isConnected)return;
@@ -2598,6 +2827,8 @@ async function renderCustomerQrJoin(){
   clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
   const slug=normalizeCustomerBusinessIntent(data?.business?.slug||data?.business_slug||'');
   status.textContent='Programme joined. Opening your wallet…';
+  await maybeOfferCustomerPasskeySetup({isCurrent});
+  if(!isCurrent())return;
   nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');
 }
 
@@ -2850,7 +3081,7 @@ function birthdayBenefitMarkup(benefit,{interactive=false,compact=false}={}){
 function actionableWalletCardMarkup(card,{detail=false}={}){
   const business=card?.business||{},loyalty=card?.loyalty||{},credit=card?.credit||{},packages=card?.packages||{};
   const unit=esc(loyalty.unit||'points'),currency=esc(business.currency||'SGD'),reward=card?.next_eligible_reward||null,visit=card?.visit_progress||{};
-  return `<article class="card wallet-section"${detail?'':' style="margin:0"'}>
+  return `<article class="card wallet-section${detail?' customer-game-card':''}"${detail?'':' style="margin:0"'}>
     <div class="row"><div><h2>${esc(business.name||'Business')} rewards</h2><p class="muted small" style="margin-top:4px">${esc(business.industry||'Local business')}</p></div><span class="spacer"></span>${detail?'':`<span class="pill">${esc(actionableWalletActionText(card))}</span>`}</div>
     <div class="wallet-metrics">
       <div class="wallet-metric"><span class="muted small">${unit} balance</span><b>${Number(loyalty.balance||0)}</b></div>
@@ -2865,35 +3096,47 @@ function actionableWalletCardMarkup(card,{detail=false}={}){
   </article>`;
 }
 let customerHomeOverview={walletCards:[],activeRequestCount:0,activeRequestsTruncated:false,bookingsAvailable:false,messageCount:null,messagesAvailable:false,claimsAvailable:false};
+function customerConfirmedEarnFeedback(businessId,items=[],unit='points'){
+  const latest=items.find(item=>item?.event_type==='earn'&&Number(item?.points_delta||0)>0);
+  if(!latest)return;
+  const safeUnit=unit==='stamps'?'stamps':'points';
+  const fingerprint=[latest.event_at,latest.event_type,latest.points_delta].join('|');
+  const key=`nestly.customer.latestEarn.${S.user?.id||'anonymous'}.${businessId}`;
+  let previous='';
+  try{previous=sessionStorage.getItem(key)||'';sessionStorage.setItem(key,fingerprint)}catch{}
+  if(!previous||previous===fingerprint)return;
+  const increase=Number(latest.points_delta);
+  toast(`+${increase} ${safeUnit} earned!`);
+  if(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  try{
+    const AudioContext=globalThis.AudioContext||globalThis.webkitAudioContext;
+    if(!AudioContext)return;
+    const audio=new AudioContext(),gain=audio.createGain(),oscillator=audio.createOscillator();
+    oscillator.type='sine';oscillator.frequency.setValueAtTime(660,audio.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(990,audio.currentTime+.16);
+    gain.gain.setValueAtTime(.0001,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.12,audio.currentTime+.02);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.28);
+    oscillator.connect(gain);gain.connect(audio.destination);oscillator.start();oscillator.stop(audio.currentTime+.3);
+    oscillator.onended=()=>audio.close();
+  }catch{}
+}
+function renderCustomerFirstProgrammeQuest(){
+  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><header class="wallet-head"><a class="logo" href="#/wallet">${brandWordmark()}</a><span class="spacer"></span><details class="customer-account-menu"><summary class="customer-avatar" aria-label="Open account menu">${CUI.icon('customers',{size:20})}</summary><div class="menu"><a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>Profile &amp; passkeys</span></a><button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>Sign out</span></button></div></details></header>
+    <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">Your first quest</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">Scan a loyalty QR</h1><p class="muted">At a participating business, scan the Nestly QR shown at the counter. That verified programme will become your first Nestly home.</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>Scan business QR</span></button><p class="muted small" style="margin-top:16px">You cannot search for or add a business by name. This keeps each programme tied to a real business-issued QR.</p></div></section></main>${legalLinks()}</div></div>`;
+  $('customerFirstScan').onclick=openCustomerJoinScanner;
+  $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  focusCustomerRoute();
+}
 function renderActionableWalletHome(payload){
   const cards=Array.isArray(payload?.cards)?payload.cards:[];
-  const legacyCards=Array.isArray(customerHomeOverview.walletCards)?customerHomeOverview.walletCards:[];
-  const appointmentCount=legacyCards.reduce((sum,card)=>sum+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0);
-  const bookings=appointmentCount+Math.max(0,Number(customerHomeOverview.activeRequestCount||0));
-  const next=cards[0]||null,nextBusiness=next?.business||{};
-  const rewardsReady=cards.filter(card=>card?.next_eligible_reward?.available_now===true).length;
-  const visitGoals=cards.filter(card=>card?.visits_remaining!==null&&card?.visits_remaining!==undefined).length;
-  const messageCopy=customerHomeOverview.messagesAvailable
-    ?customerHomeOverview.messageCount===null?'Message count is temporarily unavailable.':`${customerHomeOverview.messageCount} unread message${customerHomeOverview.messageCount===1?'':'s'}`
-    :'Messages are not enabled yet.';
-  $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>${esc(BRAND.customerLabel)}</h1><p class="muted">Your next useful step, then each business programme kept clearly separate.</p></div></header>
-    <div class="customer-home-grid"><div class="customer-home-stack">
-      <section class="card customer-home-nba"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>Next best action</span></p>
-        ${next?`<h2 style="margin-top:12px">${esc(nextBusiness.name||'Your programme')}</h2><p style="margin-top:6px;font-weight:650">${esc(actionableWalletActionText(next))}</p><p class="muted small" style="margin-top:6px">Based only on your current programme status.</p><a class="btn sm" href="#/wallet/${encodeURIComponent(nextBusiness.slug||'')}" style="margin-top:14px">Open programme</a>`
-          :`<h2 style="margin-top:12px">No programmes yet</h2><p class="muted small" style="margin-top:6px">At a participating business, scan its Nestly QR and complete the join flow. The verified programme will then appear here.</p>`}
-      </section>
-      ${payload?.truncated?`<div class="card" role="status"><p class="muted small">Showing the 100 highest-priority linked businesses. Ask ${esc(BRAND.productName)} support to help locate another programme.</p></div>`:''}
-      <section aria-labelledby="homeProgrammesTitle"><div class="customer-page-head"><div><h2 id="homeProgrammesTitle">Rewards, value &amp; visits</h2><p class="muted small">Balances are never combined across businesses.</p></div><a class="btn ghost sm" href="#/customer/programmes">All programmes</a></div>
-        ${cards.length?`<div class="wallet-firms">${cards.slice(0,4).map(card=>`<a class="wallet-firm" href="#/wallet/${encodeURIComponent(card?.business?.slug||'')}" aria-label="Open ${esc(card?.business?.name||'business')} rewards">${actionableWalletCardMarkup(card)}</a>`).join('')}</div>`:`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Nestly QR during your visit. Nestly does not let customers search for or self-link a business from this portal.</p></div>`}
-      </section>
-    </div><aside class="customer-home-stack">
-      <section class="card"><h2>At a glance</h2><div class="wallet-line"><div><b>Rewards</b><p class="muted small">${rewardsReady?`${rewardsReady} ready to use at the counter`:'No reward is marked ready right now.'}</p></div></div><div class="wallet-line"><div><b>Visits</b><p class="muted small">${visitGoals?`${visitGoals} programme${visitGoals===1?' has':'s have'} visit progress`:'No active visit goal is available.'}</p></div></div></section>
-      <div class="customer-home-quick">
-        <a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${customerHomeOverview.bookingsAvailable?(bookings?`${bookings}${customerHomeOverview.activeRequestsTruncated?'+':''} active or upcoming`:'No active or upcoming bookings'):'Booking summary is temporarily unavailable.'}</p></div></a>
-        <a href="#/customer/messages">${CUI.icon('bell',{size:20})}<div><b>Messages</b><p class="muted small">${esc(messageCopy)}</p></div></a>
-        <a href="#/customer/profile">${CUI.icon('customers',{size:20})}<div><b>Profile</b><p class="muted small">Your account details</p></div></a>
-      </div>
-    </aside></div>`;
+  if(!cards.length){renderCustomerFirstProgrammeQuest();return}
+  $('walletBody').innerHTML=`<header class="customer-page-head"><div><p class="customer-quest-kicker">Choose your nest</p><h1>Your programmes</h1><p class="muted">Pick a business to see only its points, rewards, quests, bookings, and benefits.</p></div><button class="btn sm" id="customerHomeScan" type="button">${CUI.icon('scan',{size:18})}<span>Add programme</span></button></header>
+    ${payload?.truncated?`<div class="card" role="status"><p class="muted small">Showing the 100 highest-priority linked programmes.</p></div>`:''}
+    <div class="customer-programme-list">${cards.map(card=>{
+      const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
+      const action=actionableWalletActionText(card);
+      return `<a class="card customer-programme-card" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="Open ${esc(business.name||'business')} programme"><div class="row"><div><p class="customer-quest-kicker">${esc(business.industry||'Local business')}</p><h2 style="margin-top:5px">${esc(business.name||'Business')}</h2></div><span class="spacer"></span><span class="pill">${Number(loyalty.balance||0)} ${esc(loyalty.unit||'points')}</span></div><p style="margin-top:14px;font-weight:700">${esc(action)}</p><p class="muted small" style="margin-top:5px">${reward?.available_now===true?'Reward ready — open to redeem.':'Open your programme home and continue your next quest.'}</p></a>`;
+    }).join('')}</div>`;
+  $('customerHomeScan').onclick=openCustomerJoinScanner;
 }
 async function renderCustomerWallet(businessSlug=null){
   const walletRenderEpoch=++customerWalletRenderEpoch;
@@ -2954,6 +3197,7 @@ async function renderCustomerWallet(businessSlug=null){
     if(!isWalletCurrent())return;
     if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null);
     const cards=Array.isArray(data)?data:[];
+    if(!cards.length){renderCustomerFirstProgrammeQuest();return}
     const appointmentCount=cards.reduce((sum,card)=>sum+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0);
     const activeRequestCount=bookingRequestResult.error?0:(Array.isArray(bookingRequestResult.data?.items)?bookingRequestResult.data.items.filter(isActiveCustomerBookingRequest).length:0);
     const bookingCount=appointmentCount+activeRequestCount;
@@ -3144,6 +3388,7 @@ async function renderCustomerWallet(businessSlug=null){
     if(error)return walletSectionError('walletActivity',walletRpcDenied(error)?'Loyalty activity is not available for this account.':'Activity could not be loaded.',()=>loadActivity(cursor));
     const next=Array.isArray(data?.items)?data.items:[];
     activityState.items=cursor?[...activityState.items,...next]:next;activityState.nextCursor=data?.next_cursor||null;
+    if(!cursor)customerConfirmedEarnFeedback(b.id,next,data?.unit||loyalty.unit||'points');
     if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity','No loyalty activity is available yet.',businessSlug,'activity',()=>loadActivity(null),isWalletCurrent);
     const unit=esc(data?.unit||loyalty.unit||'points'),expiry=data?.expiry||{};
     host.setAttribute('aria-busy','false');
@@ -11612,7 +11857,7 @@ async function loadBillingConfig(){
 /* ---------- customer sign-up QR ---------- */
 async function loadSignupConfig(){
   $('signupWrap').innerHTML=`<b>Customer sign-up</b>
-    <p class="muted small" style="margin:6px 0 10px">Generate and print this business QR for your counter. Customers can join only by scanning a valid QR or accepting a private invitation.</p>
+    <p class="muted small" style="margin:6px 0 10px">Print the current business-issued QR for your counter. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>
     <div id="joinQr" style="width:180px;min-height:180px;margin:0 auto;display:grid;place-items:center"><span class="muted small">Generate a QR to begin</span></div>
     <p class="small portal-link-row" id="joinQrLink" style="margin-top:12px"></p>
     <div class="row" style="margin-top:10px"><button class="btn sm" id="createJoinQr">${CUI.icon('scan',{size:17})}<span>Generate join QR</span></button>
@@ -11623,7 +11868,15 @@ async function loadSignupConfig(){
     <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
       <input type="checkbox" id="joinEnabled" style="width:auto" ${S.biz.join_enabled!==false?'checked':''}> Accept new sign-ups</label>`;
   let url='';
-  $('createJoinQr').onclick=async()=>{
+  const showJoinQr=data=>{
+    url=`${location.origin}${location.pathname}#/join?token=${encodeURIComponent(data.join_token)}`;
+    const qrEl=$('joinQr');qrEl.innerHTML='';new QRCode(qrEl,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
+    $('joinQrLink').innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a>`;
+    $('cpJoin').disabled=false;$('dlQr').disabled=false;
+    $('createJoinQr').querySelector('span').textContent='Replace join QR';
+    $('joinQrStatus').textContent=`QR ready${data.expires_at?` · expires ${sgt(data.expires_at)}`:''}${Number(data.replaced_count)>0?` · ${Number(data.replaced_count)} older QR${Number(data.replaced_count)===1?'':'s'} revoked`:''}. Download it before leaving this page.`;
+  };
+  const generateJoinQr=async()=>{
     const button=$('createJoinQr');button.disabled=true;$('joinQrStatus').textContent='Creating a business-bound QR…';
     const {data,error}=await sb.rpc('business_rotate_customer_join_qr_v90',{p_business:S.biz.id});
     if(!button.isConnected)return;
@@ -11633,13 +11886,9 @@ async function loadSignupConfig(){
         ?'QR joining needs the latest Nestly service update.'
         :'A join QR could not be generated. Try again.';return;
     }
-    url=`${location.origin}${location.pathname}#/join?token=${encodeURIComponent(data.join_token)}`;
-    const qrEl=$('joinQr');qrEl.innerHTML='';new QRCode(qrEl,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
-    $('joinQrLink').innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a>`;
-    $('cpJoin').disabled=false;$('dlQr').disabled=false;
-    button.querySelector('span').textContent='Replace join QR';
-    $('joinQrStatus').textContent=`QR ready${data.expires_at?` · expires ${sgt(data.expires_at)}`:''}${Number(data.replaced_count)>0?` · ${Number(data.replaced_count)} older QR${Number(data.replaced_count)===1?'':'s'} revoked`:''}. Download it before leaving this page.`;
+    showJoinQr(data);
   };
+  $('createJoinQr').onclick=generateJoinQr;
   $('cpJoin').onclick=()=>{if(!url)return;navigator.clipboard.writeText(url);toast('Sign-up link copied')};
   $('dlQr').onclick=()=>{
     const qrEl=$('joinQr'),img=qrEl.querySelector('img')||qrEl.querySelector('canvas');
@@ -11668,6 +11917,21 @@ async function loadSignupConfig(){
     Object.assign(S.biz,{join_enabled:to});
     toast(to?'Accepting new sign-ups':'New sign-ups paused');
   };
+  const statusResult=S.biz.join_enabled===false
+    ?await sb.rpc('business_get_customer_join_qr_status_v91',{p_business:S.biz.id})
+    :await sb.rpc('business_ensure_customer_join_qr_v91',{p_business:S.biz.id});
+  if(!$('joinQrStatus'))return;
+  if(statusResult.error){
+    $('joinQrStatus').textContent='Join QR status could not be loaded. Try again.';
+  }else if(statusResult.data?.created===true&&statusResult.data?.join_token){
+    showJoinQr(statusResult.data);
+  }else if(statusResult.data?.created===false||Number(statusResult.data?.active_count||0)>0){
+    const activeExpiry=statusResult.data?.latest_expires_at||statusResult.data?.expires_at;
+    $('joinQrStatus').textContent=`An active QR already exists${activeExpiry?` until ${sgt(activeExpiry)}`:''}. Use your saved or printed copy. Replace it only if that copy is lost.`;
+    $('createJoinQr').querySelector('span').textContent='Replace join QR';
+  }else{
+    $('joinQrStatus').textContent='No active QR exists. Turn on new sign-ups, then generate one.';
+  }
 }
 async function loadCommissionConfig(){
   const {data:me}=await sb.from('staff').select('role').eq('user_id',S.user.id).eq('business_id',S.biz.id).limit(1);

@@ -42,7 +42,20 @@ test('opaque QR join survives refresh and has no typed slug authority',async()=>
   assert.match(validation,/function validJoinTokenPayload/);
 });
 
-test('scanned QR outranks wallet destinations after passkey sign-in and is consumed by the join route',async()=>{
+test('customer can scan a business-issued QR from first use and from persistent navigation',async()=>{
+  const app=await read('app/index.html');
+  const scanner=section(app,'function customerJoinTokenFromQr','function sortStaffWorkspaces');
+  assert.match(scanner,/openCustomerJoinScanner/);
+  assert.match(scanner,/getUserMedia\(\{video:\{facingMode:\{ideal:'environment'\}\}/);
+  assert.match(scanner,/id="customerJoinScannerImage" type="file" accept="image\/\*"/);
+  assert.match(scanner,/rememberPendingCustomerJoinToken\(token\);close\(\{restoreFocus:false\}\);nav\('#\/join'\)/);
+  assert.match(app,/function renderCustomerFirstProgrammeQuest/);
+  assert.match(app,/Your first quest/);
+  assert.match(app,/id="customerFirstScan"/);
+  assert.match(app,/id="customerNavScan"/);
+});
+
+test('scanned QR waits for a completed profile, then outranks wallet destinations and is consumed',async()=>{
   const app=await read('app/index.html');
   const prioritySource=app.match(/function customerRegistrationDestinationPriority\(joinToken,businessSlug\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(prioritySource,'missing post-auth customer destination priority helper');
@@ -54,8 +67,10 @@ test('scanned QR outranks wallet destinations after passkey sign-in and is consu
   assert.equal(nextRoute,'#/join','a scanned QR must outrank existing wallet and business destinations');
 
   const registration=section(app,'async function renderCustomerRegistration','async function renderCustomerClaim');
-  assert.match(registration,/if\(S\.user\)\{[\s\S]{0,180}customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]{0,140}nav\('#\/join'\);return;/);
-  assert.match(registration,/signInWithPasskey\(\{options:\{captchaToken:passkeyCaptchaToken\}\}\)[\s\S]*captchaControl\?\.reset\(\)[\s\S]*S\.user=data\.user[\s\S]*renderCustomerRegistration\(isRouteCurrent\)/);
+  assert.match(registration,/customer_get_profile[\s\S]*if\(profile\?\.profile!==null&&profile\?\.profile!==undefined\)\{[\s\S]*customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]*nav\('#\/join'\);return;/);
+  assert.match(registration,/return renderCustomerRegistrationProfile\(isRouteCurrent\)/);
+  const passwordEntry=section(app,'function renderCustomerPasswordSignIn','async function renderCustomerOtpStart');
+  assert.match(passwordEntry,/signInWithPasskey\(\{options:\{captchaToken:challenge\}\}\)[\s\S]*resetClientSessionState\(\{preserveInvitation:true\}\);route\(\)/);
   assert.match(app,/if\(h==='#\/join'\)return renderCustomerQrJoin\(\)/);
   const consume=section(app,'async function renderCustomerQrJoin','async function renderCustomerClaim');
   assert.match(consume,/customer_join_business_from_qr_v89/);
@@ -72,7 +87,7 @@ test('passkey sign-in and complete customer passkey management are capability ga
   assert.match(app,/sb\.auth\.passkey\.list\(\)[\s\S]*if\(passkeys\.length\)return false/);
   assert.match(app,/\.modal\{position:fixed;inset:0;z-index:210/,
     'passkey setup must stay above the delayed PWA install prompt on mobile');
-  assert.match(app,/sb\.auth\.signInWithPasskey\(\{options:\{captchaToken:passkeyCaptchaToken\}\}\)/);
+  assert.match(app,/sb\.auth\.signInWithPasskey\(\{options:\{captchaToken:challenge\}\}\)/);
   assert.match(app,/if\(!passkeySupported\|\|!captchaToken\)[\s\S]*Complete the security check before using your passkey/);
   assert.match(app,/captchaToken='';[\s\S]*signInWithPasskey[\s\S]*captchaControl\?\.reset\(\)/);
   assert.match(app,/sb\.auth\.registerPasskey\(\)/);

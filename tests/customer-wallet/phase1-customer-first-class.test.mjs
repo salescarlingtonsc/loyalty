@@ -89,26 +89,26 @@ test('customer secondary routes are namespaced and cannot intercept merchant Boo
   assert.match(app,/const NOTIF_ROUTE=\{booking_new:'#\/bookings'/);
 });
 
-test('persistent customer navigation has exactly five labelled icon-and-text destinations',()=>{
+test('customer navigation keeps destinations focused while notifications and profile live in the header',()=>{
   const nav=section('const CUSTOMER_PRIMARY_NAV=Object.freeze([',']);\nfunction customerPrimaryNavigation');
-  assert.equal((nav.match(/\{key:/g)||[]).length,5);
+  assert.equal((nav.match(/\{key:/g)||[]).length,4);
   for(const [key,href,label] of [
     ['home','#/wallet','Home'],
     ['programmes','#/customer/programmes','Programmes'],
-    ['bookings','#/customer/bookings','Bookings'],
-    ['messages','#/customer/messages','Messages'],
-    ['profile','#/customer/profile','Profile']
+    ['bookings','#/customer/bookings','Bookings']
   ]){
     assert.match(nav,new RegExp(`key:'${key}',href:'${href.replaceAll('/','\\/')}'[^\\n]*label:'${label}'`));
   }
+  assert.match(nav,/key:'scan',icon:'scan',label:'Scan QR'/);
+  assert.doesNotMatch(nav,/key:'messages'|key:'profile'/);
   const navMarkup=section('function customerPrimaryNavigation(active)','function renderCustomerShell');
   assert.match(navMarkup,/<nav class="customer-primary-nav" aria-label="\$\{esc\(BRAND\.customerLabel\)\}">/);
   assert.match(navMarkup,/aria-current="page"/);
   assert.match(navMarkup,/CUI\.icon\(item\.icon/);
   assert.match(navMarkup,/<span>\$\{item\.label\}<\/span>/);
 
-  assert.match(app,/\.customer-primary-nav\{[^}]*grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/s);
-  assert.match(app,/\.customer-primary-nav a\{[^}]*min-height:48px/s);
+  assert.match(app,/\.customer-primary-nav\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/s);
+  assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button\{[^}]*min-height:48px/s);
   assert.match(app,/@media\(max-width:720px\)\{[\s\S]*\.customer-primary-nav\{position:fixed[^}]*bottom:/);
 });
 
@@ -117,7 +117,10 @@ test('customer shell, deep links, and profile transitions are predictable and ac
   assert.match(shell,/<a class="logo" href="#\/wallet" aria-label="\$\{esc\(BRAND\.customerLabel\)\} home"/);
   assert.match(shell,/<main id="main" tabindex="-1">/);
   assert.match(shell,/customerWorkspaceSwitchHtml\(staffWorkspaces\)/);
-  assert.match(shell,/id="walletSignOut"[^>]*aria-label="Sign out of \$\{esc\(BRAND\.customerLabel\)\}"/);
+  assert.match(shell,/class="customer-account-menu"/);
+  assert.match(shell,/href="#\/customer\/profile"/);
+  assert.match(shell,/id="walletSignOut"/);
+  assert.match(shell,/href="#\/customer\/messages" aria-label="Open notifications"/);
   assert.match(shell,/walletBack'\)\.onclick=\(\)=>nav\('#\/customer\/programmes'\)/);
   assert.doesNotMatch(shell,/history\.back/);
   assert.match(app,/function focusCustomerRoute\(\)\{[\s\S]*CUI\.focusRoute\(main,\{enhanceContent:true\}\)/);
@@ -152,14 +155,11 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/not editable here/);
 
   const home=section('function renderActionableWalletHome','async function renderCustomerWallet');
-  assert.match(home,/Next best action/);
-  assert.match(home,/Rewards, value &amp; visits/);
-  assert.match(home,/Balances are never combined across businesses/);
-  assert.match(home,/>Visits</);
-  assert.match(home,/Booking summary is temporarily unavailable/);
-  assert.match(home,/Message count is temporarily unavailable/);
-  assert.match(home,/scan its Nestly QR and complete the join flow/);
-  assert.match(home,/does not let customers search for or self-link a business/);
+  assert.match(home,/Choose your nest/);
+  assert.match(home,/Pick a business to see only its points, rewards, quests, bookings, and benefits/);
+  assert.match(home,/id="customerHomeScan"/);
+  assert.match(home,/Add programme/);
+  assert.match(home,/renderCustomerFirstProgrammeQuest/);
   assert.doesNotMatch(home,/href="#\/claim"/);
 
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
