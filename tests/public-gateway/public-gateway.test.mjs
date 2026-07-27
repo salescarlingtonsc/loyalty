@@ -4,6 +4,7 @@ import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   normalizeOriginList,
+  publicGatewayOrigins,
   validBookingPayload,
   validJoinPayload,
   validManagePayload,
@@ -81,6 +82,53 @@ test('validation rejects malformed, cross-shape and tokenless requests', () => {
   assert.equal(validManagePayload({ action: 'change', token, submission_id, kind: 'cancel', proposed: null }), true);
   assert.equal(validManagePayload({ action: 'change', token, kind: 'cancel', proposed: null }), false);
   assert.equal(validManagePayload({ action: 'change', token, submission_id, kind: 'reschedule', proposed: null }), false);
+});
+
+test('canonical Nestly origins remain exact and cannot expand to arbitrary origins', () => {
+  assert.deepEqual(publicGatewayOrigins(''), [
+    'https://nestly.asia',
+    'https://www.nestly.asia',
+  ], 'an unset dashboard secret must not block the two canonical production origins');
+  assert.deepEqual(publicGatewayOrigins(
+    'https://www.nestly.asia/, https://preview.example, https://preview.example'
+  ), [
+    'https://nestly.asia',
+    'https://www.nestly.asia',
+    'https://preview.example',
+  ]);
+  assert.deepEqual(normalizeOriginList(JSON.stringify([
+    'https://nestly.asia',
+    'https://www.nestly.asia',
+  ])), [
+    'https://nestly.asia',
+    'https://www.nestly.asia',
+  ], 'dashboard JSON-array formatting is normalized safely');
+  assert.deepEqual(normalizeOriginList([
+    'https://*.nestly.asia',
+    'https://attacker.invalid/path',
+    'https://user:secret@nestly.asia',
+    'javascript:alert(1)',
+  ].join(',')), []);
+  assert.deepEqual(normalizeOriginList(
+    'http://localhost:54321, http://127.0.0.1:4173, http://attacker.invalid'
+  ), [
+    'http://localhost:54321',
+    'http://127.0.0.1:4173',
+  ], 'only explicit loopback HTTP origins are allowed for local test keys');
+});
+
+test('owner runbook requires canonical and hostile-origin evidence without production demo OTPs', async () => {
+  const runbook = await read('docs/release/owner-dashboard-environment-steps-v89.md');
+  assert.match(runbook, /https:\/\/nestly\.asia,https:\/\/www\.nestly\.asia/);
+  assert.match(runbook, /Access-Control-Allow-Origin: https:\/\/www\.nestly\.asia/);
+  assert.match(runbook, /https:\/\/attacker\.invalid/);
+  assert.match(runbook, /hostile origin must[\s\S]*remain `403` with no allow-origin header/);
+  assert.match(runbook, /"customerPhoneOtpEnabled": true/);
+  assert.match(runbook, /Remove every hosted \*\*Test OTP\*\* entry/);
+  assert.match(runbook, /Production must not use `888888`/);
+  assert.match(runbook, /tracked `supabase\/config\.toml` intentionally contains no/);
+  assert.match(runbook, /Do not add one to the tracked project config/);
+  assert.match(runbook, /do not use\s+`supabase config push`/);
 });
 
 test('migration stores only SHA-256 token hashes and links conversion', async () => {

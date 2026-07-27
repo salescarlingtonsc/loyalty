@@ -177,9 +177,10 @@ test('Luna C42 remediation: anonymous pre-auth capability RPC is a two-boolean, 
 test('Luna C42 remediation: initial render, initial send, and resend require allowlisted runtime and fresh server gates', () => {
   const registrationUi = appBlock('let customerRegistrationState=', 'async function renderCustomerClaim(');
 
-  assert.match(app, /const DEMO_CUSTOMER_PHONE_NUMBERS=\['\+6581234567'\]/i);
-  assert.match(app, /const CUSTOMER_PHONE_OTP_RUNTIME_ENABLED=\([\s\S]*RUNTIME_CONFIG\.environment!==['"]production['"][\s\S]*DEMO_CUSTOMER_PHONE_NUMBERS\.length>0/i);
-  assert.match(app, /const customerPhoneBlockedInProduction=\(phone\)=>\([\s\S]*RUNTIME_CONFIG\.environment===['"]production['"][\s\S]*!DEMO_CUSTOMER_PHONE_NUMBERS\.includes\(phone\)/i);
+  assert.doesNotMatch(app, /DEMO_CUSTOMER_PHONE_NUMBERS/i);
+  assert.match(app, /const customerPhoneOtpRuntimeConfigured=\(\)=>\([\s\S]*RUNTIME_CONFIG\.customerPhoneOtpEnabled===true/i);
+  assert.match(app, /const CUSTOMER_PHONE_OTP_RUNTIME_ENABLED=\([\s\S]*customerPhoneOtpRuntimeConfigured\(\)/i);
+  assert.match(app, /const customerPhoneBlockedInProduction=\(\)=>\([\s\S]*RUNTIME_CONFIG\.environment===['"]production['"][\s\S]*!customerPhoneOtpRuntimeConfigured\(\)/i);
   assert.match(app, /const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=\(\s*CUSTOMER_PHONE_OTP_RUNTIME_ENABLED/i);
   assert.match(registrationUi, /async function customerPhoneOtpAvailable\(channel='sms'\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i);
   assert.match(registrationUi, /async function renderCustomerRegistration\([^\n]*\)[\s\S]*loadCustomerPhoneOtpCapabilities\(\{refresh:true\}\)/i,

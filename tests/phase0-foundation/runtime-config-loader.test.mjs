@@ -15,11 +15,12 @@ const PUBLISHABLE_KEY = 'sb_publishable_abcdefghijklmnopqrstuvwx';
 
 function remoteConfig(overrides = {}) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     environment: 'test',
     projectRef: NON_PRODUCTION_REF,
     supabaseUrl: `https://${NON_PRODUCTION_REF}.supabase.co`,
     supabasePublishableKey: PUBLISHABLE_KEY,
+    customerPhoneOtpEnabled: false,
     ...overrides
   };
 }
@@ -69,11 +70,12 @@ test('all declared environments have explicit accepted routing semantics', () =>
     'CONFIG_ENVIRONMENT_BOUNDARY');
 
   const local = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     environment: 'development',
     projectRef: 'local',
     supabaseUrl: 'http://127.0.0.1:54321',
-    supabasePublishableKey: PUBLISHABLE_KEY
+    supabasePublishableKey: PUBLISHABLE_KEY,
+    customerPhoneOtpEnabled: false
   };
   assert.equal(runtimeConfig.validate(local).supabaseUrl, 'http://127.0.0.1:54321');
   assert.equal(runtimeConfig.validate({ ...local, environment: 'test' }).environment, 'test');
@@ -93,12 +95,13 @@ test('missing, misspelled, coerced, and extended schemas fail closed', () => {
   }
 
   assert.equal(captureError(() => runtimeConfig.validate({ ...remoteConfig(), unexpected: true })).code, 'CONFIG_SCHEMA');
-  assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ schemaVersion: '1' }))).code, 'CONFIG_SCHEMA');
+  assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ schemaVersion: '2' }))).code, 'CONFIG_SCHEMA');
   assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ environment: 'Production' }))).code, 'CONFIG_ENVIRONMENT');
   assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ environment: true }))).code, 'CONFIG_ENVIRONMENT');
   assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ projectRef: null }))).code, 'CONFIG_PROJECT_REF');
   assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ supabaseUrl: null }))).code, 'CONFIG_URL');
   assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ supabasePublishableKey: null }))).code, 'CONFIG_KEY');
+  assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ customerPhoneOtpEnabled: 'true' }))).code, 'CONFIG_SCHEMA');
 });
 
 test('test mode refuses the production project before browser boot', () => {

@@ -51,13 +51,15 @@
   function validate(raw) {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) fail('CONFIG_MISSING');
     exactKeys(raw, [
-      'schemaVersion', 'environment', 'projectRef', 'supabaseUrl', 'supabasePublishableKey'
+      'schemaVersion', 'environment', 'projectRef', 'supabaseUrl',
+      'supabasePublishableKey', 'customerPhoneOtpEnabled'
     ], 'CONFIG_SCHEMA');
-    if (raw.schemaVersion !== 1) fail('CONFIG_SCHEMA');
+    if (raw.schemaVersion !== 2) fail('CONFIG_SCHEMA');
     if (!ENVIRONMENTS.has(raw.environment)) fail('CONFIG_ENVIRONMENT');
     if (typeof raw.projectRef !== 'string') fail('CONFIG_PROJECT_REF');
     if (typeof raw.supabaseUrl !== 'string') fail('CONFIG_URL');
     if (typeof raw.supabasePublishableKey !== 'string') fail('CONFIG_KEY');
+    if (typeof raw.customerPhoneOtpEnabled !== 'boolean') fail('CONFIG_SCHEMA');
 
     let url;
     try {
@@ -98,7 +100,8 @@
       environment: raw.environment,
       projectRef: raw.projectRef,
       supabaseUrl: url.origin,
-      supabasePublishableKey: raw.supabasePublishableKey
+      supabasePublishableKey: raw.supabasePublishableKey,
+      customerPhoneOtpEnabled: raw.customerPhoneOtpEnabled
     });
   }
 

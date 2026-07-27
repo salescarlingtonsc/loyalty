@@ -111,7 +111,7 @@ test('customer registration UI is a mobile phone OTP path with an explicit fail-
   assert.match(app, /h==='#\/'\|\|h==='#\/customer'\|\|h==='#\/customer\/register'\|\|h\.startsWith\('#\/customer\?'\)/);
   assert.match(app, /href="\/business">Business sign in<\/a>/);
   assert.match(app, /CUSTOMER_PHONE_OTP_RUNTIME_ENABLED[\s\S]*RUNTIME_CONFIG\.environment!=='production'/);
-  assert.match(app, /window\.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__===true/);
+  assert.match(app, /RUNTIME_CONFIG\.customerPhoneOtpEnabled===true/);
   assert.match(customerRoute, /normalizeSingaporeCustomerPhone/);
   assert.match(customerRoute, /\?`\+65\$\{local\}`:null/);
   assert.match(customerRoute, /sb\.rpc\('get_customer_phone_otp_capabilities'\)/);
@@ -141,27 +141,26 @@ test('customer registration UI is a mobile phone OTP path with an explicit fail-
   assert.doesNotMatch(customerRoute, /[🎉🎁📱]/u);
 });
 
-test('production phone OTP permits only the explicit demo number unless the runtime provider seam is enabled', () => {
-  const allowlistSource = block(app, /const DEMO_CUSTOMER_PHONE_NUMBERS=\[[^\n]*\];/);
-  const productionGuardSource = block(app, /const customerPhoneBlockedInProduction=\(phone\)=>\([\s\S]*?\n\);/);
-  assert.equal(allowlistSource, "const DEMO_CUSTOMER_PHONE_NUMBERS=['+6581234567'];");
+test('production phone OTP has no fixed-number bypass and requires the explicit runtime provider seam', () => {
+  const runtimeSource = block(app, /const customerPhoneOtpRuntimeConfigured=\(\)=>\([\s\S]*?\n\);/);
+  const productionGuardSource = block(app, /const customerPhoneBlockedInProduction=\(\)=>\([\s\S]*?\n\);/);
+  assert.doesNotMatch(app, /DEMO_CUSTOMER_PHONE_NUMBERS/);
+  assert.match(runtimeSource, /RUNTIME_CONFIG\.customerPhoneOtpEnabled===true/);
   assert.match(productionGuardSource, /RUNTIME_CONFIG\.environment==='production'/);
-  assert.match(productionGuardSource, /window\.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__!==true/);
-  assert.match(productionGuardSource, /!DEMO_CUSTOMER_PHONE_NUMBERS\.includes\(phone\)/);
+  assert.match(productionGuardSource, /!customerPhoneOtpRuntimeConfigured\(\)/);
 
   const buildGuard = ({environment, runtimeEnabled}) => new Function(
     'RUNTIME_CONFIG',
-    'window',
-    `${allowlistSource}\n${productionGuardSource}\nreturn customerPhoneBlockedInProduction;`
-  )({environment}, {__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__:runtimeEnabled});
+    `${runtimeSource}\n${productionGuardSource}\nreturn customerPhoneBlockedInProduction;`
+  )({environment, customerPhoneOtpEnabled:runtimeEnabled});
 
   const productionDefault = buildGuard({environment:'production', runtimeEnabled:false});
-  assert.equal(productionDefault('+6581234567'), false,
-    'the owner-approved demo mobile must be allowed in production');
+  assert.equal(productionDefault('+6581234567'), true,
+    'the former demo mobile must not bypass the production provider gate');
   assert.equal(productionDefault('+6587654321'), true,
-    'every other production mobile must stay blocked by default');
+    'every production mobile must stay blocked by default');
   assert.equal(buildGuard({environment:'production', runtimeEnabled:true})('+6587654321'), false,
-    'the explicit runtime provider seam may enable other production mobiles');
+    'the explicit runtime provider seam may enable production mobile verification');
   assert.equal(buildGuard({environment:'development', runtimeEnabled:false})('+6587654321'), false,
     'non-production transport remains governed by its separate runtime capability gate');
   assert.doesNotMatch(app, /888888/,

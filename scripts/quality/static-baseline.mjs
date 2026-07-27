@@ -264,13 +264,15 @@ export async function checkSupabaseProjectReferences(
 export async function checkSupabaseClientContract(root = repoRoot) {
   const productionConfig = JSON.parse(await readText(root, 'config/runtime/production.json'));
   assert.deepEqual(Object.keys(productionConfig).sort(), [
-    'environment', 'projectRef', 'schemaVersion', 'supabasePublishableKey', 'supabaseUrl'
+    'customerPhoneOtpEnabled', 'environment', 'projectRef', 'schemaVersion',
+    'supabasePublishableKey', 'supabaseUrl'
   ]);
-  assert.equal(productionConfig.schemaVersion, 1);
+  assert.equal(productionConfig.schemaVersion, 2);
   assert.equal(productionConfig.environment, 'production');
   assert.equal(productionConfig.projectRef, singaporeSupabaseRef);
   assert.equal(productionConfig.supabaseUrl, singaporeSupabaseUrl);
   assert.equal(productionConfig.supabasePublishableKey, singaporePublishableKey);
+  assert.equal(productionConfig.customerPhoneOtpEnabled, true);
 
   const runtimeArtifact = await readText(root, 'app/runtime-config.js');
   assert.match(runtimeArtifact, /window\.__FRENLY_RUNTIME_CONFIG__\s*=\s*Object\.freeze\(/);

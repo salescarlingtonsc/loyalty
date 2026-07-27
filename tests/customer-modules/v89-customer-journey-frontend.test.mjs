@@ -65,6 +65,13 @@ test('scanned QR outranks wallet destinations after passkey sign-in and is consu
 test('passkey sign-in and complete customer passkey management are capability gated',async()=>{
   const app=await read('app/index.html');
   assert.match(app,/experimental:\{passkey:true\}/);
+  assert.match(app,/function customerPasskeySupported\(\{management=false\}=\{\}\)/);
+  assert.match(app,/async function maybeOfferCustomerPasskeySetup\(\{isCurrent=\(\)=>true\}=\{\}\)/);
+  assert.match(app,/await maybeOfferCustomerPasskeySetup\(\{isCurrent:isRouteCurrent\}\)/);
+  assert.match(app,/id="customerPasskeyPromptAdd"[\s\S]*Enable now/);
+  assert.match(app,/sb\.auth\.passkey\.list\(\)[\s\S]*if\(passkeys\.length\)return false/);
+  assert.match(app,/\.modal\{position:fixed;inset:0;z-index:210/,
+    'passkey setup must stay above the delayed PWA install prompt on mobile');
   assert.match(app,/sb\.auth\.signInWithPasskey\(\{options:\{captchaToken:passkeyCaptchaToken\}\}\)/);
   assert.match(app,/if\(!passkeySupported\|\|!captchaToken\)[\s\S]*Complete the security check before using your passkey/);
   assert.match(app,/captchaToken='';[\s\S]*signInWithPasskey[\s\S]*captchaControl\?\.reset\(\)/);
@@ -75,6 +82,7 @@ test('passkey sign-in and complete customer passkey management are capability ga
   assert.match(app,/Passkey rename cancelled/);
   assert.match(app,/sb\.auth\.passkey\.delete\(\{passkeyId:button\.dataset\.passkeyDelete\}\)/);
   assert.match(app,/error\?\.code==='passkey_disabled'/);
+  assert.match(app,/webauthn_credential_not_found[\s\S]*remove it, then add a new passkey/);
 });
 
 test('customer booking and changes require the business v89 enablement',async()=>{

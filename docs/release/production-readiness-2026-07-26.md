@@ -17,7 +17,7 @@ is authorised by this ledger.
 | Requirement | Local implementation | Release proof still required |
 | --- | --- | --- |
 | Equal customer/business entry | Top-level chooser, persistent customer navigation, dual-role switching and customer home | Customer-only, business-only and dual-role browser acceptance on final build |
-| Mobile OTP demo | Singapore normalization, allowlisted `+6581234567`, local test OTP `888888` | Hosted Auth dashboard test-OTP configuration and final-origin smoke |
+| Mobile OTP | Singapore normalization, fresh server capability checks, hosted provider transport and no production fixed-number bypass | Remove hosted test OTPs, verify Twilio/Turnstile settings and complete a real-device final-origin smoke |
 | Customer/business synchronization | Relationship claim, booking identity/lifecycle, wallet/history projections and customer-safe readers | Applied migrations plus real-role cross-tenant and two-session sync tests |
 | Customer history | Sales, points, rewards/value, visits, bookings, messages and corrections are exposed through bounded customer readers | High-volume pagination and final mobile browser acceptance |
 | Fast sale correction | Double-confirm compensating correction without a minimum reason length | Financial replay/rollback and owner/manager/front-desk permission run |
@@ -74,7 +74,9 @@ Those store-specific assets are intentionally not represented as complete now.
 6. Under owner release approval, apply database changes before dependent
    frontend/functions.
 7. Configure hosted OTP, Stripe, scheduler, SMTP/comms, alerting and runtime
-   origins/secrets without placing secrets in source.
+   origins/secrets without placing secrets in source. Follow
+   `docs/release/owner-dashboard-environment-steps-v89.md`; production Auth must
+   not retain a fixed test OTP.
 8. Run final production smoke, reconciliation, backup/rollback and evidence
    capture. Only then may the launch gate move from `BLOCKED`.
 

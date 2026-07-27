@@ -35,11 +35,12 @@ function runGenerator(root, args) {
 
 function validConfig(overrides = {}) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     environment: 'staging',
     projectRef: NON_PRODUCTION_REF,
     supabaseUrl: `https://${NON_PRODUCTION_REF}.supabase.co`,
     supabasePublishableKey: PUBLISHABLE_KEY,
+    customerPhoneOtpEnabled: false,
     ...overrides
   };
 }

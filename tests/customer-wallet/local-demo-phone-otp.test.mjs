@@ -8,14 +8,13 @@ const config = await readFile(
 );
 const app = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
 
-test('local Supabase demo phone uses the owner-requested fixed OTP', () => {
-  assert.match(
-    config,
-    /\[auth\.sms\.test_otp\][\s\S]*\b6581234567\s*=\s*"888888"/
-  );
-  assert.match(app, /const DEMO_CUSTOMER_PHONE_NUMBERS=\['\+6581234567'\]/);
+test('tracked Supabase configuration cannot push a fixed OTP to a hosted project', () => {
+  assert.doesNotMatch(config, /\[auth\.sms\.test_otp\]/);
+  assert.doesNotMatch(config, /\b6581234567\s*=\s*"888888"/);
+  assert.doesNotMatch(app, /DEMO_CUSTOMER_PHONE_NUMBERS/);
 });
 
-test('the fixed OTP is local configuration, not browser authentication logic', () => {
+test('the browser has no fixed OTP or production number bypass', () => {
   assert.doesNotMatch(app, /888888/);
+  assert.match(app, /const customerPhoneBlockedInProduction=\(\)=>\(/);
 });

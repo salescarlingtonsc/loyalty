@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.110.7';
+import { publicGatewayOrigins } from './validation.ts';
 
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8',
@@ -33,22 +34,7 @@ export function billingJson(status: number, body: unknown): Response {
 }
 
 function allowedOrigins(): string[] {
-  return (env('PUBLIC_GATEWAY_ALLOWED_ORIGINS') || '')
-    .split(',')
-    .map((value) => value.trim())
-    .filter((value) => {
-      try {
-        const parsed = new URL(value);
-        return (
-          parsed.origin === value &&
-          parsed.protocol === 'https:' &&
-          !parsed.username &&
-          !parsed.password
-        );
-      } catch {
-        return false;
-      }
-    });
+  return publicGatewayOrigins(env('PUBLIC_GATEWAY_ALLOWED_ORIGINS'));
 }
 
 export function billingCorsFor(req: Request): Record<string, string> | null {

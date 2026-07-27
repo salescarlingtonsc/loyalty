@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.110.7';
-import { normalizeOriginList } from './validation.ts';
+import { normalizeOriginList, publicGatewayOrigins } from './validation.ts';
 import { authoritativeClientIp, deriveManagementToken, gatewayAuthorization, sha256Hex } from './security.ts';
 
 import { turnstileBindingValid } from './security.ts';
@@ -13,7 +13,7 @@ function env(name) {
 }
 
 function allowedOrigins() {
-  return normalizeOriginList(env('PUBLIC_GATEWAY_ALLOWED_ORIGINS'));
+  return publicGatewayOrigins(env('PUBLIC_GATEWAY_ALLOWED_ORIGINS'));
 }
 
 export function corsFor(req) {

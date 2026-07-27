@@ -14,9 +14,13 @@ migration stream from `supabase/migrations`.
 
 Required secrets:
 
-- `PUBLIC_GATEWAY_ALLOWED_ORIGINS`: comma-separated exact origins, for example
-  `https://nestly.asia,https://www.nestly.asia`. Keep preview or legacy origins
-  only when they are deliberately supported and included in release smoke tests.
+- `PUBLIC_GATEWAY_ALLOWED_ORIGINS`: optional comma/newline-separated exact
+  origins (or a JSON string array) for deliberately supported preview/staging
+  hosts. The two canonical production origins, `https://nestly.asia` and
+  `https://www.nestly.asia`, are immutable trusted defaults in the shared
+  gateway. Wildcards, credentials, paths, query strings and non-loopback HTTP
+  origins are rejected. Keep preview or legacy origins only when they are
+  deliberately supported and included in release smoke tests.
 - `PUBLIC_GATEWAY_IP_PEPPER`: at least 32 random characters. Rotating it resets rate-limit buckets.
 - `PUBLIC_GATEWAY_TOKEN_SECRET`: at least 32 random characters. It deterministically derives a
   256-bit booking management capability from the business slug and submission ID, allowing the
@@ -139,5 +143,6 @@ Deploy only after v86 has passed independent review:
 supabase functions deploy sme-document-signer
 ```
 
-`PUBLIC_GATEWAY_ALLOWED_ORIGINS` must include the exact Nestly web origin.
-Retain a private-bucket upload/read/finalize acceptance run as launch evidence.
+`PUBLIC_GATEWAY_ALLOWED_ORIGINS` may add intentional non-production origins;
+it cannot remove or broaden the two exact canonical Nestly origins. Retain a
+private-bucket upload/read/finalize acceptance run as launch evidence.

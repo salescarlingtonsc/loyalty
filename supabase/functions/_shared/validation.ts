@@ -3,9 +3,46 @@ export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_PATTERN = /^\+[1-9][0-9]{7,14}$/;
 export const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const NESTLY_PUBLIC_ORIGINS = Object.freeze([
+  'https://nestly.asia',
+  'https://www.nestly.asia',
+]);
 
 export function normalizeOriginList(value = '') {
-  return [...new Set(value.split(',').map((origin) => origin.trim()).filter(Boolean))];
+  const raw = String(value || '').trim();
+  let candidates = raw.split(/[,\n]/);
+  if (raw.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.every((origin) => typeof origin === 'string')) {
+        candidates = parsed;
+      }
+    } catch {
+      return [];
+    }
+  }
+  const normalized = candidates.map((candidate) => {
+    const value = String(candidate || '').trim();
+    if (!value || value.includes('*')) return null;
+    try {
+      const origin = new URL(value);
+      const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(origin.hostname);
+      if (origin.username || origin.password || origin.search || origin.hash) return null;
+      if (origin.pathname !== '/' || origin.port && !loopback) return null;
+      if (origin.protocol !== 'https:' && !(origin.protocol === 'http:' && loopback)) return null;
+      return origin.origin;
+    } catch {
+      return null;
+    }
+  }).filter((origin): origin is string => Boolean(origin));
+  return [...new Set(normalized)];
+}
+
+export function publicGatewayOrigins(value = '') {
+  return [...new Set([
+    ...NESTLY_PUBLIC_ORIGINS,
+    ...normalizeOriginList(value),
+  ])];
 }
 
 export function validJoinPayload(body) {

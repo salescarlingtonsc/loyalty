@@ -254,7 +254,7 @@ tr.click:hover td{background:#FBFAF8}
   background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s var(--spring)}
 .tglsw.on::after{transform:translateX(15px)}
 /* universal importer modal */
-.modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;
+.modal{position:fixed;inset:0;z-index:210;display:flex;align-items:center;justify-content:center;padding:24px;
   background:rgba(23,22,26,.4);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:fade .18s var(--ease)}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .modal-card{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);width:640px;max-width:100%;
@@ -900,25 +900,21 @@ const AUTH_TURNSTILE_SITE_KEY='0x4AAAAAAD4_7rnuzB3ug-NF';
    switch exists only for an emergency fail-closed build; it must never enable a
    server-disabled feature. */
 const CUSTOMER_FEATURES_EMERGENCY_DISABLED=false;
-/* Phone OTP is an explicit runtime provider seam. Outside production it is
-   disabled unless a test build sets the public boolean deliberately. In
-   production, that same explicit seam may enable the configured provider;
-   otherwise only the allowlisted demo numbers below can reach the transport.
-   No provider secret is present in the app.
-   DEMO EXCEPTION (owner instruction 2026-07-26): the numbers listed in
-   DEMO_CUSTOMER_PHONE_NUMBERS may use phone OTP in production. Each demo number
-   must have a matching Supabase Auth test OTP, so no SMS is ever sent; every
-   other number keeps the fail-closed "not available" behaviour below. */
-const DEMO_CUSTOMER_PHONE_NUMBERS=['+6581234567'];
+/* Phone OTP is an explicit runtime provider seam. No provider secret is
+   present in the browser. Fixed Auth test OTPs belong only in local/staging
+   Supabase configuration and must never create a production phone bypass. */
+const customerPhoneOtpRuntimeConfigured=()=>(
+  RUNTIME_CONFIG.customerPhoneOtpEnabled===true
+);
 const CUSTOMER_PHONE_OTP_RUNTIME_ENABLED=(
   (RUNTIME_CONFIG.environment!=='production'
-    && window.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__===true)
-  || DEMO_CUSTOMER_PHONE_NUMBERS.length>0
+    && customerPhoneOtpRuntimeConfigured())
+  || (RUNTIME_CONFIG.environment==='production'
+    && customerPhoneOtpRuntimeConfigured())
 );
-const customerPhoneBlockedInProduction=(phone)=>(
+const customerPhoneBlockedInProduction=()=>(
   RUNTIME_CONFIG.environment==='production'
-  && window.__FRENLY_CUSTOMER_PHONE_OTP_ENABLED__!==true
-  && !DEMO_CUSTOMER_PHONE_NUMBERS.includes(phone)
+  && !customerPhoneOtpRuntimeConfigured()
 );
 const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=(
   CUSTOMER_PHONE_OTP_RUNTIME_ENABLED
@@ -1854,6 +1850,8 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     }
     S.user=data.user;
     if(!isRouteCurrent()||!button.isConnected)return;
+    await maybeOfferCustomerPasskeySetup({isCurrent:isRouteCurrent});
+    if(!isRouteCurrent())return;
     renderCustomerRegistration(isRouteCurrent);
   };
   resend.onclick=async()=>{
@@ -2078,7 +2076,7 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
     if(error||!data?.user){
       passkeyStatus.textContent=error?.code==='passkey_disabled'
         ?'Face ID and Touch ID need to be enabled for this Nestly environment first.'
-        :'Passkey sign-in was not completed. Complete the security check again, or use your mobile code.';
+        :customerPasskeyErrorMessage(error,{action:'sign-in'});
       return;
     }
     S.user=data.user;passkeyStatus.textContent='Signed in.';renderCustomerRegistration(isRouteCurrent);
@@ -2178,6 +2176,71 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
 }
 function focusCustomerRoute(){
   const main=$('main');if(main)CUI.focusRoute(main,{enhanceContent:true});
+}
+function customerPasskeySupported({management=false}={}){
+  return isSecureContext&&'PublicKeyCredential' in globalThis
+    &&typeof sb.auth.registerPasskey==='function'
+    &&(!management||typeof sb.auth.passkey?.list==='function');
+}
+function customerPasskeyErrorMessage(error,{action='setup'}={}){
+  const code=String(error?.code||'');
+  if(code==='passkey_disabled')return 'Face ID and Touch ID need to be enabled for this Nestly environment first.';
+  if(code==='webauthn_credential_exists')return 'This device already has a passkey for this account.';
+  if(code==='webauthn_credential_not_found')return 'This passkey is not linked to the current Nestly domain. Sign in with your mobile code, remove it, then add a new passkey.';
+  if(code==='webauthn_verification_failed')return 'This passkey could not be verified for the current Nestly domain. Sign in with your mobile code and add a new passkey.';
+  if(code==='phone_not_confirmed'||code==='email_not_confirmed')return 'Confirm your account with your mobile code before using Face ID or Touch ID.';
+  return action==='sign-in'
+    ?'Passkey sign-in was not completed. Try again, or use your mobile code.'
+    :'Passkey setup was not completed. You can add it later from Profile.';
+}
+async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
+  const userId=S.user?.id||'';
+  if(!userId||!customerPasskeySupported({management:true}))return false;
+  const promptKey=`nestly.customer.passkeyPrompt.${userId}`;
+  if(sessionStorage.getItem(promptKey)==='skipped')return false;
+  let listed=null;
+  try{listed=await sb.auth.passkey.list()}catch(error){return false}
+  if(!isCurrent())return false;
+  if(listed?.error)return false;
+  const passkeys=Array.isArray(listed?.data)?listed.data:(Array.isArray(listed?.data?.passkeys)?listed.data.passkeys:[]);
+  if(passkeys.length)return false;
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.className='modal appointment-detail-modal';overlay.tabIndex=-1;
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','customerPasskeyPromptTitle');
+    overlay.innerHTML=`<section class="modal-card" style="max-width:500px"><div class="row appointment-detail-head"><div><h2 id="customerPasskeyPromptTitle">Enable Face ID or Touch ID?</h2><p class="muted small" style="margin-top:5px">Add a passkey on this device so next time you can sign in without waiting for an SMS code.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPasskeyPromptClose" type="button" aria-label="Close passkey setup">${CUI.icon('close',{size:18})}</button></div>
+      <div class="appointment-detail-section"><p class="muted small">Your face or fingerprint stays on your device. Nestly only stores the public passkey needed to recognise this login.</p><p id="customerPasskeyPromptStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px"></p></div>
+      <div class="appointment-detail-actions"><button class="btn" id="customerPasskeyPromptAdd" type="button">${CUI.icon('add',{size:17})}<span>Enable now</span></button><button class="btn ghost" id="customerPasskeyPromptSkip" type="button">Not now</button></div></section>`;
+    document.body.appendChild(overlay);
+    let deactivate=null,done=false;
+    const close=outcome=>{
+      if(done)return;done=true;
+      if(deactivate)deactivate({restoreFocus:false});else overlay.remove();
+      resolve(outcome);
+    };
+    deactivate=CUI.activateDialog(overlay,{onClose:()=>close('dismissed'),initialFocus:'#customerPasskeyPromptAdd'});
+    overlay.addEventListener('click',event=>{if(event.target===overlay)close('dismissed')});
+    overlay.querySelector('#customerPasskeyPromptClose').onclick=()=>close('dismissed');
+    overlay.querySelector('#customerPasskeyPromptSkip').onclick=()=>{
+      sessionStorage.setItem(promptKey,'skipped');
+      close('skipped');
+    };
+    overlay.querySelector('#customerPasskeyPromptAdd').onclick=async()=>{
+      const button=overlay.querySelector('#customerPasskeyPromptAdd');
+      const status=overlay.querySelector('#customerPasskeyPromptStatus');
+      button.disabled=true;status.textContent='Follow your device prompt to enable Face ID or Touch ID.';
+      const {error}=await sb.auth.registerPasskey();
+      if(!isCurrent()||!overlay.isConnected)return close('stale');
+      if(error){
+        button.disabled=false;status.textContent=customerPasskeyErrorMessage(error,{action:'setup'});
+        return;
+      }
+      status.textContent='Face ID or Touch ID is ready for your next sign-in.';
+      CUI.announce('Passkey enabled.');
+      close('registered');
+    };
+  });
 }
 async function syncVerifiedCustomerRelationshipsOnce(isCurrent=()=>true){
   const userId=S.user?.id||null;
@@ -2442,8 +2505,7 @@ async function renderCustomerProfile(){
   };
   const passkeyHost=$('customerPasskeys'),passkeyList=$('customerPasskeyList'),passkeyStatus=$('customerPasskeyManageStatus');
   const passkeyAdd=$('customerPasskeyAdd');
-  const passkeySupported=isSecureContext&&'PublicKeyCredential' in globalThis
-    &&typeof sb.auth.registerPasskey==='function'&&typeof sb.auth.passkey?.list==='function';
+  const passkeySupported=customerPasskeySupported({management:true});
   const formatPasskeyDate=value=>{
     const date=value?new Date(value):null;
     return date&&!Number.isNaN(date.getTime())?new Intl.DateTimeFormat(undefined,{dateStyle:'medium'}).format(date):'Date unavailable';
@@ -2492,7 +2554,7 @@ async function renderCustomerProfile(){
     if(error){
       passkeyStatus.textContent=error.code==='passkey_disabled'
         ?'Face ID and Touch ID need to be enabled for this Nestly environment first.'
-        :'Passkey registration was not completed. Try again on a private device.';
+        :customerPasskeyErrorMessage(error,{action:'setup'});
       return;
     }
     passkeyStatus.textContent='Passkey added. You can use it at your next sign-in.';loadPasskeys();

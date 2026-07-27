@@ -69,6 +69,3 @@ rp_origins = [
   "https://nestly.asia",
   "https://www.nestly.asia"
 ]
-
-[auth.sms.test_otp]
-6581234567 = "888888"
