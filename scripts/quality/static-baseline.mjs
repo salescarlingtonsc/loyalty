@@ -288,7 +288,7 @@ export async function checkSupabaseClientContract(root = repoRoot) {
     const source = await readText(root, file);
     assert.match(
       source,
-      /<script src="\/runtime-config\.js"><\/script>[\s\S]*?<script src="\/runtime-config-loader\.js"><\/script>/,
+      /<script src="\/runtime-config\.js\?v=2"><\/script>[\s\S]*?<script src="\/runtime-config-loader\.js\?v=2"><\/script>/,
       `${file} must load explicit runtime config before the shared validator.`
     );
     assert.match(

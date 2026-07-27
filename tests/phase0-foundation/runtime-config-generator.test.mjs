@@ -71,6 +71,12 @@ test('generator emits a frozen public config and an exact-origin CSP in an isola
       { key:'Service-Worker-Allowed', value:'/' },
     ],
   );
+  for (const source of ['/runtime-config.js', '/runtime-config-loader.js']) {
+    assert.deepEqual(
+      vercel.headers.find((entry) => entry.source === source)?.headers,
+      [{ key:'Cache-Control', value:'no-cache, no-store, must-revalidate' }],
+    );
+  }
   assert.deepEqual(
     vercel.headers.find(({ source }) => source === '/manifest.webmanifest')?.headers,
     [

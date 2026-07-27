@@ -38,8 +38,8 @@ test('deployable public surfaces use Nestly while compatibility identifiers rema
 
   assert.match(index, /<title>Nestly —/);
   assert.match(join, /<title>Join — Nestly<\/title>/);
-  assert.match(index, /<script src="\/brand-config\.js"><\/script>[\s\S]*<script src="\/runtime-config\.js"><\/script>/);
-  assert.match(join, /<script src="\/brand-config\.js"><\/script>[\s\S]*<script src="\/runtime-config\.js"><\/script>/);
+  assert.match(index, /<script src="\/brand-config\.js"><\/script>[\s\S]*<script src="\/runtime-config\.js\?v=2"><\/script>/);
+  assert.match(join, /<script src="\/brand-config\.js"><\/script>[\s\S]*<script src="\/runtime-config\.js\?v=2"><\/script>/);
   assert.match(index, /BRAND\.downloadPrefix}-customers\.csv/);
   assert.match(index, /BRAND\.downloadPrefix}-appointments\.csv/);
   assert.match(index, /BRAND\.downloadPrefix}-signup-qr-/);

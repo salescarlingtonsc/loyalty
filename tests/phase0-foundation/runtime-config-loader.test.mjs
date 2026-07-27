@@ -186,8 +186,8 @@ function bootstrapThroughClient(source) {
 for (const page of ['app/index.html', 'app/join.html']) {
   test(`${page} loads and validates runtime config before client or network bootstrap`, async () => {
     const source = await read(page);
-    const configScript = source.indexOf('<script src="/runtime-config.js"></script>');
-    const loaderScript = source.indexOf('<script src="/runtime-config-loader.js"></script>');
+    const configScript = source.indexOf('<script src="/runtime-config.js?v=2"></script>');
+    const loaderScript = source.indexOf('<script src="/runtime-config-loader.js?v=2"></script>');
     const supabaseScript = source.indexOf('@supabase/supabase-js');
     const requireCall = source.indexOf('window.FrenlyRuntimeConfig.require(window)');
     const createClient = source.indexOf('window.supabase.createClient');
