@@ -777,6 +777,14 @@ const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
    flow here, so it's safe to turn off. */
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit',
   experimental:{passkey:true}}});
+/* Public pre-auth capability checks must not inherit a stale persisted customer
+   or staff session. A rejected historical access token would otherwise make an
+   anonymous availability RPC fail closed even while the hosted provider and
+   platform flags are ready. */
+const preAuthSb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{
+  storageKey:'nestly-preauth-anon',persistSession:false,
+  autoRefreshToken:false,detectSessionInUrl:false
+}});
 let buildIdentity=Object.freeze({available:false});
 const buildIdentityLabel=()=>buildIdentity.available
   ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';
@@ -1786,7 +1794,7 @@ const unavailableCustomerPhoneOtpCapabilities=()=>({sms:false,whatsapp:false});
 async function loadCustomerPhoneOtpCapabilities({refresh=false}={}){
   if(!CUSTOMER_PHONE_OTP_RUNTIME_ENABLED)return unavailableCustomerPhoneOtpCapabilities();
   if(customerPhoneOtpCapabilities&&!refresh)return customerPhoneOtpCapabilities;
-  const {data,error}=await sb.rpc('get_customer_phone_otp_capabilities');
+  const {data,error}=await preAuthSb.rpc('get_customer_phone_otp_capabilities');
   customerPhoneOtpCapabilities=error?unavailableCustomerPhoneOtpCapabilities():{
     sms:data?.sms===true,whatsapp:data?.whatsapp===true
   };

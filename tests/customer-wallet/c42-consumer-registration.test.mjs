@@ -114,7 +114,7 @@ test('customer registration UI is a mobile phone OTP path with an explicit fail-
   assert.match(app, /RUNTIME_CONFIG\.customerPhoneOtpEnabled===true/);
   assert.match(customerRoute, /normalizeSingaporeCustomerPhone/);
   assert.match(customerRoute, /\?`\+65\$\{local\}`:null/);
-  assert.match(customerRoute, /sb\.rpc\('get_customer_phone_otp_capabilities'\)/);
+  assert.match(customerRoute, /preAuthSb\.rpc\('get_customer_phone_otp_capabilities'\)/);
   assert.match(customerRoute, /await customerPhoneOtpAvailable\(channel\)/);
   assert.match(customerRoute, /customerCapabilities\.customer_whatsapp_otp===true/);
   assert.match(customerRoute, /signInWithOtp\(\{phone,options\}\)/);
@@ -165,6 +165,15 @@ test('production phone OTP has no fixed-number bypass and requires the explicit 
     'non-production transport remains governed by its separate runtime capability gate');
   assert.doesNotMatch(app, /888888/,
     'the Auth test OTP must remain provider configuration, never a client-side bypass');
+});
+
+test('pre-auth OTP capability checks cannot inherit a stale persisted session', () => {
+  assert.match(app, /const preAuthSb=window\.supabase\.createClient\(SB_URL,SB_KEY,\{auth:\{\s*storageKey:'nestly-preauth-anon',persistSession:false,\s*autoRefreshToken:false,detectSessionInUrl:false/);
+  assert.match(app, /preAuthSb\.rpc\('get_customer_phone_otp_capabilities'\)/);
+  assert.doesNotMatch(
+    app,
+    /const \{data,error\}=await sb\.rpc\('get_customer_phone_otp_capabilities'\)/
+  );
 });
 
 test('initial OTP render, initial send, and resend all use fresh server capability checks', () => {
