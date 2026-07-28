@@ -130,11 +130,10 @@ test('business routes fail closed before modules when approval or billing blocks
   assert.match(blocked,/href="tel:\$\{esc\(hotline\)\}"/);
 });
 
-test('new firms submit a clean non-inventory module request and enter the pending approval route',()=>{
+test('new firms cannot create owner access before the super-admin application approval route',()=>{
   const onboard=section('function renderOnboard(){','/* ============================================================================');
-  assert.match(onboard,/Submit business for approval/);
-  assert.match(onboard,/filter\(m=>m!=='settings'&&!HIDDEN_BUSINESS_SURFACES\.has\(m\)\)/);
-  assert.match(onboard,/p_modules:INDUSTRIES\[sel\]\.mods\.filter\(module=>!HIDDEN_BUSINESS_SURFACES\.has\(module\)\)/);
-  assert.match(onboard,/Business submitted for approval/);
-  assert.doesNotMatch(onboard,/Workspace ready/);
+  assert.match(onboard,/An approved invitation is required/);
+  assert.match(onboard,/id="applyBusiness"/);
+  assert.match(onboard,/renderBusinessApplication\(\)/);
+  assert.doesNotMatch(onboard,/create_business|p_modules|Workspace ready/);
 });

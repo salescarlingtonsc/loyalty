@@ -807,6 +807,12 @@
       "path": "db/migrations/20260728_nestly_v94_platform_control_intelligence.sql",
       "semanticVersion": "v94",
       "proposedDeployVersion": "20260722000212"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v95_bilingual_programmes.sql",
+      "semanticVersion": "v95",
+      "proposedDeployVersion": "20260722000213"
     }
   ]
 }

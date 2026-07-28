@@ -15,7 +15,7 @@ const section=(start,end)=>{
 test('root is customer-first while the clean business entry resolves staff before onboarding',()=>{
   const routing=section('async function route()','/* ---------- customer wallet ---------- */');
   const customerRoot=routing.indexOf("if(h==='#/'||h==='#/customer'||h==='#/customer/register'");
-  const businessEntry=routing.indexOf("if(h==='#/business'){\n      const {data:businessPersonas,error:businessPersonaError}=await sb.rpc('get_my_personas')");
+  const businessEntry=routing.indexOf("if(h==='#/business'){");
   const staffLookup=routing.indexOf("if(!S.biz){\n      const {data:personas,error:personaError}=await sb.rpc('get_my_personas')");
   const onboarding=routing.indexOf('if(!S.biz) return renderOnboard()');
 

@@ -1678,10 +1678,6 @@
       "reason": "browser RPC 'staff_decide_booking_request_v73' atomically decides a booking lifecycle request and may create its appointment; it changes booking/appointment workflow state but does not write loyalty, stored value, payment, or other customer value"
     },
     {
-      "id": "browser.rpc:app/index.html:create_business",
-      "reason": "browser RPC 'create_business' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
-    },
-    {
       "id": "browser.rpc:app/index.html:create_client_field_definition",
       "reason": "browser RPC 'create_client_field_definition' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
@@ -2336,6 +2332,50 @@
     {
       "id": "browser.rpc:app/index.html:customer_list_programmes_v89",
       "reason": "browser RPC 'customer_list_programmes_v89' is a stable, verified-customer reader that returns one canonical programme card per linked business with effective merchant capabilities, derived loyalty balance, and upcoming appointment count. It performs no DML and resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_get_presentation_editor_v95",
+      "reason": "browser RPC 'business_get_presentation_editor_v95' is the owner/super-admin scoped read model for bilingual programme copy, current brand assets, and customer-visible reward/product/service media. It performs no DML and resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_set_brand_presentation_v95",
+      "reason": "browser RPC 'business_set_brand_presentation_v95' updates only the owner-controlled customer presentation pointers and colour under optimistic concurrency. Asset tenancy and visibility are rechecked server-side; it cannot write a sale, payment, ledger, reward entitlement, stored value, or other customer-value row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_upsert_localized_copy_v95",
+      "reason": "browser RPC 'business_upsert_localized_copy_v95' writes bounded en or zh-CN customer-facing copy for an entity already belonging to the owner business, under optimistic concurrency. It cannot change programme rules, balances, transactions, entitlements, stored value, or any other economic row."
+    },
+    {
+      "id": "browser.rpc:app/v95-media-sync.js:business_publish_media_replacement_v95",
+      "reason": "browser RPC 'business_publish_media_replacement_v95' atomically publishes one storage-verified, MIME-verified customer image and, for logo/hero, updates the optimistic brand pointer/version in the same database transaction. It writes presentation metadata only and cannot write sales, payments, ledgers, rewards, entitlements, stored value, or any other customer-value row."
+    },
+    {
+      "id": "browser.rpc:app/v95-media-sync.js:business_queue_media_cleanup_v95",
+      "reason": "browser RPC 'business_queue_media_cleanup_v95' durably records a non-economic cleanup obligation only after verifying the path belongs to the owner business and is no longer referenced by published media. It cannot alter customer value."
+    },
+    {
+      "id": "browser.rpc:app/v95-media-sync.js:business_list_media_cleanup_queue_v95",
+      "reason": "browser RPC 'business_list_media_cleanup_queue_v95' is an owner/super-admin read-only projection of bounded pending Storage cleanup work. It performs no DML and resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/v95-media-sync.js:business_mark_media_cleanup_result_v95",
+      "reason": "browser RPC 'business_mark_media_cleanup_result_v95' records truthful cleanup attempt status and refuses completion while the Storage object metadata still exists. It writes only non-economic cleanup audit state and cannot alter customer value."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_get_business_presentation_v95",
+      "reason": "browser RPC 'customer_get_business_presentation_v95' is a stable verified-link customer reader for localized merchant presentation, branch-visible content, catalogue copy, media paths, tier progress, and merchant-enabled action truth. It performs no DML and resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_get_locale_preference_v95",
+      "reason": "browser RPC 'customer_get_locale_preference_v95' is a self-scoped stable read of the authenticated customer's Nestly locale preference. It performs no DML and resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_set_locale_preference_v95",
+      "reason": "browser RPC 'customer_set_locale_preference_v95' writes only the authenticated customer's non-economic en/zh-CN UI preference under optimistic concurrency. It cannot write a sale, payment, ledger, reward, entitlement, stored value, or other customer-value row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:activate_approved_business_application_v95",
+      "reason": "browser RPC 'activate_approved_business_application_v95' consumes a super-admin-approved, single-use owner invitation after exact confirmed-email matching. It creates the approved business workspace, owner staff row, default branch, draft loyalty configuration, subscription shell, sector assignment, and append-only application/workspace audit evidence. It cannot create a customer relationship, sale, payment, points balance, reward entitlement, stored value, or other customer-value row, so it resolves to no checkout-kernel value writer."
     }
   ]
 }

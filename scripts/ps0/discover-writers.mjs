@@ -6,7 +6,7 @@
 // three surfaces of the Frenly platform:
 //   1. supabase/migrations/*.sql   — SQL functions, triggers, migration backfills
 //   2. supabase/functions/**/*.ts  — Edge Functions (service-role PostgREST/RPC)
-//   3. app/index.html, app/customer-ui.js, app/join.html — browser call sites
+//   3. shipped app browser scripts — browser call sites
 //      (.from(...).insert/update/delete/upsert and .rpc('...'))
 //
 // Output: a DETERMINISTIC (sorted) JSON inventory to stdout. Re-running the tool
@@ -38,7 +38,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
 const MIGRATIONS_DIR = join(REPO, 'supabase', 'migrations');
 const FUNCTIONS_DIR = join(REPO, 'supabase', 'functions');
-const BROWSER_FILES = ['app/index.html', 'app/customer-ui.js', 'app/join.html'];
+const BROWSER_FILES = [
+  'app/index.html','app/customer-ui.js','app/join.html','app/v95-media-sync.js'
+];
 
 // ---------------------------------------------------------------------------
 // 1. The value-table registry: the declared authority for "what counts as

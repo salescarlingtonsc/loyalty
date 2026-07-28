@@ -72,8 +72,8 @@ test('SPA preserves opaque join authority through registration and removes typed
 });
 
 test('a delayed QR destination response cannot redirect after a newer route starts',async()=>{
-  const source=app.match(/async function renderCustomerRegistration\([^\n]*\)\{[\s\S]*?\n\}\n\nconst CUSTOMER_PRIMARY_NAV/)?.[0]
-    ?.replace(/\n\nconst CUSTOMER_PRIMARY_NAV[\s\S]*$/,'');
+  const source=app.match(/async function renderCustomerRegistration\([^\n]*\)\{[\s\S]*?\n\}\n\nconst CUSTOMER_LOCALES/)?.[0]
+    ?.replace(/\n\nconst CUSTOMER_LOCALES[\s\S]*$/,'');
   assert.ok(source,'customer registration renderer must be extractable');
 
   let resolvePersonas;

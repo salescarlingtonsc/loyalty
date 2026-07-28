@@ -106,8 +106,8 @@ $$;
 grant usage on schema auth to anon, authenticated, service_role;
 grant execute on function auth.uid(), auth.jwt(), auth.role() to public;
 
--- Supabase Storage bucket metadata used by the private document migration.
--- Object APIs and storage.objects remain platform-owned and are not emulated.
+-- Supabase Storage metadata used by the migration chain. These are rehearsal
+-- stubs only; hosted Supabase owns both tables and the Storage API there.
 create table if not exists storage.buckets (
   id text primary key,
   name text not null,
@@ -115,6 +115,17 @@ create table if not exists storage.buckets (
   file_size_limit bigint,
   allowed_mime_types text[]
 );
+create table if not exists storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text not null,
+  name text not null,
+  owner_id text,
+  metadata jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(bucket_id,name)
+);
+alter table storage.objects enable row level security;
 
 -- Realtime publication the chain alters
 do $$ begin

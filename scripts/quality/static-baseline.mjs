@@ -384,8 +384,10 @@ export async function checkPublicPageForms(root = repoRoot) {
     'reusable password controls must render password inputs by default.'
   );
   assertTagContains(index, /<button\b[^>]*id=["']go["'][^>]*>/, 'app auth page must retain sign-in/sign-up button.');
-  assertTagContains(index, /<input\b[^>]*id=["']bn["'][^>]*>/, 'app onboarding must retain business-name input.');
-  assertTagContains(index, /<button\b[^>]*id=["']mk["'][^>]*>/, 'app onboarding must retain workspace creation button.');
+  assertTagContains(index, /<button\b[^>]*id=["']applyBusiness["'][^>]*>/,
+    'business users without a workspace must be sent to the approval-first application.');
+  assert.doesNotMatch(index, /id=["']mk["']/,
+    'the legacy authenticated self-service workspace creation button must stay retired.');
 }
 
 function parseMigrationFilename(fileName) {
@@ -467,7 +469,7 @@ export async function checkVercelSecurityHeaders(root = repoRoot) {
   expectDirectiveValues(directives, 'frame-src', ['https://challenges.cloudflare.com']);
   expectDirectiveValues(directives, 'style-src', ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']);
   expectDirectiveValues(directives, 'font-src', ["'self'", 'https://fonts.gstatic.com', 'data:']);
-  expectDirectiveValues(directives, 'img-src', ["'self'", 'data:', 'blob:']);
+  expectDirectiveValues(directives, 'img-src', ["'self'", 'data:', 'blob:', 'https://gadpooereceldfpfxsod.supabase.co']);
   expectDirectiveValues(directives, 'connect-src', [
     "'self'",
     singaporeSupabaseUrl,

@@ -16,7 +16,8 @@ test('customer programmes are QR-joined only and automatic global matching is no
   const context=section(app,'async function loadCustomerSurfaceContext','async function renderCustomerProgrammes');
   assert.doesNotMatch(context,/syncVerifiedCustomerRelationshipsOnce|customer_sync_verified_relationships_v81/);
   const programmes=section(app,'async function renderCustomerProgrammes','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
-  assert.match(programmes,/scan a participating business/i);
+  assert.match(programmes,/scan its Nestly QR/i);
+  assert.match(programmes,/renderCustomerFirstProgrammeQuest\(\)/);
   assert.doesNotMatch(programmes,/href="#\/claim"|Add programme|customerRelationshipCheckActionHtml/);
   const claim=section(app,'async function renderCustomerClaim','function renderCustomerWalletUnavailable');
   assert.match(claim,/if\(!invitationToken\)[\s\S]*Customers cannot search for or manually link a business/);
@@ -50,7 +51,8 @@ test('customer can scan a business-issued QR from first use and from persistent 
   assert.match(scanner,/id="customerJoinScannerImage" type="file" accept="image\/\*"/);
   assert.match(scanner,/rememberPendingCustomerJoinToken\(token\);close\(\{restoreFocus:false\}\);nav\('#\/join'\)/);
   assert.match(app,/function renderCustomerFirstProgrammeQuest/);
-  assert.match(app,/Your first quest/);
+  assert.match(app,/firstQuest:'Your first programme'/);
+  assert.match(app,/id="customerFirstScan"/);
   assert.match(app,/id="customerFirstScan"/);
   assert.match(app,/id="customerNavScan"/);
 });

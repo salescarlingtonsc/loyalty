@@ -7,6 +7,9 @@ verify_jwt = false
 [functions.manage-booking]
 verify_jwt = false
 
+[functions.public-business-application]
+verify_jwt = false
+
 [functions.stripe-billing-webhook]
 verify_jwt = false
 

@@ -92,20 +92,20 @@ test('customer secondary routes are namespaced and cannot intercept merchant Boo
 test('customer navigation keeps destinations focused while notifications and profile live in the header',()=>{
   const nav=section('const CUSTOMER_PRIMARY_NAV=Object.freeze([',']);\nfunction customerPrimaryNavigation');
   assert.equal((nav.match(/\{key:/g)||[]).length,4);
-  for(const [key,href,label] of [
-    ['home','#/wallet','Home'],
-    ['programmes','#/customer/programmes','Programmes'],
-    ['bookings','#/customer/bookings','Bookings']
+  for(const [key,href,copy] of [
+    ['home','#/wallet','home'],
+    ['programmes','#/customer/programmes','programmes'],
+    ['bookings','#/customer/bookings','bookings']
   ]){
-    assert.match(nav,new RegExp(`key:'${key}',href:'${href.replaceAll('/','\\/')}'[^\\n]*label:'${label}'`));
+    assert.match(nav,new RegExp(`key:'${key}',href:'${href.replaceAll('/','\\/')}'[^\\n]*copy:'${copy}'`));
   }
-  assert.match(nav,/key:'scan',icon:'scan',label:'Scan QR'/);
+  assert.match(nav,/key:'scan',icon:'scan',copy:'scanQr'/);
   assert.doesNotMatch(nav,/key:'messages'|key:'profile'/);
   const navMarkup=section('function customerPrimaryNavigation(active)','function renderCustomerShell');
   assert.match(navMarkup,/<nav class="customer-primary-nav" aria-label="\$\{esc\(BRAND\.customerLabel\)\}">/);
   assert.match(navMarkup,/aria-current="page"/);
   assert.match(navMarkup,/CUI\.icon\(item\.icon/);
-  assert.match(navMarkup,/<span>\$\{item\.label\}<\/span>/);
+  assert.match(navMarkup,/<span>\$\{esc\(ct\(item\.copy\)\)\}<\/span>/);
 
   assert.match(app,/\.customer-primary-nav\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/s);
   assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button\{[^}]*min-height:48px/s);
@@ -120,7 +120,7 @@ test('customer shell, deep links, and profile transitions are predictable and ac
   assert.match(shell,/class="customer-account-menu"/);
   assert.match(shell,/href="#\/customer\/profile"/);
   assert.match(shell,/id="walletSignOut"/);
-  assert.match(shell,/href="#\/customer\/messages" aria-label="Open notifications"/);
+  assert.match(shell,/href="#\/customer\/messages" aria-label="\$\{esc\(ct\('notifications'\)\)\}"/);
   assert.match(shell,/walletBack'\)\.onclick=\(\)=>nav\('#\/customer\/programmes'\)/);
   assert.doesNotMatch(shell,/history\.back/);
   assert.match(app,/function focusCustomerRoute\(\)\{[\s\S]*CUI\.focusRoute\(main,\{enhanceContent:true\}\)/);
@@ -146,7 +146,7 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/renderCustomerWalletRetry\('Your programmes are temporarily unavailable\.',null,\(\)=>renderCustomerProgrammes\(\)\)/);
   assert.match(surfaces,/Your booking requests and appointments are temporarily unavailable/);
   assert.match(surfaces,/Visit the business and scan its Nestly QR/);
-  assert.match(surfaces,/No programmes yet/);
+  assert.match(surfaces,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
   assert.doesNotMatch(surfaces,/href="#\/claim"/);
   assert.match(surfaces,/Active requests, confirmed appointments, and recent request outcomes stay separate/);
   assert.match(surfaces,/Messages are not available yet/);
@@ -155,10 +155,10 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/not editable here/);
 
   const home=section('function renderActionableWalletHome','async function renderCustomerWallet');
-  assert.match(home,/Choose your nest/);
-  assert.match(home,/Pick a business to see only its points, rewards, quests, bookings, and benefits/);
+  assert.match(home,/ct\('chooseProgramme'\)/);
+  assert.match(home,/ct\('programmesIntro'\)/);
   assert.match(home,/id="customerHomeScan"/);
-  assert.match(home,/Add programme/);
+  assert.match(home,/ct\('addProgramme'\)/);
   assert.match(home,/renderCustomerFirstProgrammeQuest/);
   assert.doesNotMatch(home,/href="#\/claim"/);
 

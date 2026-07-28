@@ -159,7 +159,7 @@ test('dashboard and customer loyalty detail preserve accessible names and one pa
   }
   assert.doesNotMatch(walletCard,/h\$\{detail\?'1':'2'\}/);
   assert.match(walletCard,/<h2>\$\{esc\(business\.name\|\|'Business'\)\} rewards<\/h2>/);
-  assert.match(app,/id="walletBack" aria-label="Back to all businesses"[^>]*min-width:44px/);
+  assert.match(app,/id="walletBack" aria-label="\$\{esc\(ct\('backProgrammes'\)\)\}"[^>]*min-width:44px/);
   assert.match(loyalty,/if\(canManageLoyalty\)\{[\s\S]{0,300}?get_active_birthday_program/,
     'read-only staff must not call the owner-only birthday programme RPC');
 });

@@ -90,3 +90,20 @@ export function validManagePayload(body) {
   if (body.kind === 'cancel') return !body.proposed;
   return Number.isFinite(Date.parse(String(body.proposed || '')));
 }
+
+export function validBusinessApplicationPayload(body) {
+  const locale = String(body?.locale || 'en').toLowerCase();
+  return !!body
+    && String(body.contact_name || '').trim().length >= 2
+    && String(body.contact_name || '').trim().length <= 100
+    && String(body.contact_email || '').length <= 254
+    && EMAIL_PATTERN.test(String(body.contact_email || '').trim())
+    && PHONE_PATTERN.test(String(body.contact_phone || ''))
+    && String(body.business_name || '').trim().length >= 2
+    && String(body.business_name || '').trim().length <= 160
+    && /^[a-z0-9][a-z0-9_-]{0,62}$/.test(String(body.sector_key || ''))
+    && String(body.registration_number || '').trim().length <= 40
+    && ['en', 'zh', 'zh-cn', 'zh-sg', 'zh-hans'].includes(locale)
+    && UUID_PATTERN.test(String(body.idempotency_key || ''))
+    && body.legal_consent === true;
+}

@@ -157,7 +157,7 @@ test('C44 SPA renders separate responsive cards and a slug drill-down without va
   assert.match(app, /customerFeatures\.customer_actionable_wallet===true/i);
   assert.match(app, /sb\.rpc\('customer_get_actionable_wallet'\)/i);
   assert.match(app, /sb\.rpc\('customer_get_actionable_business',\{p_business_slug:businessSlug\}\)/i);
-  assert.match(app, /href="#\/wallet\/\$\{encodeURIComponent\(card\?\.business\?\.slug\|\|''\)\}"/i);
+  assert.match(app, /href="#\/wallet\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}"/i);
   assert.match(app, /Never expires/i);
   assert.match(app, /business\.currency/i);
   assert.match(app, /Credit balance/i);
@@ -168,7 +168,7 @@ test('C44 SPA renders separate responsive cards and a slug drill-down without va
   assert.match(app, /customerWalletRenderEpoch/i);
   assert.match(app, /if\(!isWalletCurrent\(\)\)return;/i);
   assert.match(app, /Showing the 100 highest-priority linked programmes/i);
-  assert.match(app, /let actionableCard=null;/i);
+  assert.match(app, /let actionableCard=null(?:,programmeCards=\[\])?;/i);
   assert.match(app, /customer_get_business_summary/i);
   assert.match(app, /customer_portal_capabilities/i);
   for (const reader of [

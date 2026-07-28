@@ -1716,18 +1716,84 @@
     const {main,CUI,sb,generation,isCurrent}=context;
     main.innerHTML=loading(CUI,'Onboarding','Loading the SME pipeline…','setup');
     try{
-      const [directory,board,list]=await Promise.all([
+      const [directory,board,list,applicationQueue]=await Promise.all([
         fetchFirmDirectoryV88(sb,filters,{required:true}),
         rpc(sb,'platform_get_sme_board_v76',{p_consultant:filters.consultant||null}),
-        rpc(sb,'platform_list_prospects_v76',{p_stage:null,p_consultant:filters.consultant||null,p_search:filters.search||null,p_limit:250,p_before:null})
+        rpc(sb,'platform_list_prospects_v76',{p_stage:null,p_consultant:filters.consultant||null,p_search:filters.search||null,p_limit:250,p_before:null}),
+        context.access?.role==='super_admin'
+          ?rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:filters.search||null,p_limit:100})
+          :Promise.resolve({applications:[]})
       ]);
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       const items=mergeFirmOnboardingItems(directory.items,flattenBoard(board,list));
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       main.innerHTML=onboardingHtml({board,items,CUI,filters,attentionSummary:directory.attention_summary,canWrite:context.canWrite});
+      if(context.access?.role==='super_admin'){
+        main.insertAdjacentHTML('afterbegin',businessApplicationQueueHtml(applicationQueue,CUI));
+        wireBusinessApplicationQueue({...context,applicationQueue,filters});
+      }
       wireOnboarding({...context,board,items,filters});
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Onboarding')}
+  }
+  function businessApplicationQueueHtml(payload,CUI){
+    const applications=asArray(payload,['applications']);
+    return `<section class="card" id="platformBusinessApplicationQueue" style="margin-bottom:18px">
+      <div class="row"><div><p class="eyebrow">Owner access gate</p><h2 style="margin-top:4px">Business applications awaiting approval</h2>
+      <p class="muted small" style="margin-top:5px">No owner account or workspace can be created until a super admin approves an application.</p></div>
+      <span class="spacer"></span><span class="pill">${applications.length} pending</span></div>
+      <div class="platform-card-list" style="margin-top:14px">${applications.map(application=>`<article class="card" data-business-application="${escapeHtml(application.id)}">
+        <div class="row"><div><h3>${escapeHtml(application.business_name)}</h3>
+          <p class="muted small" style="margin-top:4px">${escapeHtml(application.contact_name)} · ${escapeHtml(application.contact_email)} · ${escapeHtml(application.contact_phone)}</p>
+          <p class="muted small" style="margin-top:4px">${escapeHtml(plainLabel(application.sector_key))}${application.registration_number?` · ${escapeHtml(application.registration_number)}`:''} · ${escapeHtml(dateTime(application.submitted_at))}</p></div>
+          <span class="spacer"></span><div class="platform-actions"><button class="btn sm" type="button" data-application-decision="approved">Approve</button>
+          <button class="btn danger sm" type="button" data-application-decision="rejected">Reject</button></div></div>
+      </article>`).join('')||CUI.emptyState({iconName:'setup',title:'No applications awaiting approval',body:'New public business applications will appear here before any owner account can be created.'})}</div>
+      ${payload?.truncated?'<p class="muted small" style="margin-top:10px">Showing the newest 100 applications. Narrow the search to find another application.</p>':''}
+    </section>`;
+  }
+  function wireBusinessApplicationQueue(context){
+    const {main,CUI,sb,applicationQueue}=context;
+    const applications=asArray(applicationQueue,['applications']);
+    main.querySelectorAll('[data-business-application]').forEach(card=>{
+      const application=applications.find(item=>String(item.id)===card.dataset.businessApplication);
+      card.querySelectorAll('[data-application-decision]').forEach(button=>{
+        button.onclick=()=>businessApplicationDecisionModal(application,button.dataset.applicationDecision,context);
+      });
+    });
+  }
+  function businessApplicationDecisionModal(application,decision,context){
+    const {CUI,sb}=context,isApproval=decision==='approved';
+    modal({title:isApproval?'Approve owner application':'Reject owner application',
+      submitLabel:isApproval?'Approve and issue secure invitation':'Reject application',CUI,
+      body:`<div class="card"><b>${escapeHtml(application.business_name)}</b><p class="muted small" style="margin-top:5px">${escapeHtml(application.contact_name)} · ${escapeHtml(application.contact_email)}</p></div>
+        <label for="businessApplicationDecisionReason">Decision note</label>
+        <textarea id="businessApplicationDecisionReason" name="reason" rows="4" required placeholder="${isApproval?'Approval basis and onboarding note':'Explain what must change before re-applying'}"></textarea>
+        ${isApproval?'<p class="muted small" style="margin-top:10px">The secure owner invitation is shown once after approval. Copy it before closing.</p>':''}`,
+      onSubmit:async(form,controls)=>{
+        const result=await rpc(sb,'platform_decide_business_application_v95',{
+          p_application:application.id,p_decision:decision,
+          p_reason:String(form.get('reason')||'').trim(),p_expected_version:application.version
+        });
+        if(isApproval){
+          const token=String(result?.invitation_token||'');
+          if(!/^[0-9a-f]{64}$/i.test(token))throw new Error('Approval succeeded but the one-time invitation was not returned. Inspect the application before proceeding.');
+          const url=new URL('/business',globalObject.location.origin);url.searchParams.set('invite',token);
+          controls.overlay.querySelector('.modal-card').innerHTML=`<h2>Application approved</h2>
+            <p class="muted small" style="margin-top:7px">Copy this secure invitation now. Nestly stores only its hash and cannot show the token again.</p>
+            <label for="approvedOwnerInviteUrl">Approved owner link</label><textarea id="approvedOwnerInviteUrl" rows="4" readonly>${escapeHtml(url.toString())}</textarea>
+            <div class="row" style="margin-top:14px"><button type="button" class="btn" id="copyApprovedOwnerInvite">Copy secure owner link</button>
+            <span class="spacer"></span><button type="button" class="btn ghost" id="closeApprovedOwnerInvite">Done</button></div>`;
+          controls.overlay.querySelector('#copyApprovedOwnerInvite').onclick=async()=>{
+            await navigator.clipboard.writeText(url.toString());CUI.announce('Secure owner invitation copied.');
+          };
+          controls.overlay.querySelector('#closeApprovedOwnerInvite').onclick=async()=>{
+            controls.close();await renderOnboarding(context);
+          };
+          return;
+        }
+        controls.close();await renderOnboarding(context);CUI.announce('Business application rejected.');
+      }});
   }
   function wireOnboarding(context) {
     const {main,CUI,items,filters}=context;

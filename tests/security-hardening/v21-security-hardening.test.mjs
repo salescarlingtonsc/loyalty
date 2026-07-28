@@ -14,7 +14,7 @@ function sqlArray(source, name) {
 }
 
 function rpcNames(source) {
-  return new Set([...source.matchAll(/\.rpc\('([a-z0-9_]+)'/gi)].map((item) => item[1]));
+  return new Set([...source.matchAll(/\.rpc\(\s*'([a-z0-9_]+)'/gi)].map((item) => item[1]));
 }
 
 function authenticatedGrantNames(source) {
@@ -51,8 +51,8 @@ test('v21 is the single canonical post-v20 security migration', async () => {
   assert.match(v21, /^commit;/im);
 });
 
-test('authenticated RPC allowlist plus exact forward v41-C46/v47-v94 grants cover the shipped SPA', async () => {
-  const [app, migration, v41, c42, c44, c45, c46, v47, v48, v49, v50, v51, v51a, v51b, v52, v53, v53a, v54, v55, v56, v57, v58, v60, v61, v62, v63, v64, v66, v67, v68a, v68c, v69, v70, v72, v73, v74, v75, v76, v77, v78, v79, v80, v81, v82, v83, v84, v85, v86, v87, v88, v89, v90, v91, v93, v94] = await Promise.all([
+test('authenticated RPC allowlist plus exact forward v41-C46/v47-v95 grants cover the shipped SPA', async () => {
+  const [app, migration, v41, c42, c44, c45, c46, v47, v48, v49, v50, v51, v51a, v51b, v52, v53, v53a, v54, v55, v56, v57, v58, v60, v61, v62, v63, v64, v66, v67, v68a, v68c, v69, v70, v72, v73, v74, v75, v76, v77, v78, v79, v80, v81, v82, v83, v84, v85, v86, v87, v88, v89, v90, v91, v93, v94, v95] = await Promise.all([
     read('app/index.html'), read(migrationPath),
     read('db/migrations/20260721_frenly_v41_customer_module_hardening.sql'),
     read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
@@ -106,10 +106,11 @@ test('authenticated RPC allowlist plus exact forward v41-C46/v47-v94 grants cove
     read('db/migrations/20260727_nestly_v90_production_readiness.sql'),
     read('db/migrations/20260727_nestly_v91_customer_game_notifications.sql'),
     read('db/migrations/20260728_nestly_v93_branch_scoped_merchant_redemption.sql'),
-    read('db/migrations/20260728_nestly_v94_platform_control_intelligence.sql')
+    read('db/migrations/20260728_nestly_v94_platform_control_intelligence.sql'),
+    read('db/migrations/20260728_nestly_v95_bilingual_programmes.sql')
   ]);
   const allowlist = sqlArray(migration, 'v_authenticated_rpc_names');
-  const forward = new Set([...authenticatedGrantNames(v41), ...authenticatedGrantNames(c42), ...authenticatedGrantNames(c44), ...authenticatedGrantNames(c45), ...authenticatedGrantNames(c46), ...authenticatedGrantNames(v47), ...authenticatedGrantNames(v48), ...authenticatedGrantNames(v49), ...authenticatedGrantNames(v50), ...authenticatedGrantNames(v51), ...authenticatedGrantNames(v51a), ...authenticatedGrantNames(v51b), ...authenticatedGrantNames(v52), ...authenticatedGrantNames(v53), ...authenticatedGrantNames(v53a), ...authenticatedGrantNames(v54), ...authenticatedGrantNames(v55), ...authenticatedGrantNames(v56), ...authenticatedGrantNames(v57), ...authenticatedGrantNames(v58), ...authenticatedGrantNames(v60), ...authenticatedGrantNames(v61), ...authenticatedGrantNames(v62), ...authenticatedGrantNames(v63), ...authenticatedGrantNames(v64), ...authenticatedGrantNames(v66), ...authenticatedGrantNames(v67), ...authenticatedGrantNames(v68a), ...authenticatedGrantNames(v68c), ...authenticatedGrantNames(v69), ...authenticatedGrantNames(v70), ...authenticatedGrantNames(v72), ...authenticatedGrantNames(v73), ...authenticatedGrantNames(v74), ...authenticatedGrantNames(v75), ...authenticatedGrantNames(v76), ...authenticatedGrantNames(v77), ...authenticatedGrantNames(v78), ...authenticatedGrantNames(v79), ...authenticatedGrantNames(v80), ...authenticatedGrantNames(v81), ...authenticatedGrantNames(v82), ...authenticatedGrantNames(v83), ...authenticatedGrantNames(v84), ...authenticatedGrantNames(v85), ...authenticatedGrantNames(v86), ...authenticatedGrantNames(v87), ...authenticatedGrantNames(v88), ...authenticatedGrantNames(v89), ...authenticatedGrantNames(v90), ...authenticatedGrantNames(v91), ...authenticatedGrantNames(v93), ...authenticatedGrantNames(v94)]);
+  const forward = new Set([...authenticatedGrantNames(v41), ...authenticatedGrantNames(c42), ...authenticatedGrantNames(c44), ...authenticatedGrantNames(c45), ...authenticatedGrantNames(c46), ...authenticatedGrantNames(v47), ...authenticatedGrantNames(v48), ...authenticatedGrantNames(v49), ...authenticatedGrantNames(v50), ...authenticatedGrantNames(v51), ...authenticatedGrantNames(v51a), ...authenticatedGrantNames(v51b), ...authenticatedGrantNames(v52), ...authenticatedGrantNames(v53), ...authenticatedGrantNames(v53a), ...authenticatedGrantNames(v54), ...authenticatedGrantNames(v55), ...authenticatedGrantNames(v56), ...authenticatedGrantNames(v57), ...authenticatedGrantNames(v58), ...authenticatedGrantNames(v60), ...authenticatedGrantNames(v61), ...authenticatedGrantNames(v62), ...authenticatedGrantNames(v63), ...authenticatedGrantNames(v64), ...authenticatedGrantNames(v66), ...authenticatedGrantNames(v67), ...authenticatedGrantNames(v68a), ...authenticatedGrantNames(v68c), ...authenticatedGrantNames(v69), ...authenticatedGrantNames(v70), ...authenticatedGrantNames(v72), ...authenticatedGrantNames(v73), ...authenticatedGrantNames(v74), ...authenticatedGrantNames(v75), ...authenticatedGrantNames(v76), ...authenticatedGrantNames(v77), ...authenticatedGrantNames(v78), ...authenticatedGrantNames(v79), ...authenticatedGrantNames(v80), ...authenticatedGrantNames(v81), ...authenticatedGrantNames(v82), ...authenticatedGrantNames(v83), ...authenticatedGrantNames(v84), ...authenticatedGrantNames(v85), ...authenticatedGrantNames(v86), ...authenticatedGrantNames(v87), ...authenticatedGrantNames(v88), ...authenticatedGrantNames(v89), ...authenticatedGrantNames(v90), ...authenticatedGrantNames(v91), ...authenticatedGrantNames(v93), ...authenticatedGrantNames(v94), ...authenticatedGrantNames(v95)]);
   const required = rpcNames(app);
   for (const rpc of required) {
     assert.ok(allowlist.has(rpc) || forward.has(rpc),
@@ -190,14 +191,16 @@ test('v21 retains authenticated-only execution on the exact legacy referral reso
   assert.match(runtimeTest, /unexpected resolve_legacy_referral overload is authenticated-executable/i);
 });
 
-test('service-only allowlist plus v89 replacements exactly cover the Edge Function call graph', async () => {
-  const [migration, v89, ...edgeSources] = await Promise.all([
+test('service-only allowlist plus v89/v95 replacements exactly cover the Edge Function call graph', async () => {
+  const [migration, v89, v95, ...edgeSources] = await Promise.all([
     read(migrationPath),
     read('db/migrations/20260727_nestly_v89_customer_qr_redemption_platform_access.sql'),
+    read('db/migrations/20260728_nestly_v95_bilingual_programmes.sql'),
     read('supabase/functions/_shared/gateway.ts'),
     read('supabase/functions/public-join/index.ts'),
     read('supabase/functions/public-booking/index.ts'),
     read('supabase/functions/manage-booking/index.ts'),
+    read('supabase/functions/public-business-application/index.ts'),
   ]);
   const retiredByV89 = new Set(['internal_public_join', 'internal_public_join_page']);
   const allowlist = new Set(
@@ -205,6 +208,7 @@ test('service-only allowlist plus v89 replacements exactly cover the Edge Functi
       .filter((name) => !retiredByV89.has(name))
   );
   for (const name of serviceGrantNames(v89)) allowlist.add(name);
+  for (const name of serviceGrantNames(v95)) allowlist.add(name);
   const required = new Set(edgeSources.flatMap((source) => [...rpcNames(source)]));
   assert.deepEqual([...allowlist].sort(), [...required].sort());
   assert.match(v89, /revoke all on function public\.internal_public_join_page\(text\)\s+from public,anon,authenticated,service_role/i);

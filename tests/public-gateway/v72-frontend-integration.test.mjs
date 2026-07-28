@@ -93,7 +93,7 @@ test('customer booking reader uses cursor pagination with truthful continuation 
   assert.match(bookings,/incoming\.filter\(item=>!seen\.has\(item\.request_id\)\)/);
   assert.match(bookings,/Pending and waitlisted booking requests are temporarily unavailable/);
   assert.match(bookings,/Confirmed appointments could not be discovered/);
-  assert.match(app,/Pick a business to see only its points, rewards, quests, bookings, and benefits/);
+  assert.match(app,/programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity\.'/);
 });
 
 test('registered zero-programme customers qualify; staff-only accounts do not',()=>{

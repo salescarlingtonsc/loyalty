@@ -78,9 +78,17 @@ Deploy with:
 supabase functions deploy public-join --no-verify-jwt
 supabase functions deploy public-booking --no-verify-jwt
 supabase functions deploy manage-booking --no-verify-jwt
+supabase functions deploy public-business-application --no-verify-jwt
 ```
 
-Do not deploy the frontend until the migration and all three functions are live and smoke-tested.
+The v95 `public-business-application` handler is the only public application-write path. It
+requires the distinct `business_application` Turnstile action, applies broad abuse and narrower
+write limits, and invokes the service-role-only `internal_submit_business_application_v95`
+contract. Browsers cannot invoke that write RPC directly. Its GET status response uses only an
+unguessable public reference and returns no applicant PII, decision reason, invitation, or token.
+
+Do not deploy the frontend until the migration and all public functions it calls are live and
+smoke-tested.
 
 ## Nestly platform billing functions
 

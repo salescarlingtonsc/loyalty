@@ -663,6 +663,12 @@ input[type=range]:focus{box-shadow:none}
 .customer-account-menu{position:relative}.customer-account-menu summary{list-style:none}.customer-account-menu summary::-webkit-details-marker{display:none}
 .customer-account-menu .menu{right:0;left:auto;min-width:210px;padding:7px}.customer-account-menu .menu a,.customer-account-menu .menu button{display:flex;width:100%;align-items:center;gap:9px;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-weight:600;text-align:left;cursor:pointer}
 .customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover{background:var(--bg)}
+.customer-locale-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;padding:4px;border-radius:11px;background:var(--bg)}
+.customer-account-menu .customer-locale-switch button{justify-content:center;min-height:44px;padding:7px}
+.customer-account-menu .customer-locale-switch button[aria-pressed="true"]{background:#fff;color:var(--coral);box-shadow:var(--shadow)}
+.customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
+.customer-sound-toggle input{width:22px;min-height:22px;accent-color:var(--coral)}
+.customer-sound-toggle:has(input:disabled){opacity:.58;cursor:not-allowed}
 .customer-avatar{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--coral);cursor:pointer}
 .customer-first-quest{overflow:hidden;padding:0;background:linear-gradient(145deg,#fff 30%,#fff1e9);border-color:rgba(194,65,53,.2)}
 .customer-first-quest-copy{padding:clamp(24px,6vw,48px);text-align:center}.customer-first-quest-icon{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(145deg,var(--coral),#f58c55);color:#fff;box-shadow:0 16px 34px rgba(194,65,53,.25)}
@@ -688,6 +694,25 @@ input[type=range]:focus{box-shadow:none}
 .customer-home-quick b{display:block;font-size:14px}.customer-home-quick p{margin-top:3px;line-height:1.4}
 .customer-programme-list,.customer-booking-list{display:grid;gap:12px}
 .customer-programme-card{display:block;min-height:44px}
+.customer-programme-card-v95{position:relative;overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.customer-programme-card-v95:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.customer-programme-card-accent{height:8px;background:var(--merchant-accent,var(--coral))}
+.customer-programme-card-body{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:13px;padding:17px}
+.customer-programme-logo{width:54px;height:54px;display:grid;place-items:center;overflow:hidden;border-radius:15px;background:color-mix(in srgb,var(--merchant-accent,var(--coral)) 13%,#fff);color:var(--merchant-accent,var(--coral));font-size:20px;font-weight:850}
+.customer-programme-logo img{width:100%;height:100%;object-fit:cover}
+.customer-merchant-hero{position:relative;overflow:hidden;min-height:280px;padding:0;border:0;border-radius:24px;background:var(--merchant-accent,#28212f);color:#fff;box-shadow:0 20px 48px rgba(23,22,26,.2)}
+.customer-merchant-hero-media{position:absolute;inset:0}.customer-merchant-hero-media img{width:100%;height:100%;object-fit:cover}
+.customer-merchant-hero-media::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(15,13,18,.82),rgba(15,13,18,.44) 55%,rgba(15,13,18,.12))}
+.customer-merchant-hero-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-height:280px;padding:clamp(22px,5vw,42px);max-width:680px}
+.customer-merchant-hero .customer-programme-logo{width:66px;height:66px;margin-bottom:18px;background:rgba(255,255,255,.94);color:var(--merchant-accent,var(--coral));box-shadow:var(--shadow)}
+.customer-merchant-hero h1{font-size:clamp(2rem,6vw,3.25rem);line-height:1.02;letter-spacing:-.045em}.customer-merchant-hero p{color:rgba(255,255,255,.86);line-height:1.55;margin-top:8px}
+.customer-balance-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,.75fr);gap:14px;margin-top:14px}
+.customer-balance-value{font-size:clamp(2.2rem,7vw,4rem);font-weight:850;letter-spacing:-.055em;line-height:1}
+.customer-tier-track{height:10px;margin-top:13px;border-radius:999px;background:var(--hair);overflow:hidden}.customer-tier-track span{display:block;height:100%;width:var(--tier-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral));transition:width .25s var(--ease)}
+.customer-perks-grid,.customer-offers-grid,.customer-rewards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin-top:12px}
+.customer-perk-card,.customer-offer-card,.customer-reward-card{overflow:hidden;min-height:120px;padding:16px;border:1px solid var(--hair);border-radius:15px;background:#fff}
+.customer-perk-card img,.customer-offer-card img,.customer-reward-card img{width:calc(100% + 32px);height:132px;margin:-16px -16px 14px;object-fit:cover;background:var(--bg)}
+.customer-section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}.customer-section-title h2{font-size:1.35rem}
 .customer-programme-guide{display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid var(--hair);border-radius:13px;background:#fff}
 .customer-programme-guide .cui-icon{flex:0 0 auto;color:var(--coral)}
 .customer-booking-business{padding:18px}
@@ -743,7 +768,8 @@ input[type=range]:focus{box-shadow:none}
   .customer-primary-nav{position:fixed;top:auto;bottom:max(8px,env(safe-area-inset-bottom));left:10px;right:10px;z-index:70;margin:0;padding:5px;gap:2px;border-radius:17px}
   .customer-primary-nav a{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
-  .customer-home-grid,.customer-profile-grid{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
+  .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
+  .customer-programme-card-body{grid-template-columns:48px minmax(0,1fr)}.customer-programme-card-body>.pill{grid-column:2}
 }
 @media(max-width:560px){
   .wallet-shell{padding:max(20px,env(safe-area-inset-top))
@@ -798,6 +824,7 @@ input[type=range]:focus{box-shadow:none}
 <script src="/grow-recommender.js"></script>
 <script src="/platform-crm-utils.js"></script>
 <script src="/platform-console.js?v=20260727-v89"></script>
+<script src="/v95-media-sync.js?v=20260728-atomic-media"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
@@ -1115,7 +1142,7 @@ const beginRouteInvocation=()=>{
   return ()=>routeRenderEpoch===routeEpoch;
 };
 
-let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[]};
+let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
 let customerFeatureCapabilities=null;
 let customerPhoneOtpCapabilities=null;
 let customerRelationshipSyncState={userId:null,attempted:false,result:null};
@@ -1204,9 +1231,11 @@ function resetClientSessionState({preserveInvitation=false}={}){
   const joinToken=preserveInvitation?pendingCustomerJoinToken:'';
   if(!preserveInvitation)rememberPendingCustomerJoinToken('');
   rememberCustomerRecoveryVerified(false);
-  S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[]};
+  S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';pendingCustomerDestination='';selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';settingsActiveTab='workspace';
+  customerLocaleLoadedFor='';customerLocaleVersion=0;
+  customerLocale=normalizeCustomerLocale(navigator.languages?.[0]||navigator.language||'en');
 }
 const $=(id)=>document.getElementById(id);
 const root=$('root');
@@ -1655,6 +1684,8 @@ async function route(){
       });
     }
     if(h==='#/business'){
+      const approvedInvite=String(location.search||'').match(/(?:^\?|&)invite=([0-9a-f]{64})(?:&|$)/i)?.[1]?.toLowerCase()||'';
+      if(/^[0-9a-f]{64}$/.test(approvedInvite))return renderApprovedBusinessActivation(approvedInvite,isRouteCurrent);
       const {data:businessPersonas,error:businessPersonaError}=await sb.rpc('get_my_personas');
       if(!isRouteCurrent())return;
       if(businessPersonaError)return renderPersonaResolutionUnavailable();
@@ -2379,17 +2410,117 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
   return renderCustomerPasswordSignIn(isRouteCurrent);
 }
 
+const CUSTOMER_LOCALES=Object.freeze(['en','zh-CN']);
+const CUSTOMER_COPY=Object.freeze({
+  en:Object.freeze({
+    home:'Home',programmes:'Programmes',bookings:'Bookings',scanQr:'Scan QR',
+    notifications:'Notifications',accountMenu:'Open account menu',profilePasskeys:'Profile & passkeys',signOut:'Sign out',
+    language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to programmes',
+    chooseProgramme:'Choose a programme',yourProgrammes:'Your programmes',
+    programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
+    addProgramme:'Add programme',openProgramme:'Open {business} programme',localBusiness:'Local business',
+    rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your programme home to see what is next.',
+    firstQuest:'Your first programme',scanLoyaltyQr:'Scan a loyalty QR',
+    firstQuestBody:'At a participating business, scan the Nestly QR shown at the counter. That verified programme becomes your first programme.',
+    scanBusinessQr:'Scan business QR',qrOnlyHelp:'Businesses can only be added with a business-issued QR.',
+    balance:'Balance',nextReward:'Next reward',tierProgress:'Tier progress',benefits:'Benefits & perks',
+    offers:'Birthday & seasonal offers',rewards:'Rewards',activityHistory:'Activity & history',
+    noBenefits:'No extra perks are available right now.',noOffers:'No birthday or seasonal offers are available right now.',
+    noRewards:'No rewards are available right now.',programmeUnavailable:'This programme could not be loaded.',
+    retry:'Try again',bookNow:'Book now',requestVisit:'Request your next visit with {business}.',
+    points:'points',stamps:'stamps',currentTier:'Current tier',nextTier:'Next: {tier}',
+    noTier:'Every visit still counts.',terms:'Terms',availableNow:'Available now',
+    loadingProgramme:'Loading programme…',loadingProgrammes:'Loading your programmes…',
+    successSounds:'Success sounds',soundOff:'Off by default',soundOn:'On',
+    soundHelp:'Optional. Sounds stay off when reduced motion is requested.',
+    disconnect:'Disconnect',merchantProgramme:'{business} programme',featured:'Featured products & services',
+    noFeatured:'This business has not published featured items yet.'
+  }),
+  'zh-CN':Object.freeze({
+    home:'首页',programmes:'会员计划',bookings:'预约',scanQr:'扫码',
+    notifications:'通知',accountMenu:'打开账户菜单',profilePasskeys:'个人资料与通行密钥',signOut:'退出登录',
+    language:'语言',english:'English',chinese:'简体中文',backProgrammes:'返回会员计划',
+    chooseProgramme:'选择会员计划',yourProgrammes:'我的会员计划',
+    programmesIntro:'选择商家，查看奖励、权益、预约和活动记录。',
+    addProgramme:'添加计划',openProgramme:'打开 {business} 会员计划',localBusiness:'本地商家',
+    rewardReady:'奖励可领取，打开即可兑换。',continueProgramme:'打开会员计划，查看下一步。',
+    firstQuest:'您的第一个会员计划',scanLoyaltyQr:'扫描会员二维码',
+    firstQuestBody:'到访参与商家时，扫描柜台展示的 Nestly 二维码。验证后，该计划会加入您的账户。',
+    scanBusinessQr:'扫描商家二维码',qrOnlyHelp:'只能通过商家发出的二维码添加会员计划。',
+    balance:'余额',nextReward:'下一个奖励',tierProgress:'等级进度',benefits:'会员权益',
+    offers:'生日与季节优惠',rewards:'奖励',activityHistory:'活动与记录',
+    noBenefits:'目前没有额外权益。',noOffers:'目前没有生日或季节优惠。',
+    noRewards:'目前没有可用奖励。',programmeUnavailable:'暂时无法加载此会员计划。',
+    featured:'精选产品与服务',noFeatured:'商家暂未发布精选项目。',
+    retry:'重试',bookNow:'立即预约',requestVisit:'预约下次到访 {business}。',
+    points:'积分',stamps:'印花',currentTier:'当前等级',nextTier:'下一等级：{tier}',
+    noTier:'每次到访都会累计。',terms:'条款',availableNow:'现可使用',
+    loadingProgramme:'正在加载会员计划…',loadingProgrammes:'正在加载您的会员计划…',
+    successSounds:'成功提示音',soundOff:'默认关闭',soundOn:'开启',
+    soundHelp:'可选。启用“减少动态效果”时，提示音仍会保持关闭。',
+    disconnect:'解除关联',merchantProgramme:'{business} 会员计划'
+  })
+});
+const normalizeCustomerLocale=value=>String(value||'').toLowerCase().startsWith('zh')?'zh-CN':'en';
+let customerLocale=normalizeCustomerLocale(navigator.languages?.[0]||navigator.language||'en');
+let customerLocaleVersion=0;
+let customerLocaleLoadedFor='';
+let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
+function ct(key,vars={}){
+  let value=CUSTOMER_COPY[customerLocale]?.[key]??CUSTOMER_COPY.en[key]??key;
+  for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
+  return value;
+}
+function customerMediaUrlV95(value){
+  const raw=String(value||'').trim();
+  if(!raw)return '';
+  const publicPrefix='/storage/v1/object/public/business-public/';
+  const objectPathPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(?:logo|hero|programme|reward|product|service|benefit|offer)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:png|jpe?g|webp|gif)$/i;
+  const origin=SB_URL.replace(/\/+$/,'');
+  const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
+  if(relative&&objectPathPattern.test(relative))return origin+raw;
+  const absolutePrefix=origin+publicPrefix;
+  const absolutePath=raw.startsWith(absolutePrefix)?raw.slice(absolutePrefix.length):'';
+  if(absolutePath&&objectPathPattern.test(absolutePath))return raw;
+  return '';
+}
+async function loadCustomerLocaleV95(isCurrent=()=>true){
+  const userId=S.user?.id||'';
+  if(!userId||customerLocaleLoadedFor===userId)return;
+  const {data,error}=await sb.rpc('customer_get_locale_preference_v95');
+  if(!isCurrent())return;
+  customerLocaleLoadedFor=userId;
+  if(!error&&data){
+    customerLocale=normalizeCustomerLocale(data.locale);
+    customerLocaleVersion=Number(data.version||0);
+  }else if(S.customerProfile?.preferred_language){
+    customerLocale=normalizeCustomerLocale(S.customerProfile.preferred_language);
+  }
+}
+async function setCustomerLocaleV95(locale){
+  const next=normalizeCustomerLocale(locale);
+  if(next===customerLocale)return true;
+  const previous=customerLocale;customerLocale=next;
+  const {data,error}=await sb.rpc('customer_set_locale_preference_v95',{
+    p_locale:next,p_expected_version:customerLocaleVersion
+  });
+  if(error){customerLocale=previous;toast(CUSTOMER_COPY.en.programmeUnavailable);return false}
+  customerLocale=normalizeCustomerLocale(data?.locale||next);
+  customerLocaleVersion=Number(data?.version??customerLocaleVersion+1);
+  if(S.customerProfile)S.customerProfile.preferred_language=customerLocale==='zh-CN'?'zh':'en';
+  route();return true;
+}
 const CUSTOMER_PRIMARY_NAV=Object.freeze([
-  {key:'home',href:'#/wallet',icon:'home',label:'Home'},
-  {key:'programmes',href:'#/customer/programmes',icon:'loyalty',label:'Programmes'},
-  {key:'bookings',href:'#/customer/bookings',icon:'bookings',label:'Bookings'},
-  {key:'scan',icon:'scan',label:'Scan QR'}
+  {key:'home',href:'#/wallet',icon:'home',copy:'home'},
+  {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'programmes'},
+  {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'},
+  {key:'scan',icon:'scan',copy:'scanQr'}
 ]);
 function customerPrimaryNavigation(active){
   return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
     ${CUSTOMER_PRIMARY_NAV.map(item=>item.key==='scan'
-      ?`<button type="button" id="customerNavScan">${CUI.icon(item.icon,{size:19})}<span>${item.label}</span></button>`
-      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''}>${CUI.icon(item.icon,{size:19})}<span>${item.label}</span></a>`).join('')}
+      ?`<button type="button" id="customerNavScan">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span></button>`
+      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''}>${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span></a>`).join('')}
   </nav>`;
 }
 function customerJoinTokenFromQr(value,currentUrl=location.href){
@@ -2512,18 +2643,24 @@ function customerSurfaceQualifies(profile,customerPersonas=[]){
 }
 function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[]}={}){
   root.innerHTML=`<div class="wallet-shell customer-shell"><div class="wallet-inner"><header class="wallet-head">
-    ${businessSlug?`<button class="btn ghost sm" id="walletBack" aria-label="Back to all businesses" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
+    ${businessSlug?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(ct('backProgrammes'))}" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
     <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    <span class="spacer"></span><span id="customerInboxBellSlot"><a class="customer-inbox-bell" href="#/customer/messages" aria-label="Open notifications" title="Notifications">${CUI.icon('bell',{size:19})}</a></span>
+    <span class="spacer"></span><span id="customerInboxBellSlot"><a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a></span>
     ${customerWorkspaceSwitchHtml(staffWorkspaces)}
-    <details class="customer-account-menu"><summary class="customer-avatar" aria-label="Open account menu">${CUI.icon('customers',{size:20})}</summary><div class="menu">
-      <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>Profile &amp; passkeys</span></a>
-      <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>Sign out</span></button>
+    <details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu">
+      <div class="customer-locale-switch" role="group" aria-label="${esc(ct('language'))}"><button type="button" data-customer-locale="en" aria-pressed="${customerLocale==='en'}">EN</button><button type="button" data-customer-locale="zh-CN" aria-pressed="${customerLocale==='zh-CN'}">简</button></div>
+      <a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a>
+      <button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button>
     </div></details>
     </header>${customerPrimaryNavigation(active)}
     <main id="main" tabindex="-1"><div id="walletBody">${body}</div></main>
     ${legalLinks()}</div></div>`;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  document.querySelectorAll('[data-customer-locale]').forEach(button=>button.onclick=async()=>{
+    if(normalizeCustomerLocale(button.dataset.customerLocale)===customerLocale)return;
+    document.querySelectorAll('[data-customer-locale]').forEach(choice=>choice.disabled=true);
+    await setCustomerLocaleV95(button.dataset.customerLocale);
+  });
   if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
   if($('walletBack'))$('walletBack').onclick=()=>nav('#/customer/programmes');
 }
@@ -2668,33 +2805,33 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true){
   const profile=profileResult.error?null:(profileResult.data?.profile??null);
   const registeredCustomer=profile!==null;
   if(!customerSurfaceQualifies(profile,customer)){renderNoCustomerDestination(staff);return null}
-  S.hasCustomerPersona=true;
+  S.hasCustomerPersona=true;S.customerProfile=profile;
+  await loadCustomerLocaleV95(isCurrent);
+  if(!isCurrent())return null;
   return {features,profile,registeredCustomer,staff,customer,staffWorkspaces:staff};
 }
 
 async function renderCustomerProgrammes(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
-  renderCustomerShell({active:'programmes',staffWorkspaces:context.staffWorkspaces,body:'<div class="card"><p class="muted">Loading your programmes…</p></div>'});
+  renderCustomerShell({active:'programmes',staffWorkspaces:context.staffWorkspaces,body:`<div class="card"><p class="muted">${esc(ct('loadingProgrammes'))}</p></div>`});
   const scanGuide=`<div class="customer-programme-guide" role="note">${CUI.icon('scan',{size:22})}<div><b>Joining a new programme</b><p class="muted small" style="margin-top:4px">Visit the business and scan its Nestly QR. After you sign in, the verified programme appears here automatically.</p></div></div>`;
   if(context.features.customer_actionable_wallet===true){
     const {data,error}=await sb.rpc('customer_get_actionable_wallet');
     if(!isCurrent())return;
     if(error)return renderCustomerWalletRetry('Your programmes are temporarily unavailable.',null,()=>renderCustomerProgrammes());
     const cards=Array.isArray(data?.cards)?data.cards:[];
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Programmes</h1><p class="muted">Every verified business stays separate, with its own rewards, value, visits, and terms.</p></div></header>${scanGuide}
-      ${data?.truncated?'<div class="card" role="status"><p class="muted small">Showing the 100 highest-priority linked programmes.</p></div>':''}
-      ${cards.length?`<div class="customer-programme-list">${cards.map(card=>`<a class="customer-programme-card" href="#/wallet/${encodeURIComponent(card?.business?.slug||'')}" aria-label="Open ${esc(card?.business?.name||'business')} programme">${actionableWalletCardMarkup(card)}</a>`).join('')}</div>`
-        :`<section class="card"><h2>No programmes yet</h2><p class="muted small" style="margin-top:6px">Your programme will appear after you scan a participating business’s Nestly QR and finish its join flow.</p></section>`}`;
+    if(!cards.length){renderCustomerFirstProgrammeQuest();return}
+    renderActionableWalletHome(data);
     focusCustomerRoute();return;
   }
   const {data,error}=await sb.rpc('customer_get_wallet');
   if(!isCurrent())return;
   if(error)return renderCustomerWalletRetry('Your programmes are temporarily unavailable.',null,()=>renderCustomerProgrammes());
   const cards=Array.isArray(data)?data:[];
+  if(!cards.length){renderCustomerFirstProgrammeQuest();return}
   $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Programmes</h1><p class="muted">Every verified business keeps its rewards and balances separate.</p></div></header>${scanGuide}
-    ${cards.length?`<div class="customer-programme-list">${cards.map(card=>{const b=card?.business||{},loyalty=card?.loyalty||{};return `<a class="card customer-programme-card" href="#/wallet/${encodeURIComponent(b.slug||'')}"><h2>${esc(b.name||'Business')}</h2><p class="muted small" style="margin-top:4px">${esc(b.industry||'Local business')}</p><div class="wallet-metrics"><div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'Points')}</span><b>${Number(loyalty.balance||0)}</b></div><div class="wallet-metric"><span class="muted small">Upcoming bookings</span><b>${Number(card?.upcoming_appointments?.count||0)}</b></div></div></a>`}).join('')}</div>`
-      :`<section class="card"><h2>No programmes yet</h2><p class="muted small" style="margin-top:6px">Your programme will appear after you scan a participating business’s Nestly QR and finish its join flow.</p></section>`}`;
+    <div class="customer-programme-list">${cards.map(card=>{const b=card?.business||{},loyalty=card?.loyalty||{};return `<a class="card customer-programme-card" href="#/wallet/${encodeURIComponent(b.slug||'')}"><h2>${esc(b.name||'Business')}</h2><p class="muted small" style="margin-top:4px">${esc(b.industry||'Local business')}</p><div class="wallet-metrics"><div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'Points')}</span><b>${Number(loyalty.balance||0)}</b></div><div class="wallet-metric"><span class="muted small">Upcoming bookings</span><b>${Number(card?.upcoming_appointments?.count||0)}</b></div></div></a>`}).join('')}</div>`;
   focusCustomerRoute();
 }
 
@@ -2841,6 +2978,7 @@ async function renderCustomerProfile(){
       <div id="customerProfileSaveStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save profile</span></button>
     </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>
+    <section class="card" id="customerExperiencePreferences" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('successSounds'))}</h2><p class="muted small">${esc(ct('soundHelp'))}</p></div><span class="spacer"></span><label class="customer-sound-toggle" for="customerSuccessSound"><input id="customerSuccessSound" type="checkbox" ${customerCelebrationSoundEnabled?'checked':''}><span>${esc(customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff'))}</span></label></div></section>
     <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
       <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
       <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
@@ -2849,6 +2987,16 @@ async function renderCustomerProfile(){
     </section>
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:17})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>`;
   bindPasswordVisibility($('walletBody'));
+  const successSound=$('customerSuccessSound');
+  if(successSound){
+    const reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;
+    if(reducedMotion){successSound.checked=false;successSound.disabled=true;customerCelebrationSoundEnabled=false}
+    successSound.onchange=()=>{
+      customerCelebrationSoundEnabled=successSound.checked&&!reducedMotion;
+      try{sessionStorage.setItem('nestly.customer.successSound',customerCelebrationSoundEnabled?'1':'0')}catch{}
+      const label=successSound.nextElementSibling;if(label)label.textContent=customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff');
+    };
+  }
   let profileAttempt=null;
   $('customerProfileSave').onclick=async()=>{
     const fullName=$('customerProfileName').value.trim(),language=$('customerProfileLanguage').value;
@@ -3222,6 +3370,79 @@ function birthdayBenefitMarkup(benefit,{interactive=false,compact=false}={}){
     ${interactive&&isAvailable?'<button type="button" class="btn ghost sm" id="birthdayBenefitShow" style="margin-top:12px">Show at counter</button><p id="birthdayBenefitCounter" class="muted small" role="status" aria-live="polite" style="margin-top:7px"></p>':''}
   </div></section>`;
 }
+function customerProgrammePresentationV95(payload={},fallback={}){
+  const brand=payload?.brand||{},programme=payload?.programme||{},catalogue=payload?.catalogue||{};
+  const business=fallback?.business||{},loyalty=fallback?.loyalty||{};
+  const heroColor=/^#[0-9a-f]{6}$/i.test(String(brand.hero_color||''))?brand.hero_color
+    :/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#28212f';
+  const unit=String(programme.unit||loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points';
+  return {
+    locale:normalizeCustomerLocale(payload?.locale||customerLocale),
+    logoUrl:customerMediaUrlV95(brand.logo_url),
+    heroImageUrl:customerMediaUrlV95(brand.hero_image_url),
+    heroColor,
+    name:programme.name||business.name||ct('programmes'),
+    tagline:programme.tagline||programme.description||business.industry||ct('localBusiness'),
+    description:programme.description||'',
+    balance:Number(programme.balance??loyalty.balance??0),
+    unit,
+    tier:programme.tier||{},
+    benefits:Array.isArray(programme.benefits)?programme.benefits:[],
+    offers:Array.isArray(programme.offers)?programme.offers:[],
+    rewards:Array.isArray(catalogue.rewards)?catalogue.rewards:[],
+    products:Array.isArray(catalogue.products)?catalogue.products:[],
+    services:Array.isArray(catalogue.services)?catalogue.services:[],
+    capabilities:payload?.capabilities||{}
+  };
+}
+function customerProgrammeLogoV95(presentation,businessName){
+  return presentation.logoUrl
+    ?`<img src="${esc(presentation.logoUrl)}" alt="${esc(businessName||presentation.name)} logo" loading="eager">`
+    :esc(String(businessName||presentation.name||'N').trim().charAt(0).toUpperCase()||'N');
+}
+function customerProgrammeSwitcherMarkup(cards=[],activeSlug=''){
+  if(cards.length<2)return '';
+  return `<div class="customer-programme-switcher" role="navigation" aria-label="${esc(ct('chooseProgramme'))}">${cards.map(card=>{
+    const business=card?.business||{};
+    return `<a href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-current="${business.slug===activeSlug?'true':'false'}">${esc(business.name||ct('localBusiness'))}</a>`;
+  }).join('')}</div>`;
+}
+function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled}){
+  const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||presentation.rewards[0]||null;
+  const tier=presentation.tier||{},progress=Math.max(0,Math.min(100,Number(tier.progress_percent||0)));
+  const unitLabel=ct(presentation.unit);
+  const nextRewardText=reward
+    ?reward.available_now===true?`${reward.name||ct('nextReward')} · ${ct('availableNow')}`
+      :`${Number(reward.remaining_units||0)} ${unitLabel} · ${reward.name||ct('nextReward')}`
+    :ct('noRewards');
+  const cardImage=item=>customerMediaUrlV95(item?.image_url);
+  return `<header class="customer-page-head"><div><p class="customer-quest-kicker">${esc(ct('merchantProgramme',{business:business.name||ct('localBusiness')}))}</p></div><button class="btn sm" id="customerMerchantScan" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button></header>
+    ${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
+    <section class="customer-merchant-hero" style="--merchant-accent:${esc(presentation.heroColor)}" aria-labelledby="customerMerchantTitle">
+      ${presentation.heroImageUrl?`<div class="customer-merchant-hero-media"><img src="${esc(presentation.heroImageUrl)}" alt="" loading="eager"></div>`:''}
+      <div class="customer-merchant-hero-copy"><div class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</div>
+        <p class="customer-quest-kicker">${esc(ct('merchantProgramme',{business:business.name||ct('localBusiness')}))}</p>
+        <h1 id="customerMerchantTitle">${esc(presentation.name)}</h1><p>${esc(presentation.tagline)}</p>
+      </div>
+    </section>
+    <div class="customer-balance-panel" style="--merchant-accent:${esc(presentation.heroColor)}">
+      <section class="card"><p class="customer-quest-kicker">${esc(ct('balance'))}</p><div class="customer-balance-value">${Number(presentation.balance??loyalty.balance??0)}</div><p class="muted">${esc(unitLabel)}</p>
+        <div class="wallet-line"><div><b>${esc(ct('nextReward'))}</b><p class="muted small" style="margin-top:4px">${esc(nextRewardText)}</p></div></div>
+      </section>
+      <section class="card"><p class="customer-quest-kicker">${esc(ct('tierProgress'))}</p><h2 style="margin-top:7px">${esc(tier.current||tier.label||ct('noTier'))}</h2>
+        ${tier.next?`<p class="muted small" style="margin-top:5px">${esc(ct('nextTier',{tier:tier.next}))}</p><div class="customer-tier-track" role="progressbar" aria-label="${esc(ct('tierProgress'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--tier-progress:${progress}%"><span></span></div>`:`<p class="muted small" style="margin-top:6px">${esc(ct('noTier'))}</p>`}
+      </section>
+    </div>
+    ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><a class="btn" href="#/b/${encodeURIComponent(business.slug)}">${esc(ct('bookNow'))}</a></div></section>`:''}
+    <div class="customer-section-title"><h2>${esc(ct('rewards'))}</h2></div>
+    ${presentation.rewards.length?`<div class="customer-rewards-grid">${presentation.rewards.map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('rewards'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}${item.terms?`<details style="margin-top:8px"><summary class="small">${esc(ct('terms'))}</summary><p class="muted small" style="margin-top:5px">${esc(item.terms)}</p></details>`:''}</article>`).join('')}</div>`:`<p class="muted small">${esc(ct('noRewards'))}</p>`}
+    <div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div>
+    ${presentation.products.length||presentation.services.length?`<div class="customer-rewards-grid">${[...presentation.products,...presentation.services].map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('featured'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}</article>`).join('')}</div>`:`<p class="muted small">${esc(ct('noFeatured'))}</p>`}
+    <div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div>
+    ${presentation.benefits.length?`<div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:`<p class="muted small">${esc(ct('noBenefits'))}</p>`}
+    <div class="customer-section-title"><h2>${esc(ct('offers'))}</h2></div>
+    ${presentation.offers.length?`<div class="customer-offers-grid">${presentation.offers.map(item=>`<article class="customer-offer-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('offers'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}${item.terms?`<details style="margin-top:8px"><summary class="small">${esc(ct('terms'))}</summary><p class="muted small" style="margin-top:5px">${esc(item.terms)}</p></details>`:''}</article>`).join('')}</div>`:`<p class="muted small">${esc(ct('noOffers'))}</p>`}`;
+}
 function actionableWalletCardMarkup(card,{detail=false}={}){
   const business=card?.business||{},loyalty=card?.loyalty||{},credit=card?.credit||{},packages=card?.packages||{};
   const unit=esc(loyalty.unit||'points'),currency=esc(business.currency||'SGD'),reward=card?.next_eligible_reward||null,visit=card?.visit_progress||{};
@@ -3251,6 +3472,7 @@ function customerConfirmedEarnFeedback(businessId,items=[],unit='points'){
   if(!previous||previous===fingerprint)return;
   const increase=Number(latest.points_delta);
   toast(`+${increase} ${safeUnit} earned!`);
+  if(!customerCelebrationSoundEnabled)return;
   if(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
   try{
     const AudioContext=globalThis.AudioContext||globalThis.webkitAudioContext;
@@ -3264,21 +3486,23 @@ function customerConfirmedEarnFeedback(businessId,items=[],unit='points'){
   }catch{}
 }
 function renderCustomerFirstProgrammeQuest(){
-  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><header class="wallet-head"><a class="logo" href="#/wallet">${brandWordmark()}</a><span class="spacer"></span><details class="customer-account-menu"><summary class="customer-avatar" aria-label="Open account menu">${CUI.icon('customers',{size:20})}</summary><div class="menu"><a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>Profile &amp; passkeys</span></a><button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>Sign out</span></button></div></details></header>
-    <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">Your first quest</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">Scan a loyalty QR</h1><p class="muted">At a participating business, scan the Nestly QR shown at the counter. That verified programme will become your first Nestly home.</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>Scan business QR</span></button><p class="muted small" style="margin-top:16px">You cannot search for or add a business by name. This keeps each programme tied to a real business-issued QR.</p></div></section></main>${legalLinks()}</div></div>`;
+  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><header class="wallet-head"><a class="logo" href="#/wallet">${brandWordmark()}</a><span class="spacer"></span><details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu"><div class="customer-locale-switch" role="group" aria-label="${esc(ct('language'))}"><button type="button" data-customer-locale="en" aria-pressed="${customerLocale==='en'}">EN</button><button type="button" data-customer-locale="zh-CN" aria-pressed="${customerLocale==='zh-CN'}">简</button></div><a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a><button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button></div></details></header>
+    <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks()}</div></div>`;
   $('customerFirstScan').onclick=openCustomerJoinScanner;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  document.querySelectorAll('[data-customer-locale]').forEach(button=>button.onclick=()=>setCustomerLocaleV95(button.dataset.customerLocale));
   focusCustomerRoute();
 }
 function renderActionableWalletHome(payload){
   const cards=Array.isArray(payload?.cards)?payload.cards:[];
   if(!cards.length){renderCustomerFirstProgrammeQuest();return}
-  $('walletBody').innerHTML=`<header class="customer-page-head"><div><p class="customer-quest-kicker">Choose your nest</p><h1>Your programmes</h1><p class="muted">Pick a business to see only its points, rewards, quests, bookings, and benefits.</p></div><button class="btn sm" id="customerHomeScan" type="button">${CUI.icon('scan',{size:18})}<span>Add programme</span></button></header>
+  $('walletBody').innerHTML=`<header class="customer-page-head"><div><p class="customer-quest-kicker">${esc(ct('chooseProgramme'))}</p><h1>${esc(ct('yourProgrammes'))}</h1><p class="muted">${esc(ct('programmesIntro'))}</p></div><button class="btn sm" id="customerHomeScan" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button></header>
     ${payload?.truncated?`<div class="card" role="status"><p class="muted small">Showing the 100 highest-priority linked programmes.</p></div>`:''}
     <div class="customer-programme-list">${cards.map(card=>{
       const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
       const action=actionableWalletActionText(card);
-      return `<a class="card customer-programme-card" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="Open ${esc(business.name||'business')} programme"><div class="row"><div><p class="customer-quest-kicker">${esc(business.industry||'Local business')}</p><h2 style="margin-top:5px">${esc(business.name||'Business')}</h2></div><span class="spacer"></span><span class="pill">${Number(loyalty.balance||0)} ${esc(loyalty.unit||'points')}</span></div><p style="margin-top:14px;font-weight:700">${esc(action)}</p><p class="muted small" style="margin-top:5px">${reward?.available_now===true?'Reward ready — open to redeem.':'Open your programme home and continue your next quest.'}</p></a>`;
+      const accent=/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f';
+      return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${esc(String(business.name||'N').trim().charAt(0).toUpperCase()||'N')}</div><div><p class="customer-quest-kicker">${esc(business.industry||ct('localBusiness'))}</p><h2 style="margin-top:5px">${esc(business.name||ct('localBusiness'))}</h2><p style="margin-top:11px;font-weight:700">${esc(action)}</p><p class="muted small" style="margin-top:5px">${esc(reward?.available_now===true?ct('rewardReady'):ct('continueProgramme'))}</p></div><span class="pill">${Number(loyalty.balance||0)} ${esc(ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points'))}</span></div></a>`;
     }).join('')}</div>`;
   $('customerHomeScan').onclick=openCustomerJoinScanner;
 }
@@ -3289,7 +3513,7 @@ async function renderCustomerWallet(businessSlug=null){
   const customerFeatures=context.features;
   renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,staffWorkspaces:context.staffWorkspaces,
     body:`<div class="card"><p class="muted">Loading ${esc(BRAND.customerLabel)}…</p></div>`});
-  let actionableCard=null;
+  let actionableCard=null,programmeCards=[];
   if(customerFeatures.customer_actionable_wallet===true){
     if(!businessSlug){
       const {data,error}=await sb.rpc('customer_get_actionable_wallet');
@@ -3327,10 +3551,14 @@ async function renderCustomerWallet(businessSlug=null){
       focusCustomerRoute();
       return;
     }
-    const {data,error}=await sb.rpc('customer_get_actionable_business',{p_business_slug:businessSlug});
+    const [{data,error},walletResult]=await Promise.all([
+      sb.rpc('customer_get_actionable_business',{p_business_slug:businessSlug}),
+      sb.rpc('customer_get_actionable_wallet')
+    ]);
     if(!isWalletCurrent())return;
     if(error)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
     actionableCard=data?.card||null;
+    programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
     if(!actionableCard)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
   }
   if(!businessSlug){
@@ -3372,15 +3600,20 @@ async function renderCustomerWallet(businessSlug=null){
   if(!isWalletCurrent())return;
   if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
   const b=summary.business||{},loyalty=summary.loyalty||{},packages=summary.packages||{},membership=summary.membership||{};
-  const businessActionsResult=await sb.rpc('customer_get_business_actions_v89',{p_business:b.id});
+  const [businessActionsResult,presentationResult]=await Promise.all([
+    sb.rpc('customer_get_business_actions_v89',{p_business:b.id}),
+    sb.rpc('customer_get_business_presentation_v95',{p_business:b.id,p_branch:null,p_locale:customerLocale})
+  ]);
   if(!isWalletCurrent())return;
   const businessActions=businessActionsResult.error?null:businessActionsResult.data;
-  const bookingEnabled=businessActions?.booking?.enabled===true;
+  const presentation=customerProgrammePresentationV95(presentationResult.error?{}:presentationResult.data,{business:b,loyalty:actionableCard?.loyalty||loyalty});
+  const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
   const hasWalletSection=true;
-  $('walletBody').innerHTML=`<div class="row"><div><h1>${esc(b.name||'My rewards')}</h1><p class="muted small" style="margin-top:4px">${esc(b.industry||'')}</p></div><span class="spacer"></span>${customerFeatures.customer_claims?'<button class="btn danger sm" id="walletUnlink">Disconnect</button>':''}</div>
-    ${actionableCard?`<div style="margin-top:18px">${actionableWalletCardMarkup(actionableCard,{detail:true})}</div>`:''}
+  $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled})}
+    ${presentationResult.error?`<section class="card" role="status" style="margin-top:14px"><div class="row"><p class="muted small">${esc(ct('programmeUnavailable'))}</p><span class="spacer"></span><button class="btn ghost sm" id="customerPresentationRetry" type="button">${esc(ct('retry'))}</button></div></section>`:''}
+    <div class="row" style="margin-top:18px"><span class="spacer"></span>${customerFeatures.customer_claims?`<button class="btn danger sm" id="walletUnlink">${esc(ct('disconnect'))}</button>`:''}</div>
     ${actionableCard?'':`<div class="wallet-metrics">
       ${loyalty.enabled?`<div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'points')}</span><b>${Number(loyalty.balance||0)}</b></div>
       <div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents||0)/100).toFixed(2)}</b></div>`:''}
@@ -3388,7 +3621,6 @@ async function renderCustomerWallet(businessSlug=null){
       ${capabilities.membership?`<div class="wallet-metric"><span class="muted small">Membership</span><b>${membership.active?'Active':'Inactive'}</b></div>`:''}
     </div>`}
     <div class="wallet-sections" id="walletSections">
-      ${capabilities.booking_request&&bookingEnabled?`<section class="card wallet-section" id="walletBook" aria-busy="false"><div class="wallet-section-head"><div><h2>Book</h2><p class="muted small">Request your next visit with ${esc(b.name||'this business')}.</p></div><span class="spacer"></span><a class="btn sm" href="#/b/${encodeURIComponent(b.slug)}">Book now</a></div></section>`:''}
       ${capabilities.rewards?walletSectionShell('walletRewards','Rewards','Browse rewards and ask the team to claim at the counter.'):''}
       ${walletSectionShell('walletTransactions','Transactions & points','Every purchase, reversal, correction, and points event kept in time order.')}
       ${capabilities.activity?walletSectionShell('walletActivity','Activity','Your loyalty history with this business.'):''}
@@ -3402,6 +3634,8 @@ async function renderCustomerWallet(businessSlug=null){
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>
     ${customerFeatures.customer_notifications?'<div id="customerNotificationPreferences"></div>':''}`;
+  $('customerMerchantScan').onclick=openCustomerJoinScanner;
+  if($('customerPresentationRetry'))$('customerPresentationRetry').onclick=()=>renderCustomerWallet(businessSlug);
   focusCustomerRoute();
   let unlinkAttemptId=crypto.randomUUID();
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
@@ -3988,8 +4222,174 @@ function renderPersonaChoice(personas,{includeCustomer=true}={}){
   $('personaChoiceSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
 
+function businessApplicationInviteToken(){
+  const token=new URLSearchParams(location.search).get('invite')||'';
+  return /^[0-9a-f]{64}$/i.test(token)?token.toLowerCase():'';
+}
+function businessApplicationCopy(locale,key){
+  const copy={
+    en:{
+      apply:'Apply for a Nestly business account',applyIntro:'Tell us about your business. A Nestly super admin must approve it before an owner account can be created.',
+      contactName:'Your full name',contactEmail:'Business email',contactPhone:'Singapore mobile number',businessName:'Business name',
+      sector:'Business sector',registration:'UEN / registration number (optional)',language:'Preferred language',
+      consent:'I have read and agree to the Terms and Privacy Policy.',submit:'Submit for approval',
+      submitted:'Application received',reference:'Save this reference',await:'Nestly will review your application. No owner account exists yet.',
+      approved:'Create your approved owner account',approvedIntro:'This invitation is bound to the approved email and can be used only once.',
+      password:'Password',confirm:'Confirm password',create:'Create owner account',signIn:'Back to sign in'
+    },
+    'zh-CN':{
+      apply:'申请 Nestly 商家账户',applyIntro:'请填写商家资料。超级管理员批准后，才能创建店主账户。',
+      contactName:'您的姓名',contactEmail:'商家邮箱',contactPhone:'新加坡手机号码',businessName:'商家名称',
+      sector:'行业',registration:'UEN／注册号码（选填）',language:'首选语言',
+      consent:'我已阅读并同意条款及隐私政策。',submit:'提交审核',
+      submitted:'申请已收到',reference:'请保存此申请编号',await:'Nestly 将审核您的申请。目前尚未创建店主账户。',
+      approved:'创建已批准的店主账户',approvedIntro:'此邀请仅限已批准的邮箱使用，并且只能使用一次。',
+      password:'密码',confirm:'确认密码',create:'创建店主账户',signIn:'返回登录'
+    }
+  };
+  return copy[locale]?.[key]||copy.en[key]||key;
+}
+function businessApplicationLanguage(){
+  return sessionStorage.getItem('nestly-business-application-locale')==='zh-CN'?'zh-CN':'en';
+}
+function renderBusinessApplication(){
+  destroyMountedTurnstiles();
+  let locale=businessApplicationLanguage();
+  const t=key=>businessApplicationCopy(locale,key);
+  root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <div class="row"><h2 style="margin:14px 0 2px">${esc(t('apply'))}</h2><span class="spacer"></span>
+      <select id="businessApplicationLocale" aria-label="${esc(t('language'))}" style="width:auto"><option value="en"${locale==='en'?' selected':''}>English</option><option value="zh-CN"${locale==='zh-CN'?' selected':''}>简体中文</option></select></div>
+    <p class="muted small" style="margin-top:6px">${esc(t('applyIntro'))}</p>
+    <label for="applicationContactName">${esc(t('contactName'))}</label><input id="applicationContactName" autocomplete="name">
+    <label for="applicationContactEmail">${esc(t('contactEmail'))}</label><input id="applicationContactEmail" type="email" autocomplete="email">
+    <label for="applicationContactPhone">${esc(t('contactPhone'))}</label><input id="applicationContactPhone" type="tel" inputmode="tel" placeholder="+65 8123 4567">
+    <label for="applicationBusinessName">${esc(t('businessName'))}</label><input id="applicationBusinessName" autocomplete="organization">
+    <label for="applicationSector">${esc(t('sector'))}</label><select id="applicationSector">${Object.entries(INDUSTRIES).map(([key,value])=>`<option value="${esc(key)}">${esc(value.label)}</option>`).join('')}</select>
+    <label for="applicationRegistration">${esc(t('registration'))}</label><input id="applicationRegistration" autocomplete="off">
+    <label class="checkrow" for="applicationConsent" style="margin-top:16px"><input id="applicationConsent" type="checkbox"><span>${esc(t('consent'))} <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a></span></label>
+    <div id="businessApplicationError"></div>
+    ${authChallengeHtml()}
+    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px" disabled>${esc(t('submit'))}</button>
+    <button class="btn ghost" id="businessApplicationBack" style="width:100%;margin-top:10px">${esc(t('signIn'))}</button>
+    ${legalLinks()}</div></div>`;
+  $('businessApplicationLocale').onchange=event=>{
+    sessionStorage.setItem('nestly-business-application-locale',event.target.value);
+    renderBusinessApplication();
+  };
+  $('businessApplicationBack').onclick=()=>renderAuth('in');
+  let token='',control=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+    retry:'authTurnstileRetry',action:'business_application',
+    onToken:value=>{token=value;$('businessApplicationSubmit').disabled=!value}})
+    .then(value=>control=value);
+  $('businessApplicationSubmit').onclick=async()=>{
+    const phone=$('applicationContactPhone').value.replace(/[\s()-]/g,'');
+    const payload={
+      contact_name:$('applicationContactName').value.trim(),
+      contact_email:$('applicationContactEmail').value.trim().toLowerCase(),
+      contact_phone:phone.startsWith('+')?phone:`+65${phone}`,
+      business_name:$('applicationBusinessName').value.trim(),
+      sector_key:$('applicationSector').value,
+      registration_number:$('applicationRegistration').value.trim()||null,
+      locale,legal_consent:$('applicationConsent').checked,
+      idempotency_key:crypto.randomUUID(),turnstile_token:token
+    };
+    if(!payload.legal_consent){
+      $('businessApplicationError').innerHTML='<div class="err">Please accept the Terms and Privacy Policy.</div>';return;
+    }
+    $('businessApplicationSubmit').disabled=true;token='';
+    try{
+      const result=await publicGateway('public-business-application',{body:payload});
+      root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><div class="logo">${brandWordmark()}</div>
+        <h2 style="margin-top:18px">${esc(t('submitted'))}</h2><p class="muted" style="margin-top:7px">${esc(t('await'))}</p>
+        <div class="card" style="margin-top:18px"><b>${esc(t('reference'))}</b><p style="font-family:monospace;margin-top:7px;overflow-wrap:anywhere">${esc(result.public_reference||'')}</p></div>
+        <button class="btn ghost" id="businessApplicationDone" style="width:100%;margin-top:18px">${esc(t('signIn'))}</button>${legalLinks()}</div></div>`;
+      $('businessApplicationDone').onclick=()=>renderAuth('in');
+    }catch(error){
+      if(control)control.reset();
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(error.message)}</div>`;
+    }
+  };
+}
+async function renderApprovedBusinessInviteSignup(inviteToken){
+  destroyMountedTurnstiles();
+  let invitation;
+  try{invitation=await publicGateway('public-business-application',{method:'GET',query:`?invite=${encodeURIComponent(inviteToken)}`})}
+  catch{return renderAuth('in')}
+  const locale=invitation.preferred_locale==='zh-CN'?'zh-CN':'en',t=key=>businessApplicationCopy(locale,key);
+  root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><div class="logo">${brandWordmark()}</div>
+    <h2 style="margin-top:18px">${esc(t('approved'))}</h2><p class="muted small" style="margin-top:6px">${esc(t('approvedIntro'))}</p>
+    <label>${esc(t('businessName'))}</label><input value="${esc(invitation.business_name||'')}" disabled>
+    <label>${esc(t('contactEmail'))}</label><input id="approvedOwnerEmail" type="email" value="${esc(invitation.approved_email||'')}" readonly>
+    <label for="approvedOwnerPassword">${esc(t('password'))}</label>${passwordControlHtml('approvedOwnerPassword',{autocomplete:'new-password'})}
+    <label for="approvedOwnerPasswordConfirm">${esc(t('confirm'))}</label>${passwordControlHtml('approvedOwnerPasswordConfirm',{autocomplete:'new-password'})}
+    <div id="approvedOwnerError"></div>${authChallengeHtml()}
+    <button class="btn" id="approvedOwnerCreate" style="width:100%;margin-top:18px" disabled>${esc(t('create'))}</button>
+    ${legalLinks()}</div></div>`;
+  bindPasswordVisibility(root);
+  let token='',control=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+    retry:'authTurnstileRetry',action:'frenly_auth',
+    onToken:value=>{token=value;$('approvedOwnerCreate').disabled=!value}})
+    .then(value=>control=value);
+  $('approvedOwnerCreate').onclick=async()=>{
+    const password=$('approvedOwnerPassword').value;
+    if(!validNewPassword(password)||password!==$('approvedOwnerPasswordConfirm').value){
+      $('approvedOwnerError').innerHTML='<div class="err">Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.</div>';return;
+    }
+    $('approvedOwnerCreate').disabled=true;
+    const returnUrl=new URL('/business',location.origin);returnUrl.searchParams.set('invite',inviteToken);
+    const {data,error}=await sb.auth.signUp({
+      email:invitation.approved_email,password,
+      options:{captchaToken:token,emailRedirectTo:returnUrl.toString()}
+    });
+    token='';
+    if(error){
+      if(control)control.reset();
+      $('approvedOwnerError').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('approvedOwnerCreate').disabled=false;return;
+    }
+    if(!data.session){
+      $('approvedOwnerError').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Check the approved email, confirm the account, then return through the same secure invitation.</div>';return;
+    }
+    route();
+  };
+}
+async function renderApprovedBusinessActivation(inviteToken,isCurrent=()=>true){
+  let invitation;
+  try{invitation=await publicGateway('public-business-application',{method:'GET',query:`?invite=${encodeURIComponent(inviteToken)}`})}
+  catch{
+    root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><h2>Invitation unavailable</h2><p class="muted" style="margin-top:7px">This approved invitation is invalid, expired, or already used.</p><button class="btn ghost" id="invalidInviteOut" style="width:100%;margin-top:18px">Sign out</button></div></div>`;
+    $('invalidInviteOut').onclick=async()=>{await sb.auth.signOut();history.replaceState(null,'','/business');route()};return;
+  }
+  if(!isCurrent())return;
+  const base=String(invitation.business_name||'business').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'business';
+  root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><div class="logo">${brandWordmark()}</div><h2 style="margin-top:18px">Create ${esc(invitation.business_name)} workspace</h2>
+    <p class="muted small" style="margin-top:6px">Final step: choose the workspace address. The approved invitation and signed-in email will be checked again.</p>
+    <label for="approvedBusinessSlug">Workspace address</label><div class="row"><span class="muted">nestly.asia/business/</span><input id="approvedBusinessSlug" value="${esc(base)}"></div>
+    <div id="approvedActivationError"></div><button class="btn" id="approvedActivationSubmit" style="width:100%;margin-top:18px">Create approved workspace</button></div></div>`;
+  $('approvedActivationSubmit').onclick=async()=>{
+    const slug=$('approvedBusinessSlug').value.trim().toLowerCase();
+    $('approvedActivationSubmit').disabled=true;
+    const activationKey=sessionStorage.getItem(`nestly-activation-${inviteToken}`)||crypto.randomUUID();
+    sessionStorage.setItem(`nestly-activation-${inviteToken}`,activationKey);
+    const {data,error}=await sb.rpc('activate_approved_business_application_v95',{
+      p_invitation_token:inviteToken,p_business_slug:slug,p_idempotency_key:activationKey
+    });
+    if(error||data?.workspace_created!==true){
+      $('approvedActivationError').innerHTML=`<div class="err">${esc(error?.message||data?.reason||'This workspace could not be created.')}</div>`;
+      $('approvedActivationSubmit').disabled=false;return;
+    }
+    sessionStorage.removeItem(`nestly-activation-${inviteToken}`);
+    history.replaceState(null,'','/business');
+    nav(`#/workspace/${encodeURIComponent(data.business_slug||slug)}/dashboard`);
+  };
+}
+
 function renderAuth(mode='in',{admin=false}={}){
   destroyMountedTurnstiles();
+  if(!admin&&businessApplicationInviteToken())return renderApprovedBusinessInviteSignup(businessApplicationInviteToken());
+  if(!admin&&mode==='up')return renderBusinessApplication();
   if(mode==='forgot'){
     root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
       <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
@@ -4136,52 +4536,26 @@ async function consumePasswordRecoveryRedirect(){
 
 /* ---------- onboarding ---------- */
 function renderOnboard(){
-  let sel='fnb';
-  const draw=()=>{
-    root.innerHTML=`<div class="center-wrap"><div class="card" style="width:640px;max-width:100%">
+  root.innerHTML=`<div class="center-wrap"><div class="card" style="width:640px;max-width:100%">
       <div class="logo" style="margin-bottom:4px">${brandWordmark()}</div>
-      <h2 style="margin:10px 0 4px">Set up your business</h2>
-      <p class="muted small">Pick your industry — ${esc(BRAND.productName)} assigns the right sector modules when your workspace is created.</p>
-      <label>Business name</label><input id="bn" placeholder="e.g. Kopi & Co">
-      <label>Industry</label>
-      <div class="ind-grid">${Object.entries(INDUSTRIES).map(([k,v])=>
-        `<div class="ind ${k===sel?'sel':''}" data-k="${k}"><span class="em">${v.em}</span><b>${v.label}</b></div>`).join('')}</div>
-      <label>Modules included</label>
-      <div class="chips">${Object.keys(MODULES).filter(m=>m!=='settings'&&!HIDDEN_BUSINESS_SURFACES.has(m)).map(m=>
-        `<span class="chip ${INDUSTRIES[sel].mods.includes(m)?'on':''}">${CUI.icon(MODULES[m][0],{size:15})} ${MODULES[m][1]}</span>`).join('')}</div>
-      <div id="oberr"></div>
-      <div class="row" style="margin-top:20px"><button class="btn" id="mk">Submit business for approval</button>
+      <h2 style="margin:10px 0 4px">An approved invitation is required</h2>
+      <p class="muted small">This signed-in account has no approved Nestly business workspace. A super admin must approve the business application before an owner account or workspace can be created.</p>
+      <div class="row" style="margin-top:20px"><button class="btn" id="applyBusiness">Apply for a business account</button>
       <span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>
       <hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px">
       <b>Joining a team instead?</b>
       <div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px">
       <button class="btn ghost" id="join">Join team</button></div>
     </div></div>`;
-    document.querySelectorAll('.ind').forEach(el=>el.onclick=()=>{sel=el.dataset.k;const n=$('bn').value;draw();$('bn').value=n});
-    $('out').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();route()};
-    $('join').onclick=async()=>{
-      if(!$('ic').value.trim()) return toast('Enter your invite code');
-      $('join').disabled=true;
-      const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});
-      if(error){$('oberr').innerHTML=`<div class="err">${esc(error.message)}</div>`;$('join').disabled=false;return}
-      S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard');
-    };
-    $('mk').onclick=async()=>{
-      const name=$('bn').value.trim();
-      if(name.length<2){$('oberr').innerHTML='<div class="err">Give your business a name.</div>';return}
-      $('mk').disabled=true;
-      try{
-        const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Math.random().toString(36).slice(2,6);
-        const {data:b,error:e1}=await sb.rpc('create_business',{
-          p_name:name,p_slug:slug,p_industry:sel,
-          p_modules:INDUSTRIES[sel].mods.filter(module=>!HIDDEN_BUSINESS_SURFACES.has(module))
-        });
-        if(e1) throw e1;
-        S.biz=b;toast('Business submitted for approval');nav(`#/workspace/${encodeURIComponent(b.slug)}/dashboard`);
-      }catch(e){$('oberr').innerHTML=`<div class="err">${esc(e.message)}</div>`;$('mk').disabled=false}
-    };
+  $('applyBusiness').onclick=async()=>{await sb.auth.signOut();resetClientSessionState();history.replaceState(null,'','/business');renderBusinessApplication()};
+  $('out').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();route()};
+  $('join').onclick=async()=>{
+    if(!$('ic').value.trim()) return toast('Enter your invite code');
+    $('join').disabled=true;
+    const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});
+    if(error){toast(error.message);$('join').disabled=false;return}
+    S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard');
   };
-  draw();
 }
 
 /* ============================================================================
@@ -11613,6 +11987,165 @@ async function pnlPage(){
 }
 
 /* ---------- settings ---------- */
+async function imageDimensionsV95(file){
+  if('createImageBitmap' in window){
+    const bitmap=await createImageBitmap(file);
+    const result={width:bitmap.width,height:bitmap.height};bitmap.close();return result;
+  }
+  return new Promise((resolve,reject)=>{
+    const image=new Image(),url=URL.createObjectURL(file);
+    image.onload=()=>{const result={width:image.naturalWidth,height:image.naturalHeight};URL.revokeObjectURL(url);resolve(result)};
+    image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Image dimensions could not be read.'))};
+    image.src=url;
+  });
+}
+async function loadCustomerProgrammePresentationEditorV95(){
+  const host=$('customerProgrammeEditorV95');
+  if(!host||S.myRole!=='owner')return;
+  host.innerHTML=CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'});
+  const {data,error}=await sb.rpc('business_get_presentation_editor_v95',{p_business:S.biz.id});
+  if(!host.isConnected)return;
+  if(error||!data){
+    host.innerHTML=CUI.errorState({title:'Customer programme editor unavailable',
+      message:error?.message||'The customer presentation could not be loaded.',retryId:'programmeEditorRetry'});
+    const retry=$('programmeEditorRetry');if(retry)retry.onclick=loadCustomerProgrammePresentationEditorV95;return;
+  }
+  const brand=data.brand||{},programme=(Array.isArray(data.programmes)?data.programmes:[])[0]||{},
+    entityGroups=[
+      ['reward',Array.isArray(data.rewards)?data.rewards:[]],
+      ['product',Array.isArray(data.products)?data.products:[]],
+      ['service',Array.isArray(data.services)?data.services:[]]
+    ],
+    entities=entityGroups.flatMap(([entity_type,items])=>items.map(item=>({
+      ...item,entity_type,name:item.customer_name||item.name||item.internal_name||'Untitled'
+    }))),
+    assets=[
+      brand.logo_asset,brand.hero_asset,
+      ...(Array.isArray(programme.media)?programme.media:[]),
+      ...entities.flatMap(item=>(Array.isArray(item.media)?item.media:[]).map(media=>({
+        ...media,entity_name:item.name
+      })))
+    ].filter(Boolean),
+    copies=Array.isArray(programme.copies)?programme.copies:[];
+  const copyFor=locale=>copies[locale]||copies.find?.(item=>item.locale===locale)||{};
+  const en=copyFor('en'),zh=copyFor('zh-CN');
+  const entityOptions=[
+    {kind:'logo',id:'',name:'Business logo'},
+    {kind:'hero',id:'',name:'Programme cover image'},
+    ...entities.filter(item=>['reward','product','service','benefit','offer'].includes(item.entity_type))
+      .map(item=>({kind:item.entity_type,id:item.id,name:`${String(item.entity_type).replaceAll('_',' ')} · ${item.name||'Untitled'}`}))
+  ];
+  host.innerHTML=`<div class="row"><div><p class="eyebrow">Customer-facing programme</p><h2 style="margin-top:4px">Show customers what they can earn</h2>
+    <p class="muted small" style="margin-top:5px">English is the fallback. Add Simplified Chinese and real merchant images; the customer portal reads this same published data.</p></div>
+    <span class="spacer"></span><a class="btn ghost sm" href="#/wallet/${encodeURIComponent(S.biz.slug)}" target="_blank" rel="noopener">Preview customer view</a></div>
+    <div class="split" style="margin-top:16px"><div>
+      <label for="programmeNameEn">Programme name (English)</label><input id="programmeNameEn" value="${esc(en.name||S.biz.name+' Rewards')}">
+      <label for="programmeTaglineEn">Short promise (English)</label><input id="programmeTaglineEn" value="${esc(en.tagline||'')}" placeholder="Earn, unlock and enjoy more every visit">
+      <label for="programmeDescriptionEn">Overview (English)</label><textarea id="programmeDescriptionEn" rows="3">${esc(en.description||'')}</textarea>
+    </div><div>
+      <label for="programmeNameZh">会员计划名称（简体中文）</label><input id="programmeNameZh" value="${esc(zh.name||'')}">
+      <label for="programmeTaglineZh">简短标语</label><input id="programmeTaglineZh" value="${esc(zh.tagline||'')}">
+      <label for="programmeDescriptionZh">计划简介</label><textarea id="programmeDescriptionZh" rows="3">${esc(zh.description||'')}</textarea>
+    </div></div>
+    <button class="btn" id="programmeCopySave" style="margin-top:14px">Save bilingual overview</button>
+    <hr style="border:none;border-top:1px solid var(--line);margin:22px 0">
+    <div class="split"><div><h3>Brand &amp; images</h3>
+      <label for="programmeHeroColor">Programme colour</label><input id="programmeHeroColor" type="color" value="${esc(brand.hero_color||'#C43D32')}" style="height:44px;padding:4px">
+      <button class="btn ghost sm" id="programmeColourSave" style="margin-top:8px">Save programme colour</button>
+      <label for="programmeImageEntity">Image for</label><select id="programmeImageEntity">${entityOptions.map(item=>`<option value="${esc(item.kind+'|'+item.id)}">${esc(item.name)}</option>`).join('')}</select>
+      <label for="programmeImageFile">Image file</label><input id="programmeImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+      <label for="programmeImageAltEn">Image description (English)</label><input id="programmeImageAltEn" maxlength="240">
+      <label for="programmeImageAltZh">图片说明（简体中文，选填）</label><input id="programmeImageAltZh" maxlength="240">
+      <button class="btn" id="programmeImageUpload" style="margin-top:14px">Upload &amp; publish image</button>
+      <p class="muted small" id="programmeImageStatus" role="status" style="margin-top:8px">PNG, JPG, WebP or GIF. Maximum 10 MB.</p></div>
+      <div><h3>Currently published</h3><div class="customer-reward-grid" style="margin-top:10px">${assets.map(asset=>`<div class="customer-reward-card">
+        ${asset.url?`<img src="${esc(customerMediaUrlV95(asset.url)||'')}" alt="${esc(asset.alt_en||'Published programme image')}" width="640" height="420" loading="lazy">`:''}
+        <div><b>${esc(String(asset.asset_kind||'image').replaceAll('_',' '))}</b><p class="muted small">${esc(asset.entity_name||asset.alt_en||'')}</p></div></div>`).join('')||'<p class="muted small">No customer images published yet.</p>'}</div></div></div>`;
+  void NestlyMediaSyncV95.retryPending({
+    storage:sb.storage,client:sb,
+    businessId:S.biz.id,limit:10
+  }).then(result=>{
+    const pending=result.outcomes?.filter(item=>item.status!=='completed')||[];
+    if(pending.length&&$('programmeImageStatus')){
+      $('programmeImageStatus').textContent=`${pending.length} previous image cleanup ${pending.length===1?'item is':'items are'} still pending and will retry.`;
+    }
+  });
+  $('programmeCopySave').onclick=async()=>{
+    if(!programme.id)return toast('Publish a loyalty programme before adding customer copy.');
+    const requests=[{
+      locale:'en',name:$('programmeNameEn').value.trim(),tagline:$('programmeTaglineEn').value.trim(),
+      description:$('programmeDescriptionEn').value.trim(),version:Number(en.version||0)
+    }];
+    if($('programmeNameZh').value.trim())requests.push({
+      locale:'zh-CN',name:$('programmeNameZh').value.trim(),tagline:$('programmeTaglineZh').value.trim(),
+      description:$('programmeDescriptionZh').value.trim(),version:Number(zh.version||0)
+    });
+    if(!requests[0].name)return toast('Add the English programme name.');
+    $('programmeCopySave').disabled=true;
+    for(const copy of requests){
+      const {error:copyError}=await sb.rpc('business_upsert_localized_copy_v95',{
+        p_business:S.biz.id,p_entity_type:'programme',p_entity_id:programme.id,p_locale:copy.locale,
+        p_name:copy.name,p_tagline:copy.tagline||null,p_description:copy.description||null,
+        p_terms:null,p_expected_version:copy.version
+      });
+      if(copyError){$('programmeCopySave').disabled=false;return fail(copyError)}
+    }
+    toast('Customer programme overview updated');loadCustomerProgrammePresentationEditorV95();
+  };
+  $('programmeColourSave').onclick=async()=>{
+    $('programmeColourSave').disabled=true;
+    const {error:colourError}=await sb.rpc('business_set_brand_presentation_v95',{
+      p_business:S.biz.id,p_logo_asset:brand.logo_asset?.id||null,
+      p_hero_asset:brand.hero_asset?.id||null,p_hero_color:$('programmeHeroColor').value,
+      p_expected_version:Number(brand.version||1)
+    });
+    if(colourError){$('programmeColourSave').disabled=false;return fail(colourError)}
+    toast('Programme colour updated');loadCustomerProgrammePresentationEditorV95();
+  };
+  $('programmeImageUpload').onclick=async()=>{
+    const file=$('programmeImageFile').files?.[0],altEn=$('programmeImageAltEn').value.trim();
+    if(!file||!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760)return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
+    if(!altEn)return toast('Add a short English image description.');
+    const [kind,entityId]=String($('programmeImageEntity').value).split('|');
+    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type];
+    const objectPath=`${S.biz.id}/${kind}/${crypto.randomUUID()}.${extension}`;
+    const existing=assets.find(asset=>asset.asset_kind===kind&&String(asset.entity_id||'')===String(entityId||'')&&!asset.branch_id);
+    $('programmeImageUpload').disabled=true;$('programmeImageStatus').textContent='Uploading image…';
+    const dimensions=await imageDimensionsV95(file);
+    const result=await NestlyMediaSyncV95.publish({
+      storage:sb.storage,client:sb,
+      businessId:S.biz.id,objectPath,file,publishArgs:{
+        p_business:S.biz.id,p_asset_kind:kind,p_entity_id:entityId||null,p_branch:null,
+        p_object_path:objectPath,p_mime_type:file.type,p_width_px:dimensions.width,p_height_px:dimensions.height,
+        p_alt_en:altEn,p_alt_zh_cn:$('programmeImageAltZh').value.trim()||null,
+        p_hero_color:kind==='logo'||kind==='hero'?$('programmeHeroColor').value:null,
+        p_expected_asset_version:Number(existing?.version||0),
+        p_expected_brand_version:kind==='logo'||kind==='hero'?Number(brand.version||1):null
+      }
+    });
+    if(!result.ok){
+      $('programmeImageUpload').disabled=false;
+      $('programmeImageStatus').textContent=result.cleanup.status==='pending_cleanup'
+        ?'Image was not published. Uploaded file cleanup is pending and will retry.'
+        :result.cleanup.status==='cleanup_untracked'
+          ?'Image was not published, and automatic file cleanup could not be scheduled. Please contact support.'
+          :'Image was not published.';
+      return fail(result.error);
+    }
+    if(result.cleanup.status==='pending_cleanup'){
+      $('programmeImageStatus').textContent='Image published. The previous file cleanup is pending and will retry.';
+      toast('Customer image published; cleanup pending');
+    }else if(result.cleanup.status==='cleanup_untracked'){
+      $('programmeImageStatus').textContent='Image published, but previous file cleanup could not be scheduled. Please contact support.';
+      toast('Customer image published; cleanup needs attention');
+    }else{
+      $('programmeImageStatus').textContent='Image published.';
+      toast('Customer image published');
+    }
+    loadCustomerProgrammePresentationEditorV95();
+  };
+}
+
 async function settingsPage(){
   const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard'&&m!=='setup');
   const [{data:moduleRules,error:moduleRulesError},{data:fieldDefs,error:fieldDefsError}]=await Promise.all([
@@ -11625,6 +12158,7 @@ async function settingsPage(){
   M().innerHTML=`<div class="settings-page"><div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
     <div class="settings-tabs" role="tablist" aria-label="Settings sections">
       <button type="button" class="settings-tab" role="tab" id="settab-workspace" aria-controls="setpanel-workspace" aria-selected="true" data-settab="workspace">Workspace &amp; brand</button>
+      ${S.myRole==='owner'?'<button type="button" class="settings-tab" role="tab" id="settab-programme" aria-controls="setpanel-programme" aria-selected="false" tabindex="-1" data-settab="programme">Customer programme</button>':''}
       <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
       <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
@@ -11642,6 +12176,9 @@ async function settingsPage(){
       <p class="field-label">Portal link (share with customers)</p>
       <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${location.origin}${location.pathname}#/b/${S.biz.slug}">${location.origin}${location.pathname}#/b/${S.biz.slug}</a></p>
       <div class="settings-save-row"><button class="btn" id="bsave">Save workspace</button><span class="settings-scope">Saves this workspace's name, brand colour, booking policy and public review link.</span></div></div></section>
+    ${S.myRole==='owner'?`<section class="settings-panel" id="setpanel-programme" role="tabpanel" aria-labelledby="settab-programme" tabindex="-1" hidden>
+      <div class="card" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
+    </section>`:''}
     <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1" hidden><div class="split"><div class="card"><b>Modules</b><p class="muted small" style="margin:6px 0 10px">Set by Nestly for your sector. Contact Nestly if your business needs a different module entitlement.</p>
       <div class="platform-module-list" aria-label="Enabled modules">${mods.filter(m=>(S.biz.enabled_modules||[]).includes(m)).map(m=>`<span class="chip on">${CUI.icon(MODULES[m][0],{size:16})} ${MODULES[m][1]}${dependencyText(m)?` · uses ${esc(dependencyText(m))}`:''}</span>`).join('')||'<span class="muted small">No optional modules are assigned.</span>'}</div></div>
       <div class="card" id="billingWrap"><div class="empty">Loading…</div></div></div></section>
@@ -11711,6 +12248,7 @@ async function settingsPage(){
   });
   const initialSettingsTab=document.getElementById('settab-'+settingsActiveTab);
   if(initialSettingsTab&&initialSettingsTab!==settingsTabs[0])selectSettingsTab(initialSettingsTab,false);
+  if(S.myRole==='owner')loadCustomerProgrammePresentationEditorV95();
   /* Checkout Catalogue is deliberately separate from Inventory: it only controls whether an
      existing service/product may be selected at checkout. Stock, suppliers, quantities and cost
      data are never loaded or rendered here. All reads and writes are owner-gated RPC contracts. */

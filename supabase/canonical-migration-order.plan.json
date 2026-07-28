@@ -808,6 +808,12 @@
       "version": "20260728123441",
       "name": "nestly_v94_platform_control_intelligence",
       "sourcePath": "db/migrations/20260728_nestly_v94_platform_control_intelligence.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260728145332",
+      "name": "nestly_v95_bilingual_programmes",
+      "sourcePath": "db/migrations/20260728_nestly_v95_bilingual_programmes.sql"
     }
   ]
 }
