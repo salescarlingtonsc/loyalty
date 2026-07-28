@@ -814,6 +814,12 @@
       "version": "20260728145332",
       "name": "nestly_v95_bilingual_programmes",
       "sourcePath": "db/migrations/20260728_nestly_v95_bilingual_programmes.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729110000",
+      "name": "nestly_v96_customer_programme_selector_media",
+      "sourcePath": "db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql"
     }
   ]
 }

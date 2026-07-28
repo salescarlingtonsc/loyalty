@@ -2366,6 +2366,10 @@
       "reason": "browser RPC 'customer_get_business_presentation_v95' is a stable verified-link customer reader for localized merchant presentation, branch-visible content, catalogue copy, media paths, tier progress, and merchant-enabled action truth. It performs no DML and resolves to no value writer."
     },
     {
+      "id": "browser.rpc:app/index.html:customer_get_programme_selector_media_v96",
+      "reason": "browser RPC 'customer_get_programme_selector_media_v96' is a stable, bounded, verified-link-scoped customer reader that returns only each linked business slug and its current customer-visible logo URL. It performs no DML and resolves to no value writer."
+    },
+    {
       "id": "browser.rpc:app/index.html:customer_get_locale_preference_v95",
       "reason": "browser RPC 'customer_get_locale_preference_v95' is a self-scoped stable read of the authenticated customer's Nestly locale preference. It performs no DML and resolves to no value writer."
     },

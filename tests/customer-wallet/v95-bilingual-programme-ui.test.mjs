@@ -29,8 +29,9 @@ test('programme selector precedes merchant detail and zero-programme state only 
   const home=section('function renderActionableWalletHome','async function renderCustomerWallet');
   const first=section('function renderCustomerFirstProgrammeQuest','function renderActionableWalletHome');
   assert.match(home,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
-  assert.match(home,/customer-programme-card-v95/);
-  assert.match(home,/href="#\/wallet\/\$\{encodeURIComponent\(business\.slug/);
+  assert.match(home,/customerProgrammeGridMarkupV96\(cards\)/);
+  assert.match(app,/function customerProgrammeTileMarkupV96\([\s\S]*customer-programme-card-v95/);
+  assert.match(app,/function customerProgrammeTileMarkupV96\([\s\S]*href="#\/wallet\/\$\{encodeURIComponent\(business\.slug/);
   assert.match(first,/id="customerFirstScan"/);
   assert.match(first,/ct\('qrOnlyHelp'\)/);
   assert.doesNotMatch(first,/customerRelationshipCheck|href="#\/claim"|type="search"/);

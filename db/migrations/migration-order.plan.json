@@ -813,6 +813,12 @@
       "path": "db/migrations/20260728_nestly_v95_bilingual_programmes.sql",
       "semanticVersion": "v95",
       "proposedDeployVersion": "20260722000213"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql",
+      "semanticVersion": "v96",
+      "proposedDeployVersion": "20260729110000"
     }
   ]
 }

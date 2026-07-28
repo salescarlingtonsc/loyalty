@@ -1,0 +1,91 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+
+const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+
+function section(start,end){
+  const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
+  assert.ok(from>=0,`missing section start: ${start}`);
+  assert.ok(to>from,`missing section end: ${end}`);
+  return app.slice(from,to);
+}
+
+test('customer Home removes the redundant Messages summary while retaining the header notification control',()=>{
+  const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
+  const fallbackHome=wallet.slice(wallet.indexOf("if(!businessSlug){"),wallet.indexOf("const args={p_business_slug:businessSlug}"));
+  const shell=section('function renderCustomerShell','function focusCustomerRoute');
+  assert.doesNotMatch(fallbackHome,/href="#\/customer\/messages"[\s\S]{0,100}<b>Messages<\/b>/);
+  assert.match(fallbackHome,/href="#\/customer\/programmes"/);
+  assert.match(fallbackHome,/href="#\/customer\/bookings"/);
+  assert.match(shell,/id="customerInboxBellSlot"/);
+  assert.match(shell,/href="#\/customer\/messages"/);
+  assert.match(shell,/CUI\.icon\('bell'/);
+});
+
+test('programme selector is exactly five compact columns on wide desktop with deliberate responsive breakpoints',()=>{
+  assert.match(app,/\.customer-programme-grid-v96\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\);gap:10px\}/);
+  assert.match(app,/@media\(min-width:721px\) and \(max-width:1100px\)\{\.customer-programme-grid-v96\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)\}\}/);
+  assert.match(app,/@media\(max-width:720px\)\{[\s\S]*\.customer-programme-grid-v96\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}/);
+  assert.match(app,/@media\(max-width:420px\)\{\.customer-programme-grid-v96\{grid-template-columns:1fr\}/);
+  assert.match(app,/\.customer-programme-card-v95\{[^}]*min-height:152px/s);
+  assert.match(app,/\.customer-programme-card\{[^}]*min-height:44px/s);
+});
+
+test('selector tiles use validated logos when supplied and deterministic initials otherwise',()=>{
+  const helper=section('function customerProgrammeInitialsV96','function renderActionableWalletHome');
+  const home=section('function renderActionableWalletHome','async function renderCustomerWallet');
+  assert.match(helper,/customerMediaUrlV95\(business\?\.logo_url\)/);
+  assert.match(helper,/<img src="\$\{esc\(logoUrl\)\}" alt="\$\{esc\(business\?\.name\|\|ct\('localBusiness'\)\)\} logo"/);
+  assert.match(helper,/customerProgrammeInitialsV96\(business\?\.name\)/);
+  assert.match(helper,/function customerProgrammeGridMarkupV96\(cards=\[\]\)/);
+  assert.match(helper,/customerProgrammeTileLogoV96\(business\)/);
+  assert.match(helper,/aria-label="\$\{esc\(ct\('openProgramme'/);
+  assert.match(helper,/href="#\/wallet\/\$\{encodeURIComponent\(business\.slug/);
+  assert.match(home,/customerProgrammeGridMarkupV96\(cards\)/);
+  assert.doesNotMatch(home,/actionableWalletActionText\(card\)/);
+});
+
+test('fallback Home and legacy Programmes route reuse the compact selector instead of huge wallet cards',()=>{
+  const programmes=section('async function renderCustomerProgrammes','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
+  const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
+  const fallbackHome=wallet.slice(wallet.indexOf("if(!businessSlug){"),wallet.indexOf("const args={p_business_slug:businessSlug}"));
+  assert.match(programmes,/Promise\.all\(\[\s*sb\.rpc\('customer_get_wallet'\),\s*sb\.rpc\('customer_get_programme_selector_media_v96'\)/);
+  assert.match(programmes,/mergeCustomerProgrammeSelectorMediaV96/);
+  assert.match(programmes,/customerProgrammeGridMarkupV96\(cards\)/);
+  assert.match(fallbackHome,/customerProgrammeGridMarkupV96\(cards\)/);
+  assert.doesNotMatch(fallbackHome,/class="wallet-firms"|class="wallet-firm"/);
+  assert.doesNotMatch(fallbackHome,/data-slug=/);
+});
+
+test('merchant feature groups and birthday participation render only from actual capability and content',()=>{
+  const merchant=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
+  const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
+  assert.match(merchant,/presentation\.rewards\.length\?`<div class="customer-section-title"/);
+  assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?/);
+  assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
+  assert.match(merchant,/presentation\.offers\.length\?`<div class="customer-section-title"/);
+  for(const content of ['rewards','benefits','offers']){
+    assert.match(merchant,new RegExp(`presentation\\.${content}\\.length\\?[\\s\\S]*?:''\\}`));
+  }
+  assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?[\s\S]*?:''\}/);
+  assert.match(wallet,/customerFeatures\.customer_birthday_benefits&&actionableCard\?\.birthday_benefit&&actionableCard\.birthday_benefit\.status!=='unavailable'/);
+});
+
+test('successful empty feature feeds remove their section instead of inventing placeholder content',()=>{
+  const empty=section('async function walletSectionEmpty','function renderWalletAppointments');
+  const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
+  assert.match(empty,/await sb\.rpc\('customer_portal_capabilities',\{p_business_slug:businessSlug\}\)/);
+  assert.ok((empty.match(/walletSectionStillCurrent\(host,isCurrent\)/g)||[]).length>=2);
+  assert.match(empty,/if\(!data\?\.\[capability\]\)\{host\.remove\(\);ensureWalletEmptyState\(businessSlug\);return\}/);
+  assert.match(empty,/host\.remove\(\);ensureWalletEmptyState\(businessSlug\)/);
+  assert.doesNotMatch(empty,/No rewards|No packages|No membership|No appointments/);
+});
+
+test('enabled transaction history preserves an explicit zero-history state and refresh affordance',()=>{
+  const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
+  assert.match(wallet,/if\(!transactionState\.items\.length\)\{[\s\S]*No purchases or points activity has been recorded for this programme yet\./);
+  assert.match(wallet,/id="walletTransactionsRetry"/);
+  assert.match(wallet,/\$\('walletTransactionsRetry'\)\.onclick=\(\)=>loadTransactions\(null\)/);
+  assert.doesNotMatch(wallet,/if\(!transactionState\.items\.length\)\{\s*host\.remove\(\)/s);
+});

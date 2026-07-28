@@ -262,6 +262,10 @@ tr.click:hover td{background:#FBFAF8}
 .settings-panel[hidden]{display:none}
 .settings-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
 .settings-save-row .btn{flex:0 0 auto}
+.workspace-logo-editor{display:grid;grid-template-columns:92px minmax(0,1fr);gap:16px;align-items:start;padding:16px 0;border-bottom:1px solid var(--line);margin-bottom:16px}
+.workspace-logo-preview{width:92px;height:92px;border-radius:24px;border:1px solid var(--line);background:var(--paper);display:grid;place-items:center;overflow:hidden;font-size:30px;font-weight:800;color:var(--red)}
+.workspace-logo-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.workspace-logo-fields{min-width:0}
 .settings-scope{color:var(--muted);font-size:12px;line-height:1.4;flex:1 1 160px;min-width:0}
 .switchrow{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 4px;font-size:12.5px;color:var(--ink2)}
 .tglsw{position:relative;width:44px;height:44px;border-radius:100px;background:transparent;cursor:pointer}
@@ -594,6 +598,8 @@ input[type=range]:focus{box-shadow:none}
   .settings-page .row>input,.settings-page .row>select{flex:1 1 100%;width:100%;max-width:100%!important}
   .settings-page .row>.btn{flex:1 1 auto;max-width:100%}
   .settings-page .row>span,.settings-page .row>b{max-width:100%;overflow-wrap:anywhere}
+  .workspace-logo-editor{grid-template-columns:72px minmax(0,1fr)}
+  .workspace-logo-preview{width:72px;height:72px;border-radius:20px}
   .checkout-catalogue-item{grid-template-columns:minmax(0,1fr)}
   .checkout-catalogue-item .btn{width:100%}
   .checkout-catalogue-filter{grid-template-columns:minmax(0,1fr)}
@@ -688,17 +694,23 @@ input[type=range]:focus{box-shadow:none}
 .customer-home-stack{display:grid;gap:14px}
 .customer-home-nba{border-color:rgba(194,65,53,.22);background:linear-gradient(145deg,#fff 35%,var(--tint))}
 .customer-home-nba .customer-home-eyebrow{display:flex;align-items:center;gap:7px;color:var(--coral);font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.07em}
-.customer-home-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.customer-home-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .customer-home-quick a{display:flex;align-items:flex-start;gap:10px;min-height:88px;padding:14px;border:1px solid var(--hair);border-radius:13px;background:#fff;box-shadow:var(--shadow)}
 .customer-home-quick a:hover{border-color:rgba(194,65,53,.28)}
 .customer-home-quick b{display:block;font-size:14px}.customer-home-quick p{margin-top:3px;line-height:1.4}
 .customer-programme-list,.customer-booking-list{display:grid;gap:12px}
+.customer-programme-grid-v96{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .customer-programme-card{display:block;min-height:44px}
-.customer-programme-card-v95{position:relative;overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.customer-programme-card-v95{position:relative;overflow:hidden;min-height:152px;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease)}
 .customer-programme-card-v95:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.customer-programme-card-v95:focus-visible{border-color:var(--merchant-accent,var(--coral))}
 .customer-programme-card-accent{height:8px;background:var(--merchant-accent,var(--coral))}
-.customer-programme-card-body{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:13px;padding:17px}
+.customer-programme-card-body{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:10px;padding:14px}
+.customer-programme-card-copy{min-width:0}.customer-programme-card-copy h2{font-size:15px;line-height:1.25;overflow-wrap:anywhere}.customer-programme-card-copy p{line-height:1.35}
+.customer-programme-card-balance{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:3px;padding-top:10px;border-top:1px solid var(--hair)}
+.customer-programme-card-balance b{font-size:17px;font-variant-numeric:tabular-nums}.customer-programme-card-balance span{color:var(--muted);font-size:11.5px}
 .customer-programme-logo{width:54px;height:54px;display:grid;place-items:center;overflow:hidden;border-radius:15px;background:color-mix(in srgb,var(--merchant-accent,var(--coral)) 13%,#fff);color:var(--merchant-accent,var(--coral));font-size:20px;font-weight:850}
+.customer-programme-card-v95 .customer-programme-logo{width:42px;height:42px;border-radius:12px;font-size:15px;letter-spacing:.02em}
 .customer-programme-logo img{width:100%;height:100%;object-fit:cover}
 .customer-merchant-hero{position:relative;overflow:hidden;min-height:280px;padding:0;border:0;border-radius:24px;background:var(--merchant-accent,#28212f);color:#fff;box-shadow:0 20px 48px rgba(23,22,26,.2)}
 .customer-merchant-hero-media{position:absolute;inset:0}.customer-merchant-hero-media img{width:100%;height:100%;object-fit:cover}
@@ -769,8 +781,9 @@ input[type=range]:focus{box-shadow:none}
   .customer-primary-nav a{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
   .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
-  .customer-programme-card-body{grid-template-columns:48px minmax(0,1fr)}.customer-programme-card-body>.pill{grid-column:2}
+  .customer-programme-grid-v96{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+@media(min-width:721px) and (max-width:1100px){.customer-programme-grid-v96{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){
   .wallet-shell{padding:max(20px,env(safe-area-inset-top))
     max(14px,env(safe-area-inset-right)) calc(44px + env(safe-area-inset-bottom))
@@ -780,6 +793,7 @@ input[type=range]:focus{box-shadow:none}
   .wallet-metrics{grid-template-columns:1fr}.wallet-section{padding:15px}.wallet-line,.wallet-appt{flex-wrap:wrap}.walletChange{width:100%}
   .entry-choice-card{padding:22px}.entry-choice-grid{grid-template-columns:1fr}.entry-choice{min-height:148px}
 }
+@media(max-width:420px){.customer-programme-grid-v96{grid-template-columns:1fr}.customer-programme-card-v95{min-height:128px}}
 .strike{text-decoration:line-through;opacity:.55}
 /* v53 visit feedback & service recovery (shared by the customer wallet and the staff queue) */
 .fb-stars{border:0;padding:0;margin:0;min-width:0}
@@ -2825,13 +2839,19 @@ async function renderCustomerProgrammes(){
     renderActionableWalletHome(data);
     focusCustomerRoute();return;
   }
-  const {data,error}=await sb.rpc('customer_get_wallet');
+  const [walletResult,selectorMediaResult]=await Promise.all([
+    sb.rpc('customer_get_wallet'),
+    sb.rpc('customer_get_programme_selector_media_v96')
+  ]);
   if(!isCurrent())return;
+  const {data,error}=walletResult;
   if(error)return renderCustomerWalletRetry('Your programmes are temporarily unavailable.',null,()=>renderCustomerProgrammes());
-  const cards=Array.isArray(data)?data:[];
+  const cards=mergeCustomerProgrammeSelectorMediaV96(
+    Array.isArray(data)?data:[],selectorMediaResult.error?null:selectorMediaResult.data
+  );
   if(!cards.length){renderCustomerFirstProgrammeQuest();return}
   $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Programmes</h1><p class="muted">Every verified business keeps its rewards and balances separate.</p></div></header>${scanGuide}
-    <div class="customer-programme-list">${cards.map(card=>{const b=card?.business||{},loyalty=card?.loyalty||{};return `<a class="card customer-programme-card" href="#/wallet/${encodeURIComponent(b.slug||'')}"><h2>${esc(b.name||'Business')}</h2><p class="muted small" style="margin-top:4px">${esc(b.industry||'Local business')}</p><div class="wallet-metrics"><div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'Points')}</span><b>${Number(loyalty.balance||0)}</b></div><div class="wallet-metric"><span class="muted small">Upcoming bookings</span><b>${Number(card?.upcoming_appointments?.count||0)}</b></div></div></a>`}).join('')}</div>`;
+    ${customerProgrammeGridMarkupV96(cards)}`;
   focusCustomerRoute();
 }
 
@@ -3287,15 +3307,16 @@ function ensureWalletEmptyState(businessSlug){
   $('walletEmptyRetry').onclick=()=>renderCustomerWallet(businessSlug);
 }
 
-async function walletSectionEmpty(id,title,message,businessSlug,capability,retry,isCurrent=()=>true){
+async function walletSectionEmpty(id,_title,_message,businessSlug,capability,retry,isCurrent=()=>true){
   const host=$(id);if(!walletSectionStillCurrent(host,isCurrent))return;
   const {data,error}=await sb.rpc('customer_portal_capabilities',{p_business_slug:businessSlug});
   if(!walletSectionStillCurrent(host,isCurrent))return;
   if(error)return walletSectionError(id,'This section could not be refreshed.',retry);
+  // A disabled optional feature and an enabled feature with a successful empty
+  // feed are both absent from the customer surface. The capability recheck is
+  // still authoritative and the post-await guard prevents a stale route write.
   if(!data?.[capability]){host.remove();ensureWalletEmptyState(businessSlug);return}
-  host.setAttribute('aria-busy','false');
-  host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(title)}</h2><p class="muted small">${esc(message)}</p></div><span class="spacer"></span><button class="btn ghost sm" id="${id}EmptyRetry">Refresh</button></div>`;
-  $(`${id}EmptyRetry`).onclick=retry;
+  host.remove();ensureWalletEmptyState(businessSlug);
 }
 
 function renderWalletAppointments(host,businessSlug,state,customerFeatures,{appointmentChangesEnabled=false}={}){
@@ -3434,14 +3455,10 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       </section>
     </div>
     ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><a class="btn" href="#/b/${encodeURIComponent(business.slug)}">${esc(ct('bookNow'))}</a></div></section>`:''}
-    <div class="customer-section-title"><h2>${esc(ct('rewards'))}</h2></div>
-    ${presentation.rewards.length?`<div class="customer-rewards-grid">${presentation.rewards.map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('rewards'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}${item.terms?`<details style="margin-top:8px"><summary class="small">${esc(ct('terms'))}</summary><p class="muted small" style="margin-top:5px">${esc(item.terms)}</p></details>`:''}</article>`).join('')}</div>`:`<p class="muted small">${esc(ct('noRewards'))}</p>`}
-    <div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div>
-    ${presentation.products.length||presentation.services.length?`<div class="customer-rewards-grid">${[...presentation.products,...presentation.services].map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('featured'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}</article>`).join('')}</div>`:`<p class="muted small">${esc(ct('noFeatured'))}</p>`}
-    <div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div>
-    ${presentation.benefits.length?`<div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:`<p class="muted small">${esc(ct('noBenefits'))}</p>`}
-    <div class="customer-section-title"><h2>${esc(ct('offers'))}</h2></div>
-    ${presentation.offers.length?`<div class="customer-offers-grid">${presentation.offers.map(item=>`<article class="customer-offer-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('offers'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}${item.terms?`<details style="margin-top:8px"><summary class="small">${esc(ct('terms'))}</summary><p class="muted small" style="margin-top:5px">${esc(item.terms)}</p></details>`:''}</article>`).join('')}</div>`:`<p class="muted small">${esc(ct('noOffers'))}</p>`}`;
+    ${presentation.rewards.length?`<div class="customer-section-title"><h2>${esc(ct('rewards'))}</h2></div><div class="customer-rewards-grid">${presentation.rewards.map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('rewards'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}${item.terms?`<details style="margin-top:8px"><summary class="small">${esc(ct('terms'))}</summary><p class="muted small" style="margin-top:5px">${esc(item.terms)}</p></details>`:''}</article>`).join('')}</div>`:''}
+    ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products,...presentation.services].map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('featured'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}</article>`).join('')}</div>`:''}
+    ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}
+    ${presentation.offers.length?`<div class="customer-section-title"><h2>${esc(ct('offers'))}</h2></div><div class="customer-offers-grid">${presentation.offers.map(item=>`<article class="customer-offer-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('offers'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}${item.terms?`<details style="margin-top:8px"><summary class="small">${esc(ct('terms'))}</summary><p class="muted small" style="margin-top:5px">${esc(item.terms)}</p></details>`:''}</article>`).join('')}</div>`:''}`;
 }
 function actionableWalletCardMarkup(card,{detail=false}={}){
   const business=card?.business||{},loyalty=card?.loyalty||{},credit=card?.credit||{},packages=card?.packages||{};
@@ -3493,17 +3510,43 @@ function renderCustomerFirstProgrammeQuest(){
   document.querySelectorAll('[data-customer-locale]').forEach(button=>button.onclick=()=>setCustomerLocaleV95(button.dataset.customerLocale));
   focusCustomerRoute();
 }
+function customerProgrammeInitialsV96(name){
+  const words=String(name||'').trim().split(/\s+/).filter(Boolean);
+  return (words.length>1?`${words[0][0]}${words[1][0]}`:words[0]?.slice(0,2)||'N').toUpperCase();
+}
+function customerProgrammeTileLogoV96(business){
+  const logoUrl=customerMediaUrlV95(business?.logo_url);
+  return logoUrl
+    ?`<img src="${esc(logoUrl)}" alt="${esc(business?.name||ct('localBusiness'))} logo" loading="lazy" width="42" height="42">`
+    :`<span aria-hidden="true">${esc(customerProgrammeInitialsV96(business?.name))}</span>`;
+}
+function mergeCustomerProgrammeSelectorMediaV96(cards=[],payload=null){
+  const logoBySlug=new Map(
+    (Array.isArray(payload?.items)?payload.items:[])
+      .filter(item=>typeof item?.business_slug==='string')
+      .map(item=>[item.business_slug,item.logo_url||null])
+  );
+  return cards.map(card=>{
+    const business=card?.business||{},slug=String(business.slug||'');
+    if(!logoBySlug.has(slug))return card;
+    return {...card,business:{...business,logo_url:logoBySlug.get(slug)}};
+  });
+}
+function customerProgrammeTileMarkupV96(card){
+  const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
+  const accent=/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f';
+  const unit=ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points');
+  return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${Number(loyalty.balance||0)}</b><span>${esc(unit)}</span></div></div></a>`;
+}
+function customerProgrammeGridMarkupV96(cards=[]){
+  return `<div class="customer-programme-list customer-programme-grid-v96">${cards.map(customerProgrammeTileMarkupV96).join('')}</div>`;
+}
 function renderActionableWalletHome(payload){
   const cards=Array.isArray(payload?.cards)?payload.cards:[];
   if(!cards.length){renderCustomerFirstProgrammeQuest();return}
   $('walletBody').innerHTML=`<header class="customer-page-head"><div><p class="customer-quest-kicker">${esc(ct('chooseProgramme'))}</p><h1>${esc(ct('yourProgrammes'))}</h1><p class="muted">${esc(ct('programmesIntro'))}</p></div><button class="btn sm" id="customerHomeScan" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button></header>
     ${payload?.truncated?`<div class="card" role="status"><p class="muted small">Showing the 100 highest-priority linked programmes.</p></div>`:''}
-    <div class="customer-programme-list">${cards.map(card=>{
-      const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
-      const action=actionableWalletActionText(card);
-      const accent=/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f';
-      return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${esc(String(business.name||'N').trim().charAt(0).toUpperCase()||'N')}</div><div><p class="customer-quest-kicker">${esc(business.industry||ct('localBusiness'))}</p><h2 style="margin-top:5px">${esc(business.name||ct('localBusiness'))}</h2><p style="margin-top:11px;font-weight:700">${esc(action)}</p><p class="muted small" style="margin-top:5px">${esc(reward?.available_now===true?ct('rewardReady'):ct('continueProgramme'))}</p></div><span class="pill">${Number(loyalty.balance||0)} ${esc(ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points'))}</span></div></a>`;
-    }).join('')}</div>`;
+    ${customerProgrammeGridMarkupV96(cards)}`;
   $('customerHomeScan').onclick=openCustomerJoinScanner;
 }
 async function renderCustomerWallet(businessSlug=null){
@@ -3562,13 +3605,16 @@ async function renderCustomerWallet(businessSlug=null){
     if(!actionableCard)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
   }
   if(!businessSlug){
-    const [{data,error},bookingRequestResult]=await Promise.all([
+    const [{data,error},bookingRequestResult,selectorMediaResult]=await Promise.all([
       sb.rpc('customer_get_wallet'),
-      sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null})
+      sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
+      sb.rpc('customer_get_programme_selector_media_v96')
     ]);
     if(!isWalletCurrent())return;
     if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null);
-    const cards=Array.isArray(data)?data:[];
+    const cards=mergeCustomerProgrammeSelectorMediaV96(
+      Array.isArray(data)?data:[],selectorMediaResult.error?null:selectorMediaResult.data
+    );
     if(!cards.length){renderCustomerFirstProgrammeQuest();return}
     const appointmentCount=cards.reduce((sum,card)=>sum+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0);
     const activeRequestCount=bookingRequestResult.error?0:(Array.isArray(bookingRequestResult.data?.items)?bookingRequestResult.data.items.filter(isActiveCustomerBookingRequest).length:0);
@@ -3580,17 +3626,9 @@ async function renderCustomerWallet(businessSlug=null){
       :'Booking summary is temporarily unavailable.';
     $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>${esc(BRAND.customerLabel)}</h1><p class="muted">Each business keeps its own rewards and balances.</p></div></header>
       <section class="card customer-home-nba"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>Next best action</span></p><h2 style="margin-top:12px">Programme guidance is unavailable</h2><p class="muted small" style="margin-top:6px">Your balances remain visible below, but ${esc(BRAND.productName)} cannot safely rank an action right now.</p></section>
-      <div class="customer-home-quick" style="margin:14px 0"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>Rewards &amp; value</b><p class="muted small">${cards.length} linked programme${cards.length===1?'':'s'}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${bookingSummary}</p></div></a><a href="#/customer/messages">${CUI.icon('bell',{size:20})}<div><b>Messages</b><p class="muted small">${customerFeatures.customer_in_app_inbox===true?'Open message centre':'Not enabled yet'}</p></div></a></div>
-      <h2 style="margin:20px 0 10px">Programmes</h2><div class="wallet-firms">${cards.map(card=>{
-        const b=card.business||{},loyalty=card.loyalty||{},appointments=card.upcoming_appointments||{};
-        const currency=b.currency||'SGD';
-        return `<button class="wallet-firm" data-slug="${esc(b.slug)}"><b>${esc(b.name||'Business')}</b>
-          <p class="muted small" style="margin-top:3px">${esc(b.industry||'Local business')}</p>
-          <div class="wallet-metrics"><div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'points')}</span><b>${Number(loyalty.balance||0)}</b></div>
-          <div class="wallet-metric"><span class="muted small">Credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents||0)/100).toFixed(2)}</b></div></div>
-          <p class="muted small" style="margin-top:12px">${Number(appointments.count||0)} upcoming</p></button>`}).join('')}</div>
+      <div class="customer-home-quick" style="margin:14px 0"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>Rewards &amp; value</b><p class="muted small">${cards.length} linked programme${cards.length===1?'':'s'}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${bookingSummary}</p></div></a></div>
+      <h2 style="margin:20px 0 10px">Programmes</h2>${customerProgrammeGridMarkupV96(cards)}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Nestly QR during your visit. Nestly does not let customers search for or self-link a business from this portal.</p></div>`}`;
-    document.querySelectorAll('.wallet-firm').forEach(button=>button.onclick=()=>nav('#/wallet/'+encodeURIComponent(button.dataset.slug)));
     focusCustomerRoute();
     return;
   }
@@ -3630,7 +3668,7 @@ async function renderCustomerWallet(businessSlug=null){
       ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
       ${walletSectionShell('walletFeedback','Your visit feedback','Share how your visits went — private to this business.')}
       ${customerFeatures.customer_in_app_inbox?`<section class="card wallet-section" id="customerInAppInbox" aria-busy="true" tabindex="-1"><div class="wallet-skeleton"></div></section>`:''}
-      ${customerFeatures.customer_birthday_benefits?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
+      ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>
     ${customerFeatures.customer_notifications?'<div id="customerNotificationPreferences"></div>':''}`;
@@ -5982,6 +6020,11 @@ function renderHistPage(history,n){
 function canScanCustomerRedemption({createSales,clientsReadable,loyaltyWritable}={}){
   return createSales===true&&clientsReadable===true&&loyaltyWritable===true;
 }
+function canUseQuickEarnGiftCards({
+  createSales,giftcardsReadable,giftcardsWritable
+}={}){
+  return createSales===true&&giftcardsReadable===true&&giftcardsWritable===true;
+}
 async function tillPage(){
   const routeMain=M();
   const isTillCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -5991,6 +6034,11 @@ async function tillPage(){
     createSales:hasRoleCapability('create_sales'),
     clientsReadable:canReadModule('clients'),
     loyaltyWritable:canWriteModule('loyalty')
+  });
+  const canIssueGiftCards=()=>canUseQuickEarnGiftCards({
+    createSales:hasRoleCapability('create_sales'),
+    giftcardsReadable:canReadModule('giftcards'),
+    giftcardsWritable:canWriteModule('giftcards')
   });
   if(!canRecordSales){
     routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Customer lookup and purchase recording are unavailable for this role.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Additional access required',description:'Quick earn requires customer read access and permission to record purchases.',body:'<p class="muted small">Ask an owner to review your Customers and Quick earn assignments.</p>'})}`;
@@ -6302,7 +6350,7 @@ async function tillPage(){
     CUI.announce('Item added');onSaleLinesChanged();
   }
   function addGiftLine(cents){
-    if(cartLocked())return;
+    if(cartLocked()||!canIssueGiftCards())return;
     cart.push({lineId:crypto.randomUUID(),type:'giftcard',ref:null,label:'Gift card',unit_cents:cents,qty:1,key:crypto.randomUUID()});
     CUI.announce('Gift card added');draw(); // extras are NOT part of the kernel evaluation — no re-evaluate
   }
@@ -6480,7 +6528,10 @@ async function tillPage(){
 
   function drawCartComposer(){
     if(catalog===null&&!catalogError)loadCatalog();
-    const canGift=canWriteModule('giftcards');
+    const canGift=canIssueGiftCards();
+    if(!canGift&&cart.some(line=>line.type==='giftcard')){
+      cart=cart.filter(line=>line.type!=='giftcard');
+    }
     const canPkg=canWriteModule('packages'), canMem=canWriteModule('memberships');
     // §6 custom-price ('Other item') entry is OWNER AND MANAGER ONLY (Option A). This is a role,
     // not an individually grantable permission — granting it means promoting the employee to
@@ -6710,8 +6761,14 @@ async function tillPage(){
     for(const l of extras){
       if(l._status==='issued'||l._status==='done')continue;
       let res;
-      if(l.type==='giftcard')res=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:l.unit_cents,
-        p_purchaser:cust.client_id,p_recipient_email:null,p_idempotency_key:l.key});
+      if(l.type==='giftcard'){
+        if(!canIssueGiftCards()){
+          anyExtraFailed=true;l._status='failed';
+          l._error='Gift cards are not enabled for this account';continue;
+        }
+        res=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:l.unit_cents,
+          p_purchaser:cust.client_id,p_recipient_email:null,p_idempotency_key:l.key});
+      }
       else if(l.type==='package')res=await sb.rpc('sell_package',{p_business:S.biz.id,p_client:cust.client_id,
         p_plan:l.ref,p_idempotency_key:l.key});
       else res=await sb.rpc('enroll_membership_v41',{p_business:S.biz.id,p_client:cust.client_id,
@@ -11999,6 +12056,117 @@ async function imageDimensionsV95(file){
     image.src=url;
   });
 }
+function workspaceLogoPublishArgsV96({
+  businessId,objectPath,fileType,width,height,altEn,brand,existing
+}={}){
+  return {
+    p_business:businessId,p_asset_kind:'logo',p_entity_id:null,p_branch:null,
+    p_object_path:objectPath,p_mime_type:fileType,p_width_px:width,
+    p_height_px:height,p_alt_en:altEn,p_alt_zh_cn:null,
+    p_hero_color:brand?.hero_color||'#C43D32',
+    p_expected_asset_version:Number(existing?.version||0),
+    p_expected_brand_version:Number(brand?.version||1)
+  };
+}
+async function loadWorkspaceLogoEditorV96(){
+  const host=$('workspaceLogoEditorV96');
+  if(!host||S.myRole!=='owner')return;
+  host.innerHTML=CUI.loadingState({title:'Loading business logo',iconName:'business'});
+  const {data,error}=await sb.rpc('business_get_presentation_editor_v95',{
+    p_business:S.biz.id
+  });
+  if(!host.isConnected)return;
+  if(error||!data){
+    host.innerHTML=CUI.errorState({
+      title:'Business logo unavailable',
+      message:error?.message||'The current logo could not be loaded.',
+      retryId:'workspaceLogoRetryV96'
+    });
+    const retry=$('workspaceLogoRetryV96');
+    if(retry)retry.onclick=loadWorkspaceLogoEditorV96;
+    return;
+  }
+  const brand=data.brand||{},existing=brand.logo_asset||null;
+  const currentUrl=customerMediaUrlV95(existing?.url||'');
+  const initial=String(S.biz.name||'N').trim().charAt(0).toUpperCase()||'N';
+  host.innerHTML=`<div class="workspace-logo-editor">
+    <div class="workspace-logo-preview" id="workspaceLogoPreviewV96" aria-label="Business logo preview">
+      ${currentUrl?`<img src="${esc(currentUrl)}" alt="${esc(existing?.alt_en||`${S.biz.name} logo`)}" width="184" height="184">`:esc(initial)}
+    </div>
+    <div class="workspace-logo-fields">
+      <b>Business logo</b>
+      <p class="muted small" style="margin:5px 0 10px">Shown in your customer programme and merchant profile. A square PNG, JPG, WebP or GIF works best.</p>
+      <label for="workspaceLogoFileV96">${existing?'Choose a replacement':'Choose a logo'}</label>
+      <input id="workspaceLogoFileV96" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-describedby="workspaceLogoHelpV96">
+      <label for="workspaceLogoAltV96">Image description</label>
+      <input id="workspaceLogoAltV96" maxlength="240" value="${esc(existing?.alt_en||`${S.biz.name} logo`)}">
+      <div class="settings-save-row">
+        <button type="button" class="btn sm" id="workspaceLogoPublishV96" disabled>${existing?'Replace logo':'Upload logo'}</button>
+        <span class="settings-scope" id="workspaceLogoHelpV96" role="status">Maximum 10 MB. Nothing changes until you publish.</span>
+      </div>
+    </div>
+  </div>`;
+  const fileInput=$('workspaceLogoFileV96'),preview=$('workspaceLogoPreviewV96');
+  const publish=$('workspaceLogoPublishV96'),status=$('workspaceLogoHelpV96');
+  let previewUrl='';
+  fileInput.onchange=()=>{
+    if(previewUrl)URL.revokeObjectURL(previewUrl);
+    const file=fileInput.files?.[0];
+    publish.disabled=!file;
+    if(!file){
+      preview.innerHTML=currentUrl
+        ?`<img src="${esc(currentUrl)}" alt="${esc(existing?.alt_en||`${S.biz.name} logo`)}" width="184" height="184">`
+        :esc(initial);
+      status.textContent='Maximum 10 MB. Nothing changes until you publish.';
+      return;
+    }
+    previewUrl=URL.createObjectURL(file);
+    preview.innerHTML=`<img src="${esc(previewUrl)}" alt="New logo preview" width="184" height="184">`;
+    status.textContent='Preview only — publish when this looks right.';
+  };
+  publish.onclick=async()=>{
+    const file=fileInput.files?.[0],altEn=$('workspaceLogoAltV96').value.trim();
+    if(!file||!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760){
+      return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
+    }
+    if(!altEn)return toast('Add a short image description.');
+    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type];
+    const objectPath=`${S.biz.id}/logo/${crypto.randomUUID()}.${extension}`;
+    publish.disabled=true;status.textContent='Uploading and publishing logo…';
+    let dimensions;
+    try{dimensions=await imageDimensionsV95(file)}
+    catch(dimensionError){
+      publish.disabled=false;status.textContent='Logo dimensions could not be read.';
+      return fail(dimensionError);
+    }
+    const result=await NestlyMediaSyncV95.publish({
+      storage:sb.storage,client:sb,businessId:S.biz.id,objectPath,file,
+      publishArgs:workspaceLogoPublishArgsV96({
+        businessId:S.biz.id,objectPath,fileType:file.type,
+        width:dimensions.width,height:dimensions.height,altEn,
+        brand,existing
+      })
+    });
+    if(!host.isConnected)return;
+    if(!result.ok){
+      publish.disabled=false;
+      status.textContent=result.cleanup.status==='pending_cleanup'
+        ?'Logo was not published. Uploaded file cleanup is pending and will retry.'
+        :result.cleanup.status==='cleanup_untracked'
+          ?'Logo was not published, and file cleanup needs support.'
+          :'Logo was not published.';
+      return fail(result.error);
+    }
+    if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=''}
+    status.textContent=result.cleanup.status==='pending_cleanup'
+      ?'Logo published. Previous file cleanup is pending and will retry.'
+      :result.cleanup.status==='cleanup_untracked'
+        ?'Logo published. Previous file cleanup needs support.'
+        :'Logo published to the customer programme.';
+    toast(existing?'Business logo replaced':'Business logo published');
+    loadWorkspaceLogoEditorV96();
+  };
+}
 async function loadCustomerProgrammePresentationEditorV95(){
   const host=$('customerProgrammeEditorV95');
   if(!host||S.myRole!=='owner')return;
@@ -12166,6 +12334,7 @@ async function settingsPage(){
       <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer fields &amp; privacy</button>
     </div>
     <section class="settings-panel" id="setpanel-workspace" role="tabpanel" aria-labelledby="settab-workspace" tabindex="-1"><div class="card"><b>Business</b>
+      ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'business'})}</div>`:''}
       <label for="bn">Name</label><input id="bn" value="${esc(S.biz.name)}">
       <label for="bi">Industry</label><select id="bi" disabled aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
       <p class="muted small" id="biSectorHint" style="margin-top:4px">Set by Nestly for your sector.</p>
@@ -12248,7 +12417,10 @@ async function settingsPage(){
   });
   const initialSettingsTab=document.getElementById('settab-'+settingsActiveTab);
   if(initialSettingsTab&&initialSettingsTab!==settingsTabs[0])selectSettingsTab(initialSettingsTab,false);
-  if(S.myRole==='owner')loadCustomerProgrammePresentationEditorV95();
+  if(S.myRole==='owner'){
+    loadWorkspaceLogoEditorV96();
+    loadCustomerProgrammePresentationEditorV95();
+  }
   /* Checkout Catalogue is deliberately separate from Inventory: it only controls whether an
      existing service/product may be selected at checkout. Stock, suppliers, quantities and cost
      data are never loaded or rendered here. All reads and writes are owner-gated RPC contracts. */
