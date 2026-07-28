@@ -62,6 +62,15 @@ input,select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;borde
 input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3.5px rgba(194,65,53,.16)}
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
 .field-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
+.password-control{position:relative}
+.password-control input{padding-right:58px}
+.password-control.has-passkey input{padding-right:102px}
+.password-control-actions{position:absolute;inset:0 4px 0 auto;display:flex;align-items:center}
+.password-icon-button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;background:transparent;color:var(--ink2);box-shadow:none;transition:background .18s var(--ease),color .18s var(--ease)}
+.password-icon-button:hover{background:var(--tint);color:var(--coral)}
+.password-icon-button:active{background:#F6DDD7}
+.password-icon-button[disabled]{opacity:.38;cursor:not-allowed}
+.password-icon-button[aria-pressed="true"]{background:var(--tint);color:var(--coral)}
 /* Buttons: press-down on :active is the single strongest "native app" tell */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;background:var(--grad);color:#fff;font-weight:600;padding:10px 20px;border-radius:100px;
   box-shadow:0 1px 2px rgba(194,65,53,.2),0 6px 16px rgba(194,65,53,.22);
@@ -767,7 +776,7 @@ input[type=range]:focus{box-shadow:none}
 <script src="/brand-config.js"></script>
 <script src="/runtime-config.js?v=2"></script>
 <script src="/runtime-config-loader.js?v=2"></script>
-<script src="/customer-ui.js"></script>
+<script src="/customer-ui.js?v=20260728-auth-controls"></script>
 <script src="/grow-recommender.js"></script>
 <script src="/platform-crm-utils.js"></script>
 <script src="/platform-console.js?v=20260727-v89"></script>
@@ -1107,13 +1116,17 @@ function rememberPendingCustomerJoinToken(token){
   }catch{}
 }
 function customerRecoveryVerified(){
-  try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)==='true'}catch{return false}
+  try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)||''}catch{return ''}
 }
-function rememberCustomerRecoveryVerified(verified){
+function rememberCustomerRecoveryVerified(userId){
   try{
-    if(verified)sessionStorage.setItem(CUSTOMER_RECOVERY_SESSION_KEY,'true');
+    if(userId)sessionStorage.setItem(CUSTOMER_RECOVERY_SESSION_KEY,String(userId));
     else sessionStorage.removeItem(CUSTOMER_RECOVERY_SESSION_KEY);
   }catch{}
+}
+function customerRecoveryDisposition(recoveryUserId,sessionUserId){
+  if(!recoveryUserId)return 'none';
+  return recoveryUserId===sessionUserId?'require_password':'clear';
 }
 function normalizeCustomerBusinessIntent(value,currentUrl=location.href){
   const raw=String(value??'').trim();
@@ -1588,6 +1601,11 @@ async function route(){
     const {data:{session}}=await sb.auth.getSession();
     if(!isRouteCurrent())return;
     S.user=session?.user||null;
+    const recoveryDisposition=customerRecoveryDisposition(customerRecoveryVerified(),S.user?.id||'');
+    if(recoveryDisposition==='clear')rememberCustomerRecoveryVerified('');
+    if(recoveryDisposition==='require_password'){
+      return renderCustomerRecoveryPasswordSetup(isRouteCurrent);
+    }
     if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
     if(h==='#/'||h==='#/customer'||h==='#/customer/register'||h.startsWith('#/customer?')) return renderCustomerRegistration(isRouteCurrent);
     const directCustomerDestination=normalizeCustomerDestination(h);
@@ -1813,6 +1831,36 @@ async function route(){
 
 /* ---------- customer wallet ---------- */
 let customerRegistrationState={phone:'',channel:'sms',purpose:'signup'};
+function passwordControlHtml(id,{autocomplete='current-password',minlength='',describedBy='',placeholder='',passkeyButtonId=''}={}){
+  const inputAttributes=[
+    `id="${esc(id)}"`,`type="password"`,`autocomplete="${esc(autocomplete)}"`,
+    minlength?`minlength="${esc(minlength)}"`:'',
+    describedBy?`aria-describedby="${esc(describedBy)}"`:'',
+    placeholder?`placeholder="${esc(placeholder)}"`:''
+  ].filter(Boolean).join(' ');
+  return `<div class="password-control${passkeyButtonId?' has-passkey':''}"><input ${inputAttributes}>
+    <span class="password-control-actions">
+      <button class="password-icon-button" type="button" data-password-toggle="${esc(id)}" aria-controls="${esc(id)}" aria-pressed="false" aria-label="Show password" title="Show password">${CUI.icon('eye',{size:20})}</button>
+      ${passkeyButtonId?`<button class="password-icon-button" id="${esc(passkeyButtonId)}" type="button" disabled aria-label="Sign in with Face ID, Touch ID or passkey" title="Use Face ID, Touch ID or passkey">${CUI.icon('faceId',{size:21})}</button>`:''}
+    </span>
+  </div>`;
+}
+function bindPasswordVisibility(container=document){
+  container.querySelectorAll('[data-password-toggle]').forEach(button=>{
+    button.onclick=()=>{
+      const input=$(button.dataset.passwordToggle);
+      if(!input)return;
+      const showing=input.type==='text';
+      input.type=showing?'password':'text';
+      const label=showing?'Show password':'Hide password';
+      button.setAttribute('aria-pressed',String(!showing));
+      button.setAttribute('aria-label',label);
+      button.title=label;
+      button.innerHTML=CUI.icon(showing?'eye':'eyeOff',{size:20});
+      input.focus({preventScroll:true});
+    };
+  });
+}
 function normalizeSingaporeCustomerPhone(value){
   const digits=String(value??'').replace(/[^0-9]/g,'');
   const local=digits.startsWith('65')&&digits.length===10?digits.slice(2):digits;
@@ -1881,14 +1929,14 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     const button=verify;button.disabled=true;
     const {data,error}=await sb.auth.verifyOtp({phone,token,type:'sms'});
     if(!isRouteCurrent()||!button.isConnected||!otpError.isConnected)return;
-    if(error||!data?.user){
+    if(error||!data?.user||!data?.session){
       button.disabled=false;
       otpError.innerHTML='<div class="err">That code could not be verified. Check it and try again.</div>';return;
     }
     S.user=data.user;
     if(!isRouteCurrent()||!button.isConnected)return;
     if(recovering){
-      rememberCustomerRecoveryVerified(true);
+      rememberCustomerRecoveryVerified(data.user.id);
       return renderCustomerRecoveryPasswordSetup(isRouteCurrent);
     }
     renderCustomerRegistration(isRouteCurrent);
@@ -1920,20 +1968,48 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     },1000);
   };
 }
+function customerPasswordUpdateErrorMessage(error){
+  const code=String(error?.code||'').toLowerCase();
+  const message=String(error?.message||'').toLowerCase();
+  if(code==='same_password'||message.includes('same password')){
+    return 'Choose a password that is different from your current password.';
+  }
+  if(code==='weak_password'||error?.name==='WeakPasswordError'||message.includes('weak password')
+    ||message.includes('password is known to be weak')||message.includes('password has been pwned')){
+    return 'Choose a stronger, unique password that has not appeared in a known data breach.';
+  }
+  if(code.includes('reauthentication')||message.includes('reauthentication')){
+    return 'For your protection, this reset session must be verified again. Return to sign in and request a new reset code.';
+  }
+  if(code.includes('session')||code.includes('jwt')||message.includes('session')
+    ||message.includes('jwt')||message.includes('not authenticated')){
+    return 'This reset session has expired. Return to sign in and request a new reset code.';
+  }
+  return 'Your password could not be changed. Check that it is unique and meets every requirement, then try again.';
+}
 function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
   if(!isRouteCurrent())return;
   customerRegistrationShell(`<section class="card" aria-labelledby="customerRecoveryPasswordTitle">
     <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerRecoveryPasswordTitle">Choose a new password</h1><p class="muted small" style="margin-top:5px">Use this password for normal Nestly sign-in. No OTP is sent when you sign in with it.</p></div></div>
     <label for="customerRecoveryPassword">New password</label>
-    <input id="customerRecoveryPassword" type="password" autocomplete="new-password" minlength="12" aria-describedby="customerRecoveryPasswordHelp">
+    ${passwordControlHtml('customerRecoveryPassword',{autocomplete:'new-password',minlength:'12',describedBy:'customerRecoveryPasswordHelp'})}
     <p class="muted small" id="customerRecoveryPasswordHelp" style="margin-top:6px">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p>
     <label for="customerRecoveryPasswordConfirm">Confirm new password</label>
-    <input id="customerRecoveryPasswordConfirm" type="password" autocomplete="new-password" minlength="12">
+    ${passwordControlHtml('customerRecoveryPasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
     <div id="customerRecoveryPasswordError" role="alert" aria-live="assertive"></div>
     <button class="btn" id="customerRecoveryPasswordSave" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:18})}<span>Save new password</span></button>
+    <button class="btn ghost" id="customerRecoveryPasswordBack" type="button" style="width:100%;margin-top:10px">${CUI.icon('back',{size:18})}<span>Cancel and return to sign in</span></button>
   </section>`);
+  bindPasswordVisibility(root);
   const save=$('customerRecoveryPasswordSave'),password=$('customerRecoveryPassword');
   const confirmPassword=$('customerRecoveryPasswordConfirm'),errorHost=$('customerRecoveryPasswordError');
+  $('customerRecoveryPasswordBack').onclick=async()=>{
+    rememberCustomerRecoveryVerified('');
+    await sb.auth.signOut();
+    resetClientSessionState({preserveInvitation:true});
+    customerRegistrationState={phone:'',channel:'sms',purpose:'signup'};
+    renderCustomerPasswordSignIn(isRouteCurrent);
+  };
   save.onclick=async()=>{
     if(!validNewPassword(password.value)){
       errorHost.innerHTML='<div class="err">Use at least 12 characters with uppercase, lowercase, a number, and a symbol.</div>';return;
@@ -1942,13 +2018,23 @@ function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
       errorHost.innerHTML='<div class="err">Passwords do not match.</div>';return;
     }
     save.disabled=true;
+    save.querySelector('span').textContent='Saving new password…';
+    const {data:userData,error:sessionError}=await sb.auth.getUser();
+    if(!isRouteCurrent()||!save.isConnected)return;
+    if(sessionError||!userData?.user||userData.user.id!==S.user?.id){
+      save.disabled=false;
+      save.querySelector('span').textContent='Save new password';
+      errorHost.innerHTML='<div class="err">This reset session has expired. Return to sign in and request a new reset code.</div>';
+      return;
+    }
     const {error}=await sb.auth.updateUser({password:password.value});
     if(!isRouteCurrent()||!save.isConnected)return;
     if(error){
-      save.disabled=false;errorHost.innerHTML='<div class="err">Your password could not be changed. Request another reset code.</div>';return;
+      save.disabled=false;save.querySelector('span').textContent='Save new password';
+      errorHost.innerHTML=`<div class="err">${esc(customerPasswordUpdateErrorMessage(error))}</div>`;return;
     }
     const phone=customerRegistrationState.phone;
-    rememberCustomerRecoveryVerified(false);
+    rememberCustomerRecoveryVerified('');
     await sb.auth.signOut();
     resetClientSessionState({preserveInvitation:true});
     customerRegistrationState={phone,channel:'sms',purpose:'signup'};
@@ -1960,17 +2046,16 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice=''}={}){
   customerRegistrationShell(`<section class="card" aria-labelledby="customerPasswordTitle">
     <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerPasswordTitle">Welcome to ${esc(BRAND.productName)}</h1><p class="muted small" style="margin-top:5px">Sign in with your mobile number and password. Normal sign-in does not send an OTP.</p></div></div>
     <label for="customerPasswordPhone">Singapore mobile number</label>
-    <input id="customerPasswordPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
+    <input id="customerPasswordPhone" type="tel" inputmode="tel" autocomplete="tel webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
     <label for="customerPassword">Password</label>
-    <input id="customerPassword" type="password" autocomplete="current-password">
+    ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn'})}
     <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px;color:var(--green)">${esc(notice)}</p>`:''}</div>
     <div style="margin-top:14px">${authChallengeHtml()}</div>
     <button class="btn" id="customerPasswordSignIn" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Sign in</span></button>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
-    <div class="row" style="margin:18px 0 0" aria-hidden="true"><span style="height:1px;background:var(--line);flex:1"></span><span class="muted small">or</span><span style="height:1px;background:var(--line);flex:1"></span></div>
-    <button class="btn ghost" id="customerPasskeySignIn" type="button" disabled style="width:100%;margin-top:12px">${CUI.icon('scan',{size:18})}<span>Use Face ID, Touch ID or passkey</span></button>
     <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
   </section>`);
+  bindPasswordVisibility(root);
   const signIn=$('customerPasswordSignIn'),phoneInput=$('customerPasswordPhone');
   const passwordInput=$('customerPassword'),errorHost=$('customerPasswordError');
   const passkeyButton=$('customerPasskeySignIn'),passkeyStatus=$('customerPasskeyStatus');
@@ -2000,7 +2085,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice=''}={}){
     captchaControl?.reset();
     if(error||!data?.user){
       signIn.disabled=false;
-      errorHost.innerHTML='<div class="err">The mobile number or password is incorrect. If this account previously used OTP-only sign-in, choose Forgot password once to create a password.</div>';return;
+      errorHost.innerHTML='<div class="err">The mobile number or password is incorrect.</div>';return;
     }
     customerRegistrationState={phone,channel:'sms',purpose:'signup'};
     resetClientSessionState({preserveInvitation:true});
@@ -2033,7 +2118,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpStartTitle">${recovering?'Reset your password':'Create your account'}</h1><p class="muted small" style="margin-top:5px">${recovering?'We send one OTP to verify that you own this mobile number.':'Choose your password, then verify your mobile number with one OTP.'}</p></div></div>
     <label for="customerPhone">Singapore mobile number</label>
     <input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
-    ${recovering?'':`<label for="customerSignupPassword">Password</label><input id="customerSignupPassword" type="password" autocomplete="new-password" minlength="12" aria-describedby="customerSignupPasswordHelp"><p class="muted small" id="customerSignupPasswordHelp" style="margin-top:6px">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p><label for="customerSignupPasswordConfirm">Confirm password</label><input id="customerSignupPasswordConfirm" type="password" autocomplete="new-password" minlength="12">`}
+    ${recovering?'':`<label for="customerSignupPassword">Password</label>${passwordControlHtml('customerSignupPassword',{autocomplete:'new-password',minlength:'12',describedBy:'customerSignupPasswordHelp'})}<p class="muted small" id="customerSignupPasswordHelp" style="margin-top:6px">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p><label for="customerSignupPasswordConfirm">Confirm password</label>${passwordControlHtml('customerSignupPasswordConfirm',{autocomplete:'new-password',minlength:'12'})}`}
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Send the verification code by</legend>
       <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS</span></label>
       <label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" ${whatsappAvailable?'':'disabled'} style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp ${whatsappAvailable?'':'— coming soon'}</span></label>
@@ -2044,6 +2129,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>${recovering?'Send password reset code':'Send account verification code'}</span></button>
     <button class="btn ghost" id="customerOtpBack" type="button" style="width:100%;margin-top:10px">Back to sign in</button>
   </section>`);
+  bindPasswordVisibility(root);
   $('customerOtpBack').onclick=()=>renderCustomerPasswordSignIn(isRouteCurrent);
   if(!smsAvailable)return;
   const send=$('customerOtpSend'),phoneInput=$('customerPhone'),errorHost=$('customerOtpError');
@@ -2202,7 +2288,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
 }
 async function renderCustomerRegistration(isRouteCurrent=()=>true){
   if(S.user){
-    if(customerRecoveryVerified())return renderCustomerRecoveryPasswordSetup(isRouteCurrent);
+    if(customerRecoveryVerified()===S.user.id)return renderCustomerRecoveryPasswordSetup(isRouteCurrent);
     const customerFeatures=await loadCustomerFeatureCapabilities();
     if(!isRouteCurrent())return;
     if(customerFeatures._load_error){
@@ -2699,12 +2785,13 @@ async function renderCustomerProfile(){
       <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save profile</span></button>
     </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>
     <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
-      <label for="customerProfilePassword">New password</label><input id="customerProfilePassword" type="password" autocomplete="new-password" minlength="12">
-      <label for="customerProfilePasswordConfirm">Confirm new password</label><input id="customerProfilePasswordConfirm" type="password" autocomplete="new-password" minlength="12">
+      <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
+      <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
       <div id="customerProfilePasswordStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Update password</span></button>
     </section>
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:17})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>`;
+  bindPasswordVisibility($('walletBody'));
   let profileAttempt=null;
   $('customerProfileSave').onclick=async()=>{
     const fullName=$('customerProfileName').value.trim(),language=$('customerProfileLanguage').value;
@@ -2734,7 +2821,7 @@ async function renderCustomerProfile(){
     if(!isCurrent()||!button.isConnected)return;
     button.disabled=false;
     if(error){
-      status.innerHTML='<div class="err">Your password could not be changed. Sign out and use Forgot password if this continues.</div>';return;
+      status.innerHTML=`<div class="err">${esc(customerPasswordUpdateErrorMessage(error))}</div>`;return;
     }
     $('customerProfilePassword').value='';$('customerProfilePasswordConfirm').value='';
     status.innerHTML='<p class="muted small" style="margin-top:10px;color:var(--green)">Password updated.</p>';
@@ -3853,7 +3940,7 @@ function renderAuth(mode='in',{admin=false}={}){
     <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Nestly administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
     <h2 style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h2>
     <label for="em">Email</label><input id="em" type="email" placeholder="you@business.com">
-    <label for="pw">Password</label><input id="pw" type="password" placeholder="••••••••">
+    <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
     <div id="autherr"></div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
     ${authChallengeHtml()}
@@ -3862,6 +3949,7 @@ function renderAuth(mode='in',{admin=false}={}){
       ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
     </div>
     ${legalLinks()}</div></div>`;
+  bindPasswordVisibility(root);
   let authToken='',authControl=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
     retry:'authTurnstileRetry',action:'frenly_auth',
@@ -3903,10 +3991,11 @@ function renderPasswordUpdate(){
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
     <h2 style="margin:14px 0 2px">Choose a new password</h2>
     <p class="muted small" style="margin-top:6px">Use at least 12 characters with upper and lowercase letters, a number and a symbol.</p>
-    <label for="newPw">New password</label><input id="newPw" type="password" autocomplete="new-password">
-    <label for="confirmPw">Confirm new password</label><input id="confirmPw" type="password" autocomplete="new-password">
+    <label for="newPw">New password</label>${passwordControlHtml('newPw',{autocomplete:'new-password'})}
+    <label for="confirmPw">Confirm new password</label>${passwordControlHtml('confirmPw',{autocomplete:'new-password'})}
     <div id="autherr"></div><button class="btn" id="savePw" style="width:100%;margin-top:18px">Update password</button>
     ${legalLinks()}</div></div>`;
+  bindPasswordVisibility(root);
   $('savePw').onclick=async()=>{
     const password=$('newPw').value;
     if(!validNewPassword(password)){

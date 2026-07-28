@@ -377,7 +377,12 @@ export async function checkPublicPageForms(root = repoRoot) {
 
   const index = await readText(root, 'app/index.html');
   assertTagContains(index, /<input\b[^>]*id=["']em["'][^>]*type=["']email["'][^>]*>/, 'app auth page must retain email input.');
-  assertTagContains(index, /<input\b[^>]*id=["']pw["'][^>]*type=["']password["'][^>]*>/, 'app auth page must retain password input.');
+  assertTagContains(index, /passwordControlHtml\(['"]pw['"]\s*,/, 'app auth page must retain the reusable password input.');
+  assertTagContains(
+    index,
+    /function\s+passwordControlHtml[\s\S]*?`type=["']password["']`/,
+    'reusable password controls must render password inputs by default.'
+  );
   assertTagContains(index, /<button\b[^>]*id=["']go["'][^>]*>/, 'app auth page must retain sign-in/sign-up button.');
   assertTagContains(index, /<input\b[^>]*id=["']bn["'][^>]*>/, 'app onboarding must retain business-name input.');
   assertTagContains(index, /<button\b[^>]*id=["']mk["'][^>]*>/, 'app onboarding must retain workspace creation button.');

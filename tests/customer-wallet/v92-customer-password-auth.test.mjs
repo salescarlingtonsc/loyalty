@@ -12,7 +12,7 @@ const section=(start,end)=>{
 
 test('normal customer login uses phone and password without touching OTP transport',()=>{
   const login=section('function renderCustomerPasswordSignIn','async function renderCustomerOtpStart');
-  assert.match(login,/autocomplete="current-password"/);
+  assert.match(login,/passwordControlHtml\('customerPassword',\{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn'\}\)/);
   assert.match(login,/sb\.auth\.signInWithPassword\(\{phone,password,options:\{captchaToken:challenge\}\}\)/);
   assert.match(login,/Normal sign-in does not send an OTP/);
   assert.doesNotMatch(login,/signInWithOtp|signUp|auth\.resend|verifyOtp|loadCustomerPhoneOtpCapabilities|customerPhoneOtpAvailable/);
@@ -35,7 +35,10 @@ test('forgot password OTP cannot create an account and ends at password login',(
   const verify=section('function renderCustomerOtpVerification','function renderCustomerRecoveryPasswordSetup');
   const recovery=section('function renderCustomerRecoveryPasswordSetup','function renderCustomerPasswordSignIn');
   assert.match(start,/signInWithOtp\(\{phone,options:\{\.\.\.options,shouldCreateUser:false\}\}\)/);
-  assert.match(verify,/rememberCustomerRecoveryVerified\(true\)/);
+  assert.match(verify,/rememberCustomerRecoveryVerified\(data\.user\.id\)/);
+  assert.match(verify,/if\(error\|\|!data\?\.user\|\|!data\?\.session\)/);
+  assert.match(recovery,/sb\.auth\.getUser\(\)/);
+  assert.match(recovery,/userData\.user\.id!==S\.user\?\.id/);
   assert.match(recovery,/sb\.auth\.updateUser\(\{password:password\.value\}\)/);
   assert.match(recovery,/await sb\.auth\.signOut\(\)/);
   assert.match(recovery,/resetClientSessionState\(\{preserveInvitation:true\}\)/);
@@ -45,7 +48,7 @@ test('forgot password OTP cannot create an account and ends at password login',(
 test('verified password recovery survives a refresh without entering the wallet',()=>{
   const registration=section('async function renderCustomerRegistration','const CUSTOMER_PRIMARY_NAV');
   assert.match(app,/CUSTOMER_RECOVERY_SESSION_KEY='nestly\.customer\.passwordRecoveryVerified'/);
-  assert.match(registration,/if\(customerRecoveryVerified\(\)\)return renderCustomerRecoveryPasswordSetup\(isRouteCurrent\)/);
+  assert.match(registration,/if\(customerRecoveryVerified\(\)===S\.user\.id\)return renderCustomerRecoveryPasswordSetup\(isRouteCurrent\)/);
   assert.match(app,/rememberCustomerRecoveryVerified\(false\)/);
 });
 

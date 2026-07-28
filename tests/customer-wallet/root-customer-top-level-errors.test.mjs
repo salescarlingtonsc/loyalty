@@ -15,8 +15,10 @@ test('customer UI helpers initialize in browser and windowless runtime contexts'
   assert.equal(typeof context.FrenlyCustomerUI?.focusRoute,'function');
 });
 
-async function runRootRoute({capabilities,profileResult,hash='#/',pathname='/',sessionUser={id:'customer-root'}}){
-  const calls={retry:[],onboard:0,profile:0,navigate:[],registration:[],auth:0};
+async function runRootRoute({
+  capabilities,profileResult,hash='#/',pathname='/',sessionUser={id:'customer-root'},recoveryUserId=''
+}){
+  const calls={retry:[],onboard:0,profile:0,navigate:[],registration:[],auth:0,recoverySetup:0,recoveryClears:0};
   const context={
     beginRouteInvocation:()=>()=>true,
     dashboardRenderEpoch:0,
@@ -30,6 +32,13 @@ async function runRootRoute({capabilities,profileResult,hash='#/',pathname='/',s
     pendingCustomerInvitationToken:'',
     pendingCustomerBusinessSlug:'',
     pendingCustomerDestination:'',
+    customerRecoveryVerified:()=>recoveryUserId,
+    customerRecoveryDisposition:(recoveryUserIdValue,sessionUserId)=>{
+      if(!recoveryUserIdValue)return 'none';
+      return recoveryUserIdValue===sessionUserId?'require_password':'clear';
+    },
+    rememberCustomerRecoveryVerified:()=>{calls.recoveryClears+=1},
+    renderCustomerRecoveryPasswordSetup:()=>{calls.recoverySetup+=1},
     normalizeCustomerBusinessIntent:value=>value||'',
     normalizeCustomerDestination:value=>{
       if(['#/wallet','#/customer/programmes','#/customer/bookings','#/customer/messages','#/customer/profile'].includes(value))return value;
@@ -93,6 +102,33 @@ async function runRootRoute({capabilities,profileResult,hash='#/',pathname='/',s
   await route();
   return calls;
 }
+
+test('pending password recovery globally intercepts refresh and every direct customer hash',async()=>{
+  for(const hash of [
+    '#/wallet','#/customer/programmes','#/customer/bookings','#/customer/messages',
+    '#/customer/profile','#/join','#/claim'
+  ]){
+    const calls=await runRootRoute({
+      hash,recoveryUserId:'customer-root',
+      capabilities:{_load_error:false,customer_phone_registration:true},
+      profileResult:{data:null,error:null}
+    });
+    assert.equal(calls.recoverySetup,1,`${hash} must return to password setup`);
+    assert.equal(calls.auth,0);
+    assert.equal(calls.onboard,0);
+  }
+});
+
+test('stale recovery marker from another user is cleared without blocking that user',async()=>{
+  const calls=await runRootRoute({
+    hash:'#/',recoveryUserId:'customer-a',sessionUser:{id:'customer-b'},
+    capabilities:{_load_error:false,customer_phone_registration:true},
+    profileResult:{data:null,error:null}
+  });
+  assert.equal(calls.recoveryClears,1);
+  assert.equal(calls.recoverySetup,0);
+  assert.equal(calls.registration.length,1);
+});
 
 test('root always opens the customer entry for a signed-in session without resolving a business workspace',async()=>{
   const calls=await runRootRoute({
