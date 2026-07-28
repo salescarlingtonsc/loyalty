@@ -52,7 +52,7 @@ test('warm-coral text and component boundary tokens meet WCAG contrast targets',
 });
 
 test('local dependency-free UI primitives and inline SVG icons are build-safe',()=>{
-  assert.match(app,/<script src="\/customer-ui\.js"><\/script>/);
+  assert.match(app,/<script src="\/customer-ui\.js\?v=[a-z0-9-]+"><\/script>/);
   assert.ok(app.indexOf('/customer-ui.js')<app.indexOf('const CUI=window.FrenlyCustomerUI'));
   for(const primitive of ['icon','action','status','permissionBanner','pageHeader','card','field','emptyState','loadingState','errorState','table']){
     assert.match(ui,new RegExp(`function ${primitive}\\(`));
@@ -72,9 +72,9 @@ test('auth fields are explicitly labelled and normal login avoids a denied Platf
     (auth.match(/<label for="em">Email<\/label><input id="em"/g)||[]).length>=2,
     'sign-in and reset-request email fields should have explicit associations',
   );
-  assert.match(auth,/<label for="pw">Password<\/label><input id="pw"/);
-  assert.match(passwordUpdate,/<label for="newPw">New password<\/label><input id="newPw"/);
-  assert.match(passwordUpdate,/<label for="confirmPw">Confirm new password<\/label><input id="confirmPw"/);
+  assert.match(auth,/<label for="pw">Password<\/label>\$\{passwordControlHtml\('pw'/);
+  assert.match(passwordUpdate,/<label for="newPw">New password<\/label>\$\{passwordControlHtml\('newPw'/);
+  assert.match(passwordUpdate,/<label for="confirmPw">Confirm new password<\/label>\$\{passwordControlHtml\('confirmPw'/);
   assert.match(resolver,/if\(mmErr\|\|!mm\)[\s\S]*S\.isSA=false/);
   assert.match(resolver,/S\.isSA=mm\.is_super_admin===true/);
   assert.match(bootstrap,/S\.saChecked=true/);
