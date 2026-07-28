@@ -1633,20 +1633,37 @@
       "delegates_to": [
         "public.redeem_reward"
       ],
-      "entry_point": "merchant_scan_redemption_qr_v89(business,qr_token,idempotency_key) - merchant confirmation boundary for a customer-created pending redemption intent",
-      "callers": "browser Quick earn QR scanner; authenticated merchant staff with loyalty write and create-sales permission",
+      "entry_point": "merchant_scan_redemption_qr_v89(business,qr_token,idempotency_key) - retired branchless merchant confirmation implementation retained in migration history",
+      "callers": "none from browser identities after v93; v93 revokes public, anon, and authenticated execution because the legacy signature cannot prove branch authorization or provenance",
       "idempotency": "an advisory transaction lock and FOR UPDATE lock serialize the opaque QR token; public.redeem_reward receives deterministic key 'v89:'||intent_id, completed intents return the stored completion result, and event uniqueness makes scan retries single-effect even when the scanner supplies a new request key",
       "loyalty": "the pending intent moves no points; only a valid, unexpired merchant scan invokes the canonical config-versioned app.redeem_reward_core chain to burn points and append the redemption/provenance rows",
       "kernel": "SAFE ORCHESTRATOR - adds merchant confirmation and intent lifecycle around the existing canonical reward-redemption writer; it contains no parallel points or credit arithmetic",
       "kernel_migratability": "KERNEL-ADJACENT - retain the scan/intent orchestration boundary, but continue routing the economic effect through the unified canonical redemption kernel rather than introducing a second redemption implementation"
     },
     {
-      "id": "browser.rpc:app/index.html:merchant_scan_redemption_qr_v89",
+      "id": "db.fn:public.merchant_scan_redemption_qr_v93/4",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260728100000_nestly_v93_branch_scoped_merchant_redemption.sql",
+      "rows_written": "no direct tracked value write; customer_redemption_intents_v89:UPDATE and customer_redemption_events_v89:INSERT are workflow evidence; via public.redeem_points or public.redeem_reward_at_context: credit_ledger:INSERT, loyalty_operations:INSERT/UPDATE, loyalty_redemption_batch_drains:INSERT, loyalty_redemption_provenance:INSERT, loyalty_redemptions:INSERT, points_batches:UPDATE, points_ledger:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, for-update",
+      "delegates_to": [
+        "public.redeem_points",
+        "public.redeem_reward_at_context"
+      ],
+      "entry_point": "merchant_scan_redemption_qr_v93(business,branch,qr_token,idempotency_key) - branch-scoped merchant confirmation boundary for a customer-created pending redemption intent",
+      "callers": "browser Quick earn QR scanner; authenticated merchant staff with loyalty write, create-sales permission, and visibility of the selected active till branch",
+      "idempotency": "an advisory transaction lock and FOR UPDATE lock serialize the opaque QR token; canonical writers receive deterministic key 'v93:'||intent_id, completed intents return the stored completion result, and event uniqueness makes scan retries single-effect",
+      "loyalty": "the pending intent moves no points; a valid merchant scan passes the authorized branch into the catalog reward writer and records the branch in completion evidence. Classic points retains canonical redeem_points after the same explicit branch authorization",
+      "kernel": "SAFE ORCHESTRATOR - adds branch-scoped merchant confirmation and intent lifecycle around existing canonical redemption writers; it contains no parallel points or credit arithmetic",
+      "kernel_migratability": "KERNEL-ADJACENT - retain the scan/intent and branch-authorization boundary while continuing to route all economic effects through canonical redemption writers"
+    },
+    {
+      "id": "browser.rpc:app/index.html:merchant_scan_redemption_qr_v93",
       "surface": "browser_rpc_binding",
-      "rpc": "merchant_scan_redemption_qr_v89",
-      "resolves_to": "public.merchant_scan_redemption_qr_v89/3 (serialized, replay-safe merchant confirmation delegating to canonical redeem_reward)",
-      "call_site_finding": "none - Quick earn submits the scanned opaque token with a per-scan idempotency key; server-side business scope, permissions, expiry, intent state, locking, and canonical redemption remain authoritative",
-      "kernel_migratability": "UI binding only - keep pointed at the merchant-confirmation orchestrator while the economic effect remains exclusively inside the canonical reward-redemption kernel"
+      "rpc": "merchant_scan_redemption_qr_v93",
+      "resolves_to": "public.merchant_scan_redemption_qr_v93/4 (branch-scoped, serialized, replay-safe merchant confirmation delegating to canonical redemption writers)",
+      "call_site_finding": "none - Quick earn submits its server-filtered active till branch, scanned opaque token, and a per-scan idempotency key; server-side branch scope, permissions, expiry, intent state, locking, and canonical redemption remain authoritative",
+      "kernel_migratability": "UI binding only - keep pointed at the branch-scoped merchant-confirmation orchestrator while the economic effect remains exclusively inside canonical reward-redemption writers"
     }
   ],
   "allowlist": [
@@ -2300,7 +2317,7 @@
     },
     {
       "id": "browser.rpc:app/index.html:customer_create_redemption_intent_v89",
-      "reason": "browser RPC 'customer_create_redemption_intent_v89' creates only a five-minute pending customer_redemption_intents_v89 row and append-only workflow event after checking the verified relationship, merchant switch, reward window, and current balance. It deliberately performs no redemption and moves no points or credit; value changes only later through the separately curated merchant_scan_redemption_qr_v89 writer."
+      "reason": "browser RPC 'customer_create_redemption_intent_v89' creates only a five-minute pending customer_redemption_intents_v89 row and append-only workflow event after checking the verified relationship, merchant switch, reward window, and current balance. It deliberately performs no redemption and moves no points or credit; value changes only later through the separately curated branch-scoped merchant_scan_redemption_qr_v93 writer. The branchless v89 scanner is revoked from browser identities."
     },
     {
       "id": "browser.rpc:app/index.html:customer_get_business_actions_v89",

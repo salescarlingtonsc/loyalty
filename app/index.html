@@ -1269,7 +1269,7 @@ function customerRedemptionIntentArgsV89({businessId,reward,idempotencyKey}){
     p_redemption_kind:kind
   };
 }
-function openMerchantRedemptionScanner({businessId,isCurrent=()=>true,onComplete=()=>{}}={}){
+function openMerchantRedemptionScanner({businessId,branchId,isCurrent=()=>true,onComplete=()=>{}}={}){
   activeMerchantScannerCleanup();
   const overlay=document.createElement('div');
   overlay.className='modal appointment-detail-modal';
@@ -1305,8 +1305,9 @@ function openMerchantRedemptionScanner({businessId,isCurrent=()=>true,onComplete
     const token=redemptionTokenFromQr(value);
     if(!token){status.textContent='That is not a Nestly redemption QR. Ask the customer to open Redeem again.';return}
     submitting=true;status.textContent='Confirming this redemption…';
-    const {data,error}=await sb.rpc('merchant_scan_redemption_qr_v89',{
-      p_business:businessId,p_qr_token:token,p_idempotency_key:crypto.randomUUID()
+    const {data,error}=await sb.rpc('merchant_scan_redemption_qr_v93',{
+      p_business:businessId,p_branch:branchId,p_qr_token:token,
+      p_idempotency_key:crypto.randomUUID()
     });
     if(closed||!isCurrent())return;
     submitting=false;
@@ -1866,6 +1867,7 @@ function normalizeSingaporeCustomerPhone(value){
   const local=digits.startsWith('65')&&digits.length===10?digits.slice(2):digits;
   return /^[89][0-9]{7}$/.test(local)?`+65${local}`:null;
 }
+const normalizeCustomerSearchPhoneDigits=value=>{const digits=String(value??'').replace(/\D/g,'');return digits.startsWith('65')&&digits.length===10?digits.slice(2):digits};
 const unavailableCustomerPhoneOtpCapabilities=()=>({sms:false,whatsapp:false});
 async function loadCustomerPhoneOtpCapabilities({refresh=false}={}){
   if(!CUSTOMER_PHONE_OTP_RUNTIME_ENABLED)return unavailableCustomerPhoneOtpCapabilities();
@@ -4900,7 +4902,7 @@ async function clientsPage(){
   const customerActions=CUI.action({id:'exp',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'})+
     (canWrite?importBtn('customers')+CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView">${CUI.pageHeader({title:'Customers',subtitle:'Search, review, import, and manage your member base.',iconName:'customers',actions:customerActions,canWrite,moduleLabel:'Customer management'})}
-    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,260px)"><label for="clientSearch" style="margin-top:0">Search customers by name</label><input id="clientSearch" type="search" autocomplete="off" placeholder="Start typing a customer name"></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear',variant:'secondary'})}</div></div>
+    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,260px)"><label for="clientSearch" style="margin-top:0">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear',variant:'secondary'})}</div></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list"><div class="empty">Loading…</div></div>
     <div class="card" id="fbQueueCard" style="margin-top:16px"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
@@ -4975,11 +4977,17 @@ async function clientsPage(){
     const isCurrent=customerLoadGate.begin();
     const from=clientPage*CLIENT_PAGE_SIZE;
     let clientQuery=sb.from('clients').select('*',{count:'exact'}).eq('business_id',S.biz.id);
-    if(clientSearch)clientQuery=clientQuery.ilike('full_name',`%${clientSearch}%`);
+    if(clientSearch){
+      const phoneDigits=normalizeCustomerSearchPhoneDigits(clientSearch);
+      const phoneSearch=phoneDigits.length>=4&&/^[+\s()\-\d]+$/.test(clientSearch);
+      clientQuery=phoneSearch
+        ?clientQuery.ilike('phone_norm',`%${phoneDigits}%`)
+        :clientQuery.ilike('full_name',`%${clientSearch}%`);
+    }
     const {data:cl,error,count}=await clientQuery.order('created_at',{ascending:false}).order('id').range(from,from+CLIENT_PAGE_SIZE-1);
     if(!isCurrent())return;
     if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
-    if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':'No customers yet',body:clientSearch?'Try a different name or clear the search.':canWrite?'Add your first customer to start earning loyalty automatically.':'Customers will appear here when an authorized teammate adds them.'});return}
+    if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':canWrite?'Add your first customer to start earning loyalty automatically.':'Customers will appear here when an authorized teammate adds them.'});return}
     const ids=cl.map(c=>c.id);
     const [{data:pb,error:pe},{data:cb,error:ce}]=await Promise.all([
       sb.from('client_points_balance').select('client_id,points').eq('business_id',S.biz.id).in('client_id',ids),
@@ -5690,7 +5698,8 @@ async function tillPage(){
     inp.onkeydown=(e)=>{if(e.key==='Enter') doFind();};
     $('tFind').onclick=doFind;
     if(canScanRedemption)$('tScanRedemption').onclick=()=>openMerchantRedemptionScanner({
-      businessId:S.biz.id,isCurrent:isTillCurrent,onComplete:()=>resetToStart()
+      businessId:S.biz.id,branchId:tillBranchId,
+      isCurrent:isTillCurrent,onComplete:()=>resetToStart()
     });
     document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
       const k=b.dataset.k;

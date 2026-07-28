@@ -178,7 +178,8 @@ test('redemption is pending until merchant scan and scanner supports iPhone came
   assert.match(app,/customer_create_redemption_intent_v89/);
   assert.match(app,/Pending merchant scan/);
   assert.match(app,/points are not redeemed until the business scans and confirms/i);
-  assert.match(app,/merchant_scan_redemption_qr_v89/);
+  assert.match(app,/merchant_scan_redemption_qr_v93/);
+  assert.match(app,/p_branch:branchId/);
   assert.match(app,/Scan customer QR/);
   assert.match(app,/jsqr@1\.4\.0\/dist\/jsQR\.js/);
   assert.match(app,/integrity="sha384-b5Ya4Bq3qCyz39m2ISh\+4DxjAIljdeFwK\/BsXLuj9gugaNwAcj\/ia15fxNZL9Nlx"/);

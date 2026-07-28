@@ -345,7 +345,7 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
     'Quick earn must never expose direct classic or catalog reward redemption');
   assert.match(tillPage, /openMerchantRedemptionScanner/i,
     'Quick earn must open the merchant scanner for a customer-created pending redemption QR');
-  assert.match(app, /merchant_scan_redemption_qr_v89/i);
+  assert.match(app, /merchant_scan_redemption_qr_v93/i);
   assert.match(tillPage, /record_sale_by_phone/i,
     'Quick earn must retain the atomic sale-and-points path');
 

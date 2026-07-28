@@ -789,6 +789,18 @@
       "path": "db/migrations/20260727_nestly_v91_customer_game_notifications.sql",
       "semanticVersion": "v91",
       "proposedDeployVersion": "20260722000209"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v92_synthetic_reporting_isolation.sql",
+      "semanticVersion": "v92",
+      "proposedDeployVersion": "20260722000210"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v93_branch_scoped_merchant_redemption.sql",
+      "semanticVersion": "v93",
+      "proposedDeployVersion": "20260722000211"
     }
   ]
 }

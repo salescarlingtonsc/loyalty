@@ -230,6 +230,17 @@ test('progressive enhancement is scoped to approved customer routes',()=>{
 
 test('customer list has search, keyboard links, pagination, export/import, and latest-response safety',()=>{
   assert.match(clients,/id="clientSearch" type="search"/);
+  assert.match(clients,/Search customers by name or phone/);
+  assert.match(clients,/normalizeCustomerSearchPhoneDigits\(clientSearch\)/);
+  assert.match(clients,/clientQuery\.ilike\('phone_norm',`%\$\{phoneDigits\}%`\)/);
+  const normalizerLine = app.split('\n')
+    .find((line) => line.startsWith('const normalizeCustomerSearchPhoneDigits='));
+  assert.ok(normalizerLine, 'customer phone-search normalizer must be defined');
+  const normalizeCustomerSearchPhoneDigits = Function(
+    `return (${normalizerLine.slice(normalizerLine.indexOf('=') + 1, -1)})`,
+  )();
+  assert.equal(normalizeCustomerSearchPhoneDigits('+65 8123 4567'), '81234567');
+  assert.equal(normalizeCustomerSearchPhoneDigits('8123'), '8123');
   assert.match(clients,/CUI\.action\(\{id:'exp',label:'Export CSV'/);
   assert.match(clients,/importBtn\('customers'\)/);
   assert.match(clients,/CUI\.action\(\{id:'add',label:'Add customer'/);

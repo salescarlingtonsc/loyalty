@@ -790,6 +790,18 @@
       "version": "20260727163752",
       "name": "nestly_v91_customer_game_notifications",
       "sourcePath": "db/migrations/20260727_nestly_v91_customer_game_notifications.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260728090000",
+      "name": "nestly_v92_synthetic_reporting_isolation",
+      "sourcePath": "db/migrations/20260728_nestly_v92_synthetic_reporting_isolation.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260728100000",
+      "name": "nestly_v93_branch_scoped_merchant_redemption",
+      "sourcePath": "db/migrations/20260728_nestly_v93_branch_scoped_merchant_redemption.sql"
     }
   ]
 }
