@@ -333,10 +333,10 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
 
   const clientDetail = app.match(/async function clientDetail\(id\)\{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(clientDetail, /const canWriteLoyalty=canWriteModule\('loyalty'\)/i);
-  assert.match(clientDetail, /canWriteLoyalty\?`<button class="btn sm" id="redeem"/i,
-    'classic redemption must not render for loyalty:r staff');
-  assert.match(clientDetail, /canWriteLoyalty\?`<button class="btn sm rewardGo"/i,
-    'catalog redemption must not render for loyalty:r staff');
+  assert.match(clientDetail, /canWriteLoyalty\?`<p class="muted small"[\s\S]*?Open Quick Earn scanner/i,
+    'loyalty writers may only be directed to the branch-scoped scanner');
+  assert.doesNotMatch(clientDetail, /id="redeem"|rewardGo|sb\.rpc\('redeem_(?:points|reward)/i,
+    'customer detail must not expose direct classic or catalog redemption');
   assert.match(clientDetail, /S\.myRole==='owner'&&canWriteLoyalty[\s\S]*?id="adjGo"/i,
     'manual balance adjustment must remain owner-only');
 

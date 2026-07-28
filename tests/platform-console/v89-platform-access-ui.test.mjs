@@ -83,15 +83,19 @@ test('console resolves active access before shell and shows an inactive-role den
   assert.match(source,/history\.replaceState\(null,'',activeRoute\.hash\)/);
 });
 
-test('super-admin grant editor and scoped sales RPCs use exact v89 contracts',async()=>{
+test('super-admin grant editor and delegated platform users use scoped v89 CRM plus v94 intelligence contracts',async()=>{
   const source=await read('app/platform-console.js');
   for(const rpc of [
     'platform_list_my_access_v89','platform_list_access_grants_v89',
     'platform_upsert_access_grant_v89','platform_list_my_firms_v89',
     'platform_create_my_prospect_v89','platform_move_my_prospect_stage_v89','platform_get_my_prospect_v89',
     'platform_add_my_prospect_activity_v89','platform_create_my_prospect_task_v89',
-    'platform_complete_my_prospect_task_v89','platform_generate_my_report_v89',
+    'platform_complete_my_prospect_task_v89',
     'platform_assign_prospect_v89','platform_list_assignment_consultants_v89'
+  ])assert.match(source,new RegExp(rpc));
+  for(const rpc of [
+    'platform_get_assigned_firm_report_v94','platform_get_catalogue_affinity_v94',
+    'platform_get_consultative_recommendations_v94'
   ])assert.match(source,new RegExp(rpc));
   assert.match(source,/const selectedUser=String\(form\.get\('user_id'\)\|\|''\)\.trim\(\)/);
   assert.match(source,/p_user:selectedUser/);
@@ -99,12 +103,12 @@ test('super-admin grant editor and scoped sales RPCs use exact v89 contracts',as
   assert.match(source,/perms\.onboarding='rw';perms\.firms='r'/);
   assert.match(source,/platformModuleKeys\.every\(key=>perms\[key\]==='rw'\)/);
   assert.match(source,/perms\['\*'\]='rw'/);
-  assert.match(source,/const useScopedV89=access\.role==='sales_staff'/);
+  assert.match(source,/const useScopedV89=access\.role!=='super_admin'/);
   assert.match(source,/access\.role==='super_admin'[\s\S]*loadRoster[\s\S]*renderScopedOverview/);
   assert.match(source,/id="platformScopedNewProspect"/);
 });
 
-test('partially customized admins keep enterprise onboarding, firms and reports with per-module write guards',async()=>{
+test('partially customized admins use server-scoped onboarding, firms and reports with per-module write guards',async()=>{
   const api=await loadConsole();
   const access=api.normalizePlatformAccess({
     role:'admin',scope:'all',
@@ -119,10 +123,10 @@ test('partially customized admins keep enterprise onboarding, firms and reports 
   assert.equal(api.canWriteModule(access,'reports'),true);
   const source=await read('app/platform-console.js');
   const routing=source.slice(source.indexOf('const useScopedV89='),source.indexOf('installReadOnlyGuard(context);',source.indexOf('const useScopedV89=')));
-  assert.match(routing,/const useScopedV89=access\.role==='sales_staff'/);
-  assert.match(routing,/activeKey==='firms'\)task=renderEnterprise\(context\)/);
-  assert.match(routing,/activeKey==='reports'\)task=renderPlatformReports\(context\)/);
-  assert.match(routing,/activeKey==='onboarding'\)task=renderOnboarding\(context\)/);
+  assert.match(routing,/const useScopedV89=access\.role!=='super_admin'/);
+  assert.match(routing,/useScopedV89&&activeKey==='firms'\)task=renderScopedFirms\(context\)/);
+  assert.match(routing,/useScopedV89&&activeKey==='reports'\)task=renderScopedReports\(context\)/);
+  assert.match(routing,/useScopedV89&&activeKey==='onboarding'\)task=renderScopedOnboarding\(context\)/);
   assert.match(source,/canWrite:activeKey==='access'\|\|canWriteModule\(access,activeKey\)/);
   assert.match(source,/if\(context\.canWrite\)return;[\s\S]*stripPlatformWriteControls\(context\.root\)/);
 });

@@ -62,6 +62,7 @@
 .platform-context-list div:last-child{border-bottom:0}
 .platform-context-list dt{color:var(--muted);font-size:12.5px}
 .platform-context-list dd{text-align:right;font-weight:650}
+.platform-context-list a{display:inline-flex;align-items:center;min-height:44px}
 .platform-route-note{
   display:flex;align-items:flex-start;gap:12px;padding:15px;border:1px solid var(--line);
   border-radius:var(--r-sm);background:#FBFAF8;color:var(--ink2)
@@ -188,6 +189,12 @@
   display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
   padding:13px 0;border-bottom:1px solid var(--hair)
 }
+.platform-control-status{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.platform-control-heading{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.platform-control-heading h3,.platform-consultative-report h3{font-size:14px}
+.platform-branch-control-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.platform-branch-control-list .platform-action-item{border:1px solid var(--line);border-radius:14px;padding:12px}
+.platform-consultative-report{margin-top:16px}
 .platform-action-item:last-child{border-bottom:0}
 .platform-preview{
   margin-top:14px;padding:14px;border:1px solid rgba(194,65,53,.3);
@@ -206,7 +213,7 @@
 .platform-enterprise-firms{grid-row:span 2}
 .platform-enterprise-firms select{min-height:148px}
 .platform-enterprise-table .platform-link-button{
-  appearance:none;border:0;background:none;padding:0;color:var(--ink);text-align:left;
+  appearance:none;border:0;background:none;min-height:44px;padding:10px 0;color:var(--ink);text-align:left;
   text-decoration:underline;text-decoration-color:rgba(194,65,53,.28);
   text-underline-offset:3px;cursor:pointer
 }
@@ -461,6 +468,7 @@
   .platform-modal-panel{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:20px 16px}
   .platform-form-actions>.btn{flex:1 1 auto}
   .platform-module-options,.platform-bundle-diff{grid-template-columns:1fr}
+  .platform-branch-control-list{grid-template-columns:1fr}
   .platform-access-list,.platform-scoped-report-options{grid-template-columns:1fr}
   .platform-scoped-search{grid-template-columns:1fr}
   .platform-scoped-search .btn{width:100%;justify-content:center}

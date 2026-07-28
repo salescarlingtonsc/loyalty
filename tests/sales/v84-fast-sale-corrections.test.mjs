@@ -114,10 +114,11 @@ test('customer UI uses QR-authorized joining and exposes paginated transaction t
   assert.match(app,/line_items/);
 });
 
-test('owner management gets a derived customer intelligence route with evidence-gated forecast',()=>{
+test('customer intelligence remains implemented but is packaged out of every business workspace',()=>{
   assert.match(app,/customerintel:\['customers','Customer intelligence'\]/);
-  assert.match(app,/canUseCustomerIntelligence=\(\)=>\['owner','manager'\]\.includes\(S\.myRole\)/);
-  assert.match(app,/canReadModule\('clients'\)&&canReadModule\('reports'\)/);
+  assert.match(app,/const HIDDEN_BUSINESS_SURFACES=new Set\(\['customerintel','inventory'\]\)/);
+  assert.match(app,/if\(HIDDEN_BUSINESS_SURFACES\.has\(pageKey\)\)/);
+  assert.match(app,/filter\(module=>!HIDDEN_BUSINESS_SURFACES\.has\(module\)\)/);
   assert.match(app,/get_customer_intelligence_v83/);
   assert.match(app,/p_snapshot_at:lastPayload\.snapshot_at/);
   assert.match(app,/p_after_created_at:cursor\.customer_since,p_after_client:cursor\.client_id/);

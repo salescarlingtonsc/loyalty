@@ -28,16 +28,13 @@ test('keyless classic redemption is no longer application executable', async () 
   assert.doesNotMatch(migration, /grant execute on function public\.redeem_points\(uuid, uuid\) to authenticated/i);
 });
 
-test('every shipped redemption call sends a stable retry key', async () => {
+test('normal merchant redemption is scanner-only in the shipped browser', async () => {
   const app = await read('app/index.html');
   const calls = [...app.matchAll(/sb\.rpc\('(redeem_points|redeem_reward(?:_at_context)?)',\{([\s\S]*?)\}\)/g)];
-  assert.equal(calls.length, 2,
-    'redemption remains on customer detail; the single-purpose Quick earn page must not add a third path');
-  for (const [, rpc, body] of calls) {
-    assert.match(body, /p_idempotency_key\s*:/i, `${rpc} call is missing p_idempotency_key`);
-  }
-  assert.match(app, /if\(!classicRedemptionIdem\) classicRedemptionIdem=crypto\.randomUUID\(\)/);
-  assert.match(app, /rewardRedemptionIdem\.has\(b\.dataset\.r\)/);
+  assert.equal(calls.length, 0,
+    'the browser must not expose a direct redemption writer outside the branch-scoped merchant scanner');
+  assert.match(app,/Customer redemptions are completed only after scanning the customer’s pending QR in Quick Earn/);
+  assert.match(app,/Open Quick Earn scanner/);
   const tillStart = app.indexOf('async function tillPage(){');
   const tillEnd = app.indexOf('async function salesPage(){',tillStart);
   const till=app.slice(tillStart,tillEnd);

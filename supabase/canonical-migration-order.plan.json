@@ -802,6 +802,12 @@
       "version": "20260728100000",
       "name": "nestly_v93_branch_scoped_merchant_redemption",
       "sourcePath": "db/migrations/20260728_nestly_v93_branch_scoped_merchant_redemption.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260728123441",
+      "name": "nestly_v94_platform_control_intelligence",
+      "sourcePath": "db/migrations/20260728_nestly_v94_platform_control_intelligence.sql"
     }
   ]
 }

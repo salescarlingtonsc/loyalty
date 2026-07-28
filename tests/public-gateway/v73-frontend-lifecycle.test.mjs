@@ -72,7 +72,7 @@ test('staff-only multi-workspace business entry and shell use the same complete 
   assert.match(persona,/staff\.map\(workspace=>/);
   assert.match(persona,/const hasCustomer=includeCustomer&&/);
   const shell=section('function renderShell(page){','const M=');
-  assert.match(shell,/customerWorkspaceSwitchHtml\(S\.staffWorkspaces\)/);
+  assert.match(shell,/businessWorkspaceSwitchHtml\(S\.staffWorkspaces,S\.biz\.slug,S\.hasCustomerPersona\)/);
 });
 
 test('v73 staff decisions are authority-gated, duplicate-safe, state-aware, and truthfully refreshed',()=>{

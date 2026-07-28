@@ -51,7 +51,7 @@ test('Luna C45: expiry is derived, and the staff projection cannot disclose cale
   const staffSafe = functionBlock(sql, 'c45_staff_safe_birthday_entitlement');
   const staffRead = functionBlock(sql, 'staff_get_customer_birthday_benefit');
   const redeem = functionBlock(sql, 'redeem_customer_birthday_benefit');
-  const clientDetail = app.slice(app.indexOf('async function clientDetail'), app.indexOf('/* catalog / milestone redemption'));
+  const clientDetail = app.slice(app.indexOf('async function clientDetail'), app.indexOf('async function tillPage'));
 
   assert.match(customerSafe, /valid_until <= p_as_of[\s\S]*'expired'/i);
   assert.match(staffSafe, /valid_until <= p_as_of[\s\S]*'expired'/i);

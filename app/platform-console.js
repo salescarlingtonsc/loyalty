@@ -44,7 +44,7 @@
     ['clients','Customers','Essentials'],['appointments','Appointments','Customer operations'],
     ['sales','Sales','Customer operations'],['services','Services','Customer operations'],
     ['bookings','Bookings','Customer operations'],['waitlist','Waitlist','Customer operations'],
-    ['inventory','Inventory','Commerce'],['packages','Packages','Commerce'],
+    ['packages','Packages','Commerce'],
     ['loyalty','Loyalty','Growth'],['retention','Retention','Growth'],
     ['referrals','Referrals','Growth'],['memberships','Memberships','Growth'],
     ['giftcards','Gift cards','Growth'],['reports','Reports','Insights'],
@@ -93,6 +93,7 @@
     '[data-onboarding-unblock]','[data-onboarding-activate]','[data-onboarding-evidence]',
     '[data-onboarding-waive]','[data-onboarding-item-block]','[data-onboarding-item-unblock]',
     '#platformNewBundle','[data-edit-sector]','[data-assign-firm]','[data-override-firm]',
+    '[data-business-approval]','[data-module-control]','[data-catalogue-intelligence]',
     '#platformNewBillingPrice','[data-billing-command]',
     '#platformNewConsultant','#platformAttributeConsultant','#platformNewPolicy',
     '#platformNewPayout','[data-edit-consultant]','[data-forfeit-consultant]',
@@ -740,6 +741,110 @@
     }):CUI.emptyState({iconName:'customers',title:'No customers in this scope',body:'Choose the whole firm or another branch/date range.'})}
     ${pagination.has_more?'<div class="platform-actions"><button type="button" class="btn ghost sm" id="enterpriseCustomersMore">Load more customers</button></div>':''}</section>`;
   }
+  function workspaceControlTone(value) {
+    return value==='approved'||value==='active'||value==='open'?'ok'
+      :value==='pending'||value==='grace'?'new':'no';
+  }
+  function moduleControlRows(effective,CUI,{branchId=null,canWrite=false}={}) {
+    const modules=asArray(effective?.modules)
+      .filter(module=>!['inventory','customerintel'].includes(module.module_key));
+    if(!modules.length)return'<p class="muted small">No business modules are enabled in this scope.</p>';
+    return CUI.table({
+      caption:branchId?'Branch effective modules':'Firm effective modules',
+      headers:['Module','Access','Source',...(canWrite?['']:[])],
+      rows:modules.map(module=>[
+        `<b>${escapeHtml(moduleLabel(module.module_key))}</b>`,
+        CUI.status(module.mode==='rw'?'Read & write':module.mode==='r'?'Read only':'Off',module.mode==='rw'?'ok':module.mode==='r'?'new':'off'),
+        escapeHtml(plainLabel(module.source||'inherited')),
+        ...(canWrite?[`<button type="button" class="btn ghost sm" data-module-control="${escapeHtml(module.module_key)}" data-branch-id="${escapeHtml(branchId||'')}" data-module-version="${escapeHtml(module.version??'')}">Edit</button>`]:[])
+      ])
+    });
+  }
+  function firmGovernanceHtml(firm,CUI,control,effective,context) {
+    const approval=asObject(control.approval),subscription=asObject(control.subscription);
+    const representative=asObject(control.representative),catalogue=asObject(control.catalogue_intelligence);
+    const canWrite=context.access?.role==='super_admin';
+    const approvalStatus=approval.status||'pending';
+    const subscriptionState=subscription.state||'unknown';
+    const contact=normalizePlatformPhone(representative.hotline_phone);
+    return `<section class="card platform-detail-section platform-governance" aria-labelledby="firmGovernanceTitle">
+      <div class="platform-list-row"><div><h2 id="firmGovernanceTitle">Workspace control</h2><p class="muted small">Approval, payment access and module policy are enforced by the server as well as this console.</p></div>${CUI.status(control.workspace_access?'Workspace open':'Workspace blocked',control.workspace_access?'ok':'no')}</div>
+      <div class="platform-detail-grid">
+        ${CUI.card({title:'Firm approval',body:`<div class="platform-control-status">${CUI.status(plainLabel(approvalStatus),workspaceControlTone(approvalStatus))}<span class="muted small">Version ${escapeHtml(approval.version??0)}</span></div>
+          <p class="muted small">${approvalStatus==='approved'?'Approved firms may enter the workspace when billing is also clear.':approvalStatus==='rejected'?'This application was rejected. The firm cannot enter the workspace.':'Awaiting a super-admin decision. No business data is exposed in the workspace.'}</p>
+          ${canWrite&&approvalStatus!=='approved'?`<div class="platform-actions"><button type="button" class="btn sm" data-business-approval="approved">Approve firm</button><button type="button" class="btn danger sm" data-business-approval="rejected">Reject</button></div>`:''}`})}
+        ${CUI.card({title:'Subscription access',body:`<div class="platform-control-status">${CUI.status(plainLabel(subscriptionState),workspaceControlTone(subscriptionState))}<span class="muted small">${subscription.overdue_day===null||subscription.overdue_day===undefined?'No overdue day':`Day ${escapeHtml(subscription.overdue_day)} overdue`}</span></div>
+          <dl class="platform-context-list"><div><dt>Due date</dt><dd>${escapeHtml(subscription.due_date||'—')}</dd></div><div><dt>Workspace paused</dt><dd>${subscription.workspace_paused?'Yes':'No'}</dd></div></dl>
+          ${subscription.workspace_paused?`<p class="small">Owner access resumes only after provider payment truth is reconciled.</p>${contact?`<a class="btn ghost sm" href="tel:${escapeHtml(contact.tel)}">Contact ${escapeHtml(representative.display_name||'assigned representative')}</a>`:''}`:'<p class="muted small">Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid.</p>'}`})}
+      </div>
+      <div class="platform-list-row platform-control-heading"><div><h3>Firm module policy</h3><p class="muted small">Branch overrides take priority over firm and sector settings. Inventory is globally unavailable to firms.</p></div>
+        ${canWrite?`<button type="button" class="btn ghost sm" data-module-control="" data-branch-id="">Edit firm modules</button>`:''}
+      </div>
+      ${moduleControlRows(effective,CUI,{canWrite})}
+      ${asArray(firm.branches).length?`<div class="platform-branch-control-list" aria-label="Branch module controls">${asArray(firm.branches).map(branch=>`
+        <div class="platform-action-item"><div><b>${escapeHtml(branch.name)}</b><p class="muted small">Branch-specific settings override firm policy.</p></div>
+          ${canWrite?`<button type="button" class="btn ghost sm" data-manage-branch="${escapeHtml(branch.branch_id)}">Manage branch</button>`:''}
+        </div>`).join('')}</div>`:''}
+      <div class="platform-list-row platform-control-heading"><div><h3>Item-level intelligence</h3><p class="muted small">When enabled, Quick Earn uses the firm catalogue and platform reports can analyse product and service patterns.</p></div>
+        ${canWrite?`<button type="button" class="btn ghost sm" data-catalogue-intelligence="${catalogue.enabled?'disable':'enable'}">${catalogue.enabled?'Disable':'Enable'}</button>`:''}
+      </div>
+      <p>${catalogue.enabled?'Enabled for catalogue-first sales and item-level intelligence.':'Disabled. Quick Earn can fall back to authorised custom-amount sales; no item affinity claims are generated.'}</p>
+    </section>`;
+  }
+  function businessApprovalModal(firm,decision,control,context,refresh) {
+    const {CUI,sb}=context,approval=asObject(control.approval);
+    modal({
+      title:`${decision==='approved'?'Approve':'Reject'} ${firm.name}`,
+      submitLabel:decision==='approved'?'Confirm approval':'Confirm rejection',
+      CUI,
+      body:CUI.field({
+        id:'businessApprovalReason',label:'Decision note',control:'textarea',required:true,
+        hint:'This note is retained in the platform audit trail.',
+        attributes:'name="reason" rows="4" minlength="3" maxlength="1000"'
+      }),
+      onSubmit:async(form,controls)=>{
+        await rpc(sb,'platform_decide_business_approval_v94',{
+          p_business:firmId(firm),p_decision:decision,p_reason:String(form.get('reason')).trim(),
+          p_expected_version:Number(approval.version||0)
+        });
+        controls.close();await refresh();CUI.announce(`Firm ${decision}.`);
+      }
+    });
+  }
+  function moduleControlModal(firm,effective,context,refresh,{branchId=null,moduleKey=''}={}) {
+    const {CUI,sb}=context;
+    const branches=asArray(firm.branches);
+    const selected=asArray(effective?.modules).find(module=>module.module_key===moduleKey);
+    const available=sectorModuleCatalog.filter(module=>module.key!=='inventory');
+    modal({
+      title:branchId?'Edit branch modules':'Edit firm modules',submitLabel:'Apply module policy',CUI,
+      body:`<div class="platform-form-grid">
+        ${CUI.field({id:'moduleControlBranch',label:'Scope',control:'select',options:branchId
+          ?branches.filter(branch=>branch.branch_id===branchId).map(branch=>({value:branch.branch_id,label:`Branch · ${branch.name}`,selected:true}))
+          :[{value:'',label:'Whole firm',selected:true}],attributes:'name="branch_id"'})}
+        ${CUI.field({id:'moduleControlKey',label:'Module',control:'select',options:available.map(module=>({value:module.key,label:module.label,selected:module.key===moduleKey})),attributes:'name="module_key"'})}
+        ${CUI.field({id:'moduleControlMode',label:'Access',control:'select',options:[
+          {value:'inherit',label:'Use inherited setting'},
+          {value:'disabled',label:'Off'},
+          {value:'r',label:'Read only'},
+          {value:'rw',label:'Read & write'}
+        ].map(option=>({...option,selected:option.value===(selected?.override_mode||'inherit')})),attributes:'name="mode"'})}
+        <div class="wide">${CUI.field({id:'moduleControlReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="4" minlength="3" maxlength="1000"'})}</div>
+      </div>
+      <div class="platform-route-note"><b>Inventory is not available here</b><p class="small">Nestly keeps inventory off for every firm, independent of sector or branch settings.</p></div>`,
+      onSubmit:async(form,controls)=>{
+        const module=String(form.get('module_key'));
+        const scopeBranch=String(form.get('branch_id')||'')||null;
+        const current=asArray(effective?.modules).find(row=>row.module_key===module);
+        await rpc(sb,'platform_set_module_override_v94',{
+          p_business:firmId(firm),p_branch:scopeBranch,p_module:module,
+          p_mode:String(form.get('mode')),p_reason:String(form.get('reason')).trim(),
+          p_expected_version:current?.version??null
+        });
+        controls.close();await refresh();CUI.announce(`${moduleLabel(module)} policy updated.`);
+      }
+    });
+  }
   function openEnterpriseFirm(firm,context,filters) {
     const {CUI,sb}=context,overlay=document.createElement('div');
     overlay.className='platform-drawer';overlay.tabIndex=-1;
@@ -755,6 +860,19 @@
     const scopedFilters={...filters,businesses:[firmId(firm)]};
     const body=overlay.querySelector('#enterpriseFirmBody');
     let customers=[],page={},snapshot=context.enterpriseSnapshot||null;
+    let control={},effective={};
+    const renderBody=()=>{
+      body.innerHTML=`${firmGovernanceHtml(firm,CUI,control,effective,context)}${enterpriseDetailTable(firm,CUI,customers,page)}`;
+      bind();
+    };
+    const refreshControls=async()=>{
+      const [nextControl,nextEffective]=await Promise.all([
+        rpc(sb,'platform_get_business_control_v94',{p_business:firmId(firm)}),
+        rpc(sb,'platform_get_effective_modules_v94',{p_business:firmId(firm),p_branch:null})
+      ]);
+      control=asObject(nextControl);effective=asObject(nextEffective);
+      if(body.isConnected)renderBody();
+    };
     const bind=()=>{
       body.querySelectorAll('[data-enterprise-branch]').forEach(button=>button.onclick=()=>{
         const branch=button.dataset.enterpriseBranch;
@@ -768,23 +886,60 @@
           const next=await fetchEnterpriseCustomerPage(sb,scopedFilters,snapshot,page.next_cursor);
           customers=customers.concat(asArray(next,['customers']));
           page=asObject(next.pagination);
-          body.innerHTML=enterpriseDetailTable(firm,CUI,customers,page);
-          bind();
+          renderBody();
         }catch(error){
           more.disabled=false;more.textContent='Try loading again';
           more.title=error?.message||'Customer page unavailable';
         }
       };
+      body.querySelectorAll('[data-business-approval]').forEach(button=>{
+        button.onclick=()=>businessApprovalModal(firm,button.dataset.businessApproval,control,context,refreshControls);
+      });
+      body.querySelectorAll('[data-module-control]').forEach(button=>{
+        button.onclick=()=>moduleControlModal(firm,effective,context,refreshControls,{
+          branchId:button.dataset.branchId||null,moduleKey:button.dataset.moduleControl||''
+        });
+      });
+      body.querySelectorAll('[data-manage-branch]').forEach(button=>{
+        button.onclick=async()=>{
+          button.disabled=true;
+          try{
+            const branchEffective=asObject(await rpc(sb,'platform_get_effective_modules_v94',{
+              p_business:firmId(firm),p_branch:button.dataset.manageBranch
+            }));
+            moduleControlModal(firm,branchEffective,context,refreshControls,{branchId:button.dataset.manageBranch});
+          }catch(error){
+            button.disabled=false;CUI.announce(error.message||'Branch policy could not be loaded.',{assertive:true});
+          }
+        };
+      });
+      body.querySelector('[data-catalogue-intelligence]')?.addEventListener('click',async event=>{
+        const button=event.currentTarget,enable=button.dataset.catalogueIntelligence==='enable';
+        if(!globalObject.confirm(`${enable?'Enable':'Disable'} item-level intelligence for ${firm.name}?`))return;
+        button.disabled=true;
+        try{
+          await rpc(sb,'platform_set_catalogue_intelligence_v94',{
+            p_business:firmId(firm),p_enabled:enable,
+            p_reason:enable?'Enabled for catalogue-first sales and monthly advisory reporting.':'Disabled by super-admin.',
+            p_expected_version:asObject(control.catalogue_intelligence).version??null
+          });
+          await refreshControls();CUI.announce(`Item-level intelligence ${enable?'enabled':'disabled'}.`);
+        }catch(error){button.disabled=false;CUI.announce(error.message||'Setting could not be updated.',{assertive:true})}
+      });
     };
-    fetchEnterpriseCustomerPage(sb,scopedFilters,snapshot).then(payload=>{
+    Promise.all([
+      fetchEnterpriseCustomerPage(sb,scopedFilters,snapshot),
+      rpc(sb,'platform_get_business_control_v94',{p_business:firmId(firm)}),
+      rpc(sb,'platform_get_effective_modules_v94',{p_business:firmId(firm),p_branch:null})
+    ]).then(([payload,controlPayload,effectivePayload])=>{
       if(!body.isConnected)return;
       snapshot=snapshot||payload.snapshot_at;
       customers=asArray(payload,['customers']);page=asObject(payload.pagination);
-      body.innerHTML=enterpriseDetailTable(firm,CUI,customers,page);
-      bind();
+      control=asObject(controlPayload);effective=asObject(effectivePayload);
+      renderBody();
     }).catch(error=>{
       if(body.isConnected)body.innerHTML=CUI.errorState({
-        title:'Customer records unavailable',message:error?.message||'Please try again.'
+        title:'Firm controls unavailable',message:error?.message||'Please try again.'
       });
     });
   }
@@ -838,6 +993,52 @@
       <footer class="platform-report-method"><b>Methodology</b><p>${escapeHtml(report.methodology?.revenue||'')}</p><p>${escapeHtml(report.methodology?.returning_customer||'')} The returning-rate denominator is active customers in this period.</p><p>${escapeHtml(report.methodology?.lapsed_customer||'')}</p></footer>
     </div>`;
   }
+  function consultativeIntelligenceHtml(report,affinity,recommendations,CUI) {
+    const kpis=asObject(report.kpis),intelligence=asObject(report.customer_intelligence);
+    const quality=asObject(report.data_quality),pairs=asArray(affinity.pairs);
+    const actions=asArray(recommendations.recommendations);
+    const confidence=quality.confidence||quality.status||'not_enough_data';
+    const cohortRows=asArray(intelligence.cohorts||intelligence.segments||intelligence.customer_groups);
+    return `<section class="card platform-report-sheet platform-consultative-report" aria-labelledby="consultativeReportTitle">
+      <div class="platform-list-row"><div><h2 id="consultativeReportTitle">Monthly consultant brief</h2>
+        <p class="muted small">Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence.</p></div>
+        ${CUI.status(plainLabel(confidence),confidence==='high'||confidence==='ready'?'ok':confidence==='medium'?'new':'off')}
+      </div>
+      <section class="platform-kpis" aria-label="Consultant brief KPIs">${[
+        ['Customers',kpis.customer_count??kpis.active_customers??0,'customers'],
+        ['Returning rate',`${Number(kpis.returning_rate_pct||0).toFixed(1)}%`,'retention'],
+        ['Transactions',kpis.transaction_count??kpis.completed_transactions??0,'till'],
+        ['Revenue',currency(kpis.net_revenue_cents??kpis.revenue_cents??0,kpis.currency||'SGD'),'reports']
+      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+      <div class="platform-detail-grid">
+        ${CUI.card({title:'Customer groups',description:'Use these groups to plan specific monthly actions, not generic campaigns.',body:cohortRows.length?CUI.table({
+          caption:'Customer group performance',headers:['Group','Customers','Orders','Revenue','Return rate'],
+          rows:cohortRows.map(row=>[
+            escapeHtml(row.label||plainLabel(row.cohort||row.segment||row.group_key)),
+            String(row.customer_count??row.customers??0),String(row.order_count??row.transactions??0),
+            currency(row.revenue_cents??row.net_revenue_cents??0,row.currency||kpis.currency||'SGD'),
+            `${Number(row.returning_rate_pct||0).toFixed(1)}%`
+          ])
+        }):'<p class="muted small">The selected scope does not yet have enough customer-group data.</p>'})}
+        ${CUI.card({title:'Products bought with services',description:'Attach rate is calculated only from canonical, non-reversed sale lines.',body:affinity.enabled===false
+          ?'<p class="muted small">Item-level intelligence is disabled for this firm.</p>'
+          :pairs.length?CUI.table({
+            caption:'Product and service affinity',headers:['Service','Product','Together','Attach rate','Units','Paired revenue'],
+            rows:pairs.map(row=>[
+              escapeHtml(row.service_name||'—'),escapeHtml(row.product_name||'—'),
+              String(row.orders_together??0),`${Number(row.attach_rate_pct||0).toFixed(1)}%`,
+              String(row.product_units??0),currency(row.paired_revenue_cents??0,kpis.currency||'SGD')
+            ])
+          }):'<p class="muted small">No reliable product/service pair is available in this scope yet.</p>'})}
+      </div>
+      <section class="platform-report-insights"><h3>Consultative action plan</h3>${actions.length?actions.map(action=>`
+        <article class="platform-insight"><div>${CUI.status(plainLabel(action.priority),action.priority==='high'?'no':action.priority==='medium'?'new':'off')}</div>
+          <div><b>${escapeHtml(action.title)}</b><p>${escapeHtml(action.recommended_action)}</p>
+          <small>${escapeHtml(action.category?`${plainLabel(action.category)} · `:'')}${escapeHtml(JSON.stringify(action.evidence||{}))}</small></div>
+        </article>`).join(''):'<div class="platform-route-note"><b>No recommendation claimed</b><p class="small">Nestly suppresses advice when the exact scope has insufficient or unreliable data.</p></div>'}</section>
+      <footer class="platform-report-method"><b>Data quality</b><p>${escapeHtml(quality.message||quality.reason||'Recommendations are suppressed below the configured evidence threshold.')}</p></footer>
+    </section>`;
+  }
   async function renderEnterpriseReport(context,filters) {
     const {main,CUI,sb}=context,host=main.querySelector('#enterpriseReportHost');
     if(!host)return;
@@ -851,6 +1052,23 @@
       );
       if(!host.isConnected)return;
       host.innerHTML=reportHtml(report,CUI,asArray(customerPayload,['customers']),asObject(customerPayload.pagination));
+      if(filters.businesses?.length===1){
+        const business=filters.businesses[0];
+        const [consultantReport,affinity,recommendations]=await Promise.all([
+          rpc(sb,'platform_get_assigned_firm_report_v94',{
+            p_business:business,p_branch:filters.branch||null,p_from:filters.from,p_to:filters.to
+          }),
+          rpc(sb,'platform_get_catalogue_affinity_v94',{
+            p_business:business,p_branch:filters.branch||null,p_from:filters.from,p_to:filters.to,p_limit:25
+          }),
+          rpc(sb,'platform_get_consultative_recommendations_v94',{
+            p_business:business,p_branch:filters.branch||null,p_from:filters.from,p_to:filters.to
+          })
+        ]);
+        host.insertAdjacentHTML('beforeend',consultativeIntelligenceHtml(
+          asObject(consultantReport),asObject(affinity),asObject(recommendations),CUI
+        ));
+      }
       host.querySelector('#enterpriseReportCsv').onclick=async event=>{
         const button=event.currentTarget;
         button.disabled=true;button.textContent='Preparing complete CSV…';
@@ -1049,6 +1267,23 @@
       };
       if(!host.isConnected)return;
       host.innerHTML=crossDomainReportHtml(payload,CUI,filters);
+      if(filters.businesses?.length===1){
+        const business=filters.businesses[0];
+        const [consultantReport,affinity,recommendations]=await Promise.all([
+          rpc(sb,'platform_get_assigned_firm_report_v94',{
+            p_business:business,p_branch:filters.branch||null,p_from:filters.from,p_to:filters.to
+          }),
+          rpc(sb,'platform_get_catalogue_affinity_v94',{
+            p_business:business,p_branch:filters.branch||null,p_from:filters.from,p_to:filters.to,p_limit:25
+          }),
+          rpc(sb,'platform_get_consultative_recommendations_v94',{
+            p_business:business,p_branch:filters.branch||null,p_from:filters.from,p_to:filters.to
+          })
+        ]);
+        host.insertAdjacentHTML('beforeend',consultativeIntelligenceHtml(
+          asObject(consultantReport),asObject(affinity),asObject(recommendations),CUI
+        ));
+      }
       host.querySelector('[data-cross-report-print]').onclick=()=>globalObject.print();
       host.querySelector('[data-cross-report-csv]').onclick=async event=>{
         const button=event.currentTarget;button.disabled=true;button.textContent='Preparing complete CSV…';
@@ -2902,7 +3137,7 @@
         const published=asObject(profile.published_version);
         return CUI.card({title:profile.label||profile.sector_key,description:`${profile.sector_key} · ${profile.active?'Active':'Inactive'}`,body:published.id?`
           <div class="platform-sector-card-head"><div><b>Published version ${escapeHtml(published.version)}</b><p class="muted small">${escapeHtml(published.label||'')}</p></div>${CUI.status('Published','ok')}</div>
-          <div class="platform-module-list" aria-label="${escapeHtml(profile.label||profile.sector_key)} modules">${asArray(published.modules).map(module=>`<span class="chip on" title="${escapeHtml(module)}">${escapeHtml(moduleLabel(module))}</span>`).join('')}</div>
+          <div class="platform-module-list" aria-label="${escapeHtml(profile.label||profile.sector_key)} modules">${asArray(published.modules).filter(module=>module!=='inventory').map(module=>`<span class="chip on" title="${escapeHtml(module)}">${escapeHtml(moduleLabel(module))}</span>`).join('')}</div>
           <div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('edit',{size:16})}<span>Edit modules</span></button></div>`
           :`${CUI.emptyState({iconName:'packages',title:'No published version',body:'Choose the standard modules and publish the first bundle.'})}<div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('add',{size:16})}<span>Choose modules</span></button></div>`});
       }).join('')||CUI.emptyState({iconName:'packages',title:'No sector profiles',body:'The platform returned no active sector profiles.'})}</div>
@@ -2912,7 +3147,7 @@
           firm.sector_key?escapeHtml(firm.sector_key):CUI.status('Unassigned','off'),
           firm.bundle_version?`v${escapeHtml(firm.bundle_version)}`:'—',
           firm.assignment_version?`v${escapeHtml(firm.assignment_version)}`:'—',
-          firm.assignment_version?escapeHtml(asArray(firm.effective_modules).map(moduleLabel).join(', ')):'—',
+          firm.assignment_version?escapeHtml(asArray(firm.effective_modules).filter(module=>module!=='inventory').map(moduleLabel).join(', ')):'—',
           `<div class="platform-actions"><button type="button" class="btn ghost sm" data-assign-firm="${escapeHtml(firm.business_id)}">${firm.assignment_version?'Reassign':'Assign'}</button>${firm.assignment_version?`<button type="button" class="btn ghost sm" data-override-firm="${escapeHtml(firm.business_id)}">Override</button>`:''}</div>`
         ])}):CUI.emptyState({iconName:'branch',title:'No firms',body:'No firms are available for sector assignment.'})}
       </section>`;
@@ -2926,7 +3161,7 @@
     }catch(error){showError(main,error,CUI,'Sector modules')}
   }
   function modulePickerHtml(selectedModules=[]) {
-    const selected=new Set(asArray(selectedModules));
+    const selected=new Set(asArray(selectedModules).filter(module=>module!=='inventory'));
     const groups=[...new Set(sectorModuleCatalog.map(module=>module.group))];
     return `<fieldset class="platform-module-picker"><legend>Choose the standard modules</legend>
       <p class="muted small">These modules become the sector template. Existing published versions remain unchanged.</p>
@@ -2943,9 +3178,10 @@
   }
   function sectorBundleReviewModal({profile,args,preview,context}) {
     const {CUI,sb}=context;
-    const current=asArray(profile?.published_version?.modules);
-    const requested=asArray(preview?.requested_modules).length?asArray(preview.requested_modules):args.p_modules;
-    const resolved=asArray(preview?.resolved_modules).length?asArray(preview.resolved_modules):requested;
+    const withoutInventory=value=>asArray(value).filter(module=>module!=='inventory');
+    const current=withoutInventory(profile?.published_version?.modules);
+    const requested=withoutInventory(asArray(preview?.requested_modules).length?preview.requested_modules:args.p_modules);
+    const resolved=withoutInventory(asArray(preview?.resolved_modules).length?preview.resolved_modules:requested);
     const added=resolved.filter(module=>!current.includes(module));
     const removed=current.filter(module=>!resolved.includes(module));
     const version=preview?.next_version??preview?.version??'next';
@@ -3874,21 +4110,39 @@
       main.innerHTML=`${CUI.pageHeader({title:'Reports',subtitle:'Generate analysis using only firms inside your platform scope.',iconName:'reports'})}
         ${scopedScopeNote(access,CUI)}
         <form class="card platform-scoped-report-form" id="platformScopedReportForm">
-          <fieldset><legend>Select firms</legend><p class="muted small">Only converted firms can be included.</p>
-            <div class="platform-scoped-report-options">${firms.map(item=>`<label><input type="checkbox" name="business" value="${escapeHtml(item.business_id)}"><span><b>${escapeHtml(item.name||item.legal_name)}</b><small>${escapeHtml(plainLabel(item.sector_key||item.industry))}</small></span></label>`).join('')}</div>
+          <fieldset><legend>Choose one assigned firm</legend><p class="muted small">The database verifies the assignment again before returning customer intelligence.</p>
+            <div class="platform-scoped-report-options">${firms.map((item,index)=>`<label><input type="radio" name="business" value="${escapeHtml(item.business_id)}"${index===0?' checked':''}><span><b>${escapeHtml(item.name||item.legal_name)}</b><small>${escapeHtml(plainLabel(item.sector_key||item.industry))}</small></span></label>`).join('')}</div>
           </fieldset>
+          <div class="platform-form-grid">
+            ${CUI.field({id:'platformScopedReportFrom',label:'From',type:'date',value:enterpriseDefaults().from,required:true,attributes:'name="from"'})}
+            ${CUI.field({id:'platformScopedReportTo',label:'To',type:'date',value:enterpriseDefaults().to,required:true,attributes:'name="to"'})}
+          </div>
           <button class="btn" type="submit">${CUI.icon('reports',{size:17})}<span>Generate report</span></button>
         </form>
-        <section id="platformScopedReportResult" class="platform-report-host" aria-live="polite">${CUI.emptyState({iconName:'reports',title:'Choose firms to report on',body:'The server verifies the same own-created or assigned scope before calculating any totals.'})}</section>`;
+        <section id="platformScopedReportResult" class="platform-report-host" aria-live="polite">${CUI.emptyState({iconName:'reports',title:'Choose a firm to report on',body:'Customer groups, product and service patterns, and consultative actions will appear here when the evidence threshold is met.'})}</section>`;
       main.querySelector('#platformScopedReportForm').onsubmit=async event=>{
         event.preventDefault();
-        const selected=[...event.currentTarget.querySelectorAll('input[name="business"]:checked')].map(input=>input.value);
+        const selected=event.currentTarget.querySelector('input[name="business"]:checked')?.value;
+        const from=main.querySelector('#platformScopedReportFrom').value;
+        const to=main.querySelector('#platformScopedReportTo').value;
         const host=main.querySelector('#platformScopedReportResult');
-        if(!selected.length){CUI.announce('Select at least one firm.',{assertive:true});return}
-        host.innerHTML=CUI.loadingState({title:'Generating report',body:'Calculating scoped metrics…',iconName:'reports'});
+        if(!selected){CUI.announce('Select one firm.',{assertive:true});return}
+        host.innerHTML=CUI.loadingState({title:'Generating consultant brief',body:'Reconciling customer, product and service evidence…',iconName:'reports'});
         try{
-          const report=asObject(await rpc(sb,'platform_generate_my_report_v89',{p_business_ids:selected}));
-          host.innerHTML=scopedReportHtml(report,CUI);
+          const [report,affinity,recommendations]=await Promise.all([
+            rpc(sb,'platform_get_assigned_firm_report_v94',{
+              p_business:selected,p_branch:null,p_from:from,p_to:to
+            }),
+            rpc(sb,'platform_get_catalogue_affinity_v94',{
+              p_business:selected,p_branch:null,p_from:from,p_to:to,p_limit:25
+            }),
+            rpc(sb,'platform_get_consultative_recommendations_v94',{
+              p_business:selected,p_branch:null,p_from:from,p_to:to
+            })
+          ]);
+          host.innerHTML=consultativeIntelligenceHtml(
+            asObject(report),asObject(affinity),asObject(recommendations),CUI
+          );
         }catch(error){host.innerHTML=CUI.errorState({title:'Report unavailable',message:error.message||'Try again.'})}
       };
       CUI.focusRoute(main);
@@ -4001,7 +4255,7 @@
     };
     activeContext=context;
     let task;
-    const useScopedV89=access.role==='sales_staff';
+    const useScopedV89=access.role!=='super_admin';
     if(activeKey==='access')task=renderPlatformAccess(context);
     else if(useScopedV89&&activeKey==='onboarding')task=renderScopedOnboarding(context);
     else if(useScopedV89&&activeKey==='firms')task=renderScopedFirms(context);

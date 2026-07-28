@@ -399,20 +399,6 @@
       "call_site_finding": "MEDIUM \u2014 no idempotency key on gift-card redemption"
     },
     {
-      "id": "browser.rpc:app/index.html:redeem_points",
-      "surface": "browser_rpc_binding",
-      "rpc": "redeem_points",
-      "resolves_to": "redeem_points/3 (idempotent)",
-      "call_site_finding": "none"
-    },
-    {
-      "id": "browser.rpc:app/index.html:redeem_reward_at_context",
-      "surface": "browser_rpc_binding",
-      "rpc": "redeem_reward_at_context",
-      "resolves_to": "redeem_reward_at_context/7 \u2192 redeem_reward_core (idempotent)",
-      "call_site_finding": "none"
-    },
-    {
       "id": "browser.rpc:app/index.html:reverse_customer_birthday_benefit_for_client",
       "surface": "browser_rpc_binding",
       "rpc": "reverse_customer_birthday_benefit_for_client",
@@ -2262,6 +2248,22 @@
     {
       "id": "browser.rpc:app/index.html:set_sv_authority_state",
       "reason": "browser RPC 'set_sv_authority_state' is a PS-2A owner-only control binding wired into the Increment D UI: it transitions sv_authority across the SAFE subset only (unbuilt/shadow_testing/reconciliation_blocked; 'live'/'ready_for_cutover' raise 22023) and writes no customer-value row, so it resolves to no value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:platform_get_business_control_v94",
+      "reason": "browser RPC 'platform_get_business_control_v94' is the v94 read-only workspace preflight. It performs no DML and returns only approval, subscription-pause, assigned-representative contact, catalogue-setting, and effective workspace-access metadata for an active staff member or authorized platform operator. It resolves to no customer-value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_get_checkout_catalogue_v94",
+      "reason": "browser RPC 'business_get_checkout_catalogue_v94' is the v94 owner-facing, branch-aware Checkout Catalogue reader. It performs no DML and returns only products/services already owned by the business together with their effective catalogue visibility. It resolves to no customer-value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_set_checkout_catalogue_enabled_v94",
+      "reason": "browser RPC 'business_set_checkout_catalogue_enabled_v94' is the v94 owner/super-admin control-plane switch for catalogue-first Quick Earn. It writes only the non-economic checkout_catalogue_settings_v94 configuration row and audit evidence under optimistic concurrency; it cannot create a sale, payment, ledger movement, reward, stock movement, or other customer-value row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_set_checkout_catalogue_item_v94",
+      "reason": "browser RPC 'business_set_checkout_catalogue_item_v94' is the v94 owner/super-admin control-plane switch for making an existing product or service visible in Checkout Catalogue. It writes only non-economic checkout_catalogue_item_overrides_v94 configuration and audit evidence under optimistic concurrency; it does not change the product/service, stock, price history, sale, payment, reward, ledger, or any other customer-value row."
     },
     {
       "id": "browser.rpc:app/index.html:customer_get_gift_cards",

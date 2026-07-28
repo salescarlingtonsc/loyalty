@@ -99,13 +99,12 @@ test('v36 isolates draft reward reads and removes browser access to stale two-ar
   assert.match(securityTest, /'get_loyalty_reward_draft'/);
 });
 
-test('customer redemption surfaces the customer-facing label when v27 is present', async () => {
+test('customer reward labels remain visible while merchant completion is QR-only', async () => {
   const app = await read('app/index.html');
   assert.match(app, /r\.customer_name\|\|r\.name/);
-  assert.match(app, /sb\.rpc\('redeem_reward_at_context'/i);
-  for (const key of ['branch','service','product']) {
-    assert.match(app, new RegExp(`p_${key}:context\\('${key}'\\)`));
-  }
+  assert.doesNotMatch(app, /sb\.rpc\('redeem_reward_at_context'/i);
+  assert.match(app, /Open Quick Earn scanner/);
+  assert.match(app, /merchant_scan_redemption_qr_v93/);
 });
 
 test('legacy zero-credit claims retain manual fulfillment meaning', async () => {

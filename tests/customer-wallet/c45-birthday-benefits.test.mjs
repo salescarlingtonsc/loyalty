@@ -161,7 +161,7 @@ test('C45 wallet UI has a truthful separate consent seam, no DOB disclosure, acc
   assert.match(wallet, /if\(!walletSectionStillCurrent\(host,isWalletCurrent\)\|\|!toggle\.isConnected\)return;/i);
   assert.match(app, /birthdayBenefitActivate[\s\S]*if\(!isWalletCurrent\(\)\|\|!birthdayActivate\.isConnected\)return;/i);
   assert.match(app, /\.btn\.sm\{[\s\S]*min-height:44px/i);
-  const clientDetail = app.slice(app.indexOf('async function clientDetail'), app.indexOf('/* catalog / milestone redemption'));
+  const clientDetail = app.slice(app.indexOf('async function clientDetail'), app.indexOf('async function tillPage'));
   assert.match(clientDetail, /const birthdayBenefitsEnabled=customerFeatures\.customer_birthday_benefits===true/i);
   assert.match(clientDetail, /birthdayBenefitsEnabled\s*\?sb\.rpc\('staff_get_customer_birthday_benefit'/i,
     'staff detail must not call the birthday reader while C45 is disabled');

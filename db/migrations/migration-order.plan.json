@@ -801,6 +801,12 @@
       "path": "db/migrations/20260728_nestly_v93_branch_scoped_merchant_redemption.sql",
       "semanticVersion": "v93",
       "proposedDeployVersion": "20260722000211"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v94_platform_control_intelligence.sql",
+      "semanticVersion": "v94",
+      "proposedDeployVersion": "20260722000212"
     }
   ]
 }
