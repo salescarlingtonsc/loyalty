@@ -1,8 +1,9 @@
 # Local rehearsal harness — full canonical-chain replay on plain Postgres
 
-This is the exact procedure used on 2026-07-23 to verify v50/v50a/v50b: a fresh replay of
-the complete canonical migration chain on a scratch Postgres (no Docker, no Supabase CLI),
-followed by the full rolled-back SQL suite matrix. It reproduced the production catalog
+This is the exact procedure used on 2026-07-23 to verify v50/v50a/v50b, and repeated through
+v100 on 2026-07-29: a fresh replay of the complete canonical migration chain on a scratch
+Postgres (no Docker, no Supabase CLI), followed by the final-schema-compatible rolled-back
+acceptance suites for the phase under review. It reproduced the production catalog
 faithfully enough to surface two live defects (SGT birth-date validation, stale v30
 contact-proof constraint), so treat it as the standard pre-review verification for any new
 migration. It is also the natural substrate for the P0-FINANCE-REVERSAL-005 /
@@ -39,18 +40,25 @@ while IFS= read -r f; do
       "$f" | psql -d frenly_rehearsal -v ON_ERROR_STOP=1 -q || { echo "FAILED: $f"; break; }
 done
 
-# Run the rolled-back suite matrix (from db/tests/, so \ir fixture paths resolve).
-# cleanup_synthetic_fixture.sql is an operational script (needs -v parameters), not a suite.
-cd db/tests
-for f in *.sql; do
-  [ "$f" = "cleanup_synthetic_fixture.sql" ] && continue
-  psql -d frenly_rehearsal -v ON_ERROR_STOP=1 -f "$f" >/dev/null 2>&1 \
-    && echo "PASS: $f" || echo "FAIL: $f"
-done
+# Run the phase's final-schema-compatible rolled-back suites explicitly. The
+# pending-migration preflight map is the source of truth for which suite belongs
+# to each pending migration. Example for v99/v100:
+psql -d frenly_rehearsal -v ON_ERROR_STOP=1 -f db/tests/v99_v100_campaign_truth_adoption.sql
+
+# Then run the latest synthetic end-to-end journey against the final schema:
+psql -d frenly_rehearsal -v ON_ERROR_STOP=1 -f db/tests/v93_synthetic_e2e_campaign.sql
 ```
 
-After the matrix, `select count(*) from public.businesses` and `from auth.users` must both
-be 0 — every suite owns its own `begin;`…`rollback;`.
+After the selected suites, `select count(*) from public.businesses` and `from auth.users`
+must both be 0 — every compatible suite owns its own `begin;`…`rollback;`.
+
+Do **not** treat `for f in db/tests/*.sql` on the final schema as a release gate. Several
+historical files are point-in-time migration suites: they deliberately assert function bodies,
+permissions, or onboarding defaults that later migrations replace. Replaying those files against
+the latest schema creates false failures and previously hid fixture drift such as the v94 approval
+gate. If a historical suite must be rerun, replay the canonical chain only through that suite's
+declared migration boundary. New release evidence must use a current final-schema-compatible suite
+and an explicit mapping in `tests/phase0-foundation/pending-migration-preflight.test.mjs`.
 
 ## Documented deviations from production (all platform-provided there)
 
@@ -61,7 +69,8 @@ a `cron` schema with `schedule()` / `unschedule()` equivalents (stub for pg_cron
 `vault.secrets` table (stub for supabase_vault), the `storage.buckets` metadata table
 used by the private SME document migration, and the `supabase_realtime` publication.
 Storage object APIs remain platform-owned and are not emulated. Nothing else in the
-chain is altered — 81/81 files apply byte-for-byte otherwise.
+chain is altered; the migration manifest determines the current count and order (139 files through
+v100 at the 2026-07-29 rehearsal) and every file applies byte-for-byte otherwise.
 
 ## What this harness is NOT
 

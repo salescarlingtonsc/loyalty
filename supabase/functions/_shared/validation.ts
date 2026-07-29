@@ -91,8 +91,15 @@ export function validManagePayload(body) {
   return Number.isFinite(Date.parse(String(body.proposed || '')));
 }
 
+export function normalizeBusinessApplicationLocale(value = 'en') {
+  const locale = String(value || 'en').trim().toLowerCase();
+  if (['zh', 'zh-cn', 'zh-sg', 'zh-hans'].includes(locale)) return 'zh-CN';
+  if (['ms', 'ms-sg', 'ms-my', 'ms-latn'].includes(locale)) return 'ms';
+  if (locale === 'en') return 'en';
+  return null;
+}
+
 export function validBusinessApplicationPayload(body) {
-  const locale = String(body?.locale || 'en').toLowerCase();
   return !!body
     && String(body.contact_name || '').trim().length >= 2
     && String(body.contact_name || '').trim().length <= 100
@@ -103,7 +110,7 @@ export function validBusinessApplicationPayload(body) {
     && String(body.business_name || '').trim().length <= 160
     && /^[a-z0-9][a-z0-9_-]{0,62}$/.test(String(body.sector_key || ''))
     && String(body.registration_number || '').trim().length <= 40
-    && ['en', 'zh', 'zh-cn', 'zh-sg', 'zh-hans'].includes(locale)
+    && normalizeBusinessApplicationLocale(body.locale) !== null
     && UUID_PATTERN.test(String(body.idempotency_key || ''))
     && body.legal_consent === true;
 }

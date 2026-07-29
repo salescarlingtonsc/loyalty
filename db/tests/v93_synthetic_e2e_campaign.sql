@@ -18,6 +18,7 @@ grant execute on function pg_temp.as_e2e_user(uuid,text) to public;
 
 do $campaign$
 declare
+  v_platform constant uuid:='92000000-0000-4000-8000-000000000100';
   v_owner constant uuid:='92000000-0000-4000-8000-000000000101';
   v_manager constant uuid:='92000000-0000-4000-8000-000000000102';
   v_frontdesk constant uuid:='92000000-0000-4000-8000-000000000103';
@@ -59,6 +60,8 @@ begin
     instance_id,id,aud,role,email,phone,encrypted_password,email_confirmed_at,
     phone_confirmed_at,created_at,updated_at
   ) values
+    ('00000000-0000-0000-0000-000000000000',v_platform,'authenticated',
+      'authenticated','nestly-e2e-platform-v92@example.test',null,'',now(),null,now(),now()),
     ('00000000-0000-0000-0000-000000000000',v_owner,'authenticated',
       'authenticated','nestly-e2e-owner-v92@example.test',null,'',now(),null,now(),now()),
     ('00000000-0000-0000-0000-000000000000',v_manager,'authenticated',
@@ -73,6 +76,14 @@ begin
       now(),now(),now(),now()),
     ('00000000-0000-0000-0000-000000000000',v_outsider,'authenticated',
       'authenticated','nestly-e2e-outsider-v92@example.test',null,'',now(),null,now(),now());
+  insert into public.super_admins(user_id,email,note)
+  values(
+    v_platform,'nestly-e2e-platform-v92@example.test',
+    'rollback-only v93 final-chain approval fixture'
+  );
+  update app.platform_feature_flags
+     set enabled=true
+   where feature_key='customer_wallet';
 
   insert into public.businesses(
     id,name,slug,industry,currency,is_synthetic,join_enabled,enabled_modules,
@@ -98,6 +109,20 @@ begin
     (v_business,v_owner_staff,v_branch),
     (v_business,v_manager_staff,v_branch),
     (v_business,v_frontdesk_staff,v_branch);
+
+  -- v94 correctly makes every newly inserted firm pending. This older
+  -- synthetic journey must explicitly pass the real platform approval
+  -- contract before testing merchant-owner capabilities on the final chain.
+  perform pg_temp.as_e2e_user(v_platform);
+  v_result:=public.platform_decide_business_approval_v94(
+    v_business,'approved','rollback-only v93 synthetic acceptance',1
+  );
+  reset role;
+  if v_result->>'approval_status'<>'approved'
+     or not (v_result->>'workspace_access')::boolean then
+    raise exception 'synthetic firm approval did not open the workspace: %',
+      v_result;
+  end if;
 
   insert into public.services(
     id,business_id,name,price_cents,duration_min,active,show_on_booking_page
@@ -421,7 +446,7 @@ begin
   ) or exists(
     select 1 from auth.users
     where id between
-      '92000000-0000-4000-8000-000000000101'::uuid
+      '92000000-0000-4000-8000-000000000100'::uuid
       and '92000000-0000-4000-8000-000000000106'::uuid
   ) then
     raise exception 'v92 synthetic campaign left database residue after rollback';

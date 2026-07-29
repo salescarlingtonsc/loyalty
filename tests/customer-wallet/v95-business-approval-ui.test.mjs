@@ -24,11 +24,19 @@ test('approved owner creation is invite-bound and workspace activation is server
   assert.match(app,/p_idempotency_key:activationKey/);
 });
 
-test('business application surfaces retain English and Simplified Chinese copy',()=>{
+test('business application surfaces offer English, Chinese and Bahasa Melayu copy',()=>{
   assert.match(app,/'zh-CN'/);
   assert.match(app,/申请 Nestly 商家账户/);
   assert.match(app,/超级管理员批准后/);
   assert.match(app,/I have read and agree to the Terms and Privacy Policy/);
+  assert.match(app,/Mohon akaun perniagaan Nestly/);
+  assert.match(app,/>Bahasa Melayu<\/option>/);
+  assert.match(app,/ms:\{fnb:'Makanan & minuman \/ Kafe'/);
+  assert.match(app,/invitationUnavailable:'Jemputan tidak tersedia'/);
+  assert.match(app,/workspaceCreateError:'Ruang kerja ini tidak dapat dicipta\.'/);
+  assert.match(app,/legalLinks\(locale\)/);
+  assert.match(app,/locale,legal_consent:/);
+  assert.doesNotMatch(app,/locale==='ms'\?'en'/);
 });
 
 test('only the superadmin platform queue can decide applications and exposes one-time link handling',()=>{
@@ -40,7 +48,7 @@ test('only the superadmin platform queue can decide applications and exposes one
   assert.match(platform,/Copy secure owner link/);
 });
 
-test('owner programme editor publishes bilingual copy and allowlisted media through guarded contracts',()=>{
+test('owner programme editor publishes canonical copy and allowlisted media through guarded contracts',()=>{
   assert.match(app,/business_get_presentation_editor_v95/);
   assert.match(app,/business_upsert_localized_copy_v95/);
   assert.doesNotMatch(app,/business_upsert_media_asset_v95/);
@@ -52,7 +60,9 @@ test('owner programme editor publishes bilingual copy and allowlisted media thro
   assert.match(mediaSync,/business_queue_media_cleanup_v95/);
   assert.match(mediaSync,/business_mark_media_cleanup_result_v95/);
   assert.match(mediaSync,/business_list_media_cleanup_queue_v95/);
-  assert.match(app,/会员计划名称（简体中文）/);
+  assert.doesNotMatch(app,/programmeNameZh|programmeTaglineZh|programmeDescriptionZh|programmeImageAltZh/);
+  assert.match(app,/p_locale:'en'/);
+  assert.match(app,/p_alt_zh_cn:null/);
   assert.match(app,/Preview customer view/);
 });
 
@@ -60,5 +70,6 @@ test('customer programme renders owner-published rewards, products and services'
   assert.match(app,/products:Array\.isArray\(catalogue\.products\)/);
   assert.match(app,/services:Array\.isArray\(catalogue\.services\)/);
   assert.match(app,/Featured products & services/);
-  assert.match(app,/精选产品与服务/);
+  const customerCopy=app.slice(app.indexOf('const CUSTOMER_COPY'),app.indexOf('const CUSTOMER_PRIMARY_NAV'));
+  assert.doesNotMatch(customerCopy,/精选产品与服务/);
 });

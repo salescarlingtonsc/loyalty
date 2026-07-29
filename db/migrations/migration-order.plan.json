@@ -819,6 +819,24 @@
       "path": "db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql",
       "semanticVersion": "v96",
       "proposedDeployVersion": "20260729110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v97_workspace_interface_localization.sql",
+      "semanticVersion": "v97",
+      "proposedDeployVersion": "20260729120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v99_campaign_truth.sql",
+      "semanticVersion": "v99",
+      "proposedDeployVersion": "20260729130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v100_product_adoption_events.sql",
+      "semanticVersion": "v100",
+      "proposedDeployVersion": "20260729140000"
     }
   ]
 }

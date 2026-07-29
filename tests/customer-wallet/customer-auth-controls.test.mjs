@@ -21,11 +21,16 @@ test('password fields have accessible visibility controls and Face ID sits besid
   const profile=section('async function renderCustomerProfile','async function renderCustomerQrJoin');
   const businessAuth=section('function renderAuth(','function validNewPassword(');
 
-  assert.match(helper,/aria-label="Show password"/);
+  assert.match(helper,/locale='en'/);
+  assert.match(helper,/authSecurityCopy\(locale,'showPassword'\)/);
+  assert.match(helper,/data-password-show-label="\$\{esc\(showLabel\)\}"/);
+  assert.match(helper,/aria-label="\$\{esc\(showLabel\)\}"/);
   assert.match(helper,/aria-controls="\$\{esc\(id\)\}"/);
   assert.match(helper,/CUI\.icon\('eye'/);
   assert.match(helper,/CUI\.icon\('faceId'/);
   assert.match(visibility,/input\.type=showing\?'password':'text'/);
+  assert.match(visibility,/button\.dataset\.passwordShowLabel/);
+  assert.match(visibility,/button\.dataset\.passwordHideLabel/);
   assert.match(visibility,/aria-pressed/);
   assert.match(login,/passkeyButtonId:'customerPasskeySignIn'/);
   assert.doesNotMatch(login,/Use Face ID, Touch ID or passkey<\/span>/);

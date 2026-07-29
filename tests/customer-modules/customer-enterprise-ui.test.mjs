@@ -103,10 +103,14 @@ test('inactive staff stop before page data calls with a reactivation and sign-ou
 test('inactive-access legal links are semantic WCAG targets on desktop and 390px',()=>{
   const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
 
-  assert.match(app,/const legalLinks=\(\)=>`<nav class="legal-links" aria-label="Legal and privacy">/);
-  for(const [href,label] of [
-    ['/privacy.html','Privacy'],['/terms.html','Terms'],['/data-request.html','Data request'],
-  ])assert.match(app,new RegExp(`<a href="${href.replace(/[/.]/g,'\\$&')}">${label}<\\/a>`));
+  assert.match(app,/const legalLinks=\(locale='en'\)=>\{/);
+  assert.match(app,/return `<nav class="legal-links" aria-label="\$\{esc\(copy\.label\)\}">/);
+  for(const [href,label,key] of [
+    ['/privacy.html','Privacy','privacy'],['/terms.html','Terms','terms'],['/data-request.html','Data request','data'],
+  ]){
+    assert.match(app,new RegExp(`${key}:['"]${label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}['"]`));
+    assert.match(app,new RegExp(`<a href="${href.replace(/[/.]/g,'\\$&')}">\\$\\{esc\\(copy\\.${key}\\)\\}<\\/a>`));
+  }
   assert.match(app,/\.legal-links a\{[^}]*display:inline-flex[^}]*min-height:44px[^}]*padding:8px[^}]*color:var\(--muted\)/s);
   assert.match(mobile,/\.legal-links\{[^}]*width:100%[^}]*max-width:100%[^}]*\}[\s\S]*\.legal-links a\{[^}]*min-height:44px/s);
 });
@@ -164,7 +168,7 @@ test('dashboard and customer loyalty detail preserve accessible names and one pa
     'read-only staff must not call the owner-only birthday programme RPC');
 });
 
-test('mobile Retention actions wrap and navigation stays fully discoverable without horizontal scrolling',()=>{
+test('mobile Retention actions wrap and role-aware workspace navigation stays thumb-reachable',()=>{
   assert.match(retention,/class="retention-taxonomy-row"/);
   assert.match(retention,/class="retention-taxonomy-actions"/);
   assert.match(app,/\.retention-taxonomy-row\{[^}]*flex-wrap:wrap[^}]*min-width:0/s);
@@ -172,8 +176,10 @@ test('mobile Retention actions wrap and navigation stays fully discoverable with
   assert.match(app,/\.retention-taxonomy-actions\{[^}]*flex-wrap:wrap[^}]*min-width:0/s);
   const mobileShell=section('@media(max-width:960px){','@media(max-width:767px){');
   assert.match(mobileShell,/\.shell\{[^}]*grid-template-columns:minmax\(0,1fr\)[^}]*max-width:100vw[^}]*min-width:0/s);
-  assert.match(mobileShell,/\.side\{[^}]*width:100%[^}]*max-width:100vw[^}]*min-width:0[^}]*overflow:visible/s);
-  assert.match(mobileShell,/\.nav\{[^}]*display:grid[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)[^}]*width:100%[^}]*min-width:0/s);
+  assert.match(mobileShell,/\.side\{display:none\}/);
+  assert.match(mobileShell,/\.staff-mobile-dock\{[^}]*position:fixed[^}]*bottom:0[^}]*display:grid/s);
+  assert.match(app,/function staffMobileActionsHtml\(page\)[\s\S]*canScanCustomerRedemption\(\{[\s\S]*loyaltyWritable:canWriteModule\('loyalty'\)[\s\S]*id="staffMobileScan"/);
+  assert.match(app,/staff-mobile-drawer[\s\S]*navHtml\(page,'mobile-nav'\)/);
   assert.doesNotMatch(mobileShell,/overflow-x:auto|flex:0 0 max-content/);
 });
 

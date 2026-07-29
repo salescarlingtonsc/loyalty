@@ -28,8 +28,14 @@ test('the owner sees draft state and explicitly publishes it', async () => {
   assert.match(app, /Draft recommendation/);
   assert.match(app, /Nothing is earning or redeeming yet/);
   assert.match(app, /configuration_status:'published'/);
-  assert.match(app, /Publish program/);
-  assert.match(app, /Loyalty program published/);
+  assert.match(app, /Save draft/);
+  assert.match(app, /Review &amp; publish/);
+  assert.match(app, /preview_publish_impact/);
+  assert.match(app, /publishConfirmationSensitive/);
+  assert.match(app, /publishConfirmationStandard/);
+  assert.match(app, /id="studioPubConfirm" type="button" disabled/);
+  assert.match(app, /\(e\.target\.value\|\|''\)!=='PUBLISH'/);
+  assert.match(app, /Grow draft saved — customers are still using the published programme/);
 });
 
 test('create_business retains authenticated-only execution', async () => {

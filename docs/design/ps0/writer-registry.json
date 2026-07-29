@@ -300,6 +300,13 @@
       "call_site_finding": "MEDIUM \u2014 manual points adjustment has no idempotency"
     },
     {
+      "id": "browser.rpc:app/index.html:attest_campaign_exposure_v99",
+      "surface": "browser_rpc_binding",
+      "rpc": "attest_campaign_exposure_v99",
+      "resolves_to": "attest_campaign_exposure_v99/8 (explicit owner confirmation; replay-safe by business key and campaign grant)",
+      "call_site_finding": "none \u2014 requires p_confirmed=true after the offer is actually shown/sent; does not claim provider delivery"
+    },
+    {
       "id": "browser.rpc:app/index.html:commit_import_job",
       "surface": "browser_rpc_binding",
       "rpc": "commit_import_job",
@@ -331,8 +338,8 @@
       "id": "browser.rpc:app/index.html:issue_campaign_offer",
       "surface": "browser_rpc_binding",
       "rpc": "issue_campaign_offer",
-      "resolves_to": "issue_campaign_offer/6 (idempotent, legacy budget authority)",
-      "call_site_finding": "none (engine cutover pending)"
+      "resolves_to": "issue_campaign_offer/6 (v99 server-issued reward entitlement; idempotent)",
+      "call_site_finding": "v99 contract: p_reward_grant_id must be omitted/null; issuance never implies exposure or provider delivery"
     },
     {
       "id": "browser.rpc:app/index.html:issue_gift_card",
@@ -354,6 +361,20 @@
       "rpc": "record_cart_sale",
       "resolves_to": "record_cart_sale/7 \u2192 record_quick_sale (idempotent)",
       "call_site_finding": "none"
+    },
+    {
+      "id": "browser.rpc:app/index.html:seal_campaign_measurement_v99",
+      "surface": "browser_rpc_binding",
+      "rpc": "seal_campaign_measurement_v99",
+      "resolves_to": "seal_campaign_measurement_v99/4 (idempotent common-arm measurement seal)",
+      "call_site_finding": "none \u2014 server refuses until every treatment entitlement has a verified manual exposure"
+    },
+    {
+      "id": "browser.rpc:app/index.html:staff_get_reward_entitlements_v99",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_get_reward_entitlements_v99",
+      "resolves_to": "staff_get_reward_entitlements_v99/2 (read-only display-safe Customer 360 projection)",
+      "call_site_finding": "none \u2014 campaign offer value is hidden until a separately proven merchant fulfilment path exists"
     },
     {
       "id": "browser.rpc:app/index.html:reserve_checkout_sv_tender",
@@ -740,19 +761,19 @@
     {
       "id": "db.fn:public.issue_campaign_offer/6",
       "surface": "db_function",
-      "latest_file": "20260722150000_frenly_v50_retention_measurement.sql",
-      "rows_written": "retention_campaign_grants:INSERT",
+      "latest_file": "20260729130000_nestly_v99_campaign_truth.sql",
+      "rows_written": "reward_grants:INSERT, retention_campaign_grants:INSERT/UPDATE, audit_log:INSERT",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "entry_point": "issue_campaign_offer(...)",
       "callers": "browser issue_campaign_offer",
-      "reads": "retention_campaigns, sale_policies",
-      "idempotency": "advisory + op-ledger",
-      "locking": "advisory",
-      "loyalty": "retention_campaign_grants INSERT (campaign entitlement/offer)",
-      "reporting": "campaign budget under legacy sum()-based cap (rev-3 S5)",
-      "reversal": "campaign grant compensation TBD in engine cutover",
+      "reads": "retention_campaigns, retention_campaign_members, retention_program_versions, firm_config_versions, businesses",
+      "idempotency": "business key advisory lock + immutable request hash + campaign/member uniqueness",
+      "locking": "business/key advisory + campaign FOR UPDATE",
+      "loyalty": "atomically creates the exact active-published treatment reward_grant and links it to retention_campaign_grants; no points/credit ledger write",
+      "reporting": "budget checked under the serialized campaign lock; issuance remains distinct from manual exposure attestation",
+      "reversal": "entitlement fulfilment/compensation remains a separate merchant workflow",
       "ui": "Retention campaigns \u2192 issue offer",
-      "kernel": "NEEDS-WORK \u2014 campaign grants stay under legacy execution authority until the campaign engine cuts over (\u00a711); budget must move onto budget_periods in the same migration."
+      "kernel": "SAFE for v99 offer issuance \u2014 treatment, tenant, published-version, budget, replay, and entitlement provenance are enforced server-side; no delivery claim is made"
     },
     {
       "id": "db.fn:public.issue_gift_card/4",
@@ -809,21 +830,6 @@
       "reporting": "re-judges a sale as revenue/not without touching amounts",
       "reversal": "reversible by setting it back",
       "kernel": "SAFE \u2014 governed, column-whitelisted policy edit; the append-only guard permits only counts_as_revenue to change. Keep the guard contract in the kernel."
-    },
-    {
-      "id": "db.fn:public.record_campaign_returns/2",
-      "surface": "db_function",
-      "latest_file": "20260722150000_frenly_v50_retention_measurement.sql",
-      "rows_written": "retention_campaign_returns:INSERT",
-      "detected_signals": "idem-signal, advisory-lock, for-update, sale-policy",
-      "entry_point": "record_campaign_returns(p_campaign, ...)",
-      "callers": "browser record_campaign_returns",
-      "idempotency": "advisory + op-ledger",
-      "locking": "advisory",
-      "sale_policy": "reads sale policy to measure returns",
-      "loyalty": "retention_campaign_returns INSERT (measured attributable return)",
-      "reporting": "campaign measurement",
-      "kernel": "SAFE \u2014 measurement write, not a value promise; keep as analytics."
     },
     {
       "id": "db.fn:public.record_cart_sale/7",
@@ -1654,6 +1660,10 @@
   ],
   "allowlist": [
     {
+      "id": "browser.rpc:app/index.html:record_product_interaction_v100",
+      "reason": "browser RPC 'record_product_interaction_v100' appends only allowlisted, privacy-minimized interaction evidence with tenant, module, and branch authorization plus request-hash idempotency. Its response explicitly says accepted_interaction_only and business_outcome_asserted=false; completed joins, bookings, sales, redemptions, invoices, exposures, and campaign returns come from canonical server-side rows. It writes no sale, payment, points, reward, entitlement, stored value, or other customer-value table."
+    },
+    {
       "id": "browser.rpc:app/index.html:accept_invite",
       "reason": "browser RPC 'accept_invite' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
@@ -2370,12 +2380,12 @@
       "reason": "browser RPC 'customer_get_programme_selector_media_v96' is a stable, bounded, verified-link-scoped customer reader that returns only each linked business slug and its current customer-visible logo URL. It performs no DML and resolves to no value writer."
     },
     {
-      "id": "browser.rpc:app/index.html:customer_get_locale_preference_v95",
-      "reason": "browser RPC 'customer_get_locale_preference_v95' is a self-scoped stable read of the authenticated customer's Nestly locale preference. It performs no DML and resolves to no value writer."
+      "id": "browser.rpc:app/index.html:get_workspace_locale_preference_v97",
+      "reason": "browser RPC 'get_workspace_locale_preference_v97' is a self-scoped stable read of the authenticated user's workspace interface locale. It performs no DML and resolves to no value writer."
     },
     {
-      "id": "browser.rpc:app/index.html:customer_set_locale_preference_v95",
-      "reason": "browser RPC 'customer_set_locale_preference_v95' writes only the authenticated customer's non-economic en/zh-CN UI preference under optimistic concurrency. It cannot write a sale, payment, ledger, reward, entitlement, stored value, or other customer-value row."
+      "id": "browser.rpc:app/index.html:set_workspace_locale_preference_v97",
+      "reason": "browser RPC 'set_workspace_locale_preference_v97' writes only the authenticated user's non-economic en/zh-CN/ms workspace interface preference under optimistic concurrency. It cannot write a sale, payment, ledger, reward, entitlement, stored value, or other customer-value row."
     },
     {
       "id": "browser.rpc:app/index.html:activate_approved_business_application_v95",

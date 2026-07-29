@@ -14,7 +14,7 @@ function section(start,end){
 }
 
 test('inventory and customer intelligence are absent from business navigation and typed routes fail closed',()=>{
-  const nav=section('function navHtml(page){','function wireNav(){');
+  const nav=section("function navHtml(page,idPrefix='nav'){",'function wireNav(){');
   const route=section('async function route(){','/* ---------- customer wallet ---------- */');
   assert.match(app,/const HIDDEN_BUSINESS_SURFACES=new Set\(\['customerintel','inventory'\]\)/);
   assert.match(nav,/filter\(module=>!HIDDEN_BUSINESS_SURFACES\.has\(module\)\)/);

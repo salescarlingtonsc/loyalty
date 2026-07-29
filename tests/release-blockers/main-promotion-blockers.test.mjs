@@ -50,12 +50,13 @@ test('an older deferred business-persona route cannot redirect over newer naviga
   assert.match(routing,/const \{data:businessPersonas,error:businessPersonaError\}=await sb\.rpc\('get_my_personas'\);\n      if\(!isRouteCurrent\(\)\)return;/);
 });
 
-test('390px navigation is a bounded discoverable grid without horizontal overflow',()=>{
+test('390px navigation uses a bounded persistent dock and a discoverable module drawer',()=>{
   const responsive=section('@media(max-width:960px)','@media(max-width:767px)');
-  assert.match(responsive,/\.side\{[^}]*max-width:100vw[^}]*overflow:visible/s);
-  assert.match(responsive,/\.nav\{[^}]*display:grid[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)[^}]*width:100%/s);
-  assert.match(responsive,/\.nav>a,\.navgroup\{min-width:0\}/);
-  assert.match(responsive,/\.nav a,\.navhead\{[^}]*width:100%[^}]*white-space:normal/s);
+  assert.match(responsive,/\.side\{display:none\}/);
+  assert.match(responsive,/\.staff-mobile-dock\{[^}]*position:fixed[^}]*left:0[^}]*right:0[^}]*bottom:0[^}]*display:grid/s);
+  assert.match(responsive,/grid-template-columns:repeat\(var\(--staff-mobile-count,4\),minmax\(0,1fr\)\)/);
+  assert.match(app,/\.staff-mobile-drawer\{[^}]*width:min\(330px,calc\(100vw - 24px\)\)[^}]*overflow:auto/s);
+  assert.match(app,/function staffMobileActionsHtml\(page\)[\s\S]*navHtml\(page,'mobile-nav'\)/);
   assert.doesNotMatch(responsive,/overflow-x:auto|flex:0 0 max-content/);
 });
 

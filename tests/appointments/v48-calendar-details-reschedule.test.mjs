@@ -73,7 +73,8 @@ test('week and mobile calendar expose unambiguous duration-aware appointment but
   assert.match(calendar,/aria-current="date"/);
   assert.match(calendar,/calendarDayLabel\(a\.starts_at\)/);
   assert.match(calendar,/appointmentDuration\(a\)\} min/);
-  assert.match(calendar,/aria-label="View \$\{esc\(a\.services/);
+  assert.match(calendar,/workspaceTemplateAttributeV97\('aria-label','viewAppointmentAgenda',\{service:a\.services\?\.name\|\|'—',customer:a\.clients\?\.full_name\|\|'—',day:calendarDayLabel\(a\.starts_at\),time:appointmentTimeRange\(a\),duration:appointmentDuration\(a\)\}\)/);
+  assert.match(calendar,/workspaceTemplateAttributeV97\('aria-label','calendarAppointment',\{service:a\.services\?\.name\|\|'—',customer:a\.clients\?\.full_name\|\|'—',time:appointmentTimeRange\(a\),duration:appointmentDuration\(a\),staff:staffName\[a\.staff_id\]\|\|'—'\}\)/);
 });
 
 test('appointment detail sheet exposes authorized particulars and safe call/edit controls',()=>{

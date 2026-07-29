@@ -25,7 +25,7 @@ test('Firms route uses complete snapshot hierarchy, customer and report contract
 test('enterprise search and scope reach both report and detail calls',async()=>{
   const source=await read('app/platform-console.js');
   assert.match(source,/p_search:filters\.search\\|\\|null/);
-  assert.match(source,/Firm scope <span class="muted small">\(select one or more\)<\/span>/);
+  assert.match(source,/\$\{escapeHtml\(pt\('Firm scope'\)\)\} <span class="muted small">\$\{escapeHtml\(pt\("\(select one or more\)"\)\)\}<\/span>/);
   assert.match(source,/Select exactly one firm to filter by branch/);
   assert.match(source,/data-enterprise-firm/);
   assert.match(source,/data-enterprise-branch/);

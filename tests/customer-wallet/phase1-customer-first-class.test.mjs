@@ -154,12 +154,16 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/Date of birth/);
   assert.match(surfaces,/not editable here/);
 
-  const home=section('function renderActionableWalletHome','async function renderCustomerWallet');
+  const home=section('function customerHomeNextActionMarkup','async function renderCustomerWallet');
   assert.match(home,/ct\('chooseProgramme'\)/);
   assert.match(home,/ct\('programmesIntro'\)/);
   assert.match(home,/id="customerHomeScan"/);
   assert.match(home,/ct\('addProgramme'\)/);
   assert.match(home,/renderCustomerFirstProgrammeQuest/);
+  assert.match(home,/customerHomeNextActionMarkup\(cards\[0\]\)/);
+  assert.match(home,/Next best action/);
+  assert.match(home,/No urgent action is available right now/);
+  assert.match(home,/href="#\/wallet\/\$\{slug\}"/);
   assert.doesNotMatch(home,/href="#\/claim"/);
 
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');

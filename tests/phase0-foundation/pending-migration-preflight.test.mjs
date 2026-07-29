@@ -98,7 +98,10 @@ const sqlTestByVersion = new Map([
   ['v93', 'db/tests/v93_synthetic_e2e_campaign.sql'],
   ['v94', 'db/tests/v94_platform_control_intelligence.sql'],
   ['v95', 'db/tests/v95_bilingual_programmes.sql'],
-  ['v96', 'db/tests/v96_customer_programme_selector_media.sql']
+  ['v96', 'db/tests/v96_customer_programme_selector_media.sql'],
+  ['v97', 'db/tests/v97_workspace_interface_localization.sql'],
+  ['v99', 'db/tests/v99_v100_campaign_truth_adoption.sql'],
+  ['v100', 'db/tests/v99_v100_campaign_truth_adoption.sql']
 ]);
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -112,7 +115,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 91);
+  assert.equal(pending.length, 94);
   assert.equal(sqlTestByVersion.size, pending.length);
 
   for (const migration of pending) {

@@ -53,7 +53,7 @@ test('all v79 onboarding actions pass the current checklist version and a fresh 
   assert.match(source, /waive_onboarding_item_v79',\{\s*p_business:detail\.prospect\.converted_business_id,\s*p_item_key:itemKey,\s*p_reason:form\.get\('reason'\),\s*p_expected_version:facts\.version,\s*p_idempotency_key:idempotencyKey\(\)/);
   assert.match(source, /block_business_onboarding_v79',\{\s*p_business:detail\.prospect\.converted_business_id,\s*p_item_key:itemKey,\s*p_reason:form\.get\('reason'\),\s*p_expected_version:facts\.version,\s*p_idempotency_key:idempotencyKey\(\)/);
   assert.match(source, /unblock_business_onboarding_v79',\{\s*p_business:detail\.prospect\.converted_business_id,\s*p_item_key:itemKey,\s*p_expected_version:facts\.version,\s*p_idempotency_key:idempotencyKey\(\)/);
-  assert.match(source, /activationReady\?'':' disabled title="Complete every mandatory item and super-admin go-live approval first\."/);
+  assert.match(source, /activationReady\?'':` disabled title="\$\{escapeHtml\(pt\('Complete every mandatory item and super-admin go-live approval first\.'\)\)\}"`/);
 });
 
 test('stale disconnected onboarding language is removed', async () => {

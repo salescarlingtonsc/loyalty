@@ -1,6 +1,1697 @@
 (function platformConsoleFactory(globalObject) {
   'use strict';
 
+  const PLATFORM_LOCALES=Object.freeze(['en','zh-CN','ms']);
+  const PLATFORM_LOCALE_LABELS=Object.freeze({
+    en:'English','zh-CN':'中文',ms:'Bahasa Melayu'
+  });
+  const PLATFORM_COPY=Object.freeze({
+    'zh-CN':Object.freeze({
+      'No reconciliation run':'没有对账运行',
+      'Map each single-value field once. Conflict: {fields}.':'每个单值字段只能映射一次。冲突：{fields}。',
+      'Source row {row}':'源数据第 {row} 行',
+      'Unnamed contact':'未命名联系人',
+      'Role not recorded':'未记录职务',
+      'Primary':'主要联系人',
+      'Stage transition':'阶段转换',
+      'This prospect matches existing firm {firm} by {basis}. Review the match before any manual decision.':'此潜在客户通过{basis}匹配现有企业{firm}。请在作出任何人工决定前审核匹配结果。',
+      'Record evidence · {item}':'记录证据 · {item}',
+      'Waive · {item}':'豁免 · {item}',
+      'whole onboarding':'整个入驻流程',
+      'Record {type}':'记录{type}',
+      'New immutable version {version}':'新的不可变版本 {version}',
+      'Nestly added {count} required dependencies automatically.':'Nestly 已自动添加 {count} 个必需依赖项。',
+      'Provider object':'服务商对象',
+      'Confirm {action}':'确认{action}',
+      'Year-one base {base}% · 12-month service bonus {bonus}% · Renewal {renewal}%':'首年基础 {base}% · 满 12 个月服务奖金 {bonus}% · 续约 {renewal}%',
+      'Insert new':'新增',
+      'Merge source lineage':'合并来源沿袭',
+      'Activities and timeline':'活动与时间线',
+      'Tasks and next actions':'任务与后续行动',
+      'Audit and stage history':'审核与阶段历史',
+      'Meeting':'会议',
+      'Uploaded':'已上传',
+      'Verified':'已验证',
+      'Proposal':'方案',
+      'Not Started':'尚未开始',
+      'Initial':'首次',
+      'Renewal':'续约',
+      'Document Sent':'已发送文件',
+      'Departed':'已离职',
+      'F&B / Café':'餐饮／咖啡馆',
+      'Hair Salon':'美发沙龙',
+      'Facial / Spa':'美容／水疗',
+      'Massage':'按摩',
+      'Fitness':'健身',
+      'Retail':'零售',
+      'Other':'其他',
+      'Developing':'发展中','Established':'成熟','Advanced':'先进',
+      'Unverified':'未验证','Disputed':'有争议',
+      'Decision Maker':'决策人','Champion':'内部支持者','Influencer':'影响者','Budget Owner':'预算负责人',
+      'User':'用户','Gatekeeper':'把关人','Whatsapp':'WhatsApp','Sms':'短信','Video':'视频','In Person':'面对面',
+      'Unqualified':'不合格','Discovery':'需求探索','Qualified':'合格','Disqualified':'已取消资格',
+      'Not Confirmed':'未确认','Range Confirmed':'范围已确认','No Budget':'无预算','Medium':'中',
+      'Exempt':'免税','Trial':'试用','Unpaid':'未支付','Partially Paid':'部分支付','Refunded':'已退款','Charged Back':'已拒付',
+      'Template Sent':'已发送模板','Received':'已接收','Validated':'已验证','Not Required':'无需',
+      'Demo':'演示','Proposal Sent':'已发送方案','Contract Sent':'已发送合同','Onboarding Session':'入驻辅导',
+      'Create Checkout':'创建结账','Create Portal':'创建账单门户','Change Cadence':'更改周期','Cancel At Period End':'期末取消',
+      'Mismatch':'不匹配',
+      'Overview':'概览','Onboarding':'客户入驻','Onboard':'入驻','Firms':'企业','Reports':'报告',
+      'Billing':'账单','Commission payable':'应付佣金','Commission':'佣金','Sector modules':'行业模块',
+      'Sectors':'行业','Automation':'自动化','Automate':'自动化','Platform access':'平台权限','Access':'权限',
+      'Platform':'平台','Platform console':'平台控制台','Skip to platform content':'跳至平台内容',
+      'Current platform access':'当前平台权限','Back to workspace':'返回工作区','Workspace':'工作区',
+      'Sign out':'退出登录','Main navigation':'主导航','Mobile navigation':'移动导航',
+      'Super admin':'超级管理员','Sales staff':'销售人员','Admin':'管理员',
+      'Only firms you created or are assigned to':'仅限您创建或获分配的企业',
+      'All platform records':'所有平台记录','Read and write':'可读写','Read only':'只读',
+      'Platform access unavailable':'平台权限不可用',
+      'This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.':'此账户没有有效的 Nestly 平台角色。请联系超级管理员授予或重新启用权限。',
+      'This platform area':'此平台区域','System update required':'需要系统更新',
+      'This console is ready, but its platform data contract is not available in this environment.':'控制台已就绪，但此环境尚未提供相应的平台数据接口。',
+      'No data was changed. Apply the corresponding reviewed platform backend phase, then retry.':'没有更改任何数据。请先应用已审核的平台后端阶段，然后重试。',
+      'Continue':'继续','Cancel':'取消','Close':'关闭','Confirm':'确认','Save':'保存','Search':'搜索',
+      'Edit':'编辑','Assign':'分配','Create':'创建','Update':'更新','Delete':'删除','Retry':'重试',
+      'Loading…':'加载中…','No results':'没有结果','Not recorded':'未记录','None':'无',
+      'Unnamed firm':'未命名企业','Firm':'企业','Sector':'行业','Branches':'分店','Branch':'分店',
+      'Staff':'员工','Customers':'顾客','Seats':'席位','Subscription':'订阅','Projected monthly':'预计每月收入',
+      'Billable seats':'计费席位','Trials':'试用','Firm snapshot':'企业概况','Firm directory':'企业目录',
+      'No firms yet':'尚无企业','The platform roster returned no firms.':'平台名册未返回任何企业。',
+      'What this view means':'此视图的含义','Revenue':'收入','Projection only':'仅为预测',
+      'Payments collected':'已收款项','Not available':'不可用','Onboarding lifecycle':'入驻生命周期',
+      'Evidence controlled':'以证据管控','Automation runs':'自动化运行','Not connected':'未连接',
+      'Platform overview':'平台概览','Platform summary':'平台摘要',
+      'A current read-only view of firms and subscription projections already available to the platform.':'平台现有企业与订阅预测的最新只读视图。',
+      'Every firm returned by the existing super-admin roster. No firm data is inferred.':'显示现有超级管理员名册返回的所有企业，不推断任何企业数据。',
+      'The platform roster is empty.':'平台名册为空。','Platform firm snapshot':'平台企业概况',
+      'Platform firm directory':'平台企业目录','Platform console unavailable':'平台控制台不可用',
+      'The super-admin firm roster could not be loaded for this account.':'无法为此账户加载超级管理员企业名册。',
+      'Enterprise data':'企业数据','Loading firm, branch and customer truth…':'正在加载企业、分店和顾客真实数据…',
+      'Enterprise reports':'企业报告','Enterprise report':'企业报告','Detailed report':'详细报告',
+      'Report unavailable':'报告不可用','Please try again.':'请重试。','Whole firm':'整个企业',
+      'Onboarding pipeline':'入驻流程','Loading the SME pipeline…':'正在加载中小企业流程…',
+      'New & unassigned':'新客户与未分配','Contact & meeting':'联系与会议','Decision':'决策',
+      'Case won':'已成交','Closed':'已关闭','New leads and records that need triage':'需要分类处理的新潜在客户和记录',
+      'Outreach, callbacks and scheduled conversations':'外联、回电和已安排的洽谈',
+      'Qualified firms considering the proposal':'正在考虑方案的合格企业',
+      'Signed, website-signup and onboarded firms':'已签约、网站注册及已入驻企业',
+      'Opportunities closed without activation':'未激活而结案的商机',
+      'New Lead':'新潜在客户','Appointment Set':'已安排预约','Call Back':'回电',
+      'Reschedule':'重新安排','Meeting Link Sent / Calendar Set':'已发送会议链接／已加入日历',
+      'Pending Decision':'待决定','Client / Deal Won':'客户／已成交','Account Created':'账户已创建',
+      'Onboarding in Progress':'入驻进行中','Activated':'已激活','Lost':'流失',
+      'Loading complete prospect detail…':'正在加载完整潜在客户资料…','Prospect detail':'潜在客户详情',
+      'Loading contacts, activities, tasks and commercial context…':'正在加载联系人、活动、任务和商务背景…',
+      'Prospect unavailable':'潜在客户不可用','Try again.':'请重试。',
+      'Sector modules':'行业模块','Loading versioned sector entitlements…':'正在加载版本化行业权限…',
+      'Billing':'账单','Loading platform billing truth…':'正在加载平台账单真实数据…',
+      'Billing detail':'账单详情','Provider-backed subscription record':'支付服务商支持的订阅记录',
+      'Loading invoices and payment attempts…':'正在加载发票和付款尝试…','Billing detail unavailable':'账单详情不可用',
+      'Commission payable':'应付佣金','Loading consultant commission truth…':'正在加载顾问佣金真实数据…',
+      'Automation':'自动化','Loading reconciliation and billing event health…':'正在加载对账与账单事件状态…',
+      'Platform access':'平台权限','Loading administrators and sales staff…':'正在加载管理员与销售人员…',
+      'Loading firms in your access scope…':'正在加载您权限范围内的企业…',
+      'Search the firms available to your platform role.':'搜索您平台角色可访问的企业。',
+      'Loading your scoped CRM pipeline…':'正在加载您权限范围内的客户关系流程…',
+      'Loading your report scope…':'正在加载您的报告范围…',
+      'Generate analysis using only firms inside your platform scope.':'仅使用您平台权限范围内的企业生成分析。',
+      'Generating consultant brief':'正在生成顾问简报','Reconciling customer, product and service evidence…':'正在核对顾客、产品与服务证据…',
+      'Loading your permitted firm summary…':'正在加载您获准查看的企业摘要…',
+      'Language':'语言','Language preference could not be saved. Please try again.':'无法保存语言偏好，请重试。'
+    }),
+    ms:Object.freeze({
+      'Overview':'Ringkasan','Onboarding':'Penerimaan','Onboard':'Terima','Firms':'Firma','Reports':'Laporan',
+      'Billing':'Pengebilan','Commission payable':'Komisen perlu dibayar','Commission':'Komisen',
+      'Sector modules':'Modul sektor','Sectors':'Sektor','Automation':'Automasi','Automate':'Automasi',
+      'Platform access':'Akses platform','Access':'Akses','Platform':'Platform','Platform console':'Konsol platform',
+      'Skip to platform content':'Langkau ke kandungan platform','Current platform access':'Akses platform semasa',
+      'Back to workspace':'Kembali ke ruang kerja','Workspace':'Ruang kerja','Sign out':'Log keluar',
+      'Main navigation':'Navigasi utama','Mobile navigation':'Navigasi mudah alih',
+      'Super admin':'Pentadbir super','Sales staff':'Kakitangan jualan','Admin':'Pentadbir',
+      'Only firms you created or are assigned to':'Hanya firma yang anda cipta atau ditugaskan kepada anda',
+      'All platform records':'Semua rekod platform','Read and write':'Baca dan tulis','Read only':'Baca sahaja',
+      'Platform access unavailable':'Akses platform tidak tersedia',
+      'This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.':'Akaun ini tiada peranan platform Nestly yang aktif. Minta pentadbir super memberikan atau mengaktifkan semula akses.',
+      'This platform area':'Bahagian platform ini','System update required':'Kemas kini sistem diperlukan',
+      'This console is ready, but its platform data contract is not available in this environment.':'Konsol ini sedia, tetapi kontrak data platformnya tidak tersedia dalam persekitaran ini.',
+      'No data was changed. Apply the corresponding reviewed platform backend phase, then retry.':'Tiada data diubah. Gunakan fasa backend platform yang telah disemak, kemudian cuba lagi.',
+      'Continue':'Teruskan','Cancel':'Batal','Close':'Tutup','Confirm':'Sahkan','Save':'Simpan','Search':'Cari',
+      'Edit':'Sunting','Assign':'Tugaskan','Create':'Cipta','Update':'Kemas kini','Delete':'Padam','Retry':'Cuba lagi',
+      'Loading…':'Memuatkan…','No results':'Tiada hasil','Not recorded':'Tidak direkodkan','None':'Tiada',
+      'Unnamed firm':'Firma tanpa nama','Firm':'Firma','Sector':'Sektor','Branches':'Cawangan','Branch':'Cawangan',
+      'Staff':'Kakitangan','Customers':'Pelanggan','Seats':'Tempat','Subscription':'Langganan',
+      'Projected monthly':'Unjuran bulanan','Billable seats':'Tempat boleh dibilkan','Trials':'Percubaan',
+      'Firm snapshot':'Ringkasan firma','Firm directory':'Direktori firma','No firms yet':'Belum ada firma',
+      'The platform roster returned no firms.':'Senarai platform tidak mengembalikan firma.',
+      'What this view means':'Maksud paparan ini','Revenue':'Hasil','Projection only':'Unjuran sahaja',
+      'Payments collected':'Bayaran diterima','Not available':'Tidak tersedia',
+      'Onboarding lifecycle':'Kitaran penerimaan','Evidence controlled':'Dikawal oleh bukti',
+      'Automation runs':'Larian automasi','Not connected':'Tidak disambungkan',
+      'Platform overview':'Ringkasan platform','Platform summary':'Ringkasan platform',
+      'A current read-only view of firms and subscription projections already available to the platform.':'Paparan baca sahaja terkini bagi firma dan unjuran langganan yang tersedia pada platform.',
+      'Every firm returned by the existing super-admin roster. No firm data is inferred.':'Setiap firma daripada senarai pentadbir super sedia ada. Tiada data firma yang diandaikan.',
+      'The platform roster is empty.':'Senarai platform kosong.','Platform firm snapshot':'Ringkasan firma platform',
+      'Platform firm directory':'Direktori firma platform','Platform console unavailable':'Konsol platform tidak tersedia',
+      'The super-admin firm roster could not be loaded for this account.':'Senarai firma pentadbir super tidak dapat dimuatkan untuk akaun ini.',
+      'Enterprise data':'Data perusahaan','Loading firm, branch and customer truth…':'Memuatkan data sebenar firma, cawangan dan pelanggan…',
+      'Enterprise reports':'Laporan perusahaan','Enterprise report':'Laporan perusahaan','Detailed report':'Laporan terperinci',
+      'Report unavailable':'Laporan tidak tersedia','Please try again.':'Sila cuba lagi.','Whole firm':'Seluruh firma',
+      'Onboarding pipeline':'Aliran penerimaan','Loading the SME pipeline…':'Memuatkan aliran PKS…',
+      'New & unassigned':'Baharu & belum ditugaskan','Contact & meeting':'Hubungan & mesyuarat',
+      'Decision':'Keputusan','Case won':'Kes berjaya','Closed':'Ditutup',
+      'New leads and records that need triage':'Prospek dan rekod baharu yang perlu disaring',
+      'Outreach, callbacks and scheduled conversations':'Jangkauan, panggilan balik dan perbualan berjadual',
+      'Qualified firms considering the proposal':'Firma layak yang sedang mempertimbangkan cadangan',
+      'Signed, website-signup and onboarded firms':'Firma yang ditandatangani, mendaftar di laman web dan diterima',
+      'Opportunities closed without activation':'Peluang ditutup tanpa pengaktifan',
+      'New Lead':'Prospek Baharu','Appointment Set':'Janji Temu Ditetapkan','Call Back':'Panggil Balik',
+      'Reschedule':'Jadual Semula','Meeting Link Sent / Calendar Set':'Pautan Mesyuarat Dihantar / Kalendar Ditetapkan',
+      'Pending Decision':'Menunggu Keputusan','Client / Deal Won':'Pelanggan / Urus Niaga Berjaya',
+      'Account Created':'Akaun Dicipta','Onboarding in Progress':'Penerimaan Sedang Berjalan',
+      'Activated':'Diaktifkan','Lost':'Hilang',
+      'Loading complete prospect detail…':'Memuatkan butiran prospek lengkap…','Prospect detail':'Butiran prospek',
+      'Loading contacts, activities, tasks and commercial context…':'Memuatkan kenalan, aktiviti, tugas dan konteks komersial…',
+      'Prospect unavailable':'Prospek tidak tersedia','Try again.':'Cuba lagi.',
+      'Loading versioned sector entitlements…':'Memuatkan kelayakan sektor berversi…',
+      'Loading platform billing truth…':'Memuatkan data sebenar pengebilan platform…',
+      'Billing detail':'Butiran pengebilan','Provider-backed subscription record':'Rekod langganan disokong penyedia',
+      'Loading invoices and payment attempts…':'Memuatkan invois dan percubaan bayaran…',
+      'Billing detail unavailable':'Butiran pengebilan tidak tersedia',
+      'Loading consultant commission truth…':'Memuatkan data sebenar komisen perunding…',
+      'Loading reconciliation and billing event health…':'Memuatkan status penyelarasan dan peristiwa pengebilan…',
+      'Loading administrators and sales staff…':'Memuatkan pentadbir dan kakitangan jualan…',
+      'Loading firms in your access scope…':'Memuatkan firma dalam skop akses anda…',
+      'Search the firms available to your platform role.':'Cari firma yang tersedia untuk peranan platform anda.',
+      'Loading your scoped CRM pipeline…':'Memuatkan aliran CRM dalam skop anda…',
+      'Loading your report scope…':'Memuatkan skop laporan anda…',
+      'Generate analysis using only firms inside your platform scope.':'Jana analisis hanya menggunakan firma dalam skop platform anda.',
+      'Generating consultant brief':'Menjana ringkasan perunding',
+      'Reconciling customer, product and service evidence…':'Menyelaraskan bukti pelanggan, produk dan perkhidmatan…',
+      'Loading your permitted firm summary…':'Memuatkan ringkasan firma yang dibenarkan…',
+      'Language':'Bahasa','Language preference could not be saved. Please try again.':'Keutamaan bahasa tidak dapat disimpan. Sila cuba lagi.'
+    })
+  });
+  const PLATFORM_COPY_MORE=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Call':'致电','WhatsApp':'WhatsApp','Open WhatsApp chat with':'打开 WhatsApp 聊天：',
+      'Close dialog':'关闭对话框','That action could not be completed.':'无法完成该操作。',
+      'Confirm change':'确认更改','Preview':'预览','I reviewed this preview and want to apply it.':'我已查看此预览并确认应用。',
+      'Review and confirm the preview first.':'请先查看并确认预览。','More':'更多',
+      'Dashboard':'仪表板','Quick earn':'快速积分','Appointments':'预约','Sales':'销售','Services':'服务',
+      'Bookings':'预订','Waitlist':'候补名单','Packages':'配套','Loyalty':'忠诚度','Retention':'客户留存',
+      'Referrals':'推荐','Memberships':'会员资格','Gift cards':'礼品卡','Staff performance':'员工表现',
+      'Daily report':'每日报告','Finance':'财务','Growth':'增长','Insights':'洞察','Commerce':'商业',
+      'Essentials':'基础功能','Customer operations':'顾客运营',
+      'Actions':'操作','Status':'状态','Type':'类型','Name':'姓名','Email':'电邮','Phone':'电话',
+      'Owner':'负责人','Role':'角色','Scope':'范围','Priority':'优先级','Source':'来源','Stage':'阶段',
+      'Updated':'已更新','Created':'已创建','Started':'已开始','Finished':'已完成','Summary':'摘要',
+      'Detail':'详情','Notes':'备注','Note':'备注','Reason':'原因','Outcome':'结果','Channel':'渠道',
+      'Activity type':'活动类型','Due at':'到期时间','Task':'任务','Add task':'添加任务',
+      'Create task':'创建任务','Complete task':'完成任务','Mark complete':'标记完成',
+      'Save activity':'保存活动','Record NPU':'记录未接听','Not recorded':'未记录',
+      'Firm entitlements':'企业权限','Firm sector entitlements':'企业行业权限','Bundle':'模块包',
+      'Assignment':'分配','Effective modules':'生效模块','Unassigned':'未分配','Reassign':'重新分配',
+      'Override':'覆盖','New bundle version':'新建模块包版本','Edit modules':'编辑模块',
+      'Choose modules':'选择模块','Choose the standard modules':'选择标准模块',
+      'No published version':'没有已发布版本','No sector profiles':'没有行业配置',
+      'Published':'已发布','Published version':'已发布版本','Active':'有效','Inactive':'无效',
+      'New price version':'新建价格版本','Billing summary':'账单摘要','Period total incl. GST':'本期总额（含消费税）',
+      'Paid firms':'已付款企业','Overdue firms':'逾期企业','Failed events':'失败事件',
+      'Stripe price catalogue':'Stripe 价格目录','Currency':'币种','Cadence':'周期','Base':'基本费用',
+      'Per seat':'每席位','Included':'包含','Tax':'税务','Effective':'生效时间',
+      'Billing exception queue':'账单异常队列','Latest provider reconciliation':'最新服务商对账',
+      'Reconciliation history':'对账记录','Firm billing':'企业账单','Payment':'付款','Last paid':'上次付款',
+      'Next payment':'下次付款','Subtotal':'小计','GST':'消费税','Total':'总额','Attempts':'尝试次数',
+      'New consultant':'新建顾问','Attribute consultant':'关联顾问','New policy':'新建政策',
+      'New payout batch':'新建付款批次','Commission totals':'佣金总计','Payable net of GST':'扣除消费税后应付',
+      'Approved':'已批准','Paid':'已支付','Forfeited':'已没收','Consultant':'顾问',
+      'Accruals':'应计佣金','Payout workflow':'付款流程','Approve':'批准','Record payment':'记录付款',
+      'Reconciliation runs':'对账运行','Failed billing events':'失败的账单事件','Reconciliation items':'对账项目',
+      'Platform billing':'平台账单','Platform billing is not connected':'平台账单尚未连接',
+      'Payables are not available yet':'应付款项尚不可用','Sector presets are not connected':'行业预设尚未连接',
+      'Automation data is not connected':'自动化数据尚未连接','Partial platform data':'部分平台数据',
+      'Open prospects':'进行中的潜在客户','Billing attention':'需关注的账单',
+      'Find a firm or customer':'查找企业或顾客','Search firms':'搜索企业','Search your CRM':'搜索您的客户关系记录',
+      'Add firm to CRM':'将企业加入客户关系系统','Import prospects':'导入潜在客户',
+      'New prospect':'新建潜在客户','All stages':'所有阶段','All statuses':'所有状态',
+      'All sources':'所有来源','All owners':'所有负责人','Attention':'关注事项','Sort':'排序',
+      'Five clear operating lanes':'五个清晰的运营阶段','Whole onboarding':'整个入驻流程',
+      'Add access':'添加权限','Add activity':'添加活动','Add firm':'添加企业','Apply filters':'应用筛选条件',
+      'Business applications awaiting approval':'待批准的企业申请','Choose one assigned firm':'选择一个已分配企业',
+      'Clean':'正常','Clear':'清除','Close detail':'关闭详情','Critical':'严重','Due now':'现已到期',
+      'Edit access':'编辑权限','Generate report':'生成报告','Generate scoped report':'生成范围报告',
+      'In {count} days':'{count} 天后','Last activity':'上次活动','Monitor':'关注','More filters':'更多筛选条件',
+      'Next action':'下一步行动','No firms':'没有企业',
+      'No owner account or workspace can be created until a super admin approves an application.':'超级管理员批准申请前，不能创建负责人账户或工作区。',
+      'Open':'打开','Open firm directory':'打开企业目录','Overdue':'逾期','Owner access gate':'负责人权限关卡',
+      'Priority / fit':'优先级／匹配度','Reject':'拒绝','Report summary':'报告摘要',
+      'Review attention queue':'查看关注队列','Scoped performance report':'范围绩效报告',
+      'Search, counts, details and reports use the same server-enforced scope. Other sales staff records are never included.':'搜索、计数、详情和报告均使用服务器强制执行的同一范围，绝不包含其他销售人员的记录。',
+      'Show':'显示','Stage age':'阶段时长','Stale':'长期未跟进','Super admin remains implicit':'超级管理员权限始终保留',
+      'The database verifies the assignment again before returning customer intelligence.':'数据库会再次验证分配关系，之后才返回顾客洞察。',
+      'The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.':'详细的客户关系阶段仍完整保留，用于审计和自动化。这五个运营阶段让日常工作无需横向滚动即可清楚阅读。打开卡片或使用阶段菜单进行准确移动。',
+      'These modules become the sector template. Existing published versions remain unchanged.':'这些模块将成为行业模板，现有已发布版本保持不变。',
+      'This module covers every record permitted by your platform role.':'此模块涵盖您平台角色获准访问的所有记录。',
+      'Today':'今天','Tomorrow':'明天','Unmapped':'未映射','Warning':'警告','Yesterday':'昨天',
+      'Your account always has every module with read and write access. Admins default to full access and can be customized here. Sales staff are restricted to their own-created or assigned CRM records and scoped reports.':'您的账户始终拥有所有模块的读写权限。管理员默认拥有完整权限，并可在此自定义。销售人员仅能访问自己创建或获分配的客户关系记录和范围报告。',
+      'pending':'待处理','{count} days ago':'{count} 天前','{title} unavailable':'{title}不可用'
+    }),
+    ms:Object.freeze({
+      'Call':'Panggil','WhatsApp':'WhatsApp','Open WhatsApp chat with':'Buka sembang WhatsApp dengan',
+      'Close dialog':'Tutup dialog','That action could not be completed.':'Tindakan itu tidak dapat diselesaikan.',
+      'Confirm change':'Sahkan perubahan','Preview':'Pratonton','I reviewed this preview and want to apply it.':'Saya telah menyemak pratonton ini dan mahu menerapkannya.',
+      'Review and confirm the preview first.':'Semak dan sahkan pratonton terlebih dahulu.','More':'Lagi',
+      'Dashboard':'Papan pemuka','Quick earn':'Ganjaran pantas','Appointments':'Janji temu','Sales':'Jualan',
+      'Services':'Perkhidmatan','Bookings':'Tempahan','Waitlist':'Senarai menunggu','Packages':'Pakej',
+      'Loyalty':'Kesetiaan','Retention':'Pengekalan','Referrals':'Rujukan','Memberships':'Keahlian',
+      'Gift cards':'Kad hadiah','Staff performance':'Prestasi kakitangan','Daily report':'Laporan harian',
+      'Finance':'Kewangan','Growth':'Pertumbuhan','Insights':'Cerapan','Commerce':'Perdagangan',
+      'Essentials':'Asas','Customer operations':'Operasi pelanggan',
+      'Actions':'Tindakan','Status':'Status','Type':'Jenis','Name':'Nama','Email':'E-mel','Phone':'Telefon',
+      'Owner':'Pemilik','Role':'Peranan','Scope':'Skop','Priority':'Keutamaan','Source':'Sumber','Stage':'Peringkat',
+      'Updated':'Dikemas kini','Created':'Dicipta','Started':'Bermula','Finished':'Selesai','Summary':'Ringkasan',
+      'Detail':'Butiran','Notes':'Nota','Note':'Nota','Reason':'Sebab','Outcome':'Hasil','Channel':'Saluran',
+      'Activity type':'Jenis aktiviti','Due at':'Tarikh tamat','Task':'Tugas','Add task':'Tambah tugas',
+      'Create task':'Cipta tugas','Complete task':'Selesaikan tugas','Mark complete':'Tanda selesai',
+      'Save activity':'Simpan aktiviti','Record NPU':'Rekod tidak dijawab','Not recorded':'Tidak direkodkan',
+      'Firm entitlements':'Kelayakan firma','Firm sector entitlements':'Kelayakan sektor firma','Bundle':'Himpunan',
+      'Assignment':'Tugasan','Effective modules':'Modul berkuat kuasa','Unassigned':'Belum ditugaskan',
+      'Reassign':'Tugaskan semula','Override':'Ganti tetapan','New bundle version':'Versi himpunan baharu',
+      'Edit modules':'Edit modul','Choose modules':'Pilih modul','Choose the standard modules':'Pilih modul standard',
+      'No published version':'Tiada versi diterbitkan','No sector profiles':'Tiada profil sektor',
+      'Published':'Diterbitkan','Published version':'Versi diterbitkan','Active':'Aktif','Inactive':'Tidak aktif',
+      'New price version':'Versi harga baharu','Billing summary':'Ringkasan pengebilan',
+      'Period total incl. GST':'Jumlah tempoh termasuk GST','Paid firms':'Firma dibayar',
+      'Overdue firms':'Firma tertunggak','Failed events':'Peristiwa gagal','Stripe price catalogue':'Katalog harga Stripe',
+      'Currency':'Mata wang','Cadence':'Kekerapan','Base':'Asas','Per seat':'Setiap tempat','Included':'Termasuk',
+      'Tax':'Cukai','Effective':'Berkuat kuasa','Billing exception queue':'Baris gilir pengecualian bil',
+      'Latest provider reconciliation':'Penyelarasan penyedia terkini','Reconciliation history':'Sejarah penyelarasan',
+      'Firm billing':'Pengebilan firma','Payment':'Bayaran','Last paid':'Bayaran terakhir',
+      'Next payment':'Bayaran seterusnya','Subtotal':'Subjumlah','GST':'GST','Total':'Jumlah','Attempts':'Percubaan',
+      'New consultant':'Perunding baharu','Attribute consultant':'Kaitkan perunding','New policy':'Polisi baharu',
+      'New payout batch':'Kumpulan pembayaran baharu','Commission totals':'Jumlah komisen',
+      'Payable net of GST':'Perlu dibayar bersih GST','Approved':'Diluluskan','Paid':'Dibayar',
+      'Forfeited':'Dilucutkan','Consultant':'Perunding','Accruals':'Akruan','Payout workflow':'Aliran pembayaran',
+      'Approve':'Luluskan','Record payment':'Rekod bayaran','Reconciliation runs':'Larian penyelarasan',
+      'Failed billing events':'Peristiwa pengebilan gagal','Reconciliation items':'Item penyelarasan',
+      'Platform billing':'Pengebilan platform','Platform billing is not connected':'Pengebilan platform tidak disambungkan',
+      'Payables are not available yet':'Bayaran belum tersedia','Sector presets are not connected':'Pratetap sektor tidak disambungkan',
+      'Automation data is not connected':'Data automasi tidak disambungkan','Partial platform data':'Data platform separa',
+      'Open prospects':'Prospek terbuka','Billing attention':'Pengebilan perlu perhatian',
+      'Find a firm or customer':'Cari firma atau pelanggan','Search firms':'Cari firma','Search your CRM':'Cari CRM anda',
+      'Add firm to CRM':'Tambah firma ke CRM','Import prospects':'Import prospek','New prospect':'Prospek baharu',
+      'All stages':'Semua peringkat','All statuses':'Semua status','All sources':'Semua sumber',
+      'All owners':'Semua pemilik','Attention':'Perhatian','Sort':'Susun',
+      'Five clear operating lanes':'Lima laluan operasi yang jelas','Whole onboarding':'Keseluruhan penerimaan',
+      'Add access':'Tambah akses','Add activity':'Tambah aktiviti','Add firm':'Tambah firma','Apply filters':'Gunakan penapis',
+      'Business applications awaiting approval':'Permohonan perniagaan menunggu kelulusan',
+      'Choose one assigned firm':'Pilih satu firma yang ditugaskan','Clean':'Bersih','Clear':'Kosongkan',
+      'Close detail':'Tutup butiran','Critical':'Kritikal','Due now':'Perlu sekarang','Edit access':'Edit akses',
+      'Generate report':'Jana laporan','Generate scoped report':'Jana laporan berskop',
+      'In {count} days':'Dalam {count} hari','Last activity':'Aktiviti terakhir','Monitor':'Pantau',
+      'More filters':'Lebih banyak penapis','Next action':'Tindakan seterusnya','No firms':'Tiada firma',
+      'No owner account or workspace can be created until a super admin approves an application.':'Akaun pemilik atau ruang kerja tidak boleh dicipta sehingga pentadbir super meluluskan permohonan.',
+      'Open':'Buka','Open firm directory':'Buka direktori firma','Overdue':'Tertunggak',
+      'Owner access gate':'Gerbang akses pemilik','Priority / fit':'Keutamaan / kesesuaian','Reject':'Tolak',
+      'Report summary':'Ringkasan laporan','Review attention queue':'Semak baris gilir perhatian',
+      'Scoped performance report':'Laporan prestasi berskop',
+      'Search, counts, details and reports use the same server-enforced scope. Other sales staff records are never included.':'Carian, kiraan, butiran dan laporan menggunakan skop sama yang dikuatkuasakan pelayan. Rekod kakitangan jualan lain tidak pernah disertakan.',
+      'Show':'Tunjukkan','Stage age':'Tempoh peringkat','Stale':'Lama tidak diurus',
+      'Super admin remains implicit':'Akses pentadbir super sentiasa kekal',
+      'The database verifies the assignment again before returning customer intelligence.':'Pangkalan data mengesahkan tugasan sekali lagi sebelum mengembalikan cerapan pelanggan.',
+      'The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.':'Peringkat CRM terperinci kekal untuk audit dan automasi. Lima laluan ini menjadikan kerja harian mudah dibaca tanpa tatal mendatar. Buka kad atau gunakan menu peringkatnya untuk pemindahan tepat.',
+      'These modules become the sector template. Existing published versions remain unchanged.':'Modul ini menjadi templat sektor. Versi diterbitkan sedia ada tidak berubah.',
+      'This module covers every record permitted by your platform role.':'Modul ini merangkumi setiap rekod yang dibenarkan oleh peranan platform anda.',
+      'Today':'Hari ini','Tomorrow':'Esok','Unmapped':'Belum dipetakan','Warning':'Amaran','Yesterday':'Semalam',
+      'Your account always has every module with read and write access. Admins default to full access and can be customized here. Sales staff are restricted to their own-created or assigned CRM records and scoped reports.':'Akaun anda sentiasa mempunyai akses baca dan tulis untuk setiap modul. Pentadbir mendapat akses penuh secara lalai dan boleh disesuaikan di sini. Kakitangan jualan dihadkan kepada rekod CRM yang mereka cipta atau ditugaskan serta laporan berskop.',
+      'pending':'menunggu','{count} days ago':'{count} hari lalu','{title} unavailable':'{title} tidak tersedia'
+    })
+  });
+  const PLATFORM_COPY_DETAIL=Object.freeze({
+    'zh-CN':Object.freeze({
+      '(one or more)':'（一个或多个）','(select one or more)':'（选择一个或多个）',
+      'Account lifecycle is controlled by onboarding evidence.':'账户生命周期由入驻证据控制。',
+      'Activate firm':'激活企业','Active access':'有效权限','Active blockers':'当前阻碍','Active:':'已启用：',
+      'Activity':'活动','Add line':'添加付款行','Add note':'添加备注','Add source data':'添加源数据',
+      'Added':'已添加','Adjustments':'调整','Application approved':'申请已批准','Apply scope':'应用范围',
+      'Approve batch':'批准批次','Approve firm':'批准企业','Approved owner link':'已批准负责人链接',
+      'Audit events':'审计事件','Business improvement report':'业务改善报告',
+      'Business profile and system readiness':'企业资料与系统准备情况','Checklist':'检查清单',
+      'Commands':'命令','Complete':'完成','Complete snapshot':'完整快照','Consultative action plan':'顾问行动计划',
+      'Convert to client':'转为客户','Copy secure owner link':'复制安全负责人链接',
+      'Copy token':'复制令牌','Customer and firm performance':'顾客与企业表现','Customer detail':'顾客详情',
+      'Data quality':'数据质量','Decision note':'决定备注','Done':'完成','Download complete CSV':'下载完整 CSV',
+      'Download error CSV':'下载错误 CSV','Edit contact profile':'编辑联系人资料','Edit core identity':'编辑核心身份',
+      'Enterprise performance report':'企业绩效报告','Entry gate':'进入条件','Evidence-backed onboarding':'证据支持的入驻',
+      'Evidence-backed priorities':'证据支持的优先事项','Explicit scope, no silent blending':'明确范围，不静默混合',
+      'File':'文件','Find user':'查找用户','Firm module policy':'企业模块政策','Guarded rollback':'受控回滚',
+      'Import completed':'导入完成','Included modules':'包含的模块','Inventory is not available here':'此处不提供库存功能',
+      'Invitation token':'邀请令牌','Invoices':'发票','Item-level intelligence':'项目级洞察',
+      'Item-level intelligence is disabled for this firm.':'此企业已停用项目级洞察。',
+      'Load more customers':'加载更多顾客','Map every source column':'映射所有源列','Mark lost':'标记为流失',
+      'Methodology':'方法','Module permissions':'模块权限','Modules after dependencies':'处理依赖后的模块',
+      'Monthly consultant brief':'每月顾问简报','Monthly trend':'每月趋势',
+      'No accruals.':'没有应计佣金。','No active blockers recorded.':'没有记录当前阻碍。',
+      'No active contacts.':'没有有效联系人。','No activity recorded.':'没有活动记录。',
+      'No adjustments.':'没有调整。','No billing commands.':'没有账单命令。','No branch rows.':'没有分店记录。',
+      'No conflict or validation rows require individual attention.':'没有需要单独处理的冲突或验证记录。',
+      'No customer rows in this scope.':'此范围内没有顾客记录。','No firm rows.':'没有企业记录。',
+      'No invoices.':'没有发票。','No modules added.':'没有添加模块。','No modules removed.':'没有移除模块。',
+      'No onboarding events returned.':'没有返回入驻事件。','No owner invitations returned.':'没有返回负责人邀请。',
+      'No payment attempts.':'没有付款尝试。','No payout batches.':'没有付款批次。',
+      'No recommendation claimed':'未提出建议','No reconciliation runs.':'没有对账运行。',
+      'No reliable product/service pair is available in this scope yet.':'此范围内暂时没有可靠的产品／服务组合。',
+      'No selection means every firm in the sector.':'不选择即代表该行业的所有企业。',
+      'No selection means every firm in the selected sector.':'不选择即代表所选行业的所有企业。',
+      'No tasks.':'没有任务。','No workspace was created':'未创建工作区',
+      'Open private document':'打开私人文件','Or choose CSV / TSV / XLSX':'或选择 CSV／TSV／XLSX',
+      'Owner invitations':'负责人邀请','Paste CSV or tab-separated rows':'粘贴 CSV 或制表符分隔的记录',
+      'Payment attempts':'付款尝试','Payments and provider status are currently reconciled.':'付款及服务商状态目前已对账。',
+      'Preview and map columns':'预览并映射列','Print / PDF':'打印／PDF','Print report':'打印报告',
+      'Purchase order required':'需要采购订单','Recent evidence events':'近期证据事件',
+      'Reconciliation history will appear after the first automated run.':'首次自动运行后将显示对账记录。',
+      'Recorded gate evidence':'已记录的条件证据','Removed':'已移除','Require two-factor authentication':'要求双重身份验证',
+      'Reset':'重置','Review analysis and decisions':'查看分析与决定','Rollback reason':'回滚原因',
+      'Rollback this batch':'回滚此批次','SME acquisition and onboarding omitted':'已省略中小企业获客与入驻',
+      'Schedule meeting':'安排会议','Selected user':'已选用户','Shown once':'仅显示一次',
+      'Source name':'来源名称','Stage history':'阶段记录','Start onboarding':'开始入驻',
+      'Subscription billing omitted':'已省略订阅账单','Tasks':'任务',
+      'Upload document':'上传文件','Values confirmed with the firm':'已与企业确认的值','Version label':'版本标签',
+      'Workspace control':'工作区控制','Your browser blocked the automatic tab':'浏览器阻止了自动打开标签页',
+      'Any pending invitation will be revoked. The replacement token is shown once.':'所有待处理邀请都会被撤销，替换令牌仅显示一次。',
+      'Approval, payment access and module policy are enforced by the server as well as this console.':'批准、付款权限和模块政策同时由服务器和此控制台强制执行。',
+      'Branch overrides take priority over firm and sector settings. Inventory is globally unavailable to firms.':'分店覆盖设置优先于企业和行业设置；库存功能对所有企业均不可用。',
+      'Branch-specific settings override firm policy.':'分店专属设置优先于企业政策。',
+      'CSV, TSV and Excel are accepted. Nothing is inserted until review is complete.':'支持 CSV、TSV 和 Excel；完成审核前不会插入任何数据。',
+      'Choose by consultant name. Assignment changes are recorded in the prospect history.':'按顾问姓名选择；分配更改会记录在潜在客户历史中。',
+      'Choose by consultant name. Sales staff continue to see only firms they created or are assigned to.':'按顾问姓名选择；销售人员仍只能看到自己创建或获分配的企业。',
+      'Copy this secure invitation now. Nestly stores only its hash and cannot show the token again.':'请立即复制此安全邀请。Nestly 只保存其哈希值，之后无法再次显示令牌。',
+      'Final waivers, blocking decisions, and firm activation are completed by a super admin.':'最终豁免、阻碍决定和企业激活由超级管理员完成。',
+      'Firm performance respects sector, firm, branch, search and date. SME pipeline analytics respects date and operator visibility; the report labels that separate scope. Currency totals remain separated.':'企业表现遵循行业、企业、分店、搜索和日期范围。中小企业流程分析遵循日期与操作员可见范围，报告会明确标示不同范围；币种总额始终分开。',
+      'I reviewed the mapping, validation results, and every conflict decision.':'我已查看映射、验证结果及每项冲突决定。',
+      'I reviewed the module list and understand this publishes a new immutable version.':'我已查看模块清单，并明白这会发布一个不可更改的新版本。',
+      'Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence.':'针对这一企业、分店和日期范围的项目级顾客洞察；每项建议均关联返回的证据。',
+      'Nestly keeps inventory off for every firm, independent of sector or branch settings.':'无论行业或分店设置如何，Nestly 都会为所有企业关闭库存功能。',
+      'Nestly suppresses advice when the exact scope has insufficient or unreliable data.':'当指定范围的数据不足或不可靠时，Nestly 不会提供建议。',
+      'Off modules are hidden and blocked. Read-only modules never show editing controls.':'关闭的模块会隐藏并阻止访问；只读模块绝不显示编辑控件。',
+      'Owner access resumes only after provider payment truth is reconciled.':'只有在服务商付款真实状态完成对账后，负责人权限才会恢复。',
+      'PDF, CSV, XLSX, PNG, JPEG, WebP or ZIP · maximum 25 MB.':'支持 PDF、CSV、XLSX、PNG、JPEG、WebP 或 ZIP；最大 25 MB。',
+      'Publishing changes the default module template for future firm assignments. Previous versions stay available for audit.':'发布会更改未来企业分配的默认模块模板；旧版本仍保留供审计。',
+      'Search is applied on the server across the complete directory, so it remains usable as the platform grows.':'搜索在服务器端覆盖完整目录，因此平台扩展后仍可正常使用。',
+      'Showing the newest 100 applications. Narrow the search to find another application.':'正在显示最新 100 个申请，请缩小搜索范围查找其他申请。',
+      'The evidence checklist is created during transactional account conversion.':'证据检查清单会在事务性账户转换过程中创建。',
+      'The latest returned run has no exception items.':'最新返回的运行没有异常项目。',
+      'The secure owner invitation is shown once after approval. Copy it before closing.':'批准后安全负责人邀请只显示一次，请在关闭前复制。',
+      'The selected scope does not yet have enough customer-group data.':'所选范围暂时没有足够的顾客群数据。',
+      'The server checked existing prospects and preserved the original source row. Conflicts must stay in review, be skipped, or be deliberately merged.':'服务器已检查现有潜在客户并保留原始源记录；冲突必须保留审核、跳过或明确合并。',
+      'This account does not have Billing access. No billing or reconciliation reader was called.':'此账户没有账单权限，因此未调用账单或对账读取器。',
+      'This account does not have Onboarding access. The customer and firm report above remains complete for the selected scope.':'此账户没有入驻权限；上方顾客与企业报告对所选范围仍然完整。',
+      'This consultant is departed. Editing preserves that status; record a deliberate reactivation as a separate reviewed policy decision.':'此顾问已离职。编辑会保留该状态；如需重新启用，请另行记录经审核的政策决定。',
+      'Unknown columns stay preserved with their source labels. Single-value fields may only be mapped once.':'未知列会连同源标签保留；单值字段只能映射一次。',
+      'Unused, unedited inserts are moved to Lost with immutable import provenance retained. Reviewed merge links are detached. The backend refuses reversal after later use or edits.':'未使用且未编辑的插入记录会移至“流失”，并保留不可更改的导入来源；已审核的合并链接会解除；后续使用或编辑后后端会拒绝回滚。',
+      'Use this short-lived link before it expires. The private storage path is not displayed.':'请在短期链接过期前使用；私人存储路径不会显示。',
+      'When enabled, Quick Earn uses the firm catalogue and platform reports can analyse product and service patterns.':'启用后，“快速积分”会使用企业目录，平台报告可分析产品与服务模式。'
+    }),
+    ms:Object.freeze({
+      '(one or more)':'(satu atau lebih)','(select one or more)':'(pilih satu atau lebih)',
+      'Account lifecycle is controlled by onboarding evidence.':'Kitaran akaun dikawal oleh bukti penerimaan.',
+      'Activate firm':'Aktifkan firma','Active access':'Akses aktif','Active blockers':'Halangan aktif','Active:':'Aktif:',
+      'Activity':'Aktiviti','Add line':'Tambah baris','Add note':'Tambah nota','Add source data':'Tambah data sumber',
+      'Added':'Ditambah','Adjustments':'Pelarasan','Application approved':'Permohonan diluluskan',
+      'Apply scope':'Gunakan skop','Approve batch':'Luluskan kumpulan','Approve firm':'Luluskan firma',
+      'Approved owner link':'Pautan pemilik diluluskan','Audit events':'Peristiwa audit',
+      'Business improvement report':'Laporan penambahbaikan perniagaan',
+      'Business profile and system readiness':'Profil perniagaan dan kesiapsiagaan sistem','Checklist':'Senarai semak',
+      'Commands':'Arahan','Complete':'Selesai','Complete snapshot':'Petikan lengkap',
+      'Consultative action plan':'Pelan tindakan perundingan','Convert to client':'Tukar kepada pelanggan',
+      'Copy secure owner link':'Salin pautan pemilik selamat','Copy token':'Salin token',
+      'Customer and firm performance':'Prestasi pelanggan dan firma','Customer detail':'Butiran pelanggan',
+      'Data quality':'Kualiti data','Decision note':'Nota keputusan','Done':'Selesai',
+      'Download complete CSV':'Muat turun CSV lengkap','Download error CSV':'Muat turun CSV ralat',
+      'Edit contact profile':'Edit profil kenalan','Edit core identity':'Edit identiti teras',
+      'Enterprise performance report':'Laporan prestasi perusahaan','Entry gate':'Syarat kemasukan',
+      'Evidence-backed onboarding':'Penerimaan berasaskan bukti','Evidence-backed priorities':'Keutamaan berasaskan bukti',
+      'Explicit scope, no silent blending':'Skop jelas, tiada campuran senyap','File':'Fail','Find user':'Cari pengguna',
+      'Firm module policy':'Polisi modul firma','Guarded rollback':'Pemulangan terkawal',
+      'Import completed':'Import selesai','Included modules':'Modul disertakan',
+      'Inventory is not available here':'Inventori tidak tersedia di sini','Invitation token':'Token jemputan',
+      'Invoices':'Invois','Item-level intelligence':'Cerapan peringkat item',
+      'Item-level intelligence is disabled for this firm.':'Cerapan peringkat item dilumpuhkan untuk firma ini.',
+      'Load more customers':'Muatkan lebih ramai pelanggan','Map every source column':'Petakan setiap lajur sumber',
+      'Mark lost':'Tanda hilang','Methodology':'Kaedah','Module permissions':'Kebenaran modul',
+      'Modules after dependencies':'Modul selepas kebergantungan','Monthly consultant brief':'Ringkasan perunding bulanan',
+      'Monthly trend':'Trend bulanan','No accruals.':'Tiada akruan.','No active blockers recorded.':'Tiada halangan aktif direkodkan.',
+      'No active contacts.':'Tiada kenalan aktif.','No activity recorded.':'Tiada aktiviti direkodkan.',
+      'No adjustments.':'Tiada pelarasan.','No billing commands.':'Tiada arahan pengebilan.',
+      'No branch rows.':'Tiada rekod cawangan.','No conflict or validation rows require individual attention.':'Tiada rekod konflik atau pengesahan yang memerlukan perhatian khusus.',
+      'No customer rows in this scope.':'Tiada rekod pelanggan dalam skop ini.','No firm rows.':'Tiada rekod firma.',
+      'No invoices.':'Tiada invois.','No modules added.':'Tiada modul ditambah.','No modules removed.':'Tiada modul dibuang.',
+      'No onboarding events returned.':'Tiada peristiwa penerimaan dikembalikan.',
+      'No owner invitations returned.':'Tiada jemputan pemilik dikembalikan.','No payment attempts.':'Tiada percubaan bayaran.',
+      'No payout batches.':'Tiada kumpulan pembayaran.','No recommendation claimed':'Tiada cadangan dibuat',
+      'No reconciliation runs.':'Tiada larian penyelarasan.',
+      'No reliable product/service pair is available in this scope yet.':'Belum ada pasangan produk/perkhidmatan yang boleh dipercayai dalam skop ini.',
+      'No selection means every firm in the sector.':'Tiada pilihan bermaksud setiap firma dalam sektor.',
+      'No selection means every firm in the selected sector.':'Tiada pilihan bermaksud setiap firma dalam sektor dipilih.',
+      'No tasks.':'Tiada tugas.','No workspace was created':'Tiada ruang kerja dicipta',
+      'Open private document':'Buka dokumen peribadi','Or choose CSV / TSV / XLSX':'Atau pilih CSV / TSV / XLSX',
+      'Owner invitations':'Jemputan pemilik','Paste CSV or tab-separated rows':'Tampal baris CSV atau dipisahkan tab',
+      'Payment attempts':'Percubaan bayaran','Payments and provider status are currently reconciled.':'Bayaran dan status penyedia telah diselaraskan.',
+      'Preview and map columns':'Pratonton dan petakan lajur','Print / PDF':'Cetak / PDF','Print report':'Cetak laporan',
+      'Purchase order required':'Pesanan pembelian diperlukan','Recent evidence events':'Peristiwa bukti terkini',
+      'Reconciliation history will appear after the first automated run.':'Sejarah penyelarasan akan muncul selepas larian automatik pertama.',
+      'Recorded gate evidence':'Bukti syarat direkodkan','Removed':'Dibuang',
+      'Require two-factor authentication':'Wajibkan pengesahan dua faktor','Reset':'Tetapkan semula',
+      'Review analysis and decisions':'Semak analisis dan keputusan','Rollback reason':'Sebab pemulangan',
+      'Rollback this batch':'Pulangkan kumpulan ini','SME acquisition and onboarding omitted':'Pemerolehan dan penerimaan PKS dikecualikan',
+      'Schedule meeting':'Jadualkan mesyuarat','Selected user':'Pengguna dipilih','Shown once':'Dipaparkan sekali',
+      'Source name':'Nama sumber','Stage history':'Sejarah peringkat','Start onboarding':'Mulakan penerimaan',
+      'Subscription billing omitted':'Pengebilan langganan dikecualikan','Tasks':'Tugas',
+      'Upload document':'Muat naik dokumen','Values confirmed with the firm':'Nilai disahkan dengan firma',
+      'Version label':'Label versi','Workspace control':'Kawalan ruang kerja',
+      'Your browser blocked the automatic tab':'Pelayar anda menyekat tab automatik',
+      'Any pending invitation will be revoked. The replacement token is shown once.':'Sebarang jemputan tertunda akan dibatalkan. Token pengganti dipaparkan sekali.',
+      'Approval, payment access and module policy are enforced by the server as well as this console.':'Kelulusan, akses bayaran dan polisi modul dikuatkuasakan oleh pelayan serta konsol ini.',
+      'Branch overrides take priority over firm and sector settings. Inventory is globally unavailable to firms.':'Tetapan cawangan mengatasi tetapan firma dan sektor. Inventori tidak tersedia kepada semua firma.',
+      'Branch-specific settings override firm policy.':'Tetapan khusus cawangan mengatasi polisi firma.',
+      'CSV, TSV and Excel are accepted. Nothing is inserted until review is complete.':'CSV, TSV dan Excel diterima. Tiada apa dimasukkan sehingga semakan selesai.',
+      'Choose by consultant name. Assignment changes are recorded in the prospect history.':'Pilih mengikut nama perunding. Perubahan tugasan direkodkan dalam sejarah prospek.',
+      'Choose by consultant name. Sales staff continue to see only firms they created or are assigned to.':'Pilih mengikut nama perunding. Kakitangan jualan terus melihat hanya firma yang mereka cipta atau ditugaskan.',
+      'Copy this secure invitation now. Nestly stores only its hash and cannot show the token again.':'Salin jemputan selamat ini sekarang. Nestly hanya menyimpan hashnya dan tidak boleh memaparkan token semula.',
+      'Final waivers, blocking decisions, and firm activation are completed by a super admin.':'Pengecualian akhir, keputusan sekatan dan pengaktifan firma diselesaikan oleh pentadbir super.',
+      'Firm performance respects sector, firm, branch, search and date. SME pipeline analytics respects date and operator visibility; the report labels that separate scope. Currency totals remain separated.':'Prestasi firma mematuhi sektor, firma, cawangan, carian dan tarikh. Analitik aliran PKS mematuhi tarikh dan keterlihatan pengendali; laporan melabel skop berasingan itu. Jumlah mata wang kekal berasingan.',
+      'I reviewed the mapping, validation results, and every conflict decision.':'Saya telah menyemak pemetaan, hasil pengesahan dan setiap keputusan konflik.',
+      'I reviewed the module list and understand this publishes a new immutable version.':'Saya telah menyemak senarai modul dan memahami bahawa ini menerbitkan versi baharu yang tidak boleh diubah.',
+      'Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence.':'Cerapan pelanggan peringkat item untuk skop firma, cawangan dan tarikh ini. Setiap cadangan dikaitkan dengan bukti yang dikembalikan.',
+      'Nestly keeps inventory off for every firm, independent of sector or branch settings.':'Nestly mematikan inventori untuk setiap firma tanpa mengira tetapan sektor atau cawangan.',
+      'Nestly suppresses advice when the exact scope has insufficient or unreliable data.':'Nestly tidak memberi nasihat apabila skop tepat mempunyai data tidak mencukupi atau tidak boleh dipercayai.',
+      'Off modules are hidden and blocked. Read-only modules never show editing controls.':'Modul dimatikan disembunyikan dan disekat. Modul baca sahaja tidak pernah menunjukkan kawalan edit.',
+      'Owner access resumes only after provider payment truth is reconciled.':'Akses pemilik disambung hanya selepas data sebenar bayaran penyedia diselaraskan.',
+      'PDF, CSV, XLSX, PNG, JPEG, WebP or ZIP · maximum 25 MB.':'PDF, CSV, XLSX, PNG, JPEG, WebP atau ZIP · maksimum 25 MB.',
+      'Publishing changes the default module template for future firm assignments. Previous versions stay available for audit.':'Penerbitan mengubah templat modul lalai untuk tugasan firma akan datang. Versi terdahulu kekal untuk audit.',
+      'Search is applied on the server across the complete directory, so it remains usable as the platform grows.':'Carian digunakan pada pelayan merentas direktori lengkap, jadi ia kekal berguna apabila platform berkembang.',
+      'Showing the newest 100 applications. Narrow the search to find another application.':'Menunjukkan 100 permohonan terbaharu. Kecilkan carian untuk mencari permohonan lain.',
+      'The evidence checklist is created during transactional account conversion.':'Senarai semak bukti dicipta semasa penukaran akaun bertransaksi.',
+      'The latest returned run has no exception items.':'Larian terkini yang dikembalikan tiada item pengecualian.',
+      'The secure owner invitation is shown once after approval. Copy it before closing.':'Jemputan pemilik selamat dipaparkan sekali selepas kelulusan. Salin sebelum menutup.',
+      'The selected scope does not yet have enough customer-group data.':'Skop dipilih belum mempunyai data kumpulan pelanggan yang mencukupi.',
+      'The server checked existing prospects and preserved the original source row. Conflicts must stay in review, be skipped, or be deliberately merged.':'Pelayan menyemak prospek sedia ada dan mengekalkan baris sumber asal. Konflik mesti kekal dalam semakan, dilangkau atau digabungkan dengan sengaja.',
+      'This account does not have Billing access. No billing or reconciliation reader was called.':'Akaun ini tiada akses Pengebilan. Tiada pembaca pengebilan atau penyelarasan dipanggil.',
+      'This account does not have Onboarding access. The customer and firm report above remains complete for the selected scope.':'Akaun ini tiada akses Penerimaan. Laporan pelanggan dan firma di atas kekal lengkap untuk skop dipilih.',
+      'This consultant is departed. Editing preserves that status; record a deliberate reactivation as a separate reviewed policy decision.':'Perunding ini telah berhenti. Penyuntingan mengekalkan status itu; rekod pengaktifan semula sebagai keputusan polisi berasingan yang disemak.',
+      'Unknown columns stay preserved with their source labels. Single-value fields may only be mapped once.':'Lajur tidak diketahui kekal bersama label sumber. Medan nilai tunggal hanya boleh dipetakan sekali.',
+      'Unused, unedited inserts are moved to Lost with immutable import provenance retained. Reviewed merge links are detached. The backend refuses reversal after later use or edits.':'Sisipan tidak digunakan dan tidak diedit dipindahkan ke Hilang dengan asal import kekal. Pautan gabungan disemak dipisahkan. Backend menolak pembalikan selepas penggunaan atau suntingan kemudian.',
+      'Use this short-lived link before it expires. The private storage path is not displayed.':'Gunakan pautan jangka pendek ini sebelum tamat. Laluan storan peribadi tidak dipaparkan.',
+      'When enabled, Quick Earn uses the firm catalogue and platform reports can analyse product and service patterns.':'Apabila didayakan, Ganjaran Pantas menggunakan katalog firma dan laporan platform boleh menganalisis corak produk serta perkhidmatan.'
+    })
+  });
+  const PLATFORM_COPY_STRICT=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Consultant brief KPIs':'顾问简报关键指标',
+      'Cross-domain report summary':'跨领域报告摘要',
+      'Move prospect':'移动潜在客户',
+      'Active filters':'已启用筛选',
+      'Onboarding attention queue':'入驻待办队列',
+      'SME onboarding list':'中小企业入驻列表',
+      'Company Name,Contact Person,Email Address':'企业名称,联系人,电邮地址',
+      'Decision for source row {row}':'源数据第 {row} 行的决定',
+      'A backend update is required for per-row decisions.':'每行决定需要后端更新。',
+      'The workspace owner must accept access first.':'工作区负责人必须先接受访问权限。',
+      'Complete every mandatory item and super-admin go-live approval first.':'请先完成所有必填项目及超级管理员上线批准。',
+      'Prospect detail sections':'潜在客户详情部分',
+      'Accepted or signed commercial terms are required.':'必须先接受或签署商业条款。',
+      '{sector} modules':'{sector}模块',
+      '{module} permission':'{module}权限',
+      'Platform access grants':'平台权限授予',
+      'due {date}':'到期日 {date}',
+      'Scoped onboarding Kanban':'范围内入驻看板',
+      'Scoped onboarding list':'范围内入驻列表',
+      'Scoped platform summary':'范围内平台摘要',
+      'No matching firms are available to report.':'没有可生成报告的匹配企业。',
+      '1 of 4 · Reserving the private object path…':'第 1/4 步 · 正在预留私有对象路径…',
+      '2 of 4 · Exchanging the short-lived upload request…':'第 2/4 步 · 正在交换短期上传请求…',
+      '3 of 4 · Uploading directly to the private document vault…':'第 3/4 步 · 正在直接上传到私有文件库…',
+      '4 of 4 · Verifying the stored object and finalising its record…':'第 4/4 步 · 正在验证对象并完成记录…',
+      'A system update is required before this checklist can be managed.':'需要系统更新后才能管理此检查清单。',
+      'Add contact':'添加联系人','All visible prospects':'所有可见潜在客户',
+      'Available areas remain live below.':'下方可用区域仍保持实时。',
+      'Block':'阻止','Block onboarding':'阻止入驻','Cash collected':'已收款',
+      'Choose the correct user':'选择正确的用户','Commercial terms':'商业条款',
+      'Company identity and operating profile':'企业身份与运营资料',
+      'Completed transactions':'已完成交易','Configure account':'配置账户','Contact':'联系',
+      'Contacts and buying committee':'联系人与采购决策团队',
+      'Conversion and account configuration':'转换与账户配置',
+      'Create Nestly account':'创建 Nestly 账户',
+      'Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid.':'从到期日起每日提醒；若发票仍未支付，第 14 天暂停负责人访问。',
+      'Default':'默认','Documents':'文件','Due date':'到期日',
+      'Edit firm modules':'编辑企业模块','Edit operating profile':'编辑运营资料',
+      'Enter a rollback reason.':'请输入回滚原因。','Evidence-managed lifecycle':'证据管理的生命周期',
+      'Firm/branch filters do not apply to this prospect pipeline contract.':'企业/分店筛选不适用于此潜在客户流程合约。',
+      'First five source rows':'前五个源数据行','Generate detailed report':'生成详细报告',
+      'Import sample':'导入样本','Include a header row and at least one data row.':'请包含标题行及至少一个数据行。',
+      'Legal name':'法定名称','Manage branch':'管理分店','Money by currency':'按币种统计金额',
+      'Net revenue':'净收入','No':'否','No billing rows in this firm scope.':'此企业范围内没有账单记录。',
+      'No business modules are enabled in this scope.':'此范围内未启用任何业务模块。',
+      'No matching user':'没有匹配的用户','No mismatch items in the latest returned run.':'最新运行没有不匹配项目。',
+      'No modules enabled':'未启用模块','No onboarding checklist was returned for this workspace.':'此工作区未返回入驻检查清单。',
+      'No overdue or failed subscription records.':'没有逾期或失败的订阅记录。',
+      'No phone':'无电话号码','No source attribution data.':'无来源归因数据。','No stage data.':'无阶段数据。',
+      'Off':'关闭','Owner / boss':'负责人 / 老板','Owner email':'负责人电邮',
+      'Qualification and discovery':'资格评估与需求探索','Record commercial detail':'记录商业详情',
+      'Record departure':'记录离职','Record qualification':'记录资格评估',
+      'Refresh evidence':'刷新证据','Refresh quality':'刷新质量','Reissue owner invite':'重新发送负责人邀请',
+      'Resolve every row still marked Review before committing.':'提交前请处理所有仍标为“审核”的行。',
+      'Returning customers':'回头客','Review and confirm the analysed import first.':'请先审核并确认已分析的导入。',
+      'SME acquisition and onboarding':'中小企业获客与入驻','Search by email or name first':'请先按电邮或姓名搜索',
+      'Search unavailable':'搜索不可用','Showing the first 250 matches. Refine the search to narrow the list.':'显示前 250 个匹配项，请缩小搜索范围。',
+      'Subscription billing and reconciliation':'订阅账单与对账','System update required for:':'以下区域需要系统更新：',
+      'Turning this off removes platform access immediately without deleting history.':'关闭后将立即移除平台访问权限，但不会删除历史记录。',
+      'UEN':'企业注册号','Unblock':'解除阻止','Unblock onboarding':'解除入驻阻止',
+      'Upload':'上传','View customers':'查看顾客','Waive':'豁免','Workspace paused':'工作区已暂停',
+      'Yes':'是','subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue.':'条所选企业范围内的订阅记录。消费税保持可见且不计入可佣金收入。',
+      'to':'至',
+      'Secure owner invitation copied.':'已复制安全负责人邀请。','Business application rejected.':'企业申请已拒绝。',
+      'Record commercial terms at the Client stage first.':'请先在客户阶段记录商业条款。','Data-quality score refreshed.':'数据质量评分已刷新。',
+      'Private document opened in a new tab.':'私有文件已在新标签页打开。','Use the open-document link in the dialog.':'请使用对话框中的打开文件链接。',
+      'Existing firm matched. No workspace was created.':'已匹配现有企业，未创建工作区。','This onboarding item cannot be waived.':'此入驻项目不能豁免。',
+      'Prospect updated.':'潜在客户已更新。','Prospect assignment updated.':'潜在客户分配已更新。','Task created.':'任务已创建。','Task completed.':'任务已完成。',
+      'This stage is controlled by account conversion and onboarding evidence.':'此阶段由账户转换及入驻证据控制。',
+      'Firm sector assigned.':'企业行业已分配。','Firm module override applied.':'企业模块覆盖已应用。','Stripe price version activated.':'Stripe 价格版本已启用。',
+      'Consultant attribution recorded.':'顾问归属已记录。','Commission policy created.':'佣金政策已创建。','Accrual approved.':'应计佣金已批准。',
+      'Payout batch created.':'付款批次已创建。','Payout line added.':'付款明细已添加。','Payout batch approved.':'付款批次已批准。',
+      'Consultant payment recorded.':'顾问付款已记录。','Open commission forfeited.':'未结佣金已没收。','Activity saved.':'活动已保存。',
+      'Firm added to your CRM.':'企业已添加到您的客户关系管理。','Consultant assignment updated.':'顾问分配已更新。',
+      'Prospect stage updated.':'潜在客户阶段已更新。','Select one firm.':'请选择一家企业。'
+      ,'Approve owner application':'批准负责人申请','Reject owner application':'拒绝负责人申请',
+      'Edit contact':'编辑联系人','Save contact':'保存联系人','Create sector bundle version':'创建行业模块包版本',
+      'Edit consultant':'编辑顾问','Save consultant':'保存顾问','Create consultant':'创建顾问'
+      ,'Firm paging did not advance.':'企业分页未能继续。','Firm directory paging did not advance.':'企业目录分页未能继续。','Customer paging did not advance.':'顾客分页未能继续。',
+      'Try loading again':'重新加载','Preparing complete CSV…':'正在准备完整 CSV…','Downloaded {count} customers':'已下载 {count} 位顾客',
+      'Retry complete CSV':'重试完整 CSV','Downloaded {count} customer rows':'已下载 {count} 条顾客记录',
+      'Approval succeeded but the one-time invitation was not returned. Inspect the application before proceeding.':'批准成功，但未返回一次性邀请。请先检查申请再继续。',
+      'Add a contact email or phone number.':'请添加联系电邮或电话号码。','The enterprise import mapper is unavailable.':'企业导入映射工具不可用。',
+      'Add at least one prospect row.':'请至少添加一条潜在客户记录。','Map one source column to Company name.':'请将一个源数据列映射到企业名称。',
+      'Every row has a validation error. Correct the mapping or source data.':'每一行都有验证错误，请修正映射或源数据。','Commit reviewed import':'提交已审核导入',
+      'Enter an email address or phone number.':'请输入电邮地址或电话号码。','The private document signer is unavailable.':'私有文件签名服务不可用。',
+      'Choose a file to upload.':'请选择要上传的文件。','The file exceeds the 25 MB limit.':'文件超过 25 MB 上限。','This file type is not supported.':'不支持此文件类型。',
+      'The signer did not return an upload token.':'签名服务未返回上传令牌。','The signed reservation no longer matches the selected file.':'已签名的预留与所选文件不再匹配。',
+      'The upload reservation expired. Choose the file and try again.':'上传预留已过期，请重新选择文件并重试。','The signer did not return a read URL.':'签名服务未返回读取网址。',
+      'Schedule the next attempt or enter a terminal disposition.':'请安排下一次尝试或填写最终处理结果。','Add a meeting URL or physical location.':'请添加会议网址或实际地点。',
+      'Add a decision date or next follow-up.':'请添加决定日期或下次跟进。','Review the module list and tick the confirmation before publishing.':'发布前请审核模块列表并勾选确认。',
+      'Choose at least one module for this sector.':'请为此行业选择至少一个模块。','The billing command executor is unavailable.':'账单指令执行服务不可用。',
+      'Add a prospect ID or business ID.':'请添加潜在客户编号或企业编号。','Find and select an existing Nestly user first.':'请先查找并选择现有 Nestly 用户。',
+      'Enter at least 3 characters of a name or email.':'请输入姓名或电邮的至少 3 个字符。','Searching existing Nestly users…':'正在搜索现有 Nestly 用户…',
+      'More than one user matched. Choose the correct name and email.':'匹配到多位用户，请选择正确的姓名和电邮。','No existing Nestly sign-in matched that search.':'没有现有 Nestly 登录账户匹配该搜索。',
+      'Platform console dependencies are unavailable.':'平台控制台依赖项不可用。','Platform access is required.':'需要平台访问权限。'
+      ,'Version':'版本','No overdue day':'无逾期天数','Day {count} overdue':'逾期第 {count} 天',
+      'Firm status updated to {status}.':'企业状态已更新为{status}。','{module} policy updated.':'{module}政策已更新。',
+      'Item-level intelligence is now {status}.':'项目级智能现为{status}。','Prospect {name} created.':'潜在客户 {name} 已创建。',
+      'Import reversed: {insertCount} insert records tombstoned and {mergeCount} merge links detached. Audit provenance was preserved.':'导入已撤销：{insertCount} 条新增记录已停用，{mergeCount} 个合并链接已解除；审计来源已保留。',
+      'Prospect moved to {stage}.':'潜在客户已移至{stage}。','{sector} module bundle published.':'{sector}模块包已发布。',
+      'Billing command status: {status}.':'账单指令状态：{status}。','Selected {user}.':'已选择 {user}。',
+      'matched user':'匹配用户','Selected {user} · {email}.':'已选择 {user} · {email}。','user':'用户','Email unavailable':'电邮不可用'
+      ,'State':'状态','Cutover':'上线迁移','Lift':'提升幅度','Floor':'最低阈值','Full':'容量已满'
+      ,'Pending':'待处理','Rejected':'已拒绝','Trialing':'试用中','Past Due':'已逾期','Cancelled':'已取消','Paused':'已暂停',
+      'Completed':'已完成','Failed':'失败','Queued':'已排队','Low':'低','Normal':'普通','High':'高','Urgent':'紧急','Info':'信息',
+      'Inbound':'传入','Outbound':'传出','Insert':'新增','Skip':'跳过','Review':'审核','Merge':'合并',
+      'Monthly':'每月','Quarterly':'每季度','Half Yearly':'每半年','Annual':'每年','Exclusive':'不含税','Inclusive':'含税','Unspecified':'未指定',
+      'Senior':'高级','Junior':'初级','Accrued':'已计提','Draft':'草稿','Manual':'手动','Automatic':'自动',
+      'Enabled':'已启用','Disabled':'已停用','Unknown':'未知','Matched':'已匹配'
+      ,'Export unavailable':'导出不可用'
+      ,'The current roster, ordered by the platform data source.':'当前名册按平台数据源排序。','No firms are available from the current platform data source.':'当前平台数据源没有可用企业。',
+      'Choose one branch or keep the whole firm.':'选择一个分店或保留整个企业。','Select exactly one firm to filter by branch.':'请选择一家企业以按分店筛选。',
+      'Branch effective modules':'分店生效模块','Firm effective modules':'企业生效模块','Workspace open':'工作区开放','Workspace blocked':'工作区已阻止',
+      'This application was rejected. The firm cannot enter the workspace.':'此申请已拒绝，企业无法进入工作区。','Awaiting a super-admin decision. No business data is exposed in the workspace.':'等待超级管理员决定；工作区不会显示任何业务数据。',
+      'Disable':'停用','Enable':'启用','Enabled for catalogue-first sales and item-level intelligence.':'已启用目录优先销售与项目级智能。',
+      'Disabled. Quick Earn can fall back to authorised custom-amount sales; no item affinity claims are generated.':'已停用。快速赚取可回退到获授权的自定义金额销售，但不会生成项目关联结论。',
+      'Confirm approval':'确认批准','Confirm rejection':'确认拒绝','Edit branch modules':'编辑分店模块',
+      'Enabled for catalogue-first sales and monthly advisory reporting.':'已启用目录优先销售与每月顾问报告。','Disabled by super-admin.':'已由超级管理员停用。',
+      'Report one branch or the whole firm.':'报告一个分店或整个企业。','Select one firm to report an individual branch.':'选择一家企业以报告个别分店。',
+      'No next action':'无下一步行动','No activity':'无活动','View firm record for':'查看企业记录：','Assigned':'已分配',
+      'Approve and issue secure invitation':'批准并发出安全邀请','Reject application':'拒绝申请','Approval basis and onboarding note':'批准依据与入驻备注',
+      'Explain what must change before re-applying':'说明重新申请前必须更改的内容',' · required':' · 必填',' · optional':' · 可选','Update evidence':'更新证据',
+      'Commercial terms are ready for account creation.':'商业条款已准备好，可创建账户。','Accepted commercial terms are required before account creation.':'创建账户前必须有已接受的商业条款。',
+      'Contact updated.':'联系人已更新。','Contact added.':'联系人已添加。','Token copied. Keep it in a secure handoff channel.':'令牌已复制，请通过安全交接渠道保存。',
+      'Copy was unavailable. Select the token and copy it manually.':'无法自动复制，请选择令牌并手动复制。','The Nestly account already exists.':'Nestly 账户已存在。',
+      'Nestly account created. Save the owner invitation token.':'Nestly 账户已创建，请保存负责人邀请令牌。','Unblock checklist item':'解除检查项目阻止',
+      'Retired':'已停用','Consultant updated.':'顾问已更新。','Consultant created.':'顾问已创建。','The firm roster requires a system update.':'企业名册需要系统更新。',
+      'The firm roster returned no records.':'企业名册未返回记录。','Scoped analytics and report generation':'范围分析与报告生成','Platform console module':'平台控制台模块',
+      'Edit platform access':'编辑平台权限','Add platform access':'添加平台权限','Save access':'保存权限','Grant access':'授予权限',
+      'Platform access updated.':'平台权限已更新。','Platform access granted.':'平台权限已授予。','Own-created or assigned firms':'自己创建或获分配的企业',
+      'All permitted records':'所有获准记录','Reassign consultant':'重新分配顾问','Manage only the firms you created or are assigned to.':'仅管理您创建或获分配的企业。',
+      'Manage the firms available to your platform role.':'管理您的平台角色可访问的企业。'
+      ,'{count} matching firms as at {date}. Search applies consistently to the directory and report.':'截至 {date} 有 {count} 家匹配企业。搜索会一致应用于目录和报告。',
+      '{count} total in scope':'范围内共 {count} 条','{action} item-level intelligence for {firm}?':'要为 {firm}{action}项目级智能吗？','Current stage:':'当前阶段：'
+      ,'{count} total; preview is snapshot-paged':'共 {count} 条；预览按快照分页','Rollback this import batch? Eligible inserts will be tombstoned as Lost and immutable audit provenance will remain.':'要回滚此导入批次吗？符合条件的新增记录将标记为已流失，并保留不可变审计来源。',
+      'CRM and onboarding workflow':'客户关系管理与入驻流程'
+      ,'Firm scope':'企业范围','Branch module controls':'分店模块控制','{count} firms need attention.':'{count} 家企业需要处理。',
+      '{count} failures':'{count} 次失败','Version {version} · ends in {suffix}':'版本 {version} · 末四位 {suffix}',
+      'To {status}':'转为{status}','Recorded':'已记录','{count} selected':'已选择 {count} 个','Choose at least one module.':'请至少选择一个模块。',
+      '{count} firms require payment follow-up.':'{count} 家企业需要付款跟进。','next payment {date}':'下次付款 {date}','{count} failed':'{count} 次失败',
+      '{amount} incl. GST':'{amount}（含消费税）','No failure':'无失败','No reason recorded':'未记录原因',
+      'Batch {id}':'批次 {id}','Line {id}':'明细 {id}','{amount} remaining':'剩余 {amount}'
+    }),
+    ms:Object.freeze({
+      '1 of 4 · Reserving the private object path…':'1 daripada 4 · Menempah laluan objek peribadi…',
+      '2 of 4 · Exchanging the short-lived upload request…':'2 daripada 4 · Menukar permintaan muat naik jangka pendek…',
+      '3 of 4 · Uploading directly to the private document vault…':'3 daripada 4 · Memuat naik terus ke peti dokumen peribadi…',
+      '4 of 4 · Verifying the stored object and finalising its record…':'4 daripada 4 · Mengesahkan objek tersimpan dan melengkapkan rekod…',
+      'A system update is required before this checklist can be managed.':'Kemas kini sistem diperlukan sebelum senarai semak ini boleh diurus.',
+      'Add contact':'Tambah kenalan','All visible prospects':'Semua prospek yang kelihatan',
+      'Available areas remain live below.':'Bahagian yang tersedia kekal langsung di bawah.',
+      'Block':'Sekat','Block onboarding':'Sekat penerimaan','Cash collected':'Tunai diterima',
+      'Choose the correct user':'Pilih pengguna yang betul','Commercial terms':'Terma komersial',
+      'Company identity and operating profile':'Identiti syarikat dan profil operasi',
+      'Completed transactions':'Transaksi selesai','Configure account':'Konfigurasi akaun','Contact':'Hubungi',
+      'Contacts and buying committee':'Kenalan dan jawatankuasa pembelian',
+      'Conversion and account configuration':'Penukaran dan konfigurasi akaun',
+      'Create Nestly account':'Cipta akaun Nestly',
+      'Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid.':'Peringatan harian bermula pada tarikh akhir. Akses pemilik dijeda pada hari ke-14 jika invois belum dibayar.',
+      'Default':'Lalai','Documents':'Dokumen','Due date':'Tarikh akhir',
+      'Edit':'Sunting','Edit firm modules':'Sunting modul firma','Edit operating profile':'Sunting profil operasi',
+      'Enter a rollback reason.':'Masukkan sebab pengembalian.','Evidence-managed lifecycle':'Kitaran hayat diurus bukti',
+      'Firm/branch filters do not apply to this prospect pipeline contract.':'Penapis firma/cawangan tidak digunakan pada kontrak aliran prospek ini.',
+      'First five source rows':'Lima baris sumber pertama','Generate detailed report':'Jana laporan terperinci',
+      'Import sample':'Sampel import','Include a header row and at least one data row.':'Sertakan baris tajuk dan sekurang-kurangnya satu baris data.',
+      'Legal name':'Nama sah','Manage branch':'Urus cawangan','Money by currency':'Wang mengikut mata wang',
+      'Net revenue':'Hasil bersih','No':'Tidak','No billing rows in this firm scope.':'Tiada baris pengebilan dalam skop firma ini.',
+      'No business modules are enabled in this scope.':'Tiada modul perniagaan didayakan dalam skop ini.',
+      'No matching user':'Tiada pengguna sepadan','No mismatch items in the latest returned run.':'Tiada item tidak sepadan dalam larian terkini.',
+      'No modules enabled':'Tiada modul didayakan','No onboarding checklist was returned for this workspace.':'Tiada senarai semak penerimaan dikembalikan untuk ruang kerja ini.',
+      'No overdue or failed subscription records.':'Tiada rekod langganan tertunggak atau gagal.',
+      'No phone':'Tiada telefon','No source attribution data.':'Tiada data atribusi sumber.','No stage data.':'Tiada data peringkat.',
+      'Off':'Mati','Owner / boss':'Pemilik / bos','Owner email':'E-mel pemilik',
+      'Qualification and discovery':'Kelayakan dan penemuan','Record commercial detail':'Rekod butiran komersial',
+      'Record departure':'Rekod pemergian','Record qualification':'Rekod kelayakan',
+      'Refresh evidence':'Muat semula bukti','Refresh quality':'Muat semula kualiti','Reissue owner invite':'Keluarkan semula jemputan pemilik',
+      'Resolve every row still marked Review before committing.':'Selesaikan setiap baris yang masih ditanda Semak sebelum melakukan.',
+      'Returning customers':'Pelanggan kembali','Review and confirm the analysed import first.':'Semak dan sahkan import yang dianalisis dahulu.',
+      'SME acquisition and onboarding':'Pemerolehan dan penerimaan PKS','Search by email or name first':'Cari mengikut e-mel atau nama dahulu',
+      'Search unavailable':'Carian tidak tersedia','Showing the first 250 matches. Refine the search to narrow the list.':'Menunjukkan 250 padanan pertama. Perincikan carian untuk mengecilkan senarai.',
+      'Subscription billing and reconciliation':'Pengebilan dan penyelarasan langganan','System update required for:':'Kemas kini sistem diperlukan untuk:',
+      'Turning this off removes platform access immediately without deleting history.':'Mematikan ini menghapuskan akses platform serta-merta tanpa memadam sejarah.',
+      'UEN':'UEN','Unblock':'Nyahsekat','Unblock onboarding':'Nyahsekat penerimaan',
+      'Upload':'Muat naik','View customers':'Lihat pelanggan','Waive':'Kecualikan','Workspace paused':'Ruang kerja dijeda',
+      'Yes':'Ya','subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue.':'rekod langganan dalam skop firma dipilih. GST kekal kelihatan dan tidak dianggap sebagai hasil berkomisen.',
+      'to':'hingga',
+      'Secure owner invitation copied.':'Jemputan pemilik selamat disalin.','Business application rejected.':'Permohonan perniagaan ditolak.',
+      'Record commercial terms at the Client stage first.':'Rekod terma komersial pada peringkat Pelanggan dahulu.','Data-quality score refreshed.':'Skor kualiti data dimuat semula.',
+      'Private document opened in a new tab.':'Dokumen peribadi dibuka dalam tab baharu.','Use the open-document link in the dialog.':'Gunakan pautan buka dokumen dalam dialog.',
+      'Existing firm matched. No workspace was created.':'Firma sedia ada dipadankan. Tiada ruang kerja dicipta.','This onboarding item cannot be waived.':'Item penerimaan ini tidak boleh dikecualikan.',
+      'Prospect updated.':'Prospek dikemas kini.','Prospect assignment updated.':'Tugasan prospek dikemas kini.','Task created.':'Tugas dicipta.','Task completed.':'Tugas selesai.',
+      'This stage is controlled by account conversion and onboarding evidence.':'Peringkat ini dikawal oleh penukaran akaun dan bukti penerimaan.',
+      'Firm sector assigned.':'Sektor firma ditugaskan.','Firm module override applied.':'Penggantian modul firma digunakan.','Stripe price version activated.':'Versi harga Stripe diaktifkan.',
+      'Consultant attribution recorded.':'Atribusi perunding direkodkan.','Commission policy created.':'Polisi komisen dicipta.','Accrual approved.':'Akruan diluluskan.',
+      'Payout batch created.':'Kumpulan bayaran dicipta.','Payout line added.':'Baris bayaran ditambah.','Payout batch approved.':'Kumpulan bayaran diluluskan.',
+      'Consultant payment recorded.':'Bayaran perunding direkodkan.','Open commission forfeited.':'Komisen terbuka dilucutkan.','Activity saved.':'Aktiviti disimpan.',
+      'Firm added to your CRM.':'Firma ditambah ke CRM anda.','Consultant assignment updated.':'Tugasan perunding dikemas kini.',
+      'Prospect stage updated.':'Peringkat prospek dikemas kini.','Select one firm.':'Pilih satu firma.'
+      ,'Approve owner application':'Luluskan permohonan pemilik','Reject owner application':'Tolak permohonan pemilik',
+      'Edit contact':'Sunting kenalan','Save contact':'Simpan kenalan','Create sector bundle version':'Cipta versi pakej sektor',
+      'Edit consultant':'Sunting perunding','Save consultant':'Simpan perunding','Create consultant':'Cipta perunding'
+      ,'Firm paging did not advance.':'Halaman firma tidak bergerak ke hadapan.','Firm directory paging did not advance.':'Halaman direktori firma tidak bergerak ke hadapan.','Customer paging did not advance.':'Halaman pelanggan tidak bergerak ke hadapan.',
+      'Try loading again':'Cuba muat semula','Preparing complete CSV…':'Menyediakan CSV lengkap…','Downloaded {count} customers':'{count} pelanggan dimuat turun',
+      'Retry complete CSV':'Cuba semula CSV lengkap','Downloaded {count} customer rows':'{count} baris pelanggan dimuat turun',
+      'Approval succeeded but the one-time invitation was not returned. Inspect the application before proceeding.':'Kelulusan berjaya tetapi jemputan sekali guna tidak dikembalikan. Periksa permohonan sebelum meneruskan.',
+      'Add a contact email or phone number.':'Tambah e-mel atau nombor telefon hubungan.','The enterprise import mapper is unavailable.':'Pemeta import perusahaan tidak tersedia.',
+      'Add at least one prospect row.':'Tambah sekurang-kurangnya satu baris prospek.','Map one source column to Company name.':'Petakan satu lajur sumber kepada nama syarikat.',
+      'Every row has a validation error. Correct the mapping or source data.':'Setiap baris mempunyai ralat pengesahan. Betulkan pemetaan atau data sumber.','Commit reviewed import':'Lakukan import yang disemak',
+      'Enter an email address or phone number.':'Masukkan alamat e-mel atau nombor telefon.','The private document signer is unavailable.':'Penandatangan dokumen peribadi tidak tersedia.',
+      'Choose a file to upload.':'Pilih fail untuk dimuat naik.','The file exceeds the 25 MB limit.':'Fail melebihi had 25 MB.','This file type is not supported.':'Jenis fail ini tidak disokong.',
+      'The signer did not return an upload token.':'Penandatangan tidak mengembalikan token muat naik.','The signed reservation no longer matches the selected file.':'Tempahan bertandatangan tidak lagi sepadan dengan fail dipilih.',
+      'The upload reservation expired. Choose the file and try again.':'Tempahan muat naik telah tamat. Pilih fail dan cuba lagi.','The signer did not return a read URL.':'Penandatangan tidak mengembalikan URL bacaan.',
+      'Schedule the next attempt or enter a terminal disposition.':'Jadualkan percubaan seterusnya atau masukkan keputusan akhir.','Add a meeting URL or physical location.':'Tambah URL mesyuarat atau lokasi fizikal.',
+      'Add a decision date or next follow-up.':'Tambah tarikh keputusan atau susulan seterusnya.','Review the module list and tick the confirmation before publishing.':'Semak senarai modul dan tandakan pengesahan sebelum menerbitkan.',
+      'Choose at least one module for this sector.':'Pilih sekurang-kurangnya satu modul untuk sektor ini.','The billing command executor is unavailable.':'Pelaksana arahan pengebilan tidak tersedia.',
+      'Add a prospect ID or business ID.':'Tambah ID prospek atau ID perniagaan.','Find and select an existing Nestly user first.':'Cari dan pilih pengguna Nestly sedia ada dahulu.',
+      'Enter at least 3 characters of a name or email.':'Masukkan sekurang-kurangnya 3 aksara nama atau e-mel.','Searching existing Nestly users…':'Mencari pengguna Nestly sedia ada…',
+      'More than one user matched. Choose the correct name and email.':'Lebih daripada satu pengguna sepadan. Pilih nama dan e-mel yang betul.','No existing Nestly sign-in matched that search.':'Tiada log masuk Nestly sedia ada sepadan dengan carian itu.',
+      'Platform console dependencies are unavailable.':'Kebergantungan konsol platform tidak tersedia.','Platform access is required.':'Akses platform diperlukan.'
+      ,'Version':'Versi','No overdue day':'Tiada hari tertunggak','Day {count} overdue':'Tertunggak hari ke-{count}',
+      'Firm status updated to {status}.':'Status firma dikemas kini kepada {status}.','{module} policy updated.':'Polisi {module} dikemas kini.',
+      'Item-level intelligence is now {status}.':'Cerapan peringkat item kini {status}.','Prospect {name} created.':'Prospek {name} dicipta.',
+      'Import reversed: {insertCount} insert records tombstoned and {mergeCount} merge links detached. Audit provenance was preserved.':'Import diterbalikkan: {insertCount} rekod sisipan dinyahaktifkan dan {mergeCount} pautan gabungan dipisahkan. Asal audit dikekalkan.',
+      'Prospect moved to {stage}.':'Prospek dipindahkan ke {stage}.','{sector} module bundle published.':'Pakej modul {sector} diterbitkan.',
+      'Billing command status: {status}.':'Status arahan pengebilan: {status}.','Selected {user}.':'{user} dipilih.',
+      'matched user':'pengguna sepadan','Selected {user} · {email}.':'{user} · {email} dipilih.','user':'pengguna','Email unavailable':'E-mel tidak tersedia'
+      ,'State':'Status','Cutover':'Pengaktifan / migrasi','Lift':'Peningkatan','Floor':'Ambang minimum','Full':'Kapasiti penuh'
+      ,'Pending':'Menunggu','Rejected':'Ditolak','Trialing':'Dalam percubaan','Past Due':'Tertunggak','Cancelled':'Dibatalkan','Paused':'Dijeda',
+      'Completed':'Selesai','Failed':'Gagal','Queued':'Dalam giliran','Low':'Rendah','Normal':'Biasa','High':'Tinggi','Urgent':'Segera','Info':'Maklumat',
+      'Inbound':'Masuk','Outbound':'Keluar','Insert':'Masukkan','Skip':'Langkau','Review':'Semak','Merge':'Gabung',
+      'Monthly':'Bulanan','Quarterly':'Suku tahunan','Half Yearly':'Setengah tahunan','Annual':'Tahunan','Exclusive':'Tidak termasuk cukai','Inclusive':'Termasuk cukai','Unspecified':'Tidak dinyatakan',
+      'Senior':'Kanan','Junior':'Junior','Accrued':'Terakru','Draft':'Draf','Manual':'Manual','Automatic':'Automatik',
+      'Enabled':'Didayakan','Disabled':'Dilumpuhkan','Unknown':'Tidak diketahui','Matched':'Sepadan'
+      ,'Export unavailable':'Eksport tidak tersedia'
+      ,'The current roster, ordered by the platform data source.':'Senarai semasa, disusun mengikut sumber data platform.','No firms are available from the current platform data source.':'Tiada firma tersedia daripada sumber data platform semasa.',
+      'Choose one branch or keep the whole firm.':'Pilih satu cawangan atau kekalkan seluruh firma.','Select exactly one firm to filter by branch.':'Pilih tepat satu firma untuk menapis mengikut cawangan.',
+      'Branch effective modules':'Modul berkuat kuasa cawangan','Firm effective modules':'Modul berkuat kuasa firma','Workspace open':'Ruang kerja terbuka','Workspace blocked':'Ruang kerja disekat',
+      'This application was rejected. The firm cannot enter the workspace.':'Permohonan ini ditolak. Firma tidak boleh memasuki ruang kerja.','Awaiting a super-admin decision. No business data is exposed in the workspace.':'Menunggu keputusan pentadbir super. Tiada data perniagaan didedahkan dalam ruang kerja.',
+      'Disable':'Lumpuhkan','Enable':'Dayakan','Enabled for catalogue-first sales and item-level intelligence.':'Didayakan untuk jualan berasaskan katalog dan cerapan peringkat item.',
+      'Disabled. Quick Earn can fall back to authorised custom-amount sales; no item affinity claims are generated.':'Dilumpuhkan. Ganjaran Pantas boleh menggunakan jualan amaun tersuai yang dibenarkan; tiada dakwaan perkaitan item dijana.',
+      'Confirm approval':'Sahkan kelulusan','Confirm rejection':'Sahkan penolakan','Edit branch modules':'Sunting modul cawangan',
+      'Enabled for catalogue-first sales and monthly advisory reporting.':'Didayakan untuk jualan berasaskan katalog dan laporan nasihat bulanan.','Disabled by super-admin.':'Dilumpuhkan oleh pentadbir super.',
+      'Report one branch or the whole firm.':'Laporkan satu cawangan atau seluruh firma.','Select one firm to report an individual branch.':'Pilih satu firma untuk melaporkan cawangan individu.',
+      'No next action':'Tiada tindakan seterusnya','No activity':'Tiada aktiviti','View firm record for':'Lihat rekod firma untuk','Assigned':'Ditugaskan',
+      'Approve and issue secure invitation':'Luluskan dan keluarkan jemputan selamat','Reject application':'Tolak permohonan','Approval basis and onboarding note':'Asas kelulusan dan nota penerimaan',
+      'Explain what must change before re-applying':'Terangkan perubahan yang diperlukan sebelum memohon semula',' · required':' · diperlukan',' · optional':' · pilihan','Update evidence':'Kemas kini bukti',
+      'Commercial terms are ready for account creation.':'Terma komersial sedia untuk penciptaan akaun.','Accepted commercial terms are required before account creation.':'Terma komersial yang diterima diperlukan sebelum penciptaan akaun.',
+      'Contact updated.':'Kenalan dikemas kini.','Contact added.':'Kenalan ditambah.','Token copied. Keep it in a secure handoff channel.':'Token disalin. Simpan dalam saluran penyerahan selamat.',
+      'Copy was unavailable. Select the token and copy it manually.':'Salinan tidak tersedia. Pilih token dan salin secara manual.','The Nestly account already exists.':'Akaun Nestly telah wujud.',
+      'Nestly account created. Save the owner invitation token.':'Akaun Nestly dicipta. Simpan token jemputan pemilik.','Unblock checklist item':'Nyahsekat item senarai semak',
+      'Retired':'Ditamatkan','Consultant updated.':'Perunding dikemas kini.','Consultant created.':'Perunding dicipta.','The firm roster requires a system update.':'Senarai firma memerlukan kemas kini sistem.',
+      'The firm roster returned no records.':'Senarai firma tidak mengembalikan rekod.','Scoped analytics and report generation':'Analitik berskop dan penjanaan laporan','Platform console module':'Modul konsol platform',
+      'Edit platform access':'Sunting akses platform','Add platform access':'Tambah akses platform','Save access':'Simpan akses','Grant access':'Berikan akses',
+      'Platform access updated.':'Akses platform dikemas kini.','Platform access granted.':'Akses platform diberikan.','Own-created or assigned firms':'Firma ciptaan sendiri atau ditugaskan',
+      'All permitted records':'Semua rekod dibenarkan','Reassign consultant':'Tugaskan semula perunding','Manage only the firms you created or are assigned to.':'Urus hanya firma yang anda cipta atau ditugaskan kepada anda.',
+      'Manage the firms available to your platform role.':'Urus firma yang tersedia untuk peranan platform anda.'
+      ,'{count} matching firms as at {date}. Search applies consistently to the directory and report.':'{count} firma sepadan setakat {date}. Carian digunakan secara konsisten pada direktori dan laporan.',
+      '{count} total in scope':'{count} jumlah dalam skop','{action} item-level intelligence for {firm}?':'{action} cerapan peringkat item untuk {firm}?','Current stage:':'Peringkat semasa:'
+      ,'{count} total; preview is snapshot-paged':'{count} jumlah; pratonton berhalaman mengikut petikan','Rollback this import batch? Eligible inserts will be tombstoned as Lost and immutable audit provenance will remain.':'Kembalikan kumpulan import ini? Sisipan layak akan ditanda Hilang dan asal audit kekal dikekalkan.',
+      'CRM and onboarding workflow':'Aliran CRM dan penerimaan'
+      ,'Firm scope':'Skop firma','Branch module controls':'Kawalan modul cawangan','{count} firms need attention.':'{count} firma memerlukan perhatian.',
+      '{count} failures':'{count} kegagalan','Version {version} · ends in {suffix}':'Versi {version} · berakhir dengan {suffix}',
+      'To {status}':'Ke {status}','Recorded':'Direkodkan','{count} selected':'{count} dipilih','Choose at least one module.':'Pilih sekurang-kurangnya satu modul.',
+      '{count} firms require payment follow-up.':'{count} firma memerlukan susulan bayaran.','next payment {date}':'bayaran seterusnya {date}','{count} failed':'{count} gagal',
+      '{amount} incl. GST':'{amount} termasuk GST','No failure':'Tiada kegagalan','No reason recorded':'Tiada sebab direkodkan',
+      'Batch {id}':'Kumpulan {id}','Line {id}':'Baris {id}','{amount} remaining':'{amount} berbaki'
+    })
+  });
+  const PLATFORM_COPY_META=Object.freeze({
+    'zh-CN':Object.freeze({
+    '12-month service bonus (basis points)':'12个月服务奖金（基点）',
+    'A combined operational view. Unavailable backend phases remain explicit and do not produce estimated records.':'组合操作视图。不可用的后端阶段仍然是明确的，并且不会生成估计记录。',
+    'A role-aware summary built from the same server-enforced firm scope as search and reports.':'基于与搜索和报告相同的服务器强制企业范围构建的角色感知摘要。',
+    'Accepted':'公认',
+    'Accepted amount (cents)':'接受金额（分）',
+    'Action queue':'动作队列',
+    'Active versions drive checkout and cadence changes. Prior versions remain visible as history.':'活动版本推动结账和节奏变化。以前的版本作为历史仍然可见。',
+    'Add a phone number or email address.':'添加电话号码或电子邮件地址。',
+    'Add an admin or sales staff account when you are ready.':'准备好后添加管理员或销售人员帐户。',
+    'Add follow-up task':'添加后续任务',
+    'Add modules':'添加模块',
+    'Add payout line':'添加支付线',
+    'Add the first decision maker, champion, billing contact or technical administrator.':'添加第一决策者、支持者、计费联系人或技术管理员。',
+    'All qualification states':'所有资格状态',
+    'All regions':'所有地区',
+    'All segments':'所有细分市场',
+    'Amount (integer cents)':'金额（整数美分）',
+    'Amount collected (cents)':'收取金额（分）',
+    'Analyse import':'分析导入',
+    'Apply module policy':'应用模块策略',
+    'Appointment at':'预约时间：',
+    'Appointment owner':'预约负责人',
+    'Approval reason':'批准理由',
+    'Approve accrual':'批准应计费用',
+    'Approve payout batch':'批准付款批次',
+    'Approved accrual ID':'批准的应计 ID',
+    'Assign consultant':'指派顾问',
+    'Assign sales consultant':'指派销售顾问',
+    'Assigned consultant ID':'分配的顾问 ID',
+    'Assigned person':'指定人员',
+    'Attach rate is calculated only from canonical, non-reversed sale lines.':'附加率仅根据规范的非反向销售线计算。',
+    'Attempt at':'尝试',
+    'Attendees':'出席者',
+    'Attribute':'属性',
+    'Automatic and manual provider comparisons. Open exception records above for the affected firm.':'自动和手动提供商比较。打开受影响企业的上述异常记录。',
+    'Base amount (cents)':'基础金额（分）',
+    'Base, service-anniversary bonus, and renewal rates are editable in basis points.':'基本、服务周年奖金和续订费率可以基点为单位进行编辑。',
+    'Billing cycle':'计费周期',
+    'Billing reconciliation history':'帐单对帐历史记录',
+    'Billing reconciliation runs':'计费对账运行',
+    'Billing reconciliation runs and provider event health from the current platform ledger.':'当前平台分类帐中的计费对账运行和提供商事件运行状况。',
+    'Blocking reason':'封锁原因',
+    'Boss / primary contact name':'老板/主要联系人姓名',
+    'Branch comparison':'分支比较',
+    'Branch report comparison':'分支机构报告比较',
+    'Budget status':'预算状况',
+    'Build one snapshot-backed report across customer performance, SME acquisition, onboarding and subscription billing.':'构建一份涵盖顾客绩效、中小企业收购、入职和订阅计费的快照支持报告。',
+    'Business description':'业务描述',
+    'Business ID':'企业ID',
+    'Business performance':'经营业绩',
+    'Business status':'经营状况',
+    'Callback at':'回调于',
+    'Cancel at period end':'期末取消',
+    'Change cadence':'改变节奏',
+    'Change the search or consultant filter.':'更改搜索或顾问过滤器。',
+    'Change the sector, firm, branch, date or search scope.':'更改部门、企业、分支机构、日期或搜索范围。',
+    'Choose a firm to report on':'选择要报告的企业',
+    'Choose a reporting scope':'选择报告范围',
+    'Choose the standard modules and publish the first bundle.':'选择标准模块并发布第一个捆绑包。',
+    'Choose the whole firm or another branch/date range.':'选择整个企业或其他分支机构/日期范围。',
+    'Comma separated':'逗号分隔',
+    'Comma-separated':'逗号分隔',
+    'Comma-separated module keys.':'以逗号分隔的模块键。',
+    'Company':'企业',
+    'Company email':'企业邮箱',
+    'Company name':'企业名称',
+    'Company phone':'企业电话',
+    'Company, owner, email, phone or UEN':'企业、所有者、电子邮件、电话或 UEN',
+    'Company, UEN, contact, phone, email or notes':'企业、UEN、联系人、电话、电子邮件或注释',
+    'Company, UEN, owner, email or phone':'企业、UEN、所有者、电子邮件或电话',
+    'Competitor':'竞争者',
+    'Configuration coverage':'配置覆盖范围',
+    'Configure the future Nestly account':'配置未来的 Nestly 帐户',
+    'Confirm commercial terms':'确认商业条款',
+    'Confirm commission forfeiture':'确认没收佣金',
+    'Confirm commission policy':'确认佣金政策',
+    'Confirm firm module override':'确认固件模块覆盖',
+    'Confirm firm sector assignment':'确认企业部门分配',
+    'Confirm lost transition':'确认丢失的转换',
+    'Confirm Stripe price version':'确认Stripe价格版本',
+    'Confirmed meeting at':'确认的会议时间为',
+    'Consultant commission accruals':'应计顾问佣金',
+    'Consultant commission is calculated on net-of-GST subscription amounts. All stored and entered amounts are integer cents.':'顾问佣金根据扣除商品及服务税的认购金额计算。所有存储和输入的金额均为整数美分。',
+    'Consultant commission roster':'顾问委员会名册',
+    'Consultant ID':'顾问ID',
+    'Consultant roster':'顾问名册',
+    'Consultant tier':'顾问级别',
+    'Contact basis':'联系依据',
+    'Contact notes':'联系方式',
+    'Contract status':'合同状态',
+    'Contract term (months)':'合同期限（月）',
+    'Create and publish':'创建并发布',
+    'Create batch':'创建批次',
+    'Create checkout':'创建结账',
+    'Create commission policy':'创建佣金政策',
+    'Create firm':'创建企业',
+    'Create one active version for each offered billing cadence before opening checkout.':'在开始结账之前，为每个提供的计费节奏创建一个活动版本。',
+    'Create prospect':'创造前景',
+    'Current firm snapshot':'当前企业快照',
+    'Current period':'本期',
+    'Current tool / vendor':'当前工具/供应商',
+    'Customer group performance':'顾客群体表现',
+    'Customer groups':'顾客群组',
+    'Customer groups, product and service patterns, and consultative actions will appear here when the evidence threshold is met.':'当满足证据阈值时，顾客群体、产品和服务模式以及咨询行动将出现在此处。',
+    'Customer report detail':'顾客报告详情',
+    'Data import status':'数据导入状态',
+    'Decision date':'决定日期',
+    'Decision maker':'决策者',
+    'Decision role':'决策作用',
+    'Departed at':'出发时间',
+    'Department / function':'部门/职能',
+    'Desired outcome':'期望的结果',
+    'Digital maturity':'数字化成熟度',
+    'Direction':'方向',
+    'Discount (basis points)':'折扣（基点）',
+    'Discount reason':'折扣理由',
+    'Display name':'显示名称',
+    'Disposition':'处置',
+    'Document type':'文件类型',
+    'Duration (seconds)':'持续时间（秒）',
+    'Edit company operating profile':'编辑企业经营概况',
+    'Edit prospect':'编辑潜在顾客',
+    'Effective from':'生效日期：',
+    'Employee range':'员工范围',
+    'Employment started':'就业开始',
+    'Enterprise firm directory':'企业商号名录',
+    'Entity type':'实体类型',
+    'Evidence note':'证据说明',
+    'Existing firm matched':'现有企业匹配',
+    'Existing tools':'现有工具',
+    'Expected seats':'预计座位数',
+    'Expected setup fee (cents)':'预计安装费（分）',
+    'Expected subscription (cents)':'预期认购（分）',
+    'Find user by email or name':'通过电子邮件或姓名查找用户',
+    'Firm approval':'企业认可',
+    'Firm comparison':'企业比较',
+    'Firm controls unavailable':'固定控制不可用',
+    'Firm record':'坚定的记录',
+    'Firm report comparison':'企业报告比较',
+    'Firm, branch and customer directory':'企业、分支机构和顾客目录',
+    'Firm, branch or customer':'企业、分支机构或顾客',
+    'Firms in your access scope':'您访问范围内的企业',
+    'First payment at':'首次付款于',
+    'Fit score (0–100)':'适合度分数 (0–100)',
+    'For example: existing customer enquiry or direct business relationship.':'例如：现有顾客询价或直接业务关系。',
+    'For example: fnb, facial, salon or fitness. Leave blank if undecided.':'例如：fnb、面部护理、沙龙或健身。如果未决定，则留空。',
+    'Forfeit open commission':'没收公开佣金',
+    'From':'从',
+    'Full name':'姓名',
+    'Generate a report to compare customer performance, pipeline conversion and billing exceptions.':'生成报告以比较顾客绩效、渠道转化和计费例外情况。',
+    'Human-confirmed score (0–100)':'人工确认分数 (0–100)',
+    'I have saved it':'我已经保存了',
+    'Included seats':'包含座位',
+    'Incorporated on':'合并于',
+    'Inspect every firm from company level down to branches and customer records, using one explicit reporting scope.':'使用明确的报告范围检查从企业级别到分支机构和顾客记录的每家企业。',
+    'Intent score (0–100)':'意图得分 (0–100)',
+    'Job title':'职称',
+    'Key objection':'主要反对意见',
+    'Latest reconciliation':'最新对账',
+    'Lead source':'铅来源',
+    'Loading scoped contacts, activity and tasks…':'正在加载范围内的联系人、活动和任务...',
+    'Locale':'语言环境',
+    'Location count':'地点数',
+    'Loss reasons':'亏损原因',
+    'Main business activity':'主要业务活动',
+    'Main objection':'主要反对意见',
+    'Manage the module starting point for each business sector.':'管理每个业务部门的模块起点。',
+    'Manual workflows to replace':'替代手动工作流程',
+    'Mark prospect lost':'标记潜在顾客丢失',
+    'Meeting at':'会议地点：',
+    'Meeting location':'集合地点',
+    'Meeting URL':'会议网址',
+    'Module':'模块',
+    'Monitor platform workflows and operational runs.':'监控平台工作流程和运营运行。',
+    'Monthly report trend':'月报趋势',
+    'Move from first contact to activation with evidence-backed onboarding gates and an auditable launch decision.':'通过有证据支持的入职门槛和可审核的启动决策，从首次接触过渡到激活。',
+    'Name, sector, UEN, owner phone or email':'姓名、部门、​​UEN、所有者电话或电子邮件',
+    'Names or emails, comma separated.':'姓名或电子邮件，以逗号分隔。',
+    'New meeting at':'新会议于',
+    'New public business applications will appear here before any owner account can be created.':'在创建任何所有者帐户之前，新的公共业务应用程序将出现在此处。',
+    'New Stripe price version':'新Stripe价格版',
+    'Next action at':'下一步行动于',
+    'Next action due':'下一步行动到期',
+    'Next actions':'下一步行动',
+    'Next attempt at':'下一次尝试',
+    'Next follow-up at':'下一次跟进于',
+    'No applications awaiting approval':'没有等待批准的申请',
+    'No billing reconciliation history was returned.':'未返回任何账单调节历史记录。',
+    'No billing records':'无账单记录',
+    'No branch records were returned.':'没有返回任何分支记录。',
+    'No branches':'没有分支机构',
+    'No consultant commission policies were returned.':'没有退回任何顾问佣金保单。',
+    'No consultant commission records were returned.':'没有返回任何顾问佣金记录。',
+    'No consultants':'没有顾问',
+    'No contacts':'没有联系人',
+    'No customers in this scope':'此范围内没有顾客',
+    'No delegated platform users':'无委托平台用户',
+    'No documents':'没有文件',
+    'No firm roster available':'没有可用的固定名单',
+    'No firms are available for sector assignment.':'没有企业可用于部门分配。',
+    'No firms in scope':'范围内没有企业',
+    'No matching firms':'没有匹配的企业',
+    'No matching prospects':'没有匹配的前景',
+    'No platform automation catalogue, run history, or status data source is available to this console.':'此控制台没有可用的平台自动化目录、运行历史记录或状态数据源。',
+    'No policy history':'无保单历史',
+    'No reconciliation runs':'没有调节运行',
+    'No Stripe prices configured':'未配置 Stripe 价格',
+    'Occurred at':'发生于',
+    'Onboarding checklist':'入职清单',
+    'Onboarding health':'入职健康',
+    'Onboarding owner ID':'入职所有者 ID',
+    'Onboarding started at':'入职开始于',
+    'Open billing portal':'打开计费门户',
+    'Operating address':'经营地址',
+    'Operational status':'运营状况',
+    'Optional ticket, document or meeting reference.':'可选的门票、文件或会议参考。',
+    'Owner phone':'业主电话',
+    'Paid amount (integer cents)':'支付金额（整数分）',
+    'Paid at':'支付于',
+    'Pain points':'痛点',
+    'Payment reference':'付款参考',
+    'Payment status':'付款状态',
+    'Payment terms (days)':'付款期限（天）',
+    'Per-seat amount (cents)':'每个席位金额（分）',
+    'Phone number':'电话号码',
+    'Physical location':'物理位置',
+    'Plan':'计划',
+    'Policy history':'政策历史',
+    'Postal code':'邮政编码',
+    'Preferred channel':'首选渠道',
+    'Preferred language':'首选语言',
+    'Preferred name':'首选名称',
+    'Preview assignment':'预览作业',
+    'Preview conversion':'预览转换',
+    'Preview forfeiture':'预览没收',
+    'Preview lost transition':'预览丢失的过渡',
+    'Preview override':'预览覆盖',
+    'Preview policy':'预览政策',
+    'Preview price':'预览价格',
+    'Previous meeting reference':'上次会议参考',
+    'Primary contact':'主要联系人',
+    'Primary problem':'主要问题',
+    'Private document is ready':'私人文件已准备好',
+    'Product':'产品',
+    'Product and service affinity':'产品和服务亲和力',
+    'Products / services':'产品/服务',
+    'Products bought with services':'随服务一起购买的产品',
+    'Proposal version':'提案版本',
+    'Proposed plan':'拟议计划',
+    'Proposed value (integer cents)':'建议价值（整数美分）',
+    'Prospect detail unavailable':'潜在顾客详细信息不可用',
+    'Prospect ID':'潜在顾客 ID',
+    'Provider-backed subscription, GST and payment status. Amounts are integer cents from the billing ledger.':'提供商支持的订阅、GST 和付款状态。金额是帐单分类帐中的整数美分。',
+    'Published bundle':'已发布捆绑包',
+    'Purchase order number':'采购订单号',
+    'Purchase timeframe':'购买时间范围',
+    'Qualification':'资质',
+    'Qualification status':'资质状况',
+    'Qualification summary':'资质概要',
+    'Read & write':'可读写',
+    'Reason / context':'原因/背景',
+    'Recontact at':'重新联系于',
+    'Record consultant payment':'记录顾问付款',
+    'Record CRM activity':'记录 CRM 活动',
+    'Record evidence':'记录证据',
+    'Record qualification and discovery':'记录资格和发现',
+    'Reference':'参考',
+    'Region':'地区',
+    'Registered address':'注册地址',
+    'Reissue and show token':'重新发行并显示令牌',
+    'Reissue owner invitation':'重新发出业主邀请',
+    'Remove modules':'删除模块',
+    'Renewal date':'续订日期',
+    'Renewal rate (basis points)':'续订率（基点）',
+    'Report money by currency':'按货币报告资金',
+    'Required features':'所需功能',
+    'Required integrations':'所需的集成',
+    'Required only when no next attempt is scheduled.':'仅当没有安排下一次尝试时才需要。',
+    'Reschedule reason':'改期原因',
+    'Reserve and upload':'预约并上传',
+    'Resume':'恢复',
+    'Review approved commission obligations and payment status.':'审查批准的佣金义务和付款状态。',
+    'Review stage move':'回顾阶段移动',
+    'Review subscription and collection activity across firms.':'审查各企业的订阅和收集活动。',
+    'Review version':'审核版本',
+    'Risk level':'风险等级',
+    'Sales consultant':'销售顾问',
+    'Save assignment':'保存作业',
+    'Save changes':'保存更改',
+    'Save commercial version':'保存商业版本',
+    'Save configuration version':'保存配置版本',
+    'Save profile version':'保存配置文件版本',
+    'Save qualification version':'保存资格版本',
+    'Save this owner invitation token':'保存此所有者邀请令牌',
+    'Scope summary':'范围摘要',
+    'Search an existing Nestly sign-in. You will confirm the matched person before granting access.':'搜索现有的 Nestly 登录。您将在授予访问权限之前确认匹配的人员。',
+    'Search every firm field':'搜索每个企业领域',
+    'Search inside scope':'范围内搜索',
+    'Seat limit':'座位限制',
+    'Sector key (optional)':'扇区密钥（可选）',
+    'Sector module defaults remain application configuration. No platform-managed preset data source exists yet.':'扇区模块默认保留应用程序配置。尚不存在平台管理的预设数据源。',
+    'Segment':'部分',
+    'Selected firm billing':'选定企业计费',
+    'Setup fee (cents)':'安装费（分）',
+    'SME source conversion':'中小企业客源转换',
+    'SME stage performance':'中小企业舞台表演',
+    'Source conversion':'源转换',
+    'Stage performance':'舞台表演',
+    'Starting stage':'起步阶段',
+    'Stripe base price ID':'Stripe 基本价格 ID',
+    'Stripe seat price ID':'条纹座位价格 ID',
+    'Sub-industry':'子行业',
+    'Subscription access':'订阅访问',
+    'Subscription status':'订阅状态',
+    'Super-admin control of platform roles, module permissions and active access.':'平台角色、模块权限和主动访问的超级管理员控制。',
+    'Tags':'标签',
+    'Target go-live':'目标上线',
+    'Tax behaviour':'纳税行为',
+    'Tax treatment':'税务处理',
+    'Terminal disposition':'终端配置',
+    'The billing reader returned no subscriptions.':'计费阅读器未返回任何订阅。',
+    'The current backend exposes per-firm subscription projections, not invoices, payment collection, or settlement.':'当前后端公开每个企业的订阅预测，而不是发票、付款收集或结算。',
+    'The current product calculates commission earned inside a firm, but has no payout periods, approval state, payment reference, or paid ledger.':'当前的产品计算企业内部赚取的佣金，但没有付款期限、批准状态、付款参考或付款分类帐。',
+    'The existing super-admin roster returned no records.':'现有的超级管理员名册未返回任何记录。',
+    'The platform console requires the reviewed onboarding data contract before it can display or change lifecycle evidence.':'平台控制台需要经过审核的入职数据合同，然后才能显示或更改生命周期证据。',
+    'The platform returned no active sector profiles.':'该平台没有返回活跃的扇区概况。',
+    'This note is retained in the platform audit trail.':'该注释保留在平台审计跟踪中。',
+    'Tier':'等级',
+    'Timezone':'时区',
+    'To':'到',
+    'Track firm onboarding from first contact through launch.':'跟踪企业从首次接触到启动的入职过程。',
+    'Trading name':'商号',
+    'Try another search or ask a super admin to review assignments.':'尝试其他搜索或要求超级管理员审核作业。',
+    'UEN / registration':'UEN／注册号',
+    'Unit price (cents)':'单价（分）',
+    'Upload private prospect document':'上传私人潜在顾客文件',
+    'Upload proposals, agreements, registration profiles or onboarding material to the private prospect vault.':'将提案、协议、注册资料或入职材料上传到私人潜在顾客库。',
+    'Use inherited setting':'使用继承的设置',
+    'Use these groups to plan specific monthly actions, not generic campaigns.':'使用这些组来计划特定的每月行动，而不是一般的活动。',
+    'User ID':'用户身份',
+    'Verification status':'验证状态',
+    'Versioned module entitlements with explicit preview and confirmation before every change.':'版本化模块权利在每次更改之前都具有明确的预览和确认功能。',
+    'Waive item':'豁免项目',
+    'Waiver reason':'豁免原因',
+    'Welcome message':'欢迎留言',
+    'Workspace name':'工作区名称',
+    'Workspace slug':'工作区蛞蝓',
+    'Year-one base rate (basis points)':'第一年基本利率（基点）',
+  }),
+    'ms':Object.freeze({
+      'No reconciliation run':'Tiada larian penyelarasan',
+      'Map each single-value field once. Conflict: {fields}.':'Petakan setiap medan nilai tunggal sekali sahaja. Konflik: {fields}.',
+      'Source row {row}':'Baris sumber {row}',
+      'Unnamed contact':'Kenalan tanpa nama',
+      'Role not recorded':'Peranan tidak direkodkan',
+      'Primary':'Utama',
+      'Stage transition':'Peralihan peringkat',
+      'This prospect matches existing firm {firm} by {basis}. Review the match before any manual decision.':'Prospek ini sepadan dengan firma sedia ada {firm} melalui {basis}. Semak padanan sebelum sebarang keputusan manual.',
+      'Record evidence · {item}':'Rekod bukti · {item}',
+      'Waive · {item}':'Ketepikan · {item}',
+      'whole onboarding':'keseluruhan penerimaan',
+      'Record {type}':'Rekod {type}',
+      'New immutable version {version}':'Versi kekal baharu {version}',
+      'Nestly added {count} required dependencies automatically.':'Nestly menambah {count} kebergantungan wajib secara automatik.',
+      'Provider object':'Objek penyedia',
+      'Confirm {action}':'Sahkan {action}',
+      'Year-one base {base}% · 12-month service bonus {bonus}% · Renewal {renewal}%':'Asas tahun pertama {base}% · bonus perkhidmatan 12 bulan {bonus}% · pembaharuan {renewal}%',
+      'Insert new':'Masukkan baharu',
+      'Merge source lineage':'Gabungkan salasilah sumber',
+      'Activities and timeline':'Aktiviti dan garis masa',
+      'Tasks and next actions':'Tugas dan tindakan seterusnya',
+      'Audit and stage history':'Audit dan sejarah peringkat',
+      'Meeting':'Mesyuarat',
+      'Uploaded':'Dimuat naik',
+      'Verified':'Disahkan',
+      'Proposal':'Cadangan',
+      'Not Started':'Belum dimulakan',
+      'Initial':'Permulaan',
+      'Renewal':'Pembaharuan',
+      'Document Sent':'Dokumen dihantar',
+      'Departed':'Telah berhenti',
+      'Manual':'Manual',
+      'Junior':'Junior',
+      'F&B / Café':'F&B / Kafe',
+      'Hair Salon':'Salun Rambut',
+      'Facial / Spa':'Rawatan Muka / Spa',
+      'Massage':'Urut',
+      'Fitness':'Kecergasan',
+      'Retail':'Runcit',
+      'Other':'Lain-lain',
+      'Developing':'Sedang berkembang','Established':'Mantap','Advanced':'Lanjutan',
+      'Unverified':'Belum disahkan','Disputed':'Dipertikaikan',
+      'Decision Maker':'Pembuat keputusan','Champion':'Penyokong dalaman','Influencer':'Pempengaruh','Budget Owner':'Pemilik bajet',
+      'User':'Pengguna','Gatekeeper':'Penjaga akses','Whatsapp':'WhatsApp','Sms':'SMS','Video':'Video','In Person':'Bersemuka',
+      'Unqualified':'Tidak layak','Discovery':'Penemuan','Qualified':'Layak','Disqualified':'Dibatalkan kelayakan',
+      'Not Confirmed':'Belum disahkan','Range Confirmed':'Julat disahkan','No Budget':'Tiada bajet','Medium':'Sederhana',
+      'Exempt':'Dikecualikan','Trial':'Percubaan','Unpaid':'Belum dibayar','Partially Paid':'Dibayar sebahagian','Refunded':'Dibayar balik','Charged Back':'Caj balik',
+      'Template Sent':'Templat dihantar','Received':'Diterima','Validated':'Disahkan','Not Required':'Tidak diperlukan',
+      'Demo':'Demo','Proposal Sent':'Cadangan dihantar','Contract Sent':'Kontrak dihantar','Onboarding Session':'Sesi penerimaan',
+      'Create Checkout':'Cipta pembayaran','Create Portal':'Cipta portal pengebilan','Change Cadence':'Tukar kekerapan','Cancel At Period End':'Batal pada akhir tempoh',
+      'Mismatch':'Tidak sepadan',
+      'Consultant brief KPIs':'KPI ringkasan perunding',
+      'Cross-domain report summary':'Ringkasan laporan rentas domain',
+      'Move prospect':'Alih prospek',
+      'Active filters':'Penapis aktif',
+      'Onboarding attention queue':'Baris perhatian penerimaan',
+      'SME onboarding list':'Senarai penerimaan PKS',
+      'Company Name,Contact Person,Email Address':'Nama Syarikat,Orang Hubungan,Alamat E-mel',
+      'Decision for source row {row}':'Keputusan untuk baris sumber {row}',
+      'A backend update is required for per-row decisions.':'Kemas kini backend diperlukan untuk keputusan setiap baris.',
+      'The workspace owner must accept access first.':'Pemilik ruang kerja mesti menerima akses dahulu.',
+      'Complete every mandatory item and super-admin go-live approval first.':'Lengkapkan semua item wajib dan kelulusan pelancaran pentadbir super dahulu.',
+      'Prospect detail sections':'Bahagian butiran prospek',
+      'Accepted or signed commercial terms are required.':'Terma komersial yang diterima atau ditandatangani diperlukan.',
+      '{sector} modules':'Modul {sector}',
+      '{module} permission':'Kebenaran {module}',
+      'Platform access grants':'Pemberian akses platform',
+      'due {date}':'tarikh akhir {date}',
+      'Scoped onboarding Kanban':'Kanban penerimaan berskop',
+      'Scoped onboarding list':'Senarai penerimaan berskop',
+      'Scoped platform summary':'Ringkasan platform berskop',
+      'No matching firms are available to report.':'Tiada firma sepadan tersedia untuk laporan.',
+    '12-month service bonus (basis points)':'Bonus perkhidmatan 12 bulan (mata asas)',
+    'A combined operational view. Unavailable backend phases remain explicit and do not produce estimated records.':'Pandangan operasi gabungan. Fasa bahagian belakang yang tidak tersedia kekal jelas dan tidak menghasilkan rekod anggaran.',
+    'A role-aware summary built from the same server-enforced firm scope as search and reports.':'Ringkasan sedar peranan yang dibina daripada skop firma yang dikuatkuasakan pelayan yang sama seperti carian dan laporan.',
+    'Accepted':'Diterima',
+    'Accepted amount (cents)':'Amaun yang diterima (sen)',
+    'Action queue':'Barisan tindakan',
+    'Active versions drive checkout and cadence changes. Prior versions remain visible as history.':'Versi aktif mendorong perubahan daftar keluar dan irama. Versi terdahulu kekal kelihatan sebagai sejarah.',
+    'Add a phone number or email address.':'Tambahkan nombor telefon atau alamat e-mel.',
+    'Add an admin or sales staff account when you are ready.':'Tambahkan akaun pentadbir atau kakitangan jualan apabila anda sudah bersedia.',
+    'Add follow-up task':'Tambah tugasan susulan',
+    'Add modules':'Tambah modul',
+    'Add payout line':'Tambahkan baris pembayaran',
+    'Add the first decision maker, champion, billing contact or technical administrator.':'Tambahkan pembuat keputusan pertama, juara, kenalan pengebilan atau pentadbir teknikal.',
+    'All qualification states':'Semua syarat kelayakan',
+    'All regions':'Semua wilayah',
+    'All segments':'Semua segmen',
+    'Amount (integer cents)':'Amaun (sen integer)',
+    'Amount collected (cents)':'Jumlah terkumpul (sen)',
+    'Analyse import':'Menganalisis import',
+    'Apply module policy':'Gunakan dasar modul',
+    'Appointment at':'Temujanji di',
+    'Appointment owner':'Pemilik temu janji',
+    'Approval reason':'Sebab kelulusan',
+    'Approve accrual':'Luluskan akruan',
+    'Approve payout batch':'Luluskan kumpulan pembayaran',
+    'Approved accrual ID':'ID akruan yang diluluskan',
+    'Assign consultant':'Tugaskan perunding',
+    'Assign sales consultant':'Tugaskan perunding jualan',
+    'Assigned consultant ID':'ID perunding yang ditugaskan',
+    'Assigned person':'Orang yang ditugaskan',
+    'Attach rate is calculated only from canonical, non-reversed sale lines.':'Kadar lampiran dikira hanya daripada baris jualan berkanun, tidak berbalik.',
+    'Attempt at':'Percubaan pada',
+    'Attendees':'Hadirin',
+    'Attribute':'Atribut',
+    'Automatic and manual provider comparisons. Open exception records above for the affected firm.':'Perbandingan pembekal automatik dan manual. Buka rekod pengecualian di atas untuk firma yang terjejas.',
+    'Base amount (cents)':'Jumlah asas (sen)',
+    'Base, service-anniversary bonus, and renewal rates are editable in basis points.':'Asas, bonus ulang tahun perkhidmatan dan kadar pembaharuan boleh diedit dalam mata asas.',
+    'Billing cycle':'Kitaran pengebilan',
+    'Billing reconciliation history':'Sejarah penyesuaian pengebilan',
+    'Billing reconciliation runs':'Penyesuaian pengebilan berjalan',
+    'Billing reconciliation runs and provider event health from the current platform ledger.':'Larian penyelarasan pengebilan dan kesihatan acara penyedia daripada lejar platform semasa.',
+    'Blocking reason':'Menyekat sebab',
+    'Boss / primary contact name':'Nama bos / kenalan utama',
+    'Branch comparison':'Perbandingan cawangan',
+    'Branch report comparison':'Perbandingan laporan cawangan',
+    'Budget status':'Status belanjawan',
+    'Build one snapshot-backed report across customer performance, SME acquisition, onboarding and subscription billing.':'Bina satu laporan bersandarkan gambar merentas prestasi pelanggan, pemerolehan PKS, onboarding dan pengebilan langganan.',
+    'Business description':'Perihalan perniagaan',
+    'Business ID':'ID perniagaan',
+    'Business performance':'Prestasi perniagaan',
+    'Business status':'Status perniagaan',
+    'Callback at':'Panggilan balik di',
+    'Cancel at period end':'Batalkan pada akhir tempoh',
+    'Change cadence':'Tukar irama',
+    'Change the search or consultant filter.':'Tukar penapis carian atau perunding.',
+    'Change the sector, firm, branch, date or search scope.':'Tukar sektor, firma, cawangan, tarikh atau skop carian.',
+    'Choose a firm to report on':'Pilih firma untuk dilaporkan',
+    'Choose a reporting scope':'Pilih skop pelaporan',
+    'Choose the standard modules and publish the first bundle.':'Pilih modul standard dan terbitkan berkas pertama.',
+    'Choose the whole firm or another branch/date range.':'Pilih keseluruhan firma atau cawangan/julat tarikh lain.',
+    'Comma separated':'Koma dipisahkan',
+    'Comma-separated':'Dipisahkan koma',
+    'Comma-separated module keys.':'Kekunci modul yang dipisahkan koma.',
+    'Company':'Syarikat',
+    'Company email':'E-mel syarikat',
+    'Company name':'Nama syarikat',
+    'Company phone':'Telefon syarikat',
+    'Company, owner, email, phone or UEN':'Syarikat, pemilik, e-mel, telefon atau UEN',
+    'Company, UEN, contact, phone, email or notes':'Syarikat, UEN, kenalan, telefon, e-mel atau nota',
+    'Company, UEN, owner, email or phone':'Syarikat, UEN, pemilik, e-mel atau telefon',
+    'Competitor':'Pesaing',
+    'Configuration coverage':'Liputan konfigurasi',
+    'Configure the future Nestly account':'Konfigurasikan akaun Nestly masa hadapan',
+    'Confirm commercial terms':'Sahkan syarat komersial',
+    'Confirm commission forfeiture':'Sahkan pelucuthakan komisen',
+    'Confirm commission policy':'Sahkan dasar komisen',
+    'Confirm firm module override':'Sahkan penggantian modul firma',
+    'Confirm firm sector assignment':'Sahkan penugasan sektor firma',
+    'Confirm lost transition':'Sahkan peralihan yang hilang',
+    'Confirm Stripe price version':'Sahkan versi harga Stripe',
+    'Confirmed meeting at':'Mesyuarat yang disahkan di',
+    'Consultant commission accruals':'Akruan komisen perunding',
+    'Consultant commission is calculated on net-of-GST subscription amounts. All stored and entered amounts are integer cents.':'Komisen perunding dikira pada jumlah langganan GST bersih. Semua amaun yang disimpan dan dimasukkan adalah sen integer.',
+    'Consultant commission roster':'Jadual komisen perunding',
+    'Consultant ID':'ID Perunding',
+    'Consultant roster':'Jadual perunding',
+    'Consultant tier':'Peringkat perunding',
+    'Contact basis':'Asas hubungan',
+    'Contact notes':'Nota kenalan',
+    'Contract status':'Status kontrak',
+    'Contract term (months)':'Tempoh kontrak (bulan)',
+    'Create and publish':'Buat dan terbitkan',
+    'Create batch':'Buat kumpulan',
+    'Create checkout':'Buat pembayaran',
+    'Create commission policy':'Buat dasar komisen',
+    'Create firm':'Buat firma',
+    'Create one active version for each offered billing cadence before opening checkout.':'Buat satu versi aktif untuk setiap kaden pengebilan yang ditawarkan sebelum membuka pembayaran.',
+    'Create prospect':'Buat prospek',
+    'Current firm snapshot':'Gambar firma semasa',
+    'Current period':'Tempoh semasa',
+    'Current tool / vendor':'Alat / vendor semasa',
+    'Customer group performance':'Prestasi kumpulan pelanggan',
+    'Customer groups':'Kumpulan pelanggan',
+    'Customer groups, product and service patterns, and consultative actions will appear here when the evidence threshold is met.':'Kumpulan pelanggan, corak produk dan perkhidmatan serta tindakan perundingan akan dipaparkan di sini apabila ambang bukti dipenuhi.',
+    'Customer report detail':'Butiran laporan pelanggan',
+    'Data import status':'Status import data',
+    'Decision date':'Tarikh keputusan',
+    'Decision maker':'Pembuat keputusan',
+    'Decision role':'Peranan keputusan',
+    'Departed at':'Bertolak pada',
+    'Department / function':'Jabatan / fungsi',
+    'Desired outcome':'Hasil yang diingini',
+    'Digital maturity':'Kematangan digital',
+    'Direction':'Arah',
+    'Discount (basis points)':'Diskaun (mata asas)',
+    'Discount reason':'Sebab diskaun',
+    'Display name':'Nama paparan',
+    'Disposition':'Pelupusan',
+    'Document type':'Jenis dokumen',
+    'Duration (seconds)':'Tempoh (saat)',
+    'Edit company operating profile':'Edit profil operasi syarikat',
+    'Edit prospect':'Edit prospek',
+    'Effective from':'Berkesan daripada',
+    'Employee range':'Julat pekerja',
+    'Employment started':'Pekerjaan bermula',
+    'Enterprise firm directory':'Direktori firma perusahaan',
+    'Entity type':'Jenis entiti',
+    'Evidence note':'Nota bukti',
+    'Existing firm matched':'Firma sedia ada dipadankan',
+    'Existing tools':'Alat sedia ada',
+    'Expected seats':'Kerusi yang dijangkakan',
+    'Expected setup fee (cents)':'Bayaran persediaan yang dijangkakan (sen)',
+    'Expected subscription (cents)':'Langganan dijangka (sen)',
+    'Find user by email or name':'Cari pengguna melalui e-mel atau nama',
+    'Firm approval':'Kelulusan firma',
+    'Firm comparison':'Perbandingan tegas',
+    'Firm controls unavailable':'Kawalan firma tidak tersedia',
+    'Firm record':'Rekod firma',
+    'Firm report comparison':'Perbandingan laporan firma',
+    'Firm, branch and customer directory':'Direktori firma, cawangan dan pelanggan',
+    'Firm, branch or customer':'Firma, cawangan atau pelanggan',
+    'Firms in your access scope':'Firma dalam skop akses anda',
+    'First payment at':'Bayaran pertama di',
+    'Fit score (0–100)':'Skor muat (0–100)',
+    'For example: existing customer enquiry or direct business relationship.':'Contohnya: pertanyaan pelanggan sedia ada atau hubungan perniagaan langsung.',
+    'For example: fnb, facial, salon or fitness. Leave blank if undecided.':'Contohnya: fnb, facial, salon atau kecergasan. Biarkan kosong jika tidak membuat keputusan.',
+    'Forfeit open commission':'Hilang komisen terbuka',
+    'From':'daripada',
+    'Full name':'Nama penuh',
+    'Generate a report to compare customer performance, pipeline conversion and billing exceptions.':'Hasilkan laporan untuk membandingkan prestasi pelanggan, penukaran saluran paip dan pengecualian pengebilan.',
+    'Human-confirmed score (0–100)':'Markah yang disahkan manusia (0–100)',
+    'I have saved it':'Saya telah menyimpannya',
+    'Included seats':'Termasuk tempat duduk',
+    'Incorporated on':'Diperbadankan pada',
+    'Inspect every firm from company level down to branches and customer records, using one explicit reporting scope.':'Periksa setiap firma dari peringkat syarikat hingga ke cawangan dan rekod pelanggan, menggunakan satu skop pelaporan yang jelas.',
+    'Intent score (0–100)':'Skor niat (0–100)',
+    'Job title':'Tajuk kerja',
+    'Key objection':'Bantahan utama',
+    'Latest reconciliation':'Perdamaian terkini',
+    'Lead source':'Sumber utama',
+    'Loading scoped contacts, activity and tasks…':'Memuatkan kenalan, aktiviti dan tugas berskop…',
+    'Locale':'Tempatan',
+    'Location count':'Kiraan lokasi',
+    'Loss reasons':'Sebab kerugian',
+    'Main business activity':'Aktiviti perniagaan utama',
+    'Main objection':'Bantahan utama',
+    'Manage the module starting point for each business sector.':'Uruskan titik permulaan modul untuk setiap sektor perniagaan.',
+    'Manual workflows to replace':'Aliran kerja manual untuk diganti',
+    'Mark prospect lost':'Tandakan prospek hilang',
+    'Meeting at':'Mesyuarat di',
+    'Meeting location':'Lokasi mesyuarat',
+    'Meeting URL':'URL mesyuarat',
+    'Module':'Modul',
+    'Monitor platform workflows and operational runs.':'Pantau aliran kerja platform dan larian operasi.',
+    'Monthly report trend':'Trend laporan bulanan',
+    'Move from first contact to activation with evidence-backed onboarding gates and an auditable launch decision.':'Beralih daripada kenalan pertama kepada pengaktifan dengan pintu masuk yang disokong bukti dan keputusan pelancaran yang boleh diaudit.',
+    'Name, sector, UEN, owner phone or email':'Nama, sektor, UEN, telefon pemilik atau e-mel',
+    'Names or emails, comma separated.':'Nama atau e-mel, dipisahkan koma.',
+    'New meeting at':'Mesyuarat baru di',
+    'New public business applications will appear here before any owner account can be created.':'Aplikasi perniagaan awam baharu akan dipaparkan di sini sebelum sebarang akaun pemilik boleh dibuat.',
+    'New Stripe price version':'Versi harga Stripe baharu',
+    'Next action at':'Tindakan seterusnya di',
+    'Next action due':'Tindakan seterusnya perlu dibayar',
+    'Next actions':'Tindakan seterusnya',
+    'Next attempt at':'Percubaan seterusnya di',
+    'Next follow-up at':'Susulan seterusnya di',
+    'No applications awaiting approval':'Tiada permohonan menunggu kelulusan',
+    'No billing reconciliation history was returned.':'Tiada sejarah penyelarasan pengebilan dikembalikan.',
+    'No billing records':'Tiada rekod pengebilan',
+    'No branch records were returned.':'Tiada rekod cawangan dikembalikan.',
+    'No branches':'Tiada cawangan',
+    'No consultant commission policies were returned.':'Tiada polisi komisen perunding dikembalikan.',
+    'No consultant commission records were returned.':'Tiada rekod komisen perunding dikembalikan.',
+    'No consultants':'Tiada perunding',
+    'No contacts':'Tiada kenalan',
+    'No customers in this scope':'Tiada pelanggan dalam skop ini',
+    'No delegated platform users':'Tiada pengguna platform yang diwakilkan',
+    'No documents':'Tiada dokumen',
+    'No firm roster available':'Tiada senarai firma tersedia',
+    'No firms are available for sector assignment.':'Tiada firma tersedia untuk penugasan sektor.',
+    'No firms in scope':'Tiada firma dalam skop',
+    'No matching firms':'Tiada firma yang sepadan',
+    'No matching prospects':'Tiada prospek yang sepadan',
+    'No platform automation catalogue, run history, or status data source is available to this console.':'Tiada katalog automasi platform, sejarah larian atau sumber data status tersedia untuk konsol ini.',
+    'No policy history':'Tiada sejarah dasar',
+    'No reconciliation runs':'Tiada perdamaian berjalan',
+    'No Stripe prices configured':'Tiada harga Stripe dikonfigurasikan',
+    'Occurred at':'Berlaku pada',
+    'Onboarding checklist':'Senarai semak onboarding',
+    'Onboarding health':'Kesihatan onboarding',
+    'Onboarding owner ID':'ID pemilik onboarding',
+    'Onboarding started at':'Onboarding bermula pada',
+    'Open billing portal':'Buka portal pengebilan',
+    'Operating address':'Alamat operasi',
+    'Operational status':'Status operasi',
+    'Optional ticket, document or meeting reference.':'Tiket pilihan, dokumen atau rujukan mesyuarat.',
+    'Owner phone':'Telefon pemilik',
+    'Paid amount (integer cents)':'Jumlah yang dibayar (sen integer)',
+    'Paid at':'Dibayar pada',
+    'Pain points':'Titik kesakitan',
+    'Payment reference':'Rujukan pembayaran',
+    'Payment status':'Status pembayaran',
+    'Payment terms (days)':'Syarat pembayaran (hari)',
+    'Per-seat amount (cents)':'Jumlah setiap tempat duduk (sen)',
+    'Phone number':'Nombor telefon',
+    'Physical location':'Lokasi fizikal',
+    'Plan':'Rancang',
+    'Policy history':'Sejarah dasar',
+    'Postal code':'Poskod',
+    'Preferred channel':'Saluran pilihan',
+    'Preferred language':'Bahasa pilihan',
+    'Preferred name':'Nama pilihan',
+    'Preview assignment':'Pratonton tugasan',
+    'Preview conversion':'Pratonton penukaran',
+    'Preview forfeiture':'Pratonton rampasan',
+    'Preview lost transition':'Pratonton peralihan yang hilang',
+    'Preview override':'Pratonton menimpa',
+    'Preview policy':'Dasar pratonton',
+    'Preview price':'Harga pratonton',
+    'Previous meeting reference':'Rujukan mesyuarat sebelumnya',
+    'Primary contact':'Kenalan utama',
+    'Primary problem':'Masalah utama',
+    'Private document is ready':'Dokumen peribadi sudah sedia',
+    'Product':'produk',
+    'Product and service affinity':'Perkaitan produk dan perkhidmatan',
+    'Products / services':'Produk / perkhidmatan',
+    'Products bought with services':'Produk yang dibeli dengan perkhidmatan',
+    'Proposal version':'Versi cadangan',
+    'Proposed plan':'Pelan yang dicadangkan',
+    'Proposed value (integer cents)':'Nilai yang dicadangkan (sen integer)',
+    'Prospect detail unavailable':'Butiran prospek tidak tersedia',
+    'Prospect ID':'ID prospek',
+    'Provider-backed subscription, GST and payment status. Amounts are integer cents from the billing ledger.':'Langganan yang disokong pembekal, GST dan status pembayaran. Amaun ialah sen integer daripada lejar pengebilan.',
+    'Published bundle':'Himpunan yang diterbitkan',
+    'Purchase order number':'Nombor pesanan belian',
+    'Purchase timeframe':'Jangka masa pembelian',
+    'Qualification':'Kelayakan',
+    'Qualification status':'Status kelayakan',
+    'Qualification summary':'Ringkasan kelayakan',
+    'Read & write':'Baca dan tulis',
+    'Reason / context':'Sebab / konteks',
+    'Recontact at':'Hubungi semula di',
+    'Record consultant payment':'Rekod pembayaran perunding',
+    'Record CRM activity':'Rekod aktiviti CRM',
+    'Record evidence':'Rekod bukti',
+    'Record qualification and discovery':'Rekod kelayakan dan penemuan',
+    'Reference':'Rujukan',
+    'Region':'Wilayah',
+    'Registered address':'Alamat berdaftar',
+    'Reissue and show token':'Terbitkan semula dan tunjukkan token',
+    'Reissue owner invitation':'Keluarkan semula jemputan pemilik',
+    'Remove modules':'Alih keluar modul',
+    'Renewal date':'Tarikh pembaharuan',
+    'Renewal rate (basis points)':'Kadar pembaharuan (mata asas)',
+    'Report money by currency':'Laporkan wang mengikut mata wang',
+    'Required features':'Ciri yang diperlukan',
+    'Required integrations':'Penyepaduan yang diperlukan',
+    'Required only when no next attempt is scheduled.':'Diperlukan hanya apabila tiada percubaan seterusnya dijadualkan.',
+    'Reschedule reason':'Jadual semula sebab',
+    'Reserve and upload':'Tempah dan muat naik',
+    'Resume':'Sambung semula',
+    'Review approved commission obligations and payment status.':'Semak obligasi komisen yang diluluskan dan status pembayaran.',
+    'Review stage move':'Semak semula langkah pentas',
+    'Review subscription and collection activity across firms.':'Semak aktiviti langganan dan kutipan merentas firma.',
+    'Review version':'Semak versi',
+    'Risk level':'Tahap risiko',
+    'Sales consultant':'Perunding jualan',
+    'Save assignment':'Simpan tugasan',
+    'Save changes':'Simpan perubahan',
+    'Save commercial version':'Simpan versi komersial',
+    'Save configuration version':'Simpan versi konfigurasi',
+    'Save profile version':'Simpan versi profil',
+    'Save qualification version':'Simpan versi kelayakan',
+    'Save this owner invitation token':'Simpan token jemputan pemilik ini',
+    'Scope summary':'Ringkasan skop',
+    'Search an existing Nestly sign-in. You will confirm the matched person before granting access.':'Cari log masuk Nestly sedia ada. Anda akan mengesahkan orang yang dipadankan sebelum memberikan akses.',
+    'Search every firm field':'Cari setiap bidang firma',
+    'Search inside scope':'Cari dalam skop',
+    'Seat limit':'Had tempat duduk',
+    'Sector key (optional)':'Kunci sektor (pilihan)',
+    'Sector module defaults remain application configuration. No platform-managed preset data source exists yet.':'Lalai modul sektor kekal konfigurasi aplikasi. Tiada sumber data pratetap terurus platform lagi wujud.',
+    'Segment':'Segmen',
+    'Selected firm billing':'Pengebilan firma terpilih',
+    'Setup fee (cents)':'Yuran persediaan (sen)',
+    'SME source conversion':'Penukaran sumber PKS',
+    'SME stage performance':'Persembahan pentas PKS',
+    'Source conversion':'Penukaran sumber',
+    'Stage performance':'Persembahan pentas',
+    'Starting stage':'Peringkat permulaan',
+    'Stripe base price ID':'ID harga asas jalur',
+    'Stripe seat price ID':'ID harga kerusi berjalur',
+    'Sub-industry':'Sub-industri',
+    'Subscription access':'Akses langganan',
+    'Subscription status':'Status langganan',
+    'Super-admin control of platform roles, module permissions and active access.':'Kawalan super-pentadbir terhadap peranan platform, kebenaran modul dan akses aktif.',
+    'Tags':'Tag',
+    'Target go-live':'Sasaran siaran langsung',
+    'Tax behaviour':'Tingkah laku cukai',
+    'Tax treatment':'Layanan cukai',
+    'Terminal disposition':'Pelupusan terminal',
+    'The billing reader returned no subscriptions.':'Pembaca pengebilan tidak mengembalikan langganan.',
+    'The current backend exposes per-firm subscription projections, not invoices, payment collection, or settlement.':'Bahagian belakang semasa mendedahkan unjuran langganan setiap firma, bukan invois, kutipan pembayaran atau penyelesaian.',
+    'The current product calculates commission earned inside a firm, but has no payout periods, approval state, payment reference, or paid ledger.':'Produk semasa mengira komisen yang diperoleh dalam firma, tetapi tidak mempunyai tempoh pembayaran, keadaan kelulusan, rujukan pembayaran atau lejar berbayar.',
+    'The existing super-admin roster returned no records.':'Senarai pentadbir super sedia ada tidak mengembalikan rekod.',
+    'The platform console requires the reviewed onboarding data contract before it can display or change lifecycle evidence.':'Konsol platform memerlukan kontrak data onboarding yang disemak sebelum ia boleh memaparkan atau menukar bukti kitaran hayat.',
+    'The platform returned no active sector profiles.':'Platform ini tidak mengembalikan profil sektor aktif.',
+    'This note is retained in the platform audit trail.':'Nota ini disimpan dalam jejak audit platform.',
+    'Tier':'Peringkat',
+    'Timezone':'Zon waktu',
+    'To':'Kepada',
+    'Track firm onboarding from first contact through launch.':'Jejaki onboarding firma dari kenalan pertama hingga pelancaran.',
+    'Trading name':'Nama dagangan',
+    'Try another search or ask a super admin to review assignments.':'Cuba carian lain atau minta pentadbir super menyemak tugasan.',
+    'UEN / registration':'UEN / pendaftaran',
+    'Unit price (cents)':'Harga seunit (sen)',
+    'Upload private prospect document':'Muat naik dokumen prospek peribadi',
+    'Upload proposals, agreements, registration profiles or onboarding material to the private prospect vault.':'Muat naik cadangan, perjanjian, profil pendaftaran atau bahan onboarding ke peti besi prospek persendirian.',
+    'Use inherited setting':'Gunakan tetapan yang diwarisi',
+    'Use these groups to plan specific monthly actions, not generic campaigns.':'Gunakan kumpulan ini untuk merancang tindakan bulanan khusus, bukan kempen generik.',
+    'User ID':'ID pengguna',
+    'Verification status':'Status pengesahan',
+    'Versioned module entitlements with explicit preview and confirmation before every change.':'Kelayakan modul versi dengan pratonton dan pengesahan eksplisit sebelum setiap perubahan.',
+    'Waive item':'Ketepikan item',
+    'Waiver reason':'Alasan pengecualian',
+    'Welcome message':'Mesej alu-aluan',
+    'Workspace name':'Nama ruang kerja',
+    'Workspace slug':'Slug ruang kerja',
+    'Year-one base rate (basis points)':'Kadar asas tahun satu (mata asas)',
+  })
+  });
+  const PLATFORM_COPY_RENDERERS=Object.freeze({
+    'zh-CN':Object.freeze({
+      '{from} to {to} · {firmCount} {firmNoun} · {branchCount} {branchNoun}{search}':'{from} 至 {to} · {firmCount} 家{firmNoun} · {branchCount} 家{branchNoun}{search}',
+      'firm':'企业','firms':'企业','branch':'分店','branches':'分店',
+      'Customer':'顾客','Active customers':'活跃顾客','Returning rate':'回访率','Transactions':'交易',
+      'Currency groups':'币种组','Cash':'现金','Visits':'到访次数','Lifetime last purchase':'历史最近购买','Returning':'回访顾客',
+      'Pipeline leads':'销售管道潜在客户','Deals won':'已成交','Billing exceptions':'账单异常',
+      'Business':'企业','Billing Cadence':'账单周期','Required Items':'必填项目','Started At':'开始时间','Activated At':'激活时间',
+      'In Progress':'进行中','Blocked':'受阻','{fulfilled} of {total}':'{fulfilled}／{total}',
+      ' · search “{query}”':' · 搜索“{query}”',
+      'Snapshot {date}. Money remains separated by currency.':'数据快照：{date}。金额始终按币种分别显示。',
+      'The returning-rate denominator is active customers in this period.':'回访率的分母为本期间的活跃顾客。',
+      '{from} to {to} · snapshot {date}':'{from} 至 {to} · 数据快照 {date}',
+      'Checklist version {version} · only recorded evidence changes readiness.':'检查清单版本 {version} · 只有已记录的证据会改变就绪状态。',
+      'Blocked: {reason}':'受阻：{reason}','Waived: {reason}':'已豁免：{reason}','Evidence: {evidence}':'证据：{evidence}',
+      'For privacy, Nestly will not show this full token again. Save it now and share it only with {owner}.':'为保护隐私，Nestly 不会再次显示此完整令牌。请立即保存，并仅与{owner}分享。',
+      'the workspace owner':'工作区负责人',
+      'The invitation expires {date}.':'邀请将于 {date} 到期。'
+      ,'{count} firm available.':'有 {count} 家企业可用。','{count} firms available.':'有 {count} 家企业可用。',
+      '{count} firm in this scope. Open a firm for branch and customer detail.':'此范围内有 {count} 家企业。打开企业可查看分店和顾客详情。',
+      '{count} firms in this scope. Open a firm for branch and customer detail.':'此范围内有 {count} 家企业。打开企业可查看分店和顾客详情。',
+      '{firm} branches':'{firm}的分店','{firm} customers':'{firm}的顾客','Move {name} to stage':'将{name}移至阶段',
+      '{count} rows':'{count} 行','{count} ready':'{count} 行就绪','{count} review':'{count} 行待审核',
+      '{count} invalid':'{count} 行无效','{count} valid':'{count} 行有效','{count} unmapped':'{count} 行未映射',
+      '{count} conflicts':'{count} 行冲突',
+      '{count} days':'{count} 天',
+      'Branch · {name}':'分店 · {name}','{percent}% complete':'已完成 {percent}%','{percent}% onboarded':'已入驻 {percent}%',
+      '{fulfilled}/{total} required':'必填项 {fulfilled}/{total}','{count} blocked':'{count} 项受阻',
+      'Custom source field · {header}':'自定义来源字段 · {header}','Column {count}':'第 {count} 列',
+      'Block {label}':'阻止{label}','Move to {stage}':'移至{stage}','Confirm {stage}':'确认{stage}',
+      'Review {sector} bundle':'审核{sector}模块包','Edit {sector} modules':'编辑{sector}模块',
+      'Assign sector to {firm}':'为{firm}分配行业','Override modules for {firm}':'覆盖{firm}的模块',
+      '{inserted} inserted · {merged} merged · {skipped} skipped. Source lineage and batch provenance were retained.':'已插入 {inserted} 行 · 已合并 {merged} 行 · 已跳过 {skipped} 行。来源沿袭和批次溯源均已保留。',
+      '{count} subscriptions. Open a firm for invoices, attempts and available commands.':'{count} 条订阅。打开企业可查看发票、付款尝试及可用指令。'
+    }),
+    ms:Object.freeze({
+      '{from} to {to} · {firmCount} {firmNoun} · {branchCount} {branchNoun}{search}':'{from} hingga {to} · {firmCount} {firmNoun} · {branchCount} {branchNoun}{search}',
+      'firm':'firma','firms':'firma','branch':'cawangan','branches':'cawangan',
+      'Customer':'Pelanggan','Active customers':'Pelanggan aktif','Returning rate':'Kadar pelanggan kembali','Transactions':'Transaksi',
+      'Currency groups':'Kumpulan mata wang','Cash':'Tunai','Visits':'Lawatan','Lifetime last purchase':'Pembelian terakhir sepanjang hayat','Returning':'Pelanggan kembali',
+      'Pipeline leads':'Prospek dalam saluran','Deals won':'Urus niaga berjaya','Billing exceptions':'Pengecualian pengebilan',
+      'Business':'Firma','Billing Cadence':'Kitaran pengebilan','Required Items':'Item wajib','Started At':'Mula pada','Activated At':'Diaktifkan pada',
+      'In Progress':'Sedang berjalan','Blocked':'Disekat','{fulfilled} of {total}':'{fulfilled} daripada {total}',
+      ' · search “{query}”':' · carian “{query}”',
+      'Snapshot {date}. Money remains separated by currency.':'Petikan data {date}. Nilai kewangan kekal diasingkan mengikut mata wang.',
+      'The returning-rate denominator is active customers in this period.':'Penyebut kadar pelanggan kembali ialah pelanggan aktif dalam tempoh ini.',
+      '{from} to {to} · snapshot {date}':'{from} hingga {to} · petikan data {date}',
+      'Checklist version {version} · only recorded evidence changes readiness.':'Versi senarai semak {version} · hanya bukti yang direkodkan mengubah tahap kesediaan.',
+      'Blocked: {reason}':'Disekat: {reason}','Waived: {reason}':'Dikecualikan: {reason}','Evidence: {evidence}':'Bukti: {evidence}',
+      'For privacy, Nestly will not show this full token again. Save it now and share it only with {owner}.':'Demi privasi, Nestly tidak akan menunjukkan token penuh ini lagi. Simpan sekarang dan kongsikannya hanya dengan {owner}.',
+      'the workspace owner':'pemilik ruang kerja',
+      'The invitation expires {date}.':'Jemputan tamat tempoh pada {date}.'
+      ,'{count} firm available.':'{count} firma tersedia.','{count} firms available.':'{count} firma tersedia.',
+      '{count} firm in this scope. Open a firm for branch and customer detail.':'{count} firma dalam skop ini. Buka firma untuk butiran cawangan dan pelanggan.',
+      '{count} firms in this scope. Open a firm for branch and customer detail.':'{count} firma dalam skop ini. Buka firma untuk butiran cawangan dan pelanggan.',
+      '{firm} branches':'Cawangan {firm}','{firm} customers':'Pelanggan {firm}','Move {name} to stage':'Alihkan {name} ke peringkat',
+      '{count} rows':'{count} baris','{count} ready':'{count} sedia','{count} review':'{count} untuk semakan',
+      '{count} invalid':'{count} tidak sah','{count} valid':'{count} sah','{count} unmapped':'{count} belum dipetakan',
+      '{count} conflicts':'{count} konflik',
+      '{count} days':'{count} hari',
+      'Branch · {name}':'Cawangan · {name}','{percent}% complete':'{percent}% lengkap','{percent}% onboarded':'{percent}% diterima',
+      '{fulfilled}/{total} required':'{fulfilled}/{total} wajib','{count} blocked':'{count} disekat',
+      'Custom source field · {header}':'Medan sumber tersuai · {header}','Column {count}':'Lajur {count}',
+      'Block {label}':'Sekat {label}','Move to {stage}':'Alih ke {stage}','Confirm {stage}':'Sahkan {stage}',
+      'Review {sector} bundle':'Semak himpunan {sector}','Edit {sector} modules':'Sunting modul {sector}',
+      'Assign sector to {firm}':'Tetapkan sektor kepada {firm}','Override modules for {firm}':'Ganti modul untuk {firm}',
+      '{inserted} inserted · {merged} merged · {skipped} skipped. Source lineage and batch provenance were retained.':'{inserted} dimasukkan · {merged} digabungkan · {skipped} dilangkau. Salasilah sumber dan asal-usul kelompok dikekalkan.',
+      '{count} subscriptions. Open a firm for invoices, attempts and available commands.':'{count} langganan. Buka firma untuk invois, percubaan dan arahan yang tersedia.'
+    })
+  });
+  let platformLocale='en';
+  let platformLocaleVersion=0;
+  let lastRenderArgs=null;
+  const normalizePlatformLocale=value=>PLATFORM_LOCALES.includes(value)?value:'en';
+  function platformText(key,variables={}){
+    let value=PLATFORM_COPY[platformLocale]?.[key]
+      ??PLATFORM_COPY_MORE[platformLocale]?.[key]
+      ??PLATFORM_COPY_DETAIL[platformLocale]?.[key]
+      ??PLATFORM_COPY_STRICT[platformLocale]?.[key]
+      ??PLATFORM_COPY_META[platformLocale]?.[key]
+      ??PLATFORM_COPY_RENDERERS[platformLocale]?.[key]
+      ??key;
+    for(const [name,replacement] of Object.entries(variables)){
+      value=value.replaceAll(`{${name}}`,String(replacement));
+    }
+    return value;
+  }
+  const pt=platformText;
+  function platformErrorMessage(error,fallback='Please try again.'){
+    const known=String(error?.message||'').trim();
+    return known&&platformText(known)!==known?platformText(known):platformText(fallback);
+  }
+  const platformStatus=value=>pt(plainLabel(value));
+  const platformIntlLocale=()=>platformLocale==='zh-CN'?'zh-SG':platformLocale==='ms'?'ms-SG':'en-SG';
+  function setPlatformLocaleForTest(locale){
+    platformLocale=normalizePlatformLocale(locale);
+    return platformLocale;
+  }
+  async function loadPlatformLocale(sb){
+    try{
+      const data=await rpc(sb,'get_workspace_locale_preference_v97');
+      platformLocale=normalizePlatformLocale(data?.locale);
+      platformLocaleVersion=Number(data?.version||0);
+    }catch{
+      platformLocale='en';platformLocaleVersion=0;
+    }
+    if(globalObject.document?.documentElement)globalObject.document.documentElement.lang=platformLocale;
+  }
+  function localizedPlatformCUI(CUI){
+    const translateOptions=(options={},fields=[])=>{
+      const next={...options};
+      for(const field of fields)if(typeof next[field]==='string')next[field]=pt(next[field]);
+      return next;
+    };
+    return new Proxy(CUI,{get(target,property,receiver){
+      const value=Reflect.get(target,property,receiver);
+      if(typeof value!=='function')return value;
+      if(property==='pageHeader')return options=>value.call(target,translateOptions(options,['title','subtitle']));
+      if(property==='card')return options=>value.call(target,translateOptions(options,['title','description']));
+      if(property==='table')return options=>value.call(target,{
+        ...options,caption:typeof options?.caption==='string'?pt(options.caption):options?.caption,
+        headers:Array.isArray(options?.headers)?options.headers.map(header=>pt(header)):options?.headers
+      });
+      if(property==='emptyState'||property==='loadingState'||property==='errorState'){
+        return options=>value.call(target,translateOptions(options,['title','body','message','actionLabel']));
+      }
+      if(property==='action')return options=>value.call(target,translateOptions(options,['label','title']));
+      if(property==='field')return options=>{
+        const next=translateOptions(options,['label','hint','placeholder']);
+        if(Array.isArray(next.options))next.options=next.options.map(option=>(
+          option&&typeof option==='object'&&isPlatformInterfaceOption(option)
+            ?{...option,label:typeof option.label==='string'?pt(option.label):option.label}
+            :option
+        ));
+        return value.call(target,next);
+      };
+      if(property==='status')return (label,...args)=>value.call(target,typeof label==='string'?pt(label):label,...args);
+      if(property==='announce')return (message,options)=>value.call(target,pt(message),options);
+      return value.bind(target);
+    }});
+  }
+
   const routes = Object.freeze([
     {key:'overview',label:'Overview',shortLabel:'Overview',hash:'#/platform',icon:'home'},
     {key:'onboarding',label:'Onboarding',shortLabel:'Onboard',hash:'#/platform/onboarding',icon:'setup'},
@@ -57,6 +1748,20 @@
     'missing_required_feature','procurement_security_blocker','price',
     'internal_priority_changed','business_ceased','duplicate','bad_fit','other'
   ]);
+  const platformInterfaceOptionValues=new Set([
+    '', 'yes','no','on','off','all','none','inherit','disabled','r','rw',
+    'admin','sales_staff','super_admin','active','inactive','pending','approved','rejected',
+    'trialing','past_due','cancelled','paused','open','closed','completed','failed','queued',
+    'low','normal','high','urgent','critical','warning','info','clean','stale','overdue',
+    'call','whatsapp','email','meeting','inbound','outbound','insert','skip','review','merge',
+    'monthly','quarterly','half_yearly','annual','exclusive','inclusive','unspecified',
+    'senior','junior','accrued','paid','forfeited','draft','manual','automatic',
+    ...prospectStages.map(stage=>stage.key),...operationalLanes.map(lane=>lane.key),
+    ...sectorModuleCatalog.map(module=>module.key),...lostReasons
+  ]);
+  function isPlatformInterfaceOption(option){
+    return platformInterfaceOptionValues.has(String(option.value??''));
+  }
   const CRM=globalObject.NestlyPlatformCRMUtils||null;
   const priorityRank=Object.freeze({urgent:4,high:3,normal:2,low:1});
   const stageGateDefinitions=Object.freeze({
@@ -159,12 +1864,12 @@
       :canAccessModule(access,route.key));
   }
   function roleLabel(role) {
-    return role==='super_admin'?'Super admin':role==='sales_staff'?'Sales staff':'Admin';
+    return pt(role==='super_admin'?'Super admin':role==='sales_staff'?'Sales staff':'Admin');
   }
   function scopeLabel(scope) {
     return scope==='own_created_or_assigned'
-      ?'Only firms you created or are assigned to'
-      :'All platform records';
+      ?pt('Only firms you created or are assigned to')
+      :pt('All platform records');
   }
   function asArray(payload, keys = []) {
     if (Array.isArray(payload)) return payload;
@@ -188,7 +1893,7 @@
   function dateTime(value) {
     if (!value) return '—';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('en-SG',{
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString(platformIntlLocale(),{
       dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Singapore'
     });
   }
@@ -197,7 +1902,40 @@
   }
   function moduleLabel(value) {
     const key=String(value||'');
-    return sectorModuleByKey.get(key)?.label||plainLabel(key);
+    return pt(sectorModuleByKey.get(key)?.label||plainLabel(key));
+  }
+  function sectorModuleChipsHtml(modules) {
+    return asArray(modules).filter(module=>module!=='inventory')
+      .map(module=>`<span class="chip on" title="${escapeHtml(moduleLabel(module))}">${escapeHtml(moduleLabel(module))}</span>`).join('');
+  }
+  function localizedEmptyHtml(key,className='muted small') {
+    return `<p class="${escapeHtml(className)}">${escapeHtml(pt(key))}</p>`;
+  }
+  function localizedRouteNoteHtml(title,body) {
+    return `<div class="platform-route-note"><b>${escapeHtml(pt(title))}</b><p class="small">${escapeHtml(pt(body))}</p></div>`;
+  }
+  function enterpriseLoadMoreCustomersHtml(hasMore) {
+    return hasMore?`<div class="platform-actions"><button type="button" class="btn ghost sm" id="enterpriseCustomersMore">${escapeHtml(pt('Load more customers'))}</button></div>`:'';
+  }
+  function importMappingSummaryHtml(summary={}) {
+    return `<div class="platform-import-summary" role="status"><b>${escapeHtml(pt('{count} rows',{count:summary.total??0}))}</b><span>${escapeHtml(pt('{count} ready',{count:summary.ready??0}))}</span><span>${escapeHtml(pt('{count} review',{count:summary.review??0}))}</span><span>${escapeHtml(pt('{count} invalid',{count:summary.invalid??0}))}</span></div>`;
+  }
+  function importDecisionSummaryHtml(localSummary={},counts={}) {
+    return `<div class="platform-import-summary"><b>${escapeHtml(pt('{count} rows',{count:localSummary.total??0}))}</b><span>${escapeHtml(pt('{count} valid',{count:counts.valid??0}))}</span><span>${escapeHtml(pt('{count} unmapped',{count:counts.unmapped??0}))}</span><span>${escapeHtml(pt('{count} conflicts',{count:counts.conflicts??0}))}</span><span>${escapeHtml(pt('{count} invalid',{count:counts.invalid??0}))}</span></div>`;
+  }
+  function committedImportSummaryText({inserted=0,merged=0,skipped=0}={}) {
+    return pt('{inserted} inserted · {merged} merged · {skipped} skipped. Source lineage and batch provenance were retained.',{inserted,merged,skipped});
+  }
+  function billingFirmCardHtml(rows,CUI) {
+    return CUI.card({
+      title:'Firm billing',
+      description:rows.length?pt('{count} subscriptions. Open a firm for invoices, attempts and available commands.',{count:rows.length}):'No subscriptions returned.',
+      body:rows.length?CUI.table({
+        caption:'Platform billing',
+        headers:['Firm','Subscription','Payment','Cadence','Last paid','Next payment','Subtotal','GST','Total','Attempts'],
+        rows:billingFirmRows(rows,CUI)
+      }):CUI.emptyState({iconName:'reports',title:'No billing records',body:'The billing reader returned no subscriptions.'})
+    });
   }
   function operationalLaneFor(item) {
     if(item&&typeof item==='object'){
@@ -220,45 +1958,45 @@
   function platformContactActions(value,CUI,{compact=false}={}) {
     const phone=normalizePlatformPhone(value);
     if(!phone)return'';
-    const label=compact?'':'<span>Call</span>';
-    const whatsappLabel=compact?'':'<span>WhatsApp</span>';
+    const label=compact?'':`<span>${escapeHtml(pt('Call'))}</span>`;
+    const whatsappLabel=compact?'':`<span>${escapeHtml(pt('WhatsApp'))}</span>`;
     return `<div class="platform-contact-actions" data-card-actions>
-      <a class="btn ghost sm" href="tel:${escapeHtml(phone.tel)}" title="Call" aria-label="Call ${escapeHtml(phone.display)}">${CUI.icon('till',{size:16})}${label}</a>
-      <a class="btn ghost sm" href="https://wa.me/${escapeHtml(phone.wa)}" target="_blank" rel="noopener" title="WhatsApp" aria-label="Open WhatsApp chat with ${escapeHtml(phone.display)}">${CUI.icon('customers',{size:16})}${whatsappLabel}</a>
+      <a class="btn ghost sm" href="tel:${escapeHtml(phone.tel)}" title="${escapeHtml(pt('Call'))}" aria-label="${escapeHtml(pt('Call'))} ${escapeHtml(phone.display)}">${CUI.icon('till',{size:16})}${label}</a>
+      <a class="btn ghost sm" href="https://wa.me/${escapeHtml(phone.wa)}" target="_blank" rel="noopener" title="${escapeHtml(pt('WhatsApp'))}" aria-label="${escapeHtml(pt('Open WhatsApp chat with'))} ${escapeHtml(phone.display)}">${CUI.icon('customers',{size:16})}${whatsappLabel}</a>
     </div>`;
   }
   function firmOwnerPhone(firm) {
     return firm.boss_phone||firm.owner_phone||firm.primary_owner_phone
       ||firm.primary_contact_phone||firm.primary_contact?.phone||'';
   }
-  function systemUpdateRequired(CUI,title='This platform area') {
+  function systemUpdateRequired(CUI,title=pt('This platform area')) {
     return unavailable(CUI,{
-      title,subtitle:'This console is ready, but its platform data contract is not available in this environment.',
-      iconName:'info',heading:'System update required',
-      body:'No data was changed. Apply the corresponding reviewed platform backend phase, then retry.'
+      title,subtitle:pt('This console is ready, but its platform data contract is not available in this environment.'),
+      iconName:'info',heading:pt('System update required'),
+      body:pt('No data was changed. Apply the corresponding reviewed platform backend phase, then retry.')
     });
   }
   function showError(host,error,CUI,title) {
     host.innerHTML = error?.platformUpdateRequired
       ? systemUpdateRequired(CUI,title)
-      : CUI.errorState({title:`${title} unavailable`,message:error?.message||'Please try again.'});
+      : CUI.errorState({title:pt('{title} unavailable',{title:pt(title)}),message:platformErrorMessage(error,'Please try again.')});
     CUI.focusRoute(host);
   }
   function closeOverlay(overlay,deactivate) {
     if (deactivate) deactivate();
     else overlay.remove();
   }
-  function modal({title,body,submitLabel='Continue',onSubmit,CUI}) {
+  function modal({title,body,submitLabel=pt('Continue'),onSubmit,CUI}) {
     const overlay=document.createElement('div');
     overlay.className='platform-modal';overlay.tabIndex=-1;
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
     overlay.setAttribute('aria-labelledby','platformModalTitle');
     overlay.innerHTML=`<div class="platform-modal-panel"><div class="platform-drawer-head">
-      <div><h1 id="platformModalTitle" style="font-size:1.35rem">${escapeHtml(title)}</h1></div>
-      <button type="button" class="btn ghost sm platform-drawer-close" data-close aria-label="Close dialog">${CUI.icon('close',{size:18})}</button>
+      <div><h1 id="platformModalTitle" style="font-size:1.35rem">${escapeHtml(pt(title))}</h1></div>
+      <button type="button" class="btn ghost sm platform-drawer-close" data-close aria-label="${escapeHtml(pt('Close dialog'))}">${CUI.icon('close',{size:18})}</button>
     </div><form data-form>${body}<div data-error role="alert"></div><div class="platform-form-actions">
-      <button type="button" class="btn ghost" data-close>Cancel</button>
-      <button type="submit" class="btn" data-submit>${escapeHtml(submitLabel)}</button>
+      <button type="button" class="btn ghost" data-close>${escapeHtml(pt('Cancel'))}</button>
+      <button type="submit" class="btn" data-submit>${escapeHtml(pt(submitLabel))}</button>
     </div></form></div>`;
     document.body.appendChild(overlay);
     let deactivate;
@@ -269,18 +2007,18 @@
       const submit=overlay.querySelector('[data-submit]'),errorHost=overlay.querySelector('[data-error]');
       submit.disabled=true;errorHost.innerHTML='';
       try{await onSubmit(new FormData(event.currentTarget),{overlay,close,errorHost,submit})}
-      catch(error){errorHost.innerHTML=`<div class="err">${escapeHtml(error?.message||'That action could not be completed.')}</div>`;submit.disabled=false}
+      catch(error){errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'That action could not be completed.'))}</div>`;submit.disabled=false}
     };
     deactivate=CUI.activateDialog(overlay,{onClose:close});
     return overlay;
   }
   function previewThenConfirm({title,preview,CUI,onConfirm}) {
     modal({
-      title,submitLabel:'Confirm change',CUI,
-      body:`<div class="platform-preview"><b>Preview</b><pre>${escapeHtml(JSON.stringify(preview,null,2))}</pre></div>
-        <label class="row" style="align-items:flex-start;margin-top:14px;color:var(--ink)"><input name="confirmed" type="checkbox" value="yes" required style="width:20px;min-width:20px;min-height:20px"><span>I reviewed this preview and want to apply it.</span></label>`,
+      title,submitLabel:pt('Confirm change'),CUI,
+      body:`<div class="platform-preview"><b>${escapeHtml(pt('Preview'))}</b><pre>${escapeHtml(JSON.stringify(preview,null,2))}</pre></div>
+        <label class="row" style="align-items:flex-start;margin-top:14px;color:var(--ink)"><input name="confirmed" type="checkbox" value="yes" required style="width:20px;min-width:20px;min-height:20px"><span>${escapeHtml(pt('I reviewed this preview and want to apply it.'))}</span></label>`,
       onSubmit:async(form,controls)=>{
-        if(form.get('confirmed')!=='yes')throw new Error('Review and confirm the preview first.');
+        if(form.get('confirmed')!=='yes')throw new Error(pt('Review and confirm the preview first.'));
         await onConfirm(controls);
       }
     });
@@ -299,7 +2037,7 @@
 
   function navigationHtml(CUI, activeKey, allowedRoutes, mobile = false) {
     const className = mobile ? 'platform-mobile-nav' : 'platform-nav';
-    const label = mobile ? 'Platform sections' : 'Platform navigation';
+    const label = pt(mobile ? 'Mobile navigation' : 'Main navigation');
     if(mobile){
       const primary=allowedRoutes.filter(route=>['overview','onboarding','firms','reports'].includes(route.key)).slice(0,4);
       const secondary=allowedRoutes.filter(route=>!primary.includes(route));
@@ -307,21 +2045,28 @@
       return `<nav class="${className}" aria-label="${label}" style="--platform-mobile-count:${Math.min(primary.length+(secondary.length?1:0),5)}">
         ${primary.map(route=>{
           const active=route.key===activeKey;
-          return `<a href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:19})}<span>${escapeHtml(route.shortLabel)}</span></a>`;
+          return `<a href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:19})}<span>${escapeHtml(pt(route.shortLabel))}</span></a>`;
         }).join('')}
         ${secondary.length?`<details class="platform-mobile-more"${moreActive?' data-active="true"':''}>
-          <summary${moreActive?' aria-current="page"':''}>${CUI.icon('setup',{size:19})}<span>More</span></summary>
+          <summary${moreActive?' aria-current="page"':''}>${CUI.icon('setup',{size:19})}<span>${escapeHtml(pt('More'))}</span></summary>
           <div class="platform-mobile-more-menu" role="list">${secondary.map(route=>{
             const active=route.key===activeKey;
-            return `<a role="listitem" href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:18})}<span>${escapeHtml(route.label)}</span></a>`;
+            return `<a role="listitem" href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:18})}<span>${escapeHtml(pt(route.label))}</span></a>`;
           }).join('')}</div>
         </details>`:''}
       </nav>`;
     }
     return `<nav class="${className}" aria-label="${label}">${allowedRoutes.map(route => {
       const active = route.key === activeKey;
-      return `<a href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:19})}<span>${escapeHtml(mobile?route.shortLabel:route.label)}</span></a>`;
+      return `<a href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:19})}<span>${escapeHtml(pt(mobile?route.shortLabel:route.label))}</span></a>`;
     }).join('')}</nav>`;
+  }
+
+  function platformLocaleSwitcherHtml(){
+    return `<div class="platform-locale-switcher" role="group" aria-label="${escapeHtml(pt('Language'))}">
+      ${PLATFORM_LOCALES.map(locale=>`<button type="button" data-platform-locale="${locale}" aria-pressed="${platformLocale===locale}">${escapeHtml(PLATFORM_LOCALE_LABELS[locale])}</button>`).join('')}
+      <span class="sr-only" id="platformLocaleStatus" role="status" aria-live="polite"></span>
+    </div>`;
   }
 
   function wordmarkHtml(brand) {
@@ -333,22 +2078,23 @@
   function shellHtml({CUI,brand,activeKey,workspaceHash,access,allowedRoutes}) {
     const route = routes.find(item => item.key === activeKey) || routes[0];
     return `<div class="platform-console">
-      <a class="skip-link" href="#platformMain">Skip to platform content</a>
-      <aside class="platform-rail" aria-label="Platform console">
-        <div class="platform-brand"><a href="#/platform" class="logo" aria-label="${escapeHtml(brand.productName)} platform home">${wordmarkHtml(brand)}</a><span class="platform-tag">Platform</span></div>
-        <div class="platform-access-summary" aria-label="Current platform access">
+      <a class="skip-link" href="#platformMain">${escapeHtml(pt('Skip to platform content'))}</a>
+      <aside class="platform-rail" aria-label="${escapeHtml(pt('Platform console'))}">
+        <div class="platform-brand"><a href="#/platform" class="logo" aria-label="${escapeHtml(brand.productName)} ${escapeHtml(pt('Platform'))}">${wordmarkHtml(brand)}</a><span class="platform-tag">${escapeHtml(pt('Platform'))}</span></div>
+        <div class="platform-access-summary" aria-label="${escapeHtml(pt('Current platform access'))}">
           <b>${escapeHtml(roleLabel(access.role))}</b>
-          <span>${escapeHtml(scopeLabel(access.scope))} · ${activeKey==='access'||modulePermission(access,activeKey)==='rw'?'Read and write':'Read only'}</span>
+          <span>${escapeHtml(scopeLabel(access.scope))} · ${escapeHtml(pt(activeKey==='access'||modulePermission(access,activeKey)==='rw'?'Read and write':'Read only'))}</span>
         </div>
         ${navigationHtml(CUI,activeKey,allowedRoutes)}
-        <div class="platform-rail-foot"><a class="platform-back" href="${escapeHtml(workspaceHash)}">${CUI.icon('back',{size:17})}<span>Back to workspace</span></a></div>
+        <div class="platform-rail-foot"><a class="platform-back" href="${escapeHtml(workspaceHash)}">${CUI.icon('back',{size:17})}<span>${escapeHtml(pt('Back to workspace'))}</span></a></div>
       </aside>
       <div class="platform-column">
         <header class="platform-topbar">
-          <div class="platform-topbar-title">${escapeHtml(route.label)}</div>
+          <div class="platform-topbar-title">${escapeHtml(pt(route.label))}</div>
           <div class="platform-topbar-actions">
-            <a class="btn ghost sm" href="${escapeHtml(workspaceHash)}" aria-label="Back to workspace">${CUI.icon('back',{size:17})}<span>Workspace</span></a>
-            <button class="btn ghost sm" type="button" id="platformSignOut">${CUI.icon('close',{size:17})}<span>Sign out</span></button>
+            ${platformLocaleSwitcherHtml()}
+            <a class="btn ghost sm" href="${escapeHtml(workspaceHash)}" aria-label="${escapeHtml(pt('Back to workspace'))}">${CUI.icon('back',{size:17})}<span>${escapeHtml(pt('Workspace'))}</span></a>
+            <button class="btn ghost sm" type="button" id="platformSignOut">${CUI.icon('close',{size:17})}<span>${escapeHtml(pt('Sign out'))}</span></button>
           </div>
         </header>
         <main class="platform-main" id="platformMain" tabindex="-1"></main>
@@ -361,12 +2107,12 @@
     return `<main class="platform-denied" id="platformMain" tabindex="-1">
       <div class="platform-denied-brand logo">${wordmarkHtml(brand||{})}</div>
       ${CUI.errorState({
-        title:'Platform access unavailable',
-        message:'This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.'
+        title:pt('Platform access unavailable'),
+        message:pt('This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.')
       })}
       <div class="platform-actions">
-        <a class="btn ghost" href="${escapeHtml(workspaceHash)}">Back to workspace</a>
-        <button type="button" class="btn ghost" id="platformDeniedSignOut">Sign out</button>
+        <a class="btn ghost" href="${escapeHtml(workspaceHash)}">${escapeHtml(pt('Back to workspace'))}</a>
+        <button type="button" class="btn ghost" id="platformDeniedSignOut">${escapeHtml(pt('Sign out'))}</button>
       </div>
     </main>`;
   }
@@ -389,7 +2135,7 @@
 
   function firmRows(rows, CUI) {
     return rows.map(row => [
-      `<b>${escapeHtml(row.name || 'Unnamed firm')}</b>`,
+      `<b>${escapeHtml(row.name || pt('Unnamed firm'))}</b>`,
       escapeHtml(row.industry || '—'),
       String(row.branch_count ?? 0),
       String(row.staff_count ?? 0),
@@ -401,13 +2147,13 @@
   }
 
   function loading(CUI, title, subtitle, iconName) {
-    return CUI.loadingState({title,body:subtitle,iconName});
+    return CUI.loadingState({title:pt(title),body:pt(subtitle),iconName});
   }
 
   function unavailable(CUI, {title,subtitle,iconName,heading,body}) {
-    return `${CUI.pageHeader({title,subtitle,iconName})}${CUI.card({
+    return `${CUI.pageHeader({title:pt(title),subtitle:pt(subtitle),iconName})}${CUI.card({
       className:'platform-state-card',
-      body:CUI.emptyState({iconName,title:heading,body})
+      body:CUI.emptyState({iconName,title:pt(heading),body:pt(body)})
     })}`;
   }
 
@@ -424,13 +2170,13 @@
       subtitle:'A current read-only view of firms and subscription projections already available to the platform.',
       iconName:'platform'
     })}
-      <section class="platform-kpis" aria-label="Platform summary">
+      <section class="platform-kpis" aria-label="${escapeHtml(pt('Platform summary'))}">
         ${[
           ['Firms',totals.firms,'branch'],
           ['Billable seats',totals.seats,'staff'],
           ['Projected monthly',currency(totals.monthly),'reports'],
           ['Trials',totals.trials,'retention']
-        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}
+        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}
       </section>
       <div class="platform-section-grid">
         ${CUI.card({
@@ -446,10 +2192,10 @@
         ${CUI.card({
           title:'What this view means',
           body:`<dl class="platform-context-list">
-            <div><dt>Revenue</dt><dd>Projection only</dd></div>
-            <div><dt>Payments collected</dt><dd>Not available</dd></div>
-            <div><dt>Onboarding lifecycle</dt><dd>Evidence controlled</dd></div>
-            <div><dt>Automation runs</dt><dd>Not connected</dd></div>
+            <div><dt>${escapeHtml(pt('Revenue'))}</dt><dd>${escapeHtml(pt('Projection only'))}</dd></div>
+            <div><dt>${escapeHtml(pt('Payments collected'))}</dt><dd>${escapeHtml(pt('Not available'))}</dd></div>
+            <div><dt>${escapeHtml(pt('Onboarding lifecycle'))}</dt><dd>${escapeHtml(pt('Evidence controlled'))}</dd></div>
+            <div><dt>${escapeHtml(pt('Automation runs'))}</dt><dd>${escapeHtml(pt('Not connected'))}</dd></div>
           </dl>`
         })}
       </div>`;
@@ -462,7 +2208,7 @@
       iconName:'branch'
     })}${CUI.card({
       title:'Firm directory',
-      description:rows.length?`${rows.length} firm${rows.length===1?'':'s'} available.`:'The platform roster is empty.',
+      description:rows.length?pt(rows.length===1?'{count} firm available.':'{count} firms available.',{count:rows.length}):'The platform roster is empty.',
       body:rows.length?CUI.table({
         caption:'Platform firm directory',
         headers:['Firm','Sector','Branches','Staff','Customers','Seats','Subscription','Projected monthly'],
@@ -477,6 +2223,12 @@
     ['facial','Facial / Spa'],['massage','Massage'],['fitness','Fitness'],
     ['retail','Retail'],['other','Other']
   ]);
+  function sectorLabel(value) {
+    const source=String(value||'').trim();
+    if(!source)return'—';
+    const controlled=enterpriseSectors.find(([key])=>key===source.toLowerCase());
+    return controlled?pt(controlled[1]):source;
+  }
   function singaporeIsoDate(date = new Date()) {
     const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{
       timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'
@@ -532,7 +2284,7 @@
       cursor=page.has_more&&next.created_at&&next.business_id?next:null;
       if(cursor){
         const token=`${cursor.created_at}:${cursor.business_id}`;
-        if(seen.has(`cursor:${token}`))throw new Error('Firm paging did not advance.');
+        if(seen.has(`cursor:${token}`))throw new Error(pt('Firm paging did not advance.'));
         seen.add(`cursor:${token}`);
       }
     }while(cursor);
@@ -567,7 +2319,7 @@
         const next=asObject(payload.next_cursor);
         if(next.id){
           const token=`${next.updated_at||''}:${next.id}`;
-          if(seenCursors.has(token))throw new Error('Firm directory paging did not advance.');
+          if(seenCursors.has(token))throw new Error(pt('Firm directory paging did not advance.'));
           seenCursors.add(token);cursor=next;
         }else cursor=null;
       }while(cursor);
@@ -605,7 +2357,7 @@
       cursor=page.has_more&&next.created_at&&next.client_id?next:null;
       if(cursor){
         const token=`${cursor.created_at}:${cursor.client_id}`;
-        if(seenCursors.has(token))throw new Error('Customer paging did not advance.');
+        if(seenCursors.has(token))throw new Error(pt('Customer paging did not advance.'));
         seenCursors.add(token);
       }
     }while(cursor);
@@ -635,15 +2387,15 @@
     return firms.map(firm=>[
       `<button type="button" class="platform-link-button" data-enterprise-firm="${escapeHtml(firmId(firm))}"><b>${escapeHtml(firm.name||firm.legal_name||'Unnamed firm')}</b></button>
         ${firmRegistrationNumber(firm)?`<span class="muted small platform-firm-secondary">${escapeHtml(firmRegistrationNumber(firm))}</span>`:''}`,
-      escapeHtml(plainLabel(firm.sector_key||firm.industry)),
+      escapeHtml(sectorLabel(firm.sector_key||firm.industry)),
       `<span>${escapeHtml(firmOwnerName(firm)||'—')}</span>${firmOwnerEmail(firm)?`<span class="muted small platform-firm-secondary">${escapeHtml(firmOwnerEmail(firm))}</span>`:''}`,
-      platformContactActions(firmOwnerPhone(firm),CUI,{compact:true})||'<span class="muted small">No phone</span>',
+      platformContactActions(firmOwnerPhone(firm),CUI,{compact:true})||`<span class="muted small">${escapeHtml(pt("No phone"))}</span>`,
       String(firm.branch_count??asArray(firm.branches).length),
       String(firm.customer_count??asArray(firm.customers).length),
       currency(firm.summary?.net_revenue_cents,firm.currency||'SGD'),
       String(firm.summary?.returning_customers??0),
       String(firm.summary?.completed_transactions??0),
-      `<button type="button" class="btn ghost sm" data-enterprise-firm="${escapeHtml(firmId(firm))}">${CUI.icon('forward',{size:16})}<span>Open</span></button>`
+      `<button type="button" class="btn ghost sm" data-enterprise-firm="${escapeHtml(firmId(firm))}">${CUI.icon('forward',{size:16})}<span>${escapeHtml(pt("Open"))}</span></button>`
     ]);
   }
   function enterpriseBranchOptions(filters,catalog) {
@@ -663,29 +2415,31 @@
       <form class="card platform-enterprise-filters" id="enterpriseFilters">
         <div class="platform-enterprise-filter-grid">
           <div class="platform-enterprise-search">${CUI.field({id:'enterpriseSearch',label:'Find a firm or customer',type:'search',value:filters.search,placeholder:'Name, sector, UEN, owner phone or email'})}
-            <p class="muted small">Search is applied on the server across the complete directory, so it remains usable as the platform grows.</p>
+            <p class="muted small">${escapeHtml(pt("Search is applied on the server across the complete directory, so it remains usable as the platform grows."))}</p>
           </div>
           ${CUI.field({id:'enterpriseSector',label:'Sector',control:'select',options:enterpriseSectors.map(([value,label])=>({value,label,selected:value===filters.sector}))})}
-          <div class="cui-field platform-enterprise-firms"><label for="enterpriseBusinesses">Firm scope <span class="muted small">(select one or more)</span></label>
-            <select id="enterpriseBusinesses" multiple size="5">${catalog.map(firm=>`<option value="${escapeHtml(firmId(firm))}"${filters.businesses.includes(firmId(firm))?' selected':''}>${escapeHtml(firm.name)} · ${escapeHtml(plainLabel(firm.industry))}</option>`).join('')}</select>
-            <p class="muted small">No selection means every firm in the sector.</p>
+          <div class="cui-field platform-enterprise-firms"><label for="enterpriseBusinesses">${escapeHtml(pt('Firm scope'))} <span class="muted small">${escapeHtml(pt("(select one or more)"))}</span></label>
+            <select id="enterpriseBusinesses" multiple size="5">${catalog.map(firm=>`<option value="${escapeHtml(firmId(firm))}"${filters.businesses.includes(firmId(firm))?' selected':''}>${escapeHtml(firm.name)} · ${escapeHtml(sectorLabel(firm.industry))}</option>`).join('')}</select>
+            <p class="muted small">${escapeHtml(pt("No selection means every firm in the sector."))}</p>
           </div>
-          <div class="cui-field"><label for="enterpriseBranch">Branch</label><select id="enterpriseBranch"${filters.businesses.length===1?'':' disabled'}>
-            <option value="">Whole firm</option>${branches.map(branch=>`<option value="${escapeHtml(branch.branch_id)}"${branch.branch_id===filters.branch?' selected':''}>${escapeHtml(branch.name)}</option>`).join('')}
-          </select><p class="muted small">${filters.businesses.length===1?'Choose one branch or keep the whole firm.':'Select exactly one firm to filter by branch.'}</p></div>
+          <div class="cui-field"><label for="enterpriseBranch">${escapeHtml(pt("Branch"))}</label><select id="enterpriseBranch"${filters.businesses.length===1?'':' disabled'}>
+            <option value="">${escapeHtml(pt("Whole firm"))}</option>${branches.map(branch=>`<option value="${escapeHtml(branch.branch_id)}"${branch.branch_id===filters.branch?' selected':''}>${escapeHtml(branch.name)}</option>`).join('')}
+          </select><p class="muted small">${escapeHtml(pt(filters.businesses.length===1?'Choose one branch or keep the whole firm.':'Select exactly one firm to filter by branch.'))}</p></div>
           ${CUI.field({id:'enterpriseFrom',label:'From',type:'date',value:filters.from})}
           ${CUI.field({id:'enterpriseTo',label:'To',type:'date',value:filters.to})}
         </div>
         <div class="platform-actions">
-          <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>Apply scope</span></button>
-          <button class="btn ghost" type="button" id="enterpriseClear">Clear</button>
-          ${canGenerateReport?`<button class="btn ghost" type="button" id="enterpriseGenerateReport"${firms.length?'':' disabled title="No matching firms are available to report."'}>${CUI.icon('reports',{size:17})}<span>Generate detailed report</span></button>`:''}
+          <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt("Apply scope"))}</span></button>
+          <button class="btn ghost" type="button" id="enterpriseClear">${escapeHtml(pt("Clear"))}</button>
+          ${canGenerateReport?`<button class="btn ghost" type="button" id="enterpriseGenerateReport"${firms.length?'':` disabled title="${escapeHtml(pt('No matching firms are available to report.'))}"`}>${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt("Generate detailed report"))}</span></button>`:''}
         </div>
       </form>
-      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Complete snapshot</b><p class="small">${escapeHtml(pagination.total_firms??firms.length)} matching firm${Number(pagination.total_firms??firms.length)===1?'':'s'} as at ${escapeHtml(dateTime(payload.snapshot_at))}. Search applies consistently to the directory and report.</p></div></div>
+      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Complete snapshot"))}</b><p class="small">${escapeHtml(pt('{count} matching firms as at {date}. Search applies consistently to the directory and report.',{
+        count:pagination.total_firms??firms.length,date:dateTime(payload.snapshot_at)
+      }))}</p></div></div>
       ${CUI.card({
         title:'Firm, branch and customer directory',
-        description:firms.length?`${firms.length} firm${firms.length===1?'':'s'} in this scope. Open a firm for branch and customer detail.`:'No firms match this scope.',
+        description:firms.length?pt(firms.length===1?'{count} firm in this scope. Open a firm for branch and customer detail.':'{count} firms in this scope. Open a firm for branch and customer detail.',{count:firms.length}):'No firms match this scope.',
         body:firms.length?CUI.table({
           caption:'Enterprise firm directory',
           headers:['Firm / UEN','Sector','Owner','Contact','Branches','Customers','Net revenue','Returning','Transactions',''],
@@ -700,36 +2454,36 @@
     const ownerPhone=firmOwnerPhone(firm);
     return `<div class="platform-detail-grid">
       ${CUI.card({title:'Scope summary',body:`<dl class="platform-context-list">
-        <div><dt>Net revenue</dt><dd>${escapeHtml(currency(firm.summary?.net_revenue_cents,firm.currency||'SGD'))}</dd></div>
-        <div><dt>Cash collected</dt><dd>${escapeHtml(currency(firm.summary?.cash_collected_cents,firm.currency||'SGD'))}</dd></div>
-        <div><dt>Completed transactions</dt><dd>${escapeHtml(firm.summary?.completed_transactions??0)}</dd></div>
-        <div><dt>Returning customers</dt><dd>${escapeHtml(firm.summary?.returning_customers??0)}</dd></div>
+        <div><dt>${escapeHtml(pt("Net revenue"))}</dt><dd>${escapeHtml(currency(firm.summary?.net_revenue_cents,firm.currency||'SGD'))}</dd></div>
+        <div><dt>${escapeHtml(pt("Cash collected"))}</dt><dd>${escapeHtml(currency(firm.summary?.cash_collected_cents,firm.currency||'SGD'))}</dd></div>
+        <div><dt>${escapeHtml(pt("Completed transactions"))}</dt><dd>${escapeHtml(firm.summary?.completed_transactions??0)}</dd></div>
+        <div><dt>${escapeHtml(pt("Returning customers"))}</dt><dd>${escapeHtml(firm.summary?.returning_customers??0)}</dd></div>
       </dl>`})}
       ${CUI.card({title:'Firm record',body:`<dl class="platform-context-list">
-        <div><dt>Legal name</dt><dd>${escapeHtml(firm.legal_name||firm.name||'—')}</dd></div>
-        <div><dt>UEN</dt><dd>${escapeHtml(firmRegistrationNumber(firm)||'—')}</dd></div>
-        <div><dt>Sector</dt><dd>${escapeHtml(plainLabel(firm.sector_key||firm.industry))}</dd></div>
-        <div><dt>Owner / boss</dt><dd>${escapeHtml(firmOwnerName(firm)||'—')}</dd></div>
-        <div><dt>Owner email</dt><dd>${firmOwnerEmail(firm)?`<a href="mailto:${escapeHtml(firmOwnerEmail(firm))}">${escapeHtml(firmOwnerEmail(firm))}</a>`:'—'}</dd></div>
-        <div><dt>Branches</dt><dd>${escapeHtml(firm.branch_count??branches.length)}</dd></div>
-        <div><dt>Staff</dt><dd>${escapeHtml(firm.staff_count??0)}</dd></div>
-        <div><dt>Customers</dt><dd>${escapeHtml(firm.customer_count??pagination.total_customers??customers.length)}</dd></div>
+        <div><dt>${escapeHtml(pt("Legal name"))}</dt><dd>${escapeHtml(firm.legal_name||firm.name||'—')}</dd></div>
+        <div><dt>${escapeHtml(pt("UEN"))}</dt><dd>${escapeHtml(firmRegistrationNumber(firm)||'—')}</dd></div>
+        <div><dt>${escapeHtml(pt("Sector"))}</dt><dd>${escapeHtml(sectorLabel(firm.sector_key||firm.industry))}</dd></div>
+        <div><dt>${escapeHtml(pt("Owner / boss"))}</dt><dd>${escapeHtml(firmOwnerName(firm)||'—')}</dd></div>
+        <div><dt>${escapeHtml(pt("Owner email"))}</dt><dd>${firmOwnerEmail(firm)?`<a href="mailto:${escapeHtml(firmOwnerEmail(firm))}">${escapeHtml(firmOwnerEmail(firm))}</a>`:'—'}</dd></div>
+        <div><dt>${escapeHtml(pt("Branches"))}</dt><dd>${escapeHtml(firm.branch_count??branches.length)}</dd></div>
+        <div><dt>${escapeHtml(pt("Staff"))}</dt><dd>${escapeHtml(firm.staff_count??0)}</dd></div>
+        <div><dt>${escapeHtml(pt("Customers"))}</dt><dd>${escapeHtml(firm.customer_count??pagination.total_customers??customers.length)}</dd></div>
       </dl>${platformContactActions(ownerPhone,CUI)}`})}
     </div>
-    <section class="platform-detail-section"><h2>Branches</h2>${branches.length?CUI.table({
-      caption:`${firm.name} branches`,
+    <section class="platform-detail-section"><h2>${escapeHtml(pt("Branches"))}</h2>${branches.length?CUI.table({
+      caption:pt('{firm} branches',{firm:firm.name}),
       headers:['Branch','Status','Customers','Staff','Net revenue','Transactions',''],
       rows:branches.map(branch=>[
-        `<b>${escapeHtml(branch.name)}</b>${branch.is_default?' <span class="pill">Default</span>':''}`,
+        `<b>${escapeHtml(branch.name)}</b>${branch.is_default?` <span class="pill">${escapeHtml(pt("Default"))}</span>`:''}`,
         CUI.status(branch.active?'Active':'Inactive',branch.active?'ok':'off'),
         String(branch.customer_count??0),String(branch.staff_count??0),
         currency(branch.net_revenue_cents,firm.currency||'SGD'),
         String(branch.completed_transactions??0),
-        `<button type="button" class="btn ghost sm" data-enterprise-branch="${escapeHtml(branch.branch_id)}">View customers</button>`
+        `<button type="button" class="btn ghost sm" data-enterprise-branch="${escapeHtml(branch.branch_id)}">${escapeHtml(pt("View customers"))}</button>`
       ])
     }):CUI.emptyState({iconName:'branch',title:'No branches',body:'No branch records were returned.'})}</section>
-    <section class="platform-detail-section"><div class="platform-list-row"><h2>Customers</h2><span class="muted small">${escapeHtml(pagination.total_customers??customers.length)} total in scope</span></div>${customers.length?CUI.table({
-      caption:`${firm.name} customers`,
+    <section class="platform-detail-section"><div class="platform-list-row"><h2>${escapeHtml(pt("Customers"))}</h2><span class="muted small">${escapeHtml(pt('{count} total in scope',{count:pagination.total_customers??customers.length}))}</span></div>${customers.length?CUI.table({
+      caption:pt('{firm} customers',{firm:firm.name}),
       headers:['Customer','Contact','Net revenue','Transactions','Visits','First purchase','Last purchase'],
       rows:customers.map(customer=>[
         `<b>${escapeHtml(customer.full_name)}</b>`,
@@ -739,7 +2493,7 @@
         escapeHtml(dateTime(customer.first_purchase_at)),escapeHtml(dateTime(customer.last_purchase_at))
       ])
     }):CUI.emptyState({iconName:'customers',title:'No customers in this scope',body:'Choose the whole firm or another branch/date range.'})}
-    ${pagination.has_more?'<div class="platform-actions"><button type="button" class="btn ghost sm" id="enterpriseCustomersMore">Load more customers</button></div>':''}</section>`;
+    ${enterpriseLoadMoreCustomersHtml(pagination.has_more)}</section>`;
   }
   function workspaceControlTone(value) {
     return value==='approved'||value==='active'||value==='open'?'ok'
@@ -748,15 +2502,15 @@
   function moduleControlRows(effective,CUI,{branchId=null,canWrite=false}={}) {
     const modules=asArray(effective?.modules)
       .filter(module=>!['inventory','customerintel'].includes(module.module_key));
-    if(!modules.length)return'<p class="muted small">No business modules are enabled in this scope.</p>';
+    if(!modules.length)return`<p class="muted small">${escapeHtml(pt("No business modules are enabled in this scope."))}</p>`;
     return CUI.table({
       caption:branchId?'Branch effective modules':'Firm effective modules',
       headers:['Module','Access','Source',...(canWrite?['']:[])],
       rows:modules.map(module=>[
         `<b>${escapeHtml(moduleLabel(module.module_key))}</b>`,
         CUI.status(module.mode==='rw'?'Read & write':module.mode==='r'?'Read only':'Off',module.mode==='rw'?'ok':module.mode==='r'?'new':'off'),
-        escapeHtml(plainLabel(module.source||'inherited')),
-        ...(canWrite?[`<button type="button" class="btn ghost sm" data-module-control="${escapeHtml(module.module_key)}" data-branch-id="${escapeHtml(branchId||'')}" data-module-version="${escapeHtml(module.version??'')}">Edit</button>`]:[])
+        escapeHtml(platformStatus(module.source||'inherited')),
+        ...(canWrite?[`<button type="button" class="btn ghost sm" data-module-control="${escapeHtml(module.module_key)}" data-branch-id="${escapeHtml(branchId||'')}" data-module-version="${escapeHtml(module.version??'')}">${escapeHtml(pt("Edit"))}</button>`]:[])
       ])
     });
   }
@@ -768,33 +2522,33 @@
     const subscriptionState=subscription.state||'unknown';
     const contact=normalizePlatformPhone(representative.hotline_phone);
     return `<section class="card platform-detail-section platform-governance" aria-labelledby="firmGovernanceTitle">
-      <div class="platform-list-row"><div><h2 id="firmGovernanceTitle">Workspace control</h2><p class="muted small">Approval, payment access and module policy are enforced by the server as well as this console.</p></div>${CUI.status(control.workspace_access?'Workspace open':'Workspace blocked',control.workspace_access?'ok':'no')}</div>
+      <div class="platform-list-row"><div><h2 id="firmGovernanceTitle">${escapeHtml(pt("Workspace control"))}</h2><p class="muted small">${escapeHtml(pt("Approval, payment access and module policy are enforced by the server as well as this console."))}</p></div>${CUI.status(control.workspace_access?'Workspace open':'Workspace blocked',control.workspace_access?'ok':'no')}</div>
       <div class="platform-detail-grid">
-        ${CUI.card({title:'Firm approval',body:`<div class="platform-control-status">${CUI.status(plainLabel(approvalStatus),workspaceControlTone(approvalStatus))}<span class="muted small">Version ${escapeHtml(approval.version??0)}</span></div>
-          <p class="muted small">${approvalStatus==='approved'?'Approved firms may enter the workspace when billing is also clear.':approvalStatus==='rejected'?'This application was rejected. The firm cannot enter the workspace.':'Awaiting a super-admin decision. No business data is exposed in the workspace.'}</p>
-          ${canWrite&&approvalStatus!=='approved'?`<div class="platform-actions"><button type="button" class="btn sm" data-business-approval="approved">Approve firm</button><button type="button" class="btn danger sm" data-business-approval="rejected">Reject</button></div>`:''}`})}
-        ${CUI.card({title:'Subscription access',body:`<div class="platform-control-status">${CUI.status(plainLabel(subscriptionState),workspaceControlTone(subscriptionState))}<span class="muted small">${subscription.overdue_day===null||subscription.overdue_day===undefined?'No overdue day':`Day ${escapeHtml(subscription.overdue_day)} overdue`}</span></div>
-          <dl class="platform-context-list"><div><dt>Due date</dt><dd>${escapeHtml(subscription.due_date||'—')}</dd></div><div><dt>Workspace paused</dt><dd>${subscription.workspace_paused?'Yes':'No'}</dd></div></dl>
-          ${subscription.workspace_paused?`<p class="small">Owner access resumes only after provider payment truth is reconciled.</p>${contact?`<a class="btn ghost sm" href="tel:${escapeHtml(contact.tel)}">Contact ${escapeHtml(representative.display_name||'assigned representative')}</a>`:''}`:'<p class="muted small">Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid.</p>'}`})}
+        ${CUI.card({title:'Firm approval',body:`<div class="platform-control-status">${CUI.status(platformStatus(approvalStatus),workspaceControlTone(approvalStatus))}<span class="muted small">${escapeHtml(pt("Version"))} ${escapeHtml(approval.version??0)}</span></div>
+          <p class="muted small">${escapeHtml(pt(approvalStatus==='approved'?'Approved firms may enter the workspace when billing is also clear.':approvalStatus==='rejected'?'This application was rejected. The firm cannot enter the workspace.':'Awaiting a super-admin decision. No business data is exposed in the workspace.'))}</p>
+          ${canWrite&&approvalStatus!=='approved'?`<div class="platform-actions"><button type="button" class="btn sm" data-business-approval="approved">${escapeHtml(pt("Approve firm"))}</button><button type="button" class="btn danger sm" data-business-approval="rejected">${escapeHtml(pt("Reject"))}</button></div>`:''}`})}
+        ${CUI.card({title:'Subscription access',body:`<div class="platform-control-status">${CUI.status(platformStatus(subscriptionState),workspaceControlTone(subscriptionState))}<span class="muted small">${subscription.overdue_day===null||subscription.overdue_day===undefined?escapeHtml(pt('No overdue day')):escapeHtml(pt('Day {count} overdue',{count:subscription.overdue_day}))}</span></div>
+          <dl class="platform-context-list"><div><dt>${escapeHtml(pt("Due date"))}</dt><dd>${escapeHtml(subscription.due_date||'—')}</dd></div><div><dt>${escapeHtml(pt("Workspace paused"))}</dt><dd>${subscription.workspace_paused?pt('Yes'):pt('No')}</dd></div></dl>
+          ${subscription.workspace_paused?`<p class="small">${escapeHtml(pt("Owner access resumes only after provider payment truth is reconciled."))}</p>${contact?`<a class="btn ghost sm" href="tel:${escapeHtml(contact.tel)}">${escapeHtml(pt("Contact"))} ${escapeHtml(representative.display_name||'assigned representative')}</a>`:''}`:`<p class="muted small">${escapeHtml(pt("Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid."))}</p>`}`})}
       </div>
-      <div class="platform-list-row platform-control-heading"><div><h3>Firm module policy</h3><p class="muted small">Branch overrides take priority over firm and sector settings. Inventory is globally unavailable to firms.</p></div>
-        ${canWrite?`<button type="button" class="btn ghost sm" data-module-control="" data-branch-id="">Edit firm modules</button>`:''}
+      <div class="platform-list-row platform-control-heading"><div><h3>${escapeHtml(pt("Firm module policy"))}</h3><p class="muted small">${escapeHtml(pt("Branch overrides take priority over firm and sector settings. Inventory is globally unavailable to firms."))}</p></div>
+        ${canWrite?`<button type="button" class="btn ghost sm" data-module-control="" data-branch-id="">${escapeHtml(pt("Edit firm modules"))}</button>`:''}
       </div>
       ${moduleControlRows(effective,CUI,{canWrite})}
-      ${asArray(firm.branches).length?`<div class="platform-branch-control-list" aria-label="Branch module controls">${asArray(firm.branches).map(branch=>`
-        <div class="platform-action-item"><div><b>${escapeHtml(branch.name)}</b><p class="muted small">Branch-specific settings override firm policy.</p></div>
-          ${canWrite?`<button type="button" class="btn ghost sm" data-manage-branch="${escapeHtml(branch.branch_id)}">Manage branch</button>`:''}
+      ${asArray(firm.branches).length?`<div class="platform-branch-control-list" aria-label="${escapeHtml(pt('Branch module controls'))}">${asArray(firm.branches).map(branch=>`
+        <div class="platform-action-item"><div><b>${escapeHtml(branch.name)}</b><p class="muted small">${escapeHtml(pt("Branch-specific settings override firm policy."))}</p></div>
+          ${canWrite?`<button type="button" class="btn ghost sm" data-manage-branch="${escapeHtml(branch.branch_id)}">${escapeHtml(pt("Manage branch"))}</button>`:''}
         </div>`).join('')}</div>`:''}
-      <div class="platform-list-row platform-control-heading"><div><h3>Item-level intelligence</h3><p class="muted small">When enabled, Quick Earn uses the firm catalogue and platform reports can analyse product and service patterns.</p></div>
-        ${canWrite?`<button type="button" class="btn ghost sm" data-catalogue-intelligence="${catalogue.enabled?'disable':'enable'}">${catalogue.enabled?'Disable':'Enable'}</button>`:''}
+      <div class="platform-list-row platform-control-heading"><div><h3>${escapeHtml(pt("Item-level intelligence"))}</h3><p class="muted small">${escapeHtml(pt("When enabled, Quick Earn uses the firm catalogue and platform reports can analyse product and service patterns."))}</p></div>
+        ${canWrite?`<button type="button" class="btn ghost sm" data-catalogue-intelligence="${catalogue.enabled?'disable':'enable'}">${escapeHtml(pt(catalogue.enabled?'Disable':'Enable'))}</button>`:''}
       </div>
-      <p>${catalogue.enabled?'Enabled for catalogue-first sales and item-level intelligence.':'Disabled. Quick Earn can fall back to authorised custom-amount sales; no item affinity claims are generated.'}</p>
+      <p>${escapeHtml(pt(catalogue.enabled?'Enabled for catalogue-first sales and item-level intelligence.':'Disabled. Quick Earn can fall back to authorised custom-amount sales; no item affinity claims are generated.'))}</p>
     </section>`;
   }
   function businessApprovalModal(firm,decision,control,context,refresh) {
     const {CUI,sb}=context,approval=asObject(control.approval);
     modal({
-      title:`${decision==='approved'?'Approve':'Reject'} ${firm.name}`,
+      title:`${pt(decision==='approved'?'Approve':'Reject')} ${firm.name}`,
       submitLabel:decision==='approved'?'Confirm approval':'Confirm rejection',
       CUI,
       body:CUI.field({
@@ -807,7 +2561,7 @@
           p_business:firmId(firm),p_decision:decision,p_reason:String(form.get('reason')).trim(),
           p_expected_version:Number(approval.version||0)
         });
-        controls.close();await refresh();CUI.announce(`Firm ${decision}.`);
+        controls.close();await refresh();CUI.announce(pt('Firm status updated to {status}.',{status:platformStatus(decision)}));
       }
     });
   }
@@ -820,7 +2574,7 @@
       title:branchId?'Edit branch modules':'Edit firm modules',submitLabel:'Apply module policy',CUI,
       body:`<div class="platform-form-grid">
         ${CUI.field({id:'moduleControlBranch',label:'Scope',control:'select',options:branchId
-          ?branches.filter(branch=>branch.branch_id===branchId).map(branch=>({value:branch.branch_id,label:`Branch · ${branch.name}`,selected:true}))
+          ?branches.filter(branch=>branch.branch_id===branchId).map(branch=>({value:branch.branch_id,label:pt('Branch · {name}',{name:branch.name}),selected:true}))
           :[{value:'',label:'Whole firm',selected:true}],attributes:'name="branch_id"'})}
         ${CUI.field({id:'moduleControlKey',label:'Module',control:'select',options:available.map(module=>({value:module.key,label:module.label,selected:module.key===moduleKey})),attributes:'name="module_key"'})}
         ${CUI.field({id:'moduleControlMode',label:'Access',control:'select',options:[
@@ -831,7 +2585,7 @@
         ].map(option=>({...option,selected:option.value===(selected?.override_mode||'inherit')})),attributes:'name="mode"'})}
         <div class="wide">${CUI.field({id:'moduleControlReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="4" minlength="3" maxlength="1000"'})}</div>
       </div>
-      <div class="platform-route-note"><b>Inventory is not available here</b><p class="small">Nestly keeps inventory off for every firm, independent of sector or branch settings.</p></div>`,
+      <div class="platform-route-note"><b>${escapeHtml(pt("Inventory is not available here"))}</b><p class="small">${escapeHtml(pt("Nestly keeps inventory off for every firm, independent of sector or branch settings."))}</p></div>`,
       onSubmit:async(form,controls)=>{
         const module=String(form.get('module_key'));
         const scopeBranch=String(form.get('branch_id')||'')||null;
@@ -841,7 +2595,7 @@
           p_mode:String(form.get('mode')),p_reason:String(form.get('reason')).trim(),
           p_expected_version:current?.version??null
         });
-        controls.close();await refresh();CUI.announce(`${moduleLabel(module)} policy updated.`);
+        controls.close();await refresh();CUI.announce(pt('{module} policy updated.',{module:pt(moduleLabel(module))}));
       }
     });
   }
@@ -849,7 +2603,7 @@
     const {CUI,sb}=context,overlay=document.createElement('div');
     overlay.className='platform-drawer';overlay.tabIndex=-1;
     overlay.innerHTML=`<section class="platform-drawer-panel platform-enterprise-drawer" aria-labelledby="enterpriseFirmTitle">
-      <div class="platform-drawer-head"><div><h1 id="enterpriseFirmTitle" style="font-size:1.45rem">${escapeHtml(firm.name)}</h1><p class="muted small">${escapeHtml(plainLabel(firm.industry))} · ${escapeHtml(filters.from)} to ${escapeHtml(filters.to)}</p></div><button type="button" class="btn ghost sm platform-drawer-close" aria-label="Close detail">${CUI.icon('close',{size:18})}</button></div>
+      <div class="platform-drawer-head"><div><h1 id="enterpriseFirmTitle" style="font-size:1.45rem">${escapeHtml(firm.name)}</h1><p class="muted small">${escapeHtml(sectorLabel(firm.industry))} · ${escapeHtml(filters.from)} ${escapeHtml(pt('to'))} ${escapeHtml(filters.to)}</p></div><button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div>
       <div id="enterpriseFirmBody">${loading(CUI,'Customer records','Loading the first complete-snapshot page…','customers')}</div>
     </section>`;
     document.body.appendChild(overlay);
@@ -881,15 +2635,15 @@
       });
       const more=body.querySelector('#enterpriseCustomersMore');
       if(more)more.onclick=async()=>{
-        more.disabled=true;more.textContent='Loading…';
+        more.disabled=true;more.textContent=pt('Loading…');
         try{
           const next=await fetchEnterpriseCustomerPage(sb,scopedFilters,snapshot,page.next_cursor);
           customers=customers.concat(asArray(next,['customers']));
           page=asObject(next.pagination);
           renderBody();
         }catch(error){
-          more.disabled=false;more.textContent='Try loading again';
-          more.title=error?.message||'Customer page unavailable';
+          more.disabled=false;more.textContent=pt('Try loading again');
+          more.title=platformErrorMessage(error,'Customer page unavailable');
         }
       };
       body.querySelectorAll('[data-business-approval]').forEach(button=>{
@@ -909,13 +2663,15 @@
             }));
             moduleControlModal(firm,branchEffective,context,refreshControls,{branchId:button.dataset.manageBranch});
           }catch(error){
-            button.disabled=false;CUI.announce(error.message||'Branch policy could not be loaded.',{assertive:true});
+            button.disabled=false;CUI.announce(platformErrorMessage(error,'Branch policy could not be loaded.'),{assertive:true});
           }
         };
       });
       body.querySelector('[data-catalogue-intelligence]')?.addEventListener('click',async event=>{
         const button=event.currentTarget,enable=button.dataset.catalogueIntelligence==='enable';
-        if(!globalObject.confirm(`${enable?'Enable':'Disable'} item-level intelligence for ${firm.name}?`))return;
+        if(!globalObject.confirm(pt('{action} item-level intelligence for {firm}?',{
+          action:pt(enable?'Enable':'Disable'),firm:firm.name
+        })))return;
         button.disabled=true;
         try{
           await rpc(sb,'platform_set_catalogue_intelligence_v94',{
@@ -923,8 +2679,8 @@
             p_reason:enable?'Enabled for catalogue-first sales and monthly advisory reporting.':'Disabled by super-admin.',
             p_expected_version:asObject(control.catalogue_intelligence).version??null
           });
-          await refreshControls();CUI.announce(`Item-level intelligence ${enable?'enabled':'disabled'}.`);
-        }catch(error){button.disabled=false;CUI.announce(error.message||'Setting could not be updated.',{assertive:true})}
+          await refreshControls();CUI.announce(pt('Item-level intelligence is now {status}.',{status:pt(enable?'enabled':'disabled')}));
+        }catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Setting could not be updated.'),{assertive:true})}
       });
     };
     Promise.all([
@@ -939,7 +2695,7 @@
       renderBody();
     }).catch(error=>{
       if(body.isConnected)body.innerHTML=CUI.errorState({
-        title:'Firm controls unavailable',message:error?.message||'Please try again.'
+        title:'Firm controls unavailable',message:platformErrorMessage(error,'Please try again.')
       });
     });
   }
@@ -973,24 +2729,32 @@
       ['Net revenue',currency(summary.net_revenue_cents,summary.currency),'reports'],
       ['Cash collected',currency(summary.cash_collected_cents,summary.currency),'reports']
     ]:[['Currency groups',currencies.length,'reports']];
+    const scopeSearch=scope.search?pt(' · search “{query}”',{query:scope.search}):'';
+    const scopeSummary=pt('{from} to {to} · {firmCount} {firmNoun} · {branchCount} {branchNoun}{search}',{
+      from:scope.from,to:scope.to,firmCount:scope.firm_count??0,
+      firmNoun:pt(Number(scope.firm_count)===1?'firm':'firms'),
+      branchCount:scope.branch_count??0,
+      branchNoun:pt(Number(scope.branch_count)===1?'branch':'branches'),
+      search:scopeSearch
+    });
     return `<div class="card platform-report-sheet" id="enterpriseReportSheet">
-      <div class="platform-list-row"><div><h2>Business improvement report</h2><p class="muted small">${escapeHtml(scope.from)} to ${escapeHtml(scope.to)} · ${escapeHtml(scope.firm_count??0)} firm${Number(scope.firm_count)===1?'':'s'} · ${escapeHtml(scope.branch_count??0)} branch${Number(scope.branch_count)===1?'':'es'}${scope.search?` · search “${escapeHtml(scope.search)}”`:''}</p><p class="muted small">Snapshot ${escapeHtml(dateTime(report.snapshot_at))}. Money remains separated by currency.</p></div>${includeActions?'<div class="platform-actions no-print"><button type="button" class="btn ghost sm" id="enterpriseReportCsv">Download complete CSV</button><button type="button" class="btn ghost sm" id="enterpriseReportPrint">Print report</button></div>':''}</div>
-      <section class="platform-kpis" aria-label="Report summary">${[
+        <div class="platform-list-row"><div><h2>${escapeHtml(pt("Business improvement report"))}</h2><p class="muted small">${escapeHtml(scopeSummary)}</p><p class="muted small">${escapeHtml(pt('Snapshot {date}. Money remains separated by currency.',{date:dateTime(report.snapshot_at)}))}</p></div>${includeActions?`<div class="platform-actions no-print"><button type="button" class="btn ghost sm" id="enterpriseReportCsv">${escapeHtml(pt("Download complete CSV"))}</button><button type="button" class="btn ghost sm" id="enterpriseReportPrint">${escapeHtml(pt("Print report"))}</button></div>`:''}</div>
+      <section class="platform-kpis" aria-label="${escapeHtml(pt('Report summary'))}">${[
         ...moneyCards,
         ['Returning rate',`${Number(summary.returning_rate_pct||0).toFixed(1)}%`,'retention'],
         ['Active customers',summary.active_customers??0,'customers']
-      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
-      ${currencies.length?`<section class="platform-detail-section"><h3>Money by currency</h3>${CUI.table({caption:'Report money by currency',headers:['Currency','Net revenue','Cash collected','Transactions','Active customers','Returning rate'],rows:currencies.map(row=>[
+      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+      ${currencies.length?`<section class="platform-detail-section"><h3>${escapeHtml(pt("Money by currency"))}</h3>${CUI.table({caption:'Report money by currency',headers:['Currency','Net revenue','Cash collected','Transactions','Active customers','Returning rate'],rows:currencies.map(row=>[
         escapeHtml(row.currency),currency(row.net_revenue_cents,row.currency),currency(row.cash_collected_cents,row.currency),String(row.completed_transactions??0),String(row.active_customers??0),`${Number(row.returning_rate_pct||0).toFixed(1)}%`
       ])})}</section>`:''}
-      <section class="platform-report-insights"><h3>Evidence-backed priorities</h3>${insights.map(insight=>`<article class="platform-insight"><div>${CUI.status(plainLabel(insight.priority),insight.priority==='high'?'no':insight.priority==='medium'?'new':'off')}</div><div><b>${escapeHtml(insight.title)}</b><p>${escapeHtml(insight.recommendation)}</p><small>${escapeHtml(JSON.stringify(insight.evidence||{}))}</small></div></article>`).join('')}</section>
-      <section class="platform-detail-section"><h3>Monthly trend</h3>${monthly.length?CUI.table({caption:'Monthly report trend',headers:['Month','Currency','Net revenue','Transactions','Active customers'],rows:monthly.map(row=>[escapeHtml(row.month_start),escapeHtml(row.currency),currency(row.net_revenue_cents,row.currency),String(row.transactions??0),String(row.active_customers??0)])}):''}</section>
+      <section class="platform-report-insights"><h3>${escapeHtml(pt("Evidence-backed priorities"))}</h3>${insights.map(insight=>`<article class="platform-insight"><div>${CUI.status(platformStatus(insight.priority),insight.priority==='high'?'no':insight.priority==='medium'?'new':'off')}</div><div><b>${escapeHtml(insight.title)}</b><p>${escapeHtml(insight.recommendation)}</p><small>${escapeHtml(JSON.stringify(insight.evidence||{}))}</small></div></article>`).join('')}</section>
+      <section class="platform-detail-section"><h3>${escapeHtml(pt("Monthly trend"))}</h3>${monthly.length?CUI.table({caption:'Monthly report trend',headers:['Month','Currency','Net revenue','Transactions','Active customers'],rows:monthly.map(row=>[escapeHtml(row.month_start),escapeHtml(row.currency),currency(row.net_revenue_cents,row.currency),String(row.transactions??0),String(row.active_customers??0)])}):''}</section>
       <div class="platform-detail-grid">
-        ${CUI.card({title:'Firm comparison',body:businesses.length?CUI.table({caption:'Firm report comparison',headers:['Firm','Sector','Currency','Net revenue','Transactions','Active customers'],rows:businesses.map(row=>[escapeHtml(row.name),escapeHtml(plainLabel(row.industry)),escapeHtml(row.currency),currency(row.net_revenue_cents,row.currency),String(row.completed_transactions??0),String(row.active_customers??0)])}):'<p class="muted">No firm rows.</p>'})}
-        ${CUI.card({title:'Branch comparison',body:branches.length?CUI.table({caption:'Branch report comparison',headers:['Firm','Branch','Currency','Net revenue','Customers'],rows:branches.map(row=>[escapeHtml(row.business_name),escapeHtml(row.name),escapeHtml(row.currency),currency(row.net_revenue_cents,row.currency),String(row.active_customers??0)])}):'<p class="muted">No branch rows.</p>'})}
+        ${CUI.card({title:'Firm comparison',body:businesses.length?CUI.table({caption:'Firm report comparison',headers:['Firm','Sector','Currency','Net revenue','Transactions','Active customers'],rows:businesses.map(row=>[escapeHtml(row.name),escapeHtml(sectorLabel(row.industry)),escapeHtml(row.currency),currency(row.net_revenue_cents,row.currency),String(row.completed_transactions??0),String(row.active_customers??0)])}):localizedEmptyHtml('No firm rows.','muted')})}
+        ${CUI.card({title:'Branch comparison',body:branches.length?CUI.table({caption:'Branch report comparison',headers:['Firm','Branch','Currency','Net revenue','Customers'],rows:branches.map(row=>[escapeHtml(row.business_name),escapeHtml(row.name),escapeHtml(row.currency),currency(row.net_revenue_cents,row.currency),String(row.active_customers??0)])}):localizedEmptyHtml('No branch rows.','muted')})}
       </div>
-      <section class="platform-detail-section"><div class="platform-list-row"><h3>Customer detail</h3><span class="muted small">${escapeHtml(customerPage.total_customers??report.customer_total??customers.length)} total; preview is snapshot-paged</span></div>${customers.length?CUI.table({caption:'Customer report detail',headers:['Firm','Customer','Currency','Revenue','Cash','Visits','Lifetime last purchase','Returning'],rows:customers.map(row=>[escapeHtml(row.business_name),escapeHtml(row.full_name),escapeHtml(row.currency),currency(row.net_revenue_cents,row.currency),currency(row.cash_collected_cents,row.currency),String(row.visit_count??0),escapeHtml(dateTime(row.last_purchase_at)),row.returning_customer?'Yes':'No'])}):'<p class="muted">No customer rows in this scope.</p>'}</section>
-      <footer class="platform-report-method"><b>Methodology</b><p>${escapeHtml(report.methodology?.revenue||'')}</p><p>${escapeHtml(report.methodology?.returning_customer||'')} The returning-rate denominator is active customers in this period.</p><p>${escapeHtml(report.methodology?.lapsed_customer||'')}</p></footer>
+      <section class="platform-detail-section"><div class="platform-list-row"><h3>${escapeHtml(pt("Customer detail"))}</h3><span class="muted small">${escapeHtml(pt('{count} total; preview is snapshot-paged',{count:customerPage.total_customers??report.customer_total??customers.length}))}</span></div>${customers.length?CUI.table({caption:'Customer report detail',headers:['Firm','Customer','Currency','Revenue','Cash','Visits','Lifetime last purchase','Returning'],rows:customers.map(row=>[escapeHtml(row.business_name),escapeHtml(row.full_name),escapeHtml(row.currency),currency(row.net_revenue_cents,row.currency),currency(row.cash_collected_cents,row.currency),String(row.visit_count??0),escapeHtml(dateTime(row.last_purchase_at)),pt(row.returning_customer?'Yes':'No')])}):localizedEmptyHtml('No customer rows in this scope.','muted')}</section>
+      <footer class="platform-report-method"><b>${escapeHtml(pt("Methodology"))}</b><p>${escapeHtml(report.methodology?.revenue||'')}</p><p>${escapeHtml(report.methodology?.returning_customer||'')} ${escapeHtml(pt('The returning-rate denominator is active customers in this period.'))}</p><p>${escapeHtml(report.methodology?.lapsed_customer||'')}</p></footer>
     </div>`;
   }
   function consultativeIntelligenceHtml(report,affinity,recommendations,CUI) {
@@ -1000,28 +2764,28 @@
     const confidence=quality.confidence||quality.status||'not_enough_data';
     const cohortRows=asArray(intelligence.cohorts||intelligence.segments||intelligence.customer_groups);
     return `<section class="card platform-report-sheet platform-consultative-report" aria-labelledby="consultativeReportTitle">
-      <div class="platform-list-row"><div><h2 id="consultativeReportTitle">Monthly consultant brief</h2>
-        <p class="muted small">Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence.</p></div>
-        ${CUI.status(plainLabel(confidence),confidence==='high'||confidence==='ready'?'ok':confidence==='medium'?'new':'off')}
+      <div class="platform-list-row"><div><h2 id="consultativeReportTitle">${escapeHtml(pt("Monthly consultant brief"))}</h2>
+        <p class="muted small">${escapeHtml(pt("Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence."))}</p></div>
+        ${CUI.status(platformStatus(confidence),confidence==='high'||confidence==='ready'?'ok':confidence==='medium'?'new':'off')}
       </div>
-      <section class="platform-kpis" aria-label="Consultant brief KPIs">${[
+      <section class="platform-kpis" aria-label="${escapeHtml(pt('Consultant brief KPIs'))}">${[
         ['Customers',kpis.customer_count??kpis.active_customers??0,'customers'],
         ['Returning rate',`${Number(kpis.returning_rate_pct||0).toFixed(1)}%`,'retention'],
         ['Transactions',kpis.transaction_count??kpis.completed_transactions??0,'till'],
         ['Revenue',currency(kpis.net_revenue_cents??kpis.revenue_cents??0,kpis.currency||'SGD'),'reports']
-      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
         ${CUI.card({title:'Customer groups',description:'Use these groups to plan specific monthly actions, not generic campaigns.',body:cohortRows.length?CUI.table({
           caption:'Customer group performance',headers:['Group','Customers','Orders','Revenue','Return rate'],
           rows:cohortRows.map(row=>[
-            escapeHtml(row.label||plainLabel(row.cohort||row.segment||row.group_key)),
+            escapeHtml(row.label||platformStatus(row.cohort||row.segment||row.group_key)),
             String(row.customer_count??row.customers??0),String(row.order_count??row.transactions??0),
             currency(row.revenue_cents??row.net_revenue_cents??0,row.currency||kpis.currency||'SGD'),
             `${Number(row.returning_rate_pct||0).toFixed(1)}%`
           ])
-        }):'<p class="muted small">The selected scope does not yet have enough customer-group data.</p>'})}
+        }):localizedEmptyHtml('The selected scope does not yet have enough customer-group data.')})}
         ${CUI.card({title:'Products bought with services',description:'Attach rate is calculated only from canonical, non-reversed sale lines.',body:affinity.enabled===false
-          ?'<p class="muted small">Item-level intelligence is disabled for this firm.</p>'
+          ?localizedEmptyHtml('Item-level intelligence is disabled for this firm.')
           :pairs.length?CUI.table({
             caption:'Product and service affinity',headers:['Service','Product','Together','Attach rate','Units','Paired revenue'],
             rows:pairs.map(row=>[
@@ -1029,14 +2793,14 @@
               String(row.orders_together??0),`${Number(row.attach_rate_pct||0).toFixed(1)}%`,
               String(row.product_units??0),currency(row.paired_revenue_cents??0,kpis.currency||'SGD')
             ])
-          }):'<p class="muted small">No reliable product/service pair is available in this scope yet.</p>'})}
+          }):localizedEmptyHtml('No reliable product/service pair is available in this scope yet.')})}
       </div>
-      <section class="platform-report-insights"><h3>Consultative action plan</h3>${actions.length?actions.map(action=>`
-        <article class="platform-insight"><div>${CUI.status(plainLabel(action.priority),action.priority==='high'?'no':action.priority==='medium'?'new':'off')}</div>
+      <section class="platform-report-insights"><h3>${escapeHtml(pt("Consultative action plan"))}</h3>${actions.length?actions.map(action=>`
+        <article class="platform-insight"><div>${CUI.status(platformStatus(action.priority),action.priority==='high'?'no':action.priority==='medium'?'new':'off')}</div>
           <div><b>${escapeHtml(action.title)}</b><p>${escapeHtml(action.recommended_action)}</p>
-          <small>${escapeHtml(action.category?`${plainLabel(action.category)} · `:'')}${escapeHtml(JSON.stringify(action.evidence||{}))}</small></div>
-        </article>`).join(''):'<div class="platform-route-note"><b>No recommendation claimed</b><p class="small">Nestly suppresses advice when the exact scope has insufficient or unreliable data.</p></div>'}</section>
-      <footer class="platform-report-method"><b>Data quality</b><p>${escapeHtml(quality.message||quality.reason||'Recommendations are suppressed below the configured evidence threshold.')}</p></footer>
+          <small>${escapeHtml(action.category?`${platformStatus(action.category)} · `:'')}${escapeHtml(JSON.stringify(action.evidence||{}))}</small></div>
+        </article>`).join(''):localizedRouteNoteHtml('No recommendation claimed','Nestly suppresses advice when the exact scope has insufficient or unreliable data.')}</section>
+      <footer class="platform-report-method"><b>${escapeHtml(pt("Data quality"))}</b><p>${escapeHtml(quality.message||quality.reason||'Recommendations are suppressed below the configured evidence threshold.')}</p></footer>
     </section>`;
   }
   async function renderEnterpriseReport(context,filters) {
@@ -1071,22 +2835,22 @@
       }
       host.querySelector('#enterpriseReportCsv').onclick=async event=>{
         const button=event.currentTarget;
-        button.disabled=true;button.textContent='Preparing complete CSV…';
+        button.disabled=true;button.textContent=pt('Preparing complete CSV…');
         try{
           const customers=await fetchAllEnterpriseCustomers(sb,filters,report.snapshot_at);
           downloadCsv(
             `${context.brand?.downloadPrefix||'nestly'}-enterprise-report-${filters.from}-${filters.to}.csv`,
             reportCsvRows(report,customers)
           );
-          button.textContent=`Downloaded ${customers.length} customers`;
+          button.textContent=pt('Downloaded {count} customers',{count:customers.length});
         }catch(error){
-          button.disabled=false;button.textContent='Retry complete CSV';
-          button.title=error?.message||'Export unavailable';
+          button.disabled=false;button.textContent=pt('Retry complete CSV');
+          button.title=platformErrorMessage(error,'Export unavailable');
         }
       };
       host.querySelector('#enterpriseReportPrint').onclick=()=>globalObject.print();
       host.querySelector('#enterpriseReportSheet')?.scrollIntoView?.({behavior:'smooth',block:'start'});
-    }catch(error){host.innerHTML=error?.platformUpdateRequired?systemUpdateRequired(CUI,'Enterprise reports'):CUI.errorState({title:'Report unavailable',message:error?.message||'Please try again.'})}
+    }catch(error){host.innerHTML=error?.platformUpdateRequired?systemUpdateRequired(CUI,'Enterprise reports'):CUI.errorState({title:'Report unavailable',message:platformErrorMessage(error,'Please try again.')})}
   }
   async function renderEnterprise(context,filters=enterpriseDefaults()) {
     const {main,CUI,sb,generation,isCurrent}=context;
@@ -1125,7 +2889,7 @@
         const ids=selectedOptions(businessSelect),branchSelect=main.querySelector('#enterpriseBranch');
         const selectedFirm=ids.length===1?catalog.find(row=>firmId(row)===ids[0]):null;
         branchSelect.disabled=ids.length!==1;
-        branchSelect.innerHTML=`<option value="">Whole firm</option>${asArray(selectedFirm?.branches).map(branch=>`<option value="${escapeHtml(branch.branch_id)}">${escapeHtml(branch.name)}</option>`).join('')}`;
+        branchSelect.innerHTML=`<option value="">${escapeHtml(pt("Whole firm"))}</option>${asArray(selectedFirm?.branches).map(branch=>`<option value="${escapeHtml(branch.branch_id)}">${escapeHtml(branch.name)}</option>`).join('')}`;
       };
       businessSelect.onchange=refreshBranches;
       form.onsubmit=event=>{
@@ -1164,19 +2928,19 @@
         <div class="platform-enterprise-filter-grid">
           ${CUI.field({id:'platformReportSearch',label:'Search inside scope',type:'search',value:filters.search,placeholder:'Firm, branch or customer'})}
           ${CUI.field({id:'platformReportSector',label:'Sector',control:'select',options:enterpriseSectors.map(([value,label])=>({value,label,selected:value===filters.sector}))})}
-          <div class="cui-field platform-enterprise-firms"><label for="platformReportBusinesses">Firms <span class="muted small">(one or more)</span></label>
-            <select id="platformReportBusinesses" multiple size="5">${catalog.map(firm=>`<option value="${escapeHtml(firmId(firm))}"${filters.businesses.includes(firmId(firm))?' selected':''}>${escapeHtml(firm.name)} · ${escapeHtml(plainLabel(firm.industry))}</option>`).join('')}</select>
-            <p class="muted small">No selection means every firm in the selected sector.</p>
+          <div class="cui-field platform-enterprise-firms"><label for="platformReportBusinesses">${escapeHtml(pt('Firms'))} <span class="muted small">${escapeHtml(pt("(one or more)"))}</span></label>
+            <select id="platformReportBusinesses" multiple size="5">${catalog.map(firm=>`<option value="${escapeHtml(firmId(firm))}"${filters.businesses.includes(firmId(firm))?' selected':''}>${escapeHtml(firm.name)} · ${escapeHtml(sectorLabel(firm.industry))}</option>`).join('')}</select>
+            <p class="muted small">${escapeHtml(pt("No selection means every firm in the selected sector."))}</p>
           </div>
-          <div class="cui-field"><label for="platformReportBranch">Branch</label><select id="platformReportBranch"${filters.businesses.length===1?'':' disabled'}>
-            <option value="">Whole firm</option>${branches.map(branch=>`<option value="${escapeHtml(branch.branch_id)}"${branch.branch_id===filters.branch?' selected':''}>${escapeHtml(branch.name)}</option>`).join('')}
-          </select><p class="muted small">${filters.businesses.length===1?'Report one branch or the whole firm.':'Select one firm to report an individual branch.'}</p></div>
+          <div class="cui-field"><label for="platformReportBranch">${escapeHtml(pt("Branch"))}</label><select id="platformReportBranch"${filters.businesses.length===1?'':' disabled'}>
+            <option value="">${escapeHtml(pt("Whole firm"))}</option>${branches.map(branch=>`<option value="${escapeHtml(branch.branch_id)}"${branch.branch_id===filters.branch?' selected':''}>${escapeHtml(branch.name)}</option>`).join('')}
+          </select><p class="muted small">${escapeHtml(pt(filters.businesses.length===1?'Report one branch or the whole firm.':'Select one firm to report an individual branch.'))}</p></div>
           ${CUI.field({id:'platformReportFrom',label:'From',type:'date',value:filters.from,required:true})}
           ${CUI.field({id:'platformReportTo',label:'To',type:'date',value:filters.to,required:true})}
         </div>
-        <div class="platform-actions"><button class="btn" type="submit">${CUI.icon('reports',{size:17})}<span>Generate report</span></button><button type="button" class="btn ghost" id="platformReportReset">Reset</button></div>
+        <div class="platform-actions"><button class="btn" type="submit">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt("Generate report"))}</span></button><button type="button" class="btn ghost" id="platformReportReset">${escapeHtml(pt("Reset"))}</button></div>
       </form>
-      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Explicit scope, no silent blending</b><p class="small">Firm performance respects sector, firm, branch, search and date. SME pipeline analytics respects date and operator visibility; the report labels that separate scope. Currency totals remain separated.</p></div></div>
+      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Explicit scope, no silent blending"))}</b><p class="small">${escapeHtml(pt("Firm performance respects sector, firm, branch, search and date. SME pipeline analytics respects date and operator visibility; the report labels that separate scope. Currency totals remain separated."))}</p></div></div>
       <section id="platformCrossDomainReport" class="platform-report-host" aria-live="polite">${CUI.emptyState({iconName:'reports',title:'Choose a reporting scope',body:'Generate a report to compare customer performance, pipeline conversion and billing exceptions.'})}</section>`;
   }
   function analyticsReportRows(analytics) {
@@ -1184,7 +2948,7 @@
     const rows=[['record_type','scope','name','group','metric','value','currency','from','to','snapshot_at']];
     Object.entries(summary).forEach(([metric,value])=>rows.push(['sme_summary','all_prospects','SME pipeline','summary',metric,value,metric.endsWith('_cents')?'SGD':'',scope.from,scope.to,analytics.snapshot_at]));
     asArray(analytics.stages).forEach(stage=>['current_count','entries','median_age_days'].forEach(metric=>rows.push(['sme_stage','all_prospects',stage.label||stage.stage_key,stage.stage_key,metric,stage[metric]??'','',scope.from,scope.to,analytics.snapshot_at])));
-    asArray(analytics.source_page).forEach(source=>['leads','converted'].forEach(metric=>rows.push(['sme_source','all_prospects',plainLabel(source.source_type),source.source_type,metric,source[metric]??0,'',scope.from,scope.to,analytics.snapshot_at])));
+    asArray(analytics.source_page).forEach(source=>['leads','converted'].forEach(metric=>rows.push(['sme_source','all_prospects',platformStatus(source.source_type),source.source_type,metric,source[metric]??0,'',scope.from,scope.to,analytics.snapshot_at])));
     return rows;
   }
   function billingReportRows(rows,reconciliation,filters,snapshot) {
@@ -1208,8 +2972,8 @@
     const latestRun=runs[0]||{};
     const reportScope=asObject(report.scope),crmScope=asObject(analytics.scope);
     return `<article class="card platform-report-sheet" id="platformCrossDomainReportSheet">
-      <header class="platform-list-row"><div><h2>Enterprise performance report</h2><p class="muted small">${escapeHtml(reportScope.from||filters.from)} to ${escapeHtml(reportScope.to||filters.to)} · snapshot ${escapeHtml(dateTime(report.snapshot_at))}</p></div><div class="platform-actions no-print"><button type="button" class="btn ghost sm" data-cross-report-csv>Download complete CSV</button><button type="button" class="btn ghost sm" data-cross-report-print>Print / PDF</button></div></header>
-      <section class="platform-kpis" aria-label="Cross-domain report summary">${[
+      <header class="platform-list-row"><div><h2>${escapeHtml(pt("Enterprise performance report"))}</h2><p class="muted small">${escapeHtml(pt('{from} to {to} · snapshot {date}',{from:reportScope.from||filters.from,to:reportScope.to||filters.to,date:dateTime(report.snapshot_at)}))}</p></div><div class="platform-actions no-print"><button type="button" class="btn ghost sm" data-cross-report-csv>${escapeHtml(pt("Download complete CSV"))}</button><button type="button" class="btn ghost sm" data-cross-report-print>${escapeHtml(pt("Print / PDF"))}</button></div></header>
+      <section class="platform-kpis" aria-label="${escapeHtml(pt('Cross-domain report summary'))}">${[
         ['Active customers',summary.active_customers??0,'customers'],
         ['Returning rate',`${Number(summary.returning_rate_pct||0).toFixed(1)}%`,'retention'],
         ...(analyticsAvailable?[
@@ -1218,24 +2982,24 @@
           ['Activated',crm.activated??0,'branch']
         ]:[]),
         ...(billingAvailable?[['Billing exceptions',billingExceptions.length,'info']]:[])
-      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
-      <section class="platform-detail-section"><h3>Customer and firm performance</h3>${reportHtml(report,CUI,customers,customerPage,false).replace('id="enterpriseReportSheet"','')}</section>
-      ${analyticsAvailable?`<section class="platform-detail-section"><div class="platform-list-row"><div><h3>SME acquisition and onboarding</h3><p class="muted small">All visible prospects · ${escapeHtml(crmScope.from||filters.from)} to ${escapeHtml(crmScope.to||filters.to)}. Firm/branch filters do not apply to this prospect pipeline contract.</p></div></div>
+      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+      <section class="platform-detail-section"><h3>${escapeHtml(pt("Customer and firm performance"))}</h3>${reportHtml(report,CUI,customers,customerPage,false).replace('id="enterpriseReportSheet"','')}</section>
+      ${analyticsAvailable?`<section class="platform-detail-section"><div class="platform-list-row"><div><h3>${escapeHtml(pt("SME acquisition and onboarding"))}</h3><p class="muted small">${escapeHtml(pt("All visible prospects"))} · ${escapeHtml(crmScope.from||filters.from)} ${escapeHtml(pt("to"))} ${escapeHtml(crmScope.to||filters.to)}. ${escapeHtml(pt("Firm/branch filters do not apply to this prospect pipeline contract."))}</p></div></div>
         <div class="platform-detail-grid">
-          ${CUI.card({title:'Stage performance',body:asArray(analytics.stages).length?CUI.table({caption:'SME stage performance',headers:['Stage','Current','Entries','Median age (days)'],rows:asArray(analytics.stages).map(stage=>[escapeHtml(stage.label||plainLabel(stage.stage_key)),String(stage.current_count??0),String(stage.entries??0),Number(stage.median_age_days||0).toFixed(1)])}):'<p class="muted small">No stage data.</p>'})}
-          ${CUI.card({title:'Source conversion',body:asArray(analytics.source_page).length?CUI.table({caption:'SME source conversion',headers:['Source','Leads','Converted','Rate'],rows:asArray(analytics.source_page).map(source=>[escapeHtml(plainLabel(source.source_type)),String(source.leads??0),String(source.converted??0),`${Number(source.leads?Number(source.converted||0)*100/Number(source.leads):0).toFixed(1)}%`])}):'<p class="muted small">No source attribution data.</p>'})}
+          ${CUI.card({title:'Stage performance',body:asArray(analytics.stages).length?CUI.table({caption:'SME stage performance',headers:['Stage','Current','Entries','Median age (days)'],rows:asArray(analytics.stages).map(stage=>[escapeHtml(stage.label?pt(stage.label):platformStatus(stage.stage_key)),String(stage.current_count??0),String(stage.entries??0),Number(stage.median_age_days||0).toFixed(1)])}):`<p class="muted small">${escapeHtml(pt("No stage data."))}</p>`})}
+          ${CUI.card({title:'Source conversion',body:asArray(analytics.source_page).length?CUI.table({caption:'SME source conversion',headers:['Source','Leads','Converted','Rate'],rows:asArray(analytics.source_page).map(source=>[escapeHtml(platformStatus(source.source_type)),String(source.leads??0),String(source.converted??0),`${Number(source.leads?Number(source.converted||0)*100/Number(source.leads):0).toFixed(1)}%`])}):`<p class="muted small">${escapeHtml(pt("No source attribution data."))}</p>`})}
         </div>
-        ${asArray(analytics.loss_reasons).length?CUI.card({title:'Loss reasons',body:CUI.table({caption:'Loss reasons',headers:['Reason','Prospects'],rows:asArray(analytics.loss_reasons).map(row=>[escapeHtml(plainLabel(row.reason_code)),String(row.count??0)])})}):''}
-      </section>`:'<div class="platform-route-note"><b>SME acquisition and onboarding omitted</b><p class="small">This account does not have Onboarding access. The customer and firm report above remains complete for the selected scope.</p></div>'}
-      ${billingAvailable?`<section class="platform-detail-section"><div class="platform-list-row"><div><h3>Subscription billing and reconciliation</h3><p class="muted small">${billing.length} subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue.</p></div>${latestRun.id?CUI.status(plainLabel(latestRun.status),latestRun.status==='completed'?'ok':'off'):CUI.status('No reconciliation run','off')}</div>
+        ${asArray(analytics.loss_reasons).length?CUI.card({title:'Loss reasons',body:CUI.table({caption:'Loss reasons',headers:['Reason','Prospects'],rows:asArray(analytics.loss_reasons).map(row=>[escapeHtml(platformStatus(row.reason_code)),String(row.count??0)])})}):''}
+      </section>`:localizedRouteNoteHtml('SME acquisition and onboarding omitted','This account does not have Onboarding access. The customer and firm report above remains complete for the selected scope.')}
+      ${billingAvailable?`<section class="platform-detail-section"><div class="platform-list-row"><div><h3>${escapeHtml(pt("Subscription billing and reconciliation"))}</h3><p class="muted small">${billing.length} ${escapeHtml(pt("subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue."))}</p></div>${latestRun.id?CUI.status(platformStatus(latestRun.status),latestRun.status==='completed'?'ok':'off'):CUI.status(pt('No reconciliation run'),'off')}</div>
         ${billing.length?CUI.table({caption:'Selected firm billing',headers:['Firm','Subscription','Payment','Cadence','Subtotal','GST','Total','Next payment','Failures'],rows:billing.map(row=>[
-          escapeHtml(row.business_name),CUI.status(row.status||'—',statusTone(row.status)),CUI.status(row.payment_status||'—',row.payment_status==='paid'?'ok':row.payment_status==='past_due'?'no':'off'),escapeHtml(plainLabel(row.cadence)),currency(row.period_subtotal_cents,row.currency),currency(row.period_tax_cents,row.currency),currency(row.period_total_cents,row.currency),escapeHtml(dateTime(row.next_payment_at)),String(row.failed_event_count||0)
-        ])}):'<p class="muted small">No billing rows in this firm scope.</p>'}
+          escapeHtml(row.business_name),CUI.status(platformStatus(row.status||'—'),statusTone(row.status)),CUI.status(platformStatus(row.payment_status||'—'),row.payment_status==='paid'?'ok':row.payment_status==='past_due'?'no':'off'),escapeHtml(platformStatus(row.cadence)),currency(row.period_subtotal_cents,row.currency),currency(row.period_tax_cents,row.currency),currency(row.period_total_cents,row.currency),escapeHtml(dateTime(row.next_payment_at)),String(row.failed_event_count||0)
+        ])}):`<p class="muted small">${escapeHtml(pt("No billing rows in this firm scope."))}</p>`}
         <div class="platform-detail-grid">
-          ${CUI.card({title:'Billing exception queue',description:billingExceptions.length?`${billingExceptions.length} firms need attention.`:'No firm-level payment exceptions.',body:billingExceptions.length?billingExceptions.map(row=>`<div class="platform-action-item"><div><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(plainLabel(row.payment_status||row.status))} · ${escapeHtml(dateTime(row.next_payment_at))}</p></div>${CUI.status(`${Number(row.failed_event_count||0)} failures`,'no')}</div>`).join(''):'<p class="muted small">No overdue or failed subscription records.</p>'})}
-          ${CUI.card({title:'Latest reconciliation',description:latestRun.started_at?`${dateTime(latestRun.started_at)} · ${plainLabel(latestRun.run_mode)}`:'No reconciliation run was returned.',body:items.length?items.map(item=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(item.object_type))}</b><p class="muted small">${escapeHtml(item.provider_object_id||'Provider object')}</p></div>${CUI.status(plainLabel(item.result),item.result==='matched'?'ok':'no')}</div>`).join(''):'<p class="muted small">No mismatch items in the latest returned run.</p>'})}
+          ${CUI.card({title:'Billing exception queue',description:billingExceptions.length?pt('{count} firms need attention.',{count:billingExceptions.length}):'No firm-level payment exceptions.',body:billingExceptions.length?billingExceptions.map(row=>`<div class="platform-action-item"><div><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(dateTime(row.next_payment_at))}</p></div>${CUI.status(pt('{count} failures',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):`<p class="muted small">${escapeHtml(pt("No overdue or failed subscription records."))}</p>`})}
+          ${CUI.card({title:'Latest reconciliation',description:latestRun.started_at?`${dateTime(latestRun.started_at)} · ${platformStatus(latestRun.run_mode)}`:'No reconciliation run was returned.',body:items.length?items.map(item=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(item.object_type))}</b><p class="muted small">${escapeHtml(item.provider_object_id||'Provider object')}</p></div>${CUI.status(platformStatus(item.result),item.result==='matched'?'ok':'no')}</div>`).join(''):`<p class="muted small">${escapeHtml(pt("No mismatch items in the latest returned run."))}</p>`})}
         </div>
-      </section>`:'<div class="platform-route-note"><b>Subscription billing omitted</b><p class="small">This account does not have Billing access. No billing or reconciliation reader was called.</p></div>'}
+      </section>`:localizedRouteNoteHtml('Subscription billing omitted','This account does not have Billing access. No billing or reconciliation reader was called.')}
     </article>`;
   }
   async function renderCrossDomainReport(context,filters) {
@@ -1286,7 +3050,7 @@
       }
       host.querySelector('[data-cross-report-print]').onclick=()=>globalObject.print();
       host.querySelector('[data-cross-report-csv]').onclick=async event=>{
-        const button=event.currentTarget;button.disabled=true;button.textContent='Preparing complete CSV…';
+        const button=event.currentTarget;button.disabled=true;button.textContent=pt('Preparing complete CSV…');
         try{
           const customers=await fetchAllEnterpriseCustomers(sb,filters,reportObject.snapshot_at);
           const legacy=reportCsvRows(reportObject,customers),header=legacy[0];
@@ -1297,11 +3061,11 @@
             ...(sectionAccess.onboarding?analyticsReportRows(asObject(analytics)).slice(1):[]),
             ...(sectionAccess.billing?billingReportRows(billing,reconciliation,filters,reportObject.snapshot_at).slice(1):[])
           ]);
-          button.textContent=`Downloaded ${customers.length} customer rows`;
-        }catch(error){button.disabled=false;button.textContent='Retry complete CSV';button.title=error.message}
+          button.textContent=pt('Downloaded {count} customer rows',{count:customers.length});
+        }catch(error){button.disabled=false;button.textContent=pt('Retry complete CSV');button.title=platformErrorMessage(error,'Export unavailable')}
       };
       host.querySelector('#platformCrossDomainReportSheet')?.scrollIntoView?.({behavior:'smooth',block:'start'});
-    }catch(error){host.innerHTML=error.platformUpdateRequired?systemUpdateRequired(CUI,'Enterprise reports'):CUI.errorState({title:'Report unavailable',message:error.message||'Please try again.'})}
+    }catch(error){host.innerHTML=error.platformUpdateRequired?systemUpdateRequired(CUI,'Enterprise reports'):CUI.errorState({title:'Report unavailable',message:platformErrorMessage(error,'Please try again.')})}
   }
   async function renderPlatformReports(context,filters=enterpriseDefaults()) {
     const {main,CUI,sb}=context;
@@ -1315,7 +3079,7 @@
         const ids=selectedOptions(businessSelect),branch=main.querySelector('#platformReportBranch');
         const firm=ids.length===1?catalog.find(row=>firmId(row)===ids[0]):null;
         branch.disabled=ids.length!==1;
-        branch.innerHTML=`<option value="">Whole firm</option>${asArray(firm?.branches).map(row=>`<option value="${escapeHtml(row.branch_id)}">${escapeHtml(row.name)}</option>`).join('')}`;
+        branch.innerHTML=`<option value="">${escapeHtml(pt("Whole firm"))}</option>${asArray(firm?.branches).map(row=>`<option value="${escapeHtml(row.branch_id)}">${escapeHtml(row.name)}</option>`).join('')}`;
       };
       form.onsubmit=event=>{
         event.preventDefault();
@@ -1374,15 +3138,15 @@
     return Number.isFinite(time)?Math.floor((now-time)/86400000):null;
   }
   function relativeActivity(value,{future=false}={}) {
-    if(!value)return future?'No next action':'No activity';
+    if(!value)return pt(future?'No next action':'No activity');
     const time=new Date(value).getTime();
     if(!Number.isFinite(time))return String(value);
     const days=Math.round((time-Date.now())/86400000);
-    if(days===0)return'Today';
-    if(days===1)return'Tomorrow';
-    if(days===-1)return'Yesterday';
-    if(days>1)return`In ${days} days`;
-    return`${Math.abs(days)} days ago`;
+    if(days===0)return pt('Today');
+    if(days===1)return pt('Tomorrow');
+    if(days===-1)return pt('Yesterday');
+    if(days>1)return pt('In {count} days',{count:days});
+    return pt('{count} days ago',{count:Math.abs(days)});
   }
   function onboardingPercent(item) {
     const summary=asObject(item.onboarding_summary);
@@ -1488,48 +3252,48 @@
     const canOpenDetail=item._has_prospect_detail!==false;
     const stageLabel=!canOpenDetail&&operationalLaneFor(item)==='case_won'
       ?(item.lane_label||'Website signup / live firm')
-      :(prospectStages.find(option=>option.key===stage)?.label||plainLabel(stage));
-    return `<article class="platform-prospect-card" draggable="false" data-prospect="${escapeHtml(id)}" data-version="${prospectVersion(item)}" data-stage="${escapeHtml(stage)}" data-lane="${escapeHtml(operationalLaneFor(item))}" data-has-prospect="${canOpenDetail?'true':'false'}" tabindex="0" role="button" aria-label="${canOpenDetail?'Open':'View firm record for'} ${escapeHtml(prospectCompany(item))}">
+      :pt(prospectStages.find(option=>option.key===stage)?.label||platformStatus(stage));
+    return `<article class="platform-prospect-card" draggable="false" data-prospect="${escapeHtml(id)}" data-version="${prospectVersion(item)}" data-stage="${escapeHtml(stage)}" data-lane="${escapeHtml(operationalLaneFor(item))}" data-has-prospect="${canOpenDetail?'true':'false'}" tabindex="0" role="button" aria-label="${escapeHtml(pt(canOpenDetail?'Open':'View firm record for'))} ${escapeHtml(prospectCompany(item))}">
       <div class="platform-prospect-name">${escapeHtml(prospectCompany(item))}</div>
       <div class="platform-prospect-contact"><b>${escapeHtml(prospectContact(item))}</b>${contactTitle?`<span>${escapeHtml(contactTitle)}</span>`:''}${contactPhone?`<span>${escapeHtml(contactPhone)}</span>`:''}</div>
       <dl class="platform-card-facts">
-        <div><dt>Owner</dt><dd>${escapeHtml(item.consultant_name||item.owner_name||(item.assigned_consultant_id?'Assigned':'Unassigned'))}</dd></div>
+        <div><dt>${escapeHtml(pt('Owner'))}</dt><dd>${escapeHtml(item.consultant_name||item.owner_name||pt(item.assigned_consultant_id?'Assigned':'Unassigned'))}</dd></div>
         ${canOpenDetail
-          ?`<div><dt>Priority / fit</dt><dd>${escapeHtml(`${plainLabel(priority)} · ${plainLabel(fit)}`)}</dd></div>`
-          :`<div><dt>Sector</dt><dd>${escapeHtml(plainLabel(item.sector_key||item.industry))}</dd></div>`}
+          ?`<div><dt>${escapeHtml(pt('Priority / fit'))}</dt><dd>${escapeHtml(`${platformStatus(priority)} · ${platformStatus(fit)}`)}</dd></div>`
+          :`<div><dt>${escapeHtml(pt('Sector'))}</dt><dd>${escapeHtml(sectorLabel(item.sector_key||item.industry))}</dd></div>`}
         ${canOpenDetail
-          ?`<div><dt>Next action</dt><dd>${escapeHtml(relativeActivity(nextAction,{future:true}))}</dd></div>`
-          :`<div><dt>Subscription</dt><dd>${escapeHtml(plainLabel(item.subscription_status||'Not recorded'))}</dd></div>`}
+          ?`<div><dt>${escapeHtml(pt('Next action'))}</dt><dd>${escapeHtml(relativeActivity(nextAction,{future:true}))}</dd></div>`
+          :`<div><dt>${escapeHtml(pt('Subscription'))}</dt><dd>${escapeHtml(platformStatus(item.subscription_status||'Not recorded'))}</dd></div>`}
         ${canOpenDetail
-          ?`<div><dt>Stage age</dt><dd>${stageDays} day${stageDays===1?'':'s'}</dd></div>`
-          :`<div><dt>Last activity</dt><dd>${escapeHtml(relativeActivity(item.last_activity_at))}</dd></div>`}
+          ?`<div><dt>${escapeHtml(pt('Stage age'))}</dt><dd>${stageDays}</dd></div>`
+          :`<div><dt>${escapeHtml(pt('Last activity'))}</dt><dd>${escapeHtml(relativeActivity(item.last_activity_at))}</dd></div>`}
       </dl>
       <div class="platform-card-badges">
         ${CUI.status(stageLabel,'off')}
-        ${item.attention_due===true?CUI.status('Due now','no'):''}
-        ${attentionSeverity==='critical'?CUI.status('Critical','no'):''}
-        ${attentionSeverity==='warning'?CUI.status('Warning','new'):''}
-        ${attentionSeverity==='info'?CUI.status('Monitor','off'):''}
-        ${stale?CUI.status('Stale','off'):''}${overdue?CUI.status('Overdue','no'):''}
-        ${prospectAttentionMatches(item,'clean')?CUI.status('Clean','ok'):''}
-        ${completeness?CUI.status(`${Math.max(0,Math.min(100,completeness))}% complete`,completeness>=80?'ok':'new'):''}
-        ${progress!==null?CUI.status(`${Math.max(0,Math.min(100,progress))}% onboarded`,progress===100?'ok':'new'):''}
-        ${onboarding?CUI.status(plainLabel(onboarding),onboardingTone(onboarding)):''}
-        ${summary.mandatoryTotal?CUI.status(`${summary.mandatoryFulfilled}/${summary.mandatoryTotal} required`,'off'):''}
-        ${Number(summary.blockedItems?.length||0)>0?CUI.status(`${summary.blockedItems.length} blocked`,'no'):''}
-        ${warnings.slice(0,3).map(flag=>CUI.status(plainLabel(flag),'no')).join('')}
-        ${stage==='unmapped'?CUI.status('Unmapped','no'):''}
+        ${item.attention_due===true?CUI.status(pt('Due now'),'no'):''}
+        ${attentionSeverity==='critical'?CUI.status(pt('Critical'),'no'):''}
+        ${attentionSeverity==='warning'?CUI.status(pt('Warning'),'new'):''}
+        ${attentionSeverity==='info'?CUI.status(pt('Monitor'),'off'):''}
+        ${stale?CUI.status(pt('Stale'),'off'):''}${overdue?CUI.status(pt('Overdue'),'no'):''}
+        ${prospectAttentionMatches(item,'clean')?CUI.status(pt('Clean'),'ok'):''}
+        ${completeness?CUI.status(pt('{percent}% complete',{percent:Math.max(0,Math.min(100,completeness))}),completeness>=80?'ok':'new'):''}
+        ${progress!==null?CUI.status(pt('{percent}% onboarded',{percent:Math.max(0,Math.min(100,progress))}),progress===100?'ok':'new'):''}
+        ${onboarding?CUI.status(platformStatus(onboarding),onboardingTone(onboarding)):''}
+        ${summary.mandatoryTotal?CUI.status(pt('{fulfilled}/{total} required',{fulfilled:summary.mandatoryFulfilled,total:summary.mandatoryTotal}),'off'):''}
+        ${Number(summary.blockedItems?.length||0)>0?CUI.status(pt('{count} blocked',{count:summary.blockedItems.length}),'no'):''}
+        ${warnings.slice(0,3).map(flag=>CUI.status(platformStatus(flag),'no')).join('')}
+        ${stage==='unmapped'?CUI.status(pt('Unmapped'),'no'):''}
       </div>
-      ${tags.length?`<div class="platform-card-tags" aria-label="Tags">${tags.slice(0,4).map(tag=>`<span>${escapeHtml(tag)}</span>`).join('')}</div>`:''}
+      ${tags.length?`<div class="platform-card-tags" aria-label="${escapeHtml(pt('Tags'))}">${tags.slice(0,4).map(tag=>`<span>${escapeHtml(tag)}</span>`).join('')}</div>`:''}
       ${contactActions}
       ${managed||!canWrite?`<div class="platform-card-actions platform-card-managed" data-card-actions>${canOpenDetail
-        ?'<span class="muted small">Evidence-managed lifecycle</span>'
-        :'<a class="btn ghost sm" href="#/platform/firms">Open firm directory</a>'}</div>`:`<div class="platform-card-actions" data-card-actions>
-        <label class="sr-only" for="move-${escapeHtml(id)}">Move ${escapeHtml(prospectCompany(item))} to stage</label>
+        ?`<span class="muted small">${escapeHtml(pt("Evidence-managed lifecycle"))}</span>`
+        :`<a class="btn ghost sm" href="#/platform/firms">${escapeHtml(pt("Open firm directory"))}</a>`}</div>`:`<div class="platform-card-actions" data-card-actions>
+        <label class="sr-only" for="move-${escapeHtml(id)}">${escapeHtml(pt('Move {name} to stage',{name:prospectCompany(item)}))}</label>
         <select id="move-${escapeHtml(id)}" data-move-select>
-          ${prospectStages.map(option=>`<option value="${option.key}"${option.key===stage?' selected':''}${['account_created','onboarding','activated'].includes(option.key)?' disabled':''}>${escapeHtml(option.label)}</option>`).join('')}
+          ${prospectStages.map(option=>`<option value="${option.key}"${option.key===stage?' selected':''}${['account_created','onboarding','activated'].includes(option.key)?' disabled':''}>${escapeHtml(pt(option.label))}</option>`).join('')}
         </select>
-        <button type="button" class="btn ghost sm" data-move aria-label="Move prospect">${CUI.icon('forward',{size:16})}</button>
+        <button type="button" class="btn ghost sm" data-move aria-label="${escapeHtml(pt('Move prospect'))}">${CUI.icon('forward',{size:16})}</button>
       </div>`}
     </article>`;
   }
@@ -1600,7 +3364,7 @@
     return{
       due:'Due now',critical:'Critical',warning:'Warning',
       info:'Monitor',stale:'Stale',clean:'Clean'
-    }[value]||plainLabel(value);
+    }[value]||platformStatus(value);
   }
   function prospectMatchesFilters(item,filters) {
     const search=String(filters.search||'').toLowerCase();
@@ -1635,7 +3399,7 @@
     };
     const active=Object.entries(labels).filter(([key])=>filters[key]);
     if(!active.length)return'';
-    return `<div class="platform-active-filters" aria-label="Active filters">${CUI.icon('search',{size:16})}<span>Active:</span>${active.map(([key,label])=>`<span class="chip">${escapeHtml(label)} · ${escapeHtml(key==='attention'?attentionFilterLabel(filters[key]):plainLabel(filters[key]))}</span>`).join('')}</div>`;
+    return `<div class="platform-active-filters" aria-label="${escapeHtml(pt('Active filters'))}">${CUI.icon('search',{size:16})}<span>${escapeHtml(pt("Active:"))}</span>${active.map(([key,label])=>`<span class="chip">${escapeHtml(pt(label))} · ${escapeHtml(key==='attention'?attentionFilterLabel(filters[key]):platformStatus(filters[key]))}</span>`).join('')}</div>`;
   }
   function onboardingHtml({board,items,CUI,filters,attentionSummary={},canWrite=true}) {
     const filtered=sortProspects(items.filter(item=>prospectMatchesFilters(item,filters)),filters.sort);
@@ -1646,7 +3410,7 @@
       (_value,item)=>item.consultant_name||item.owner_name||'Assigned owner');
     const sources=optionRows(items,prospectSource),regions=optionRows(items,item=>prospectValue(item,'region','company.region'));
     const segments=optionRows(items,item=>prospectValue(item,'segment','company.segment','industry','company.industry'));
-    const qualifications=optionRows(items,prospectFit,value=>plainLabel(value));
+    const qualifications=optionRows(items,prospectFit,value=>platformStatus(value));
     const attention=asObject(attentionSummary);
     const attentionCounts={
       due:Number(attention.due??items.filter(item=>prospectAttentionMatches(item,'due')).length),
@@ -1660,32 +3424,32 @@
       title:'Onboarding',
       subtitle:'Move from first contact to activation with evidence-backed onboarding gates and an auditable launch decision.',
       iconName:'setup',
-      actions:canWrite?`<button type="button" class="btn ghost" id="platformImportProspects">${CUI.icon('import',{size:17})}<span>Import</span></button><button type="button" class="btn" id="platformNewProspect">${CUI.icon('add',{size:17})}<span>New prospect</span></button>`:''
+      actions:canWrite?`<button type="button" class="btn ghost" id="platformImportProspects">${CUI.icon('import',{size:17})}<span>${escapeHtml(pt('Import prospects'))}</span></button><button type="button" class="btn" id="platformNewProspect">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New prospect'))}</span></button>`:''
     })}
-      <section class="platform-attention-summary" aria-label="Onboarding attention queue">
+      <section class="platform-attention-summary" aria-label="${escapeHtml(pt('Onboarding attention queue'))}">
         ${[
           ['due','Due now','no'],['critical','Critical','no'],['warning','Warning','new'],
           ['info','Monitor','off'],['stale','Stale','off'],['clean','Clean','ok']
-        ].map(([key,label,tone])=>`<button type="button" class="platform-attention-card ${tone}" data-attention-quick="${key}" aria-label="Show ${escapeHtml(label.toLowerCase())} firms">
-          <span>${escapeHtml(label)}</span><b>${escapeHtml(attentionCounts[key])}</b>
+        ].map(([key,label,tone])=>`<button type="button" class="platform-attention-card ${tone}" data-attention-quick="${key}" aria-label="${escapeHtml(pt('Show'))} ${escapeHtml(pt(label))}">
+          <span>${escapeHtml(pt(label))}</span><b>${escapeHtml(attentionCounts[key])}</b>
         </button>`).join('')}
       </section>
       <form class="card platform-filter-panel" id="platformBoardFilters">
         <div class="platform-filter-primary">
           ${CUI.field({id:'platformProspectSearch',label:'Search every firm field',type:'search',value:filters.search,placeholder:'Company, UEN, contact, phone, email or notes'})}
-          ${CUI.field({id:'platformLaneFilter',label:'Operational status',control:'select',options:[{value:'',label:'All statuses'},...operationalLanes.map(lane=>({value:lane.key,label:lane.label}))].map(option=>({...option,selected:option.value===filters.lane}))})}
+          ${CUI.field({id:'platformLaneFilter',label:'Operational status',control:'select',options:[{value:'',label:pt('All statuses')},...operationalLanes.map(lane=>({value:lane.key,label:pt(lane.label)}))].map(option=>({...option,selected:option.value===filters.lane}))})}
           ${CUI.field({id:'platformAttentionFilter',label:'Attention',control:'select',options:[
             ['','All firms'],['due','Due now'],['critical','Critical'],['warning','Warning'],
             ['info','Monitor'],['stale','Stale'],['clean','Clean']
-          ].map(([value,label])=>({value,label,selected:value===filters.attention}))})}
+          ].map(([value,label])=>({value,label:pt(label),selected:value===filters.attention}))})}
           ${CUI.field({id:'platformProspectSort',label:'Sort',control:'select',options:[
             ['next_action','Next action'],['stage_age','Stage age'],['priority','Priority'],
             ['newest','Newest'],['oldest','Oldest'],['overdue','Overdue first'],['stale','Stale first'],['complete','Completeness']
-          ].map(([value,label])=>({value,label,selected:value===filters.sort}))})}
-          <div class="platform-filter-submit"><button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>Apply filters</span></button><button class="btn ghost" type="button" id="platformBoardClear">Clear</button></div>
+          ].map(([value,label])=>({value,label:pt(label),selected:value===filters.sort}))})}
+          <div class="platform-filter-submit"><button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt('Apply filters'))}</span></button><button class="btn ghost" type="button" id="platformBoardClear">${escapeHtml(pt('Clear'))}</button></div>
         </div>
         <details class="platform-filter-more"${Object.values(filters).filter(Boolean).length>2?' open':''}>
-          <summary>More filters</summary>
+          <summary>${escapeHtml(pt('More filters'))}</summary>
           <div class="platform-filter-grid">
             ${CUI.field({id:'platformConsultantFilter',label:'Owner',control:'select',options:[{value:'',label:'All owners'},...owners].map(option=>({...option,selected:option.value===filters.consultant}))})}
             ${CUI.field({id:'platformStageFilter',label:'Stage',control:'select',options:[{value:'',label:'All stages'},...prospectStages,{value:'unmapped',label:'Unmapped'}].map(option=>({value:option.value||option.key,label:option.label,selected:(option.value||option.key)===filters.stage}))})}
@@ -1700,12 +3464,12 @@
         </details>
         ${onboardingFilterSummary(filters,CUI)}
       </form>
-      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Five clear operating lanes</b><p class="small">The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.</p></div></div>
-      <div class="platform-kanban" aria-label="SME onboarding Kanban">${operationalLanes.map(lane=>`<section class="platform-kanban-column" aria-labelledby="lane-${lane.key}">
-        <header class="platform-kanban-head"><div><h2 id="lane-${lane.key}">${escapeHtml(lane.label)}</h2><p>${escapeHtml(lane.description)}</p></div><span class="platform-count">${byLane[lane.key].length}</span></header>
-        <div class="platform-card-list">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI,{canWrite})).join('')||`<p class="muted small platform-lane-empty">No firms</p>`}</div>
+      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt('Five clear operating lanes'))}</b><p class="small">${escapeHtml(pt('The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.'))}</p></div></div>
+      <div class="platform-kanban" aria-label="${escapeHtml(pt('Onboarding pipeline'))}">${operationalLanes.map(lane=>`<section class="platform-kanban-column" aria-labelledby="lane-${lane.key}">
+        <header class="platform-kanban-head"><div><h2 id="lane-${lane.key}">${escapeHtml(pt(lane.label))}</h2><p>${escapeHtml(pt(lane.description))}</p></div><span class="platform-count">${byLane[lane.key].length}</span></header>
+        <div class="platform-card-list">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI,{canWrite})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
       </section>`).join('')}</div>
-      <div class="platform-prospect-list" aria-label="SME onboarding list">${filtered.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>`;
+      <div class="platform-prospect-list" aria-label="${escapeHtml(pt('SME onboarding list'))}">${filtered.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>`;
   }
 
   function defaultOnboardingFilters(){
@@ -1739,17 +3503,17 @@
   function businessApplicationQueueHtml(payload,CUI){
     const applications=asArray(payload,['applications']);
     return `<section class="card" id="platformBusinessApplicationQueue" style="margin-bottom:18px">
-      <div class="row"><div><p class="eyebrow">Owner access gate</p><h2 style="margin-top:4px">Business applications awaiting approval</h2>
-      <p class="muted small" style="margin-top:5px">No owner account or workspace can be created until a super admin approves an application.</p></div>
-      <span class="spacer"></span><span class="pill">${applications.length} pending</span></div>
+      <div class="row"><div><p class="eyebrow">${escapeHtml(pt('Owner access gate'))}</p><h2 style="margin-top:4px">${escapeHtml(pt('Business applications awaiting approval'))}</h2>
+      <p class="muted small" style="margin-top:5px">${escapeHtml(pt('No owner account or workspace can be created until a super admin approves an application.'))}</p></div>
+      <span class="spacer"></span><span class="pill">${applications.length} ${escapeHtml(pt('pending'))}</span></div>
       <div class="platform-card-list" style="margin-top:14px">${applications.map(application=>`<article class="card" data-business-application="${escapeHtml(application.id)}">
         <div class="row"><div><h3>${escapeHtml(application.business_name)}</h3>
           <p class="muted small" style="margin-top:4px">${escapeHtml(application.contact_name)} · ${escapeHtml(application.contact_email)} · ${escapeHtml(application.contact_phone)}</p>
-          <p class="muted small" style="margin-top:4px">${escapeHtml(plainLabel(application.sector_key))}${application.registration_number?` · ${escapeHtml(application.registration_number)}`:''} · ${escapeHtml(dateTime(application.submitted_at))}</p></div>
-          <span class="spacer"></span><div class="platform-actions"><button class="btn sm" type="button" data-application-decision="approved">Approve</button>
-          <button class="btn danger sm" type="button" data-application-decision="rejected">Reject</button></div></div>
+          <p class="muted small" style="margin-top:4px">${escapeHtml(sectorLabel(application.sector_key))}${application.registration_number?` · ${escapeHtml(application.registration_number)}`:''} · ${escapeHtml(dateTime(application.submitted_at))}</p></div>
+          <span class="spacer"></span><div class="platform-actions"><button class="btn sm" type="button" data-application-decision="approved">${escapeHtml(pt('Approve'))}</button>
+          <button class="btn danger sm" type="button" data-application-decision="rejected">${escapeHtml(pt('Reject'))}</button></div></div>
       </article>`).join('')||CUI.emptyState({iconName:'setup',title:'No applications awaiting approval',body:'New public business applications will appear here before any owner account can be created.'})}</div>
-      ${payload?.truncated?'<p class="muted small" style="margin-top:10px">Showing the newest 100 applications. Narrow the search to find another application.</p>':''}
+        ${payload?.truncated?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("Showing the newest 100 applications. Narrow the search to find another application."))}</p>`:''}
     </section>`;
   }
   function wireBusinessApplicationQueue(context){
@@ -1767,9 +3531,9 @@
     modal({title:isApproval?'Approve owner application':'Reject owner application',
       submitLabel:isApproval?'Approve and issue secure invitation':'Reject application',CUI,
       body:`<div class="card"><b>${escapeHtml(application.business_name)}</b><p class="muted small" style="margin-top:5px">${escapeHtml(application.contact_name)} · ${escapeHtml(application.contact_email)}</p></div>
-        <label for="businessApplicationDecisionReason">Decision note</label>
-        <textarea id="businessApplicationDecisionReason" name="reason" rows="4" required placeholder="${isApproval?'Approval basis and onboarding note':'Explain what must change before re-applying'}"></textarea>
-        ${isApproval?'<p class="muted small" style="margin-top:10px">The secure owner invitation is shown once after approval. Copy it before closing.</p>':''}`,
+        <label for="businessApplicationDecisionReason">${escapeHtml(pt("Decision note"))}</label>
+        <textarea id="businessApplicationDecisionReason" name="reason" rows="4" required placeholder="${escapeHtml(pt(isApproval?'Approval basis and onboarding note':'Explain what must change before re-applying'))}"></textarea>
+        ${isApproval?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("The secure owner invitation is shown once after approval. Copy it before closing."))}</p>`:''}`,
       onSubmit:async(form,controls)=>{
         const result=await rpc(sb,'platform_decide_business_application_v95',{
           p_application:application.id,p_decision:decision,
@@ -1777,13 +3541,13 @@
         });
         if(isApproval){
           const token=String(result?.invitation_token||'');
-          if(!/^[0-9a-f]{64}$/i.test(token))throw new Error('Approval succeeded but the one-time invitation was not returned. Inspect the application before proceeding.');
+          if(!/^[0-9a-f]{64}$/i.test(token))throw new Error(pt('Approval succeeded but the one-time invitation was not returned. Inspect the application before proceeding.'));
           const url=new URL('/business',globalObject.location.origin);url.searchParams.set('invite',token);
-          controls.overlay.querySelector('.modal-card').innerHTML=`<h2>Application approved</h2>
-            <p class="muted small" style="margin-top:7px">Copy this secure invitation now. Nestly stores only its hash and cannot show the token again.</p>
-            <label for="approvedOwnerInviteUrl">Approved owner link</label><textarea id="approvedOwnerInviteUrl" rows="4" readonly>${escapeHtml(url.toString())}</textarea>
-            <div class="row" style="margin-top:14px"><button type="button" class="btn" id="copyApprovedOwnerInvite">Copy secure owner link</button>
-            <span class="spacer"></span><button type="button" class="btn ghost" id="closeApprovedOwnerInvite">Done</button></div>`;
+          controls.overlay.querySelector('.modal-card').innerHTML=`<h2>${escapeHtml(pt("Application approved"))}</h2>
+            <p class="muted small" style="margin-top:7px">${escapeHtml(pt("Copy this secure invitation now. Nestly stores only its hash and cannot show the token again."))}</p>
+            <label for="approvedOwnerInviteUrl">${escapeHtml(pt("Approved owner link"))}</label><textarea id="approvedOwnerInviteUrl" rows="4" readonly>${escapeHtml(url.toString())}</textarea>
+            <div class="row" style="margin-top:14px"><button type="button" class="btn" id="copyApprovedOwnerInvite">${escapeHtml(pt("Copy secure owner link"))}</button>
+            <span class="spacer"></span><button type="button" class="btn ghost" id="closeApprovedOwnerInvite">${escapeHtml(pt("Done"))}</button></div>`;
           controls.overlay.querySelector('#copyApprovedOwnerInvite').onclick=async()=>{
             await navigator.clipboard.writeText(url.toString());CUI.announce('Secure owner invitation copied.');
           };
@@ -1849,7 +3613,7 @@
       ${CUI.field({id:'newStage',label:'Starting stage',control:'select',options:prospectStages.filter(stage=>!['account_created','onboarding','activated'].includes(stage.key)).map(stage=>({value:stage.key,label:stage.label,selected:stage.key==='new_lead'})),attributes:'name="stage"'})}
       ${CUI.field({id:'newTags',label:'Tags',placeholder:'Comma separated',attributes:'name="tags"'})}
     </div>`,onSubmit:async(form,controls)=>{
-      if(!form.get('contact_email')&&!form.get('contact_phone'))throw new Error('Add a contact email or phone number.');
+      if(!form.get('contact_email')&&!form.get('contact_phone'))throw new Error(pt('Add a contact email or phone number.'));
       const data=await rpc(sb,'platform_create_prospect_v76',{
         p_company:{legal_name:form.get('company_name'),registration_number:form.get('uen')||null},
         p_primary_contact:{full_name:form.get('contact_name'),email:form.get('contact_email')||null,phone:form.get('contact_phone')||null},
@@ -1858,30 +3622,30 @@
         p_idempotency_key:idempotencyKey()
       });
       controls.close();await renderOnboarding(context);
-      CUI.announce(`Prospect ${data?.prospect?.company_name||form.get('company_name')} created.`);
+      CUI.announce(pt('Prospect {name} created.',{name:data?.prospect?.company_name||form.get('company_name')}));
     }});
   }
   function prospectImportModal(context) {
     const {CUI,sb}=context;
     let parsed={headers:[],rows:[]},mapping={},batch=null,serverRows=[],analysis=null;
     const overlay=modal({title:'Import prospects',submitLabel:'Analyse import',CUI,body:`
-      <div class="platform-import-step" aria-current="step"><span>1</span><div><b>Add source data</b><p class="muted small">CSV, TSV and Excel are accepted. Nothing is inserted until review is complete.</p></div></div>
-      <label for="platformImportSource">Source name</label><input id="platformImportSource" name="source" value="Platform import" required>
-      <label for="platformImportPaste">Paste CSV or tab-separated rows</label>
-      <textarea id="platformImportPaste" name="paste" rows="7" placeholder="Company Name,Contact Person,Email Address"></textarea>
-      <label for="platformImportFile">Or choose CSV / TSV / XLSX</label><input id="platformImportFile" type="file" accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values">
-      <button type="button" class="btn ghost sm" data-import-columns style="margin-top:10px">${CUI.icon('search',{size:16})}<span>Preview and map columns</span></button>
+      <div class="platform-import-step" aria-current="step"><span>1</span><div><b>${escapeHtml(pt("Add source data"))}</b><p class="muted small">${escapeHtml(pt("CSV, TSV and Excel are accepted. Nothing is inserted until review is complete."))}</p></div></div>
+      <label for="platformImportSource">${escapeHtml(pt("Source name"))}</label><input id="platformImportSource" name="source" value="Platform import" required>
+      <label for="platformImportPaste">${escapeHtml(pt("Paste CSV or tab-separated rows"))}</label>
+      <textarea id="platformImportPaste" name="paste" rows="7" placeholder="${escapeHtml(pt('Company Name,Contact Person,Email Address'))}"></textarea>
+      <label for="platformImportFile">${escapeHtml(pt("Or choose CSV / TSV / XLSX"))}</label><input id="platformImportFile" type="file" accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values">
+      <button type="button" class="btn ghost sm" data-import-columns style="margin-top:10px">${CUI.icon('search',{size:16})}<span>${escapeHtml(pt("Preview and map columns"))}</span></button>
       <div class="platform-import-preview" data-preview aria-live="polite"></div>`,onSubmit:async(form,controls)=>{
-        if(!CRM)throw new Error('The enterprise import mapper is unavailable.');
+        if(!CRM)throw new Error(pt('The enterprise import mapper is unavailable.'));
         if(!parsed.rows.length)parsePastedImport(controls.overlay);
-        if(!parsed.rows.length)throw new Error('Add at least one prospect row.');
+        if(!parsed.rows.length)throw new Error(pt('Add at least one prospect row.'));
         collectImportMapping(controls.overlay);
         const conflicts=CRM.mappingConflicts(mapping);
-        if(conflicts.length)throw new Error(`Map each single-value field once. Conflict: ${conflicts.map(item=>plainLabel(item.destination)).join(', ')}.`);
-        if(!Object.values(mapping).includes('company_name'))throw new Error('Map one source column to Company name.');
+        if(conflicts.length)throw new Error(pt('Map each single-value field once. Conflict: {fields}.',{fields:conflicts.map(item=>platformStatus(item.destination)).join(', ')}));
+        if(!Object.values(mapping).includes('company_name'))throw new Error(pt('Map one source column to Company name.'));
         const mapped=CRM.analyseImportRows(CRM.mapImportRows(parsed.rows,mapping));
         const localSummary=CRM.importSummary(mapped);
-        if(localSummary.invalid===localSummary.total)throw new Error('Every row has a validation error. Correct the mapping or source data.');
+        if(localSummary.invalid===localSummary.total)throw new Error(pt('Every row has a validation error. Correct the mapping or source data.'));
         const staged=await rpc(sb,'platform_stage_prospect_import_v76',{
           p_source_system:'platform_console',p_source_name:form.get('source'),
           p_rows:parsed.rows.map(row=>row.values),p_idempotency_key:idempotencyKey()
@@ -1915,16 +3679,16 @@
     function renderImportMapping(host){
       const preview=host.querySelector('[data-preview]');
       if(!parsed.rows.length){
-        preview.innerHTML='<div class="err">Include a header row and at least one data row.</div>';return;
+        preview.innerHTML=`<div class="err">${escapeHtml(pt("Include a header row and at least one data row."))}</div>`;return;
       }
       const mapped=CRM.analyseImportRows(CRM.mapImportRows(parsed.rows,mapping)),summary=CRM.importSummary(mapped);
       preview.innerHTML=`<section class="platform-import-mapping" aria-labelledby="importMapTitle">
-        <div class="platform-import-step"><span>2</span><div><b id="importMapTitle">Map every source column</b><p class="muted small">Unknown columns stay preserved with their source labels. Single-value fields may only be mapped once.</p></div></div>
+        <div class="platform-import-step"><span>2</span><div><b id="importMapTitle">${escapeHtml(pt("Map every source column"))}</b><p class="muted small">${escapeHtml(pt("Unknown columns stay preserved with their source labels. Single-value fields may only be mapped once."))}</p></div></div>
         <div class="platform-import-map-grid">${parsed.headers.map(header=>`<div><label for="import-map-${escapeHtml(CRM.normaliseHeader(header).replace(/\s/g,'-'))}">${escapeHtml(header)}</label><select id="import-map-${escapeHtml(CRM.normaliseHeader(header).replace(/\s/g,'-'))}" data-import-map="${escapeHtml(header)}">
-          ${[...CRM.importFields,{key:CRM.customFieldKey(header),label:`Custom source field · ${header}`}].map(field=>`<option value="${escapeHtml(field.key)}"${mapping[header]===field.key?' selected':''}>${escapeHtml(field.label)}</option>`).join('')}
+          ${[...CRM.importFields,{key:CRM.customFieldKey(header),label:pt('Custom source field · {header}',{header})}].map(field=>`<option value="${escapeHtml(field.key)}"${mapping[header]===field.key?' selected':''}>${escapeHtml(field.label)}</option>`).join('')}
         </select></div>`).join('')}</div>
-        <div class="platform-import-summary" role="status"><b>${summary.total} rows</b><span>${summary.ready} ready</span><span>${summary.review} review</span><span>${summary.invalid} invalid</span></div>
-        <div class="cui-table-wrap" role="region" aria-label="Import sample" tabindex="0"><table class="cui-table"><caption>First five source rows</caption><thead><tr>${parsed.headers.map(header=>`<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${parsed.rows.slice(0,5).map(row=>`<tr>${parsed.headers.map(header=>`<td data-label="${escapeHtml(header)}">${escapeHtml(row.values[header])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+        ${importMappingSummaryHtml(summary)}
+        <div class="cui-table-wrap" role="region" aria-label="${escapeHtml(pt("Import sample"))}" tabindex="0"><table class="cui-table"><caption>${escapeHtml(pt("First five source rows"))}</caption><thead><tr>${parsed.headers.map(header=>`<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${parsed.rows.slice(0,5).map(row=>`<tr>${parsed.headers.map(header=>`<td data-label="${escapeHtml(header)}">${escapeHtml(row.values[header])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
       </section>`;
       preview.querySelectorAll('[data-import-map]').forEach(select=>select.onchange=()=>{
         collectImportMapping(host);renderImportMapping(host);
@@ -1939,29 +3703,29 @@
         invalid:Number(analysis.invalid_rows??staged.invalid_rows??0)
       };
       preview.innerHTML=`<section class="platform-import-results" aria-labelledby="importDecisionTitle">
-        <div class="platform-import-step"><span>3</span><div><b id="importDecisionTitle">Review analysis and decisions</b><p class="muted small">The server checked existing prospects and preserved the original source row. Conflicts must stay in review, be skipped, or be deliberately merged.</p></div></div>
-        <div class="platform-import-summary"><b>${localSummary.total} rows</b><span>${counts.valid} valid</span><span>${counts.unmapped} unmapped</span><span>${counts.conflicts} conflicts</span><span>${counts.invalid} invalid</span></div>
-        ${serverRows.length?`<div class="platform-import-review-list">${serverRows.map(row=>importReviewRowHtml(row)).join('')}</div>`:'<p class="muted small">No conflict or validation rows require individual attention.</p>'}
-        <div class="platform-actions"><button type="button" class="btn ghost sm" data-import-errors>${CUI.icon('export',{size:16})}<span>Download error CSV</span></button></div>
-        <label class="row platform-confirm-row"><input type="checkbox" data-import-confirm><span>I reviewed the mapping, validation results, and every conflict decision.</span></label>
+        <div class="platform-import-step"><span>3</span><div><b id="importDecisionTitle">${escapeHtml(pt("Review analysis and decisions"))}</b><p class="muted small">${escapeHtml(pt("The server checked existing prospects and preserved the original source row. Conflicts must stay in review, be skipped, or be deliberately merged."))}</p></div></div>
+        ${importDecisionSummaryHtml(localSummary,counts)}
+        ${serverRows.length?`<div class="platform-import-review-list">${serverRows.map(row=>importReviewRowHtml(row)).join('')}</div>`:`<p class="muted small">${escapeHtml(pt("No conflict or validation rows require individual attention."))}</p>`}
+        <div class="platform-actions"><button type="button" class="btn ghost sm" data-import-errors>${CUI.icon('export',{size:16})}<span>${escapeHtml(pt("Download error CSV"))}</span></button></div>
+        <label class="row platform-confirm-row"><input type="checkbox" data-import-confirm><span>${escapeHtml(pt("I reviewed the mapping, validation results, and every conflict decision."))}</span></label>
       </section>`;
       preview.querySelectorAll('[data-import-decision]').forEach(select=>select.onchange=()=>saveImportDecision(select,controls));
       preview.querySelector('[data-import-errors]').onclick=()=>downloadImportErrors(serverRows,batch,context);
-      controls.submit.textContent='Commit reviewed import';controls.submit.disabled=false;
+      controls.submit.textContent=pt('Commit reviewed import');controls.submit.disabled=false;
       controls.overlay.querySelector('[data-form]').onsubmit=async event=>{
         event.preventDefault();
         if(!controls.overlay.querySelector('[data-import-confirm]')?.checked){
-          controls.errorHost.innerHTML='<div class="err">Review and confirm the analysed import first.</div>';return;
+          controls.errorHost.innerHTML=`<div class="err">${escapeHtml(pt("Review and confirm the analysed import first."))}</div>`;return;
         }
         if([...controls.overlay.querySelectorAll('[data-import-decision]')].some(select=>select.value==='review')){
-          controls.errorHost.innerHTML='<div class="err">Resolve every row still marked Review before committing.</div>';return;
+          controls.errorHost.innerHTML=`<div class="err">${escapeHtml(pt("Resolve every row still marked Review before committing."))}</div>`;return;
         }
         controls.submit.disabled=true;controls.errorHost.innerHTML='';
         try{
           const committed=await commitProspectImport(sb,batch);
           renderCommittedImport(controls,committed,batch,context);
           await renderOnboarding(context);
-        }catch(error){controls.errorHost.innerHTML=`<div class="err">${escapeHtml(error.message)}</div>`;controls.submit.disabled=false}
+        }catch(error){controls.errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'Import could not be completed.'))}</div>`;controls.submit.disabled=false}
       };
     }
     overlay.querySelector('[data-import-columns]').onclick=()=>parsePastedImport(overlay);
@@ -1980,10 +3744,10 @@
     const id=row.import_row_id||row.id||'',candidates=asArray(row.candidates);
     const suggested=row.row_status==='invalid'?'skip':row.row_status==='conflict'?'review':'insert';
     return `<article class="platform-import-review-row">
-      <div><b>Source row ${escapeHtml(row.row_number)}</b><p class="muted small">${escapeHtml(plainLabel(row.row_status))}${asArray(row.errors).length?` · ${escapeHtml(asArray(row.errors).map(plainLabel).join(', '))}`:''}</p>
-        ${candidates.length?`<p class="small">${candidates.map(candidate=>`${plainLabel(candidate.match_basis)} ${candidate.score}% · ${candidate.candidate_prospect_id}`).map(escapeHtml).join('<br>')}</p>`:''}</div>
-      <div><label class="sr-only" for="import-decision-${escapeHtml(row.row_number)}">Decision for source row ${escapeHtml(row.row_number)}</label><select id="import-decision-${escapeHtml(row.row_number)}" data-import-decision data-import-row="${escapeHtml(id)}" data-candidate="${escapeHtml(candidates[0]?.candidate_prospect_id||'')}"${id?'':' disabled title="A backend update is required for per-row decisions."'}>
-        ${[['review','Review'],['insert','Insert new'],['skip','Skip'],...(candidates.length?[['merge','Merge source lineage']]:[])].map(([value,label])=>`<option value="${value}"${value===suggested?' selected':''}>${label}</option>`).join('')}
+      <div><b>${escapeHtml(pt('Source row {row}',{row:row.row_number}))}</b><p class="muted small">${escapeHtml(platformStatus(row.row_status))}${asArray(row.errors).length?` · ${escapeHtml(asArray(row.errors).map(platformStatus).join(', '))}`:''}</p>
+        ${candidates.length?`<p class="small">${candidates.map(candidate=>`${platformStatus(candidate.match_basis)} ${candidate.score}% · ${candidate.candidate_prospect_id}`).map(escapeHtml).join('<br>')}</p>`:''}</div>
+      <div><label class="sr-only" for="import-decision-${escapeHtml(row.row_number)}">${escapeHtml(pt('Decision for source row {row}',{row:row.row_number}))}</label><select id="import-decision-${escapeHtml(row.row_number)}" data-import-decision data-import-row="${escapeHtml(id)}" data-candidate="${escapeHtml(candidates[0]?.candidate_prospect_id||'')}"${id?'':` disabled title="${escapeHtml(pt('A backend update is required for per-row decisions.'))}"`}>
+        ${[['review','Review'],['insert','Insert new'],['skip','Skip'],...(candidates.length?[['merge','Merge source lineage']]:[])].map(([value,label])=>`<option value="${value}"${value===suggested?' selected':''}>${escapeHtml(pt(label))}</option>`).join('')}
       </select></div>
     </article>`;
   }
@@ -1998,7 +3762,7 @@
         p_reason:`Platform import review: ${decision}`
       });
     }catch(error){
-      select.value='review';controls.errorHost.innerHTML=`<div class="err">${escapeHtml(error.message)}</div>`;
+      select.value='review';controls.errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'Import decision could not be saved.'))}</div>`;
     }finally{select.disabled=false}
   }
   function downloadImportErrors(rows,batch,context) {
@@ -2022,20 +3786,22 @@
     const inserted=Number(committed.inserted_rows??committed.imported_rows??committed.imported_count??committed.imported??0);
     const merged=Number(committed.merged_rows??0),skipped=Number(committed.skipped_rows??0);
     controls.overlay.querySelector('[data-preview]').innerHTML=`<section class="platform-import-results">
-      <div class="platform-import-step"><span>${context.CUI.icon('check',{size:17})}</span><div><b>Import completed</b><p class="muted small">${inserted} inserted · ${merged} merged · ${skipped} skipped. Source lineage and batch provenance were retained.</p></div></div>
-      <div class="platform-route-note"><div><b>Guarded rollback</b><p class="small">Unused, unedited inserts are moved to Lost with immutable import provenance retained. Reviewed merge links are detached. The backend refuses reversal after later use or edits.</p><label for="platformImportRollbackReason">Rollback reason</label><input id="platformImportRollbackReason" data-import-rollback-reason><button type="button" class="btn danger sm" data-import-rollback>Rollback this batch</button></div></div>
+      <div class="platform-import-step"><span>${context.CUI.icon('check',{size:17})}</span><div><b>${escapeHtml(pt("Import completed"))}</b><p class="muted small">${escapeHtml(committedImportSummaryText({inserted,merged,skipped}))}</p></div></div>
+      <div class="platform-route-note"><div><b>${escapeHtml(pt("Guarded rollback"))}</b><p class="small">${escapeHtml(pt("Unused, unedited inserts are moved to Lost with immutable import provenance retained. Reviewed merge links are detached. The backend refuses reversal after later use or edits."))}</p><label for="platformImportRollbackReason">${escapeHtml(pt("Rollback reason"))}</label><input id="platformImportRollbackReason" data-import-rollback-reason><button type="button" class="btn danger sm" data-import-rollback>${escapeHtml(pt("Rollback this batch"))}</button></div></div>
     </section>`;
     controls.submit.hidden=true;
     controls.overlay.querySelector('[data-import-rollback]').onclick=async event=>{
       const reason=controls.overlay.querySelector('[data-import-rollback-reason]').value.trim();
-      if(reason.length<2){controls.errorHost.innerHTML='<div class="err">Enter a rollback reason.</div>';return}
-      if(!globalObject.confirm('Rollback this import batch? Eligible inserts will be tombstoned as Lost and immutable audit provenance will remain.'))return;
+      if(reason.length<2){controls.errorHost.innerHTML=`<div class="err">${escapeHtml(pt("Enter a rollback reason."))}</div>`;return}
+      if(!globalObject.confirm(pt('Rollback this import batch? Eligible inserts will be tombstoned as Lost and immutable audit provenance will remain.')))return;
       event.currentTarget.disabled=true;
       try{
         const result=await rpc(activeContext.sb,'platform_reverse_prospect_import_v86',{p_batch:batch,p_reason:reason});
         controls.close();await renderOnboarding(activeContext);
-        activeContext.CUI.announce(`Import reversed: ${Number(result.reversed_insert_rows||0)} insert records tombstoned and ${Number(result.unlinked_merge_rows||0)} merge links detached. Audit provenance was preserved.`);
-      }catch(error){controls.errorHost.innerHTML=`<div class="err">${escapeHtml(error.message)}</div>`;event.currentTarget.disabled=false}
+        activeContext.CUI.announce(pt('Import reversed: {insertCount} insert records tombstoned and {mergeCount} merge links detached. Audit provenance was preserved.',{
+          insertCount:Number(result.reversed_insert_rows||0),mergeCount:Number(result.unlinked_merge_rows||0)
+        }));
+      }catch(error){controls.errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'Import rollback could not be completed.'))}</div>`;event.currentTarget.disabled=false}
     };
   }
   function parseTableText(text) {
@@ -2047,7 +3813,7 @@
     return matrix.slice(1).filter(row=>row.some(value=>String(value||'').trim())).map(row=>Object.fromEntries(headers.map((header,index)=>[header,row[index]??null])));
   }
   function matrixImportSource(matrix) {
-    const headers=(matrix[0]||[]).map((value,index)=>String(value||'').trim()||`Column ${index+1}`);
+    const headers=(matrix[0]||[]).map((value,index)=>String(value||'').trim()||pt('Column {count}',{count:index+1}));
     return{delimiter:',',headers,rows:matrix.slice(1).filter(row=>row.some(value=>String(value||'').trim())).map((row,index)=>({
       row_number:index+2,values:Object.fromEntries(headers.map((header,column)=>[header,String(row[column]??'').trim()]))
     }))};
@@ -2055,7 +3821,7 @@
   async function openProspectDetail(item,context) {
     const {CUI,sb}=context,id=item.id||item.prospect_id;
     const overlay=document.createElement('div');overlay.className='platform-drawer';overlay.tabIndex=-1;
-    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head"><div><h1 id="prospectDetailTitle" style="font-size:1.45rem">${escapeHtml(prospectCompany(item))}</h1><p class="muted small">Loading complete prospect detail…</p></div><button type="button" class="btn ghost sm platform-drawer-close" aria-label="Close detail">${CUI.icon('close',{size:18})}</button></div><div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading contacts, activities, tasks and commercial context…',iconName:'customers'})}</div></section>`;
+    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head"><div><h1 id="prospectDetailTitle" style="font-size:1.45rem">${escapeHtml(prospectCompany(item))}</h1><p class="muted small">${escapeHtml(pt("Loading complete prospect detail…"))}</p></div><button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div><div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading contacts, activities, tasks and commercial context…',iconName:'customers'})}</div></section>`;
     document.body.appendChild(overlay);
     let deactivate,closed=false,boardDirty=false;
     const close=()=>{
@@ -2070,7 +3836,7 @@
     }catch(error){
       overlay.querySelector('[data-detail]').innerHTML=error.platformUpdateRequired
         ?systemUpdateRequired(CUI,'Prospect detail')
-        :CUI.errorState({title:'Prospect detail unavailable',message:error.message});
+        :CUI.errorState({title:'Prospect detail unavailable',message:platformErrorMessage(error,'Prospect detail unavailable')});
     }
   }
   async function loadProspectDetail(sb,id) {
@@ -2124,12 +3890,12 @@
   }
   function detailObjectHtml(value,empty='Not recorded') {
     const object=asObject(value),entries=Object.entries(object).filter(([,item])=>item!==null&&item!==''&&item!==undefined);
-    if(!entries.length)return`<p class="muted small">${escapeHtml(empty)}</p>`;
-    return `<dl class="platform-context-list">${entries.map(([key,item])=>`<div><dt>${escapeHtml(plainLabel(key))}</dt><dd>${escapeHtml(typeof item==='object'?JSON.stringify(item):item)}</dd></div>`).join('')}</dl>`;
+    if(!entries.length)return`<p class="muted small">${escapeHtml(pt(empty))}</p>`;
+    return `<dl class="platform-context-list">${entries.map(([key,item])=>`<div><dt>${escapeHtml(pt(plainLabel(key)))}</dt><dd>${escapeHtml(typeof item==='object'?JSON.stringify(item):item)}</dd></div>`).join('')}</dl>`;
   }
   function formatDetailValue(value) {
-    if(value===true)return'Yes';
-    if(value===false)return'No';
+    if(value===true)return pt('Yes');
+    if(value===false)return pt('No');
     if(Array.isArray(value))return value.length?value.join(', '):'—';
     if(value&&typeof value==='object')return Object.keys(value).length?JSON.stringify(value):'—';
     return value===null||value===undefined||value===''?'—':String(value);
@@ -2139,28 +3905,28 @@
     const rows=fields.map(field=>{
       const [key,label,formatter]=field;
       const raw=object[key],shown=formatter?formatter(raw,object):formatDetailValue(raw);
-      return`<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(shown)}</dd></div>`;
+      return`<div><dt>${escapeHtml(pt(label))}</dt><dd>${escapeHtml(shown)}</dd></div>`;
     });
-    return rows.length?`<dl class="platform-context-list platform-typed-list">${rows.join('')}</dl>`:`<p class="muted small">${escapeHtml(empty)}</p>`;
+    return rows.length?`<dl class="platform-context-list platform-typed-list">${rows.join('')}</dl>`:`<p class="muted small">${escapeHtml(pt(empty))}</p>`;
   }
   const contactBase=row=>asObject(row.contact||row);
   const contactExtended=row=>asObject(row.profile);
   const commercialBase=value=>asObject(value?.terms||value);
   const commercialExtended=value=>asObject(value?.detail);
   function sectionHeader(title,action='') {
-    return`<div class="platform-list-row"><h2>${escapeHtml(title)}</h2>${action}</div>`;
+    return`<div class="platform-list-row"><h2>${escapeHtml(pt(title))}</h2>${action}</div>`;
   }
   function onboardingPanelHtml(payload,error,CUI,isSuperAdmin=false) {
     if(error)return CUI.card({
       title:'Evidence-backed onboarding',
       body:error.platformUpdateRequired
-        ?'<p class="muted small">A system update is required before this checklist can be managed.</p>'
-        :`<div class="err">${escapeHtml(error.message||'The onboarding checklist could not be loaded.')}</div>`
+        ?`<p class="muted small">${escapeHtml(pt("A system update is required before this checklist can be managed."))}</p>`
+        :`<div class="err">${escapeHtml(platformErrorMessage(error,'The onboarding checklist could not be loaded.'))}</div>`
     });
     const onboarding=asObject(payload),checklist=asObject(onboarding.checklist);
     if(!checklist.id)return CUI.card({
       title:'Evidence-backed onboarding',
-      body:'<p class="muted small">No onboarding checklist was returned for this workspace.</p>'
+      body:`<p class="muted small">${escapeHtml(pt("No onboarding checklist was returned for this workspace."))}</p>`
     });
     const facts=onboardingFacts(onboarding),items=asArray(onboarding.items);
     const invitations=asArray(onboarding.owner_invitations),events=asArray(onboarding.events);
@@ -2171,61 +3937,72 @@
       &&items.some(item=>item.item_key==='go_live_approved'&&item.status==='satisfied');
     const blockers=[
       ...(checklist.blocked_at?[{label:'Whole onboarding',reason:checklist.blocked_reason}]:[]),
-      ...facts.blockedItems.map(item=>({label:item.label||plainLabel(item.item_key),reason:item.block_reason}))
+      ...facts.blockedItems.map(item=>({label:item.label||platformStatus(item.item_key),reason:item.block_reason}))
     ];
     return `<section class="card platform-detail-section" aria-labelledby="onboardingChecklistTitle">
       <div class="platform-drawer-head" style="margin-bottom:10px">
-        <div><h2 id="onboardingChecklistTitle">Evidence-backed onboarding</h2><p class="muted small">Checklist version ${escapeHtml(facts.version)} · only recorded evidence changes readiness.</p></div>
-        ${CUI.status(plainLabel(facts.status),onboardingTone(facts.status))}
+        <div><h2 id="onboardingChecklistTitle">${escapeHtml(pt("Evidence-backed onboarding"))}</h2><p class="muted small">${escapeHtml(pt('Checklist version {version} · only recorded evidence changes readiness.',{version:facts.version}))}</p></div>
+        ${CUI.status(platformStatus(facts.status),onboardingTone(facts.status))}
       </div>
       <div class="platform-detail-grid">
         ${detailObjectHtml({
           business:onboarding.business?.name,
           plan:onboarding.subscription?.plan_code,
           billing_cadence:onboarding.subscription?.billing_cadence,
-          required_items:`${facts.mandatoryFulfilled} of ${facts.mandatoryTotal}`,
+          required_items:pt('{fulfilled} of {total}',{fulfilled:facts.mandatoryFulfilled,total:facts.mandatoryTotal}),
           started_at:dateTime(checklist.started_at),
           activated_at:dateTime(checklist.activated_at)
         })}
-        ${blockers.length?`<div><b>Active blockers</b><ul class="platform-error-list">${blockers.map(blocker=>`<li><b>${escapeHtml(blocker.label)}</b>: ${escapeHtml(blocker.reason||'No reason recorded')}</li>`).join('')}</ul></div>`:'<div><b>Active blockers</b><p class="muted small">No active blockers recorded.</p></div>'}
+        ${blockers.length?`<div><b>${escapeHtml(pt("Active blockers"))}</b><ul class="platform-error-list">${blockers.map(blocker=>`<li><b>${escapeHtml(blocker.label)}</b>: ${escapeHtml(blocker.reason||pt('No reason recorded'))}</li>`).join('')}</ul></div>`:`<div><b>${escapeHtml(pt("Active blockers"))}</b><p class="muted small">${escapeHtml(pt("No active blockers recorded."))}</p></div>`}
       </div>
       ${facts.activated?'':`<div class="platform-actions" style="margin-top:14px">
-        ${facts.status==='not_started'?`<button type="button" class="btn sm" data-onboarding-start${canStart?'':' disabled title="The workspace owner must accept access first."'}>${CUI.icon('forward',{size:16})}<span>Start onboarding</span></button>`:''}
-        <button type="button" class="btn ghost sm" data-onboarding-refresh>${CUI.icon('retention',{size:16})}<span>Refresh evidence</span></button>
-        <button type="button" class="btn ghost sm" data-onboarding-reissue>${CUI.icon('customers',{size:16})}<span>Reissue owner invite</span></button>
+        ${facts.status==='not_started'?`<button type="button" class="btn sm" data-onboarding-start${canStart?'':` disabled title="${escapeHtml(pt('The workspace owner must accept access first.'))}"`}>${CUI.icon('forward',{size:16})}<span>${escapeHtml(pt("Start onboarding"))}</span></button>`:''}
+        <button type="button" class="btn ghost sm" data-onboarding-refresh>${CUI.icon('retention',{size:16})}<span>${escapeHtml(pt("Refresh evidence"))}</span></button>
+        <button type="button" class="btn ghost sm" data-onboarding-reissue>${CUI.icon('customers',{size:16})}<span>${escapeHtml(pt("Reissue owner invite"))}</span></button>
         ${superAdminOnly(isSuperAdmin,checklist.blocked_at
-          ?'<button type="button" class="btn ghost sm" data-onboarding-unblock>Unblock onboarding</button>'
-          :'<button type="button" class="btn danger sm" data-onboarding-block>Block onboarding</button>')}
-        ${superAdminOnly(isSuperAdmin,`<button type="button" class="btn sm" data-onboarding-activate${activationReady?'':' disabled title="Complete every mandatory item and super-admin go-live approval first."'}>${CUI.icon('check',{size:16})}<span>Activate firm</span></button>`)}
+          ?`<button type="button" class="btn ghost sm" data-onboarding-unblock>${escapeHtml(pt("Unblock onboarding"))}</button>`
+          :`<button type="button" class="btn danger sm" data-onboarding-block>${escapeHtml(pt("Block onboarding"))}</button>`)}
+        ${superAdminOnly(isSuperAdmin,`<button type="button" class="btn sm" data-onboarding-activate${activationReady?'':` disabled title="${escapeHtml(pt('Complete every mandatory item and super-admin go-live approval first.'))}"`}>${CUI.icon('check',{size:16})}<span>${escapeHtml(pt("Activate firm"))}</span></button>`)}
       </div>`}
-      ${!facts.activated&&!isSuperAdmin?'<p class="muted small" data-super-admin-onboarding-note>Final waivers, blocking decisions, and firm activation are completed by a super admin.</p>':''}
-      <h3 style="font-size:14px;margin-top:16px">Checklist</h3>
+      ${!facts.activated&&!isSuperAdmin?`<p class="muted small" data-super-admin-onboarding-note>${escapeHtml(pt("Final waivers, blocking decisions, and firm activation are completed by a super admin."))}</p>`:''}
+      <h3 style="font-size:14px;margin-top:16px">${escapeHtml(pt("Checklist"))}</h3>
       <div>${items.map(item=>{
         const canRecord=!facts.activated&&['manual','sa_approval'].includes(item.verification_mode)&&item.status!=='blocked';
         const canWaive=!facts.activated&&item.waivable===true&&item.item_key!=='go_live_approved'&&item.status==='pending';
         return `<article class="platform-action-item">
-          <div><b>${escapeHtml(item.label||plainLabel(item.item_key))}</b>
-            <p class="muted small">${escapeHtml(plainLabel(item.category))} · ${escapeHtml(plainLabel(item.verification_mode))}${item.mandatory?' · required':' · optional'}</p>
-            ${item.block_reason?`<p class="small">Blocked: ${escapeHtml(item.block_reason)}</p>`:''}
-            ${item.waiver_reason?`<p class="small">Waived: ${escapeHtml(item.waiver_reason)}</p>`:''}
-            ${Object.keys(asObject(item.evidence)).length?`<p class="muted small">Evidence: ${escapeHtml(JSON.stringify(item.evidence))}</p>`:''}
+          <div><b>${escapeHtml(item.label||platformStatus(item.item_key))}</b>
+            <p class="muted small">${escapeHtml(platformStatus(item.category))} · ${escapeHtml(platformStatus(item.verification_mode))}${escapeHtml(pt(item.mandatory?' · required':' · optional'))}</p>
+            ${item.block_reason?`<p class="small">${escapeHtml(pt('Blocked: {reason}',{reason:item.block_reason}))}</p>`:''}
+            ${item.waiver_reason?`<p class="small">${escapeHtml(pt('Waived: {reason}',{reason:item.waiver_reason}))}</p>`:''}
+            ${Object.keys(asObject(item.evidence)).length?`<p class="muted small">${escapeHtml(pt('Evidence: {evidence}',{evidence:JSON.stringify(item.evidence)}))}</p>`:''}
           </div>
-          <div><div style="text-align:right">${CUI.status(plainLabel(item.status),item.status==='satisfied'?'ok':item.status==='blocked'?'no':'off')}</div>
+          <div><div style="text-align:right">${CUI.status(platformStatus(item.status),item.status==='satisfied'?'ok':item.status==='blocked'?'no':'off')}</div>
             ${facts.activated?'':`<div class="platform-actions" style="justify-content:flex-end;margin-top:6px">
-              ${canRecord?`<button type="button" class="btn ghost sm" data-onboarding-evidence="${escapeHtml(item.item_key)}">${item.status==='satisfied'?'Update evidence':'Record evidence'}</button>`:''}
-              ${superAdminOnly(isSuperAdmin&&canWaive,`<button type="button" class="btn ghost sm" data-onboarding-waive="${escapeHtml(item.item_key)}">Waive</button>`)}
+              ${canRecord?`<button type="button" class="btn ghost sm" data-onboarding-evidence="${escapeHtml(item.item_key)}">${escapeHtml(pt(item.status==='satisfied'?'Update evidence':'Record evidence'))}</button>`:''}
+              ${superAdminOnly(isSuperAdmin&&canWaive,`<button type="button" class="btn ghost sm" data-onboarding-waive="${escapeHtml(item.item_key)}">${escapeHtml(pt("Waive"))}</button>`)}
               ${superAdminOnly(isSuperAdmin,item.status==='blocked'
-                ?`<button type="button" class="btn ghost sm" data-onboarding-item-unblock="${escapeHtml(item.item_key)}">Unblock</button>`
-                :`<button type="button" class="btn danger sm" data-onboarding-item-block="${escapeHtml(item.item_key)}">Block</button>`)}
+                ?`<button type="button" class="btn ghost sm" data-onboarding-item-unblock="${escapeHtml(item.item_key)}">${escapeHtml(pt("Unblock"))}</button>`
+                :`<button type="button" class="btn danger sm" data-onboarding-item-block="${escapeHtml(item.item_key)}">${escapeHtml(pt("Block"))}</button>`)}
             </div>`}
           </div>
         </article>`;
       }).join('')}</div>
       <div class="platform-detail-grid" style="margin-top:14px">
-        <div><h3 style="font-size:14px">Owner invitations</h3>${invitations.length?invitations.map(invitation=>`<div class="platform-action-item"><div><b>${escapeHtml(invitation.owner_email)}</b><p class="muted small">Version ${escapeHtml(invitation.version)} · ends in ${escapeHtml(invitation.token_last_four||'—')}</p></div><div>${CUI.status(plainLabel(invitation.status),invitation.status==='accepted'?'ok':invitation.status==='pending'?'new':'off')}<p class="muted small">${escapeHtml(dateTime(invitation.expires_at))}</p></div></div>`).join(''):'<p class="muted small">No owner invitations returned.</p>'}</div>
-        <div><h3 style="font-size:14px">Recent evidence events</h3>${events.length?[...events].reverse().slice(0,20).map(event=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(event.event_type))}</b><p class="muted small">${escapeHtml(event.to_status?`To ${plainLabel(event.to_status)}`:'Recorded')}</p></div><span class="muted small">${escapeHtml(dateTime(event.created_at))}</span></div>`).join(''):'<p class="muted small">No onboarding events returned.</p>'}</div>
+        <div><h3 style="font-size:14px">${escapeHtml(pt("Owner invitations"))}</h3>${invitations.length?invitations.map(invitation=>`<div class="platform-action-item"><div><b>${escapeHtml(invitation.owner_email)}</b><p class="muted small">${escapeHtml(pt('Version {version} · ends in {suffix}',{version:invitation.version,suffix:invitation.token_last_four||'—'}))}</p></div><div>${CUI.status(platformStatus(invitation.status),invitation.status==='accepted'?'ok':invitation.status==='pending'?'new':'off')}<p class="muted small">${escapeHtml(dateTime(invitation.expires_at))}</p></div></div>`).join(''):`<p class="muted small">${escapeHtml(pt("No owner invitations returned."))}</p>`}</div>
+        <div><h3 style="font-size:14px">${escapeHtml(pt("Recent evidence events"))}</h3>${events.length?[...events].reverse().slice(0,20).map(event=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(event.event_type))}</b><p class="muted small">${escapeHtml(event.to_status?pt('To {status}',{status:platformStatus(event.to_status)}):pt('Recorded'))}</p></div><span class="muted small">${escapeHtml(dateTime(event.created_at))}</span></div>`).join(''):`<p class="muted small">${escapeHtml(pt("No onboarding events returned."))}</p>`}</div>
       </div>
     </section>`;
+  }
+  function prospectLifecycleActionsHtml({converted=false,stage='',termsAccepted=false},CUI) {
+    const accountAction=converted
+      ?`<span class="muted small">${escapeHtml(pt('Account lifecycle is controlled by onboarding evidence.'))}</span>`
+      :stage==='client'
+        ?`<button type="button" class="btn" data-create-account${termsAccepted?'':` disabled title="${escapeHtml(pt('Accepted or signed commercial terms are required.'))}"`}>${CUI.icon('branch',{size:16})}<span>${escapeHtml(pt('Create Nestly account'))}</span></button>`
+        :`<button type="button" class="btn ghost sm" data-convert>${escapeHtml(pt('Convert to client'))}</button>`;
+    const lostAction=converted||stage==='lost'
+      ?''
+      :`<button type="button" class="btn danger sm" data-lost>${escapeHtml(pt('Mark lost'))}</button>`;
+    return accountAction+lostAction;
   }
   function prospectDetailHtml(detail,CUI,isSuperAdmin=false) {
     const prospect=asObject(detail.prospect),company=asObject(detail.company),assignment=asObject(detail.assignment);
@@ -2239,35 +4016,32 @@
     const primaryRow=contacts.find(row=>contactBase(row).is_primary)||contacts[0]||{},primary=contactBase(primaryRow);
     const whatsapp=contactExtended(primaryRow).whatsapp_e164||contactExtended(primaryRow).whatsapp_original||primary.phone;
     const callPhone=normalizePlatformPhone(primary.phone),whatsappPhone=normalizePlatformPhone(whatsapp);
-    return `<nav class="platform-detail-nav" aria-label="Prospect detail sections">
+    return `<nav class="platform-detail-nav" aria-label="${escapeHtml(pt('Prospect detail sections'))}">
       ${[
         ['detail-overview','Overview'],['detail-company','Company'],['detail-contacts','Contacts'],
         ['detail-qualification','Qualification'],['detail-activities','Activities'],['detail-tasks','Tasks'],
         ['detail-commercial','Commercial'],['detail-documents','Documents'],['detail-conversion','Account'],
         ['detail-onboarding','Onboarding'],['detail-audit','Audit']
-      ].map(([id,label])=>`<button type="button" data-detail-section="${id}">${escapeHtml(label)}</button>`).join('')}
+      ].map(([id,label])=>`<button type="button" data-detail-section="${id}">${escapeHtml(pt(label))}</button>`).join('')}
     </nav>
     <div class="platform-actions platform-detail-shortcuts">
-      ${callPhone?`<a class="btn ghost sm" href="tel:${escapeHtml(callPhone.tel)}">${CUI.icon('till',{size:16})}<span>Call</span></a>`:''}
-      ${whatsappPhone?`<a class="btn ghost sm" href="https://wa.me/${escapeHtml(whatsappPhone.wa)}" target="_blank" rel="noopener">${CUI.icon('customers',{size:16})}<span>WhatsApp</span></a>`:''}
-      ${primary.email?`<a class="btn ghost sm" href="mailto:${escapeHtml(primary.email)}">${CUI.icon('empty',{size:16})}<span>Email</span></a>`:''}
-      <button type="button" class="btn ghost sm" data-add-activity="meeting">${CUI.icon('appointments',{size:16})}<span>Schedule meeting</span></button>
-      ${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>${CUI.icon('edit',{size:16})}<span>Edit</span></button>
-      <button type="button" class="btn ghost sm" data-assign-prospect>${CUI.icon('staff',{size:16})}<span>Assign</span></button>`}
-      <button type="button" class="btn sm" data-add-note>${CUI.icon('add',{size:16})}<span>Add note</span></button>
-      <button type="button" class="btn ghost sm" data-add-npu>Record NPU</button>
-      <button type="button" class="btn ghost sm" data-add-task>${CUI.icon('appointments',{size:16})}<span>Add task</span></button>
-      <button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>Upload document</span></button>
-      ${converted?'<span class="muted small">Account lifecycle is controlled by onboarding evidence.</span>':stage==='client'
-        ?`<button type="button" class="btn" data-create-account${termsAccepted?'':' disabled title="Accepted or signed commercial terms are required."'}>${CUI.icon('branch',{size:16})}<span>Create Nestly account</span></button>`
-        :'<button type="button" class="btn ghost sm" data-convert>Convert to client</button>'}
-      ${converted||stage==='lost'?'':'<button type="button" class="btn danger sm" data-lost>Mark lost</button>'}
+      ${callPhone?`<a class="btn ghost sm" href="tel:${escapeHtml(callPhone.tel)}">${CUI.icon('till',{size:16})}<span>${escapeHtml(pt("Call"))}</span></a>`:''}
+      ${whatsappPhone?`<a class="btn ghost sm" href="https://wa.me/${escapeHtml(whatsappPhone.wa)}" target="_blank" rel="noopener">${CUI.icon('customers',{size:16})}<span>${escapeHtml(pt("WhatsApp"))}</span></a>`:''}
+      ${primary.email?`<a class="btn ghost sm" href="mailto:${escapeHtml(primary.email)}">${CUI.icon('empty',{size:16})}<span>${escapeHtml(pt("Email"))}</span></a>`:''}
+      <button type="button" class="btn ghost sm" data-add-activity="meeting">${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt("Schedule meeting"))}</span></button>
+      ${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt("Edit"))}</span></button>
+      <button type="button" class="btn ghost sm" data-assign-prospect>${CUI.icon('staff',{size:16})}<span>${escapeHtml(pt("Assign"))}</span></button>`}
+      <button type="button" class="btn sm" data-add-note>${CUI.icon('add',{size:16})}<span>${escapeHtml(pt("Add note"))}</span></button>
+      <button type="button" class="btn ghost sm" data-add-npu>${escapeHtml(pt("Record NPU"))}</button>
+      <button type="button" class="btn ghost sm" data-add-task>${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt("Add task"))}</span></button>
+      <button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload document"))}</span></button>
+      ${prospectLifecycleActionsHtml({converted,stage,termsAccepted},CUI)}
     </div>
     <section class="card platform-detail-section" id="detail-overview">
-      ${sectionHeader('Overview',`<button type="button" class="btn ghost sm" data-refresh-quality>${CUI.icon('retention',{size:16})}<span>Refresh quality</span></button>`)}
+      ${sectionHeader(pt('Overview'),`<button type="button" class="btn ghost sm" data-refresh-quality>${CUI.icon('retention',{size:16})}<span>${escapeHtml(pt("Refresh quality"))}</span></button>`)}
       <div class="platform-detail-grid">
         ${typedDetailHtml({...prospect,...company},[
-          ['current_stage_key','Stage',plainLabel],['priority','Priority',plainLabel],
+          ['current_stage_key','Stage',platformStatus],['priority','Priority',platformStatus],
           ['region','Region'],['next_action_at','Next action',dateTime],
           ['stage_entered_at','Stage entered',dateTime],['converted_at','Converted',dateTime]
         ])}
@@ -2285,23 +4059,23 @@
       ${asArray(quality.rule_results).length?`<div class="platform-quality-rules">${asArray(quality.rule_results).map(rule=>`<span class="${rule.passed?'pass':'fail'}">${CUI.icon(rule.passed?'check':'info',{size:14})}${escapeHtml(rule.label)}</span>`).join('')}</div>`:''}
     </section>
     <section class="card platform-detail-section" id="detail-company">
-      ${sectionHeader('Company identity and operating profile',`<div class="platform-actions">${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>Edit core identity</button>`}<button type="button" class="btn ghost sm" data-edit-company-profile>Edit operating profile</button></div>`)}
+      ${sectionHeader(pt('Company identity and operating profile'),`<div class="platform-actions">${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>${escapeHtml(pt("Edit core identity"))}</button>`}<button type="button" class="btn ghost sm" data-edit-company-profile>${escapeHtml(pt("Edit operating profile"))}</button></div>`)}
       <div class="platform-detail-grid">
         ${typedDetailHtml(company,[
           ['legal_name','Legal name'],['trading_name','Trading name'],['registration_number','UEN / registration'],
           ['industry','Industry'],['website','Website'],['email','General email'],['phone','General phone']
         ])}
         ${typedDetailHtml(companyProfile,[
-          ['entity_type','Entity type',plainLabel],['business_status','Business status',plainLabel],
+          ['entity_type','Entity type',platformStatus],['business_status','Business status',platformStatus],
           ['incorporated_on','Incorporated'],['registered_address','Registered address'],
           ['operating_address','Operating address'],['postal_code','Postal code'],
-          ['region_state','Region / state'],['verification_status','Verification',plainLabel]
+          ['region_state','Region / state'],['verification_status','Verification',platformStatus]
         ])}
       </div>
-      <details class="platform-detail-more"><summary>Business profile and system readiness</summary>${typedDetailHtml(companyProfile,[
+      <details class="platform-detail-more"><summary>${escapeHtml(pt("Business profile and system readiness"))}</summary>${typedDetailHtml(companyProfile,[
         ['main_business_activity','Main business activity'],['sub_industry','Sub-industry'],
         ['business_description','Description'],['employee_range','Employee range'],['expected_seats','Expected seats'],
-        ['location_count','Locations'],['customer_type','Customer type',plainLabel],['digital_maturity','Digital maturity',plainLabel],
+        ['location_count','Locations'],['customer_type','Customer type',platformStatus],['digital_maturity','Digital maturity',platformStatus],
         ['existing_tools','Existing tools'],['existing_crm','Existing CRM'],['existing_accounting','Existing accounting'],
         ['manual_workflows','Manual workflows'],['required_integrations','Required integrations'],
         ['migration_volume','Migration volume'],['procurement_security_requirements','Procurement / security'],
@@ -2310,73 +4084,73 @@
       ])}</details>
     </section>
     <section class="card platform-detail-section" id="detail-contacts">
-      ${sectionHeader('Contacts and buying committee',`<button type="button" class="btn ghost sm" data-add-contact>${CUI.icon('add',{size:16})}<span>Add contact</span></button>`)}
+      ${sectionHeader(pt('Contacts and buying committee'),`<button type="button" class="btn ghost sm" data-add-contact>${CUI.icon('add',{size:16})}<span>${escapeHtml(pt("Add contact"))}</span></button>`)}
       ${contacts.length?`<div class="platform-contact-grid">${contacts.map(row=>{
         const contact=contactBase(row),profile=contactExtended(row);
-        return`<article class="platform-contact-card"><div class="platform-list-row"><div><b>${escapeHtml(contact.full_name||'Unnamed contact')}</b><p class="muted small">${escapeHtml(contact.title||profile.department_function||'Role not recorded')}</p></div>${contact.is_primary?CUI.status('Primary','ok'):''}</div>
+        return`<article class="platform-contact-card"><div class="platform-list-row"><div><b>${escapeHtml(contact.full_name||pt('Unnamed contact'))}</b><p class="muted small">${escapeHtml(contact.title||profile.department_function||pt('Role not recorded'))}</p></div>${contact.is_primary?CUI.status(pt('Primary'),'ok'):''}</div>
           ${typedDetailHtml({...contact,...profile},[
-            ['decision_role','Decision role',plainLabel],['email','Email'],['phone','Phone'],
-            ['preferred_channel','Preferred channel',plainLabel],['preferred_language','Language'],
+            ['decision_role','Decision role',platformStatus],['email','Email'],['phone','Phone'],
+            ['preferred_channel','Preferred channel',platformStatus],['preferred_language','Language'],
             ['consent_basis','Contact basis'],['do_not_contact','Do not contact']
-          ])}<button type="button" class="btn ghost sm" data-edit-contact-profile="${escapeHtml(contact.id)}">Edit contact profile</button></article>`;
+          ])}<button type="button" class="btn ghost sm" data-edit-contact-profile="${escapeHtml(contact.id)}">${escapeHtml(pt("Edit contact profile"))}</button></article>`;
       }).join('')}</div>`:CUI.emptyState({iconName:'customers',title:'No contacts',body:'Add the first decision maker, champion, billing contact or technical administrator.'})}
     </section>
     <section class="card platform-detail-section" id="detail-qualification">
-      ${sectionHeader('Qualification and discovery',`<button type="button" class="btn ghost sm" data-edit-qualification>${CUI.icon('edit',{size:16})}<span>Record qualification</span></button>`)}
+      ${sectionHeader(pt('Qualification and discovery'),`<button type="button" class="btn ghost sm" data-edit-qualification>${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt("Record qualification"))}</span></button>`)}
       ${typedDetailHtml(qualification,[
-        ['qualification_status','Status',plainLabel],['primary_problem','Primary problem'],['desired_outcome','Desired outcome'],
+        ['qualification_status','Status',platformStatus],['primary_problem','Primary problem'],['desired_outcome','Desired outcome'],
         ['current_tool_vendor','Current tool / vendor'],['pain_points','Pain points'],['required_features','Required features'],
-        ['required_integrations','Required integrations'],['budget_status','Budget',plainLabel],
+        ['required_integrations','Required integrations'],['budget_status','Budget',platformStatus],
         ['expected_subscription_cents','Expected subscription',value=>value===undefined?'—':currency(value)],
         ['purchase_timeframe','Purchase timeframe'],['target_go_live','Target go-live'],['decision_date','Decision date'],
-        ['main_objection','Main objection'],['risk_level','Risk',plainLabel],['fit_score','Fit score'],
+        ['main_objection','Main objection'],['risk_level','Risk',platformStatus],['fit_score','Fit score'],
         ['intent_score','Intent score'],['system_suggested_score','System suggestion'],['human_confirmed_score','Human-confirmed score']
       ])}
     </section>
     <section class="card platform-detail-section" id="detail-activities">
-      ${sectionHeader('Activities and timeline',`<div class="platform-actions">${['call','whatsapp','email','meeting'].map(type=>`<button type="button" class="btn ghost sm" data-add-activity="${type}">${escapeHtml(type==='meeting'?'Meeting':plainLabel(type))}</button>`).join('')}</div>`)}
-      ${activities.length?activities.map(activity=>`<article class="platform-timeline-item"><div class="platform-timeline-marker"></div><div><div class="platform-list-row"><b>${escapeHtml(plainLabel(activity.activity_type||activity.type))}</b><span class="muted small">${escapeHtml(dateTime(activity.occurred_at||activity.created_at))}</span></div><p class="small">${escapeHtml(activity.summary||activity.detail||'')}</p>${Object.keys(asObject(activity.extended_detail)).length?`<p class="muted small">${escapeHtml([activity.extended_detail.outcome,activity.extended_detail.channel&&plainLabel(activity.extended_detail.channel),activity.extended_detail.next_action].filter(Boolean).join(' · '))}</p>`:''}</div></article>`).join(''):detailObjectHtml(null)}
+      ${sectionHeader('Activities and timeline',`<div class="platform-actions">${['call','whatsapp','email','meeting'].map(type=>`<button type="button" class="btn ghost sm" data-add-activity="${type}">${escapeHtml(platformStatus(type))}</button>`).join('')}</div>`)}
+      ${activities.length?activities.map(activity=>`<article class="platform-timeline-item"><div class="platform-timeline-marker"></div><div><div class="platform-list-row"><b>${escapeHtml(platformStatus(activity.activity_type||activity.type))}</b><span class="muted small">${escapeHtml(dateTime(activity.occurred_at||activity.created_at))}</span></div><p class="small">${escapeHtml(activity.summary||activity.detail||'')}</p>${Object.keys(asObject(activity.extended_detail)).length?`<p class="muted small">${escapeHtml([activity.extended_detail.outcome,activity.extended_detail.channel&&platformStatus(activity.extended_detail.channel),activity.extended_detail.next_action].filter(Boolean).join(' · '))}</p>`:''}</div></article>`).join(''):detailObjectHtml(null)}
     </section>
-    <section class="card platform-detail-section" id="detail-tasks">${sectionHeader('Tasks and next actions')}${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title||'Task')}</b><p class="muted small">Due ${escapeHtml(dateTime(task.due_at))} · ${escapeHtml(task.status||'open')}</p></div>${task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">Complete</button>`:''}</div>`).join(''):detailObjectHtml(null)}</section>
+    <section class="card platform-detail-section" id="detail-tasks">${sectionHeader('Tasks and next actions')}${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title||pt('Task'))}</b><p class="muted small">${escapeHtml(pt('due {date}',{date:dateTime(task.due_at)}))} · ${escapeHtml(platformStatus(task.status||'open'))}</p></div>${task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt("Complete"))}</button>`:''}</div>`).join(''):detailObjectHtml(null)}</section>
     <section class="card platform-detail-section" id="detail-commercial">
-      ${sectionHeader('Commercial terms',terms.id?`<button type="button" class="btn ghost sm" data-edit-commercial-detail>Record commercial detail</button>`:'')}
+      ${sectionHeader(pt('Commercial terms'),terms.id?`<button type="button" class="btn ghost sm" data-edit-commercial-detail>${escapeHtml(pt("Record commercial detail"))}</button>`:'')}
       <div class="platform-detail-grid">
         ${typedDetailHtml(terms,[
-          ['product_code','Product'],['plan_code','Plan'],['billing_cycle','Billing cycle',plainLabel],
+          ['product_code','Product'],['plan_code','Plan'],['billing_cycle','Billing cycle',platformStatus],
           ['seats','Seats'],['accepted_value_cents','Accepted value',value=>value===undefined?'—':currency(value,terms.currency)],
-          ['contract_status','Contract',plainLabel],['owner_email','Owner email'],['target_go_live','Target go-live']
+          ['contract_status','Contract',platformStatus],['owner_email','Owner email'],['target_go_live','Target go-live']
         ])}
         ${typedDetailHtml(commercialDetail,[
           ['unit_price_cents','Unit price',value=>value===undefined?'—':currency(value,terms.currency)],
           ['discount_basis_points','Discount',value=>value===undefined?'—':`${Number(value)/100}%`],
           ['setup_fee_cents','Setup fee',value=>value===undefined?'—':currency(value,terms.currency)],
-          ['tax_treatment','Tax treatment',plainLabel],['contract_term_months','Contract months'],
-          ['renewal_on','Renewal date'],['payment_terms_days','Payment terms',value=>value===undefined?'—':`${value} days`],
-          ['payment_status','Payment status',plainLabel],['amount_collected_cents','Amount collected',value=>value===undefined?'—':currency(value,terms.currency)]
+          ['tax_treatment','Tax treatment',platformStatus],['contract_term_months','Contract months'],
+          ['renewal_on','Renewal date'],['payment_terms_days','Payment terms',value=>value===undefined?'—':pt('{count} days',{count:value})],
+          ['payment_status','Payment status',platformStatus],['amount_collected_cents','Amount collected',value=>value===undefined?'—':currency(value,terms.currency)]
         ])}
       </div>
     </section>
     <section class="card platform-detail-section" id="detail-documents">
-      ${sectionHeader('Documents',`<button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>Upload</span></button>`)}
-      ${documents.length?documents.map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.original_filename)}</b><p class="muted small">${escapeHtml(plainLabel(document.document_type))} · v${escapeHtml(document.version)} · ${escapeHtml(plainLabel(document.status))} · ${escapeHtml(formatFileSize(document.size_bytes))}</p></div>${['uploaded','verified'].includes(document.status)?`<button type="button" class="btn ghost sm" data-read-document="${escapeHtml(document.id)}">Open</button>`:CUI.status(plainLabel(document.status),'off')}</div>`).join(''):CUI.emptyState({iconName:'empty',title:'No documents',body:'Upload proposals, agreements, registration profiles or onboarding material to the private prospect vault.'})}
+      ${sectionHeader(pt('Documents'),`<button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload"))}</span></button>`)}
+      ${documents.length?documents.map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.original_filename)}</b><p class="muted small">${escapeHtml(platformStatus(document.document_type))} · v${escapeHtml(document.version)} · ${escapeHtml(platformStatus(document.status))} · ${escapeHtml(formatFileSize(document.size_bytes))}</p></div>${['uploaded','verified'].includes(document.status)?`<button type="button" class="btn ghost sm" data-read-document="${escapeHtml(document.id)}">${escapeHtml(pt("Open"))}</button>`:CUI.status(platformStatus(document.status),'off')}</div>`).join(''):CUI.emptyState({iconName:'empty',title:'No documents',body:'Upload proposals, agreements, registration profiles or onboarding material to the private prospect vault.'})}
     </section>
     <section class="card platform-detail-section" id="detail-conversion">
-      ${sectionHeader('Conversion and account configuration',`<button type="button" class="btn ghost sm" data-edit-conversion-config>Configure account</button>`)}
+      ${sectionHeader(pt('Conversion and account configuration'),`<button type="button" class="btn ghost sm" data-edit-conversion-config>${escapeHtml(pt("Configure account"))}</button>`)}
       ${typedDetailHtml(conversion,[
         ['workspace_name','Workspace name'],['workspace_slug','Workspace slug'],['owner_email','Owner email'],
-        ['seat_limit','Seat limit'],['plan_code','Plan'],['billing_cycle','Billing cycle',plainLabel],
-        ['currency','Currency'],['timezone','Timezone'],['locale','Locale'],['data_import_status','Data import',plainLabel],
+        ['seat_limit','Seat limit'],['plan_code','Plan'],['billing_cycle','Billing cycle',platformStatus],
+        ['currency','Currency'],['timezone','Timezone'],['locale','Locale'],['data_import_status','Data import',platformStatus],
         ['require_two_factor','Require 2FA'],['customer_success_consultant_id','Customer success owner'],
         ['target_go_live','Target go-live']
       ])}
-      ${converted?'':`<p class="platform-route-note small">Current stage: ${escapeHtml(plainLabel(stage))}. ${escapeHtml(stage==='client'?(termsAccepted?'Commercial terms are ready for account creation.':'Accepted commercial terms are required before account creation.'):'Complete the evidence-backed Client gate first.')}</p>`}
+      ${converted?'':`<p class="platform-route-note small">${escapeHtml(pt('Current stage:'))} ${escapeHtml(platformStatus(stage))}. ${escapeHtml(pt(stage==='client'?(termsAccepted?'Commercial terms are ready for account creation.':'Accepted commercial terms are required before account creation.'):'Complete the evidence-backed Client gate first.'))}</p>`}
     </section>
-    <section class="platform-detail-section" id="detail-onboarding">${converted?onboardingPanelHtml(detail.onboarding,detail.onboarding_error,CUI,isSuperAdmin):CUI.card({title:'Onboarding checklist',body:'<p class="muted small">The evidence checklist is created during transactional account conversion.</p>'})}</section>
+    <section class="platform-detail-section" id="detail-onboarding">${converted?onboardingPanelHtml(detail.onboarding,detail.onboarding_error,CUI,isSuperAdmin):CUI.card({title:'Onboarding checklist',body:`<p class="muted small">${escapeHtml(pt("The evidence checklist is created during transactional account conversion."))}</p>`})}</section>
     <section class="card platform-detail-section" id="detail-audit">
       ${sectionHeader('Audit and stage history')}
-      <div class="platform-detail-grid"><div><h3>Stage history</h3>${asArray(detail.stage_history).length?asArray(detail.stage_history).map(history=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(history.to_stage_key))}</b><p class="muted small">${escapeHtml(history.reason_code?plainLabel(history.reason_code):'Stage transition')}</p></div><span class="muted small">${escapeHtml(dateTime(history.occurred_at))}</span></div>`).join(''):detailObjectHtml(null)}</div>
-      <div><h3>Recorded gate evidence</h3>${stageEvidence.length?stageEvidence.map(evidence=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(evidence.stage_key))}</b><p class="muted small">${escapeHtml(Object.keys(asObject(evidence.evidence)).join(', '))}</p></div><span class="muted small">${escapeHtml(dateTime(evidence.created_at))}</span></div>`).join(''):detailObjectHtml(null)}</div></div>
-      <h3 style="margin-top:14px">Audit events</h3>${audit.length?audit.map(event=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(event.action))}</b><p class="muted small">${escapeHtml(plainLabel(event.entity))}</p></div><span class="muted small">${escapeHtml(dateTime(event.created_at))}</span></div>`).join(''):detailObjectHtml(null)}
+      <div class="platform-detail-grid"><div><h3>${escapeHtml(pt("Stage history"))}</h3>${asArray(detail.stage_history).length?asArray(detail.stage_history).map(history=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(history.to_stage_key))}</b><p class="muted small">${escapeHtml(history.reason_code?platformStatus(history.reason_code):pt('Stage transition'))}</p></div><span class="muted small">${escapeHtml(dateTime(history.occurred_at))}</span></div>`).join(''):detailObjectHtml(null)}</div>
+      <div><h3>${escapeHtml(pt("Recorded gate evidence"))}</h3>${stageEvidence.length?stageEvidence.map(evidence=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(evidence.stage_key))}</b><p class="muted small">${escapeHtml(Object.keys(asObject(evidence.evidence)).map(platformStatus).join(', '))}</p></div><span class="muted small">${escapeHtml(dateTime(evidence.created_at))}</span></div>`).join(''):detailObjectHtml(null)}</div></div>
+      <h3 style="margin-top:14px">${escapeHtml(pt("Audit events"))}</h3>${audit.length?audit.map(event=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(event.action))}</b><p class="muted small">${escapeHtml(platformStatus(event.entity))}</p></div><span class="muted small">${escapeHtml(dateTime(event.created_at))}</span></div>`).join(''):detailObjectHtml(null)}
     </section>`;
   }
   function wireProspectDetail(detail,context) {
@@ -2449,14 +4223,14 @@
       ${CUI.field({id:'companyEmployeeRange',label:'Employee range',value:profileValue(current,'employee_range'),attributes:'name="employee_range"'})}
       ${CUI.field({id:'companyExpectedSeats',label:'Expected seats',type:'number',value:profileValue(current,'expected_seats'),attributes:'name="expected_seats" min="0" step="1"'})}
       ${CUI.field({id:'companyLocationCount',label:'Location count',type:'number',value:profileValue(current,'location_count'),attributes:'name="location_count" min="0" step="1"'})}
-      ${CUI.field({id:'companyDigitalMaturity',label:'Digital maturity',control:'select',options:['','low','developing','established','advanced'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===current.digital_maturity})),attributes:'name="digital_maturity"'})}
+      ${CUI.field({id:'companyDigitalMaturity',label:'Digital maturity',control:'select',options:['','low','developing','established','advanced'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.digital_maturity})),attributes:'name="digital_maturity"'})}
       <div class="wide">${CUI.field({id:'companyDescription',label:'Business description',control:'textarea',value:profileValue(current,'business_description'),attributes:'name="business_description" rows="3"'})}</div>
       <div class="wide">${CUI.field({id:'companyServices',label:'Products / services',value:commaValues(current.products_services),hint:'Comma-separated',attributes:'name="products_services"'})}</div>
       <div class="wide">${CUI.field({id:'companyTools',label:'Existing tools',value:commaValues(current.existing_tools),hint:'Comma-separated',attributes:'name="existing_tools"'})}</div>
       <div class="wide">${CUI.field({id:'companyIntegrations',label:'Required integrations',value:commaValues(current.required_integrations),hint:'Comma-separated',attributes:'name="required_integrations"'})}</div>
       <div class="wide">${CUI.field({id:'companyManualWorkflows',label:'Manual workflows to replace',control:'textarea',value:profileValue(current,'manual_workflows'),attributes:'name="manual_workflows" rows="3"'})}</div>
-      ${CUI.field({id:'companyVerification',label:'Verification status',control:'select',options:['unverified','verified','disputed'].map(value=>({value,label:plainLabel(value),selected:value===(current.verification_status||'unverified')})),attributes:'name="verification_status"'})}
-      <label class="row platform-confirm-row"><input type="checkbox" name="confirmed" value="yes"${current.confirmed_by?' checked':''}><span>Values confirmed with the firm</span></label>
+      ${CUI.field({id:'companyVerification',label:'Verification status',control:'select',options:['unverified','verified','disputed'].map(value=>({value,label:platformStatus(value),selected:value===(current.verification_status||'unverified')})),attributes:'name="verification_status"'})}
+      <label class="row platform-confirm-row"><input type="checkbox" name="confirmed" value="yes"${current.confirmed_by?' checked':''}><span>${escapeHtml(pt("Values confirmed with the firm"))}</span></label>
     </div>`,onSubmit:async(form,controls)=>{
       const allowed=[
         'registration_country','entity_type','incorporated_on','business_status','registered_address',
@@ -2489,14 +4263,14 @@
       ${CUI.field({id:'contactPhone',label:'Phone',value:base.phone||current.mobile_original||'',attributes:'name="phone"'})}
       ${CUI.field({id:'contactPreferredName',label:'Preferred name',value:current.preferred_name||'',attributes:'name="preferred_name"'})}
       ${CUI.field({id:'contactDepartment',label:'Department / function',value:current.department_function||'',attributes:'name="department_function"'})}
-      ${CUI.field({id:'contactDecisionRole',label:'Decision role',control:'select',options:['','decision_maker','champion','influencer','budget_owner','user','gatekeeper'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===current.decision_role})),attributes:'name="decision_role"'})}
-      ${CUI.field({id:'contactPreferredChannel',label:'Preferred channel',control:'select',options:['','phone','whatsapp','email','sms','video','in_person'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===current.preferred_channel})),attributes:'name="preferred_channel"'})}
+      ${CUI.field({id:'contactDecisionRole',label:'Decision role',control:'select',options:['','decision_maker','champion','influencer','budget_owner','user','gatekeeper'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.decision_role})),attributes:'name="decision_role"'})}
+      ${CUI.field({id:'contactPreferredChannel',label:'Preferred channel',control:'select',options:['','phone','whatsapp','email','sms','video','in_person'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.preferred_channel})),attributes:'name="preferred_channel"'})}
       ${CUI.field({id:'contactLanguage',label:'Preferred language',value:current.preferred_language||'',attributes:'name="preferred_language"'})}
       ${CUI.field({id:'contactBasis',label:'Contact basis',value:current.consent_basis||'',hint:'For example: existing customer enquiry or direct business relationship.',attributes:'name="consent_basis"'})}
       <div class="wide">${CUI.field({id:'contactNotes',label:'Contact notes',control:'textarea',value:current.notes||'',attributes:'name="notes" rows="3"'})}</div>
       ${[['is_primary','Primary contact',base.is_primary],['active','Active contact',base.active!==false],['is_billing_contact','Billing contact',current.is_billing_contact],['is_technical_admin','Technical administrator',current.is_technical_admin],['is_authorised_signatory','Authorised signatory',current.is_authorised_signatory],['do_not_contact','Do not contact',current.do_not_contact]].map(([name,label,checked])=>`<label class="row platform-confirm-row"><input type="checkbox" name="${name}" value="yes"${checked?' checked':''}><span>${label}</span></label>`).join('')}
     </div>`,onSubmit:async(form,controls)=>{
-      if(!String(form.get('email')||'').trim()&&!String(form.get('phone')||'').trim())throw new Error('Enter an email address or phone number.');
+      if(!String(form.get('email')||'').trim()&&!String(form.get('phone')||'').trim())throw new Error(pt('Enter an email address or phone number.'));
       const basePayload={full_name:form.get('full_name'),title:form.get('title')||null,email:form.get('email')||null,phone:form.get('phone')||null,is_primary:form.get('is_primary')==='yes',active:form.get('active')==='yes'};
       const allowed=['preferred_name','department_function','decision_role','decision_authority_level','mobile_original','office_phone_original','whatsapp_original','preferred_channel','preferred_language','timezone','contact_hours','profile_url','is_billing_contact','is_technical_admin','is_authorised_signatory','consent_basis','marketing_opt_in','opted_in_at','opt_in_source','do_not_contact','last_contacted_at','next_follow_up_at','notes'];
       const profile={...profileSnapshot(current,allowed)};
@@ -2510,8 +4284,8 @@
   function qualificationModal(detail,context) {
     const {CUI,sb}=context,prospect=asObject(detail.prospect),current=asObject(detail.qualification);
     modal({title:'Record qualification and discovery',submitLabel:'Save qualification version',CUI,body:`<div class="platform-form-grid">
-      ${CUI.field({id:'qualStatus',label:'Qualification status',control:'select',options:['','unqualified','discovery','qualified','disqualified'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===current.qualification_status})),attributes:'name="qualification_status"'})}
-      ${CUI.field({id:'qualBudget',label:'Budget status',control:'select',options:['','unknown','not_confirmed','range_confirmed','approved','no_budget'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===current.budget_status})),attributes:'name="budget_status"'})}
+      ${CUI.field({id:'qualStatus',label:'Qualification status',control:'select',options:['','unqualified','discovery','qualified','disqualified'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.qualification_status})),attributes:'name="qualification_status"'})}
+      ${CUI.field({id:'qualBudget',label:'Budget status',control:'select',options:['','unknown','not_confirmed','range_confirmed','approved','no_budget'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.budget_status})),attributes:'name="budget_status"'})}
       <div class="wide">${CUI.field({id:'qualProblem',label:'Primary problem',control:'textarea',value:current.primary_problem||'',attributes:'name="primary_problem" rows="3"'})}</div>
       <div class="wide">${CUI.field({id:'qualOutcome',label:'Desired outcome',control:'textarea',value:current.desired_outcome||'',attributes:'name="desired_outcome" rows="3"'})}</div>
       ${CUI.field({id:'qualCurrentVendor',label:'Current tool / vendor',value:current.current_tool_vendor||'',attributes:'name="current_tool_vendor"'})}
@@ -2520,7 +4294,7 @@
       ${CUI.field({id:'qualExpectedSetup',label:'Expected setup fee (cents)',type:'number',value:current.expected_setup_fee_cents??'',attributes:'name="expected_setup_fee_cents" min="0" step="1"'})}
       ${CUI.field({id:'qualGoLive',label:'Target go-live',type:'date',value:isoInput(current.target_go_live,{date:true}),attributes:'name="target_go_live"'})}
       ${CUI.field({id:'qualDecisionDate',label:'Decision date',type:'date',value:isoInput(current.decision_date,{date:true}),attributes:'name="decision_date"'})}
-      ${CUI.field({id:'qualRisk',label:'Risk level',control:'select',options:['','low','medium','high'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===current.risk_level})),attributes:'name="risk_level"'})}
+      ${CUI.field({id:'qualRisk',label:'Risk level',control:'select',options:['','low','medium','high'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.risk_level})),attributes:'name="risk_level"'})}
       ${CUI.field({id:'qualFit',label:'Fit score (0–100)',type:'number',value:current.fit_score??'',attributes:'name="fit_score" min="0" max="100" step="1"'})}
       ${CUI.field({id:'qualIntent',label:'Intent score (0–100)',type:'number',value:current.intent_score??'',attributes:'name="intent_score" min="0" max="100" step="1"'})}
       ${CUI.field({id:'qualHumanScore',label:'Human-confirmed score (0–100)',type:'number',value:current.human_confirmed_score??'',attributes:'name="human_confirmed_score" min="0" max="100" step="1"'})}
@@ -2548,15 +4322,15 @@
       <div class="wide">${CUI.field({id:'commercialDiscountReason',label:'Discount reason',value:current.discount_reason||'',attributes:'name="discount_reason"'})}</div>
       ${CUI.field({id:'commercialSetupFee',label:'Setup fee (cents)',type:'number',value:current.setup_fee_cents??'',attributes:'name="setup_fee_cents" min="0" step="1"'})}
       ${CUI.field({id:'commercialContractMonths',label:'Contract term (months)',type:'number',value:current.contract_term_months??'',attributes:'name="contract_term_months" min="1" step="1"'})}
-      ${CUI.field({id:'commercialTax',label:'Tax treatment',control:'select',options:['','exclusive','inclusive','exempt'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===current.tax_treatment})),attributes:'name="tax_treatment"'})}
+      ${CUI.field({id:'commercialTax',label:'Tax treatment',control:'select',options:['','exclusive','inclusive','exempt'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.tax_treatment})),attributes:'name="tax_treatment"'})}
       ${CUI.field({id:'commercialTermsDays',label:'Payment terms (days)',type:'number',value:current.payment_terms_days??'',attributes:'name="payment_terms_days" min="0" step="1"'})}
       ${CUI.field({id:'commercialRenewal',label:'Renewal date',type:'date',value:isoInput(current.renewal_on,{date:true}),attributes:'name="renewal_on"'})}
-      ${CUI.field({id:'commercialSubStatus',label:'Subscription status',control:'select',options:['','proposal','trial','active','past_due','cancelled'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===current.subscription_status})),attributes:'name="subscription_status"'})}
-      ${CUI.field({id:'commercialPaymentStatus',label:'Payment status',control:'select',options:['','unpaid','partially_paid','paid','refunded','charged_back'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===current.payment_status})),attributes:'name="payment_status"'})}
+      ${CUI.field({id:'commercialSubStatus',label:'Subscription status',control:'select',options:['','proposal','trial','active','past_due','cancelled'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.subscription_status})),attributes:'name="subscription_status"'})}
+      ${CUI.field({id:'commercialPaymentStatus',label:'Payment status',control:'select',options:['','unpaid','partially_paid','paid','refunded','charged_back'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.payment_status})),attributes:'name="payment_status"'})}
       ${CUI.field({id:'commercialCollected',label:'Amount collected (cents)',type:'number',value:current.amount_collected_cents??'',attributes:'name="amount_collected_cents" min="0" step="1"'})}
       ${CUI.field({id:'commercialFirstPaid',label:'First payment at',type:'datetime-local',value:isoInput(current.first_payment_at),attributes:'name="first_payment_at"'})}
       ${CUI.field({id:'commercialProposalVersion',label:'Proposal version',value:current.proposal_version||'',attributes:'name="proposal_version"'})}
-      <label class="row platform-confirm-row"><input type="checkbox" name="purchase_order_required" value="yes"${current.purchase_order_required?' checked':''}><span>Purchase order required</span></label>
+      <label class="row platform-confirm-row"><input type="checkbox" name="purchase_order_required" value="yes"${current.purchase_order_required?' checked':''}><span>${escapeHtml(pt("Purchase order required"))}</span></label>
       ${CUI.field({id:'commercialPo',label:'Purchase order number',value:current.purchase_order_number||'',attributes:'name="purchase_order_number"'})}
     </div>`,onSubmit:async(form,controls)=>{
       const allowed=['unit_price_cents','discount_basis_points','discount_reason','discount_approved_by','tax_treatment','setup_fee_cents','contract_term_months','trial_starts_on','trial_ends_on','subscription_starts_on','subscription_ends_on','renewal_on','payment_terms_days','proposal_version','proposal_sent_at','proposal_expires_at','contract_sent_at','contract_signed_at','signatory_contact_id','purchase_order_required','purchase_order_number','subscription_status','payment_status','first_payment_at','amount_collected_cents'];
@@ -2578,16 +4352,16 @@
       ${CUI.field({id:'configOwnerEmail',label:'Owner email',type:'email',required:true,value:current.owner_email||primary.email||'',attributes:'name="owner_email"'})}
       ${CUI.field({id:'configOwnerPhone',label:'Owner phone',value:current.owner_phone||primary.phone||'',attributes:'name="owner_phone"'})}
       ${CUI.field({id:'configPlan',label:'Plan',value:current.plan_code||commercialBase(detail.commercial_terms).plan_code||'',attributes:'name="plan_code"'})}
-      ${CUI.field({id:'configCadence',label:'Billing cycle',control:'select',options:['quarterly','half_yearly','annual'].map(value=>({value,label:plainLabel(value),selected:value===(current.billing_cycle||commercialBase(detail.commercial_terms).billing_cycle)})),attributes:'name="billing_cycle"'})}
+      ${CUI.field({id:'configCadence',label:'Billing cycle',control:'select',options:['quarterly','half_yearly','annual'].map(value=>({value,label:platformStatus(value),selected:value===(current.billing_cycle||commercialBase(detail.commercial_terms).billing_cycle)})),attributes:'name="billing_cycle"'})}
       ${CUI.field({id:'configSeats',label:'Seat limit',type:'number',value:current.seat_limit??commercialBase(detail.commercial_terms).seats??1,attributes:'name="seat_limit" min="1" step="1"'})}
       ${CUI.field({id:'configCurrency',label:'Currency',value:current.currency||commercialBase(detail.commercial_terms).currency||'SGD',attributes:'name="currency" maxlength="3"'})}
       ${CUI.field({id:'configTimezone',label:'Timezone',value:current.timezone||'Asia/Singapore',attributes:'name="timezone"'})}
       ${CUI.field({id:'configLocale',label:'Locale',value:current.locale||'en-SG',attributes:'name="locale"'})}
-      ${CUI.field({id:'configDataImport',label:'Data import status',control:'select',options:['not_started','template_sent','received','validated','completed','not_required'].map(value=>({value,label:plainLabel(value),selected:value===(current.data_import_status||'not_started')})),attributes:'name="data_import_status"'})}
+      ${CUI.field({id:'configDataImport',label:'Data import status',control:'select',options:['not_started','template_sent','received','validated','completed','not_required'].map(value=>({value,label:platformStatus(value),selected:value===(current.data_import_status||'not_started')})),attributes:'name="data_import_status"'})}
       ${CUI.field({id:'configTargetGoLive',label:'Target go-live',type:'date',value:isoInput(current.target_go_live||commercialBase(detail.commercial_terms).target_go_live,{date:true}),attributes:'name="target_go_live"'})}
       <div class="wide">${CUI.field({id:'configIntegrations',label:'Required integrations',value:commaValues(current.required_integrations),hint:'Comma-separated',attributes:'name="required_integrations"'})}</div>
       <div class="wide">${CUI.field({id:'configWelcome',label:'Welcome message',control:'textarea',value:current.welcome_message||'',attributes:'name="welcome_message" rows="3"'})}</div>
-      <label class="row platform-confirm-row"><input type="checkbox" name="require_two_factor" value="yes"${current.require_two_factor?' checked':''}><span>Require two-factor authentication</span></label>
+      <label class="row platform-confirm-row"><input type="checkbox" name="require_two_factor" value="yes"${current.require_two_factor?' checked':''}><span>${escapeHtml(pt("Require two-factor authentication"))}</span></label>
     </div>`,onSubmit:async(form,controls)=>{
       const allowed=['workspace_name','legal_name','registration_number','workspace_slug','primary_owner_contact_id','owner_email','owner_phone','administrator_emails','team_member_emails','role_template_key','seat_limit','plan_code','billing_cycle','trial_starts_on','trial_ends_on','billing_contact_id','invoice_address','gst_registration_number','invoice_prefix','currency','timezone','locale','date_format','logo_document_id','brand_primary_color','brand_secondary_color','sender_name','welcome_message','custom_domain','default_terms_document_id','payment_instructions_masked','workflow_template_key','notification_preferences','required_integrations','data_import_status','security_policy','require_two_factor','retention_policy_days','support_owner','customer_success_consultant_id','target_go_live'];
       const profile={...profileSnapshot(current,allowed)};
@@ -2609,7 +4383,7 @@
       await refreshProspectDrawer(context,prospect.id);
       context.CUI.announce('Data-quality score refreshed.');
     }catch(error){
-      context.CUI.announce(error.message||'Quality refresh failed.',{assertive:true});
+      context.CUI.announce(platformErrorMessage(error,'Quality refresh failed.'),{assertive:true});
       if(button?.isConnected)button.disabled=false;
     }
   }
@@ -2623,7 +4397,7 @@
     'image/png','image/jpeg','image/webp','application/zip'
   ];
   async function invokeDocumentSigner(sb,body) {
-    if(!sb.functions?.invoke)throw new Error('The private document signer is unavailable.');
+    if(!sb.functions?.invoke)throw new Error(pt('The private document signer is unavailable.'));
     const result=await sb.functions.invoke('sme-document-signer',{body});
     if(result?.error)throw result.error;
     return asObject(result?.data);
@@ -2631,35 +4405,35 @@
   function documentUploadModal(detail,context) {
     const {CUI,sb}=context,prospect=asObject(detail.prospect);
     modal({title:'Upload private prospect document',submitLabel:'Reserve and upload',CUI,body:`
-      ${CUI.field({id:'documentType',label:'Document type',control:'select',options:prospectDocumentTypes.map(value=>({value,label:plainLabel(value)})),attributes:'name="document_type"'})}
-      <div class="cui-field"><label for="prospectDocumentFile">File</label><input id="prospectDocumentFile" name="file" type="file" required accept=".pdf,.csv,.xlsx,.png,.jpg,.jpeg,.webp,.zip"><p class="muted small">PDF, CSV, XLSX, PNG, JPEG, WebP or ZIP · maximum 25 MB.</p></div>
+      ${CUI.field({id:'documentType',label:'Document type',control:'select',options:prospectDocumentTypes.map(value=>({value,label:platformStatus(value)})),attributes:'name="document_type"'})}
+      <div class="cui-field"><label for="prospectDocumentFile">${escapeHtml(pt("File"))}</label><input id="prospectDocumentFile" name="file" type="file" required accept=".pdf,.csv,.xlsx,.png,.jpg,.jpeg,.webp,.zip"><p class="muted small">${escapeHtml(pt("PDF, CSV, XLSX, PNG, JPEG, WebP or ZIP · maximum 25 MB."))}</p></div>
       ${CUI.field({id:'documentNotes',label:'Notes',control:'textarea',attributes:'name="notes" rows="3"'})}
       <div class="platform-upload-progress" data-upload-progress aria-live="polite"></div>`,
       onSubmit:async(form,controls)=>{
         const file=form.get('file');
-        if(!(file instanceof File)||!file.size)throw new Error('Choose a file to upload.');
-        if(file.size>26214400)throw new Error('The file exceeds the 25 MB limit.');
-        if(!prospectDocumentMimes.includes(file.type))throw new Error('This file type is not supported.');
+        if(!(file instanceof File)||!file.size)throw new Error(pt('Choose a file to upload.'));
+        if(file.size>26214400)throw new Error(pt('The file exceeds the 25 MB limit.'));
+        if(!prospectDocumentMimes.includes(file.type))throw new Error(pt('This file type is not supported.'));
         const progress=controls.overlay.querySelector('[data-upload-progress]');
-        progress.innerHTML='<p class="muted small">1 of 4 · Reserving the private object path…</p>';
+        progress.innerHTML=`<p class="muted small">${escapeHtml(pt("1 of 4 · Reserving the private object path…"))}</p>`;
         const reservation=asObject(await rpc(sb,'platform_request_prospect_document_upload_v86',{
           p_prospect:prospect.id,p_document_type:form.get('document_type'),
           p_original_filename:file.name,p_mime_type:file.type,p_size_bytes:file.size,
           p_logical_document:null,p_notes:form.get('notes')||null
         }));
-        progress.innerHTML='<p class="muted small">2 of 4 · Exchanging the short-lived upload request…</p>';
+        progress.innerHTML=`<p class="muted small">${escapeHtml(pt("2 of 4 · Exchanging the short-lived upload request…"))}</p>`;
         const exchange=await invokeDocumentSigner(sb,{
           action:'exchange',request_id:reservation.request_id,exchange_token:reservation.exchange_token
         });
-        if(exchange.purpose!=='upload'||!exchange.signed_upload_token)throw new Error('The signer did not return an upload token.');
-        if(exchange.mime_type!==file.type||Number(exchange.size_bytes)!==file.size)throw new Error('The signed reservation no longer matches the selected file.');
-        if(new Date(exchange.reservation_expires_at).getTime()<=Date.now())throw new Error('The upload reservation expired. Choose the file and try again.');
-        progress.innerHTML='<p class="muted small">3 of 4 · Uploading directly to the private document vault…</p>';
+        if(exchange.purpose!=='upload'||!exchange.signed_upload_token)throw new Error(pt('The signer did not return an upload token.'));
+        if(exchange.mime_type!==file.type||Number(exchange.size_bytes)!==file.size)throw new Error(pt('The signed reservation no longer matches the selected file.'));
+        if(new Date(exchange.reservation_expires_at).getTime()<=Date.now())throw new Error(pt('The upload reservation expired. Choose the file and try again.'));
+        progress.innerHTML=`<p class="muted small">${escapeHtml(pt("3 of 4 · Uploading directly to the private document vault…"))}</p>`;
         const storageResult=await sb.storage.from(exchange.bucket_id).uploadToSignedUrl(
           exchange.object_path,exchange.signed_upload_token,file,{contentType:file.type,cacheControl:'0'}
         );
         if(storageResult?.error)throw storageResult.error;
-        progress.innerHTML='<p class="muted small">4 of 4 · Verifying the stored object and finalising its record…</p>';
+        progress.innerHTML=`<p class="muted small">${escapeHtml(pt("4 of 4 · Verifying the stored object and finalising its record…"))}</p>`;
         await invokeDocumentSigner(sb,{action:'finalize',request_id:reservation.request_id});
         await refreshAfterProspectMutation(prospect.id,controls,context,'Private document uploaded and verified.');
       }
@@ -2675,7 +4449,7 @@
       const exchange=await invokeDocumentSigner(context.sb,{
         action:'exchange',request_id:reservation.request_id,exchange_token:reservation.exchange_token
       });
-      if(exchange.purpose!=='read'||!exchange.signed_url)throw new Error('The signer did not return a read URL.');
+      if(exchange.purpose!=='read'||!exchange.signed_url)throw new Error(pt('The signer did not return a read URL.'));
       if(pendingTab){
         pendingTab.opener=null;
         pendingTab.location.replace(exchange.signed_url);
@@ -2683,13 +4457,13 @@
       }else{
         showResultModal({
           title:'Private document is ready',CUI:context.CUI,
-          body:`<div class="platform-route-note"><div><b>Your browser blocked the automatic tab</b><p class="small">Use this short-lived link before it expires. The private storage path is not displayed.</p><a class="btn" href="${escapeHtml(exchange.signed_url)}" target="_blank" rel="noopener noreferrer">Open private document</a></div></div>`
+          body:`<div class="platform-route-note"><div><b>${escapeHtml(pt("Your browser blocked the automatic tab"))}</b><p class="small">${escapeHtml(pt("Use this short-lived link before it expires. The private storage path is not displayed."))}</p><a class="btn" href="${escapeHtml(exchange.signed_url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(pt("Open private document"))}</a></div></div>`
         });
         context.CUI.announce('Use the open-document link in the dialog.');
       }
     }catch(error){
       try{pendingTab?.close()}catch(_closeError){}
-      context.CUI.announce(error.message||'The document could not be opened.',{assertive:true});
+      context.CUI.announce(platformErrorMessage(error,'The document could not be opened.'),{assertive:true});
     }finally{if(button.isConnected)button.disabled=false}
   }
   function showResultModal({title,body,CUI}) {
@@ -2698,6 +4472,13 @@
       onSubmit:async(_form,controls)=>controls.close()
     });
   }
+  function oneTimeInvitationBodyHtml(invitation,CUI) {
+    const token=String(invitation?.raw_token||'');
+    return `<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Shown once"))}</b><p class="small">${escapeHtml(pt('For privacy, Nestly will not show this full token again. Save it now and share it only with {owner}.',{owner:invitation.owner_email||pt('the workspace owner')}))}</p></div></div>
+      <label for="ownerInvitationToken">${escapeHtml(pt("Invitation token"))}</label>
+      <div class="row"><input id="ownerInvitationToken" value="${escapeHtml(token)}" readonly spellcheck="false" style="font-family:monospace"><button type="button" class="btn ghost" data-copy-token>${escapeHtml(pt("Copy token"))}</button></div>
+      <p class="muted small" data-copy-status aria-live="polite">${escapeHtml(pt('The invitation expires {date}.',{date:dateTime(invitation.expires_at)}))}</p>`;
+  }
   function showOneTimeInvitation(invitation,context) {
     const {CUI}=context,token=String(invitation?.raw_token||'');
     if(!token)return;
@@ -2705,10 +4486,7 @@
       title:'Save this owner invitation token',
       submitLabel:'I have saved it',
       CUI,
-      body:`<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Shown once</b><p class="small">For privacy, Nestly will not show this full token again. Save it now and share it only with ${escapeHtml(invitation.owner_email||'the workspace owner')}.</p></div></div>
-        <label for="ownerInvitationToken">Invitation token</label>
-        <div class="row"><input id="ownerInvitationToken" value="${escapeHtml(token)}" readonly spellcheck="false" style="font-family:monospace"><button type="button" class="btn ghost" data-copy-token>Copy token</button></div>
-        <p class="muted small" data-copy-status aria-live="polite">The invitation expires ${escapeHtml(dateTime(invitation.expires_at))}.</p>`,
+      body:oneTimeInvitationBodyHtml(invitation,CUI),
       onSubmit:async(_form,controls)=>controls.close()
     });
     overlay.querySelector('[data-copy-token]').onclick=async()=>{
@@ -2721,9 +4499,9 @@
           input.select();copied=Boolean(document.execCommand?.('copy'));
         }
       }catch(_error){copied=false}
-      overlay.querySelector('[data-copy-status]').textContent=copied
+      overlay.querySelector('[data-copy-status]').textContent=pt(copied
         ?'Token copied. Keep it in a secure handoff channel.'
-        :'Copy was unavailable. Select the token and copy it manually.';
+        :'Copy was unavailable. Select the token and copy it manually.');
     };
   }
   function requestAccountConversion(detail,context) {
@@ -2751,12 +4529,12 @@
           showResultModal({
             title:'Existing firm matched',
             CUI,
-            body:`<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>No workspace was created</b><p class="small">This prospect matches existing firm ${escapeHtml(result.matched_business_id||'—')} by ${escapeHtml(plainLabel(result.match_basis))}. Review the match before any manual decision.</p></div></div>`
+            body:`<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("No workspace was created"))}</b><p class="small">${escapeHtml(pt('This prospect matches existing firm {firm} by {basis}. Review the match before any manual decision.',{firm:result.matched_business_id||'—',basis:platformStatus(result.match_basis)}))}</p></div></div>`
           });
           CUI.announce('Existing firm matched. No workspace was created.',{assertive:true});
           return;
         }
-        CUI.announce(result.outcome==='already_converted'?'The Nestly account already exists.':'Nestly account created. Save the owner invitation token.');
+        CUI.announce(pt(result.outcome==='already_converted'?'The Nestly account already exists.':'Nestly account created. Save the owner invitation token.'));
         if(result.owner_invitation?.raw_token)showOneTimeInvitation(result.owner_invitation,context);
       }
     });
@@ -2772,7 +4550,7 @@
       await rpc(context.sb,name,{...args,p_idempotency_key:idempotencyKey()});
       await finishOnboardingMutation(detail,context,message);
     }catch(error){
-      context.CUI.announce(error.message||'The onboarding action could not be completed.',{assertive:true});
+      context.CUI.announce(platformErrorMessage(error,'The onboarding action could not be completed.'),{assertive:true});
       if(button.isConnected)button.disabled=false;
     }
   }
@@ -2830,7 +4608,7 @@
       submitLabel:'Reissue and show token',
       CUI,
       body:`${CUI.field({id:'reissueOwnerEmail',label:'Owner email',type:'email',value:latest.owner_email||'',required:true,attributes:'name="owner_email"'})}
-        <p class="muted small">Any pending invitation will be revoked. The replacement token is shown once.</p>`,
+        <p class="muted small">${escapeHtml(pt("Any pending invitation will be revoked. The replacement token is shown once."))}</p>`,
       onSubmit:async(form,controls)=>{
         const result=asObject(await rpc(sb,'reissue_workspace_owner_invite_v79',{
           p_business:detail.prospect.converted_business_id,
@@ -2846,7 +4624,7 @@
     const {CUI,sb}=context,facts=onboardingFacts(detail.onboarding);
     const item=asArray(detail.onboarding.items).find(row=>row.item_key===itemKey)||{};
     modal({
-      title:`Record evidence · ${item.label||plainLabel(itemKey)}`,
+      title:pt('Record evidence · {item}',{item:item.label||platformStatus(itemKey)}),
       submitLabel:'Record evidence',
       CUI,
       body:`${CUI.field({id:'onboardingEvidenceNote',label:'Evidence note',control:'textarea',required:true,attributes:'name="note" rows="4"'})}
@@ -2872,7 +4650,7 @@
       CUI.announce('This onboarding item cannot be waived.',{assertive:true});return;
     }
     modal({
-      title:`Waive · ${item.label||plainLabel(itemKey)}`,
+      title:pt('Waive · {item}',{item:item.label||platformStatus(itemKey)}),
       submitLabel:'Waive item',
       CUI,
       body:CUI.field({id:'onboardingWaiverReason',label:'Waiver reason',control:'textarea',required:true,attributes:'name="reason" rows="4" minlength="3"'}),
@@ -2890,9 +4668,9 @@
   }
   function blockOnboardingModal(detail,itemKey,context) {
     const {CUI,sb}=context,facts=onboardingFacts(detail.onboarding);
-    const label=itemKey?(asArray(detail.onboarding.items).find(row=>row.item_key===itemKey)?.label||plainLabel(itemKey)):'whole onboarding';
+    const label=itemKey?(asArray(detail.onboarding.items).find(row=>row.item_key===itemKey)?.label||platformStatus(itemKey)):pt('whole onboarding');
     modal({
-      title:`Block ${label}`,
+      title:pt('Block {label}',{label}),
       submitLabel:'Block',
       CUI,
       body:CUI.field({id:'onboardingBlockReason',label:'Blocking reason',control:'textarea',required:true,attributes:'name="reason" rows="4" minlength="3"'}),
@@ -2934,7 +4712,7 @@
       ${CUI.field({id:'editEmail',label:'Company email',type:'email',value:company.email||'',attributes:'name="email"'})}
       ${CUI.field({id:'editPhone',label:'Company phone',value:company.phone||'',attributes:'name="phone"'})}
       ${CUI.field({id:'editNextAction',label:'Next action at',type:'datetime-local',value:prospect.next_action_at?String(prospect.next_action_at).slice(0,16):'',attributes:'name="next_action_at"'})}
-      ${CUI.field({id:'editPriority',label:'Priority',control:'select',options:['low','normal','high','urgent'].map(value=>({value,label:plainLabel(value),selected:value===(prospect.priority||'normal')})),attributes:'name="priority"'})}
+      ${CUI.field({id:'editPriority',label:'Priority',control:'select',options:['low','normal','high','urgent'].map(value=>({value,label:platformStatus(value),selected:value===(prospect.priority||'normal')})),attributes:'name="priority"'})}
       ${CUI.field({id:'editRegion',label:'Region',value:prospect.region||'',attributes:'name="region"'})}
       <div class="wide">${CUI.field({id:'editTags',label:'Tags',value:asArray(detail.tags).map(tag=>tag.tag_key||tag.name||tag).join(', '),attributes:'name="tags"'})}</div>
     </div>`,onSubmit:async(form,controls)=>{
@@ -2958,7 +4736,7 @@
       options:[{value:'',label:'Unassigned'},...consultants].map(option=>({
         ...option,selected:String(option.value)===String(prospect.assigned_consultant_id||'')
       })),attributes:'name="consultant"'
-    })}<p class="muted small">Choose by consultant name. Assignment changes are recorded in the prospect history.</p>`,
+    })}<p class="muted small">${escapeHtml(pt("Choose by consultant name. Assignment changes are recorded in the prospect history."))}</p>`,
       onSubmit:async(form,controls)=>{
         await rpc(sb,'platform_assign_prospect_v89',{
           p_prospect:prospect.id,p_consultant:form.get('consultant')||null,
@@ -2971,14 +4749,14 @@
     const {CUI,sb}=context;
     const actualType=type==='npu'?'call':type;
     const defaultSummary=type==='npu'?'No pick-up attempt':type==='meeting'?'Meeting scheduled':'';
-    modal({title:type==='npu'?'Record NPU':`Record ${plainLabel(type)}`,submitLabel:'Save activity',CUI,body:`<div class="platform-form-grid">
-      ${CUI.field({id:'activityType',label:'Activity type',control:'select',options:['note','call','email','whatsapp','meeting','demo','document_sent','proposal_sent','contract_sent','payment','onboarding_session'].map(value=>({value,label:plainLabel(value),selected:value===actualType})),attributes:'name="activity_type"'})}
-      ${CUI.field({id:'activityChannel',label:'Channel',control:'select',options:['','phone','sms','whatsapp','email','video','in_person'].map(value=>({value,label:value?plainLabel(value):'Not recorded',selected:value===actualType||(actualType==='call'&&value==='phone')})),attributes:'name="channel"'})}
+    modal({title:type==='npu'?'Record NPU':pt('Record {type}',{type:platformStatus(type)}),submitLabel:'Save activity',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'activityType',label:'Activity type',control:'select',options:['note','call','email','whatsapp','meeting','demo','document_sent','proposal_sent','contract_sent','payment','onboarding_session'].map(value=>({value,label:platformStatus(value),selected:value===actualType})),attributes:'name="activity_type"'})}
+      ${CUI.field({id:'activityChannel',label:'Channel',control:'select',options:['','phone','sms','whatsapp','email','video','in_person'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===actualType||(actualType==='call'&&value==='phone')})),attributes:'name="channel"'})}
       <div class="wide">
       ${CUI.field({id:'activitySummary',label:'Summary',required:true,value:defaultSummary,attributes:'name="summary"'})}
       </div><div class="wide">${CUI.field({id:'activityDetail',label:'Detail',control:'textarea',attributes:'name="detail" rows="4"'})}</div>
       ${CUI.field({id:'activityOccurred',label:'Occurred at',type:'datetime-local',value:isoInput(new Date()),attributes:'name="occurred_at"'})}
-      ${CUI.field({id:'activityDirection',label:'Direction',control:'select',options:['','outbound','inbound'].map(value=>({value,label:value?plainLabel(value):'Not recorded'})),attributes:'name="direction"'})}
+      ${CUI.field({id:'activityDirection',label:'Direction',control:'select',options:['','outbound','inbound'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded')})),attributes:'name="direction"'})}
       ${CUI.field({id:'activityOutcome',label:'Outcome',value:type==='npu'?'No answer':'',attributes:'name="outcome"'})}
       ${CUI.field({id:'activityDisposition',label:'Disposition',value:type==='npu'?'no_answer':'',attributes:'name="disposition"'})}
       ${CUI.field({id:'activityDuration',label:'Duration (seconds)',type:'number',attributes:'name="duration_seconds" min="0" step="1"'})}
@@ -3046,7 +4824,7 @@
   }
   function stageEvidenceFieldSpecs(stage) {
     const now=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
-    const channel={id:'channel',label:'Channel',control:'select',options:['phone','sms','whatsapp','email','video','in_person'].map(value=>({value,label:plainLabel(value)}))};
+    const channel={id:'channel',label:'Channel',control:'select',options:['phone','sms','whatsapp','email','video','in_person'].map(value=>({value,label:platformStatus(value)}))};
     const specs={
       new_lead:[{id:'source',label:'Lead source'}],
       appt_set:[
@@ -3089,10 +4867,10 @@
     return specs[stage]||[];
   }
   function stageEvidenceModal(prospect,toStage,context) {
-    const {CUI}=context,stageLabel=prospectStages.find(stage=>stage.key===toStage)?.label||plainLabel(toStage);
+    const {CUI}=context,stageLabel=pt(prospectStages.find(stage=>stage.key===toStage)?.label||platformStatus(toStage));
     const specs=stageEvidenceFieldSpecs(toStage);
-    modal({title:`Move to ${stageLabel}`,submitLabel:'Review stage move',CUI,body:`
-      <div class="platform-gate-summary"><b>Entry gate</b><ul>${asArray(stageGateDefinitions[toStage]).map(requirement=>`<li>${escapeHtml(requirement)}</li>`).join('')}</ul></div>
+    modal({title:pt('Move to {stage}',{stage:stageLabel}),submitLabel:'Review stage move',CUI,body:`
+      <div class="platform-gate-summary"><b>${escapeHtml(pt("Entry gate"))}</b><ul>${asArray(stageGateDefinitions[toStage]).map(requirement=>`<li>${escapeHtml(requirement)}</li>`).join('')}</ul></div>
       <div class="platform-form-grid">${specs.map(spec=>stageField(CUI,spec)).join('')}</div>`,
       onSubmit:async(form,controls)=>{
         const evidence={};
@@ -3105,14 +4883,14 @@
           evidence[spec.id]=value;
         });
         if(/^npu_[1-6]$/.test(toStage)&&!evidence.next_attempt_at&&!evidence.terminal_disposition)
-          throw new Error('Schedule the next attempt or enter a terminal disposition.');
+          throw new Error(pt('Schedule the next attempt or enter a terminal disposition.'));
         if(toStage==='meeting_sent'&&!evidence.meeting_url&&!evidence.physical_location)
-          throw new Error('Add a meeting URL or physical location.');
+          throw new Error(pt('Add a meeting URL or physical location.'));
         if(toStage==='pending_decision'&&!evidence.decision_at&&!evidence.next_follow_up_at)
-          throw new Error('Add a decision date or next follow-up.');
+          throw new Error(pt('Add a decision date or next follow-up.'));
         controls.close();
         previewThenConfirm({
-          title:`Confirm ${stageLabel}`,
+          title:pt('Confirm {stage}',{stage:stageLabel}),
           preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:toStage,entry_gate:stageGateDefinitions[toStage],evidence},
           CUI,onConfirm:async confirmControls=>{
             await performStageMove(prospect,toStage,{entryEvidence:evidence},context);
@@ -3124,7 +4902,7 @@
   function lostStageModal(prospect,context) {
     const {CUI}=context;
     modal({title:'Mark prospect lost',submitLabel:'Preview lost transition',CUI,body:`<div class="platform-form-grid">
-      ${CUI.field({id:'lostReason',label:'Reason',control:'select',required:true,options:lostReasons.map(value=>({value,label:plainLabel(value)})),attributes:'name="reason_code"'})}
+      ${CUI.field({id:'lostReason',label:'Reason',control:'select',required:true,options:lostReasons.map(value=>({value,label:platformStatus(value)})),attributes:'name="reason_code"'})}
       ${CUI.field({id:'lostCompetitor',label:'Competitor',attributes:'name="competitor"'})}
       ${CUI.field({id:'lostRecontact',label:'Recontact at',type:'date',attributes:'name="recontact_at"'})}
       <div class="wide">${CUI.field({id:'lostDetail',label:'Detail',control:'textarea',attributes:'name="reason_detail" rows="4"'})}</div>
@@ -3140,7 +4918,7 @@
       ${CUI.field({id:'termsProduct',label:'Product',required:true,attributes:'name="product_code"'})}
       ${CUI.field({id:'termsPlan',label:'Plan',required:true,attributes:'name="plan_code"'})}
       ${CUI.field({id:'termsSeats',label:'Seats',type:'number',required:true,attributes:'name="seats" min="1" step="1"'})}
-      ${CUI.field({id:'termsCycle',label:'Billing cycle',control:'select',options:['quarterly','half_yearly','annual'].map(value=>({value,label:plainLabel(value)})),attributes:'name="billing_cycle"'})}
+      ${CUI.field({id:'termsCycle',label:'Billing cycle',control:'select',options:['quarterly','half_yearly','annual'].map(value=>({value,label:platformStatus(value)})),attributes:'name="billing_cycle"'})}
       ${CUI.field({id:'termsAmount',label:'Accepted amount (cents)',type:'number',required:true,attributes:'name="accepted_amount_cents" min="0" step="1"'})}
       ${CUI.field({id:'termsCurrency',label:'Currency',value:'SGD',required:true,attributes:'name="currency" maxlength="3"'})}
       ${CUI.field({id:'termsStatus',label:'Contract status',control:'select',options:[{value:'accepted',label:'Accepted'}],attributes:'name="contract_status"'})}
@@ -3162,8 +4940,8 @@
         p_commercial_terms:options.commercialTerms||null,
         p_idempotency_key:idempotencyKey()
       });
-      context.close?.();await renderOnboarding(context);CUI.announce(`Prospect moved to ${plainLabel(toStage)}.`);
-    }catch(error){CUI.announce(error.message||'Stage move failed.',{assertive:true});throw error}
+      context.close?.();await renderOnboarding(context);CUI.announce(pt('Prospect moved to {stage}.',{stage:platformStatus(toStage)}));
+    }catch(error){CUI.announce(platformErrorMessage(error,'Stage move failed.'),{assertive:true});throw error}
   }
 
   async function renderSectors(context) {
@@ -3197,24 +4975,24 @@
       });
       main.innerHTML=`${CUI.pageHeader({
         title:'Sector modules',subtitle:'Versioned module entitlements with explicit preview and confirmation before every change.',iconName:'packages',
-        actions:`<button class="btn" type="button" id="platformNewBundle">${CUI.icon('add',{size:17})}<span>New bundle version</span></button>`
+        actions:`<button class="btn" type="button" id="platformNewBundle">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New bundle version'))}</span></button>`
       })}
       <div class="platform-sector-list">${profiles.map(profile=>{
         const published=asObject(profile.published_version);
-        return CUI.card({title:profile.label||profile.sector_key,description:`${profile.sector_key} · ${profile.active?'Active':'Inactive'}`,body:published.id?`
-          <div class="platform-sector-card-head"><div><b>Published version ${escapeHtml(published.version)}</b><p class="muted small">${escapeHtml(published.label||'')}</p></div>${CUI.status('Published','ok')}</div>
-          <div class="platform-module-list" aria-label="${escapeHtml(profile.label||profile.sector_key)} modules">${asArray(published.modules).filter(module=>module!=='inventory').map(module=>`<span class="chip on" title="${escapeHtml(module)}">${escapeHtml(moduleLabel(module))}</span>`).join('')}</div>
-          <div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('edit',{size:16})}<span>Edit modules</span></button></div>`
-          :`${CUI.emptyState({iconName:'packages',title:'No published version',body:'Choose the standard modules and publish the first bundle.'})}<div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('add',{size:16})}<span>Choose modules</span></button></div>`});
+        return CUI.card({title:profile.label||profile.sector_key,description:`${profile.sector_key} · ${pt(profile.active?'Active':'Inactive')}`,body:published.id?`
+          <div class="platform-sector-card-head"><div><b>${escapeHtml(pt('Published version'))} ${escapeHtml(published.version)}</b><p class="muted small">${escapeHtml(published.label||'')}</p></div>${CUI.status(pt('Published'),'ok')}</div>
+          <div class="platform-module-list" aria-label="${escapeHtml(pt('{sector} modules',{sector:profile.label||sectorLabel(profile.sector_key)}))}">${sectorModuleChipsHtml(published.modules)}</div>
+          <div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt('Edit modules'))}</span></button></div>`
+          :`${CUI.emptyState({iconName:'packages',title:'No published version',body:'Choose the standard modules and publish the first bundle.'})}<div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('add',{size:16})}<span>${escapeHtml(pt('Choose modules'))}</span></button></div>`});
       }).join('')||CUI.emptyState({iconName:'packages',title:'No sector profiles',body:'The platform returned no active sector profiles.'})}</div>
-      <section class="card" style="margin-top:16px"><div class="platform-list-row"><div><h2 style="font-size:16px">Firm entitlements</h2><p class="muted small">${assignments.length} of ${businesses.length} firm${businesses.length===1?'':'s'} assigned.</p></div></div>
+      <section class="card" style="margin-top:16px"><div class="platform-list-row"><div><h2 style="font-size:16px">${escapeHtml(pt('Firm entitlements'))}</h2><p class="muted small">${assignments.length} / ${businesses.length}</p></div></div>
         ${businesses.length?CUI.table({caption:'Firm sector entitlements',headers:['Firm','Sector','Bundle','Assignment','Effective modules','Actions'],rows:businesses.map(firm=>[
           `<b>${escapeHtml(firm.business_name)}</b>`,
-          firm.sector_key?escapeHtml(firm.sector_key):CUI.status('Unassigned','off'),
+          firm.sector_key?escapeHtml(sectorLabel(firm.sector_key)):CUI.status(pt('Unassigned'),'off'),
           firm.bundle_version?`v${escapeHtml(firm.bundle_version)}`:'—',
           firm.assignment_version?`v${escapeHtml(firm.assignment_version)}`:'—',
           firm.assignment_version?escapeHtml(asArray(firm.effective_modules).filter(module=>module!=='inventory').map(moduleLabel).join(', ')):'—',
-          `<div class="platform-actions"><button type="button" class="btn ghost sm" data-assign-firm="${escapeHtml(firm.business_id)}">${firm.assignment_version?'Reassign':'Assign'}</button>${firm.assignment_version?`<button type="button" class="btn ghost sm" data-override-firm="${escapeHtml(firm.business_id)}">Override</button>`:''}</div>`
+          `<div class="platform-actions"><button type="button" class="btn ghost sm" data-assign-firm="${escapeHtml(firm.business_id)}">${escapeHtml(pt(firm.assignment_version?'Reassign':'Assign'))}</button>${firm.assignment_version?`<button type="button" class="btn ghost sm" data-override-firm="${escapeHtml(firm.business_id)}">${escapeHtml(pt('Override'))}</button>`:''}</div>`
         ])}):CUI.emptyState({iconName:'branch',title:'No firms',body:'No firms are available for sector assignment.'})}
       </section>`;
       main.querySelector('#platformNewBundle').onclick=()=>sectorBundleModal({profiles,context});
@@ -3229,17 +5007,17 @@
   function modulePickerHtml(selectedModules=[]) {
     const selected=new Set(asArray(selectedModules).filter(module=>module!=='inventory'));
     const groups=[...new Set(sectorModuleCatalog.map(module=>module.group))];
-    return `<fieldset class="platform-module-picker"><legend>Choose the standard modules</legend>
-      <p class="muted small">These modules become the sector template. Existing published versions remain unchanged.</p>
+    return `<fieldset class="platform-module-picker"><legend>${escapeHtml(pt('Choose the standard modules'))}</legend>
+      <p class="muted small">${escapeHtml(pt('These modules become the sector template. Existing published versions remain unchanged.'))}</p>
       ${groups.map(group=>`<section class="platform-module-group" aria-labelledby="module-group-${group.toLowerCase().replace(/\W+/g,'-')}">
-        <h2 id="module-group-${group.toLowerCase().replace(/\W+/g,'-')}">${escapeHtml(group)}</h2>
+        <h2 id="module-group-${group.toLowerCase().replace(/\W+/g,'-')}">${escapeHtml(pt(group))}</h2>
         <div class="platform-module-options">${sectorModuleCatalog.filter(module=>module.group===group).map(module=>`
           <label class="platform-module-option">
             <input type="checkbox" name="modules" value="${escapeHtml(module.key)}"${selected.has(module.key)?' checked':''}>
-            <span><b>${escapeHtml(module.label)}</b><small>${escapeHtml(module.key)}</small></span>
+            <span><b>${escapeHtml(pt(module.label))}</b><small>${escapeHtml(module.key)}</small></span>
           </label>`).join('')}</div>
       </section>`).join('')}
-      <div class="platform-module-selection" aria-live="polite"><b data-module-count>${selected.size} selected</b><span data-module-summary>${selected.size?escapeHtml([...selected].map(moduleLabel).join(', ')):'Choose at least one module.'}</span></div>
+      <div class="platform-module-selection" aria-live="polite"><b data-module-count>${escapeHtml(pt('{count} selected',{count:selected.size}))}</b><span data-module-summary>${selected.size?escapeHtml([...selected].map(moduleLabel).join(', ')):escapeHtml(pt('Choose at least one module.'))}</span></div>
     </fieldset>`;
   }
   function sectorBundleReviewModal({profile,args,preview,context}) {
@@ -3252,43 +5030,43 @@
     const removed=current.filter(module=>!resolved.includes(module));
     const version=preview?.next_version??preview?.version??'next';
     let createdBundleId=null;
-    modal({title:`Review ${profile?.label||args.p_sector_key} bundle`,submitLabel:'Create and publish',CUI,body:`
+    modal({title:pt('Review {sector} bundle',{sector:profile?.label||args.p_sector_key}),submitLabel:'Create and publish',CUI,body:`
       <div class="platform-bundle-review">
-        <div class="platform-route-note">${CUI.icon('info',{size:19})}<div><b>New immutable version ${escapeHtml(version)}</b><p class="small">Publishing changes the default module template for future firm assignments. Previous versions stay available for audit.</p></div></div>
+        <div class="platform-route-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt('New immutable version {version}',{version}))}</b><p class="small">${escapeHtml(pt("Publishing changes the default module template for future firm assignments. Previous versions stay available for audit."))}</p></div></div>
         <dl class="platform-context-list">
-          <div><dt>Sector</dt><dd>${escapeHtml(profile?.label||plainLabel(args.p_sector_key))}</dd></div>
-          <div><dt>Version label</dt><dd>${escapeHtml(args.p_label)}</dd></div>
-          <div><dt>Modules after dependencies</dt><dd>${escapeHtml(resolved.length)}</dd></div>
+          <div><dt>${escapeHtml(pt("Sector"))}</dt><dd>${escapeHtml(profile?.label||sectorLabel(args.p_sector_key))}</dd></div>
+          <div><dt>${escapeHtml(pt("Version label"))}</dt><dd>${escapeHtml(args.p_label)}</dd></div>
+          <div><dt>${escapeHtml(pt("Modules after dependencies"))}</dt><dd>${escapeHtml(resolved.length)}</dd></div>
         </dl>
-        <section><h2>Included modules</h2><div class="platform-module-list">${resolved.map(module=>`<span class="chip on" title="${escapeHtml(module)}">${escapeHtml(moduleLabel(module))}</span>`).join('')}</div></section>
+        <section><h2>${escapeHtml(pt("Included modules"))}</h2><div class="platform-module-list">${sectorModuleChipsHtml(resolved)}</div></section>
         <div class="platform-bundle-diff">
-          <section><h2>Added</h2>${added.length?`<ul>${added.map(module=>`<li>${escapeHtml(moduleLabel(module))}</li>`).join('')}</ul>`:'<p class="muted small">No modules added.</p>'}</section>
-          <section><h2>Removed</h2>${removed.length?`<ul>${removed.map(module=>`<li>${escapeHtml(moduleLabel(module))}</li>`).join('')}</ul>`:'<p class="muted small">No modules removed.</p>'}</section>
+          <section><h2>${escapeHtml(pt("Added"))}</h2>${added.length?`<ul>${added.map(module=>`<li>${escapeHtml(moduleLabel(module))}</li>`).join('')}</ul>`:localizedEmptyHtml('No modules added.')}</section>
+          <section><h2>${escapeHtml(pt("Removed"))}</h2>${removed.length?`<ul>${removed.map(module=>`<li>${escapeHtml(moduleLabel(module))}</li>`).join('')}</ul>`:localizedEmptyHtml('No modules removed.')}</section>
         </div>
-        ${resolved.length!==requested.length?`<p class="muted small">Nestly added ${escapeHtml(resolved.length-requested.length)} required dependenc${resolved.length-requested.length===1?'y':'ies'} automatically.</p>`:''}
-        <label class="platform-review-confirm"><input type="checkbox" name="reviewed" value="yes"><span>I reviewed the module list and understand this publishes a new immutable version.</span></label>
+        ${resolved.length!==requested.length?`<p class="muted small">${escapeHtml(pt('Nestly added {count} required dependencies automatically.',{count:resolved.length-requested.length}))}</p>`:''}
+        <label class="platform-review-confirm"><input type="checkbox" name="reviewed" value="yes"><span>${escapeHtml(pt("I reviewed the module list and understand this publishes a new immutable version."))}</span></label>
       </div>`,onSubmit:async(form,controls)=>{
-        if(form.get('reviewed')!=='yes')throw new Error('Review the module list and tick the confirmation before publishing.');
+        if(form.get('reviewed')!=='yes')throw new Error(pt('Review the module list and tick the confirmation before publishing.'));
         if(!createdBundleId){
           const created=await rpc(sb,'platform_create_sector_bundle_v75',{...args,p_dry_run:false});
           createdBundleId=created.bundle_version_id;
         }
         await rpc(sb,'platform_publish_sector_bundle_v75',{p_bundle_version:createdBundleId,p_dry_run:true});
         await rpc(sb,'platform_publish_sector_bundle_v75',{p_bundle_version:createdBundleId,p_dry_run:false});
-        controls.close();await renderSectors(context);CUI.announce(`${profile?.label||plainLabel(args.p_sector_key)} module bundle published.`);
+        controls.close();await renderSectors(context);CUI.announce(pt('{sector} module bundle published.',{sector:profile?.label||sectorLabel(args.p_sector_key)}));
       }});
   }
   function sectorBundleModal({profiles,context,profile=null}) {
     const {CUI,sb}=context;
     const initial=profile||profiles[0]||{},published=asObject(initial.published_version);
-    const defaultLabel=`${initial.label||plainLabel(initial.sector_key)} · ${new Date().toLocaleDateString('en-SG',{year:'numeric',month:'short',day:'2-digit'})}`;
-    const overlay=modal({title:published.id?`Edit ${initial.label||initial.sector_key} modules`:'Create sector bundle version',submitLabel:'Review version',CUI,body:`<div class="platform-form-grid">
+    const defaultLabel=`${initial.label||sectorLabel(initial.sector_key)} · ${new Date().toLocaleDateString(platformIntlLocale(),{year:'numeric',month:'short',day:'2-digit'})}`;
+    const overlay=modal({title:published.id?pt('Edit {sector} modules',{sector:initial.label||initial.sector_key}):'Create sector bundle version',submitLabel:'Review version',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'bundleSector',label:'Sector',control:'select',options:profiles.map(item=>({value:item.sector_key,label:item.label||item.sector_key,selected:item.sector_key===initial.sector_key})),attributes:'name="sector_key"'})}
       ${CUI.field({id:'bundleLabel',label:'Version label',required:true,value:defaultLabel,attributes:'name="label"'})}
       <div class="wide" data-module-picker-host>${modulePickerHtml(asArray(published.modules))}</div>
     </div>`,onSubmit:async(form,controls)=>{
       const selected=form.getAll('modules').map(String);
-      if(!selected.length)throw new Error('Choose at least one module for this sector.');
+      if(!selected.length)throw new Error(pt('Choose at least one module for this sector.'));
       const selectedProfile=profiles.find(item=>item.sector_key===form.get('sector_key'))||initial;
       const args={p_sector_key:form.get('sector_key'),p_label:String(form.get('label')).trim(),p_modules:selected,p_dry_run:true};
       const preview=await rpc(sb,'platform_create_sector_bundle_v75',args);
@@ -3298,21 +5076,21 @@
     const wirePicker=()=>{
       const checkboxes=[...pickerHost.querySelectorAll('input[name="modules"]')];
       const selected=checkboxes.filter(input=>input.checked).map(input=>input.value);
-      pickerHost.querySelector('[data-module-count]').textContent=`${selected.length} selected`;
-      pickerHost.querySelector('[data-module-summary]').textContent=selected.length?selected.map(moduleLabel).join(', '):'Choose at least one module.';
+      pickerHost.querySelector('[data-module-count]').textContent=pt('{count} selected',{count:selected.length});
+      pickerHost.querySelector('[data-module-summary]').textContent=selected.length?selected.map(moduleLabel).join(', '):pt('Choose at least one module.');
     };
     pickerHost.addEventListener('change',wirePicker);
     sectorSelect.onchange=()=>{
       const next=profiles.find(item=>item.sector_key===sectorSelect.value);
       pickerHost.innerHTML=modulePickerHtml(asArray(next?.published_version?.modules));
-      overlay.querySelector('#bundleLabel').value=`${next?.label||plainLabel(sectorSelect.value)} · ${new Date().toLocaleDateString('en-SG',{year:'numeric',month:'short',day:'2-digit'})}`;
+      overlay.querySelector('#bundleLabel').value=`${next?.label||sectorLabel(sectorSelect.value)} · ${new Date().toLocaleDateString(platformIntlLocale(),{year:'numeric',month:'short',day:'2-digit'})}`;
       wirePicker();
     };
   }
   function assignSectorModal(firm,profiles,context) {
     const {CUI,sb}=context;
     const versions=profiles.map(profile=>profile.published_version).filter(version=>version?.id);
-    modal({title:`Assign sector to ${firm?.business_name||'firm'}`,submitLabel:'Preview assignment',CUI,body:CUI.field({id:'assignBundle',label:'Published bundle',control:'select',options:versions.map(version=>({value:version.id,label:`${version.label} · v${version.version}`})),attributes:'name="bundle_version"'}),
+    modal({title:pt('Assign sector to {firm}',{firm:firm?.business_name||pt('firm')}),submitLabel:'Preview assignment',CUI,body:CUI.field({id:'assignBundle',label:'Published bundle',control:'select',options:versions.map(version=>({value:version.id,label:`${version.label} · v${version.version}`})),attributes:'name="bundle_version"'}),
       onSubmit:async(form,controls)=>{
         const args={p_business:firm.business_id,p_bundle_version:form.get('bundle_version'),p_expected_version:firm.assignment_version??null,p_dry_run:true};
         const preview=await rpc(sb,'platform_assign_business_sector_v75',args);controls.close();
@@ -3323,7 +5101,7 @@
   }
   function sectorOverrideModal(firm,context) {
     const {CUI,sb}=context;
-    modal({title:`Override modules for ${firm.business_name}`,submitLabel:'Preview override',CUI,body:`
+    modal({title:pt('Override modules for {firm}',{firm:firm.business_name}),submitLabel:'Preview override',CUI,body:`
       ${CUI.field({id:'overrideAdd',label:'Add modules',hint:'Comma-separated module keys.',attributes:'name="add_modules"'})}
       ${CUI.field({id:'overrideRemove',label:'Remove modules',hint:'Comma-separated module keys.',attributes:'name="remove_modules"'})}
       ${CUI.field({id:'overrideReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="4"'})}`,
@@ -3335,6 +5113,32 @@
           await rpc(sb,'platform_set_business_sector_override_v75',{...args,p_dry_run:false});confirmControls.close();await renderSectors(context);CUI.announce('Firm module override applied.');
         }});
       }});
+  }
+
+  function billingCatalogueRows(catalog,CUI) {
+    return asArray(catalog).map(row=>[
+      escapeHtml(row.currency),escapeHtml(platformStatus(row.cadence)),currency(row.base_amount_cents,row.currency),
+      currency(row.per_seat_amount_cents,row.currency),String(row.included_seats),
+      escapeHtml(platformStatus(row.tax_behavior)),CUI.status(pt(row.active?'Active':'Retired'),row.active?'ok':'off'),
+      escapeHtml(dateTime(row.effective_from))
+    ]);
+  }
+  function billingFirmRows(rows,CUI) {
+    return asArray(rows).map(row=>[
+      `<button type="button" class="customer-link" data-billing-firm="${escapeHtml(row.business_id)}">${escapeHtml(row.business_name)}</button>`,
+      CUI.status(platformStatus(row.status||'—'),statusTone(row.status)),
+      CUI.status(platformStatus(row.payment_status||'—'),row.payment_status==='paid'?'ok':row.payment_status==='past_due'?'no':'off'),
+      escapeHtml(platformStatus(row.cadence)),escapeHtml(dateTime(row.last_paid_at)),escapeHtml(dateTime(row.next_payment_at)),
+      currency(row.period_subtotal_cents,row.currency),currency(row.period_tax_cents,row.currency),
+      `<span class="platform-money">${currency(row.period_total_cents,row.currency)}</span>`,String(row.failed_event_count||0)
+    ]);
+  }
+  function automationRunRows(runs,CUI) {
+    return asArray(runs).map(run=>[
+      escapeHtml(dateTime(run.started_at)),escapeHtml(platformStatus(run.run_mode)),
+      CUI.status(platformStatus(run.status||'—'),run.status==='completed'?'ok':run.status==='failed'?'no':'new'),
+      escapeHtml(dateTime(run.finished_at)),escapeHtml(JSON.stringify(run.summary||{}))
+    ]);
   }
 
   async function renderBilling(context) {
@@ -3359,28 +5163,19 @@
         paid:value.paid+(row.last_paid_at?1:0),failed:value.failed+Number(row.failed_event_count||0)
       }),{total:0,overdue:0,paid:0,failed:0});
       main.innerHTML=`${CUI.pageHeader({title:'Billing',subtitle:'Provider-backed subscription, GST and payment status. Amounts are integer cents from the billing ledger.',iconName:'reports',
-        actions:`<button type="button" class="btn" id="platformNewBillingPrice">${CUI.icon('add',{size:17})}<span>New price version</span></button>`})}
-        <section class="platform-kpis" aria-label="Billing summary">${[
+        actions:`<button type="button" class="btn" id="platformNewBillingPrice">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New price version'))}</span></button>`})}
+        <section class="platform-kpis" aria-label="${escapeHtml(pt('Billing summary'))}">${[
           ['Period total incl. GST',currency(totals.total),'reports'],['Paid firms',totals.paid,'check'],['Overdue firms',totals.overdue,'info'],['Failed events',totals.failed,'retention']
-        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
-        ${CUI.card({title:'Stripe price catalogue',description:'Active versions drive checkout and cadence changes. Prior versions remain visible as history.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per seat','Included','Tax','Status','Effective'],rows:catalog.map(row=>[
-          escapeHtml(row.currency),escapeHtml(plainLabel(row.cadence)),currency(row.base_amount_cents,row.currency),
-          currency(row.per_seat_amount_cents,row.currency),String(row.included_seats),
-          escapeHtml(plainLabel(row.tax_behavior)),CUI.status(row.active?'Active':'Retired',row.active?'ok':'off'),
-          escapeHtml(dateTime(row.effective_from))
-        ])}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create one active version for each offered billing cadence before opening checkout.'})})}
+        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+        ${CUI.card({title:'Stripe price catalogue',description:'Active versions drive checkout and cadence changes. Prior versions remain visible as history.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per seat','Included','Tax','Status','Effective'],rows:billingCatalogueRows(catalog,CUI)}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create one active version for each offered billing cadence before opening checkout.'})})}
         <div class="platform-detail-grid">
-          ${CUI.card({title:'Billing exception queue',description:exceptions.length?`${exceptions.length} firm${exceptions.length===1?'':'s'} require payment follow-up.`:'No overdue or failed firm billing records.',body:exceptions.length?exceptions.map(row=>`<div class="platform-action-item"><div><button type="button" class="platform-link-button" data-billing-firm="${escapeHtml(row.business_id)}"><b>${escapeHtml(row.business_name)}</b></button><p class="muted small">${escapeHtml(plainLabel(row.payment_status||row.status))} · next payment ${escapeHtml(dateTime(row.next_payment_at))}</p></div>${CUI.status(`${Number(row.failed_event_count||0)} failed`,'no')}</div>`).join(''):'<p class="muted small">Payments and provider status are currently reconciled.</p>'})}
-          ${CUI.card({title:'Latest provider reconciliation',description:reconciliationRuns[0]?`${dateTime(reconciliationRuns[0].started_at)} · ${plainLabel(reconciliationRuns[0].run_mode)}`:'No reconciliation run was returned.',body:reconciliationItems.length?reconciliationItems.map(item=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(item.object_type))}</b><p class="muted small">${escapeHtml(item.provider_object_id||'Provider object')} · ${escapeHtml(dateTime(item.created_at))}</p></div>${CUI.status(plainLabel(item.result),item.result==='matched'?'ok':'no')}</div>`).join(''):reconciliationRuns[0]?'<p class="muted small">The latest returned run has no exception items.</p>':'<p class="muted small">Reconciliation history will appear after the first automated run.</p>'})}
+          ${CUI.card({title:'Billing exception queue',description:exceptions.length?pt('{count} firms require payment follow-up.',{count:exceptions.length}):'No overdue or failed firm billing records.',body:exceptions.length?exceptions.map(row=>`<div class="platform-action-item"><div><button type="button" class="platform-link-button" data-billing-firm="${escapeHtml(row.business_id)}"><b>${escapeHtml(row.business_name)}</b></button><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(pt('next payment {date}',{date:dateTime(row.next_payment_at)}))}</p></div>${CUI.status(pt('{count} failed',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):localizedEmptyHtml('Payments and provider status are currently reconciled.')})}
+          ${CUI.card({title:'Latest provider reconciliation',description:reconciliationRuns[0]?`${dateTime(reconciliationRuns[0].started_at)} · ${platformStatus(reconciliationRuns[0].run_mode)}`:'No reconciliation run was returned.',body:reconciliationItems.length?reconciliationItems.map(item=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(item.object_type))}</b><p class="muted small">${escapeHtml(item.provider_object_id||pt('Provider object'))} · ${escapeHtml(dateTime(item.created_at))}</p></div>${CUI.status(platformStatus(item.result),item.result==='matched'?'ok':'no')}</div>`).join(''):reconciliationRuns[0]?localizedEmptyHtml('The latest returned run has no exception items.'):localizedEmptyHtml('Reconciliation history will appear after the first automated run.')})}
         </div>
         ${CUI.card({title:'Reconciliation history',description:'Automatic and manual provider comparisons. Open exception records above for the affected firm.',body:reconciliationRuns.length?CUI.table({caption:'Billing reconciliation history',headers:['Started','Mode','Status','Finished','Summary'],rows:reconciliationRuns.map(run=>[
-          escapeHtml(dateTime(run.started_at)),escapeHtml(plainLabel(run.run_mode)),CUI.status(plainLabel(run.status),run.status==='completed'?'ok':run.status==='failed'?'no':'off'),escapeHtml(dateTime(run.finished_at)),escapeHtml(JSON.stringify(run.summary||{}))
-        ])}):'<p class="muted small">No reconciliation runs.</p>'})}
-        ${CUI.card({title:'Firm billing',description:rows.length?`${rows.length} subscriptions. Open a firm for invoices, attempts and available commands.`:'No subscriptions returned.',body:rows.length?CUI.table({caption:'Platform billing',headers:['Firm','Subscription','Payment','Cadence','Last paid','Next payment','Subtotal','GST','Total','Attempts'],rows:rows.map(row=>[
-          `<button type="button" class="customer-link" data-billing-firm="${escapeHtml(row.business_id)}">${escapeHtml(row.business_name)}</button>`,
-          CUI.status(row.status||'—',statusTone(row.status)),CUI.status(row.payment_status||'—',row.payment_status==='paid'?'ok':row.payment_status==='past_due'?'no':'off'),escapeHtml(plainLabel(row.cadence)),escapeHtml(dateTime(row.last_paid_at)),escapeHtml(dateTime(row.next_payment_at)),
-          currency(row.period_subtotal_cents,row.currency),currency(row.period_tax_cents,row.currency),`<span class="platform-money">${currency(row.period_total_cents,row.currency)}</span>`,String(row.failed_event_count||0)
-        ])}):CUI.emptyState({iconName:'reports',title:'No billing records',body:'The billing reader returned no subscriptions.'})})}`;
+          escapeHtml(dateTime(run.started_at)),escapeHtml(platformStatus(run.run_mode)),CUI.status(platformStatus(run.status),run.status==='completed'?'ok':run.status==='failed'?'no':'off'),escapeHtml(dateTime(run.finished_at)),escapeHtml(JSON.stringify(run.summary||{}))
+        ])}):localizedEmptyHtml('No reconciliation runs.')})}
+        ${billingFirmCardHtml(rows,CUI)}`;
       main.querySelector('#platformNewBillingPrice').onclick=()=>billingPriceModal(context);
       main.querySelectorAll('[data-billing-firm]').forEach(button=>button.onclick=()=>openBillingDetail(button.dataset.billingFirm,context));
       CUI.focusRoute(main);
@@ -3391,13 +5186,13 @@
     const defaultEffective=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
     modal({title:'New Stripe price version',submitLabel:'Preview price',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'billingPriceCurrency',label:'Currency',value:'SGD',required:true,attributes:'name="currency" maxlength="3"'})}
-      ${CUI.field({id:'billingPriceCadence',label:'Cadence',control:'select',options:['quarterly','half_yearly','annual'].map(value=>({value,label:plainLabel(value)})),attributes:'name="cadence"'})}
+      ${CUI.field({id:'billingPriceCadence',label:'Cadence',control:'select',options:['quarterly','half_yearly','annual'].map(value=>({value,label:platformStatus(value)})),attributes:'name="cadence"'})}
       ${CUI.field({id:'billingBasePriceId',label:'Stripe base price ID',required:true,attributes:'name="base_price_id" placeholder="price_..."'})}
       ${CUI.field({id:'billingSeatPriceId',label:'Stripe seat price ID',required:true,attributes:'name="seat_price_id" placeholder="price_..."'})}
       ${CUI.field({id:'billingBaseAmount',label:'Base amount (cents)',type:'number',required:true,attributes:'name="base_amount_cents" min="0" step="1"'})}
       ${CUI.field({id:'billingSeatAmount',label:'Per-seat amount (cents)',type:'number',required:true,attributes:'name="seat_amount_cents" min="0" step="1"'})}
       ${CUI.field({id:'billingIncludedSeats',label:'Included seats',type:'number',value:'1',required:true,attributes:'name="included_seats" min="0" step="1"'})}
-      ${CUI.field({id:'billingTaxBehavior',label:'Tax behaviour',control:'select',options:['exclusive','inclusive','unspecified'].map(value=>({value,label:plainLabel(value)})),attributes:'name="tax_behavior"'})}
+      ${CUI.field({id:'billingTaxBehavior',label:'Tax behaviour',control:'select',options:['exclusive','inclusive','unspecified'].map(value=>({value,label:platformStatus(value)})),attributes:'name="tax_behavior"'})}
       ${CUI.field({id:'billingEffectiveFrom',label:'Effective from',type:'datetime-local',value:defaultEffective,required:true,attributes:'name="effective_from"'})}
       <div class="wide">${CUI.field({id:'billingPriceReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}</div>
     </div>`,onSubmit:async(form,controls)=>{
@@ -3427,20 +5222,20 @@
     const {CUI,sb}=context;
     const overlay=document.createElement('div');overlay.className='platform-drawer';overlay.tabIndex=-1;
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','billingDetailTitle');
-    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head"><div><h1 id="billingDetailTitle" style="font-size:1.45rem">Billing detail</h1><p class="muted small">Provider-backed subscription record</p></div><button class="btn ghost sm platform-drawer-close" type="button" aria-label="Close detail">${CUI.icon('close',{size:18})}</button></div><div data-detail>${CUI.loadingState({title:'Billing detail',body:'Loading invoices and payment attempts…',iconName:'reports'})}</div></section>`;
+      overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head"><div><h1 id="billingDetailTitle" style="font-size:1.45rem">${escapeHtml(pt('Billing detail'))}</h1><p class="muted small">${escapeHtml(pt('Provider-backed subscription record'))}</p></div><button class="btn ghost sm platform-drawer-close" type="button" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div><div data-detail>${CUI.loadingState({title:'Billing detail',body:'Loading invoices and payment attempts…',iconName:'reports'})}</div></section>`;
     document.body.appendChild(overlay);let deactivate;const close=()=>closeOverlay(overlay,deactivate);
     overlay.querySelector('.platform-drawer-close').onclick=close;deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
     try{
       const detail=asObject(await rpc(sb,'get_business_billing_v77',{p_business:businessId}));
       const commands=billingCommands(detail);
-      overlay.querySelector('[data-detail]').innerHTML=`<div class="platform-actions" style="margin-bottom:14px">${commands.map(command=>`<button type="button" class="btn ${command.danger?'danger':'ghost'} sm" data-billing-command="${command.type}" data-cadence="${command.cadence||''}">${escapeHtml(command.label)}</button>`).join('')}</div>
+      overlay.querySelector('[data-detail]').innerHTML=`<div class="platform-actions" style="margin-bottom:14px">${commands.map(command=>`<button type="button" class="btn ${command.danger?'danger':'ghost'} sm" data-billing-command="${command.type}" data-cadence="${command.cadence||''}">${escapeHtml(pt(command.label))}</button>`).join('')}</div>
         <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,billable_seats:detail.billable_seats,last_paid_at:detail.last_paid_at,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({subtotal_ex_gst_cents:detail.period_subtotal_cents,gst_cents:detail.period_tax_cents,total_including_gst_cents:detail.period_total_cents,currency:detail.currency})})}</div>
-        <section class="card platform-detail-section"><h2>Invoices</h2>${asArray(detail.invoices).map(invoice=>`<div class="platform-action-item"><div><b>${escapeHtml(invoice.number||invoice.provider_invoice_id)}</b><p class="muted small">${escapeHtml(invoice.status)} · ${currency(invoice.total_cents,invoice.currency)} incl. GST</p></div><span>${invoice.paid_normalized?CUI.status('Paid','ok'):CUI.status('Outstanding','no')}</span></div>`).join('')||'<p class="muted small">No invoices.</p>'}</section>
-        <section class="card platform-detail-section"><h2>Payment attempts</h2>${asArray(detail.payment_attempts).map(attempt=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(attempt.attempt_state))}</b><p class="muted small">${currency(attempt.amount_cents,detail.currency)} · ${escapeHtml(attempt.failure_code||'No failure')}</p></div><span class="muted small">${escapeHtml(dateTime(attempt.occurred_at))}</span></div>`).join('')||'<p class="muted small">No payment attempts.</p>'}</section>
-        <section class="card platform-detail-section"><h2>Adjustments</h2>${asArray(detail.adjustments).map(adjustment=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(adjustment.adjustment_type))}</b><p class="muted small">${currency(adjustment.total_cents,adjustment.currency||detail.currency)} incl. GST · ${escapeHtml(adjustment.reason||'No reason recorded')}</p></div><span class="muted small">${escapeHtml(dateTime(adjustment.occurred_at))}</span></div>`).join('')||'<p class="muted small">No adjustments.</p>'}</section>
-        <section class="card platform-detail-section"><h2>Commands</h2>${asArray(detail.commands).map(command=>detailObjectHtml(command)).join('')||'<p class="muted small">No billing commands.</p>'}</section>`;
+        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Invoices"))}</h2>${asArray(detail.invoices).map(invoice=>`<div class="platform-action-item"><div><b>${escapeHtml(invoice.number||invoice.provider_invoice_id)}</b><p class="muted small">${escapeHtml(platformStatus(invoice.status))} · ${escapeHtml(pt('{amount} incl. GST',{amount:currency(invoice.total_cents,invoice.currency)}))}</p></div><span>${invoice.paid_normalized?CUI.status('Paid','ok'):CUI.status('Outstanding','no')}</span></div>`).join('')||localizedEmptyHtml('No invoices.')}</section>
+        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Payment attempts"))}</h2>${asArray(detail.payment_attempts).map(attempt=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(attempt.attempt_state))}</b><p class="muted small">${currency(attempt.amount_cents,detail.currency)} · ${escapeHtml(attempt.failure_code||pt('No failure'))}</p></div><span class="muted small">${escapeHtml(dateTime(attempt.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No payment attempts.')}</section>
+        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Adjustments"))}</h2>${asArray(detail.adjustments).map(adjustment=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(adjustment.adjustment_type))}</b><p class="muted small">${escapeHtml(pt('{amount} incl. GST',{amount:currency(adjustment.total_cents,adjustment.currency||detail.currency)}))} · ${escapeHtml(adjustment.reason||pt('No reason recorded'))}</p></div><span class="muted small">${escapeHtml(dateTime(adjustment.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No adjustments.')}</section>
+        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Commands"))}</h2>${asArray(detail.commands).map(command=>detailObjectHtml(command)).join('')||localizedEmptyHtml('No billing commands.')}</section>`;
       overlay.querySelectorAll('[data-billing-command]').forEach(button=>button.onclick=()=>requestBillingCommand(businessId,button.dataset.billingCommand,button.dataset.cadence||null,{...context,close}));
-    }catch(error){overlay.querySelector('[data-detail]').innerHTML=error.platformUpdateRequired?systemUpdateRequired(CUI,'Billing detail'):CUI.errorState({title:'Billing detail unavailable',message:error.message})}
+    }catch(error){overlay.querySelector('[data-detail]').innerHTML=error.platformUpdateRequired?systemUpdateRequired(CUI,'Billing detail'):CUI.errorState({title:'Billing detail unavailable',message:platformErrorMessage(error,'Billing detail unavailable')})}
   }
   function billingCommands(detail) {
     const commands=[];
@@ -3454,12 +5249,12 @@
   }
   function requestBillingCommand(businessId,type,cadence,context) {
     const {CUI,sb}=context;
-    const label=plainLabel(type);
-    previewThenConfirm({title:`Confirm ${label}`,preview:{business_id:businessId,command_type:type,cadence},CUI,onConfirm:async(controls)=>{
+    const label=platformStatus(type);
+    previewThenConfirm({title:pt('Confirm {action}',{action:label}),preview:{business_id:businessId,command_type:type,cadence},CUI,onConfirm:async(controls)=>{
       const requested=await rpc(sb,'request_billing_command_v77',{p_business:businessId,p_command_type:type,p_cadence:cadence,p_idempotency_key:idempotencyKey()});
       let result=requested;
       if(['pending','processing','uncertain'].includes(requested?.status)){
-        if(!sb.functions?.invoke)throw new Error('The billing command executor is unavailable.');
+        if(!sb.functions?.invoke)throw new Error(pt('The billing command executor is unavailable.'));
         const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.command_id}});
         if(executed?.error)throw executed.error;
         result=executed?.data||requested;
@@ -3475,8 +5270,28 @@
         else globalObject.open(result.redirect_url,'_blank','noopener');
         return;
       }
-      await renderBilling(context);CUI.announce(`Billing command ${result?.status||'queued'}.`);
+      await renderBilling(context);CUI.announce(pt('Billing command status: {status}.',{status:platformStatus(result?.status||'queued')}));
     }});
+  }
+
+  function commissionRosterRows(consultants,CUI) {
+    return asArray(consultants).map(row=>[
+      `<b>${escapeHtml(row.display_name||row.consultant_name||row.name||row.consultant_id)}</b>`,
+      escapeHtml(platformStatus(row.tier||row.role)),currency(row.payable_cents),currency(row.approved_cents),currency(row.paid_cents),
+      row.active!==false
+        ?`<div class="platform-actions"><button type="button" class="btn ghost sm" data-edit-consultant="${escapeHtml(row.consultant_id||row.id)}">${escapeHtml(pt("Edit"))}</button><button type="button" class="btn danger sm" data-forfeit-consultant="${escapeHtml(row.consultant_id||row.id)}">${escapeHtml(pt("Record departure"))}</button></div>`
+        :CUI.status(pt('Departed'),'off')
+    ]);
+  }
+  function commissionAccrualRows(accruals,consultants,CUI) {
+    return asArray(accruals).map(row=>[
+      escapeHtml(row.consultant_name||asArray(consultants).find(item=>item.consultant_id===row.consultant_id)?.display_name||row.consultant_id),
+      escapeHtml(platformStatus(row.commission_phase||row.commission_type||row.kind)),
+      CUI.status(platformStatus(row.status||'accrued'),row.status==='paid'?'ok':row.status==='forfeited'?'off':'new'),
+      currency(row.net_of_gst_cents||row.basis_cents,row.currency),
+      `<span class="platform-money">${currency(row.amount_cents||row.commission_cents,row.currency)}</span>`,
+      row.status==='accrued'?`<button type="button" class="btn ghost sm" data-approve-accrual="${escapeHtml(row.accrual_id||row.id)}">${escapeHtml(pt("Approve"))}</button>`:''
+    ]);
   }
 
   async function renderCommission(context) {
@@ -3501,28 +5316,19 @@
         ??accruals.filter(row=>row.status===status).reduce((value,row)=>value+Number(row.amount_cents||row.commission_cents||0),0));
       main.innerHTML=`${CUI.pageHeader({
         title:'Commission payable',subtitle:'Consultant commission is calculated on net-of-GST subscription amounts. All stored and entered amounts are integer cents.',iconName:'staff',
-        actions:`<button type="button" class="btn ghost" id="platformNewConsultant">New consultant</button><button type="button" class="btn ghost" id="platformAttributeConsultant">Attribute consultant</button><button type="button" class="btn ghost" id="platformNewPolicy">New policy</button><button type="button" class="btn" id="platformNewPayout">New payout batch</button>`
+        actions:`<button type="button" class="btn ghost" id="platformNewConsultant">${escapeHtml(pt('New consultant'))}</button><button type="button" class="btn ghost" id="platformAttributeConsultant">${escapeHtml(pt('Attribute consultant'))}</button><button type="button" class="btn ghost" id="platformNewPolicy">${escapeHtml(pt('New policy'))}</button><button type="button" class="btn" id="platformNewPayout">${escapeHtml(pt('New payout batch'))}</button>`
       })}
-      <section class="platform-kpis" aria-label="Commission totals">${[
+      <section class="platform-kpis" aria-label="${escapeHtml(pt('Commission totals'))}">${[
         ['Payable net of GST',currency(sum('payable')),'reports'],['Approved',currency(sum('approved')),'check'],
         ['Paid',currency(sum('paid')),'staff'],['Forfeited',currency(sum('forfeited')),'info']
-      ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+      ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
-        ${CUI.card({title:'Consultant roster',body:consultants.length?CUI.table({caption:'Consultant commission roster',headers:['Consultant','Role','Payable','Approved','Paid','Actions'],rows:consultants.map(row=>[
-          `<b>${escapeHtml(row.display_name||row.consultant_name||row.name||row.consultant_id)}</b>`,escapeHtml(plainLabel(row.tier||row.role)),currency(row.payable_cents),currency(row.approved_cents),currency(row.paid_cents),
-          row.active!==false
-            ?`<div class="platform-actions"><button type="button" class="btn ghost sm" data-edit-consultant="${escapeHtml(row.consultant_id||row.id)}">Edit</button><button type="button" class="btn danger sm" data-forfeit-consultant="${escapeHtml(row.consultant_id||row.id)}">Record departure</button></div>`
-            :CUI.status('Departed','off')
-        ])}):CUI.emptyState({iconName:'staff',title:'No consultants',body:'No consultant commission records were returned.'})})}
-        ${CUI.card({title:'Policy history',description:'Base, service-anniversary bonus, and renewal rates are editable in basis points.',body:policies.length?policies.map(policy=>`<div class="platform-action-item"><div><b>${escapeHtml(plainLabel(policy.tier||policy.role))}</b><p class="muted small">Year-one base ${Number(policy.first_year_bps||0)/100}% · 12-month service bonus ${Number(policy.anniversary_bonus_bps||0)/100}% · Renewal ${Number(policy.renewal_bps||0)/100}%</p></div><span class="muted small">${escapeHtml(dateTime(policy.effective_from))}</span></div>`).join(''):CUI.emptyState({iconName:'reports',title:'No policy history',body:'No consultant commission policies were returned.'})})}
+        ${CUI.card({title:'Consultant roster',body:consultants.length?CUI.table({caption:'Consultant commission roster',headers:['Consultant','Role','Payable','Approved','Paid','Actions'],rows:commissionRosterRows(consultants,CUI)}):CUI.emptyState({iconName:'staff',title:'No consultants',body:'No consultant commission records were returned.'})})}
+        ${CUI.card({title:'Policy history',description:'Base, service-anniversary bonus, and renewal rates are editable in basis points.',body:policies.length?policies.map(policy=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(policy.tier||policy.role))}</b><p class="muted small">${escapeHtml(pt('Year-one base {base}% · 12-month service bonus {bonus}% · Renewal {renewal}%',{base:Number(policy.first_year_bps||0)/100,bonus:Number(policy.anniversary_bonus_bps||0)/100,renewal:Number(policy.renewal_bps||0)/100}))}</p></div><span class="muted small">${escapeHtml(dateTime(policy.effective_from))}</span></div>`).join(''):CUI.emptyState({iconName:'reports',title:'No policy history',body:'No consultant commission policies were returned.'})})}
       </div>
-      <section class="card platform-detail-section"><h2>Accruals</h2>${accruals.length?CUI.table({caption:'Consultant commission accruals',headers:['Consultant','Type','Status','Net-of-GST basis','Commission','Actions'],rows:accruals.map(row=>[
-        escapeHtml(row.consultant_name||consultants.find(item=>item.consultant_id===row.consultant_id)?.display_name||row.consultant_id),escapeHtml(plainLabel(row.commission_phase||row.commission_type||row.kind)),CUI.status(row.status||'accrued',row.status==='paid'?'ok':row.status==='forfeited'?'off':'new'),
-        currency(row.net_of_gst_cents||row.basis_cents,row.currency),`<span class="platform-money">${currency(row.amount_cents||row.commission_cents,row.currency)}</span>`,
-        row.status==='accrued'?`<button type="button" class="btn ghost sm" data-approve-accrual="${escapeHtml(row.accrual_id||row.id)}">Approve</button>`:''
-      ])}):'<p class="muted small">No accruals.</p>'}</section>
-      <section class="card platform-detail-section"><h2>Payout workflow</h2>${batches.map(batch=>`<div class="platform-action-item"><div><b>Batch ${escapeHtml(batch.batch_id||batch.id)}</b><p class="muted small">${escapeHtml(batch.status||'draft')} · ${escapeHtml(batch.currency||'SGD')}</p></div><div class="platform-actions">${batch.status==='draft'?`<button class="btn ghost sm" data-add-payout-line="${escapeHtml(batch.batch_id||batch.id)}">Add line</button><button class="btn sm" data-approve-payout="${escapeHtml(batch.batch_id||batch.id)}">Approve batch</button>`:''}</div></div>`).join('')||'<p class="muted small">No payout batches.</p>'}
-        ${lines.filter(line=>Number(line.remaining_cents??line.amount_cents)>0&&(line.recordable===true||(!('recordable' in line)&&!['paid','void'].includes(line.batch_status||line.status)))).map(line=>`<div class="platform-action-item"><div><b>Line ${escapeHtml(line.line_id||line.id)}</b><p class="muted small">${currency(line.remaining_cents??line.amount_cents,line.currency)} remaining · ${escapeHtml(line.batch_status||line.status||'approved')}</p></div><button class="btn sm" data-record-payout="${escapeHtml(line.line_id||line.id)}" data-line-amount="${Number(line.remaining_cents??line.amount_cents??0)}">Record payment</button></div>`).join('')}</section>`;
+      <section class="card platform-detail-section"><h2>${escapeHtml(pt("Accruals"))}</h2>${accruals.length?CUI.table({caption:'Consultant commission accruals',headers:['Consultant','Type','Status','Net-of-GST basis','Commission','Actions'],rows:commissionAccrualRows(accruals,consultants,CUI)}):localizedEmptyHtml('No accruals.')}</section>
+      <section class="card platform-detail-section"><h2>${escapeHtml(pt("Payout workflow"))}</h2>${batches.map(batch=>`<div class="platform-action-item"><div><b>${escapeHtml(pt('Batch {id}',{id:batch.batch_id||batch.id}))}</b><p class="muted small">${escapeHtml(platformStatus(batch.status||'draft'))} · ${escapeHtml(batch.currency||'SGD')}</p></div><div class="platform-actions">${batch.status==='draft'?`<button class="btn ghost sm" data-add-payout-line="${escapeHtml(batch.batch_id||batch.id)}">${escapeHtml(pt("Add line"))}</button><button class="btn sm" data-approve-payout="${escapeHtml(batch.batch_id||batch.id)}">${escapeHtml(pt("Approve batch"))}</button>`:''}</div></div>`).join('')||localizedEmptyHtml('No payout batches.')}
+        ${lines.filter(line=>Number(line.remaining_cents??line.amount_cents)>0&&(line.recordable===true||(!('recordable' in line)&&!['paid','void'].includes(line.batch_status||line.status)))).map(line=>`<div class="platform-action-item"><div><b>${escapeHtml(pt('Line {id}',{id:line.line_id||line.id}))}</b><p class="muted small">${escapeHtml(pt('{amount} remaining',{amount:currency(line.remaining_cents??line.amount_cents,line.currency)}))} · ${escapeHtml(platformStatus(line.batch_status||line.status||'approved'))}</p></div><button class="btn sm" data-record-payout="${escapeHtml(line.line_id||line.id)}" data-line-amount="${Number(line.remaining_cents??line.amount_cents??0)}">${escapeHtml(pt("Record payment"))}</button></div>`).join('')}</section>`;
       main.querySelector('#platformNewConsultant').onclick=()=>consultantModal(null,context);
       main.querySelector('#platformNewPolicy').onclick=()=>commissionPolicyModal(context);
       main.querySelector('#platformAttributeConsultant').onclick=()=>attributeConsultantModal(context);
@@ -3541,9 +5347,9 @@
     modal({title:consultant?'Edit consultant':'New consultant',submitLabel:consultant?'Save consultant':'Create consultant',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'consultantUser',label:'User ID',value:consultant?.user_id||'',required:true,attributes:'name="user_id"'})}
       ${CUI.field({id:'consultantName',label:'Display name',value:consultant?.display_name||'',required:true,attributes:'name="display_name"'})}
-      ${CUI.field({id:'consultantTier',label:'Tier',control:'select',required:true,options:['senior','junior'].map(value=>({value,label:plainLabel(value),selected:value===(consultant?.tier||'junior')})),attributes:'name="tier"'})}
+      ${CUI.field({id:'consultantTier',label:'Tier',control:'select',required:true,options:['senior','junior'].map(value=>({value,label:platformStatus(value),selected:value===(consultant?.tier||'junior')})),attributes:'name="tier"'})}
       ${CUI.field({id:'consultantEmploymentStart',label:'Employment started',type:'date',value:consultant?.employment_started_on||'',required:true,attributes:'name="employment_started_on"'})}
-    </div>${consultant?.active===false?'<p class="platform-route-note small">This consultant is departed. Editing preserves that status; record a deliberate reactivation as a separate reviewed policy decision.</p>':''}`,
+    </div>${consultant?.active===false?localizedEmptyHtml('This consultant is departed. Editing preserves that status; record a deliberate reactivation as a separate reviewed policy decision.','platform-route-note small'):''}`,
     onSubmit:async(form,controls)=>{
       await rpc(sb,'platform_upsert_commission_consultant_v89',{
         p_consultant:consultant?.consultant_id||consultant?.id||null,
@@ -3551,7 +5357,7 @@
         p_tier:form.get('tier'),p_employment_started_on:form.get('employment_started_on'),
         p_active:consultant?.active===false?false:true
       });
-      controls.close();await renderCommission(context);CUI.announce(consultant?'Consultant updated.':'Consultant created.');
+      controls.close();await renderCommission(context);CUI.announce(pt(consultant?'Consultant updated.':'Consultant created.'));
     }});
   }
   function attributeConsultantModal(context) {
@@ -3563,7 +5369,7 @@
       ${CUI.field({id:'attributeStarted',label:'Onboarding started at',type:'datetime-local',required:true,attributes:'name="onboarding_started_at"'})}
       <div class="wide">${CUI.field({id:'attributeReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}</div>
     </div>`,onSubmit:async(form,controls)=>{
-      if(!form.get('prospect')&&!form.get('business'))throw new Error('Add a prospect ID or business ID.');
+      if(!form.get('prospect')&&!form.get('business'))throw new Error(pt('Add a prospect ID or business ID.'));
       await rpc(sb,'attribute_consultant_v78',{
         p_consultant:form.get('consultant'),p_prospect:form.get('prospect')||null,
         p_business:form.get('business')||null,
@@ -3576,7 +5382,7 @@
   function commissionPolicyModal(context) {
     const {CUI,sb}=context;
     modal({title:'Create commission policy',submitLabel:'Preview policy',CUI,body:`<div class="platform-form-grid">
-      ${CUI.field({id:'policyRole',label:'Consultant tier',control:'select',required:true,options:['senior','junior'].map(value=>({value,label:plainLabel(value)})),attributes:'name="role"'})}
+      ${CUI.field({id:'policyRole',label:'Consultant tier',control:'select',required:true,options:['senior','junior'].map(value=>({value,label:platformStatus(value)})),attributes:'name="role"'})}
       ${CUI.field({id:'policyEffective',label:'Effective from',type:'datetime-local',required:true,attributes:'name="effective_from"'})}
       ${CUI.field({id:'policyFirst',label:'Year-one base rate (basis points)',type:'number',required:true,attributes:'name="first_year_bps" min="0" max="10000" step="1"'})}
       ${CUI.field({id:'policyAnniversary',label:'12-month service bonus (basis points)',type:'number',required:true,attributes:'name="anniversary_bonus_bps" min="0" max="10000" step="1"'})}
@@ -3630,8 +5436,8 @@
       const runs=asArray(reconciliation?.runs),items=asArray(reconciliation?.items),rows=asArray(billing);
       const failedEvents=rows.reduce((value,row)=>value+Number(row.failed_event_count||0),0);
       main.innerHTML=`${CUI.pageHeader({title:'Automation',subtitle:'Billing reconciliation runs and provider event health from the current platform ledger.',iconName:'retention'})}
-        <section class="platform-health-grid"><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('retention',{size:17})}<span>Reconciliation runs</span></div><div class="platform-kpi-value">${runs.length}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('info',{size:17})}<span>Failed billing events</span></div><div class="platform-kpi-value">${failedEvents}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('reports',{size:17})}<span>Reconciliation items</span></div><div class="platform-kpi-value">${items.length}</div></article></section>
-        ${CUI.card({title:'Reconciliation history',body:runs.length?CUI.table({caption:'Billing reconciliation runs',headers:['Started','Mode','Status','Finished','Summary'],rows:runs.map(run=>[escapeHtml(dateTime(run.started_at)),escapeHtml(run.run_mode),CUI.status(run.status||'—',run.status==='completed'?'ok':run.status==='failed'?'no':'new'),escapeHtml(dateTime(run.finished_at)),escapeHtml(JSON.stringify(run.summary||{}))])}):CUI.emptyState({iconName:'retention',title:'No reconciliation runs',body:'No billing reconciliation history was returned.'})})}`;
+        <section class="platform-health-grid"><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('retention',{size:17})}<span>${escapeHtml(pt('Reconciliation runs'))}</span></div><div class="platform-kpi-value">${runs.length}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('info',{size:17})}<span>${escapeHtml(pt('Failed billing events'))}</span></div><div class="platform-kpi-value">${failedEvents}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt('Reconciliation items'))}</span></div><div class="platform-kpi-value">${items.length}</div></article></section>
+        ${CUI.card({title:'Reconciliation history',body:runs.length?CUI.table({caption:'Billing reconciliation runs',headers:['Started','Mode','Status','Finished','Summary'],rows:automationRunRows(runs,CUI)}):CUI.emptyState({iconName:'retention',title:'No reconciliation runs',body:'No billing reconciliation history was returned.'})})}`;
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Automation')}
   }
@@ -3692,18 +5498,18 @@
     const accruals=asArray(commission,['accruals','commission_accruals']);
     const commissionAttention=accruals.filter(row=>['open','payable'].includes(row.status));
     main.innerHTML=`${CUI.pageHeader({title:'Platform overview',subtitle:'A combined operational view. Unavailable backend phases remain explicit and do not produce estimated records.',iconName:'platform'})}
-      ${unavailableAreas.length?`<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>Partial platform data</b><p class="small">System update required for: ${escapeHtml(unavailableAreas.map(([label])=>label).join(', '))}. Available areas remain live below.</p></div></div>`:''}
-      <section class="platform-kpis" aria-label="Platform summary">${[
+      ${unavailableAreas.length?`<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Partial platform data"))}</b><p class="small">${escapeHtml(pt("System update required for:"))} ${escapeHtml(unavailableAreas.map(([label])=>pt(label)).join(', '))}. ${escapeHtml(pt("Available areas remain live below."))}</p></div></div>`:''}
+      <section class="platform-kpis" aria-label="${escapeHtml(pt('Platform summary'))}">${[
         ['Firms',firms.length,'branch'],['Open prospects',prospects.filter(row=>!['client','activated','lost'].includes(prospectStage(row))).length,'setup'],
         ['Projected monthly',currency(projectedMonthly),'reports'],['Billing attention',billingAttention.length,'info']
-      ].map(([label,metric,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(metric)}</div></article>`).join('')}</section>
+      ].map(([label,metric,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(metric)}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
         ${CUI.card({title:'Action queue',body:`<div class="platform-action-queue">${[
           ['Overdue prospect tasks',overdueProspects.length,'#/platform/onboarding'],
           ['Stale prospects',staleProspects.length,'#/platform/onboarding'],
           ['Billing records needing attention',billingAttention.length,'#/platform/billing'],
           ['Open commission accruals',commissionAttention.length,'#/platform/commissions']
-        ].map(([label,count,hash])=>`<a class="platform-action-item" href="${hash}"><span>${escapeHtml(label)}</span><b>${count}</b></a>`).join('')}</div>`})}
+        ].map(([label,count,hash])=>`<a class="platform-action-item" href="${hash}"><span>${escapeHtml(pt(label))}</span><b>${count}</b></a>`).join('')}</div>`})}
         ${CUI.card({title:'Configuration coverage',body:detailObjectHtml({
           sector_profiles:asArray(sectors.profiles).length,
           firms_with_sector_assignment:asArray(sectors.businesses).length,
@@ -3722,11 +5528,11 @@
     return platformModuleKeys.map(key=>{
       const current=perms[key]??perms['*']??(role==='admin'?'rw':'off');
       return `<label class="platform-permission-row" data-access-module="${key}">
-        <span><b>${escapeHtml(platformModuleLabels[key])}</b><small>${key==='onboarding'?'CRM and onboarding workflow':key==='reports'?'Scoped analytics and report generation':'Platform console module'}</small></span>
-        <select name="permission_${key}" aria-label="${escapeHtml(platformModuleLabels[key])} permission">
-          <option value="off"${current!=='r'&&current!=='rw'?' selected':''}>Off</option>
-          <option value="r"${current==='r'?' selected':''}>Read only</option>
-          <option value="rw"${current==='rw'?' selected':''}>Read and write</option>
+        <span><b>${escapeHtml(pt(platformModuleLabels[key]))}</b><small>${escapeHtml(pt(key==='onboarding'?'CRM and onboarding workflow':key==='reports'?'Scoped analytics and report generation':'Platform console module'))}</small></span>
+        <select name="permission_${key}" aria-label="${escapeHtml(pt('{module} permission',{module:pt(platformModuleLabels[key])}))}">
+          <option value="off"${current!=='r'&&current!=='rw'?' selected':''}>${escapeHtml(pt("Off"))}</option>
+          <option value="r"${current==='r'?' selected':''}>${escapeHtml(pt("Read only"))}</option>
+          <option value="rw"${current==='rw'?' selected':''}>${escapeHtml(pt("Read and write"))}</option>
         </select>
       </label>`;
     }).join('');
@@ -3742,9 +5548,9 @@
         hint:'Search an existing Nestly sign-in. You will confirm the matched person before granting access.',
         attributes:'autocomplete="off" minlength="3" maxlength="160"'
       })}
-      <button type="button" class="btn ghost" id="platformAccessUserLookup">${CUI.icon('search',{size:17})}<span>Find user</span></button>
-      <label for="platformAccessUser" style="margin-top:12px">Selected user</label>
-      <select id="platformAccessUser" name="user_id" disabled required><option value="">Search by email or name first</option></select>
+      <button type="button" class="btn ghost" id="platformAccessUserLookup">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt("Find user"))}</span></button>
+      <label for="platformAccessUser" style="margin-top:12px">${escapeHtml(pt("Selected user"))}</label>
+      <select id="platformAccessUser" name="user_id" disabled required><option value="">${escapeHtml(pt("Search by email or name first"))}</option></select>
       <p id="platformAccessUserStatus" class="muted small" role="status" aria-live="polite" style="margin-top:7px"></p>`;
     const overlay=modal({
       title:isEdit?'Edit platform access':'Add platform access',
@@ -3757,15 +5563,15 @@
           {value:'sales_staff',label:'Sales staff',selected:seed.role==='sales_staff'}
         ],attributes:'name="role"'
       })}
-      <label class="platform-active-toggle"><input type="checkbox" name="active" value="yes"${seed.active!==false?' checked':''}><span><b>Active access</b><small>Turning this off removes platform access immediately without deleting history.</small></span></label>
-      <fieldset class="platform-permission-editor"><legend>Module permissions</legend>
-        <p class="muted small">Off modules are hidden and blocked. Read-only modules never show editing controls.</p>
+      <label class="platform-active-toggle"><input type="checkbox" name="active" value="yes"${seed.active!==false?' checked':''}><span><b>${escapeHtml(pt("Active access"))}</b><small>${escapeHtml(pt("Turning this off removes platform access immediately without deleting history."))}</small></span></label>
+      <fieldset class="platform-permission-editor"><legend>${escapeHtml(pt("Module permissions"))}</legend>
+        <p class="muted small">${escapeHtml(pt("Off modules are hidden and blocked. Read-only modules never show editing controls."))}</p>
         <div data-permission-rows>${accessPermissionRows(seed)}</div>
       </fieldset>`,
       onSubmit:async(form,controls)=>{
         const role=String(form.get('role')||''),perms={};
         const selectedUser=String(form.get('user_id')||'').trim();
-        if(!selectedUser)throw new Error('Find and select an existing Nestly user first.');
+        if(!selectedUser)throw new Error(pt('Find and select an existing Nestly user first.'));
         platformModuleKeys.forEach(key=>{
           const value=String(form.get(`permission_${key}`)||'off');
           if(value==='r'||value==='rw')perms[key]=value;
@@ -3785,7 +5591,7 @@
           p_role:role,p_module_perms:perms,p_active:form.get('active')==='yes'
         });
         controls.close();await renderPlatformAccess(context);
-        CUI.announce(isEdit?'Platform access updated.':'Platform access granted.');
+        CUI.announce(pt(isEdit?'Platform access updated.':'Platform access granted.'));
       }
     });
     if(!isEdit){
@@ -3795,30 +5601,32 @@
       const lookupStatus=overlay.querySelector('#platformAccessUserStatus');
       lookup.onclick=async()=>{
         const value=String(query.value||'').trim();
-        if(value.length<3){lookupStatus.textContent='Enter at least 3 characters of a name or email.';return}
-        lookup.disabled=true;picker.disabled=true;lookupStatus.textContent='Searching existing Nestly users…';
+        if(value.length<3){lookupStatus.textContent=pt('Enter at least 3 characters of a name or email.');return}
+        lookup.disabled=true;picker.disabled=true;lookupStatus.textContent=pt('Searching existing Nestly users…');
         try{
           const payload=asObject(await rpc(sb,'platform_lookup_access_user_v89',{p_query:value}));
           const items=asArray(payload,['items']);
           picker.innerHTML=items.length
-            ?`${payload.status==='ambiguous'?'<option value="" selected>Choose the correct user</option>':''}${items.map(item=>`<option value="${escapeHtml(item.user_id)}">${escapeHtml(item.display_name||'Unnamed user')} · ${escapeHtml(item.email||'Email unavailable')}</option>`).join('')}`
-            :'<option value="">No matching user</option>';
+            ?`${payload.status==='ambiguous'?`<option value="" selected>${escapeHtml(pt("Choose the correct user"))}</option>`:''}${items.map(item=>`<option value="${escapeHtml(item.user_id)}">${escapeHtml(item.display_name||'Unnamed user')} · ${escapeHtml(item.email||'Email unavailable')}</option>`).join('')}`
+            :`<option value="">${escapeHtml(pt("No matching user"))}</option>`;
           picker.disabled=!items.length;
           if(payload.status==='matched'&&items.length===1){
             picker.value=items[0].user_id;
-            lookupStatus.textContent=`Selected ${items[0].display_name||items[0].email||'matched user'}.`;
+        lookupStatus.textContent=pt('Selected {user}.',{user:items[0].display_name||items[0].email||pt('matched user')});
           }else if(payload.status==='ambiguous'&&items.length){
-            lookupStatus.textContent='More than one user matched. Choose the correct name and email.';
+            lookupStatus.textContent=pt('More than one user matched. Choose the correct name and email.');
           }else{
-            lookupStatus.textContent='No existing Nestly sign-in matched that search.';
+            lookupStatus.textContent=pt('No existing Nestly sign-in matched that search.');
           }
           picker.onchange=()=>{
             const item=items.find(row=>String(row.user_id)===picker.value);
-            if(item)lookupStatus.textContent=`Selected ${item.display_name||item.email||'user'} · ${item.email||'Email unavailable'}.`;
+            if(item)lookupStatus.textContent=pt('Selected {user} · {email}.',{
+              user:item.display_name||item.email||pt('user'),email:item.email||pt('Email unavailable')
+            });
           };
         }catch(error){
-          picker.innerHTML='<option value="">Search unavailable</option>';
-          lookupStatus.textContent=error.message||'User search is unavailable.';
+          picker.innerHTML=`<option value="">${escapeHtml(pt("Search unavailable"))}</option>`;
+          lookupStatus.textContent=platformErrorMessage(error,'User search is unavailable.');
         }finally{lookup.disabled=false}
       };
     }
@@ -3849,28 +5657,28 @@
         title:'Platform access',
         subtitle:'Super-admin control of platform roles, module permissions and active access.',
         iconName:'staff',
-        actions:`<button type="button" class="btn" id="platformAddAccess">${CUI.icon('add',{size:17})}<span>Add access</span></button>`
+        actions:`<button type="button" class="btn" id="platformAddAccess">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('Add access'))}</span></button>`
       })}
       <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div>
-        <b>Super admin remains implicit</b>
-        <p class="small">Your account always has every module with read and write access. Admins default to full access and can be customized here. Sales staff are restricted to their own-created or assigned CRM records and scoped reports.</p>
+        <b>${escapeHtml(pt('Super admin remains implicit'))}</b>
+        <p class="small">${escapeHtml(pt('Your account always has every module with read and write access. Admins default to full access and can be customized here. Sales staff are restricted to their own-created or assigned CRM records and scoped reports.'))}</p>
       </div></div>
-      <section class="platform-access-list" aria-label="Platform access grants">
+      <section class="platform-access-list" aria-label="${escapeHtml(pt('Platform access grants'))}">
         ${grants.map(grant=>`<article class="card platform-access-card">
           <div class="platform-access-card-head"><div><h2>${escapeHtml(grant.email||grant.user_id)}</h2>
             <p class="muted small">${escapeHtml(grant.user_id)}</p></div>
             ${CUI.status(grant.active?'Active':'Inactive',grant.active?'ok':'off')}
           </div>
           <dl class="platform-access-facts">
-            <div><dt>Role</dt><dd>${escapeHtml(roleLabel(grant.role))}</dd></div>
-            <div><dt>Scope</dt><dd>${escapeHtml(grant.role==='sales_staff'?'Own-created or assigned firms':'All permitted records')}</dd></div>
-            <div><dt>Updated</dt><dd>${escapeHtml(dateTime(grant.updated_at))}</dd></div>
+            <div><dt>${escapeHtml(pt('Role'))}</dt><dd>${escapeHtml(roleLabel(grant.role))}</dd></div>
+            <div><dt>${escapeHtml(pt('Scope'))}</dt><dd>${escapeHtml(pt(grant.role==='sales_staff'?'Own-created or assigned firms':'All permitted records'))}</dd></div>
+            <div><dt>${escapeHtml(pt('Updated'))}</dt><dd>${escapeHtml(dateTime(grant.updated_at))}</dd></div>
           </dl>
-          <div class="platform-module-list" aria-label="Module permissions">${platformModuleKeys.map(key=>{
+          <div class="platform-module-list" aria-label="${escapeHtml(pt('Module permissions'))}">${platformModuleKeys.map(key=>{
             const permission=grant.module_perms?.[key]??grant.module_perms?.['*']??'off';
             return permission==='off'?'':`<span class="chip ${permission==='rw'?'on':''}">${escapeHtml(platformModuleLabels[key])} · ${permission==='rw'?'write':'read'}</span>`;
-          }).join('')||'<span class="muted small">No modules enabled</span>'}</div>
-          <div class="platform-actions platform-access-actions"><button type="button" class="btn ghost" data-edit-access="${escapeHtml(grant.user_id)}">${CUI.icon('edit',{size:17})}<span>Edit access</span></button></div>
+          }).join('')||`<span class="muted small">${escapeHtml(pt("No modules enabled"))}</span>`}</div>
+          <div class="platform-actions platform-access-actions"><button type="button" class="btn ghost" data-edit-access="${escapeHtml(grant.user_id)}">${CUI.icon('edit',{size:17})}<span>${escapeHtml(pt('Edit access'))}</span></button></div>
         </article>`).join('')||CUI.emptyState({iconName:'staff',title:'No delegated platform users',body:'Add an admin or sales staff account when you are ready.'})}
       </section>`;
       main.querySelector('#platformAddAccess').onclick=()=>accessGrantModal(null,context);
@@ -3885,8 +5693,8 @@
     return `<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div>
       <b>${escapeHtml(roleLabel(access.role))} · ${escapeHtml(scopeLabel(access.scope))}</b>
       <p class="small">${access.scope==='own_created_or_assigned'
-        ?'Search, counts, details and reports use the same server-enforced scope. Other sales staff records are never included.'
-        :'This module covers every record permitted by your platform role.'}</p>
+        ?escapeHtml(pt('Search, counts, details and reports use the same server-enforced scope. Other sales staff records are never included.'))
+        :escapeHtml(pt('This module covers every record permitted by your platform role.'))}</p>
     </div></div>`;
   }
 
@@ -3923,10 +5731,10 @@
       headers:['Firm','Stage','Owner','Contact','Attention','Updated'],
       rows:items.map(item=>[
         `<b>${escapeHtml(item.name||item.legal_name||'Unnamed firm')}</b>${item.registration_number?`<span class="muted small platform-firm-secondary">${escapeHtml(item.registration_number)}</span>`:''}`,
-        escapeHtml(plainLabel(prospectStage(item))),
-        escapeHtml(item.consultant_name||item.owner_name||(item.assigned_consultant_id?'Assigned':'Unassigned')),
+        escapeHtml(platformStatus(prospectStage(item))),
+        escapeHtml(item.consultant_name||item.owner_name||pt(item.assigned_consultant_id?'Assigned':'Unassigned')),
         `<span>${escapeHtml(item.boss_name||item.primary_contact_name||'—')}</span>${platformContactActions(item.boss_phone||item.primary_contact_phone,CUI,{compact:true})}`,
-        item.attention_due?CUI.status('Due now','no'):CUI.status(plainLabel(item.attention_severity||'Clear'),item.attention_severity==='critical'?'no':'off'),
+        item.attention_due?CUI.status(pt('Due now'),'no'):CUI.status(platformStatus(item.attention_severity||'Clear'),item.attention_severity==='critical'?'no':'off'),
         escapeHtml(dateTime(item.updated_at))
       ]),className:'platform-scoped-firms-table'
     });
@@ -3941,9 +5749,9 @@
         ${scopedScopeNote(access,CUI)}
         <form class="card platform-scoped-search" id="platformScopedFirmSearch">
           ${CUI.field({id:'platformScopedFirmQuery',label:'Search firms',type:'search',value:search,placeholder:'Company, UEN, owner, email or phone'})}
-          <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>Search</span></button>
+          <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt('Search'))}</span></button>
         </form>
-        ${payload.truncated?`<p class="platform-route-note">Showing the first 250 matches. Refine the search to narrow the list.</p>`:''}
+        ${payload.truncated?`<p class="platform-route-note">${escapeHtml(pt("Showing the first 250 matches. Refine the search to narrow the list."))}</p>`:''}
         <section class="card">${items.length?scopedFirmTable(items,CUI):CUI.emptyState({iconName:'branch',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</section>`;
       main.querySelector('#platformScopedFirmSearch').onsubmit=event=>{
         event.preventDefault();renderScopedFirms(context,main.querySelector('#platformScopedFirmQuery').value.trim());
@@ -3958,7 +5766,7 @@
       title:'Record CRM activity',submitLabel:'Save activity',CUI,
       body:`${CUI.field({id:'scopedActivityType',label:'Activity type',control:'select',options:[
         'note','call','email','whatsapp','meeting','demo','proposal_sent','contract_sent'
-      ].map(value=>({value,label:plainLabel(value)})),attributes:'name="activity_type"'})}
+      ].map(value=>({value,label:platformStatus(value)})),attributes:'name="activity_type"'})}
       ${CUI.field({id:'scopedActivitySummary',label:'Summary',required:true,attributes:'name="summary" minlength="2" maxlength="240"'})}
       ${CUI.field({id:'scopedActivityDetail',label:'Detail',control:'textarea',attributes:'name="detail" rows="4"'})}`,
       onSubmit:async(form,controls)=>{
@@ -3983,7 +5791,7 @@
       ${CUI.field({id:'scopedNewSector',label:'Sector key (optional)',hint:'For example: fnb, facial, salon or fitness. Leave blank if undecided.',attributes:'name="sector_key" autocapitalize="none"'})}`,
       onSubmit:async(form,controls)=>{
         if(!String(form.get('phone')||'').trim()&&!String(form.get('email')||'').trim()){
-          throw new Error('Add a phone number or email address.');
+          throw new Error(pt('Add a phone number or email address.'));
         }
         await rpc(sb,'platform_create_my_prospect_v89',{
           p_company_name:form.get('company_name'),
@@ -4024,7 +5832,7 @@
           ...option,selected:String(option.value)===current
         })),attributes:'name="consultant"'
       })}
-      <p class="muted small">Choose by consultant name. Sales staff continue to see only firms they created or are assigned to.</p>`,
+      <p class="muted small">${escapeHtml(pt("Choose by consultant name. Sales staff continue to see only firms they created or are assigned to."))}</p>`,
       onSubmit:async(form,controls)=>{
         await rpc(context.sb,'platform_assign_prospect_v89',{
           p_prospect:prospect.id||prospect.prospect_id,
@@ -4046,7 +5854,7 @@
     overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head">
       <div><h1 id="scopedProspectTitle" style="font-size:1.45rem">${escapeHtml(prospectCompany(item))}</h1>
       <p class="muted small">${escapeHtml(scopeLabel(context.access.scope))}</p></div>
-      <button type="button" class="btn ghost sm platform-drawer-close" aria-label="Close detail">${CUI.icon('close',{size:18})}</button>
+      <button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button>
       </div><div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading scoped contacts, activity and tasks…',iconName:'customers'})}</div></section>`;
     document.body.appendChild(overlay);
     let deactivate;
@@ -4061,22 +5869,22 @@
         const assignment=asObject(detail.assignment);
         const contacts=asArray(detail.contacts),activities=asArray(detail.activities),tasks=asArray(detail.tasks);
         host.innerHTML=`<div class="platform-detail-shortcuts platform-actions">
-          ${context.canWrite?`<button type="button" class="btn" data-add-note>${CUI.icon('add',{size:16})}<span>Add activity</span></button>
-          <button type="button" class="btn ghost" data-add-task>${CUI.icon('appointments',{size:16})}<span>Add task</span></button>`:''}
-          ${canAssignScopedProspect(context)?`<button type="button" class="btn ghost" data-scoped-assign>${CUI.icon('staff',{size:16})}<span>${prospect.assigned_consultant_id?'Reassign consultant':'Assign consultant'}</span></button>`:''}
+          ${context.canWrite?`<button type="button" class="btn" data-add-note>${CUI.icon('add',{size:16})}<span>${escapeHtml(pt('Add activity'))}</span></button>
+          <button type="button" class="btn ghost" data-add-task>${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt('Add task'))}</span></button>`:''}
+          ${canAssignScopedProspect(context)?`<button type="button" class="btn ghost" data-scoped-assign>${CUI.icon('staff',{size:16})}<span>${escapeHtml(pt(prospect.assigned_consultant_id?'Reassign consultant':'Assign consultant'))}</span></button>`:''}
         </div>
         <div class="platform-detail-grid">
           ${CUI.card({title:'Company',body:detailObjectHtml({
             legal_name:company.legal_name||company.trading_name,
             registration_number:company.registration_number,
-            stage:plainLabel(prospectStage(prospect)),
-            priority:plainLabel(prospect.priority||'normal'),
+            stage:platformStatus(prospectStage(prospect)),
+            priority:platformStatus(prospect.priority||'normal'),
             sales_consultant:assignment.display_name||assignment.consultant_name||prospect.consultant_name||'Unassigned'
           })})}
-          ${CUI.card({title:'Primary contact',body:contacts.length?contacts.map(contact=>`<div class="platform-action-item"><div><b>${escapeHtml(contact.full_name||contact.name||'Contact')}</b><p class="muted small">${escapeHtml(contact.email||contact.phone||'No contact detail')}</p></div>${platformContactActions(contact.phone,CUI,{compact:true})}</div>`).join(''):'<p class="muted small">No active contacts.</p>'})}
+          ${CUI.card({title:'Primary contact',body:contacts.length?contacts.map(contact=>`<div class="platform-action-item"><div><b>${escapeHtml(contact.full_name||contact.name||'Contact')}</b><p class="muted small">${escapeHtml(contact.email||contact.phone||'No contact detail')}</p></div>${platformContactActions(contact.phone,CUI,{compact:true})}</div>`).join(''):localizedEmptyHtml('No active contacts.')})}
         </div>
-        <section class="card platform-detail-section"><h2>Activity</h2>${activities.length?activities.map(activity=>`<div class="platform-timeline-item"><span class="platform-timeline-marker"></span><div><b>${escapeHtml(activity.summary||plainLabel(activity.activity_type))}</b><p class="muted small">${escapeHtml(dateTime(activity.occurred_at))}</p></div></div>`).join(''):'<p class="muted small">No activity recorded.</p>'}</section>
-        <section class="card platform-detail-section"><h2>Tasks</h2>${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title)}</b><p class="muted small">${escapeHtml(plainLabel(task.status||'open'))} · due ${escapeHtml(dateTime(task.due_at))}</p></div>${context.canWrite&&task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">Complete</button>`:''}</div>`).join(''):'<p class="muted small">No tasks.</p>'}</section>`;
+        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Activity"))}</h2>${activities.length?activities.map(activity=>`<div class="platform-timeline-item"><span class="platform-timeline-marker"></span><div><b>${escapeHtml(activity.summary||platformStatus(activity.activity_type))}</b><p class="muted small">${escapeHtml(dateTime(activity.occurred_at))}</p></div></div>`).join(''):localizedEmptyHtml('No activity recorded.')}</section>
+        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Tasks"))}</h2>${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title)}</b><p class="muted small">${escapeHtml(platformStatus(task.status||'open'))} · ${escapeHtml(pt('due {date}',{date:dateTime(task.due_at)}))}</p></div>${context.canWrite&&task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt("Complete"))}</button>`:''}</div>`).join(''):localizedEmptyHtml('No tasks.')}</section>`;
         host.querySelector('[data-add-note]')?.addEventListener('click',()=>scopedActivityModal(prospectId,context,renderDetail));
         host.querySelector('[data-add-task]')?.addEventListener('click',()=>scopedTaskModal(prospectId,context,renderDetail));
         host.querySelector('[data-scoped-assign]')?.addEventListener('click',()=>
@@ -4090,7 +5898,7 @@
             controls.close();await renderDetail();CUI.announce('Task completed.');
           }
         }));
-      }catch(error){host.innerHTML=CUI.errorState({title:'Prospect unavailable',message:error.message||'Try again.'})}
+      }catch(error){host.innerHTML=CUI.errorState({title:'Prospect unavailable',message:platformErrorMessage(error,'Try again.')})}
     };
     await renderDetail();
   }
@@ -4107,20 +5915,20 @@
           ?'Manage only the firms you created or are assigned to.'
           :'Manage the firms available to your platform role.',
         iconName:'setup',
-        actions:context.canWrite?`<button type="button" class="btn" id="platformScopedNewProspect">${CUI.icon('add',{size:17})}<span>Add firm</span></button>`:''
+        actions:context.canWrite?`<button type="button" class="btn" id="platformScopedNewProspect">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('Add firm'))}</span></button>`:''
       })}${scopedScopeNote(access,CUI)}
       <form class="card platform-scoped-search" id="platformScopedOnboardingSearch">
         ${CUI.field({id:'platformScopedOnboardingQuery',label:'Search your CRM',type:'search',value:search,placeholder:'Company, owner, email, phone or UEN'})}
-        <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>Search</span></button>
+        <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt('Search'))}</span></button>
       </form>
-      <div class="platform-kanban" aria-label="Scoped onboarding Kanban">${operationalLanes.map(lane=>{
+      <div class="platform-kanban" aria-label="${escapeHtml(pt('Scoped onboarding Kanban'))}">${operationalLanes.map(lane=>{
         const laneItems=items.filter(item=>operationalLaneFor(item)===lane.key);
         return `<section class="platform-kanban-column" aria-labelledby="scoped-lane-${lane.key}">
-          <header class="platform-kanban-head"><div><h2 id="scoped-lane-${lane.key}">${escapeHtml(lane.label)}</h2><p>${escapeHtml(lane.description)}</p></div><span class="platform-count">${laneItems.length}</span></header>
-          <div class="platform-card-list">${laneItems.map(item=>prospectCardHtml(item,CUI,{canWrite:context.canWrite})).join('')||'<p class="muted small platform-lane-empty">No firms</p>'}</div>
+          <header class="platform-kanban-head"><div><h2 id="scoped-lane-${lane.key}">${escapeHtml(pt(lane.label))}</h2><p>${escapeHtml(pt(lane.description))}</p></div><span class="platform-count">${laneItems.length}</span></header>
+          <div class="platform-card-list">${laneItems.map(item=>prospectCardHtml(item,CUI,{canWrite:context.canWrite})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
         </section>`;
       }).join('')}</div>
-      <div class="platform-prospect-list" aria-label="Scoped onboarding list">${items.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite:context.canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</div>`;
+      <div class="platform-prospect-list" aria-label="${escapeHtml(pt('Scoped onboarding list'))}">${items.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite:context.canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</div>`;
       main.querySelector('#platformScopedOnboardingSearch').onsubmit=event=>{
         event.preventDefault();renderScopedOnboarding(context,main.querySelector('#platformScopedOnboardingQuery').value.trim());
       };
@@ -4139,7 +5947,7 @@
               p_expected_version:prospectVersion(item),p_reason:null
             });
             await renderScopedOnboarding(context,search);CUI.announce('Prospect stage updated.');
-          }catch(error){button.disabled=false;CUI.announce(error.message||'Stage could not be updated.',{assertive:true})}
+          }catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Stage could not be updated.'),{assertive:true})}
         };
       });
       main.querySelectorAll('[data-prospect]').forEach(card=>{
@@ -4155,15 +5963,15 @@
   function scopedReportHtml(report,CUI) {
     const summary=asObject(report.summary);
     return `<article class="card platform-report-sheet">
-      <header><h2>Scoped performance report</h2><p class="muted small">${escapeHtml(dateTime(report.scope?.generated_at))}</p></header>
-      <section class="platform-kpis" aria-label="Report summary">${[
+      <header><h2>${escapeHtml(pt('Scoped performance report'))}</h2><p class="muted small">${escapeHtml(dateTime(report.scope?.generated_at))}</p></header>
+      <section class="platform-kpis" aria-label="${escapeHtml(pt('Report summary'))}">${[
         ['Businesses',summary.business_count||0,'branch'],
         ['Customers',summary.customer_count||0,'customers'],
         ['Sales',summary.sales_count||0,'till'],
         ['Revenue',currency(summary.revenue_cents||0),'reports']
-      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+      ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       ${CUI.table({caption:'Business performance',headers:['Business','Sector','Customers','Revenue'],rows:asArray(report.businesses).map(row=>[
-        escapeHtml(row.name),escapeHtml(plainLabel(row.industry)),String(row.customers||0),currency(row.revenue_cents||0)
+        escapeHtml(row.name),escapeHtml(sectorLabel(row.industry)),String(row.customers||0),currency(row.revenue_cents||0)
       ])})}
     </article>`;
   }
@@ -4176,14 +5984,14 @@
       main.innerHTML=`${CUI.pageHeader({title:'Reports',subtitle:'Generate analysis using only firms inside your platform scope.',iconName:'reports'})}
         ${scopedScopeNote(access,CUI)}
         <form class="card platform-scoped-report-form" id="platformScopedReportForm">
-          <fieldset><legend>Choose one assigned firm</legend><p class="muted small">The database verifies the assignment again before returning customer intelligence.</p>
-            <div class="platform-scoped-report-options">${firms.map((item,index)=>`<label><input type="radio" name="business" value="${escapeHtml(item.business_id)}"${index===0?' checked':''}><span><b>${escapeHtml(item.name||item.legal_name)}</b><small>${escapeHtml(plainLabel(item.sector_key||item.industry))}</small></span></label>`).join('')}</div>
+          <fieldset><legend>${escapeHtml(pt('Choose one assigned firm'))}</legend><p class="muted small">${escapeHtml(pt('The database verifies the assignment again before returning customer intelligence.'))}</p>
+            <div class="platform-scoped-report-options">${firms.map((item,index)=>`<label><input type="radio" name="business" value="${escapeHtml(item.business_id)}"${index===0?' checked':''}><span><b>${escapeHtml(item.name||item.legal_name)}</b><small>${escapeHtml(sectorLabel(item.sector_key||item.industry))}</small></span></label>`).join('')}</div>
           </fieldset>
           <div class="platform-form-grid">
             ${CUI.field({id:'platformScopedReportFrom',label:'From',type:'date',value:enterpriseDefaults().from,required:true,attributes:'name="from"'})}
             ${CUI.field({id:'platformScopedReportTo',label:'To',type:'date',value:enterpriseDefaults().to,required:true,attributes:'name="to"'})}
           </div>
-          <button class="btn" type="submit">${CUI.icon('reports',{size:17})}<span>Generate report</span></button>
+          <button class="btn" type="submit">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt('Generate report'))}</span></button>
         </form>
         <section id="platformScopedReportResult" class="platform-report-host" aria-live="polite">${CUI.emptyState({iconName:'reports',title:'Choose a firm to report on',body:'Customer groups, product and service patterns, and consultative actions will appear here when the evidence threshold is met.'})}</section>`;
       main.querySelector('#platformScopedReportForm').onsubmit=async event=>{
@@ -4209,7 +6017,7 @@
           host.innerHTML=consultativeIntelligenceHtml(
             asObject(report),asObject(affinity),asObject(recommendations),CUI
           );
-        }catch(error){host.innerHTML=CUI.errorState({title:'Report unavailable',message:error.message||'Try again.'})}
+        }catch(error){host.innerHTML=CUI.errorState({title:'Report unavailable',message:platformErrorMessage(error,'Try again.')})}
       };
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Reports')}
@@ -4228,17 +6036,17 @@
         subtitle:'A role-aware summary built from the same server-enforced firm scope as search and reports.',
         iconName:'platform'
       })}${scopedScopeNote(access,CUI)}
-      <section class="platform-kpis" aria-label="Scoped platform summary">${[
+      <section class="platform-kpis" aria-label="${escapeHtml(pt('Scoped platform summary'))}">${[
         ['Firms in scope',items.length,'branch'],
         ['CRM records',prospects.length,'customers'],
         ['Case won / onboarding',active.length,'setup'],
         ['Need attention',due.length,'info']
-      ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+      ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
         ${CUI.card({title:'Next actions',body:`<div class="platform-action-queue">
-          <a class="platform-action-item" href="#/platform/onboarding"><span>Review attention queue</span><b>${due.length}</b></a>
-          <a class="platform-action-item" href="#/platform/firms"><span>Open firm directory</span><b>${items.length}</b></a>
-          ${canAccessModule(access,'reports')?'<a class="platform-action-item" href="#/platform/reports"><span>Generate scoped report</span><b>Open</b></a>':''}
+          <a class="platform-action-item" href="#/platform/onboarding"><span>${escapeHtml(pt('Review attention queue'))}</span><b>${due.length}</b></a>
+          <a class="platform-action-item" href="#/platform/firms"><span>${escapeHtml(pt('Open firm directory'))}</span><b>${items.length}</b></a>
+          ${canAccessModule(access,'reports')?`<a class="platform-action-item" href="#/platform/reports"><span>${escapeHtml(pt('Generate scoped report'))}</span><b>${escapeHtml(pt('Open'))}</b></a>`:''}
         </div>`})}
         ${CUI.card({title:'Access',body:detailObjectHtml({
           role:roleLabel(access.role),
@@ -4277,13 +6085,17 @@
   }
 
   async function render({root,sb,CUI,brand,hash,isCurrent,onSignOut,workspaceHash='#/'} = {}) {
-    if (!root || !sb || !CUI) throw new Error('Platform console dependencies are unavailable.');
+    if (!root || !sb || !CUI) throw new Error(pt('Platform console dependencies are unavailable.'));
+    lastRenderArgs={root,sb,CUI,brand,hash,isCurrent,onSignOut,workspaceHash};
     const generation = ++renderGeneration;
     readOnlyObserver?.disconnect();readOnlyObserver=null;
+    await loadPlatformLocale(sb);
+    if(generation!==renderGeneration||(isCurrent&&!isCurrent()))return;
+    CUI=localizedPlatformCUI(CUI);
     let access;
     try{
       access=normalizePlatformAccess(await rpc(sb,'platform_list_my_access_v89'));
-      if(!access)throw new Error('Platform access is required.');
+      if(!access)throw new Error(pt('Platform access is required.'));
     }catch(error){
       root.innerHTML=platformAccessDeniedHtml({
         CUI,brand:brand||globalObject.NestlyBrand||{},workspaceHash,onSignOut
@@ -4313,6 +6125,26 @@
     });
     const signOut = root.querySelector('#platformSignOut');
     if (signOut) signOut.onclick = () => onSignOut?.();
+    root.querySelectorAll('[data-platform-locale]').forEach(button=>button.onclick=async()=>{
+      const next=normalizePlatformLocale(button.dataset.platformLocale);
+      if(next===platformLocale)return;
+      const controls=[...root.querySelectorAll('[data-platform-locale]')];
+      controls.forEach(control=>control.disabled=true);
+      const status=root.querySelector('#platformLocaleStatus');
+      try{
+        const data=await rpc(sb,'set_workspace_locale_preference_v97',{
+          p_locale:next,p_expected_version:platformLocaleVersion
+        });
+        platformLocale=normalizePlatformLocale(data?.locale);
+        platformLocaleVersion=Number(data?.version||platformLocaleVersion+1);
+        if(globalObject.document?.documentElement)globalObject.document.documentElement.lang=platformLocale;
+        await render(lastRenderArgs);
+      }catch(error){
+        controls.forEach(control=>control.disabled=false);
+        if(status)status.textContent=pt('Language preference could not be saved. Please try again.');
+        CUI.announce?.(pt('Language preference could not be saved. Please try again.'),{assertive:true});
+      }
+    });
     const main = root.querySelector('#platformMain');
     const context={
       root,main,sb,CUI,brand:brand||globalObject.NestlyBrand||{},hash,isCurrent,
@@ -4348,14 +6180,28 @@
     isRoute,routeKey,render,routes,prospectStages,operationalLanes,
     normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,superAdminOnly,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
     operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
-    firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions
+    firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,
+    platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
+    setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
+    localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
+    firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,modulePickerHtml,
+    reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
+    importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
+    commissionRosterRows,commissionAccrualRows,automationRunRows
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       isRoute,routeKey,routes,prospectStages,operationalLanes,
       normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,superAdminOnly,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
       operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
-      firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions
+      firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,
+      platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
+      setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
+      localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
+      firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,modulePickerHtml,
+      reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
+      importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
+      commissionRosterRows,commissionAccrualRows,automationRunRows
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

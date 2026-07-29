@@ -10,6 +10,7 @@ import {
   verifyTurnstile,
 } from '../_shared/gateway.ts';
 import {
+  normalizeBusinessApplicationLocale,
   UUID_PATTERN,
   validBusinessApplicationPayload,
 } from '../_shared/validation.ts';
@@ -85,9 +86,7 @@ Deno.serve(async (req) => {
       p_business_name: String(body.business_name).trim(),
       p_sector_key: String(body.sector_key),
       p_registration_number: String(body.registration_number || '').trim() || null,
-      p_locale: String(body.locale || 'en').toLowerCase() === 'zh-cn'
-        ? 'zh-CN'
-        : 'en',
+      p_locale: normalizeBusinessApplicationLocale(body.locale) || 'en',
       p_idempotency_key: String(body.idempotency_key),
     });
     if (error || !data) return publicError(req);

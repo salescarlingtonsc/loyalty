@@ -820,6 +820,24 @@
       "version": "20260729110000",
       "name": "nestly_v96_customer_programme_selector_media",
       "sourcePath": "db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729120000",
+      "name": "nestly_v97_workspace_interface_localization",
+      "sourcePath": "db/migrations/20260729_nestly_v97_workspace_interface_localization.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729130000",
+      "name": "nestly_v99_campaign_truth",
+      "sourcePath": "db/migrations/20260729_nestly_v99_campaign_truth.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729140000",
+      "name": "nestly_v100_product_adoption_events",
+      "sourcePath": "db/migrations/20260729_nestly_v100_product_adoption_events.sql"
     }
   ]
 }

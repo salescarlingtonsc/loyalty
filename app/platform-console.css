@@ -40,6 +40,17 @@
 }
 .platform-topbar-title{font-weight:750;letter-spacing:-.015em}
 .platform-topbar-actions{display:flex;align-items:center;gap:8px}
+.platform-locale-switcher{
+  display:flex;align-items:center;gap:3px;padding:3px;border:1px solid var(--hair);
+  border-radius:12px;background:#fff
+}
+.platform-locale-switcher button{
+  min-height:44px;padding:8px 11px;border:0;border-radius:9px;background:transparent;
+  color:var(--muted);font:inherit;font-size:12px;font-weight:750;cursor:pointer
+}
+.platform-locale-switcher button[aria-pressed="true"]{background:var(--tint);color:var(--coral)}
+.platform-locale-switcher button:focus-visible{outline:3px solid rgba(194,65,53,.25);outline-offset:1px}
+.platform-locale-switcher button:disabled{opacity:.55;cursor:wait}
 .platform-main{width:100%;max-width:1500px;margin:0 auto;
   padding:30px max(32px,env(safe-area-inset-right))
     calc(56px + env(safe-area-inset-bottom)) max(32px,env(safe-area-inset-left))}
@@ -412,6 +423,9 @@
     width:44px;min-width:44px;height:44px;min-height:44px;padding:9px;justify-content:center
   }
   .platform-topbar-actions .btn span{display:none}
+  .platform-locale-switcher{max-width:188px;overflow-x:auto;scrollbar-width:none}
+  .platform-locale-switcher::-webkit-scrollbar{display:none}
+  .platform-locale-switcher button{min-width:44px;padding-inline:8px;font-size:10px;white-space:nowrap}
   .platform-main{padding:20px max(14px,env(safe-area-inset-right))
     calc(38px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
   .platform-kpis{grid-template-columns:1fr 1fr;gap:10px}

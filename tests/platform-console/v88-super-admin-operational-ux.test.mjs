@@ -148,5 +148,5 @@ test('enterprise search unions live v88 matches with v82 branch/customer matches
   assert.match(source,/renderEnterpriseReport\(context,resolvedScopeFilters\)/);
   assert.match(source,/total_firms:firms\.length,returned_firms:firms\.length/);
   assert.match(source,/openEnterpriseFirm\(firm,context,\{\.\.\.filters,search:''\}\)/);
-  assert.match(source,/disabled title="No matching firms are available to report\."/);
+  assert.match(source,/disabled title="\$\{escapeHtml\(pt\('No matching firms are available to report\.'\)\)\}"/);
 });

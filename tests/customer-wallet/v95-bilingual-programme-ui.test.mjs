@@ -12,17 +12,14 @@ function section(start,end){
   return app.slice(from,to);
 }
 
-test('customer locale is browser-seeded, persisted with optimistic versioning, and has English fallback',()=>{
-  const locale=section('const CUSTOMER_LOCALES','const CUSTOMER_PRIMARY_NAV');
-  assert.match(locale,/Object\.freeze\(\['en','zh-CN'\]\)/);
-  assert.match(locale,/navigator\.languages\?\.\[0\]\|\|navigator\.language\|\|'en'/);
-  assert.match(locale,/CUSTOMER_COPY\[customerLocale\]\?\.\[key\]\?\?CUSTOMER_COPY\.en\[key\]\?\?key/);
-  assert.match(locale,/sb\.rpc\('customer_get_locale_preference_v95'\)/);
-  assert.match(locale,/sb\.rpc\('customer_set_locale_preference_v95',\{\s*p_locale:next,p_expected_version:customerLocaleVersion/s);
-  assert.match(app,/data-customer-locale="en"/);
-  assert.match(app,/data-customer-locale="zh-CN"/);
-  assert.match(app,/aria-pressed="\$\{customerLocale==='zh-CN'\}"/);
-  assert.match(locale,/firstQuestBody:'到访参与商家时/);
+test('customer portal stays English-only while profile language remains communication metadata',()=>{
+  const locale=section('const CUSTOMER_COPY','const CUSTOMER_PRIMARY_NAV');
+  assert.match(locale,/const normalizeCustomerLocale=\(\)=> 'en'/);
+  assert.match(locale,/let customerLocale='en'/);
+  assert.doesNotMatch(locale,/'zh-CN':Object\.freeze/);
+  assert.doesNotMatch(app,/data-customer-locale=/);
+  assert.doesNotMatch(app,/customer_get_locale_preference_v95|customer_set_locale_preference_v95/);
+  assert.match(app,/id="customerProfileLanguage"/);
 });
 
 test('programme selector precedes merchant detail and zero-programme state only offers issued-QR joining',()=>{
@@ -40,7 +37,7 @@ test('programme selector precedes merchant detail and zero-programme state only 
 test('merchant home consumes the v95 presentation contract with truthful capability gating and resilient fallback',()=>{
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   const presentation=section('function customerProgrammePresentationV95','function actionableWalletCardMarkup');
-  assert.match(wallet,/sb\.rpc\('customer_get_business_presentation_v95',\{p_business:b\.id,p_branch:null,p_locale:customerLocale\}\)/);
+  assert.match(wallet,/sb\.rpc\('customer_get_business_presentation_v95',\{p_business:b\.id,p_branch:null,p_locale:'en'\}\)/);
   assert.match(wallet,/businessActions\?\.booking\?\.enabled===true&&presentation\.capabilities\.booking_enabled!==false/);
   assert.match(wallet,/customerMerchantExperienceMarkupV95\(\{presentation,business:b,actionableCard,programmeCards/);
   assert.match(wallet,/presentationResult\.error[\s\S]*customerPresentationRetry/);
@@ -55,7 +52,7 @@ test('merchant home consumes the v95 presentation contract with truthful capabil
 });
 
 test('business media accepts only the configured public bucket object shape and CSP origin',()=>{
-  const media=section('function customerMediaUrlV95','async function loadCustomerLocaleV95');
+  const media=section('function customerMediaUrlV95','const CUSTOMER_PRIMARY_NAV');
   assert.match(media,/\/storage\/v1\/object\/public\/business-public\//);
   assert.match(media,/\(\?:logo\|hero\|programme\|reward\|product\|service\|benefit\|offer\)/);
   assert.match(media,/\(\?:png\|jpe\?g\|webp\|gif\)/);
@@ -80,7 +77,7 @@ test('celebration sound is opt-in, stored locally, and blocked for reduced-motio
 test('customer mobile navigation and media layouts keep accessible touch targets and stable image geometry',()=>{
   assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button\{[^}]*min-height:48px/s);
   assert.match(app,/\.customer-avatar\{[^}]*width:44px;height:44px/s);
-  assert.match(app,/\.customer-account-menu \.customer-locale-switch button\{[^}]*min-height:44px/s);
+  assert.doesNotMatch(app,/\.customer-account-menu \.customer-locale-switch/);
   assert.match(app,/\.customer-perk-card img,\.customer-offer-card img,\.customer-reward-card img\{[^}]*height:132px/s);
   assert.match(app,/@media\(max-width:720px\)\{[\s\S]*\.customer-primary-nav\{position:fixed/s);
   assert.match(app,/@media\(prefers-reduced-motion:reduce\)/);
