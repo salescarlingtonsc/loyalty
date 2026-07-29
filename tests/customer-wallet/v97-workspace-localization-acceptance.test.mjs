@@ -299,6 +299,25 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
   assert.match(app,/localizeWorkspaceTemplateV97\(template\)/);
 });
 
+test('v101 localization observer cannot recursively rewrite its own template children',()=>{
+  const templateLocalizer=section(
+    'function localizeWorkspaceTemplateV97',
+    'function localizeWorkspaceTemplateAttributesV97',
+  );
+  const observer=section(
+    'function observeWorkspaceLocalizationV97',
+    'async function loadWorkspaceLocaleV97',
+  );
+  assert.match(templateLocalizer,/const localizedHtml=workspaceTemplateInnerHtmlV97/);
+  assert.match(templateLocalizer,/if\(element\.innerHTML!==localizedHtml\)element\.innerHTML=localizedHtml/);
+  assert.match(observer,/node\.nodeType!==Node\.ELEMENT_NODE[\s\S]*element\.closest\?\.\('\[data-workspace-template\],\[data-merchant-content\]'\)\)continue/);
+  assert.match(observer,/node\.nodeType===Node\.ELEMENT_NODE[\s\S]*!element\.matches\?\.\('\[data-workspace-template\]'\)\)continue/);
+  assert.ok(
+    observer.indexOf('continue;')<observer.indexOf('localizeWorkspaceSubtreeV97(element)'),
+    'self-generated template children must be rejected before the localizer runs',
+  );
+});
+
 test('v97 every runtime template executes arbitrary values without translating, dropping or merging them',()=>{
   for(const key of interpolatedInventory){
     const names=placeholders(templateCopy[key].en);

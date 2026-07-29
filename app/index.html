@@ -5743,7 +5743,8 @@ function localizeWorkspaceTemplateV97(element){
       .map(value=>[value.dataset.workspaceValue,value.textContent]));
     workspaceTemplateValuesV97.set(element,values);
   }
-  element.innerHTML=workspaceTemplateInnerHtmlV97(key,values,workspaceLocale);
+  const localizedHtml=workspaceTemplateInnerHtmlV97(key,values,workspaceLocale);
+  if(element.innerHTML!==localizedHtml)element.innerHTML=localizedHtml;
 }
 function localizeWorkspaceTemplateAttributesV97(element){
   for(const attribute of WORKSPACE_TEMPLATE_ATTRIBUTES_V97){
@@ -5812,7 +5813,16 @@ function observeWorkspaceLocalizationV97(){
   const shell=root.querySelector('.shell');if(!shell)return;
   workspaceLocalizationObserver=new MutationObserver(records=>{
     for(const record of records)for(const node of record.addedNodes){
-      localizeWorkspaceSubtreeV97(node.nodeType===Node.ELEMENT_NODE?node:node.parentElement);
+      const element=node.nodeType===Node.ELEMENT_NODE?node:node.parentElement;
+      if(!element)continue;
+      /* Template localization replaces its own text/value children. Ignore those
+         observer records or they recursively rewrite the same innerHTML forever. */
+      if(node.nodeType!==Node.ELEMENT_NODE
+         &&element.closest?.('[data-workspace-template],[data-merchant-content]'))continue;
+      if(node.nodeType===Node.ELEMENT_NODE
+         &&element.closest?.('[data-workspace-template],[data-merchant-content]')
+         &&!element.matches?.('[data-workspace-template]'))continue;
+      localizeWorkspaceSubtreeV97(element);
     }
   });
   workspaceLocalizationObserver.observe(document.body,{childList:true,subtree:true});
