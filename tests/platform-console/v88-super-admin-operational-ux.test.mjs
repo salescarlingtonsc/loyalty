@@ -34,10 +34,10 @@ test('onboarding board has prominent search, status and attention filters withou
   ]);
   for(const id of ['platformProspectSearch','platformLaneFilter','platformAttentionFilter'])
     assert.match(source,new RegExp(id));
-  assert.match(source,/fetchFirmDirectoryV88\(sb,filters,\{required:true\}\)/);
-  assert.match(source,/mergeFirmOnboardingItems\(\s*directory\.items,flattenBoard\(board,list\)/);
+  assert.match(source,/fetchFirmDirectoryPageV88\(sb,filters,\{[\s\S]*required:true,limit:50/);
+  assert.match(source,/mergeFirmOnboardingItems\(directoryItems,prospectItems\)/);
   assert.match(source,/data-attention-quick/);
-  assert.match(source,/attention_summary:attentionSummary/);
+  assert.match(source,/attentionSummary:prior\?\.attentionSummary\|\|directory\.attention_summary/);
   assert.match(source,/\['due','Due now','no'\],\['critical','Critical','no'\],\['warning','Warning','new'\]/);
   assert.match(source,/\['info','Monitor','off'\],\['stale','Stale','off'\],\['clean','Clean','ok'\]/);
   assert.match(source,/Open firm directory/);
@@ -47,6 +47,8 @@ test('onboarding board has prominent search, status and attention filters withou
   assert.match(kanbanRule,/display:grid/);
   assert.match(kanbanRule,/auto-fit/);
   assert.doesNotMatch(kanbanRule,/overflow-x|scroll-snap/);
+  assert.match(source,/id="platformOnboardingLoadMore"/);
+  assert.match(source,/Load 50 more firms/);
 });
 
 test('attention filters preserve independent due, severity, stale and clean meanings',async()=>{
@@ -110,17 +112,19 @@ test('firm directory search consumes the scalable v88 contract and exposes safe 
     business_id:null,row_id:'row-1',prospect_id:'prospect-1'
   }),'row-1');
   assert.match(source,/platform_list_firm_onboarding_v88/);
-  assert.match(source,/p_limit:100/);
+  assert.match(source,/p_limit:limit/);
+  assert.match(source,/required=false,snapshot=null,cursor=null,limit=50/);
   assert.match(source,/p_after_updated_at:cursor\?\.updated_at/);
   assert.match(source,/firm\.business_id\|\|firm\.id\|\|firm\.row_id\|\|firm\.prospect_id/);
-  assert.match(source,/resolveEnterpriseSearchBusinessIds\(\s*directory\?\.items,asArray\(hierarchyMatches,\['firms'\]\),filters\.businesses/);
+  assert.match(source,/const directoryIds=asArray\(directory\?\.items\)/);
+  assert.match(source,/fetchEnterpriseFirmPage\(sb,\{[\s\S]*\.\.\.filters,businesses:directoryIds,search:''/);
   assert.match(source,/Name, sector, UEN, owner phone or email/);
   assert.match(source,/firm\.boss_phone\|\|firm\.owner_phone/);
   assert.match(source,/href="tel:\$\{escapeHtml\(phone\.tel\)\}"/);
   assert.match(source,/https:\/\/wa\.me\/\$\{escapeHtml\(phone\.wa\)\}/);
 });
 
-test('enterprise search unions live v88 matches with v82 branch/customer matches for display and reports',async()=>{
+test('enterprise search unions live v88 matches with v82 branch/customer matches without duplicating report generation',async()=>{
   const [Console,source]=await Promise.all([loadConsole(),read('app/platform-console.js')]);
   const directory=[
     {business_id:'business-owner-match',row_id:'business-owner-match'},
@@ -143,10 +147,12 @@ test('enterprise search unions live v88 matches with v82 branch/customer matches
     Array.from(Console.resolveEnterpriseSearchBusinessIds(directory,hierarchy,['not-matched'])),
     []
   );
-  assert.match(source,/const hierarchyMatches=await fetchEnterpriseFirmPages\(sb,filters\)/);
-  assert.match(source,/resolvedScopeFilters=\{\.\.\.filters,businesses:resolvedIds,search:''\}/);
-  assert.match(source,/renderEnterpriseReport\(context,resolvedScopeFilters\)/);
-  assert.match(source,/total_firms:firms\.length,returned_firms:firms\.length/);
+  assert.match(source,/let hierarchyFirms=asArray\(rawPayload,\['firms'\]\)/);
+  assert.match(source,/const directoryIds=asArray\(directory\?\.items\)[\s\S]*!hierarchyIds\.has/);
+  assert.match(source,/fetchEnterpriseFirmPage\(sb,\{[\s\S]*businesses:directoryIds,search:''/);
+  assert.match(source,/const unique=new Map\(hierarchyFirms\.map\(firm=>\[firmId\(firm\),firm\]\)\)/);
   assert.match(source,/openEnterpriseFirm\(firm,context,\{\.\.\.filters,search:''\}\)/);
-  assert.match(source,/disabled title="\$\{escapeHtml\(pt\('No matching firms are available to report\.'\)\)\}"/);
+  assert.match(source,/const canonicalReportHash=enterpriseReportHash\(filters\)/);
+  assert.match(source,/Continue in Reports/);
+  assert.doesNotMatch(source,/id="enterpriseGenerateReport"/);
 });

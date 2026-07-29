@@ -100,15 +100,21 @@ order. A hidden navigation item without server-side denial is a failure.
 
 ## Journey I — platform onboarding, intelligence, billing, commission
 
-1. Website firm request appears in platform onboarding.
-2. Assigned consultant can manage it; unassigned consultant cannot.
-3. Owner cannot activate before Super Admin approval.
-4. Approved firm appears as won/active with all branches and customers.
-5. Consultant generates branch and whole-firm intelligence with source window,
+1. Super admin lands on Today and sees each submitted application, blocked or
+   overdue onboarding case, late billing account, payable commission, and
+   system incident once, with reason, status, age, SLA, responsible owner, and
+   one primary action. Healthy/paid records do not appear as work.
+2. Sales staff lands on its own Today and sees only firms it created or was
+   assigned.
+3. Website firm request appears in platform onboarding.
+4. Assigned consultant can manage it; unassigned consultant cannot.
+5. Owner cannot activate before Super Admin approval.
+6. Approved firm appears as won/active with all branches and customers.
+7. Consultant generates branch and whole-firm intelligence with source window,
    data sufficiency, and actionable recommendations.
-6. Billing success sets paid/next date; overdue schedules daily notices and day
+8. Billing success sets paid/next date; overdue schedules daily notices and day
    14 access pause; payment restores access.
-7. GST/refund/chargeback and anniversary/employment cases produce expected
+9. GST/refund/chargeback and anniversary/employment cases produce expected
    commission.
 
 ## Journey J — navigation, language, and mobile resilience
@@ -120,3 +126,31 @@ order. A hidden navigation item without server-side denial is a failure.
 4. Run critical customer and staff paths at 390px and 412px viewports.
 5. Verify touch targets, keyboard overlap, safe areas, camera denial/retry,
    notification denial, and passkey cancel/unsupported behavior.
+
+## Journey K — owner promotion to customer programme
+
+1. `SPA-GLOW` owner starts a promotion and enters only these facts: 30% off Spa
+   Ritual 60, National Day, valid through 30 August 2026.
+2. The free copy assistant produces concise Singapore-English headline/body
+   copy and one approved CTA without changing or inventing any number, date,
+   product, eligibility rule, price, scarcity, or claim.
+3. Owner edits the proposed copy, saves a draft, uploads an owned image with
+   alt text, previews, and explicitly publishes.
+4. Manager and front desk direct publish/image-write attempts are denied.
+   Super admin may inspect the state and manage the launch entitlement, but a
+   fresh merchant-authored promotion still requires the business owner; support
+   may only replay an already-recorded exact receipt.
+5. The linked customer reloads the selected programme. Business identity and
+   formatted points occupy one compact header; up to two currently active
+   promotion cards appear before supporting catalogue content.
+6. A third eligible offer is not returned to the customer projection. Promotion
+   authoring and reading are company-wide and reject non-null branch input;
+   future, expired, inactive, and other-business offers do not leak.
+7. Ten first-published offer slots are allowed during the complimentary
+   authoring window. Unpublishing does not restore a slot; an eleventh and a
+   new publish after 31 October 2026 are refused unless the platform
+   entitlement extends the allowance.
+8. Existing published offers continue to obey their own start/end dates when
+   the complimentary authoring window ends.
+9. Failed image upload, lost response, retry, double tap, refresh, back/forward,
+   and 390px/412px layouts preserve an understandable draft or published state.

@@ -65,10 +65,9 @@ test('merchant feature groups and birthday participation render only from actual
     'authoritative wallet rewards are the only reward cards on programme detail');
   assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?/);
   assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
-  assert.match(merchant,/presentation\.offers\.length\?`<div class="customer-section-title"/);
-  for(const content of ['benefits','offers']){
-    assert.match(merchant,new RegExp(`presentation\\.${content}\\.length\\?[\\s\\S]*?:''\\}`));
-  }
+  assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,2\)/);
+  assert.match(merchant,/offers\.length\?`<section class="customer-promotions-section"/);
+  assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
   assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?[\s\S]*?:''\}/);
   assert.match(wallet,/customerFeatures\.customer_birthday_benefits&&actionableCard\?\.birthday_benefit&&actionableCard\.birthday_benefit\.status!=='unavailable'/);
 });

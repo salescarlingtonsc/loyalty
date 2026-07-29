@@ -64,8 +64,10 @@ test('business entry resolves workspaces while customer and workspace deep links
 test('hidden admin entry uses normal auth and resolves Platform before tenant discovery',()=>{
   const routing=section('function entryRouteForLocation','/* ---------- customer wallet ---------- */');
   assert.match(routing,/if\(cleanPath==='\/admin'\)return '#\/platform'/);
-  assert.match(routing,/renderAuth\('in',\{admin:h==='#\/platform'\|\|h\.startsWith\('#\/platform\/'\)\}\)/);
-  const platformAt=routing.indexOf('if(platformConsole?.isRoute(h))');
+  assert.match(routing,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
+  assert.match(routing,/const requestedPlatformRoute=platformRoutePath==='#\/platform'\|\|platformRoutePath\.startsWith\('#\/platform\/'\)/);
+  assert.match(routing,/renderAuth\('in',\{admin:requestedPlatformRoute\}\)/);
+  const platformAt=routing.indexOf('if(requestedPlatformRoute)');
   const businessAt=routing.indexOf("if(h==='#/business')");
   const discoveryAt=routing.indexOf("if(h.startsWith('#/workspace/'))");
   assert.ok(platformAt>=0&&businessAt>platformAt&&discoveryAt>businessAt,

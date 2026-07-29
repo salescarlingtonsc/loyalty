@@ -167,9 +167,35 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 - Basic in-app/Web Push can cover transactional events such as points credited,
   redemption completed, booking changes, package use, and value expiring in
   three days and one day.
-- Advanced promotional campaigns are a platform-mediated upsell and require
-  appropriate consent and controls; firms do not receive unrestricted campaign
-  access at launch.
+- An owner may publish customer-programme promotion cards made from the
+  business's own factual offer, image, dates, terms, and one approved CTA. This
+  is in-programme content, not permission to broadcast an unrestricted
+  campaign.
+- The complimentary launch allowance is ten first-published offer slots per
+  company through 31 October 2026; unpublishing an offer does not restore its
+  slot. V104 offers are company-wide: one published offer is consistent for
+  every linked customer and cannot be authored for an individual branch. Two
+  currently active offers may be presented at once in the selected customer
+  programme. The platform can change an individual company's entitlement later
+  without changing the offer records.
+- Owners may keep creating and editing unpublished authoring records after the
+  allowance is full or the complimentary period ends. First publication after
+  that point requires a platform entitlement. Existing publications continue
+  to follow their own start/end dates; the window never deletes an offer.
+- Fresh promotion authoring and publication use business-owner authority,
+  matching the browser surface and owned-media upload path. Super admins may
+  inspect promotion state, change a company's launch entitlement, and replay
+  an already-recorded exact receipt for support recovery, but cannot originate
+  merchant marketing copy or a new publication through these writers.
+- Promotion images use UUID object paths in the public customer-media bucket.
+  Draft media is not surfaced by Nestly's customer readers, but it is not
+  described as private because possession of its object URL permits access.
+- Promotion wording assistance must preserve every merchant-supplied number,
+  date, eligibility condition, and term. It must not invent scarcity, prices,
+  availability, outcomes, or legal claims. The generated copy remains editable
+  and is never published without an explicit owner action.
+- Advanced broadcast, paid placement, and push promotional campaigns remain a
+  platform-mediated upsell and require appropriate consent and controls.
 
 ## Non-negotiable quality rule
 

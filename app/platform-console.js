@@ -58,10 +58,10 @@
       'Mismatch':'不匹配',
       'Overview':'概览','Onboarding':'客户入驻','Onboard':'入驻','Firms':'企业','Reports':'报告',
       'Billing':'账单','Commission payable':'应付佣金','Commission':'佣金','Sector modules':'行业模块',
-      'Sectors':'行业','Automation':'自动化','Automate':'自动化','Platform access':'平台权限','Access':'权限',
+      'Sectors':'行业','Automation':'自动化','Automate':'自动化','Platform access':'平台权限','Platform controls':'平台控制','Access':'权限',
       'Platform':'平台','Platform console':'平台控制台','Skip to platform content':'跳至平台内容',
       'Current platform access':'当前平台权限','Back to workspace':'返回工作区','Workspace':'工作区',
-      'Sign out':'退出登录','Main navigation':'主导航','Mobile navigation':'移动导航',
+      'Sign out':'退出登录','Main navigation':'主导航','Mobile navigation':'移动导航','More: {section}':'更多：{section}',
       'Super admin':'超级管理员','Sales staff':'销售人员','Admin':'管理员',
       'Only firms you created or are assigned to':'仅限您创建或获分配的企业',
       'All platform records':'所有平台记录','Read and write':'可读写','Read only':'只读',
@@ -123,10 +123,10 @@
       'Overview':'Ringkasan','Onboarding':'Penerimaan','Onboard':'Terima','Firms':'Firma','Reports':'Laporan',
       'Billing':'Pengebilan','Commission payable':'Komisen perlu dibayar','Commission':'Komisen',
       'Sector modules':'Modul sektor','Sectors':'Sektor','Automation':'Automasi','Automate':'Automasi',
-      'Platform access':'Akses platform','Access':'Akses','Platform':'Platform','Platform console':'Konsol platform',
+      'Platform access':'Akses platform','Platform controls':'Kawalan platform','Access':'Akses','Platform':'Platform','Platform console':'Konsol platform',
       'Skip to platform content':'Langkau ke kandungan platform','Current platform access':'Akses platform semasa',
       'Back to workspace':'Kembali ke ruang kerja','Workspace':'Ruang kerja','Sign out':'Log keluar',
-      'Main navigation':'Navigasi utama','Mobile navigation':'Navigasi mudah alih',
+      'Main navigation':'Navigasi utama','Mobile navigation':'Navigasi mudah alih','More: {section}':'Lagi: {section}',
       'Super admin':'Pentadbir super','Sales staff':'Kakitangan jualan','Admin':'Pentadbir',
       'Only firms you created or are assigned to':'Hanya firma yang anda cipta atau ditugaskan kepada anda',
       'All platform records':'Semua rekod platform','Read and write':'Baca dan tulis','Read only':'Baca sahaja',
@@ -252,6 +252,36 @@
       'The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.':'详细的客户关系阶段仍完整保留，用于审计和自动化。这五个运营阶段让日常工作无需横向滚动即可清楚阅读。打开卡片或使用阶段菜单进行准确移动。',
       'These modules become the sector template. Existing published versions remain unchanged.':'这些模块将成为行业模板，现有已发布版本保持不变。',
       'This module covers every record permitted by your platform role.':'此模块涵盖您平台角色获准访问的所有记录。',
+      'Continue in Reports':'前往报告','Operating queue':'运营队列','Age':'时长','Current status':'当前状态','Response target':'响应时限','Responsible':'负责人',
+      'Age not recorded':'未记录时长','{count} days old':'已持续 {count} 天','Onboarding is blocked':'入驻流程受阻',
+      'Follow-up is overdue':'跟进已逾期','Critical onboarding attention':'入驻流程需要紧急处理',
+      'Onboarding warning needs review':'需要查看入驻警告','No recent activity':'近期没有活动',
+      'Attention is due now':'现需处理','Next action is due today':'下一步行动今天到期',
+      'No next action is scheduled':'尚未安排下一步行动','{count} overdue tasks':'{count} 项逾期任务',
+      'SLA due now':'服务时限现已到期','Next action {when}':'下一步行动：{when}','SLA not scheduled':'尚未安排服务时限',
+      'Open case':'打开个案','Subscription payment is past due':'订阅付款已逾期',
+      'Provider payment attempts failed':'支付服务商扣款尝试失败','{count} days past due':'已逾期 {count} 天',
+      '{count} failed attempts':'{count} 次失败尝试','Payment follow-up due':'应跟进付款','Open billing':'打开账单',
+      'Commission accrual':'佣金应计','Commission payment requires review':'需要审核佣金付款',
+      'Due {when}':'到期：{when}','Payment review required':'需要审核付款','Open commissions':'打开佣金',
+      'Work the highest-priority item first.':'请先处理最高优先级事项。',
+      'You are caught up':'工作已跟上','No overdue, due-today, blocked, stale or unscheduled work is in your current scope.':'当前范围内没有逾期、今天到期、受阻、长期未跟进或未安排的工作。',
+      '{count} more items remain in the linked work areas.':'相关工作区域还有 {count} 项。',
+      'Owner application awaits a decision':'负责人申请等待决定','Review due {when}':'审核到期：{when}',
+      'Approval review required':'需要审批审核','Review application':'查看申请','Applications':'申请',
+      'Approve application':'批准申请','What approval does':'批准后的结果','What rejection does':'拒绝后的结果',
+      'Approving issues a one-time secure owner invitation. It does not activate the firm; the owner must use the invitation to create the approved account and continue onboarding.':'批准后会发出一次性安全负责人邀请，但不会激活企业；负责人必须使用邀请创建获批账户并继续入驻流程。',
+      'Rejecting keeps owner account creation and firm activation blocked. The applicant must submit a revised application before access can be approved.':'拒绝后会继续阻止负责人创建账户及激活企业；申请人必须提交修订后的申请，方可再次审批。',
+      'System reconciliation incident':'系统对账事件','Reconciliation exception for {object}':'{object} 对账异常',
+      'Automation run requires review':'自动化运行需要审核','Review immediately':'立即审核',
+      'Platform operations':'平台运营','Open automation':'打开自动化',
+      'A prioritized operating queue from live onboarding, billing and commission records.':'根据实时入驻、账单和佣金记录生成的优先运营队列。',
+      'A prioritized operating queue from live onboarding, billing, commission and automation records.':'根据实时入驻、账单、佣金和自动化记录生成的优先运营队列。',
+      'Resolve blocked and overdue work first, then due-today and unscheduled follow-ups.':'先处理受阻和逾期工作，再处理今天到期及未安排的跟进。',
+      'Work only the firms you created or are assigned to, ordered by urgency.':'仅处理您创建或获分配的企业，并按紧急程度排序。',
+      'Your work today':'您今天的工作','Start with blocked or overdue firms. Every item stays inside your assigned or self-created scope.':'从受阻或逾期企业开始；每一项都只来自您获分配或自行创建的范围。',
+      'Review the highest-priority work across your permitted firms.':'查看获准企业中优先级最高的工作。',
+      'Work areas':'工作区域','Open onboarding':'打开入驻流程',
       'Today':'今天','Tomorrow':'明天','Unmapped':'未映射','Warning':'警告','Yesterday':'昨天',
       'Your account always has every module with read and write access. Admins default to full access and can be customized here. Sales staff are restricted to their own-created or assigned CRM records and scoped reports.':'您的账户始终拥有所有模块的读写权限。管理员默认拥有完整权限，并可在此自定义。销售人员仅能访问自己创建或获分配的客户关系记录和范围报告。',
       'pending':'待处理','{count} days ago':'{count} 天前','{title} unavailable':'{title}不可用'
@@ -322,6 +352,36 @@
       'The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.':'Peringkat CRM terperinci kekal untuk audit dan automasi. Lima laluan ini menjadikan kerja harian mudah dibaca tanpa tatal mendatar. Buka kad atau gunakan menu peringkatnya untuk pemindahan tepat.',
       'These modules become the sector template. Existing published versions remain unchanged.':'Modul ini menjadi templat sektor. Versi diterbitkan sedia ada tidak berubah.',
       'This module covers every record permitted by your platform role.':'Modul ini merangkumi setiap rekod yang dibenarkan oleh peranan platform anda.',
+      'Continue in Reports':'Teruskan dalam Laporan','Operating queue':'Baris gilir operasi','Age':'Tempoh','Current status':'Status semasa','Response target':'Sasaran respons','Responsible':'Penanggungjawab',
+      'Age not recorded':'Tempoh tidak direkodkan','{count} days old':'Berusia {count} hari','Onboarding is blocked':'Penerimaan disekat',
+      'Follow-up is overdue':'Susulan tertunggak','Critical onboarding attention':'Penerimaan memerlukan perhatian kritikal',
+      'Onboarding warning needs review':'Amaran penerimaan perlu disemak','No recent activity':'Tiada aktiviti terkini',
+      'Attention is due now':'Perhatian diperlukan sekarang','Next action is due today':'Tindakan seterusnya perlu dibuat hari ini',
+      'No next action is scheduled':'Tiada tindakan seterusnya dijadualkan','{count} overdue tasks':'{count} tugas tertunggak',
+      'SLA due now':'SLA perlu sekarang','Next action {when}':'Tindakan seterusnya {when}','SLA not scheduled':'SLA belum dijadualkan',
+      'Open case':'Buka kes','Subscription payment is past due':'Bayaran langganan tertunggak',
+      'Provider payment attempts failed':'Percubaan bayaran penyedia gagal','{count} days past due':'Tertunggak {count} hari',
+      '{count} failed attempts':'{count} percubaan gagal','Payment follow-up due':'Susulan bayaran diperlukan','Open billing':'Buka pengebilan',
+      'Commission accrual':'Akruan komisen','Commission payment requires review':'Bayaran komisen perlu disemak',
+      'Due {when}':'Perlu {when}','Payment review required':'Semakan bayaran diperlukan','Open commissions':'Buka komisen',
+      'Work the highest-priority item first.':'Selesaikan perkara berkeutamaan tertinggi dahulu.',
+      'You are caught up':'Semua kerja terkini','No overdue, due-today, blocked, stale or unscheduled work is in your current scope.':'Tiada kerja tertunggak, perlu hari ini, disekat, lama tidak diurus atau belum dijadualkan dalam skop semasa.',
+      '{count} more items remain in the linked work areas.':'{count} perkara lagi kekal dalam kawasan kerja berkaitan.',
+      'Owner application awaits a decision':'Permohonan pemilik menunggu keputusan','Review due {when}':'Semakan perlu {when}',
+      'Approval review required':'Semakan kelulusan diperlukan','Review application':'Semak permohonan','Applications':'Permohonan',
+      'Approve application':'Luluskan permohonan','What approval does':'Kesan kelulusan','What rejection does':'Kesan penolakan',
+      'Approving issues a one-time secure owner invitation. It does not activate the firm; the owner must use the invitation to create the approved account and continue onboarding.':'Kelulusan mengeluarkan jemputan pemilik selamat sekali guna. Ia tidak mengaktifkan firma; pemilik mesti menggunakan jemputan untuk mencipta akaun yang diluluskan dan meneruskan penerimaan.',
+      'Rejecting keeps owner account creation and firm activation blocked. The applicant must submit a revised application before access can be approved.':'Penolakan terus menyekat penciptaan akaun pemilik dan pengaktifan firma. Pemohon mesti menghantar permohonan disemak sebelum akses boleh diluluskan.',
+      'System reconciliation incident':'Insiden penyelarasan sistem','Reconciliation exception for {object}':'Pengecualian penyelarasan untuk {object}',
+      'Automation run requires review':'Larian automasi perlu disemak','Review immediately':'Semak segera',
+      'Platform operations':'Operasi platform','Open automation':'Buka automasi',
+      'A prioritized operating queue from live onboarding, billing, commission and automation records.':'Baris gilir operasi berkeutamaan daripada rekod penerimaan, pengebilan, komisen dan automasi langsung.',
+      'A prioritized operating queue from live onboarding, billing and commission records.':'Baris gilir operasi berkeutamaan daripada rekod penerimaan, pengebilan dan komisen langsung.',
+      'Resolve blocked and overdue work first, then due-today and unscheduled follow-ups.':'Selesaikan kerja disekat dan tertunggak dahulu, kemudian susulan hari ini dan belum dijadualkan.',
+      'Work only the firms you created or are assigned to, ordered by urgency.':'Urus hanya firma yang anda cipta atau ditugaskan, disusun mengikut keutamaan.',
+      'Your work today':'Kerja anda hari ini','Start with blocked or overdue firms. Every item stays inside your assigned or self-created scope.':'Mulakan dengan firma disekat atau tertunggak. Setiap perkara kekal dalam skop ditugaskan atau ciptaan sendiri.',
+      'Review the highest-priority work across your permitted firms.':'Semak kerja berkeutamaan tertinggi dalam firma yang dibenarkan.',
+      'Work areas':'Kawasan kerja','Open onboarding':'Buka penerimaan',
       'Today':'Hari ini','Tomorrow':'Esok','Unmapped':'Belum dipetakan','Warning':'Amaran','Yesterday':'Semalam',
       'Your account always has every module with read and write access. Admins default to full access and can be customized here. Sales staff are restricted to their own-created or assigned CRM records and scoped reports.':'Akaun anda sentiasa mempunyai akses baca dan tulis untuk setiap modul. Pentadbir mendapat akses penuh secara lalai dan boleh disesuaikan di sini. Kakitangan jualan dihadkan kepada rekod CRM yang mereka cipta atau ditugaskan serta laporan berskop.',
       'pending':'menunggu','{count} days ago':'{count} hari lalu','{title} unavailable':'{title} tidak tersedia'
@@ -1620,6 +1680,288 @@
       '{count} subscriptions. Open a firm for invoices, attempts and available commands.':'{count} langganan. Buka firma untuk invois, percubaan dan arahan yang tersedia.'
     })
   });
+  const PLATFORM_COPY_V105=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Enter an amount with no more than two decimal places.':'请输入金额，最多保留两位小数。',
+      'Enter a percentage from 0 to 100 with no more than two decimal places.':'请输入 0 至 100 的百分比，最多保留两位小数。',
+      'Paged snapshot':'分页快照',
+      '{shown} of {count} matching firms shown as at {date}. Search runs on the server; load another page only when needed.':'截至 {date}，已显示 {count} 家匹配企业中的 {shown} 家。搜索在服务器执行，仅在需要时加载下一页。',
+      'Load 50 more firms':'再加载 50 家企业',
+      'Manage firm modules':'管理企业模块',
+      'Selected branch':'已选分店',
+      'Editing':'正在编辑',
+      '{module} access':'{module}权限',
+      'No module access changes to save.':'没有需要保存的模块权限更改。',
+      '{count} module settings updated.':'已更新 {count} 项模块设置。',
+      'Loading next 50 firms…':'正在加载接下来的 50 家企业…',
+      'Retry next 50 firms':'重试加载接下来的 50 家企业',
+      '{shown} of {count} firms loaded. Search and the main status filters run across the complete directory.':'已加载 {count} 家企业中的 {shown} 家。搜索及主要状态筛选会覆盖完整目录。',
+      '{shown} of {count} firms loaded.':'已加载 {count} 家企业中的 {shown} 家。',
+      'Firm actions':'企业操作',
+      'More actions':'更多操作',
+      'Edit firm':'编辑企业',
+      'Change owner':'更换负责人',
+      'Record not proceeding':'记录不继续',
+      'Log activity':'记录活动',
+      'Log {type}':'记录{type}',
+      'One place for each type of module decision':'每类模块决策只在一个位置管理',
+      'Sector defaults are managed here. To assign a sector or change one firm or branch, open the firm in Firms and use Firm module policy.':'行业默认模块在此管理。若要分配行业或更改单个企业或分店，请在“企业”中打开该企业并使用企业模块政策。',
+      'Advanced provider mapping':'高级支付服务商映射',
+      'Only change these values when connecting an already-created Stripe price.':'仅在连接已创建的 Stripe 价格时更改这些值。',
+      'Enter customer-facing amounts in dollars. Nestly stores the exact cents automatically.':'请输入面向客户的新币金额；Nestly 会自动精确存储为分。',
+      'Existing Nestly user':'现有 Nestly 用户',
+      'If the connection is interrupted, submit this same decision again. Nestly will revoke the unseen link and return a fresh secure invitation.':'若连接中断，请再次提交相同决定。Nestly 会撤销未显示的链接并返回新的安全邀请。',
+      'Unnamed user':'未命名用户',
+      '{count} matching users found.':'找到 {count} 个匹配用户。',
+      'No matching Nestly user was found.':'未找到匹配的 Nestly 用户。',
+      'User search is unavailable.':'用户搜索暂不可用。',
+      'Unnamed consultant':'未命名顾问',
+      'Choose a firm.':'请选择企业。',
+      'Today stays operational':'“今天”保持专注于运营',
+      'Firm browsing, report generation, pricing and platform configuration stay in their dedicated work areas so this page remains a short decision queue.':'企业浏览、报告生成、定价及平台配置保留在各自工作区，让此页始终保持为简短的决策队列。',
+      'Firm 360':'企业 360',
+      'Read-only firm view · database-enforced assignment scope':'只读企业视图 · 数据库强制执行分配范围',
+      'Open report builder':'打开报告生成器',
+      'System health':'系统运行状况',
+      'Save module access':'保存模块权限',
+      'Why are you changing access?':'为什么要更改权限？',
+      'One short note covers every changed module.':'一条简短备注即可说明所有模块更改。',
+      'Expected subscription (SGD)':'预计订阅费（新币）',
+      'Expected setup fee (SGD)':'预计设置费（新币）',
+      'Unit price (SGD)':'单价（新币）',
+      'Discount (%)':'折扣（%）',
+      'Setup fee (SGD)':'设置费（新币）',
+      'Amount collected (SGD)':'已收金额（新币）',
+      'Assign to':'分配给',
+      'Proposed value (SGD)':'建议金额（新币）',
+      'Accepted amount (SGD)':'接受金额（新币）',
+      'Onboarding owner':'入驻负责人',
+      'Choose consultant':'选择顾问',
+      'Define the reusable default module template for each sector.':'为每个行业定义可重复使用的默认模块模板。',
+      'Resolve subscription, invoice and payment exceptions. Technical reconciliation history is in System health.':'处理订阅、发票及付款异常。技术对账历史记录位于“系统运行状况”。',
+      'Base subscription (SGD)':'基础订阅费（新币）',
+      'Per-seat charge (SGD)':'每席位费用（新币）',
+      'Commission is calculated on subscription amounts before GST. Enter money in SGD and rates as percentages.':'佣金按 GST 前的订阅金额计算。金额以新币输入，费率以百分比输入。',
+      'Set the first-year, service-anniversary bonus, and renewal percentages paid to each consultant tier.':'设置各顾问级别的首年、服务周年奖金及续约佣金百分比。',
+      'Find Nestly user by email or name':'按电邮或姓名查找 Nestly 用户',
+      'Search for the staff account that will receive consultant access.':'搜索将获得顾问权限的员工账户。',
+      'Year-one base rate (%)':'首年基础费率（%）',
+      '12-month service bonus (%)':'满 12 个月服务奖金（%）',
+      'Renewal rate (%)':'续约费率（%）',
+      'Approved commission':'已批准佣金',
+      'Payment amount (SGD)':'付款金额（新币）',
+      'Paid amount (SGD)':'已付金额（新币）',
+      'Technical reconciliation runs and provider event health. Resolve affected firm payments in Finance.':'查看技术对账运行及支付服务商事件状态；受影响企业的付款应在“财务”中处理。',
+      'Loading this firm’s performance and customer intelligence…':'正在加载此企业的绩效及顾客洞察…',
+      'Platform access could not be checked':'无法验证平台权限',
+      'This account does not currently have an active platform role.':'此账户目前没有有效的平台角色。',
+      'Access required':'需要平台权限',
+      'Try again':'重试',
+      'Nestly could not verify this account’s platform role. Your access has not been removed. Use the button below to check again.':'Nestly 暂时无法验证此账户的平台角色。您的权限并未被移除，请使用下方按钮再次检查。',
+      'Manage branch modules':'管理分店模块',
+      'Reset all to firm settings':'全部恢复为企业设置',
+      'Reset all to sector defaults':'全部恢复为行业默认设置',
+      'Use firm setting':'使用企业设置',
+      'Use sector default':'使用行业默认设置',
+      'Only differences for this branch are saved. Everything else continues to follow the firm.':'仅保存此分店与企业设置不同的项目；其余项目继续沿用企业设置。',
+      'Only differences from the sector template are saved. Future sector improvements still flow through inherited modules.':'仅保存与行业模板不同的项目；继承的模块仍会自动采用日后的行业模板改进。',
+      'Essentials':'基础功能','Customer operations':'顾客运营','Commerce':'交易','Growth':'增长','Insights':'洞察','Finance':'财务',
+      'Dashboard':'首页','Quick earn':'快速积分','Customers':'顾客','Appointments':'预约','Sales':'销售','Services':'服务','Bookings':'预订','Waitlist':'候补名单','Packages':'配套','Loyalty':'忠诚计划','Bring-backs':'召回顾客','Referrals':'推荐','Memberships':'会员制','Gift cards':'礼品卡','Reports':'报告','Staff performance':'员工绩效','Daily report':'每日报告','P&L':'损益','Expenses':'支出',
+      'Daily business overview and priorities.':'每日业务概览与优先事项。',
+      'Record purchases, points and redemptions.':'记录消费、积分与兑换。',
+      'Customer profiles, visits and balances.':'顾客档案、到访与余额。',
+      'Team calendar and appointment management.':'团队日历与预约管理。',
+      'Sales history, corrections and payment records.':'销售记录、更正与付款记录。',
+      'Services, prices and duration options.':'服务、价格与时长选项。',
+      'Customer booking requests and confirmations.':'顾客预订申请与确认。',
+      'Fill cancelled slots from a waiting list.':'使用候补名单填补取消的时段。',
+      'Sell and consume multi-session packages.':'销售并核销多次服务配套。',
+      'Points, stamps, tiers and rewards.':'积分、印花、等级与奖励。',
+      'Win-back audiences and return offers.':'召回顾客群与回流优惠。',
+      'Customer referral programmes.':'顾客推荐计划。',
+      'Recurring customer memberships.':'定期顾客会员制。',
+      'Issue and redeem gift-card value.':'发行与兑换礼品卡金额。',
+      'Business performance reports.':'业务绩效报告。',
+      'Team activity and performance views.':'团队活动与绩效视图。',
+      'Daily operating summary.':'每日运营摘要。',
+      'Profit-and-loss view.':'损益视图。',
+      'Business expense records.':'企业支出记录。',
+      'Search assigned firms':'搜索获分配的企业',
+      '{shown} of {count} matching firms loaded. Search runs on the server.':'已加载 {count} 家匹配企业中的 {shown} 家。搜索在服务器执行。',
+      'Selected assigned firm':'已选择的获分配企业',
+      'No assigned firms found':'未找到获分配的企业',
+      'Loaded securely from the report link':'已从报告链接安全加载',
+      'Operational preview: {shown} of {count} firms are loaded. Use Onboarding search for the complete scoped directory.':'运营预览：已加载 {count} 家企业中的 {shown} 家。请使用“入驻”搜索完整的权限范围目录。',
+      'Complete scoped directory loaded for this snapshot.':'此快照的完整权限范围目录已加载。',
+      'Unavailable — no records were used.':'不可用——未使用任何记录。',
+      '{loaded} of {total} records loaded.':'已加载 {total} 条记录中的 {loaded} 条。',
+      'At least {count} records loaded; this source does not expose another safe page.':'已加载至少 {count} 条记录；此来源没有提供下一页的安全读取方式。',
+      '{count} records checked completely.':'已完整检查 {count} 条记录。',
+      'Coverage complete — all exception sources were checked.':'覆盖完整——所有异常来源均已检查。',
+      'Coverage incomplete — Today may omit additional work.':'覆盖不完整——“今天”可能遗漏其他工作。',
+      'No work is visible in the loaded coverage':'当前已加载范围内没有可见工作',
+      'Today is incomplete. Open the affected work areas before treating the queue as caught up.':'“今天”的数据不完整。在将队列视为已处理完毕前，请打开受影响的工作区检查。',
+      'Onboarding attention':'入驻待办',
+      'Owner applications':'企业主申请',
+      'Commissions':'佣金',
+      'Total firms':'企业总数',
+      'Applications awaiting approval':'待审批申请',
+      'Billing attention':'账单待办',
+      'The exact firm total is shown, but only the first directory page is present on Today.':'企业总数准确，但“今天”仅载入企业目录的第一页。',
+      'The safe paging guard was reached; use Onboarding before declaring the queue clear.':'已达到安全分页上限；在确认队列已清空前，请到“入驻”检查。',
+      'The billing reader has no cursor or total count.':'账单读取接口没有游标或总数。',
+      'The commission accrual reader has no cursor or total count.':'佣金应计读取接口没有游标或总数。',
+      'The application reader reports more submitted applications but exposes no cursor.':'申请读取接口显示仍有更多已提交申请，但没有提供游标。',
+      'Latest-run exception detail was unavailable; the run itself remains actionable.':'无法取得最近一次运行的异常详情；该运行本身仍需处理。',
+      'Item-level exceptions were loaded only for the latest run; open System health for full review.':'仅载入最近一次运行的项目级异常；请打开“系统运行状况”进行完整检查。',
+      'Subscription billing':'订阅计费','Failures':'失败次数',
+      'Technical reconciliation remains in System health.':'技术对账保留在“系统运行状况”中。',
+      'Reconciliation exceptions':'对账异常',
+      '{count} subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue. Technical reconciliation remains in System health.':'所选企业范围内有 {count} 条订阅记录。GST 保持可见且不计入可佣金收入。技术对账保留在“系统运行状况”中。',
+      '{shown} of {count} matching firms loaded. No selection means every firm in the selected sector.':'已加载 {count} 家匹配企业中的 {shown} 家。若未选择企业，则报告涵盖所选行业的所有企业。',
+      'Firm / UEN':'企业／UEN','First purchase':'首次消费','Last purchase':'最近消费','All sectors':'所有行业','No primary contact':'无主要联系人'
+    }),
+    ms:Object.freeze({
+      'Enter an amount with no more than two decimal places.':'Masukkan amaun dengan tidak lebih daripada dua tempat perpuluhan.',
+      'Enter a percentage from 0 to 100 with no more than two decimal places.':'Masukkan peratusan antara 0 hingga 100 dengan tidak lebih daripada dua tempat perpuluhan.',
+      'Paged snapshot':'Petikan berhalaman',
+      '{shown} of {count} matching firms shown as at {date}. Search runs on the server; load another page only when needed.':'Setakat {date}, {shown} daripada {count} firma sepadan dipaparkan. Carian berjalan pada pelayan; muatkan halaman seterusnya hanya apabila diperlukan.',
+      'Load 50 more firms':'Muatkan 50 firma lagi',
+      'Manage firm modules':'Urus modul firma',
+      'Selected branch':'Cawangan dipilih',
+      'Editing':'Sedang menyunting',
+      '{module} access':'Akses {module}',
+      'No module access changes to save.':'Tiada perubahan akses modul untuk disimpan.',
+      '{count} module settings updated.':'{count} tetapan modul dikemas kini.',
+      'Loading next 50 firms…':'Memuatkan 50 firma seterusnya…',
+      'Retry next 50 firms':'Cuba semula 50 firma seterusnya',
+      '{shown} of {count} firms loaded. Search and the main status filters run across the complete directory.':'{shown} daripada {count} firma dimuatkan. Carian dan penapis status utama meliputi keseluruhan direktori.',
+      '{shown} of {count} firms loaded.':'{shown} daripada {count} firma dimuatkan.',
+      'Firm actions':'Tindakan firma',
+      'More actions':'Lagi tindakan',
+      'Edit firm':'Sunting firma',
+      'Change owner':'Tukar pemilik',
+      'Record not proceeding':'Rekod tidak diteruskan',
+      'Log activity':'Rekod aktiviti',
+      'Log {type}':'Rekod {type}',
+      'One place for each type of module decision':'Satu tempat bagi setiap jenis keputusan modul',
+      'Sector defaults are managed here. To assign a sector or change one firm or branch, open the firm in Firms and use Firm module policy.':'Lalai sektor diuruskan di sini. Untuk menetapkan sektor atau mengubah satu firma atau cawangan, buka firma dalam Firma dan gunakan polisi modul firma.',
+      'Advanced provider mapping':'Pemetaan penyedia lanjutan',
+      'Only change these values when connecting an already-created Stripe price.':'Ubah nilai ini hanya apabila menyambungkan harga Stripe yang telah dicipta.',
+      'Enter customer-facing amounts in dollars. Nestly stores the exact cents automatically.':'Masukkan amaun pelanggan dalam dolar. Nestly menyimpan nilai sen yang tepat secara automatik.',
+      'Existing Nestly user':'Pengguna Nestly sedia ada',
+      'If the connection is interrupted, submit this same decision again. Nestly will revoke the unseen link and return a fresh secure invitation.':'Jika sambungan terputus, hantar semula keputusan yang sama. Nestly akan membatalkan pautan yang belum dipaparkan dan memberikan jemputan selamat yang baharu.',
+      'Unnamed user':'Pengguna tanpa nama',
+      '{count} matching users found.':'{count} pengguna sepadan ditemui.',
+      'No matching Nestly user was found.':'Tiada pengguna Nestly sepadan ditemui.',
+      'User search is unavailable.':'Carian pengguna tidak tersedia.',
+      'Unnamed consultant':'Perunding tanpa nama',
+      'Choose a firm.':'Pilih sebuah firma.',
+      'Today stays operational':'Hari ini kekal berfokus pada operasi',
+      'Firm browsing, report generation, pricing and platform configuration stay in their dedicated work areas so this page remains a short decision queue.':'Pelayaran firma, penjanaan laporan, penetapan harga dan konfigurasi platform kekal dalam ruang kerja khusus supaya halaman ini menjadi baris gilir keputusan yang ringkas.',
+      'Firm 360':'Firma 360',
+      'Read-only firm view · database-enforced assignment scope':'Paparan firma baca sahaja · skop tugasan dikuatkuasakan pangkalan data',
+      'Open report builder':'Buka pembina laporan',
+      'System health':'Kesihatan sistem',
+      'Save module access':'Simpan akses modul',
+      'Why are you changing access?':'Mengapa anda mengubah akses?',
+      'One short note covers every changed module.':'Satu nota ringkas meliputi semua modul yang diubah.',
+      'Expected subscription (SGD)':'Langganan dijangka (SGD)',
+      'Expected setup fee (SGD)':'Yuran persediaan dijangka (SGD)',
+      'Unit price (SGD)':'Harga seunit (SGD)',
+      'Discount (%)':'Diskaun (%)',
+      'Setup fee (SGD)':'Yuran persediaan (SGD)',
+      'Amount collected (SGD)':'Amaun dikutip (SGD)',
+      'Assign to':'Tetapkan kepada',
+      'Proposed value (SGD)':'Nilai dicadangkan (SGD)',
+      'Accepted amount (SGD)':'Amaun diterima (SGD)',
+      'Onboarding owner':'Pemilik penerimaan',
+      'Choose consultant':'Pilih perunding',
+      'Define the reusable default module template for each sector.':'Takrifkan templat modul lalai yang boleh digunakan semula bagi setiap sektor.',
+      'Resolve subscription, invoice and payment exceptions. Technical reconciliation history is in System health.':'Selesaikan pengecualian langganan, invois dan bayaran. Sejarah penyelarasan teknikal berada dalam Kesihatan sistem.',
+      'Base subscription (SGD)':'Langganan asas (SGD)',
+      'Per-seat charge (SGD)':'Caj setiap tempat (SGD)',
+      'Commission is calculated on subscription amounts before GST. Enter money in SGD and rates as percentages.':'Komisen dikira atas amaun langganan sebelum GST. Masukkan wang dalam SGD dan kadar sebagai peratusan.',
+      'Set the first-year, service-anniversary bonus, and renewal percentages paid to each consultant tier.':'Tetapkan peratusan tahun pertama, bonus ulang tahun perkhidmatan dan pembaharuan bagi setiap peringkat perunding.',
+      'Find Nestly user by email or name':'Cari pengguna Nestly melalui e-mel atau nama',
+      'Search for the staff account that will receive consultant access.':'Cari akaun kakitangan yang akan menerima akses perunding.',
+      'Year-one base rate (%)':'Kadar asas tahun pertama (%)',
+      '12-month service bonus (%)':'Bonus perkhidmatan 12 bulan (%)',
+      'Renewal rate (%)':'Kadar pembaharuan (%)',
+      'Approved commission':'Komisen diluluskan',
+      'Payment amount (SGD)':'Amaun bayaran (SGD)',
+      'Paid amount (SGD)':'Amaun dibayar (SGD)',
+      'Technical reconciliation runs and provider event health. Resolve affected firm payments in Finance.':'Lihat larian penyelarasan teknikal dan kesihatan peristiwa penyedia. Selesaikan bayaran firma terjejas dalam Kewangan.',
+      'Loading this firm’s performance and customer intelligence…':'Memuatkan prestasi dan cerapan pelanggan firma ini…',
+      'Platform access could not be checked':'Akses platform tidak dapat disemak',
+      'This account does not currently have an active platform role.':'Akaun ini tidak mempunyai peranan platform yang aktif pada masa ini.',
+      'Access required':'Akses diperlukan',
+      'Try again':'Cuba lagi',
+      'Nestly could not verify this account’s platform role. Your access has not been removed. Use the button below to check again.':'Nestly tidak dapat mengesahkan peranan platform akaun ini buat sementara. Akses anda belum dibuang. Gunakan butang di bawah untuk menyemak semula.',
+      'Manage branch modules':'Urus modul cawangan',
+      'Reset all to firm settings':'Tetapkan semula semua kepada tetapan firma',
+      'Reset all to sector defaults':'Tetapkan semula semua kepada lalai sektor',
+      'Use firm setting':'Gunakan tetapan firma',
+      'Use sector default':'Gunakan lalai sektor',
+      'Only differences for this branch are saved. Everything else continues to follow the firm.':'Hanya perbezaan bagi cawangan ini disimpan. Tetapan lain terus mengikut firma.',
+      'Only differences from the sector template are saved. Future sector improvements still flow through inherited modules.':'Hanya perbezaan daripada templat sektor disimpan. Modul diwarisi terus menerima penambahbaikan sektor akan datang.',
+      'Essentials':'Asas','Customer operations':'Operasi pelanggan','Commerce':'Perdagangan','Growth':'Pertumbuhan','Insights':'Cerapan','Finance':'Kewangan',
+      'Dashboard':'Papan pemuka','Quick earn':'Pendapatan pantas','Customers':'Pelanggan','Appointments':'Janji temu','Sales':'Jualan','Services':'Perkhidmatan','Bookings':'Tempahan','Waitlist':'Senarai menunggu','Packages':'Pakej','Loyalty':'Kesetiaan','Bring-backs':'Bawa kembali','Referrals':'Rujukan','Memberships':'Keahlian','Gift cards':'Kad hadiah','Reports':'Laporan','Staff performance':'Prestasi kakitangan','Daily report':'Laporan harian','P&L':'Untung rugi','Expenses':'Perbelanjaan',
+      'Daily business overview and priorities.':'Gambaran harian perniagaan dan keutamaan.',
+      'Record purchases, points and redemptions.':'Rekod pembelian, mata dan penebusan.',
+      'Customer profiles, visits and balances.':'Profil, lawatan dan baki pelanggan.',
+      'Team calendar and appointment management.':'Kalendar pasukan dan pengurusan janji temu.',
+      'Sales history, corrections and payment records.':'Sejarah jualan, pembetulan dan rekod bayaran.',
+      'Services, prices and duration options.':'Perkhidmatan, harga dan pilihan tempoh.',
+      'Customer booking requests and confirmations.':'Permintaan serta pengesahan tempahan pelanggan.',
+      'Fill cancelled slots from a waiting list.':'Isi slot dibatalkan daripada senarai menunggu.',
+      'Sell and consume multi-session packages.':'Jual dan gunakan pakej berbilang sesi.',
+      'Points, stamps, tiers and rewards.':'Mata, cop, peringkat dan ganjaran.',
+      'Win-back audiences and return offers.':'Kumpulan pelanggan kembali dan tawaran pulang.',
+      'Customer referral programmes.':'Program rujukan pelanggan.',
+      'Recurring customer memberships.':'Keahlian pelanggan berulang.',
+      'Issue and redeem gift-card value.':'Keluarkan dan tebus nilai kad hadiah.',
+      'Business performance reports.':'Laporan prestasi perniagaan.',
+      'Team activity and performance views.':'Paparan aktiviti dan prestasi pasukan.',
+      'Daily operating summary.':'Ringkasan operasi harian.',
+      'Profit-and-loss view.':'Paparan untung rugi.',
+      'Business expense records.':'Rekod perbelanjaan perniagaan.',
+      'Search assigned firms':'Cari firma ditugaskan',
+      '{shown} of {count} matching firms loaded. Search runs on the server.':'{shown} daripada {count} firma sepadan dimuatkan. Carian berjalan pada pelayan.',
+      'Selected assigned firm':'Firma ditugaskan yang dipilih',
+      'No assigned firms found':'Tiada firma ditugaskan ditemui',
+      'Loaded securely from the report link':'Dimuatkan dengan selamat daripada pautan laporan',
+      'Operational preview: {shown} of {count} firms are loaded. Use Onboarding search for the complete scoped directory.':'Pratonton operasi: {shown} daripada {count} firma dimuatkan. Gunakan carian Penerimaan untuk direktori skop lengkap.',
+      'Complete scoped directory loaded for this snapshot.':'Direktori skop lengkap dimuatkan untuk petikan ini.',
+      'Unavailable — no records were used.':'Tidak tersedia — tiada rekod digunakan.',
+      '{loaded} of {total} records loaded.':'{loaded} daripada {total} rekod dimuatkan.',
+      'At least {count} records loaded; this source does not expose another safe page.':'Sekurang-kurangnya {count} rekod dimuatkan; sumber ini tidak menyediakan halaman selamat yang seterusnya.',
+      '{count} records checked completely.':'{count} rekod telah disemak sepenuhnya.',
+      'Coverage complete — all exception sources were checked.':'Liputan lengkap — semua sumber pengecualian telah disemak.',
+      'Coverage incomplete — Today may omit additional work.':'Liputan tidak lengkap — Hari ini mungkin tidak memaparkan kerja tambahan.',
+      'No work is visible in the loaded coverage':'Tiada kerja kelihatan dalam liputan yang dimuatkan',
+      'Today is incomplete. Open the affected work areas before treating the queue as caught up.':'Data Hari ini tidak lengkap. Buka ruang kerja yang terjejas sebelum menganggap baris gilir telah selesai.',
+      'Onboarding attention':'Tindakan penerimaan',
+      'Owner applications':'Permohonan pemilik',
+      'Commissions':'Komisen',
+      'Total firms':'Jumlah firma',
+      'Applications awaiting approval':'Permohonan menunggu kelulusan',
+      'Billing attention':'Tindakan pengebilan',
+      'The exact firm total is shown, but only the first directory page is present on Today.':'Jumlah firma adalah tepat, tetapi Hari ini hanya memuatkan halaman pertama direktori.',
+      'The safe paging guard was reached; use Onboarding before declaring the queue clear.':'Had halaman selamat telah dicapai; semak Penerimaan sebelum menganggap baris gilir kosong.',
+      'The billing reader has no cursor or total count.':'Pembaca pengebilan tidak menyediakan kursor atau jumlah keseluruhan.',
+      'The commission accrual reader has no cursor or total count.':'Pembaca akruan komisen tidak menyediakan kursor atau jumlah keseluruhan.',
+      'The application reader reports more submitted applications but exposes no cursor.':'Pembaca permohonan melaporkan lebih banyak permohonan dihantar tetapi tidak menyediakan kursor.',
+      'Latest-run exception detail was unavailable; the run itself remains actionable.':'Butiran pengecualian larian terkini tidak tersedia; larian itu masih memerlukan tindakan.',
+      'Item-level exceptions were loaded only for the latest run; open System health for full review.':'Pengecualian peringkat item hanya dimuatkan untuk larian terkini; buka Kesihatan sistem untuk semakan penuh.',
+      'Subscription billing':'Pengebilan langganan','Failures':'Kegagalan',
+      'Technical reconciliation remains in System health.':'Penyelarasan teknikal kekal dalam Kesihatan sistem.',
+      'Reconciliation exceptions':'Pengecualian penyelarasan',
+      '{count} subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue. Technical reconciliation remains in System health.':'Terdapat {count} rekod langganan dalam skop firma dipilih. GST kekal kelihatan dan tidak dianggap sebagai hasil berkomisen. Penyelarasan teknikal kekal dalam Kesihatan sistem.',
+      '{shown} of {count} matching firms loaded. No selection means every firm in the selected sector.':'{shown} daripada {count} firma sepadan dimuatkan. Tanpa pilihan firma, laporan merangkumi semua firma dalam sektor dipilih.',
+      'Firm / UEN':'Firma / UEN','First purchase':'Pembelian pertama','Last purchase':'Pembelian terakhir','All sectors':'Semua sektor','No primary contact':'Tiada hubungan utama'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -1631,6 +1973,7 @@
       ??PLATFORM_COPY_STRICT[platformLocale]?.[key]
       ??PLATFORM_COPY_META[platformLocale]?.[key]
       ??PLATFORM_COPY_RENDERERS[platformLocale]?.[key]
+      ??PLATFORM_COPY_V105[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -1664,19 +2007,31 @@
       for(const field of fields)if(typeof next[field]==='string')next[field]=pt(next[field]);
       return next;
     };
-    return new Proxy(CUI,{get(target,property,receiver){
-      const value=Reflect.get(target,property,receiver);
+    /* CustomerUI is intentionally frozen. A Proxy may not return a wrapped value for a
+       non-configurable, read-only property on its target, so proxying CustomerUI directly
+       crashes at the first method read. Proxy a configurable facade and always invoke the
+       original helper as the receiver instead. */
+    const facade=Object.create(Object.getPrototypeOf(CUI));
+    Reflect.ownKeys(CUI).forEach(property=>{
+      const descriptor=Object.getOwnPropertyDescriptor(CUI,property);
+      if(!descriptor)return;
+      Object.defineProperty(facade,property,'value' in descriptor
+        ?{...descriptor,writable:true,configurable:true}
+        :{...descriptor,configurable:true});
+    });
+    return new Proxy(facade,{get(_target,property){
+      const value=Reflect.get(CUI,property,CUI);
       if(typeof value!=='function')return value;
-      if(property==='pageHeader')return options=>value.call(target,translateOptions(options,['title','subtitle']));
-      if(property==='card')return options=>value.call(target,translateOptions(options,['title','description']));
-      if(property==='table')return options=>value.call(target,{
+      if(property==='pageHeader')return options=>value.call(CUI,translateOptions(options,['title','subtitle']));
+      if(property==='card')return options=>value.call(CUI,translateOptions(options,['title','description']));
+      if(property==='table')return options=>value.call(CUI,{
         ...options,caption:typeof options?.caption==='string'?pt(options.caption):options?.caption,
         headers:Array.isArray(options?.headers)?options.headers.map(header=>pt(header)):options?.headers
       });
       if(property==='emptyState'||property==='loadingState'||property==='errorState'){
-        return options=>value.call(target,translateOptions(options,['title','body','message','actionLabel']));
+        return options=>value.call(CUI,translateOptions(options,['title','body','message','actionLabel']));
       }
-      if(property==='action')return options=>value.call(target,translateOptions(options,['label','title']));
+      if(property==='action')return options=>value.call(CUI,translateOptions(options,['label','title']));
       if(property==='field')return options=>{
         const next=translateOptions(options,['label','hint','placeholder']);
         if(Array.isArray(next.options))next.options=next.options.map(option=>(
@@ -1684,23 +2039,23 @@
             ?{...option,label:typeof option.label==='string'?pt(option.label):option.label}
             :option
         ));
-        return value.call(target,next);
+        return value.call(CUI,next);
       };
-      if(property==='status')return (label,...args)=>value.call(target,typeof label==='string'?pt(label):label,...args);
-      if(property==='announce')return (message,options)=>value.call(target,pt(message),options);
-      return value.bind(target);
+      if(property==='status')return (label,...args)=>value.call(CUI,typeof label==='string'?pt(label):label,...args);
+      if(property==='announce')return (message,options)=>value.call(CUI,pt(message),options);
+      return value.bind(CUI);
     }});
   }
 
   const routes = Object.freeze([
-    {key:'overview',label:'Overview',shortLabel:'Overview',hash:'#/platform',icon:'home'},
+    {key:'overview',label:'Today',shortLabel:'Today',hash:'#/platform',icon:'home'},
     {key:'onboarding',label:'Onboarding',shortLabel:'Onboard',hash:'#/platform/onboarding',icon:'setup'},
     {key:'firms',label:'Firms',shortLabel:'Firms',hash:'#/platform/firms',icon:'branch'},
     {key:'reports',label:'Reports',shortLabel:'Reports',hash:'#/platform/reports',icon:'reports'},
     {key:'billing',label:'Billing',shortLabel:'Billing',hash:'#/platform/billing',icon:'reports'},
     {key:'commissions',label:'Commission payable',shortLabel:'Commission',hash:'#/platform/commissions',icon:'staff'},
     {key:'sectors',label:'Sector modules',shortLabel:'Sectors',hash:'#/platform/sectors',icon:'packages'},
-    {key:'automation',label:'Automation',shortLabel:'Automate',hash:'#/platform/automation',icon:'retention'},
+    {key:'automation',label:'System health',shortLabel:'Health',hash:'#/platform/automation',icon:'retention'},
     {key:'access',label:'Platform access',shortLabel:'Access',hash:'#/platform/access',icon:'staff',superAdminOnly:true}
   ]);
   const platformModuleKeys=Object.freeze([
@@ -1709,7 +2064,7 @@
   const platformModuleLabels=Object.freeze({
     overview:'Overview',onboarding:'Onboarding',firms:'Firms',reports:'Reports',
     billing:'Billing',commissions:'Commission payable',sectors:'Sector modules',
-    automation:'Automation'
+    automation:'System health'
   });
   const prospectStages = Object.freeze([
     ['new_lead','New Lead'],['appt_set','Appointment Set'],
@@ -1731,17 +2086,26 @@
       stages:Object.freeze(['lost'])})
   ]);
   const sectorModuleCatalog = Object.freeze([
-    ['dashboard','Dashboard','Essentials'],['till','Quick earn','Essentials'],
-    ['clients','Customers','Essentials'],['appointments','Appointments','Customer operations'],
-    ['sales','Sales','Customer operations'],['services','Services','Customer operations'],
-    ['bookings','Bookings','Customer operations'],['waitlist','Waitlist','Customer operations'],
-    ['packages','Packages','Commerce'],
-    ['loyalty','Loyalty','Growth'],['retention','Retention','Growth'],
-    ['referrals','Referrals','Growth'],['memberships','Memberships','Growth'],
-    ['giftcards','Gift cards','Growth'],['reports','Reports','Insights'],
-    ['staffperf','Staff performance','Insights'],['dailyreport','Daily report','Insights'],
-    ['pnl','P&L','Finance'],['expenses','Expenses','Finance']
-  ].map(([key,label,group])=>Object.freeze({key,label,group})));
+    ['dashboard','Dashboard','Essentials','Daily business overview and priorities.'],
+    ['till','Quick earn','Essentials','Record purchases, points and redemptions.'],
+    ['clients','Customers','Essentials','Customer profiles, visits and balances.'],
+    ['appointments','Appointments','Customer operations','Team calendar and appointment management.'],
+    ['sales','Sales','Customer operations','Sales history, corrections and payment records.'],
+    ['services','Services','Customer operations','Services, prices and duration options.'],
+    ['bookings','Bookings','Customer operations','Customer booking requests and confirmations.'],
+    ['waitlist','Waitlist','Customer operations','Fill cancelled slots from a waiting list.'],
+    ['packages','Packages','Commerce','Sell and consume multi-session packages.'],
+    ['loyalty','Loyalty','Growth','Points, stamps, tiers and rewards.'],
+    ['retention','Bring-backs','Growth','Win-back audiences and return offers.'],
+    ['referrals','Referrals','Growth','Customer referral programmes.'],
+    ['memberships','Memberships','Growth','Recurring customer memberships.'],
+    ['giftcards','Gift cards','Growth','Issue and redeem gift-card value.'],
+    ['reports','Reports','Insights','Business performance reports.'],
+    ['staffperf','Staff performance','Insights','Team activity and performance views.'],
+    ['dailyreport','Daily report','Insights','Daily operating summary.'],
+    ['pnl','P&L','Finance','Profit-and-loss view.'],
+    ['expenses','Expenses','Finance','Business expense records.']
+  ].map(([key,label,group,description])=>Object.freeze({key,label,group,description})));
   const sectorModuleByKey = new Map(sectorModuleCatalog.map(module=>[module.key,module]));
   const lostReasons = Object.freeze([
     'no_response','not_interested','no_budget','timing','chose_competitor',
@@ -1862,6 +2226,20 @@
     return routes.filter(route=>route.key==='access'
       ?access?.role==='super_admin'
       :canAccessModule(access,route.key));
+  }
+  const platformNavigationBlueprint=Object.freeze([
+    Object.freeze({key:'overview',label:'Today',icon:'home',routeKeys:Object.freeze(['overview'])}),
+    Object.freeze({key:'firms',label:'Firms',icon:'branch',routeKeys:Object.freeze(['firms','onboarding'])}),
+    Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports'])}),
+    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['billing','commissions'])}),
+    Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
+    Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','access'])})
+  ]);
+  function platformNavigationGroups(allowedRoutes=[]) {
+    const allowedByKey=new Map(allowedRoutes.map(route=>[route.key,route]));
+    return platformNavigationBlueprint.map(group=>Object.freeze({
+      ...group,routes:Object.freeze(group.routeKeys.map(key=>allowedByKey.get(key)).filter(Boolean))
+    })).filter(group=>group.routes.length);
   }
   function roleLabel(role) {
     return pt(role==='super_admin'?'Super admin':role==='sales_staff'?'Sales staff':'Admin');
@@ -2056,10 +2434,32 @@
         </details>`:''}
       </nav>`;
     }
-    return `<nav class="${className}" aria-label="${label}">${allowedRoutes.map(route => {
-      const active = route.key === activeKey;
-      return `<a href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:19})}<span>${escapeHtml(pt(mobile?route.shortLabel:route.label))}</span></a>`;
-    }).join('')}</nav>`;
+    const groups=platformNavigationGroups(allowedRoutes);
+    const groupHtml=group=>{
+      const activeGroup=group.routes.some(route=>route.key===activeKey);
+      if(group.routes.length===1){
+        const route=group.routes[0],active=route.key===activeKey;
+        return `<a href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:19})}<span>${escapeHtml(pt(route.label))}</span></a>`;
+      }
+      const homeRoute=group.routes[0],homeActive=homeRoute.key===activeKey;
+      const panelId=`platformNavGroup-${group.key}`;
+      return `<div class="platform-nav-group"${activeGroup?' data-active="true"':''}>
+        <div class="platform-nav-group-row">
+          <a class="platform-nav-group-home" href="${homeRoute.hash}"${homeActive?' aria-current="page"':''}>${CUI.icon(group.icon,{size:19})}<span>${escapeHtml(pt(group.label))}</span></a>
+          <button class="platform-nav-group-toggle" type="button" data-platform-nav-toggle="${panelId}" aria-controls="${panelId}" aria-expanded="${activeGroup}" aria-label="${escapeHtml(pt('More: {section}',{section:pt(group.label)}))}"><span aria-hidden="true">›</span></button>
+        </div>
+        <div class="platform-nav-group-items" id="${panelId}"${activeGroup?'':' hidden'}>${group.routes.slice(1).map(route=>{
+          const active=route.key===activeKey;
+          return `<a href="${route.hash}"${active?' aria-current="page"':''}>${CUI.icon(route.icon,{size:17})}<span>${escapeHtml(pt(route.label))}</span></a>`;
+        }).join('')}</div>
+      </div>`;
+    };
+    const primaryGroups=groups.filter(group=>!group.secondary);
+    const secondaryGroups=groups.filter(group=>group.secondary);
+    return `<nav class="${className}" aria-label="${label}">
+      ${primaryGroups.map(groupHtml).join('')}
+      ${secondaryGroups.length?`<div class="platform-nav-secondary" aria-label="${escapeHtml(pt('Platform controls'))}">${secondaryGroups.map(groupHtml).join('')}</div>`:''}
+    </nav>`;
   }
 
   function platformLocaleSwitcherHtml(){
@@ -2093,7 +2493,7 @@
           <div class="platform-topbar-title">${escapeHtml(pt(route.label))}</div>
           <div class="platform-topbar-actions">
             ${platformLocaleSwitcherHtml()}
-            <a class="btn ghost sm" href="${escapeHtml(workspaceHash)}" aria-label="${escapeHtml(pt('Back to workspace'))}">${CUI.icon('back',{size:17})}<span>${escapeHtml(pt('Workspace'))}</span></a>
+            <a class="btn ghost sm platform-topbar-workspace" href="${escapeHtml(workspaceHash)}" aria-label="${escapeHtml(pt('Back to workspace'))}">${CUI.icon('back',{size:17})}<span>${escapeHtml(pt('Workspace'))}</span></a>
             <button class="btn ghost sm" type="button" id="platformSignOut">${CUI.icon('close',{size:17})}<span>${escapeHtml(pt('Sign out'))}</span></button>
           </div>
         </header>
@@ -2106,20 +2506,59 @@
   function platformAccessDeniedHtml({CUI,brand,workspaceHash,onSignOut}) {
     return `<main class="platform-denied" id="platformMain" tabindex="-1">
       <div class="platform-denied-brand logo">${wordmarkHtml(brand||{})}</div>
-      ${CUI.errorState({
+      ${CUI.pageHeader({
         title:pt('Platform access unavailable'),
-        message:pt('This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.')
+        subtitle:pt('This account does not currently have an active platform role.'),
+        iconName:'info'
       })}
+      ${CUI.card({title:'Access required',body:`<p>${escapeHtml(pt('This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.'))}</p>`})}
       <div class="platform-actions">
         <a class="btn ghost" href="${escapeHtml(workspaceHash)}">${escapeHtml(pt('Back to workspace'))}</a>
         <button type="button" class="btn ghost" id="platformDeniedSignOut">${escapeHtml(pt('Sign out'))}</button>
       </div>
     </main>`;
   }
+  function platformAccessLoadFailureHtml({CUI,brand,workspaceHash,error}) {
+    return `<main class="platform-denied" id="platformMain" tabindex="-1">
+      <div class="platform-denied-brand logo">${wordmarkHtml(brand||{})}</div>
+      ${CUI.errorState({
+        title:pt('Platform access could not be checked'),
+        message:platformErrorMessage(error,'Nestly could not verify this account’s platform role. Your access has not been removed. Use the button below to check again.'),
+        retryId:'platformAccessRetry'
+      })}
+      <div class="platform-actions">
+        <a class="btn ghost" href="${escapeHtml(workspaceHash)}">${escapeHtml(pt('Back to workspace'))}</a>
+      </div>
+    </main>`;
+  }
+  function isPlatformAccessDeniedError(error) {
+    return String(error?.code||error?.status||'')==='42501';
+  }
 
   function currency(cents, currencyCode = 'SGD') {
     const safe = Number.isFinite(Number(cents)) ? Number(cents) : 0;
     return `${currencyCode} ${(safe / 100).toFixed(2)}`;
+  }
+  function moneyInputToCents(value) {
+    const text=String(value??'').trim();
+    if(!/^\d+(?:\.\d{1,2})?$/.test(text))throw new Error(pt('Enter an amount with no more than two decimal places.'));
+    return Math.round(Number(text)*100);
+  }
+  function centsToMoneyInput(cents) {
+    const safe=Number.isFinite(Number(cents))?Number(cents):0;
+    return(safe/100).toFixed(2);
+  }
+  function nullableMoneyInputToCents(value) {
+    return String(value??'').trim()===''?null:moneyInputToCents(value);
+  }
+  function percentInputToBasisPoints(value) {
+    const text=String(value??'').trim();
+    if(!/^\d+(?:\.\d{1,2})?$/.test(text)||Number(text)>100)throw new Error(pt('Enter a percentage from 0 to 100 with no more than two decimal places.'));
+    return Math.round(Number(text)*100);
+  }
+  function basisPointsToPercentInput(basisPoints) {
+    const safe=Number.isFinite(Number(basisPoints))?Number(basisPoints):0;
+    return(safe/100).toFixed(2);
   }
   function formatFileSize(bytes) {
     const value=Number(bytes);
@@ -2240,6 +2679,39 @@
     fromDate.setUTCFullYear(fromDate.getUTCFullYear()-1);
     return {sector:'',businesses:[],branch:'',search:'',from:singaporeIsoDate(fromDate),to};
   }
+  function enterpriseReportHash(filters=enterpriseDefaults()) {
+    const entries=[];
+    const add=(key,value)=>{if(value)entries.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`)};
+    add('search',filters.search);add('sector',filters.sector);
+    add('businesses',asArray(filters.businesses).join(','));
+    add('branch',filters.branch);add('from',filters.from);add('to',filters.to);
+    const query=entries.join('&');
+    return `#/platform/reports${query?`?${query}`:''}`;
+  }
+  function enterpriseFirmHash(filters=enterpriseDefaults()) {
+    return enterpriseReportHash(filters).replace('#/platform/reports','#/platform/firms');
+  }
+  function enterpriseReportFiltersFromHash(hash) {
+    const defaults=enterpriseDefaults(),query=String(hash||'').split('?')[1]||'';
+    if(!query)return defaults;
+    const params=new Map(query.split('&').filter(Boolean).map(pair=>{
+      const [key,...rest]=pair.split('=');
+      return [decodeURIComponent(key||''),decodeURIComponent(rest.join('=')||'')];
+    }));
+    const date=value=>/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?value:null;
+    return {
+      search:String(params.get('search')||'').trim(),
+      sector:String(params.get('sector')||'').trim(),
+      businesses:String(params.get('businesses')||'').split(',').map(value=>value.trim()).filter(Boolean),
+      branch:String(params.get('branch')||'').trim(),
+      from:date(params.get('from'))||defaults.from,
+      to:date(params.get('to'))||defaults.to
+    };
+  }
+  function platformRouteParam(hash,key) {
+    const query=String(hash||'').split('?')[1]||'';
+    return String(new URLSearchParams(query).get(key)||'').trim();
+  }
   function selectedOptions(select) {
     return Array.from(select?.selectedOptions||[],option=>option.value).filter(Boolean);
   }
@@ -2265,69 +2737,78 @@
       p_search:filters.search||null
     };
   }
-  async function fetchEnterpriseFirmPages(sb,filters) {
-    let snapshot=null,cursor=null,first=null;
-    const firms=[],seen=new Set();
-    do{
-      const payload=asObject(await rpc(sb,'platform_get_enterprise_hierarchy_v82',{
-        ...enterpriseArgs(filters),p_limit:500,p_snapshot_at:snapshot,
-        p_after_created_at:cursor?.created_at||null,
-        p_after_business:cursor?.business_id||null
-      }));
-      if(!first)first=payload;
-      snapshot=snapshot||payload.snapshot_at;
-      asArray(payload,['firms']).forEach(firm=>{
-        const id=firmId(firm);
-        if(id&&!seen.has(id)){seen.add(id);firms.push(firm)}
-      });
-      const page=asObject(payload.pagination),next=asObject(page.next_cursor);
-      cursor=page.has_more&&next.created_at&&next.business_id?next:null;
-      if(cursor){
-        const token=`${cursor.created_at}:${cursor.business_id}`;
-        if(seen.has(`cursor:${token}`))throw new Error(pt('Firm paging did not advance.'));
-        seen.add(`cursor:${token}`);
-      }
-    }while(cursor);
-    const payload=first||{};
-    return {...payload,snapshot_at:snapshot,firms,pagination:{
-      ...asObject(payload.pagination),returned_firms:firms.length,has_more:false,next_cursor:null
-    }};
+  async function fetchEnterpriseFirmPage(sb,filters,{
+    snapshot=null,cursor=null,limit=50
+  }={}) {
+    return asObject(await rpc(sb,'platform_get_enterprise_hierarchy_v82',{
+      ...enterpriseArgs(filters),p_limit:limit,p_snapshot_at:snapshot,
+      p_after_created_at:cursor?.created_at||null,
+      p_after_business:cursor?.business_id||null
+    }));
   }
-  async function fetchFirmDirectoryV88(sb,filters,{required=false}={}) {
-    const items=[],seen=new Set(),seenCursors=new Set();
-    let snapshot=null,cursor=null,totalCount=0,attentionSummary={};
+  async function fetchFirmDirectoryPageV88(sb,filters,{
+    required=false,snapshot=null,cursor=null,limit=50
+  }={}) {
     try{
-      do{
-        const payload=asObject(await rpc(sb,'platform_list_firm_onboarding_v88',{
-          p_filters:{
-            search:filters.search||null,
-            sector:filters.sector||null,
-            lane:filters.lane||null
-          },
-          p_snapshot_at:snapshot,
-          p_limit:100,
-          p_after_updated_at:cursor?.updated_at||null,
-          p_after_id:cursor?.id||null
-        }));
-        snapshot=snapshot||payload.snapshot_at;
-        totalCount=Number(payload.total_count||0);
-        if(!Object.keys(attentionSummary).length)attentionSummary=asObject(payload.attention_summary);
-        asArray(payload,['items']).forEach(item=>{
-          const id=firmId(item);
-          if(id&&!seen.has(id)){seen.add(id);items.push(item)}
-        });
-        const next=asObject(payload.next_cursor);
-        if(next.id){
-          const token=`${next.updated_at||''}:${next.id}`;
-          if(seenCursors.has(token))throw new Error(pt('Firm directory paging did not advance.'));
-          seenCursors.add(token);cursor=next;
-        }else cursor=null;
-      }while(cursor);
-      return{items,total_count:totalCount,snapshot_at:snapshot,attention_summary:attentionSummary};
+      const attention=String(filters.attention||'');
+      const payload=asObject(await rpc(sb,'platform_list_firm_onboarding_v88',{
+        p_filters:{
+          search:filters.search||null,
+          sector:filters.sector||null,
+          lane:filters.lane||null,
+          attention_severity:['critical','warning','info'].includes(attention)?attention:null,
+          attention_due:attention==='due'?true:attention==='clean'?false:null
+        },
+        p_snapshot_at:snapshot,
+        p_limit:limit,
+        p_after_updated_at:cursor?.updated_at||null,
+        p_after_id:cursor?.id||null
+      }));
+      return{
+        items:asArray(payload,['items']),
+        total_count:Number(payload.total_count||0),
+        snapshot_at:payload.snapshot_at,
+        attention_summary:asObject(payload.attention_summary),
+        next_cursor:Object.keys(asObject(payload.next_cursor)).length
+          ?asObject(payload.next_cursor):null
+      };
     }catch(error){
       if(missingRpc(error)&&!required)return null;
       throw error;
     }
+  }
+  async function fetchAllFirmAttentionV88(sb,{
+    limit=250,maxPages=40
+  }={}) {
+    const items=[],seenRows=new Set(),seenCursors=new Set();
+    let snapshot=null,cursor=null,totalCount=0,pages=0,complete=false;
+    while(pages<maxPages){
+      const payload=asObject(await rpc(sb,'platform_list_firm_attention_v88',{
+        p_snapshot_at:snapshot,p_limit:limit,
+        p_after_days_unattended:cursor?.days_unattended??null,
+        p_after_id:cursor?.id||null
+      }));
+      if(!snapshot)snapshot=payload.snapshot_at||null;
+      totalCount=Math.max(totalCount,Number(payload.total_count||0));
+      for(const row of asArray(payload,['items'])){
+        const key=String(row.id||row.row_id||row.prospect_id||row.business_id||'');
+        if(key&&seenRows.has(key))continue;
+        if(key)seenRows.add(key);
+        items.push(row);
+      }
+      pages+=1;
+      const next=asObject(payload.next_cursor);
+      if(items.length>=totalCount||!Object.keys(next).length){
+        complete=true;cursor=null;break;
+      }
+      const cursorKey=`${next.days_unattended??''}:${next.id||''}`;
+      if(seenCursors.has(cursorKey))break;
+      seenCursors.add(cursorKey);cursor=next;
+    }
+    return{
+      items,total_count:totalCount,snapshot_at:snapshot,
+      pages,complete,truncated:!complete,next_cursor:cursor
+    };
   }
   function mergeFirmDirectoryData(firms,directoryItems) {
     const directoryByBusiness=new Map(asArray(directoryItems)
@@ -2394,8 +2875,7 @@
       String(firm.customer_count??asArray(firm.customers).length),
       currency(firm.summary?.net_revenue_cents,firm.currency||'SGD'),
       String(firm.summary?.returning_customers??0),
-      String(firm.summary?.completed_transactions??0),
-      `<button type="button" class="btn ghost sm" data-enterprise-firm="${escapeHtml(firmId(firm))}">${CUI.icon('forward',{size:16})}<span>${escapeHtml(pt("Open"))}</span></button>`
+      String(firm.summary?.completed_transactions??0)
     ]);
   }
   function enterpriseBranchOptions(filters,catalog) {
@@ -2407,6 +2887,7 @@
   function enterpriseHtml(payload,CUI,filters,catalog,canGenerateReport=false) {
     const firms=asArray(payload,['firms']),pagination=asObject(payload.pagination);
     const branches=enterpriseBranchOptions(filters,catalog);
+    const canonicalReportHash=enterpriseReportHash(filters);
     return `${CUI.pageHeader({
       title:'Enterprise data',
       subtitle:'Inspect every firm from company level down to branches and customer records, using one explicit reporting scope.',
@@ -2431,23 +2912,23 @@
         <div class="platform-actions">
           <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt("Apply scope"))}</span></button>
           <button class="btn ghost" type="button" id="enterpriseClear">${escapeHtml(pt("Clear"))}</button>
-          ${canGenerateReport?`<button class="btn ghost" type="button" id="enterpriseGenerateReport"${firms.length?'':` disabled title="${escapeHtml(pt('No matching firms are available to report.'))}"`}>${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt("Generate detailed report"))}</span></button>`:''}
+          ${canGenerateReport?`<a class="btn ghost" data-open-canonical-reports href="${escapeHtml(canonicalReportHash)}">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt("Continue in Reports"))}</span></a>`:''}
         </div>
       </form>
-      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Complete snapshot"))}</b><p class="small">${escapeHtml(pt('{count} matching firms as at {date}. Search applies consistently to the directory and report.',{
-        count:pagination.total_firms??firms.length,date:dateTime(payload.snapshot_at)
+      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Paged snapshot"))}</b><p class="small">${escapeHtml(pt('{shown} of {count} matching firms shown as at {date}. Search runs on the server; load another page only when needed.',{
+        shown:firms.length,count:pagination.total_firms??firms.length,date:dateTime(payload.snapshot_at)
       }))}</p></div></div>
       ${CUI.card({
         title:'Firm, branch and customer directory',
         description:firms.length?pt(firms.length===1?'{count} firm in this scope. Open a firm for branch and customer detail.':'{count} firms in this scope. Open a firm for branch and customer detail.',{count:firms.length}):'No firms match this scope.',
-        body:firms.length?CUI.table({
+        body:firms.length?`${CUI.table({
           caption:'Enterprise firm directory',
-          headers:['Firm / UEN','Sector','Owner','Contact','Branches','Customers','Net revenue','Returning','Transactions',''],
+          headers:['Firm / UEN','Sector','Owner','Contact','Branches','Customers','Net revenue','Returning','Transactions'],
           rows:enterpriseFirmRows(firms,CUI),
           className:'platform-firms-table platform-enterprise-table'
-        }):CUI.emptyState({iconName:'branch',title:'No matching firms',body:'Change the sector, firm, branch, date or search scope.'})
-      })}
-      <section id="enterpriseReportHost" class="platform-report-host" aria-live="polite"></section>`;
+        })}${pagination.has_more?`<div class="platform-load-more"><button type="button" class="btn ghost" data-enterprise-load-more>${escapeHtml(pt('Load 50 more firms'))}</button></div>`:''}`
+          :CUI.emptyState({iconName:'branch',title:'No matching firms',body:'Change the sector, firm, branch, date or search scope.'})
+      })}`;
   }
   function enterpriseDetailTable(firm,CUI,customers=[],pagination={}) {
     const branches=asArray(firm.branches);
@@ -2499,22 +2980,31 @@
     return value==='approved'||value==='active'||value==='open'?'ok'
       :value==='pending'||value==='grace'?'new':'no';
   }
-  function moduleControlRows(effective,CUI,{branchId=null,canWrite=false}={}) {
+  function moduleControlRows(effective,CUI,{branchId=null}={}) {
     const modules=asArray(effective?.modules)
       .filter(module=>!['inventory','customerintel'].includes(module.module_key));
     if(!modules.length)return`<p class="muted small">${escapeHtml(pt("No business modules are enabled in this scope."))}</p>`;
     return CUI.table({
       caption:branchId?'Branch effective modules':'Firm effective modules',
-      headers:['Module','Access','Source',...(canWrite?['']:[])],
+      headers:['Module','Access','Source'],
       rows:modules.map(module=>[
         `<b>${escapeHtml(moduleLabel(module.module_key))}</b>`,
         CUI.status(module.mode==='rw'?'Read & write':module.mode==='r'?'Read only':'Off',module.mode==='rw'?'ok':module.mode==='r'?'new':'off'),
-        escapeHtml(platformStatus(module.source||'inherited')),
-        ...(canWrite?[`<button type="button" class="btn ghost sm" data-module-control="${escapeHtml(module.module_key)}" data-branch-id="${escapeHtml(branchId||'')}" data-module-version="${escapeHtml(module.version??'')}">${escapeHtml(pt("Edit"))}</button>`]:[])
+        escapeHtml(platformStatus(module.source||'inherited'))
       ])
     });
   }
-  function firmGovernanceHtml(firm,CUI,control,effective,context) {
+  function moduleOverrideState(module,branchId=null) {
+    const source=String(module?.source||'');
+    const sourceMatchesScope=branchId
+      ?source==='branch_override'
+      :source==='firm_override';
+    return{
+      mode:String(module?.override_mode||(sourceMatchesScope?module?.mode:'inherit')||'inherit'),
+      version:module?.override_version??(sourceMatchesScope?module?.version:null)
+    };
+  }
+  function firmGovernanceHtml(firm,CUI,control,effective,context,{sectorProfiles=[],sectorAssignment={}}={}) {
     const approval=asObject(control.approval),subscription=asObject(control.subscription);
     const representative=asObject(control.representative),catalogue=asObject(control.catalogue_intelligence);
     const canWrite=context.access?.role==='super_admin';
@@ -2532,9 +3022,9 @@
           ${subscription.workspace_paused?`<p class="small">${escapeHtml(pt("Owner access resumes only after provider payment truth is reconciled."))}</p>${contact?`<a class="btn ghost sm" href="tel:${escapeHtml(contact.tel)}">${escapeHtml(pt("Contact"))} ${escapeHtml(representative.display_name||'assigned representative')}</a>`:''}`:`<p class="muted small">${escapeHtml(pt("Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid."))}</p>`}`})}
       </div>
       <div class="platform-list-row platform-control-heading"><div><h3>${escapeHtml(pt("Firm module policy"))}</h3><p class="muted small">${escapeHtml(pt("Branch overrides take priority over firm and sector settings. Inventory is globally unavailable to firms."))}</p></div>
-        ${canWrite?`<button type="button" class="btn ghost sm" data-module-control="" data-branch-id="">${escapeHtml(pt("Edit firm modules"))}</button>`:''}
+        ${canWrite?`<div class="platform-actions">${sectorProfiles.length?`<button type="button" class="btn ghost sm" data-change-sector>${escapeHtml(pt(sectorAssignment.assignment_version?'Change sector template':'Assign sector template'))}</button>`:''}<button type="button" class="btn ghost sm" data-module-control="" data-branch-id="">${escapeHtml(pt("Manage firm modules"))}</button></div>`:''}
       </div>
-      ${moduleControlRows(effective,CUI,{canWrite})}
+      ${moduleControlRows(effective,CUI)}
       ${asArray(firm.branches).length?`<div class="platform-branch-control-list" aria-label="${escapeHtml(pt('Branch module controls'))}">${asArray(firm.branches).map(branch=>`
         <div class="platform-action-item"><div><b>${escapeHtml(branch.name)}</b><p class="muted small">${escapeHtml(pt("Branch-specific settings override firm policy."))}</p></div>
           ${canWrite?`<button type="button" class="btn ghost sm" data-manage-branch="${escapeHtml(branch.branch_id)}">${escapeHtml(pt("Manage branch"))}</button>`:''}
@@ -2568,36 +3058,65 @@
   function moduleControlModal(firm,effective,context,refresh,{branchId=null,moduleKey=''}={}) {
     const {CUI,sb}=context;
     const branches=asArray(firm.branches);
-    const selected=asArray(effective?.modules).find(module=>module.module_key===moduleKey);
     const available=sectorModuleCatalog.filter(module=>module.key!=='inventory');
-    modal({
-      title:branchId?'Edit branch modules':'Edit firm modules',submitLabel:'Apply module policy',CUI,
-      body:`<div class="platform-form-grid">
-        ${CUI.field({id:'moduleControlBranch',label:'Scope',control:'select',options:branchId
-          ?branches.filter(branch=>branch.branch_id===branchId).map(branch=>({value:branch.branch_id,label:pt('Branch · {name}',{name:branch.name}),selected:true}))
-          :[{value:'',label:'Whole firm',selected:true}],attributes:'name="branch_id"'})}
-        ${CUI.field({id:'moduleControlKey',label:'Module',control:'select',options:available.map(module=>({value:module.key,label:module.label,selected:module.key===moduleKey})),attributes:'name="module_key"'})}
-        ${CUI.field({id:'moduleControlMode',label:'Access',control:'select',options:[
-          {value:'inherit',label:'Use inherited setting'},
-          {value:'disabled',label:'Off'},
-          {value:'r',label:'Read only'},
-          {value:'rw',label:'Read & write'}
-        ].map(option=>({...option,selected:option.value===(selected?.override_mode||'inherit')})),attributes:'name="mode"'})}
-        <div class="wide">${CUI.field({id:'moduleControlReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="4" minlength="3" maxlength="1000"'})}</div>
+    const effectiveByKey=new Map(asArray(effective?.modules).map(module=>[module.module_key,module]));
+    const inheritedLabel=branchId?'Use firm setting':'Use sector default';
+    const scopeLabelValue=branchId
+      ?pt('Branch · {name}',{name:branches.find(branch=>branch.branch_id===branchId)?.name||pt('Selected branch')})
+      :pt('Whole firm');
+    const groups=[...new Set(available.map(module=>module.group))];
+    const overlay=modal({
+      title:branchId?'Manage branch modules':'Manage firm modules',submitLabel:'Save module access',CUI,
+      body:`<div class="platform-module-policy-intro">
+        <div><span class="eyebrow">${escapeHtml(pt('Editing'))}</span><h2>${escapeHtml(scopeLabelValue)}</h2><p class="muted small">${escapeHtml(pt(branchId
+          ?'Only differences for this branch are saved. Everything else continues to follow the firm.'
+          :'Only differences from the sector template are saved. Future sector improvements still flow through inherited modules.'))}</p></div>
+        <button type="button" class="btn ghost sm" data-reset-module-policy>${escapeHtml(pt(branchId?'Reset all to firm settings':'Reset all to sector defaults'))}</button>
       </div>
+      <div class="platform-module-policy-list">
+        ${groups.map(group=>`<section class="platform-module-policy-group" aria-labelledby="policy-group-${escapeHtml(group.toLowerCase().replace(/\W+/g,'-'))}">
+          <h3 id="policy-group-${escapeHtml(group.toLowerCase().replace(/\W+/g,'-'))}">${escapeHtml(pt(group))}</h3>
+          <div class="platform-module-policy-options">${available.filter(module=>module.group===group).map(module=>{
+            const current=effectiveByKey.get(module.key);
+            const mode=moduleOverrideState(current,branchId).mode;
+            return `<label class="platform-module-policy-row" data-module-row="${escapeHtml(module.key)}">
+              <span class="platform-module-policy-copy"><b>${escapeHtml(pt(module.label))}</b><small>${escapeHtml(pt(module.description))}</small></span>
+              <select name="module_mode_${escapeHtml(module.key)}" data-module-mode="${escapeHtml(module.key)}" data-initial-mode="${escapeHtml(mode)}" aria-label="${escapeHtml(pt('{module} access',{module:pt(module.label)}))}">
+                ${[
+                  ['inherit',inheritedLabel],['disabled','Off'],['r','Read only'],['rw','Read & write']
+                ].map(([value,label])=>`<option value="${value}"${value===mode?' selected':''}>${escapeHtml(pt(label))}</option>`).join('')}
+              </select>
+            </label>`;
+          }).join('')}</div>
+        </section>`).join('')}
+      </div>
+      ${CUI.field({id:'moduleControlReason',label:'Why are you changing access?',control:'textarea',required:true,hint:'One short note covers every changed module.',attributes:'name="reason" rows="3" minlength="3" maxlength="1000"'})}
       <div class="platform-route-note"><b>${escapeHtml(pt("Inventory is not available here"))}</b><p class="small">${escapeHtml(pt("Nestly keeps inventory off for every firm, independent of sector or branch settings."))}</p></div>`,
       onSubmit:async(form,controls)=>{
-        const module=String(form.get('module_key'));
-        const scopeBranch=String(form.get('branch_id')||'')||null;
-        const current=asArray(effective?.modules).find(row=>row.module_key===module);
-        await rpc(sb,'platform_set_module_override_v94',{
-          p_business:firmId(firm),p_branch:scopeBranch,p_module:module,
-          p_mode:String(form.get('mode')),p_reason:String(form.get('reason')).trim(),
-          p_expected_version:current?.version??null
+        const changes=available.map(module=>{
+          const current=effectiveByKey.get(module.key);
+          const next=String(form.get(`module_mode_${module.key}`)||'inherit');
+          const prior=moduleOverrideState(current,branchId);
+          return {module:module.key,next,current:prior.mode,version:prior.version};
+        }).filter(change=>change.next!==change.current);
+        if(!changes.length)throw new Error(pt('No module access changes to save.'));
+        const reason=String(form.get('reason')).trim();
+        await rpc(sb,'platform_set_module_overrides_v105',{
+          p_business:firmId(firm),p_branch:branchId||null,p_reason:reason,
+          p_changes:changes.map(change=>({
+            module:change.module,mode:change.next,expected_version:change.version
+          }))
         });
-        controls.close();await refresh();CUI.announce(pt('{module} policy updated.',{module:pt(moduleLabel(module))}));
+        controls.close();await refresh();CUI.announce(pt('{count} module settings updated.',{count:changes.length}));
       }
     });
+    overlay.querySelector('[data-reset-module-policy]')?.addEventListener('click',()=>{
+      overlay.querySelectorAll('[data-module-mode]').forEach(select=>{select.value='inherit'});
+      CUI.announce(pt(branchId?'All modules will follow the firm after you save.':'All modules will follow the sector template after you save.'));
+    });
+    const focusTarget=overlay.querySelector(`[data-module-row="${globalObject.CSS?.escape?.(moduleKey)||moduleKey}"] select`)
+      ||overlay.querySelector('[data-module-mode]');
+    focusTarget?.focus();
   }
   function openEnterpriseFirm(firm,context,filters) {
     const {CUI,sb}=context,overlay=document.createElement('div');
@@ -2614,17 +3133,22 @@
     const scopedFilters={...filters,businesses:[firmId(firm)]};
     const body=overlay.querySelector('#enterpriseFirmBody');
     let customers=[],page={},snapshot=context.enterpriseSnapshot||null;
-    let control={},effective={};
+    let control={},effective={},sectorProfiles=[],sectorAssignment={};
     const renderBody=()=>{
-      body.innerHTML=`${firmGovernanceHtml(firm,CUI,control,effective,context)}${enterpriseDetailTable(firm,CUI,customers,page)}`;
+      body.innerHTML=`${firmGovernanceHtml(firm,CUI,control,effective,context,{sectorProfiles,sectorAssignment})}${enterpriseDetailTable(firm,CUI,customers,page)}`;
       bind();
     };
     const refreshControls=async()=>{
-      const [nextControl,nextEffective]=await Promise.all([
+      const [nextControl,nextEffective,sectorPayload]=await Promise.all([
         rpc(sb,'platform_get_business_control_v94',{p_business:firmId(firm)}),
-        rpc(sb,'platform_get_effective_modules_v94',{p_business:firmId(firm),p_branch:null})
+        rpc(sb,'platform_get_effective_modules_v105',{p_business:firmId(firm),p_branch:null}),
+        rpc(sb,'platform_list_sector_entitlements_v75')
       ]);
       control=asObject(nextControl);effective=asObject(nextEffective);
+      const sectors=asObject(sectorPayload);
+      sectorProfiles=asArray(sectors.profiles);
+      sectorAssignment=asArray(sectors.businesses).find(row=>String(row.business_id)===firmId(firm))
+        ||{...firm,business_id:firmId(firm),business_name:firm.name};
       if(body.isConnected)renderBody();
     };
     const bind=()=>{
@@ -2654,11 +3178,14 @@
           branchId:button.dataset.branchId||null,moduleKey:button.dataset.moduleControl||''
         });
       });
+      body.querySelector('[data-change-sector]')?.addEventListener('click',()=>{
+        assignSectorModal(sectorAssignment,sectorProfiles,context,refreshControls);
+      });
       body.querySelectorAll('[data-manage-branch]').forEach(button=>{
         button.onclick=async()=>{
           button.disabled=true;
           try{
-            const branchEffective=asObject(await rpc(sb,'platform_get_effective_modules_v94',{
+            const branchEffective=asObject(await rpc(sb,'platform_get_effective_modules_v105',{
               p_business:firmId(firm),p_branch:button.dataset.manageBranch
             }));
             moduleControlModal(firm,branchEffective,context,refreshControls,{branchId:button.dataset.manageBranch});
@@ -2686,7 +3213,7 @@
     Promise.all([
       fetchEnterpriseCustomerPage(sb,scopedFilters,snapshot),
       rpc(sb,'platform_get_business_control_v94',{p_business:firmId(firm)}),
-      rpc(sb,'platform_get_effective_modules_v94',{p_business:firmId(firm),p_branch:null})
+      rpc(sb,'platform_get_effective_modules_v105',{p_business:firmId(firm),p_branch:null})
     ]).then(([payload,controlPayload,effectivePayload])=>{
       if(!body.isConnected)return;
       snapshot=snapshot||payload.snapshot_at;
@@ -2852,29 +3379,45 @@
       host.querySelector('#enterpriseReportSheet')?.scrollIntoView?.({behavior:'smooth',block:'start'});
     }catch(error){host.innerHTML=error?.platformUpdateRequired?systemUpdateRequired(CUI,'Enterprise reports'):CUI.errorState({title:'Report unavailable',message:platformErrorMessage(error,'Please try again.')})}
   }
-  async function renderEnterprise(context,filters=enterpriseDefaults()) {
+  async function renderEnterprise(context,filters=enterpriseDefaults(),pageState=null) {
     const {main,CUI,sb,generation,isCurrent}=context;
     main.innerHTML=loading(CUI,'Enterprise data','Loading firm, branch and customer truth…','branch');
     try{
-      const directory=await fetchFirmDirectoryV88(sb,filters);
-      let rawPayload,resolvedScopeFilters=filters;
-      if(filters.search){
-        const hierarchyMatches=await fetchEnterpriseFirmPages(sb,filters);
-        const resolvedIds=resolveEnterpriseSearchBusinessIds(
-          directory?.items,asArray(hierarchyMatches,['firms']),filters.businesses
-        );
-        resolvedScopeFilters={...filters,businesses:resolvedIds,search:''};
-        rawPayload=resolvedIds.length
-          ?await fetchEnterpriseFirmPages(sb,resolvedScopeFilters)
-          :{
-            snapshot_at:directory?.snapshot_at||hierarchyMatches.snapshot_at,
-            firms:[],pagination:{total_firms:0,returned_firms:0,has_more:false,next_cursor:null}
-          };
-      }else rawPayload=await fetchEnterpriseFirmPages(sb,filters);
+      let state=pageState;
+      if(!state){
+        const [directory,rawPayload]=await Promise.all([
+          fetchFirmDirectoryPageV88(sb,filters),
+          fetchEnterpriseFirmPage(sb,filters)
+        ]);
+        let hierarchyFirms=asArray(rawPayload,['firms']);
+        if(filters.search){
+          const hierarchyIds=new Set(hierarchyFirms.map(firmId));
+          const directoryIds=asArray(directory?.items)
+            .filter(item=>item.business_id&&!hierarchyIds.has(String(item.business_id)))
+            .map(item=>String(item.business_id));
+          if(directoryIds.length){
+            const directoryMatches=await fetchEnterpriseFirmPage(sb,{
+              ...filters,businesses:directoryIds,search:''
+            },{snapshot:rawPayload.snapshot_at,limit:Math.min(directoryIds.length,100)});
+            hierarchyFirms=[...hierarchyFirms,...asArray(directoryMatches,['firms'])];
+          }
+        }
+        const unique=new Map(hierarchyFirms.map(firm=>[firmId(firm),firm]));
+        state={
+          rawPayload:{...rawPayload,firms:[...unique.values()]},
+          directory,
+          snapshot:rawPayload.snapshot_at,
+          cursor:asObject(rawPayload.pagination).has_more
+            ?asObject(asObject(rawPayload.pagination).next_cursor):null
+        };
+      }
+      const rawPayload=state.rawPayload;
+      const directory=state.directory;
       const firms=mergeFirmDirectoryData(asArray(rawPayload,['firms']),directory?.items);
       const payload={...rawPayload,firms,pagination:{
         ...asObject(rawPayload.pagination),
-        total_firms:firms.length,returned_firms:firms.length
+        returned_firms:firms.length,
+        has_more:Boolean(state.cursor)
       }};
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       if(!context.enterpriseCatalog||(!filters.sector&&!filters.businesses.length&&!filters.branch&&!filters.search)){
@@ -2895,18 +3438,53 @@
       form.onsubmit=event=>{
         event.preventDefault();
         const businesses=selectedOptions(businessSelect);
-        renderEnterprise(context,{
+        const next={
           sector:main.querySelector('#enterpriseSector').value,
           businesses,
           branch:businesses.length===1?main.querySelector('#enterpriseBranch').value:'',
           search:main.querySelector('#enterpriseSearch').value.trim(),
           from:main.querySelector('#enterpriseFrom').value,
           to:main.querySelector('#enterpriseTo').value
-        });
+        };
+        const nextHash=enterpriseFirmHash(next);
+        if(globalObject.history?.replaceState)globalObject.history.replaceState(null,'',nextHash);
+        renderEnterprise({...context,hash:nextHash},next);
       };
-      main.querySelector('#enterpriseClear').onclick=()=>renderEnterprise(context,enterpriseDefaults());
-      const reportButton=main.querySelector('#enterpriseGenerateReport');
-      if(reportButton&&firms.length)reportButton.onclick=()=>renderEnterpriseReport(context,resolvedScopeFilters);
+      main.querySelector('#enterpriseClear').onclick=()=>{
+        if(globalObject.history?.replaceState)globalObject.history.replaceState(null,'','#/platform/firms');
+        renderEnterprise({...context,hash:'#/platform/firms'},enterpriseDefaults());
+      };
+      main.querySelector('[data-enterprise-load-more]')?.addEventListener('click',async event=>{
+        const button=event.currentTarget;
+        button.disabled=true;button.textContent=pt('Loading next 50 firms…');
+        try{
+          const nextPage=await fetchEnterpriseFirmPage(sb,filters,{
+            snapshot:state.snapshot,cursor:state.cursor
+          });
+          const combined=new Map(asArray(rawPayload,['firms']).map(firm=>[firmId(firm),firm]));
+          asArray(nextPage,['firms']).forEach(firm=>combined.set(firmId(firm),firm));
+          const pagination=asObject(nextPage.pagination);
+          const nextState={
+            ...state,
+            rawPayload:{
+              ...rawPayload,
+              firms:[...combined.values()],
+              pagination:{
+                ...asObject(rawPayload.pagination),
+                total_firms:pagination.total_firms??asObject(rawPayload.pagination).total_firms,
+                returned_firms:combined.size,
+                has_more:Boolean(pagination.has_more),
+                next_cursor:pagination.next_cursor||null
+              }
+            },
+            cursor:pagination.has_more?asObject(pagination.next_cursor):null
+          };
+          await renderEnterprise(context,filters,nextState);
+        }catch(error){
+          button.disabled=false;button.textContent=pt('Retry next 50 firms');
+          button.title=platformErrorMessage(error,'Try again.');
+        }
+      });
       main.querySelectorAll('[data-enterprise-firm]').forEach(button=>{
         button.onclick=()=>{
           const firm=firms.find(row=>firmId(row)===button.dataset.enterpriseFirm);
@@ -2917,7 +3495,7 @@
     }catch(error){showError(main,error,CUI,'Enterprise data')}
   }
 
-  function reportsPageHtml(CUI,filters,catalog) {
+  function reportsPageHtml(CUI,filters,catalog,catalogMeta={}) {
     const branches=enterpriseBranchOptions(filters,catalog);
     return `${CUI.pageHeader({
       title:'Enterprise reports',
@@ -2930,7 +3508,10 @@
           ${CUI.field({id:'platformReportSector',label:'Sector',control:'select',options:enterpriseSectors.map(([value,label])=>({value,label,selected:value===filters.sector}))})}
           <div class="cui-field platform-enterprise-firms"><label for="platformReportBusinesses">${escapeHtml(pt('Firms'))} <span class="muted small">${escapeHtml(pt("(one or more)"))}</span></label>
             <select id="platformReportBusinesses" multiple size="5">${catalog.map(firm=>`<option value="${escapeHtml(firmId(firm))}"${filters.businesses.includes(firmId(firm))?' selected':''}>${escapeHtml(firm.name)} · ${escapeHtml(sectorLabel(firm.industry))}</option>`).join('')}</select>
-            <p class="muted small">${escapeHtml(pt("No selection means every firm in the selected sector."))}</p>
+            <p class="muted small">${escapeHtml(pt('{shown} of {count} matching firms loaded. No selection means every firm in the selected sector.',{
+              shown:catalog.length,count:Number(catalogMeta.total||catalog.length)
+            }))}</p>
+            ${catalogMeta.hasMore?`<button type="button" class="btn ghost sm" id="platformReportFirmLoadMore">${escapeHtml(pt('Load 50 more firms'))}</button>`:''}
           </div>
           <div class="cui-field"><label for="platformReportBranch">${escapeHtml(pt("Branch"))}</label><select id="platformReportBranch"${filters.businesses.length===1?'':' disabled'}>
             <option value="">${escapeHtml(pt("Whole firm"))}</option>${branches.map(branch=>`<option value="${escapeHtml(branch.branch_id)}"${branch.branch_id===filters.branch?' selected':''}>${escapeHtml(branch.name)}</option>`).join('')}
@@ -2951,7 +3532,7 @@
     asArray(analytics.source_page).forEach(source=>['leads','converted'].forEach(metric=>rows.push(['sme_source','all_prospects',platformStatus(source.source_type),source.source_type,metric,source[metric]??0,'',scope.from,scope.to,analytics.snapshot_at])));
     return rows;
   }
-  function billingReportRows(rows,reconciliation,filters,snapshot) {
+  function billingReportRows(rows,filters,snapshot) {
     const output=[['record_type','scope','name','group','metric','value','currency','from','to','snapshot_at']];
     rows.forEach(row=>[
       ['subscription_status',row.status],['payment_status',row.payment_status],
@@ -2959,17 +3540,14 @@
       ['period_total_cents',row.period_total_cents],['failed_event_count',row.failed_event_count],
       ['next_payment_at',row.next_payment_at]
     ].forEach(([metric,value])=>output.push(['billing','selected_firms',row.business_name,row.business_id,metric,value??'',row.currency||'',filters.from,filters.to,snapshot])));
-    asArray(reconciliation.items).forEach(item=>output.push(['reconciliation','latest_run',item.provider_object_id||item.object_type,item.business_id,item.result,JSON.stringify(item.detail||{}),'',filters.from,filters.to,snapshot]));
     return output;
   }
   function crossDomainReportHtml({
-    report,customers,customerPage,analytics,billing,reconciliation,
+    report,customers,customerPage,analytics,billing,
     analyticsAvailable=false,billingAvailable=false
   },CUI,filters) {
     const summary=asObject(report.summary),crm=asObject(analytics.summary);
     const billingExceptions=billing.filter(row=>row.status==='past_due'||row.payment_status==='past_due'||Number(row.failed_event_count||0)>0);
-    const runs=asArray(reconciliation.runs),items=asArray(reconciliation.items);
-    const latestRun=runs[0]||{};
     const reportScope=asObject(report.scope),crmScope=asObject(analytics.scope);
     return `<article class="card platform-report-sheet" id="platformCrossDomainReportSheet">
       <header class="platform-list-row"><div><h2>${escapeHtml(pt("Enterprise performance report"))}</h2><p class="muted small">${escapeHtml(pt('{from} to {to} · snapshot {date}',{from:reportScope.from||filters.from,to:reportScope.to||filters.to,date:dateTime(report.snapshot_at)}))}</p></div><div class="platform-actions no-print"><button type="button" class="btn ghost sm" data-cross-report-csv>${escapeHtml(pt("Download complete CSV"))}</button><button type="button" class="btn ghost sm" data-cross-report-print>${escapeHtml(pt("Print / PDF"))}</button></div></header>
@@ -2991,15 +3569,12 @@
         </div>
         ${asArray(analytics.loss_reasons).length?CUI.card({title:'Loss reasons',body:CUI.table({caption:'Loss reasons',headers:['Reason','Prospects'],rows:asArray(analytics.loss_reasons).map(row=>[escapeHtml(platformStatus(row.reason_code)),String(row.count??0)])})}):''}
       </section>`:localizedRouteNoteHtml('SME acquisition and onboarding omitted','This account does not have Onboarding access. The customer and firm report above remains complete for the selected scope.')}
-      ${billingAvailable?`<section class="platform-detail-section"><div class="platform-list-row"><div><h3>${escapeHtml(pt("Subscription billing and reconciliation"))}</h3><p class="muted small">${billing.length} ${escapeHtml(pt("subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue."))}</p></div>${latestRun.id?CUI.status(platformStatus(latestRun.status),latestRun.status==='completed'?'ok':'off'):CUI.status(pt('No reconciliation run'),'off')}</div>
+      ${billingAvailable?`<section class="platform-detail-section"><div class="platform-list-row"><div><h3>${escapeHtml(pt("Subscription billing"))}</h3><p class="muted small">${escapeHtml(pt("{count} subscription records in the selected firm scope. GST remains visible and is not treated as commissionable revenue. Technical reconciliation remains in System health.",{count:billing.length}))}</p></div></div>
         ${billing.length?CUI.table({caption:'Selected firm billing',headers:['Firm','Subscription','Payment','Cadence','Subtotal','GST','Total','Next payment','Failures'],rows:billing.map(row=>[
           escapeHtml(row.business_name),CUI.status(platformStatus(row.status||'—'),statusTone(row.status)),CUI.status(platformStatus(row.payment_status||'—'),row.payment_status==='paid'?'ok':row.payment_status==='past_due'?'no':'off'),escapeHtml(platformStatus(row.cadence)),currency(row.period_subtotal_cents,row.currency),currency(row.period_tax_cents,row.currency),currency(row.period_total_cents,row.currency),escapeHtml(dateTime(row.next_payment_at)),String(row.failed_event_count||0)
         ])}):`<p class="muted small">${escapeHtml(pt("No billing rows in this firm scope."))}</p>`}
-        <div class="platform-detail-grid">
-          ${CUI.card({title:'Billing exception queue',description:billingExceptions.length?pt('{count} firms need attention.',{count:billingExceptions.length}):'No firm-level payment exceptions.',body:billingExceptions.length?billingExceptions.map(row=>`<div class="platform-action-item"><div><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(dateTime(row.next_payment_at))}</p></div>${CUI.status(pt('{count} failures',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):`<p class="muted small">${escapeHtml(pt("No overdue or failed subscription records."))}</p>`})}
-          ${CUI.card({title:'Latest reconciliation',description:latestRun.started_at?`${dateTime(latestRun.started_at)} · ${platformStatus(latestRun.run_mode)}`:'No reconciliation run was returned.',body:items.length?items.map(item=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(item.object_type))}</b><p class="muted small">${escapeHtml(item.provider_object_id||'Provider object')}</p></div>${CUI.status(platformStatus(item.result),item.result==='matched'?'ok':'no')}</div>`).join(''):`<p class="muted small">${escapeHtml(pt("No mismatch items in the latest returned run."))}</p>`})}
-        </div>
-      </section>`:localizedRouteNoteHtml('Subscription billing omitted','This account does not have Billing access. No billing or reconciliation reader was called.')}
+        ${CUI.card({title:'Billing exception queue',description:billingExceptions.length?pt('{count} firms need attention.',{count:billingExceptions.length}):'No firm-level payment exceptions.',body:billingExceptions.length?billingExceptions.map(row=>`<div class="platform-action-item"><div><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(dateTime(row.next_payment_at))}</p></div>${CUI.status(pt('{count} failures',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):`<p class="muted small">${escapeHtml(pt("No overdue or failed subscription records."))}</p>`})}
+      </section>`:localizedRouteNoteHtml('Subscription billing omitted','This account does not have Billing access. No billing reader was called.')}
     </article>`;
   }
   async function renderCrossDomainReport(context,filters) {
@@ -3008,25 +3583,20 @@
     host.innerHTML=loading(CUI,'Enterprise report','Building firm, customer, pipeline and billing sections…','reports');
     try{
       const sectionAccess=reportSectionAccess(context.access);
-      const [report,customerPayload,analytics,billingPayload,reconciliationRuns]=await Promise.all([
+      const [report,customerPayload,analytics,billingPayload]=await Promise.all([
         rpc(sb,'platform_generate_improvement_report_v82',enterpriseArgs(filters)),
         fetchEnterpriseCustomerPage(sb,filters,null),
         sectionAccess.onboarding
           ?rpc(sb,'platform_get_sme_analytics_v86',{p_from:filters.from,p_to:filters.to,p_snapshot_at:null,p_consultant:null,p_limit:200,p_after_source:null})
           :Promise.resolve(null),
-        sectionAccess.billing?rpc(sb,'platform_get_billing_v89',{p_business:null,p_limit:250}):Promise.resolve(null),
-        sectionAccess.billing?rpc(sb,'platform_get_billing_reconciliation_v89',{p_run:null,p_limit:50}):Promise.resolve(null)
+        sectionAccess.billing?rpc(sb,'platform_get_billing_v89',{p_business:null,p_limit:250}):Promise.resolve(null)
       ]);
       const reportObject=asObject(report),allowedIds=new Set(asArray(reportObject.businesses).map(firmId));
       const billing=asArray(billingPayload).filter(row=>!allowedIds.size||allowedIds.has(String(row.business_id)));
-      const runPayload=asObject(reconciliationRuns),latestRun=asArray(runPayload.runs)[0];
-      const reconciliation=sectionAccess.billing&&latestRun?.id
-        ?asObject(await rpc(sb,'platform_get_billing_reconciliation_v89',{p_run:latestRun.id,p_limit:50}))
-        :runPayload;
       const payload={
         report:reportObject,customers:asArray(customerPayload,['customers']),
         customerPage:asObject(customerPayload.pagination),analytics:asObject(analytics),
-        billing,reconciliation,analyticsAvailable:sectionAccess.onboarding,
+        billing,analyticsAvailable:sectionAccess.onboarding,
         billingAvailable:sectionAccess.billing
       };
       if(!host.isConnected)return;
@@ -3059,7 +3629,7 @@
           downloadCsv(`${context.brand?.downloadPrefix||'nestly'}-enterprise-cross-domain-${filters.from}-${filters.to}.csv`,[
             extendedHeader,...legacy.slice(1).map(convertLegacy),
             ...(sectionAccess.onboarding?analyticsReportRows(asObject(analytics)).slice(1):[]),
-            ...(sectionAccess.billing?billingReportRows(billing,reconciliation,filters,reportObject.snapshot_at).slice(1):[])
+            ...(sectionAccess.billing?billingReportRows(billing,filters,reportObject.snapshot_at).slice(1):[])
           ]);
           button.textContent=pt('Downloaded {count} customer rows',{count:customers.length});
         }catch(error){button.disabled=false;button.textContent=pt('Retry complete CSV');button.title=platformErrorMessage(error,'Export unavailable')}
@@ -3067,13 +3637,34 @@
       host.querySelector('#platformCrossDomainReportSheet')?.scrollIntoView?.({behavior:'smooth',block:'start'});
     }catch(error){host.innerHTML=error.platformUpdateRequired?systemUpdateRequired(CUI,'Enterprise reports'):CUI.errorState({title:'Report unavailable',message:platformErrorMessage(error,'Please try again.')})}
   }
-  async function renderPlatformReports(context,filters=enterpriseDefaults()) {
+  async function renderPlatformReports(context,filters=enterpriseDefaults(),catalogState=null) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Enterprise reports','Loading reporting dimensions…','reports');
     try{
-      if(!context.enterpriseCatalog)context.enterpriseCatalog=asArray(await fetchEnterpriseFirmPages(sb,enterpriseDefaults()),['firms']);
-      const catalog=context.enterpriseCatalog;
-      main.innerHTML=reportsPageHtml(CUI,filters,catalog);
+      let state=catalogState;
+      if(!state){
+        const catalogueFilters={...enterpriseDefaults(),search:filters.search,sector:filters.sector};
+        const page=await fetchEnterpriseFirmPage(sb,catalogueFilters,{limit:50});
+        const firms=asArray(page,['firms']),pagination=asObject(page.pagination);
+        state={
+          firms,snapshot:page.snapshot_at,
+          cursor:pagination.has_more?asObject(pagination.next_cursor):null,
+          total:Number(pagination.total_firms??firms.length)
+        };
+        const missingSelected=filters.businesses.filter(id=>!firms.some(row=>firmId(row)===id));
+        if(missingSelected.length){
+          const selectedPage=await fetchEnterpriseFirmPage(sb,{
+            ...enterpriseDefaults(),businesses:missingSelected
+          },{snapshot:state.snapshot,limit:Math.min(missingSelected.length,100)});
+          const merged=new Map(firms.map(row=>[firmId(row),row]));
+          asArray(selectedPage,['firms']).forEach(row=>merged.set(firmId(row),row));
+          state.firms=[...merged.values()];
+        }
+      }
+      const catalog=state.firms;
+      main.innerHTML=reportsPageHtml(CUI,filters,catalog,{
+        total:state.total,hasMore:Boolean(state.cursor)
+      });
       const form=main.querySelector('#platformReportFilters'),businessSelect=main.querySelector('#platformReportBusinesses');
       businessSelect.onchange=()=>{
         const ids=selectedOptions(businessSelect),branch=main.querySelector('#platformReportBranch');
@@ -3089,10 +3680,38 @@
           branch:businesses.length===1?main.querySelector('#platformReportBranch').value:'',
           from:main.querySelector('#platformReportFrom').value,to:main.querySelector('#platformReportTo').value
         };
-        renderPlatformReports(context,next).then(()=>renderCrossDomainReport(context,next));
+        const nextHash=enterpriseReportHash(next);
+        globalObject.history?.replaceState?.(null,'',nextHash);
+        renderPlatformReports({...context,hash:nextHash},next);
       };
-      main.querySelector('#platformReportReset').onclick=()=>renderPlatformReports(context,enterpriseDefaults());
+      main.querySelector('#platformReportReset').onclick=()=>{
+        globalObject.history?.replaceState?.(null,'','#/platform/reports');
+        renderPlatformReports({...context,hash:'#/platform/reports'},enterpriseDefaults());
+      };
+      main.querySelector('#platformReportFirmLoadMore')?.addEventListener('click',async event=>{
+        const button=event.currentTarget;button.disabled=true;
+        button.textContent=pt('Loading next 50 firms…');
+        try{
+          const nextPage=await fetchEnterpriseFirmPage(sb,{
+            ...enterpriseDefaults(),search:filters.search,sector:filters.sector
+          },{snapshot:state.snapshot,cursor:state.cursor,limit:50});
+          const merged=new Map(catalog.map(row=>[firmId(row),row]));
+          asArray(nextPage,['firms']).forEach(row=>merged.set(firmId(row),row));
+          const pagination=asObject(nextPage.pagination);
+          await renderPlatformReports(context,filters,{
+            firms:[...merged.values()],snapshot:state.snapshot,
+            cursor:pagination.has_more?asObject(pagination.next_cursor):null,
+            total:Number(pagination.total_firms??state.total)
+          });
+        }catch(error){
+          button.disabled=false;button.textContent=pt('Retry next 50 firms');
+          button.title=platformErrorMessage(error,'Try again.');
+        }
+      });
       CUI.focusRoute(main);
+      if(String(context.hash||'').includes('?')){
+        await renderCrossDomainReport(context,filters);
+      }
     }catch(error){showError(main,error,CUI,'Enterprise reports')}
   }
 
@@ -3360,6 +3979,243 @@
       &&onboardingHealth(item)!=='blocked';
     return false;
   }
+  function platformTodayOwner(item) {
+    return String(prospectValue(item,
+      'consultant_name','assigned_consultant_name','assignment.display_name',
+      'owner_name','onboarding_owner_name','account_manager_name'
+    )||pt('Unassigned'));
+  }
+  function platformTodayAge(item,type='prospect') {
+    const source=type==='prospect'
+      ?prospectValue(item,'stage_entered_at','last_activity_at','updated_at','created_at')
+      :prospectValue(item,'due_at','review_due_at','next_payment_at','submitted_at','created_at','updated_at');
+    const days=dayDelta(source);
+    if(days===null)return pt('Age not recorded');
+    if(days<=0)return pt('Today');
+    return pt('{count} days old',{count:days});
+  }
+  function platformTodayProspectReason(item) {
+    const severity=String(item.attention_severity||'none').toLowerCase();
+    const health=onboardingHealth(item),next=nextActionBucket(item);
+    if(health==='blocked')return pt('Onboarding is blocked');
+    if(item.overdue===true||item.next_action_overdue===true||Number(item.overdue_task_count||0)>0)
+      return pt('Follow-up is overdue');
+    if(severity==='critical')return pt('Critical onboarding attention');
+    if(severity==='warning')return pt('Onboarding warning needs review');
+    if(prospectIsStale(item))return pt('No recent activity');
+    if(item.attention_due===true)return pt('Attention is due now');
+    if(next==='today')return pt('Next action is due today');
+    return pt('No next action is scheduled');
+  }
+  function platformTodayProspectSla(item) {
+    const overdueTasks=Number(item.overdue_task_count||0);
+    if(overdueTasks>0)return pt('{count} overdue tasks',{count:overdueTasks});
+    if(item.attention_due===true)return pt('SLA due now');
+    const next=prospectValue(item,'next_action_at','next_activity_at');
+    return next?pt('Next action {when}',{when:relativeActivity(next,{future:true})}):pt('SLA not scheduled');
+  }
+  function platformTodayProspectPriority(item) {
+    const severity=String(item.attention_severity||'none').toLowerCase();
+    if(onboardingHealth(item)==='blocked')return 0;
+    if(item.overdue===true||item.next_action_overdue===true||Number(item.overdue_task_count||0)>0)return 1;
+    if(severity==='critical')return 2;
+    if(severity==='warning')return 3;
+    if(prospectIsStale(item))return 4;
+    if(item.attention_due===true||nextActionBucket(item)==='today')return 5;
+    return 6;
+  }
+  function platformTodayProspectEligible(item) {
+    const stage=prospectStage(item),severity=String(item.attention_severity||'none').toLowerCase();
+    const needsAttention=item.attention_due===true
+      ||item.overdue===true||item.next_action_overdue===true||Number(item.overdue_task_count||0)>0
+      ||['critical','warning'].includes(severity)||prospectIsStale(item)
+      ||onboardingHealth(item)==='blocked'||['overdue','today'].includes(nextActionBucket(item));
+    if(needsAttention)return true;
+    const openRecord=Boolean(item.prospect_id||item.id)&&item._has_prospect_detail!==false
+      &&!['lost','activated','client'].includes(stage);
+    return openRecord&&nextActionBucket(item)==='missing';
+  }
+  function buildPlatformTodayQueue({
+    applications=[],prospects=[],billing=[],commissions=[],incidents=[],scoped=false
+  }={}) {
+    const applicationItems=asArray(applications)
+      .filter(item=>String(item.status||'submitted').toLowerCase()==='submitted')
+      .map(item=>({
+        type:'application',id:String(item.id||item.application_id||''),
+        name:item.business_name||item.company_name||pt('Unnamed firm'),
+        reason:pt('Owner application awaits a decision'),
+        status:platformStatus(item.status||'submitted'),
+        age:platformTodayAge(item,'application'),
+        sla:item.review_due_at
+          ?pt('Review due {when}',{when:relativeActivity(item.review_due_at,{future:true})})
+          :pt('Approval review required'),
+        owner:platformTodayOwner(item),priority:1,
+        primaryAction:{label:pt('Review application'),href:onboardingHash(
+          defaultOnboardingFilters(),{application:String(item.id||item.application_id||'')}
+        )}
+      }));
+    const prospectItems=asArray(prospects).filter(platformTodayProspectEligible).map(item=>({
+      type:'prospect',
+      id:String(item.prospect_id||item.id||item.row_id||item.business_id||''),
+      name:prospectCompany(item),
+      reason:platformTodayProspectReason(item),
+      status:platformStatus(prospectStage(item)),
+      age:platformTodayAge(item,'prospect'),
+      sla:platformTodayProspectSla(item),
+      owner:platformTodayOwner(item),
+      priority:platformTodayProspectPriority(item),
+      primaryAction:{label:pt('Open case'),href:scoped
+        ?scopedOnboardingHash({prospect:String(item.prospect_id||item.id||item.row_id||item.business_id||'')})
+        :onboardingHash(defaultOnboardingFilters(),{
+          prospect:String(item.prospect_id||item.id||item.row_id||item.business_id||'')
+        })}
+    }));
+    const billingItems=asArray(billing)
+      .filter(item=>item.status==='past_due'||item.payment_status==='past_due'||Number(item.failed_event_count||0)>0)
+      .map(item=>{
+        const failed=Number(item.failed_event_count||0),pastDue=item.status==='past_due'||item.payment_status==='past_due';
+        return {
+          type:'billing',id:String(item.business_id||item.id||''),name:item.business_name||item.name||pt('Unnamed firm'),
+          reason:pastDue?pt('Subscription payment is past due'):pt('Provider payment attempts failed'),
+          status:platformStatus(item.payment_status||item.status||'attention'),
+          age:platformTodayAge(item,'billing'),
+          sla:Number(item.days_past_due||0)>0
+            ?pt('{count} days past due',{count:Number(item.days_past_due)})
+            :failed>0?pt('{count} failed attempts',{count:failed})
+              :pt('Payment follow-up due'),
+          owner:platformTodayOwner(item),priority:pastDue?0:2,
+          primaryAction:{label:pt('Open billing'),href:`#/platform/billing?business=${encodeURIComponent(String(item.business_id||item.id||''))}`}
+        };
+      });
+    const commissionItems=asArray(commissions)
+      .filter(item=>['open','payable'].includes(String(item.status||'').toLowerCase()))
+      .map(item=>({
+        type:'commission',id:String(item.id||item.accrual_id||item.consultant_id||''),
+        name:item.consultant_name||item.display_name||item.business_name||pt('Commission accrual'),
+        reason:pt('Commission payment requires review'),
+        status:platformStatus(item.status||'open'),
+        age:platformTodayAge(item,'commission'),
+        sla:item.due_at?pt('Due {when}',{when:relativeActivity(item.due_at,{future:true})}):pt('Payment review required'),
+        owner:platformTodayOwner(item),priority:item.status==='payable'?3:5,
+        primaryAction:{label:pt('Open commissions'),href:`#/platform/commissions?accrual=${encodeURIComponent(String(item.id||item.accrual_id||item.consultant_id||''))}`}
+      }));
+    const incidentItems=asArray(incidents)
+      .filter(item=>{
+        const result=String(item.result||item.status||'').toLowerCase();
+        return result&&!['matched','completed','ok','healthy','success'].includes(result);
+      })
+      .map(item=>{
+        const objectType=platformStatus(item.object_type||item.run_mode||'automation');
+        return {
+          type:'incident',id:String(item.id||item.run_id||item.provider_object_id||item.created_at||''),
+          name:item.business_name||item.provider_object_id||pt('System reconciliation incident'),
+          reason:item.result
+            ?pt('Reconciliation exception for {object}',{object:objectType})
+            :pt('Automation run requires review'),
+          status:platformStatus(item.result||item.status||'exception'),
+          age:platformTodayAge(item,'incident'),
+          sla:pt('Review immediately'),
+          owner:pt('Platform operations'),
+          priority:String(item.status||item.result||'').toLowerCase()==='failed'?0:1,
+          primaryAction:{label:pt('Open automation'),href:`#/platform/automation?incident=${encodeURIComponent(String(item.id||item.run_id||item.provider_object_id||item.created_at||''))}`}
+        };
+      });
+    return [...applicationItems,...incidentItems,...prospectItems,...billingItems,...commissionItems]
+      .sort((left,right)=>left.priority-right.priority||left.name.localeCompare(right.name));
+  }
+  function platformTodayCoverageDomain({
+    key,label,returned=0,total=null,limit=null,truncated=false,
+    failed=false,detail='',affectsCaughtUp=true
+  }={}) {
+    const loaded=Math.max(0,Number(returned||0));
+    const exactTotal=Number.isFinite(Number(total))&&total!==null
+      ?Math.max(0,Number(total)):null;
+    let state='complete';
+    if(failed)state='unavailable';
+    else if(truncated||(exactTotal!==null&&loaded<exactTotal)
+      ||(exactTotal===null&&Number(limit)>0&&loaded>=Number(limit)))state='partial';
+    return{
+      key:String(key||'unknown'),label:String(label||key||'Source'),
+      returned:loaded,total:exactTotal,limit:Number(limit)||null,
+      state,detail:String(detail||''),affectsCaughtUp:affectsCaughtUp!==false
+    };
+  }
+  function buildPlatformTodayCoverage(domains=[]) {
+    const normalized=asArray(domains).map(domain=>
+      domain?.state?domain:platformTodayCoverageDomain(domain)
+    );
+    const workDomains=normalized.filter(domain=>domain.affectsCaughtUp!==false);
+    return{
+      domains:normalized,
+      complete:workDomains.every(domain=>domain.state==='complete'),
+      unavailable:normalized.filter(domain=>domain.state==='unavailable').map(domain=>domain.key),
+      partial:normalized.filter(domain=>domain.state==='partial').map(domain=>domain.key)
+    };
+  }
+  function platformTodayCoverageText(domain) {
+    if(domain.state==='unavailable')return pt('Unavailable — no records were used.');
+    if(domain.total!==null&&domain.returned<domain.total)
+      return pt('{loaded} of {total} records loaded.',{
+        loaded:domain.returned,total:domain.total
+      });
+    if(domain.state==='partial')
+      return pt('At least {count} records loaded; this source does not expose another safe page.',{
+        count:domain.returned
+      });
+    return pt('{count} records checked completely.',{count:domain.returned});
+  }
+  function platformTodayCoverageHtml(coverage) {
+    const truth=coverage&&Array.isArray(coverage.domains)
+      ?coverage:buildPlatformTodayCoverage([]);
+    const summary=truth.complete
+      ?pt('Coverage complete — all exception sources were checked.')
+      :pt('Coverage incomplete — Today may omit additional work.');
+    return `<details class="platform-today-coverage" data-platform-today-coverage data-coverage-complete="${truth.complete?'true':'false'}">
+      <summary>${escapeHtml(summary)}</summary>
+      <ul>${truth.domains.map(domain=>`<li data-coverage-domain="${escapeHtml(domain.key)}" data-coverage-state="${escapeHtml(domain.state)}">
+        <b>${escapeHtml(pt(domain.label))}:</b>
+        <span>${escapeHtml(platformTodayCoverageText(domain))}${domain.detail?` ${escapeHtml(pt(domain.detail))}`:''}</span>
+      </li>`).join('')}</ul>
+    </details>`;
+  }
+  function platformTodayMetric(value,domain,{exact=false}={}) {
+    if(domain?.state==='unavailable')return '—';
+    const count=Math.max(0,Number(value||0));
+    return !exact&&domain?.state==='partial'?`${count}+`:String(count);
+  }
+  function platformTodayQueueHtml(items,CUI,{
+    title='Today',description='Work the highest-priority item first.',limit=12,
+    sales=false,scope='',coverage=null,coverageNote=''
+  }={}) {
+    const visible=asArray(items).slice(0,limit),remaining=Math.max(0,asArray(items).length-visible.length);
+    const coverageIncomplete=coverage?.complete===false;
+    const empty=coverageIncomplete
+      ?CUI.emptyState({
+        iconName:'info',title:'No work is visible in the loaded coverage',
+        body:'Today is incomplete. Open the affected work areas before treating the queue as caught up.'
+      })
+      :CUI.emptyState({
+        iconName:'check',title:'You are caught up',
+        body:'No overdue, due-today, blocked, stale or unscheduled work is in your current scope.'
+      });
+    return `<section class="card platform-today${sales?' platform-sales-today':''}" data-platform-today-queue${sales?' data-platform-sales-today':''}${scope?` data-platform-scope="${escapeHtml(scope)}"`:''}>
+      <header class="platform-today-head"><div><p class="eyebrow">${escapeHtml(pt('Operating queue'))}</p><h2>${escapeHtml(pt(title))}</h2><p class="muted small">${escapeHtml(pt(description))}</p></div><span class="platform-count">${visible.length}</span></header>
+      <div class="platform-today-list">${visible.map(item=>`<article class="platform-today-item" data-platform-today-item data-today-type="${escapeHtml(item.type)}">
+        <div class="platform-today-main"><h3>${escapeHtml(item.name)}</h3><p class="platform-today-reason" data-today-reason>${escapeHtml(item.reason)}</p>
+          <dl class="platform-today-meta">
+            <div><dt>${escapeHtml(pt('Current status'))}</dt><dd data-today-status>${escapeHtml(item.status)}</dd></div>
+            <div><dt>${escapeHtml(pt('Age'))}</dt><dd data-today-age>${escapeHtml(item.age)}</dd></div>
+            <div><dt>${escapeHtml(pt('Response target'))}</dt><dd data-today-sla>${escapeHtml(item.sla)}</dd></div>
+            <div><dt>${escapeHtml(pt('Responsible'))}</dt><dd data-today-owner>${escapeHtml(item.owner)}</dd></div>
+          </dl>
+        </div>
+        <a class="btn sm platform-today-action" data-today-primary-action href="${escapeHtml(item.primaryAction.href)}">${escapeHtml(item.primaryAction.label)}</a>
+      </article>`).join('')||empty}</div>
+      ${remaining?`<p class="muted small platform-today-more">${escapeHtml(pt('{count} more items remain in the linked work areas.',{count:remaining}))}</p>`:''}
+      ${coverage?platformTodayCoverageHtml(coverage):''}
+      ${coverageNote?`<p class="muted small platform-today-coverage" data-platform-today-coverage>${escapeHtml(pt(coverageNote))}</p>`:''}
+    </section>`;
+  }
   function attentionFilterLabel(value) {
     return{
       due:'Due now',critical:'Critical',warning:'Warning',
@@ -3401,7 +4257,9 @@
     if(!active.length)return'';
     return `<div class="platform-active-filters" aria-label="${escapeHtml(pt('Active filters'))}">${CUI.icon('search',{size:16})}<span>${escapeHtml(pt("Active:"))}</span>${active.map(([key,label])=>`<span class="chip">${escapeHtml(pt(label))} · ${escapeHtml(key==='attention'?attentionFilterLabel(filters[key]):platformStatus(filters[key]))}</span>`).join('')}</div>`;
   }
-  function onboardingHtml({board,items,CUI,filters,attentionSummary={},canWrite=true}) {
+  function onboardingHtml({
+    items,CUI,filters,attentionSummary={},canWrite=true,pagination={}
+  }) {
     const filtered=sortProspects(items.filter(item=>prospectMatchesFilters(item,filters)),filters.sort);
     const byLane=Object.fromEntries(operationalLanes.map(lane=>[
       lane.key,filtered.filter(item=>operationalLaneFor(item)===lane.key)
@@ -3469,35 +4327,114 @@
         <header class="platform-kanban-head"><div><h2 id="lane-${lane.key}">${escapeHtml(pt(lane.label))}</h2><p>${escapeHtml(pt(lane.description))}</p></div><span class="platform-count">${byLane[lane.key].length}</span></header>
         <div class="platform-card-list">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI,{canWrite})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
       </section>`).join('')}</div>
-      <div class="platform-prospect-list" aria-label="${escapeHtml(pt('SME onboarding list'))}">${filtered.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>`;
+      <div class="platform-prospect-list" aria-label="${escapeHtml(pt('SME onboarding list'))}">${filtered.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>
+      <div class="platform-paged-summary" data-onboarding-page-summary>
+        <p class="muted small">${escapeHtml(pt('{shown} of {count} firms loaded. Search and the main status filters run across the complete directory.',{
+          shown:Number(pagination.shown||items.length),count:Number(pagination.total||items.length)
+        }))}</p>
+        ${pagination.hasMore?`<button type="button" class="btn ghost" id="platformOnboardingLoadMore">${escapeHtml(pt('Load 50 more firms'))}</button>`:''}
+      </div>`;
   }
 
   function defaultOnboardingFilters(){
     return{search:'',lane:'',attention:'',consultant:'',stage:'',source:'',region:'',segment:'',priority:'',
       qualification:'',nextAction:'',health:'',sort:'next_action'};
   }
+  function onboardingHash(filters=defaultOnboardingFilters(),{prospect='',application=''}={}) {
+    const defaults=defaultOnboardingFilters(),entries=[];
+    const add=(key,value)=>{if(value&&value!==defaults[key])entries.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`)};
+    Object.keys(defaults).forEach(key=>add(key,filters[key]));
+    add('prospect',prospect);
+    add('application',application);
+    return`#/platform/onboarding${entries.length?`?${entries.join('&')}`:''}`;
+  }
+  function onboardingStateFromHash(hash) {
+    const filters=defaultOnboardingFilters(),query=String(hash||'').split('?')[1]||'';
+    const params=new Map(query.split('&').filter(Boolean).map(pair=>{
+      const [key,...rest]=pair.split('=');
+      return[decodeURIComponent(key||''),decodeURIComponent(rest.join('=')||'')];
+    }));
+    Object.keys(filters).forEach(key=>{
+      if(params.has(key))filters[key]=String(params.get(key)||'').trim();
+    });
+    return{
+      filters,
+      prospect:String(params.get('prospect')||'').trim(),
+      application:String(params.get('application')||'').trim()
+    };
+  }
+  function replaceOnboardingState(context,filters,{prospect='',application=''}={}) {
+    const hash=onboardingHash(filters,{prospect,application});
+    if(globalObject.history?.replaceState)globalObject.history.replaceState(null,'',hash);
+    return{...context,hash,onboardingFilters:filters};
+  }
   async function renderOnboarding(context,filters=defaultOnboardingFilters()) {
     const {main,CUI,sb,generation,isCurrent}=context;
-    main.innerHTML=loading(CUI,'Onboarding','Loading the SME pipeline…','setup');
+    const prior=context.onboardingLoadMore?asObject(context.onboardingPage):null;
+    const previousScroll=prior?Number(globalObject.scrollY||0):null;
+    main.innerHTML=loading(CUI,'Onboarding',prior?'Loading the next 50 firms…':'Loading the SME pipeline…','setup');
     try{
-      const [directory,board,list,applicationQueue]=await Promise.all([
-        fetchFirmDirectoryV88(sb,filters,{required:true}),
-        rpc(sb,'platform_get_sme_board_v76',{p_consultant:filters.consultant||null}),
-        rpc(sb,'platform_list_prospects_v76',{p_stage:null,p_consultant:filters.consultant||null,p_search:filters.search||null,p_limit:250,p_before:null}),
-        context.access?.role==='super_admin'
+      const [directory,list,applicationQueue]=await Promise.all([
+        fetchFirmDirectoryPageV88(sb,filters,{
+          required:true,limit:50,
+          snapshot:prior?.snapshot_at||null,
+          cursor:prior?.next_cursor||null
+        }),
+        rpc(sb,'platform_list_prospects_v76',{
+          p_stage:null,p_consultant:filters.consultant||null,p_search:filters.search||null,
+          p_limit:50,p_before:prior?.next_before||null
+        }),
+        prior?.applicationQueue?Promise.resolve(prior.applicationQueue):context.access?.role==='super_admin'
           ?rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:filters.search||null,p_limit:100})
           :Promise.resolve({applications:[]})
       ]);
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
-      const items=mergeFirmOnboardingItems(directory.items,flattenBoard(board,list));
+      const directoryItems=asArray(prior?.directoryItems).concat(directory.items);
+      const prospectItems=asArray(prior?.prospectItems).concat(flattenBoard(null,list));
+      const items=mergeFirmOnboardingItems(directoryItems,prospectItems);
+      const total=Number(directory.total_count||prior?.total||items.length);
+      const pageState={
+        snapshot_at:prior?.snapshot_at||directory.snapshot_at,
+        next_cursor:directory.next_cursor,
+        next_before:list?.next_before||null,
+        directoryItems,prospectItems,total,applicationQueue
+      };
+      const pagination={shown:directoryItems.length,total,hasMore:directoryItems.length<total};
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
-      main.innerHTML=onboardingHtml({board,items,CUI,filters,attentionSummary:directory.attention_summary,canWrite:context.canWrite});
+      main.innerHTML=onboardingHtml({
+        items,CUI,filters,
+        attentionSummary:prior?.attentionSummary||directory.attention_summary,
+        canWrite:context.canWrite,pagination
+      });
+      pageState.attentionSummary=prior?.attentionSummary||directory.attention_summary;
       if(context.access?.role==='super_admin'){
         main.insertAdjacentHTML('afterbegin',businessApplicationQueueHtml(applicationQueue,CUI));
         wireBusinessApplicationQueue({...context,applicationQueue,filters});
       }
-      wireOnboarding({...context,board,items,filters});
-      CUI.focusRoute(main);
+      wireOnboarding({...context,items,filters,onboardingPage:pageState,onboardingLoadMore:false});
+      if(prior){
+        globalObject.requestAnimationFrame?.(()=>globalObject.scrollTo?.(0,previousScroll));
+        const firstNew=directory.items[0];
+        if(firstNew){
+          const card=main.querySelector(`[data-prospect="${String(firstNew.id||firstNew.prospect_id||'').replace(/"/g,'\\"')}"]`);
+          card?.focus?.({preventScroll:true});
+        }
+      }else CUI.focusRoute(main);
+      const requestedProspect=onboardingStateFromHash(context.hash).prospect;
+      const requestedApplication=onboardingStateFromHash(context.hash).application;
+      if(requestedApplication){
+        const card=main.querySelector(`[data-business-application="${globalObject.CSS?.escape?.(requestedApplication)||requestedApplication.replace(/"/g,'\\"')}"]`);
+        card?.scrollIntoView?.({behavior:'smooth',block:'center'});
+        card?.focus?.({preventScroll:true});
+      }
+      if(requestedProspect){
+        const requestedItem=items.find(item=>String(item.id||item.prospect_id)===requestedProspect)
+          ||{id:requestedProspect,prospect_id:requestedProspect,company_name:pt('Firm record')};
+        openProspectDetail(requestedItem,{
+          ...context,onboardingFilters:filters,
+          prospectCloseHash:onboardingHash(filters)
+        });
+      }
     }catch(error){showError(main,error,CUI,'Onboarding')}
   }
   function businessApplicationQueueHtml(payload,CUI){
@@ -3506,12 +4443,12 @@
       <div class="row"><div><p class="eyebrow">${escapeHtml(pt('Owner access gate'))}</p><h2 style="margin-top:4px">${escapeHtml(pt('Business applications awaiting approval'))}</h2>
       <p class="muted small" style="margin-top:5px">${escapeHtml(pt('No owner account or workspace can be created until a super admin approves an application.'))}</p></div>
       <span class="spacer"></span><span class="pill">${applications.length} ${escapeHtml(pt('pending'))}</span></div>
-      <div class="platform-card-list" style="margin-top:14px">${applications.map(application=>`<article class="card" data-business-application="${escapeHtml(application.id)}">
+      <div class="platform-card-list" style="margin-top:14px">${applications.map(application=>`<article class="card" tabindex="-1" data-business-application="${escapeHtml(application.id)}">
         <div class="row"><div><h3>${escapeHtml(application.business_name)}</h3>
           <p class="muted small" style="margin-top:4px">${escapeHtml(application.contact_name)} · ${escapeHtml(application.contact_email)} · ${escapeHtml(application.contact_phone)}</p>
           <p class="muted small" style="margin-top:4px">${escapeHtml(sectorLabel(application.sector_key))}${application.registration_number?` · ${escapeHtml(application.registration_number)}`:''} · ${escapeHtml(dateTime(application.submitted_at))}</p></div>
-          <span class="spacer"></span><div class="platform-actions"><button class="btn sm" type="button" data-application-decision="approved">${escapeHtml(pt('Approve'))}</button>
-          <button class="btn danger sm" type="button" data-application-decision="rejected">${escapeHtml(pt('Reject'))}</button></div></div>
+          <span class="spacer"></span><div class="platform-actions"><button class="btn sm" type="button" data-application-decision="approve">${escapeHtml(pt('Approve application'))}</button>
+          <button class="btn danger sm" type="button" data-application-decision="reject">${escapeHtml(pt('Reject application'))}</button></div></div>
       </article>`).join('')||CUI.emptyState({iconName:'setup',title:'No applications awaiting approval',body:'New public business applications will appear here before any owner account can be created.'})}</div>
         ${payload?.truncated?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("Showing the newest 100 applications. Narrow the search to find another application."))}</p>`:''}
     </section>`;
@@ -3527,17 +4464,24 @@
     });
   }
   function businessApplicationDecisionModal(application,decision,context){
-    const {CUI,sb}=context,isApproval=decision==='approved';
+    const {CUI,sb}=context,isApproval=decision==='approve';
+    const decisionAttemptKey=idempotencyKey();
     modal({title:isApproval?'Approve owner application':'Reject owner application',
-      submitLabel:isApproval?'Approve and issue secure invitation':'Reject application',CUI,
+      submitLabel:isApproval?'Approve application':'Reject application',CUI,
       body:`<div class="card"><b>${escapeHtml(application.business_name)}</b><p class="muted small" style="margin-top:5px">${escapeHtml(application.contact_name)} · ${escapeHtml(application.contact_email)}</p></div>
+        <div class="platform-route-note platform-status-note" data-application-consequence><b>${escapeHtml(pt(isApproval?'What approval does':'What rejection does'))}</b>
+          <p class="small">${escapeHtml(pt(isApproval
+            ?'Approving issues a one-time secure owner invitation. It does not activate the firm; the owner must use the invitation to create the approved account and continue onboarding.'
+            :'Rejecting keeps owner account creation and firm activation blocked. The applicant must submit a revised application before access can be approved.'))}</p>
+        </div>
         <label for="businessApplicationDecisionReason">${escapeHtml(pt("Decision note"))}</label>
         <textarea id="businessApplicationDecisionReason" name="reason" rows="4" required placeholder="${escapeHtml(pt(isApproval?'Approval basis and onboarding note':'Explain what must change before re-applying'))}"></textarea>
-        ${isApproval?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("The secure owner invitation is shown once after approval. Copy it before closing."))}</p>`:''}`,
+        ${isApproval?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("If the connection is interrupted, submit this same decision again. Nestly will revoke the unseen link and return a fresh secure invitation."))}</p>`:''}`,
       onSubmit:async(form,controls)=>{
-        const result=await rpc(sb,'platform_decide_business_application_v95',{
-          p_application:application.id,p_decision:decision,
-          p_reason:String(form.get('reason')||'').trim(),p_expected_version:application.version
+        const result=await rpc(sb,'platform_decide_business_application_v105',{
+          p_application:application.id,p_decision:isApproval?'approved':'rejected',
+          p_reason:String(form.get('reason')||'').trim(),p_expected_version:application.version,
+          p_idempotency_key:decisionAttemptKey
         });
         if(isApproval){
           const token=String(result?.invitation_token||'');
@@ -3563,7 +4507,7 @@
     const {main,CUI,items,filters}=context;
     main.querySelector('#platformBoardFilters').onsubmit=event=>{
       event.preventDefault();
-      renderOnboarding(context,{
+      const next={
         search:main.querySelector('#platformProspectSearch').value.trim(),
         lane:main.querySelector('#platformLaneFilter').value,
         attention:main.querySelector('#platformAttentionFilter').value,
@@ -3577,12 +4521,22 @@
         nextAction:main.querySelector('#platformNextActionFilter').value,
         health:main.querySelector('#platformHealthFilter').value,
         sort:main.querySelector('#platformProspectSort').value
-      });
+      };
+      renderOnboarding(replaceOnboardingState(context,next),next);
     };
-    main.querySelector('#platformBoardClear').onclick=()=>renderOnboarding(context,defaultOnboardingFilters());
-    main.querySelectorAll('[data-attention-quick]').forEach(button=>button.onclick=()=>renderOnboarding(context,{
-      ...filters,attention:button.dataset.attentionQuick
-    }));
+    main.querySelector('#platformBoardClear').onclick=()=>{
+      const next=defaultOnboardingFilters();
+      renderOnboarding(replaceOnboardingState(context,next),next);
+    };
+    main.querySelectorAll('[data-attention-quick]').forEach(button=>button.onclick=()=>{
+      const next={...filters,attention:button.dataset.attentionQuick};
+      renderOnboarding(replaceOnboardingState(context,next),next);
+    });
+    const loadMore=main.querySelector('#platformOnboardingLoadMore');
+    if(loadMore)loadMore.onclick=async()=>{
+      loadMore.disabled=true;loadMore.textContent=pt('Loading…');
+      await renderOnboarding({...context,onboardingLoadMore:true},filters);
+    };
     const newProspect=main.querySelector('#platformNewProspect');
     if(newProspect)newProspect.onclick=()=>newProspectModal(context);
     const importProspects=main.querySelector('#platformImportProspects');
@@ -3591,7 +4545,15 @@
       const item=items.find(row=>String(row.id||row.prospect_id)===card.dataset.prospect);
       const open=()=>{
         if(item?._has_prospect_detail===false)globalObject.location.hash='#/platform/firms';
-        else openProspectDetail(item,context);
+        else{
+          const detailContext=replaceOnboardingState(context,filters,{
+            prospect:item.id||item.prospect_id
+          });
+          openProspectDetail(item,{
+            ...detailContext,onboardingFilters:filters,
+            prospectCloseHash:onboardingHash(filters)
+          });
+        }
       };
       card.onclick=event=>{if(event.target.closest('[data-card-actions]'))return;open()};
       card.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('[data-card-actions]')){event.preventDefault();open()}};
@@ -3601,15 +4563,18 @@
       };
     });
   }
-  function newProspectModal(context) {
+  async function newProspectModal(context) {
     const {CUI,sb}=context;
+    const consultants=await fetchScopedConsultants(sb).catch(()=>[]);
     modal({title:'New prospect',submitLabel:'Create prospect',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'newCompanyName',label:'Company name',required:true,attributes:'name="company_name"'})}
       ${CUI.field({id:'newUen',label:'UEN',attributes:'name="uen"'})}
       ${CUI.field({id:'newContactName',label:'Primary contact',required:true,attributes:'name="contact_name"'})}
       ${CUI.field({id:'newContactEmail',label:'Email',type:'email',attributes:'name="contact_email"'})}
       ${CUI.field({id:'newContactPhone',label:'Phone',attributes:'name="contact_phone"'})}
-      ${CUI.field({id:'newConsultant',label:'Consultant ID',attributes:'name="consultant"'})}
+      ${CUI.field({id:'newConsultant',label:'Sales consultant',control:'select',options:[
+        {value:'',label:'Unassigned'},...consultants
+      ],attributes:'name="consultant"'})}
       ${CUI.field({id:'newStage',label:'Starting stage',control:'select',options:prospectStages.filter(stage=>!['account_created','onboarding','activated'].includes(stage.key)).map(stage=>({value:stage.key,label:stage.label,selected:stage.key==='new_lead'})),attributes:'name="stage"'})}
       ${CUI.field({id:'newTags',label:'Tags',placeholder:'Comma separated',attributes:'name="tags"'})}
     </div>`,onSubmit:async(form,controls)=>{
@@ -3827,7 +4792,12 @@
     const close=()=>{
       if(closed)return;
       closed=true;closeOverlay(overlay,deactivate);
-      if(boardDirty)renderOnboarding(context);
+      if(context.prospectCloseHash&&globalObject.history?.replaceState){
+        globalObject.history.replaceState(null,'',context.prospectCloseHash);
+      }
+      if(boardDirty)renderOnboarding({
+        ...context,hash:context.prospectCloseHash||context.hash
+      },context.onboardingFilters||defaultOnboardingFilters());
     };
     overlay.querySelector('.platform-drawer-close').onclick=close;
     deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
@@ -4024,18 +4994,22 @@
         ['detail-onboarding','Onboarding'],['detail-audit','Audit']
       ].map(([id,label])=>`<button type="button" data-detail-section="${id}">${escapeHtml(pt(label))}</button>`).join('')}
     </nav>
-    <div class="platform-actions platform-detail-shortcuts">
+    <div class="platform-actions platform-detail-shortcuts" aria-label="${escapeHtml(pt('Firm actions'))}">
       ${callPhone?`<a class="btn ghost sm" href="tel:${escapeHtml(callPhone.tel)}">${CUI.icon('till',{size:16})}<span>${escapeHtml(pt("Call"))}</span></a>`:''}
       ${whatsappPhone?`<a class="btn ghost sm" href="https://wa.me/${escapeHtml(whatsappPhone.wa)}" target="_blank" rel="noopener">${CUI.icon('customers',{size:16})}<span>${escapeHtml(pt("WhatsApp"))}</span></a>`:''}
-      ${primary.email?`<a class="btn ghost sm" href="mailto:${escapeHtml(primary.email)}">${CUI.icon('empty',{size:16})}<span>${escapeHtml(pt("Email"))}</span></a>`:''}
-      <button type="button" class="btn ghost sm" data-add-activity="meeting">${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt("Schedule meeting"))}</span></button>
-      ${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt("Edit"))}</span></button>
-      <button type="button" class="btn ghost sm" data-assign-prospect>${CUI.icon('staff',{size:16})}<span>${escapeHtml(pt("Assign"))}</span></button>`}
       <button type="button" class="btn sm" data-add-note>${CUI.icon('add',{size:16})}<span>${escapeHtml(pt("Add note"))}</span></button>
-      <button type="button" class="btn ghost sm" data-add-npu>${escapeHtml(pt("Record NPU"))}</button>
-      <button type="button" class="btn ghost sm" data-add-task>${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt("Add task"))}</span></button>
-      <button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload document"))}</span></button>
-      ${prospectLifecycleActionsHtml({converted,stage,termsAccepted},CUI)}
+      <details class="platform-action-disclosure">
+        <summary class="btn ghost sm">${CUI.icon('settings',{size:16})}<span>${escapeHtml(pt('More actions'))}</span></summary>
+        <div class="platform-action-disclosure-menu">
+          ${primary.email?`<a class="btn ghost sm" href="mailto:${escapeHtml(primary.email)}">${CUI.icon('empty',{size:16})}<span>${escapeHtml(pt("Email"))}</span></a>`:''}
+          ${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt("Edit firm"))}</span></button>
+          <button type="button" class="btn ghost sm" data-assign-prospect>${CUI.icon('staff',{size:16})}<span>${escapeHtml(pt("Change owner"))}</span></button>`}
+          <button type="button" class="btn ghost sm" data-add-task>${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt("Add follow-up task"))}</span></button>
+          <button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload document"))}</span></button>
+          <button type="button" class="btn ghost sm" data-add-npu>${escapeHtml(pt("Record not proceeding"))}</button>
+          ${prospectLifecycleActionsHtml({converted,stage,termsAccepted},CUI)}
+        </div>
+      </details>
     </div>
     <section class="card platform-detail-section" id="detail-overview">
       ${sectionHeader(pt('Overview'),`<button type="button" class="btn ghost sm" data-refresh-quality>${CUI.icon('retention',{size:16})}<span>${escapeHtml(pt("Refresh quality"))}</span></button>`)}
@@ -4108,7 +5082,7 @@
       ])}
     </section>
     <section class="card platform-detail-section" id="detail-activities">
-      ${sectionHeader('Activities and timeline',`<div class="platform-actions">${['call','whatsapp','email','meeting'].map(type=>`<button type="button" class="btn ghost sm" data-add-activity="${type}">${escapeHtml(platformStatus(type))}</button>`).join('')}</div>`)}
+      ${sectionHeader('Activities and timeline',`<details class="platform-action-disclosure"><summary class="btn ghost sm">${CUI.icon('add',{size:16})}<span>${escapeHtml(pt("Log activity"))}</span></summary><div class="platform-action-disclosure-menu">${['call','whatsapp','email','meeting'].map(type=>`<button type="button" class="btn ghost sm" data-add-activity="${type}">${escapeHtml(pt('Log {type}',{type:platformStatus(type)}))}</button>`).join('')}</div></details>`)}
       ${activities.length?activities.map(activity=>`<article class="platform-timeline-item"><div class="platform-timeline-marker"></div><div><div class="platform-list-row"><b>${escapeHtml(platformStatus(activity.activity_type||activity.type))}</b><span class="muted small">${escapeHtml(dateTime(activity.occurred_at||activity.created_at))}</span></div><p class="small">${escapeHtml(activity.summary||activity.detail||'')}</p>${Object.keys(asObject(activity.extended_detail)).length?`<p class="muted small">${escapeHtml([activity.extended_detail.outcome,activity.extended_detail.channel&&platformStatus(activity.extended_detail.channel),activity.extended_detail.next_action].filter(Boolean).join(' · '))}</p>`:''}</div></article>`).join(''):detailObjectHtml(null)}
     </section>
     <section class="card platform-detail-section" id="detail-tasks">${sectionHeader('Tasks and next actions')}${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title||pt('Task'))}</b><p class="muted small">${escapeHtml(pt('due {date}',{date:dateTime(task.due_at)}))} · ${escapeHtml(platformStatus(task.status||'open'))}</p></div>${task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt("Complete"))}</button>`:''}</div>`).join(''):detailObjectHtml(null)}</section>
@@ -4290,8 +5264,8 @@
       <div class="wide">${CUI.field({id:'qualOutcome',label:'Desired outcome',control:'textarea',value:current.desired_outcome||'',attributes:'name="desired_outcome" rows="3"'})}</div>
       ${CUI.field({id:'qualCurrentVendor',label:'Current tool / vendor',value:current.current_tool_vendor||'',attributes:'name="current_tool_vendor"'})}
       ${CUI.field({id:'qualTimeframe',label:'Purchase timeframe',value:current.purchase_timeframe||'',attributes:'name="purchase_timeframe"'})}
-      ${CUI.field({id:'qualExpectedSubscription',label:'Expected subscription (cents)',type:'number',value:current.expected_subscription_cents??'',attributes:'name="expected_subscription_cents" min="0" step="1"'})}
-      ${CUI.field({id:'qualExpectedSetup',label:'Expected setup fee (cents)',type:'number',value:current.expected_setup_fee_cents??'',attributes:'name="expected_setup_fee_cents" min="0" step="1"'})}
+      ${CUI.field({id:'qualExpectedSubscription',label:'Expected subscription (SGD)',type:'number',value:current.expected_subscription_cents===null||current.expected_subscription_cents===undefined?'':centsToMoneyInput(current.expected_subscription_cents),attributes:'name="expected_subscription" min="0" step="0.01" inputmode="decimal"'})}
+      ${CUI.field({id:'qualExpectedSetup',label:'Expected setup fee (SGD)',type:'number',value:current.expected_setup_fee_cents===null||current.expected_setup_fee_cents===undefined?'':centsToMoneyInput(current.expected_setup_fee_cents),attributes:'name="expected_setup_fee" min="0" step="0.01" inputmode="decimal"'})}
       ${CUI.field({id:'qualGoLive',label:'Target go-live',type:'date',value:isoInput(current.target_go_live,{date:true}),attributes:'name="target_go_live"'})}
       ${CUI.field({id:'qualDecisionDate',label:'Decision date',type:'date',value:isoInput(current.decision_date,{date:true}),attributes:'name="decision_date"'})}
       ${CUI.field({id:'qualRisk',label:'Risk level',control:'select',options:['','low','medium','high'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.risk_level})),attributes:'name="risk_level"'})}
@@ -4306,7 +5280,9 @@
       const allowed=['primary_problem','why_change','existing_workflow','current_tool_vendor','pain_points','consequence_of_inaction','desired_outcome','required_features','nice_to_have_features','success_criteria','expected_user_count','expected_usage_volume','required_integrations','required_migration','security_requirements','compliance_requirements','decision_maker_contact_id','champion_contact_id','budget_owner_contact_id','budget_status','budget_min_cents','budget_max_cents','expected_subscription_cents','expected_setup_fee_cents','purchase_timeframe','target_go_live','procurement_process','legal_review_required','security_review_required','competitors_considered','decision_criteria','decision_date','main_objection','risk_level','fit_score','intent_score','qualification_status','disqualification_reason','system_suggested_score','score_reasons','human_confirmed_score'];
       const profile={...profileSnapshot(current,allowed)};
       for(const key of ['qualification_status','budget_status','primary_problem','desired_outcome','current_tool_vendor','purchase_timeframe','target_go_live','decision_date','risk_level','main_objection'])profile[key]=form.get(key)||null;
-      for(const key of ['expected_subscription_cents','expected_setup_fee_cents','fit_score','intent_score','human_confirmed_score'])profile[key]=nullableNumber(form.get(key));
+      profile.expected_subscription_cents=nullableMoneyInputToCents(form.get('expected_subscription'));
+      profile.expected_setup_fee_cents=nullableMoneyInputToCents(form.get('expected_setup_fee'));
+      for(const key of ['fit_score','intent_score','human_confirmed_score'])profile[key]=nullableNumber(form.get(key));
       for(const key of ['pain_points','required_features','required_integrations'])profile[key]=formList(form.get(key));
       await rpc(sb,'platform_record_qualification_v86',{p_prospect:prospect.id,p_profile:profile});
       await refreshAfterProspectMutation(prospect.id,controls,context,'Qualification saved.');
@@ -4317,17 +5293,17 @@
     const current=commercialExtended(detail.commercial_terms);
     if(!terms.id){CUI.announce('Record commercial terms at the Client stage first.',{assertive:true});return}
     modal({title:'Record commercial detail',submitLabel:'Save commercial version',CUI,body:`<div class="platform-form-grid">
-      ${CUI.field({id:'commercialUnitPrice',label:'Unit price (cents)',type:'number',value:current.unit_price_cents??'',attributes:'name="unit_price_cents" min="0" step="1"'})}
-      ${CUI.field({id:'commercialDiscount',label:'Discount (basis points)',type:'number',value:current.discount_basis_points??'',attributes:'name="discount_basis_points" min="0" max="10000" step="1"'})}
+      ${CUI.field({id:'commercialUnitPrice',label:'Unit price (SGD)',type:'number',value:current.unit_price_cents===null||current.unit_price_cents===undefined?'':centsToMoneyInput(current.unit_price_cents),attributes:'name="unit_price" min="0" step="0.01" inputmode="decimal"'})}
+      ${CUI.field({id:'commercialDiscount',label:'Discount (%)',type:'number',value:current.discount_basis_points===null||current.discount_basis_points===undefined?'':basisPointsToPercentInput(current.discount_basis_points),attributes:'name="discount_percent" min="0" max="100" step="0.01" inputmode="decimal"'})}
       <div class="wide">${CUI.field({id:'commercialDiscountReason',label:'Discount reason',value:current.discount_reason||'',attributes:'name="discount_reason"'})}</div>
-      ${CUI.field({id:'commercialSetupFee',label:'Setup fee (cents)',type:'number',value:current.setup_fee_cents??'',attributes:'name="setup_fee_cents" min="0" step="1"'})}
+      ${CUI.field({id:'commercialSetupFee',label:'Setup fee (SGD)',type:'number',value:current.setup_fee_cents===null||current.setup_fee_cents===undefined?'':centsToMoneyInput(current.setup_fee_cents),attributes:'name="setup_fee" min="0" step="0.01" inputmode="decimal"'})}
       ${CUI.field({id:'commercialContractMonths',label:'Contract term (months)',type:'number',value:current.contract_term_months??'',attributes:'name="contract_term_months" min="1" step="1"'})}
       ${CUI.field({id:'commercialTax',label:'Tax treatment',control:'select',options:['','exclusive','inclusive','exempt'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.tax_treatment})),attributes:'name="tax_treatment"'})}
       ${CUI.field({id:'commercialTermsDays',label:'Payment terms (days)',type:'number',value:current.payment_terms_days??'',attributes:'name="payment_terms_days" min="0" step="1"'})}
       ${CUI.field({id:'commercialRenewal',label:'Renewal date',type:'date',value:isoInput(current.renewal_on,{date:true}),attributes:'name="renewal_on"'})}
       ${CUI.field({id:'commercialSubStatus',label:'Subscription status',control:'select',options:['','proposal','trial','active','past_due','cancelled'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.subscription_status})),attributes:'name="subscription_status"'})}
       ${CUI.field({id:'commercialPaymentStatus',label:'Payment status',control:'select',options:['','unpaid','partially_paid','paid','refunded','charged_back'].map(value=>({value,label:value?platformStatus(value):pt('Not recorded'),selected:value===current.payment_status})),attributes:'name="payment_status"'})}
-      ${CUI.field({id:'commercialCollected',label:'Amount collected (cents)',type:'number',value:current.amount_collected_cents??'',attributes:'name="amount_collected_cents" min="0" step="1"'})}
+      ${CUI.field({id:'commercialCollected',label:'Amount collected (SGD)',type:'number',value:current.amount_collected_cents===null||current.amount_collected_cents===undefined?'':centsToMoneyInput(current.amount_collected_cents),attributes:'name="amount_collected" min="0" step="0.01" inputmode="decimal"'})}
       ${CUI.field({id:'commercialFirstPaid',label:'First payment at',type:'datetime-local',value:isoInput(current.first_payment_at),attributes:'name="first_payment_at"'})}
       ${CUI.field({id:'commercialProposalVersion',label:'Proposal version',value:current.proposal_version||'',attributes:'name="proposal_version"'})}
       <label class="row platform-confirm-row"><input type="checkbox" name="purchase_order_required" value="yes"${current.purchase_order_required?' checked':''}><span>${escapeHtml(pt("Purchase order required"))}</span></label>
@@ -4336,7 +5312,11 @@
       const allowed=['unit_price_cents','discount_basis_points','discount_reason','discount_approved_by','tax_treatment','setup_fee_cents','contract_term_months','trial_starts_on','trial_ends_on','subscription_starts_on','subscription_ends_on','renewal_on','payment_terms_days','proposal_version','proposal_sent_at','proposal_expires_at','contract_sent_at','contract_signed_at','signatory_contact_id','purchase_order_required','purchase_order_number','subscription_status','payment_status','first_payment_at','amount_collected_cents'];
       const profile={...profileSnapshot(current,allowed)};
       for(const key of ['discount_reason','tax_treatment','renewal_on','subscription_status','payment_status','proposal_version','purchase_order_number'])profile[key]=form.get(key)||null;
-      for(const key of ['unit_price_cents','discount_basis_points','setup_fee_cents','contract_term_months','payment_terms_days','amount_collected_cents'])profile[key]=nullableNumber(form.get(key));
+      profile.unit_price_cents=nullableMoneyInputToCents(form.get('unit_price'));
+      profile.discount_basis_points=String(form.get('discount_percent')??'').trim()===''?null:percentInputToBasisPoints(form.get('discount_percent'));
+      profile.setup_fee_cents=nullableMoneyInputToCents(form.get('setup_fee'));
+      profile.amount_collected_cents=nullableMoneyInputToCents(form.get('amount_collected'));
+      for(const key of ['contract_term_months','payment_terms_days'])profile[key]=nullableNumber(form.get(key));
       profile.first_payment_at=nullableDateTime(form.get('first_payment_at'));
       profile.purchase_order_required=form.get('purchase_order_required')==='yes';
       await rpc(sb,'platform_record_commercial_detail_v86',{p_commercial_terms:terms.id,p_detail:profile});
@@ -4788,12 +5768,17 @@
         await refreshAfterProspectMutation(prospect.id||prospect.prospect_id,controls,context,'Activity saved.');
       }});
   }
-  function taskModal(prospect,context) {
+  async function taskModal(prospect,context) {
     const {CUI,sb}=context;
+    const consultants=await fetchScopedConsultants(sb,[prospect]).catch(()=>scopedConsultantOptions([prospect]));
     modal({title:'Add task',submitLabel:'Create task',CUI,body:`
       ${CUI.field({id:'taskTitle',label:'Task',required:true,attributes:'name="title"'})}
       ${CUI.field({id:'taskDue',label:'Due at',type:'datetime-local',required:true,attributes:'name="due_at"'})}
-      ${CUI.field({id:'taskConsultant',label:'Assigned consultant ID',attributes:'name="consultant"'})}`,
+      ${CUI.field({id:'taskConsultant',label:'Assign to',control:'select',options:[
+        {value:'',label:'Unassigned'},...consultants.map(option=>({
+          ...option,selected:String(option.value)===String(prospect.assigned_consultant_id||'')
+        }))
+      ],attributes:'name="consultant"'})}`,
       onSubmit:async(form,controls)=>{
         await rpc(sb,'platform_create_prospect_task_v76',{p_prospect:prospect.id||prospect.prospect_id,p_title:form.get('title'),p_due_at:new Date(form.get('due_at')).toISOString(),p_assigned_consultant:form.get('consultant')||null,p_idempotency_key:idempotencyKey()});
         controls.close();context.close?.();await renderOnboarding(context);CUI.announce('Task created.');
@@ -4818,8 +5803,8 @@
     if(toStage==='client')return commercialTermsModal(prospect,context);
     return stageEvidenceModal(prospect,toStage,context);
   }
-  function stageField(CUI,{id,label,type='text',control='input',required=true,options=[],hint='',wide=false,value=''}) {
-    const field=CUI.field({id,label,type,control,required,options,value,attributes:`name="${id}"${control==='textarea'?' rows="3"':''}`,hint});
+  function stageField(CUI,{id,label,type='text',control='input',required=true,options=[],hint='',wide=false,value='',money=false}) {
+    const field=CUI.field({id,label,type,control,required,options,value,attributes:`name="${id}"${control==='textarea'?' rows="3"':''}${money?' min="0" step="0.01" inputmode="decimal"':''}`,hint});
     return wide?`<div class="wide">${field}</div>`:field;
   }
   function stageEvidenceFieldSpecs(stage) {
@@ -4853,7 +5838,7 @@
         {id:'decision_maker',label:'Decision maker'},
         {id:'key_objection',label:'Key objection'},
         {id:'proposed_plan',label:'Proposed plan'},
-        {id:'proposed_value_cents',label:'Proposed value (integer cents)',type:'number'},
+        {id:'proposed_value_cents',label:'Proposed value (SGD)',type:'number',money:true},
         {id:'next_action_at',label:'Next action at',type:'datetime-local'},
         {id:'decision_at',label:'Decision date',type:'date',required:false},
         {id:'next_follow_up_at',label:'Next follow-up at',type:'datetime-local',required:false}
@@ -4878,7 +5863,8 @@
           let value=String(form.get(spec.id)||'').trim();
           if(!value)return;
           if(spec.type==='datetime-local')value=new Date(value).toISOString();
-          if(spec.type==='number')value=Number(value);
+          if(spec.money)value=moneyInputToCents(value);
+          else if(spec.type==='number')value=Number(value);
           if(spec.id==='attendees')value=value.split(',').map(item=>item.trim()).filter(Boolean).join(', ');
           evidence[spec.id]=value;
         });
@@ -4912,21 +5898,26 @@
       controls.close();previewThenConfirm({title:'Confirm lost transition',preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:'lost',...fields},CUI,onConfirm:async(confirmControls)=>{await performStageMove(prospect,'lost',{entryEvidence:fields},context);confirmControls.close()}});
     }});
   }
-  function commercialTermsModal(prospect,context) {
-    const {CUI}=context;
+  async function commercialTermsModal(prospect,context) {
+    const {CUI,sb}=context;
+    const consultants=await fetchScopedConsultants(sb,[prospect]).catch(()=>scopedConsultantOptions([prospect]));
     modal({title:'Convert to client',submitLabel:'Preview conversion',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'termsProduct',label:'Product',required:true,attributes:'name="product_code"'})}
       ${CUI.field({id:'termsPlan',label:'Plan',required:true,attributes:'name="plan_code"'})}
       ${CUI.field({id:'termsSeats',label:'Seats',type:'number',required:true,attributes:'name="seats" min="1" step="1"'})}
       ${CUI.field({id:'termsCycle',label:'Billing cycle',control:'select',options:['quarterly','half_yearly','annual'].map(value=>({value,label:platformStatus(value)})),attributes:'name="billing_cycle"'})}
-      ${CUI.field({id:'termsAmount',label:'Accepted amount (cents)',type:'number',required:true,attributes:'name="accepted_amount_cents" min="0" step="1"'})}
+      ${CUI.field({id:'termsAmount',label:'Accepted amount (SGD)',type:'number',required:true,attributes:'name="accepted_amount" min="0" step="0.01" inputmode="decimal"'})}
       ${CUI.field({id:'termsCurrency',label:'Currency',value:'SGD',required:true,attributes:'name="currency" maxlength="3"'})}
       ${CUI.field({id:'termsStatus',label:'Contract status',control:'select',options:[{value:'accepted',label:'Accepted'}],attributes:'name="contract_status"'})}
       ${CUI.field({id:'termsOwnerEmail',label:'Owner email',type:'email',required:true,attributes:'name="owner_email"'})}
-      ${CUI.field({id:'termsOnboardingOwner',label:'Onboarding owner ID',required:true,attributes:'name="onboarding_owner"'})}
+      ${CUI.field({id:'termsOnboardingOwner',label:'Onboarding owner',control:'select',required:true,options:[
+        {value:'',label:'Choose consultant'},...consultants.map(option=>({
+          ...option,selected:String(option.value)===String(prospect.assigned_consultant_id||'')
+        }))
+      ],attributes:'name="onboarding_owner"'})}
       ${CUI.field({id:'termsGoLive',label:'Target go-live',type:'date',required:true,attributes:'name="target_go_live"'})}
     </div>`,onSubmit:async(form,controls)=>{
-      const terms={product_code:form.get('product_code'),plan_code:form.get('plan_code'),seats:Number(form.get('seats')),billing_cycle:form.get('billing_cycle'),accepted_value_cents:Number(form.get('accepted_amount_cents')),currency:String(form.get('currency')).toUpperCase(),contract_status:'accepted',owner_email:form.get('owner_email'),onboarding_owner_consultant_id:form.get('onboarding_owner'),target_go_live:form.get('target_go_live')};
+      const terms={product_code:form.get('product_code'),plan_code:form.get('plan_code'),seats:Number(form.get('seats')),billing_cycle:form.get('billing_cycle'),accepted_value_cents:moneyInputToCents(form.get('accepted_amount')),currency:String(form.get('currency')).toUpperCase(),contract_status:'accepted',owner_email:form.get('owner_email'),onboarding_owner_consultant_id:form.get('onboarding_owner'),target_go_live:form.get('target_go_live')};
       controls.close();previewThenConfirm({title:'Confirm commercial terms',preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:'client',entry_gate:stageGateDefinitions.client,commercial_terms:terms},CUI,onConfirm:async(confirmControls)=>{await performStageMove(prospect,'client',{entryEvidence:{explicit_confirmation:true},commercialTerms:terms},context);confirmControls.close()}});
     }});
   }
@@ -4948,35 +5939,13 @@
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Sector modules','Loading versioned sector entitlements…','packages');
     try{
-      const [sectorPayload,rosterPayload]=await Promise.all([
-        rpc(sb,'platform_list_sector_entitlements_v75'),
-        rpc(sb,'platform_list_sector_firms_v89')
-      ]);
+      const sectorPayload=await rpc(sb,'platform_list_sector_entitlements_v75');
       const payload=asObject(sectorPayload),profiles=asArray(payload.profiles);
-      const assignments=asArray(payload.businesses);
-      const assignmentsByBusiness=new Map(assignments.map(firm=>[firm.business_id,firm]));
-      const roster=asArray(rosterPayload,['businesses','items','rows']);
-      const businesses=roster.map(row=>{
-        const businessId=row.business_id||row.id;
-        return assignmentsByBusiness.get(businessId)||{
-          business_id:businessId,
-          business_name:row.business_name||row.name||'Unnamed firm',
-          industry:row.industry||null,
-          assignment_version:null,
-          bundle_version_id:null,
-          sector_key:null,
-          bundle_version:null,
-          override_version_id:null,
-          effective_modules:asArray(row.enabled_modules)
-        };
-      });
-      assignments.forEach(firm=>{
-        if(!businesses.some(row=>row.business_id===firm.business_id))businesses.push(firm);
-      });
       main.innerHTML=`${CUI.pageHeader({
-        title:'Sector modules',subtitle:'Versioned module entitlements with explicit preview and confirmation before every change.',iconName:'packages',
+        title:'Sector modules',subtitle:'Define the reusable default module template for each sector.',iconName:'packages',
         actions:`<button class="btn" type="button" id="platformNewBundle">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New bundle version'))}</span></button>`
       })}
+      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt('One place for each type of module decision'))}</b><p class="small">${escapeHtml(pt('Sector defaults are managed here. To assign a sector or change one firm or branch, open the firm in Firms and use Firm module policy.'))}</p></div></div>
       <div class="platform-sector-list">${profiles.map(profile=>{
         const published=asObject(profile.published_version);
         return CUI.card({title:profile.label||profile.sector_key,description:`${profile.sector_key} · ${pt(profile.active?'Active':'Inactive')}`,body:published.id?`
@@ -4984,23 +5953,11 @@
           <div class="platform-module-list" aria-label="${escapeHtml(pt('{sector} modules',{sector:profile.label||sectorLabel(profile.sector_key)}))}">${sectorModuleChipsHtml(published.modules)}</div>
           <div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt('Edit modules'))}</span></button></div>`
           :`${CUI.emptyState({iconName:'packages',title:'No published version',body:'Choose the standard modules and publish the first bundle.'})}<div class="platform-actions platform-sector-actions"><button type="button" class="btn ghost sm" data-edit-sector="${escapeHtml(profile.sector_key)}">${CUI.icon('add',{size:16})}<span>${escapeHtml(pt('Choose modules'))}</span></button></div>`});
-      }).join('')||CUI.emptyState({iconName:'packages',title:'No sector profiles',body:'The platform returned no active sector profiles.'})}</div>
-      <section class="card" style="margin-top:16px"><div class="platform-list-row"><div><h2 style="font-size:16px">${escapeHtml(pt('Firm entitlements'))}</h2><p class="muted small">${assignments.length} / ${businesses.length}</p></div></div>
-        ${businesses.length?CUI.table({caption:'Firm sector entitlements',headers:['Firm','Sector','Bundle','Assignment','Effective modules','Actions'],rows:businesses.map(firm=>[
-          `<b>${escapeHtml(firm.business_name)}</b>`,
-          firm.sector_key?escapeHtml(sectorLabel(firm.sector_key)):CUI.status(pt('Unassigned'),'off'),
-          firm.bundle_version?`v${escapeHtml(firm.bundle_version)}`:'—',
-          firm.assignment_version?`v${escapeHtml(firm.assignment_version)}`:'—',
-          firm.assignment_version?escapeHtml(asArray(firm.effective_modules).filter(module=>module!=='inventory').map(moduleLabel).join(', ')):'—',
-          `<div class="platform-actions"><button type="button" class="btn ghost sm" data-assign-firm="${escapeHtml(firm.business_id)}">${escapeHtml(pt(firm.assignment_version?'Reassign':'Assign'))}</button>${firm.assignment_version?`<button type="button" class="btn ghost sm" data-override-firm="${escapeHtml(firm.business_id)}">${escapeHtml(pt('Override'))}</button>`:''}</div>`
-        ])}):CUI.emptyState({iconName:'branch',title:'No firms',body:'No firms are available for sector assignment.'})}
-      </section>`;
+      }).join('')||CUI.emptyState({iconName:'packages',title:'No sector profiles',body:'The platform returned no active sector profiles.'})}</div>`;
       main.querySelector('#platformNewBundle').onclick=()=>sectorBundleModal({profiles,context});
       main.querySelectorAll('[data-edit-sector]').forEach(button=>button.onclick=()=>sectorBundleModal({
         profiles,context,profile:profiles.find(item=>item.sector_key===button.dataset.editSector)
       }));
-      main.querySelectorAll('[data-assign-firm]').forEach(button=>button.onclick=()=>assignSectorModal(businesses.find(item=>item.business_id===button.dataset.assignFirm),profiles,context));
-      main.querySelectorAll('[data-override-firm]').forEach(button=>button.onclick=()=>sectorOverrideModal(businesses.find(item=>item.business_id===button.dataset.overrideFirm),context));
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Sector modules')}
   }
@@ -5014,7 +5971,7 @@
         <div class="platform-module-options">${sectorModuleCatalog.filter(module=>module.group===group).map(module=>`
           <label class="platform-module-option">
             <input type="checkbox" name="modules" value="${escapeHtml(module.key)}"${selected.has(module.key)?' checked':''}>
-            <span><b>${escapeHtml(pt(module.label))}</b><small>${escapeHtml(module.key)}</small></span>
+            <span><b>${escapeHtml(pt(module.label))}</b><small>${escapeHtml(pt(module.description))}</small></span>
           </label>`).join('')}</div>
       </section>`).join('')}
       <div class="platform-module-selection" aria-live="polite"><b data-module-count>${escapeHtml(pt('{count} selected',{count:selected.size}))}</b><span data-module-summary>${selected.size?escapeHtml([...selected].map(moduleLabel).join(', ')):escapeHtml(pt('Choose at least one module.'))}</span></div>
@@ -5087,7 +6044,7 @@
       wirePicker();
     };
   }
-  function assignSectorModal(firm,profiles,context) {
+  function assignSectorModal(firm,profiles,context,onSaved=()=>renderSectors(context)) {
     const {CUI,sb}=context;
     const versions=profiles.map(profile=>profile.published_version).filter(version=>version?.id);
     modal({title:pt('Assign sector to {firm}',{firm:firm?.business_name||pt('firm')}),submitLabel:'Preview assignment',CUI,body:CUI.field({id:'assignBundle',label:'Published bundle',control:'select',options:versions.map(version=>({value:version.id,label:`${version.label} · v${version.version}`})),attributes:'name="bundle_version"'}),
@@ -5095,26 +6052,10 @@
         const args={p_business:firm.business_id,p_bundle_version:form.get('bundle_version'),p_expected_version:firm.assignment_version??null,p_dry_run:true};
         const preview=await rpc(sb,'platform_assign_business_sector_v75',args);controls.close();
         previewThenConfirm({title:'Confirm firm sector assignment',preview,CUI,onConfirm:async(confirmControls)=>{
-          await rpc(sb,'platform_assign_business_sector_v75',{...args,p_dry_run:false});confirmControls.close();await renderSectors(context);CUI.announce('Firm sector assigned.');
+          await rpc(sb,'platform_assign_business_sector_v75',{...args,p_dry_run:false});confirmControls.close();await onSaved();CUI.announce('Firm sector assigned.');
         }});
       }});
   }
-  function sectorOverrideModal(firm,context) {
-    const {CUI,sb}=context;
-    modal({title:pt('Override modules for {firm}',{firm:firm.business_name}),submitLabel:'Preview override',CUI,body:`
-      ${CUI.field({id:'overrideAdd',label:'Add modules',hint:'Comma-separated module keys.',attributes:'name="add_modules"'})}
-      ${CUI.field({id:'overrideRemove',label:'Remove modules',hint:'Comma-separated module keys.',attributes:'name="remove_modules"'})}
-      ${CUI.field({id:'overrideReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="4"'})}`,
-      onSubmit:async(form,controls)=>{
-        const values=name=>String(form.get(name)||'').split(',').map(value=>value.trim()).filter(Boolean);
-        const args={p_business:firm.business_id,p_add_modules:values('add_modules'),p_remove_modules:values('remove_modules'),p_reason:form.get('reason'),p_expected_version:firm.assignment_version,p_dry_run:true};
-        const preview=await rpc(sb,'platform_set_business_sector_override_v75',args);controls.close();
-        previewThenConfirm({title:'Confirm firm module override',preview,CUI,onConfirm:async(confirmControls)=>{
-          await rpc(sb,'platform_set_business_sector_override_v75',{...args,p_dry_run:false});confirmControls.close();await renderSectors(context);CUI.announce('Firm module override applied.');
-        }});
-      }});
-  }
-
   function billingCatalogueRows(catalog,CUI) {
     return asArray(catalog).map(row=>[
       escapeHtml(row.currency),escapeHtml(platformStatus(row.cadence)),currency(row.base_amount_cents,row.currency),
@@ -5135,7 +6076,8 @@
   }
   function automationRunRows(runs,CUI) {
     return asArray(runs).map(run=>[
-      escapeHtml(dateTime(run.started_at)),escapeHtml(platformStatus(run.run_mode)),
+      `<span data-incident-id="${escapeHtml(run.id||run.run_id||run.created_at||'')}">${escapeHtml(dateTime(run.started_at))}</span>`,
+      escapeHtml(platformStatus(run.run_mode)),
       CUI.status(platformStatus(run.status||'—'),run.status==='completed'?'ok':run.status==='failed'?'no':'new'),
       escapeHtml(dateTime(run.finished_at)),escapeHtml(JSON.stringify(run.summary||{}))
     ]);
@@ -5145,40 +6087,30 @@
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Billing','Loading platform billing truth…','reports');
     try{
-      const [billingPayload,catalogPayload,reconciliationPayload]=await Promise.all([
+      const [billingPayload,catalogPayload]=await Promise.all([
         rpc(sb,'platform_get_billing_v89',{p_business:null,p_limit:250}),
-        rpc(sb,'get_billing_price_catalog_v77',{p_currency:null}),
-        rpc(sb,'platform_get_billing_reconciliation_v89',{p_run:null,p_limit:50})
+        rpc(sb,'get_billing_price_catalog_v77',{p_currency:null})
       ]);
       const rows=asArray(billingPayload);
       const catalog=asArray(catalogPayload);
-      const reconciliationRuns=asArray(reconciliationPayload?.runs);
-      const latestReconciliation=reconciliationRuns[0]?.id
-        ?asObject(await rpc(sb,'platform_get_billing_reconciliation_v89',{p_run:reconciliationRuns[0].id,p_limit:50}))
-        :asObject(reconciliationPayload);
-      const reconciliationItems=asArray(latestReconciliation.items);
       const exceptions=rows.filter(row=>row.status==='past_due'||row.payment_status==='past_due'||Number(row.failed_event_count||0)>0);
       const totals=rows.reduce((value,row)=>({
         total:value.total+Number(row.period_total_cents||0),overdue:value.overdue+(row.status==='past_due'?1:0),
         paid:value.paid+(row.last_paid_at?1:0),failed:value.failed+Number(row.failed_event_count||0)
       }),{total:0,overdue:0,paid:0,failed:0});
-      main.innerHTML=`${CUI.pageHeader({title:'Billing',subtitle:'Provider-backed subscription, GST and payment status. Amounts are integer cents from the billing ledger.',iconName:'reports',
+      main.innerHTML=`${CUI.pageHeader({title:'Billing',subtitle:'Resolve subscription, invoice and payment exceptions. Technical reconciliation history is in System health.',iconName:'reports',
         actions:`<button type="button" class="btn" id="platformNewBillingPrice">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New price version'))}</span></button>`})}
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Billing summary'))}">${[
           ['Period total incl. GST',currency(totals.total),'reports'],['Paid firms',totals.paid,'check'],['Overdue firms',totals.overdue,'info'],['Failed events',totals.failed,'retention']
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
         ${CUI.card({title:'Stripe price catalogue',description:'Active versions drive checkout and cadence changes. Prior versions remain visible as history.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per seat','Included','Tax','Status','Effective'],rows:billingCatalogueRows(catalog,CUI)}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create one active version for each offered billing cadence before opening checkout.'})})}
-        <div class="platform-detail-grid">
-          ${CUI.card({title:'Billing exception queue',description:exceptions.length?pt('{count} firms require payment follow-up.',{count:exceptions.length}):'No overdue or failed firm billing records.',body:exceptions.length?exceptions.map(row=>`<div class="platform-action-item"><div><button type="button" class="platform-link-button" data-billing-firm="${escapeHtml(row.business_id)}"><b>${escapeHtml(row.business_name)}</b></button><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(pt('next payment {date}',{date:dateTime(row.next_payment_at)}))}</p></div>${CUI.status(pt('{count} failed',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):localizedEmptyHtml('Payments and provider status are currently reconciled.')})}
-          ${CUI.card({title:'Latest provider reconciliation',description:reconciliationRuns[0]?`${dateTime(reconciliationRuns[0].started_at)} · ${platformStatus(reconciliationRuns[0].run_mode)}`:'No reconciliation run was returned.',body:reconciliationItems.length?reconciliationItems.map(item=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(item.object_type))}</b><p class="muted small">${escapeHtml(item.provider_object_id||pt('Provider object'))} · ${escapeHtml(dateTime(item.created_at))}</p></div>${CUI.status(platformStatus(item.result),item.result==='matched'?'ok':'no')}</div>`).join(''):reconciliationRuns[0]?localizedEmptyHtml('The latest returned run has no exception items.'):localizedEmptyHtml('Reconciliation history will appear after the first automated run.')})}
-        </div>
-        ${CUI.card({title:'Reconciliation history',description:'Automatic and manual provider comparisons. Open exception records above for the affected firm.',body:reconciliationRuns.length?CUI.table({caption:'Billing reconciliation history',headers:['Started','Mode','Status','Finished','Summary'],rows:reconciliationRuns.map(run=>[
-          escapeHtml(dateTime(run.started_at)),escapeHtml(platformStatus(run.run_mode)),CUI.status(platformStatus(run.status),run.status==='completed'?'ok':run.status==='failed'?'no':'off'),escapeHtml(dateTime(run.finished_at)),escapeHtml(JSON.stringify(run.summary||{}))
-        ])}):localizedEmptyHtml('No reconciliation runs.')})}
+        ${CUI.card({title:'Billing exception queue',description:exceptions.length?pt('{count} firms require payment follow-up.',{count:exceptions.length}):'No overdue or failed firm billing records.',body:exceptions.length?exceptions.map(row=>`<div class="platform-action-item"><div><button type="button" class="platform-link-button" data-billing-firm="${escapeHtml(row.business_id)}"><b>${escapeHtml(row.business_name)}</b></button><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(pt('next payment {date}',{date:dateTime(row.next_payment_at)}))}</p></div>${CUI.status(pt('{count} failed',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):localizedEmptyHtml('Payments and provider status are currently reconciled.')})}
         ${billingFirmCardHtml(rows,CUI)}`;
       main.querySelector('#platformNewBillingPrice').onclick=()=>billingPriceModal(context);
       main.querySelectorAll('[data-billing-firm]').forEach(button=>button.onclick=()=>openBillingDetail(button.dataset.billingFirm,context));
       CUI.focusRoute(main);
+      const requestedBusiness=platformRouteParam(context.hash,'business');
+      if(requestedBusiness)await openBillingDetail(requestedBusiness,context);
     }catch(error){showError(main,error,CUI,'Billing')}
   }
   function billingPriceModal(context) {
@@ -5187,22 +6119,27 @@
     modal({title:'New Stripe price version',submitLabel:'Preview price',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'billingPriceCurrency',label:'Currency',value:'SGD',required:true,attributes:'name="currency" maxlength="3"'})}
       ${CUI.field({id:'billingPriceCadence',label:'Cadence',control:'select',options:['quarterly','half_yearly','annual'].map(value=>({value,label:platformStatus(value)})),attributes:'name="cadence"'})}
-      ${CUI.field({id:'billingBasePriceId',label:'Stripe base price ID',required:true,attributes:'name="base_price_id" placeholder="price_..."'})}
-      ${CUI.field({id:'billingSeatPriceId',label:'Stripe seat price ID',required:true,attributes:'name="seat_price_id" placeholder="price_..."'})}
-      ${CUI.field({id:'billingBaseAmount',label:'Base amount (cents)',type:'number',required:true,attributes:'name="base_amount_cents" min="0" step="1"'})}
-      ${CUI.field({id:'billingSeatAmount',label:'Per-seat amount (cents)',type:'number',required:true,attributes:'name="seat_amount_cents" min="0" step="1"'})}
+      ${CUI.field({id:'billingBaseAmount',label:'Base subscription (SGD)',type:'number',required:true,attributes:'name="base_amount" min="0" step="0.01" inputmode="decimal"'})}
+      ${CUI.field({id:'billingSeatAmount',label:'Per-seat charge (SGD)',type:'number',required:true,attributes:'name="seat_amount" min="0" step="0.01" inputmode="decimal"'})}
       ${CUI.field({id:'billingIncludedSeats',label:'Included seats',type:'number',value:'1',required:true,attributes:'name="included_seats" min="0" step="1"'})}
       ${CUI.field({id:'billingTaxBehavior',label:'Tax behaviour',control:'select',options:['exclusive','inclusive','unspecified'].map(value=>({value,label:platformStatus(value)})),attributes:'name="tax_behavior"'})}
       ${CUI.field({id:'billingEffectiveFrom',label:'Effective from',type:'datetime-local',value:defaultEffective,required:true,attributes:'name="effective_from"'})}
       <div class="wide">${CUI.field({id:'billingPriceReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}</div>
-    </div>`,onSubmit:async(form,controls)=>{
+      <details class="wide platform-advanced-fields"><summary>${escapeHtml(pt('Advanced provider mapping'))}</summary>
+        <p class="muted small">${escapeHtml(pt('Only change these values when connecting an already-created Stripe price.'))}</p>
+        <div class="platform-form-grid">
+          ${CUI.field({id:'billingBasePriceId',label:'Stripe base price ID',required:true,attributes:'name="base_price_id" placeholder="price_..."'})}
+          ${CUI.field({id:'billingSeatPriceId',label:'Stripe seat price ID',required:true,attributes:'name="seat_price_id" placeholder="price_..."'})}
+        </div>
+      </details>
+    </div><p class="muted small">${escapeHtml(pt('Enter customer-facing amounts in dollars. Nestly stores the exact cents automatically.'))}</p>`,onSubmit:async(form,controls)=>{
       const proposal={
         p_currency:String(form.get('currency')).toUpperCase(),
         p_cadence:form.get('cadence'),
         p_provider_base_price_id:form.get('base_price_id'),
         p_provider_seat_price_id:form.get('seat_price_id'),
-        p_base_amount_cents:Number(form.get('base_amount_cents')),
-        p_per_seat_amount_cents:Number(form.get('seat_amount_cents')),
+        p_base_amount_cents:moneyInputToCents(form.get('base_amount')),
+        p_per_seat_amount_cents:moneyInputToCents(form.get('seat_amount')),
         p_included_seats:Number(form.get('included_seats')),
         p_tax_behavior:form.get('tax_behavior'),
         p_effective_from:new Date(form.get('effective_from')).toISOString()
@@ -5229,7 +6166,7 @@
       const detail=asObject(await rpc(sb,'get_business_billing_v77',{p_business:businessId}));
       const commands=billingCommands(detail);
       overlay.querySelector('[data-detail]').innerHTML=`<div class="platform-actions" style="margin-bottom:14px">${commands.map(command=>`<button type="button" class="btn ${command.danger?'danger':'ghost'} sm" data-billing-command="${command.type}" data-cadence="${command.cadence||''}">${escapeHtml(pt(command.label))}</button>`).join('')}</div>
-        <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,billable_seats:detail.billable_seats,last_paid_at:detail.last_paid_at,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({subtotal_ex_gst_cents:detail.period_subtotal_cents,gst_cents:detail.period_tax_cents,total_including_gst_cents:detail.period_total_cents,currency:detail.currency})})}</div>
+        <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,billable_seats:detail.billable_seats,last_paid_at:detail.last_paid_at,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({'Subtotal before GST':currency(detail.period_subtotal_cents,detail.currency),'GST':currency(detail.period_tax_cents,detail.currency),'Total including GST':currency(detail.period_total_cents,detail.currency)})})}</div>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Invoices"))}</h2>${asArray(detail.invoices).map(invoice=>`<div class="platform-action-item"><div><b>${escapeHtml(invoice.number||invoice.provider_invoice_id)}</b><p class="muted small">${escapeHtml(platformStatus(invoice.status))} · ${escapeHtml(pt('{amount} incl. GST',{amount:currency(invoice.total_cents,invoice.currency)}))}</p></div><span>${invoice.paid_normalized?CUI.status('Paid','ok'):CUI.status('Outstanding','no')}</span></div>`).join('')||localizedEmptyHtml('No invoices.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Payment attempts"))}</h2>${asArray(detail.payment_attempts).map(attempt=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(attempt.attempt_state))}</b><p class="muted small">${currency(attempt.amount_cents,detail.currency)} · ${escapeHtml(attempt.failure_code||pt('No failure'))}</p></div><span class="muted small">${escapeHtml(dateTime(attempt.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No payment attempts.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Adjustments"))}</h2>${asArray(detail.adjustments).map(adjustment=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(adjustment.adjustment_type))}</b><p class="muted small">${escapeHtml(pt('{amount} incl. GST',{amount:currency(adjustment.total_cents,adjustment.currency||detail.currency)}))} · ${escapeHtml(adjustment.reason||pt('No reason recorded'))}</p></div><span class="muted small">${escapeHtml(dateTime(adjustment.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No adjustments.')}</section>
@@ -5289,7 +6226,7 @@
       escapeHtml(platformStatus(row.commission_phase||row.commission_type||row.kind)),
       CUI.status(platformStatus(row.status||'accrued'),row.status==='paid'?'ok':row.status==='forfeited'?'off':'new'),
       currency(row.net_of_gst_cents||row.basis_cents,row.currency),
-      `<span class="platform-money">${currency(row.amount_cents||row.commission_cents,row.currency)}</span>`,
+      `<span class="platform-money" data-accrual-id="${escapeHtml(row.accrual_id||row.id)}">${currency(row.amount_cents||row.commission_cents,row.currency)}</span>`,
       row.status==='accrued'?`<button type="button" class="btn ghost sm" data-approve-accrual="${escapeHtml(row.accrual_id||row.id)}">${escapeHtml(pt("Approve"))}</button>`:''
     ]);
   }
@@ -5298,10 +6235,11 @@
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Commission payable','Loading consultant commission truth…','staff');
     try{
-      const [dashboard,policiesPayload,directoryPayload]=await Promise.all([
+      const [dashboard,policiesPayload,directoryPayload,firmDirectoryPage]=await Promise.all([
         rpc(sb,'get_consultant_commission_dashboard_v78',{p_consultant:null,p_limit:100}),
         rpc(sb,'get_consultant_commission_policies_v78'),
-        rpc(sb,'platform_list_commission_consultants_v89')
+        rpc(sb,'platform_list_commission_consultants_v89'),
+        fetchFirmDirectoryPageV88(sb,defaultOnboardingFilters(),{limit:100})
       ]);
       const view=asObject(dashboard),totals=asObject(view.totals);
       const directory=asArray(directoryPayload,['consultants','items']);
@@ -5311,11 +6249,12 @@
       })),accruals=asArray(view,['accruals','commission_accruals']);
       const batches=asArray(view,['payout_batches','batches']),lines=asArray(view,['payout_lines','lines']);
       const policies=asArray(policiesPayload,['policies','items']);
+      const firmDirectory=asArray(firmDirectoryPage?.items);
       const consultantTotal=field=>consultants.reduce((value,row)=>value+Number(row[field]||0),0);
       const sum=status=>Number(totals[`${status}_cents`]??consultantTotal(`${status}_cents`)
         ??accruals.filter(row=>row.status===status).reduce((value,row)=>value+Number(row.amount_cents||row.commission_cents||0),0));
       main.innerHTML=`${CUI.pageHeader({
-        title:'Commission payable',subtitle:'Consultant commission is calculated on net-of-GST subscription amounts. All stored and entered amounts are integer cents.',iconName:'staff',
+        title:'Commission payable',subtitle:'Commission is calculated on subscription amounts before GST. Enter money in SGD and rates as percentages.',iconName:'staff',
         actions:`<button type="button" class="btn ghost" id="platformNewConsultant">${escapeHtml(pt('New consultant'))}</button><button type="button" class="btn ghost" id="platformAttributeConsultant">${escapeHtml(pt('Attribute consultant'))}</button><button type="button" class="btn ghost" id="platformNewPolicy">${escapeHtml(pt('New policy'))}</button><button type="button" class="btn" id="platformNewPayout">${escapeHtml(pt('New payout batch'))}</button>`
       })}
       <section class="platform-kpis" aria-label="${escapeHtml(pt('Commission totals'))}">${[
@@ -5324,28 +6263,44 @@
       ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
         ${CUI.card({title:'Consultant roster',body:consultants.length?CUI.table({caption:'Consultant commission roster',headers:['Consultant','Role','Payable','Approved','Paid','Actions'],rows:commissionRosterRows(consultants,CUI)}):CUI.emptyState({iconName:'staff',title:'No consultants',body:'No consultant commission records were returned.'})})}
-        ${CUI.card({title:'Policy history',description:'Base, service-anniversary bonus, and renewal rates are editable in basis points.',body:policies.length?policies.map(policy=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(policy.tier||policy.role))}</b><p class="muted small">${escapeHtml(pt('Year-one base {base}% · 12-month service bonus {bonus}% · Renewal {renewal}%',{base:Number(policy.first_year_bps||0)/100,bonus:Number(policy.anniversary_bonus_bps||0)/100,renewal:Number(policy.renewal_bps||0)/100}))}</p></div><span class="muted small">${escapeHtml(dateTime(policy.effective_from))}</span></div>`).join(''):CUI.emptyState({iconName:'reports',title:'No policy history',body:'No consultant commission policies were returned.'})})}
+        ${CUI.card({title:'Policy history',description:'Set the first-year, service-anniversary bonus, and renewal percentages paid to each consultant tier.',body:policies.length?policies.map(policy=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(policy.tier||policy.role))}</b><p class="muted small">${escapeHtml(pt('Year-one base {base}% · 12-month service bonus {bonus}% · Renewal {renewal}%',{base:Number(policy.first_year_bps||0)/100,bonus:Number(policy.anniversary_bonus_bps||0)/100,renewal:Number(policy.renewal_bps||0)/100}))}</p></div><span class="muted small">${escapeHtml(dateTime(policy.effective_from))}</span></div>`).join(''):CUI.emptyState({iconName:'reports',title:'No policy history',body:'No consultant commission policies were returned.'})})}
       </div>
       <section class="card platform-detail-section"><h2>${escapeHtml(pt("Accruals"))}</h2>${accruals.length?CUI.table({caption:'Consultant commission accruals',headers:['Consultant','Type','Status','Net-of-GST basis','Commission','Actions'],rows:commissionAccrualRows(accruals,consultants,CUI)}):localizedEmptyHtml('No accruals.')}</section>
       <section class="card platform-detail-section"><h2>${escapeHtml(pt("Payout workflow"))}</h2>${batches.map(batch=>`<div class="platform-action-item"><div><b>${escapeHtml(pt('Batch {id}',{id:batch.batch_id||batch.id}))}</b><p class="muted small">${escapeHtml(platformStatus(batch.status||'draft'))} · ${escapeHtml(batch.currency||'SGD')}</p></div><div class="platform-actions">${batch.status==='draft'?`<button class="btn ghost sm" data-add-payout-line="${escapeHtml(batch.batch_id||batch.id)}">${escapeHtml(pt("Add line"))}</button><button class="btn sm" data-approve-payout="${escapeHtml(batch.batch_id||batch.id)}">${escapeHtml(pt("Approve batch"))}</button>`:''}</div></div>`).join('')||localizedEmptyHtml('No payout batches.')}
         ${lines.filter(line=>Number(line.remaining_cents??line.amount_cents)>0&&(line.recordable===true||(!('recordable' in line)&&!['paid','void'].includes(line.batch_status||line.status)))).map(line=>`<div class="platform-action-item"><div><b>${escapeHtml(pt('Line {id}',{id:line.line_id||line.id}))}</b><p class="muted small">${escapeHtml(pt('{amount} remaining',{amount:currency(line.remaining_cents??line.amount_cents,line.currency)}))} · ${escapeHtml(platformStatus(line.batch_status||line.status||'approved'))}</p></div><button class="btn sm" data-record-payout="${escapeHtml(line.line_id||line.id)}" data-line-amount="${Number(line.remaining_cents??line.amount_cents??0)}">${escapeHtml(pt("Record payment"))}</button></div>`).join('')}</section>`;
       main.querySelector('#platformNewConsultant').onclick=()=>consultantModal(null,context);
       main.querySelector('#platformNewPolicy').onclick=()=>commissionPolicyModal(context);
-      main.querySelector('#platformAttributeConsultant').onclick=()=>attributeConsultantModal(context);
+      main.querySelector('#platformAttributeConsultant').onclick=()=>attributeConsultantModal(context,consultants,firmDirectory);
       main.querySelector('#platformNewPayout').onclick=()=>payoutBatchModal(context);
       main.querySelectorAll('[data-edit-consultant]').forEach(button=>button.onclick=()=>consultantModal(consultants.find(row=>(row.consultant_id||row.id)===button.dataset.editConsultant),context));
       main.querySelectorAll('[data-approve-accrual]').forEach(button=>button.onclick=()=>approveAccrualModal(button.dataset.approveAccrual,context));
       main.querySelectorAll('[data-forfeit-consultant]').forEach(button=>button.onclick=()=>forfeitCommissionModal(button.dataset.forfeitConsultant,context));
-      main.querySelectorAll('[data-add-payout-line]').forEach(button=>button.onclick=()=>payoutLineModal(button.dataset.addPayoutLine,context));
+      main.querySelectorAll('[data-add-payout-line]').forEach(button=>button.onclick=()=>payoutLineModal(
+        button.dataset.addPayoutLine,context,
+        accruals.filter(row=>row.status==='approved'&&Number(row.amount_cents||row.commission_cents||0)>0),
+        consultants
+      ));
       main.querySelectorAll('[data-approve-payout]').forEach(button=>button.onclick=()=>approvePayout(button.dataset.approvePayout,context));
       main.querySelectorAll('[data-record-payout]').forEach(button=>button.onclick=()=>recordPayoutModal(button.dataset.recordPayout,Number(button.dataset.lineAmount),context));
       CUI.focusRoute(main);
+      const requestedAccrual=platformRouteParam(context.hash,'accrual');
+      if(requestedAccrual){
+        const target=main.querySelector(`[data-accrual-id="${globalObject.CSS?.escape?.(requestedAccrual)||requestedAccrual.replace(/"/g,'\\"')}"]`)?.closest('tr');
+        target?.scrollIntoView?.({behavior:'smooth',block:'center'});
+        target?.setAttribute?.('tabindex','-1');target?.focus?.({preventScroll:true});
+      }
     }catch(error){showError(main,error,CUI,'Commission payable')}
   }
   function consultantModal(consultant,context) {
     const {CUI,sb}=context;
-    modal({title:consultant?'Edit consultant':'New consultant',submitLabel:consultant?'Save consultant':'Create consultant',CUI,body:`<div class="platform-form-grid">
-      ${CUI.field({id:'consultantUser',label:'User ID',value:consultant?.user_id||'',required:true,attributes:'name="user_id"'})}
+    const userPicker=consultant
+      ?`<div class="platform-route-note"><b>${escapeHtml(consultant.display_name||pt('Consultant'))}</b><p class="small">${escapeHtml(consultant.email||pt('Existing Nestly user'))}</p></div><input type="hidden" name="user_id" value="${escapeHtml(consultant.user_id||'')}">`
+      :`${CUI.field({id:'consultantUserQuery',label:'Find Nestly user by email or name',required:true,hint:'Search for the staff account that will receive consultant access.',attributes:'autocomplete="off" minlength="3" maxlength="160"'})}
+        <button type="button" class="btn ghost" id="consultantUserLookup">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt('Find user'))}</span></button>
+        <label for="consultantUser" style="margin-top:12px">${escapeHtml(pt('Selected user'))}</label>
+        <select id="consultantUser" name="user_id" disabled required><option value="">${escapeHtml(pt('Search by email or name first'))}</option></select>
+        <p id="consultantUserStatus" class="muted small" role="status" aria-live="polite" style="margin-top:7px"></p>`;
+    const overlay=modal({title:consultant?'Edit consultant':'New consultant',submitLabel:consultant?'Save consultant':'Create consultant',CUI,body:`${userPicker}<div class="platform-form-grid">
       ${CUI.field({id:'consultantName',label:'Display name',value:consultant?.display_name||'',required:true,attributes:'name="display_name"'})}
       ${CUI.field({id:'consultantTier',label:'Tier',control:'select',required:true,options:['senior','junior'].map(value=>({value,label:platformStatus(value),selected:value===(consultant?.tier||'junior')})),attributes:'name="tier"'})}
       ${CUI.field({id:'consultantEmploymentStart',label:'Employment started',type:'date',value:consultant?.employment_started_on||'',required:true,attributes:'name="employment_started_on"'})}
@@ -5359,20 +6314,47 @@
       });
       controls.close();await renderCommission(context);CUI.announce(pt(consultant?'Consultant updated.':'Consultant created.'));
     }});
+    if(!consultant){
+      const query=overlay.querySelector('#consultantUserQuery');
+      const lookup=overlay.querySelector('#consultantUserLookup');
+      const picker=overlay.querySelector('#consultantUser');
+      const status=overlay.querySelector('#consultantUserStatus');
+      lookup.onclick=async()=>{
+        const value=String(query.value||'').trim();
+        if(value.length<3){status.textContent=pt('Enter at least 3 characters of a name or email.');return}
+        lookup.disabled=true;picker.disabled=true;status.textContent=pt('Searching existing Nestly users…');
+        try{
+          const payload=asObject(await rpc(sb,'platform_lookup_access_user_v89',{p_query:value}));
+          const items=asArray(payload,['items']);
+          picker.innerHTML=items.length
+            ?`${payload.status==='ambiguous'?`<option value="" selected>${escapeHtml(pt('Choose the correct user'))}</option>`:''}${items.map(item=>`<option value="${escapeHtml(item.user_id)}">${escapeHtml(item.display_name||pt('Unnamed user'))} · ${escapeHtml(item.email||pt('Email unavailable'))}</option>`).join('')}`
+            :`<option value="">${escapeHtml(pt('No matching user'))}</option>`;
+          picker.disabled=!items.length;
+          if(payload.status==='matched'&&items.length===1)picker.value=items[0].user_id;
+          status.textContent=items.length?pt('{count} matching users found.',{count:items.length}):pt('No matching Nestly user was found.');
+        }catch(error){status.textContent=platformErrorMessage(error,pt('User search is unavailable.'))}
+        finally{lookup.disabled=false}
+      };
+    }
   }
-  function attributeConsultantModal(context) {
+  function attributeConsultantModal(context,consultants=[],firms=[]) {
     const {CUI,sb}=context;
+    const firmOptions=asArray(firms).map(row=>{
+      const business=row.business_id||row.id,prospect=row.prospect_id;
+      const value=business?`business:${business}`:prospect?`prospect:${prospect}`:'';
+      return value?{value,label:row.business_name||row.company_name||row.name||pt('Unnamed firm')}:null;
+    }).filter(Boolean);
     modal({title:'Attribute consultant',submitLabel:'Attribute',CUI,body:`<div class="platform-form-grid">
-      ${CUI.field({id:'attributeConsultant',label:'Consultant ID',required:true,attributes:'name="consultant"'})}
-      ${CUI.field({id:'attributeProspect',label:'Prospect ID',attributes:'name="prospect"'})}
-      ${CUI.field({id:'attributeBusiness',label:'Business ID',attributes:'name="business"'})}
+      ${CUI.field({id:'attributeConsultant',label:'Consultant',control:'select',required:true,options:asArray(consultants).map(row=>({value:row.consultant_id||row.id,label:row.display_name||row.consultant_name||row.name||pt('Unnamed consultant')})),attributes:'name="consultant"'})}
+      ${CUI.field({id:'attributeFirm',label:'Firm',control:'select',required:true,options:firmOptions,attributes:'name="firm"'})}
       ${CUI.field({id:'attributeStarted',label:'Onboarding started at',type:'datetime-local',required:true,attributes:'name="onboarding_started_at"'})}
       <div class="wide">${CUI.field({id:'attributeReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}</div>
     </div>`,onSubmit:async(form,controls)=>{
-      if(!form.get('prospect')&&!form.get('business'))throw new Error(pt('Add a prospect ID or business ID.'));
+      const [recordType,recordId]=String(form.get('firm')||'').split(':');
+      if(!recordId)throw new Error(pt('Choose a firm.'));
       await rpc(sb,'attribute_consultant_v78',{
-        p_consultant:form.get('consultant'),p_prospect:form.get('prospect')||null,
-        p_business:form.get('business')||null,
+        p_consultant:form.get('consultant'),p_prospect:recordType==='prospect'?recordId:null,
+        p_business:recordType==='business'?recordId:null,
         p_onboarding_started_at:new Date(form.get('onboarding_started_at')).toISOString(),
         p_reason:form.get('reason')
       });
@@ -5384,13 +6366,14 @@
     modal({title:'Create commission policy',submitLabel:'Preview policy',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'policyRole',label:'Consultant tier',control:'select',required:true,options:['senior','junior'].map(value=>({value,label:platformStatus(value)})),attributes:'name="role"'})}
       ${CUI.field({id:'policyEffective',label:'Effective from',type:'datetime-local',required:true,attributes:'name="effective_from"'})}
-      ${CUI.field({id:'policyFirst',label:'Year-one base rate (basis points)',type:'number',required:true,attributes:'name="first_year_bps" min="0" max="10000" step="1"'})}
-      ${CUI.field({id:'policyAnniversary',label:'12-month service bonus (basis points)',type:'number',required:true,attributes:'name="anniversary_bonus_bps" min="0" max="10000" step="1"'})}
-      ${CUI.field({id:'policyRenewal',label:'Renewal rate (basis points)',type:'number',required:true,attributes:'name="renewal_bps" min="0" step="1"'})}
+      ${CUI.field({id:'policyFirst',label:'Year-one base rate (%)',type:'number',required:true,attributes:'name="first_year_percent" min="0" max="100" step="0.01" inputmode="decimal"'})}
+      ${CUI.field({id:'policyAnniversary',label:'12-month service bonus (%)',type:'number',required:true,attributes:'name="anniversary_bonus_percent" min="0" max="100" step="0.01" inputmode="decimal"'})}
+      ${CUI.field({id:'policyRenewal',label:'Renewal rate (%)',type:'number',required:true,attributes:'name="renewal_percent" min="0" max="100" step="0.01" inputmode="decimal"'})}
       <div class="wide">${CUI.field({id:'policyReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}</div>
     </div>`,onSubmit:async(form,controls)=>{
-      const values={role:form.get('role'),first_year_bps:Number(form.get('first_year_bps')),anniversary_bonus_bps:Number(form.get('anniversary_bonus_bps')),renewal_bps:Number(form.get('renewal_bps')),effective_from:new Date(form.get('effective_from')).toISOString(),reason:form.get('reason')};
-      controls.close();previewThenConfirm({title:'Confirm commission policy',preview:{...values,calculation_basis:'net_of_gst'},CUI,onConfirm:async(confirmControls)=>{
+      const values={role:form.get('role'),first_year_bps:percentInputToBasisPoints(form.get('first_year_percent')),anniversary_bonus_bps:percentInputToBasisPoints(form.get('anniversary_bonus_percent')),renewal_bps:percentInputToBasisPoints(form.get('renewal_percent')),effective_from:new Date(form.get('effective_from')).toISOString(),reason:form.get('reason')};
+      const preview={role:values.role,year_one_rate:`${basisPointsToPercentInput(values.first_year_bps)}%`,service_anniversary_bonus:`${basisPointsToPercentInput(values.anniversary_bonus_bps)}%`,renewal_rate:`${basisPointsToPercentInput(values.renewal_bps)}%`,effective_from:values.effective_from,reason:values.reason,calculation_basis:'Subscription amount before GST'};
+      controls.close();previewThenConfirm({title:'Confirm commission policy',preview,CUI,onConfirm:async(confirmControls)=>{
         await rpc(sb,'create_consultant_commission_policy_v78',{p_tier:values.role,p_first_year_bps:values.first_year_bps,p_anniversary_bonus_bps:values.anniversary_bonus_bps,p_renewal_bps:values.renewal_bps,p_effective_from:values.effective_from,p_reason:values.reason});
         confirmControls.close();await renderCommission(context);CUI.announce('Commission policy created.');
       }});
@@ -5406,18 +6389,22 @@
     modal({title:'New payout batch',submitLabel:'Create batch',CUI,body:`${CUI.field({id:'batchCurrency',label:'Currency',value:'SGD',required:true,attributes:'name="currency" maxlength="3"'})}${CUI.field({id:'batchNote',label:'Note',control:'textarea',attributes:'name="note" rows="3"'})}`,
       onSubmit:async(form,controls)=>{await rpc(sb,'create_consultant_payout_batch_v78',{p_currency:String(form.get('currency')).toUpperCase(),p_note:form.get('note')||null});controls.close();await renderCommission(context);CUI.announce('Payout batch created.')}});
   }
-  function payoutLineModal(batchId,context) {
+  function payoutLineModal(batchId,context,accruals=[],consultants=[]) {
     const {CUI,sb}=context;
-    modal({title:'Add payout line',submitLabel:'Add line',CUI,body:`${CUI.field({id:'lineAccrual',label:'Approved accrual ID',required:true,attributes:'name="accrual"'})}${CUI.field({id:'lineAmount',label:'Amount (integer cents)',type:'number',required:true,attributes:'name="amount_cents" min="1" step="1"'})}`,
-      onSubmit:async(form,controls)=>{await rpc(sb,'add_consultant_payout_line_v78',{p_batch:batchId,p_accrual:form.get('accrual'),p_amount_cents:Number(form.get('amount_cents'))});controls.close();await renderCommission(context);CUI.announce('Payout line added.')}});
+    const options=asArray(accruals).map(row=>{
+      const consultant=asArray(consultants).find(item=>(item.consultant_id||item.id)===row.consultant_id);
+      return{value:row.accrual_id||row.id,label:`${row.consultant_name||consultant?.display_name||pt('Consultant')} · ${currency(row.amount_cents||row.commission_cents,row.currency)} · ${platformStatus(row.commission_phase||row.commission_type||row.kind)}`};
+    });
+    modal({title:'Add payout line',submitLabel:'Add line',CUI,body:`${CUI.field({id:'lineAccrual',label:'Approved commission',control:'select',required:true,options,attributes:'name="accrual"'})}${CUI.field({id:'lineAmount',label:'Payment amount (SGD)',type:'number',required:true,attributes:'name="amount" min="0.01" step="0.01" inputmode="decimal"'})}`,
+      onSubmit:async(form,controls)=>{await rpc(sb,'add_consultant_payout_line_v78',{p_batch:batchId,p_accrual:form.get('accrual'),p_amount_cents:moneyInputToCents(form.get('amount'))});controls.close();await renderCommission(context);CUI.announce('Payout line added.')}});
   }
   function approvePayout(batchId,context) {
     previewThenConfirm({title:'Approve payout batch',preview:{batch_id:batchId,action:'approve'},CUI:context.CUI,onConfirm:async controls=>{await rpc(context.sb,'approve_consultant_payout_batch_v78',{p_batch:batchId});controls.close();await renderCommission(context);context.CUI.announce('Payout batch approved.')}});
   }
   function recordPayoutModal(lineId,amount,context) {
     const {CUI,sb}=context;
-    modal({title:'Record consultant payment',submitLabel:'Record payment',CUI,body:`${CUI.field({id:'paidAmount',label:'Paid amount (integer cents)',type:'number',value:String(amount),required:true,attributes:'name="amount_cents" min="1" step="1"'})}${CUI.field({id:'paidReference',label:'Payment reference',required:true,attributes:'name="reference"'})}${CUI.field({id:'paidAt',label:'Paid at',type:'datetime-local',required:true,attributes:'name="paid_at"'})}`,
-      onSubmit:async(form,controls)=>{await rpc(sb,'record_consultant_payout_v78',{p_line:lineId,p_amount_cents:Number(form.get('amount_cents')),p_reference:form.get('reference'),p_paid_at:new Date(form.get('paid_at')).toISOString()});controls.close();await renderCommission(context);CUI.announce('Consultant payment recorded.')}});
+    modal({title:'Record consultant payment',submitLabel:'Record payment',CUI,body:`${CUI.field({id:'paidAmount',label:'Paid amount (SGD)',type:'number',value:centsToMoneyInput(amount),required:true,attributes:'name="amount" min="0.01" step="0.01" inputmode="decimal"'})}${CUI.field({id:'paidReference',label:'Payment reference',required:true,attributes:'name="reference"'})}${CUI.field({id:'paidAt',label:'Paid at',type:'datetime-local',required:true,attributes:'name="paid_at"'})}`,
+      onSubmit:async(form,controls)=>{await rpc(sb,'record_consultant_payout_v78',{p_line:lineId,p_amount_cents:moneyInputToCents(form.get('amount')),p_reference:form.get('reference'),p_paid_at:new Date(form.get('paid_at')).toISOString()});controls.close();await renderCommission(context);CUI.announce('Consultant payment recorded.')}});
   }
   function forfeitCommissionModal(consultantId,context) {
     const {CUI,sb}=context;
@@ -5427,7 +6414,7 @@
 
   async function renderAutomation(context) {
     const {main,CUI,sb}=context;
-    main.innerHTML=loading(CUI,'Automation','Loading reconciliation and billing event health…','retention');
+    main.innerHTML=loading(CUI,'System health','Loading reconciliation and billing event health…','retention');
     try{
       const [reconciliation,billing]=await Promise.all([
         rpc(sb,'platform_get_automation_reconciliation_v89',{p_run:null,p_limit:50}),
@@ -5435,11 +6422,20 @@
       ]);
       const runs=asArray(reconciliation?.runs),items=asArray(reconciliation?.items),rows=asArray(billing);
       const failedEvents=rows.reduce((value,row)=>value+Number(row.failed_event_count||0),0);
-      main.innerHTML=`${CUI.pageHeader({title:'Automation',subtitle:'Billing reconciliation runs and provider event health from the current platform ledger.',iconName:'retention'})}
+      main.innerHTML=`${CUI.pageHeader({title:'System health',subtitle:'Technical reconciliation runs and provider event health. Resolve affected firm payments in Finance.',iconName:'retention'})}
         <section class="platform-health-grid"><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('retention',{size:17})}<span>${escapeHtml(pt('Reconciliation runs'))}</span></div><div class="platform-kpi-value">${runs.length}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('info',{size:17})}<span>${escapeHtml(pt('Failed billing events'))}</span></div><div class="platform-kpi-value">${failedEvents}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt('Reconciliation items'))}</span></div><div class="platform-kpi-value">${items.length}</div></article></section>
+        ${CUI.card({title:'Reconciliation exceptions',body:items.length?items.map(item=>`<article class="platform-action-item" tabindex="-1" data-incident-id="${escapeHtml(item.id||item.provider_object_id||item.created_at||'')}"><div><b>${escapeHtml(platformStatus(item.object_type||'provider object'))}</b><p class="muted small">${escapeHtml(item.provider_object_id||pt('Provider object'))}</p></div>${CUI.status(platformStatus(item.result||item.status||'exception'),item.result==='matched'?'ok':'no')}</article>`).join(''):localizedEmptyHtml('No reconciliation exceptions were returned.')})}
         ${CUI.card({title:'Reconciliation history',body:runs.length?CUI.table({caption:'Billing reconciliation runs',headers:['Started','Mode','Status','Finished','Summary'],rows:automationRunRows(runs,CUI)}):CUI.emptyState({iconName:'retention',title:'No reconciliation runs',body:'No billing reconciliation history was returned.'})})}`;
       CUI.focusRoute(main);
-    }catch(error){showError(main,error,CUI,'Automation')}
+      const requestedIncident=platformRouteParam(context.hash,'incident');
+      if(requestedIncident){
+        const marker=main.querySelector(`[data-incident-id="${globalObject.CSS?.escape?.(requestedIncident)||requestedIncident.replace(/"/g,'\\"')}"]`);
+        const target=marker?.closest?.('tr')||marker;
+        target?.scrollIntoView?.({behavior:'smooth',block:'center'});
+        target?.setAttribute?.('tabindex','-1');
+        target?.focus?.({preventScroll:true});
+      }
+    }catch(error){showError(main,error,CUI,'System health')}
   }
 
   function disconnectedRouteHtml(key, CUI) {
@@ -5477,49 +6473,117 @@
     const {sb,CUI,main,generation,isCurrent}=context;
     main.innerHTML=loading(CUI,'Platform overview','Combining current onboarding, firm, billing and commission truth…','platform');
     const results=await Promise.allSettled([
-      rpc(sb,'super_admin_list_businesses'),
-      rpc(sb,'platform_get_sme_board_v76',{p_consultant:null}),
-      rpc(sb,'platform_list_prospects_v76',{p_stage:null,p_consultant:null,p_search:null,p_limit:250,p_before:null}),
+      fetchFirmDirectoryPageV88(sb,defaultOnboardingFilters(),{required:true,limit:50}),
+      fetchAllFirmAttentionV88(sb,{limit:250,maxPages:40}),
       rpc(sb,'get_platform_billing_v77',{p_business:null,p_limit:250}),
       rpc(sb,'get_consultant_commission_dashboard_v78',{p_consultant:null,p_limit:100}),
-      rpc(sb,'platform_list_sector_entitlements_v75')
+      rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:null,p_limit:100}),
+      rpc(sb,'platform_get_automation_reconciliation_v89',{p_run:null,p_limit:50})
     ]);
     if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
     const value=index=>results[index].status==='fulfilled'?results[index].value:null;
-    const firms=asArray(value(0)),board=asObject(value(1)),prospects=flattenBoard(board,value(2));
-    const billing=asArray(value(3)),commission=asObject(value(4)),sectors=asObject(value(5));
+    const firmDirectory=asObject(value(0)),firms=asArray(firmDirectory,['items']);
+    const attention=asObject(value(1)),prospects=asArray(attention,['items']);
+    const billing=asArray(value(2)),commission=asObject(value(3));
+    const applicationPayload=asObject(value(4));
+    const applications=asArray(applicationPayload,['applications']);
+    const automation=asObject(value(5)),automationRuns=asArray(automation.runs);
+    let automationDetailFailed=false;
+    let automationIncidents=automationRuns.filter(run=>
+      !['completed','ok','healthy','success'].includes(String(run.status||'').toLowerCase())
+    );
+    if(automationRuns[0]?.id){
+      try{
+        const detail=asObject(await rpc(sb,'platform_get_automation_reconciliation_v89',{
+          p_run:automationRuns[0].id,p_limit:50
+        }));
+        automationIncidents=[...automationIncidents,...asArray(detail.items)];
+      }catch(_error){
+        automationDetailFailed=true;
+        /* The run-level incident remains actionable when item detail is unavailable. */
+      }
+    }
+    if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
     const unavailableAreas=[
-      ['Firms',results[0]],['Onboarding',results[1]],['Billing',results[3]],['Commission',results[4]],['Sector modules',results[5]]
+      ['Firms',results[0]],['Onboarding',results[1]],['Billing',results[2]],
+      ['Commission',results[3]],['Applications',results[4]],['Automation',results[5]]
     ].filter(([,result])=>result.status==='rejected');
-    const projectedMonthly=firms.reduce((sum,row)=>sum+Number(row.est_monthly_cents||0),0);
-    const overdueProspects=prospects.filter(row=>row.overdue===true||Number(row.overdue_task_count||0)>0);
-    const staleProspects=prospects.filter(row=>row.stale===true||row.is_stale===true);
-    const billingAttention=billing.filter(row=>row.status==='past_due'||Number(row.failed_event_count||0)>0);
+    const billingAttention=billing.filter(row=>
+      String(row.status||row.payment_status||'').toLowerCase()==='past_due'
+      ||Number(row.failed_event_count||0)>0
+    );
     const accruals=asArray(commission,['accruals','commission_accruals']);
-    const commissionAttention=accruals.filter(row=>['open','payable'].includes(row.status));
-    main.innerHTML=`${CUI.pageHeader({title:'Platform overview',subtitle:'A combined operational view. Unavailable backend phases remain explicit and do not produce estimated records.',iconName:'platform'})}
+    const commissionAttention=accruals.filter(row=>['open','payable'].includes(String(row.status||'').toLowerCase()));
+    const coverage=buildPlatformTodayCoverage([
+      platformTodayCoverageDomain({
+        key:'firms',label:'Firms',returned:firms.length,
+        total:Number.isFinite(Number(firmDirectory.total_count))
+          ?Number(firmDirectory.total_count):null,
+        truncated:Boolean(firmDirectory.next_cursor),
+        failed:results[0].status==='rejected',
+        detail:firmDirectory.next_cursor
+          ?'The exact firm total is shown, but only the first directory page is present on Today.':''
+      }),
+      platformTodayCoverageDomain({
+        key:'attention',label:'Onboarding attention',returned:prospects.length,
+        total:Number.isFinite(Number(attention.total_count))
+          ?Number(attention.total_count):null,
+        truncated:attention.truncated===true||attention.complete===false,
+        failed:results[1].status==='rejected',
+        detail:attention.truncated===true
+          ?'The safe paging guard was reached; use Onboarding before declaring the queue clear.':''
+      }),
+      platformTodayCoverageDomain({
+        key:'billing',label:'Billing',returned:billing.length,limit:250,
+        failed:results[2].status==='rejected',
+        detail:billing.length>=250
+          ?'The billing reader has no cursor or total count.':''
+      }),
+      platformTodayCoverageDomain({
+        key:'commissions',label:'Commissions',returned:accruals.length,limit:100,
+        failed:results[3].status==='rejected',
+        detail:accruals.length>=100
+          ?'The commission accrual reader has no cursor or total count.':''
+      }),
+      platformTodayCoverageDomain({
+        key:'applications',label:'Owner applications',returned:applications.length,
+        truncated:applicationPayload.truncated===true,
+        failed:results[4].status==='rejected',
+        detail:applicationPayload.truncated===true
+          ?'The application reader reports more submitted applications but exposes no cursor.':''
+      }),
+      platformTodayCoverageDomain({
+        key:'automation',label:'Automation',returned:automationRuns.length,limit:50,
+        truncated:automationRuns.length>1||automationDetailFailed,
+        failed:results[5].status==='rejected',
+        detail:automationDetailFailed
+          ?'Latest-run exception detail was unavailable; the run itself remains actionable.'
+          :automationRuns.length>1
+            ?'Item-level exceptions were loaded only for the latest run; open System health for full review.':''
+      })
+    ]);
+    const coverageByKey=new Map(coverage.domains.map(domain=>[domain.key,domain]));
+    const todayItems=buildPlatformTodayQueue({
+      applications,prospects,billing:billingAttention,commissions:commissionAttention,
+      incidents:automationIncidents
+    });
+    main.innerHTML=`${CUI.pageHeader({title:'Today',subtitle:'A prioritized operating queue from live onboarding, billing, commission and automation records.',iconName:'platform'})}
       ${unavailableAreas.length?`<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Partial platform data"))}</b><p class="small">${escapeHtml(pt("System update required for:"))} ${escapeHtml(unavailableAreas.map(([label])=>pt(label)).join(', '))}. ${escapeHtml(pt("Available areas remain live below."))}</p></div></div>`:''}
+      ${platformTodayQueueHtml(todayItems,CUI,{
+        title:'Today',
+        description:'Resolve blocked and overdue work first, then due-today and unscheduled follow-ups.',
+        coverage
+      })}
       <section class="platform-kpis" aria-label="${escapeHtml(pt('Platform summary'))}">${[
-        ['Firms',firms.length,'branch'],['Open prospects',prospects.filter(row=>!['client','activated','lost'].includes(prospectStage(row))).length,'setup'],
-        ['Projected monthly',currency(projectedMonthly),'reports'],['Billing attention',billingAttention.length,'info']
-      ].map(([label,metric,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(metric)}</div></article>`).join('')}</section>
-      <div class="platform-detail-grid">
-        ${CUI.card({title:'Action queue',body:`<div class="platform-action-queue">${[
-          ['Overdue prospect tasks',overdueProspects.length,'#/platform/onboarding'],
-          ['Stale prospects',staleProspects.length,'#/platform/onboarding'],
-          ['Billing records needing attention',billingAttention.length,'#/platform/billing'],
-          ['Open commission accruals',commissionAttention.length,'#/platform/commissions']
-        ].map(([label,count,hash])=>`<a class="platform-action-item" href="${hash}"><span>${escapeHtml(pt(label))}</span><b>${count}</b></a>`).join('')}</div>`})}
-        ${CUI.card({title:'Configuration coverage',body:detailObjectHtml({
-          sector_profiles:asArray(sectors.profiles).length,
-          firms_with_sector_assignment:asArray(sectors.businesses).length,
-          firms_without_sector_assignment:Math.max(0,firms.length-asArray(sectors.businesses).length),
-          trialing:billing.filter(row=>row.status==='trialing').length,
-          active:billing.filter(row=>row.status==='active').length,
-          past_due:billing.filter(row=>row.status==='past_due').length
-        })})}
-      </div>
-      <section class="card" style="margin-top:16px">${firms.length?CUI.table({caption:'Current firm snapshot',headers:['Firm','Sector','Branches','Staff','Customers','Seats','Subscription','Projected monthly'],rows:firmRows(firms.slice(0,12),CUI),className:'platform-firms-table'}):CUI.emptyState({iconName:'branch',title:'No firm roster available',body:results[0].status==='rejected'?'The firm roster requires a system update.':'The firm roster returned no records.'})}</section>`;
+        ['Total firms',Number(firmDirectory.total_count||firms.length),'branch','firms',true],
+        ['Onboarding attention',Number(attention.total_count||prospects.length),'setup','attention',true],
+        ['Applications awaiting approval',applications.length,'customers','applications',false],
+        ['Billing attention',billingAttention.length,'info','billing',false]
+      ].map(([label,metric,icon,key,exact])=>{
+        const domain=coverageByKey.get(key);
+        return `<article class="card platform-kpi" data-kpi-coverage-state="${escapeHtml(domain?.state||'unknown')}"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(platformTodayMetric(metric,domain,{exact}))}</div></article>`;
+      }).join('')}</section>
+      <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Today stays operational"))}</b><p class="small">${escapeHtml(pt("Firm browsing, report generation, pricing and platform configuration stay in their dedicated work areas so this page remains a short decision queue."))}</p></div></div>`;
     CUI.focusRoute(main);
   }
 
@@ -5536,6 +6600,19 @@
         </select>
       </label>`;
     }).join('');
+  }
+  function normalizePlatformGrantPermissions(role,permissions={}) {
+    const requested={};
+    platformModuleKeys.forEach(key=>{
+      const value=String(permissions[key]||'off');
+      if(value==='r'||value==='rw')requested[key]=value;
+    });
+    if(role==='sales_staff')return {
+      overview:'r',onboarding:'rw',firms:'r',
+      reports:['r','rw'].includes(requested.reports)?requested.reports:'r'
+    };
+    if(role==='admin'&&platformModuleKeys.every(key=>requested[key]==='rw'))return{'*':'rw'};
+    return requested;
   }
 
   function accessGrantModal(grant,context) {
@@ -5569,23 +6646,14 @@
         <div data-permission-rows>${accessPermissionRows(seed)}</div>
       </fieldset>`,
       onSubmit:async(form,controls)=>{
-        const role=String(form.get('role')||''),perms={};
+        const role=String(form.get('role')||''),requestedPerms={};
         const selectedUser=String(form.get('user_id')||'').trim();
         if(!selectedUser)throw new Error(pt('Find and select an existing Nestly user first.'));
         platformModuleKeys.forEach(key=>{
           const value=String(form.get(`permission_${key}`)||'off');
-          if(value==='r'||value==='rw')perms[key]=value;
+          if(value==='r'||value==='rw')requestedPerms[key]=value;
         });
-        if(role==='sales_staff'){
-          perms.onboarding='rw';perms.firms='r';
-          if(!['r','rw'].includes(perms.reports))perms.reports='r';
-          Object.keys(perms).forEach(key=>{
-            if(!['onboarding','firms','reports'].includes(key))delete perms[key];
-          });
-        }else if(platformModuleKeys.every(key=>perms[key]==='rw')){
-          Object.keys(perms).forEach(key=>delete perms[key]);
-          perms['*']='rw';
-        }
+        const perms=normalizePlatformGrantPermissions(role,requestedPerms);
         await rpc(sb,'platform_upsert_access_grant_v89',{
           p_user:selectedUser,
           p_role:role,p_module_perms:perms,p_active:form.get('active')==='yes'
@@ -5636,7 +6704,8 @@
       overlay.querySelectorAll('[data-access-module]').forEach(row=>{
         const key=row.dataset.accessModule,select=row.querySelector('select');
         if(!sales){select.disabled=false;return}
-        if(key==='onboarding'){select.value='rw';select.disabled=true}
+        if(key==='overview'){select.value='r';select.disabled=true}
+        else if(key==='onboarding'){select.value='rw';select.disabled=true}
         else if(key==='firms'||key==='reports'){
           if(key==='firms')select.value='r';
           else if(!['r','rw'].includes(select.value))select.value='r';
@@ -5698,10 +6767,84 @@
     </div></div>`;
   }
 
-  async function fetchScopedFirms(sb,search='') {
-    return asObject(await rpc(sb,'platform_list_my_firms_v89',{
-      p_search:search||null,p_limit:250
+  async function fetchScopedFirms(sb,search='',cursor=null,{limit=50,snapshot=null}={}) {
+    const after=asObject(cursor);
+    return asObject(await rpc(sb,'platform_list_my_firms_v105',{
+      p_search:search||null,p_limit:limit,
+      p_snapshot_at:snapshot||null,
+      p_after_updated_at:after.updated_at||null,p_after_id:after.id||null
     }));
+  }
+  async function fetchAllScopedFirms(sb,search='',{
+    limit=50,maxPages=100
+  }={}) {
+    const items=[],seenRows=new Set(),seenCursors=new Set();
+    let snapshot=null,cursor=null,totalCount=0,pages=0,complete=false,scope='';
+    while(pages<maxPages){
+      const payload=await fetchScopedFirms(sb,search,cursor,{limit,snapshot});
+      if(!snapshot)snapshot=payload.snapshot_at||null;
+      if(!scope)scope=String(payload.scope||'');
+      totalCount=Math.max(totalCount,Number(payload.total_count||0));
+      for(const row of asArray(payload,['items'])){
+        const key=String(row.row_id||row.prospect_id||row.business_id||row.id||'');
+        if(key&&seenRows.has(key))continue;
+        if(key)seenRows.add(key);
+        items.push(row);
+      }
+      pages+=1;
+      const next=asObject(payload.next_cursor);
+      if(items.length>=totalCount||!Object.keys(next).length){
+        complete=true;cursor=null;break;
+      }
+      const cursorKey=`${next.updated_at||''}:${next.id||''}`;
+      if(seenCursors.has(cursorKey))break;
+      seenCursors.add(cursorKey);cursor=next;
+    }
+    return{
+      items,total_count:totalCount,scope,snapshot_at:snapshot,
+      pages,complete,truncated:!complete,next_cursor:cursor
+    };
+  }
+
+  function scopedDirectoryStateFromHash(hash='') {
+    const query=String(hash).split('?')[1]||'';
+    const params=new URLSearchParams(query);
+    const defaults=enterpriseDefaults();
+    return{
+      search:String(params.get('search')||'').trim(),
+      firm:String(params.get('firm')||'').trim(),
+      prospect:String(params.get('prospect')||'').trim(),
+      from:/^\d{4}-\d{2}-\d{2}$/.test(String(params.get('from')||''))
+        ?String(params.get('from')):defaults.from,
+      to:/^\d{4}-\d{2}-\d{2}$/.test(String(params.get('to')||''))
+        ?String(params.get('to')):defaults.to
+    };
+  }
+
+  function scopedFirmIdFromHash(hash='') {
+    return scopedDirectoryStateFromHash(hash).firm;
+  }
+
+  function scopedFirmHash(businessId,{search=''}={}) {
+    const params=new URLSearchParams();
+    if(search)params.set('search',search);
+    if(businessId)params.set('firm',String(businessId));
+    return`#/platform/firms${[...params].length?`?${params.toString()}`:''}`;
+  }
+
+  function scopedOnboardingHash({search='',prospect=''}={}) {
+    const params=new URLSearchParams();
+    if(search)params.set('search',search);
+    if(prospect)params.set('prospect',prospect);
+    return`#/platform/onboarding${[...params].length?`?${params.toString()}`:''}`;
+  }
+  function scopedReportHash({search='',firm='',from='',to=''}={}) {
+    const params=new URLSearchParams();
+    if(search)params.set('search',search);
+    if(firm)params.set('firm',firm);
+    if(from)params.set('from',from);
+    if(to)params.set('to',to);
+    return`#/platform/reports${[...params].length?`?${params.toString()}`:''}`;
   }
 
   function canAssignScopedProspect(context) {
@@ -5730,7 +6873,9 @@
       caption:'Firms in your access scope',
       headers:['Firm','Stage','Owner','Contact','Attention','Updated'],
       rows:items.map(item=>[
-        `<b>${escapeHtml(item.name||item.legal_name||'Unnamed firm')}</b>${item.registration_number?`<span class="muted small platform-firm-secondary">${escapeHtml(item.registration_number)}</span>`:''}`,
+        item.business_id
+          ?`<button type="button" class="platform-table-link" data-scoped-firm="${escapeHtml(item.business_id)}"><b>${escapeHtml(item.name||item.legal_name||'Unnamed firm')}</b>${item.registration_number?`<span class="muted small platform-firm-secondary">${escapeHtml(item.registration_number)}</span>`:''}</button>`
+          :`<button type="button" class="platform-table-link" data-scoped-prospect="${escapeHtml(item.prospect_id||item.id||'')}"><b>${escapeHtml(item.name||item.legal_name||'Unnamed firm')}</b>${item.registration_number?`<span class="muted small platform-firm-secondary">${escapeHtml(item.registration_number)}</span>`:''}</button>`,
         escapeHtml(platformStatus(prospectStage(item))),
         escapeHtml(item.consultant_name||item.owner_name||pt(item.assigned_consultant_id?'Assigned':'Unassigned')),
         `<span>${escapeHtml(item.boss_name||item.primary_contact_name||'—')}</span>${platformContactActions(item.boss_phone||item.primary_contact_phone,CUI,{compact:true})}`,
@@ -5740,22 +6885,140 @@
     });
   }
 
-  async function renderScopedFirms(context,search='') {
+  async function openScopedFirm(item,context,{onClose}={}) {
+    const {CUI,sb}=context,businessId=String(item?.business_id||'').trim();
+    if(!businessId)return;
+    const period=enterpriseDefaults();
+    const overlay=document.createElement('div');
+    overlay.className='platform-drawer';overlay.tabIndex=-1;
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','scopedFirmTitle');
+    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head">
+      <div><h1 id="scopedFirmTitle" style="font-size:1.45rem">${escapeHtml(item.name||item.legal_name||pt('Firm 360'))}</h1>
+      <p class="muted small">${escapeHtml(pt('Read-only firm view · database-enforced assignment scope'))}</p></div>
+      <button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button>
+      </div><div data-detail>${CUI.loadingState({title:'Firm 360',body:'Loading this firm’s performance and customer intelligence…',iconName:'branch'})}</div></section>`;
+    document.body.appendChild(overlay);
+    let deactivate;
+    const close=()=>{
+      closeOverlay(overlay,deactivate);
+      onClose?.();
+    };
+    overlay.querySelector('.platform-drawer-close').onclick=close;
+    deactivate=CUI.activateDialog(overlay,{onClose:close});
+    const host=overlay.querySelector('[data-detail]');
+    try{
+      const [report,affinity,recommendations]=await Promise.all([
+        rpc(sb,'platform_get_assigned_firm_report_v94',{
+          p_business:businessId,p_branch:null,p_from:period.from,p_to:period.to
+        }),
+        rpc(sb,'platform_get_catalogue_affinity_v94',{
+          p_business:businessId,p_branch:null,p_from:period.from,p_to:period.to,p_limit:25
+        }),
+        rpc(sb,'platform_get_consultative_recommendations_v94',{
+          p_business:businessId,p_branch:null,p_from:period.from,p_to:period.to
+        })
+      ]);
+      if(!host.isConnected)return;
+      const firmReport=asObject(report),scope=asObject(firmReport.scope);
+      overlay.querySelector('#scopedFirmTitle').textContent=scope.business_name||item.name||item.legal_name||pt('Firm 360');
+      host.innerHTML=`<div class="platform-detail-shortcuts platform-actions">
+        <a class="btn" href="${escapeHtml(enterpriseReportHash({
+          search:'',sector:'',businesses:[businessId],branch:'',
+          from:period.from,to:period.to
+        }))}">${CUI.icon('reports',{size:16})}<span>${escapeHtml(pt('Open report builder'))}</span></a>
+      </div>
+      <div class="platform-detail-grid">
+        ${CUI.card({title:'Firm',body:typedDetailHtml({
+          name:scope.business_name||item.name||item.legal_name,
+          registration:item.registration_number,
+          sector:sectorLabel(item.sector_key||item.industry),
+          stage:platformStatus(prospectStage(item)),
+          consultant:item.consultant_name||item.owner_name||'Unassigned'
+        },[
+          ['name','Name'],['registration','UEN / registration'],
+          ['sector','Sector'],['stage','Stage'],['consultant','Sales consultant']
+        ])})}
+        ${CUI.card({title:'Primary contact',body:typedDetailHtml({
+          name:item.boss_name||item.primary_contact_name,
+          phone:item.boss_phone||item.primary_contact_phone,
+          email:item.boss_email||item.primary_contact_email
+        },[['name','Name'],['phone','Phone'],['email','Email']])+
+          platformContactActions(item.boss_phone||item.primary_contact_phone,CUI)})}
+      </div>
+      ${consultativeIntelligenceHtml(firmReport,asObject(affinity),asObject(recommendations),CUI)}`;
+    }catch(error){
+      const denied=String(error?.code||error?.status||'')==='42501';
+      host.innerHTML=CUI.errorState({
+        title:denied?'Firm unavailable in your access scope':'Firm 360 unavailable',
+        message:denied
+          ?'This firm is not assigned to you. No firm or customer information was returned.'
+          :platformErrorMessage(error,'Try again.')
+      });
+    }
+  }
+
+  async function renderScopedFirms(context,search=null,{pageState=null}={}) {
     const {main,CUI,sb,access}=context;
+    const route=scopedDirectoryStateFromHash(context.hash);
+    const activeSearch=search===null?route.search:search;
+    const prior=asObject(pageState);
     main.innerHTML=loading(CUI,'Firms','Loading firms in your access scope…','branch');
     try{
-      const payload=await fetchScopedFirms(sb,search),items=asArray(payload,['items']);
+      const payload=await fetchScopedFirms(sb,activeSearch,prior.next_cursor,{
+        snapshot:prior.snapshot_at||null
+      }),items=[
+        ...asArray(prior.items),...asArray(payload,['items'])
+      ];
+      const nextCursor=asObject(payload.next_cursor);
+      const snapshotAt=payload.snapshot_at||prior.snapshot_at||null;
+      const total=Number(payload.total_count??items.length);
+      const requestedFirm=route.firm;
       main.innerHTML=`${CUI.pageHeader({title:'Firms',subtitle:'Search the firms available to your platform role.',iconName:'branch'})}
         ${scopedScopeNote(access,CUI)}
         <form class="card platform-scoped-search" id="platformScopedFirmSearch">
-          ${CUI.field({id:'platformScopedFirmQuery',label:'Search firms',type:'search',value:search,placeholder:'Company, UEN, owner, email or phone'})}
+          ${CUI.field({id:'platformScopedFirmQuery',label:'Search firms',type:'search',value:activeSearch,placeholder:'Company, UEN, owner, email or phone'})}
           <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt('Search'))}</span></button>
         </form>
-        ${payload.truncated?`<p class="platform-route-note">${escapeHtml(pt("Showing the first 250 matches. Refine the search to narrow the list."))}</p>`:''}
-        <section class="card">${items.length?scopedFirmTable(items,CUI):CUI.emptyState({iconName:'branch',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</section>`;
+        <section class="card">${items.length?scopedFirmTable(items,CUI):CUI.emptyState({iconName:'branch',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}
+          <div class="platform-paged-summary"><p class="muted small">${escapeHtml(pt('{shown} of {count} firms loaded.',{shown:items.length,count:total}))}</p>
+          ${Object.keys(nextCursor).length&&items.length<total?`<button type="button" class="btn ghost" id="platformScopedFirmsMore">${escapeHtml(pt('Load 50 more firms'))}</button>`:''}</div>
+        </section>`;
       main.querySelector('#platformScopedFirmSearch').onsubmit=event=>{
-        event.preventDefault();renderScopedFirms(context,main.querySelector('#platformScopedFirmQuery').value.trim());
+        event.preventDefault();
+        const nextSearch=main.querySelector('#platformScopedFirmQuery').value.trim();
+        const hash=scopedFirmHash('',{search:nextSearch});
+        globalObject.history?.replaceState?.(null,'',hash);
+        renderScopedFirms({...context,hash},nextSearch);
       };
+      const clearFirmRoute=()=>{
+        const hash=scopedFirmHash('',{search:activeSearch});
+        globalObject.history?.replaceState?.(null,'',hash);
+      };
+      main.querySelector('#platformScopedFirmsMore')?.addEventListener('click',()=>{
+        renderScopedFirms(context,activeSearch,{pageState:{
+          items,next_cursor:nextCursor,snapshot_at:snapshotAt
+        }});
+      });
+      main.querySelectorAll('[data-scoped-firm]').forEach(button=>{
+        button.onclick=()=>{
+          const item=items.find(row=>String(row.business_id)===button.dataset.scopedFirm);
+          const hash=scopedFirmHash(button.dataset.scopedFirm,{search:activeSearch});
+          if(globalObject.history?.replaceState){
+            globalObject.history.replaceState(null,'',hash);
+          }
+          openScopedFirm(item,context,{onClose:clearFirmRoute});
+        };
+      });
+      main.querySelectorAll('[data-scoped-prospect]').forEach(button=>{
+        const item=items.find(row=>String(row.prospect_id||row.id||'')===button.dataset.scopedProspect);
+        button.onclick=()=>openScopedProspect(item,context);
+      });
+      if(requestedFirm){
+        const item=items.find(row=>String(row.business_id)===requestedFirm)
+          ||{business_id:requestedFirm};
+        await openScopedFirm(item,context,{onClose:clearFirmRoute});
+      }
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Firms')}
   }
@@ -5844,7 +7107,7 @@
     });
   }
 
-  async function openScopedProspect(item,context,consultants=[]) {
+  async function openScopedProspect(item,context,consultants=[],{onClose}={}) {
     const {CUI,sb}=context,prospectId=item.prospect_id||item.id;
     if(!prospectId)return;
     const overlay=document.createElement('div');
@@ -5858,7 +7121,10 @@
       </div><div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading scoped contacts, activity and tasks…',iconName:'customers'})}</div></section>`;
     document.body.appendChild(overlay);
     let deactivate;
-    const close=()=>closeOverlay(overlay,deactivate);
+    const close=()=>{
+      closeOverlay(overlay,deactivate);
+      onClose?.();
+    };
     overlay.querySelector('.platform-drawer-close').onclick=close;
     deactivate=CUI.activateDialog(overlay,{onClose:close});
     const renderDetail=async()=>{
@@ -5903,11 +7169,21 @@
     await renderDetail();
   }
 
-  async function renderScopedOnboarding(context,search='') {
+  async function renderScopedOnboarding(context,search=null,{pageState=null}={}) {
     const {main,CUI,sb,access}=context;
+    const route=scopedDirectoryStateFromHash(context.hash);
+    const activeSearch=search===null?route.search:search;
+    const prior=asObject(pageState);
     main.innerHTML=loading(CUI,'Onboarding','Loading your scoped CRM pipeline…','setup');
     try{
-      const payload=await fetchScopedFirms(sb,search),items=asArray(payload,['items']);
+      const payload=await fetchScopedFirms(sb,activeSearch,prior.next_cursor,{
+        snapshot:prior.snapshot_at||null
+      }),items=[
+        ...asArray(prior.items),...asArray(payload,['items'])
+      ];
+      const nextCursor=asObject(payload.next_cursor);
+      const snapshotAt=payload.snapshot_at||prior.snapshot_at||null;
+      const total=Number(payload.total_count??items.length);
       const consultants=canAssignScopedProspect(context)
         ?await fetchScopedConsultants(sb,items):[];
       main.innerHTML=`${CUI.pageHeader({
@@ -5918,7 +7194,7 @@
         actions:context.canWrite?`<button type="button" class="btn" id="platformScopedNewProspect">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('Add firm'))}</span></button>`:''
       })}${scopedScopeNote(access,CUI)}
       <form class="card platform-scoped-search" id="platformScopedOnboardingSearch">
-        ${CUI.field({id:'platformScopedOnboardingQuery',label:'Search your CRM',type:'search',value:search,placeholder:'Company, owner, email, phone or UEN'})}
+        ${CUI.field({id:'platformScopedOnboardingQuery',label:'Search your CRM',type:'search',value:activeSearch,placeholder:'Company, owner, email, phone or UEN'})}
         <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt('Search'))}</span></button>
       </form>
       <div class="platform-kanban" aria-label="${escapeHtml(pt('Scoped onboarding Kanban'))}">${operationalLanes.map(lane=>{
@@ -5928,13 +7204,25 @@
           <div class="platform-card-list">${laneItems.map(item=>prospectCardHtml(item,CUI,{canWrite:context.canWrite})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
         </section>`;
       }).join('')}</div>
-      <div class="platform-prospect-list" aria-label="${escapeHtml(pt('Scoped onboarding list'))}">${items.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite:context.canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</div>`;
+      <div class="platform-prospect-list" aria-label="${escapeHtml(pt('Scoped onboarding list'))}">${items.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite:context.canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</div>
+      <div class="platform-paged-summary"><p class="muted small">${escapeHtml(pt('{shown} of {count} firms loaded.',{shown:items.length,count:total}))}</p>
+        ${Object.keys(nextCursor).length&&items.length<total?`<button type="button" class="btn ghost" id="platformScopedOnboardingMore">${escapeHtml(pt('Load 50 more firms'))}</button>`:''}
+      </div>`;
       main.querySelector('#platformScopedOnboardingSearch').onsubmit=event=>{
-        event.preventDefault();renderScopedOnboarding(context,main.querySelector('#platformScopedOnboardingQuery').value.trim());
+        event.preventDefault();
+        const nextSearch=main.querySelector('#platformScopedOnboardingQuery').value.trim();
+        const hash=scopedOnboardingHash({search:nextSearch});
+        globalObject.history?.replaceState?.(null,'',hash);
+        renderScopedOnboarding({...context,hash},nextSearch);
       };
       main.querySelector('#platformScopedNewProspect')?.addEventListener('click',()=>
-        scopedProspectCreateModal(context,()=>renderScopedOnboarding(context,search))
+        scopedProspectCreateModal(context,()=>renderScopedOnboarding(context,activeSearch))
       );
+      main.querySelector('#platformScopedOnboardingMore')?.addEventListener('click',()=>{
+        renderScopedOnboarding(context,activeSearch,{pageState:{
+          items,next_cursor:nextCursor,snapshot_at:snapshotAt
+        }});
+      });
       main.querySelectorAll('[data-move]').forEach(button=>{
         button.onclick=async event=>{
           event.stopPropagation();
@@ -5946,16 +7234,30 @@
               p_to_stage:card.querySelector('[data-move-select]').value,
               p_expected_version:prospectVersion(item),p_reason:null
             });
-            await renderScopedOnboarding(context,search);CUI.announce('Prospect stage updated.');
+            await renderScopedOnboarding(context,activeSearch);CUI.announce('Prospect stage updated.');
           }catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Stage could not be updated.'),{assertive:true})}
         };
       });
       main.querySelectorAll('[data-prospect]').forEach(card=>{
         const item=items.find(row=>String(row.id||row.prospect_id||row.row_id||row.business_id)===card.dataset.prospect);
-        const open=()=>openScopedProspect(item,context,consultants);
+        const prospectId=String(item?.prospect_id||item?.id||'');
+        const open=()=>{
+          const hash=scopedOnboardingHash({search:activeSearch,prospect:prospectId});
+          globalObject.history?.replaceState?.(null,'',hash);
+          openScopedProspect(item,context,consultants,{onClose:()=>{
+            globalObject.history?.replaceState?.(null,'',scopedOnboardingHash({search:activeSearch}));
+          }});
+        };
         card.onclick=event=>{if(event.target.closest('[data-card-actions]'))return;open()};
         card.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('[data-card-actions]')){event.preventDefault();open()}};
       });
+      if(route.prospect){
+        const item=items.find(row=>String(row.prospect_id||row.id||'')===route.prospect)
+          ||{prospect_id:route.prospect};
+        await openScopedProspect(item,context,consultants,{onClose:()=>{
+          globalObject.history?.replaceState?.(null,'',scopedOnboardingHash({search:activeSearch}));
+        }});
+      }
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Onboarding')}
   }
@@ -5976,31 +7278,51 @@
     </article>`;
   }
 
-  async function renderScopedReports(context) {
+  async function renderScopedReports(context,search=null,{pageState=null}={}) {
     const {main,CUI,sb,access}=context;
+    const route=scopedDirectoryStateFromHash(context.hash);
+    const activeSearch=search===null?route.search:search;
+    const prior=asObject(pageState);
     main.innerHTML=loading(CUI,'Reports','Loading your report scope…','reports');
     try{
-      const firms=asArray(await fetchScopedFirms(sb),['items']).filter(item=>item.business_id);
+      const payload=await fetchScopedFirms(sb,activeSearch,prior.next_cursor,{
+        snapshot:prior.snapshot_at||null
+      });
+      const firms=[
+        ...asArray(prior.items),...asArray(payload,['items'])
+      ].filter(item=>item.business_id);
+      const nextCursor=asObject(payload.next_cursor);
+      const snapshotAt=payload.snapshot_at||prior.snapshot_at||null;
+      const total=Number(payload.total_count??firms.length);
+      const selectedId=route.firm||'';
+      const selectedLoaded=firms.some(item=>String(item.business_id)===selectedId);
+      const selectedOptions=selectedId&&!selectedLoaded
+        ?`<label data-deep-linked-firm><input type="radio" name="business" value="${escapeHtml(selectedId)}" checked><span><b>${escapeHtml(pt('Selected assigned firm'))}</b><small>${escapeHtml(pt('Loaded securely from the report link'))}</small></span></label>`
+        :'';
       main.innerHTML=`${CUI.pageHeader({title:'Reports',subtitle:'Generate analysis using only firms inside your platform scope.',iconName:'reports'})}
         ${scopedScopeNote(access,CUI)}
+        <form class="card platform-scoped-search" id="platformScopedReportSearch">
+          ${CUI.field({id:'platformScopedReportQuery',label:'Search assigned firms',type:'search',value:activeSearch,placeholder:'Company, UEN, owner, email or phone'})}
+          <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt('Search'))}</span></button>
+        </form>
         <form class="card platform-scoped-report-form" id="platformScopedReportForm">
           <fieldset><legend>${escapeHtml(pt('Choose one assigned firm'))}</legend><p class="muted small">${escapeHtml(pt('The database verifies the assignment again before returning customer intelligence.'))}</p>
-            <div class="platform-scoped-report-options">${firms.map((item,index)=>`<label><input type="radio" name="business" value="${escapeHtml(item.business_id)}"${index===0?' checked':''}><span><b>${escapeHtml(item.name||item.legal_name)}</b><small>${escapeHtml(sectorLabel(item.sector_key||item.industry))}</small></span></label>`).join('')}</div>
+            <div class="platform-scoped-report-options">${selectedOptions}${firms.map(item=>`<label><input type="radio" name="business" value="${escapeHtml(item.business_id)}"${String(item.business_id)===selectedId?' checked':''}><span><b>${escapeHtml(item.name||item.legal_name)}</b><small>${escapeHtml(sectorLabel(item.sector_key||item.industry))}</small></span></label>`).join('')}</div>
+            ${firms.length||selectedOptions?'':CUI.emptyState({iconName:'reports',title:'No assigned firms found',body:'Try another search or ask a super admin to review assignments.'})}
           </fieldset>
+          <div class="platform-paged-summary"><p class="muted small">${escapeHtml(pt('{shown} of {count} matching firms loaded. Search runs on the server.',{shown:firms.length,count:total}))}</p>
+            ${Object.keys(nextCursor).length&&firms.length<total?`<button type="button" class="btn ghost" id="platformScopedReportsMore">${escapeHtml(pt('Load 50 more firms'))}</button>`:''}
+          </div>
           <div class="platform-form-grid">
-            ${CUI.field({id:'platformScopedReportFrom',label:'From',type:'date',value:enterpriseDefaults().from,required:true,attributes:'name="from"'})}
-            ${CUI.field({id:'platformScopedReportTo',label:'To',type:'date',value:enterpriseDefaults().to,required:true,attributes:'name="to"'})}
+            ${CUI.field({id:'platformScopedReportFrom',label:'From',type:'date',value:route.from,required:true,attributes:'name="from"'})}
+            ${CUI.field({id:'platformScopedReportTo',label:'To',type:'date',value:route.to,required:true,attributes:'name="to"'})}
           </div>
           <button class="btn" type="submit">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt('Generate report'))}</span></button>
         </form>
         <section id="platformScopedReportResult" class="platform-report-host" aria-live="polite">${CUI.emptyState({iconName:'reports',title:'Choose a firm to report on',body:'Customer groups, product and service patterns, and consultative actions will appear here when the evidence threshold is met.'})}</section>`;
-      main.querySelector('#platformScopedReportForm').onsubmit=async event=>{
-        event.preventDefault();
-        const selected=event.currentTarget.querySelector('input[name="business"]:checked')?.value;
-        const from=main.querySelector('#platformScopedReportFrom').value;
-        const to=main.querySelector('#platformScopedReportTo').value;
+      const generate=async(selected,from,to)=>{
         const host=main.querySelector('#platformScopedReportResult');
-        if(!selected){CUI.announce('Select one firm.',{assertive:true});return}
+        if(!selected||!host){CUI.announce('Select one firm.',{assertive:true});return}
         host.innerHTML=CUI.loadingState({title:'Generating consultant brief',body:'Reconciling customer, product and service evidence…',iconName:'reports'});
         try{
           const [report,affinity,recommendations]=await Promise.all([
@@ -6017,35 +7339,88 @@
           host.innerHTML=consultativeIntelligenceHtml(
             asObject(report),asObject(affinity),asObject(recommendations),CUI
           );
-        }catch(error){host.innerHTML=CUI.errorState({title:'Report unavailable',message:platformErrorMessage(error,'Try again.')})}
+        }catch(error){
+          host.innerHTML=CUI.errorState({
+            title:'Report unavailable',message:platformErrorMessage(error,'Try again.')
+          });
+        }
       };
+      main.querySelector('#platformScopedReportSearch').onsubmit=event=>{
+        event.preventDefault();
+        const nextSearch=main.querySelector('#platformScopedReportQuery').value.trim();
+        const hash=scopedReportHash({
+          search:nextSearch,from:route.from,to:route.to
+        });
+        globalObject.history?.replaceState?.(null,'',hash);
+        renderScopedReports({...context,hash},nextSearch);
+      };
+      main.querySelector('#platformScopedReportsMore')?.addEventListener('click',()=>{
+        renderScopedReports(context,activeSearch,{pageState:{
+          items:firms,next_cursor:nextCursor,snapshot_at:snapshotAt
+        }});
+      });
+      main.querySelector('#platformScopedReportForm').onsubmit=async event=>{
+        event.preventDefault();
+        const selected=event.currentTarget.querySelector('input[name="business"]:checked')?.value;
+        const from=main.querySelector('#platformScopedReportFrom').value;
+        const to=main.querySelector('#platformScopedReportTo').value;
+        if(!selected){CUI.announce('Select one firm.',{assertive:true});return}
+        const hash=scopedReportHash({search:activeSearch,firm:selected,from,to});
+        context.hash=hash;
+        globalObject.history?.replaceState?.(null,'',hash);
+        await generate(selected,from,to);
+      };
+      if(selectedId)await generate(selectedId,route.from,route.to);
       CUI.focusRoute(main);
     }catch(error){showError(main,error,CUI,'Reports')}
   }
 
   async function renderScopedOverview(context) {
     const {main,CUI,sb,access}=context;
-    main.innerHTML=loading(CUI,'Platform overview','Loading your permitted firm summary…','platform');
+    const sales=access.role==='sales_staff';
+    main.innerHTML=loading(CUI,sales?'Today':'Platform overview','Loading your permitted firm summary…','platform');
     try{
-      const payload=await fetchScopedFirms(sb),items=asArray(payload,['items']);
+      const payload=await fetchAllScopedFirms(sb,'',{limit:50,maxPages:100});
+      const items=asArray(payload,['items']);
+      const total=Number(payload.total_count??items.length);
       const prospects=items.filter(item=>item.prospect_id);
       const active=items.filter(item=>['activated','client','account_created','onboarding'].includes(prospectStage(item)));
-      const due=items.filter(item=>item.attention_due===true);
+      const todayItems=buildPlatformTodayQueue({prospects:items,scoped:true});
+      const scopedCoverage=buildPlatformTodayCoverage([
+        platformTodayCoverageDomain({
+          key:'scoped-firms',
+          label:sales?'Assigned and self-created firms':'Permitted firms',
+          returned:items.length,total,
+          truncated:payload.truncated===true||payload.complete===false,
+          detail:payload.truncated===true
+            ?'The safe paging guard was reached. Use Onboarding search before treating this queue as complete.':''
+        })
+      ]);
+      const scopedDomain=scopedCoverage.domains[0];
       main.innerHTML=`${CUI.pageHeader({
-        title:'Platform overview',
-        subtitle:'A role-aware summary built from the same server-enforced firm scope as search and reports.',
+        title:sales?'Today':'Platform overview',
+        subtitle:sales
+          ?'Work only the firms you created or are assigned to, ordered by urgency.'
+          :'A role-aware summary built from the same server-enforced firm scope as search and reports.',
         iconName:'platform'
       })}${scopedScopeNote(access,CUI)}
+      ${platformTodayQueueHtml(todayItems,CUI,{
+        title:sales?'Your work today':'Today',
+        description:sales
+          ?'Start with blocked or overdue firms. Every item stays inside your assigned or self-created scope.'
+          :'Review the highest-priority work across your permitted firms.',
+        sales,scope:access.scope,coverage:scopedCoverage
+      })}
       <section class="platform-kpis" aria-label="${escapeHtml(pt('Scoped platform summary'))}">${[
-        ['Firms in scope',items.length,'branch'],
-        ['CRM records',prospects.length,'customers'],
-        ['Case won / onboarding',active.length,'setup'],
-        ['Need attention',due.length,'info']
-      ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+        ['Firms in scope',total,'branch',true],
+        ['CRM records',prospects.length,'customers',false],
+        ['Case won / onboarding',active.length,'setup',false],
+        ['Need attention',todayItems.length,'info',false]
+      ].map(([label,value,icon,exact])=>`<article class="card platform-kpi" data-kpi-coverage-state="${escapeHtml(scopedDomain.state)}"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(platformTodayMetric(value,scopedDomain,{exact}))}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
-        ${CUI.card({title:'Next actions',body:`<div class="platform-action-queue">
-          <a class="platform-action-item" href="#/platform/onboarding"><span>${escapeHtml(pt('Review attention queue'))}</span><b>${due.length}</b></a>
-          <a class="platform-action-item" href="#/platform/firms"><span>${escapeHtml(pt('Open firm directory'))}</span><b>${items.length}</b></a>
+        ${CUI.card({title:'Work areas',body:`<div class="platform-action-queue">
+          <a class="platform-action-item" href="#/platform/onboarding"><span>${escapeHtml(pt('Open onboarding'))}</span><b>${escapeHtml(platformTodayMetric(todayItems.length,scopedDomain))}</b></a>
+          <a class="platform-action-item" href="#/platform/firms"><span>${escapeHtml(pt('Open firm directory'))}</span><b>${escapeHtml(platformTodayMetric(items.length,scopedDomain))}</b></a>
           ${canAccessModule(access,'reports')?`<a class="platform-action-item" href="#/platform/reports"><span>${escapeHtml(pt('Generate scoped report'))}</span><b>${escapeHtml(pt('Open'))}</b></a>`:''}
         </div>`})}
         ${CUI.card({title:'Access',body:detailObjectHtml({
@@ -6059,7 +7434,6 @@
   }
 
   async function loadRoster({sb,CUI,main,key,generation,isCurrent}) {
-    if(key==='overview')return loadOverview({sb,CUI,main,key,generation,isCurrent});
     main.innerHTML = loading(
       CUI,
       key === 'firms' ? 'Firms' : 'Platform overview',
@@ -6095,8 +7469,24 @@
     let access;
     try{
       access=normalizePlatformAccess(await rpc(sb,'platform_list_my_access_v89'));
-      if(!access)throw new Error(pt('Platform access is required.'));
     }catch(error){
+      if(isPlatformAccessDeniedError(error)){
+        root.innerHTML=platformAccessDeniedHtml({
+          CUI,brand:brand||globalObject.NestlyBrand||{},workspaceHash,onSignOut
+        });
+        const deniedSignOut=root.querySelector('#platformDeniedSignOut');
+        if(deniedSignOut)deniedSignOut.onclick=()=>onSignOut?.();
+      }else{
+        root.innerHTML=platformAccessLoadFailureHtml({
+          CUI,brand:brand||globalObject.NestlyBrand||{},workspaceHash,error
+        });
+        const retry=root.querySelector('#platformAccessRetry');
+        if(retry)retry.onclick=()=>render(lastRenderArgs);
+      }
+      CUI.focusRoute(root.querySelector('#platformMain'));
+      return;
+    }
+    if(!access){
       root.innerHTML=platformAccessDeniedHtml({
         CUI,brand:brand||globalObject.NestlyBrand||{},workspaceHash,onSignOut
       });
@@ -6125,6 +7515,13 @@
     });
     const signOut = root.querySelector('#platformSignOut');
     if (signOut) signOut.onclick = () => onSignOut?.();
+    root.querySelectorAll('[data-platform-nav-toggle]').forEach(button=>button.onclick=()=>{
+      const items=root.querySelector(`#${button.dataset.platformNavToggle}`);
+      if(!items)return;
+      const expanded=button.getAttribute('aria-expanded')!=='true';
+      button.setAttribute('aria-expanded',String(expanded));
+      items.hidden=!expanded;
+    });
     root.querySelectorAll('[data-platform-locale]').forEach(button=>button.onclick=async()=>{
       const next=normalizePlatformLocale(button.dataset.platformLocale);
       if(next===platformLocale)return;
@@ -6160,12 +7557,18 @@
     else if(useScopedV89&&activeKey==='reports')task=renderScopedReports(context);
     if (activeKey === 'overview') {
       task=access.role==='super_admin'
-        ?loadRoster({sb,CUI,main,key:activeKey,generation,isCurrent})
+        ?loadOverview(context)
         :renderScopedOverview(context);
     }
-    if(!task&&activeKey==='firms')task=renderEnterprise(context);
-    if(!task&&activeKey==='reports')task=renderPlatformReports(context);
-    if(!task&&activeKey==='onboarding')task=renderOnboarding(context);
+    if(!task&&activeKey==='firms')task=renderEnterprise(
+      context,enterpriseReportFiltersFromHash(hash)
+    );
+    if(!task&&activeKey==='reports')task=renderPlatformReports(
+      context,enterpriseReportFiltersFromHash(hash)
+    );
+    if(!task&&activeKey==='onboarding')task=renderOnboarding(
+      context,onboardingStateFromHash(hash).filters
+    );
     if(!task&&activeKey==='billing')task=renderBilling(context);
     if(!task&&activeKey==='commissions')task=renderCommission(context);
     if(!task&&activeKey==='sectors')task=renderSectors(context);
@@ -6178,9 +7581,13 @@
 
   globalObject.NestlyPlatformConsole = Object.freeze({
     isRoute,routeKey,render,routes,prospectStages,operationalLanes,
-    normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,superAdminOnly,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
+    normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,superAdminOnly,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,platformNavigationGroups,
     operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
-    firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,
+    firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,scopedFirmIdFromHash,scopedFirmHash,normalizePlatformGrantPermissions,
+    enterpriseReportHash,enterpriseFirmHash,enterpriseReportFiltersFromHash,fetchEnterpriseFirmPage,fetchFirmDirectoryPageV88,fetchAllFirmAttentionV88,fetchScopedFirms,fetchAllScopedFirms,
+    buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
+    moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
+    onboardingHash,onboardingStateFromHash,
     platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
     setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
     localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
@@ -6192,9 +7599,13 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       isRoute,routeKey,routes,prospectStages,operationalLanes,
-      normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,superAdminOnly,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,
+      normalizePlatformAccess,modulePermission,canAccessModule,canWriteModule,superAdminOnly,reportSectionAccess,isFullLegacyAdmin,visibleRoutes,platformNavigationGroups,
       operationalLaneFor,prospectAttentionMatches,normalizePlatformPhone,moduleLabel,
-      firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,
+      firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,scopedFirmIdFromHash,scopedFirmHash,normalizePlatformGrantPermissions,
+      enterpriseReportHash,enterpriseFirmHash,enterpriseReportFiltersFromHash,fetchEnterpriseFirmPage,fetchFirmDirectoryPageV88,fetchAllFirmAttentionV88,fetchScopedFirms,fetchAllScopedFirms,
+      buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
+      moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
+      onboardingHash,onboardingStateFromHash,
       platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
       setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
       localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,

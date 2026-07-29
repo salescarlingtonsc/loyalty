@@ -87,7 +87,7 @@ test('super-admin grant editor and delegated platform users use scoped v89 CRM p
   const source=await read('app/platform-console.js');
   for(const rpc of [
     'platform_list_my_access_v89','platform_list_access_grants_v89',
-    'platform_upsert_access_grant_v89','platform_list_my_firms_v89',
+    'platform_upsert_access_grant_v89','platform_list_my_firms_v105',
     'platform_create_my_prospect_v89','platform_move_my_prospect_stage_v89','platform_get_my_prospect_v89',
     'platform_add_my_prospect_activity_v89','platform_create_my_prospect_task_v89',
     'platform_complete_my_prospect_task_v89',
@@ -100,9 +100,9 @@ test('super-admin grant editor and delegated platform users use scoped v89 CRM p
   assert.match(source,/const selectedUser=String\(form\.get\('user_id'\)\|\|''\)\.trim\(\)/);
   assert.match(source,/p_user:selectedUser/);
   assert.match(source,/p_role:role,p_module_perms:perms,p_active/);
-  assert.match(source,/perms\.onboarding='rw';perms\.firms='r'/);
-  assert.match(source,/platformModuleKeys\.every\(key=>perms\[key\]==='rw'\)/);
-  assert.match(source,/perms\['\*'\]='rw'/);
+  assert.match(source,/role==='sales_staff'\)return \{[\s\S]*overview:'r',onboarding:'rw',firms:'r'/);
+  assert.match(source,/platformModuleKeys\.every\(key=>requested\[key\]==='rw'\)/);
+  assert.match(source,/return\{'\*':'rw'\}/);
   assert.match(source,/const useScopedV89=access\.role!=='super_admin'/);
   assert.match(source,/access\.role==='super_admin'[\s\S]*loadRoster[\s\S]*renderScopedOverview/);
   assert.match(source,/id="platformScopedNewProspect"/);
@@ -216,7 +216,7 @@ test('read-only admin and sales-scoped users cannot render reassignment controls
   assert.match(writeSelectors,/\[data-scoped-assign\]/);
 });
 
-test('delegated sectors admin uses the sectors-authorized firm roster rather than a super-admin reader',async()=>{
+test('delegated sectors admin edits reusable defaults without loading or duplicating the firm roster',async()=>{
   const api=await loadConsole();
   const access=api.normalizePlatformAccess({
     role:'admin',scope:'all',module_perms:{sectors:'rw'}
@@ -229,18 +229,19 @@ test('delegated sectors admin uses the sectors-authorized firm roster rather tha
     source.indexOf('function modulePickerHtml')
   );
   assert.match(sectors,/platform_list_sector_entitlements_v75/);
-  assert.match(sectors,/platform_list_sector_firms_v89/);
-  assert.doesNotMatch(sectors,/super_admin_list_businesses/);
+  assert.doesNotMatch(sectors,/platform_list_sector_firms_v89|super_admin_list_businesses/);
+  assert.match(sectors,/Sector defaults are managed here/);
+  assert.match(sectors,/open the firm in Firms and use Firm module policy/);
 });
 
-test('delegated billing, commissions and automation renders call their module-bound v89 wrappers',async()=>{
+test('delegated finance and system-health renders keep operational and technical jobs separate',async()=>{
   const source=await read('app/platform-console.js');
   const billing=source.slice(source.indexOf('async function renderBilling'),source.indexOf('async function renderCommission'));
   const commissions=source.slice(source.indexOf('async function renderCommission'),source.indexOf('async function renderAutomation'));
   const automation=source.slice(source.indexOf('async function renderAutomation'),source.indexOf('function disconnectedRouteHtml'));
   assert.match(billing,/platform_get_billing_v89/);
-  assert.match(billing,/platform_get_billing_reconciliation_v89/);
-  assert.doesNotMatch(billing,/get_platform_billing_v77|get_billing_reconciliation_v77/);
+  assert.doesNotMatch(billing,/platform_get_billing_reconciliation_v89|get_platform_billing_v77|get_billing_reconciliation_v77/);
+  assert.match(billing,/Technical reconciliation history is in System health/);
   assert.match(commissions,/platform_list_commission_consultants_v89/);
   assert.match(commissions,/platform_upsert_commission_consultant_v89/);
   assert.doesNotMatch(commissions,/platform_list_consultants_v75|platform_upsert_consultant_v75/);
@@ -249,7 +250,7 @@ test('delegated billing, commissions and automation renders call their module-bo
   assert.doesNotMatch(automation,/get_platform_billing_v77|get_billing_reconciliation_v77/);
 });
 
-test('firms-only admin sees enterprise hierarchy without a report action',async()=>{
+test('firms-only admin sees enterprise hierarchy without a duplicate report action',async()=>{
   const api=await loadConsole();
   const access=api.normalizePlatformAccess({
     role:'admin',scope:'all',module_perms:{firms:'r'}
@@ -261,9 +262,10 @@ test('firms-only admin sees enterprise hierarchy without a report action',async(
     source.indexOf('function enterpriseHtml'),
     source.indexOf('function enterpriseDetailTable')
   );
-  assert.match(enterprise,/canGenerateReport\?`<button[^>]*id="enterpriseGenerateReport"/);
+  assert.match(enterprise,/canGenerateReport\?`<a[^>]*data-open-canonical-reports[^>]*href="\$\{escapeHtml\(canonicalReportHash\)\}"/);
+  assert.match(enterprise,/Continue in Reports/);
   assert.match(source,/const canGenerateReport=canAccessModule\(context\.access,'reports'\)/);
-  assert.match(source,/if\(reportButton&&firms\.length\)/);
+  assert.doesNotMatch(enterprise,/enterpriseGenerateReport|Generate report/);
 });
 
 test('reports-only admin receives the core report without unauthorized optional RPCs',async()=>{
@@ -280,7 +282,7 @@ test('reports-only admin receives the core report without unauthorized optional 
   );
   assert.match(renderer,/sectionAccess\.onboarding[\s\S]*platform_get_sme_analytics_v86[\s\S]*:Promise\.resolve\(null\)/);
   assert.match(renderer,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v89'[\s\S]*:Promise\.resolve\(null\)/);
-  assert.match(renderer,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_reconciliation_v89'[\s\S]*:Promise\.resolve\(null\)/);
+  assert.doesNotMatch(renderer,/platform_get_billing_reconciliation_v89/);
   assert.match(source,/SME acquisition and onboarding omitted/);
   assert.match(source,/Subscription billing omitted/);
   assert.match(source,/No billing or reconciliation reader was called/);

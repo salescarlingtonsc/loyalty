@@ -23,16 +23,17 @@ test('module controls support firm and branch scope while inventory is globally 
     source.indexOf('const sectorModuleByKey')
   );
   assert.doesNotMatch(catalog,/\['inventory','Inventory'/);
-  assert.match(source,/platform_get_effective_modules_v94/);
-  assert.match(source,/platform_set_module_override_v94/);
+  assert.match(source,/platform_get_effective_modules_v105/);
+  assert.match(source,/platform_set_module_overrides_v105/);
+  assert.doesNotMatch(source,/rpc\(sb,'platform_set_module_override_v94'/);
   assert.match(source,/!\['inventory','customerintel'\]\.includes\(module\.module_key\)/);
   assert.match(source,/Branch-specific settings override firm policy/);
   assert.match(source,/Branch overrides take priority over firm and sector settings/);
   assert.match(source,/Inventory is globally unavailable to firms/);
-  assert.match(source,/mode:'inherit'|value:'inherit'/);
-  assert.match(source,/value:'disabled'/);
-  assert.match(source,/value:'r'/);
-  assert.match(source,/value:'rw'/);
+  assert.match(source,/\['inherit',inheritedLabel\]/);
+  assert.match(source,/\['disabled','Off'\]/);
+  assert.match(source,/\['r','Read only'\]/);
+  assert.match(source,/\['rw','Read & write'\]/);
 });
 
 test('customer intelligence is platform-scoped and produces evidence-backed consultant briefs',async()=>{

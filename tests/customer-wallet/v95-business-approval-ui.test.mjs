@@ -42,8 +42,9 @@ test('business application surfaces offer English, Chinese and Bahasa Melayu cop
 test('only the superadmin platform queue can decide applications and exposes one-time link handling',()=>{
   assert.match(platform,/context\.access\?\.role==='super_admin'/);
   assert.match(platform,/platform_list_business_applications_v95/);
-  assert.match(platform,/platform_decide_business_application_v95/);
+  assert.match(platform,/platform_decide_business_application_v105/);
   assert.match(platform,/p_expected_version:application\.version/);
+  assert.match(platform,/p_idempotency_key:decisionAttemptKey/);
   assert.match(platform,/Nestly stores only its hash and cannot show the token again/);
   assert.match(platform,/Copy secure owner link/);
 });

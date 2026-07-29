@@ -83,7 +83,7 @@ test('platform console exposes the required namespaced routes', async () => {
   assert.equal(consoleApi.routeKey('#/platform/commissions'),'commissions');
   assert.deepEqual(
     Array.from(consoleApi.routes,route=>route.label),
-    ['Overview','Onboarding','Firms','Reports','Billing','Commission payable','Sector modules','Automation','Platform access']
+    ['Today','Onboarding','Firms','Reports','Billing','Commission payable','Sector modules','System health','Platform access']
   );
 });
 
@@ -94,24 +94,27 @@ test('platform console is routed before workspace onboarding and uses versioned 
     read('app/platform-console.css')
   ]);
   const platformBinding = index.indexOf('const platformConsole=globalThis.NestlyPlatformConsole');
-  const platformRoute = index.indexOf('if(platformConsole?.isRoute(h))');
+  const platformRoute = index.indexOf('if(requestedPlatformRoute)');
   const onboardingFallback = index.indexOf('if(!S.biz) return renderOnboard()');
 
   assert.ok(platformBinding > 0&&platformBinding < platformRoute);
   assert.ok(platformRoute > 0);
   assert.ok(onboardingFallback > platformRoute);
-  assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css">/);
-  assert.match(index,/<script src="\/platform-console\.js\?v=20260727-v89"><\/script>/);
+  assert.match(index,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
+  assert.match(index,/if\(requestedPlatformRoute\)\{[\s\S]*return await platformConsole\.render\(/);
+  assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css\?v=20260729-v105">/);
+  assert.match(index,/<script src="\/platform-console\.js\?v=20260729-v105"><\/script>/);
   assert.match(consoleSource,/sb\.rpc\('super_admin_list_businesses'\)/);
-  assert.match(consoleSource,/platform_get_sme_board_v76/);
+  assert.match(consoleSource,/platform_list_firm_onboarding_v88/);
+  assert.match(consoleSource,/platform_list_prospects_v76/);
   assert.match(consoleSource,/platform_list_sector_entitlements_v75/);
   assert.match(consoleSource,/get_platform_billing_v77/);
   assert.match(consoleSource,/platform_get_billing_v89/);
-  assert.match(consoleSource,/platform_get_billing_reconciliation_v89/);
   assert.match(consoleSource,/platform_get_automation_billing_v89/);
   assert.match(consoleSource,/platform_get_automation_reconciliation_v89/);
   assert.match(consoleSource,/get_consultant_commission_dashboard_v78/);
   assert.doesNotMatch(consoleSource,/get_billing_reconciliation_v77/);
+  assert.doesNotMatch(consoleSource,/platform_get_billing_reconciliation_v89/);
   assert.match(consoleSource,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v89'/);
   assert.match(consoleSource,/System update required/);
   assert.doesNotMatch(consoleSource,/[\u{1F300}-\u{1FAFF}]/u);

@@ -849,6 +849,18 @@
       "path": "db/migrations/20260729_nestly_v103_customer_summary_business_identity.sql",
       "semanticVersion": "v103",
       "proposedDeployVersion": "20260729160000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v104_marketing_offers.sql",
+      "semanticVersion": "v104",
+      "proposedDeployVersion": "20260729170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v105_admin_task_closure.sql",
+      "semanticVersion": "v105",
+      "proposedDeployVersion": "20260729180000"
     }
   ]
 }

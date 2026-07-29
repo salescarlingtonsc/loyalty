@@ -850,6 +850,18 @@
       "version": "20260729160000",
       "name": "nestly_v103_customer_summary_business_identity",
       "sourcePath": "db/migrations/20260729_nestly_v103_customer_summary_business_identity.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729170000",
+      "name": "nestly_v104_marketing_offers",
+      "sourcePath": "db/migrations/20260729_nestly_v104_marketing_offers.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729180000",
+      "name": "nestly_v105_admin_task_closure",
+      "sourcePath": "db/migrations/20260729_nestly_v105_admin_task_closure.sql"
     }
   ]
 }

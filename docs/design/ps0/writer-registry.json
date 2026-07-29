@@ -2442,6 +2442,22 @@
       "reason": "browser RPC 'staff_list_package_entitlements_v102' is a stable packages/till/sales-scoped reader of all tenant package purchases using only purchase-time client_packages snapshots. It performs no DML and cannot consume a session, create a sale, or move points."
     },
     {
+      "id": "browser.rpc:app/index.html:business_get_promotion_editor_v104",
+      "reason": "browser RPC 'business_get_promotion_editor_v104' is an owner/super-admin read model for the tenant's bounded promotion drafts, active offer count, immutable first-publication slot usage and launch entitlement. It performs no DML and resolves to no customer-value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_create_promotion_draft_v104",
+      "reason": "browser RPC 'business_create_promotion_draft_v104' creates one owner-authored promotion draft with a caller-stable promotion id and attempt receipt. Super admins can inspect promotion state and control the launch entitlement, but cannot start a new merchant publication through this writer. It writes only non-economic, customer-hidden offer content and English presentation copy; retries with the same attempt key replay the original result and cannot duplicate an offer, sale, payment, points movement, reward entitlement, package, stored value or other customer-value row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_finalize_promotion_v104",
+      "reason": "browser RPC 'business_finalize_promotion_v104' is the owner-only post-create promotion writer for company-wide draft edits, global photo replacement, publishing and unpublishing. A super admin may replay an already-recorded exact receipt for support recovery, but cannot begin a fresh merchant publication. One stable attempt receipt atomically coordinates owner authority, optimistic content/copy/global-media versions, verified owned storage, hidden draft media, and ten immutable first-publication slots through the exclusive 1 November 2026 Singapore boundary. It writes only non-economic presentation, entitlement and audit rows; it cannot create a sale, payment, points movement, reward entitlement, package, stored value or other customer-value row. The customer projection, not this writer, limits presentation to two current offers."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_get_promotions_v104",
+      "reason": "browser RPC 'customer_get_promotions_v104' is a verified-link customer reader that returns at most two active, date-valid, company-wide promotion presentation rows for one linked business and rejects non-null branch input. It performs no DML and resolves to no customer-value writer."
+    },
+    {
       "id": "db.backfill:20260729150000_nestly_v102_package_checkout_entitlements.sql:client_packages",
       "reason": "One-time v102 migration backfill copies the historically referenced plan/service facts into new bigint purchase-snapshot columns before making the core plan name/version/session/price snapshots NOT NULL. It does not change remaining sessions, status, sale, points, payment or any customer balance, and is not a runtime writer."
     }

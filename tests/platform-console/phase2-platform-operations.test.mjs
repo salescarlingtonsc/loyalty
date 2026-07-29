@@ -44,20 +44,20 @@ test('platform console wires v75 sector mutations through dry-run previews', asy
     'platform_create_sector_bundle_v75',
     'platform_publish_sector_bundle_v75',
     'platform_assign_business_sector_v75',
-    'platform_set_business_sector_override_v75'
+    'platform_set_module_overrides_v105'
   ]) assert.match(source, new RegExp(rpc));
 
   assert.match(source, /platform_create_sector_bundle_v75',args/);
   assert.match(source, /platform_publish_sector_bundle_v75',\{p_bundle_version:createdBundleId,p_dry_run:true\}/);
   assert.match(source, /platform_assign_business_sector_v75',args/);
-  assert.match(source, /platform_set_business_sector_override_v75',args/);
+  assert.match(source, /platform_set_module_overrides_v105',\{/);
   assert.match(source, /previewThenConfirm/);
 });
 
 test('pipeline mutations, detail and imports use the v76 core plus v86 governed contracts', async () => {
   const source = await read('app/platform-console.js');
   for (const rpc of [
-    'platform_get_sme_board_v76','platform_list_prospects_v76',
+    'platform_list_firm_onboarding_v88','platform_list_prospects_v76',
     'platform_get_prospect_detail_v76','platform_create_prospect_v76',
     'platform_update_prospect_v76','platform_assign_prospect_v89',
     'platform_add_prospect_activity_v76','platform_create_prospect_task_v76',
@@ -77,7 +77,7 @@ test('pipeline mutations, detail and imports use the v76 core plus v86 governed 
   assert.match(source, /staged\.valid_rows/);
   assert.match(source, /committed\.imported_rows/);
   assert.match(source, /plan_code:form\.get\('plan_code'\)/);
-  assert.match(source, /accepted_value_cents:Number/);
+  assert.match(source, /accepted_value_cents:moneyInputToCents/);
   assert.match(source, /onboarding_owner_consultant_id:form\.get\('onboarding_owner'\)/);
   assert.match(source, /const fields=\{reason_code:form\.get\('reason_code'\),context:/);
   assert.match(source, /p_entry_evidence:options\.entryEvidence\|\|\{\}/);
@@ -87,7 +87,7 @@ test('billing, automation and commission views use delegated v89 platform truth'
   const source = await read('app/platform-console.js');
   for (const rpc of [
     'platform_get_billing_v89','get_business_billing_v77',
-    'request_billing_command_v77','platform_get_billing_reconciliation_v89',
+    'request_billing_command_v77',
     'get_billing_price_catalog_v77','preview_billing_price_catalog_v77',
     'confirm_billing_price_catalog_v77',
     'platform_list_commission_consultants_v89','platform_upsert_commission_consultant_v89',

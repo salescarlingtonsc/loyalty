@@ -299,9 +299,9 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   const explicit=[...new Set([...source.matchAll(/\bpt\((['"])(.*?)\1/g)].map(match=>match[2]))];
   const metadata=[...new Set([...source.matchAll(/\b(?:title|subtitle|description|caption|label|hint|placeholder|body|message|actionLabel|submitLabel)\s*:\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
   const announcements=[...new Set([...source.matchAll(/\.announce\(\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
-  assert.equal(explicit.length,504,'update the audited explicit-copy inventory when adding runtime UI');
-  assert.equal(metadata.length,470,'update the audited CUI metadata inventory when adding UI metadata');
-  assert.equal(announcements.length,29,'update the audited static announcement inventory when adding announcements');
+  assert.equal(explicit.length,585,'update the audited explicit-copy inventory when adding runtime UI');
+  assert.equal(metadata.length,466,'update the audited CUI metadata inventory when adding UI metadata');
+  assert.equal(announcements.length,28,'update the audited static announcement inventory when adding announcements');
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');
   const directErrorDisplays=[...source.matchAll(/error\??\.message/g)]
@@ -668,16 +668,16 @@ test('mixed dynamic template inventory is explicitly classified',async()=>{
   const classifications=[
     {kind:'localized-ui',pattern:/^disabled title="§"$/},
     {kind:'data-only',pattern:/^(?:§ (?:KB|MB)|Platform import review: §|NPU: §)$/},
-    {kind:'technical',pattern:/^(?:platform-§-§|cursor:§|§-enterprise-(?:report|cross-domain)-§-§\.csv|custom__§|§-import-§-errors\.csv|name="§"§|§_cents|permission_§)$/}
+    {kind:'technical',pattern:/^(?:platform-§-§|platformNavGroup-§|cursor:§|#\/platform\/(?:firms|reports|onboarding)§|#\/platform\/(?:billing\?business|commissions\?accrual|automation\?incident)=§|#\/platform\/firms\?firm=§|module_mode_§|\[data-module-row="§"\] select|data-platform-scope="§"|\[data-(?:prospect|business-application|accrual-id|incident-id)="§"\]|§-enterprise-(?:report|cross-domain)-§-§\.csv|custom__§|§-import-§-errors\.csv|name="§"§+|§_cents|(?:business|prospect):§|permission_§)$/}
   ];
   const classified=inventory.map(entry=>({
     ...entry,kind:classifications.find(rule=>rule.pattern.test(entry.text))?.kind||'unclassified'
   }));
-  assert.equal(classified.length,20,'review every interpolated template segment when the inventory changes');
+  assert.equal(classified.length,35,'review every interpolated template segment when the inventory changes');
   assert.deepEqual(classified.filter(entry=>entry.kind==='unclassified'),[]);
-  assert.equal(classified.filter(entry=>entry.kind==='localized-ui').length,5);
+  assert.equal(classified.filter(entry=>entry.kind==='localized-ui').length,4);
   assert.equal(classified.filter(entry=>entry.kind==='data-only').length,4);
-  assert.equal(classified.filter(entry=>entry.kind==='technical').length,11);
+  assert.equal(classified.filter(entry=>entry.kind==='technical').length,27);
 });
 
 test('every mixed UI grammar template localizes arbitrary values in Chinese and Malay',async()=>{

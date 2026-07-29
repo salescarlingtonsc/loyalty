@@ -45,6 +45,22 @@ Configuration cases:
 - one firm-level module override and one Tampines branch override;
 - logo upload success, replacement, invalid type, and denied-role attempts.
 
+Promotion cases:
+
+- owner draft for **National Day Glow**;
+- exact offer facts: **30% off Spa Ritual 60**, celebrating National Day,
+  valid through **30 August 2026**;
+- CTA: **Book now** when customer booking is enabled, otherwise **View offer**;
+- a real 16:9 JPEG/WebP with descriptive alt text;
+- two simultaneous active offers for the normal customer projection;
+- a third active offer to prove the server returns no more than two;
+- one future, one expired, and one inactive offer, plus a non-null Tampines
+  branch author/read attempt that must be rejected because v104 promotions are
+  company-wide;
+- ten active offers followed by an eleventh publish attempt for quota proof;
+- wording-assistant inputs containing a percentage, date, and named service to
+  prove those facts remain exact after polishing.
+
 ## `CAFE-HARBOUR` — Harbour Kopi
 
 Sector: F&B / Café

@@ -29,15 +29,17 @@ test('presentation failure falls back to the loaded summary without a false prog
 test('programme balance is compact, formatted once, and tier progress is truthful',()=>{
   const merchant=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
   const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
-  assert.equal((merchant.match(/customer-balance-value/g)||[]).length,1);
+  assert.equal((merchant.match(/customer-programme-compact-balance/g)||[]).length,1);
   assert.match(merchant,/customerPointTotalV103\(loyalty\.balance\?\?presentation\.balance\?\?0\)/);
-  assert.match(app,/\.customer-balance-value\{font-size:clamp\(1\.85rem,5vw,2\.6rem\)/);
+  assert.match(app,/\.customer-programme-compact-balance b\{[^}]*font-size:clamp\(1\.25rem,4vw,1\.65rem\)/);
   assert.equal(helpers.customerPointTotalV103(1234567),'1,234,567');
   assert.equal(helpers.customerTierHasProgressV103({}),false);
   assert.equal(helpers.customerTierHasProgressV103({progress_percent:0}),false);
   assert.equal(helpers.customerTierHasProgressV103({current:'Gold'}),true);
   assert.equal(helpers.customerTierHasProgressV103({progress_percent:25}),true);
-  assert.match(merchant,/\$\{hasTier\?`<section class="card"/);
+  assert.match(merchant,/hasTier&&String\(tier\.current\|\|tier\.label\|\|''\)\.trim\(\)/);
+  assert.doesNotMatch(merchant,/role="progressbar"/);
+  assert.doesNotMatch(merchant,/customer-balance-panel/);
   assert.doesNotMatch(merchant,/Every visit still counts|ct\('noTier'\)/);
   assert.doesNotMatch(merchant,/ct\('noRewards'\)/);
   assert.doesNotMatch(wallet,/<span class="muted small">\$\{esc\(loyalty\.unit\|\|'points'\)\}/);

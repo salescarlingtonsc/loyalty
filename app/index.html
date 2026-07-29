@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/nestly-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/platform-console.css">
+<link rel="stylesheet" href="/platform-console.css?v=20260729-v105">
 <link rel="stylesheet" href="/pwa.css">
 <script src="/pwa.js" defer></script>
 <style>
@@ -784,6 +784,26 @@ input[type=range]:focus{box-shadow:none}
 .customer-perk-card,.customer-offer-card,.customer-reward-card{overflow:hidden;min-height:120px;padding:16px;border:1px solid var(--hair);border-radius:15px;background:#fff}
 .customer-perk-card img,.customer-offer-card img,.customer-reward-card img{width:calc(100% + 32px);height:132px;margin:-16px -16px 14px;object-fit:cover;background:var(--bg)}
 .customer-section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}.customer-section-title h2{font-size:1.35rem}
+.customer-programme-compact-head{display:flex;align-items:center;gap:12px;min-width:0;padding:14px 16px;border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:var(--shadow);margin-bottom:16px}
+.customer-programme-compact-head .customer-programme-logo{width:48px;height:48px;flex:0 0 48px}
+.customer-programme-compact-copy{min-width:0;flex:1}.customer-programme-compact-copy h1{font-size:clamp(1.25rem,4vw,1.7rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-programme-compact-copy p{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.customer-programme-compact-balance{text-align:right;flex:0 0 auto}.customer-programme-compact-balance b{display:block;font-size:clamp(1.25rem,4vw,1.65rem);line-height:1}.customer-programme-compact-balance span{display:block;margin-top:4px;color:var(--muted);font-size:.78rem}
+.customer-promotions-section{margin-top:6px}.customer-promotions-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.customer-promotions-head h2{font-size:clamp(1.45rem,4vw,2rem)}.customer-promotions-head p{margin-top:4px}
+.customer-promotions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.customer-promotion-card{position:relative;overflow:hidden;min-height:360px;border-radius:22px;background:#17161a;color:#fff;box-shadow:0 18px 42px rgba(23,22,26,.18)}
+.customer-promotion-card-media{position:absolute;inset:0}.customer-promotion-card-media img{width:100%;height:100%;object-fit:cover}.customer-promotion-card-media::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,13,18,.06) 18%,rgba(15,13,18,.86) 82%)}
+.customer-promotion-card-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;min-height:360px;padding:22px}.customer-promotion-card-copy h3{font-size:clamp(1.45rem,4vw,2.05rem);line-height:1.08;letter-spacing:-.025em;color:#fff}.customer-promotion-card-copy h3,.customer-promotion-card-copy p,.customer-promotion-card-copy summary,.customer-promotion-card-copy dd{overflow-wrap:anywhere;word-break:break-word}.customer-promotion-card-copy p{margin-top:8px;color:rgba(255,255,255,.88);line-height:1.45}
+.customer-promotion-validity{font-weight:750}.customer-promotion-detail-list{display:grid;gap:10px;margin:16px 0}.customer-promotion-detail-list>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px}.customer-promotion-detail-list dt{color:var(--muted);font-size:.78rem;font-weight:750}.customer-promotion-detail-list dd{margin:0;overflow-wrap:anywhere}
+.customer-promotion-card-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}.customer-promotion-card-actions .btn{background:#fff;color:#17161a;box-shadow:none}.customer-promotion-card details{min-width:0}.customer-promotion-card details[open]{flex:1 1 100%;width:100%}.customer-promotion-card details summary{color:rgba(255,255,255,.88)}
+#customerPromotionDetailsModal .modal-card,#customerPromotionDetailsModal .row,#customerPromotionDetailsModal h2{min-width:0}#customerPromotionDetailsModal h2{flex:1 1 auto}#customerPromotionDetailsModal h2,#customerPromotionDetailsModal p,#customerPromotionDetailsModal dd{overflow-wrap:anywhere;word-break:break-word}
+.promotion-studio{display:grid;gap:16px}.promotion-studio-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;list-style:none}.promotion-studio-progress li{padding:11px;border-radius:13px;background:var(--bg);font-size:.84rem;font-weight:750}.promotion-studio-progress li strong{display:block;color:var(--coral);margin-bottom:3px}.promotion-editor-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:16px}.promotion-preview{position:sticky;top:92px;align-self:start}.promotion-preview .customer-promotion-card{min-height:410px}.promotion-preview .customer-promotion-card-copy{min-height:410px}.promotion-item-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)}.promotion-item-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--bg)}.promotion-item-row:last-child{border-bottom:0}.promotion-quota{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.promotion-quota-meter{height:8px;flex:1 1 180px;overflow:hidden;border-radius:999px;background:var(--hair)}.promotion-quota-meter span{display:block;height:100%;width:var(--quota-progress,0%);background:var(--coral)}
+@media(max-width:760px){
+  .customer-promotions-grid,.promotion-editor-grid{grid-template-columns:1fr}
+  .customer-promotion-card,.customer-promotion-card-copy{min-height:320px}
+  .customer-programme-compact-head{padding:12px}
+  .customer-programme-compact-balance b{font-size:1.2rem}
+  .promotion-preview{position:static}
+}
 .customer-programme-guide{display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid var(--hair);border-radius:13px;background:#fff}
 .customer-programme-guide .cui-icon{flex:0 0 auto;color:var(--coral)}
 .customer-booking-business{padding:18px}
@@ -897,7 +917,7 @@ input[type=range]:focus{box-shadow:none}
 <script src="/customer-ui.js?v=20260728-auth-controls"></script>
 <script src="/grow-recommender.js"></script>
 <script src="/platform-crm-utils.js"></script>
-<script src="/platform-console.js?v=20260727-v89"></script>
+<script src="/platform-console.js?v=20260729-v105"></script>
 <script src="/v95-media-sync.js?v=20260728-atomic-media"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
@@ -1829,6 +1849,18 @@ async function route(){
     if(passwordRecoveryActive) return renderPasswordUpdate();
     let h=entryRouteForLocation();
     if(h==='#/login')h='#/business';
+    const platformConsole=globalThis.NestlyPlatformConsole;
+    const platformRoutePath=String(h).split('?')[0].replace(/\/+$/,'');
+    const requestedPlatformRoute=platformRoutePath==='#/platform'||platformRoutePath.startsWith('#/platform/');
+    if(requestedPlatformRoute){
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1" aria-labelledby="platformBootTitle">
+        <section class="card" style="width:420px;max-width:100%;text-align:center" role="status" aria-live="polite">
+          <div class="loader" aria-hidden="true"></div>
+          <h1 id="platformBootTitle" style="font-size:1.5rem;margin:14px 0 6px">Opening Nestly admin</h1>
+          <p class="muted small">Checking your access and loading current work…</p>
+        </section>
+      </main>`;
+    }
     if(h.startsWith('#/claim?')){
       const claimRouteParams=new URLSearchParams(h.split('?')[1]||'');
       const invite=claimRouteParams.get('invite')||'';
@@ -1873,16 +1905,20 @@ async function route(){
       return renderCustomerRegistration(isRouteCurrent);
     }
     if(!S.user&&h==='#/join')return renderCustomerRegistration(isRouteCurrent);
-    if(!S.user)return renderAuth('in',{admin:h==='#/platform'||h.startsWith('#/platform/')});
+    if(!S.user)return renderAuth('in',{admin:requestedPlatformRoute});
     /* Platform routes are resolved before workspace discovery/onboarding. The platform
        console derives the active role, module rights and sales scope from auth.uid() through
        v89 before it renders navigation or data, so tenant ownership is not required. */
-    const platformConsole=globalThis.NestlyPlatformConsole;
-    if(platformConsole?.isRoute(h)){
+    if(requestedPlatformRoute){
+      if(typeof platformConsole?.isRoute!=='function'
+        ||typeof platformConsole?.render!=='function'
+        ||platformConsole.isRoute(h)!==true){
+        throw new Error('Nestly admin could not be loaded. Reload to try again.');
+      }
       const workspaceHash=S.biz?.slug
         ?`#/workspace/${encodeURIComponent(S.biz.slug)}/dashboard`
         :'#/';
-      return platformConsole.render({
+      return await platformConsole.render({
         root,sb,CUI,brand:BRAND,hash:h,isCurrent:isRouteCurrent,workspaceHash,
         onSignOut:async()=>{
           killChannels();await sb.auth.signOut();resetClientSessionState();nav('#/');
@@ -2075,6 +2111,14 @@ async function route(){
        server-side regardless — this only keeps the surface out of a non-owner's reach. */
     if(pageKey==='storedvalue'&&S.myRole!=='owner'){
       toast('Only the owner can open Stored value.');
+      return nav('#/dashboard');
+    }
+    /* Promotions are customer-facing publishing authority, not an ordinary staff module.
+       Keep the authoring surface owner-only in the client and enforce the same boundary in
+       v104 RPCs. Managers/front desk can continue operating the published programme without
+       receiving content-publishing authority. */
+    if(pageKey==='promotions'&&S.myRole!=='owner'){
+      toast('Only the owner can publish promotions.');
       return nav('#/dashboard');
     }
     if(pageKey==='platform'&&!S.isSA){
@@ -3590,38 +3634,90 @@ function customerBusinessIdV103({summaryBusiness={},actionableCard=null,programm
   return candidates.map(value=>String(value||'').trim())
     .find(value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value))||null;
 }
+function customerPromotionCtaV104(item,business,bookingEnabled){
+  const metadata=item?.metadata||{},cta=metadata.cta||{},
+    requestedKind=String(cta.kind||metadata.cta_kind||'programme'),
+    kind=requestedKind==='book'&&!bookingEnabled?'programme':requestedKind;
+  const configured=String(cta.label||metadata.cta_label||'').trim();
+  if(kind==='book'&&bookingEnabled){
+    return `<a class="btn sm" href="#/b/${encodeURIComponent(business.slug||'')}">${esc(configured||'Book now')}</a>`;
+  }
+  if(kind==='counter'){
+    return `<button class="btn sm" type="button" data-promotion-counter>${esc(configured||'Show at counter')}</button>`;
+  }
+  const label=requestedKind==='book'&&!bookingEnabled?'View details':configured||'View details';
+  return `<button class="btn sm" type="button" data-promotion-details>${esc(label)}</button>`;
+}
+function customerPromotionValidityV104(item={}){
+  const starts=promotionDateTextV104(item.starts_at),ends=promotionDateTextV104(item.ends_at);
+  if(starts&&ends)return `Valid ${starts} – ${ends}`;
+  if(ends)return `Valid until ${ends}`;
+  return starts?`Valid from ${starts}`:'';
+}
+function customerPromotionCardV104(item,business,bookingEnabled){
+  const image=customerMediaUrlV95(item?.image_url),
+    validity=customerPromotionValidityV104(item),
+    facts=String(item?.metadata?.offer_facts||'').trim(),
+    terms=String(item?.terms||'').trim();
+  return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
+    ${image?`<div class="customer-promotion-card-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:''}
+    <div class="customer-promotion-card-copy">
+      <p class="customer-quest-kicker">Limited-time offer</p>
+      <h3>${esc(item?.name||'Latest offer')}</h3>
+      ${item?.tagline||item?.description?`<p>${esc(item.tagline||item.description)}</p>`:''}
+      ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
+      <div class="customer-promotion-card-actions">
+        ${customerPromotionCtaV104(item,business,bookingEnabled)}
+        ${terms?`<details><summary class="small">Terms</summary><p class="small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
+      </div>
+      <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>
+      <template data-promotion-details-template>
+        <p>${esc(item?.description||item?.tagline||facts||item?.name||'Latest offer')}</p>
+        <dl class="customer-promotion-detail-list">
+          ${facts?`<div><dt>Offer</dt><dd>${esc(facts)}</dd></div>`:''}
+          ${validity?`<div><dt>Validity</dt><dd>${esc(validity)}</dd></div>`:''}
+          ${terms?`<div><dt>Terms</dt><dd>${esc(terms)}</dd></div>`:''}
+        </dl>
+        <p class="muted small">Show these details to the team when you visit.</p>
+      </template>
+    </div>
+  </article>`;
+}
+function openCustomerPromotionDetailsV104(card){
+  const template=card?.querySelector('template[data-promotion-details-template]');
+  if(!template)return;
+  $('customerPromotionDetailsModal')?.remove();
+  const title=card.querySelector('h3')?.textContent?.trim()||'Offer details';
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerPromotionDetailsModal" role="dialog" aria-modal="true" aria-labelledby="customerPromotionDetailsTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
+    <div class="row"><h2 id="customerPromotionDetailsTitle">${esc(title)}</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerPromotionDetailsClose">Close</button></div>
+    <div style="margin-top:16px">${template.innerHTML}</div>
+    <button type="button" class="btn" id="customerPromotionDetailsDone" style="margin-top:18px">Done</button>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('customerPromotionDetailsModal')?.remove()};
+  deactivate=CUI.activateDialog($('customerPromotionDetailsModal'),{
+    onClose:close,initialFocus:'#customerPromotionDetailsClose'
+  });
+  $('customerPromotionDetailsClose').onclick=$('customerPromotionDetailsDone').onclick=close;
+}
 function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
-  const tier=presentation.tier||{},progress=Math.max(0,Math.min(100,Number(tier.progress_percent||0)));
+  const tier=presentation.tier||{};
   const hasTier=customerTierHasProgressV103(tier);
   const unitLabel=ct(presentation.unit);
-  const nextRewardText=reward
-    ?reward.available_now===true?`${reward.name||ct('nextReward')} · ${ct('availableNow')}`
-      :`${Number(reward.remaining_units||0)} ${unitLabel} · ${reward.name||ct('nextReward')}`
-    :'';
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
-  return `<header class="customer-page-head"><div><p class="customer-quest-kicker">${esc(ct('merchantProgramme',{business:business.name||ct('localBusiness')}))}</p></div></header>
-    ${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
-    <section class="customer-merchant-hero" style="--merchant-accent:${esc(presentation.heroColor)}" aria-labelledby="customerMerchantTitle">
-      ${presentation.heroImageUrl?`<div class="customer-merchant-hero-media"><img src="${esc(presentation.heroImageUrl)}" alt="" loading="eager"></div>`:''}
-      <div class="customer-merchant-hero-copy"><div class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</div>
-        <p class="customer-quest-kicker">${esc(ct('merchantProgramme',{business:business.name||ct('localBusiness')}))}</p>
-        <h1 id="customerMerchantTitle">${esc(presentation.name)}</h1><p>${esc(presentation.tagline)}</p>
-      </div>
-    </section>
-    <div class="customer-balance-panel${hasTier?'':' customer-balance-panel-single'}" style="--merchant-accent:${esc(presentation.heroColor)}">
-      <section class="card"><p class="customer-quest-kicker">${esc(ct('balance'))}</p><div class="customer-balance-value">${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}</div><p class="muted">${esc(unitLabel)}</p>
-        ${reward?`<div class="wallet-line"><div><b>${esc(ct('nextReward'))}</b><p class="muted small" style="margin-top:4px">${esc(nextRewardText)}</p></div></div>`:''}
-      </section>
-      ${hasTier?`<section class="card"><p class="customer-quest-kicker">${esc(ct('tierProgress'))}</p><h2 style="margin-top:7px">${esc(tier.current||tier.label||ct('currentTier'))}</h2>
-        ${tier.next?`<p class="muted small" style="margin-top:5px">${esc(ct('nextTier',{tier:tier.next}))}</p>`:''}
-        <div class="customer-tier-track" role="progressbar" aria-label="${esc(ct('tierProgress'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--tier-progress:${progress}%"><span></span></div>
-      </section>`:''}
-    </div>
+  const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,2);
+  return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
+    <header class="customer-programme-compact-head" style="--merchant-accent:${esc(presentation.heroColor)}">
+      <div class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</div>
+      <div class="customer-programme-compact-copy"><h1>${esc(business.name||presentation.name)}</h1>
+        <p class="muted small">${esc(presentation.name)}${hasTier&&String(tier.current||tier.label||'').trim()?` · ${esc(tier.current||tier.label)}`:''}</p></div>
+      <div class="customer-programme-compact-balance"><b>${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}</b><span>${esc(unitLabel)}</span></div>
+    </header>
+    ${offers.length?`<section class="customer-promotions-section" aria-labelledby="latestOffersTitle"><div class="customer-promotions-head"><div><p class="customer-quest-kicker">From ${esc(business.name||ct('localBusiness'))}</p><h2 id="latestOffersTitle">Latest offers</h2></div></div><div class="customer-promotions-grid">${offers.map(item=>customerPromotionCardV104(item,business,bookingEnabled)).join('')}</div></section>`:''}
     ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><a class="btn" href="#/b/${encodeURIComponent(business.slug)}">${esc(ct('bookNow'))}</a></div></section>`:''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products,...presentation.services].map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('featured'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}</article>`).join('')}</div>`:''}
-    ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}
-    ${presentation.offers.length?`<div class="customer-section-title"><h2>${esc(ct('offers'))}</h2></div><div class="customer-offers-grid">${presentation.offers.map(item=>`<article class="customer-offer-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('offers'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}${item.terms?`<details style="margin-top:8px"><summary class="small">${esc(ct('terms'))}</summary><p class="muted small" style="margin-top:5px">${esc(item.terms)}</p></details>`:''}</article>`).join('')}</div>`:''}`;
+    ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
 function actionableWalletCardMarkup(card,{detail=false}={}){
   const business=card?.business||{},loyalty=card?.loyalty||{},credit=card?.credit||{},packages=card?.packages||{};
@@ -3834,13 +3930,17 @@ async function renderCustomerWallet(businessSlug=null){
   const unavailableBusinessId=()=>Promise.resolve({
     data:null,error:{code:'business_id_unavailable',message:'Business identifier is unavailable'}
   });
-  const [businessActionsResult,presentationResult]=await Promise.all([
+  const [businessActionsResult,presentationResult,promotionsResult]=await Promise.all([
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
-    businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId()
+    businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
+    businessId?sb.rpc('customer_get_promotions_v104',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId()
   ]);
   if(!isWalletCurrent())return;
   const businessActions=businessActionsResult.error?null:businessActionsResult.data;
   const presentation=customerProgrammePresentationV95(presentationResult.error?{}:presentationResult.data,{business:b,loyalty:actionableCard?.loyalty||loyalty});
+  presentation.offers=promotionsResult.error
+    ?presentation.offers.slice(0,2)
+    :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]);
   const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
@@ -3872,6 +3972,14 @@ async function renderCustomerWallet(businessSlug=null){
       ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
+  document.querySelectorAll('[data-promotion-counter]').forEach(button=>button.onclick=()=>{
+    const card=button.closest('[data-promotion-id]'),status=card?.querySelector('[data-promotion-status]');
+    if(status)status.textContent='Show this offer to the team at the counter.';
+    button.textContent='Ready to show';
+  });
+  document.querySelectorAll('[data-promotion-details]').forEach(button=>button.onclick=()=>{
+    openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
+  });
   focusCustomerRoute();
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
@@ -5024,7 +5132,7 @@ function importBtn(moduleKey){return CUI.action({label:'Import',iconName:'import
 
 /* ---------- shell ---------- */
 function activeGroupKey(pageKey){
-  const k=pageKey==='client'?'clients':['studio','storedvalue'].includes(pageKey)?'loyalty':pageKey;
+  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey;
   const g=NAVGROUPS.find(g=>g.items.includes(k));
   return g?g.key:null;
 }
@@ -5061,6 +5169,7 @@ function navHtml(page,idPrefix='nav'){
       <button type="button" class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}" aria-expanded="${isOpen}" aria-controls="${idPrefix}-${g.key}"><span class="ic">${CUI.icon(g.icon,{size:18})}</span>${g.label}<span class="chev" aria-hidden="true">${isOpen?'−':'+'}</span></button>
       <div class="navbody" id="${idPrefix}-${g.key}" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
         ${g.key==='grow'?growNavItemHtml(g.items,activeKey):''}
+        ${g.key==='grow'&&S.myRole==='owner'&&g.items.includes('loyalty')?`<a href="#/promotions" class="${activeKey==='promotions'?'act':''}"${activeKey==='promotions'?' aria-current="page"':''}><span class="ic">${CUI.icon('loyalty',{size:18})}</span>Promotions</a>`:''}
         ${restItems.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span>${MODULES[m][1]}</a>`).join('')}
       </div></div>`;
   }).join('');
@@ -5909,7 +6018,7 @@ function renderShell(page){
     const maxY=Math.max(0,document.documentElement.scrollHeight-window.innerHeight);
     window.scrollTo(priorWindowX,Math.min(priorWindowY,maxY));
   });
-  const customerUiRoutes=new Set(['till','clients','client','loyalty','retention','referrals','memberships','giftcards']);
+  const customerUiRoutes=new Set(['till','clients','client','loyalty','retention','promotions','referrals','memberships','giftcards']);
   const enhanceCustomerUi=customerUiRoutes.has(page[0]);
   if(enhanceCustomerUi)customerUiObserver=CUI.mountMain(main);
   wireNav();
@@ -5929,7 +6038,7 @@ function renderShell(page){
      only which function that key maps to is new, so the module route-guard above this
      function needs no changes at all. */
   const P={dashboard,till:tillPage,clients:clientsPage,client:clientDetail,sales:salesPage,services:servicesPage,
-    bookings:bookingsPage,loyalty:hashParam=>growPage('rewards',hashParam),retention:hashParam=>growPage('winback',hashParam),studio:hashParam=>growPage('studio',hashParam),storedvalue:hashParam=>growPage('storedvalue',hashParam),referrals:referralsPage,
+    bookings:bookingsPage,loyalty:hashParam=>growPage('rewards',hashParam),retention:hashParam=>growPage('winback',hashParam),promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam),storedvalue:hashParam=>growPage('storedvalue',hashParam),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,
     staffperf:staffPerfPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
@@ -9302,6 +9411,515 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurren
 function growStatus(label,tone=''){
   return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
 }
+/* v104 starts with a zero-credit structured copy assistant. It deliberately does not call a
+   model from the browser or expose a provider key. The policy below is also the contract for
+   a future server-side model: merchant facts are immutable inputs, never suggestions. */
+const PROMOTION_COPY_POLICY_V104=Object.freeze({
+  system:'You are Nestly’s SME promotion copy assistant. Transform only the merchant-provided facts into concise Singapore English. Preserve every number, percentage, date, named item, eligibility condition and term exactly. Never invent scarcity, prices, availability, outcomes, endorsements or legal claims. Return one headline and one short message. End the message with the matching call to action from the approved CTA list. Do not add hashtags or emojis.',
+  ctas:Object.freeze({book:'Book now',programme:'View offer',counter:'Show at counter'}),
+  messageCtas:Object.freeze({
+    book:'Book now to enjoy this offer.',
+    programme:'View the offer and plan your visit.',
+    counter:'Show this offer at the counter when you visit.'
+  })
+});
+function promotionDateInputV104(value){
+  if(!value)return '';
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'})
+    .formatToParts(new Date(value));
+  const byType=Object.fromEntries(parts.map(part=>[part.type,part.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+}
+function promotionDateTextV104(value){
+  if(!value)return '';
+  const instant=/^\d{4}-\d{2}-\d{2}$/.test(String(value))
+    ?new Date(`${value}T12:00:00+08:00`):new Date(value);
+  return new Intl.DateTimeFormat('en-SG',{timeZone:'Asia/Singapore',day:'numeric',month:'long',year:'numeric'}).format(instant);
+}
+function promotionBoundaryV104(date,{end=false}={}){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date||'')))return null;
+  return new Date(`${date}T${end?'23:59:59.999':'00:00:00.000'}+08:00`).toISOString();
+}
+function promotionCopyAssistV104({offerFacts,occasion,endDate,businessName,ctaKind}={}){
+  const facts=String(offerFacts||'').trim(),reason=String(occasion||'').trim(),
+    validUntil=promotionDateTextV104(endDate),business=String(businessName||'').trim(),
+    action=PROMOTION_COPY_POLICY_V104.messageCtas[ctaKind]||
+      PROMOTION_COPY_POLICY_V104.messageCtas.programme;
+  if(!facts||!validUntil)return null;
+  const headlineCandidate=reason?`${reason}: ${facts}`:facts,
+    conciseHeadline=reason?`${reason} offer`:'Special offer',
+    headline=headlineCandidate.length<=70?headlineCandidate:
+      conciseHeadline.length<=70?conciseHeadline:'Special offer',
+    messageStart=reason?`Celebrate ${reason} with ${facts}`:`Enjoy ${facts}`,
+    messageWithBusiness=`${messageStart}${business?` at ${business}`:''}. Available until ${validUntil}. ${action}`,
+    messageWithoutBusiness=`${messageStart}. Available until ${validUntil}. ${action}`,
+    message=messageWithBusiness.length<=600?messageWithBusiness:messageWithoutBusiness;
+  return {headline,message,ctaLabel:PROMOTION_COPY_POLICY_V104.ctas[ctaKind]||PROMOTION_COPY_POLICY_V104.ctas.programme};
+}
+function promotionEditorItemV104(raw={}){
+  const metadata=raw.metadata||{},cta=metadata.cta||{},
+    media=raw.media||raw.media_asset||{};
+  return {
+    ...raw,
+    id:raw.id||raw.promotion_id||'',
+    name:raw.name||raw.copy?.name||'',
+    tagline:raw.tagline||raw.copy?.tagline||'',
+    description:raw.description||raw.copy?.description||'',
+    terms:raw.terms||raw.copy?.terms||'',
+    offerFacts:raw.offer_facts||metadata.offer_facts||'',
+    occasion:raw.occasion||metadata.occasion||'',
+    ctaKind:raw.cta_kind||cta.kind||metadata.cta_kind||'programme',
+    ctaLabel:raw.cta_label||cta.label||metadata.cta_label||'View offer',
+    contentVersion:Number(raw.content_version||raw.version||0),
+    copyVersion:Number(raw.copy_version||raw.copy?.version||0),
+    imageUrl:raw.image_url||media.url||'',
+    imageAlt:raw.image_alt||media.alt_en||'',
+    mediaVersion:Number(raw.media_version||media.version||0),
+    imageCustomerVisible:raw.image_customer_visible===true||
+      media.customer_visible===true,
+    mediaVersionsByScope:raw.media_versions_by_scope||{}
+  };
+}
+function promotionScopeMediaV104(item={},branchId=null,{allowGlobalFallback=true}={}){
+  const scopes=item.mediaVersionsByScope||item.media_versions_by_scope||{},
+    exact=scopes[branchId||'global']||null,
+    global=branchId&&allowGlobalFallback?scopes.global||null:null;
+  return exact||global||null;
+}
+function promotionRpcErrorIsAmbiguousV104(error){
+  if(!error)return false;
+  const status=Number(error.status||error.statusCode||0);
+  /* A gateway can time out after Postgres committed. Those responses must replay the
+     same receipt key and must never trigger deletion of the newly committed photo. */
+  if(status===408||status===429||status>=500)return true;
+  if(error.code)return false;
+  return /failed to fetch|network|load failed|timeout|timed out|connection|offline/i
+    .test(String(error.message||error.error||error));
+}
+function promotionPreviewMarkupV104(item,imageUrl='',business=null){
+  const preview={...item,image_url:imageUrl||item.imageUrl,metadata:{...(item.metadata||{}),
+    cta:{kind:item.ctaKind,label:item.ctaLabel}}};
+  const merchant=business||{name:S.biz.name,slug:S.biz.slug};
+  return customerPromotionCardV104(preview,merchant,true);
+}
+function promotionPageCurrentV104(pageRoot,host){
+  return Boolean(pageRoot?.isConnected&&host?.contains?.(pageRoot));
+}
+async function promotionsPage(selectedPromotionId=null){
+  const host=M();
+  const businessId=S.biz.id,businessName=S.biz.name,businessSlug=S.biz.slug,
+    businessSnapshot=Object.freeze({id:businessId,name:businessName,slug:businessSlug});
+  host.innerHTML=CUI.loadingState({title:'Promotions',iconName:'loyalty'});
+  const {data,error}=await sb.rpc('business_get_promotion_editor_v104',{p_business:businessId});
+  if(!host.isConnected||S.biz?.id!==businessId)return;
+  if(error){
+    host.innerHTML=CUI.errorState({title:'Promotions unavailable',
+      message:error?.message||'Promotion details could not be loaded.',
+      retryId:'promotionStudioRetry'});
+    const retry=$('promotionStudioRetry');if(retry)retry.onclick=()=>promotionsPage(selectedPromotionId);
+    return;
+  }
+  const items=(Array.isArray(data?.items)?data.items:[]).map(promotionEditorItemV104);
+  const entitlement=data?.entitlement||{},max=Math.max(0,Number(entitlement.max_published_offers??10)),
+    published=Math.max(0,Number(entitlement.published_count||0)),
+    quotaUsed=Math.max(0,Number(entitlement.quota_used??published)),
+    canPublishNew=entitlement.can_publish_new!==false;
+  const selected=items.find(item=>item.id===selectedPromotionId)||null;
+  const today=promotionDateInputV104(new Date());
+  const initial={
+    id:selected?.id||'',branch_id:null,name:selected?.name||'',
+    tagline:selected?.tagline||'',description:selected?.description||'',
+    terms:selected?.terms||'',offerFacts:selected?.offerFacts||'',
+    occasion:selected?.occasion||'',ctaKind:selected?.ctaKind||'programme',
+    ctaLabel:selected?.ctaLabel||'View offer',
+    starts_at:selected?.starts_at||promotionBoundaryV104(today),
+    ends_at:selected?.ends_at||'',display_order:Number(selected?.display_order??100),
+    imageUrl:selected?.imageUrl||'',imageAlt:selected?.imageAlt||'',
+    metadata:selected?.metadata||{},
+    active:selected?.active===true,contentVersion:selected?.contentVersion||0,
+    copyVersion:selected?.copyVersion||0,mediaVersion:selected?.mediaVersion||0,
+    imageCustomerVisible:selected?.imageCustomerVisible===true,
+    mediaVersionsByScope:selected?.mediaVersionsByScope||{}
+  };
+  const canPublishThis=initial.active||Boolean(initial.metadata?.published_once_at)||canPublishNew,
+    quotaProgress=max?Math.min(100,Math.round((quotaUsed/max)*100)):100;
+  host.innerHTML=`<div class="promotion-studio" data-workspace-i18n>
+    ${CUI.pageHeader({title:'Promotions',subtitle:'Turn one factual offer and photo into clear customer-ready marketing.',iconName:'loyalty',canWrite:true,moduleLabel:'Customer programme'})}
+    <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} launch offer slots used</b>
+      <p class="muted small" style="margin-top:4px">${published} currently published. Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}. Customers see no more than two current offers at once.</p></div>
+      <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} launch offer slots used" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
+      ${!canPublishThis?'<div class="err" style="margin-top:12px">Publishing is not available for this company. Offers that are still live can still be edited or unpublished.</div>':''}
+    </section>
+    <ol class="promotion-studio-progress" aria-label="Promotion publishing steps">
+      <li><strong>1. Offer</strong>Add exact facts and dates</li>
+      <li><strong>2. Message</strong>Polish and edit the wording</li>
+      <li><strong>3. Publish</strong>Add photo, preview, publish</li>
+    </ol>
+    <div class="promotion-editor-grid"><section class="card" data-merchant-content>
+      <div class="row"><div><h2>${selected?'Edit promotion':'Create promotion'}</h2><p class="muted small" style="margin-top:4px">Facts remain yours. Nestly will not invent discount, timing, eligibility, or claims.</p></div><span class="spacer"></span>${selected?'<button type="button" class="btn ghost sm" id="promotionNew">New promotion</button>':''}</div>
+      <label for="promotionFacts">What is the offer?</label><input id="promotionFacts" maxlength="140" value="${esc(initial.offerFacts)}" placeholder="e.g. 30% off Spa Ritual 60">
+      <label for="promotionOccasion">Occasion or reason (optional)</label><input id="promotionOccasion" maxlength="80" value="${esc(initial.occasion)}" placeholder="e.g. National Day">
+      <div class="split"><div><label for="promotionStart">Starts</label><input id="promotionStart" type="date" value="${esc(promotionDateInputV104(initial.starts_at)||today)}"></div>
+        <div><label for="promotionEnd">Ends</label><input id="promotionEnd" type="date" value="${esc(promotionDateInputV104(initial.ends_at))}"></div></div>
+      <p class="muted small" style="margin-top:12px">This offer applies across the company, so every linked customer sees the same published promotion.</p>
+      <div class="row" style="margin-top:14px"><button type="button" class="btn ghost" id="promotionPolish">${CUI.icon('loyalty',{size:17})}<span>Polish wording — free</span></button><p class="muted small">Uses verified templates; no API credits.</p></div>
+      <label for="promotionName">Headline</label><input id="promotionName" maxlength="70" value="${esc(initial.name)}">
+      <label for="promotionMessage">Customer message</label><textarea id="promotionMessage" maxlength="600" rows="4">${esc(initial.description||initial.tagline)}</textarea>
+      <label for="promotionTerms">Terms (optional)</label><textarea id="promotionTerms" maxlength="500" rows="3" placeholder="Eligibility, exclusions, or redemption details">${esc(initial.terms)}</textarea>
+      <div class="split"><div><label for="promotionCtaKind">Customer action</label><select id="promotionCtaKind">
+        <option value="book" ${initial.ctaKind==='book'?'selected':''}>Book now</option>
+        <option value="programme" ${initial.ctaKind==='programme'?'selected':''}>View offer</option>
+        <option value="counter" ${initial.ctaKind==='counter'?'selected':''}>Show at counter</option></select></div>
+        <div><label for="promotionCtaLabel">Button wording</label><input id="promotionCtaLabel" maxlength="40" value="${esc(initial.ctaLabel)}"></div></div>
+      <label for="promotionImage">Promotion photo</label><input id="promotionImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+      <label for="promotionImageAlt">Photo description</label><input id="promotionImageAlt" maxlength="240" value="${esc(initial.imageAlt)}" placeholder="Describe the image for customers who cannot see it">
+      <p class="muted small" id="promotionImageStatus" role="status" style="margin-top:7px">${initial.imageUrl?(initial.active&&initial.imageCustomerVisible?'Current photo is published. Choose another only to replace it.':'Draft photo saved. It is not shown in your customer programme until you publish.'):'Choose the customer-facing photo now. A saved draft is not shown in your customer programme until you publish.'}</p>
+      <div class="row" style="margin-top:18px">${initial.active?'':`<button type="button" class="btn ghost" id="promotionSave">Save draft</button>`}
+        <button type="button" class="btn" id="promotionPublish" ${!canPublishThis?'disabled':''}>${initial.active?'Update published offer':'Publish offer'}</button>
+        ${initial.active?'<button type="button" class="btn ghost" id="promotionUnpublish">Unpublish</button>':''}</div>
+      <p class="muted small" id="promotionSaveStatus" role="status" aria-live="polite" style="margin-top:9px">${initial.active?'Published and visible while active.':'Drafts are never shown to customers.'}</p>
+    </section>
+    <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
+    <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${item.active?'Published':'Draft'}${item.ends_at?` · ends ${esc(promotionDateTextV104(item.ends_at))}`:''}</p></div><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
+  </div>`;
+  localizeWorkspaceSubtreeV97(host);
+  const pageRoot=host.querySelector('.promotion-studio'),
+    isPromotionCurrent=()=>S.biz?.id===businessId&&promotionPageCurrentV104(pageRoot,host);
+  const field=id=>$(id);
+  let previewObjectUrl='';
+  const currentDraft=()=>{
+    const scopedMedia=promotionScopeMediaV104(initial,null);
+    return {
+      ...initial,
+      name:field('promotionName').value.trim(),description:field('promotionMessage').value.trim(),
+      tagline:field('promotionMessage').value.trim(),terms:field('promotionTerms').value.trim(),
+      offerFacts:field('promotionFacts').value.trim(),occasion:field('promotionOccasion').value.trim(),
+      ctaKind:field('promotionCtaKind').value,ctaLabel:field('promotionCtaLabel').value.trim(),
+      imageUrl:scopedMedia?.image_url||initial.imageUrl,
+      imageAlt:field('promotionImageAlt').value.trim()||
+        scopedMedia?.image_alt||initial.imageAlt,
+      starts_at:promotionBoundaryV104(field('promotionStart').value),
+      ends_at:promotionBoundaryV104(field('promotionEnd').value,{end:true}),
+      branch_id:null
+    };
+  };
+  const updatePreview=()=>{
+    const draft=currentDraft(),file=field('promotionImage').files?.[0];
+    if(file){if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=URL.createObjectURL(file)}
+    field('promotionPreview').innerHTML=promotionPreviewMarkupV104(draft,previewObjectUrl,businessSnapshot);
+  };
+  let lastAssisted=null;
+  const applyAssistance=(force=false)=>{
+    const assisted=promotionCopyAssistV104({
+      offerFacts:field('promotionFacts').value,occasion:field('promotionOccasion').value,
+      endDate:field('promotionEnd').value,businessName,
+      ctaKind:field('promotionCtaKind').value
+    });
+    if(!assisted)return false;
+    const currentName=field('promotionName').value.trim(),
+      currentMessage=field('promotionMessage').value.trim(),
+      mayReplace=force||(!currentName&&!currentMessage)||(
+        lastAssisted&&currentName===lastAssisted.headline&&
+        currentMessage===lastAssisted.message
+      );
+    if(!mayReplace)return false;
+    field('promotionName').value=assisted.headline;
+    field('promotionMessage').value=assisted.message;
+    field('promotionCtaLabel').value=assisted.ctaLabel;
+    lastAssisted=assisted;
+    return true;
+  };
+  ['promotionName','promotionMessage','promotionTerms','promotionCtaLabel',
+    'promotionImageAlt','promotionStart']
+    .forEach(id=>field(id).addEventListener('input',updatePreview));
+  ['promotionFacts','promotionOccasion','promotionEnd'].forEach(id=>
+    field(id).addEventListener('input',()=>{applyAssistance(false);updatePreview()})
+  );
+  field('promotionImage').addEventListener('change',updatePreview);
+  field('promotionCtaKind').addEventListener('change',()=>{
+    field('promotionCtaLabel').value=PROMOTION_COPY_POLICY_V104.ctas[field('promotionCtaKind').value]||'View offer';
+    applyAssistance(false);
+    updatePreview();
+  });
+  field('promotionPolish').onclick=()=>{
+    if(!applyAssistance(true))return toast('Add the exact offer and end date first.');
+    updatePreview();toast('Wording polished — review every fact before publishing.');
+  };
+  if(field('promotionNew'))field('promotionNew').onclick=()=>promotionsPage();
+  const createPendingStorageKey=`nestly.v104.promotion-create.${businessId}`,
+    pendingStorageKey=`nestly.v104.promotion-finalize.${businessId}`,
+    readSessionValue=key=>{
+      try{
+        const value=JSON.parse(sessionStorage.getItem(key)||'null');
+        return value?.businessId===businessId?value:null;
+      }catch(_error){return null}
+    },
+    writeSessionValue=(key,value)=>{
+      try{
+        if(value)sessionStorage.setItem(key,JSON.stringify(value));
+        else sessionStorage.removeItem(key);
+      }catch(_error){}
+    };
+  let pendingCreate=readSessionValue(createPendingStorageKey),
+    pendingFinalize=readSessionValue(pendingStorageKey),
+    interruptedPromotionId=pendingFinalize?.promotionId||pendingCreate?.promotionId||null,
+    workingPromotion=selected,
+    workingPromotionId=selected?.id||interruptedPromotionId||(
+      pendingCreate&&(!selectedPromotionId||pendingCreate.promotionId===selectedPromotionId)
+        ?pendingCreate.promotionId:null
+    )||selectedPromotionId||crypto.randomUUID(),
+    createConfirmed=Boolean(selected),
+    createAttemptKey=pendingCreate?.promotionId===workingPromotionId
+      ?pendingCreate.attemptKey:crypto.randomUUID(),
+    createFingerprint=pendingCreate?.promotionId===workingPromotionId
+      ?pendingCreate.fingerprint||'':'',
+    createOutcomeUnconfirmed=Boolean(
+      pendingCreate?.promotionId===workingPromotionId&&!selected
+    );
+  if(selected&&pendingCreate?.promotionId===selected.id){
+    pendingCreate=null;writeSessionValue(createPendingStorageKey,null);
+  }
+  if(interruptedPromotionId&&selectedPromotionId&&interruptedPromotionId!==selectedPromotionId){
+    field('promotionSaveStatus').textContent='Finishing the interrupted promotion save first…';
+    history.replaceState(null,'',`${location.pathname}${location.search}#/promotions/${encodeURIComponent(interruptedPromotionId)}`);
+    return promotionsPage(interruptedPromotionId);
+  }
+  const promotionReceiptRpcV104=Object.freeze({
+    business_create_promotion_draft_v104:args=>
+      sb.rpc('business_create_promotion_draft_v104',args),
+    business_finalize_promotion_v104:args=>
+      sb.rpc('business_finalize_promotion_v104',args)
+  });
+  const safeRpc=async(name,args)=>{
+    try{
+      const call=promotionReceiptRpcV104[name];
+      if(!call)throw new Error('Unsupported promotion receipt operation.');
+      return await call(args);
+    }
+    catch(error){return {data:null,error}}
+  };
+  const rpcWithReceiptReplay=async(name,args)=>{
+    let result=await safeRpc(name,args);
+    if(result.error&&promotionRpcErrorIsAmbiguousV104(result.error))result=await safeRpc(name,args);
+    return result;
+  };
+  const createDraftArgs=draft=>({
+    p_business:businessId,p_promotion_id:workingPromotionId,
+    p_attempt_key:createAttemptKey,p_branch:draft.branch_id,
+    p_name:draft.name,p_tagline:null,p_description:draft.description,
+    p_terms:draft.terms||null,p_starts_at:draft.starts_at,p_ends_at:draft.ends_at,
+    p_display_order:Number(initial.display_order??100),p_cta_kind:draft.ctaKind,
+    p_cta_label:draft.ctaLabel,p_offer_facts:draft.offerFacts,
+    p_occasion:draft.occasion||null
+  });
+  const ensureDraft=async draft=>{
+    if(createConfirmed)return {data:workingPromotion,error:null};
+    const args=createOutcomeUnconfirmed&&pendingCreate
+        ?pendingCreate.args:createDraftArgs(draft),
+      fingerprint=JSON.stringify(args);
+    if(createOutcomeUnconfirmed&&createFingerprint!==fingerprint){
+      return {data:null,error:new Error('Finish confirming the previous draft save before changing this promotion.')};
+    }
+    createFingerprint=fingerprint;
+    pendingCreate={
+      businessId,promotionId:workingPromotionId,
+      attemptKey:createAttemptKey,args,fingerprint
+    };
+    writeSessionValue(createPendingStorageKey,pendingCreate);
+    history.replaceState(null,'',`${location.pathname}${location.search}#/promotions/${encodeURIComponent(workingPromotionId)}`);
+    const result=await rpcWithReceiptReplay('business_create_promotion_draft_v104',args);
+    if(result.error){
+      createOutcomeUnconfirmed=promotionRpcErrorIsAmbiguousV104(result.error);
+      if(!createOutcomeUnconfirmed){
+        pendingCreate=null;writeSessionValue(createPendingStorageKey,null);
+      }
+      return result;
+    }
+    createOutcomeUnconfirmed=false;
+    createConfirmed=true;
+    pendingCreate=null;writeSessionValue(createPendingStorageKey,null);
+    workingPromotion=promotionEditorItemV104(result.data?.item||result.data||{id:workingPromotionId});
+    return {data:workingPromotion,error:null};
+  };
+  const exactTargetMediaVersion=(item,branchId)=>{
+    const exact=promotionScopeMediaV104(item,branchId,{allowGlobalFallback:false});
+    return Number(exact?.version||exact?.media_version||exact?.target_media_version||0);
+  };
+  const finalizeArgs=({draft,publish,promotion,fileInfo,attemptKey})=>({
+    p_business:businessId,p_promotion_id:promotion.id,p_branch:draft.branch_id,
+    p_name:draft.name,p_tagline:null,p_description:draft.description,
+    p_terms:draft.terms||null,p_starts_at:draft.starts_at,p_ends_at:draft.ends_at,
+    p_display_order:Number(initial.display_order??100),p_cta_kind:draft.ctaKind,
+    p_cta_label:draft.ctaLabel,p_offer_facts:draft.offerFacts,
+    p_occasion:draft.occasion||null,p_publish:publish,
+    p_object_path:fileInfo?.objectPath||null,p_mime_type:fileInfo?.mimeType||null,
+    p_width_px:fileInfo?.width||null,p_height_px:fileInfo?.height||null,
+    p_alt_en:fileInfo?.alt||null,
+    p_expected_content_version:Number(promotion.contentVersion||0),
+    p_expected_copy_version:Number(promotion.copyVersion||0),
+    p_expected_target_media_version:exactTargetMediaVersion(promotion,draft.branch_id),
+    p_attempt_key:attemptKey
+  });
+  const clearFinalizedObjects=async(result,pending)=>{
+    const oldPath=result?.previous_object_path||null;
+    if(oldPath&&oldPath!==pending?.objectPath){
+      await NestlyMediaSyncV95.removeOrQueue({
+        storage:sb.storage,client:sb,businessId,objectPath:oldPath,
+        reason:'superseded v104 promotion photo'
+      });
+    }
+  };
+  const cleanFailedUpload=async pending=>{
+    if(!pending?.objectPath)return {status:'not_required'};
+    return NestlyMediaSyncV95.removeOrQueue({
+      storage:sb.storage,client:sb,businessId,
+      objectPath:pending.objectPath,
+      reason:'v104 promotion photo after definitive finalization failure'
+    });
+  };
+  const runPendingFinalize=async pending=>{
+    const result=await rpcWithReceiptReplay('business_finalize_promotion_v104',pending.args);
+    if(!result.error){
+      await clearFinalizedObjects(result.data,pending);
+      pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+      return result;
+    }
+    if(!promotionRpcErrorIsAmbiguousV104(result.error)){
+      await cleanFailedUpload(pending);
+      pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+    }
+    return result;
+  };
+  const uploadPromotionPhoto=async({file,alt,promotionId})=>{
+    let dimensions;
+    try{dimensions=await imageDimensionsV95(file)}
+    catch(error){return {error,fileInfo:null}}
+    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type],
+      objectPath=`${businessId}/offer/${crypto.randomUUID()}.${extension}`,
+      uploaded=await sb.storage.from('business-public').upload(
+        objectPath,file,{contentType:file.type,upsert:false}
+      );
+    if(uploaded.error)return {error:uploaded.error,fileInfo:null};
+    return {error:null,fileInfo:{
+      objectPath,mimeType:file.type,width:dimensions.width,height:dimensions.height,alt
+    }};
+  };
+  const completionMessage=pending=>pending?.operation==='unpublish'
+    ?'Promotion unpublished'
+    :pending?.publish?'Promotion published':'Promotion draft saved';
+  const save=async(publish,{unpublish=false}={})=>{
+    if(pendingFinalize){
+      const status=field('promotionSaveStatus');
+      const pending=pendingFinalize;
+      status.textContent='Confirming the previous save…';
+      const resumed=await runPendingFinalize(pending);
+      if(!isPromotionCurrent())return;
+      if(resumed.error){
+        status.textContent=promotionRpcErrorIsAmbiguousV104(resumed.error)
+          ?'The save outcome is still unconfirmed. Check your connection, then press again.'
+          :'The previous save was not completed.';
+        return promotionRpcErrorIsAmbiguousV104(resumed.error)?null:fail(resumed.error);
+      }
+      toast(completionMessage(pending));
+      return promotionsPage(resumed.data?.promotion_id||workingPromotionId);
+    }
+    const draft=currentDraft();
+    const file=unpublish?null:field('promotionImage').files?.[0],
+      alt=field('promotionImageAlt').value.trim();
+    if(!draft.offerFacts)return toast('Add the exact offer.');
+    if(!draft.name||!draft.description)return toast('Polish or write the headline and customer message.');
+    if(!draft.starts_at||!draft.ends_at||new Date(draft.ends_at)<=new Date(draft.starts_at))return toast('Choose a valid start and end date.');
+    if(!PROMOTION_COPY_POLICY_V104.ctas[draft.ctaKind]||!draft.ctaLabel)return toast('Choose a clear customer action.');
+    if(file&&(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760))return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
+    if(file&&!alt)return toast('Add a photo description.');
+    const status=field('promotionSaveStatus'),buttons=[field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')].filter(Boolean);
+    buttons.forEach(button=>button.disabled=true);
+    status.textContent=unpublish?'Unpublishing…':publish?'Publishing…':'Saving draft…';
+    const wasAlreadyCreated=createConfirmed;
+    const created=await ensureDraft(draft);
+    if(created.error){
+      if(!isPromotionCurrent())return;
+      buttons.forEach(button=>button.disabled=false);
+      status.textContent=createOutcomeUnconfirmed
+        ?'The draft save outcome is unconfirmed. Check your connection and press again.'
+        :'Draft was not saved.';
+      return createOutcomeUnconfirmed?null:fail(created.error);
+    }
+    workingPromotion=promotionEditorItemV104(created.data||workingPromotion||{id:workingPromotionId});
+    let saveResult=null;
+    if(!publish&&!file&&!wasAlreadyCreated){
+      saveResult=created.data;
+    }else{
+      let fileInfo=null;
+      if(file){
+        if(isPromotionCurrent())field('promotionImageStatus').textContent='Uploading promotion photo…';
+        const uploaded=await uploadPromotionPhoto({file,alt,promotionId:workingPromotionId});
+        if(uploaded.error){
+          if(!isPromotionCurrent())return;
+          buttons.forEach(button=>button.disabled=false);
+          status.textContent='Your draft is safe. The photo needs another try.';
+          field('promotionImageStatus').textContent='Photo was not saved. Your draft is safe; try again.';
+          return fail(uploaded.error);
+        }
+        fileInfo=uploaded.fileInfo;
+      }
+      const attemptKey=crypto.randomUUID(),
+        args=finalizeArgs({draft,publish,promotion:workingPromotion,fileInfo,attemptKey});
+      pendingFinalize={
+        businessId,promotionId:workingPromotionId,publish,
+        operation:unpublish?'unpublish':publish?'publish':'draft',
+        objectPath:fileInfo?.objectPath||null,args,attemptKey,
+        fingerprint:JSON.stringify(args)
+      };
+      writeSessionValue(pendingStorageKey,pendingFinalize);
+      const finalized=await runPendingFinalize(pendingFinalize);
+      if(finalized.error){
+        if(!isPromotionCurrent())return;
+        buttons.forEach(button=>button.disabled=false);
+        if(promotionRpcErrorIsAmbiguousV104(finalized.error)){
+          status.textContent='The save outcome is unconfirmed. Check your connection, then press again.';
+          field('promotionImageStatus').textContent='Photo upload is held safely while Nestly confirms the save.';
+          return;
+        }
+        status.textContent=unpublish?'Offer was not unpublished.':publish
+          ?'Offer was not published.':'Draft was not saved.';
+        return fail(finalized.error);
+      }
+      saveResult=finalized.data;
+    }
+    if(!isPromotionCurrent())return;
+    const savedId=saveResult?.promotion_id||saveResult?.item?.id||workingPromotionId;
+    toast(unpublish?'Promotion unpublished':publish?'Promotion published':'Promotion draft saved');
+    promotionsPage(savedId);
+  };
+  if(field('promotionSave'))field('promotionSave').onclick=()=>save(false);
+  field('promotionPublish').onclick=()=>save(true);
+  if(field('promotionUnpublish'))field('promotionUnpublish').onclick=()=>save(false,{unpublish:true});
+  field('promotionImage').onchange=()=>{
+    updatePreview();
+    field('promotionImageStatus').textContent='Photo selected. It will upload when you save or publish.';
+  };
+  if(createOutcomeUnconfirmed&&pendingCreate?.promotionId===workingPromotionId){
+    field('promotionSaveStatus').textContent='Confirming an interrupted draft save…';
+    setTimeout(async()=>{
+      if(!isPromotionCurrent())return;
+      const resumed=await ensureDraft(currentDraft());
+      if(!isPromotionCurrent())return;
+      if(resumed.error){
+        field('promotionSaveStatus').textContent=createOutcomeUnconfirmed
+          ?'The draft save outcome is still unconfirmed. Check your connection, then reload.'
+          :'The interrupted draft was not saved.';
+        return;
+      }
+      toast('Promotion draft confirmed');promotionsPage(workingPromotionId);
+    },0);
+  }else if(pendingFinalize?.promotionId===workingPromotionId){
+    field('promotionSaveStatus').textContent='Confirming an interrupted save…';
+    setTimeout(()=>{if(isPromotionCurrent())save(Boolean(pendingFinalize?.publish))},0);
+  }
+  routeDispose=()=>{if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl)};
+}
 async function growPage(routedSurface,hashParam){
   const outerMain=M(),isGrowCurrent=()=>outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
   const modules=S.myModules||[];
@@ -9323,6 +9941,7 @@ async function growPage(routedSurface,hashParam){
   const nodeStatus=live=>draftLabel|| (live?'Live':'Needs setup');
   const nodeTone=live=>draftLabel?'new':live?'on':'off';
   const optionalTools=[
+    isOwner&&canRewards?{key:'promotions',icon:'loyalty',title:'Promotions',copy:'Publish up to two timely offers at the top of your customer programme.'}:null,
     modules.includes('referrals')?{key:'referrals',icon:'referrals',title:'Referrals',copy:'Turn happy customers into trusted introductions.'}:null,
     modules.includes('memberships')?{key:'memberships',icon:'memberships',title:'Memberships',copy:'Build recurring value for your most regular customers.'}:null,
     modules.includes('giftcards')?{key:'giftcards',icon:'giftcard',title:'Gift cards',copy:'Let customers share prepaid value with someone new.'}:null
