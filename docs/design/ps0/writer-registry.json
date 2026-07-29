@@ -427,11 +427,11 @@
       "call_site_finding": "none"
     },
     {
-      "id": "browser.rpc:app/index.html:sell_package",
+      "id": "browser.rpc:app/index.html:sell_package_v102",
       "surface": "browser_rpc_binding",
-      "rpc": "sell_package",
-      "resolves_to": "sell_package/4 (idempotent) \u2014 both the cart (4113) and the standalone Packages page (6581) now pass p_idempotency_key",
-      "call_site_finding": "none (v54) \u2014 the former HARD finding is closed: EXECUTE on the 3-arg overload is revoked and the app agent migrated the standalone call site to the 4-arg overload"
+      "rpc": "sell_package_v102",
+      "resolves_to": "sell_package_v102/5 (idempotent, explicit branch, exact persisted result)",
+      "call_site_finding": "none (v102) \u2014 both cart and standalone Packages use the sole browser-granted branch-bound keyed package writer; legacy /4 and /3 execute are revoked"
     },
     {
       "id": "browser.rpc:app/index.html:set_expense_void",
@@ -448,11 +448,11 @@
       "call_site_finding": "none"
     },
     {
-      "id": "browser.rpc:app/index.html:use_package_session",
+      "id": "browser.rpc:app/index.html:use_package_session_v102",
       "surface": "browser_rpc_binding",
-      "rpc": "use_package_session",
-      "resolves_to": "use_package_session/3 (idempotent)",
-      "call_site_finding": "none"
+      "rpc": "use_package_session_v102",
+      "resolves_to": "use_package_session_v102/4 (idempotent, explicit branch, exact persisted result)",
+      "call_site_finding": "none (v102) \u2014 the selected branch is in the immutable request hash and the legacy branch-implicit /3 execute grant is revoked"
     },
     {
       "id": "browser.rpc:app/index.html:create_expense",
@@ -788,7 +788,7 @@
     {
       "id": "db.fn:public.issue_gift_card/5",
       "surface": "db_function",
-      "latest_file": "20260725110000_frenly_v70_legacy_non_overlap.sql",
+      "latest_file": "20260729150000_nestly_v102_package_checkout_entitlements.sql",
       "rows_written": "gift_card_issue_operations:INSERT, gift_cards:INSERT, sales:INSERT",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "entry_point": "issue_gift_card(p_business,p_amount,p_purchaser,p_recipient_email,p_idempotency_key)  [idempotent]",
@@ -800,7 +800,7 @@
       "reporting": "gift-card sale reported as cash collected, excluded from revenue KPIs (v9)",
       "reversal": "sale reversible via reverse_sale",
       "ui": "Gift cards \u2192 Issue",
-      "kernel": "SAFE \u2014 idempotent; /4 legacy execute revoked (v41). Route the sale through the kernel with kind=gift_card policy preserved."
+      "kernel": "SAFE \u2014 idempotent; /4 legacy execute revoked (v41). v102 preserves exact completed replay, then enforces the owner gift-card issuance switch before every new write while leaving redemption untouched. Route the sale through the kernel with kind=gift_card policy preserved."
     },
     {
       "id": "db.fn:public.open_drawer/3",
@@ -1194,6 +1194,23 @@
       "kernel": "NEEDS-WORK \u2014 correct idempotent shell, but it wraps the non-idempotent /3 instead of a kernel; fold both into the kernel so there is one package-sale path."
     },
     {
+      "id": "db.fn:public.sell_package_v102/5",
+      "surface": "db_function",
+      "latest_file": "20260729150000_nestly_v102_package_checkout_entitlements.sql",
+      "rows_written": "client_packages:INSERT, sales:INSERT, sale_intent_operations:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, for-update",
+      "entry_point": "sell_package_v102(p_business,p_client,p_plan,p_branch,p_idempotency_key)",
+      "callers": "browser cart checkout and standalone Packages page",
+      "reads": "package_plans/services/branches/clients/staff; points_ledger by exact sale and customer",
+      "idempotency": "business/key advisory lock + immutable SHA-256 request hash including branch + sale_intent_operations exact JSON replay",
+      "locking": "advisory + staff FOR UPDATE + plan/branch FOR SHARE",
+      "package_membership": "atomically inserts one client_packages row with purchase snapshots",
+      "payment": "inserts one branch/staff-attributed package sale at the frozen plan price",
+      "loyalty": "sale trigger applies the owner policy once; response points_earned is summed only from points_ledger rows bearing the exact sale_id and points_total is ledger-derived",
+      "reversal": "sale remains compensatable through the canonical reversal provenance flow",
+      "kernel_migratability": "KERNEL-ADJACENT \u2014 v102 collapses browser package sale to one branch-bound keyed writer with exact replay; a later unified-kernel increment may absorb the sale insertion without changing its snapshot/idempotency contract"
+    },
+    {
       "id": "db.fn:public.set_expense_void/3",
       "surface": "db_function",
       "latest_file": "20260718180329_frenly_v11b_money.sql",
@@ -1245,6 +1262,23 @@
       "reversal": "reversible; reverse_sale_v34_base writes package_session_reversals and restores the session",
       "ui": "Packages \u2192 Use session",
       "kernel": "SAFE \u2014 idempotent; grant on the 2-arg legacy overload was revoked (v34). Session consumption is a kernel-adjacent value event to route through the kernel envelope."
+    },
+    {
+      "id": "db.fn:public.use_package_session_v102/4",
+      "surface": "db_function",
+      "latest_file": "20260729150000_nestly_v102_package_checkout_entitlements.sql",
+      "rows_written": "client_packages:UPDATE, package_session_consumptions:INSERT, sales:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, for-update",
+      "entry_point": "use_package_session_v102(p_business,p_client_package,p_branch,p_idempotency_key)",
+      "callers": "browser Quick Earn and standalone Packages page",
+      "reads": "frozen client_packages snapshots, branches/service_branches, points_ledger",
+      "idempotency": "business/key advisory lock + immutable MD5 request payload including explicit branch + exact JSON result persisted on package_session_consumptions",
+      "locking": "advisory + client package/staff FOR UPDATE + branch FOR SHARE",
+      "package_membership": "decrements exactly one remaining session and freezes the before/after evidence",
+      "payment": "inserts a $0 service visit at the explicitly selected branch; no payment is created",
+      "loyalty": "points_earned is fixed at zero for consumption and points_total is snapshotted from the ledger into the replay result",
+      "reversal": "the consumption/sale remains linked to package_session_reversals for compensating restoration",
+      "kernel_migratability": "KERNEL-ADJACENT \u2014 session consumption is a non-payment entitlement use with its own exact keyed evidence; retain beside the money kernel"
     },
     {
       "id": "db.trigger:appointments:trg_appointment_completed",
@@ -1804,10 +1838,6 @@
       "reason": "browser RPC 'customer_submit_visit_feedback' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
-      "id": "browser.rpc:app/index.html:customer_unlink_business_link",
-      "reason": "browser RPC 'customer_unlink_business_link' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
-    },
-    {
       "id": "browser.rpc:app/index.html:customer_update_profile",
       "reason": "browser RPC 'customer_update_profile' is the C42 self-scoped, idempotent customer profile editor used by My Frenly Profile. It updates private identity configuration only and performs no sale, balance, benefit, or other customer-value movement."
     },
@@ -2082,10 +2112,6 @@
     {
       "id": "browser.write:app/index.html:client_field_values:UPSERT",
       "reason": "browser direct write to non-value catalog/config table client_field_values (UPSERT); RLS-gated setup data, not customer value"
-    },
-    {
-      "id": "browser.write:app/index.html:package_plans:INSERT",
-      "reason": "browser direct write to non-value catalog/config table package_plans (INSERT); RLS-gated setup data, not customer value"
     },
     {
       "id": "browser.write:app/index.html:products:INSERT",
@@ -2390,6 +2416,34 @@
     {
       "id": "browser.rpc:app/index.html:activate_approved_business_application_v95",
       "reason": "browser RPC 'activate_approved_business_application_v95' consumes a super-admin-approved, single-use owner invitation after exact confirmed-email matching. It creates the approved business workspace, owner staff row, default branch, draft loyalty configuration, subscription shell, sector assignment, and append-only application/workspace audit evidence. It cannot create a customer relationship, sale, payment, points balance, reward entitlement, stored value, or other customer-value row, so it resolves to no checkout-kernel value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_get_checkout_preferences_v102",
+      "reason": "browser RPC 'business_get_checkout_preferences_v102' is a stable staff-scoped reader of the explicit gift-card checkout switch and resolved package-purchase points policy. It performs no DML and resolves to no customer-value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:save_package_plan_v102",
+      "reason": "browser RPC 'save_package_plan_v102' replaces the former direct package_plans insert with an authorized package-module configuration writer. It derives and freezes list-price comparison snapshots from the linked tenant service and writes audit evidence, but it cannot sell a package, charge a customer, award points, consume a session, or write another customer-value row."
+    },
+    {
+      "id": "browser.rpc:app/index.html:set_gift_card_sales_enabled_v102",
+      "reason": "browser RPC 'set_gift_card_sales_enabled_v102' is an owner/super-admin control-plane switch that determines whether gift-card issuance is offered in Quick Earn. It updates only business configuration plus audit evidence and cannot issue, redeem, fund, or alter a gift card."
+    },
+    {
+      "id": "browser.rpc:app/index.html:set_package_points_policy_v102",
+      "reason": "browser RPC 'set_package_points_policy_v102' is an owner/super-admin policy writer for whether a later package purchase earns loyalty points once. It changes only the non-economic sale_policies configuration row; it does not sell a package or move points itself."
+    },
+    {
+      "id": "browser.rpc:app/index.html:staff_get_customer_entitlements_v102",
+      "reason": "browser RPC 'staff_get_customer_entitlements_v102' is a stable, business- and client-scoped reader of active package balances and pending redemption intents for Quick Earn. It performs no DML, does not consume a package or complete a redemption, and resolves to no customer-value writer."
+    },
+    {
+      "id": "browser.rpc:app/index.html:staff_list_package_entitlements_v102",
+      "reason": "browser RPC 'staff_list_package_entitlements_v102' is a stable packages/till/sales-scoped reader of all tenant package purchases using only purchase-time client_packages snapshots. It performs no DML and cannot consume a session, create a sale, or move points."
+    },
+    {
+      "id": "db.backfill:20260729150000_nestly_v102_package_checkout_entitlements.sql:client_packages",
+      "reason": "One-time v102 migration backfill copies the historically referenced plan/service facts into new bigint purchase-snapshot columns before making the core plan name/version/session/price snapshots NOT NULL. It does not change remaining sessions, status, sale, points, payment or any customer balance, and is not a runtime writer."
     }
   ]
 }

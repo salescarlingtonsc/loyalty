@@ -242,7 +242,9 @@ test('Terra C46: customer wallet UI has an accessible stale-guarded bell and inb
   assert.match(inbox, /customer_list_in_app_inbox/i);
   assert.match(inbox, /customer_set_in_app_inbox_state/i);
   assert.match(inbox, /walletSectionStillCurrent\(host,isCurrent\)/i);
-  assert.match(inbox, /aria-label="Open inbox"/i);
+  assert.match(inbox, /href="#\/customer\/messages"/i);
+  assert.match(inbox, /aria-label="Open messages/i);
+  assert.doesNotMatch(inbox, /scrollIntoView|aria-controls="customerInAppInbox"/i);
   assert.match(inbox, /aria-live="polite"/i);
   assert.match(inbox, /data-route-key="wallet_business"/i);
   assert.match(inbox, /\$\{esc\(BRAND\.customerLabel\)\} inbox/i);

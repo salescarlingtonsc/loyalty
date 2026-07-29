@@ -61,11 +61,12 @@ test('fallback Home and legacy Programmes route reuse the compact selector inste
 test('merchant feature groups and birthday participation render only from actual capability and content',()=>{
   const merchant=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
-  assert.match(merchant,/presentation\.rewards\.length\?`<div class="customer-section-title"/);
+  assert.doesNotMatch(merchant,/presentation\.rewards\.length|presentation\.rewards\.map/,
+    'authoritative wallet rewards are the only reward cards on programme detail');
   assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?/);
   assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
   assert.match(merchant,/presentation\.offers\.length\?`<div class="customer-section-title"/);
-  for(const content of ['rewards','benefits','offers']){
+  for(const content of ['benefits','offers']){
     assert.match(merchant,new RegExp(`presentation\\.${content}\\.length\\?[\\s\\S]*?:''\\}`));
   }
   assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?[\s\S]*?:''\}/);
@@ -82,10 +83,10 @@ test('successful empty feature feeds remove their section instead of inventing p
   assert.doesNotMatch(empty,/No rewards|No packages|No membership|No appointments/);
 });
 
-test('enabled transaction history preserves an explicit zero-history state and refresh affordance',()=>{
+test('enabled transaction history preserves a calm explicit zero-history state',()=>{
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   assert.match(wallet,/if\(!transactionState\.items\.length\)\{[\s\S]*No purchases or points activity has been recorded for this programme yet\./);
-  assert.match(wallet,/id="walletTransactionsRetry"/);
-  assert.match(wallet,/\$\('walletTransactionsRetry'\)\.onclick=\(\)=>loadTransactions\(null\)/);
+  assert.doesNotMatch(wallet,/id="walletTransactionsRetry"/);
+  assert.doesNotMatch(wallet,/\$\('walletTransactionsRetry'\)\.onclick/);
   assert.doesNotMatch(wallet,/if\(!transactionState\.items\.length\)\{\s*host\.remove\(\)/s);
 });

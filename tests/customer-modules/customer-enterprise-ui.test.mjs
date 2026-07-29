@@ -264,10 +264,10 @@ test('read-only referral, membership, and gift-card views omit editable transact
   assert.match(memberships,/const planEditor=canWrite\?`<label for="mn"/);
   assert.match(memberships,/const enrollmentEditor=canEnroll\?`<label for="ec"/);
   assert.match(memberships,/if\(canEnroll&&\$\('ego'\)\)/);
-  assert.match(giftcards,/const giftCardWorkspace=canTransact\?`/);
-  assert.match(giftcards,/:`<div class="cui-card-head"><h2>Gift card transactions<\/h2>/);
-  assert.match(giftcards,/if\(canTransact&&\$\('gsell'\)\)/);
-  assert.match(giftcards,/if\(canTransact&&\$\('gredeem'\)\)/);
+  assert.match(giftcards,/const issueWorkspace=canIssue\?`/);
+  assert.match(giftcards,/const redeemWorkspace=canRedeem\?`/);
+  assert.match(giftcards,/if\(canIssue&&\$\('gsell'\)\)/);
+  assert.match(giftcards,/if\(canRedeem&&\$\('gredeem'\)\)/);
 });
 
 test('financial UI actions require module rights plus server-mirrored create-sales capability',()=>{
@@ -275,7 +275,8 @@ test('financial UI actions require module rights plus server-mirrored create-sal
   assert.match(app,/frontdesk:new Set\(\['create_sales'\]\),bookkeeper:new Set\(\['view_finance'\]\)/);
   assert.match(detail,/const canWriteLoyalty=canWriteModule\('loyalty'\)&&hasRoleCapability\('create_sales'\)/);
   assert.match(memberships,/const canEnroll=canWrite&&hasRoleCapability\('create_sales'\)/);
-  assert.match(giftcards,/const canTransact=canWrite&&hasRoleCapability\('create_sales'\)/);
+  assert.match(giftcards,/const abilities=giftCardAbilitiesV102\(\{[\s\S]*createSales:hasRoleCapability\('create_sales'\),[\s\S]*giftcardsReadable:canReadModule\('giftcards'\),[\s\S]*giftcardsWritable:canWriteModule\('giftcards'\),[\s\S]*businessEnabled:giftCardsEnabled/);
+  assert.match(giftcards,/const canIssue=abilities\.canIssue,canRedeem=abilities\.canRedeem/);
   assert.match(till,/const canRecordSales=hasRoleCapability\('create_sales'\)&&canReadModule\('clients'\)/);
   assert.match(till,/if\(!canRecordSales\)[\s\S]*Additional access required/);
   assert.match(detail,/const canWriteLoyalty=canWriteModule\('loyalty'\)/);

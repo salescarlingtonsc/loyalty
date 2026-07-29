@@ -838,6 +838,18 @@
       "version": "20260729140000",
       "name": "nestly_v100_product_adoption_events",
       "sourcePath": "db/migrations/20260729_nestly_v100_product_adoption_events.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729150000",
+      "name": "nestly_v102_package_checkout_entitlements",
+      "sourcePath": "db/migrations/20260729_nestly_v102_package_checkout_entitlements.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729160000",
+      "name": "nestly_v103_customer_summary_business_identity",
+      "sourcePath": "db/migrations/20260729_nestly_v103_customer_summary_business_identity.sql"
     }
   ]
 }

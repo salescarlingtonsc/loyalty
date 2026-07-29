@@ -220,7 +220,8 @@ test('classic and catalog rewards share the v89 availability enum and produce tr
   const app=await read('app/index.html');
   const wallet=section(app,'async function renderCustomerWallet','async function renderCustomerInAppInbox');
   assert.match(wallet,/available_at_counter:'Available at counter'/);
-  assert.match(wallet,/disabled:'QR redemption is not enabled by this business'/);
+  assert.match(wallet,/disabled:'Unavailable for redemption'/);
+  assert.doesNotMatch(wallet,/Ask the business to enable QR redemption|QR redemption is not enabled by this business/);
   assert.match(wallet,/not_started:'Available soon'/);
   assert.match(wallet,/ended:'Offer ended'/);
   assert.match(wallet,/limit_reached:'Claim limit reached'/);

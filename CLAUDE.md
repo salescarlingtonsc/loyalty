@@ -1,5 +1,12 @@
 # Avocado — project instructions (loyalty platform)
 
+> **Current Nestly authority:** Read the root `AGENTS.md` and the product/QA
+> documents it lists before changing code. Those versioned documents contain the
+> owner's cumulative Nestly requirements, screenshot issue ledger, traceability
+> matrix, realistic fixtures, role journeys, and release evidence rules. Where
+> legacy Avocado/Frenly wording in this file conflicts with them, the current
+> Nestly product truth and a newer explicit owner instruction take precedence.
+
 > If this repo and the marketing-content repo ever conflict, note: **this folder is the
 > Avocado loyalty PRODUCT**; `marketing-content` is a separate "Super Marketing Brain"
 > repo with its own CLAUDE.md — do not merge them.

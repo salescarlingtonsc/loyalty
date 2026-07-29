@@ -45,7 +45,8 @@ test('v100 telemetry records interaction starts and views without asserting outc
   assert.doesNotMatch(scanner,/recordProductInteractionV100\([^)]*(?:completed|redeemed)/);
 
   const wallet=between('async function renderCustomerWallet','/* ---------- auth ---------- */');
-  assert.match(wallet,/'customer\.programme_viewed',b\.id/);
+  assert.match(wallet,/if\(businessId\)recordProductInteractionV100\('customer\.programme_viewed',businessId/);
+  assert.doesNotMatch(wallet,/'customer\.programme_viewed',b\.id/);
 
   const grow=between('async function growPage','/* ---------- Bring-back playbooks');
   assert.match(grow,/'merchant\.grow_opened'/);

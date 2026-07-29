@@ -64,21 +64,24 @@ test('Workspace & brand provides owner preview and replace controls wired only t
   assert.doesNotMatch(logo,/business_upsert_media_asset_v95|business_set_brand_presentation_v95/);
 });
 
-test('Quick Earn gift cards require create-sales plus effective gift-card read and write access',()=>{
-  const source=declaredFunction('canUseQuickEarnGiftCards');
-  const canUse=vm.runInNewContext(`(()=>{${source};return canUseQuickEarnGiftCards})()`);
-  assert.equal(canUse({
-    createSales:true,giftcardsReadable:true,giftcardsWritable:true
-  }),true);
-  assert.equal(canUse({
-    createSales:true,giftcardsReadable:false,giftcardsWritable:false
-  }),false,'an absent module must hide gift-card checkout');
-  assert.equal(canUse({
-    createSales:true,giftcardsReadable:true,giftcardsWritable:false
-  }),false,'read-only gift-card access must not issue value');
-  assert.equal(canUse({
-    createSales:false,giftcardsReadable:true,giftcardsWritable:true
-  }),false,'gift-card write access cannot bypass create-sales capability');
+test('Quick Earn gift cards require owner enablement plus create-sales and effective module access',()=>{
+  const source=declaredFunction('giftCardAbilitiesV102');
+  const abilities=vm.runInNewContext(`(()=>{${source};return giftCardAbilitiesV102})()`);
+  assert.equal(abilities({
+    createSales:true,giftcardsReadable:true,giftcardsWritable:true,businessEnabled:true
+  }).canIssue,true);
+  assert.equal(abilities({
+    createSales:true,giftcardsReadable:true,giftcardsWritable:true,businessEnabled:false
+  }).canIssue,false,'a business that has not enabled gift cards must not see issuance in Quick Earn');
+  assert.equal(abilities({
+    createSales:true,giftcardsReadable:false,giftcardsWritable:false,businessEnabled:true
+  }).canIssue,false,'an absent module must hide gift-card checkout');
+  assert.equal(abilities({
+    createSales:true,giftcardsReadable:true,giftcardsWritable:false,businessEnabled:true
+  }).canIssue,false,'read-only gift-card access must not issue value');
+  assert.equal(abilities({
+    createSales:false,giftcardsReadable:true,giftcardsWritable:true,businessEnabled:true
+  }).canIssue,false,'gift-card write access cannot bypass create-sales capability');
 });
 
 test('Quick Earn removes unauthorized gift-card lines and never calls issue_gift_card after access loss',()=>{

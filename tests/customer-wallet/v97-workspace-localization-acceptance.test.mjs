@@ -282,7 +282,7 @@ test('v97 localization preserves merchant/customer records even when values coll
 
 test('v97 named templates are an exact reviewed inventory with locale and placeholder parity',()=>{
   const keys=Object.keys(templateCopy);
-  assert.equal(keys.length,113,'mixed-interface interpolation inventory changed without review');
+  assert.equal(keys.length,116,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -566,7 +566,7 @@ test('v97 customer portal is English-only while profile language remains metadat
   assert.doesNotMatch(app,/customer_get_locale_preference_v95/);
   assert.doesNotMatch(app,/customer_set_locale_preference_v95/);
   assert.doesNotMatch(section('const CUSTOMER_COPY','const CUSTOMER_PRIMARY_NAV'),/'zh-CN'\s*:\s*Object\.freeze/);
-  assert.match(wallet,/customer_get_business_presentation_v95',\{p_business:b\.id,p_branch:null,p_locale:'en'\}/);
+  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:'en'\}\)/);
   assert.match(app,/id="customerProfileLanguage"/);
   assert.match(app,/p_preferred_language:language/);
 });

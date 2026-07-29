@@ -215,14 +215,16 @@ test('legacy anonymous Turnstile gateway and opaque management tokens remain int
   assert.match(v19, /token_hash\s+bytea|opaque|management_token/i);
 });
 
-test('SPA customer actions and notifications remain launch-gated until provider operations are approved', async () => {
+test('SPA customer actions and the dedicated in-app inbox remain capability gated', async () => {
   const app = await read('app/index.html');
   assert.match(app, /CUSTOMER_FEATURES_EMERGENCY_DISABLED/i,
     'customer-facing features need an emergency fail-closed build gate');
   assert.match(app, /\.rpc\(\s*['"]get_customer_feature_capabilities['"]/i,
     'normal customer enablement must come from private server capabilities');
   assert.match(app, /customerFeatures\.customer_actions/i);
-  assert.match(app, /customerFeatures\.customer_notifications/i);
+  assert.match(app, /context\.features\.customer_in_app_inbox===true/i);
+  assert.match(app, /href="#\/customer\/messages"/i,
+    'the customer notification bell must open the dedicated Messages route');
   assert.doesNotMatch(app, /customer_(?:request|cancel|reschedule|notification)[a-z_]*\s*\([^)]*\)\s*;?\s*(?!if|&&|\?)/i,
     'customer actions must not be wired as unconditional calls');
 });

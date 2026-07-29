@@ -263,8 +263,10 @@ test('Luna C46-R1: UI sync/offline failure clears stale actions and retry repeat
   assert.match(unavailable, /globalThis\.navigator\?\.onLine===false/i);
   assert.match(unavailable, /items=\[\];nextCursor=null;bell=null/i,
     'failure view must discard every previously rendered actionable item');
-  assert.match(unavailable, /slot\.innerHTML=''/i,
-    'failure view must remove a possibly stale unread bell');
+  assert.match(unavailable, /slot\.innerHTML=`<a class="customer-inbox-bell" href="#\/customer\/messages"/i,
+    'failure view must preserve navigation to Messages while clearing stale unread state');
+  assert.doesNotMatch(unavailable, /customer-inbox-badge|data-inbox-open|unread_count/i,
+    'failure view must not preserve a stale unread badge or programme action');
   assert.match(unavailable, /id="customerInboxSyncRetry"/i);
   assert.match(unavailable, /await\s+refreshInbox\(\)/i,
     'retry must repeat authoritative sync rather than directly loading stale history');

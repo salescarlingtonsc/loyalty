@@ -77,7 +77,7 @@ test('packages and expenses retain reads while their write actions follow the ex
   const expenses=section('async function expensesPage(){','/* ---------- P&L ---------- */');
   assert.match(packages,/const canWrite=canWriteModule\('packages'\)/);
   assert.match(packages,/const canSell=canWrite&&hasRoleCapability\('create_sales'\)/);
-  assert.match(packages,/if\(canWrite\)\$\('kadd'\)\.onclick/);
+  assert.match(packages,/if\(canWrite\)\{[\s\S]*\$\('kadd'\)\.onclick/);
   assert.match(packages,/if\(canSell\)\$\('ksell'\)\.onclick/);
   assert.match(packages,/canWrite&&k\.remaining>0/);
   assert.match(packages,/canWrite&&x\.can_reverse/);

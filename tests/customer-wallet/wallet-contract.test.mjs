@@ -248,7 +248,8 @@ test('v38 adds server-side personas, claim route, and private customer gates', a
   assert.match(app, /sb\.rpc\('customer_create_identity'/i);
   assert.match(app, /sb\.rpc\('customer_claim_link_by_email'/i);
   assert.match(app, /sb\.rpc\('customer_claim_link_invitation'/i);
-  assert.match(app, /sb\.rpc\('customer_unlink_business_link'/i);
+  assert.doesNotMatch(app, /sb\.rpc\('customer_unlink_business_link'/i,
+    'v103 removes customer self-disconnect from the wallet while retaining the backend audit contract');
   assert.match(app, /history\.replaceState[\s\S]{0,180}#\/claim/i);
   const routeBlock=app.slice(app.search(/async\s+function\s+route\s*\(/i));
   const firstAwait=routeBlock.search(/\bawait\b/);

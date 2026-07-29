@@ -776,8 +776,10 @@ input[type=range]:focus{box-shadow:none}
 .customer-merchant-hero .customer-programme-logo{width:66px;height:66px;margin-bottom:18px;background:rgba(255,255,255,.94);color:var(--merchant-accent,var(--coral));box-shadow:var(--shadow)}
 .customer-merchant-hero h1{font-size:clamp(2rem,6vw,3.25rem);line-height:1.02;letter-spacing:-.045em}.customer-merchant-hero p{color:rgba(255,255,255,.86);line-height:1.55;margin-top:8px}
 .customer-balance-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,.75fr);gap:14px;margin-top:14px}
-.customer-balance-value{font-size:clamp(2.2rem,7vw,4rem);font-weight:850;letter-spacing:-.055em;line-height:1}
+.customer-balance-panel.customer-balance-panel-single{grid-template-columns:minmax(0,560px)}
+.customer-balance-value{font-size:clamp(1.85rem,5vw,2.6rem);font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
 .customer-tier-track{height:10px;margin-top:13px;border-radius:999px;background:var(--hair);overflow:hidden}.customer-tier-track span{display:block;height:100%;width:var(--tier-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral));transition:width .25s var(--ease)}
+.wallet-history-disclosure{margin-top:14px;padding:0;overflow:hidden}.wallet-history-disclosure>summary{display:flex;align-items:center;gap:10px;min-height:56px;padding:16px 18px;cursor:pointer;font-weight:750;list-style-position:inside}.wallet-history-disclosure>summary .muted{font-weight:500}.wallet-history-disclosure[open]>summary{border-bottom:1px solid var(--hair)}.wallet-history-disclosure-body{display:grid;gap:14px;padding:14px}.wallet-history-disclosure .wallet-section{margin:0;box-shadow:none}
 .customer-perks-grid,.customer-offers-grid,.customer-rewards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin-top:12px}
 .customer-perk-card,.customer-offer-card,.customer-reward-card{overflow:hidden;min-height:120px;padding:16px;border:1px solid var(--hair);border-radius:15px;background:#fff}
 .customer-perk-card img,.customer-offer-card img,.customer-reward-card img{width:calc(100% + 32px);height:132px;margin:-16px -16px 14px;object-fit:cover;background:var(--bg)}
@@ -2634,14 +2636,14 @@ const CUSTOMER_COPY=Object.freeze({
     balance:'Balance',nextReward:'Next reward',tierProgress:'Tier progress',benefits:'Benefits & perks',
     offers:'Birthday & seasonal offers',rewards:'Rewards',activityHistory:'Activity & history',
     noBenefits:'No extra perks are available right now.',noOffers:'No birthday or seasonal offers are available right now.',
-    noRewards:'No rewards are available right now.',programmeUnavailable:'This programme could not be loaded.',
+    noRewards:'No rewards are available right now.',
     retry:'Try again',bookNow:'Book now',requestVisit:'Request your next visit with {business}.',
     points:'points',stamps:'stamps',currentTier:'Current tier',nextTier:'Next: {tier}',
-    noTier:'Every visit still counts.',terms:'Terms',availableNow:'Available now',
+    terms:'Terms',availableNow:'Available now',
     loadingProgramme:'Loading programme…',loadingProgrammes:'Loading your programmes…',
     successSounds:'Success sounds',soundOff:'Off by default',soundOn:'On',
     soundHelp:'Optional. Sounds stay off when reduced motion is requested.',
-    disconnect:'Disconnect',merchantProgramme:'{business} programme',featured:'Featured products & services',
+    merchantProgramme:'{business} programme',featured:'Featured products & services',
     noFeatured:'This business has not published featured items yet.'
   })
 });
@@ -3568,16 +3570,37 @@ function customerProgrammeSwitcherMarkup(cards=[],activeSlug=''){
     return `<a href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-current="${business.slug===activeSlug?'true':'false'}">${esc(business.name||ct('localBusiness'))}</a>`;
   }).join('')}</div>`;
 }
+function customerPointTotalV103(value){
+  return new Intl.NumberFormat('en-SG',{maximumFractionDigits:0})
+    .format(Math.max(0,Number(value)||0));
+}
+function customerTierHasProgressV103(tier={}){
+  const named=[tier.current,tier.label,tier.next].some(value=>String(value||'').trim().length>0);
+  const progress=Number(tier.progress_percent);
+  return named||(Number.isFinite(progress)&&progress>0);
+}
+function customerBusinessIdV103({summaryBusiness={},actionableCard=null,programmeCards=[],businessSlug=''}={}){
+  const matchingCard=(Array.isArray(programmeCards)?programmeCards:[])
+    .find(card=>card?.business?.slug===businessSlug);
+  const candidates=[
+    summaryBusiness?.id,
+    actionableCard?.business?.id,
+    matchingCard?.business?.id
+  ];
+  return candidates.map(value=>String(value||'').trim())
+    .find(value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value))||null;
+}
 function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled}){
-  const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||presentation.rewards[0]||null;
+  const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{},progress=Math.max(0,Math.min(100,Number(tier.progress_percent||0)));
+  const hasTier=customerTierHasProgressV103(tier);
   const unitLabel=ct(presentation.unit);
   const nextRewardText=reward
     ?reward.available_now===true?`${reward.name||ct('nextReward')} · ${ct('availableNow')}`
       :`${Number(reward.remaining_units||0)} ${unitLabel} · ${reward.name||ct('nextReward')}`
-    :ct('noRewards');
+    :'';
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
-  return `<header class="customer-page-head"><div><p class="customer-quest-kicker">${esc(ct('merchantProgramme',{business:business.name||ct('localBusiness')}))}</p></div><button class="btn sm" id="customerMerchantScan" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button></header>
+  return `<header class="customer-page-head"><div><p class="customer-quest-kicker">${esc(ct('merchantProgramme',{business:business.name||ct('localBusiness')}))}</p></div></header>
     ${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
     <section class="customer-merchant-hero" style="--merchant-accent:${esc(presentation.heroColor)}" aria-labelledby="customerMerchantTitle">
       ${presentation.heroImageUrl?`<div class="customer-merchant-hero-media"><img src="${esc(presentation.heroImageUrl)}" alt="" loading="eager"></div>`:''}
@@ -3586,16 +3609,16 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
         <h1 id="customerMerchantTitle">${esc(presentation.name)}</h1><p>${esc(presentation.tagline)}</p>
       </div>
     </section>
-    <div class="customer-balance-panel" style="--merchant-accent:${esc(presentation.heroColor)}">
-      <section class="card"><p class="customer-quest-kicker">${esc(ct('balance'))}</p><div class="customer-balance-value">${Number(presentation.balance??loyalty.balance??0)}</div><p class="muted">${esc(unitLabel)}</p>
-        <div class="wallet-line"><div><b>${esc(ct('nextReward'))}</b><p class="muted small" style="margin-top:4px">${esc(nextRewardText)}</p></div></div>
+    <div class="customer-balance-panel${hasTier?'':' customer-balance-panel-single'}" style="--merchant-accent:${esc(presentation.heroColor)}">
+      <section class="card"><p class="customer-quest-kicker">${esc(ct('balance'))}</p><div class="customer-balance-value">${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}</div><p class="muted">${esc(unitLabel)}</p>
+        ${reward?`<div class="wallet-line"><div><b>${esc(ct('nextReward'))}</b><p class="muted small" style="margin-top:4px">${esc(nextRewardText)}</p></div></div>`:''}
       </section>
-      <section class="card"><p class="customer-quest-kicker">${esc(ct('tierProgress'))}</p><h2 style="margin-top:7px">${esc(tier.current||tier.label||ct('noTier'))}</h2>
-        ${tier.next?`<p class="muted small" style="margin-top:5px">${esc(ct('nextTier',{tier:tier.next}))}</p><div class="customer-tier-track" role="progressbar" aria-label="${esc(ct('tierProgress'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--tier-progress:${progress}%"><span></span></div>`:`<p class="muted small" style="margin-top:6px">${esc(ct('noTier'))}</p>`}
-      </section>
+      ${hasTier?`<section class="card"><p class="customer-quest-kicker">${esc(ct('tierProgress'))}</p><h2 style="margin-top:7px">${esc(tier.current||tier.label||ct('currentTier'))}</h2>
+        ${tier.next?`<p class="muted small" style="margin-top:5px">${esc(ct('nextTier',{tier:tier.next}))}</p>`:''}
+        <div class="customer-tier-track" role="progressbar" aria-label="${esc(ct('tierProgress'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--tier-progress:${progress}%"><span></span></div>
+      </section>`:''}
     </div>
     ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><a class="btn" href="#/b/${encodeURIComponent(business.slug)}">${esc(ct('bookNow'))}</a></div></section>`:''}
-    ${presentation.rewards.length?`<div class="customer-section-title"><h2>${esc(ct('rewards'))}</h2></div><div class="customer-rewards-grid">${presentation.rewards.map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('rewards'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}${item.terms?`<details style="margin-top:8px"><summary class="small">${esc(ct('terms'))}</summary><p class="muted small" style="margin-top:5px">${esc(item.terms)}</p></details>`:''}</article>`).join('')}</div>`:''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products,...presentation.services].map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('featured'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}</article>`).join('')}</div>`:''}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}
     ${presentation.offers.length?`<div class="customer-section-title"><h2>${esc(ct('offers'))}</h2></div><div class="customer-offers-grid">${presentation.offers.map(item=>`<article class="customer-offer-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('offers'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}${item.terms?`<details style="margin-top:8px"><summary class="small">${esc(ct('terms'))}</summary><p class="muted small" style="margin-top:5px">${esc(item.terms)}</p></details>`:''}</article>`).join('')}</div>`:''}`;
@@ -3802,12 +3825,18 @@ async function renderCustomerWallet(businessSlug=null){
   if(!isWalletCurrent())return;
   if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
   const b=summary.business||{},loyalty=summary.loyalty||{},packages=summary.packages||{},membership=summary.membership||{};
-  recordProductInteractionV100('customer.programme_viewed',b.id,{
-    context:{entry_point:'customer_wallet',locale:customerLocale,surface_version:'v100'}
+  const businessId=customerBusinessIdV103({
+    summaryBusiness:b,actionableCard,programmeCards,businessSlug
+  });
+  if(businessId)recordProductInteractionV100('customer.programme_viewed',businessId,{
+      context:{entry_point:'customer_wallet',locale:customerLocale,surface_version:'v100'}
+    });
+  const unavailableBusinessId=()=>Promise.resolve({
+    data:null,error:{code:'business_id_unavailable',message:'Business identifier is unavailable'}
   });
   const [businessActionsResult,presentationResult]=await Promise.all([
-    sb.rpc('customer_get_business_actions_v89',{p_business:b.id}),
-    sb.rpc('customer_get_business_presentation_v95',{p_business:b.id,p_branch:null,p_locale:'en'})
+    businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
+    businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId()
   ]);
   if(!isWalletCurrent())return;
   const businessActions=businessActionsResult.error?null:businessActionsResult.data;
@@ -3815,34 +3844,35 @@ async function renderCustomerWallet(businessSlug=null){
   const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
+  const showCreditMetric=loyalty.enabled===true&&Number(loyalty.credit_balance_cents||0)>0;
+  const showPackageMetric=capabilities.packages===true&&Number(packages.sessions_remaining||0)>0;
+  const showMembershipMetric=capabilities.membership===true&&membership.active===true;
+  const showSecondaryMetrics=!actionableCard&&(showCreditMetric||showPackageMetric||showMembershipMetric);
   const hasWalletSection=true;
   $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled})}
-    ${presentationResult.error?`<section class="card" role="status" style="margin-top:14px"><div class="row"><p class="muted small">${esc(ct('programmeUnavailable'))}</p><span class="spacer"></span><button class="btn ghost sm" id="customerPresentationRetry" type="button">${esc(ct('retry'))}</button></div></section>`:''}
-    <div class="row" style="margin-top:18px"><span class="spacer"></span>${customerFeatures.customer_claims?`<button class="btn danger sm" id="walletUnlink">${esc(ct('disconnect'))}</button>`:''}</div>
-    ${actionableCard?'':`<div class="wallet-metrics">
-      ${loyalty.enabled?`<div class="wallet-metric"><span class="muted small">${esc(loyalty.unit||'points')}</span><b>${Number(loyalty.balance||0)}</b></div>
-      <div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents||0)/100).toFixed(2)}</b></div>`:''}
-      ${capabilities.packages?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining||0)}</b></div>`:''}
-      ${capabilities.membership?`<div class="wallet-metric"><span class="muted small">Membership</span><b>${membership.active?'Active':'Inactive'}</b></div>`:''}
-    </div>`}
+    ${showSecondaryMetrics?`<div class="wallet-metrics">
+      ${showCreditMetric?`<div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents)/100).toFixed(2)}</b></div>`:''}
+      ${showPackageMetric?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining)}</b></div>`:''}
+      ${showMembershipMetric?`<div class="wallet-metric"><span class="muted small">Membership</span><b>Active</b></div>`:''}
+    </div>`:''}
     <div class="wallet-sections" id="walletSections">
-      ${capabilities.rewards?walletSectionShell('walletRewards','Rewards','Browse rewards and ask the team to claim at the counter.'):''}
-      ${walletSectionShell('walletTransactions','Transactions & points','Every purchase, reversal, correction, and points event kept in time order.')}
-      ${capabilities.activity?walletSectionShell('walletActivity','Activity','Your loyalty history with this business.'):''}
+      ${capabilities.rewards?walletSectionShell('walletRewards','Rewards','Choose an eligible reward and show its QR at the counter.'):''}
+      <details class="card wallet-history-disclosure" id="walletHistoryDisclosure">
+        <summary><span>History</span><span class="muted small">Transactions and loyalty activity</span></summary>
+        <div class="wallet-history-disclosure-body">
+          ${walletSectionShell('walletTransactions','Transactions & points','Every purchase, reversal, correction, and points event kept in time order.')}
+          ${capabilities.activity?walletSectionShell('walletActivity','Loyalty activity','Your loyalty history with this business.'):''}
+        </div>
+      </details>
       ${walletSectionShell('walletGiftCards','Gift cards','Money left on your gift cards from this business.')}
       ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
       ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
       ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
       ${walletSectionShell('walletFeedback','Your visit feedback','Share how your visits went — private to this business.')}
-      ${customerFeatures.customer_in_app_inbox?`<section class="card wallet-section" id="customerInAppInbox" aria-busy="true" tabindex="-1"><div class="wallet-skeleton"></div></section>`:''}
       ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
-    </div>
-    ${customerFeatures.customer_notifications?'<div id="customerNotificationPreferences"></div>':''}`;
-  $('customerMerchantScan').onclick=openCustomerJoinScanner;
-  if($('customerPresentationRetry'))$('customerPresentationRetry').onclick=()=>renderCustomerWallet(businessSlug);
+    </div>`;
   focusCustomerRoute();
-  let unlinkAttemptId=crypto.randomUUID();
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
      rating; a high rating only adds an extra prominent share card. review_url rides the existing
@@ -3873,16 +3903,6 @@ async function renderCustomerWallet(businessSlug=null){
   if(birthdayShow)birthdayShow.onclick=()=>{
     const status=$('birthdayBenefitCounter');if(status)status.textContent='Show this screen to the team at the counter. No birthday details are shared with the business.';
   };
-  const unlinkButton=$('walletUnlink');
-  if(unlinkButton)unlinkButton.onclick=async()=>{
-    if(!confirm(`Disconnect this business from ${BRAND.customerLabel}? Your customer history stays with the business, but this account will immediately lose wallet access.`))return;
-    unlinkButton.disabled=true;
-    const {error}=await sb.rpc('customer_unlink_business_link',{
-      p_business_slug:businessSlug,p_idempotency_key:unlinkAttemptId});
-    if(!isWalletCurrent()||!unlinkButton.isConnected)return;
-    if(error){unlinkButton.disabled=false;return toast('Customer access is unavailable. Please try again later.')}
-    toast('Business disconnected');nav('#/wallet');
-  };
   ensureWalletEmptyState(businessSlug);
   const isWalletSectionCurrent=(host)=>walletSectionStillCurrent(host,isWalletCurrent);
   const loadRewards=async()=>{
@@ -3890,7 +3910,7 @@ async function renderCustomerWallet(businessSlug=null){
     host.setAttribute('aria-busy','true');
     const [catalogResult,actionsResult]=await Promise.all([
       sb.rpc('customer_get_reward_catalog',args),
-      sb.rpc('customer_get_business_actions_v89',{p_business:b.id})
+      businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId()
     ]);
     const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
@@ -3917,14 +3937,14 @@ async function renderCustomerWallet(businessSlug=null){
     if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards','No rewards are available right now.',businessSlug,'rewards',loadRewards,isWalletCurrent);
     const availability={
       available_at_counter:'Available at counter',
-      disabled:'QR redemption is not enabled by this business',
+      disabled:'Unavailable for redemption',
       insufficient_balance:'More points needed',
       not_started:'Available soon',
       ended:'Offer ended',
       limit_reached:'Claim limit reached'
     };
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Rewards</h2><p class="muted small">Claims are completed with the team at the counter.</p></div></div><div class="wallet-rewards">${rewards.map(r=>`<article class="wallet-reward">
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Rewards</h2><p class="muted small">Choose an eligible reward, then let the team scan its QR at the counter.</p></div></div><div class="wallet-rewards">${rewards.map(r=>`<article class="wallet-reward">
       ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b>${esc(r.customer_name||'Reward')}</b><span class="spacer"></span><span class="pill">${Number(r.cost_points||0)} ${esc(loyalty.unit||'points')}</span></div>
       ${r.description?`<p class="muted small" style="margin-top:7px">${esc(r.description)}</p>`:''}<p class="small" style="margin-top:9px">${esc(availability[r.availability]||'Ask at counter')}</p>
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
@@ -3932,8 +3952,8 @@ async function renderCustomerWallet(businessSlug=null){
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
       ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}
       <div class="wallet-reward-actions">${r.action_key&&customerRewardCanRedeem(r,redemptionEnabled)
-        ?`<button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('redeem',{size:17})}<span>Redeem</span></button>`
-        :r.availability==='available_at_counter'?'<span class="muted small">Ask the business to enable QR redemption.</span>':''}</div></article>`).join('')}</div>`;
+        ?`<button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('redeem',{size:17})}<span>Redeem now</span></button>`
+        :''}</div></article>`).join('')}</div>`;
     let redemptionAttempt=null;
     host.querySelectorAll('[data-customer-redeem]').forEach(button=>button.onclick=async()=>{
       const reward=rewards.find(item=>item.action_key===button.dataset.customerRedeem);
@@ -3944,10 +3964,10 @@ async function renderCustomerWallet(businessSlug=null){
       button.disabled=true;button.querySelector('span').textContent='Preparing QR…';
       const {data:intent,error:intentError}=await sb.rpc('customer_create_redemption_intent_v89',
         customerRedemptionIntentArgsV89({
-          businessId:b.id,reward,idempotencyKey:redemptionAttempt.key
+          businessId,reward,idempotencyKey:redemptionAttempt.key
         }));
       if(!isWalletSectionCurrent(host)||!button.isConnected)return;
-      button.disabled=false;button.querySelector('span').textContent='Redeem';
+      button.disabled=false;button.querySelector('span').textContent='Redeem now';
       if(intentError){
         toast(intentError.code==='PGRST202'||intentError.code==='42883'
           ?'QR redemption needs the latest Nestly service update.'
@@ -3971,11 +3991,11 @@ async function renderCustomerWallet(businessSlug=null){
     if(error)return walletSectionError('walletActivity',walletRpcDenied(error)?'Loyalty activity is not available for this account.':'Activity could not be loaded.',()=>loadActivity(cursor));
     const next=Array.isArray(data?.items)?data.items:[];
     activityState.items=cursor?[...activityState.items,...next]:next;activityState.nextCursor=data?.next_cursor||null;
-    if(!cursor)customerConfirmedEarnFeedback(b.id,next,data?.unit||loyalty.unit||'points');
+    if(!cursor)customerConfirmedEarnFeedback(businessId,next,data?.unit||loyalty.unit||'points');
     if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity','No loyalty activity is available yet.',businessSlug,'activity',()=>loadActivity(null),isWalletCurrent);
     const unit=esc(data?.unit||loyalty.unit||'points'),expiry=data?.expiry||{};
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Activity</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${Number(expiry.expiring_next_30_days)} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:'<p class="muted small">Your loyalty history with this business.</p>'}</div></div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Loyalty activity</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${Number(expiry.expiring_next_30_days)} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:'<p class="muted small">Your loyalty history with this business.</p>'}</div></div>
       <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0),campaign=campaignEntitlementDisplayV99(item);return `<div class="wallet-line"><div><b>${esc(campaign.title||'Loyalty activity')}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${campaign.status?' · '+esc(campaign.status.replaceAll('_',' ')):''}</p>${campaign.detail?`<p class="muted small" style="margin-top:3px">${esc(campaign.detail)}</p>`:''}</div><span class="spacer"></span>${campaign.pending?'<span class="pill off">Pending with business</span>':`<span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':''}${delta} ${unit}</span>`}</div>`}).join('')}</div>
       ${activityState.nextCursor?'<button class="btn ghost sm" id="walletActivityMore" style="margin-top:12px">Load more</button>':''}`;
     if($('walletActivityMore'))$('walletActivityMore').onclick=()=>{ $('walletActivityMore').disabled=true;loadActivity(activityState.nextCursor) };
@@ -4007,8 +4027,8 @@ async function renderCustomerWallet(businessSlug=null){
     transactionState.nextCursor=data?.next_cursor||null;
     host.setAttribute('aria-busy','false');
     if(!transactionState.items.length){
-      host.innerHTML='<div class="wallet-section-head"><div><h2>Transactions &amp; points</h2><p class="muted small">No purchases or points activity has been recorded for this programme yet.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletTransactionsRetry">Refresh</button></div>';
-      $('walletTransactionsRetry').onclick=()=>loadTransactions(null);return;
+      host.innerHTML='<div class="wallet-section-head"><div><h2>Transactions &amp; points</h2><p class="muted small">No purchases or points activity has been recorded for this programme yet.</p></div></div>';
+      return;
     }
     const historyCurrency=String(data?.business?.currency||currency);
     const historyMoney=cents=>`${historyCurrency} ${(Number(cents||0)/100).toFixed(2)}`;
@@ -4172,8 +4192,6 @@ async function renderCustomerWallet(businessSlug=null){
   };
   await Promise.all([loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback()]);
   if(!isWalletCurrent())return;
-  if(customerFeatures.customer_notifications) renderCustomerNotificationPreferences(businessSlug,isWalletCurrent);
-  if(customerFeatures.customer_in_app_inbox===true) renderCustomerInAppInbox(businessSlug,isWalletCurrent,actionableCard);
 }
 
 async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionableCard=null){
@@ -4205,9 +4223,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     if(!walletSectionStillCurrent(host,isCurrent)||!slotCurrent())return null;
     if(error)return {error};
     const unread=Math.max(0,Number(data?.unread_count||0));
-    slot.innerHTML=`<button type="button" class="customer-inbox-bell" id="customerInboxBell" aria-label="Open inbox" aria-controls="customerInAppInbox" title="${unread?`${unread} unread inbox item${unread===1?'':'s'}`:'Open inbox'}">${CUI.icon('bell',{size:19})}${unread?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</button>`;
-    const bell=$('customerInboxBell');
-    if(bell)bell.onclick=()=>{if(!walletSectionStillCurrent(host,isCurrent))return;host.focus({preventScroll:true});host.scrollIntoView({behavior:'smooth',block:'start'});};
+    slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread?`Open messages, ${unread} unread`:'Open messages'}" title="${unread?`${unread} unread message${unread===1?'':'s'}`:'Open messages'}">${CUI.icon('bell',{size:19})}${unread?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
     return {unread,quiet:data?.quiet_hours_active===true};
   };
   const render=()=>{
@@ -4269,7 +4285,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
       ?'You appear to be offline. Reconnect, then retry to refresh your current programme updates.'
       :'We could not refresh your current programme updates. Programme actions are hidden until refresh succeeds.';
     items=[];nextCursor=null;bell=null;
-    if(slotCurrent())slot.innerHTML='';
+    if(slotCurrent())slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="Open messages" title="Open messages">${CUI.icon('bell',{size:19})}</a>`;
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${heading}</h2><p class="muted small" role="status" aria-live="polite">${message}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerInboxSyncRetry">Retry inbox refresh</button></div>`;
     const retry=host.querySelector('#customerInboxSyncRetry');
@@ -5601,6 +5617,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   receiptConfirmationsFailed:Object.freeze({en:'{count} confirmations could not be recorded. Retry the same selected customers.','zh-CN':'有 {count} 项确认无法记录。请重试相同的已选顾客。',ms:'{count} pengesahan tidak dapat direkodkan. Cuba semula pelanggan terpilih yang sama.'}),
   exposureRetryChannelLocked:Object.freeze({en:'This retry is locked to {channel} because that is the channel you originally confirmed. Choose that channel, or close and start a separate new attempt.','zh-CN':'此重试已锁定为 {channel}，因为这是您最初确认的渠道。请选择该渠道，或关闭后另行开始新的尝试。',ms:'Cubaan semula ini dikunci kepada {channel} kerana itulah saluran yang anda sahkan pada asalnya. Pilih saluran itu, atau tutup dan mulakan cubaan baharu yang berasingan.'}),
   exposureRetryMixedChannels:Object.freeze({en:'Selected retries use different confirmed channels. Retry one channel group at a time.','zh-CN':'所选重试使用不同的已确认渠道。请每次仅重试一个渠道组。',ms:'Cubaan semula yang dipilih menggunakan saluran pengesahan yang berbeza. Cuba semula satu kumpulan saluran pada satu masa.'}),
+  packageVersionCreated:Object.freeze({en:'New package version v{version} created; prior version archived','zh-CN':'已创建配套新版本 v{version}；旧版本已归档',ms:'Versi pakej baharu v{version} dicipta; versi terdahulu diarkibkan'}),
+  packageSoldWithPoints:Object.freeze({en:'Package sold · {earned} points earned · {total} total points','zh-CN':'配套已售出 · 获得 {earned} 分 · 总积分 {total}',ms:'Pakej dijual · {earned} mata diperoleh · jumlah mata {total}'}),
+  packageSoldNoPoints:Object.freeze({en:'Package sold · 0 points earned · {total} total points','zh-CN':'配套已售出 · 获得 0 分 · 总积分 {total}',ms:'Pakej dijual · 0 mata diperoleh · jumlah mata {total}'}),
   giftCardLoaded:Object.freeze({en:'{amount} loaded onto account 🎉','zh-CN':'已将 {amount} 存入账户 🎉',ms:'{amount} dimasukkan ke dalam akaun 🎉'}),
   sessionUsed:Object.freeze({en:'Session used — {remaining} left. Visit counted for retention ✓','zh-CN':'已使用一次——剩余 {remaining} 次。此次到访已计入回流统计 ✓',ms:'Sesi digunakan — baki {remaining}. Lawatan dikira untuk pengekalan ✓'}),
   catalogueEnabled:Object.freeze({en:'Catalogue-first checkout enabled','zh-CN':'已启用目录优先结账',ms:'Pembayaran katalog dahulu diaktifkan'}),
@@ -5685,7 +5704,9 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'bookedWith','newReturn','newReturns','measurementStarted','measurementStartedEnds',
   'receiptConfirmationRecorded','receiptConfirmationsRecorded',
   'receiptConfirmationFailed','receiptConfirmationsFailed',
-  'exposureRetryChannelLocked','exposureRetryMixedChannels','giftCardLoaded','sessionUsed',
+  'exposureRetryChannelLocked','exposureRetryMixedChannels',
+  'packageVersionCreated','packageSoldWithPoints','packageSoldNoPoints',
+  'giftCardLoaded','sessionUsed',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
@@ -6403,7 +6424,7 @@ async function clientDetail(id){
     /* Membership + package events for the unified timeline and the status badges. These reuse
        the same tables the Memberships / Packages pages already query, now scoped to one client. */
     sb.from('memberships').select('*, membership_plans(name,price_cents,cadence)').eq('business_id',S.biz.id).eq('client_id',id).order('created_at',{ascending:false}),
-    sb.from('client_packages').select('*, package_plans(name,sessions)').eq('business_id',S.biz.id).eq('client_id',id).order('purchased_at',{ascending:false})]);
+    sb.from('client_packages').select('id,business_id,client_id,purchased_at,remaining,status,plan_name_snapshot,sessions_snapshot,plan_version_snapshot,price_cents_snapshot,service_name_snapshot,service_variant_snapshot,service_duration_min_snapshot,list_unit_cents_snapshot,list_value_cents_snapshot').eq('business_id',S.biz.id).eq('client_id',id).order('purchased_at',{ascending:false})]);
   if(!isClientDetailCurrent())return;
   if(error) throw error;
   let reversalData=null;
@@ -6441,8 +6462,11 @@ async function clientDetail(id){
   const histGrants=(rg||[]).map(g=>({...g,t:g.granted_at,kind:'grant',program:g.program_name}));
   const histMemberships=(msRows||[]).map(m=>({t:m.created_at,kind:'membership',plan:m.membership_plans?.name,
     status:m.status,cadence:m.membership_plans?.cadence,renews:m.current_period_end}));
-  const histPackages=(cpRows||[]).map(k=>({t:k.purchased_at,kind:'package',plan:k.package_plans?.name,
-    sessions:k.package_plans?.sessions,remaining:k.remaining,status:k.status}));
+  const histPackages=(cpRows||[]).map(k=>({t:k.purchased_at,kind:'package',plan:k.plan_name_snapshot,
+    planVersion:k.plan_version_snapshot,sessions:k.sessions_snapshot,remaining:k.remaining,status:k.status,
+    priceCents:k.price_cents_snapshot,service:k.service_name_snapshot,
+    serviceVariant:k.service_variant_snapshot,serviceDuration:k.service_duration_min_snapshot,
+    listUnitCents:k.list_unit_cents_snapshot,listValueCents:k.list_value_cents_snapshot}));
   const history=[...histSales,...histAppts,...histRedemptions,...histGrants,...histMemberships,...histPackages]
     .sort((a,b)=>(b.t||'').localeCompare(a.t||''));
   let histShown=50;
@@ -6811,10 +6835,97 @@ function renderHistPage(history,n){
 function canScanCustomerRedemption({createSales,clientsReadable,loyaltyWritable}={}){
   return createSales===true&&clientsReadable===true&&loyaltyWritable===true;
 }
-function canUseQuickEarnGiftCards({
-  createSales,giftcardsReadable,giftcardsWritable
+function giftCardAbilitiesV102({
+  createSales,giftcardsReadable,giftcardsWritable,businessEnabled
 }={}){
-  return createSales===true&&giftcardsReadable===true&&giftcardsWritable===true;
+  const authority=createSales===true&&giftcardsReadable===true&&giftcardsWritable===true;
+  return {
+    canIssue:authority&&businessEnabled===true,
+    canRedeem:authority
+  };
+}
+function packageSaleResultV102(data){
+  const valid=data?.status==='completed'&&!!data?.sale_id&&!!data?.client_package_id
+    &&Number.isFinite(Number(data?.points_earned))&&Number.isFinite(Number(data?.points_total));
+  return valid?{
+    saleId:String(data.sale_id),
+    clientPackageId:String(data.client_package_id),
+    pointsEarned:Number(data.points_earned),
+    pointsTotal:Number(data.points_total),
+    replayed:data.replayed===true
+  }:null;
+}
+function packageUseResultV102(data){
+  const valid=data?.status==='completed'&&!!data?.consumption_id&&!!data?.sale_id
+    &&!!data?.client_package_id&&!!data?.client_id&&!!data?.branch_id
+    &&Number.isFinite(Number(data?.remaining_before))
+    &&Number.isFinite(Number(data?.remaining_after))
+    &&Number(data?.points_earned)===0
+    &&Number.isFinite(Number(data?.points_total));
+  return valid?{
+    consumptionId:String(data.consumption_id),
+    saleId:String(data.sale_id),
+    clientPackageId:String(data.client_package_id),
+    branchId:String(data.branch_id),
+    remainingBefore:Number(data.remaining_before),
+    remainingAfter:Number(data.remaining_after),
+    pointsEarned:0,
+    pointsTotal:Number(data.points_total),
+    replayed:data.replayed===true
+  }:null;
+}
+function checkoutPreferencesStateV102(result){
+  const available=!result?.error&&result?.data?.status==='available'
+    &&typeof result.data.gift_card_sales_enabled==='boolean'
+    &&typeof result.data.package_earns_points==='boolean';
+  return {
+    available,
+    giftCardSalesEnabled:available?result.data.gift_card_sales_enabled===true:null,
+    packageEarnsPoints:available?result.data.package_earns_points===true:null
+  };
+}
+function packageUseAttemptKeyV102(attempts,clientPackageId,branchId,createKey=()=>crypto.randomUUID()){
+  const slot=`${clientPackageId}|${branchId}`;
+  if(!attempts.has(slot))attempts.set(slot,createKey());
+  return {slot,key:attempts.get(slot)};
+}
+function checkoutPointsReceiptV102({saleResult,packageResults=[],refreshedPoints=null}={}){
+  const operations=[];
+  if(saleResult&&Number.isFinite(Number(saleResult.pointsEarned))){
+    operations.push({
+      kind:'sale',
+      pointsEarned:Number(saleResult.pointsEarned),
+      pointsTotal:saleResult.pointsTotal!=null&&Number.isFinite(Number(saleResult.pointsTotal))
+        ?Number(saleResult.pointsTotal):null
+    });
+  }
+  for(const result of packageResults){
+    if(!result||!Number.isFinite(Number(result.pointsEarned)))continue;
+    operations.push({
+      kind:'package',
+      pointsEarned:Number(result.pointsEarned),
+      pointsTotal:result.pointsTotal!=null&&Number.isFinite(Number(result.pointsTotal))
+        ?Number(result.pointsTotal):null
+    });
+  }
+  const lastOperationTotal=[...operations].reverse().find(item=>item.pointsTotal!=null)?.pointsTotal??null;
+  const currentTotal=refreshedPoints!=null&&Number.isFinite(Number(refreshedPoints))
+    ?Number(refreshedPoints):null;
+  return {
+    pointsEarned:operations.reduce((sum,item)=>sum+item.pointsEarned,0),
+    // A writer receipt is the checkout snapshot. A later lookup is only a fallback when the
+    // writer has no total; a mismatch may be unrelated concurrent ledger activity.
+    pointsTotal:lastOperationTotal??currentTotal,
+    balanceConsistent:lastOperationTotal==null||currentTotal==null||lastOperationTotal===currentTotal,
+    operations
+  };
+}
+function serviceDisplayName(service={}){
+  const name=String(service.name||service.service_name||'Service').trim()||'Service';
+  const variant=String(service.variant_label||'').trim();
+  const duration=Number(service.duration_min);
+  const detail=variant||(duration>0?`${duration} min`:'');
+  return detail?`${name} · ${detail}`:name;
 }
 async function tillPage(){
   const routeMain=M();
@@ -6826,11 +6937,12 @@ async function tillPage(){
     clientsReadable:canReadModule('clients'),
     loyaltyWritable:canWriteModule('loyalty')
   });
-  const canIssueGiftCards=()=>canUseQuickEarnGiftCards({
+  const canIssueGiftCards=()=>giftCardAbilitiesV102({
     createSales:hasRoleCapability('create_sales'),
     giftcardsReadable:canReadModule('giftcards'),
-    giftcardsWritable:canWriteModule('giftcards')
-  });
+    giftcardsWritable:canWriteModule('giftcards'),
+    businessEnabled:S.biz.gift_card_sales_enabled===true
+  }).canIssue;
   if(!canRecordSales){
     routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Customer lookup and purchase recording are unavailable for this role.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Additional access required',description:'Quick earn requires customer read access and permission to record purchases.',body:'<p class="muted small">Ask an owner to review your Customers and Quick earn assignments.</p>'})}`;
     return;
@@ -6883,8 +6995,9 @@ async function tillPage(){
   let cart=[];            // lines: {lineId,type:'service'|'product'|'custom'|'giftcard'|'package'|'membership',ref,label,unit_cents,qty,reason?,key?}
                            // service/product/custom = evaluated by evaluate_checkout, then finalised by ONE record_cart_sale (PS-1C.1);
                            // custom carries a mandatory staff `reason`; giftcard/package/membership = each its own server-idempotent RPC per line.
-  let catalog=null;       // {services,products|null,packages|null,memberships|null} lazy-loaded once
+  let catalog=null;       // catalogue + customer package/voucher entitlements, loaded together
   let catalogLoading=false, catalogError=null;
+  const packageUseAttemptsV102=new Map(); // client-package + branch -> stable key until confirmed success
   let saleCommitted=false, saleResult=null; // once the cart sale succeeds it is LOCKED; a retry never
                                              // re-runs it, only the failed gift/package/membership calls.
   let checkoutError=null;  // extras partial-failure banner state (kernel already committed)
@@ -7091,7 +7204,7 @@ async function tillPage(){
          keeps the exact points/retention/referral firing and the reserve->complete idempotency of
          the till today. A single-retail cart FEFO-deducts stock server-side; multi-retail does not.
        • gift cards -> issue_gift_card (unchanged), one call per line, AFTER the sale.
-       • packages -> sell_package(…,p_idempotency_key uuid) 4-arg overload; memberships ->
+       • packages -> sell_package_v102(…,p_branch,p_idempotency_key) with an authoritative receipt; memberships ->
          enroll_membership_v41(…,p_idempotency_key uuid) 4-arg overload. Both are now server-
          idempotent (v51a keyed ledger), so they are admitted as their own per-line calls exactly
          like gift cards — NEVER as record_cart_sale line items (the engine treats those item_types
@@ -7101,7 +7214,7 @@ async function tillPage(){
     catalogLoading=true;catalogError=null;
     const wantPackages=canWriteModule('packages');
     const wantMemberships=canWriteModule('memberships');
-    const [checkout,pkg,mem]=await Promise.all([
+    const [checkout,pkg,mem,preferences,entitlements,serviceMeta]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
          reconstructs or broadens that availability rule. */
@@ -7111,7 +7224,13 @@ async function tillPage(){
       wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).order('name')
         :Promise.resolve({data:null,error:null}),
       wantMemberships?sb.from('membership_plans').select('id,name,price_cents,cadence,active').eq('business_id',S.biz.id).eq('active',true).order('name')
-        :Promise.resolve({data:null,error:null})
+        :Promise.resolve({data:null,error:null}),
+      sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id}),
+      sb.rpc('staff_get_customer_entitlements_v102',{
+        p_business:S.biz.id,p_client:cust.client_id
+      }),
+      sb.from('services').select('id,name,variant_label,duration_min')
+        .eq('business_id',S.biz.id)
     ]);
     if(!isTillCurrent())return;
     catalogLoading=false;
@@ -7122,15 +7241,28 @@ async function tillPage(){
     if(checkout.data.platform_allowed===false||checkout.data.enabled!==true){
       catalogueSelectionEnabled=false;S.biz.quick_earn_catalogue_enabled=false;draw();return;
     }
+    const preferenceState=checkoutPreferencesStateV102(preferences);
+    const preferencesAvailable=preferenceState.available;
+    if(preferencesAvailable){
+      S.biz.gift_card_sales_enabled=preferenceState.giftCardSalesEnabled;
+    }else{
+      S.biz.gift_card_sales_enabled=null;
+    }
     const activeItems=(Array.isArray(checkout.data.items)?checkout.data.items:[])
       .filter(item=>item?.checkout_active===true&&item?.branch_available!==false);
+    const serviceById=Object.fromEntries((serviceMeta.data||[]).map(service=>[service.id,service]));
     catalog={
       services:activeItems.filter(item=>item.item_type==='service')
-        .map(item=>({id:item.item_id,name:item.name,unit_cents:item.unit_cents||0})),
+        .map(item=>({id:item.item_id,
+          name:serviceDisplayName(serviceById[item.item_id]||item),
+          unit_cents:item.unit_cents||0})),
       products:activeItems.filter(item=>item.item_type==='product')
         .map(item=>({id:item.item_id,name:item.name,unit_cents:item.unit_cents||0})),
       packages:(pkg.error||!pkg.data)?null:pkg.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0})),
-      memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence}))
+      memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
+      customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
+      customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
+      packageEarnsPoints:preferenceState.packageEarnsPoints
     };
     draw();
   }
@@ -7154,11 +7286,31 @@ async function tillPage(){
     CUI.announce('Gift card added');draw(); // extras are NOT part of the kernel evaluation — no re-evaluate
   }
   /* Package/membership lines mirror gift cards: qty 1, a stable per-line uuid key minted at
-     add-time (reused verbatim on retry so the 4-arg overload dedupes), always a NEW line. */
+     add-time (reused verbatim on retry so the authoritative writer dedupes), always a NEW line. */
   function addPlanLine(type,plan){
     if(cartLocked())return;
     cart.push({lineId:crypto.randomUUID(),type,ref:plan.id,label:plan.name,unit_cents:plan.unit_cents,qty:1,key:crypto.randomUUID()});
     CUI.announce(workspaceTemplateTextV97('itemAdded',{item:plan.name}));draw(); // extras do not affect the kernel total
+  }
+  async function useCustomerPackage(clientPackageId){
+    if(busy||cartLocked())return;
+    const owned=catalog?.customerPackages?.find(item=>item.client_package_id===clientPackageId);
+    if(!owned)return toast('That package is no longer available');
+    if(!confirm(`Use 1 session from ${owned.plan_name}? ${owned.remaining} remaining now.`))return;
+    const attempt=packageUseAttemptKeyV102(packageUseAttemptsV102,clientPackageId,tillBranchId);
+    busy=true;
+    const {data,error}=await sb.rpc('use_package_session_v102',{
+      p_business:S.biz.id,p_client_package:clientPackageId,p_branch:tillBranchId,
+      p_idempotency_key:attempt.key
+    });
+    if(!isTillCurrent())return;
+    busy=false;
+    if(error)return fail(error);
+    const result=packageUseResultV102(data);
+    if(!result)return fail(new Error('The package-use receipt was incomplete. Retry with the same branch.'));
+    packageUseAttemptsV102.delete(attempt.slot);
+    toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));
+    catalog=null;draw();
   }
   function changeQty(lineId,delta){
     if(cartLocked())return;
@@ -7177,7 +7329,9 @@ async function tillPage(){
   function extrasTotalCents(){return extraLines().reduce((s,l)=>s+l.unit_cents*l.qty,0)} // NOT part of the kernel/evaluation total
   function extraLineBadge(l,succeeded,failed){
     if(l.type==='giftcard')return succeeded?`Issued · <span class="till-receipt-code">${esc(l._code||'')}</span>`:failed?`Not issued — ${esc(l._error||'failed')}`:'Gift card — issued at checkout';
-    if(l.type==='package')return succeeded?'Sold':failed?`Not sold — ${esc(l._error||'failed')}`:'Package — charged at checkout';
+    if(l.type==='package')return succeeded
+      ?`Sold · ${Number(l._packageResult?.pointsEarned||0)} points earned · ${Number(l._packageResult?.pointsTotal||0)} total`
+      :failed?`Not sold — ${esc(l._error||'failed')}`:'Package — charged at checkout';
     if(l.type==='membership')return succeeded?'Enrolled':failed?`Not enrolled — ${esc(l._error||'failed')}`:'Membership — charged at checkout';
     return '';
   }
@@ -7363,14 +7517,30 @@ async function tillPage(){
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
-        picker=`${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}`}${pkgBtns}${memBtns}
+        const ownedPackages=(catalog.customerPackages||[]).length
+          ?`<div class="permission-banner" style="margin-bottom:14px"><b>Use an existing customer package</b>
+            <p class="muted small" style="margin:4px 0 8px">No payment is taken. One session is deducted and recorded as a visit.</p>
+            <div class="till-cart-catalog">${catalog.customerPackages.map(item=>`<button type="button" class="btn ghost" data-use-package="${item.client_package_id}">
+              ${esc(item.plan_name)}<span class="till-cart-price">${item.remaining}/${item.sessions} left${item.service_name?` · ${esc(serviceDisplayName(item))}`:''}</span>
+            </button>`).join('')}</div></div>`
+          :'';
+        const pendingVouchers=(catalog.customerVouchers||[]).length
+          ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
+            ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
+            ${canScanRedemption?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
+          :'';
+        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${canGift?`<div class="split" style="margin-top:10px;align-items:end">
             <div><label for="tGift">Gift card value (${S.biz.currency||'SGD'})</label><input id="tGift" inputmode="decimal" placeholder="0.00"></div>
             <div><button type="button" class="btn ghost" id="tGiftAdd" style="width:100%">${CUI.icon('giftcard',{size:16})} Add card</button></div>
           </div><p class="muted small" style="margin-top:6px">A gift card is issued as its own record and does not earn points.</p>`:''}
-          ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">Packages and memberships are charged as their own record and do not earn points here.</p>`:''}`;
+          ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
+            ?'Package purchases earn points once at purchase.'
+            :catalog.packageEarnsPoints===false
+              ?'Package purchases do not earn points for this business.'
+              :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'} Using a session never earns points.</p>`:''}`;
       }
     }
     // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
@@ -7440,6 +7610,13 @@ async function tillPage(){
     document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
+    });
+    document.querySelectorAll('[data-use-package]').forEach(button=>{
+      button.onclick=()=>useCustomerPackage(button.dataset.usePackage);
+    });
+    if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
+      businessId:S.biz.id,branchId:tillBranchId,
+      isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
     });
     if($('tCustomOpen'))$('tCustomOpen').onclick=openCustomModal;
     if($('tGiftAdd'))$('tGiftAdd').onclick=()=>{
@@ -7520,7 +7697,7 @@ async function tillPage(){
   /* PS-1C.1 FINALISE (step 2 of the kernel journey) + honest extras sequencing.
      Order: (1) ONE record_cart_sale that CONSUMES the evaluation token (p_evaluation_id; p_lines is
      null — the token is authoritative), then (2) one call per extra line — issue_gift_card, the
-     4-arg sell_package, or the 4-arg enroll_membership_v41. Idempotency: the finalise reuses ONE
+     sell_package_v102 with an explicit branch, or the 4-arg enroll_membership_v41. Idempotency: the finalise reuses ONE
      STABLE key (writeAttemptKey/FINALISE_SLOT) across retries, cleared only on success or an explicit
      cancel/cart-change; each extra carries its own stable uuid `key`. If the kernel finalise fails we
      STOP (no extra attempted) and recover per §2 (stale re-confirm / retry / conflict). If it
@@ -7550,6 +7727,7 @@ async function tillPage(){
       saleCommitted=true;staleConfirm=false;payError=null;
       const duplicate=isReplayResult(data);
       saleResult={duplicate,pointsEarned:duplicate?0:(data&&data.points_earned||0),
+        pointsTotal:Number.isFinite(Number(data?.points_total))?Number(data.points_total):null,
         lines:saleLines.map(l=>({label:l.label,qty:l.qty,amount:l.unit_cents*l.qty,type:l.type})),
         subtotal:evalResult.subtotal_cents,discount:evalResult.discount_total_cents,
         gst:evalResult.gst_cents,total:evalResult.total_cents,effects:(evalResult.applied_effects||[]),
@@ -7568,15 +7746,19 @@ async function tillPage(){
         res=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:l.unit_cents,
           p_purchaser:cust.client_id,p_recipient_email:null,p_idempotency_key:l.key});
       }
-      else if(l.type==='package')res=await sb.rpc('sell_package',{p_business:S.biz.id,p_client:cust.client_id,
-        p_plan:l.ref,p_idempotency_key:l.key});
+      else if(l.type==='package')res=await sb.rpc('sell_package_v102',{p_business:S.biz.id,p_client:cust.client_id,
+        p_plan:l.ref,p_branch:tillBranchId,p_idempotency_key:l.key});
       else res=await sb.rpc('enroll_membership_v41',{p_business:S.biz.id,p_client:cust.client_id,
         p_plan:l.ref,p_idempotency_key:l.key});
       if(!isTillCurrent())return;
       if(res.error){anyExtraFailed=true;l._status='failed';
         l._error=isBackendMissing(res.error)?'needs the latest system update':(res.error.message||'failed');continue}
       if(l.type==='giftcard'){l._status='issued';l._code=res.data&&res.data.code;l._error=null}
-      else{l._status='done';l._error=null}
+      else if(l.type==='package'){
+        const result=packageSaleResultV102(res.data);
+        if(!result){anyExtraFailed=true;l._status='failed';l._error='server receipt was incomplete';continue}
+        l._packageResult=result;l._status='done';l._error=null;
+      }else{l._status='done';l._error=null}
     }
     busy=false;
     if(anyExtraFailed){
@@ -7606,16 +7788,31 @@ async function tillPage(){
       payError=null;evalError={kind:'perm',message:"You don't have permission to record sales."};evalState='error';draw();return;}
     payError={kind:'retry'};draw(); // network / timeout / lost response / anything else — keep the key, offer Retry
   }
-  function finishCartReceipt(){
+  async function finishCartReceipt(){
     const extras=extraLines(), r=saleResult;
+    const refreshed=await sb.rpc('lookup_client_by_phone',{
+      p_business:S.biz.id,p_phone:cust.phone||phone
+    });
+    if(!isTillCurrent())return;
+    const refreshedPoints=refreshed.error?null:Number(refreshed.data?.points);
+    const packageResults=extras
+      .filter(line=>line.type==='package'&&line._status==='done'&&line._packageResult)
+      .map(line=>line._packageResult);
+    const pointsReceipt=checkoutPointsReceiptV102({
+      saleResult:r,packageResults,refreshedPoints
+    });
     doneInfo={receipt:true,name:cust.full_name,tender,
       lines:r?r.lines.map(l=>({label:l.label,qty:l.qty,amount:l.amount})):[],
       effects:r?(r.effects||[]):[],subtotal:r?r.subtotal:0,discount:r?r.discount:0,gst:r?r.gst:0,total:r?r.total:0,
       extras:extras.map(l=>({type:l.type,label:l.label,amount:l.unit_cents*l.qty,
-        status:l._status==='failed'?'failed':'done',code:l._code||null,error:l._error||null})),
+        status:l._status==='failed'?'failed':'done',code:l._code||null,error:l._error||null,
+        pointsEarned:l.type==='package'?Number(l._packageResult?.pointsEarned||0):0,
+        pointsTotal:l.type==='package'&&Number.isFinite(Number(l._packageResult?.pointsTotal))
+          ?Number(l._packageResult.pointsTotal):null})),
       hasSale:!!r,extrasTotal:extrasTotalCents(),
-      pointsEarned:r?r.pointsEarned:0,
-      pointsTotal:(cust.points!=null&&r&&!r.duplicate)?cust.points+r.pointsEarned:null,
+      pointsEarned:pointsReceipt.pointsEarned,
+      pointsTotal:pointsReceipt.pointsTotal,
+      pointsBalanceConsistent:pointsReceipt.balanceConsistent,
       duplicate:r?r.duplicate:false};
     checkoutError=null;clearCheckoutState();step=3;draw();
   }
@@ -7633,8 +7830,8 @@ async function tillPage(){
     $('tNext').onclick=resetToStart;
   }
   /* Cart-mode receipt: line labels (browsing prices) + the EVALUATION-authoritative breakdown
-     (subtotal, applied discounts, GST, TOTAL) captured verbatim at finalise, points_earned from the
-     finalise response, then the gift-card / package / membership outcomes (failures honestly flagged). */
+     (subtotal, applied discounts, GST, TOTAL) captured verbatim at finalise. Points earned are the
+     sum of the core-sale and exact package-writer receipts, never a before/after balance delta. */
   function drawCartReceipt(){
     const d=doneInfo;
     const anyExtraFailed=d.extras.some(x=>x.status==='failed');
@@ -7649,19 +7846,21 @@ async function tillPage(){
     const extraRows=d.extras.map(x=>{
       const failed=x.status==='failed';
       const name=x.type==='giftcard'?`Gift card ${failed?'(not issued)':`· <span class="till-receipt-code">${esc(x.code||'')}</span>`}`
-        :x.type==='package'?`${esc(x.label)} ${failed?'(not sold)':'· sold'}`
+        :x.type==='package'?`${esc(x.label)} ${failed?'(not sold)':`· sold${x.pointsEarned>0?` · +${x.pointsEarned} points`:''}`}`
         :`${esc(x.label)} ${failed?'(not enrolled)':'· enrolled'}`;
       return `<li><span>${name}</span><span>${failed?'—':money(x.amount)}</span></li>`;
     }).join('');
     const extrasBlock=d.extras.length?`<div style="margin-top:12px;text-align:left"><b class="small">Also charged (separate records)</b>
       <ul class="till-receipt-lines">${extraRows}</ul></div>`:'';
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:anyExtraFailed?'Sale saved. Some items did not finish.':'Sale saved and points added. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
       <div class="card frontline-card till-cart-card" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
-        ${d.hasSale?(d.duplicate
+        ${d.pointsEarned>0
+          ?`<p style="font-size:1.5rem;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`
+          :d.hasSale?(d.duplicate
           ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
-          :`<p style="font-size:1.5rem;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`)
+          :`<p class="muted small">No points earned for this purchase.</p>`)
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
@@ -7772,6 +7971,8 @@ async function servicesPage(){
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services, bundles, resources, and product links. Ask for Services edit access to change them.</p></div>`}
     <div class="split">${canWrite?`<div class="card"><b>Add service</b>
       <label>Name</label><input id="sn" placeholder="e.g. Signature Facial">
+      <label>Variation (optional)</label><input id="sv" placeholder="e.g. 30 min, 60 min, Deep tissue">
+      <p class="muted small" style="margin-top:5px">Use the same service name with different variations, durations and prices.</p>
       <label>Price (${S.biz.currency||'SGD'})</label><input id="sp" type="number" min="0" step="0.01">
       <label>Duration (minutes)</label><input id="sd" type="number" min="5" step="5" value="60">
       <div style="margin-top:16px"><button class="btn" id="sadd">Add service</button></div></div>`:''}
@@ -7782,21 +7983,24 @@ async function servicesPage(){
   function renderSvc(){
     const sv=svCache;
     $('slist').innerHTML=(sv&&sv.length)?`<table><tr><th>Service</th><th>Price</th><th>Mins</th><th>Status</th><th></th></tr>
-      ${sv.map(s=>`<tr><td><b>${esc(s.name)}</b></td><td>${money(s.price_cents)}</td><td>${s.duration_min}</td>
+      ${sv.map(s=>`<tr><td><b>${esc(serviceDisplayName(s))}</b></td><td>${money(s.price_cents)}</td><td>${s.duration_min}</td>
       <td><span class="pill ${s.active?'on':'off'}">${s.active?'active':'off'}</span></td>
       <td>${canWrite?`<button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table>`
       :`<div class="empty"><div class="big">🛠️</div>No services yet.</div>`;
   }
   if(canWrite)$('sadd').onclick=async()=>{
-    const name=$('sn').value.trim(),price=Math.round(parseFloat($('sp').value||'0')*100),dur=parseInt($('sd').value||'60');
+    const name=$('sn').value.trim(),variant=$('sv').value.trim()||null,
+      price=Math.round(parseFloat($('sp').value||'0')*100),dur=parseInt($('sd').value||'60');
     if(name.length<2) return toast('Name required');
     const btn=$('sadd');btn.disabled=true;btn.textContent='Adding…';
-    const {data,error}=await sb.from('services').insert({business_id:S.biz.id,name,price_cents:price,duration_min:dur}).select().single();
+    const {data,error}=await sb.from('services').insert({
+      business_id:S.biz.id,name,variant_label:variant,price_cents:price,duration_min:dur
+    }).select().single();
     btn.disabled=false;btn.textContent='Add service';
     if(error) return fail(error);
     svCache=[...svCache,data].sort((a,b)=>a.name.localeCompare(b.name));
     renderSvc();
-    toast('Service added');$('sn').value='';$('sp').value='';$('sn').focus();
+    toast('Service added');$('sn').value='';$('sv').value='';$('sp').value='';$('sn').focus();
   };
   window.toggleSvc=async(id,to)=>{
     if(!canWrite)return;
@@ -8580,19 +8784,32 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       givebackMeter.innerHTML=`<div class="gb-meter-head"><span class="gb-meter-figure">${esc(growPctText(pct))}</span><span class="pill ${pillTone}">${esc(label)}</span></div>
         <div class="gb-meter-bar"><span class="gb-meter-fill" style="width:${Math.min(100,Math.max(2,pct/20*100)).toFixed(1)}%"></span></div>
         <div class="gb-scale"><span>0%</span><span>20% or more</span></div>
-        <p class="small">At these numbers you give back <b>${esc(growMoney(Math.round(pct*100)))}</b> for every ${esc(money(10000))} spent. <span class="muted">Most shops stay under 8%.</span></p>
+        <p class="small">At these numbers you give back <b>${esc(growMoney(Math.round(pct*100)))}</b> for every ${esc(money(10000))} spent. <span class="muted">Choose a level the business can sustain.</span></p>
         ${pct>15?'<p class="small" style="color:var(--red)">Unusually generous — double-check this is intended. You can still save it.</p>':''}`;
     };
     ['le','lr','lc'].forEach(id=>{const input=$(id);if(input)input.addEventListener('input',renderGivebackMeter)});
     renderGivebackMeter();
   }
   /* --- "Recommend my numbers" panel (owner-only; Apply prefills, never publishes) --------- */
+  const growSectorProfile=industry=>{
+    const key=String(industry||'').toLowerCase();
+    if(/facial|spa|salon|beauty|hair/.test(key))
+      return {label:'Facial / Spa',low:3,high:15,start:8};
+    if(/fitness|gym|wellness/.test(key))
+      return {label:'Fitness / Wellness',low:3,high:12,start:6};
+    if(/f&b|cafe|café|food|restaurant|fn?b/.test(key))
+      return {label:'F&B / Café',low:2,high:8,start:5};
+    return {label:'your sector',low:2,high:10,start:5};
+  };
   const growRecOpen=$('growRecOpen');
   if(growRecOpen){
     const growRecBody=$('growRecBody');
     let growRecMetrics=null;
+    const sectorProfile=growSectorProfile(S.biz.industry);
     const renderGrowRecResult=()=>{
-      const target=parseFloat($('growRecTarget').value);
+      const target=Math.min(50,Math.max(0.5,parseFloat($('growRecTargetNumber').value||$('growRecTarget').value)));
+      $('growRecTarget').value=String(Math.min(30,target));
+      $('growRecTargetNumber').value=String(target);
       const rec=GROWREC().recommendPoints({avgTicketCents:growRecMetrics.avgTicketCents,targetGivebackPct:target});
       const out=$('growRecOut');
       if(!out)return;
@@ -8634,12 +8851,17 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       }
       growRecBody.innerHTML=`<div style="margin-top:14px">
           <p class="small">Based on <b>${growRecMetrics.count}</b> priced item${growRecMetrics.count===1?'':'s'}. Your typical sale is <b>${esc(growMoney(growRecMetrics.avgTicketCents))}</b>.</p>
-          <label for="growRecTarget" style="margin-top:14px">How much do you want to give back? <span id="growRecTargetOut">5.00%</span></label>
-          <input id="growRecTarget" type="range" min="2" max="8" step="0.5" value="5">
-          <div class="gb-scale"><span>2%</span><span>Typical café 2–8%</span><span>8%</span></div>
+          <label for="growRecTarget" style="margin-top:14px">How much do you want to give back? <span id="growRecTargetOut">${sectorProfile.start.toFixed(2)}%</span></label>
+          <div class="row" style="align-items:center;gap:12px"><input id="growRecTarget" type="range" min="0.5" max="30" step="0.5" value="${sectorProfile.start}" style="flex:1">
+            <input id="growRecTargetNumber" type="number" min="0.5" max="50" step="0.5" value="${sectorProfile.start}" aria-label="Give-back percentage" style="width:100px"></div>
+          <div class="gb-scale"><span>0.5%</span><span>Suggested starting range for ${esc(sectorProfile.label)}: ${sectorProfile.low}–${sectorProfile.high}%</span><span>30% slider · type up to 50%</span></div>
+          <p class="muted small" style="margin-top:6px">This is Nestly setup guidance, not an external market benchmark. You can choose outside the range.</p>
           <div id="growRecOut" style="margin-top:12px"></div>
         </div>`;
-      $('growRecTarget').addEventListener('input',renderGrowRecResult);
+      $('growRecTarget').addEventListener('input',()=>{
+        $('growRecTargetNumber').value=$('growRecTarget').value;renderGrowRecResult();
+      });
+      $('growRecTargetNumber').addEventListener('input',renderGrowRecResult);
       renderGrowRecResult();
     };
     growRecOpen.onclick=()=>{
@@ -11596,25 +11818,48 @@ async function giftcardsPage(){
   const isGiftCardsCurrent=()=>routeMain.isConnected&&M()===routeMain;
   routeMain.innerHTML=CUI.loadingState({title:'Gift cards',iconName:'giftcard'});
   const canWrite=canWriteModule('giftcards');
-  const canTransact=canWrite&&hasRoleCapability('create_sales');
+  const canConfigure=S.myRole==='owner';
   let issueGiftCardIdempotencyKey=crypto.randomUUID();
-  const {data:cl,error:clientsError}=await sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name');
+  const [clientsResult,preferencesResult]=await Promise.all([
+    sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
+    sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})
+  ]);
+  const {data:cl,error:clientsError}=clientsResult;
   if(!isGiftCardsCurrent())return;
   if(clientsError)throw clientsError;
-  const giftCardWorkspace=canTransact?`<div class="cui-card-head"><h2>Sell a gift card</h2></div>
+  const preferenceState=checkoutPreferencesStateV102(preferencesResult);
+  const preferencesAvailable=preferenceState.available;
+  const giftCardsEnabled=preferenceState.giftCardSalesEnabled;
+  S.biz.gift_card_sales_enabled=giftCardsEnabled;
+  const abilities=giftCardAbilitiesV102({
+    createSales:hasRoleCapability('create_sales'),
+    giftcardsReadable:canReadModule('giftcards'),
+    giftcardsWritable:canWriteModule('giftcards'),
+    businessEnabled:giftCardsEnabled
+  });
+  const canIssue=abilities.canIssue,canRedeem=abilities.canRedeem;
+  const issueWorkspace=canIssue?`<div class="cui-card-head"><h2>Sell a gift card</h2></div>
       <label for="ga">Amount (${S.biz.currency||'SGD'})</label><input id="ga" type="number" min="1" step="0.01" value="50">
-      <label for="gp">Purchaser (optional — earns loyalty on the purchase)</label>
+      <label for="gp">Purchaser (optional — links this card sale to their customer history)</label>
       <select id="gp"><option value="">Walk-in</option>${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')}</select>
       <label for="gr">Recipient email (optional)</label><input id="gr" type="email" autocomplete="email" placeholder="friend@email.com">
       <div style="margin-top:16px">${CUI.action({id:'gsell',label:'Sell card and generate code',iconName:'giftcard'})}</div>
-      <div id="gcode" aria-live="polite"></div>
-      <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
-      <div class="cui-card-head"><h2>Redeem a card</h2></div>
+      <div id="gcode" aria-live="polite"></div>`
+    :`<div class="cui-card-head"><h2>Sell a gift card</h2></div><p class="muted small">${preferencesAvailable
+      ?'Gift-card sales are off. Existing cards can still be redeemed below.'
+      :'Gift-card sale setting unavailable. Selling is paused until the setting can be confirmed.'}</p>`;
+  const redeemWorkspace=canRedeem?`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
+      <div class="cui-card-head"><h2>Redeem an existing card</h2><p>Redemption stays available even when new card sales are off.</p></div>
       <label for="gc">Code</label><input id="gc" placeholder="GC-XXXXXXXX" style="text-transform:uppercase">
       <label for="gcl">Load onto customer</label><select id="gcl">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">— add a customer first —</option>'}</select>
       <div style="margin-top:16px">${CUI.action({id:'gredeem',label:'Redeem balance to customer credit',iconName:'redeem',variant:'secondary'})}</div>`
-    :`<div class="cui-card-head"><h2>Gift card transactions</h2><p>Issuing and redemption require gift-card write access and a role allowed to create sales.</p></div><dl class="cui-readonly-list"><div class="cui-readonly-row"><dt>Available actions</dt><dd>Review issued cards and balances</dd></div><div class="cui-readonly-row"><dt>Restricted actions</dt><dd>Sell cards and redeem balances</dd></div></dl>`;
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'Issue and redeem spendable credit through one auditable ledger.',iconName:'giftcard',canWrite:canTransact,moduleLabel:'Gift card transactions'})}
+    :`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0"><div class="cui-card-head"><h2>Redeem an existing card</h2><p>Gift-card write access and sales authority are required.</p></div>`;
+  const giftCardWorkspace=issueWorkspace+redeemWorkspace;
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'Issue and redeem spendable credit through one auditable ledger.',iconName:'giftcard',canWrite:canIssue||canRedeem,moduleLabel:'Gift card transactions'})}
+    ${canConfigure&&preferencesAvailable?`<div class="card" style="margin-bottom:16px"><label style="display:flex;align-items:flex-start;gap:10px;color:var(--ink);cursor:pointer;margin:0">
+      <input id="giftCardEnabled" type="checkbox" style="width:auto;margin-top:3px" ${giftCardsEnabled?'checked':''}>
+      <span><b>Offer gift cards</b><small class="muted" style="display:block;margin-top:3px">When off, gift-card selling is hidden from Quick Earn. Existing balances and history remain safe.</small></span>
+    </label></div>`:canConfigure&&!preferencesAvailable?`<div class="permission-banner" style="margin-bottom:16px"><b>Gift-card sale setting unavailable</b><p class="muted small" style="margin-top:4px">Selling is paused. Existing cards can still be redeemed with the required authority.</p><button class="btn ghost sm" id="giftPreferencesRetry" style="margin-top:8px">Try again</button></div>`:!giftCardsEnabled?`<div class="permission-banner" style="margin-bottom:16px"><b>Gift-card sales are off</b><p class="muted small" style="margin-top:4px">An owner can enable them here when the business is ready. Existing card redemption remains available.</p></div>`:''}
     <div class="split">
     <div class="card">${giftCardWorkspace}</div>
     <div class="card"><div class="cui-card-head"><h2>Cards on the books</h2></div><div id="glist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>
@@ -11646,7 +11891,19 @@ async function giftcardsPage(){
       <p class="muted small" style="margin-top:10px">${esc(growEstimateNote)} Type any amount you like when you sell a card.</p>`;
   };
   loadGiftHint();
-  if(canTransact&&$('gsell'))$('gsell').onclick=async()=>{
+  if($('giftPreferencesRetry'))$('giftPreferencesRetry').onclick=giftcardsPage;
+  if($('giftCardEnabled'))$('giftCardEnabled').onchange=async()=>{
+    const checkbox=$('giftCardEnabled');checkbox.disabled=true;
+    const {error}=await sb.rpc('set_gift_card_sales_enabled_v102',{
+      p_business:S.biz.id,p_enabled:checkbox.checked
+    });
+    checkbox.disabled=false;
+    if(error){checkbox.checked=!checkbox.checked;return fail(error)}
+    S.biz.gift_card_sales_enabled=checkbox.checked;
+    toast(checkbox.checked?'Gift cards enabled':'Gift cards hidden from Quick Earn');
+    giftcardsPage();
+  };
+  if(canIssue&&$('gsell'))$('gsell').onclick=async()=>{
     const amt=Math.round(parseFloat($('ga').value||'0')*100);
     if(!(amt>0)) return toast('Enter an amount');
     const sellButton=$('gsell');sellButton.disabled=true;
@@ -11660,7 +11917,7 @@ async function giftcardsPage(){
     issueGiftCardIdempotencyKey=crypto.randomUUID();
     loadCards();
   };
-  if(canTransact&&$('gredeem'))$('gredeem').onclick=async()=>{
+  if(canRedeem&&$('gredeem'))$('gredeem').onclick=async()=>{
     if(!$('gc').value.trim()||!$('gcl').value) return toast('Enter a code and pick a customer');
     const redeemButton=$('gredeem');redeemButton.disabled=true;
     const {data,error}=await sb.rpc('redeem_gift_card_v41',{p_business:S.biz.id,p_code:$('gc').value,
@@ -11681,7 +11938,7 @@ async function giftcardsPage(){
       ${gcs.map(g=>`<tr><td><b>•••• ${esc(g.code_suffix)}</b></td><td>${money(g.initial_cents)}</td><td>${money(g.balance_cents)}</td>
       <td><span class="pill ${g.status==='active'?'on':g.status==='redeemed'?'ok':'no'}">${g.status}</span></td>
       <td>${g.created_at.slice(0,10)}</td></tr>`).join('')}</table>`
-      :CUI.emptyState({iconName:'giftcard',title:'No gift cards yet',body:canTransact?'Sell the first card from the transaction panel.':'Issued cards will appear here.'});
+      :CUI.emptyState({iconName:'giftcard',title:'No gift cards yet',body:canIssue?'Sell the first card from the transaction panel.':'Issued cards will appear here.'});
   }
   loadCards();
 }
@@ -11702,7 +11959,7 @@ async function appointmentsPage(){
     {data:serviceBranches,error:serviceBranchError}
   ]=await Promise.all([
     sb.from('clients').select('id,full_name,phone,phone_norm,email').eq('business_id',S.biz.id).order('full_name'),
-    sb.from('services').select('id,name,price_cents,duration_min').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('services').select('id,name,variant_label,price_cents,duration_min').eq('business_id',S.biz.id).eq('active',true).order('name'),
     sb.from('staff').select('id,full_name,user_id,calendar_color,phone,email').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
     sb.from('branches').select('id,name,is_default,timezone').eq('business_id',S.biz.id).eq('active',true).order('name'),
     sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id),
@@ -11800,7 +12057,7 @@ async function appointmentsPage(){
   function syncFormOptions(){
     if(!canWrite)return;
     const services=branchServices(branchId),people=branchStaff(branchId);
-    $('as').innerHTML=`<option value="">General visit</option>${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}">${esc(s.name)} · ${s.duration_min} min</option>`).join('')}`;
+    $('as').innerHTML=`<option value="">General visit</option>${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}">${esc(serviceDisplayName(s))}</option>`).join('')}`;
     $('astf').innerHTML=`<option value="auto">Best available · fair rotation</option>${people.map(s=>`<option value="${s.id}">${esc(staffLabel(s))}</option>`).join('')}`;
     $('generalDuration').hidden=$('as').value!=='';
   }
@@ -12381,66 +12638,148 @@ async function packagesPage(){
   const canWrite=canWriteModule('packages');
   const canSell=canWrite&&hasRoleCapability('create_sales');
   routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
-  const [plansResult,clientsResult,servicesResult]=await Promise.all([
+  const [plansResult,clientsResult,servicesResult,branchesResult,preferencesResult]=await Promise.all([
     sb.from('package_plans').select('*').eq('business_id',S.biz.id).order('created_at',{ascending:false}),
     sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
-    sb.from('services').select('id,name').eq('business_id',S.biz.id).order('name')]);
+    sb.from('services').select('id,name,variant_label,duration_min,price_cents,active').eq('business_id',S.biz.id).order('name'),
+    sb.from('branches').select('id,name,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})]);
   if(!isCurrent())return;
-  if(plansResult.error||clientsResult.error||servicesResult.error){
+  if(plansResult.error||clientsResult.error||servicesResult.error||branchesResult.error){
     routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1></div></div><div class="card"><div class="err">Packages could not be loaded.</div><button class="btn ghost sm" id="packagesRetry" style="margin-top:12px">Retry</button></div>`;
     $('packagesRetry').onclick=packagesPage;return;
   }
-  const plans=plansResult.data,cl=clientsResult.data,sv=servicesResult.data;
+  const plans=plansResult.data,cl=clientsResult.data,sv=servicesResult.data,packageBranches=branchesResult.data||[];
+  const preferenceState=checkoutPreferencesStateV102(preferencesResult);
+  const preferencesAvailable=preferenceState.available;
+  const packageEarnsPoints=preferenceState.packageEarnsPoints;
+  const serviceById=Object.fromEntries((sv||[]).map(service=>[service.id,service]));
+  const discountSummary=plan=>{
+    const list=Number(plan.list_value_cents_snapshot);
+    if(!(list>0))return 'No linked service price';
+    const difference=list-Number(plan.price_cents||0);
+    if(difference===0)return `${money(list)} list value · no discount`;
+    const pct=Math.abs(difference/list*100).toFixed(1).replace(/\.0$/,'');
+    return difference>0
+      ?`${money(list)} list value · save ${money(difference)} (${pct}% off)`
+      :`${money(list)} list value · ${money(-difference)} above list (${pct}%)`;
+  };
   M().innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only packages access</b><p class="muted small" style="margin-top:5px">You can review package plans and customer balances. Ask for Packages edit access to create or use sessions.</p></div>`}
     <div class="split">
-    <div class="card">${canWrite?`<b>Create a package</b>
+    <div class="card">${canWrite?`<b id="kFormTitle">Create a package</b>
+      <input id="kid" type="hidden">
       <label>Name</label><input id="kn" placeholder="e.g. 5x Facial">
       <div class="split"><div><label>Price (${S.biz.currency||'SGD'})</label><input id="kp" type="number" min="0" step="0.01" value="400"></div>
       <div><label>Sessions</label><input id="ks" type="number" min="1" value="5"></div></div>
-      <label>Service (optional)</label><select id="kv"><option value="">— any —</option>${(sv||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
-      <div style="margin-top:14px"><button class="btn" id="kadd">Create</button></div>`:''}
+      <label>Exact service / variation</label><select id="kv"><option value="">— flexible package, no list-price comparison —</option>${(sv||[]).filter(s=>s.active).map(s=>`<option value="${s.id}">${esc(serviceDisplayName(s))} · ${money(s.price_cents)}</option>`).join('')}</select>
+      <div class="permission-banner" id="kDiscount" style="margin-top:14px"><b>Choose a service to calculate value</b><p class="muted small" style="margin-top:4px">Nestly compares the package price with the exact service price × sessions.</p></div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="kadd">Save package</button><button class="btn ghost" id="kcancel" style="display:none">Cancel edit</button></div>
+      ${S.myRole==='owner'&&preferencesAvailable?`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
+        <label style="display:flex;align-items:flex-start;gap:10px;color:var(--ink);cursor:pointer">
+          <input id="kPoints" type="checkbox" style="width:auto;margin-top:3px" ${packageEarnsPoints?'checked':''}>
+          <span><b>Award loyalty points when a package is purchased</b><small class="muted" style="display:block;margin-top:3px">Awarded once on the package price. Using sessions never awards points again.</small></span>
+        </label>`:S.myRole==='owner'?`<div class="permission-banner" style="margin-top:20px"><b>Package points setting unavailable</b><p class="muted small" style="margin-top:4px">Nestly cannot confirm whether package purchases earn points. The setting control is hidden; completed sale receipts remain authoritative.</p><button class="btn ghost sm" id="packagePreferencesRetry" style="margin-top:8px">Try again</button></div>`:''}`:''}
       <div id="kplist" style="margin-top:16px">${(plans||[]).map(p=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
-        <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">${money(p.price_cents)} · ${p.sessions} sessions</span></div>
-        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'off'}</span></div>`).join('')||''}</div>
+        <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">v${Number(p.version_no||1)} · ${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''}</span>
+          <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">This version is frozen. Existing customer purchases keep their original price, sessions and service snapshot.</div></div>
+        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'archived'}</span>
+        ${canWrite&&p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}</div>`).join('')||''}</div>
       ${canSell?`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
       <b>Sell a package</b>
       <label>Customer</label><select id="kc">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">—</option>'}</select>
       <label>Package</label><select id="kk">${(plans||[]).filter(p=>p.active).map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.price_cents)}</option>`).join('')||'<option value="">—</option>'}</select>
+      <label>Sale branch</label><select id="kSaleBranch">${packageBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')||'<option value="">No active branch</option>'}</select>
       <div style="margin-top:14px"><button class="btn" id="ksell">Sell — charge now</button></div>`:canWrite?'<p class="muted small" style="margin-top:14px">Your role cannot record package sales.</p>':''}</div>
-    <div class="card"><b>Customer packages</b><div id="klist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
-  if(canWrite)$('kadd').onclick=async()=>{
-    if($('kn').value.trim().length<2) return toast('Name it');
-    const {error}=await sb.from('package_plans').insert({business_id:S.biz.id,name:$('kn').value.trim(),
-      price_cents:Math.round(parseFloat($('kp').value||'0')*100),sessions:parseInt($('ks').value||'1'),
-      service_id:$('kv').value||null});
-    if(error) return fail(error);toast('Package created');packagesPage();
-  };
+    <div class="card"><b>Customer packages</b>
+      ${canWrite?`<label for="kUseBranch" style="margin-top:10px">Branch recording the used session</label><select id="kUseBranch">${packageBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')||'<option value="">No active branch</option>'}</select>`:''}
+      <div id="klist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+  if($('packagePreferencesRetry'))$('packagePreferencesRetry').onclick=packagesPage;
+  if(canWrite){
+    const resetPackageForm=()=>{
+      $('kid').value='';$('kn').value='';$('kp').value='';$('ks').value='5';$('kv').value='';
+      $('kFormTitle').textContent='Create a package';$('kadd').textContent='Save package';$('kcancel').style.display='none';renderPackageDiscount();
+    };
+    const renderPackageDiscount=()=>{
+      const service=serviceById[$('kv').value],sessions=Number($('ks').value),price=Math.round(Number($('kp').value||0)*100);
+      if(!service||!(sessions>0)){
+        $('kDiscount').innerHTML='<b>Choose a service to calculate value</b><p class="muted small" style="margin-top:4px">Nestly compares the package price with the exact service price × sessions.</p>';return;
+      }
+      const list=Number(service.price_cents)*sessions,difference=list-price;
+      const pct=list>0?Math.abs(difference/list*100):0;
+      const result=difference===0?'No discount'
+        :difference>0?`${money(difference)} off · ${pct.toFixed(1).replace(/\.0$/,'')}% discount`
+        :`${money(-difference)} above list price · ${pct.toFixed(1).replace(/\.0$/,'')}% premium`;
+      $('kDiscount').innerHTML=`<b>${esc(serviceDisplayName(service))}: ${money(service.price_cents)} × ${sessions} = ${money(list)}</b>
+        <p style="margin-top:5px"><b>${esc(result)}</b></p>
+        <p class="muted small" style="margin-top:4px">This list value is frozen with the package so future service-price changes do not rewrite what was sold.</p>`;
+    };
+    $('kv').onchange=renderPackageDiscount;$('ks').oninput=renderPackageDiscount;$('kp').oninput=renderPackageDiscount;
+    $('kcancel').onclick=resetPackageForm;
+    document.querySelectorAll('[data-edit-package]').forEach(button=>button.onclick=()=>{
+      const plan=(plans||[]).find(item=>item.id===button.dataset.editPackage);if(!plan)return;
+      $('kid').value=plan.id;$('kn').value=plan.name;$('kp').value=(plan.price_cents/100).toFixed(2);
+      $('ks').value=plan.sessions;$('kv').value=plan.service_id||'';
+      $('kFormTitle').textContent='Create a new package version';$('kadd').textContent='Save new version';$('kcancel').style.display='inline-flex';
+      renderPackageDiscount();$('kn').focus();window.scrollTo({top:0,behavior:'smooth'});
+    });
+    $('kadd').onclick=async()=>{
+      if($('kn').value.trim().length<2) return toast('Name it');
+      const button=$('kadd');button.disabled=true;
+      const existing=(plans||[]).find(plan=>plan.id===$('kid').value);
+      const {data,error}=await sb.rpc('save_package_plan_v102',{
+        p_business:S.biz.id,p_plan:$('kid').value||null,p_name:$('kn').value.trim(),
+        p_price_cents:Math.round(parseFloat($('kp').value||'0')*100),
+        p_sessions:parseInt($('ks').value||'1'),p_service:$('kv').value||null,
+        p_active:existing?existing.active:true
+      });
+      button.disabled=false;
+      if(error)return fail(error);
+      toast($('kid').value
+        ?workspaceTemplateTextV97('packageVersionCreated',{version:Number(data?.version_no||0)})
+        :'Package created');packagesPage();
+    };
+    if($('kPoints'))$('kPoints').onchange=async()=>{
+      const checkbox=$('kPoints');checkbox.disabled=true;
+      const {error}=await sb.rpc('set_package_points_policy_v102',{
+        p_business:S.biz.id,p_earns_points:checkbox.checked
+      });
+      checkbox.disabled=false;
+      if(error){checkbox.checked=!checkbox.checked;return fail(error)}
+      toast(checkbox.checked?'Package purchases will earn points once':'Package purchases will not earn points');
+    };
+    renderPackageDiscount();
+  }
   if(canSell)$('ksell').onclick=async()=>{
-    if(!$('kc').value||!$('kk').value) return toast('Pick customer + package');
+    if(!$('kc').value||!$('kk').value||!$('kSaleBranch').value) return toast('Pick customer, package and branch');
     const sellSlot=`frenly:package-sell:${S.biz.id}`;
-    const sellKey=writeAttemptKey(sellSlot,`${$('kc').value}|${$('kk').value}`);
+    const sellKey=writeAttemptKey(sellSlot,`${$('kc').value}|${$('kk').value}|${$('kSaleBranch').value}`);
     const sellButton=$('ksell');sellButton.disabled=true;
-    const {data,error}=await sb.rpc('sell_package',{p_business:S.biz.id,p_client:$('kc').value,p_plan:$('kk').value,p_idempotency_key:sellKey});
+    const {data,error}=await sb.rpc('sell_package_v102',{p_business:S.biz.id,p_client:$('kc').value,
+      p_plan:$('kk').value,p_branch:$('kSaleBranch').value,p_idempotency_key:sellKey});
     if(error){
       sellButton.disabled=false;
       if(error.code==='23505'||error.code==='40001'){clearWriteAttempt(sellSlot);return toast('That sale clashed with another — check the customer’s packages, then start a fresh one')}
       return fail(error);
     }
+    const result=packageSaleResultV102(data);
+    if(!result){sellButton.disabled=false;return toast('The package sale receipt was incomplete. Retry with the same checkout.')}
     clearWriteAttempt(sellSlot);
-    toast(isReplayResult(data)?'Already recorded — no duplicate package created':'Package sold — revenue booked, loyalty earned 🎉');packagesPage();
+    toast(result.pointsEarned>0
+      ?workspaceTemplateTextV97('packageSoldWithPoints',{earned:result.pointsEarned,total:result.pointsTotal})
+      :workspaceTemplateTextV97('packageSoldNoPoints',{total:result.pointsTotal}));
+    packagesPage();
   };
   const [{data:cps,error:cpError},workflow]=await Promise.all([
-    sb.from('client_packages').select('*, clients(full_name), package_plans(name,sessions)')
-      .eq('business_id',S.biz.id).order('purchased_at',{ascending:false}),
+    sb.rpc('staff_list_package_entitlements_v102',{p_business:S.biz.id}),
     loadReversalWorkflows(null,100,'package').catch(e=>{fail(e);return null})]);
   if(cpError)return fail(cpError);
   const packageHistory=(workflow?.sales||[]).filter(x=>x.is_package_session||x.original_sale_id&&x.amount_cents===0);
   $('klist').innerHTML=(cps&&cps.length)?`<table><tr><th>Customer</th><th>Package</th><th>Left</th><th>Status</th><th></th></tr>
-    ${cps.map(k=>`<tr><td><b>${esc(k.clients?.full_name||'—')}</b></td><td>${esc(k.package_plans?.name||'—')}</td>
-    <td>${k.remaining}/${k.package_plans?.sessions||'?'}</td>
+    ${cps.map(k=>`<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">v${Number(k.plan_version||1)} · ${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}</td>
+    <td>${k.remaining}/${k.sessions||'?'}</td>
     <td><span class="pill ${k.status==='active'?'on':'off'}">${k.status.replace('_',' ')}</span></td>
-    <td>${canWrite&&k.remaining>0?`<button class="btn sm" onclick="usePkg('${k.id}')">Use session</button>`:k.remaining>0?'<span class="muted small">View only</span>':''}</td></tr>`).join('')}</table>
+    <td>${canWrite&&k.remaining>0?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:k.remaining>0?'<span class="muted small">View only</span>':''}</td></tr>`).join('')}</table>
     ${packageHistory.length?`<div style="margin-top:22px;border-top:1px solid var(--line);padding-top:16px"><b>Session correction history</b><p class="muted small" style="margin-top:4px">A correction restores one session and never refunds a payment. ${workspaceTemplateHtmlV97(workflow?.may_have_more?'packageHistoryWithOlder':'packageHistory',{shown:packageHistory.length,total:Number(workflow?.total_sales??packageHistory.length),limit:Number(workflow?.limit||100)})}</p><table style="margin-top:8px"><tr><th>When</th><th>Customer</th><th>Relationship</th><th>Result</th><th></th></tr>
       ${packageHistory.map(x=>`<tr><td>${sgt(x.occurred_at)}</td><td>${esc(x.customer_name||'Customer')}</td><td>${x.is_reversal
         ?workspaceTemplateHtmlV97('reversalOf',{id:x.original_sale_id||''})
@@ -12451,11 +12790,17 @@ async function packagesPage(){
   const packageSessionIdem=new Map();
   window.usePkg=async(id)=>{
     if(!canWrite)return;
-    if(!packageSessionIdem.has(id))packageSessionIdem.set(id,crypto.randomUUID());
-    const {data,error}=await sb.rpc('use_package_session',{
-      p_business:S.biz.id,p_cp:id,p_idempotency_key:packageSessionIdem.get(id)});
+    const branchId=$('kUseBranch')?.value;
+    if(!branchId)return toast('Choose the branch using this session');
+    const attempt=packageUseAttemptKeyV102(packageSessionIdem,id,branchId);
+    const {data,error}=await sb.rpc('use_package_session_v102',{
+      p_business:S.biz.id,p_client_package:id,p_branch:branchId,
+      p_idempotency_key:attempt.key});
     if(error) return fail(error);
-    toast(workspaceTemplateTextV97('sessionUsed',{remaining:data}));packagesPage();
+    const result=packageUseResultV102(data);
+    if(!result)return fail(new Error('The package-use receipt was incomplete. Retry with the same branch.'));
+    packageSessionIdem.delete(attempt.slot);
+    toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));packagesPage();
   };
 }
 

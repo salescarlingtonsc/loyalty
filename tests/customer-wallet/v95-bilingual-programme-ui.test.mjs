@@ -37,18 +37,20 @@ test('programme selector precedes merchant detail and zero-programme state only 
 test('merchant home consumes the v95 presentation contract with truthful capability gating and resilient fallback',()=>{
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   const presentation=section('function customerProgrammePresentationV95','function actionableWalletCardMarkup');
-  assert.match(wallet,/sb\.rpc\('customer_get_business_presentation_v95',\{p_business:b\.id,p_branch:null,p_locale:'en'\}\)/);
+  assert.match(wallet,/businessId\?sb\.rpc\('customer_get_business_presentation_v95',\{p_business:businessId,p_branch:null,p_locale:'en'\}\)/);
   assert.match(wallet,/businessActions\?\.booking\?\.enabled===true&&presentation\.capabilities\.booking_enabled!==false/);
   assert.match(wallet,/customerMerchantExperienceMarkupV95\(\{presentation,business:b,actionableCard,programmeCards/);
-  assert.match(wallet,/presentationResult\.error[\s\S]*customerPresentationRetry/);
+  assert.match(wallet,/customerProgrammePresentationV95\(presentationResult\.error\?\{\}:presentationResult\.data/);
+  assert.doesNotMatch(wallet,/customerPresentationRetry|programmeUnavailable/);
   assert.match(presentation,/customer-merchant-hero/);
   assert.match(presentation,/customer-balance-panel/);
+  assert.match(presentation,/customerTierHasProgressV103/);
   assert.match(presentation,/role="progressbar"/);
   assert.match(presentation,/customer-rewards-grid/);
   assert.match(presentation,/customer-perks-grid/);
   assert.match(presentation,/customer-offers-grid/);
   assert.match(presentation,/bookingEnabled\?`<section/);
-  assert.match(presentation,/id="customerMerchantScan"/);
+  assert.doesNotMatch(presentation,/id="customerMerchantScan"/);
 });
 
 test('business media accepts only the configured public bucket object shape and CSP origin',()=>{
