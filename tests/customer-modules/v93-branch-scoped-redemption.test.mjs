@@ -28,19 +28,31 @@ test('v93 merchant scan requires an active visible branch and preserves canonica
   );
 });
 
-test('Quick Earn sends the selected accessible till branch to v93', async () => {
+test('Quick Earn sends the selected accessible till branch to the current scanner', async () => {
   const app = await read('app/index.html');
-  assert.match(
-    app,
-    /openMerchantRedemptionScanner\(\{businessId,branchId,/,
+  const scanner = app.slice(
+    app.indexOf('function openMerchantRedemptionScanner'),
+    app.indexOf('function renderMerchantRedemptionComplete', app.indexOf('function openMerchantRedemptionScanner')),
+  );
+  const till = app.slice(
+    app.indexOf('async function tillPage'),
+    app.indexOf('async function appointmentsPage', app.indexOf('async function tillPage')),
   );
   assert.match(
-    app,
-    /sb\.rpc\('merchant_scan_redemption_qr_v93',\{[\s\S]*?p_business:businessId,p_branch:branchId,/,
+    scanner,
+    /function openMerchantRedemptionScanner\(\{\s*businessId,branchId,/,
   );
   assert.match(
-    app,
-    /openMerchantRedemptionScanner\(\{[\s\S]*?businessId:S\.biz\.id,branchId:tillBranchId,/,
+    scanner,
+    /sb\.rpc\('merchant_scan_redemption_qr_v117',\{[\s\S]*?p_business:businessId,p_branch:branchId,/,
+  );
+  assert.match(
+    till,
+    /accessibleTillBranches=assignedTillBranches\.filter\(branch=>\s*branchCanWrite\(branch\.id,'till'\)&&branchCanRead\(branch\.id,'clients'\)\s*\)/,
+  );
+  assert.match(
+    till,
+    /openMerchantRedemptionScanner\(\{\s*businessId:S\.biz\.id,branchId:tillBranchId,/,
   );
 });
 

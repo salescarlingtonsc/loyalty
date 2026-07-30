@@ -23,7 +23,7 @@ test('reward feedback is driven only by a new confirmed earn event and uses its 
   assert.match(app,/function customerConfirmedEarnFeedback/);
   assert.match(app,/item\?\.event_type==='earn'&&Number\(item\?\.points_delta\|\|0\)>0/);
   assert.match(app,/safeUnit=unit==='stamps'\?'stamps':'points'/);
-  assert.match(app,/\`\+\$\{increase\} \$\{safeUnit\} earned!\`/);
+  assert.match(app,/toast\('\+'\+increase\+' '\+safeUnit\+' earned!'\)/);
   assert.doesNotMatch(app,/points added — quest progress updated/);
   assert.match(app,/prefers-reduced-motion: reduce/);
   assert.match(app,/AudioContext/);

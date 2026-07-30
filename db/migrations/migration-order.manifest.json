@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 141,
-  "executableCount": 127,
+  "itemCount": 144,
+  "executableCount": 130,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -199,6 +199,15 @@
         "db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql",
         "db/migrations/20260729_nestly_v97_workspace_interface_localization.sql",
         "db/migrations/20260729_nestly_v99_campaign_truth.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260730",
+      "count": 3,
+      "paths": [
+        "db/migrations/20260730_nestly_v115_effective_module_projection.sql",
+        "db/migrations/20260730_nestly_v116_classic_reward_projection.sql",
+        "db/migrations/20260730_nestly_v117_effective_loyalty_boundaries.sql"
       ]
     }
   ],
@@ -1330,6 +1339,30 @@
       "semanticVersion": "v105",
       "proposedDeployVersion": "20260729180000",
       "sha256": "a7a4454c190ee123d5bb8d9a2501455acd87def7d01a8ddb2f2c54aee160402f"
+    },
+    {
+      "order": 142,
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v115_effective_module_projection.sql",
+      "semanticVersion": "v115",
+      "proposedDeployVersion": "20260730120000",
+      "sha256": "59b769172f664adff16acf90ab620efd2329ddccc988d96439e7ab525ac38611"
+    },
+    {
+      "order": 143,
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v116_classic_reward_projection.sql",
+      "semanticVersion": "v116",
+      "proposedDeployVersion": "20260730130000",
+      "sha256": "dff10b11d6d3663a442b6589b0c0145f6fe62727dd69abbba09ff0714aa02fb0"
+    },
+    {
+      "order": 144,
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v117_effective_loyalty_boundaries.sql",
+      "semanticVersion": "v117",
+      "proposedDeployVersion": "20260730140000",
+      "sha256": "737bbf97c7dcd83684d938480ce92c6b2b29a051d2a269cdd48fa441f1f65f20"
     }
   ]
 }

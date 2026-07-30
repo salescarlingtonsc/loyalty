@@ -41,7 +41,7 @@ test('normal merchant redemption is scanner-only in the shipped browser', async 
   assert.doesNotMatch(till,/redeem_points|redeem_reward(?:_at_context)?|redemptionIdem/);
   assert.match(till,/openMerchantRedemptionScanner/,
     'Quick earn may open only the merchant scanner for an already-pending customer QR redemption');
-  assert.match(app,/merchant_scan_redemption_qr_v93/);
+  assert.match(app,/merchant_scan_redemption_qr_v117/);
 });
 
 test('operation table is RLS-protected and has no client write grant', async () => {

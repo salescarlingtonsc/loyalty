@@ -78,7 +78,8 @@ test('Gift Cards route and role contract is explicit for every canonical role',(
   assert.match(app,/memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage/);
   assert.match(app,/const canReadModule=module=>S\.myModules\?\.includes\(module\)===true/);
   assert.match(app,/const canWriteModule=module=>S\.myModules\?\.includes\(module\)===true\s*&&roleCanUseModule\(S\.myRole,module\)\s*&&\(S\.myRole==='owner'\|\|S\.myModulePerms\?\.\[module\]==='rw'\)/);
-  assert.match(app,/const canWrite=canWriteModule\('giftcards'\);[\s\S]*const abilities=giftCardAbilitiesV102\(\{[\s\S]*createSales:hasRoleCapability\('create_sales'\),[\s\S]*giftcardsReadable:canReadModule\('giftcards'\),[\s\S]*giftcardsWritable:canWriteModule\('giftcards'\),[\s\S]*businessEnabled:giftCardsEnabled[\s\S]*\}\);[\s\S]*const canIssue=abilities\.canIssue,canRedeem=abilities\.canRedeem/);
+  assert.match(app,/const abilities=giftCardAbilitiesV102\(\{[\s\S]*createSales:hasRoleCapability\('create_sales'\),[\s\S]*giftcardsReadable:branchCanRead\(giftBranchId,'giftcards'\),[\s\S]*giftcardsWritable:branchCanWrite\(giftBranchId,'giftcards'\),[\s\S]*businessEnabled:giftCardsEnabled[\s\S]*\}\);[\s\S]*const canIssue=abilities\.canIssue;[\s\S]*const canRedeem=hasRoleCapability\('create_sales'\)[\s\S]*branchCanWrite\(giftBranchId,'till'\)[\s\S]*branchCanRead\(giftBranchId,'clients'\)/);
+  assert.doesNotMatch(app,/const canRedeem=abilities\.canRedeem/);
 });
 
 test('build identity endpoint exposes only validated non-secret deployment facts',()=>{

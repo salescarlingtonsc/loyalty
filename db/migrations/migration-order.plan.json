@@ -861,6 +861,24 @@
       "path": "db/migrations/20260729_nestly_v105_admin_task_closure.sql",
       "semanticVersion": "v105",
       "proposedDeployVersion": "20260729180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v115_effective_module_projection.sql",
+      "semanticVersion": "v115",
+      "proposedDeployVersion": "20260730120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v116_classic_reward_projection.sql",
+      "semanticVersion": "v116",
+      "proposedDeployVersion": "20260730130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v117_effective_loyalty_boundaries.sql",
+      "semanticVersion": "v117",
+      "proposedDeployVersion": "20260730140000"
     }
   ]
 }

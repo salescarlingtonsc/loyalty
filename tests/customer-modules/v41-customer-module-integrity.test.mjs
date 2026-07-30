@@ -345,7 +345,7 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
     'Quick earn must never expose direct classic or catalog reward redemption');
   assert.match(tillPage, /openMerchantRedemptionScanner/i,
     'Quick earn must open the merchant scanner for a customer-created pending redemption QR');
-  assert.match(app, /merchant_scan_redemption_qr_v93/i);
+  assert.match(app, /merchant_scan_redemption_qr_v117/i);
   assert.match(tillPage, /record_sale_by_phone/i,
     'Quick earn must retain the atomic sale-and-points path');
 
@@ -378,7 +378,7 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
 
   const giftPage = app.match(/async function giftcardsPage\(\)\{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(giftPage, /crypto\.randomUUID\s*\(\s*\)/i);
-  assert.match(giftPage, /sb\.rpc\('issue_gift_card'[\s\S]*p_idempotency_key\s*:/i);
+  assert.match(giftPage, /sb\.rpc\('issue_gift_card_at_branch_v117'[\s\S]*p_idempotency_key\s*:/i);
   assert.match(giftPage, /sb\.rpc\('staff_list_gift_cards'/i);
   assert.doesNotMatch(giftPage, /sb\.from\('gift_cards'\)\.select/i);
   assert.doesNotMatch(giftPage, /\.code\b[\s\S]*Cards on the books/i,

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nestly v117 mobile acceptance frames</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #ece9e4;
+      color: #17151a;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    p { margin: 0 0 24px; color: #625d69; }
+    main {
+      display: grid;
+      grid-template-columns: repeat(2, 390px);
+      gap: 24px;
+      align-items: start;
+    }
+    section {
+      width: 390px;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    iframe {
+      display: block;
+      width: 390px;
+      height: 844px;
+      border: 1px solid #c8c2ba;
+      border-radius: 24px;
+      background: #f7f5f1;
+      box-shadow: 0 16px 44px rgba(39, 30, 48, .14);
+    }
+    body.single-view {
+      width: 100vw;
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body.single-view > h1,
+    body.single-view > p,
+    body.single-view section > h2 {
+      display: none;
+    }
+    body.single-view main,
+    body.single-view section {
+      display: block;
+      width: 100vw;
+      min-width: 0;
+    }
+    body.single-view iframe {
+      width: 100vw;
+      height: 100vh;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>v117 effective loyalty boundary acceptance</h1>
+  <p>Real local application rendered inside two 390 × 844 CSS-pixel viewports.</p>
+  <main>
+    <section data-view="customer">
+      <h2>Customer programme</h2>
+      <iframe
+        title="Customer programme mobile viewport"
+        src="http://127.0.0.1:4180/#/wallet/glow-orchard-forward"></iframe>
+    </section>
+    <section data-view="staff">
+      <h2>Staff Quick earn</h2>
+      <iframe
+        title="Staff Quick earn mobile viewport"
+        src="http://127.0.0.1:4181/business#/till"></iframe>
+    </section>
+  </main>
+  <script>
+    const requestedView = new URLSearchParams(location.search).get('view');
+    if (requestedView === 'customer' || requestedView === 'staff') {
+      document.body.classList.add('single-view');
+      document.querySelector('main').style.display = 'block';
+      document.querySelectorAll('[data-view]').forEach((section) => {
+        section.hidden = section.dataset.view !== requestedView;
+      });
+    }
+  </script>
+</body>
+</html>

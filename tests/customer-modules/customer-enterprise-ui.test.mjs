@@ -275,10 +275,14 @@ test('financial UI actions require module rights plus server-mirrored create-sal
   assert.match(app,/frontdesk:new Set\(\['create_sales'\]\),bookkeeper:new Set\(\['view_finance'\]\)/);
   assert.match(detail,/const canWriteLoyalty=canWriteModule\('loyalty'\)&&hasRoleCapability\('create_sales'\)/);
   assert.match(memberships,/const canEnroll=canWrite&&hasRoleCapability\('create_sales'\)/);
-  assert.match(giftcards,/const abilities=giftCardAbilitiesV102\(\{[\s\S]*createSales:hasRoleCapability\('create_sales'\),[\s\S]*giftcardsReadable:canReadModule\('giftcards'\),[\s\S]*giftcardsWritable:canWriteModule\('giftcards'\),[\s\S]*businessEnabled:giftCardsEnabled/);
-  assert.match(giftcards,/const canIssue=abilities\.canIssue,canRedeem=abilities\.canRedeem/);
-  assert.match(till,/const canRecordSales=hasRoleCapability\('create_sales'\)&&canReadModule\('clients'\)/);
-  assert.match(till,/if\(!canRecordSales\)[\s\S]*Additional access required/);
+  assert.match(giftcards,/const abilities=giftCardAbilitiesV102\(\{[\s\S]*createSales:hasRoleCapability\('create_sales'\),[\s\S]*giftcardsReadable:branchCanRead\(giftBranchId,'giftcards'\),[\s\S]*giftcardsWritable:branchCanWrite\(giftBranchId,'giftcards'\),[\s\S]*businessEnabled:giftCardsEnabled/);
+  assert.match(giftcards,/const canIssue=abilities\.canIssue/);
+  assert.match(giftcards,/const canRedeem=hasRoleCapability\('create_sales'\)[\s\S]*branchCanWrite\(giftBranchId,'till'\)[\s\S]*branchCanRead\(giftBranchId,'clients'\)/);
+  assert.match(till,/const canRecordSalesAtWorkspace=hasRoleCapability\('create_sales'\)&&canReadModule\('clients'\)/);
+  assert.match(till,/if\(!canRecordSalesAtWorkspace\)[\s\S]*Additional access required/);
+  assert.match(till,/const accessibleTillBranches=assignedTillBranches\.filter\(branch=>\s*branchCanWrite\(branch\.id,'till'\)&&branchCanRead\(branch\.id,'clients'\)\s*\)/);
+  assert.match(till,/const canRecordSales=hasRoleCapability\('create_sales'\)&&Boolean\(tillBranchId\)/);
+  assert.match(till,/if\(!tillStaffId\|\|!tillBranchId\)[\s\S]*Quick earn is not available/);
   assert.match(detail,/const canWriteLoyalty=canWriteModule\('loyalty'\)/);
 });
 
@@ -306,7 +310,7 @@ test('customer routes paint loading, expose retryable failures, and ignore late 
   assert.ok((retention.match(/if\(!isRetentionCurrent\(\)\)return/g)||[]).length>=10);
   assert.match(referrals,/await sb\.rpc\('save_referral_program'[\s\S]{0,400}if\(!isReferralsCurrent\(\)\)return/);
   assert.match(memberships,/await sb\.rpc\('enroll_membership_v41'[\s\S]{0,250}if\(!isMembershipsCurrent\(\)\)return/);
-  assert.match(giftcards,/await sb\.rpc\('issue_gift_card'[\s\S]{0,350}if\(!isGiftCardsCurrent\(\)\)return/);
+  assert.match(giftcards,/await sb\.rpc\('issue_gift_card_at_branch_v117'[\s\S]{0,450}if\(!isGiftCardsCurrent\(\)\)return/);
 });
 
 test('customer dialogs and shell disclosures are keyboard complete and semantically reachable',()=>{

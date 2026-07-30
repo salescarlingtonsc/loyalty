@@ -111,9 +111,9 @@ test('the SPA has no raw customer-module writes and carries stable retry keys', 
   const app = await read('app/index.html');
   assert.doesNotMatch(app, /sb\.from\('(clients|consents|referrals|referral_programs|gift_cards|membership_plans|memberships)'\)\.(insert|update|delete|upsert)/i);
   for (const rpc of [
-    'staff_create_client', 'staff_set_marketing_consent', 'issue_gift_card',
+    'staff_create_client', 'staff_set_marketing_consent', 'issue_gift_card_at_branch_v117',
     'staff_list_gift_cards', 'save_referral_program', 'save_membership_plan',
-    'set_membership_status', 'enroll_membership_v41', 'redeem_gift_card_v41'
+    'set_membership_status', 'enroll_membership_v41', 'redeem_gift_card_at_branch_v117'
   ]) assert.match(app, new RegExp(`sb\\.rpc\\('${rpc}'`, 'i'), `app must call ${rpc}`);
   assert.match(app, /const createClientIdempotencyKey=crypto\.randomUUID\(\)/i);
   assert.match(app, /const consentIdempotencyKey=crypto\.randomUUID\(\)/i);
@@ -125,10 +125,14 @@ test('the SPA has no raw customer-module writes and carries stable retry keys', 
   assert.doesNotMatch(app, /sb\.rpc\('redeem_gift_card'/i);
   assert.match(app, /const canWriteModule=module=>S\.myModules\?\.includes\(module\)===true\s*&&roleCanUseModule\(S\.myRole,module\)\s*&&\(S\.myRole==='owner'\|\|S\.myModulePerms\?\.\[module\]==='rw'\)/i);
   assert.match(app, /mm\.module_perms[\s\S]*?S\.myModulePerms/i);
-  for (const module of ['clients', 'referrals', 'memberships', 'giftcards']) {
+  for (const module of ['clients', 'referrals', 'memberships']) {
     assert.match(app, new RegExp(`canWriteModule\\('${module}'\\)`, 'i'),
       `${module} page must suppress write affordances for r-only staff`);
   }
+  assert.match(app, /giftcardsReadable:branchCanRead\(giftBranchId,'giftcards'\)/i);
+  assert.match(app, /giftcardsWritable:branchCanWrite\(giftBranchId,'giftcards'\)/i);
+  assert.match(app, /const canIssue=abilities\.canIssue/i,
+    'Gift cards issuance must suppress write affordances from the exact branch projection');
 });
 
 test('module tables use read-specific policies and RPC-only writes', async () => {

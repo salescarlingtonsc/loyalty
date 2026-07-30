@@ -1563,7 +1563,7 @@ function openMerchantRedemptionScanner({businessId,branchId,isCurrent=()=>true,o
   const decoderAvailable=typeof globalThis.jsQR==='function';
   const cameraAvailable=!!navigator.mediaDevices?.getUserMedia;
   const scanCanvas=document.createElement('canvas'),scanContext=scanCanvas.getContext('2d',{willReadFrequently:true});
-  let stream=null,frameHandle=0,submitting=false,closed=false;
+  let stream=null,frameHandle=0,submitting=false,closed=false,redemptionAttempt=null;
   const stopCamera=()=>{
     if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;
     if(stream)stream.getTracks().forEach(track=>track.stop());
@@ -1578,10 +1578,17 @@ function openMerchantRedemptionScanner({businessId,branchId,isCurrent=()=>true,o
     if(submitting||closed||!isCurrent())return;
     const token=redemptionTokenFromQr(value);
     if(!token){status.textContent='That is not a Nestly redemption QR. Ask the customer to open Redeem again.';return}
+    if(!branchId){
+      status.textContent='Choose an accessible branch before confirming this reward.';
+      return;
+    }
+    if(!redemptionAttempt||redemptionAttempt.token!==token){
+      redemptionAttempt={token,key:crypto.randomUUID()};
+    }
     submitting=true;status.textContent='Confirming this redemption…';
-    const {data,error}=await sb.rpc('merchant_scan_redemption_qr_v93',{
+    const {data,error}=await sb.rpc('merchant_scan_redemption_qr_v117',{
       p_business:businessId,p_branch:branchId,p_qr_token:token,
-      p_idempotency_key:crypto.randomUUID()
+      p_idempotency_key:redemptionAttempt.key
     });
     if(closed||!isCurrent())return;
     submitting=false;
@@ -3747,7 +3754,10 @@ function customerConfirmedEarnFeedback(businessId,items=[],unit='points'){
   try{previous=sessionStorage.getItem(key)||'';sessionStorage.setItem(key,fingerprint)}catch{}
   if(!previous||previous===fingerprint)return;
   const increase=Number(latest.points_delta);
-  toast(`+${increase} ${safeUnit} earned!`);
+  toast('+'+increase+' '+safeUnit+' earned!');
+  customerSuccessCue();
+}
+function customerSuccessCue(){
   if(!customerCelebrationSoundEnabled)return;
   if(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
   try{
@@ -4086,7 +4096,7 @@ async function renderCustomerWallet(businessSlug=null){
         redemptionAttempt=null;toast('This reward is already redeemed');loadRewards();loadTransactions(null);return;
       }
       if(intent?.status!=='pending'||!intent?.qr_token){
-        toast(`Redemption is ${String(intent?.status||'unavailable').replaceAll('_',' ')}.`);return;
+        toast('Redemption is '+String(intent?.status||'unavailable').replaceAll('_',' ')+'.');return;
       }
       showPendingRedemptionQr({intent,businessName:b.name,rewardName:reward.customer_name||reward.name,onClose:()=>loadRewards()});
     });
@@ -4529,7 +4539,7 @@ function renderBusinessWorkspaceControl(control={}){
     <button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>
     ${legalLinks()}</section></main>`;
   $('main').focus();
-  CUI.announce(`${title}.`,{assertive:true});
+  CUI.announce(title+'.',{assertive:true});
   $('businessControlRetry').onclick=route;
   $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
@@ -7039,20 +7049,8 @@ function serviceDisplayName(service={}){
 async function tillPage(){
   const routeMain=M();
   const isTillCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  const canAddClient=canWriteModule('clients');
-  const canRecordSales=hasRoleCapability('create_sales')&&canReadModule('clients');
-  const canScanRedemption=canScanCustomerRedemption({
-    createSales:hasRoleCapability('create_sales'),
-    clientsReadable:canReadModule('clients'),
-    loyaltyWritable:canWriteModule('loyalty')
-  });
-  const canIssueGiftCards=()=>giftCardAbilitiesV102({
-    createSales:hasRoleCapability('create_sales'),
-    giftcardsReadable:canReadModule('giftcards'),
-    giftcardsWritable:canWriteModule('giftcards'),
-    businessEnabled:S.biz.gift_card_sales_enabled===true
-  }).canIssue;
-  if(!canRecordSales){
+  const canRecordSalesAtWorkspace=hasRoleCapability('create_sales')&&canReadModule('clients');
+  if(!canRecordSalesAtWorkspace){
     routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Customer lookup and purchase recording are unavailable for this role.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Additional access required',description:'Quick earn requires customer read access and permission to record purchases.',body:'<p class="muted small">Ask an owner to review your Customers and Quick earn assignments.</p>'})}`;
     return;
   }
@@ -7070,14 +7068,60 @@ async function tillPage(){
   const tillStaffId=tillStaff?.[0]?.id||null;
   const canSeeAllTillBranches=S.myRole==='owner'||S.myRole==='manager';
   const tillAssignedBranchIds=new Set((tillStaffBranches||[]).filter(row=>row.staff_id===tillStaffId).map(row=>row.branch_id));
-  const accessibleTillBranches=(tillBranches||[]).filter(branch=>canSeeAllTillBranches||tillAssignedBranchIds.has(branch.id));
+  const assignedTillBranches=(tillBranches||[]).filter(branch=>canSeeAllTillBranches||tillAssignedBranchIds.has(branch.id));
+  const branchModuleResults=await Promise.all(assignedTillBranches.map(async branch=>{
+    const result=await sb.rpc('get_my_modules_at_v115',{
+      p_business:S.biz.id,p_branch:branch.id
+    });
+    return {branch,result};
+  }));
+  if(!isTillCurrent())return;
+  const branchModuleFailure=branchModuleResults.find(item=>item.result.error||!item.result.data);
+  if(branchModuleFailure){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Branch access could not be checked safely.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn could not be loaded',description:'No purchase, redemption, package use, or gift card was recorded.',body:'<button type="button" class="btn ghost" id="tBranchModulesRetry">Try again</button>'})}`;
+    $('tBranchModulesRetry').onclick=tillPage;
+    return;
+  }
+  const branchModulePermsById=new Map(branchModuleResults.map(({branch,result})=>[
+    branch.id,result.data.module_perms&&typeof result.data.module_perms==='object'
+      ?result.data.module_perms:{}
+  ]));
+  const branchCanRead=(branchId,module)=>['r','rw'].includes(branchModulePermsById.get(branchId)?.[module]);
+  const branchCanWrite=(branchId,module)=>branchModulePermsById.get(branchId)?.[module]==='rw';
+  const canAddClient=()=>branchCanWrite(tillBranchId,'clients');
+  const accessibleTillBranches=assignedTillBranches.filter(branch=>
+    branchCanWrite(branch.id,'till')&&branchCanRead(branch.id,'clients')
+  );
   let tillBranchId=accessibleTillBranches.some(branch=>branch.id===selectedBranchId)?selectedBranchId:
     (accessibleTillBranches.find(branch=>branch.is_default)?.id||accessibleTillBranches[0]?.id||'');
+  const canRecordSales=hasRoleCapability('create_sales')&&Boolean(tillBranchId);
+  const canScanRedemption=()=>canScanCustomerRedemption({
+    createSales:hasRoleCapability('create_sales'),
+    clientsReadable:branchCanRead(tillBranchId,'clients'),
+    loyaltyWritable:branchCanWrite(tillBranchId,'loyalty')
+  });
+  const canIssueGiftCards=()=>giftCardAbilitiesV102({
+    createSales:hasRoleCapability('create_sales'),
+    giftcardsReadable:branchCanRead(tillBranchId,'giftcards'),
+    giftcardsWritable:branchCanWrite(tillBranchId,'giftcards'),
+    businessEnabled:S.biz.gift_card_sales_enabled===true
+  }).canIssue;
   if(!tillStaffId||!tillBranchId){
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'A staff identity and active branch are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn is not ready',description:'Ask an owner to activate this staff account and assign it to a branch.',body:'<p class="muted small">No purchase or points were recorded.</p>'})}`;
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'A staff identity and branch with Quick earn access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn is not available',description:'Ask an owner or Nestly administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, package use, or gift card was recorded.</p>'})}`;
     return;
   }
   selectedBranchId=tillBranchId;
+  let hasActiveGiftLiability=false;
+  const refreshGiftLiability=async()=>{
+    const {data,error}=await sb.rpc('business_has_active_gift_liability_v117',{
+      p_business:S.biz.id,p_branch:tillBranchId
+    });
+    if(!isTillCurrent())return false;
+    hasActiveGiftLiability=!error&&data===true;
+    return hasActiveGiftLiability;
+  };
+  await refreshGiftLiability();
+  if(!isTillCurrent())return;
   recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
     branchId:tillBranchId,
     context:{action_key:'quick_earn',entry_point:'workspace_route',locale:workspaceLocale,surface_version:'v100'}
@@ -7128,6 +7172,7 @@ async function tillPage(){
   let svTender=null;       // null | {reservation_id,reserved_cents,remaining_due_cents,requested_cents}
   let svBusy=false;
   const FINALISE_SLOT='frenly.till.cartFinalise'; // sessionStorage slot for the STABLE finalise idempotency key (writeAttemptKey pattern, F2)
+  const GIFT_REDEEM_SLOT='nestly.till.giftCardRedeem';
   // The cart is LOCKED (no picker, qty or remove) whenever a finalise is mid-recovery or extras are pending,
   // so a retry reuses the same idempotency key instead of minting a fresh one and double-charging.
   const cartLocked=()=>!!(checkoutError||staleConfirm||payError);
@@ -7159,7 +7204,7 @@ async function tillPage(){
   }
 
   function drawStep1(){
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:canScanRedemption?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn',actions:canScanRedemption?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
+    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn',actions:canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="8186 3833" value="${esc(phone)}">
@@ -7169,14 +7214,14 @@ async function tillPage(){
           ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" ${workspaceTemplateAttributeV97('aria-label',k==='⌫'?'phoneKeyDelete':k==='✕'?'phoneKeyClear':'phoneKeyDigit',k==='⌫'||k==='✕'?{}:{digit:k})}>${k}</button>`).join('')}
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
-        ${canScanRedemption?'':'<p class="muted small">Redemption scanning requires Loyalty write access.</p>'}
+        ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
     const inp=$('tPhone');
     inp.focus();
     inp.oninput=()=>{phone=inp.value.replace(/\D/g,'').slice(0,8);inp.value=phone};
     inp.onkeydown=(e)=>{if(e.key==='Enter') doFind();};
     $('tFind').onclick=doFind;
-    if(canScanRedemption)$('tScanRedemption').onclick=()=>openMerchantRedemptionScanner({
+    if(canScanRedemption())$('tScanRedemption').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>resetToStart()
     });
@@ -7229,7 +7274,7 @@ async function tillPage(){
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
           <input type="checkbox" id="tConsent" style="width:auto"> Marketing consent given</label></div>
         <div id="tErr2"></div>
-        ${canAddClient?'<button class="btn" id="tAdd" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Add & continue</button>':'<div class="err">Customer creation is read only for your role.</div>'}
+        ${canAddClient()?'<button class="btn" id="tAdd" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Add & continue</button>':'<div class="err">Customer creation is read only at this branch.</div>'}
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
     $('tBack').onclick=()=>{quickAddIdem=null;step=1;draw()};
@@ -7321,8 +7366,8 @@ async function tillPage(){
   async function loadCatalog(){
     if(catalog||catalogLoading) return;
     catalogLoading=true;catalogError=null;
-    const wantPackages=canWriteModule('packages');
-    const wantMemberships=canWriteModule('memberships');
+    const wantPackages=branchCanWrite(tillBranchId,'packages');
+    const wantMemberships=branchCanWrite(tillBranchId,'memberships');
     const [checkout,pkg,mem,preferences,entitlements,serviceMeta]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
@@ -7594,7 +7639,8 @@ async function tillPage(){
     if(!canGift&&cart.some(line=>line.type==='giftcard')){
       cart=cart.filter(line=>line.type!=='giftcard');
     }
-    const canPkg=canWriteModule('packages'), canMem=canWriteModule('memberships');
+    const canPkg=branchCanWrite(tillBranchId,'packages');
+    const canMem=branchCanWrite(tillBranchId,'memberships');
     // §6 custom-price ('Other item') entry is OWNER AND MANAGER ONLY (Option A). This is a role,
     // not an individually grantable permission — granting it means promoting the employee to
     // manager, which also carries the broader finance/refund permissions. The server enforces this
@@ -7636,11 +7682,19 @@ async function tillPage(){
         const pendingVouchers=(catalog.customerVouchers||[]).length
           ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
-            ${canScanRedemption?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
+            ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
           :'';
         picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
+          ${hasActiveGiftLiability?`<div class="permission-banner" style="margin-top:14px">
+            <b>Redeem an existing gift card</b>
+            <p class="muted small" style="margin:4px 0 8px">Enter the customer’s card code. Existing value remains usable even when new card sales are off.</p>
+            <div class="split" style="align-items:end">
+              <div><label for="tGiftRedeem">Gift card code</label><input id="tGiftRedeem" autocomplete="off" placeholder="GC-XXXXXXXX" style="text-transform:uppercase"></div>
+              <div><button type="button" class="btn ghost" id="tGiftRedeemGo" style="width:100%">${CUI.icon('redeem',{size:16})} Load balance</button></div>
+            </div>
+          </div>`:''}
           ${canGift?`<div class="split" style="margin-top:10px;align-items:end">
             <div><label for="tGift">Gift card value (${S.biz.currency||'SGD'})</label><input id="tGift" inputmode="decimal" placeholder="0.00"></div>
             <div><button type="button" class="btn ghost" id="tGiftAdd" style="width:100%">${CUI.icon('giftcard',{size:16})} Add card</button></div>
@@ -7704,11 +7758,14 @@ async function tillPage(){
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
     $('tBack').onclick=()=>{if(checkoutError){toast('Finish or retry the unfinished items first');return}clearCheckoutState();step=1;cust=null;saleIdem=null;cart=[];draw()};
-    if($('tBranch'))$('tBranch').onchange=()=>{
+    if($('tBranch'))$('tBranch').onchange=async()=>{
       tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;
       /* A branch change invalidates every item and evaluation. Clear the cart, then ask the
          server for this branch's effective catalogue before another selection is possible. */
       cart=[];catalog=null;catalogError=null;clearCheckoutState();
+      hasActiveGiftLiability=false;
+      await refreshGiftLiability();
+      if(!isTillCurrent())return;
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
     };
     if($('tCatRetry'))$('tCatRetry').onclick=()=>{catalogError=null;catalog=null;draw()};
@@ -7733,6 +7790,31 @@ async function tillPage(){
       if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return cartErr('Enter a gift-card value, for example 50.00');
       const c=Math.round(Number(raw)*100);if(!(c>0)||c>100000000)return cartErr('Gift card must be between 0.01 and 1,000,000.00');
       addGiftLine(c);
+    };
+    if($('tGiftRedeemGo'))$('tGiftRedeemGo').onclick=async()=>{
+      const code=($('tGiftRedeem').value||'').trim();
+      if(!code)return cartErr('Enter the customer’s gift card code');
+      const button=$('tGiftRedeemGo');button.disabled=true;
+      const giftRedeemFingerprint=JSON.stringify([
+        S.biz.id,tillBranchId,cust.client_id,code.toUpperCase(),null
+      ]);
+      const {data,error}=await sb.rpc('redeem_gift_card_at_branch_v117',{
+        p_business:S.biz.id,p_branch:tillBranchId,p_code:code,
+        p_client:cust.client_id,p_amount:null,
+        p_idempotency_key:writeAttemptKey(
+          GIFT_REDEEM_SLOT,giftRedeemFingerprint
+        )
+      });
+      if(!isTillCurrent())return;
+      button.disabled=false;
+      if(error)return cartErr('That gift card could not be redeemed. Check the code and remaining balance.');
+      clearWriteAttempt(GIFT_REDEEM_SLOT);
+      cust.credit_cents=Number(cust.credit_cents||0)+Number(data?.loaded_cents||0);
+      $('tGiftRedeem').value='';
+      await refreshGiftLiability();
+      if(!isTillCurrent())return;
+      toast(workspaceTemplateTextV97('giftCardLoaded',{amount:money(data?.loaded_cents||0)}));
+      draw();
     };
     document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>changeQty(b.dataset.line,parseInt(b.dataset.qty,10)));
     document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removeLine(b.dataset.remove));
@@ -7852,7 +7934,7 @@ async function tillPage(){
           anyExtraFailed=true;l._status='failed';
           l._error='Gift cards are not enabled for this account';continue;
         }
-        res=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:l.unit_cents,
+        res=await sb.rpc('issue_gift_card_at_branch_v117',{p_business:S.biz.id,p_branch:tillBranchId,p_amount:l.unit_cents,
           p_purchaser:cust.client_id,p_recipient_email:null,p_idempotency_key:l.key});
       }
       else if(l.type==='package')res=await sb.rpc('sell_package_v102',{p_business:S.biz.id,p_client:cust.client_id,
@@ -7987,7 +8069,7 @@ async function tillPage(){
   draw();
   if(pendingTillRedemptionScan){
     pendingTillRedemptionScan=false;
-    if(canScanRedemption)requestAnimationFrame(()=>{
+    if(canScanRedemption())requestAnimationFrame(()=>{
       if(isTillCurrent())$('tScanRedemption')?.click();
     });
   }
@@ -12436,27 +12518,68 @@ async function giftcardsPage(){
   const routeMain=M();
   const isGiftCardsCurrent=()=>routeMain.isConnected&&M()===routeMain;
   routeMain.innerHTML=CUI.loadingState({title:'Gift cards',iconName:'giftcard'});
-  const canWrite=canWriteModule('giftcards');
   const canConfigure=S.myRole==='owner';
   let issueGiftCardIdempotencyKey=crypto.randomUUID();
-  const [clientsResult,preferencesResult]=await Promise.all([
+  const redeemGiftCardSlot='nestly.giftCards.redeem';
+  const [clientsResult,preferencesResult,branchesResult,staffResult,staffBranchesResult]=await Promise.all([
     sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
-    sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})
+    sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id}),
+    sb.from('branches').select('id,name,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).eq('active',true).limit(1),
+    sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)
   ]);
   const {data:cl,error:clientsError}=clientsResult;
   if(!isGiftCardsCurrent())return;
-  if(clientsError)throw clientsError;
+  const loadError=clientsError||branchesResult.error||staffResult.error||staffBranchesResult.error;
+  if(loadError)throw loadError;
+  const staffId=staffResult.data?.[0]?.id||null;
+  const canSeeAllBranches=S.myRole==='owner'||S.myRole==='manager';
+  const assignedBranchIds=new Set((staffBranchesResult.data||[])
+    .filter(row=>row.staff_id===staffId).map(row=>row.branch_id));
+  const visibleBranches=(branchesResult.data||[])
+    .filter(branch=>canSeeAllBranches||assignedBranchIds.has(branch.id));
+  const moduleResults=await Promise.all(visibleBranches.map(async branch=>({
+    branch,
+    result:await sb.rpc('get_my_modules_at_v115',{
+      p_business:S.biz.id,p_branch:branch.id
+    })
+  })));
+  if(!isGiftCardsCurrent())return;
+  if(moduleResults.some(item=>item.result.error||!item.result.data)){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'Branch access could not be checked safely.',iconName:'giftcard',canWrite:false,moduleLabel:'Gift cards'})}${CUI.card({title:'Gift cards could not be loaded',description:'No card was issued or redeemed.',body:'<button class="btn ghost" id="giftBranchRetry">Try again</button>'})}`;
+    $('giftBranchRetry').onclick=giftcardsPage;return;
+  }
+  const permsByBranch=new Map(moduleResults.map(({branch,result})=>[
+    branch.id,result.data.module_perms||{}
+  ]));
+  const branchCanRead=(branchId,module)=>['r','rw'].includes(permsByBranch.get(branchId)?.[module]);
+  const branchCanWrite=(branchId,module)=>permsByBranch.get(branchId)?.[module]==='rw';
+  const operationalBranches=visibleBranches.filter(branch=>
+    branchCanRead(branch.id,'giftcards')
+    ||(branchCanWrite(branch.id,'till')&&branchCanRead(branch.id,'clients'))
+  );
+  let giftBranchId=operationalBranches.some(branch=>branch.id===selectedBranchId)
+    ?selectedBranchId
+    :(operationalBranches.find(branch=>branch.is_default)?.id||operationalBranches[0]?.id||'');
+  if(!giftBranchId){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'A branch with Gift cards or Till access is required.',iconName:'giftcard',canWrite:false,moduleLabel:'Gift cards'})}${CUI.card({title:'Additional access required',description:'Ask an owner or Nestly administrator to review this staff member’s branch modules.'})}`;
+    return;
+  }
+  selectedBranchId=giftBranchId;
   const preferenceState=checkoutPreferencesStateV102(preferencesResult);
   const preferencesAvailable=preferenceState.available;
   const giftCardsEnabled=preferenceState.giftCardSalesEnabled;
   S.biz.gift_card_sales_enabled=giftCardsEnabled;
   const abilities=giftCardAbilitiesV102({
     createSales:hasRoleCapability('create_sales'),
-    giftcardsReadable:canReadModule('giftcards'),
-    giftcardsWritable:canWriteModule('giftcards'),
+    giftcardsReadable:branchCanRead(giftBranchId,'giftcards'),
+    giftcardsWritable:branchCanWrite(giftBranchId,'giftcards'),
     businessEnabled:giftCardsEnabled
   });
-  const canIssue=abilities.canIssue,canRedeem=abilities.canRedeem;
+  const canIssue=abilities.canIssue;
+  const canRedeem=hasRoleCapability('create_sales')
+    &&branchCanWrite(giftBranchId,'till')
+    &&branchCanRead(giftBranchId,'clients');
   const issueWorkspace=canIssue?`<div class="cui-card-head"><h2>Sell a gift card</h2></div>
       <label for="ga">Amount (${S.biz.currency||'SGD'})</label><input id="ga" type="number" min="1" step="0.01" value="50">
       <label for="gp">Purchaser (optional — links this card sale to their customer history)</label>
@@ -12475,6 +12598,7 @@ async function giftcardsPage(){
     :`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0"><div class="cui-card-head"><h2>Redeem an existing card</h2><p>Gift-card write access and sales authority are required.</p></div>`;
   const giftCardWorkspace=issueWorkspace+redeemWorkspace;
   routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'Issue and redeem spendable credit through one auditable ledger.',iconName:'giftcard',canWrite:canIssue||canRedeem,moduleLabel:'Gift card transactions'})}
+    ${operationalBranches.length>1?`<div class="card" style="margin-bottom:16px"><label for="giftBranch">Branch</label><select id="giftBranch">${operationalBranches.map(branch=>`<option value="${branch.id}" ${branch.id===giftBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select></div>`:`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> ${esc(operationalBranches[0].name)}</p>`}
     ${canConfigure&&preferencesAvailable?`<div class="card" style="margin-bottom:16px"><label style="display:flex;align-items:flex-start;gap:10px;color:var(--ink);cursor:pointer;margin:0">
       <input id="giftCardEnabled" type="checkbox" style="width:auto;margin-top:3px" ${giftCardsEnabled?'checked':''}>
       <span><b>Offer gift cards</b><small class="muted" style="display:block;margin-top:3px">When off, gift-card selling is hidden from Quick Earn. Existing balances and history remain safe.</small></span>
@@ -12510,6 +12634,10 @@ async function giftcardsPage(){
       <p class="muted small" style="margin-top:10px">${esc(growEstimateNote)} Type any amount you like when you sell a card.</p>`;
   };
   loadGiftHint();
+  if($('giftBranch'))$('giftBranch').onchange=()=>{
+    selectedBranchId=$('giftBranch').value;
+    giftcardsPage();
+  };
   if($('giftPreferencesRetry'))$('giftPreferencesRetry').onclick=giftcardsPage;
   if($('giftCardEnabled'))$('giftCardEnabled').onchange=async()=>{
     const checkbox=$('giftCardEnabled');checkbox.disabled=true;
@@ -12526,7 +12654,7 @@ async function giftcardsPage(){
     const amt=Math.round(parseFloat($('ga').value||'0')*100);
     if(!(amt>0)) return toast('Enter an amount');
     const sellButton=$('gsell');sellButton.disabled=true;
-    const {data,error}=await sb.rpc('issue_gift_card',{p_business:S.biz.id,p_amount:amt,
+    const {data,error}=await sb.rpc('issue_gift_card_at_branch_v117',{p_business:S.biz.id,p_branch:giftBranchId,p_amount:amt,
       p_purchaser:$('gp').value||null,p_recipient_email:$('gr').value||null,
       p_idempotency_key:issueGiftCardIdempotencyKey});
     if(!isGiftCardsCurrent())return;
@@ -12539,11 +12667,18 @@ async function giftcardsPage(){
   if(canRedeem&&$('gredeem'))$('gredeem').onclick=async()=>{
     if(!$('gc').value.trim()||!$('gcl').value) return toast('Enter a code and pick a customer');
     const redeemButton=$('gredeem');redeemButton.disabled=true;
-    const {data,error}=await sb.rpc('redeem_gift_card_v41',{p_business:S.biz.id,p_code:$('gc').value,
-      p_client:$('gcl').value,p_amount:null});
+    const giftCode=$('gc').value.trim();
+    const giftClient=$('gcl').value;
+    const giftFingerprint=JSON.stringify([
+      S.biz.id,giftBranchId,giftClient,giftCode.toUpperCase(),null
+    ]);
+    const {data,error}=await sb.rpc('redeem_gift_card_at_branch_v117',{p_business:S.biz.id,p_branch:giftBranchId,p_code:giftCode,
+      p_client:giftClient,p_amount:null,
+      p_idempotency_key:writeAttemptKey(redeemGiftCardSlot,giftFingerprint)});
     if(!isGiftCardsCurrent())return;
     redeemButton.disabled=false;
     if(error) return fail(error);
+    clearWriteAttempt(redeemGiftCardSlot);
     toast(workspaceTemplateTextV97('giftCardLoaded',{amount:money(data.loaded_cents)}));$('gc').value='';loadCards();
   };
   async function loadCards(){
@@ -15267,7 +15402,7 @@ async function renderPortal(slug){
       const stepEl=root.querySelector(`.pf-step[data-step="${key}"]`);
       const heading=stepEl?.querySelector('h2');
       if(heading)requestAnimationFrame(()=>heading.focus({preventScroll:false}));
-      CUI.announce(`Step ${stepIdx+1} of ${steps.length}: ${stepMeta[key].label}`);
+      CUI.announce('Step '+(stepIdx+1)+' of '+steps.length+': '+stepMeta[key].label);
     };
     const setChoice=(selector,el)=>root.querySelectorAll(selector).forEach(b=>{const on=b===el;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',String(on));});
     root.querySelectorAll('[data-svc]').forEach(el=>el.onclick=()=>{selSvc=el.dataset.svc||null;serviceChosen=true;setChoice('[data-svc]',el);const e=$('err-service');if(e)e.textContent='';});
@@ -15324,7 +15459,7 @@ async function renderPortal(slug){
         <p class="small" style="margin-top:10px"><b>What happens next:</b> ${m.next}</p>${manageToken?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>
         <p class="small" style="margin-top:6px;word-break:break-all"><a href="${esc(manageUrl)}" style="color:#D06A2E;text-decoration:underline">${esc(manageUrl)}</a></p>
         <button class="btn ghost sm" id="copyManage" style="margin-top:12px">Copy private link</button>`:''}</div>`;
-      CUI.announce(`${m.title} ${m.body}`,{assertive:true});
+      CUI.announce(m.title+' '+m.body,{assertive:true});
       requestAnimationFrame(()=>bookingFormCard.querySelector('h2')?.focus());
       if($('copyManage')) $('copyManage').onclick=async()=>{await navigator.clipboard.writeText(manageUrl);toast('Private link copied')};
     };
