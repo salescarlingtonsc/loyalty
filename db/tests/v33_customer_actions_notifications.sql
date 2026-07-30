@@ -24,6 +24,7 @@ declare
   v_business_a uuid;
   v_business_b uuid;
   v_slug_a text;
+  v_owner uuid;
   v_customer_a uuid := gen_random_uuid();
   v_customer_b uuid := gen_random_uuid();
   v_staff_only uuid := gen_random_uuid();
@@ -42,7 +43,11 @@ begin
   reset role;
   select id, slug into v_business_a, v_slug_a from public.businesses order by created_at, id limit 1;
   select id into v_business_b from public.businesses where id <> v_business_a order by created_at, id limit 1;
-  if v_business_a is null or v_business_b is null then
+  select user_id into v_owner
+    from public.staff
+   where business_id = v_business_a and role = 'owner' and active and user_id is not null
+   order by created_at, id limit 1;
+  if v_business_a is null or v_business_b is null or v_owner is null then
     raise exception 'v33 suite requires business A and business B';
   end if;
 
@@ -88,6 +93,10 @@ begin
   update app.platform_feature_flags
      set enabled = true
    where feature_key in ('customer_actions', 'customer_notifications');
+  perform pg_temp.as_customer(v_owner);
+  perform public.business_set_customer_capabilities_v89(
+    v_business_a, false, false, true
+  );
 
   -- Customer A can append one pending cancel request; replay is identical and a
   -- payload mismatch under the same idempotency key is rejected.

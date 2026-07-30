@@ -7,7 +7,7 @@ import test from 'node:test';
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 const planPath = path.join(repoRoot, 'supabase/canonical-migration-order.plan.json');
 
-const sqlTestByVersion = new Map([
+const sqlTestBySemanticVersion = new Map([
   ['v24a', 'db/tests/v24a_redemption_idempotency.sql'],
   ['v24b', 'db/tests/v24b_module_dependencies.sql'],
   ['v24c', 'db/tests/v24c_import_foundation.sql'],
@@ -94,10 +94,6 @@ const sqlTestByVersion = new Map([
   ['v89', 'db/tests/v89_customer_platform_contracts.sql'],
   ['v90', 'db/tests/v90_production_readiness.sql'],
   ['v91', 'db/tests/v91_customer_game_notifications.sql'],
-  ['v92', 'db/tests/v92_synthetic_reporting_isolation.sql'],
-  ['v93', 'db/tests/v93_synthetic_e2e_campaign.sql'],
-  ['v94', 'db/tests/v94_platform_control_intelligence.sql'],
-  ['v95', 'db/tests/v95_bilingual_programmes.sql'],
   ['v96', 'db/tests/v96_customer_programme_selector_media.sql'],
   ['v97', 'db/tests/v97_workspace_interface_localization.sql'],
   ['v99', 'db/tests/v99_v100_campaign_truth_adoption.sql'],
@@ -105,12 +101,487 @@ const sqlTestByVersion = new Map([
   ['v102', 'db/tests/v102_package_checkout_entitlements.sql'],
   ['v103', 'db/tests/v103_customer_summary_business_identity.sql'],
   ['v104', 'db/tests/v104_marketing_offers.sql'],
-  ['v105', 'db/tests/v105_admin_task_closure.sql']
+  ['v105', 'db/tests/v105_admin_task_closure.sql'],
+  ['v106', 'db/tests/v106_revenue_truth_foundation.sql'],
+  ['v107', 'db/tests/v107_customer_lifecycle_contract.sql'],
+  ['v108', 'db/tests/v108_measured_bringback_loop.sql'],
+  ['v109', 'db/tests/v109_economics_driver_sector_policy.sql'],
+  ['v110', 'db/tests/v110_growth_delivery_lifecycle.sql'],
+  ['v111', 'db/tests/v111_customer_identity_governance.sql'],
+  ['v112', 'db/tests/v112_concurrent_replay_delivery_backoff.sql'],
+  ['v113', 'db/tests/v113_effective_identity_consumers.sql'],
+  ['v114', 'db/tests/v114_traceable_growth_costs.sql']
 ]);
+
+const sqlTestByMigrationName = new Map([
+  ['nestly_v92_synthetic_reporting_isolation', 'db/tests/v92_synthetic_reporting_isolation.sql'],
+  ['nestly_v92_customer_privacy_marketing_manifest', 'db/tests/v92_customer_privacy_marketing_manifest.sql'],
+  ['nestly_v93_branch_scoped_merchant_redemption', 'db/tests/v93_synthetic_e2e_campaign.sql'],
+  ['nestly_v93_customer_notification_constraints', 'db/tests/v93_customer_notification_constraints.sql'],
+  ['nestly_v94_platform_control_intelligence', 'db/tests/v94_platform_control_intelligence.sql'],
+  ['nestly_v94_platform_firm_snapshot_null_guard', 'db/tests/v94_platform_firm_snapshot_null_guard.sql'],
+  ['nestly_v95_bilingual_programmes', 'db/tests/v95_bilingual_programmes.sql'],
+  ['nestly_v95_customer_web_push', 'db/tests/v95_customer_web_push.sql']
+]);
+
+const migrationIdentity = (migration) => `${migration.version}_${migration.name}`;
+const semanticVersionFor = (migration) =>
+  migration.name.match(/^(?:frenly|nestly)_(v\d+[a-z]?|c\d+)(?:_|$)/)?.[1];
+const rollbackSuiteFor = (migration) =>
+  sqlTestByMigrationName.get(migration.name)
+  ?? sqlTestBySemanticVersion.get(semanticVersionFor(migration));
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const statementCount = (sql, statement) =>
   [...sql.matchAll(new RegExp(`^\\s*${statement}\\s*;\\s*$`, 'gim'))].length;
+
+function isEscapeStringPrefix(source, quoteIndex) {
+  return source[quoteIndex] === "'"
+    && /e/i.test(source[quoteIndex - 1] ?? '')
+    && !/[a-z0-9_$]/i.test(source[quoteIndex - 2] ?? '');
+}
+
+function parenthesizedBody(source, openIndex) {
+  assert.equal(source[openIndex], '(', 'parenthesizedBody must start at an opening parenthesis');
+  let depth = 0;
+  let quote = null;
+  let backslashEscapes = false;
+
+  for (let index = openIndex; index < source.length; index += 1) {
+    const character = source[index];
+
+    if (quote) {
+      if (backslashEscapes && character === '\\' && index + 1 < source.length) {
+        index += 1;
+      } else if (character === quote) {
+        if (source[index + 1] === quote) {
+          index += 1;
+        } else {
+          quote = null;
+          backslashEscapes = false;
+        }
+      }
+      continue;
+    }
+
+    if (character === "'" || character === '"') {
+      quote = character;
+      backslashEscapes = isEscapeStringPrefix(source, index);
+    } else if (character === '(') {
+      depth += 1;
+    } else if (character === ')') {
+      depth -= 1;
+      if (depth === 0) {
+        return { body: source.slice(openIndex + 1, index), closeIndex: index };
+      }
+    }
+  }
+
+  throw new Error('Unbalanced SQL function argument list');
+}
+
+function splitTopLevel(source) {
+  const parts = [];
+  let start = 0;
+  let depth = 0;
+  let quote = null;
+  let backslashEscapes = false;
+
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+
+    if (quote) {
+      if (backslashEscapes && character === '\\' && index + 1 < source.length) {
+        index += 1;
+      } else if (character === quote) {
+        if (source[index + 1] === quote) {
+          index += 1;
+        } else {
+          quote = null;
+          backslashEscapes = false;
+        }
+      }
+      continue;
+    }
+
+    if (character === "'" || character === '"') {
+      quote = character;
+      backslashEscapes = isEscapeStringPrefix(source, index);
+    } else if (character === '(' || character === '[') {
+      depth += 1;
+    } else if (character === ')' || character === ']') {
+      depth -= 1;
+    } else if (character === ',' && depth === 0) {
+      parts.push(source.slice(start, index));
+      start = index + 1;
+    }
+  }
+
+  parts.push(source.slice(start));
+  return parts.map((part) => part.trim()).filter(Boolean);
+}
+
+function stripSqlComments(source) {
+  let result = '';
+  let quote = null;
+  let backslashEscapes = false;
+
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+
+    if (quote) {
+      result += character;
+      if (backslashEscapes && character === '\\' && index + 1 < source.length) {
+        result += source[index + 1];
+        index += 1;
+      } else if (character === quote) {
+        if (source[index + 1] === quote) {
+          result += source[index + 1];
+          index += 1;
+        } else {
+          quote = null;
+          backslashEscapes = false;
+        }
+      }
+      continue;
+    }
+
+    if (character === "'" || character === '"') {
+      quote = character;
+      backslashEscapes = isEscapeStringPrefix(source, index);
+      result += character;
+    } else if (character === '-' && source[index + 1] === '-') {
+      while (index < source.length && source[index] !== '\n') {
+        index += 1;
+      }
+      result += '\n';
+    } else if (character === '/' && source[index + 1] === '*') {
+      let depth = 1;
+      index += 2;
+      while (index < source.length && depth > 0) {
+        if (source[index] === '/' && source[index + 1] === '*') {
+          depth += 1;
+          index += 2;
+        } else if (source[index] === '*' && source[index + 1] === '/') {
+          depth -= 1;
+          index += 2;
+        } else {
+          index += 1;
+        }
+      }
+      assert.equal(depth, 0, 'Unclosed SQL block comment');
+      index -= 1;
+      result += ' ';
+    } else {
+      result += character;
+    }
+  }
+
+  return result;
+}
+
+function sqlOutsideCommentsAndLiterals(source) {
+  let result = '';
+
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+    const dollarTag = character === '$'
+      ? source.slice(index).match(/^\$[a-z_][a-z0-9_]*\$|^\$\$/i)?.[0]
+      : null;
+
+    if (dollarTag) {
+      const bodyEnd = source.indexOf(dollarTag, index + dollarTag.length);
+      assert.notEqual(bodyEnd, -1, `Unclosed SQL dollar quote ${dollarTag}`);
+      const consumed = source.slice(index, bodyEnd + dollarTag.length);
+      result += consumed.replace(/[^\n]/g, ' ');
+      index = bodyEnd + dollarTag.length - 1;
+    } else if (character === "'" || character === '"') {
+      const quote = character;
+      const backslashEscapes = isEscapeStringPrefix(source, index);
+      result += ' ';
+      for (index += 1; index < source.length; index += 1) {
+        if (source[index] === '\n') {
+          result += '\n';
+        } else {
+          result += ' ';
+        }
+        if (backslashEscapes && source[index] === '\\' && index + 1 < source.length) {
+          result += ' ';
+          index += 1;
+        } else if (source[index] === quote) {
+          if (source[index + 1] === quote) {
+            result += ' ';
+            index += 1;
+          } else {
+            break;
+          }
+        }
+      }
+    } else if (character === '-' && source[index + 1] === '-') {
+      while (index < source.length && source[index] !== '\n') {
+        result += ' ';
+        index += 1;
+      }
+      result += '\n';
+    } else if (character === '/' && source[index + 1] === '*') {
+      let depth = 1;
+      result += '  ';
+      index += 2;
+      while (index < source.length && depth > 0) {
+        if (source[index] === '/' && source[index + 1] === '*') {
+          depth += 1;
+          result += '  ';
+          index += 2;
+        } else if (source[index] === '*' && source[index + 1] === '/') {
+          depth -= 1;
+          result += '  ';
+          index += 2;
+        } else {
+          result += source[index] === '\n' ? '\n' : ' ';
+          index += 1;
+        }
+      }
+      assert.equal(depth, 0, 'Unclosed SQL block comment');
+      index -= 1;
+    } else {
+      result += character;
+    }
+  }
+
+  return result;
+}
+
+function dollarBodyHeaderEnd(source, startIndex) {
+  for (let index = startIndex; index < source.length; index += 1) {
+    const character = source[index];
+    const dollarTag = character === '$'
+      ? source.slice(index).match(/^\$[a-z_][a-z0-9_]*\$|^\$\$/i)?.[0]
+      : null;
+
+    if (dollarTag) {
+      const headerPrefix = sqlOutsideCommentsAndLiterals(source.slice(startIndex, index));
+      assert.match(headerPrefix, /\bas\s*$/i, 'Dollar-quoted function body must follow AS');
+      return index + dollarTag.length;
+    }
+
+    if (character === "'" || character === '"') {
+      const quote = character;
+      const backslashEscapes = isEscapeStringPrefix(source, index);
+      for (index += 1; index < source.length; index += 1) {
+        if (backslashEscapes && source[index] === '\\' && index + 1 < source.length) {
+          index += 1;
+        } else if (source[index] === quote) {
+          if (source[index + 1] === quote) {
+            index += 1;
+          } else {
+            break;
+          }
+        }
+      }
+    } else if (character === '-' && source[index + 1] === '-') {
+      while (index < source.length && source[index] !== '\n') {
+        index += 1;
+      }
+    } else if (character === '/' && source[index + 1] === '*') {
+      let depth = 1;
+      index += 2;
+      while (index < source.length && depth > 0) {
+        if (source[index] === '/' && source[index + 1] === '*') {
+          depth += 1;
+          index += 2;
+        } else if (source[index] === '*' && source[index + 1] === '/') {
+          depth -= 1;
+          index += 2;
+        } else {
+          index += 1;
+        }
+      }
+      assert.equal(depth, 0, 'Unclosed SQL block comment before function body');
+      index -= 1;
+    }
+  }
+
+  throw new Error('Public function must have a bounded dollar-quoted body');
+}
+
+function stripTopLevelDefault(argument) {
+  let depth = 0;
+  let quote = null;
+  let backslashEscapes = false;
+
+  for (let index = 0; index < argument.length; index += 1) {
+    const character = argument[index];
+
+    if (quote) {
+      if (backslashEscapes && character === '\\' && index + 1 < argument.length) {
+        index += 1;
+      } else if (character === quote) {
+        if (argument[index + 1] === quote) {
+          index += 1;
+        } else {
+          quote = null;
+          backslashEscapes = false;
+        }
+      }
+      continue;
+    }
+
+    if (character === "'" || character === '"') {
+      quote = character;
+      backslashEscapes = isEscapeStringPrefix(argument, index);
+    } else if (character === '(' || character === '[') {
+      depth += 1;
+    } else if (character === ')' || character === ']') {
+      depth -= 1;
+    } else if (depth === 0 && character === '=') {
+      return argument.slice(0, index).trim();
+    } else if (
+      depth === 0
+      && argument.slice(index).match(/^default(?:\s|$)/i)
+      && (index === 0 || /\s/.test(argument[index - 1]))
+    ) {
+      return argument.slice(0, index).trim();
+    }
+  }
+
+  return argument.trim();
+}
+
+const unnamedTypeLeads = new Set([
+  'bigint',
+  'bigserial',
+  'bit',
+  'boolean',
+  'bool',
+  'box',
+  'bytea',
+  'character',
+  'cidr',
+  'date',
+  'decimal',
+  'double',
+  'inet',
+  'int',
+  'int2',
+  'int4',
+  'int8',
+  'integer',
+  'interval',
+  'json',
+  'jsonb',
+  'money',
+  'numeric',
+  'real',
+  'record',
+  'serial',
+  'smallint',
+  'smallserial',
+  'text',
+  'time',
+  'timestamp',
+  'timestamptz',
+  'timetz',
+  'uuid',
+  'varchar',
+  'xml'
+]);
+
+function normalizeIdentityType(type) {
+  return type
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([()[\],])\s*/g, '$1')
+    .replace(/^int2$/, 'smallint')
+    .replace(/^int4$/, 'integer')
+    .replace(/^int8$/, 'bigint')
+    .replace(/^int$/, 'integer')
+    .replace(/^smallserial$/, 'smallint')
+    .replace(/^serial$/, 'integer')
+    .replace(/^bigserial$/, 'bigint')
+    .replace(/^bool$/, 'boolean')
+    .replace(/^float4$/, 'real')
+    .replace(/^float8$/, 'double precision')
+    .replace(/^decimal(?=$|\()/, 'numeric')
+    .replace(/^timestamp with time zone$/, 'timestamptz')
+    .replace(/^timestamp without time zone$/, 'timestamp')
+    .replace(/^time with time zone$/, 'timetz')
+    .replace(/^time without time zone$/, 'time')
+    .replace(/^character varying(?=$|\()/, 'varchar');
+}
+
+function identityArgumentTypes(argumentList, declaration = false) {
+  return splitTopLevel(stripSqlComments(argumentList)).flatMap((rawArgument) => {
+    let argument = stripTopLevelDefault(rawArgument);
+    const mode = argument.match(/^(inout|in|out|variadic)\s+/i)?.[1]?.toLowerCase();
+    argument = argument.replace(/^(?:inout|in|out|variadic)\s+/i, '').trim();
+
+    if (mode === 'out') {
+      return [];
+    }
+
+    if (declaration) {
+      const firstToken = argument.match(/^("[^"]+"|[a-z_][a-z0-9_$]*)/i)?.[1];
+      const unquotedFirstToken = firstToken?.replace(/^"|"$/g, '').toLowerCase();
+      const remainder = firstToken ? argument.slice(firstToken.length).trim() : '';
+      const isUnnamedType = unquotedFirstToken
+        && (unnamedTypeLeads.has(unquotedFirstToken) || firstToken.includes('.'));
+
+      if (remainder && !isUnnamedType) {
+        argument = remainder;
+      }
+    }
+
+    return [normalizeIdentityType(argument)];
+  });
+}
+
+function publicFunctionDefinitions(sql) {
+  const inspectableSql = sqlOutsideCommentsAndLiterals(sql);
+  const pattern = /create\s+(?:or\s+replace\s+)?function\s+(public\.[a-z0-9_]+)\s*\(/gi;
+  return [...inspectableSql.matchAll(pattern)].map((match) => {
+    const openIndex = match.index + match[0].lastIndexOf('(');
+    const argumentsList = parenthesizedBody(sql, openIndex);
+    const headerEnd = dollarBodyHeaderEnd(sql, argumentsList.closeIndex + 1);
+    return {
+      index: match.index,
+      name: match[1].toLowerCase(),
+      identityTypes: identityArgumentTypes(argumentsList.body, true),
+      header: inspectableSql.slice(match.index, headerEnd)
+    };
+  });
+}
+
+const isSecurityDefiner = (definition) => /\bsecurity\s+definer\b/i.test(definition.header);
+const hasPinnedSearchPath = (definition) => /\bset\s+search_path\s+(?:to|=)/i.test(definition.header);
+
+function hasExactPublicExecuteRevoke(sql, definition) {
+  const inspectableSql = sqlOutsideCommentsAndLiterals(sql);
+  const pattern = /revoke\s+all(?:\s+privileges)?\s+on\s+function\s+(public\.[a-z0-9_]+)\s*\(/gi;
+
+  for (const match of inspectableSql.matchAll(pattern)) {
+    const openIndex = match.index + match[0].lastIndexOf('(');
+    const argumentsList = parenthesizedBody(inspectableSql, openIndex);
+    const tail = inspectableSql.slice(argumentsList.closeIndex + 1);
+    const roles = tail.match(/^\s+from\s+([^;]+)\s*;/i)?.[1]
+      ?.split(',')
+      .map((role) => role.trim().replace(/^"|"$/g, '').toLowerCase());
+    const identityTypes = identityArgumentTypes(argumentsList.body, true);
+
+    if (
+      match.index > definition.index
+      &&
+      match[1].toLowerCase() === definition.name
+      && identityTypes.length === definition.identityTypes.length
+      && identityTypes.every((type, index) => type === definition.identityTypes[index])
+      && roles?.includes('public')
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 async function pendingMigrations() {
   const plan = JSON.parse(await readFile(planPath, 'utf8'));
@@ -119,17 +590,25 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 98);
-  assert.equal(sqlTestByVersion.size, pending.length);
+  assert.equal(pending.length, 111);
+  const mappedSuites = new Map(pending.map((migration) => [
+    migrationIdentity(migration),
+    rollbackSuiteFor(migration)
+  ]));
+  assert.equal(mappedSuites.size, pending.length, 'every pending migration identity must be unique');
+  assert.deepEqual(
+    [...mappedSuites].filter(([, testPath]) => !testPath),
+    [],
+    'every unique pending migration identity must map to a rollback suite'
+  );
 
   for (const migration of pending) {
     const migrationSql = await readFile(path.join(repoRoot, migration.sourcePath), 'utf8');
     assert.equal(statementCount(migrationSql, 'begin'), 1, `${migration.name} must begin one transaction`);
     assert.equal(statementCount(migrationSql, 'commit'), 1, `${migration.name} must commit one transaction`);
 
-    const semanticVersion = migration.name.match(/^(?:frenly|nestly)_(v\d+[a-z]?|c\d+)(?:_|$)/)?.[1];
-    const testPath = sqlTestByVersion.get(semanticVersion);
-    assert.ok(testPath, `${semanticVersion} must have a mapped rollback suite`);
+    const testPath = mappedSuites.get(migrationIdentity(migration));
+    assert.ok(testPath, `${migrationIdentity(migration)} must have a mapped rollback suite`);
     const testSql = await readFile(path.join(repoRoot, testPath), 'utf8');
     assert.doesNotMatch(
       testSql,
@@ -166,26 +645,224 @@ test('every newly created public table has RLS and an explicit browser-role ACL'
 test('pending public SECURITY DEFINER RPCs pin search_path and revoke default execution', async () => {
   for (const migration of await pendingMigrations()) {
     const sql = await readFile(path.join(repoRoot, migration.sourcePath), 'utf8');
-    const definitions = [...sql.matchAll(/create or replace function\s+(public\.[a-z0-9_]+)[\s\S]*?\$\$/gi)];
+    const definitions = publicFunctionDefinitions(sql).filter(isSecurityDefiner);
 
-    for (let index = 0; index < definitions.length; index += 1) {
-      const definition = definitions[index];
-      const nextOffset = definitions[index + 1]?.index ?? sql.length;
-      const block = sql.slice(definition.index, nextOffset);
-      const functionName = definition[1];
-      const retiredFailClosedStub=/security invoker/i.test(block)
-        &&/Legacy phone-sale signature is retired/.test(block)
-        &&functionName==='public.record_sale_by_phone';
-      assert.ok(/security definer/i.test(block)||retiredFailClosedStub,
-        `${migration.name}: ${functionName} must be SECURITY DEFINER or an explicitly retired fail-closed stub`);
-      assert.match(block, /set search_path\s+(?:to|=)/i, `${migration.name}: ${functionName} must pin search_path`);
-      assert.match(
-        sql,
-        new RegExp(`revoke\\s+all[\\s\\S]{0,240}?on\\s+function\\s+${escapeRegExp(functionName)}\\s*\\(`, 'i'),
-        `${migration.name}: ${functionName} must revoke PostgreSQL's default PUBLIC execute grant`
+    for (const definition of definitions) {
+      const signature = `${definition.name}(${definition.identityTypes.join(',')})`;
+      assert.ok(
+        hasPinnedSearchPath(definition),
+        `${migration.name}: ${signature} must pin search_path`
+      );
+      assert.ok(
+        hasExactPublicExecuteRevoke(sql, definition),
+        `${migration.name}: ${signature} must revoke PostgreSQL's default execute grant from PUBLIC on the exact overload`
       );
     }
   }
+});
+
+test('SECURITY DEFINER preflight rejects wrong-role and wrong-overload revocations', () => {
+  const declarationSql = `
+    create or replace function public.example_rpc(
+      p_business uuid,
+      p_amount numeric(12, 2) default 0
+    )
+    returns void
+    language plpgsql
+    security definer
+    set search_path = ''
+    as $$ begin null; end; $$;
+  `;
+  const declaration = publicFunctionDefinitions(declarationSql)[0];
+  const withDeclaration = (aclSql) => `${declarationSql}\n${aclSql}`;
+
+  assert.ok(
+    hasExactPublicExecuteRevoke(
+      withDeclaration(
+        'revoke all on function public.example_rpc(uuid, numeric(12, 2)) from authenticated, public, anon;'
+      ),
+      declaration
+    ),
+    'an exact overload revocation that includes PUBLIC must pass'
+  );
+  assert.equal(
+    hasExactPublicExecuteRevoke(
+      withDeclaration(
+        'revoke all on function public.example_rpc(uuid, numeric(12, 2)) from authenticated, anon;'
+      ),
+      declaration
+    ),
+    false,
+    'a revocation that omits PUBLIC must fail'
+  );
+  assert.equal(
+    hasExactPublicExecuteRevoke(
+      withDeclaration('revoke all on function public.example_rpc(uuid) from public;'),
+      declaration
+    ),
+    false,
+    'a PUBLIC revocation on the wrong overload must fail'
+  );
+  assert.equal(
+    hasExactPublicExecuteRevoke(
+      withDeclaration(`
+        revoke all on function public.example_rpc(uuid) from public;
+        revoke all on function public.example_rpc(uuid, numeric(12, 2)) from authenticated, anon;
+      `),
+      declaration
+    ),
+    false,
+    'separate wrong-overload and wrong-role statements must not combine into a false pass'
+  );
+  assert.equal(
+    hasExactPublicExecuteRevoke(
+      withDeclaration(`
+        -- revoke all on function public.example_rpc(uuid, numeric(12, 2)) from public;
+        select 'revoke all on function public.example_rpc(uuid, numeric(12, 2)) from public;';
+        do $acl$
+        begin
+          perform 'revoke all on function public.example_rpc(uuid, numeric(12, 2)) from public;';
+        end
+        $acl$;
+        revoke all on function public.example_rpc(uuid, numeric(12, 2)) from authenticated, anon;
+      `),
+      declaration
+    ),
+    false,
+    'comments, string literals, and dollar-quoted bodies cannot spoof a PUBLIC revocation'
+  );
+  assert.equal(
+    hasExactPublicExecuteRevoke(
+      withDeclaration(`
+        /*
+          outer comment
+          /* inner comment */
+          revoke all on function public.example_rpc(uuid, numeric(12, 2)) from public;
+        */
+        revoke all on function public.example_rpc(uuid, numeric(12, 2)) from authenticated, anon;
+      `),
+      declaration
+    ),
+    false,
+    'a fake exact revoke inside nested PostgreSQL block comments cannot satisfy the guard'
+  );
+  assert.equal(
+    hasExactPublicExecuteRevoke(
+      withDeclaration(String.raw`
+        select E'kept open by \' revoke all on function public.example_rpc(uuid, numeric(12, 2)) from public; still literal';
+        revoke all on function public.example_rpc(uuid, numeric(12, 2)) from authenticated, anon;
+      `),
+      declaration
+    ),
+    false,
+    'a fake exact revoke after an escaped quote inside a PostgreSQL E-string cannot satisfy the guard'
+  );
+
+  const plainCreateSql = `
+    create function public.plain_create_rpc(p_business uuid)
+    returns void
+    language plpgsql
+    security definer
+    set search_path = ''
+    as $$ begin null; end; $$;
+  `;
+  const plainCreate = publicFunctionDefinitions(plainCreateSql)[0];
+  assert.equal(plainCreate?.name, 'public.plain_create_rpc', 'plain CREATE FUNCTION must be inspected');
+  assert.equal(
+    hasExactPublicExecuteRevoke(
+      `${plainCreateSql}
+       revoke all on function public.plain_create_rpc(uuid) from authenticated, anon;`,
+      plainCreate
+    ),
+    false,
+    'a plain CREATE FUNCTION cannot bypass the PUBLIC revocation requirement'
+  );
+
+  const contaminationDefinitions = publicFunctionDefinitions(`
+    create function public.safe_invoker(p_business uuid)
+    returns void
+    language plpgsql
+    security invoker
+    as $$ begin null; end; $$;
+
+    create function app.internal_definer(p_business uuid)
+    returns void
+    language plpgsql
+    security definer
+    set search_path = ''
+    as $$ begin null; end; $$;
+
+    create function public.missing_path_definer(p_business uuid)
+    returns void
+    language plpgsql
+    security definer
+    as $$ begin null; end; $$;
+
+    create function public.later_safe_invoker(p_business uuid)
+    returns void
+    language plpgsql
+    security invoker
+    set search_path = ''
+    as $$ begin null; end; $$;
+  `);
+  assert.equal(
+    contaminationDefinitions.filter(isSecurityDefiner).map(({ name }) => name).join(','),
+    'public.missing_path_definer',
+    'an intervening app definer must not reclassify a public invoker'
+  );
+  assert.equal(
+    hasPinnedSearchPath(contaminationDefinitions.find(({ name }) => name === 'public.missing_path_definer')),
+    false,
+    'a public definer cannot borrow search_path from a later function header'
+  );
+
+  const commentedTokenSql = `
+    create /* discovery gap */ function public.commented_tokens_rpc(p_business uuid)
+    returns void
+    language plpgsql
+    security /* classification gap */ definer
+    set /* header gap */ search_path = ''
+    as $$ begin null; end; $$;
+    revoke all on function public.commented_tokens_rpc(uuid) from public;
+  `;
+  const commentedTokenDefinition = publicFunctionDefinitions(commentedTokenSql)[0];
+  assert.equal(
+    commentedTokenDefinition?.name,
+    'public.commented_tokens_rpc',
+    'comments between CREATE FUNCTION tokens cannot hide a public function'
+  );
+  assert.equal(
+    isSecurityDefiner(commentedTokenDefinition),
+    true,
+    'comments between SECURITY DEFINER tokens cannot hide the authority mode'
+  );
+  assert.equal(
+    hasPinnedSearchPath(commentedTokenDefinition),
+    true,
+    'comments in a pinned search_path header must not prevent exact inspection'
+  );
+  assert.equal(
+    hasExactPublicExecuteRevoke(commentedTokenSql, commentedTokenDefinition),
+    true,
+    'the exact active post-definition PUBLIC revocation remains provable'
+  );
+
+  const recreatedSql = `
+    revoke all on function public.recreated_rpc(uuid) from public;
+    drop function public.recreated_rpc(uuid);
+    create function public.recreated_rpc(p_business uuid)
+    returns void
+    language plpgsql
+    security definer
+    set search_path = ''
+    as $$ begin null; end; $$;
+  `;
+  const recreatedDefinition = publicFunctionDefinitions(recreatedSql)[0];
+  assert.equal(
+    hasExactPublicExecuteRevoke(recreatedSql, recreatedDefinition),
+    false,
+    'a revoke before DROP and plain CREATE cannot secure the newly created function ACL'
+  );
 });
 
 test('v27 establishes the tenant-safe products parent key before its composite FK', async () => {

@@ -1,7 +1,8 @@
 #!/bin/sh
 # v63 PS-2A Increment C concurrency harness: a REAL two-connection race against the stored-value
 # SPEND path (owner adversarial test 3 - concurrent redemptions, no overspend).
-#   Seed a disposable tenant + a stored-value account funded to cover EXACTLY ONE spend (5000 paid
+#   Seed a disposable tenant + a stored-value account funded through the current authoritative
+#   top-up sale path to cover EXACTLY ONE spend (5000 paid
 #   + 1000 bonus = 6000 available). Force sv_authority='live' (this DB is disposable and dropped, so
 #   persisting 'live' here is fine - it NEVER touches UAT). Race two public.sv_spend calls of 6000
 #   with DIFFERENT idempotency keys: exactly ONE succeeds, ONE fails (insufficient), no overspend,
@@ -34,7 +35,7 @@ owner="$(q -c 'select gen_random_uuid()')"
 owner_prefix="${owner%%-*}"
 slug="v63-conc-$owner_prefix"
 
-# --- Setup: disposable business + client + stored-value plan version, funded, authority forced live ---
+# --- Setup: disposable business + client + current plan version, authority forced live, then funded ---
 q <<SQL >/dev/null
 insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
 values('00000000-0000-0000-0000-000000000000','$owner','authenticated','authenticated','$slug@example.test','',now(),now(),now());
@@ -44,21 +45,41 @@ select public.create_business('V63 concurrency','$slug','test', array['dashboard
 insert into public.clients(business_id,full_name,phone)
   select id,'v63 conc','+6590000063' from public.businesses where slug='$slug';
 do \$seed\$
-declare v_biz uuid; v_client uuid; v_plan uuid; v_pv uuid; v_res jsonb;
+declare
+  v_biz uuid;
+  v_branch uuid;
+  v_client uuid;
+  v_plan uuid;
+  v_pv uuid;
+  v_res jsonb;
 begin
   select id into v_biz from public.businesses where slug='$slug';
+  select id into v_branch from public.branches
+   where business_id=v_biz and active
+   order by is_default desc nulls last,created_at,id
+   limit 1;
   select id into v_client from public.clients where business_id=v_biz order by created_at limit 1;
   insert into public.sv_plans(business_id,name) values (v_biz,'v63 conc plan') returning id into v_plan;
   insert into public.sv_plan_versions(business_id,plan_id,version_no,price_cents,bonus_cents,expiry_days,terms_snapshot)
   values (v_biz,v_plan,1,5000,1000,365, jsonb_build_object('price_cents',5000,'bonus_cents',1000)) returning id into v_pv;
-  -- mint 5000 paid + 1000 bonus = 6000 available (covers EXACTLY one 6000 spend).
-  perform public.sv_topup(v_biz, v_client, v_pv, gen_random_uuid());
   -- force authority='live' in this DISPOSABLE db (the v61 guard rejects the transition; disable it
   -- transiently). This is legitimate ONLY because the harness refuses to run without
   -- V63_CONFIRM_DISPOSABLE_DB=YES and the cluster is thrown away afterwards.
   alter table public.sv_authority disable trigger sv_authority_guard;
   update public.sv_authority set state='live' where business_id=v_biz and asset='stored_value';
   alter table public.sv_authority enable trigger sv_authority_guard;
+  -- Mint 5000 paid + 1000 bonus = 6000 available through the sole current
+  -- authority. Cash evidence is exact, branch-scoped and retained by v66.
+  v_res:=public.record_sv_topup_sale(
+    v_biz,v_branch,v_client,v_pv,
+    jsonb_build_object(
+      'method','cash','amount_cents',5000,'currency','SGD'
+    ),
+    gen_random_uuid()
+  );
+  if v_res->>'status'<>'ok' or (v_res->>'spendable')::boolean is not true then
+    raise exception 'v63 setup top-up sale failed: %',v_res;
+  end if;
 end \$seed\$;
 SQL
 
@@ -69,6 +90,21 @@ case "$biz$acct" in *' '*|*'
 case "$biz" in ????????-????-????-????-????????????) ;; *) echo "setup failed (biz=$biz)" >&2; exit 1;; esac
 avail="$(q -c "select app.sv_available_balance('$biz'::uuid,'$acct'::uuid)")"
 [ "$avail" = "6000" ] || { echo "setup: available must be 6000, got $avail" >&2; exit 1; }
+payment_evidence="$(q -c "
+  select concat_ws('|',payment.method,payment.amount_cents,
+    payment.currency,payment.confirmation_mode)
+  from public.sv_topup_payments payment
+  where payment.business_id='$biz'::uuid
+    and payment.client_id=(
+      select client_id from public.sv_accounts where id='$acct'::uuid
+    )
+  order by payment.confirmed_at desc,payment.id desc
+  limit 1
+")"
+[ "$payment_evidence" = "cash|5000|SGD|cash_received" ] || {
+  echo "setup: authoritative payment evidence is incomplete ($payment_evidence)" >&2
+  exit 1
+}
 
 # worker: spend the full 6000 with a given key; write status/error to a file
 spend() { # $1=key $2=outfile

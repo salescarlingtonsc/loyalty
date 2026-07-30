@@ -66,7 +66,9 @@ test('frontline Quick earn minimizes choices and keeps hardened sale attribution
   assert.match(till,/accessibleTillBranches/);
   assert.match(till,/^\s*if\(!\/\^\\d\+\(\?:\\\.\\d\{1,2\}\)\?\$\/\.test\(rawAmount\)\)/m);
   assert.match(till,/keydown[\s\S]*Enter[\s\S]*tConfirm/i);
-  assert.doesNotMatch(till,/Redeem|Points balance|Store credit|Visits/i);
+  assert.doesNotMatch(till,/Points balance|Store credit|Visits/i);
+  assert.match(till,/Scan customer QR/,
+    'the intentionally added post-sale reward scanner must remain a clear, single-purpose action');
   assert.match(quick,/staff\.user_id=auth\.uid\(\)[\s\S]*p_staff is distinct from v_actor_staff/i);
   assert.match(quick,/p_idem is null or char_length\(btrim\(p_idem\)\) not between 8 and 200/i);
   assert.match(quick,/p_kind is distinct from 'quick_sale'/i);

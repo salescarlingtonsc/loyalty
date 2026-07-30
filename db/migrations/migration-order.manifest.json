@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 141,
-  "executableCount": 127,
+  "itemCount": 154,
+  "executableCount": 140,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -179,26 +179,45 @@
     },
     {
       "sourceDeployVersion": "20260728",
-      "count": 4,
+      "count": 8,
       "paths": [
+        "db/migrations/20260728_nestly_v92_customer_privacy_marketing_manifest.sql",
         "db/migrations/20260728_nestly_v92_synthetic_reporting_isolation.sql",
         "db/migrations/20260728_nestly_v93_branch_scoped_merchant_redemption.sql",
+        "db/migrations/20260728_nestly_v93_customer_notification_constraints.sql",
         "db/migrations/20260728_nestly_v94_platform_control_intelligence.sql",
-        "db/migrations/20260728_nestly_v95_bilingual_programmes.sql"
+        "db/migrations/20260728_nestly_v94_platform_firm_snapshot_null_guard.sql",
+        "db/migrations/20260728_nestly_v95_bilingual_programmes.sql",
+        "db/migrations/20260728_nestly_v95_customer_web_push.sql"
       ]
     },
     {
       "sourceDeployVersion": "20260729",
-      "count": 8,
+      "count": 14,
       "paths": [
         "db/migrations/20260729_nestly_v100_product_adoption_events.sql",
         "db/migrations/20260729_nestly_v102_package_checkout_entitlements.sql",
         "db/migrations/20260729_nestly_v103_customer_summary_business_identity.sql",
         "db/migrations/20260729_nestly_v104_marketing_offers.sql",
         "db/migrations/20260729_nestly_v105_admin_task_closure.sql",
+        "db/migrations/20260729_nestly_v106_revenue_truth_foundation.sql",
+        "db/migrations/20260729_nestly_v107_customer_lifecycle_contract.sql",
+        "db/migrations/20260729_nestly_v108_measured_bringback_loop.sql",
+        "db/migrations/20260729_nestly_v109_economics_driver_sector_policy.sql",
+        "db/migrations/20260729_nestly_v110_growth_delivery_lifecycle.sql",
+        "db/migrations/20260729_nestly_v111_customer_identity_governance.sql",
         "db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql",
         "db/migrations/20260729_nestly_v97_workspace_interface_localization.sql",
         "db/migrations/20260729_nestly_v99_campaign_truth.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260730",
+      "count": 3,
+      "paths": [
+        "db/migrations/20260730_nestly_v112_concurrent_replay_delivery_backoff.sql",
+        "db/migrations/20260730_nestly_v113_effective_identity_consumers.sql",
+        "db/migrations/20260730_nestly_v114_traceable_growth_costs.sql"
       ]
     }
   ],
@@ -1270,13 +1289,45 @@
     {
       "order": 134,
       "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v92_customer_privacy_marketing_manifest.sql",
+      "semanticVersion": "v92",
+      "proposedDeployVersion": "20260728110000",
+      "sha256": "24714b039de12b4fb6ce34bb6ebeb41124703417734f0d223069e94b52ecf7e3"
+    },
+    {
+      "order": 135,
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v93_customer_notification_constraints.sql",
+      "semanticVersion": "v93",
+      "proposedDeployVersion": "20260728120000",
+      "sha256": "1e01c041d8b451101ba3e6af28be998a5465360e1c37c5a841e4224a0cd9aefe"
+    },
+    {
+      "order": 136,
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v94_platform_firm_snapshot_null_guard.sql",
+      "semanticVersion": "v94",
+      "proposedDeployVersion": "20260728130000",
+      "sha256": "b119674e51b13c0b5154233ddb0e71ef061e11e882d99de583dbe977fa469067"
+    },
+    {
+      "order": 137,
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v95_customer_web_push.sql",
+      "semanticVersion": "v95",
+      "proposedDeployVersion": "20260728140000",
+      "sha256": "7738ad0b932e9d4782202e28892b09f2aa76c7ee559f5073f0617936c34953c0"
+    },
+    {
+      "order": 138,
+      "kind": "executable",
       "path": "db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql",
       "semanticVersion": "v96",
       "proposedDeployVersion": "20260729110000",
       "sha256": "6ed9fbc05aea95632654554fb4f0f0518f27ce044cad40544ec2221c2a35b112"
     },
     {
-      "order": 135,
+      "order": 139,
       "kind": "executable",
       "path": "db/migrations/20260729_nestly_v97_workspace_interface_localization.sql",
       "semanticVersion": "v97",
@@ -1284,7 +1335,7 @@
       "sha256": "197f60ba3ec9e07a80bbf247c112eb96f398fc2869f3f42b1aa642dbddb4f6d0"
     },
     {
-      "order": 136,
+      "order": 140,
       "kind": "executable",
       "path": "db/migrations/20260729_nestly_v99_campaign_truth.sql",
       "semanticVersion": "v99",
@@ -1292,7 +1343,7 @@
       "sha256": "eec51904f327fa22d8bcd815d01f67ecece6280be3f7672f4d3562771b10450f"
     },
     {
-      "order": 137,
+      "order": 141,
       "kind": "executable",
       "path": "db/migrations/20260729_nestly_v100_product_adoption_events.sql",
       "semanticVersion": "v100",
@@ -1300,7 +1351,7 @@
       "sha256": "af1336f6c43259d749bc2a082c2016834aa57c84592d28a034d175097aaff25f"
     },
     {
-      "order": 138,
+      "order": 142,
       "kind": "executable",
       "path": "db/migrations/20260729_nestly_v102_package_checkout_entitlements.sql",
       "semanticVersion": "v102",
@@ -1308,7 +1359,7 @@
       "sha256": "aa7e4218efcf8a9f79a200f6af8ab82bb272fd557e6ec98e958505d63de1c704"
     },
     {
-      "order": 139,
+      "order": 143,
       "kind": "executable",
       "path": "db/migrations/20260729_nestly_v103_customer_summary_business_identity.sql",
       "semanticVersion": "v103",
@@ -1316,7 +1367,7 @@
       "sha256": "5aabd6195d5125b06f44d1eba21dc801a155e1ef6c0dcecd0eb624f3040b14b0"
     },
     {
-      "order": 140,
+      "order": 144,
       "kind": "executable",
       "path": "db/migrations/20260729_nestly_v104_marketing_offers.sql",
       "semanticVersion": "v104",
@@ -1324,12 +1375,84 @@
       "sha256": "f04c1ac1ddda44091686163842bf075d20e754c39caa3d2e036659a6bbb152d9"
     },
     {
-      "order": 141,
+      "order": 145,
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v106_revenue_truth_foundation.sql",
+      "semanticVersion": "v106",
+      "proposedDeployVersion": "20260729171008",
+      "sha256": "e75b7eef09f5041219485bfe5d859c0184c54327516a2f980ec0b116885c73ab"
+    },
+    {
+      "order": 146,
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v107_customer_lifecycle_contract.sql",
+      "semanticVersion": "v107",
+      "proposedDeployVersion": "20260729171010",
+      "sha256": "6532bac95c4552b05507a5cfaf067f07bbcf6c414bcdf6ce3c9700f2b72df823"
+    },
+    {
+      "order": 147,
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v108_measured_bringback_loop.sql",
+      "semanticVersion": "v108",
+      "proposedDeployVersion": "20260729171045",
+      "sha256": "61c42c4539eee2fb7b8080d433fa833417e929dd07b7b8617ff6c4454501e25b"
+    },
+    {
+      "order": 148,
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v109_economics_driver_sector_policy.sql",
+      "semanticVersion": "v109",
+      "proposedDeployVersion": "20260729171100",
+      "sha256": "febe88098b6cd04b0a8950738aa8bb2fcd50d9e247ff489a15271891b4f61cf2"
+    },
+    {
+      "order": 149,
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v110_growth_delivery_lifecycle.sql",
+      "semanticVersion": "v110",
+      "proposedDeployVersion": "20260729171130",
+      "sha256": "20ef128c8564f74f0d5f579499382e0de5633388c37a9b84a4e6f1061fd24ee8"
+    },
+    {
+      "order": 150,
       "kind": "executable",
       "path": "db/migrations/20260729_nestly_v105_admin_task_closure.sql",
       "semanticVersion": "v105",
       "proposedDeployVersion": "20260729180000",
       "sha256": "a7a4454c190ee123d5bb8d9a2501455acd87def7d01a8ddb2f2c54aee160402f"
+    },
+    {
+      "order": 151,
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v111_customer_identity_governance.sql",
+      "semanticVersion": "v111",
+      "proposedDeployVersion": "20260729194101",
+      "sha256": "21b662137a8fae4a42f0abe4c6a3f8064335a7a180c7cac892e6d12dcbde0d14"
+    },
+    {
+      "order": 152,
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v112_concurrent_replay_delivery_backoff.sql",
+      "semanticVersion": "v112",
+      "proposedDeployVersion": "20260729200000",
+      "sha256": "0224b6f8e1e92c38373596066adb0435c1fc6f955a4ff529984e484e8dea4c5c"
+    },
+    {
+      "order": 153,
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v113_effective_identity_consumers.sql",
+      "semanticVersion": "v113",
+      "proposedDeployVersion": "20260729210000",
+      "sha256": "aaf8cd4c0bf52adbdd587a05c7ec5e73d9744d861a9dd2d3109d8a547810bb45"
+    },
+    {
+      "order": 154,
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v114_traceable_growth_costs.sql",
+      "semanticVersion": "v114",
+      "proposedDeployVersion": "20260729211122",
+      "sha256": "7cf424465d2052fbebbb6dc32f1c438686a7ce7c2d85045d7d8078dfaa474f55"
     }
   ]
 }

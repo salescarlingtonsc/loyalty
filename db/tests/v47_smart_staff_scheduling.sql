@@ -212,7 +212,7 @@ begin
      where namespace.nspname='public'
        and proc.proname=any(array[
          'join_program','enrol_customer','get_join_page','request_booking',
-         'get_booking_availability','get_business_public','list_my_appointments','request_change'
+         'get_booking_availability','list_my_appointments','request_change'
        ])
        and (
          has_function_privilege('anon',proc.oid,'execute')
@@ -220,6 +220,11 @@ begin
        )
   ) then
     raise exception 'v47 reopened a deprecated browser-executable public gateway overload';
+  end if;
+  if to_regprocedure('public.get_business_public(text)') is null
+     or not has_function_privilege('anon','public.get_business_public(text)','execute')
+     or not has_function_privilege('authenticated','public.get_business_public(text)','execute') then
+    raise exception 'v89 bounded public business discovery contract is unavailable';
   end if;
   if to_regprocedure('public.internal_public_booking_change(text,uuid,text,text,timestamptz,text)') is null
      or has_function_privilege('anon',

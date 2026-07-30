@@ -4,7 +4,27 @@ begin;
 
 do $v71_test$
 begin
-  if (
+  if to_regprocedure('public.customer_get_platform_marketing_preference()') is not null then
+    if (
+      select count(*)
+        from app.customer_legal_documents d
+       where (
+         d.document_key = 'terms'
+         and d.document_version = '2026-07-26'
+         and d.document_sha256 = '12aff22e35449a889c75d7cb3705a0f7c58a5de333a8b25a81128e89b76b4618'
+         and d.published_at = timestamptz '2026-07-26 00:00:00+08:00'
+         and d.active
+       ) or (
+         d.document_key = 'privacy'
+         and d.document_version = '2026-07-28'
+         and d.document_sha256 = '49b83b2300f42f447b8b7cbf42a1ff8a5aa4661f054aab15de53f8d41135f5f5'
+         and d.published_at = timestamptz '2026-07-28 00:00:00+08:00'
+         and d.active
+       )
+    ) <> 2 then
+      raise exception 'later authoritative customer legal manifest is not exact';
+    end if;
+  elsif (
     select count(*)
       from app.customer_legal_documents d
      where (

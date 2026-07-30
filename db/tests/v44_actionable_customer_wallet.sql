@@ -85,7 +85,8 @@ begin
     raise exception 'C44 self-created business fixture is incomplete';
   end if;
 
-  update public.businesses set enabled_modules = array['loyalty','packages'] where id = v_business;
+  -- The final sector bundle already includes loyalty and packages. v75
+  -- intentionally prevents this old fixture from mutating modules directly.
   update app.platform_feature_flags set enabled = true, changed_at = now()
    where feature_key in ('customer_wallet','customer_actionable_wallet');
 

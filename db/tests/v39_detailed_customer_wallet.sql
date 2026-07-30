@@ -24,6 +24,7 @@ declare
   v_slug text;
   v_other_slug text;
   v_owner uuid;
+  v_superadmin uuid;
   v_customer uuid := gen_random_uuid();
   v_customer_b uuid := gen_random_uuid();
   v_identity uuid := gen_random_uuid();
@@ -69,13 +70,11 @@ begin
   select b.id, b.slug into v_other_business, v_other_slug
     from public.businesses b where b.id <> v_business
    order by b.created_at, b.id limit 1;
-  if v_business is null or v_other_business is null or v_owner is null then
+  select user_id into v_superadmin from public.super_admins order by created_at limit 1;
+  if v_business is null or v_other_business is null or v_owner is null or v_superadmin is null then
     raise exception 'v39 suite requires two businesses and one active owner loyalty fixture';
   end if;
 
-  update public.businesses
-     set enabled_modules = array['loyalty','appointments','bookings','packages','memberships']
-   where id = v_business;
   update app.platform_feature_flags set enabled = true, changed_at = now()
    where feature_key = 'customer_wallet';
 
@@ -418,9 +417,15 @@ begin
   end loop;
 
   reset role;
-  update public.businesses
-     set enabled_modules = array_remove(enabled_modules,'packages')
-   where id = v_business;
+  perform pg_temp.as_v39_user(v_superadmin);
+  perform public.platform_set_business_sector_override_v75(
+    v_business,
+    array[]::text[],
+    array['packages']::text[],
+    'v39 final package gate fixture',
+    null,
+    false
+  );
   perform pg_temp.as_v39_user(v_customer);
   begin
     perform public.customer_get_packages(v_slug,'{}'::jsonb);

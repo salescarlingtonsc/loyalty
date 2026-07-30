@@ -165,13 +165,15 @@ begin
     raise exception 'sector override did not update effective modules';
   end if;
 
-  begin
-    perform pg_temp.as_v75_user(v_sa);
-    update public.businesses set name='ILLEGAL SA TENANT WRITE' where id=v_business;
-    reset role;
+  perform pg_temp.as_v75_user(v_sa);
+  update public.businesses set name='ILLEGAL SA TENANT WRITE' where id=v_business;
+  reset role;
+  if exists (
+    select 1 from public.businesses
+     where id=v_business and name='ILLEGAL SA TENANT WRITE'
+  ) then
     raise exception 'super admin gained general tenant update authority';
-  exception when insufficient_privilege then reset role;
-  end;
+  end if;
 end
 $v75_test$;
 

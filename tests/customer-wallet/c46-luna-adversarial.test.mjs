@@ -176,8 +176,8 @@ test('Luna C46-R1: expiry facts preserve the finite C44 unit without claiming mo
     'an unknown loyalty unit must not be silently relabelled as points');
   assert.doesNotMatch(expiry, /\$|dollar|saving|save money|cash value|credit value/i,
     'expiry copy must not invent a monetary value or saving');
-  assert.match(fixture, /unit','stamps'[\s\S]*Stamps expire soon[\s\S]*unit','points'[\s\S]*Points expire soon/i,
-    'rollback fixture must exercise both accepted unit labels');
+  assert.match(fixture, /unit','stamps'[\s\S]*Stamps expire within 3 days[\s\S]*unit','points'[\s\S]*Points expire within 3 days/i,
+    'final-schema rollback fixture must exercise both accepted unit labels with current urgency copy');
   assert.match(fixture, /unit','currency'[\s\S]*candidate\.topic='value_expiry'/i,
     'rollback fixture must reject an unsupported unit rather than mislabel it');
 });

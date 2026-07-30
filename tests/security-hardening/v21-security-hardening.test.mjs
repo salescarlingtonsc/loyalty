@@ -18,8 +18,11 @@ function rpcNames(source) {
 }
 
 function authenticatedGrantNames(source) {
-  return new Set([...source.matchAll(/grant execute on function public\.([a-z0-9_]+)\([^;]*?\)\s+to authenticated/gi)]
-    .map((item) => item[1]));
+  const names = new Set();
+  for (const grant of source.matchAll(/grant execute on function\s+([\s\S]*?)\s+to authenticated\s*;/gi)) {
+    for (const item of grant[1].matchAll(/public\.([a-z0-9_]+)\s*\(/gi)) names.add(item[1]);
+  }
+  return names;
 }
 
 function serviceGrantNames(source) {
@@ -51,72 +54,22 @@ test('v21 is the single canonical post-v20 security migration', async () => {
   assert.match(v21, /^commit;/im);
 });
 
-test('authenticated RPC allowlist plus exact forward v41-C46/v47-v104 grants cover the shipped SPA', async () => {
-  const [app, migration, v41, c42, c44, c45, c46, v47, v48, v49, v50, v51, v51a, v51b, v52, v53, v53a, v54, v55, v56, v57, v58, v60, v61, v62, v63, v64, v66, v67, v68a, v68c, v69, v70, v72, v73, v74, v75, v76, v77, v78, v79, v80, v81, v82, v83, v84, v85, v86, v87, v88, v89, v90, v91, v93, v94, v95, v96, v97, v99, v100, v102, v104] = await Promise.all([
-    read('app/index.html'), read(migrationPath),
-    read('db/migrations/20260721_frenly_v41_customer_module_hardening.sql'),
+test('authenticated RPC allowlist plus every exact pending forward grant cover the shipped SPA', async () => {
+  const [app, migration, plan, c42, c44, v74] = await Promise.all([
+    read('app/index.html'),
+    read(migrationPath),
+    read('supabase/canonical-migration-order.plan.json').then(JSON.parse),
     read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
     read('db/migrations/20260721_frenly_v44_actionable_customer_wallet.sql'),
-    read('db/migrations/20260721_frenly_v45_birthday_benefits.sql'),
-    read('db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql'),
-    read('db/migrations/20260722050339_frenly_v47_smart_staff_scheduling.sql'),
-    read('db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql'),
-    read('db/migrations/20260722_frenly_v49_billing_projection_rpc.sql'),
-    read('db/migrations/20260722_frenly_v50_retention_measurement.sql'),
-    read('db/migrations/20260723_frenly_v51_sale_line_items.sql'),
-    read('db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql'),
-    read('db/migrations/20260723_frenly_v51b_client_credit_history.sql'),
-    read('db/migrations/20260723_frenly_v52_sgt_date_normalization.sql'),
-    read('db/migrations/20260723_frenly_v53_visit_feedback.sql'),
-    read('db/migrations/20260723_frenly_v53a_wallet_review_url.sql'),
-    read('db/migrations/20260723_frenly_v54_f2_write_hardening.sql'),
-    read('db/migrations/20260724_frenly_v55_ps1a_authoring.sql'),
-    read('db/migrations/20260724_frenly_v56_ps1b_events_execution.sql'),
-    read('db/migrations/20260724_frenly_v57_ps1b1_price_fail_closed.sql'),
-    read('db/migrations/20260724_frenly_v58_ps1c_checkout_kernel.sql'),
-    read('db/migrations/20260724_frenly_v60_ps1c2_execution_state.sql'),
-    read('db/migrations/20260724_frenly_v61_ps2a_stored_value_foundation.sql'),
-    read('db/migrations/20260724_frenly_v62_ps2b_shadow_reconciliation.sql'),
-    read('db/migrations/20260724_frenly_v63_ps2c_redemption_mechanics.sql'),
-    read('db/migrations/20260724_frenly_v64_ps2d_pause_controls.sql'),
-    read('db/migrations/20260724_frenly_v66_ps2live_topup_sale.sql'),
-    read('db/migrations/20260724_frenly_v67_ps2live_checkout_tender.sql'),
-    read('db/migrations/20260724_frenly_v68a_chargeback_correction.sql'),
-    read('db/migrations/20260724_frenly_v68c_customer_gift_cards.sql'),
-    read('db/migrations/20260724_frenly_v69_controlled_cutover.sql'),
-    read('db/migrations/20260724_frenly_v70_legacy_non_overlap.sql'),
-    read('db/migrations/20260726_frenly_v72_booking_identity_sync.sql'),
-    read('db/migrations/20260726_frenly_v73_booking_lifecycle.sql'),
-    read('db/migrations/20260726_frenly_v74_staff_module_permissions.sql'),
-    read('db/migrations/20260726_nestly_v75_sector_entitlements.sql'),
-    read('db/migrations/20260726_nestly_v76_sme_crm.sql'),
-    read('db/migrations/20260726_nestly_v77_stripe_billing.sql'),
-    read('db/migrations/20260726_nestly_v78_consultant_commissions.sql'),
-    read('db/migrations/20260726_nestly_v79_conversion_onboarding.sql'),
-    read('db/migrations/20260726_nestly_v80_customer_legal_manifest.sql'),
-    read('db/migrations/20260726_nestly_v81_customer_relationship_sync.sql'),
-    read('db/migrations/20260726_nestly_v82_enterprise_intelligence.sql'),
-    read('db/migrations/20260726_nestly_v83_customer_intelligence.sql'),
-    read('db/migrations/20260726_nestly_v84_fast_sale_corrections.sql'),
-    read('db/migrations/20260726_nestly_v85_conversion_guard_repair.sql'),
-    read('db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql'),
-    read('db/migrations/20260726_nestly_v87_overdue_appointment_amendments.sql'),
-    read('db/migrations/20260726_nestly_v88_platform_firm_onboarding.sql'),
-    read('db/migrations/20260727_nestly_v89_customer_qr_redemption_platform_access.sql'),
-    read('db/migrations/20260727_nestly_v90_production_readiness.sql'),
-    read('db/migrations/20260727_nestly_v91_customer_game_notifications.sql'),
-    read('db/migrations/20260728_nestly_v93_branch_scoped_merchant_redemption.sql'),
-    read('db/migrations/20260728_nestly_v94_platform_control_intelligence.sql'),
-    read('db/migrations/20260728_nestly_v95_bilingual_programmes.sql'),
-    read('db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql'),
-    read('db/migrations/20260729_nestly_v97_workspace_interface_localization.sql'),
-    read('db/migrations/20260729_nestly_v99_campaign_truth.sql'),
-    read('db/migrations/20260729_nestly_v100_product_adoption_events.sql'),
-    read('db/migrations/20260729_nestly_v102_package_checkout_entitlements.sql'),
-    read('db/migrations/20260729_nestly_v104_marketing_offers.sql')
+    read('db/migrations/20260726_frenly_v74_staff_module_permissions.sql')
   ]);
+  const forwardMigrations = await Promise.all(
+    plan.items
+      .filter(({ kind }) => kind === 'pending')
+      .map(({ sourcePath }) => read(sourcePath))
+  );
   const allowlist = sqlArray(migration, 'v_authenticated_rpc_names');
-  const forward = new Set([...authenticatedGrantNames(v41), ...authenticatedGrantNames(c42), ...authenticatedGrantNames(c44), ...authenticatedGrantNames(c45), ...authenticatedGrantNames(c46), ...authenticatedGrantNames(v47), ...authenticatedGrantNames(v48), ...authenticatedGrantNames(v49), ...authenticatedGrantNames(v50), ...authenticatedGrantNames(v51), ...authenticatedGrantNames(v51a), ...authenticatedGrantNames(v51b), ...authenticatedGrantNames(v52), ...authenticatedGrantNames(v53), ...authenticatedGrantNames(v53a), ...authenticatedGrantNames(v54), ...authenticatedGrantNames(v55), ...authenticatedGrantNames(v56), ...authenticatedGrantNames(v57), ...authenticatedGrantNames(v58), ...authenticatedGrantNames(v60), ...authenticatedGrantNames(v61), ...authenticatedGrantNames(v62), ...authenticatedGrantNames(v63), ...authenticatedGrantNames(v64), ...authenticatedGrantNames(v66), ...authenticatedGrantNames(v67), ...authenticatedGrantNames(v68a), ...authenticatedGrantNames(v68c), ...authenticatedGrantNames(v69), ...authenticatedGrantNames(v70), ...authenticatedGrantNames(v72), ...authenticatedGrantNames(v73), ...authenticatedGrantNames(v74), ...authenticatedGrantNames(v75), ...authenticatedGrantNames(v76), ...authenticatedGrantNames(v77), ...authenticatedGrantNames(v78), ...authenticatedGrantNames(v79), ...authenticatedGrantNames(v80), ...authenticatedGrantNames(v81), ...authenticatedGrantNames(v82), ...authenticatedGrantNames(v83), ...authenticatedGrantNames(v84), ...authenticatedGrantNames(v85), ...authenticatedGrantNames(v86), ...authenticatedGrantNames(v87), ...authenticatedGrantNames(v88), ...authenticatedGrantNames(v89), ...authenticatedGrantNames(v90), ...authenticatedGrantNames(v91), ...authenticatedGrantNames(v93), ...authenticatedGrantNames(v94), ...authenticatedGrantNames(v95), ...authenticatedGrantNames(v96), ...authenticatedGrantNames(v97), ...authenticatedGrantNames(v99), ...authenticatedGrantNames(v100), ...authenticatedGrantNames(v102), ...authenticatedGrantNames(v104)]);
+  const forward = new Set(forwardMigrations.flatMap((source) => [...authenticatedGrantNames(source)]));
   const required = rpcNames(app);
   for (const rpc of required) {
     assert.ok(allowlist.has(rpc) || forward.has(rpc),

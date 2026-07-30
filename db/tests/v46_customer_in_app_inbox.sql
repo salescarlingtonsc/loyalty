@@ -123,23 +123,23 @@ begin
   if not exists (
     select 1 from app.c46_customer_safe_inbox_candidates(jsonb_build_object(
       'loyalty',jsonb_build_object('unit','stamps'),
-      'expiry',jsonb_build_object('expiring_units',4,'expiring_within_7_days',2,'next_expiry_at','2026-08-01T00:00:00Z')
+      'expiry',jsonb_build_object('expiring_units',4,'expiring_within_7_days',2,'next_expiry_at',now()+interval '2 days')
     )) candidate
      where candidate.topic='value_expiry'
-       and candidate.title='Stamps expire soon'
-       and candidate.body='Open this business wallet to review your stamps.'
+       and candidate.title='Stamps expire within 3 days'
+       and candidate.body='Open this programme now to review your expiring stamps.'
   ) or not exists (
     select 1 from app.c46_customer_safe_inbox_candidates(jsonb_build_object(
       'loyalty',jsonb_build_object('unit','points'),
-      'expiry',jsonb_build_object('expiring_units',4,'expiring_within_7_days',2,'next_expiry_at','2026-08-01T00:00:00Z')
+      'expiry',jsonb_build_object('expiring_units',4,'expiring_within_7_days',2,'next_expiry_at',now()+interval '2 days')
     )) candidate
      where candidate.topic='value_expiry'
-       and candidate.title='Points expire soon'
-       and candidate.body='Open this business wallet to review your points.'
+       and candidate.title='Points expire within 3 days'
+       and candidate.body='Open this programme now to review your expiring points.'
   ) or exists (
     select 1 from app.c46_customer_safe_inbox_candidates(jsonb_build_object(
       'loyalty',jsonb_build_object('unit','currency'),
-      'expiry',jsonb_build_object('expiring_units',4,'expiring_within_7_days',2,'next_expiry_at','2026-08-01T00:00:00Z')
+      'expiry',jsonb_build_object('expiring_units',4,'expiring_within_7_days',2,'next_expiry_at',now()+interval '2 days')
     )) candidate where candidate.topic='value_expiry'
   ) then
     raise exception 'C46 expiry copy must preserve only the C44 points/stamps unit without a value claim';
@@ -227,6 +227,13 @@ begin
   -- This pending v33 action is immutable source evidence. It is deliberately
   -- inserted directly in the rollback fixture, never sent through an outbox,
   -- so C46 can prove it does not create legacy delivery/provider side effects.
+  -- v89 adds the authoritative per-business appointment-change gate, which the
+  -- owner must explicitly enable before any such source evidence may exist.
+  perform pg_temp.as_c46_user(v_owner);
+  perform public.business_set_customer_capabilities_v89(
+    v_business, false, false, true
+  );
+  reset role;
   insert into public.customer_appointment_action_requests(
     id,business_id,identity_id,auth_user_id,link_id,client_id,appointment_id,action,
     proposed_at,note,status,idempotency_key,request_hash,created_at

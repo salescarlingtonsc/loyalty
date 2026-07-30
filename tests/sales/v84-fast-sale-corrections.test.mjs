@@ -130,9 +130,13 @@ test('customer intelligence remains implemented but is packaged out of every bus
   assert.match(app,/page\.next_ordinal/);
   assert.doesNotMatch(app,/CUSTOMER_INTELLIGENCE_EXPORT_CAP/);
   assert.match(app,/No partial CSV was downloaded/);
-  assert.match(app,/Returning customers/);
-  assert.match(app,/of active customers/);
-  assert.match(app,/Average purchase frequency/);
+  assert.match(app,/get_revenue_truth_v106/);
+  assert.match(app,/get_customer_lifecycle_v107/);
+  assert.match(app,/get_growth_daily_briefing_v108/);
+  assert.match(app,/RevenueTruthUI\.buildViewModel/);
+  assert.match(app,/Repeat this period/);
+  assert.match(app,/Identified customer revenue/);
+  assert.doesNotMatch(app,/>Returning customers</);
   assert.match(app,/Expected cash collected · next 90 days/);
   assert.match(app,/13 complete Singapore calendar weeks/);
   assert.match(app,/Forecast withheld until the selected scope has enough valid history/);

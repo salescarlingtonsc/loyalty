@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-style-sha256" content="5365b9a968c568028842e0582c2c640170f1fda91bb90d5dbf0c68bfa75b6aee">
+<meta name="v105-production-style-sha256" content="92351c9b91aac7f5b69efec5e848dc215b23f93db613b72be715851cb8d35522">
 <title>Nestly v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -125,8 +125,9 @@ tr.click:hover td{background:#FBFAF8}
 .customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
-.challenge-retry{background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
+.challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
 .logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;letter-spacing:-.02em}
+.wallet-head>a.logo{display:inline-flex;align-items:center;min-height:44px}
 .logo span{color:var(--coral)}
 .ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:8px}
 .ind{border:1.5px solid var(--line);border-radius:var(--r-sm);padding:14px;text-align:center;cursor:pointer;
@@ -716,6 +717,10 @@ input[type=range]:focus{box-shadow:none}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
 .customer-sound-toggle input{width:22px;min-height:22px;accent-color:var(--coral)}
 .customer-sound-toggle:has(input:disabled){opacity:.58;cursor:not-allowed}
+.customer-account-menu .menu [data-push-state="enabled"]{color:var(--green)}
+.customer-push-setting{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
+.customer-push-setting [data-push-status]{max-width:62ch;line-height:1.55}
+@media(max-width:560px){.customer-push-setting{grid-template-columns:1fr}.customer-push-setting .btn{width:100%}}
 .customer-avatar{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--coral);cursor:pointer}
 .customer-first-quest{overflow:hidden;padding:0;background:linear-gradient(145deg,#fff 30%,#fff1e9);border-color:rgba(194,65,53,.2)}
 .customer-first-quest-copy{padding:clamp(24px,6vw,48px);text-align:center}.customer-first-quest-icon{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(145deg,var(--coral),#f58c55);color:#fff;box-shadow:0 16px 34px rgba(194,65,53,.25)}
@@ -728,6 +733,10 @@ input[type=range]:focus{box-shadow:none}
 .customer-programme-switcher a[aria-current="true"]{border-color:var(--coral);background:var(--tint);color:var(--coral)}
 .customer-game-card{position:relative;overflow:hidden;border:0;background:linear-gradient(145deg,#211d2a,#443451);color:#fff;box-shadow:0 18px 42px rgba(38,29,48,.2)}
 .customer-game-card .muted{color:rgba(255,255,255,.72)}.customer-game-card::after{content:'';position:absolute;width:190px;height:190px;right:-70px;top:-90px;border-radius:50%;background:rgba(255,255,255,.08)}
+.customer-redemption-complete{animation:customer-reward-pop .34s var(--spring)}
+.customer-redemption-complete .redemption-qr{display:grid;place-items:center;min-height:220px;border-radius:24px;background:linear-gradient(145deg,#e8fff1,#fff7dc);color:#137a47}
+.customer-redemption-complete .redemption-qr .cui-icon{width:76px;height:76px;filter:drop-shadow(0 12px 18px rgba(19,122,71,.16))}
+@keyframes customer-reward-pop{0%{transform:scale(.96);opacity:.65}70%{transform:scale(1.015)}100%{transform:scale(1);opacity:1}}
 .customer-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .customer-page-head h1{font-size:clamp(1.75rem,4vw,2.3rem)}
 .customer-page-head p{line-height:1.55;margin-top:5px;max-width:64ch}
@@ -1494,7 +1503,7 @@ input[type=range]:focus{box-shadow:none}
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 5365b9a968c5</span>
+<span class="v105-provenance">v105 production-component harness · 92351c9b91aa</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -1619,7 +1628,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'5365b9a968c568028842e0582c2c640170f1fda91bb90d5dbf0c68bfa75b6aee',
+  sourceHash:'92351c9b91aac7f5b69efec5e848dc215b23f93db613b72be715851cb8d35522',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

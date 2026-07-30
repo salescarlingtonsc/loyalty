@@ -82,6 +82,9 @@ set role authenticated;
 select set_config('request.jwt.claim.sub',:'owner',false) \gset
 select (public.create_business(:'fixture_name',:'fixture_slug','test',array['dashboard','clients','sales','loyalty','appointments'])::jsonb->>'id')::uuid as business \gset
 select id as owner_staff from public.staff where business_id=:'business' and user_id=:'owner' limit 1 \gset
+select public.business_set_customer_capabilities_v89(
+  :'business',false,false,true
+) as customer_capabilities \gset
 reset role;
 update app.platform_feature_flags set enabled=true where feature_key in ('customer_in_app_inbox','customer_actionable_wallet','customer_wallet','customer_birthday_benefits');
 insert into public.clients(business_id,full_name) values(:'business','C46 synthetic customer') returning id as client \gset

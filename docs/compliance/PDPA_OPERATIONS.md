@@ -1,8 +1,8 @@
-# Frenly PDPA Operations Runbook
+# Nestly PDPA Operations Runbook
 
-Status: **pre-launch control document**  
-Owner: **not yet assigned**  
-Last reviewed: **19 July 2026**  
+Status: **pre-launch control document**
+Owner: **Founder — interim privacy, retention and incident owner for the mock pilot**
+Last reviewed: **28 July 2026**
 Jurisdiction: **Singapore**
 
 This is an operational baseline, not legal advice or a claim of certification. The owner must obtain Singapore legal review before relying on the public notices or merchant terms for general availability.
@@ -13,10 +13,10 @@ Public launch is **blocked** until every item in this table has a named owner, d
 
 | Gate | Current evidence | Required owner action | Pass evidence |
 |---|---|---|---|
-| Legal operator identity | The repository does not establish Frenly's legal entity name, UEN, registered/business address or service address. | Confirm the contracting Singapore person/entity and insert its legal identity and service details into the Terms, Privacy Notice, subscription/order flow and merchant contract. | Counsel-approved entity details appear consistently in all public and commercial surfaces. |
-| Formal DPO designation | The public pages deliberately identify only `leechuanseng.biz@gmail.com` as an **Interim Privacy Contact**. There is no evidence of a formal DPO designation. | The governing owner must designate at least one DPO in writing, define authority and reporting line, provide a monitored business contact, and record acceptance of the role. | Signed designation record, role description, escalation cover and monitoring test. |
-| DPO registration and public contact | No registration evidence exists. | Register or update the DPO through the current PDPC online registration process using an authorised Corppass user. ACRA BizFile+ registration has been unavailable since 1 December 2024; follow the current PDPC process. Update the public notice from interim contact to the verified DPO business contact after designation. | PDPC submission acknowledgement, screenshot/export of submitted details, and live public contact test. Formal designation and public availability are legal duties; registration is an additional Frenly launch-control requirement based on current PDPC guidance. |
-| Role allocation with merchants | Public wording distinguishes the roles, but no merchant data-processing agreement is present. | Approve a merchant agreement/DPA that maps activities where the merchant is the organisation and Frenly is its data intermediary, and activities where Frenly acts as an organisation for its own purposes. | Signed template, processing instructions, security schedule, subprocessor terms, breach-notice obligation and deletion/return terms. |
+| Legal operator identity | The repository does not establish Nestly's legal entity name, UEN, registered/business address or service address. | Confirm the contracting Singapore person/entity and insert its legal identity and service details into the Terms, Privacy Notice, subscription/order flow and merchant contract. | Counsel-approved entity details appear consistently in all public and commercial surfaces. |
+| Formal DPO designation | The public pages deliberately identify only `nestly.asia@gmail.com` as an **Interim Privacy Contact** for the approved pre-incorporation mock pilot. There is no evidence of a formal DPO designation. | Before public commercial launch, the governing owner must designate at least one DPO in writing, define authority and reporting line, provide a monitored business contact, and record acceptance of the role. | Signed designation record, role description, escalation cover and monitoring test. |
+| DPO registration and public contact | No registration evidence exists. | Formally designate the DPO, then register or update the DPO through the current [PDPC online process](https://www.pdpc.gov.sg/dp-professional/register-your-dpo-with-pdpc). ACRA-registered and non-ACRA entities can use the PDPC form; a non-ACRA entity may register directly with PDPC and must not wait for incorporation merely to begin this action. Update the public notice from interim contact to the verified DPO business contact after designation. | PDPC submission acknowledgement, screenshot/export of submitted details, and live public contact test. Formal designation and public availability are legal duties; registration is an additional Nestly launch-control requirement based on current PDPC guidance. |
+| Role allocation with merchants | Public wording distinguishes the roles, but no merchant data-processing agreement is present. | Approve a merchant agreement/DPA that maps activities where the merchant is the organisation and Nestly is its data intermediary, and activities where Nestly acts as an organisation for its own purposes. | Signed template, processing instructions, security schedule, subprocessor terms, breach-notice obligation and deletion/return terms. |
 | Production location and transfers | The notice says the production database is configured in Singapore and that other providers may process abroad. Database transfer is still in progress. | Complete Singapore cutover, verify the live application no longer sends personal data to the legacy region, inventory every provider/location and document transfer safeguards. Do not publish the location statement before the fact is true. | Live endpoint evidence, provider list, data-flow map, contractual transfer assessment and owner sign-off. |
 | Data inventory and retention | Code and audit documents identify broad fields, but there is no approved record-level retention schedule. | Inventory each field/system, purpose, role, source, disclosure, location and disposal rule. Approve legal/business retention triggers rather than arbitrary universal periods. | Approved inventory and schedule with tested deletion/anonymisation jobs and backup-expiry evidence. |
 | Data requests | A manual public email process now exists; there is no demonstrated case log, identity-verification procedure or trained backup owner. | Establish the register, verification matrix, merchant routing, exception review, secure response method and absence cover. Rehearse access, correction, withdrawal and deletion cases. | Completed tabletop records and evidence that the mailbox is monitored and cases are auditable. |
@@ -26,24 +26,24 @@ Public launch is **blocked** until every item in this table has a named owner, d
 
 ## 1. Role model
 
-Frenly must determine its PDPA role per processing activity, not once for the whole product.
+Nestly must determine its PDPA role per processing activity, not once for the whole product.
 
-| Activity | Merchant role | Frenly role | Operational consequence |
+| Activity | Merchant role | Nestly role | Operational consequence |
 |---|---|---|---|
-| Merchant customer profile, booking, sale, loyalty balance, notes and merchant marketing | Usually the organisation deciding purposes and means | Usually data intermediary processing under contract and instructions | Merchant provides the customer notice and decides requests; Frenly secures, retains and returns/deletes data under the DPA and assists promptly. |
-| Merchant staff records and permissions entered for workforce operations | Usually the organisation/employer | Usually data intermediary | Merchant controls employment purpose and access; Frenly applies role isolation, audit and instruction handling. |
-| Frenly account authentication, platform security, abuse prevention, direct support and legal compliance | May provide user information and cooperate | Organisation for Frenly's own purposes | Frenly must notify purposes, limit collection, handle rights, make retention decisions and maintain direct accountability. |
-| Frenly subscription administration and commercial relationship | Customer organisation | Organisation | Commercial records require their own purpose, access and retention controls. Do not describe a ledger entry as regulated payment processing. |
+| Merchant customer profile, booking, sale, loyalty balance, notes and merchant marketing | Usually the organisation deciding purposes and means | Usually data intermediary processing under contract and instructions | Merchant provides the customer notice and decides requests; Nestly secures, retains and returns/deletes data under the DPA and assists promptly. |
+| Merchant staff records and permissions entered for workforce operations | Usually the organisation/employer | Usually data intermediary | Merchant controls employment purpose and access; Nestly applies role isolation, audit and instruction handling. |
+| Nestly account authentication, platform security, abuse prevention, direct support and legal compliance | May provide user information and cooperate | Organisation for Nestly's own purposes | Nestly must notify purposes, limit collection, handle rights, make retention decisions and maintain direct accountability. |
+| Nestly subscription administration and commercial relationship | Customer organisation | Organisation | Commercial records require their own purpose, access and retention controls. Do not describe a ledger entry as regulated payment processing. |
 | Merchant campaign content, recipient selection and DNC compliance | Organisation and sender/authoriser | Data intermediary if only executing instructions; may incur direct DNC responsibility depending on sending role | Contractually allocate checks, suppression, sender identification, consent evidence and complaint handling. Block sending unless evidence passes. |
-| Aggregated service improvement | Merchant role depends on source and agreement | Organisation if Frenly determines a separate purpose | Use genuinely anonymised data where possible. Do not repurpose identifiable tenant data without a documented lawful basis, notice and contract right. |
+| Aggregated service improvement | Merchant role depends on source and agreement | Organisation if Nestly determines a separate purpose | Use genuinely anonymised data where possible. Do not repurpose identifiable tenant data without a documented lawful basis, notice and contract right. |
 
-The PDPC explains that a data intermediary processes personal data on behalf of another organisation and has role-specific duties; the engaging organisation remains responsible for data processed on its behalf. Frenly may occupy both roles for different activities.
+The PDPC explains that a data intermediary processes personal data on behalf of another organisation and has role-specific duties; the engaging organisation remains responsible for data processed on its behalf. Nestly may occupy both roles for different activities.
 
 ## 2. Required registers
 
 Keep these in a controlled system with access logs. Do not store request identity documents or customer exports in this repository.
 
-1. **Personal data inventory:** field/category, data subject, collection source, purpose, legal/consent basis, Frenly role, merchant role, systems, region, recipients, retention trigger and disposal method.
+1. **Personal data inventory:** field/category, data subject, collection source, purpose, legal/consent basis, Nestly role, merchant role, systems, region, recipients, retention trigger and disposal method.
 2. **Vendor/subprocessor register:** service, data categories, purpose, locations/support access, contract, transfer safeguard, security review, breach contact, exit/export/deletion method and annual review date.
 3. **Consent register:** merchant, customer, channel, action, exact notice/version, source, time, actor, evidence, withdrawal time and suppression result.
 4. **Data request register:** reference, received date, scope, responsible organisation, identity method, searches, exceptions, fee if lawfully applicable, response date, disclosure channel and evidence deleted after completion.
@@ -55,10 +55,10 @@ Keep these in a controlled system with access logs. Do not store request identit
 
 ### Intake and acknowledgement
 
-- Monitor `leechuanseng.biz@gmail.com` every business day until a dedicated privacy mailbox and formally designated DPO contact replace it.
+- Monitor `nestly.asia@gmail.com` every business day until a formally designated and registered DPO contact replaces the mock-pilot interim contact.
 - Create a case reference immediately. Acknowledge receipt without confirming that the named record exists.
 - Identify request type: access, correction, withdrawal, deletion/closure, complaint, incident or merchant service dispute.
-- Identify whether Frenly or the merchant controls the requested processing. If the merchant is responsible, obtain the requester's permission where needed to route it; do not silently disclose the request to an unrelated merchant.
+- Identify whether Nestly or the merchant controls the requested processing. If the merchant is responsible, obtain the requester's permission where needed to route it; do not silently disclose the request to an unrelated merchant.
 
 ### Identity and authority
 
@@ -86,7 +86,7 @@ No merchant campaign should send until these checks are machine-enforced and aud
 3. A prior withdrawal or suppression always wins over an import, duplicate profile or later bulk edit.
 4. For covered marketing to Singapore telephone numbers, a valid DNC check is recorded unless a documented exception or clear and unambiguous consent applies.
 5. The message identifies the sender, gives contact information where required and provides an opt-out using the same medium.
-6. The opt-out updates the suppression list without requiring login, purchase or excessive information. PDPC guidance says telephone marketing must stop within 21 days after an opt-out; Frenly's operational target should be immediate suppression.
+6. The opt-out updates the suppression list without requiring login, purchase or excessive information. PDPC guidance says telephone marketing must stop within 21 days after an opt-out; Nestly's operational target should be immediate suppression.
 7. Service messages are separated from promotional content. Do not add marketing to a service message to avoid campaign controls.
 
 ## 5. Retention and disposal
@@ -127,7 +127,7 @@ Run quarterly disposal checks and sample evidence. A deletion statement is not c
 
 1. **Detect and contain:** page the incident owner, stop exposure, preserve evidence and avoid destructive cleanup.
 2. **Scope:** identify systems, data categories, encryption/access status, affected people/merchants, dates, recipients and ongoing risk.
-3. **Notify merchants:** where Frenly is a data intermediary, notify the responsible organisation without undue delay and provide information needed for its assessment.
+3. **Notify merchants:** where Nestly is a data intermediary, notify the responsible organisation without undue delay and provide information needed for its assessment.
 4. **Assess:** the responsible organisation assesses whether the breach is likely to cause significant harm and/or is of significant scale. Record the reasoning even when not notifiable.
 5. **Notify:** where notifiable, notify the PDPC as soon as practicable and no later than three calendar days after making the assessment; notify affected individuals as soon as practicable where required. Do not wait for a perfect forensic report before meeting a deadline.
 6. **Recover and learn:** validate containment, rotate credentials, restore safely, monitor recurrence, complete root-cause analysis and track corrective actions to closure.

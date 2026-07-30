@@ -1,7 +1,7 @@
 -- Rollback-only v81 customer relationship synchronization and history suite.
 -- Covers exact linking, ambiguous matches, historical link evidence, idempotency,
 -- cross-business isolation, pagination, standalone points without double-count,
--- raw table denial, and anon denial.
+-- raw table denial, and final v89 browser-route denial.
 begin;
 -- The v79 dual-table trigger dereferences branches.active on a businesses
 -- record during the shared fixture's harmless timestamp normalization. Use its
@@ -149,7 +149,10 @@ begin
    where id = v_historical_link;
   perform set_config('app.customer_link_transition_id', '', true);
 
-  perform pg_temp.as_v81_user(v_user);
+  -- v89 removes this legacy self-link route from authenticated browsers. Keep
+  -- exercising the historical implementation through the service-only ACL,
+  -- then assert the final browser denial below.
+  perform pg_temp.as_v81_user(v_user, 'service_role');
   v_response := public.customer_sync_verified_relationships_v81(
     'v81-sync-idempotency'
   );
@@ -195,7 +198,7 @@ begin
   select count(*) into v_link_count
     from public.customer_links link
    where link.identity_id = v_identity;
-  perform pg_temp.as_v81_user(v_user);
+  perform pg_temp.as_v81_user(v_user, 'service_role');
   v_replay := public.customer_sync_verified_relationships_v81(
     'v81-sync-idempotency'
   );
@@ -297,15 +300,23 @@ begin
     reset role;
   end;
 
-  -- anon has no RPC access.
+  -- v89 is authoritative: neither authenticated customers nor anon may execute
+  -- the legacy contact-based self-link route.
   begin
-    perform pg_temp.as_v81_user(null, 'anon');
+    perform pg_temp.as_v81_user(v_user, 'authenticated');
     perform public.customer_sync_verified_relationships_v81('v81-anon-denied');
     reset role;
-    raise exception 'anon relationship sync unexpectedly succeeded';
+    raise exception 'authenticated legacy relationship sync unexpectedly succeeded';
   exception when insufficient_privilege then
     reset role;
   end;
+  if has_function_privilege(
+       'anon',
+       'public.customer_sync_verified_relationships_v81(text)',
+       'execute'
+     ) then
+    raise exception 'anon relationship sync unexpectedly remained executable';
+  end if;
 end
 $v81_test$;
 
