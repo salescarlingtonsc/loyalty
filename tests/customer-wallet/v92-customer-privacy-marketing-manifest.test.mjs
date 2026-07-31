@@ -21,8 +21,8 @@ test('v92 source and canonical migration are byte-identical',()=>{
   assert.match(sql,/^commit;$/m);
 });
 
-test('v92 publishes the exact live Privacy Notice digest without changing Terms',()=>{
-  assert.equal(privacyDigest,approvedPrivacyDigest);
+test('v92 preserves its approved Privacy Notice after a later legal manifest',()=>{
+  assert.notEqual(privacyDigest,approvedPrivacyDigest);
   assert.match(sql,new RegExp(`'privacy'[\\s\\S]*'2026-07-28'[\\s\\S]*'${approvedPrivacyDigest}'`));
   assert.doesNotMatch(sql,/update app\.customer_legal_documents[\\s\\S]{0,300}document_key = 'terms'/i);
 });

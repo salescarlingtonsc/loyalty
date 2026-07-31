@@ -175,6 +175,55 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 ## Billing and consultant commission
 
+- The contracting operator is **NESTLY TECHNOLOGIES PTE. LTD.** (Singapore UEN
+  **202634502E**). The monitored commercial/privacy mailbox currently supplied
+  by the owner is **nestlyasia@gmail.com**. Formal DPO designation and counsel
+  approval remain separate launch gates.
+- One launch plan is offered in SGD: **SGD 149 billed monthly** or **SGD 1,188
+  billed annually** (SGD 99/month equivalent), with annual selected by default.
+  **SGD 168/month** is display-only comparison pricing and must never be sent to
+  Stripe as the amount due unless a later explicit owner decision introduces an
+  actual billable price at that amount.
+- The plan includes 1,000 customer profiles. A merchant chooses capacity in
+  1,000-profile increments; each additional 1,000-profile block is SGD 10 per
+  month or SGD 120 per annual term. The confirmed capacity and exact recurring
+  total must be visible before Stripe Checkout. V124 supports later capacity
+  increases through Stripe with provider proration. A prorated change remains
+  pending while Stripe reports `pending_update`; it is never presented as
+  complete before provider confirmation. Self-service decreases are
+  intentionally unavailable through either capacity or cadence commands.
+- Individual staff access is included at launch. Nestly must encourage unique
+  staff accounts and least-privilege roles rather than create a pricing reason
+  to share credentials. A later pricing change requires a new owner decision
+  and migration; legacy seat fields are historical data, not the launch offer.
+- Every eligible V124 provider subscription has one 30-day money-back-request
+  window. The deadline is the exact timestamp 30 days after that provider
+  subscription's earliest successful invoice payment, including an earlier
+  matching invoice found by backfill; an unrelated legacy renewal cannot start
+  a new window. It is displayed to the owner and never resets after cadence,
+  capacity, cancellation or reactivation changes. It is a refund-request
+  eligibility policy, not a free trial or an automatic refund; approved refunds
+  still follow fraud, chargeback, tax and provider controls.
+- Complete Stripe subscription snapshots are authoritative for item membership:
+  a local capacity item absent from a newer complete snapshot is removed. The
+  owner browser reuses one durable request key and command ID for the same
+  selection after an ambiguous or lost response, renders terminal failure as
+  failure, and never reports it as a submitted success. Each durable command
+  snapshots one catalogue row; a later price rollover cannot change provider
+  price IDs under the command's Stripe idempotency key. An uncertain increase
+  remains recoverable when its webhook has already projected the exact requested
+  capacity.
+- The checkout overview describes generally included owner/staff/customer
+  modules: CRM and QR signup; loyalty points/stamps, reward paths, birthdays and
+  referrals; appointments, team scheduling and waitlist; sales/Quick Earn;
+  packages, memberships and dedicated gift-card management; customer portal
+  wallet/history/redemption; promotions and owner-reviewed AI copy assistance;
+  feedback and score-independent Google-review handoff; notifications where
+  configured; profitability and operational reports; branches, roles and
+  permissions; and English, Simplified Chinese and Malay business UI. Payment
+  processing fees, usage-priced external messaging, custom integrations,
+  platform-only administration and any disabled/unconfigured module are not
+  implied to be included or available.
 - Nestly subscription status is automated from the billing provider, including
   paid state and next payment date.
 - Overdue businesses receive daily notices from the due date. At 14 days

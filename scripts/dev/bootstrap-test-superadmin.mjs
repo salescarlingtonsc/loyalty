@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
-const DEFAULT_EMAIL = 'nestly.asia@gmail.com';
+const DEFAULT_EMAIL = 'nestlyasia@gmail.com';
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 export function localSupabaseUrl(value) {

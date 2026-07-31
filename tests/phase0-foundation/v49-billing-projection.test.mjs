@@ -67,15 +67,14 @@ test('v49 rollback suite checks ACL, projection math, owner access, and non-owne
   assert.match(fixture,/monthly_total_cents'\)::bigint<>5500/);
 });
 
-test('owner-only Settings uses v49 RPC and a generic retryable error without raw database text',()=>{
+test('owner-only Settings uses the V124 projection and generic retryable errors without raw database text',()=>{
   const billing=section('async function loadBillingConfig()','/* ---------- customer sign-up QR ---------- */');
   assert.match(app,/if\(pageKey==='settings'&&S\.myRole!=='owner'\)[\s\S]*Only the owner can open Settings\./);
-  assert.match(billing,/sb\.rpc\('get_business_billing_v49',\{p_business:S\.biz\.id\}\)/);
-  assert.match(billing,/typeof b\.currency==='string'&&\/\^\[A-Z\]\{3\}\$\/\.test\(b\.currency\)\?b\.currency:'SGD'/);
-  assert.match(billing,/const billingMoney=c=>billingCurrency\+/);
-  assert.doesNotMatch(billing,/\bmoney\(/);
+  assert.match(billing,/sb\.rpc\('get_business_billing_v124',\{p_business:S\.biz\.id\}\)/);
+  assert.match(billing,/const money=c=>'SGD '/);
+  assert.match(billing,/capacity_block_amount_cents/);
   assert.doesNotMatch(billing,/S\.biz\?\.currency|S\.biz\.currency/);
-  assert.doesNotMatch(billing,/v_business_billing|error\.message|console\.(?:error|warn)/);
+  assert.doesNotMatch(billing,/v_business_billing|error\.message|requestError\?\.message|console\.(?:error|warn)/);
   assert.match(billing,/Billing details could not load\. Check your connection and try again\./);
   assert.match(billing,/id="billingRetry"/);
   assert.match(billing,/\$\('billingRetry'\)\.onclick=\(\)=>loadBillingConfig\(\)/);

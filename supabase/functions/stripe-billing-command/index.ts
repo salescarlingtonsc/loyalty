@@ -38,7 +38,9 @@ function subscriptionMatchesRecovery(
   if (commandType === 'resume') {
     return subscription.cancel_at_period_end === false;
   }
-  if (commandType !== 'change_cadence') return false;
+  if (!['change_cadence', 'change_capacity'].includes(commandType)) return false;
+  const capacityModel = data.pricing_model === 'v124_customer_capacity';
+  if (capacityModel && subscription.pending_update) return false;
   const baseItem = subscription.items.data.find(
     (item) => item.id === String(data.provider_base_item_id || ''),
   );
@@ -49,20 +51,57 @@ function subscriptionMatchesRecovery(
   ) {
     return false;
   }
-  const extraSeats = Number(data.extra_seats || 0);
-  const seatItemId = data.provider_seat_item_id
-    ? String(data.provider_seat_item_id)
+  const extraItemQuantity = Number(
+    capacityModel ? data.extra_capacity_blocks || 0 : data.extra_seats || 0,
+  );
+  const extraItemId = capacityModel
+    ? data.provider_capacity_item_id
+    : data.provider_seat_item_id;
+  const extraPriceId = capacityModel
+    ? data.provider_capacity_price_id
+    : data.provider_seat_price_id;
+  const providerExtraItemId = extraItemId
+    ? String(extraItemId)
     : '';
-  const seatItem = seatItemId
-    ? subscription.items.data.find((item) => item.id === seatItemId)
+  const extraItem = providerExtraItemId
+    ? subscription.items.data.find((item) => item.id === providerExtraItemId)
     : undefined;
-  return extraSeats > 0
+  return extraItemQuantity > 0
     ? Boolean(
-        seatItem &&
-          seatItem.price.id === String(data.provider_seat_price_id || '') &&
-          seatItem.quantity === extraSeats,
+        extraItem &&
+          extraItem.price.id === String(extraPriceId || '') &&
+          extraItem.quantity === extraItemQuantity,
       )
-    : !seatItem;
+    : !extraItem;
+}
+
+async function validateV124Prices(
+  stripe: Stripe,
+  data: Record<string, unknown>,
+): Promise<void> {
+  if (data.pricing_model !== 'v124_customer_capacity') return;
+  const cadence = String(data.requested_cadence || '');
+  const expectedInterval = cadence === 'annual' ? 'year' : 'month';
+  const expectedBase = Number(data.base_amount_cents);
+  const expectedCapacity = Number(data.capacity_block_amount_cents);
+  const [basePrice, capacityPrice] = await Promise.all([
+    stripe.prices.retrieve(String(data.provider_base_price_id)),
+    stripe.prices.retrieve(String(data.provider_capacity_price_id)),
+  ]);
+  const valid = (
+    price: Stripe.Price,
+    expectedAmount: number,
+  ): boolean =>
+    price.active === true &&
+    price.type === 'recurring' &&
+    price.currency.toUpperCase() === String(data.currency || '').toUpperCase() &&
+    price.unit_amount === expectedAmount &&
+    price.recurring?.interval === expectedInterval &&
+    price.recurring?.interval_count === 1 &&
+    price.recurring?.usage_type === 'licensed';
+  if (!valid(basePrice, expectedBase) || !valid(capacityPrice, expectedCapacity)) {
+    throw new Error('Stripe prices do not match the reviewed V124 catalogue');
+  }
 }
 
 async function retrieveRecoveredProviderResult(
@@ -78,7 +117,7 @@ async function retrieveRecoveredProviderResult(
       : null;
   }
   if (
-    ['change_cadence', 'cancel_at_period_end', 'resume'].includes(commandType)
+    ['change_cadence', 'change_capacity', 'cancel_at_period_end', 'resume'].includes(commandType)
   ) {
     const subscription = await stripe.subscriptions.retrieve(providerObjectId);
     return subscriptionMatchesRecovery(subscription, commandType, data)
@@ -127,7 +166,9 @@ Deno.serve(async (req) => {
   let redirectUrl = '';
   try {
     admin = billingAdminClient();
-    const { data, error } = await admin.rpc('claim_billing_command_v77', {
+    // V124 is the dispatcher; the SQL function delegates historical commands
+    // to claim_billing_command_v77 so outstanding v77 retries remain recoverable.
+    const { data, error } = await admin.rpc('claim_billing_command_v124', {
       p_command: commandId,
       p_actor: actor,
     });
@@ -147,6 +188,7 @@ Deno.serve(async (req) => {
     const commandType = String(data.command_type);
     const businessId = String(data.business_id);
     const cadence = data.requested_cadence ? String(data.requested_cadence) : '';
+    const requestedCustomerCapacity = Number(data.requested_customer_capacity || 0);
     const customerId = data.provider_customer_id
       ? String(data.provider_customer_id)
       : undefined;
@@ -155,6 +197,16 @@ Deno.serve(async (req) => {
       : undefined;
     redirectUrl = `${origin}/#/settings`;
     let providerResolved = false;
+    let providerConfirmationPending = false;
+
+    if (
+      data.pricing_model === 'v124_customer_capacity' &&
+      ['create_checkout', 'change_cadence', 'change_capacity'].includes(commandType)
+    ) {
+      providerCallStarted = true;
+      await validateV124Prices(stripe, data);
+      providerCallStarted = false;
+    }
 
     const portalRecoveryReplay =
       data.recovery_required && commandType === 'create_portal';
@@ -186,11 +238,18 @@ Deno.serve(async (req) => {
       const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
         { price: String(data.provider_base_price_id), quantity: 1 },
       ];
-      const extraSeats = Number(data.extra_seats || 0);
-      if (extraSeats > 0) {
+      const capacityModel = data.pricing_model === 'v124_customer_capacity';
+      const extraItemQuantity = Number(
+        capacityModel ? data.extra_capacity_blocks || 0 : data.extra_seats || 0,
+      );
+      if (extraItemQuantity > 0) {
         lineItems.push({
-          price: String(data.provider_seat_price_id),
-          quantity: extraSeats,
+          price: String(
+            capacityModel
+              ? data.provider_capacity_price_id
+              : data.provider_seat_price_id,
+          ),
+          quantity: extraItemQuantity,
         });
       }
       providerCallStarted = true;
@@ -202,8 +261,20 @@ Deno.serve(async (req) => {
           line_items: lineItems,
           success_url: `${origin}/#/settings?billing=processing`,
           cancel_url: `${origin}/#/settings?billing=canceled`,
-          metadata: { business_id: businessId, cadence },
-          subscription_data: { metadata: { business_id: businessId, cadence } },
+          metadata: {
+            business_id: businessId,
+            cadence,
+            pricing_model: String(data.pricing_model || 'legacy_seat'),
+            customer_capacity: String(requestedCustomerCapacity || ''),
+          },
+          subscription_data: {
+            metadata: {
+              business_id: businessId,
+              cadence,
+              pricing_model: String(data.pricing_model || 'legacy_seat'),
+              customer_capacity: String(requestedCustomerCapacity || ''),
+            },
+          },
         },
         { idempotencyKey },
       );
@@ -222,11 +293,23 @@ Deno.serve(async (req) => {
       );
       providerObjectId = session.id;
       redirectUrl = session.url;
-    } else if (!providerResolved && commandType === 'change_cadence') {
+    } else if (
+      !providerResolved &&
+      ['change_cadence', 'change_capacity'].includes(commandType)
+    ) {
       if (!subscriptionId || !data.provider_base_item_id) {
         throw new Error('Stripe subscription items are not linked');
       }
-      const extraSeats = Number(data.extra_seats || 0);
+      const capacityModel = data.pricing_model === 'v124_customer_capacity';
+      const extraItemQuantity = Number(
+        capacityModel ? data.extra_capacity_blocks || 0 : data.extra_seats || 0,
+      );
+      const extraItemId = capacityModel
+        ? data.provider_capacity_item_id
+        : data.provider_seat_item_id;
+      const extraPriceId = capacityModel
+        ? data.provider_capacity_price_id
+        : data.provider_seat_price_id;
       const items: Stripe.SubscriptionUpdateParams.Item[] = [
         {
           id: String(data.provider_base_item_id),
@@ -234,20 +317,20 @@ Deno.serve(async (req) => {
           quantity: 1,
         },
       ];
-      if (data.provider_seat_item_id) {
+      if (extraItemId) {
         items.push(
-          extraSeats > 0
+          extraItemQuantity > 0
             ? {
-                id: String(data.provider_seat_item_id),
-                price: String(data.provider_seat_price_id),
-                quantity: extraSeats,
+                id: String(extraItemId),
+                price: String(extraPriceId),
+                quantity: extraItemQuantity,
               }
-            : { id: String(data.provider_seat_item_id), deleted: true },
+            : { id: String(extraItemId), deleted: true },
         );
-      } else if (extraSeats > 0) {
+      } else if (extraItemQuantity > 0) {
         items.push({
-          price: String(data.provider_seat_price_id),
-          quantity: extraSeats,
+          price: String(extraPriceId),
+          quantity: extraItemQuantity,
         });
       }
       providerCallStarted = true;
@@ -255,12 +338,21 @@ Deno.serve(async (req) => {
         subscriptionId,
         {
           items,
-          proration_behavior: 'none',
-          metadata: { business_id: businessId, cadence },
+          // Legacy v77 remains proration_behavior: 'none'. V124 upgrades invoice now.
+          proration_behavior: capacityModel ? 'always_invoice' : 'none',
+          payment_behavior: capacityModel ? 'pending_if_incomplete' : undefined,
+          metadata: {
+            business_id: businessId,
+            cadence,
+            pricing_model: String(data.pricing_model || 'legacy_seat'),
+            customer_capacity: String(requestedCustomerCapacity || ''),
+          },
         },
         { idempotencyKey },
       );
       providerObjectId = subscription.id;
+      providerConfirmationPending =
+        capacityModel && subscription.pending_update !== null;
     } else if (
       !providerResolved &&
       (commandType === 'cancel_at_period_end' || commandType === 'resume')
@@ -275,6 +367,29 @@ Deno.serve(async (req) => {
       providerObjectId = subscription.id;
     } else if (!providerResolved) {
       throw new Error('billing command is not executable');
+    }
+
+    if (providerConfirmationPending) {
+      const { data: pending, error: pendingError } = await admin.rpc(
+        'complete_billing_command_v77',
+        {
+          p_command: commandId,
+          p_status: 'uncertain',
+          p_provider_object_id: providerObjectId,
+          p_redirect_url: null,
+          p_error_code: 'provider_confirmation_pending',
+          p_error_message:
+            'Stripe has not confirmed the prorated subscription change. Retry this command ID after payment confirmation.',
+        },
+      );
+      if (pendingError) {
+        throw new Error('billing command pending-state persistence failed');
+      }
+      return billingCorsJson(req, 202, {
+        command_id: commandId,
+        status: pending?.status || 'uncertain',
+        error: 'provider_confirmation_pending',
+      });
     }
 
     const { data: completed, error: completionError } = await admin.rpc(

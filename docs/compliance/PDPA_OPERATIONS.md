@@ -1,7 +1,7 @@
 # Nestly PDPA Operations Runbook
 
 Status: **pre-launch control document**
-Owner: **Founder — interim privacy, retention and incident owner for the mock pilot**
+Owner: **Founder — Interim Privacy Contact, retention and incident owner for the mock pilot**
 Last reviewed: **28 July 2026**
 Jurisdiction: **Singapore**
 
@@ -13,8 +13,8 @@ Public launch is **blocked** until every item in this table has a named owner, d
 
 | Gate | Current evidence | Required owner action | Pass evidence |
 |---|---|---|---|
-| Legal operator identity | The repository does not establish Nestly's legal entity name, UEN, registered/business address or service address. | Confirm the contracting Singapore person/entity and insert its legal identity and service details into the Terms, Privacy Notice, subscription/order flow and merchant contract. | Counsel-approved entity details appear consistently in all public and commercial surfaces. |
-| Formal DPO designation | The public pages deliberately identify only `nestly.asia@gmail.com` as an **Interim Privacy Contact** for the approved pre-incorporation mock pilot. There is no evidence of a formal DPO designation. | Before public commercial launch, the governing owner must designate at least one DPO in writing, define authority and reporting line, provide a monitored business contact, and record acceptance of the role. | Signed designation record, role description, escalation cover and monitoring test. |
+| Legal operator identity | Owner-supplied ACRA business profile inspected 1 August 2026 identifies **NESTLY TECHNOLOGIES PTE. LTD.**, UEN **202634502E**, incorporated 29 July 2026, registered office **29 Fernvale Road, #11-36, High Park Residences, Singapore 797416**. The source also contains a director identity number, which must never enter this repository or ordinary product surfaces. | Insert the legal identity and service details consistently into Terms, Privacy Notice, subscription/order flow and merchant contract, then obtain Singapore counsel review. | Counsel-approved entity details appear consistently in all public and commercial surfaces; identity-number and source-document scans are clean. |
+| Formal DPO designation | The owner supplied `nestlyasia@gmail.com` as the monitored business contact. There is no evidence that this mailbox or a person has been formally designated as DPO. | Before public commercial launch, the governing owner must designate at least one DPO in writing, define authority and reporting line, provide a monitored business contact, and record acceptance of the role. | Signed designation record, role description, escalation cover and monitoring test. |
 | DPO registration and public contact | No registration evidence exists. | Formally designate the DPO, then register or update the DPO through the current [PDPC online process](https://www.pdpc.gov.sg/dp-professional/register-your-dpo-with-pdpc). ACRA-registered and non-ACRA entities can use the PDPC form; a non-ACRA entity may register directly with PDPC and must not wait for incorporation merely to begin this action. Update the public notice from interim contact to the verified DPO business contact after designation. | PDPC submission acknowledgement, screenshot/export of submitted details, and live public contact test. Formal designation and public availability are legal duties; registration is an additional Nestly launch-control requirement based on current PDPC guidance. |
 | Role allocation with merchants | Public wording distinguishes the roles, but no merchant data-processing agreement is present. | Approve a merchant agreement/DPA that maps activities where the merchant is the organisation and Nestly is its data intermediary, and activities where Nestly acts as an organisation for its own purposes. | Signed template, processing instructions, security schedule, subprocessor terms, breach-notice obligation and deletion/return terms. |
 | Production location and transfers | The notice says the production database is configured in Singapore and that other providers may process abroad. Database transfer is still in progress. | Complete Singapore cutover, verify the live application no longer sends personal data to the legacy region, inventory every provider/location and document transfer safeguards. Do not publish the location statement before the fact is true. | Live endpoint evidence, provider list, data-flow map, contractual transfer assessment and owner sign-off. |
@@ -55,7 +55,7 @@ Keep these in a controlled system with access logs. Do not store request identit
 
 ### Intake and acknowledgement
 
-- Monitor `nestly.asia@gmail.com` every business day until a formally designated and registered DPO contact replaces the mock-pilot interim contact.
+- Monitor `nestlyasia@gmail.com` every business day until a formally designated and registered DPO contact replaces the interim contact.
 - Create a case reference immediately. Acknowledge receipt without confirming that the named record exists.
 - Identify request type: access, correction, withdrawal, deletion/closure, complaint, incident or merchant service dispute.
 - Identify whether Nestly or the merchant controls the requested processing. If the merchant is responsible, obtain the requester's permission where needed to route it; do not silently disclose the request to an unrelated merchant.

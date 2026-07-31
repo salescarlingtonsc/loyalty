@@ -437,11 +437,12 @@ test('normal Finance workflows show SGD, percentages, names and firms instead of
   const billing=sourceSection(source,'function billingPriceModal','async function openBillingDetail');
   const commission=sourceSection(source,'async function renderCommission','function forfeitCommissionModal');
 
-  assert.match(billing,/Base subscription \(SGD\)/);
-  assert.match(billing,/Per-seat charge \(SGD\)/);
+  assert.match(billing,/Monthly is fixed at SGD 149/);
+  assert.match(billing,/Annual is fixed at SGD 1,188/);
+  assert.match(billing,/Stripe \+1,000-customer price ID/);
   assert.match(billing,/Advanced provider mapping/);
-  assert.match(billing,/moneyInputToCents\(form\.get\('base_amount'\)\)/);
-  assert.doesNotMatch(billing,/label:'Base amount \(cents\)'|label:'Per-seat amount \(cents\)'/);
+  assert.doesNotMatch(billing,/base_amount|seat_amount|included_seats|moneyInputToCents/);
+  assert.doesNotMatch(billing,/label:'Base amount \(cents\)'|label:'Per-seat amount \(cents\)'|Per-seat charge/);
 
   assert.match(commission,/Year-one base rate \(%\)/);
   assert.match(commission,/12-month service bonus \(%\)/);

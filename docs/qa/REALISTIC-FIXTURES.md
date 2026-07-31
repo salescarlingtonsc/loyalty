@@ -161,6 +161,36 @@ All automated credentials must come from a non-committed test-secret mechanism.
 | `PLAT-REFUND` | Annual invoice refunded after payment; GST and refund excluded from commission. |
 | `PLAT-STAFF-LEFT` | Consultant departed before eligibility anniversary; commission returns to company. |
 
+### `SPA-GLOW-BILLING` — launch pricing and capacity
+
+- Monthly, 1,000 profiles: SGD 149.00 per month.
+- Monthly, 3,000 profiles: SGD 169.00 per month (base plus two SGD 10 blocks).
+- Annual, 1,000 profiles: SGD 1,188.00 paid up front (SGD 99/month equivalent).
+- Annual, 3,000 profiles: SGD 1,428.00 paid up front (base plus two SGD 120 blocks).
+- Annual is selected on first render. SGD 168/month is comparison copy only and
+  is absent from all Stripe line-item amounts.
+- Glow Atelier has 850 profiles for the first checkout, then 1,150 profiles to
+  prove the customer count is authoritative. Use a 1,000-capacity subscription
+  to test an immediate increase to 3,000 and confirm V124 renders no
+  self-service decrease control.
+- First successful paid invoice at `2026-08-01T04:15:00Z` produces one request
+  deadline at `2026-08-31T04:15:00Z`. Cadence/capacity changes, cancellation and
+  reactivation leave both timestamps unchanged. A paid invoice for a different
+  legacy provider subscription is excluded; an earlier invoice for the same
+  V124 subscription is backfilled and moves the deadline backward only.
+- A newer complete Stripe snapshot that omits the capacity add-on deletes the
+  stale local item and projects 1,000 capacity. A pending prorated update stays
+  uncertain, and the same browser selection reuses its request key and command
+  ID after a lost response. Once its webhook projects 3,000 capacity, the exact
+  uncertain command remains recoverable even though requested and current
+  capacity are equal. A later annual catalogue rollover uses different fixture
+  price IDs but cannot change the original command snapshot. Terminal failed or
+  canceled outcomes render explicit failure copy.
+- Staff fixtures remain Olivia, Maya, Farah, Chen and Aisha. Adding or removing
+  any of them changes permissions/scheduling but never the subscription total.
+- GST remains unset in the fixture unless independent registration evidence is
+  supplied; incorporation alone is not GST-registration proof.
+
 ## Required state variations
 
 Every relevant journey chooses from this list and records which variants were

@@ -982,6 +982,12 @@
       "version": "20260731150000",
       "name": "nestly_v123_module_button_readiness",
       "sourcePath": "db/migrations/20260731_nestly_v123_module_button_readiness.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731164709",
+      "name": "nestly_v124_stripe_launch_pricing",
+      "sourcePath": "db/migrations/20260801_nestly_v124_stripe_launch_pricing.sql"
     }
   ]
 }

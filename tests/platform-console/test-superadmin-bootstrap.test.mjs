@@ -22,6 +22,6 @@ test('bootstrap password and service key stay execution-time inputs', () => {
     SUPABASE_SERVICE_ROLE_KEY: 'test-key',
     NESTLY_TEST_SUPERADMIN_PASSWORD: 'test-password-placeholder'
   });
-  assert.equal(config.email, 'nestly.asia@gmail.com');
+  assert.equal(config.email, 'nestlyasia@gmail.com');
   assert.equal(config.password, 'test-password-placeholder');
 });

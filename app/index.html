@@ -6228,12 +6228,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   activeQrsRevoked:Object.freeze({en:'{count} active QRs revoked.','zh-CN':'已撤销 {count} 个有效二维码。',ms:'{count} QR aktif dibatalkan.'}),
   activeQrExists:Object.freeze({en:'An active QR already exists. Use your saved or printed copy. Replace it only if that copy is lost.','zh-CN':'已有有效二维码。请使用已保存或打印的副本；仅在副本遗失时更换。',ms:'QR aktif sudah wujud. Gunakan salinan yang disimpan atau dicetak. Gantikannya hanya jika salinan itu hilang.'}),
   activeQrExistsUntil:Object.freeze({en:'An active QR already exists until {expires}. Use your saved or printed copy. Replace it only if that copy is lost.','zh-CN':'已有有效二维码，有效期至 {expires}。请使用已保存或打印的副本；仅在副本遗失时更换。',ms:'QR aktif sudah wujud sehingga {expires}. Gunakan salinan yang disimpan atau dicetak. Gantikannya hanya jika salinan itu hilang.'}),
-  billingLogins:Object.freeze({en:'Logins in use: {count}','zh-CN':'使用中的登录账号：{count}',ms:'Log masuk digunakan: {count}'}),
-  billingBase:Object.freeze({en:'{base} base ({included} login included) = {total}/month','zh-CN':'基础费用 {base}（含 {included} 个登录账号）= {total}／月',ms:'Asas {base} ({included} log masuk disertakan) = {total}/bulan'}),
-  billingBaseMany:Object.freeze({en:'{base} base ({included} logins included) = {total}/month','zh-CN':'基础费用 {base}（含 {included} 个登录账号）= {total}／月',ms:'Asas {base} ({included} log masuk disertakan) = {total}/bulan'}),
-  billingBaseExtra:Object.freeze({en:'{base} base ({included} login included) + {extra} extra × {seat} = {total}/month','zh-CN':'基础费用 {base}（含 {included} 个登录账号）+ {extra} 个额外账号 × {seat} = {total}／月',ms:'Asas {base} ({included} log masuk disertakan) + {extra} tambahan × {seat} = {total}/bulan'}),
-  billingBaseExtraMany:Object.freeze({en:'{base} base ({included} logins included) + {extra} extra × {seat} = {total}/month','zh-CN':'基础费用 {base}（含 {included} 个登录账号）+ {extra} 个额外账号 × {seat} = {total}／月',ms:'Asas {base} ({included} log masuk disertakan) + {extra} tambahan × {seat} = {total}/bulan'}),
-  freeTrialUntil:Object.freeze({en:'Free trial until {date}','zh-CN':'免费试用至 {date}',ms:'Percubaan percuma sehingga {date}'}),
   wizardStepWho:Object.freeze({en:'Step {step} of {total} — Who','zh-CN':'第 {step} 步，共 {total} 步——对象',ms:'Langkah {step} daripada {total} — Sasaran'}),
   wizardStepReward:Object.freeze({en:'Step {step} of {total} — Reward','zh-CN':'第 {step} 步，共 {total} 步——奖励',ms:'Langkah {step} daripada {total} — Ganjaran'}),
   wizardStepSafety:Object.freeze({en:'Step {step} of {total} — Safety','zh-CN':'第 {step} 步，共 {total} 步——安全设置',ms:'Langkah {step} daripada {total} — Keselamatan'}),
@@ -6298,8 +6292,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
   'qrReadyExpires','qrReadyRevoked','qrReadyQrsRevoked','qrReadyExpiresRevoked',
   'qrReadyExpiresQrsRevoked','activeQrRevoked',
-  'activeQrsRevoked','activeQrExists','activeQrExistsUntil','billingLogins',
-  'billingBase','billingBaseMany','billingBaseExtra','billingBaseExtraMany','freeTrialUntil',
+  'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
   'availableStaff','availableStaffMany','recentAppointments','reversalOf',
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
@@ -16281,35 +16274,121 @@ async function settingsPage(){
   };
   /* commission config — owner only, % only (flat-amount commission is not built yet) */
   loadCommissionConfig();
-  /* billing (read-only) + customer sign-up QR — independent async loads, own cards */
+  /* ---------- billing (read-only) ---------- */
+  /* V124 adds guarded checkout commands; billing truth remains provider-backed. */
   loadBillingConfig();
   loadSignupConfig();
 }
-/* ---------- billing (read-only) ---------- */
+/* ---------- provider-backed subscription billing ---------- */
 async function loadBillingConfig(){
   const wrap=$('billingWrap');if(!wrap||!S.biz?.id)return;
   wrap.setAttribute('aria-busy','true');
-  const {data:b,error}=await sb.rpc('get_business_billing_v49',{p_business:S.biz.id});
+  const {data:b,error}=await sb.rpc('get_business_billing_v124',{p_business:S.biz.id});
   if(!wrap.isConnected)return;
   wrap.setAttribute('aria-busy','false');
   if(error||!b||b.business_id!==S.biz.id){
     wrap.innerHTML=`<b>Billing</b><div class="empty small" role="alert">Billing details could not load. Check your connection and try again.</div><button type="button" class="btn ghost sm" id="billingRetry">Retry billing</button>`;
     $('billingRetry').onclick=()=>loadBillingConfig();return;
   }
-  const billingCurrency=typeof b.currency==='string'&&/^[A-Z]{3}$/.test(b.currency)?b.currency:'SGD';
-  const billingMoney=c=>billingCurrency+' '+((Number.isFinite(Number(c))?Number(c):0)/100).toFixed(2);
-  const seats=b.billable_seats??0,extra=b.extra_seats??0,base=b.base_price_cents??0,perSeat=b.per_seat_price_cents??0,incl=b.included_seats??1;
-  const statusPill=b.status==='active'?'ok':b.status==='trialing'?'new':'off';
-  const billingSummaryKey=extra>0
-    ?(incl===1?'billingBaseExtra':'billingBaseExtraMany')
-    :(incl===1?'billingBase':'billingBaseMany');
-  wrap.innerHTML=`<b>Billing</b>
-    <div class="row" style="margin-top:8px"><span class="pill ${statusPill}">${esc(b.status||'—')}</span>
-    <span class="spacer"></span><span class="muted small">${workspaceTemplateHtmlV97('billingLogins',{count:seats})}</span></div>
-    <p class="muted small" style="margin-top:12px;line-height:1.6">${workspaceTemplateHtmlV97(billingSummaryKey,{base:billingMoney(base),included:incl,extra,seat:billingMoney(perSeat),total:billingMoney(b.monthly_total_cents||0)})}</p>
-    <div style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em;margin-top:6px;font-variant-numeric:tabular-nums">${billingMoney(b.monthly_total_cents||0)}<span class="muted small" style="font-weight:500;letter-spacing:-.005em"> /month</span></div>
-    ${b.status==='trialing'&&b.trial_ends_at?`<p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97('freeTrialUntil',{date:sgt(b.trial_ends_at)})}</p>`:''}
-    <p class="muted small" style="margin-top:12px">Payment isn't collected in-app yet.</p>`;
+  const plans=Array.isArray(b.plans)?b.plans:[],byCadence=Object.fromEntries(plans.map(plan=>[plan.cadence,plan]));
+  const currentCustomers=Math.max(0,Number(b.current_customer_count||0));
+  const minimumCapacity=Math.max(1000,Math.ceil(currentCustomers/1000)*1000);
+  const currentCapacity=Math.max(minimumCapacity,Number(b.terms?.customer_capacity||0));
+  const initialCadence=byCadence[b.terms?.cadence]?b.terms.cadence:'annual';
+  let selectedCadence=byCadence[initialCadence]?initialCadence:(byCadence.annual?'annual':'monthly');
+  let selectedCapacity=currentCapacity;
+  const money=c=>'SGD '+((Number.isFinite(Number(c))?Number(c):0)/100).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const capacityOptions=Array.from({length:20},(_,index)=>(index+1)*1000).filter(value=>value>=currentCapacity);
+  if(!capacityOptions.includes(selectedCapacity))capacityOptions.unshift(selectedCapacity);
+  const includedModules=Array.isArray(b.included_modules)?b.included_modules:[];
+  const exclusions=Array.isArray(b.exclusions)?b.exclusions:[];
+  const providerSubscription=!!b.provider?.subscription_id;
+  const billingAttemptSlot=`nestly:v124:billing-command:${S.biz.id}`;
+  const readBillingAttempt=()=>{try{return JSON.parse(sessionStorage.getItem(billingAttemptSlot)||'null')}catch{return null}};
+  const writeBillingAttempt=attempt=>{try{sessionStorage.setItem(billingAttemptSlot,JSON.stringify(attempt))}catch{}};
+  const clearBillingAttempt=key=>{try{const current=readBillingAttempt();if(!current||current.key===key)sessionStorage.removeItem(billingAttemptSlot)}catch{}};
+  const renderPlan=()=>{
+    const plan=byCadence[selectedCadence];
+    if(!plan){
+      wrap.innerHTML=`<b>Billing</b><div class="empty small" role="alert">Subscription checkout is not configured yet. Contact <a href="mailto:nestlyasia@gmail.com">nestlyasia@gmail.com</a>.</div>`;
+      return;
+    }
+    const blocks=selectedCapacity/1000,extraBlocks=Math.max(blocks-1,0);
+    const total=Number(plan.base_amount_cents)+extraBlocks*Number(plan.capacity_block_amount_cents);
+    const cadenceLabel=selectedCadence==='annual'?'year':'month';
+    const equivalent=selectedCadence==='annual'?money(total/12)+' / month equivalent':money(total)+' / month';
+    const statusPill=b.status==='active'?'ok':b.status==='trialing'?'new':'off';
+    const guarantee=b.money_back_window?.money_back_request_until
+      ?`Money-back request deadline: <strong>${esc(sgt(b.money_back_window.money_back_request_until))}</strong>. It does not reset after plan changes.`
+      :'Your 30-day money-back request window starts at the exact time Stripe confirms your first paid invoice.';
+    const sameCadence=b.terms?.cadence===selectedCadence,sameCapacity=Number(b.terms?.customer_capacity||0)===selectedCapacity;
+    const action=!providerSubscription?'Start secure checkout'
+      :!sameCadence?'Change billing cycle'
+      :!sameCapacity?'Increase capacity'
+      :'Manage billing';
+    wrap.innerHTML=`<div class="row"><div><b>Nestly subscription</b><p class="muted small" style="margin-top:3px">One plan. Annual saves SGD 600 against monthly billing.</p></div><span class="spacer"></span><span class="pill ${statusPill}">${esc(b.status||'not started')}</span></div>
+      <fieldset style="border:0;padding:0;margin:16px 0 0"><legend class="small" style="font-weight:700;margin-bottom:8px">Billing cycle</legend>
+        <div class="row" style="align-items:stretch">
+          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="annual" checked> <strong>Annual · SGD 1,188/year</strong><br><span class="muted small">SGD 99/month equivalent · selected by default</span></label>
+          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="monthly" ${selectedCadence==='monthly'?'checked':''}> <strong>Monthly · SGD 149/month</strong><br><span class="muted small">Cancel renewal before the next billing date</span></label>
+        </div>
+      </fieldset>
+      <p class="muted small" style="margin-top:10px">Reference price: SGD 168/month. This is comparison information only; it is not a checkout charge.</p>
+      <label for="billingCapacity" style="display:block;margin-top:16px;font-weight:700">Customer capacity</label>
+      <select id="billingCapacity" style="margin-top:6px;max-width:340px">${capacityOptions.map(value=>`<option value="${value}" ${value===selectedCapacity?'selected':''}>Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select>
+      <p class="muted small" style="margin-top:7px">1,000 customer profiles included. Each additional 1,000 is ${money(plan.capacity_block_amount_cents)} per ${cadenceLabel}. ${currentCustomers.toLocaleString('en-SG')} profiles currently stored. Capacity can be increased later.</p>
+      <div class="card" style="margin-top:16px;background:var(--sand)"><div class="row"><div><span class="muted small">Recurring total${plan.tax_behavior==='exclusive'?' before GST':''}</span><div style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums">${money(total)} <span class="muted small">/ ${cadenceLabel}</span></div><div class="muted small">${equivalent} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity</div></div></div></div>
+      <div class="row" style="margin-top:14px;align-items:flex-start"><span class="pill ok">Staff access included</span><p class="muted small" style="margin:2px 0 0">Use a unique login and least-privilege role for every team member. Staff count never changes this plan's price.</p></div>
+      <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:700">What is included</summary><ul class="small" style="columns:2;column-width:240px">${includedModules.map(module=>`<li>${esc(module)}</li>`).join('')}</ul><p class="muted small"><strong>AI-assisted promotion copy</strong> helps reword factual offer content; the owner reviews and publishes it. It does not invent prices, dates or claims.</p></details>
+      <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Not included in this price</summary><ul class="small">${exclusions.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details>
+      <p class="muted small" style="margin-top:14px">${guarantee}</p>
+      <div class="row" style="margin-top:14px"><button type="button" class="btn" id="billingPrimary">${esc(action)}</button>${providerSubscription?'<button type="button" class="btn ghost" id="billingPortal">Open Stripe billing portal</button>':''}</div>
+      <p class="muted small" id="billingCommandStatus" role="status" aria-live="polite" style="margin-top:8px">Stripe Checkout securely collects payment details. Nestly changes access only after provider confirmation.</p>
+      <p class="muted small" style="margin-top:14px">Billed by NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · <a href="mailto:nestlyasia@gmail.com">nestlyasia@gmail.com</a></p>`;
+    wrap.querySelectorAll('[name="billingCadence"]').forEach(input=>{
+      input.checked=input.value===selectedCadence;
+      input.onchange=()=>{selectedCadence=input.value;renderPlan()};
+    });
+    $('billingCapacity').onchange=()=>{selectedCapacity=Number($('billingCapacity').value);renderPlan()};
+    const execute=async(type,cadence,capacity)=>{
+      const status=$('billingCommandStatus'),buttons=wrap.querySelectorAll('button');buttons.forEach(button=>button.disabled=true);
+      status.textContent=type==='create_portal'?'Opening Stripe billing portal…':'Submitting the exact plan to Stripe…';
+      const fingerprint=JSON.stringify({type,cadence:cadence||null,capacity:capacity||null});
+      let attempt=readBillingAttempt();
+      if(!attempt||attempt.fingerprint!==fingerprint){attempt={fingerprint,key:crypto.randomUUID(),command_id:null};writeBillingAttempt(attempt)}
+      let requested=attempt.command_id?{command_id:attempt.command_id}:null,requestError=null;
+      if(!requested){
+        const response=await sb.rpc('request_billing_command_v124',{
+          p_business:S.biz.id,p_command_type:type,p_cadence:cadence,
+          p_customer_capacity:capacity,p_idempotency_key:attempt.key
+        });
+        requested=response.data;requestError=response.error;
+      }
+      if(requestError||!requested?.command_id){buttons.forEach(button=>button.disabled=false);status.textContent='Nestly could not confirm whether the billing request was saved. Retry this same selection; the exact request key will be reused.';return}
+      attempt.command_id=requested.command_id;writeBillingAttempt(attempt);
+      const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:attempt.command_id}});
+      if(executed.error){buttons.forEach(button=>button.disabled=false);status.textContent='Nestly could not confirm Stripe’s result. Retry this same selection to recover the exact provider request; do not start a different request yet.';return}
+      const result=executed.data||requested;
+      if(result.redirect_url){clearBillingAttempt(attempt.key);location.assign(result.redirect_url);return}
+      if(['failed','canceled'].includes(result.status)){
+        clearBillingAttempt(attempt.key);
+        status.textContent='Stripe did not complete this billing request. Review the selection and try again with a new request.';
+      }else if(result.status==='uncertain'){
+        status.textContent='Stripe still needs payment confirmation. Retry this same selection after completing payment; Nestly will recover the exact request.';
+      }else{
+        clearBillingAttempt(attempt.key);
+        status.textContent='Request submitted. The current plan remains shown until Stripe confirms payment and the subscription webhook is received.';
+      }
+      buttons.forEach(button=>button.disabled=false);
+    };
+    $('billingPrimary').onclick=()=>{
+      if(providerSubscription&&sameCadence&&sameCapacity)return execute('create_portal',null,null);
+      const type=!providerSubscription?'create_checkout':!sameCadence?'change_cadence':'change_capacity';
+      return execute(type,selectedCadence,selectedCapacity);
+    };
+    if($('billingPortal'))$('billingPortal').onclick=()=>execute('create_portal',null,null);
+  };
+  renderPlan();
 }
 /* ---------- customer sign-up QR ---------- */
 async function loadSignupConfig(){

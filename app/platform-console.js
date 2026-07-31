@@ -637,6 +637,12 @@
       'Prospect updated.':'潜在客户已更新。','Prospect assignment updated.':'潜在客户分配已更新。','Task created.':'任务已创建。','Task completed.':'任务已完成。',
       'This stage is controlled by account conversion and onboarding evidence.':'此阶段由账户转换及入驻证据控制。',
       'Firm sector assigned.':'企业行业已分配。','Firm module override applied.':'企业模块覆盖已应用。','Stripe price version activated.':'Stripe 价格版本已启用。',
+      'V124 bills customer capacity, never staff access. Active versions drive checkout and upgrades; prior versions remain history.':'V124 按顾客容量计费，不按员工访问人数计费。有效版本用于结账和升级；旧版本保留为历史记录。',
+      'Per +1,000 customers':'每增加 1,000 位顾客','Customers included':'包含顾客数',
+      'Create matching monthly and annual Stripe Price versions before opening checkout.':'开放结账前，请创建相匹配的月付和年付 Stripe 价格版本。',
+      'Stripe +1,000-customer price ID':'Stripe 每增加 1,000 位顾客的价格 ID',
+      'Monthly is fixed at SGD 149 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'月付固定为 149 新币，每额外 1,000 位顾客加收 10 新币。年付固定为 1,188 新币，每额外 1,000 位顾客加收 120 新币。168 新币仅为比较价格。',
+      'Current customers':'当前顾客数','Customer capacity':'顾客容量','Money-back request until':'退款申请截止时间','Create annual checkout':'创建年付结账',
       'Consultant attribution recorded.':'顾问归属已记录。','Commission policy created.':'佣金政策已创建。','Accrual approved.':'应计佣金已批准。',
       'Payout batch created.':'付款批次已创建。','Payout line added.':'付款明细已添加。','Payout batch approved.':'付款批次已批准。',
       'Consultant payment recorded.':'顾问付款已记录。','Open commission forfeited.':'未结佣金已没收。','Activity saved.':'活动已保存。',
@@ -761,6 +767,12 @@
       'Prospect updated.':'Prospek dikemas kini.','Prospect assignment updated.':'Tugasan prospek dikemas kini.','Task created.':'Tugas dicipta.','Task completed.':'Tugas selesai.',
       'This stage is controlled by account conversion and onboarding evidence.':'Peringkat ini dikawal oleh penukaran akaun dan bukti penerimaan.',
       'Firm sector assigned.':'Sektor firma ditugaskan.','Firm module override applied.':'Penggantian modul firma digunakan.','Stripe price version activated.':'Versi harga Stripe diaktifkan.',
+      'V124 bills customer capacity, never staff access. Active versions drive checkout and upgrades; prior versions remain history.':'V124 mengebil kapasiti pelanggan, bukan akses kakitangan. Versi aktif digunakan untuk pembayaran dan peningkatan; versi terdahulu kekal sebagai sejarah.',
+      'Per +1,000 customers':'Bagi setiap tambahan 1,000 pelanggan','Customers included':'Pelanggan disertakan',
+      'Create matching monthly and annual Stripe Price versions before opening checkout.':'Cipta versi Harga Stripe bulanan dan tahunan yang sepadan sebelum membuka pembayaran.',
+      'Stripe +1,000-customer price ID':'ID harga Stripe bagi tambahan 1,000 pelanggan',
+      'Monthly is fixed at SGD 149 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'Bulanan ditetapkan pada SGD 149 + SGD 10 bagi setiap tambahan 1,000 pelanggan. Tahunan ditetapkan pada SGD 1,188 + SGD 120 bagi setiap tambahan 1,000 pelanggan. SGD 168 hanyalah metadata perbandingan.',
+      'Current customers':'Pelanggan semasa','Customer capacity':'Kapasiti pelanggan','Money-back request until':'Tarikh akhir permohonan pulangan wang','Create annual checkout':'Cipta pembayaran tahunan',
       'Consultant attribution recorded.':'Atribusi perunding direkodkan.','Commission policy created.':'Polisi komisen dicipta.','Accrual approved.':'Akruan diluluskan.',
       'Payout batch created.':'Kumpulan bayaran dicipta.','Payout line added.':'Baris bayaran ditambah.','Payout batch approved.':'Kumpulan bayaran diluluskan.',
       'Consultant payment recorded.':'Bayaran perunding direkodkan.','Open commission forfeited.':'Komisen terbuka dilucutkan.','Activity saved.':'Aktiviti disimpan.',
@@ -6059,7 +6071,7 @@
   function billingCatalogueRows(catalog,CUI) {
     return asArray(catalog).map(row=>[
       escapeHtml(row.currency),escapeHtml(platformStatus(row.cadence)),currency(row.base_amount_cents,row.currency),
-      currency(row.per_seat_amount_cents,row.currency),String(row.included_seats),
+      currency(row.capacity_block_amount_cents,row.currency),String(row.included_customer_capacity),
       escapeHtml(platformStatus(row.tax_behavior)),CUI.status(pt(row.active?'Active':'Retired'),row.active?'ok':'off'),
       escapeHtml(dateTime(row.effective_from))
     ]);
@@ -6089,7 +6101,7 @@
     try{
       const [billingPayload,catalogPayload]=await Promise.all([
         rpc(sb,'platform_get_billing_v89',{p_business:null,p_limit:250}),
-        rpc(sb,'get_billing_price_catalog_v77',{p_currency:null})
+        rpc(sb,'get_billing_plan_catalog_v124',{})
       ]);
       const rows=asArray(billingPayload);
       const catalog=asArray(catalogPayload);
@@ -6103,7 +6115,7 @@
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Billing summary'))}">${[
           ['Period total incl. GST',currency(totals.total),'reports'],['Paid firms',totals.paid,'check'],['Overdue firms',totals.overdue,'info'],['Failed events',totals.failed,'retention']
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
-        ${CUI.card({title:'Stripe price catalogue',description:'Active versions drive checkout and cadence changes. Prior versions remain visible as history.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per seat','Included','Tax','Status','Effective'],rows:billingCatalogueRows(catalog,CUI)}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create one active version for each offered billing cadence before opening checkout.'})})}
+        ${CUI.card({title:'Stripe price catalogue',description:'V124 bills customer capacity, never staff access. Active versions drive checkout and upgrades; prior versions remain history.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per +1,000 customers','Customers included','Tax','Status','Effective'],rows:billingCatalogueRows(catalog,CUI)}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create matching monthly and annual Stripe Price versions before opening checkout.'})})}
         ${CUI.card({title:'Billing exception queue',description:exceptions.length?pt('{count} firms require payment follow-up.',{count:exceptions.length}):'No overdue or failed firm billing records.',body:exceptions.length?exceptions.map(row=>`<div class="platform-action-item"><div><button type="button" class="platform-link-button" data-billing-firm="${escapeHtml(row.business_id)}"><b>${escapeHtml(row.business_name)}</b></button><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(pt('next payment {date}',{date:dateTime(row.next_payment_at)}))}</p></div>${CUI.status(pt('{count} failed',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):localizedEmptyHtml('Payments and provider status are currently reconciled.')})}
         ${billingFirmCardHtml(rows,CUI)}`;
       main.querySelector('#platformNewBillingPrice').onclick=()=>billingPriceModal(context);
@@ -6117,11 +6129,7 @@
     const {CUI,sb}=context;
     const defaultEffective=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
     modal({title:'New Stripe price version',submitLabel:'Preview price',CUI,body:`<div class="platform-form-grid">
-      ${CUI.field({id:'billingPriceCurrency',label:'Currency',value:'SGD',required:true,attributes:'name="currency" maxlength="3"'})}
-      ${CUI.field({id:'billingPriceCadence',label:'Cadence',control:'select',options:['quarterly','half_yearly','annual'].map(value=>({value,label:platformStatus(value)})),attributes:'name="cadence"'})}
-      ${CUI.field({id:'billingBaseAmount',label:'Base subscription (SGD)',type:'number',required:true,attributes:'name="base_amount" min="0" step="0.01" inputmode="decimal"'})}
-      ${CUI.field({id:'billingSeatAmount',label:'Per-seat charge (SGD)',type:'number',required:true,attributes:'name="seat_amount" min="0" step="0.01" inputmode="decimal"'})}
-      ${CUI.field({id:'billingIncludedSeats',label:'Included seats',type:'number',value:'1',required:true,attributes:'name="included_seats" min="0" step="1"'})}
+      ${CUI.field({id:'billingPriceCadence',label:'Cadence',control:'select',options:['annual','monthly'].map(value=>({value,label:platformStatus(value)})),attributes:'name="cadence"'})}
       ${CUI.field({id:'billingTaxBehavior',label:'Tax behaviour',control:'select',options:['exclusive','inclusive','unspecified'].map(value=>({value,label:platformStatus(value)})),attributes:'name="tax_behavior"'})}
       ${CUI.field({id:'billingEffectiveFrom',label:'Effective from',type:'datetime-local',value:defaultEffective,required:true,attributes:'name="effective_from"'})}
       <div class="wide">${CUI.field({id:'billingPriceReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}</div>
@@ -6129,26 +6137,22 @@
         <p class="muted small">${escapeHtml(pt('Only change these values when connecting an already-created Stripe price.'))}</p>
         <div class="platform-form-grid">
           ${CUI.field({id:'billingBasePriceId',label:'Stripe base price ID',required:true,attributes:'name="base_price_id" placeholder="price_..."'})}
-          ${CUI.field({id:'billingSeatPriceId',label:'Stripe seat price ID',required:true,attributes:'name="seat_price_id" placeholder="price_..."'})}
+          ${CUI.field({id:'billingCapacityPriceId',label:'Stripe +1,000-customer price ID',required:true,attributes:'name="capacity_price_id" placeholder="price_..."'})}
         </div>
       </details>
-    </div><p class="muted small">${escapeHtml(pt('Enter customer-facing amounts in dollars. Nestly stores the exact cents automatically.'))}</p>`,onSubmit:async(form,controls)=>{
+    </div><p class="muted small">${escapeHtml(pt('Monthly is fixed at SGD 149 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.'))}</p>`,onSubmit:async(form,controls)=>{
       const proposal={
-        p_currency:String(form.get('currency')).toUpperCase(),
         p_cadence:form.get('cadence'),
         p_provider_base_price_id:form.get('base_price_id'),
-        p_provider_seat_price_id:form.get('seat_price_id'),
-        p_base_amount_cents:moneyInputToCents(form.get('base_amount')),
-        p_per_seat_amount_cents:moneyInputToCents(form.get('seat_amount')),
-        p_included_seats:Number(form.get('included_seats')),
+        p_provider_capacity_price_id:form.get('capacity_price_id'),
         p_tax_behavior:form.get('tax_behavior'),
         p_effective_from:new Date(form.get('effective_from')).toISOString()
       };
-      const preview=await rpc(sb,'preview_billing_price_catalog_v77',proposal);
+      const preview=await rpc(sb,'preview_billing_plan_catalog_v124',proposal);
       const reason=form.get('reason');
       controls.close();
       previewThenConfirm({title:'Confirm Stripe price version',preview,CUI,onConfirm:async confirmControls=>{
-        await rpc(sb,'confirm_billing_price_catalog_v77',{
+        await rpc(sb,'confirm_billing_plan_catalog_v124',{
           ...proposal,p_confirmation_hash:preview.confirmation_hash,p_reason:reason
         });
         confirmControls.close();await renderBilling(context);CUI.announce('Stripe price version activated.');
@@ -6163,32 +6167,33 @@
     document.body.appendChild(overlay);let deactivate;const close=()=>closeOverlay(overlay,deactivate);
     overlay.querySelector('.platform-drawer-close').onclick=close;deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
     try{
-      const detail=asObject(await rpc(sb,'get_business_billing_v77',{p_business:businessId}));
+      const detail=asObject(await rpc(sb,'get_business_billing_v124',{p_business:businessId}));
       const commands=billingCommands(detail);
       overlay.querySelector('[data-detail]').innerHTML=`<div class="platform-actions" style="margin-bottom:14px">${commands.map(command=>`<button type="button" class="btn ${command.danger?'danger':'ghost'} sm" data-billing-command="${command.type}" data-cadence="${command.cadence||''}">${escapeHtml(pt(command.label))}</button>`).join('')}</div>
-        <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,billable_seats:detail.billable_seats,last_paid_at:detail.last_paid_at,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({'Subtotal before GST':currency(detail.period_subtotal_cents,detail.currency),'GST':currency(detail.period_tax_cents,detail.currency),'Total including GST':currency(detail.period_total_cents,detail.currency)})})}</div>
+        <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,'Current customers':detail.current_customer_count,'Customer capacity':detail.terms?.customer_capacity,last_paid_at:detail.last_paid_at,'Money-back request until':detail.money_back_window?.money_back_request_until,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({'Subtotal before GST':currency(detail.period_subtotal_cents,detail.currency),'GST':currency(detail.period_tax_cents,detail.currency),'Total including GST':currency(detail.period_total_cents,detail.currency)})})}</div>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Invoices"))}</h2>${asArray(detail.invoices).map(invoice=>`<div class="platform-action-item"><div><b>${escapeHtml(invoice.number||invoice.provider_invoice_id)}</b><p class="muted small">${escapeHtml(platformStatus(invoice.status))} · ${escapeHtml(pt('{amount} incl. GST',{amount:currency(invoice.total_cents,invoice.currency)}))}</p></div><span>${invoice.paid_normalized?CUI.status('Paid','ok'):CUI.status('Outstanding','no')}</span></div>`).join('')||localizedEmptyHtml('No invoices.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Payment attempts"))}</h2>${asArray(detail.payment_attempts).map(attempt=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(attempt.attempt_state))}</b><p class="muted small">${currency(attempt.amount_cents,detail.currency)} · ${escapeHtml(attempt.failure_code||pt('No failure'))}</p></div><span class="muted small">${escapeHtml(dateTime(attempt.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No payment attempts.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Adjustments"))}</h2>${asArray(detail.adjustments).map(adjustment=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(adjustment.adjustment_type))}</b><p class="muted small">${escapeHtml(pt('{amount} incl. GST',{amount:currency(adjustment.total_cents,adjustment.currency||detail.currency)}))} · ${escapeHtml(adjustment.reason||pt('No reason recorded'))}</p></div><span class="muted small">${escapeHtml(dateTime(adjustment.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No adjustments.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Commands"))}</h2>${asArray(detail.commands).map(command=>detailObjectHtml(command)).join('')||localizedEmptyHtml('No billing commands.')}</section>`;
-      overlay.querySelectorAll('[data-billing-command]').forEach(button=>button.onclick=()=>requestBillingCommand(businessId,button.dataset.billingCommand,button.dataset.cadence||null,{...context,close}));
+      overlay.querySelectorAll('[data-billing-command]').forEach(button=>button.onclick=()=>requestBillingCommand(businessId,button.dataset.billingCommand,button.dataset.cadence||null,detail.terms?.customer_capacity||Math.max(1000,Math.ceil(Number(detail.current_customer_count||0)/1000)*1000),{...context,close}));
     }catch(error){overlay.querySelector('[data-detail]').innerHTML=error.platformUpdateRequired?systemUpdateRequired(CUI,'Billing detail'):CUI.errorState({title:'Billing detail unavailable',message:platformErrorMessage(error,'Billing detail unavailable')})}
   }
   function billingCommands(detail) {
     const commands=[];
     const hasCustomer=!!detail.provider?.customer_id,hasSubscription=!!detail.provider?.subscription_id;
-    if(!hasSubscription)commands.push({type:'create_checkout',cadence:detail.cadence||'annual',label:'Create checkout'});
+    if(!hasSubscription)commands.push({type:'create_checkout',cadence:'annual',label:'Create annual checkout'});
     if(hasCustomer)commands.push({type:'create_portal',label:'Open billing portal'});
-    if(hasSubscription&&!['canceled','cancelled'].includes(detail.status))commands.push({type:'change_cadence',cadence:detail.cadence==='annual'?'quarterly':'annual',label:'Change cadence'});
+    if(hasSubscription&&!['canceled','cancelled'].includes(detail.status))commands.push({type:'change_cadence',cadence:detail.cadence==='annual'?'monthly':'annual',label:'Change cadence'});
     if(hasSubscription&&detail.cancel_at_period_end)commands.push({type:'resume',label:'Resume'});
     else if(hasSubscription&&['active','trialing','past_due'].includes(detail.status))commands.push({type:'cancel_at_period_end',label:'Cancel at period end',danger:true});
     return commands;
   }
-  function requestBillingCommand(businessId,type,cadence,context) {
+  function requestBillingCommand(businessId,type,cadence,customerCapacity,context) {
     const {CUI,sb}=context;
     const label=platformStatus(type);
-    previewThenConfirm({title:pt('Confirm {action}',{action:label}),preview:{business_id:businessId,command_type:type,cadence},CUI,onConfirm:async(controls)=>{
-      const requested=await rpc(sb,'request_billing_command_v77',{p_business:businessId,p_command_type:type,p_cadence:cadence,p_idempotency_key:idempotencyKey()});
+    const planCommand=['create_checkout','change_cadence','change_capacity'].includes(type);
+    previewThenConfirm({title:pt('Confirm {action}',{action:label}),preview:{business_id:businessId,command_type:type,cadence,customer_capacity:planCommand?customerCapacity:null},CUI,onConfirm:async(controls)=>{
+      const requested=await rpc(sb,'request_billing_command_v124',{p_business:businessId,p_command_type:type,p_cadence:planCommand?cadence:null,p_customer_capacity:planCommand?customerCapacity:null,p_idempotency_key:idempotencyKey()});
       let result=requested;
       if(['pending','processing','uncertain'].includes(requested?.status)){
         if(!sb.functions?.invoke)throw new Error(pt('The billing command executor is unavailable.'));

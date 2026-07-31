@@ -37,6 +37,17 @@ type LocalSubscription = {
   cancel_at_period_end: boolean;
 };
 
+type LocalSubscriptionItem = {
+  provider_subscription_id: string;
+  provider_price_id: string;
+  quantity: number;
+};
+
+type SubscriptionItemSnapshot = {
+  price_id: string;
+  quantity: number;
+};
+
 type LocalInvoice = {
   business_id: string;
   provider_invoice_id: string;
@@ -97,16 +108,30 @@ function stripeSubscriptionSnapshot(
         (itemPeriodEnds.length ? Math.max(...itemPeriodEnds) : null),
     ),
     cancel_at_period_end: subscription.cancel_at_period_end,
+    items: subscription.items.data
+      .map((item) => ({
+        price_id: item.price.id,
+        quantity: Number(item.quantity || 0),
+      }))
+      .sort((left, right) =>
+        left.price_id.localeCompare(right.price_id) ||
+        left.quantity - right.quantity
+      ),
   };
 }
 
 function localSubscriptionSnapshot(
   subscription: LocalSubscription,
+  items: SubscriptionItemSnapshot[],
 ): Record<string, unknown> {
   return {
     status: subscription.status,
     current_period_end: subscription.current_period_end,
     cancel_at_period_end: subscription.cancel_at_period_end,
+    items: [...items].sort((left, right) =>
+      left.price_id.localeCompare(right.price_id) ||
+      left.quantity - right.quantity
+    ),
   };
 }
 
@@ -319,6 +344,25 @@ async function reconcileSubscriptions({
       return (data || []) as LocalSubscription[];
     },
     consumePage: async (rows) => {
+      const providerSubscriptionIds = rows.map(
+        ({ provider_subscription_id }) => provider_subscription_id,
+      );
+      const { data: itemRows, error: itemError } = await admin
+        .from('billing_provider_subscription_items')
+        .select('provider_subscription_id,provider_price_id,quantity')
+        .in('provider_subscription_id', providerSubscriptionIds);
+      if (itemError) {
+        throw new Error('local subscription item projection unavailable');
+      }
+      const itemsBySubscription = new Map<string, SubscriptionItemSnapshot[]>();
+      for (const item of (itemRows || []) as LocalSubscriptionItem[]) {
+        const items = itemsBySubscription.get(item.provider_subscription_id) || [];
+        items.push({
+          price_id: item.provider_price_id,
+          quantity: Number(item.quantity || 0),
+        });
+        itemsBySubscription.set(item.provider_subscription_id, items);
+      }
       const outcomes = await mapWithConcurrency(
         rows,
         MAX_PROVIDER_LOOKUP_CONCURRENCY,
@@ -328,7 +372,10 @@ async function reconcileSubscriptions({
               local.provider_subscription_id,
             );
             const expected = stripeSubscriptionSnapshot(provider);
-            const actual = localSubscriptionSnapshot(local);
+            const actual = localSubscriptionSnapshot(
+              local,
+              itemsBySubscription.get(local.provider_subscription_id) || [],
+            );
             const [expectedDigest, actualDigest] = await Promise.all([
               digest(expected),
               digest(actual),

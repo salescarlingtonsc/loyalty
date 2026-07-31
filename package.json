@@ -14,6 +14,7 @@
     "canonical-migrations:materialize": "node scripts/migrations/materialize-canonical-order.mjs --materialize",
     "canonical-migrations:check": "node scripts/migrations/materialize-canonical-order.mjs --check",
     "dev:bootstrap-superadmin": "node scripts/dev/bootstrap-test-superadmin.mjs",
+    "stripe:v124:setup": "node scripts/stripe/setup-v124-catalog.mjs",
     "test": "node --test",
     "build": "node scripts/quality/build-static.mjs",
     "validate": "npm run quality && npm run runtime-config:check && npm run migration-manifest:check && npm run canonical-migrations:check && npm test && npm run build"
