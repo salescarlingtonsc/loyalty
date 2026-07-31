@@ -126,3 +126,32 @@ This evidence does not make V125 production-ready or store-ready. Still needed:
 
 At the time of this pre-release evidence capture, no V125 commit, push,
 production migration, production secret change or deployment had occurred.
+
+## Production release evidence — 1 August 2026
+
+- Candidate commit `8b0481c549fd5e08649cbc2248c57201f0d80487` was pushed on
+  `codex/v124-stripe-pricing`; GitHub PR #5 passed every required check and was
+  merged to `main` as `ea56d633b13f4f9825a4de9d85c6a5eb823ec575`.
+- Production preflight found zero tax-bearing subscription, invoice,
+  payment-attempt or adjustment rows and zero non-exclusive V124 catalogue
+  rows. Supabase applied migration `20260731192905` successfully.
+- Post-migration proof records the no-GST singleton, all five validated
+  constraints, all four enforcement triggers and zero tax-bearing rows.
+- Supabase deployed `stripe-billing-command` v4, `manage-booking` v6,
+  `public-booking` v6, `public-business-application` v2 and `public-join` v6.
+  Live preflight requests accept exactly `capacitor://localhost` and reject
+  `https://attacker.invalid` with HTTP 403 on all five functions.
+- Vercel preview `loyalty-hbmlxi4m6-csbiz1234567s-projects.vercel.app` passed
+  header/body smoke and was promoted. The subsequent Git-backed production
+  deployment `dpl_3isAsdXwukkU5fYTfcbe2StEyF5R` is READY and aliases
+  `www.nestly.asia`/`nestly.asia`; the apex redirects to `www`, both bundled
+  entrypoints expose CSP, native bridge links remain canonical HTTPS, and the
+  billing UI says `GST not charged`.
+- The live V124 catalogue has zero active rows. Stripe onboarding, live Prices,
+  protected Edge secrets and provider/webhook acceptance are therefore not
+  represented as complete. The available Chrome session was signed out of
+  Stripe; no credential, bank, OTP or legal-attestation step was attempted.
+- Supabase advisors report no `ERROR` findings. V125 advisor notices are the
+  expected no-policy/RPC notices for an inaccessible policy table and guarded
+  authenticated `SECURITY DEFINER` APIs; the wider pre-existing advisory
+  backlog remains separate release work.
