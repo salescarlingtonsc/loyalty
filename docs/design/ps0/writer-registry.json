@@ -2159,14 +2159,6 @@
       "reason": "browser direct write to non-value catalog/config table branches (UPDATE); RLS-gated setup data, not customer value"
     },
     {
-      "id": "browser.write:app/index.html:bundle_items:INSERT",
-      "reason": "browser direct write to non-value catalog/config table bundle_items (INSERT); RLS-gated setup data, not customer value"
-    },
-    {
-      "id": "browser.write:app/index.html:bundles:INSERT",
-      "reason": "browser direct write to non-value catalog/config table bundles (INSERT); RLS-gated setup data, not customer value"
-    },
-    {
       "id": "browser.write:app/index.html:businesses:UPDATE",
       "reason": "browser direct write to non-value catalog/config table businesses (UPDATE); RLS-gated setup data, not customer value"
     },
@@ -2585,6 +2577,10 @@
     {
       "id": "browser.rpc:app/index.html:list_staff_blocked_times_v120",
       "reason": "V120 branch-authorised read-only calendar projection. It returns local block details and redacted cross-branch busy intervals without DML or customer-value effects."
+    },
+    {
+      "id": "browser.rpc:app/index.html:create_service_bundle_v123",
+      "reason": "V123 replay-safe Services catalogue writer. It atomically creates one bundle and its service membership plus non-economic audit/idempotency evidence after tenant, module-write, active-service and input validation. It cannot create or mutate a sale, payment, discount, points balance, reward entitlement, package, gift card, stored value, stock movement, or other customer-value ledger."
     }
   ]
 }

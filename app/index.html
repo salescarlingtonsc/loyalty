@@ -396,7 +396,9 @@ input[type=range]:focus{box-shadow:none}
 .qbtn:hover{color:var(--ink)}
 .qbtn:active{transform:scale(.94)}
 .qbtn.act{background:var(--ink);color:#fff;border-color:var(--ink)}
-.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0;max-width:100%}
+.split>*{min-width:0;max-width:100%}
+#slist{min-width:0;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .row{display:flex;gap:10px;align-items:center}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 .settings-page .row>*{min-width:0}
@@ -684,6 +686,9 @@ input[type=range]:focus{box-shadow:none}
 @media(max-width:560px){.task-launcher-grid,.report-decision-grid{grid-template-columns:1fr}.task-launcher-card{min-height:76px}.appointment-primary-action .btn{width:100%}}
 @media(max-width:767px){
   .cui-page-head,.topbar{align-items:flex-start}.cui-page-actions,.topbar>.row{width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{flex:1 1 auto}
+  .topbar>.row{min-width:0;max-width:100%;flex-wrap:wrap}
+  .topbar>.row>input,.topbar>.row>select,.topbar>.row>span{min-width:0;max-width:100%}
+  .topbar>.row>#branchWrap{flex:1 1 190px}.topbar>.row>#branchWrap>select{width:100%;max-width:100%}
   .cui-table[data-responsive="true"] thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
   .cui-table[data-responsive="true"],.cui-table[data-responsive="true"] tbody,.cui-table[data-responsive="true"] tr,.cui-table[data-responsive="true"] td{display:block;width:100%}
   .cui-table[data-responsive="true"] tr{padding:10px 0;border-bottom:1px solid var(--line)}
@@ -1531,6 +1536,21 @@ const toast=m=>{
   const source=String(m??''),message=root.querySelector('.shell')?workspaceTranslationV97(source):source;
   showToast(message);CUI.announce(message);
 };
+async function copyTextToClipboard(value,{button=null,success='Copied',failure='Copy was blocked. Select the text and copy it manually.'}={}){
+  if(button)button.disabled=true;
+  try{
+    if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');
+    await navigator.clipboard.writeText(String(value??''));
+    if(success)toast(success);
+    return true;
+  }catch(error){
+    console.warn('Clipboard copy failed',error);
+    if(failure){showToast(failure);CUI.announce(failure,{assertive:true})}
+    return false;
+  }finally{
+    if(button?.isConnected)button.disabled=false;
+  }
+}
 const fail=e=>{
   console.error(e);
   const source=e?.message||String(e);
@@ -2013,6 +2033,31 @@ function createLatestRequestGate(isInstanceCurrent){
     begin(){const requestGeneration=++generation;return()=>requestGeneration===generation&&isInstanceCurrent()},
     invalidate(){generation+=1}
   };
+}
+function createReportRequestGate(isInstanceCurrent,getRunButton){
+  const gate=createLatestRequestGate(isInstanceCurrent);
+  return {
+    begin(){
+      const isLatest=gate.begin(),button=getRunButton();
+      if(button&&button.isConnected!==false)button.disabled=true;
+      return isLatest;
+    },
+    invalidate(){
+      gate.invalidate();
+      if(!isInstanceCurrent())return false;
+      const button=getRunButton();
+      if(button&&button.isConnected!==false)button.disabled=false;
+      return true;
+    }
+  };
+}
+function setReportRetryState(isInstanceCurrent,button,body,message,retryId,onRetry){
+  if(!isInstanceCurrent()||!button||!body||button.isConnected===false||body.isConnected===false)return false;
+  button.disabled=false;
+  body.innerHTML=`<div class="card"><div class="err">${message} <button class="btn ghost sm" id="${retryId}">Retry</button></div></div>`;
+  const retryButton=body.querySelector(`#${retryId}`);
+  if(retryButton)retryButton.onclick=onRetry;
+  return true;
 }
 function nav(h){location.hash=h}
 window.addEventListener('hashchange',route);
@@ -7318,7 +7363,7 @@ async function clientDetail(id){
     if(error) return fail(error);
     toast(workspaceTemplateTextV97('adjustedBalance',{balance:data}));clientDetail(id);
   };
-  $('copyRef').onclick=()=>{navigator.clipboard.writeText(c.referral_code||'');toast('Code copied')};
+  $('copyRef').onclick=async()=>copyTextToClipboard(c.referral_code||'',{button:$('copyRef'),success:'Code copied'});
   const consentIdempotencyKey=crypto.randomUUID();
   if($('consentBtn'))$('consentBtn').onclick=async()=>{
     const consentButton=$('consentBtn');
@@ -8626,16 +8671,28 @@ async function servicesPage(){
       :'<p class="muted small">No resources yet.</p>';
   }
   if(canWrite)$('badd3').onclick=async()=>{
+    const badd3=$('badd3');
     const name=$('bnm').value.trim();
     const picked=[...document.querySelectorAll('[data-bs]')].filter(x=>x.checked).map(x=>x.dataset.bs);
     if(name.length<2) return toast('Name the bundle');
     if(picked.length<2) return toast('Pick at least 2 services');
-    const {data:b,error}=await sb.from('bundles').insert({business_id:S.biz.id,name,
-      price_cents:Math.round(parseFloat($('bpr').value||'0')*100)}).select().single();
-    if(error) return fail(error);
-    const {error:e2}=await sb.from('bundle_items').insert(picked.map(sid=>({bundle_id:b.id,service_id:sid})));
-    if(e2) return fail(e2);
-    toast('Bundle created');$('bnm').value='';loadBR();
+    const priceCents=Math.round(parseFloat($('bpr').value||'0')*100);
+    const bundleSlot='nestly.services.createBundle.v123';
+    const fingerprint=JSON.stringify([S.biz.id,name,priceCents,[...picked].sort()]);
+    badd3.disabled=true;badd3.textContent='Creating…';
+    try{
+      const {data,error}=await sb.rpc('create_service_bundle_v123',{
+        p_business:S.biz.id,p_name:name,p_price_cents:priceCents,
+        p_service_ids:picked,p_idempotency_key:writeAttemptKey(bundleSlot,fingerprint)
+      });
+      if(error)return fail(error);
+      clearWriteAttempt(bundleSlot);
+      toast(isReplayResult(data)?'Bundle already created — no duplicate':'Bundle created');
+      $('bnm').value='';document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=false});
+      await loadBR();
+    }finally{
+      if(badd3.isConnected){badd3.disabled=false;badd3.textContent='Create bundle'}
+    }
   };
   if(canWrite)$('radd3').onclick=async()=>{
     if($('rnm').value.trim().length<2) return toast('Name it');
@@ -8766,7 +8823,7 @@ async function bookingsPage(){
         <div id="bkCsvPrev" style="margin-top:12px"></div>
       </div>
     </div>`:''}`;
-  $('cp').onclick=()=>{navigator.clipboard.writeText(portal);toast('Portal link copied')};
+  $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
   if(isOwner){
     const controls=['customerBookingEnabled','customerRedemptionEnabled','customerAppointmentChangesEnabled'];
     const status=$('customerCapabilitiesStatus'),save=$('saveCustomerCapabilities');
@@ -11053,11 +11110,11 @@ function pbOpenIssueModal(c,targets,ctx){
   const close=()=>{deactivate?deactivate():modal.remove();if(ctx.isCurrent())renderPlaybooks(ctx);};
   deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#pbIssueRun'});
   $('pbIssueClose').onclick=close;
-  $('pbCopyContacts').onclick=()=>{
+  $('pbCopyContacts').onclick=async()=>{
     const prepared=[...entitlementRows.values()].map(row=>row.target);
-    navigator.clipboard.writeText(pbContactListText(c,prepared))
-      .then(()=>toast('Contact list copied — paste into WhatsApp or your notes'))
-      .catch(()=>toast('Copy failed — try again'));
+    await copyTextToClipboard(pbContactListText(c,prepared),{button:$('pbCopyContacts'),
+      success:'Contact list copied — paste into WhatsApp or your notes',
+      failure:'Copy was blocked. Select the prepared contacts and copy them manually.'});
   };
   function renderEntitlementOutcome({failed=[],capped=false}={}){
     const outEl=$('pbIssueOutcome');if(!outEl)return;
@@ -15034,36 +15091,30 @@ async function reportsPage(){
 /* ---------- get started (first-run setup guide) ---------- */
 let setupTeamSkipped=false; /* in-memory only — no localStorage in this stack; resets on reload */
 async function setupPage(){
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">A few things to set up before you open for business — do them in any order.</p></div></div>
     <div class="card" id="sp_progress" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     <div id="sp_steps" class="grid"></div>`;
   const bid=S.biz.id;
-  const [{data:sv,error:e1},{data:pr,error:e2},{data:lp,error:e3},{data:st,error:e4},{data:cl,error:e5}]=await Promise.all([
+  const [{data:sv,error:e1},{data:lp,error:e2},{data:st,error:e3},{data:cl,error:e4}]=await Promise.all([
     sb.from('services').select('id').eq('business_id',bid),
-    sb.from('products').select('id').eq('business_id',bid),
     sb.from('loyalty_programs').select('id').eq('business_id',bid).eq('active',true).limit(1),
     sb.from('staff').select('id').eq('business_id',bid),
     sb.from('clients').select('id').eq('business_id',bid).limit(1)
   ]);
-  const err=e1||e2||e3||e4||e5; if(err) return fail(err);
-  let spCount=0;
-  if(sv&&sv.length&&pr&&pr.length){
-    const ids=sv.map(s=>s.id);
-    const {data:sp}=await sb.from('service_products').select('service_id').in('service_id',ids);
-    spCount=(sp||[]).length;
+  if(!isCurrent())return;
+  const err=e1||e2||e3||e4;
+  if(err){
+    $('sp_progress').innerHTML=CUI.errorState({title:'Setup guide unavailable',message:'Your current setup could not be checked.',retryId:'setupRetry'});
+    $('sp_steps').innerHTML='';
+    const retry=$('setupRetry');if(retry)retry.onclick=()=>setupPage();
+    return;
   }
   const portal=`${location.origin}${location.pathname}#/b/${S.biz.slug}`;
-  const usesInventory=(S.biz.enabled_modules||[]).includes('inventory');
   const steps=[
-    {id:'services',em:'🛠️',title:usesInventory?'Add your services':'Add your services or products',
+    {id:'services',em:'🛠️',title:'Add your services or products',
       why:'This is what customers see and book — nothing else works until there\'s at least one.',
       done:(sv||[]).length>0,link:'#/services',cta:'Add a service →'},
-    {id:'products',em:'📦',title:'Add a product with stock',
-      why:'Each sale takes from the oldest-expiry batch first — nothing to do, it\'s automatic (FEFO).',
-      done:(pr||[]).length>0,link:'#/inventory',cta:'Add a product →',hide:!usesInventory},
-    {id:'link',em:'🔗',title:'Link products to services',
-      why:'When a service is completed, linked items deduct automatically — no manual stock counting.',
-      done:spCount>0,link:'#/services',cta:'Link a product →',hide:!usesInventory},
     {id:'loyalty',em:'🎁',title:'Set up loyalty',
       why:'Points per dollar and a redeem threshold — set once, then every sale earns automatically.',
       done:(lp||[]).length>0,link:'#/loyalty',cta:'Set up loyalty →'},
@@ -15076,7 +15127,7 @@ async function setupPage(){
     {id:'share',em:'🔗',title:'Share your booking page',
       why:'Customers book or reserve here — put it in your bio, WhatsApp, or a QR code on the counter.',
       done:true,link:null,cta:null}
-  ].filter(s=>!s.hide);
+  ];
   const doneCount=steps.filter(s=>s.done).length;
   $('sp_progress').innerHTML=`<div class="row"><b>${doneCount} of ${steps.length} done</b><span class="spacer"></span>
     <button class="btn ghost sm" id="sp_hide">Hide this guide</button></div>
@@ -15096,7 +15147,7 @@ async function setupPage(){
       </div>
     </div></div>`).join('');
   const copyBtn=$('sp_copy');
-  if(copyBtn) copyBtn.onclick=()=>{navigator.clipboard.writeText(portal);toast('Portal link copied')};
+  if(copyBtn) copyBtn.onclick=async()=>copyTextToClipboard(portal,{button:copyBtn,success:'Portal link copied'});
   document.querySelectorAll('[data-skip]').forEach(b=>b.onclick=()=>{setupTeamSkipped=true;setupPage()});
 }
 
@@ -15104,7 +15155,7 @@ async function setupPage(){
 async function staffPerfPage(drillId){
   if(drillId) return staffPerfDrill(drillId);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
-  M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Sales, revenue and commission per staff member — click a row to see the individual sales behind it</p></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Sales, revenue and commission per staff member — select a staff name to see the individual sales behind it</p></div>
     <div class="range">
       <button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
       <input type="date" id="pf" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" value="${today}">
@@ -15144,7 +15195,7 @@ async function staffPerfPage(drillId){
     if(!keys.length){$('pbody').innerHTML=`<div class="empty"><div class="big">🧑‍💼</div>No staff or sales in this range yet.</div>`;return}
     const totals=keys.reduce((t,k)=>({count:t.count+agg[k].count,revenue:t.revenue+agg[k].revenue,commission:t.commission+agg[k].commission}),{count:0,revenue:0,commission:0});
     $('pbody').innerHTML=`<table><tr><th>Staff</th><th>Sales</th><th>Revenue attributed</th><th>Commission earned</th></tr>
-      ${keys.map(k=>`<tr class="click" onclick="location.hash='#/staffperf/${k==='__unattributed'?'unattributed':k}'"><td><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></td>
+      ${keys.map(k=>`<tr><td><a href="#/staffperf/${k==='__unattributed'?'unattributed':encodeURIComponent(k)}"><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></a></td>
         <td>${agg[k].count}</td><td>${money(agg[k].revenue)}</td><td>${money(agg[k].commission)}</td></tr>`).join('')}
       <tr><td><b>Total</b></td><td><b>${totals.count}</b></td><td><b>${money(totals.revenue)}</b></td><td><b>${money(totals.commission)}</b></td></tr></table>`;
   }
@@ -15210,25 +15261,40 @@ async function staffPerfDrill(idParam){
 
 /* ---------- daily report ---------- */
 async function dailyReportPage(){
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=(()=>{const d=new Date(new Date().getTime()+8*3600000);return d.toISOString().slice(0,10)})();
   M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Everyone served today — particulars, service, revenue, staff — in one view</p></div>
     <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><span id="branchWrap"></span><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div id="drBody"><div class="card"><div class="empty">Pick a date and Generate.</div></div></div>`;
   $('drPrint').onclick=()=>window.print();
-  let lastRows=[];
+  let lastRows=[],lastScope=null;
+  const invalidate=()=>{
+    if(!requestGate.invalidate())return;
+    const csvButton=$('drCsv'),body=$('drBody');
+    if(!csvButton||!body)return;
+    lastRows=[];lastScope=null;csvButton.disabled=true;
+    body.innerHTML='<div class="card"><div class="empty">Scope changed. Generate this report again before exporting.</div></div>';
+  };
+  $('drDate').onchange=()=>invalidate();
+  $('drCsv').disabled=true;
   $('drGo').onclick=load;
   $('drCsv').onclick=()=>{
-    if(!lastRows.length) return toast('Generate a report first');
+    if(!lastScope||!lastRows.length) return toast('Generate a report first');
     const reversalByOriginal=Object.fromEntries(lastRows.filter(r=>r.reversal_of).map(r=>[r.reversal_of,r]));
     const rows=[['time','customer','phone','service_or_kind','relationship','original_sale_id','reversal_sale_id','signed_amount_additive','relationship_net_original_only','staff'],
       ...lastRows.map(r=>{const rev=reversalByOriginal[r.id];return [sgt(r.occurred_at),r.custName,r.custPhone,r.label,r.reversal_of?'reversal':'original',r.reversal_of||r.id,r.reversal_of?r.id:(rev?.id||''),(r.amount_cents/100).toFixed(2),r.reversal_of?'':((r.amount_cents+(rev?.amount_cents||0))/100).toFixed(2),r.staffName]})];
     const blob=new Blob([csvRows(rows)],{type:'text/csv'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-daily-report-${$('drDate').value}.csv`;a.click();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-daily-report-${lastScope.day}.csv`;a.click();
     toast('CSV downloaded');
   };
   async function load(){
+    const isLatest=requestGate.begin(),button=$('drGo');
     const day=$('drDate').value;
+    const scope={day,branchId:selectedBranchId||null};
+    $('drCsv').disabled=true;
+    $('drBody').innerHTML='<div class="card"><div class="empty">Generating current report…</div></div>';
     const from=sgDateBoundary(day),toExclusive=sgDateBoundary(day,1);
     let sl;
     try{
@@ -15239,7 +15305,14 @@ async function dailyReportPage(){
         if(selectedBranchId)q=q.eq('branch_id',selectedBranchId);
         return q.order('occurred_at').order('id');
       });
-    }catch(error){return fail(error)}
+    }catch(error){
+      if(isLatest()){
+        setReportRetryState(isCurrent,button,$('drBody'),'Daily report could not be generated.','drRetry',load);
+        fail(error);
+      }
+      return;
+    }
+    if(!isLatest())return;
     const rows=(sl||[]).map(s=>({
       occurred_at:s.occurred_at,
       custName:s.clients?.full_name||'Walk-in',custPhone:s.clients?.phone||'',
@@ -15247,7 +15320,7 @@ async function dailyReportPage(){
       amount_cents:s.amount_cents,staffName:s.staff?.full_name||'Unattributed',
       id:s.id,reversal_of:s.reversal_of,reversal_reason:s.reversal_reason,
       kind:s.kind,counts_as_revenue:s.counts_as_revenue,counts_as_visit:s.counts_as_visit,client_id:s.client_id}));
-    lastRows=rows;
+    lastRows=rows;lastScope=scope;button.disabled=false;$('drCsv').disabled=!rows.length;
     const revenue=rows.filter(r=>r.counts_as_revenue).reduce((a,r)=>a+r.amount_cents,0);
     const visits=rows.filter(r=>r.counts_as_visit).reduce((n,r)=>n+(r.reversal_of?-1:1),0);
     const uniq=new Set(rows.filter(r=>r.client_id).map(r=>r.client_id)).size;
@@ -15273,7 +15346,7 @@ async function dailyReportPage(){
     C('drC1',{type:'bar',data:{labels:Object.keys(byStaff),datasets:[{data:Object.values(byStaff).map(v=>v/100),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     C('drC2',{type:'doughnut',data:{labels:Object.keys(byKind).map(k=>k.replace('_',' ')),datasets:[{data:Object.values(byKind).map(v=>v/100),backgroundColor:[coral,amber,'#8B7BC7','#2FA36B','#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});
   }
-  refreshBranchFilter(load);
+  refreshBranchFilter(()=>{invalidate();load()},isCurrent);
 }
 
 /* ---------- expenses ---------- */
@@ -15348,6 +15421,8 @@ async function expensesPage(){
 
 /* ---------- P&L ---------- */
 async function pnlPage(){
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('plGo'):null);
   const iso=d=>d.toISOString().slice(0,10);
   const d30=new Date(Date.now()-29*864e5),today=new Date();
   M().innerHTML=`<div class="topbar"><div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div>
@@ -15356,34 +15431,79 @@ async function pnlPage(){
       <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div></div>
     <div id="plBody"><div class="card"><div class="empty">Pick a range and Run.</div></div></div>`;
   $('plPrint').onclick=()=>window.print();
-  let lastCat={},lastMonthly={};
+  let lastCat={},lastMonthly={},lastScope=null,lastSummary=null;
+  const invalidate=()=>{
+    if(!requestGate.invalidate())return;
+    const csvButton=$('plCsv'),body=$('plBody');
+    if(!csvButton||!body)return;
+    lastCat={};lastMonthly={};lastScope=null;lastSummary=null;csvButton.disabled=true;
+    body.innerHTML='<div class="card"><div class="empty">Scope changed. Run this report again before exporting.</div></div>';
+  };
+  $('plFrom').onchange=$('plTo').onchange=()=>invalidate();
+  $('plCsv').disabled=true;
   $('plGo').onclick=load;
   $('plCsv').onclick=()=>{
-    if(!Object.keys(lastCat).length&&!Object.keys(lastMonthly).length) return toast('Run a report first');
-    const rows=[['section','key','amount'],
+    if(!lastScope||!lastSummary) return toast('Run a report first');
+    const rows=[['section','key','amount_or_value'],
+      ['scope','from',lastScope.from],['scope','to',lastScope.to],
+      ['scope','branch_id',lastScope.branchId||'all'],
+      ['summary','revenue_cash',(lastSummary.cash/100).toFixed(2)],
+      ['summary','revenue_accrual',(lastSummary.accrual/100).toFixed(2)],
+      ['summary','expenses',(lastSummary.expenses/100).toFixed(2)],
+      ['summary','net_cash_less_expenses',(lastSummary.net/100).toFixed(2)],
       ...Object.entries(lastCat).map(([k,v])=>['expenses_by_category',k,(v/100).toFixed(2)]),
       ...Object.entries(lastMonthly).map(([k,v])=>['monthly',k,JSON.stringify(v)])];
-    const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-pnl.csv`;a.click();
+    const blob=new Blob([csvRows(rows)],{type:'text/csv'});
+    const branchPart=lastScope.branchId?`-${lastScope.branchId}`:'';
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-pnl-${lastScope.from}-${lastScope.to}${branchPart}.csv`;a.click();
     toast('CSV downloaded');
   };
   async function load(){
+    const isLatest=requestGate.begin(),button=$('plGo');
     const from=$('plFrom').value,to=$('plTo').value;
-    const {data:sum,error}=await sb.rpc('get_revenue_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:selectedBranchId});
+    const scope={from,to,branchId:selectedBranchId||null};
+    $('plCsv').disabled=true;
+    $('plBody').innerHTML='<div class="card"><div class="empty">Running current report…</div></div>';
+    let summaryResult;
+    try{
+      summaryResult=await sb.rpc('get_revenue_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:selectedBranchId});
+    }catch(error){
+      if(isLatest()){
+        setReportRetryState(isCurrent,button,$('plBody'),'P&L summary could not be loaded.','plRetry',load);
+        fail(error);
+      }
+      return;
+    }
+    if(!isLatest())return;
+    const {data:sum,error}=summaryResult||{};
     if(error){
       if(error.code==='42501'||String(error.message||'').includes('branch_visibility')){
-        $('plBody').innerHTML=`<div class="card"><div class="empty"><div class="big">🔒</div>You can only view branches assigned to you.</div></div>`;return
+        button.disabled=false;$('plBody').innerHTML=`<div class="card"><div class="empty"><div class="big">🔒</div>You can only view branches assigned to you.</div></div>`;return
       }
       if(String(error.message||'').toLowerCase().includes('permission')){
-        $('plBody').innerHTML=`<div class="card"><div class="empty"><div class="big">🔒</div>Ask the owner for finance access to see the P&L.</div></div>`;return
+        button.disabled=false;$('plBody').innerHTML=`<div class="card"><div class="empty"><div class="big">🔒</div>Ask the owner for finance access to see the P&L.</div></div>`;return
       }
+      setReportRetryState(isCurrent,button,$('plBody'),'P&L summary could not be loaded.','plRetry',load);
       return fail(error);
     }
     let exQ=sb.from('expenses').select('*').eq('business_id',S.biz.id)
       .is('voided_at',null).gte('occurred_on',from).lte('occurred_on',to);
     if(selectedBranchId) exQ=exQ.eq('branch_id',selectedBranchId);
-    const {data:ex,error:e2}=await exQ;
-    if(e2) return fail(e2);
+    let expensesResult;
+    try{expensesResult=await exQ}
+    catch(error){
+      if(isLatest()){
+        setReportRetryState(isCurrent,button,$('plBody'),'P&L expenses could not be loaded.','plRetry',load);
+        fail(error);
+      }
+      return;
+    }
+    if(!isLatest())return;
+    const {data:ex,error:e2}=expensesResult||{};
+    if(e2){
+      setReportRetryState(isCurrent,button,$('plBody'),'P&L expenses could not be loaded.','plRetry',load);
+      return fail(e2);
+    }
     const cash=sum.revenue_cash_cents||0, accrual=sum.revenue_accrual_cents||0, expTotal=sum.expenses_cents||0;
     const net=cash-expTotal;
     const byCat={};(ex||[]).forEach(e=>{byCat[e.category]=(byCat[e.category]||0)+e.amount_cents});
@@ -15395,11 +15515,25 @@ async function pnlPage(){
       let slQ=sb.from('sales').select('amount_cents,occurred_at,counts_as_revenue').eq('business_id',S.biz.id)
         .eq('counts_as_revenue',true).gte('occurred_at',from).lte('occurred_at',to+'T23:59:59');
       if(selectedBranchId) slQ=slQ.eq('branch_id',selectedBranchId);
-      const {data:sl}=await slQ;
+      let monthlyResult;
+      try{monthlyResult=await slQ}
+      catch(error){
+        if(isLatest()){
+          setReportRetryState(isCurrent,button,$('plBody'),'P&L monthly sales could not be loaded.','plRetry',load);
+          fail(error);
+        }
+        return;
+      }
+      if(!isLatest())return;
+      const {data:sl,error:e3}=monthlyResult||{};
+      if(e3){
+        setReportRetryState(isCurrent,button,$('plBody'),'P&L monthly sales could not be loaded.','plRetry',load);
+        return fail(e3);
+      }
       (sl||[]).forEach(s=>{const k=s.occurred_at.slice(0,7);(monthly[k]=monthly[k]||{rev:0,exp:0}).rev+=s.amount_cents});
       (ex||[]).forEach(e=>{const k=e.occurred_on.slice(0,7);(monthly[k]=monthly[k]||{rev:0,exp:0}).exp+=e.amount_cents});
     }
-    lastMonthly=monthly;
+    lastMonthly=monthly;lastScope=scope;lastSummary={cash,accrual,expenses:expTotal,net};button.disabled=false;$('plCsv').disabled=false;
     const mk=Object.keys(monthly).sort();
     $('plBody').innerHTML=`<div class="kpis">
         <div class="card kpi"><div class="l">Revenue (money collected)</div><div class="v">${money(cash)}</div></div>
@@ -15419,7 +15553,7 @@ async function pnlPage(){
       {label:'Expenses',data:mk.map(k=>monthly[k].exp/100),backgroundColor:coral,borderRadius:6}]},
       options:{plugins:{legend:{position:'bottom'}}}});
   }
-  refreshBranchFilter(load);
+  refreshBranchFilter(()=>{invalidate();load()},isCurrent);
 }
 
 /* ---------- settings ---------- */
@@ -16028,7 +16162,7 @@ async function settingsPage(){
     if(id===myStaffId){S.myModules=null;S.myModulePerms=null;route();}
   };
   window.rmStaff=async(id)=>{const removedUserId=teamRowsById.get(id)?.user_id||'';const {error}=await sb.from('staff').delete().eq('id',id);if(error)return fail(error);invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:removedUserId});toast('Removed');await loadTeam();};
-  window.cpInv=(c)=>{navigator.clipboard.writeText(c);toast('Code copied — send it to your teammate')};
+  window.cpInv=async(c)=>copyTextToClipboard(c,{success:'Code copied — send it to your teammate'});
   window.rvInv=async(id)=>{await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);toast('Invite revoked');loadTeam();};
   window.toggleModPanel=(staffId)=>{openModId=(openModId===staffId)?null:staffId;loadTeam();};
   window.setModulePermissionV74=(staffId,module,value)=>{
@@ -16100,7 +16234,8 @@ async function settingsPage(){
   $('igo').onclick=async()=>{
     const {data,error}=await sb.rpc('create_invite',{p_business:S.biz.id,p_role:$('ir').value,p_email:$('ie').value||null});
     if(error) return fail(error);
-    toast(workspaceTemplateTextV97('inviteCreated',{code:data.code}));navigator.clipboard.writeText(data.code);loadTeam();
+    await copyTextToClipboard(data.code,{success:workspaceTemplateTextV97('inviteCreated',{code:data.code}),
+      failure:'Invite created, but copy was blocked. Copy the code from Pending invites.'});loadTeam();
   };
   await loadTemplates();
   loadTeam();
@@ -16217,7 +16352,7 @@ async function loadSignupConfig(){
     showJoinQr(data);
   };
   $('createJoinQr').onclick=generateJoinQr;
-  $('cpJoin').onclick=()=>{if(!url)return;navigator.clipboard.writeText(url);toast('Sign-up link copied')};
+  $('cpJoin').onclick=async()=>{if(!url)return;await copyTextToClipboard(url,{button:$('cpJoin'),success:'Sign-up link copied'})};
   $('dlQr').onclick=()=>{
     const qrEl=$('joinQr'),img=qrEl.querySelector('img')||qrEl.querySelector('canvas');
     if(!img) return toast('QR still rendering — try again');
@@ -16603,7 +16738,7 @@ async function renderPortal(slug){
         <button class="btn ghost sm" id="copyManage" style="margin-top:12px">Copy private link</button>`:''}</div>`;
       CUI.announce(m.title+' '+m.body,{assertive:true});
       requestAnimationFrame(()=>bookingFormCard.querySelector('h2')?.focus());
-      if($('copyManage')) $('copyManage').onclick=async()=>{await navigator.clipboard.writeText(manageUrl);toast('Private link copied')};
+      if($('copyManage')) $('copyManage').onclick=async()=>copyTextToClipboard(manageUrl,{button:$('copyManage'),success:'Private link copied'});
     };
     $('mfind').onclick=async()=>{
       manageToken=($('mtoken').value||'').trim();

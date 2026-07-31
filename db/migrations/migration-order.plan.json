@@ -975,6 +975,12 @@
       "path": "db/migrations/20260731_nestly_v122_owner_seven_workflows.sql",
       "semanticVersion": "v122",
       "proposedDeployVersion": "20260731140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260731_nestly_v123_module_button_readiness.sql",
+      "semanticVersion": "v123",
+      "proposedDeployVersion": "20260731150000"
     }
   ]
 }

@@ -976,6 +976,12 @@
       "version": "20260731140000",
       "name": "nestly_v122_owner_seven_workflows",
       "sourcePath": "db/migrations/20260731_nestly_v122_owner_seven_workflows.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731150000",
+      "name": "nestly_v123_module_button_readiness",
+      "sourcePath": "db/migrations/20260731_nestly_v123_module_button_readiness.sql"
     }
   ]
 }

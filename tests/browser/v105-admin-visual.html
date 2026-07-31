@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-style-sha256" content="3826ed3e8df5882bfca2955b7b9f20fec25b2589f5db507f11fef8a7e7bf6f54">
+<meta name="v105-production-style-sha256" content="c8668564380aa232831af96121786b0bb79c4ba646574e06d740d66a0ddabf14">
 <title>Nestly v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -379,7 +379,9 @@ input[type=range]:focus{box-shadow:none}
 .qbtn:hover{color:var(--ink)}
 .qbtn:active{transform:scale(.94)}
 .qbtn.act{background:var(--ink);color:#fff;border-color:var(--ink)}
-.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0;max-width:100%}
+.split>*{min-width:0;max-width:100%}
+#slist{min-width:0;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .row{display:flex;gap:10px;align-items:center}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 .settings-page .row>*{min-width:0}
@@ -667,6 +669,9 @@ input[type=range]:focus{box-shadow:none}
 @media(max-width:560px){.task-launcher-grid,.report-decision-grid{grid-template-columns:1fr}.task-launcher-card{min-height:76px}.appointment-primary-action .btn{width:100%}}
 @media(max-width:767px){
   .cui-page-head,.topbar{align-items:flex-start}.cui-page-actions,.topbar>.row{width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{flex:1 1 auto}
+  .topbar>.row{min-width:0;max-width:100%;flex-wrap:wrap}
+  .topbar>.row>input,.topbar>.row>select,.topbar>.row>span{min-width:0;max-width:100%}
+  .topbar>.row>#branchWrap{flex:1 1 190px}.topbar>.row>#branchWrap>select{width:100%;max-width:100%}
   .cui-table[data-responsive="true"] thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
   .cui-table[data-responsive="true"],.cui-table[data-responsive="true"] tbody,.cui-table[data-responsive="true"] tr,.cui-table[data-responsive="true"] td{display:block;width:100%}
   .cui-table[data-responsive="true"] tr{padding:10px 0;border-bottom:1px solid var(--line)}
@@ -1543,7 +1548,7 @@ input[type=range]:focus{box-shadow:none}
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 3826ed3e8df5</span>
+<span class="v105-provenance">v105 production-component harness · c8668564380a</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -1668,7 +1673,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'3826ed3e8df5882bfca2955b7b9f20fec25b2589f5db507f11fef8a7e7bf6f54',
+  sourceHash:'c8668564380aa232831af96121786b0bb79c4ba646574e06d740d66a0ddabf14',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

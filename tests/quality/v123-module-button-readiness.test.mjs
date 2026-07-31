@@ -1,0 +1,140 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
+const app=fs.readFileSync(path.join(root,'app/index.html'),'utf8');
+const between=(start,end)=>app.slice(app.indexOf(start),app.indexOf(end,app.indexOf(start)));
+
+test('every mapped module and literal control passes the V123 readiness inventory',()=>{
+  const run=spawnSync(process.execPath,['scripts/quality/module-button-readiness.mjs','--strict'],{cwd:root,encoding:'utf8'});
+  assert.equal(run.status,0,run.stdout+run.stderr);
+  const report=JSON.parse(run.stdout);
+  assert.equal(report.business.expected,25);
+  assert.equal(report.platform.expected,9);
+  assert.equal(report.controls.buttons,254);
+  assert.deepEqual(report.controls.hiddenRouteTargets,[]);
+  assert.deepEqual(report.controls.nonSemanticClickTargets,[]);
+});
+
+test('Get started never advertises the intentionally unavailable Inventory surface',()=>{
+  const setup=between('async function setupPage(){','/* ---------- staff performance');
+  assert.doesNotMatch(setup,/S\.biz\.enabled_modules|from\('products'\)|from\('service_products'\)|#\/inventory|usesInventory/);
+  assert.match(setup,/Add your services or products/);
+});
+
+test('all application clipboard actions use one honest recoverable helper',()=>{
+  const helper=between('async function copyTextToClipboard','function killCharts');
+  assert.match(helper,/navigator\.clipboard\?\.writeText/);
+  assert.match(helper,/await navigator\.clipboard\.writeText/);
+  assert.match(helper,/catch/);
+  assert.match(helper,/button\.disabled=true/);
+  assert.equal((app.match(/navigator\.clipboard\.writeText/g)||[]).length,1);
+  assert.ok((app.match(/copyTextToClipboard\(/g)||[]).length>=9,'every copy surface must use the shared helper');
+  for(const id of ['copyRef','cp','sp_copy','cpJoin','copyManage'])assert.match(app,new RegExp(`id="${id}"`));
+  assert.match(app,/copyBtn\.onclick=async\(\)=>copyTextToClipboard/);
+});
+
+test('staff performance drill-down is a semantic keyboard link',()=>{
+  const staff=between('async function staffPerfPage','async function staffPerfDrill');
+  assert.doesNotMatch(staff,/<tr[^>]*onclick=/);
+  assert.doesNotMatch(staff,/click a row/i);
+  assert.match(staff,/select a staff name/i);
+  assert.match(staff,/<a[^>]+href="#\/staffperf\/\$\{/);
+});
+
+test('bundle creation uses one replay-safe server writer and disables the initiating control',()=>{
+  const services=between('async function servicesPage','/* ---------- loyalty');
+  assert.match(services,/sb\.rpc\('create_service_bundle_v123'/);
+  assert.doesNotMatch(services,/from\('bundles'\)\.insert/);
+  assert.match(services,/badd3\.disabled=true/);
+  assert.match(services,/finally\{[\s\S]*if\(badd3\.isConnected\)\{badd3\.disabled=false/);
+});
+
+test('V123 bundle migration removes direct write authority and makes one atomic keyed write',()=>{
+  const migration=fs.readFileSync(path.join(root,'db/migrations/20260731_nestly_v123_module_button_readiness.sql'),'utf8');
+  assert.match(migration,/revoke insert,update,delete,truncate on table public\.bundles/);
+  assert.match(migration,/create or replace function public\.create_service_bundle_v123/);
+  assert.match(migration,/app\.can_module_write\(p_business,'services'\)/);
+  assert.match(migration,/pg_advisory_xact_lock/);
+  assert.match(migration,/idempotency key reused with a different bundle/);
+  assert.match(migration,/insert into public\.bundles/);
+  assert.match(migration,/insert into public\.bundle_items/);
+  assert.match(migration,/grant execute on function public\.create_service_bundle_v123/);
+});
+
+test('daily and P&L reports invalidate stale exports and reject obsolete responses',()=>{
+  const daily=between('async function dailyReportPage','async function pnlPage');
+  const pnl=between('async function pnlPage','/* ---------- settings');
+  for(const source of [daily,pnl]){
+    assert.match(source,/createReportRequestGate/);
+    assert.match(source,/\.onchange=.*invalidate/);
+    assert.match(source,/\.disabled=true/);
+  }
+  assert.match(app,/@media\(max-width:767px\)\{[\s\S]*\.topbar>\.row\{min-width:0;max-width:100%;flex-wrap:wrap\}/);
+  assert.match(app,/@media\(max-width:960px\)\{[\s\S]*\.charts,\.split\{grid-template-columns:1fr\}/);
+  assert.match(app,/\.split>\*\{min-width:0;max-width:100%\}/);
+  assert.match(app,/#slist\{min-width:0;max-width:100%;overflow-x:auto/);
+});
+
+test('report scope change during a pending request restores the primary action for retry',()=>{
+  const helperSource=between('function createLatestRequestGate','function nav(h)');
+  const makeGate=new Function(`${helperSource}; return createReportRequestGate;`)();
+  let current=true;
+  const runButton={disabled:false,isConnected:true};
+  const gate=makeGate(()=>current,()=>runButton);
+
+  const firstIsLatest=gate.begin();
+  assert.equal(runButton.disabled,true,'a pending request disables its primary action');
+  assert.equal(firstIsLatest(),true);
+
+  assert.equal(gate.invalidate(),true,'the current report accepts the scope invalidation');
+  assert.equal(runButton.disabled,false,'scope change restores Generate/Run immediately');
+  assert.equal(firstIsLatest(),false,'the pending response is now stale');
+
+  const retryIsLatest=gate.begin();
+  assert.equal(runButton.disabled,true,'the user can start a fresh request');
+  assert.equal(retryIsLatest(),true,'the retry owns the latest generation');
+  runButton.disabled=false;
+  assert.equal(runButton.disabled,false,'a successful retry can restore the action');
+
+  current=false;runButton.disabled=true;
+  assert.equal(gate.invalidate(),false,'a detached route is not mutated');
+  assert.equal(runButton.disabled,true,'a detached route button is left untouched');
+});
+
+test('report request rejection renders a current-route retry and every P&L export includes scope and KPIs',()=>{
+  const helperSource=between('function createLatestRequestGate','function nav(h)');
+  const setRetry=new Function(`${helperSource}; return setReportRetryState;`)();
+  let current=true,retries=0,html='';
+  const retryButton={onclick:null};
+  const runButton={disabled:true,isConnected:true};
+  const body={isConnected:true,querySelector:selector=>selector==='#reportRetry'?retryButton:null};
+  Object.defineProperty(body,'innerHTML',{set:value=>{html=value},get:()=>html});
+
+  assert.equal(setRetry(()=>current,runButton,body,'Report could not be loaded.','reportRetry',()=>{retries+=1}),true);
+  assert.equal(runButton.disabled,false);
+  assert.match(html,/Report could not be loaded\./);
+  assert.equal(typeof retryButton.onclick,'function');
+  retryButton.onclick();assert.equal(retries,1);
+  current=false;runButton.disabled=true;html='unchanged';
+  assert.equal(setRetry(()=>current,runButton,body,'obsolete','reportRetry',()=>{}),false);
+  assert.equal(html,'unchanged');assert.equal(runButton.disabled,true);
+
+  const daily=between('async function dailyReportPage','async function pnlPage');
+  const pnl=between('async function pnlPage','/* ---------- settings');
+  assert.match(daily,/Daily report could not be generated\.[\s\S]*drRetry/);
+  for(const message of ['P&L summary could not be loaded.','P&L expenses could not be loaded.','P&L monthly sales could not be loaded.']){
+    assert.match(pnl,new RegExp(message.replace(/[&.]/g,'\\$&')));
+  }
+  assert.match(pnl,/try\{\s*summaryResult=await sb\.rpc/);
+  assert.match(pnl,/try\{expensesResult=await exQ\}/);
+  assert.match(pnl,/try\{monthlyResult=await slQ\}/);
+  assert.match(pnl,/const \{data:sl,error:e3\}=monthlyResult\|\|\{\}/);
+  for(const row of ['revenue_cash','revenue_accrual','expenses','net_cash_less_expenses'])assert.match(pnl,new RegExp(`'summary','${row}'`));
+  assert.match(pnl,/\['scope','from'/);
+  assert.match(pnl,/csvRows\(rows\)/);
+});
