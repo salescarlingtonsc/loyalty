@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-style-sha256" content="852d5d0df1636228bb5a2018cbe4f5a25d460e4b3e4046d2805021870d8d923e">
+<meta name="v105-production-style-sha256" content="c8668564380aa232831af96121786b0bb79c4ba646574e06d740d66a0ddabf14">
 <title>Nestly v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -379,7 +379,9 @@ input[type=range]:focus{box-shadow:none}
 .qbtn:hover{color:var(--ink)}
 .qbtn:active{transform:scale(.94)}
 .qbtn.act{background:var(--ink);color:#fff;border-color:var(--ink)}
-.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0;max-width:100%}
+.split>*{min-width:0;max-width:100%}
+#slist{min-width:0;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .row{display:flex;gap:10px;align-items:center}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 .settings-page .row>*{min-width:0}
@@ -415,6 +417,12 @@ input[type=range]:focus{box-shadow:none}
 .grow-flow-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--tint);color:var(--coral)}
 .grow-flow-step h2{font-size:16px;margin:12px 0 3px}.grow-flow-step p{font-size:12.5px;line-height:1.45;color:var(--muted);margin:0 0 12px}
 .grow-flow-foot{display:flex;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}.grow-flow-foot .btn{min-height:44px}
+.reward-milestone-track{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;list-style:none;margin:14px 0 0;padding:0}
+.reward-milestone-track li,.birthday-reward-overview{display:flex;gap:11px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:14px;background:#FBFAF8}
+.reward-milestone-number{display:grid;place-items:center;flex:0 0 32px;height:32px;border-radius:50%;background:var(--tint);color:var(--coral);font-weight:700}
+.birthday-reward-overview{margin-top:10px}.profitability-product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px}
+.profitability-product-grid article{padding:14px;border:1px solid var(--line);border-radius:14px}.profitability-product-grid dl{display:grid;gap:6px;margin:10px 0}
+.profitability-product-grid dl div{display:flex;justify-content:space-between;gap:12px}.profitability-product-grid dt{color:var(--muted);font-size:12px}.profitability-product-grid dd{font-weight:650;text-align:right}
 .grow-guide{border:1px solid var(--coral);border-radius:var(--r-sm);background:#fff;padding:0 16px}
 .grow-guide>summary,.grow-advanced>summary{display:flex;align-items:center;gap:10px;min-height:52px;cursor:pointer;font-weight:700}
 .grow-guide-body{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:0 0 16px}
@@ -542,9 +550,10 @@ input[type=range]:focus{box-shadow:none}
 .task-launcher-card b{display:block}.task-launcher-card span{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.35}
 .performance-panel{margin-top:18px}.performance-panel>summary{cursor:pointer;font-weight:750;list-style:none;min-height:44px;display:flex;align-items:center;justify-content:space-between}.performance-panel>summary::-webkit-details-marker{display:none}.performance-panel>summary::after{content:'+';float:right}.performance-panel[open]>summary::after{content:'−'}
 .appointment-primary-action{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:0 0 14px}
-.appointment-layout{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+.appointment-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;min-width:0;width:100%}
 .appointment-layout.form-open{grid-template-columns:minmax(300px,360px) minmax(0,1fr)}
-.appointment-form-card{position:sticky;top:82px}
+.appointment-layout>*{min-width:0;max-width:100%}
+.appointment-form-card{position:sticky;top:82px;min-width:0;width:100%;max-width:100%}
 .appointment-form-card[hidden]{display:none}
 .appointment-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .appointment-toolbar select{width:auto;min-width:150px;margin:0}
@@ -649,7 +658,8 @@ input[type=range]:focus{box-shadow:none}
   .global-search{flex:1 1 200px}
   .global-quick{display:none}
   .global-act{flex:1 1 auto;justify-content:center}
-  .charts,.split,.appointment-layout,.appointment-layout.form-open{grid-template-columns:1fr}
+  .charts,.split{grid-template-columns:1fr}
+  .appointment-layout,.appointment-layout.form-open{grid-template-columns:minmax(0,1fr)}
   .task-launcher-grid,.report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .appointment-form-card{position:static}
   .chart-frame{block-size:220px}
@@ -659,6 +669,9 @@ input[type=range]:focus{box-shadow:none}
 @media(max-width:560px){.task-launcher-grid,.report-decision-grid{grid-template-columns:1fr}.task-launcher-card{min-height:76px}.appointment-primary-action .btn{width:100%}}
 @media(max-width:767px){
   .cui-page-head,.topbar{align-items:flex-start}.cui-page-actions,.topbar>.row{width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{flex:1 1 auto}
+  .topbar>.row{min-width:0;max-width:100%;flex-wrap:wrap}
+  .topbar>.row>input,.topbar>.row>select,.topbar>.row>span{min-width:0;max-width:100%}
+  .topbar>.row>#branchWrap{flex:1 1 190px}.topbar>.row>#branchWrap>select{width:100%;max-width:100%}
   .cui-table[data-responsive="true"] thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
   .cui-table[data-responsive="true"],.cui-table[data-responsive="true"] tbody,.cui-table[data-responsive="true"] tr,.cui-table[data-responsive="true"] td{display:block;width:100%}
   .cui-table[data-responsive="true"] tr{padding:10px 0;border-bottom:1px solid var(--line)}
@@ -782,7 +795,9 @@ input[type=range]:focus{box-shadow:none}
 .customer-home-quick a:hover{border-color:rgba(194,65,53,.28)}
 .customer-home-quick b{display:block;font-size:14px}.customer-home-quick p{margin-top:3px;line-height:1.4}
 .customer-programme-list,.customer-booking-list{display:grid;gap:12px}
-.customer-programme-grid-v96{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.customer-programme-grid-v96{grid-template-columns:1fr;gap:22px}
+.customer-programme-category{display:grid;gap:10px}.customer-programme-category-head{display:flex;align-items:center;gap:8px}
+.customer-programme-category-head h2{font-size:16px}.customer-programme-category-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .customer-programme-card{display:block;min-height:44px}
 .customer-programme-card-v95{position:relative;overflow:hidden;min-height:152px;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease)}
 .customer-programme-card-v95:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
@@ -886,9 +901,9 @@ input[type=range]:focus{box-shadow:none}
   .customer-primary-nav a{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
   .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
-  .customer-programme-grid-v96{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .customer-programme-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-@media(min-width:721px) and (max-width:1100px){.customer-programme-grid-v96{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:721px) and (max-width:1100px){.customer-programme-category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){
   .wallet-shell{padding:max(20px,env(safe-area-inset-top))
     max(14px,env(safe-area-inset-right)) calc(44px + env(safe-area-inset-bottom))
@@ -898,7 +913,7 @@ input[type=range]:focus{box-shadow:none}
   .wallet-metrics{grid-template-columns:1fr}.wallet-section{padding:15px}.wallet-line,.wallet-appt{flex-wrap:wrap}.walletChange{width:100%}
   .entry-choice-card{padding:22px}.entry-choice-grid{grid-template-columns:1fr}.entry-choice{min-height:148px}
 }
-@media(max-width:420px){.customer-programme-grid-v96{grid-template-columns:1fr}.customer-programme-card-v95{min-height:128px}}
+@media(max-width:420px){.customer-programme-category-grid{grid-template-columns:1fr}.customer-programme-card-v95{min-height:128px}}
 @media(max-width:560px){.customer-next-action>.row{align-items:stretch}.customer-next-action .btn{width:100%;justify-content:center}}
 .strike{text-decoration:line-through;opacity:.55}
 /* v53 visit feedback & service recovery (shared by the customer wallet and the staff queue) */
@@ -1533,7 +1548,7 @@ input[type=range]:focus{box-shadow:none}
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 852d5d0df163</span>
+<span class="v105-provenance">v105 production-component harness · c8668564380a</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -1658,7 +1673,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'852d5d0df1636228bb5a2018cbe4f5a25d460e4b3e4046d2805021870d8d923e',
+  sourceHash:'c8668564380aa232831af96121786b0bb79c4ba646574e06d740d66a0ddabf14',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

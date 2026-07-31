@@ -19,6 +19,7 @@ test('approved owner creation is invite-bound and workspace activation is server
   assert.match(app,/renderApprovedBusinessInviteSignup/);
   assert.match(app,/approvedOwnerEmail[\s\S]*readonly/);
   assert.match(app,/emailRedirectTo:returnUrl\.toString\(\)/);
+  assert.match(app,/returnUrl=new URL\(NestlyNativeBridge\.publicUrl\('\/business'\)\)/);
   assert.match(app,/activate_approved_business_application_v95/);
   assert.match(app,/p_invitation_token:inviteToken/);
   assert.match(app,/p_idempotency_key:activationKey/);

@@ -1,6 +1,6 @@
 # Nestly product truth
 
-Last consolidated: 2026-07-29
+Last consolidated: 2026-08-01
 
 This is the durable statement of confirmed owner decisions. It describes the
 intended product, not the current implementation. Implementation and evidence
@@ -38,7 +38,11 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   individual programme, points/value, benefits, progress, packages/vouchers,
   visits, transactions, bookings, and relevant actions.
 - The programme selector uses compact logo-led cards, up to five per desktop
-  row, with a mobile-friendly layout.
+  row, with a mobile-friendly layout. When a customer has programmes from
+  several sectors, the selector groups only those already-linked businesses
+  into plain-language categories such as Personal care, Food & drink, and
+  Fitness. Categories never create a business relationship or permit arbitrary
+  search/self-linking.
 - Business logos, programme images, reward images, and enabled catalogue
   content sync from the owner configuration to the customer portal.
 - Notification is a header action, not a duplicate dashboard module. Profile is
@@ -74,7 +78,9 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 - A customer redemption creates a pending, time-limited QR. Value changes only
   after authorized business staff scan and confirm it in Quick Earn.
 - Quick Earn shows a selected customer's owned and eligible packages, vouchers,
-  memberships, gift cards, and pending redemptions. Applying an entitlement
+  memberships, and pending redemptions. Gift-card issuance, lookup, transfer,
+  and redemption are not Quick Earn actions; they remain in the dedicated Gift
+  Cards workflow so checkout stays focused. Applying any visible entitlement
   must update the business record and customer portal consistently.
 - Gift-card issuance controls appear only when gift-card issuance is enabled.
   Disabling new issuance must not erase or strand valid existing customer value.
@@ -114,6 +120,18 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   information but must not be the primary operational label.
 - Appointments can be created, viewed, amended, rescheduled, assigned,
   completed, marked no-show, and cancelled according to role.
+- The Appointments calendar is an operational writer, not a read-only report:
+  an authorized user can select a free time inside a named staff member's
+  column to create an appointment with that exact staff/date/time prefilled.
+  The two-staff day view must make conflicts, leave, breaks, blocks, and
+  available time visually distinct and persist new appointments after refresh.
+- Customer feedback is stored once and projects consistently to the business
+  workspace after refresh/reconnect. A business may configure its verified
+  Google review URL. After any genuine internal rating is saved, the success
+  state may offer the same clearly labelled external Google review link.
+  Wording may thank a five-star customer warmly, but link access must not depend
+  on the score because selective positive-review solicitation is prohibited by
+  Google Maps policy. External navigation is always an explicit customer action.
 - Navigation must preserve the user's position and state; left navigation must
   not hard-refresh, jump to the top, or show an unexplained blank workspace.
 - Owner analytics include returning-customer count, visit frequency, revenue
@@ -126,6 +144,15 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   be created.
 - The overview explains the whole programme in plain language, shows the
   customer-facing result, and makes each section directly editable.
+- The business-owner overview shows every configured reward and birthday
+  benefit as an ordered, game-like path: what the customer does, current
+  progress unit, what unlocks at each milestone, and what comes next. It must
+  not invent a milestone where no rule exists.
+- Product/service cost and selling price feed an understandable profitability
+  view showing gross profit, margin, estimated reward cost, and the remaining
+  contribution after reward. AI-assisted programme setup must explain its
+  assumptions in plain language, use the firm's real catalogue costs/prices,
+  and require explicit owner review before saving or publishing.
 - Everyday rewards, bring-backs, referrals, memberships, gift cards, and
   advanced rules must not feel like disconnected technical submodules.
 - Recommendations use the firm's actual sector and prices. They state their
@@ -148,6 +175,64 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 ## Billing and consultant commission
 
+- The contracting operator is **NESTLY TECHNOLOGIES PTE. LTD.** (Singapore UEN
+  **202634502E**). The monitored commercial/privacy mailbox currently supplied
+  by the owner is **nestlyasia@gmail.com**. Formal DPO designation and counsel
+  approval remain separate launch gates.
+- One launch plan is offered in SGD: **SGD 149 billed monthly** or **SGD 1,188
+  billed annually** (SGD 99/month equivalent), with annual selected by default.
+  **SGD 168/month** is display-only comparison pricing and must never be sent to
+  Stripe as the amount due unless a later explicit owner decision introduces an
+  actual billable price at that amount.
+- Nestly is not GST-registered at launch. Nestly subscription checkout,
+  invoices, receipts, platform billing projections, and exports therefore show
+  **GST not charged (SGD 0.00)** and the amount due equals the pre-tax recurring
+  total. Stripe Tax and automatic tax collection remain disabled, and every
+  activated Stripe Price must use explicit `exclusive` tax behavior so a later
+  registration cannot silently reinterpret historical prices. Charging GST
+  requires verified registration evidence, a new owner decision, an
+  independently reviewed catalogue version, and new provider prices; company
+  incorporation alone is not GST-registration proof.
+- The plan includes 1,000 customer profiles. A merchant chooses capacity in
+  1,000-profile increments; each additional 1,000-profile block is SGD 10 per
+  month or SGD 120 per annual term. The confirmed capacity and exact recurring
+  total must be visible before Stripe Checkout. V124 supports later capacity
+  increases through Stripe with provider proration. A prorated change remains
+  pending while Stripe reports `pending_update`; it is never presented as
+  complete before provider confirmation. Self-service decreases are
+  intentionally unavailable through either capacity or cadence commands.
+- Individual staff access is included at launch. Nestly must encourage unique
+  staff accounts and least-privilege roles rather than create a pricing reason
+  to share credentials. A later pricing change requires a new owner decision
+  and migration; legacy seat fields are historical data, not the launch offer.
+- Every eligible V124 provider subscription has one 30-day money-back-request
+  window. The deadline is the exact timestamp 30 days after that provider
+  subscription's earliest successful invoice payment, including an earlier
+  matching invoice found by backfill; an unrelated legacy renewal cannot start
+  a new window. It is displayed to the owner and never resets after cadence,
+  capacity, cancellation or reactivation changes. It is a refund-request
+  eligibility policy, not a free trial or an automatic refund; approved refunds
+  still follow fraud, chargeback, tax and provider controls.
+- Complete Stripe subscription snapshots are authoritative for item membership:
+  a local capacity item absent from a newer complete snapshot is removed. The
+  owner browser reuses one durable request key and command ID for the same
+  selection after an ambiguous or lost response, renders terminal failure as
+  failure, and never reports it as a submitted success. Each durable command
+  snapshots one catalogue row; a later price rollover cannot change provider
+  price IDs under the command's Stripe idempotency key. An uncertain increase
+  remains recoverable when its webhook has already projected the exact requested
+  capacity.
+- The checkout overview describes generally included owner/staff/customer
+  modules: CRM and QR signup; loyalty points/stamps, reward paths, birthdays and
+  referrals; appointments, team scheduling and waitlist; sales/Quick Earn;
+  packages, memberships and dedicated gift-card management; customer portal
+  wallet/history/redemption; promotions and owner-reviewed AI copy assistance;
+  feedback and score-independent Google-review handoff; notifications where
+  configured; profitability and operational reports; branches, roles and
+  permissions; and English, Simplified Chinese and Malay business UI. Payment
+  processing fees, usage-priced external messaging, custom integrations,
+  platform-only administration and any disabled/unconfigured module are not
+  implied to be included or available.
 - Nestly subscription status is automated from the billing provider, including
   paid state and next payment date.
 - Overdue businesses receive daily notices from the due date. At 14 days
@@ -171,6 +256,13 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   business's own factual offer, image, dates, terms, and one approved CTA. This
   is in-programme content, not permission to broadcast an unrestricted
   campaign.
+- A linked customer may receive one consent-aware in-app promotion prompt and,
+  where Web Push permission and delivery configuration exist, one deduplicated
+  company-scoped notification for a newly published promotion. Transactional
+  expiry reminders remain limited to configured customer value that expires in
+  three days and one day. Denied permission, missing delivery configuration,
+  duplicate jobs, and expired/inactive offers fail safely without claiming a
+  notification was sent.
 - The complimentary launch allowance is ten first-published offer slots per
   company through 31 October 2026; unpublishing an offer does not restore its
   slot. V104 offers are company-wide: one published offer is consistent for

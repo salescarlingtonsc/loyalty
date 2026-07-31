@@ -77,7 +77,7 @@ test('privacy notice covers the required PDPA-facing subjects and role split', (
 
   assert.match(html, /Interim Privacy Contact/i);
   assert.match(html, /not a statement that the named contact has been formally appointed/i);
-  assert.match(html, /mailto:nestly\.asia@gmail\.com/i);
+  assert.match(html, /mailto:nestlyasia@gmail\.com/i);
   assert.match(html, /do not sell personal data/i);
   assert.doesNotMatch(text, /guarantee(?:d|s)? absolute security/i);
 });
@@ -96,7 +96,7 @@ test('terms set merchant obligations and do not claim regulated payment processi
     'Do Not Call',
     'loyalty points',
     'merchant, not Nestly',
-    'not proof of payment settlement',
+    'not proof of settlement',
     'does not mean Nestly collected',
     'laws of Singapore',
     'account closure',
@@ -105,7 +105,7 @@ test('terms set merchant obligations and do not claim regulated payment processi
     assert.match(text, new RegExp(phrase, 'i'), `terms missing: ${phrase}`);
   }
 
-  assert.match(html, /mailto:leechuanseng\.biz@gmail\.com/i);
+  assert.match(html, /mailto:nestlyasia@gmail\.com/i);
   assert.doesNotMatch(text, /Nestly is (?:a|the) payment processor/i);
   assert.match(text, /it is not:.*a guarantee.*increase revenue/i);
 });
@@ -129,7 +129,7 @@ test('data request page provides a usable, minimised manual process', () => {
     assert.match(text, new RegExp(phrase, 'i'), `data request page missing: ${phrase}`);
   }
 
-  assert.match(html, /mailto:nestly\.asia@gmail\.com\?subject=Nestly%20data%20request/i);
+  assert.match(html, /mailto:nestlyasia@gmail\.com\?subject=Nestly%20data%20request/i);
   assert.match(text, /Do not send your password, one-time code, full payment-card number/i);
   assert.doesNotMatch(text, /we (?:guarantee|promise) (?:a )?response within/i);
   assert.doesNotMatch(html, /type=["']file["']/i);

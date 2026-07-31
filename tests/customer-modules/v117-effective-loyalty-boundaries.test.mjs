@@ -123,7 +123,7 @@ test('gift issuance is branch-aware while existing liability redemption uses Til
   );
 });
 
-test('merchant UI consumes only v117 branch-bound writers and hides absent liabilities',async()=>{
+test('merchant UI keeps gift-card writers in the dedicated workspace only',async()=>{
   const app=await read('app/index.html');
   const till=app.slice(
     app.indexOf('async function tillPage(){'),
@@ -133,11 +133,10 @@ test('merchant UI consumes only v117 branch-bound writers and hides absent liabi
     app.indexOf('async function giftcardsPage(){'),
     app.indexOf('/* ---------- billing (read-only) ---------- */')
   );
-  assert.match(till,/business_has_active_gift_liability_v117[\s\S]*?p_branch:tillBranchId/);
-  assert.match(till,/hasActiveGiftLiability\?`<div class="permission-banner"[\s\S]*?<b>Redeem an existing gift card/);
-  assert.match(till,/redeem_gift_card_at_branch_v117[\s\S]*?p_branch:tillBranchId/);
-  assert.match(till,/redeem_gift_card_at_branch_v117[\s\S]*?p_idempotency_key:writeAttemptKey/);
-  assert.match(till,/issue_gift_card_at_branch_v117[\s\S]*?p_branch:tillBranchId/);
+  assert.doesNotMatch(
+    till,
+    /business_has_active_gift_liability_v117|redeem_gift_card_at_branch_v117|issue_gift_card_at_branch_v117/
+  );
   assert.doesNotMatch(till,/sb\.rpc\('issue_gift_card'/);
   assert.doesNotMatch(till,/sb\.rpc\('redeem_gift_card(?:_v41)?'/);
   assert.match(giftCards,/get_my_modules_at_v115[\s\S]*?p_branch:branch\.id/);

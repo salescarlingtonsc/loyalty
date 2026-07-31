@@ -969,6 +969,30 @@
       "path": "db/migrations/20260731_nestly_v121_effective_loyalty_sale_earn_boundary.sql",
       "semanticVersion": "v121",
       "proposedDeployVersion": "20260731130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260731_nestly_v122_owner_seven_workflows.sql",
+      "semanticVersion": "v122",
+      "proposedDeployVersion": "20260731140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260731_nestly_v123_module_button_readiness.sql",
+      "semanticVersion": "v123",
+      "proposedDeployVersion": "20260731150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v124_stripe_launch_pricing.sql",
+      "semanticVersion": "v124",
+      "proposedDeployVersion": "20260731164709"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v125_no_gst_and_native_store_readiness.sql",
+      "semanticVersion": "v125",
+      "proposedDeployVersion": "20260731182246"
     }
   ]
 }

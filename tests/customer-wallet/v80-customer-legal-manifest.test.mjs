@@ -31,8 +31,9 @@ test('v80 canonical migration is byte-identical to its Nestly source', () => {
   assert.match(sql, /^commit;$/m);
 });
 
-test('v80 preserves its historical approved digests while its Terms remain live', () => {
-  assert.equal(sha256(terms), approved.terms);
+test('v80 preserves its historical approved digests after later legal manifests', () => {
+  assert.notEqual(sha256(terms), approved.terms,
+    'the live Terms have advanced through a later manifest');
   assert.notEqual(sha256(privacy), approved.privacy,
     'the live Privacy Notice has advanced through a later manifest');
   assert.match(sql, new RegExp(`'terms'[\\s\\S]*'2026-07-26'[\\s\\S]*'${approved.terms}'`));

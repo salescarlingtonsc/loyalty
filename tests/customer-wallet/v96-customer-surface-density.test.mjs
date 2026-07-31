@@ -24,10 +24,10 @@ test('customer Home removes the redundant Messages summary while retaining the h
 });
 
 test('programme selector is exactly five compact columns on wide desktop with deliberate responsive breakpoints',()=>{
-  assert.match(app,/\.customer-programme-grid-v96\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\);gap:10px\}/);
-  assert.match(app,/@media\(min-width:721px\) and \(max-width:1100px\)\{\.customer-programme-grid-v96\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)\}\}/);
-  assert.match(app,/@media\(max-width:720px\)\{[\s\S]*\.customer-programme-grid-v96\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}/);
-  assert.match(app,/@media\(max-width:420px\)\{\.customer-programme-grid-v96\{grid-template-columns:1fr\}/);
+  assert.match(app,/\.customer-programme-category-grid\{display:grid;grid-template-columns:repeat\(5,minmax\(0,1fr\)\);gap:10px\}/);
+  assert.match(app,/@media\(min-width:721px\) and \(max-width:1100px\)\{\.customer-programme-category-grid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)\}\}/);
+  assert.match(app,/@media\(max-width:720px\)\{[\s\S]*\.customer-programme-category-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}/);
+  assert.match(app,/@media\(max-width:420px\)\{\.customer-programme-category-grid\{grid-template-columns:1fr\}/);
   assert.match(app,/\.customer-programme-card-v95\{[^}]*min-height:152px/s);
   assert.match(app,/\.customer-programme-card\{[^}]*min-height:44px/s);
 });

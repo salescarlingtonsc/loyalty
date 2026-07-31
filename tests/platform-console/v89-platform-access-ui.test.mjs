@@ -239,7 +239,7 @@ test('delegated finance and system-health renders keep operational and technical
   const billing=source.slice(source.indexOf('async function renderBilling'),source.indexOf('async function renderCommission'));
   const commissions=source.slice(source.indexOf('async function renderCommission'),source.indexOf('async function renderAutomation'));
   const automation=source.slice(source.indexOf('async function renderAutomation'),source.indexOf('function disconnectedRouteHtml'));
-  assert.match(billing,/platform_get_billing_v89/);
+  assert.match(billing,/platform_get_billing_v125/);
   assert.doesNotMatch(billing,/platform_get_billing_reconciliation_v89|get_platform_billing_v77|get_billing_reconciliation_v77/);
   assert.match(billing,/Technical reconciliation history is in System health/);
   assert.match(commissions,/platform_list_commission_consultants_v89/);
@@ -281,7 +281,7 @@ test('reports-only admin receives the core report without unauthorized optional 
     source.indexOf('async function renderPlatformReports')
   );
   assert.match(renderer,/sectionAccess\.onboarding[\s\S]*platform_get_sme_analytics_v86[\s\S]*:Promise\.resolve\(null\)/);
-  assert.match(renderer,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v89'[\s\S]*:Promise\.resolve\(null\)/);
+  assert.match(renderer,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v125'[\s\S]*:Promise\.resolve\(null\)/);
   assert.doesNotMatch(renderer,/platform_get_billing_reconciliation_v89/);
   assert.match(source,/SME acquisition and onboarding omitted/);
   assert.match(source,/Subscription billing omitted/);

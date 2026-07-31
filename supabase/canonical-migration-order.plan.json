@@ -970,6 +970,30 @@
       "version": "20260731130000",
       "name": "nestly_v121_effective_loyalty_sale_earn_boundary",
       "sourcePath": "db/migrations/20260731_nestly_v121_effective_loyalty_sale_earn_boundary.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731140000",
+      "name": "nestly_v122_owner_seven_workflows",
+      "sourcePath": "db/migrations/20260731_nestly_v122_owner_seven_workflows.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731150000",
+      "name": "nestly_v123_module_button_readiness",
+      "sourcePath": "db/migrations/20260731_nestly_v123_module_button_readiness.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731164709",
+      "name": "nestly_v124_stripe_launch_pricing",
+      "sourcePath": "db/migrations/20260801_nestly_v124_stripe_launch_pricing.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731182246",
+      "name": "nestly_v125_no_gst_and_native_store_readiness",
+      "sourcePath": "db/migrations/20260801_nestly_v125_no_gst_and_native_store_readiness.sql"
     }
   ]
 }

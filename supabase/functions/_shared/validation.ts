@@ -7,6 +7,10 @@ export const NESTLY_PUBLIC_ORIGINS = Object.freeze([
   'https://nestly.asia',
   'https://www.nestly.asia',
 ]);
+export const NESTLY_NATIVE_APP_ORIGINS = Object.freeze([
+  'capacitor://localhost',
+  'https://localhost',
+]);
 
 export function normalizeOriginList(value = '') {
   const raw = String(value || '').trim();
@@ -41,6 +45,7 @@ export function normalizeOriginList(value = '') {
 export function publicGatewayOrigins(value = '') {
   return [...new Set([
     ...NESTLY_PUBLIC_ORIGINS,
+    ...NESTLY_NATIVE_APP_ORIGINS,
     ...normalizeOriginList(value),
   ])];
 }

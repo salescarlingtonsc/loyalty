@@ -86,10 +86,10 @@ test('pipeline mutations, detail and imports use the v76 core plus v86 governed 
 test('billing, automation and commission views use delegated v89 platform truth', async () => {
   const source = await read('app/platform-console.js');
   for (const rpc of [
-    'platform_get_billing_v89','get_business_billing_v77',
-    'request_billing_command_v77',
-    'get_billing_price_catalog_v77','preview_billing_price_catalog_v77',
-    'confirm_billing_price_catalog_v77',
+    'platform_get_billing_v125','get_business_billing_v125',
+    'request_billing_command_v124',
+    'get_billing_plan_catalog_v125','preview_billing_plan_catalog_v125',
+    'confirm_billing_plan_catalog_v125',
     'platform_list_commission_consultants_v89','platform_upsert_commission_consultant_v89',
     'platform_get_automation_billing_v89','platform_get_automation_reconciliation_v89',
     'get_consultant_commission_dashboard_v78',

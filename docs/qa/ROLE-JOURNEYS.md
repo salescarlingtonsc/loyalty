@@ -116,6 +116,34 @@ order. A hidden navigation item without server-side denial is a failure.
    14 access pause; payment restores access.
 9. GST/refund/chargeback and anniversary/employment cases produce expected
    commission.
+10. A new `SPA-GLOW-BILLING` owner sees annual selected by default, reads the
+    included modules/exclusions, selects 1,000 or 3,000 customer capacity, and
+    sees the exact recurring total before Stripe Checkout. No staff quantity is
+    requested or billed.
+11. Monthly 1,000/3,000 totals are SGD 149/169; annual 1,000/3,000 totals are
+    SGD 1,188/1,428. An increase requests immediate provider proration but stays
+    pending when payment confirmation or SCA is outstanding. Neither cadence
+    nor capacity commands can decrease capacity.
+12. The earliest successful paid invoice for the matching V124 provider
+    subscription fixes one 30-day refund-request deadline; a matching earlier
+    invoice is backfilled and an unrelated legacy renewal is excluded.
+    Cadence/capacity changes, cancellation, reactivation, duplicate events and
+    lost-response retries reuse exact evidence and do not move it. A refund
+    request is not represented as approved or paid until the provider event
+    confirms it.
+13. If payment confirmation remains pending, the same command recovers after
+    its webhook projects the requested capacity. A later catalogue rollover
+    cannot alter that command's snapshotted Stripe prices. Terminal failed or
+    canceled commands display failure and require a new request rather than
+    claiming successful submission.
+14. While Nestly is not GST-registered, owner checkout, invoice history and
+    platform billing all show `GST not charged` with SGD 0.00 tax; amount due
+    equals subtotal. Catalogue activation rejects inclusive/unspecified Stripe
+    Prices and Checkout keeps automatic tax disabled.
+15. A provider invoice due on day 0 produces one daily notice; owner access is
+    still open through day 13 and pauses at day 14. Customer value/history and
+    customer access remain intact. A causally newer paid event restores owner
+    access and the platform/owner next-payment projection after refresh.
 
 ## Journey J — navigation, language, and mobile resilience
 
@@ -126,6 +154,12 @@ order. A hidden navigation item without server-side denial is a failure.
 4. Run critical customer and staff paths at 390px and 412px viewports.
 5. Verify touch targets, keyboard overlap, safe areas, camera denial/retry,
    notification denial, and passkey cancel/unsupported behavior.
+6. Build the one-source native iOS and Android projects, verify universal/app
+   links and permission copy, and run cold start, authentication, QR, offline,
+   resume and update flows on physical devices before store submission.
+7. Record Apple/Google signing teams, bundle/application IDs, archive hashes,
+   store privacy/support metadata and review results. A simulator, PWA install,
+   or unsigned wrapper alone does not satisfy publication readiness.
 
 ## Journey K — owner promotion to customer programme
 

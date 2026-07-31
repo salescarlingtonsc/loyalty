@@ -28,6 +28,7 @@ Catalogue:
 | Spa ritual | 30 min | SGD 40 |
 | Spa ritual | 60 min | SGD 60 |
 | Spa ritual | 90 min | SGD 85 |
+| Glow serum (retail) | N/A | SGD 68 selling price / SGD 24 product cost |
 
 Packages:
 
@@ -59,6 +60,21 @@ Configuration cases:
   balance remains persistent but is exposed only while effective policy permits
   customer Loyalty reads. Farah, assigned only to Orchard, cannot complete the
   Tampines comparison appointment.
+- Two-staff calendar authoring: click Chen Wei's free 10:15 Day-view slot and
+  save a Spa Ritual 60 appointment, then click Aisha Rahman's independently
+  eligible column. Both staff/date/time values must be prefilled from the
+  selected calendar cell, conflicts and Supplier training must stay
+  non-selectable, and the saved appointments must survive refresh.
+- Profitability setup: Glow serum sells for SGD 68 with SGD 24 product cost.
+  The owner must see SGD 44 gross profit and about 64.7% gross margin before
+  choosing a reward. A reward proposal must state its cost assumption and show
+  contribution after reward; it is never auto-published.
+- Feedback: `CUS-MEI` submits one four-star internal rating and one separate
+  five-star fixture. The company has a syntactically valid, synthetic Google
+  Business review URL configured; both persisted ratings offer the same
+  optional external link so the product does not selectively solicit positive
+  reviews. Five-star copy may be warmer. A comparison tenant cannot read either
+  record.
 
 Promotion cases:
 
@@ -91,6 +107,9 @@ Catalogue:
 Programme:
 
 - stamp or points configuration using café-specific recommendations;
+- an ordered stamp path: stamp 5 unlocks one Kopi; stamp 10 unlocks one Kaya
+  toast set, with the second threshold displayed as the next five stamps after
+  the first unlock;
 - birthday benefit disabled;
 - gift-card issuance enabled in one run;
 - a seasonal reward published by platform campaign controls.
@@ -109,6 +128,15 @@ Catalogue:
 
 Use it for bookings, memberships, package expiry, class capacity, staff
 assignment, and mobile booking acceptance.
+
+## Customer category projection
+
+Use `CUS-MEI` with existing QR-created links to `SPA-GLOW`,
+`CAFE-HARBOUR`, and `FIT-NORTHSTAR`. The customer selector groups them under
+Personal care, Food & drink, and Fitness while preserving the existing
+programme links. Add one governed but unmapped synthetic sector to verify an
+Other fallback. The fixture must not add business search or create any new
+relationship.
 
 ## Customers
 
@@ -132,6 +160,45 @@ All automated credentials must come from a non-committed test-secret mechanism.
 | `PLAT-OVERDUE-14` | Half-yearly firm on day 14 overdue; owner access pause expected. |
 | `PLAT-REFUND` | Annual invoice refunded after payment; GST and refund excluded from commission. |
 | `PLAT-STAFF-LEFT` | Consultant departed before eligibility anniversary; commission returns to company. |
+
+### `SPA-GLOW-BILLING` — launch pricing and capacity
+
+- Monthly, 1,000 profiles: SGD 149.00 per month.
+- Monthly, 3,000 profiles: SGD 169.00 per month (base plus two SGD 10 blocks).
+- Annual, 1,000 profiles: SGD 1,188.00 paid up front (SGD 99/month equivalent).
+- Annual, 3,000 profiles: SGD 1,428.00 paid up front (base plus two SGD 120 blocks).
+- Annual is selected on first render. SGD 168/month is comparison copy only and
+  is absent from all Stripe line-item amounts.
+- Glow Atelier has 850 profiles for the first checkout, then 1,150 profiles to
+  prove the customer count is authoritative. Use a 1,000-capacity subscription
+  to test an immediate increase to 3,000 and confirm V124 renders no
+  self-service decrease control.
+- First successful paid invoice at `2026-08-01T04:15:00Z` produces one request
+  deadline at `2026-08-31T04:15:00Z`. Cadence/capacity changes, cancellation and
+  reactivation leave both timestamps unchanged. A paid invoice for a different
+  legacy provider subscription is excluded; an earlier invoice for the same
+  V124 subscription is backfilled and moves the deadline backward only.
+- A newer complete Stripe snapshot that omits the capacity add-on deletes the
+  stale local item and projects 1,000 capacity. A pending prorated update stays
+  uncertain, and the same browser selection reuses its request key and command
+  ID after a lost response. Once its webhook projects 3,000 capacity, the exact
+  uncertain command remains recoverable even though requested and current
+  capacity are equal. A later annual catalogue rollover uses different fixture
+  price IDs but cannot change the original command snapshot. Terminal failed or
+  canceled outcomes render explicit failure copy.
+- Staff fixtures remain Olivia, Maya, Farah, Chen and Aisha. Adding or removing
+  any of them changes permissions/scheduling but never the subscription total.
+- Nestly operator GST registration is `false`; every V125 subscription invoice
+  has SGD 0.00 tax and total equals subtotal. The fixture Stripe Prices use
+  explicit `exclusive` tax behavior and Checkout automatic tax is disabled.
+  An inclusive/unspecified Price, automatic-tax request, or non-zero provider
+  tax total is rejected/fail-closed. Incorporation alone is not
+  GST-registration proof.
+- Overdue boundary: an invoice due `2026-08-01T00:00:00Z` leaves owner access
+  open through `2026-08-14T23:59:59Z` (day 13) and pauses it from
+  `2026-08-15T00:00:00Z` (day 14). `CUS-MEI` retains the same points, packages,
+  history and customer access throughout. A causally newer paid event restores
+  owner access and advances `next_payment_at`; duplicate/stale events do not.
 
 ## Required state variations
 

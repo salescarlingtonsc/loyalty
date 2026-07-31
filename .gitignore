@@ -7,3 +7,8 @@ node_modules/
 .local/supabase-sync/
 supabase/.temp/
 supabase/.branches/
+dist/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
