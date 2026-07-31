@@ -1,6 +1,6 @@
 # v117 effective Loyalty, branch scanner and gift-liability acceptance
 
-Date: 2026-07-31
+Date: 2026-07-30
 Environment: local Supabase and local static application
 Release state: local candidate only; no production migration, production data
 change, commit, push or deployment
@@ -31,24 +31,14 @@ Regression evidence:
 - `tests/browser/v117-effective-loyalty-mobile.html`
   (`631f358a943af494f1a2537a9caa4475b71bc0ef3e7c2b0aac56b492af727197`)
 - `app/index.html`
-  (`7b868c2f6ec2b095da223fd84df80ac8aa3541da396596909a7a6161ecca30ff`)
+  (`dd01a25bf1a8f019bbc4824d31b3727b3d5e848647ef5a6cfa7d2042bb3cfde2`)
 - `docs/design/ps0/writer-registry.json`
-  (`746b61d5cb425d3457c9d9a79a344a45f635141a13dd2203ba077459b74eb92b`)
+  (`f095e5ea45cc49fbf68a47d9bef1351ef17ef5dc6cde6076141233f5d6e09043`)
 
 ## Database boundary evidence
 
-The rehearsal database was created from exact `origin/main`
-`2263702e5b1f5bf4c33533e875a46f4e45229fd0` in the disposable local Supabase
-project `nestly-v117-pristine`. Its canonical v105 chain was applied first.
-Only the source v115, v116 and v117 migrations from this candidate were then
-applied, in order, using `psql -X -v ON_ERROR_STOP=1`. This proves that the
-release migrations apply to the current production baseline without relying on
-unreleased v106-v114 state.
-
-All SQL acceptance suites used `psql -X -v ON_ERROR_STOP=1` against that exact
-rehearsal database and ended in `ROLLBACK`. The v116 suite now explicitly
-enables the `customer_wallet` feature in its disposable fixture instead of
-depending on cumulative local state.
+All database acceptance commands used `psql -X -v ON_ERROR_STOP=1`, ran against
+the local database, and ended in `ROLLBACK`.
 
 Passing suites:
 
@@ -103,9 +93,9 @@ The exact customer -> staff -> customer chain was:
    balance remained 1,080.
 3. Orchard front desk signed in, opened Quick Earn -> **Scan customer QR**,
    pasted the freshly decoded QR content through the documented camera
-   fallback, and received a server receipt for Alicia Tan, 1,000 points
+   fallback, and received a server receipt for Mei Lin Fresh, 1,000 points
    spent, SGD 10 store credit and operation
-   `85a3b55b-4fac-439e-8a91-6e91633b1b0e`.
+   `d9fba096-9e96-4aed-8dce-c4ecc681d2f7`.
 4. The customer signed in again and re-opened the programme. The balance was
    80, the reward changed to **More points needed**, and History showed the
    newest completed **Points redeemed** event with `-1000 points redeemed`.
@@ -120,37 +110,26 @@ The exact customer -> staff -> customer chain was:
 
 The same operation was verified read-only in local Postgres:
 
-- intent `d904a39e-f2db-416b-a4b5-fd9025bfd00e` is `completed`;
+- intent `c4ce6613-db60-42d5-81cd-26db7143cccf` is `completed`;
 - canonical operation
-  `85a3b55b-4fac-439e-8a91-6e91633b1b0e` is `completed`;
+  `d9fba096-9e96-4aed-8dce-c4ecc681d2f7` is `completed`;
 - idempotency key is
-  `v117:d904a39e-f2db-416b-a4b5-fd9025bfd00e`;
-- completion branch is the enabled Orchard branch
-  `11700000-0000-4000-8000-000000000011`;
-- result is exactly `{"credit_cents":1000,"points_spent":1000}`;
-- the persistent points balance is exactly 80;
-- exactly one `loyalty_earn` credit-ledger row adds SGD 10;
-- the intent has exactly one `intent_created` and one `scan_completed` event.
-
-The browser served the exact candidate `app/index.html` SHA listed above. Its
-production Supabase origin was intercepted only at the browser transport layer
-and fulfilled by the pristine local API, so the application bytes were not
-rewritten. The customer, front-desk and business records were synthetic and
-existed only in the disposable rehearsal database.
+  `v117:c4ce6613-db60-42d5-81cd-26db7143cccf`;
+- result is exactly `{"credit_cents":1000,"points_spent":1000}`.
 
 Artifacts:
 
 - `docs/qa/evidence/v117-customer-pending-desktop.jpg`
-  (`41526081dafca28e6dbe42d24cab43ddf7aa55a0fd50cd52fe1534123f97f013`)
+  (`621c6eb2928ecc201b950ecdee144347ebbad0ecb687e7e696bac542132a9491`)
 - `docs/qa/evidence/v117-staff-completed-desktop.jpg`
-  (`5f764c5148ccc8ebf3a6bc6bfd02016ada8efd4a36ec137716c9f9e6d02a07fc`)
+  (`20b8438ebba90805401aa1b3e13687df26442d41f3471e6eded716356b4e5073`)
 - `docs/qa/evidence/v117-customer-completed-desktop.jpg`
-  (`91d680bf77e6124b9fedbae4b42fca40729b4f7f54e47dfe314b5550a4c74fae`)
+  (`08f3a2eaa2782d818ab860271193fb4fad693d1ed87c2ae9ce087ab677599f6f`)
 - `docs/qa/evidence/v117-customer-completed-mobile-390-top.jpg`
-  (`d9a05e7b1847e2b63a584eb509f83b8d9877b0c35cdf5aca454fff199af079f4`;
+  (`8dc55091dbe8fa39aa25948aeb769dfc325617be5f686f8d38f34c4b10afe671`;
   true 390 x 844 viewport; compact 80-point balance)
 - `docs/qa/evidence/v117-customer-completed-mobile-390-history.jpg`
-  (`e14f0dc4c5ac55e6366625fa25e3ca09cc06f39ae115a603896813d7533a00fc`;
+  (`9d20d6f6ce2c0b188f269bcfca71d98883feda2668d0708cd410a9007d93a1c2`;
   true 390 x 844 viewport; ineligible reward and newest completed
   `-1000 points redeemed` History event)
 
@@ -166,10 +145,10 @@ Result:
 - runtime configuration: pass;
 - source migration manifest: pass;
 - canonical migration chain: pass;
-- Node regression suite: 1,090 passed, 0 failed;
+- Node regression suite: 1,284 passed, 0 failed;
 - static build validation: pass.
 
-The full `npm test` run independently reports 1,090 passed and 0 failed.
+The full `npm test` run independently reports 1,284 passed and 0 failed.
 `git diff --check` passes.
 
 ## Evidence limits and release authority

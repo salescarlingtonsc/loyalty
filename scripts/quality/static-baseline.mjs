@@ -265,7 +265,7 @@ export async function checkSupabaseClientContract(root = repoRoot) {
   const productionConfig = JSON.parse(await readText(root, 'config/runtime/production.json'));
   assert.deepEqual(Object.keys(productionConfig).sort(), [
     'customerPhoneOtpEnabled', 'environment', 'projectRef', 'schemaVersion',
-    'supabasePublishableKey', 'supabaseUrl'
+    'supabasePublishableKey', 'supabaseUrl', 'webPushPublicKey'
   ]);
   assert.equal(productionConfig.schemaVersion, 2);
   assert.equal(productionConfig.environment, 'production');
@@ -273,6 +273,7 @@ export async function checkSupabaseClientContract(root = repoRoot) {
   assert.equal(productionConfig.supabaseUrl, singaporeSupabaseUrl);
   assert.equal(productionConfig.supabasePublishableKey, singaporePublishableKey);
   assert.equal(productionConfig.customerPhoneOtpEnabled, true);
+  assert.equal(typeof productionConfig.webPushPublicKey, 'string');
 
   const runtimeArtifact = await readText(root, 'app/runtime-config.js');
   assert.match(runtimeArtifact, /window\.__FRENLY_RUNTIME_CONFIG__\s*=\s*Object\.freeze\(/);
@@ -377,7 +378,11 @@ export async function checkPublicPageForms(root = repoRoot) {
 
   const index = await readText(root, 'app/index.html');
   assertTagContains(index, /<input\b[^>]*id=["']em["'][^>]*type=["']email["'][^>]*>/, 'app auth page must retain email input.');
-  assertTagContains(index, /passwordControlHtml\(['"]pw['"]\s*,/, 'app auth page must retain the reusable password input.');
+  assertTagContains(
+    index,
+    /passwordControlHtml\(['"]pw['"]\s*,/,
+    'app auth page must retain the reusable password input.'
+  );
   assertTagContains(
     index,
     /function\s+passwordControlHtml[\s\S]*?`type=["']password["']`/,
@@ -432,12 +437,12 @@ export async function checkMigrationFilenameSanity(root = repoRoot) {
   assert.equal(new Set(files).size, files.length, 'Migration filenames must be unique.');
 
   const parsed = files.map(parseMigrationFilename);
-  const semanticKeys = new Set();
-  for (const item of parsed) {
-    const key = `${item.semantic.major}.${item.semantic.variant}.${item.extension}`;
-    assert.ok(!semanticKeys.has(key), `Duplicate migration semantic key for same extension: ${item.fileName}`);
-    semanticKeys.add(key);
-  }
+  const migrationIdentities = new Set(parsed.map(({ fileName }) => fileName));
+  assert.equal(
+    migrationIdentities.size,
+    parsed.length,
+    'Migration identities must be unique even when multiple migrations share a semantic release label.'
+  );
 
   const orderedBySemantic = [...parsed].sort((a, b) => {
     if (a.semantic.major !== b.semantic.major) return a.semantic.major - b.semantic.major;

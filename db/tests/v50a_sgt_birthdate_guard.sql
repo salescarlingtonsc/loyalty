@@ -101,12 +101,17 @@ begin
   -- ---------------------------------------------------------------------------
   update app.platform_feature_flags set enabled = true, changed_at = statement_timestamp()
    where feature_key in ('customer_phone_registration', 'customer_phone_otp');
-  insert into app.customer_legal_documents(document_key, document_version, document_sha256, published_at, active)
-  values ('terms', 'v50a-1', md5('v50a-terms')||md5('terms-v50a'), now(), true),
-         ('privacy', 'v50a-1', md5('v50a-privacy')||md5('privacy-v50a'), now(), true)
-  on conflict (document_key) do update set
-    document_version = excluded.document_version, document_sha256 = excluded.document_sha256,
-    published_at = excluded.published_at, active = true;
+  -- On the historical v50a boundary the suite owns temporary legal fixtures.
+  -- On the full final schema, v92's exact Privacy manifest is authoritative and
+  -- its consent-evidence trigger rejects any rollback fixture that overwrites it.
+  if to_regprocedure('public.customer_get_platform_marketing_preference()') is null then
+    insert into app.customer_legal_documents(document_key, document_version, document_sha256, published_at, active)
+    values ('terms', 'v50a-1', md5('v50a-terms')||md5('terms-v50a'), now(), true),
+           ('privacy', 'v50a-1', md5('v50a-privacy')||md5('privacy-v50a'), now(), true)
+    on conflict (document_key) do update set
+      document_version = excluded.document_version, document_sha256 = excluded.document_sha256,
+      published_at = excluded.published_at, active = true;
+  end if;
   -- The accept customer needs a verified phone; the reject fails validation first.
   update auth.users set phone = '+6581' || substr(v_cust_accept::text, 1, 6), phone_confirmed_at = now()
    where id = v_cust_accept;

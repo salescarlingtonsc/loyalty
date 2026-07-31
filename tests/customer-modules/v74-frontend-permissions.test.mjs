@@ -56,10 +56,10 @@ test('owner, manager, frontdesk, staff, and bookkeeper enforce compound finance 
 
 test('fallback filtering preserves owner special modules but removes them and finance from ineligible roles',()=>{
   const {filter}=permissionHarness();
-  const modules=['dashboard','branches','settings','setup','expenses','pnl','clients'];
+  const modules=['dashboard','branches','settings','setup','expenses','pnl','staffperf','clients'];
   assert.equal(JSON.stringify(filter(modules,'owner')),JSON.stringify(modules));
-  assert.equal(JSON.stringify(filter(modules,'manager')),JSON.stringify(['dashboard','expenses','pnl','clients']));
-  assert.equal(JSON.stringify(filter(modules,'bookkeeper')),JSON.stringify(['dashboard','expenses','pnl','clients']));
+  assert.equal(JSON.stringify(filter(modules,'manager')),JSON.stringify(['dashboard','expenses','pnl','staffperf','clients']));
+  assert.equal(JSON.stringify(filter(modules,'bookkeeper')),JSON.stringify(['dashboard','expenses','pnl','staffperf','clients']));
   assert.equal(JSON.stringify(filter(modules,'staff')),JSON.stringify(['dashboard','clients']));
   assert.equal(JSON.stringify(filter(modules,'frontdesk')),JSON.stringify(['dashboard','clients']));
   const route=section('async function route(){','/* ---------- customer wallet ---------- */');
@@ -75,7 +75,7 @@ test('Team permissions initialize from module_perms and render Off Read Edit rat
   assert.match(settings,/Inherit all enabled modules/);
   assert.match(settings,/Set Off \/ Read \/ Edit explicitly/);
   assert.match(settings,/<option value="off"[\s\S]*>Off<\/option><option value="r"[\s\S]*>Read<\/option><option value="rw"[\s\S]*>Edit<\/option>/);
-  assert.match(settings,/Unavailable for \$\{esc\(ROLE_LABELS\[s\.role\]\|\|s\.role\)\}: Expenses and P&amp;L require a finance-capable role/);
+  assert.match(settings,/Unavailable for \$\{esc\(ROLE_LABELS\[s\.role\]\|\|s\.role\)\}: Expenses, P&amp;L and Staff performance require a finance-capable role/);
   assert.doesNotMatch(section('function modulePermissionGridHtml','function modPanelHtml'),/type="checkbox"/);
   assert.match(settings,/enabledAssignableModules[\s\S]*!OWNER_ONLY_MODULES\.has\(module\)/);
 });
@@ -102,7 +102,7 @@ test('role changes use v74 atomically and explain finance removal',()=>{
   const settings=section('async function settingsPage(){','/* ---------- billing (read-only) ---------- */');
   assert.match(settings,/set_staff_role_v74',\{p_staff:id,p_role:role\}/);
   assert.match(settings,/if\(error\)\{fail\(error\);await loadTeam\(\);return\}/);
-  assert.match(settings,/Expenses and P&amp;L were removed because/);
+  assert.match(settings,/Expenses, P&amp;L and Staff performance were removed because/);
   assert.doesNotMatch(settings,/from\('staff'\)\.update\(\{role\}/);
 });
 

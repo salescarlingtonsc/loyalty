@@ -19,6 +19,9 @@ verify_jwt = true
 [functions.stripe-billing-reconcile]
 verify_jwt = false
 
+[functions.customer-push-dispatch]
+verify_jwt = false
+
 [functions.sme-document-signer]
 verify_jwt = true
 

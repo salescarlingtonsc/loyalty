@@ -232,13 +232,29 @@ begin
   end if;
 
   perform pg_temp.as_v89_user(v_owner);
-  v_result:=public.business_create_customer_join_qr_v89(
-    v_business,now()+interval '1 day'
-  );
+  if to_regprocedure(
+       'public.business_rotate_customer_join_qr_v90(uuid,timestamp with time zone)'
+     ) is not null then
+    v_result:=public.business_rotate_customer_join_qr_v90(
+      v_business,now()+interval '1 day'
+    );
+  else
+    v_result:=public.business_create_customer_join_qr_v89(
+      v_business,now()+interval '1 day'
+    );
+  end if;
   v_join_token:=v_result->>'join_token';
-  v_result:=public.business_create_customer_join_qr_v89(
-    v_other_business,now()+interval '1 day'
-  );
+  if to_regprocedure(
+       'public.business_rotate_customer_join_qr_v90(uuid,timestamp with time zone)'
+     ) is not null then
+    v_result:=public.business_rotate_customer_join_qr_v90(
+      v_other_business,now()+interval '1 day'
+    );
+  else
+    v_result:=public.business_create_customer_join_qr_v89(
+      v_other_business,now()+interval '1 day'
+    );
+  end if;
   v_other_join_token:=v_result->>'join_token';
   reset role;
 
@@ -346,8 +362,9 @@ begin
       (select slug from public.businesses where id=v_business),
       'Hidden Service Customer','hidden@example.test','+6581230089',
       v_hidden_service,1,now()+interval '1 day',null,null,false,
-      encode(gen_random_bytes(32),'hex'),encode(gen_random_bytes(32),'hex'),
-      encode(gen_random_bytes(32),'hex'),null
+      encode(extensions.gen_random_bytes(32),'hex'),
+      encode(extensions.gen_random_bytes(32),'hex'),
+      encode(extensions.gen_random_bytes(32),'hex'),null
     );
     raise exception 'public booking submit accepted a hidden service';
   exception when invalid_parameter_value then null;

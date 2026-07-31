@@ -805,9 +805,33 @@
     },
     {
       "kind": "pending",
+      "version": "20260728110000",
+      "name": "nestly_v92_customer_privacy_marketing_manifest",
+      "sourcePath": "db/migrations/20260728_nestly_v92_customer_privacy_marketing_manifest.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260728120000",
+      "name": "nestly_v93_customer_notification_constraints",
+      "sourcePath": "db/migrations/20260728_nestly_v93_customer_notification_constraints.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260728123441",
       "name": "nestly_v94_platform_control_intelligence",
       "sourcePath": "db/migrations/20260728_nestly_v94_platform_control_intelligence.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260728130000",
+      "name": "nestly_v94_platform_firm_snapshot_null_guard",
+      "sourcePath": "db/migrations/20260728_nestly_v94_platform_firm_snapshot_null_guard.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260728140000",
+      "name": "nestly_v95_customer_web_push",
+      "sourcePath": "db/migrations/20260728_nestly_v95_customer_web_push.sql"
     },
     {
       "kind": "pending",
@@ -859,9 +883,63 @@
     },
     {
       "kind": "pending",
+      "version": "20260729171008",
+      "name": "nestly_v106_revenue_truth_foundation",
+      "sourcePath": "db/migrations/20260729_nestly_v106_revenue_truth_foundation.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729171010",
+      "name": "nestly_v107_customer_lifecycle_contract",
+      "sourcePath": "db/migrations/20260729_nestly_v107_customer_lifecycle_contract.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729171045",
+      "name": "nestly_v108_measured_bringback_loop",
+      "sourcePath": "db/migrations/20260729_nestly_v108_measured_bringback_loop.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729171100",
+      "name": "nestly_v109_economics_driver_sector_policy",
+      "sourcePath": "db/migrations/20260729_nestly_v109_economics_driver_sector_policy.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729171130",
+      "name": "nestly_v110_growth_delivery_lifecycle",
+      "sourcePath": "db/migrations/20260729_nestly_v110_growth_delivery_lifecycle.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260729180000",
       "name": "nestly_v105_admin_task_closure",
       "sourcePath": "db/migrations/20260729_nestly_v105_admin_task_closure.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729194101",
+      "name": "nestly_v111_customer_identity_governance",
+      "sourcePath": "db/migrations/20260729_nestly_v111_customer_identity_governance.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729200000",
+      "name": "nestly_v112_concurrent_replay_delivery_backoff",
+      "sourcePath": "db/migrations/20260730_nestly_v112_concurrent_replay_delivery_backoff.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729210000",
+      "name": "nestly_v113_effective_identity_consumers",
+      "sourcePath": "db/migrations/20260730_nestly_v113_effective_identity_consumers.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260729211122",
+      "name": "nestly_v114_traceable_growth_costs",
+      "sourcePath": "db/migrations/20260730_nestly_v114_traceable_growth_costs.sql"
     },
     {
       "kind": "pending",
@@ -880,6 +958,18 @@
       "version": "20260730140000",
       "name": "nestly_v117_effective_loyalty_boundaries",
       "sourcePath": "db/migrations/20260730_nestly_v117_effective_loyalty_boundaries.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731120000",
+      "name": "nestly_v120_staff_blocked_times",
+      "sourcePath": "db/migrations/20260731_nestly_v120_staff_blocked_times.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731130000",
+      "name": "nestly_v121_effective_loyalty_sale_earn_boundary",
+      "sourcePath": "db/migrations/20260731_nestly_v121_effective_loyalty_sale_earn_boundary.sql"
     }
   ]
 }

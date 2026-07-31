@@ -68,9 +68,6 @@ begin
      or not (v_result->>'workspace_access')::boolean then
     raise exception 'v116 synthetic business was not approved: %',v_result;
   end if;
-  update app.platform_feature_flags
-     set enabled=true,changed_at=statement_timestamp()
-   where feature_key='customer_wallet';
   insert into public.customer_identities(
     id,auth_user_id,status,created_via
   ) values(

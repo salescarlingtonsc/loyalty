@@ -72,6 +72,17 @@ begin
     'test', array['bookings','appointments']
   ) returning id into v_other_business;
 
+  -- v89 adds a default-closed customer-bound booking gate. This historical
+  -- lifecycle suite deliberately exercises one bound-client conversion, so a
+  -- full-final-schema replay must explicitly supply that later prerequisite.
+  if to_regclass('public.business_customer_capabilities_v89') is not null then
+    execute
+      'insert into public.business_customer_capabilities_v89(
+         business_id,booking_enabled,redemption_enabled,appointment_changes_enabled
+       ) values ($1,true,false,false)'
+      using v_business;
+  end if;
+
   insert into public.staff(
     business_id,user_id,role,full_name,active,modules,module_perms
   ) values
@@ -440,6 +451,12 @@ begin
   exception when foreign_key_violation then null;
   end;
   begin
+    insert into public.booking_requests(
+      business_id,name,phone,party_size,preferred_at,status
+    ) values (
+      v_business,'Duplicate waitlist fixture','+6580110073',1,
+      v_start+interval '6 hours 30 minutes','new'
+    ) returning id into v_request;
     insert into public.waitlist(
       business_id,name,status,booking_request_id
     ) values (v_business,'Duplicate link','waiting',v_request);

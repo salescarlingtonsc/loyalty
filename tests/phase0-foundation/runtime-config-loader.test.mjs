@@ -21,6 +21,7 @@ function remoteConfig(overrides = {}) {
     supabaseUrl: `https://${NON_PRODUCTION_REF}.supabase.co`,
     supabasePublishableKey: PUBLISHABLE_KEY,
     customerPhoneOtpEnabled: false,
+    webPushPublicKey: '',
     ...overrides
   };
 }
@@ -75,7 +76,8 @@ test('all declared environments have explicit accepted routing semantics', () =>
     projectRef: 'local',
     supabaseUrl: 'http://127.0.0.1:54321',
     supabasePublishableKey: PUBLISHABLE_KEY,
-    customerPhoneOtpEnabled: false
+    customerPhoneOtpEnabled: false,
+    webPushPublicKey: ''
   };
   assert.equal(runtimeConfig.validate(local).supabaseUrl, 'http://127.0.0.1:54321');
   assert.equal(runtimeConfig.validate({ ...local, environment: 'test' }).environment, 'test');
@@ -102,6 +104,8 @@ test('missing, misspelled, coerced, and extended schemas fail closed', () => {
   assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ supabaseUrl: null }))).code, 'CONFIG_URL');
   assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ supabasePublishableKey: null }))).code, 'CONFIG_KEY');
   assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ customerPhoneOtpEnabled: 'true' }))).code, 'CONFIG_SCHEMA');
+  assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ webPushPublicKey: null }))).code, 'CONFIG_WEB_PUSH_KEY');
+  assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ webPushPublicKey: 'private key' }))).code, 'CONFIG_WEB_PUSH_KEY');
 });
 
 test('test mode refuses the production project before browser boot', () => {
@@ -157,6 +161,16 @@ test('only publishable keys and structurally complete legacy anon JWTs are accep
   for (const key of rejected) {
     assert.equal(captureError(() => runtimeConfig.validate(remoteConfig({ supabasePublishableKey: key }))).code,
       'CONFIG_KEY');
+  }
+});
+
+test('web push accepts only an empty disabled value or a public VAPID key shape', () => {
+  assert.equal(runtimeConfig.validate(remoteConfig()).webPushPublicKey, '');
+  const publicKey='B'.repeat(87);
+  assert.equal(runtimeConfig.validate(remoteConfig({webPushPublicKey:publicKey})).webPushPublicKey,publicKey);
+  for(const value of ['short','contains+standard/slashes','-----BEGIN PRIVATE KEY-----']){
+    assert.equal(captureError(()=>runtimeConfig.validate(remoteConfig({webPushPublicKey:value}))).code,
+      'CONFIG_WEB_PUSH_KEY');
   }
 });
 

@@ -21,7 +21,7 @@ declare
   v_authenticated_rpc_names constant text[] := array[
     'accept_invite', 'adjust_points', 'apply_module_template', 'close_drawer', 'commit_import_job',
     'convert_booking_request', 'create_business', 'create_client_field_definition', 'create_invite', 'create_loyalty_config_draft',
-    'customer_claim_link_by_email', 'customer_claim_link_invitation', 'customer_create_identity',
+    'customer_claim_link_invitation', 'customer_create_identity',
     'customer_get_appointments', 'customer_get_appointments_page', 'customer_get_business_summary',
     'customer_get_identity', 'customer_get_loyalty_details', 'customer_get_memberships',
     'customer_get_packages', 'customer_get_reward_catalog', 'customer_get_wallet',
@@ -42,7 +42,8 @@ declare
     'staff_get_reversal_workflows', 'super_admin_list_businesses', 'use_package_session'
   ];
   v_service_rpc_names constant text[] := array[
-    'internal_gateway_rate_limit', 'internal_public_join_page', 'internal_public_join',
+    'customer_claim_link_by_email',
+    'internal_gateway_rate_limit', 'internal_public_join_page_v89', 'internal_public_join_v89',
     'internal_public_booking_page', 'internal_public_booking_submit',
     'internal_public_booking_lookup', 'internal_public_booking_change'
   ];
@@ -81,12 +82,12 @@ begin
       join pg_namespace n on n.oid = p.pronamespace
      where n.nspname in ('app', 'public')
        and p.prosecdef
-       -- C42 deliberately exposes this exact two-boolean, fail-closed
-       -- pre-auth capability seam. Its shape and exact role grants are
-       -- asserted independently by the C42 runtime suite.
-       and p.oid is distinct from to_regprocedure(
-         'public.get_customer_phone_otp_capabilities()'
-       )
+       -- Final schema deliberately exposes two bounded, read-only pre-auth
+       -- seams: C42 capabilities and v89 public business discovery.
+       and p.oid <> all(array[
+         to_regprocedure('public.get_customer_phone_otp_capabilities()'),
+         to_regprocedure('public.get_business_public(text)')
+       ])
        and (
          has_function_privilege('anon', p.oid, 'execute')
          or exists (

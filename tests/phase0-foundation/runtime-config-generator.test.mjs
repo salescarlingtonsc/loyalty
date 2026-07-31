@@ -41,6 +41,7 @@ function validConfig(overrides = {}) {
     supabaseUrl: `https://${NON_PRODUCTION_REF}.supabase.co`,
     supabasePublishableKey: PUBLISHABLE_KEY,
     customerPhoneOtpEnabled: false,
+    webPushPublicKey: '',
     ...overrides
   };
 }

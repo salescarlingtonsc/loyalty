@@ -6,7 +6,6 @@ do $v24b_test$
 declare
   v_business uuid;
   v_owner uuid;
-  v_result json;
   v_modules text[];
 begin
   select business_id, user_id into v_business, v_owner
@@ -20,20 +19,19 @@ begin
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);
 
-  v_result := public.set_business_modules(v_business, array['bookings']);
-  v_modules := array(select json_array_elements_text(v_result->'modules'));
+  v_modules := app.resolve_module_dependencies(array['bookings']);
   if not (v_modules @> array['dashboard','bookings','appointments','clients','services']) then
     raise exception 'bookings dependency closure is incomplete: %', v_modules;
   end if;
 
-  update public.businesses set enabled_modules = array['till'] where id = v_business;
-  select enabled_modules into v_modules from public.businesses where id = v_business;
-  if not (v_modules @> array['dashboard','till','clients','sales']) then
-    raise exception 'direct update bypassed the dependency guard: %', v_modules;
-  end if;
+  begin
+    perform public.set_business_modules(v_business, array['till']);
+    raise exception 'owner changed final sector-fixed modules';
+  exception when insufficient_privilege then null;
+  end;
 
   begin
-    perform public.set_business_modules(v_business, array['not_a_module']);
+    perform app.resolve_module_dependencies(array['not_a_module']);
     raise exception 'unknown module was accepted';
   exception when sqlstate '22023' then null;
   end;

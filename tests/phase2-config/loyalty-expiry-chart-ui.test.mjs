@@ -102,7 +102,7 @@ test('every responsive Chart.js canvas is isolated in a bounded frame', () => {
   assert.match(dashboard, /async function load\(\)\{\s*const isCurrent=requestGate\.begin\(\);\s*if\(!isCurrent\(\)\)return;\s*killCharts\(\)/);
   assert.match(dashboard, /try\{response=await sb\.rpc\('get_dashboard_summary'[\s\S]*catch\(error\)\{if\(isCurrent\(\)\)fail\(error\);return\}[\s\S]*if\(!isCurrent\(\)\)return;[\s\S]*if\(error\) return fail\(error\)/);
   assert.match(dashboard, /const C=\(id,cfg\)=>\{if\(isCurrent\(\)\)/);
-  assert.match(dashboard, /refreshBranchFilter\(load,isDashboardCurrent\)/);
+  assert.match(dashboard, /refreshBranchFilter\(\(\)=>\{renderTasks\(\);load\(\)\},isDashboardCurrent\)/);
   assert.match(app, /async function route\(\)\{\s*const isRouteCurrent=beginRouteInvocation\(\);\s*dashboardRenderEpoch\+=1/);
   assert.match(app, /if\(!isCurrent\(\)\|\|!wrap\.isConnected\|\|\$\('branchWrap'\)!==wrap\)return/);
   assert.match(app, /const sel=wrap\.querySelector\('#branchSel'\)/);

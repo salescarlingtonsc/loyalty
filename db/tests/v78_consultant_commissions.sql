@@ -107,7 +107,8 @@ begin
        and eligible_at=invoice_paid_at
        and status='accrued'
   ) then
-    raise exception 'first-year senior base accrual was not 30% of net cash ex GST';
+    raise exception using
+      message = 'first-year senior base accrual was not 30% of net cash ex GST';
   end if;
   if not exists(
     select 1 from public.consultant_commission_accruals
@@ -116,7 +117,8 @@ begin
        and eligible_at=onboarding_started_at+interval '12 months'
        and status='accrued'
   ) then
-    raise exception 'senior anniversary accrual was not deferred 10%';
+    raise exception using
+      message = 'senior anniversary accrual was not deferred 10%';
   end if;
   perform app.accrue_consultant_invoice_v78(v_first_invoice);
   if (select count(*) from public.consultant_commission_accruals
@@ -144,7 +146,8 @@ begin
      where id=v_renewal_accrual and commission_phase='renewal'
        and rate_bps=1500 and commission_cents=1500
   ) then
-    raise exception '12-month anniversary did not use the 15% renewal rate';
+    raise exception using
+      message = '12-month anniversary did not use the 15% renewal rate';
   end if;
 
   -- Refund then chargeback append negative compensation and cap at original.

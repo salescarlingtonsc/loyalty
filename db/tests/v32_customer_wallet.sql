@@ -26,6 +26,7 @@ declare
   v_business_a uuid;
   v_business_b uuid;
   v_owner uuid;
+  v_superadmin uuid;
   v_customer_a uuid := gen_random_uuid();
   v_customer_b uuid := gen_random_uuid();
   v_staff_only uuid := gen_random_uuid();
@@ -59,12 +60,10 @@ begin
      and s.user_id is not null
    order by s.created_at, s.id
    limit 1;
-  if v_business_a is null or v_business_b is null or v_owner is null then
+  select user_id into v_superadmin from public.super_admins order by created_at limit 1;
+  if v_business_a is null or v_business_b is null or v_owner is null or v_superadmin is null then
     raise exception 'v32 suite requires two businesses and an active owner';
   end if;
-  update public.businesses
-     set enabled_modules = array['loyalty','appointments','bookings','packages','memberships']
-   where id in (v_business_a, v_business_b);
 
   insert into auth.users(
     instance_id, id, aud, role, email, encrypted_password,
@@ -173,7 +172,19 @@ begin
 
   -- Disabled modules remove both the data and the direct appointments reader.
   reset role;
-  update public.businesses set enabled_modules = array['dashboard'] where id = v_business_b;
+  perform pg_temp.as_wallet_customer(v_superadmin);
+  perform public.platform_set_business_sector_override_v75(
+    v_business_b,
+    array[]::text[],
+    array[
+      'till','clients','appointments','sales','services','bookings','waitlist',
+      'inventory','packages','loyalty','retention','referrals','memberships',
+      'giftcards','reports','staffperf','dailyreport','pnl','expenses'
+    ]::text[],
+    'v32 final module gate fixture',
+    null,
+    false
+  );
   perform pg_temp.as_wallet_customer(v_customer_a);
   v_wallet := public.customer_get_wallet();
   select card into v_disabled_card

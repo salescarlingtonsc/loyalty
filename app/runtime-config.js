@@ -5,5 +5,6 @@ window.__FRENLY_RUNTIME_CONFIG__ = Object.freeze({
   "projectRef": "gadpooereceldfpfxsod",
   "supabaseUrl": "https://gadpooereceldfpfxsod.supabase.co",
   "supabasePublishableKey": "sb_publishable_wDf8p9RghbpM2t7_PfBWKQ_YhYhNEAI",
-  "customerPhoneOtpEnabled": true
+  "customerPhoneOtpEnabled": true,
+  "webPushPublicKey": ""
 });

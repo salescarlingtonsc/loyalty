@@ -27,6 +27,9 @@ test('reward feedback is driven only by a new confirmed earn event and uses its 
   assert.doesNotMatch(app,/points added — quest progress updated/);
   assert.match(app,/prefers-reduced-motion: reduce/);
   assert.match(app,/AudioContext/);
+  assert.match(app,/navigator\?\.vibrate/);
+  assert.match(app,/function customerSuccessCue/);
+  assert.match(app,/customer-redemption-complete/);
   assert.match(app,/customer-game-card/);
 });
 

@@ -75,6 +75,9 @@ test('auth fields are explicitly labelled and normal login avoids a denied Platf
   assert.match(auth,/<label for="pw">Password<\/label>\$\{passwordControlHtml\('pw'/);
   assert.match(passwordUpdate,/<label for="newPw">New password<\/label>\$\{passwordControlHtml\('newPw'/);
   assert.match(passwordUpdate,/<label for="confirmPw">Confirm new password<\/label>\$\{passwordControlHtml\('confirmPw'/);
+  assert.match(app,/function passwordControlHtml\(id,/);
+  assert.match(app,/data-password-toggle=/);
+  assert.match(app,/function bindPasswordVisibility\(container=document\)/);
   assert.match(resolver,/if\(mmErr\|\|!mm\)[\s\S]*S\.isSA=false/);
   assert.match(resolver,/S\.isSA=mm\.is_super_admin===true/);
   assert.match(bootstrap,/S\.saChecked=true/);
@@ -140,6 +143,8 @@ test('targets, mobile layouts, reflowing tables, and reduced motion are explicit
   assert.match(app,/\.btn\{[^}]*min-height:44px/s);
   assert.match(app,/\.btn\.sm\{[^}]*min-height:44px/s);
   assert.match(app,/\.qbtn\{[^}]*min-height:44px/s);
+  assert.match(app,/\.wallet-head>a\.logo\{[^}]*display:inline-flex[^}]*align-items:center[^}]*min-height:44px/s);
+  assert.match(app,/\.challenge-retry\{[^}]*display:inline-flex[^}]*align-items:center[^}]*min-height:44px/s);
   assert.match(app,/\.skip-link\{[^}]*min-height:44px/s);
   assert.match(app,/input,select,textarea\{[^}]*min-height:44px/s);
   assert.match(app,/@media\(max-width:375px\)/);
