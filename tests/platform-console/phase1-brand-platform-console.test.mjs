@@ -109,13 +109,13 @@ test('platform console is routed before workspace onboarding and uses versioned 
   assert.match(consoleSource,/platform_list_prospects_v76/);
   assert.match(consoleSource,/platform_list_sector_entitlements_v75/);
   assert.match(consoleSource,/get_platform_billing_v77/);
-  assert.match(consoleSource,/platform_get_billing_v89/);
+  assert.match(consoleSource,/platform_get_billing_v125/);
   assert.match(consoleSource,/platform_get_automation_billing_v89/);
   assert.match(consoleSource,/platform_get_automation_reconciliation_v89/);
   assert.match(consoleSource,/get_consultant_commission_dashboard_v78/);
   assert.doesNotMatch(consoleSource,/get_billing_reconciliation_v77/);
   assert.doesNotMatch(consoleSource,/platform_get_billing_reconciliation_v89/);
-  assert.match(consoleSource,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v89'/);
+  assert.match(consoleSource,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v125'/);
   assert.match(consoleSource,/System update required/);
   assert.doesNotMatch(consoleSource,/[\u{1F300}-\u{1FAFF}]/u);
   assert.match(styles,/min-height:44px/);

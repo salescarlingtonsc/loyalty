@@ -1951,8 +1951,8 @@
       "reason": "browser RPC 'get_birthday_program_draft' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
-      "id": "browser.rpc:app/index.html:get_business_billing_v124",
-      "reason": "browser RPC 'get_business_billing_v124' is a finite owner billing reader; it projects provider truth and writes no operational or customer value"
+      "id": "browser.rpc:app/index.html:get_business_billing_v125",
+      "reason": "browser RPC 'get_business_billing_v125' is a finite owner billing reader; it projects provider truth plus the fail-closed no-GST policy and writes no operational or customer value"
     },
     {
       "id": "browser.rpc:app/index.html:request_billing_command_v124",

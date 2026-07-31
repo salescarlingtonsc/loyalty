@@ -987,6 +987,12 @@
       "path": "db/migrations/20260801_nestly_v124_stripe_launch_pricing.sql",
       "semanticVersion": "v124",
       "proposedDeployVersion": "20260731164709"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v125_no_gst_and_native_store_readiness.sql",
+      "semanticVersion": "v125",
+      "proposedDeployVersion": "20260731182246"
     }
   ]
 }

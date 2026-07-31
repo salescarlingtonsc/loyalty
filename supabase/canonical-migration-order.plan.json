@@ -988,6 +988,12 @@
       "version": "20260731164709",
       "name": "nestly_v124_stripe_launch_pricing",
       "sourcePath": "db/migrations/20260801_nestly_v124_stripe_launch_pricing.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731182246",
+      "name": "nestly_v125_no_gst_and_native_store_readiness",
+      "sourcePath": "db/migrations/20260801_nestly_v125_no_gst_and_native_store_readiness.sql"
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Nestly product truth
 
-Last consolidated: 2026-07-29
+Last consolidated: 2026-08-01
 
 This is the durable statement of confirmed owner decisions. It describes the
 intended product, not the current implementation. Implementation and evidence
@@ -184,6 +184,15 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   **SGD 168/month** is display-only comparison pricing and must never be sent to
   Stripe as the amount due unless a later explicit owner decision introduces an
   actual billable price at that amount.
+- Nestly is not GST-registered at launch. Nestly subscription checkout,
+  invoices, receipts, platform billing projections, and exports therefore show
+  **GST not charged (SGD 0.00)** and the amount due equals the pre-tax recurring
+  total. Stripe Tax and automatic tax collection remain disabled, and every
+  activated Stripe Price must use explicit `exclusive` tax behavior so a later
+  registration cannot silently reinterpret historical prices. Charging GST
+  requires verified registration evidence, a new owner decision, an
+  independently reviewed catalogue version, and new provider prices; company
+  incorporation alone is not GST-registration proof.
 - The plan includes 1,000 customer profiles. A merchant chooses capacity in
   1,000-profile increments; each additional 1,000-profile block is SGD 10 per
   month or SGD 120 per annual term. The confirmed capacity and exact recurring

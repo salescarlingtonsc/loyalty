@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Nestly">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://challenges.cloudflare.com; worker-src 'self'; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com; upgrade-insecure-requests">
 <title>Nestly — Loyalty & retention for every business</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
@@ -20,6 +21,7 @@
 <link rel="stylesheet" href="/revenue-truth.css">
 <link rel="stylesheet" href="/growth-offers.css">
 <link rel="stylesheet" href="/sector-economics.css">
+<script src="/native-bridge.js"></script>
 <script src="/pwa.js" defer></script>
 <script src="/customer-push.js"></script>
 <style>
@@ -995,6 +997,7 @@ const CUI=window.FrenlyCustomerUI;
 const BRAND=window.NestlyBrand;
 const SB_URL=RUNTIME_CONFIG.supabaseUrl;
 const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
+const publicAppUrl=(route='')=>window.NestlyNativeBridge.publicUrl(`/#/${String(route).replace(/^#?\/?/,'')}`);
 /* detectSessionInUrl:false — with it left at its (true) default, supabase-js inspects
    window.location.hash on load and can history.replaceState the hash away on a hash-routed
    SPA, which is why a browser refresh was silently losing the current route ("refresh does
@@ -1815,7 +1818,7 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     <p class="muted small" id="customerRedemptionQrStatus" role="status" aria-live="polite" style="margin-top:10px">Your points are not redeemed until the business scans and confirms this QR.${intent?.expires_at?` This code expires ${esc(walletDate(intent.expires_at,true))}.`:''}</p>
     <div class="row" style="margin-top:16px"><button class="btn danger" id="customerRedemptionQrCancel" type="button">Cancel redemption</button><button class="btn ghost" id="customerRedemptionQrDone" type="button">Close — keep pending</button></div></section>`;
   document.body.appendChild(overlay);
-  const qrValue=`${location.origin}${location.pathname}#/redeem?token=${encodeURIComponent(token)}`;
+  const qrValue=publicAppUrl(`redeem?token=${encodeURIComponent(token)}`);
   new QRCode(overlay.querySelector('#customerRedemptionQr'),{text:qrValue,width:220,height:220,correctLevel:QRCode.CorrectLevel.M});
   let closed=false,pollTimer=0,polling=false,deactivateDialog=null,terminal=false;
   const close=({restoreFocus=true}={})=>{
@@ -5185,7 +5188,7 @@ async function renderApprovedBusinessInviteSignup(inviteToken){
       $('approvedOwnerError').innerHTML=`<div class="err">${esc(t('passwordRule'))}</div>`;return;
     }
     $('approvedOwnerCreate').disabled=true;
-    const returnUrl=new URL('/business',location.origin);returnUrl.searchParams.set('invite',inviteToken);
+    const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));returnUrl.searchParams.set('invite',inviteToken);
     const {data,error}=await sb.auth.signUp({
       email:invitation.approved_email,password,
       options:{captchaToken:token,emailRedirectTo:returnUrl.toString()}
@@ -5265,7 +5268,7 @@ function renderAuth(mode='in',{admin=false}={}){
       }
       if(!authToken) return;
       $('resetRequest').disabled=true;
-      const redirect=new URL(location.pathname,location.origin);
+      const redirect=new URL(NestlyNativeBridge.publicUrl(admin?'/admin':'/business'));
       redirect.searchParams.set('recovery','1');
       try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString(),captchaToken:authToken})}catch{}
       /* Turnstile tokens are single-use: clear and reset so a retry gets a fresh challenge. */
@@ -8765,7 +8768,7 @@ function bookingDecisionNotice(result,decision){
 }
 async function bookingsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  const portal=`${location.origin}${location.pathname}#/b/${S.biz.slug}`;
+  const portal=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
   const isOwner=S.myRole==='owner';
   const canConvertBooking=canWriteModule('appointments');
   const canDeclineBooking=canWriteModule('bookings');
@@ -15103,7 +15106,7 @@ async function setupPage(){
     const retry=$('setupRetry');if(retry)retry.onclick=()=>setupPage();
     return;
   }
-  const portal=`${location.origin}${location.pathname}#/b/${S.biz.slug}`;
+  const portal=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
   const steps=[
     {id:'services',em:'🛠️',title:'Add your services or products',
       why:'This is what customers see and book — nothing else works until there\'s at least one.',
@@ -15838,7 +15841,7 @@ async function settingsPage(){
       <label for="bru">Public review link (Google, Facebook, etc.)</label><input id="bru" type="url" inputmode="url" placeholder="https://g.page/your-business/review" value="${esc(S.biz.review_url||'')}" aria-describedby="bruHint">
       <p class="muted small" id="bruHint" style="margin-top:4px">Optional. Must start with https://. Shown to customers in their wallet — it is offered to everyone, never used to hide low ratings.</p>
       <p class="field-label">Portal link (share with customers)</p>
-      <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${location.origin}${location.pathname}#/b/${S.biz.slug}">${location.origin}${location.pathname}#/b/${S.biz.slug}</a></p>
+      <p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}">${publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`)}</a></p>
       <div class="settings-save-row"><button class="btn" id="bsave">Save workspace</button><span class="settings-scope">Saves this workspace's name, brand colour, booking policy and public review link.</span></div></div></section>
     ${S.myRole==='owner'?`<section class="settings-panel" id="setpanel-programme" role="tabpanel" aria-labelledby="settab-programme" tabindex="-1" hidden>
       <div class="card" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
@@ -16283,7 +16286,7 @@ async function settingsPage(){
 async function loadBillingConfig(){
   const wrap=$('billingWrap');if(!wrap||!S.biz?.id)return;
   wrap.setAttribute('aria-busy','true');
-  const {data:b,error}=await sb.rpc('get_business_billing_v124',{p_business:S.biz.id});
+  const {data:b,error}=await sb.rpc('get_business_billing_v125',{p_business:S.biz.id});
   if(!wrap.isConnected)return;
   wrap.setAttribute('aria-busy','false');
   if(error||!b||b.business_id!==S.biz.id){
@@ -16328,7 +16331,7 @@ async function loadBillingConfig(){
       :'Manage billing';
     wrap.innerHTML=`<div class="row"><div><b>Nestly subscription</b><p class="muted small" style="margin-top:3px">One plan. Annual saves SGD 600 against monthly billing.</p></div><span class="spacer"></span><span class="pill ${statusPill}">${esc(b.status||'not started')}</span></div>
       <fieldset style="border:0;padding:0;margin:16px 0 0"><legend class="small" style="font-weight:700;margin-bottom:8px">Billing cycle</legend>
-        <div class="row" style="align-items:stretch">
+        <div class="row" style="align-items:stretch;flex-wrap:wrap">
           <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="annual" checked> <strong>Annual · SGD 1,188/year</strong><br><span class="muted small">SGD 99/month equivalent · selected by default</span></label>
           <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="monthly" ${selectedCadence==='monthly'?'checked':''}> <strong>Monthly · SGD 149/month</strong><br><span class="muted small">Cancel renewal before the next billing date</span></label>
         </div>
@@ -16337,14 +16340,14 @@ async function loadBillingConfig(){
       <label for="billingCapacity" style="display:block;margin-top:16px;font-weight:700">Customer capacity</label>
       <select id="billingCapacity" style="margin-top:6px;max-width:340px">${capacityOptions.map(value=>`<option value="${value}" ${value===selectedCapacity?'selected':''}>Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select>
       <p class="muted small" style="margin-top:7px">1,000 customer profiles included. Each additional 1,000 is ${money(plan.capacity_block_amount_cents)} per ${cadenceLabel}. ${currentCustomers.toLocaleString('en-SG')} profiles currently stored. Capacity can be increased later.</p>
-      <div class="card" style="margin-top:16px;background:var(--sand)"><div class="row"><div><span class="muted small">Recurring total${plan.tax_behavior==='exclusive'?' before GST':''}</span><div style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums">${money(total)} <span class="muted small">/ ${cadenceLabel}</span></div><div class="muted small">${equivalent} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity</div></div></div></div>
+      <div class="card" style="margin-top:16px;background:var(--sand)"><div class="row"><div><span class="muted small">Amount due</span><div style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums">${money(total)} <span class="muted small">/ ${cadenceLabel}</span></div><div class="muted small">${equivalent} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity</div><div class="muted small" style="margin-top:6px">GST not charged · SGD 0.00</div></div></div></div>
       <div class="row" style="margin-top:14px;align-items:flex-start"><span class="pill ok">Staff access included</span><p class="muted small" style="margin:2px 0 0">Use a unique login and least-privilege role for every team member. Staff count never changes this plan's price.</p></div>
       <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:700">What is included</summary><ul class="small" style="columns:2;column-width:240px">${includedModules.map(module=>`<li>${esc(module)}</li>`).join('')}</ul><p class="muted small"><strong>AI-assisted promotion copy</strong> helps reword factual offer content; the owner reviews and publishes it. It does not invent prices, dates or claims.</p></details>
       <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Not included in this price</summary><ul class="small">${exclusions.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details>
       <p class="muted small" style="margin-top:14px">${guarantee}</p>
       <div class="row" style="margin-top:14px"><button type="button" class="btn" id="billingPrimary">${esc(action)}</button>${providerSubscription?'<button type="button" class="btn ghost" id="billingPortal">Open Stripe billing portal</button>':''}</div>
       <p class="muted small" id="billingCommandStatus" role="status" aria-live="polite" style="margin-top:8px">Stripe Checkout securely collects payment details. Nestly changes access only after provider confirmation.</p>
-      <p class="muted small" style="margin-top:14px">Billed by NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · <a href="mailto:nestlyasia@gmail.com">nestlyasia@gmail.com</a></p>`;
+      <p class="muted small" style="margin-top:14px">Billed by NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · Not GST-registered · <a href="mailto:nestlyasia@gmail.com">nestlyasia@gmail.com</a></p>`;
     wrap.querySelectorAll('[name="billingCadence"]').forEach(input=>{
       input.checked=input.value===selectedCadence;
       input.onchange=()=>{selectedCadence=input.value;renderPlan()};
@@ -16399,16 +16402,17 @@ async function loadSignupConfig(){
     <div class="row" style="margin-top:10px"><button class="btn sm" id="createJoinQr">${CUI.icon('scan',{size:17})}<span>Generate join QR</span></button>
     <button class="btn ghost sm" id="cpJoin" disabled>Copy link</button>
     <button class="btn ghost sm" id="dlQr" disabled>Download QR</button>
+    ${window.NestlyNativeBridge?.isNative?'<button class="btn ghost sm" id="shareJoin" disabled>Share link</button>':''}
     <button class="btn danger sm" id="revokeJoinQr">Revoke all QRs</button></div>
     <p class="muted small" id="joinQrStatus" role="status" aria-live="polite" style="margin-top:8px">The raw join token is shown only in this browser session. Download the QR before leaving this page.</p>
     <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
       <input type="checkbox" id="joinEnabled" style="width:auto" ${S.biz.join_enabled!==false?'checked':''}> Accept new sign-ups</label>`;
   let url='';
   const showJoinQr=data=>{
-    url=`${location.origin}${location.pathname}#/join?token=${encodeURIComponent(data.join_token)}`;
+    url=publicAppUrl(`join?token=${encodeURIComponent(data.join_token)}`);
     const qrEl=$('joinQr');qrEl.innerHTML='';new QRCode(qrEl,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
     $('joinQrLink').innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a>`;
-    $('cpJoin').disabled=false;$('dlQr').disabled=false;
+    $('cpJoin').disabled=false;$('dlQr').disabled=false;if($('shareJoin'))$('shareJoin').disabled=false;
     $('createJoinQr').querySelector('span').textContent='Replace join QR';
     const expires=data.expires_at?sgt(data.expires_at):'',replaced=Number(data.replaced_count||0);
     const key=expires&&replaced
@@ -16417,6 +16421,7 @@ async function loadSignupConfig(){
       :replaced?(replaced===1?'qrReadyRevoked':'qrReadyQrsRevoked')
       :'qrReady';
     $('joinQrStatus').innerHTML=workspaceTemplateHtmlV97(key,{expires,count:replaced});
+    window.NestlyNativeBridge?.haptic?.('Light').catch(()=>{});
   };
   const generateJoinQr=async()=>{
     const button=$('createJoinQr');button.disabled=true;$('joinQrStatus').textContent='Creating a business-bound QR…';
@@ -16432,6 +16437,11 @@ async function loadSignupConfig(){
   };
   $('createJoinQr').onclick=generateJoinQr;
   $('cpJoin').onclick=async()=>{if(!url)return;await copyTextToClipboard(url,{button:$('cpJoin'),success:'Sign-up link copied'})};
+  if($('shareJoin'))$('shareJoin').onclick=async()=>{
+    if(!url)return;
+    try{await window.NestlyNativeBridge.share({title:'Join this Nestly programme',text:'Open this secure Nestly business link to join.',url})}
+    catch{$('joinQrStatus').textContent='The native share sheet could not open. Copy the link instead.'}
+  };
   $('dlQr').onclick=()=>{
     const qrEl=$('joinQr'),img=qrEl.querySelector('img')||qrEl.querySelector('canvas');
     if(!img) return toast('QR still rendering — try again');
@@ -16448,7 +16458,7 @@ async function loadSignupConfig(){
     button.disabled=false;
     if(error){$('joinQrStatus').textContent='Active join QRs could not be revoked. Try again.';return}
     url='';$('joinQr').innerHTML='<span class="muted small">No active QR in this session</span>';
-    $('joinQrLink').textContent='';$('cpJoin').disabled=true;$('dlQr').disabled=true;
+    $('joinQrLink').textContent='';$('cpJoin').disabled=true;$('dlQr').disabled=true;if($('shareJoin'))$('shareJoin').disabled=true;
     $('createJoinQr').querySelector('span').textContent='Generate join QR';
     const revoked=Number(data?.revoked_count||0);
     $('joinQrStatus').innerHTML=workspaceTemplateHtmlV97(revoked===1?'activeQrRevoked':'activeQrsRevoked',{count:revoked});
@@ -16806,7 +16816,7 @@ async function renderPortal(slug){
       };
       const m=msgs[bookRes&&bookRes.status]||msgs.pending;
       manageToken=bookRes.manage_token||'';
-      const manageUrl=`${location.origin}${location.pathname}#/b/${encodeURIComponent(slug)}?manage=${encodeURIComponent(manageToken)}`;
+      const manageUrl=publicAppUrl(`b/${encodeURIComponent(slug)}?manage=${encodeURIComponent(manageToken)}`);
       const bookingFormCard=$('bookingFormCard');
       if(!bookingFormCard)return;
       bookingTurnstileControl?.destroy();bookingTurnstileControl=null;

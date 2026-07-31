@@ -215,7 +215,7 @@
       'Choose modules':'选择模块','Choose the standard modules':'选择标准模块',
       'No published version':'没有已发布版本','No sector profiles':'没有行业配置',
       'Published':'已发布','Published version':'已发布版本','Active':'有效','Inactive':'无效',
-      'New price version':'新建价格版本','Billing summary':'账单摘要','Period total incl. GST':'本期总额（含消费税）',
+      'New price version':'新建价格版本','Billing summary':'账单摘要','Period amount due':'本期应付金额',
       'Paid firms':'已付款企业','Overdue firms':'逾期企业','Failed events':'失败事件',
       'Stripe price catalogue':'Stripe 价格目录','Currency':'币种','Cadence':'周期','Base':'基本费用',
       'Per seat':'每席位','Included':'包含','Tax':'税务','Effective':'生效时间',
@@ -311,7 +311,7 @@
       'No published version':'Tiada versi diterbitkan','No sector profiles':'Tiada profil sektor',
       'Published':'Diterbitkan','Published version':'Versi diterbitkan','Active':'Aktif','Inactive':'Tidak aktif',
       'New price version':'Versi harga baharu','Billing summary':'Ringkasan pengebilan',
-      'Period total incl. GST':'Jumlah tempoh termasuk GST','Paid firms':'Firma dibayar',
+      'Period amount due':'Jumlah perlu dibayar tempoh','Paid firms':'Firma dibayar',
       'Overdue firms':'Firma tertunggak','Failed events':'Peristiwa gagal','Stripe price catalogue':'Katalog harga Stripe',
       'Currency':'Mata wang','Cadence':'Kekerapan','Base':'Asas','Per seat':'Setiap tempat','Included':'Termasuk',
       'Tax':'Cukai','Effective':'Berkuat kuasa','Billing exception queue':'Baris gilir pengecualian bil',
@@ -638,6 +638,9 @@
       'This stage is controlled by account conversion and onboarding evidence.':'此阶段由账户转换及入驻证据控制。',
       'Firm sector assigned.':'企业行业已分配。','Firm module override applied.':'企业模块覆盖已应用。','Stripe price version activated.':'Stripe 价格版本已启用。',
       'V124 bills customer capacity, never staff access. Active versions drive checkout and upgrades; prior versions remain history.':'V124 按顾客容量计费，不按员工访问人数计费。有效版本用于结账和升级；旧版本保留为历史记录。',
+      'V125 bills customer capacity, never staff access. Nestly is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.':'V125 按顾客容量计费，不按员工访问人数计费。Nestly 尚未注册消费税：Stripe 价格采用不含税模式，并停用自动税费。',
+      'Create matching monthly and annual Stripe Price versions with exclusive tax behavior before opening checkout.':'开放结账前，请创建采用不含税模式的月付和年付 Stripe 价格版本。',
+      'GST treatment':'消费税处理','GST not charged · Stripe Price tax behavior must be exclusive · automatic tax remains disabled.':'未收取消费税 · Stripe 价格必须采用不含税模式 · 自动税费保持停用。','Price tax mode':'价格税务模式',
       'Per +1,000 customers':'每增加 1,000 位顾客','Customers included':'包含顾客数',
       'Create matching monthly and annual Stripe Price versions before opening checkout.':'开放结账前，请创建相匹配的月付和年付 Stripe 价格版本。',
       'Stripe +1,000-customer price ID':'Stripe 每增加 1,000 位顾客的价格 ID',
@@ -714,7 +717,7 @@
       '{count} failures':'{count} 次失败','Version {version} · ends in {suffix}':'版本 {version} · 末四位 {suffix}',
       'To {status}':'转为{status}','Recorded':'已记录','{count} selected':'已选择 {count} 个','Choose at least one module.':'请至少选择一个模块。',
       '{count} firms require payment follow-up.':'{count} 家企业需要付款跟进。','next payment {date}':'下次付款 {date}','{count} failed':'{count} 次失败',
-      '{amount} incl. GST':'{amount}（含消费税）','No failure':'无失败','No reason recorded':'未记录原因',
+      'Amount due: {amount}':'应付金额：{amount}','Amount: {amount}':'金额：{amount}','GST not charged':'未收取消费税','No failure':'无失败','No reason recorded':'未记录原因',
       'Batch {id}':'批次 {id}','Line {id}':'明细 {id}','{amount} remaining':'剩余 {amount}'
     }),
     ms:Object.freeze({
@@ -768,6 +771,9 @@
       'This stage is controlled by account conversion and onboarding evidence.':'Peringkat ini dikawal oleh penukaran akaun dan bukti penerimaan.',
       'Firm sector assigned.':'Sektor firma ditugaskan.','Firm module override applied.':'Penggantian modul firma digunakan.','Stripe price version activated.':'Versi harga Stripe diaktifkan.',
       'V124 bills customer capacity, never staff access. Active versions drive checkout and upgrades; prior versions remain history.':'V124 mengebil kapasiti pelanggan, bukan akses kakitangan. Versi aktif digunakan untuk pembayaran dan peningkatan; versi terdahulu kekal sebagai sejarah.',
+      'V125 bills customer capacity, never staff access. Nestly is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.':'V125 mengebil kapasiti pelanggan, bukan akses kakitangan. Nestly belum berdaftar GST: tingkah laku cukai Harga Stripe adalah eksklusif dan cukai automatik dilumpuhkan.',
+      'Create matching monthly and annual Stripe Price versions with exclusive tax behavior before opening checkout.':'Cipta versi Harga Stripe bulanan dan tahunan dengan tingkah laku cukai eksklusif sebelum membuka pembayaran.',
+      'GST treatment':'Pengendalian GST','GST not charged · Stripe Price tax behavior must be exclusive · automatic tax remains disabled.':'GST tidak dikenakan · Tingkah laku cukai Harga Stripe mesti eksklusif · cukai automatik kekal dilumpuhkan.','Price tax mode':'Mod cukai harga',
       'Per +1,000 customers':'Bagi setiap tambahan 1,000 pelanggan','Customers included':'Pelanggan disertakan',
       'Create matching monthly and annual Stripe Price versions before opening checkout.':'Cipta versi Harga Stripe bulanan dan tahunan yang sepadan sebelum membuka pembayaran.',
       'Stripe +1,000-customer price ID':'ID harga Stripe bagi tambahan 1,000 pelanggan',
@@ -844,7 +850,7 @@
       '{count} failures':'{count} kegagalan','Version {version} · ends in {suffix}':'Versi {version} · berakhir dengan {suffix}',
       'To {status}':'Ke {status}','Recorded':'Direkodkan','{count} selected':'{count} dipilih','Choose at least one module.':'Pilih sekurang-kurangnya satu modul.',
       '{count} firms require payment follow-up.':'{count} firma memerlukan susulan bayaran.','next payment {date}':'bayaran seterusnya {date}','{count} failed':'{count} gagal',
-      '{amount} incl. GST':'{amount} termasuk GST','No failure':'Tiada kegagalan','No reason recorded':'Tiada sebab direkodkan',
+      'Amount due: {amount}':'Jumlah perlu dibayar: {amount}','Amount: {amount}':'Amaun: {amount}','GST not charged':'GST tidak dikenakan','No failure':'Tiada kegagalan','No reason recorded':'Tiada sebab direkodkan',
       'Batch {id}':'Kumpulan {id}','Line {id}':'Baris {id}','{amount} remaining':'{amount} berbaki'
     })
   });
@@ -3601,7 +3607,7 @@
         sectionAccess.onboarding
           ?rpc(sb,'platform_get_sme_analytics_v86',{p_from:filters.from,p_to:filters.to,p_snapshot_at:null,p_consultant:null,p_limit:200,p_after_source:null})
           :Promise.resolve(null),
-        sectionAccess.billing?rpc(sb,'platform_get_billing_v89',{p_business:null,p_limit:250}):Promise.resolve(null)
+        sectionAccess.billing?rpc(sb,'platform_get_billing_v125',{p_business:null,p_limit:250}):Promise.resolve(null)
       ]);
       const reportObject=asObject(report),allowedIds=new Set(asArray(reportObject.businesses).map(firmId));
       const billing=asArray(billingPayload).filter(row=>!allowedIds.size||allowedIds.has(String(row.business_id)));
@@ -4498,7 +4504,7 @@
         if(isApproval){
           const token=String(result?.invitation_token||'');
           if(!/^[0-9a-f]{64}$/i.test(token))throw new Error(pt('Approval succeeded but the one-time invitation was not returned. Inspect the application before proceeding.'));
-          const url=new URL('/business',globalObject.location.origin);url.searchParams.set('invite',token);
+          const url=new URL(globalObject.NestlyNativeBridge.publicUrl('/business'));url.searchParams.set('invite',token);
           controls.overlay.querySelector('.modal-card').innerHTML=`<h2>${escapeHtml(pt("Application approved"))}</h2>
             <p class="muted small" style="margin-top:7px">${escapeHtml(pt("Copy this secure invitation now. Nestly stores only its hash and cannot show the token again."))}</p>
             <label for="approvedOwnerInviteUrl">${escapeHtml(pt("Approved owner link"))}</label><textarea id="approvedOwnerInviteUrl" rows="4" readonly>${escapeHtml(url.toString())}</textarea>
@@ -6100,8 +6106,8 @@
     main.innerHTML=loading(CUI,'Billing','Loading platform billing truth…','reports');
     try{
       const [billingPayload,catalogPayload]=await Promise.all([
-        rpc(sb,'platform_get_billing_v89',{p_business:null,p_limit:250}),
-        rpc(sb,'get_billing_plan_catalog_v124',{})
+        rpc(sb,'platform_get_billing_v125',{p_business:null,p_limit:250}),
+        rpc(sb,'get_billing_plan_catalog_v125',{})
       ]);
       const rows=asArray(billingPayload);
       const catalog=asArray(catalogPayload);
@@ -6113,9 +6119,9 @@
       main.innerHTML=`${CUI.pageHeader({title:'Billing',subtitle:'Resolve subscription, invoice and payment exceptions. Technical reconciliation history is in System health.',iconName:'reports',
         actions:`<button type="button" class="btn" id="platformNewBillingPrice">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New price version'))}</span></button>`})}
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Billing summary'))}">${[
-          ['Period total incl. GST',currency(totals.total),'reports'],['Paid firms',totals.paid,'check'],['Overdue firms',totals.overdue,'info'],['Failed events',totals.failed,'retention']
+          ['Period amount due',currency(totals.total),'reports'],['Paid firms',totals.paid,'check'],['Overdue firms',totals.overdue,'info'],['Failed events',totals.failed,'retention']
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
-        ${CUI.card({title:'Stripe price catalogue',description:'V124 bills customer capacity, never staff access. Active versions drive checkout and upgrades; prior versions remain history.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per +1,000 customers','Customers included','Tax','Status','Effective'],rows:billingCatalogueRows(catalog,CUI)}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create matching monthly and annual Stripe Price versions before opening checkout.'})})}
+        ${CUI.card({title:'Stripe price catalogue',description:'V125 bills customer capacity, never staff access. Nestly is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per +1,000 customers','Customers included','Price tax mode','Status','Effective'],rows:billingCatalogueRows(catalog,CUI)}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create matching monthly and annual Stripe Price versions with exclusive tax behavior before opening checkout.'})})}
         ${CUI.card({title:'Billing exception queue',description:exceptions.length?pt('{count} firms require payment follow-up.',{count:exceptions.length}):'No overdue or failed firm billing records.',body:exceptions.length?exceptions.map(row=>`<div class="platform-action-item"><div><button type="button" class="platform-link-button" data-billing-firm="${escapeHtml(row.business_id)}"><b>${escapeHtml(row.business_name)}</b></button><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(pt('next payment {date}',{date:dateTime(row.next_payment_at)}))}</p></div>${CUI.status(pt('{count} failed',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):localizedEmptyHtml('Payments and provider status are currently reconciled.')})}
         ${billingFirmCardHtml(rows,CUI)}`;
       main.querySelector('#platformNewBillingPrice').onclick=()=>billingPriceModal(context);
@@ -6130,7 +6136,7 @@
     const defaultEffective=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
     modal({title:'New Stripe price version',submitLabel:'Preview price',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'billingPriceCadence',label:'Cadence',control:'select',options:['annual','monthly'].map(value=>({value,label:platformStatus(value)})),attributes:'name="cadence"'})}
-      ${CUI.field({id:'billingTaxBehavior',label:'Tax behaviour',control:'select',options:['exclusive','inclusive','unspecified'].map(value=>({value,label:platformStatus(value)})),attributes:'name="tax_behavior"'})}
+      <input type="hidden" name="tax_behavior" value="exclusive"><div class="cui-field"><span class="field-label">${escapeHtml(pt('GST treatment'))}</span><p class="muted small">${escapeHtml(pt('GST not charged · Stripe Price tax behavior must be exclusive · automatic tax remains disabled.'))}</p></div>
       ${CUI.field({id:'billingEffectiveFrom',label:'Effective from',type:'datetime-local',value:defaultEffective,required:true,attributes:'name="effective_from"'})}
       <div class="wide">${CUI.field({id:'billingPriceReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}</div>
       <details class="wide platform-advanced-fields"><summary>${escapeHtml(pt('Advanced provider mapping'))}</summary>
@@ -6148,11 +6154,11 @@
         p_tax_behavior:form.get('tax_behavior'),
         p_effective_from:new Date(form.get('effective_from')).toISOString()
       };
-      const preview=await rpc(sb,'preview_billing_plan_catalog_v124',proposal);
+      const preview=await rpc(sb,'preview_billing_plan_catalog_v125',proposal);
       const reason=form.get('reason');
       controls.close();
       previewThenConfirm({title:'Confirm Stripe price version',preview,CUI,onConfirm:async confirmControls=>{
-        await rpc(sb,'confirm_billing_plan_catalog_v124',{
+        await rpc(sb,'confirm_billing_plan_catalog_v125',{
           ...proposal,p_confirmation_hash:preview.confirmation_hash,p_reason:reason
         });
         confirmControls.close();await renderBilling(context);CUI.announce('Stripe price version activated.');
@@ -6167,13 +6173,13 @@
     document.body.appendChild(overlay);let deactivate;const close=()=>closeOverlay(overlay,deactivate);
     overlay.querySelector('.platform-drawer-close').onclick=close;deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
     try{
-      const detail=asObject(await rpc(sb,'get_business_billing_v124',{p_business:businessId}));
+      const detail=asObject(await rpc(sb,'get_business_billing_v125',{p_business:businessId}));
       const commands=billingCommands(detail);
       overlay.querySelector('[data-detail]').innerHTML=`<div class="platform-actions" style="margin-bottom:14px">${commands.map(command=>`<button type="button" class="btn ${command.danger?'danger':'ghost'} sm" data-billing-command="${command.type}" data-cadence="${command.cadence||''}">${escapeHtml(pt(command.label))}</button>`).join('')}</div>
-        <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,'Current customers':detail.current_customer_count,'Customer capacity':detail.terms?.customer_capacity,last_paid_at:detail.last_paid_at,'Money-back request until':detail.money_back_window?.money_back_request_until,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({'Subtotal before GST':currency(detail.period_subtotal_cents,detail.currency),'GST':currency(detail.period_tax_cents,detail.currency),'Total including GST':currency(detail.period_total_cents,detail.currency)})})}</div>
-        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Invoices"))}</h2>${asArray(detail.invoices).map(invoice=>`<div class="platform-action-item"><div><b>${escapeHtml(invoice.number||invoice.provider_invoice_id)}</b><p class="muted small">${escapeHtml(platformStatus(invoice.status))} · ${escapeHtml(pt('{amount} incl. GST',{amount:currency(invoice.total_cents,invoice.currency)}))}</p></div><span>${invoice.paid_normalized?CUI.status('Paid','ok'):CUI.status('Outstanding','no')}</span></div>`).join('')||localizedEmptyHtml('No invoices.')}</section>
+        <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,'Current customers':detail.current_customer_count,'Customer capacity':detail.terms?.customer_capacity,last_paid_at:detail.last_paid_at,'Money-back request until':detail.money_back_window?.money_back_request_until,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({'Subscription amount':currency(detail.period_subtotal_cents,detail.currency),'GST not charged':currency(detail.period_tax_cents,detail.currency),'Amount due':currency(detail.period_total_cents,detail.currency)})})}</div>
+        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Invoices"))}</h2>${asArray(detail.invoices).map(invoice=>`<div class="platform-action-item"><div><b>${escapeHtml(invoice.number||invoice.provider_invoice_id)}</b><p class="muted small">${escapeHtml(platformStatus(invoice.status))} · ${escapeHtml(pt('Amount due: {amount}',{amount:currency(invoice.total_cents,invoice.currency)}))} · ${escapeHtml(pt('GST not charged'))}</p></div><span>${invoice.paid_normalized?CUI.status('Paid','ok'):CUI.status('Outstanding','no')}</span></div>`).join('')||localizedEmptyHtml('No invoices.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Payment attempts"))}</h2>${asArray(detail.payment_attempts).map(attempt=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(attempt.attempt_state))}</b><p class="muted small">${currency(attempt.amount_cents,detail.currency)} · ${escapeHtml(attempt.failure_code||pt('No failure'))}</p></div><span class="muted small">${escapeHtml(dateTime(attempt.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No payment attempts.')}</section>
-        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Adjustments"))}</h2>${asArray(detail.adjustments).map(adjustment=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(adjustment.adjustment_type))}</b><p class="muted small">${escapeHtml(pt('{amount} incl. GST',{amount:currency(adjustment.total_cents,adjustment.currency||detail.currency)}))} · ${escapeHtml(adjustment.reason||pt('No reason recorded'))}</p></div><span class="muted small">${escapeHtml(dateTime(adjustment.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No adjustments.')}</section>
+        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Adjustments"))}</h2>${asArray(detail.adjustments).map(adjustment=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(adjustment.adjustment_type))}</b><p class="muted small">${escapeHtml(pt('Amount: {amount}',{amount:currency(adjustment.total_cents,adjustment.currency||detail.currency)}))} · ${escapeHtml(adjustment.reason||pt('No reason recorded'))}</p></div><span class="muted small">${escapeHtml(dateTime(adjustment.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No adjustments.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Commands"))}</h2>${asArray(detail.commands).map(command=>detailObjectHtml(command)).join('')||localizedEmptyHtml('No billing commands.')}</section>`;
       overlay.querySelectorAll('[data-billing-command]').forEach(button=>button.onclick=()=>requestBillingCommand(businessId,button.dataset.billingCommand,button.dataset.cadence||null,detail.terms?.customer_capacity||Math.max(1000,Math.ceil(Number(detail.current_customer_count||0)/1000)*1000),{...context,close}));
     }catch(error){overlay.querySelector('[data-detail]').innerHTML=error.platformUpdateRequired?systemUpdateRequired(CUI,'Billing detail'):CUI.errorState({title:'Billing detail unavailable',message:platformErrorMessage(error,'Billing detail unavailable')})}

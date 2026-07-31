@@ -325,7 +325,7 @@ test('index integrates all v108 owner and customer RPCs without changing classic
   assert.match(module,/dismiss_growth_recommendation_v108/);
   assert.match(index,/customer_get_growth_offers_v108/);
   assert.match(module,/customer_prepare_growth_offer_qr_v108/);
-  assert.match(index,/#\/redeem\?token=/);
+  assert.match(index,/publicAppUrl\(`redeem\?token=/);
   assert.match(index,/showGrowthOfferQr/);
   assert.match(index,/buildGrowthRedeemUrl/);
 });

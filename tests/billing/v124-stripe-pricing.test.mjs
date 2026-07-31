@@ -47,8 +47,8 @@ test('Stripe executor uses base plus capacity-block items and proration for upgr
   assert.match(edge, /extra_capacity_blocks/i);
   assert.match(edge, /provider_capacity_price_id/i);
   assert.match(edge, /requested_customer_capacity/i);
-  assert.match(edge, /proration_behavior:[^\n]+always_invoice/i);
-  assert.match(edge, /subscription\.pending_update/);
+  assert.match(edge, /stripePendingUpdateParamsV125\(items, metadata\)/i);
+  assert.match(edge, /verifiedSubscription\.pending_update/);
   assert.match(edge, /p_status:\s*'uncertain'/);
   assert.match(edge, /provider_confirmation_pending/);
   assert.doesNotMatch(edge, /const extraSeats = Number\(data\.extra_seats/);
@@ -97,7 +97,7 @@ test('money-back windows are scoped to the matching V124 provider subscription a
 
 test('owner checkout defaults annual and explains price, capacity, modules, staff and guarantee', async () => {
   const app = await read('app/index.html');
-  assert.match(app, /get_business_billing_v124/);
+  assert.match(app, /get_business_billing_v125/);
   assert.match(app, /value="annual"[^>]+checked/);
   assert.match(app, /SGD 1,188/);
   assert.match(app, /SGD 149/);

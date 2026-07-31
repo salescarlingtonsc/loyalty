@@ -9,8 +9,11 @@ scripts/launch-readiness/check.mjs` is the authority for that distinction: all
 17 P0 items require hash-pinned staging/production evidence and independent Sol
 acceptance. Source code and static tests cannot manufacture that evidence.
 
-No migration, data mutation, secret change, deployment, merge, commit or push
-is authorised by this ledger.
+Sol accepted the exact corrected V125 candidate on 2026-08-01, and the owner
+subsequently approved its commit, push, reviewed migration and deployment in
+the same task. That approval is limited to V125; it does not convert unresolved
+launch or store-publication rows into production proof and does not authorize
+inventing missing Stripe, Apple or Google credentials.
 
 ## Product requirement coverage
 
@@ -31,7 +34,7 @@ is authorised by this ledger.
 | Payment automation | Scheduled bidirectional provider-vs-Nestly subscription/invoice reconciliation: two local keysets whose membership is pinned by `created_at <= snapshot` plus two bounded Stripe `starting_after` streams, durable partial-run cursors, scoped `missing_local`/`missing_provider` evidence and clean only after all four streams complete. The snapshot pins membership only; subscription and invoice state comparisons intentionally use the current/live values read during reconciliation. Command persistence uncertainty is retryable against the same Stripe idempotency evidence, while Billing Portal recovery explicitly replays session creation | Deploy worker, configure secret schedule, complete an entire reconciliation cycle with final `clean` (never `partial`) and exercise uncertain-command recovery |
 | Consultant commission | Senior 30% base + deferred 10%; junior 20% + deferred 5%; 15%/5% renewals; GST excluded; refund/chargeback adjustments; setup fee included | Disposable SQL lifecycle run and finance acceptance |
 | Installable mobile app | Manifest, icons, iOS Home Screen metadata, standalone safe areas, update UX and public offline fallback | HTTPS device install/update/reconnect run on current iOS Safari and Android Chrome |
-| Native-store readiness | Explicit Capacitor boundary and deep-link/auth checklist | Deferred owner phase: identifiers, signing, associated domains, native projects and physical-device/store review |
+| Native-store readiness | One-source Capacitor iOS/Android projects, stable `asia.nestly.app` identifier, Android API 36 target, iOS/Android link declarations, branded icons and bounded Network/Haptics/Share/Browser/App adapters | Owner activated this phase on 2026-08-01. Signed archives, verified hosted association files, Apple/Google teams, physical-device runs, store metadata and review remain required |
 
 ## Commission interpretation implemented
 
@@ -57,7 +60,8 @@ responses are never cached by the service worker. Failed navigation uses a
 self-contained public offline screen, because the live application cannot
 truthfully operate without current server data.
 
-The later App Store/Play Store phase must reuse `app/` as the only web source.
+The App Store/Play Store phase was activated by the owner on 2026-08-01 and
+must reuse `app/` as the only web source.
 It must add native identifiers, verified universal/app links, signing,
 permission copy, secure credential handling and physical-device acceptance.
 Those store-specific assets are intentionally not represented as complete now.

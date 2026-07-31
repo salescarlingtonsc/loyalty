@@ -188,8 +188,17 @@ All automated credentials must come from a non-committed test-secret mechanism.
   canceled outcomes render explicit failure copy.
 - Staff fixtures remain Olivia, Maya, Farah, Chen and Aisha. Adding or removing
   any of them changes permissions/scheduling but never the subscription total.
-- GST remains unset in the fixture unless independent registration evidence is
-  supplied; incorporation alone is not GST-registration proof.
+- Nestly operator GST registration is `false`; every V125 subscription invoice
+  has SGD 0.00 tax and total equals subtotal. The fixture Stripe Prices use
+  explicit `exclusive` tax behavior and Checkout automatic tax is disabled.
+  An inclusive/unspecified Price, automatic-tax request, or non-zero provider
+  tax total is rejected/fail-closed. Incorporation alone is not
+  GST-registration proof.
+- Overdue boundary: an invoice due `2026-08-01T00:00:00Z` leaves owner access
+  open through `2026-08-14T23:59:59Z` (day 13) and pauses it from
+  `2026-08-15T00:00:00Z` (day 14). `CUS-MEI` retains the same points, packages,
+  history and customer access throughout. A causally newer paid event restores
+  owner access and advances `next_payment_at`; duplicate/stale events do not.
 
 ## Required state variations
 

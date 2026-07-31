@@ -78,7 +78,7 @@ begin
   begin
     perform public.preview_billing_plan_catalog_v124(
       'annual','price_v124_annual_base','price_v124_annual_capacity',
-      'unspecified',v_effective
+      'exclusive',v_effective
     );
   exception when insufficient_privilege then v_denied:=true;
   end;
@@ -88,7 +88,7 @@ begin
   perform pg_temp.as_v124_user(v_owner);
   v_preview:=public.preview_billing_plan_catalog_v124(
     'annual','price_v124_annual_base','price_v124_annual_capacity',
-    'unspecified',v_effective
+    'exclusive',v_effective
   );
   if (v_preview->>'base_amount_cents')::integer<>118800
      or (v_preview->>'capacity_block_amount_cents')::integer<>12000
@@ -97,12 +97,12 @@ begin
   end if;
   v_result:=public.confirm_billing_plan_catalog_v124(
     'annual','price_v124_annual_base','price_v124_annual_capacity',
-    'unspecified',v_effective,v_preview->>'confirmation_hash',
+    'exclusive',v_effective,v_preview->>'confirmation_hash',
     'rollback-only annual V124 activation'
   );
   v_preview:=public.preview_billing_plan_catalog_v124(
     'monthly','price_v124_monthly_base','price_v124_monthly_capacity',
-    'unspecified',v_effective
+    'exclusive',v_effective
   );
   if (v_preview->>'base_amount_cents')::integer<>14900
      or (v_preview->>'capacity_block_amount_cents')::integer<>1000 then
@@ -110,7 +110,7 @@ begin
   end if;
   perform public.confirm_billing_plan_catalog_v124(
     'monthly','price_v124_monthly_base','price_v124_monthly_capacity',
-    'unspecified',v_effective,v_preview->>'confirmation_hash',
+    'exclusive',v_effective,v_preview->>'confirmation_hash',
     'rollback-only monthly V124 activation'
   );
 
@@ -144,7 +144,7 @@ begin
   ) values (
     'SGD','annual',12,'price_v124_annual_base_rollover',
     'price_v124_annual_capacity_rollover',118800,12000,
-    'unspecified',now(),v_owner
+    'exclusive',now(),v_owner
   );
 
   perform pg_temp.as_v124_user(null,'service_role');

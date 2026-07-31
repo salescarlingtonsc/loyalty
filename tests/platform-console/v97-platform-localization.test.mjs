@@ -299,8 +299,8 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   const explicit=[...new Set([...source.matchAll(/\bpt\((['"])(.*?)\1/g)].map(match=>match[2]))];
   const metadata=[...new Set([...source.matchAll(/\b(?:title|subtitle|description|caption|label|hint|placeholder|body|message|actionLabel|submitLabel)\s*:\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
   const announcements=[...new Set([...source.matchAll(/\.announce\(\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
-  assert.equal(explicit.length,585,'update the audited explicit-copy inventory when adding runtime UI');
-  assert.equal(metadata.length,463,'update the audited CUI metadata inventory when adding UI metadata');
+  assert.equal(explicit.length,589,'update the audited explicit-copy inventory when adding runtime UI');
+  assert.equal(metadata.length,462,'update the audited CUI metadata inventory when adding UI metadata');
   assert.equal(announcements.length,28,'update the audited static announcement inventory when adding announcements');
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');

@@ -136,6 +136,14 @@ order. A hidden navigation item without server-side denial is a failure.
     cannot alter that command's snapshotted Stripe prices. Terminal failed or
     canceled commands display failure and require a new request rather than
     claiming successful submission.
+14. While Nestly is not GST-registered, owner checkout, invoice history and
+    platform billing all show `GST not charged` with SGD 0.00 tax; amount due
+    equals subtotal. Catalogue activation rejects inclusive/unspecified Stripe
+    Prices and Checkout keeps automatic tax disabled.
+15. A provider invoice due on day 0 produces one daily notice; owner access is
+    still open through day 13 and pauses at day 14. Customer value/history and
+    customer access remain intact. A causally newer paid event restores owner
+    access and the platform/owner next-payment projection after refresh.
 
 ## Journey J — navigation, language, and mobile resilience
 
@@ -146,6 +154,12 @@ order. A hidden navigation item without server-side denial is a failure.
 4. Run critical customer and staff paths at 390px and 412px viewports.
 5. Verify touch targets, keyboard overlap, safe areas, camera denial/retry,
    notification denial, and passkey cancel/unsupported behavior.
+6. Build the one-source native iOS and Android projects, verify universal/app
+   links and permission copy, and run cold start, authentication, QR, offline,
+   resume and update flows on physical devices before store submission.
+7. Record Apple/Google signing teams, bundle/application IDs, archive hashes,
+   store privacy/support metadata and review results. A simulator, PWA install,
+   or unsigned wrapper alone does not satisfy publication readiness.
 
 ## Journey K — owner promotion to customer programme
 

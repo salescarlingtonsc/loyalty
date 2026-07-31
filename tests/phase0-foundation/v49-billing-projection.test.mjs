@@ -70,7 +70,7 @@ test('v49 rollback suite checks ACL, projection math, owner access, and non-owne
 test('owner-only Settings uses the V124 projection and generic retryable errors without raw database text',()=>{
   const billing=section('async function loadBillingConfig()','/* ---------- customer sign-up QR ---------- */');
   assert.match(app,/if\(pageKey==='settings'&&S\.myRole!=='owner'\)[\s\S]*Only the owner can open Settings\./);
-  assert.match(billing,/sb\.rpc\('get_business_billing_v124',\{p_business:S\.biz\.id\}\)/);
+  assert.match(billing,/sb\.rpc\('get_business_billing_v125',\{p_business:S\.biz\.id\}\)/);
   assert.match(billing,/const money=c=>'SGD '/);
   assert.match(billing,/capacity_block_amount_cents/);
   assert.doesNotMatch(billing,/S\.biz\?\.currency|S\.biz\.currency/);

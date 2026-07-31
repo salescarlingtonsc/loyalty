@@ -88,12 +88,16 @@ test('canonical Nestly origins remain exact and cannot expand to arbitrary origi
   assert.deepEqual(publicGatewayOrigins(''), [
     'https://nestly.asia',
     'https://www.nestly.asia',
-  ], 'an unset dashboard secret must not block the two canonical production origins');
+    'capacitor://localhost',
+    'https://localhost',
+  ], 'an unset dashboard secret must retain canonical web and packaged native origins');
   assert.deepEqual(publicGatewayOrigins(
     'https://www.nestly.asia/, https://preview.example, https://preview.example'
   ), [
     'https://nestly.asia',
     'https://www.nestly.asia',
+    'capacitor://localhost',
+    'https://localhost',
     'https://preview.example',
   ]);
   assert.deepEqual(normalizeOriginList(JSON.stringify([
@@ -450,7 +454,7 @@ test('booking capabilities are scrubbed from current history and change retries 
   const scrub = app.indexOf("history.replaceState(null,'',`${location.pathname}${location.search}#/b/", portalStart);
   assert.ok(portalStart >= 0 && scrub > portalStart && scrub < firstAwait);
   assert.doesNotMatch(app, /history\.replaceState\(null,'',manageUrl\)/);
-  assert.match(app, /const manageUrl=`\$\{location\.origin\}/);
+  assert.match(app, /const manageUrl=publicAppUrl\(`b\/\$\{encodeURIComponent\(slug\)\}\?manage=/);
   assert.match(app, /if\(!changeAttempt\|\|changeAttempt\.key!==key\)changeAttempt=\{key,id:crypto\.randomUUID\(\)\}/);
   assert.match(app, /submission_id:changeAttempt\.id/);
   assert.match(app, /changeAttempt=null/);

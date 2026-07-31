@@ -50,19 +50,19 @@ if (!product) {
 const definitions = [
   {
     role: 'base', cadence: 'monthly', lookupKey: 'nestly_v124_monthly_base_sgd',
-    unitAmount: 14900, interval: 'month', nickname: 'Nestly monthly base — 1,000 customers',
+    unitAmount: 14900, interval: 'month', tax_behavior: 'exclusive', nickname: 'Nestly monthly base — 1,000 customers',
   },
   {
     role: 'capacity', cadence: 'monthly', lookupKey: 'nestly_v124_monthly_capacity_1000_sgd',
-    unitAmount: 1000, interval: 'month', nickname: 'Nestly monthly — additional 1,000 customers',
+    unitAmount: 1000, interval: 'month', tax_behavior: 'exclusive', nickname: 'Nestly monthly — additional 1,000 customers',
   },
   {
     role: 'base', cadence: 'annual', lookupKey: 'nestly_v124_annual_base_sgd',
-    unitAmount: 118800, interval: 'year', nickname: 'Nestly annual base — 1,000 customers',
+    unitAmount: 118800, interval: 'year', tax_behavior: 'exclusive', nickname: 'Nestly annual base — 1,000 customers',
   },
   {
     role: 'capacity', cadence: 'annual', lookupKey: 'nestly_v124_annual_capacity_1000_sgd',
-    unitAmount: 12000, interval: 'year', nickname: 'Nestly annual — additional 1,000 customers',
+    unitAmount: 12000, interval: 'year', tax_behavior: 'exclusive', nickname: 'Nestly annual — additional 1,000 customers',
   },
 ];
 
@@ -80,15 +80,17 @@ for (const definition of definitions) {
       && price.type === 'recurring'
       && price.recurring?.interval === definition.interval
       && price.recurring?.interval_count === 1
-      && price.recurring?.usage_type === 'licensed';
+      && price.recurring?.usage_type === 'licensed'
+      && price.tax_behavior === 'exclusive';
     if (!matches) {
-      throw new Error(`Existing Stripe lookup key ${definition.lookupKey} conflicts with V124.`);
+      throw new Error(`Existing Stripe lookup key ${definition.lookupKey} conflicts with reviewed V125 no-GST pricing.`);
     }
   } else {
     price = await api('POST', '/v1/prices', {
       product: product.id,
       currency: 'sgd',
       unit_amount: String(definition.unitAmount),
+      tax_behavior: definition.tax_behavior,
       lookup_key: definition.lookupKey,
       nickname: definition.nickname,
       'recurring[interval]': definition.interval,

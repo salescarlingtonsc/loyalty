@@ -8,6 +8,12 @@ import {
   requiredEnv,
 } from '../_shared/billing-service.ts';
 import { billingCommandFailureDisposition } from '../_shared/billing-command-recovery.ts';
+import {
+  enforceProviderNoTaxV125,
+  stripePendingUpdateParamsV125,
+  stripeSubscriptionHasNoTaxV125,
+  stripeSubscriptionMatchesCommandV125,
+} from '../_shared/billing-tax-policy-v125.ts';
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -27,59 +33,14 @@ function returnOrigin(): string {
   return configured.origin;
 }
 
-function subscriptionMatchesRecovery(
-  subscription: Stripe.Subscription,
-  commandType: string,
-  data: Record<string, unknown>,
-): boolean {
-  if (commandType === 'cancel_at_period_end') {
-    return subscription.cancel_at_period_end === true;
-  }
-  if (commandType === 'resume') {
-    return subscription.cancel_at_period_end === false;
-  }
-  if (!['change_cadence', 'change_capacity'].includes(commandType)) return false;
-  const capacityModel = data.pricing_model === 'v124_customer_capacity';
-  if (capacityModel && subscription.pending_update) return false;
-  const baseItem = subscription.items.data.find(
-    (item) => item.id === String(data.provider_base_item_id || ''),
-  );
-  if (
-    !baseItem ||
-    baseItem.price.id !== String(data.provider_base_price_id || '') ||
-    baseItem.quantity !== 1
-  ) {
-    return false;
-  }
-  const extraItemQuantity = Number(
-    capacityModel ? data.extra_capacity_blocks || 0 : data.extra_seats || 0,
-  );
-  const extraItemId = capacityModel
-    ? data.provider_capacity_item_id
-    : data.provider_seat_item_id;
-  const extraPriceId = capacityModel
-    ? data.provider_capacity_price_id
-    : data.provider_seat_price_id;
-  const providerExtraItemId = extraItemId
-    ? String(extraItemId)
-    : '';
-  const extraItem = providerExtraItemId
-    ? subscription.items.data.find((item) => item.id === providerExtraItemId)
-    : undefined;
-  return extraItemQuantity > 0
-    ? Boolean(
-        extraItem &&
-          extraItem.price.id === String(extraPriceId || '') &&
-          extraItem.quantity === extraItemQuantity,
-      )
-    : !extraItem;
-}
-
 async function validateV124Prices(
   stripe: Stripe,
   data: Record<string, unknown>,
 ): Promise<void> {
   if (data.pricing_model !== 'v124_customer_capacity') return;
+  if (data.tax_behavior !== 'exclusive') {
+    throw new Error('Nestly is not GST-registered; catalogue tax behavior must be exclusive');
+  }
   const cadence = String(data.requested_cadence || '');
   const expectedInterval = cadence === 'annual' ? 'year' : 'month';
   const expectedBase = Number(data.base_amount_cents);
@@ -98,7 +59,8 @@ async function validateV124Prices(
     price.unit_amount === expectedAmount &&
     price.recurring?.interval === expectedInterval &&
     price.recurring?.interval_count === 1 &&
-    price.recurring?.usage_type === 'licensed';
+    price.recurring?.usage_type === 'licensed' &&
+    price.tax_behavior === 'exclusive';
   if (!valid(basePrice, expectedBase) || !valid(capacityPrice, expectedCapacity)) {
     throw new Error('Stripe prices do not match the reviewed V124 catalogue');
   }
@@ -120,7 +82,7 @@ async function retrieveRecoveredProviderResult(
     ['change_cadence', 'change_capacity', 'cancel_at_period_end', 'resume'].includes(commandType)
   ) {
     const subscription = await stripe.subscriptions.retrieve(providerObjectId);
-    return subscriptionMatchesRecovery(subscription, commandType, data)
+    return stripeSubscriptionMatchesCommandV125(subscription, commandType, data)
       ? { providerObjectId: subscription.id }
       : null;
   }
@@ -217,6 +179,16 @@ Deno.serve(async (req) => {
     ) {
       providerCallStarted = true;
       try {
+        if (
+          ['change_cadence', 'change_capacity', 'cancel_at_period_end', 'resume']
+            .includes(commandType)
+        ) {
+          await enforceProviderNoTaxV125(
+            stripe,
+            String(data.prior_provider_object_id),
+            idempotencyKey,
+          );
+        }
         const recovered = await retrieveRecoveredProviderResult(
           stripe,
           commandType,
@@ -259,6 +231,7 @@ Deno.serve(async (req) => {
           customer: customerId,
           client_reference_id: businessId,
           line_items: lineItems,
+          automatic_tax: { enabled: false },
           success_url: `${origin}/#/settings?billing=processing`,
           cancel_url: `${origin}/#/settings?billing=canceled`,
           metadata: {
@@ -268,6 +241,7 @@ Deno.serve(async (req) => {
             customer_capacity: String(requestedCustomerCapacity || ''),
           },
           subscription_data: {
+            default_tax_rates: [],
             metadata: {
               business_id: businessId,
               cadence,
@@ -300,6 +274,12 @@ Deno.serve(async (req) => {
       if (!subscriptionId || !data.provider_base_item_id) {
         throw new Error('Stripe subscription items are not linked');
       }
+      providerCallStarted = true;
+      await enforceProviderNoTaxV125(
+        stripe,
+        subscriptionId,
+        idempotencyKey,
+      );
       const capacityModel = data.pricing_model === 'v124_customer_capacity';
       const extraItemQuantity = Number(
         capacityModel ? data.extra_capacity_blocks || 0 : data.extra_seats || 0,
@@ -310,15 +290,15 @@ Deno.serve(async (req) => {
       const extraPriceId = capacityModel
         ? data.provider_capacity_price_id
         : data.provider_seat_price_id;
-      const items: Stripe.SubscriptionUpdateParams.Item[] = [
-        {
+      const itemsById = new Map<string, Stripe.SubscriptionUpdateParams.Item>();
+      itemsById.set(String(data.provider_base_item_id), {
           id: String(data.provider_base_item_id),
           price: String(data.provider_base_price_id),
           quantity: 1,
-        },
-      ];
+        });
       if (extraItemId) {
-        items.push(
+        itemsById.set(
+          String(extraItemId),
           extraItemQuantity > 0
             ? {
                 id: String(extraItemId),
@@ -328,42 +308,63 @@ Deno.serve(async (req) => {
             : { id: String(extraItemId), deleted: true },
         );
       } else if (extraItemQuantity > 0) {
-        items.push({
+        itemsById.set('__new_capacity_item__', {
           price: String(extraPriceId),
           quantity: extraItemQuantity,
         });
       }
-      providerCallStarted = true;
+      const items = [...itemsById.values()];
+      const metadata = {
+        business_id: businessId,
+        cadence,
+        pricing_model: String(data.pricing_model || 'legacy_seat'),
+        customer_capacity: String(requestedCustomerCapacity || ''),
+      };
       const subscription = await stripe.subscriptions.update(
         subscriptionId,
-        {
-          items,
-          // Legacy v77 remains proration_behavior: 'none'. V124 upgrades invoice now.
-          proration_behavior: capacityModel ? 'always_invoice' : 'none',
-          payment_behavior: capacityModel ? 'pending_if_incomplete' : undefined,
-          metadata: {
-            business_id: businessId,
-            cadence,
-            pricing_model: String(data.pricing_model || 'legacy_seat'),
-            customer_capacity: String(requestedCustomerCapacity || ''),
-          },
-        },
+        capacityModel
+          ? stripePendingUpdateParamsV125(items, metadata)
+          : { items, proration_behavior: 'none', metadata },
         { idempotencyKey },
       );
+      const verifiedSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+      if (!stripeSubscriptionHasNoTaxV125(verifiedSubscription)) {
+        throw new Error('Stripe subscription retained a tax configuration');
+      }
       providerObjectId = subscription.id;
       providerConfirmationPending =
-        capacityModel && subscription.pending_update !== null;
+        capacityModel && verifiedSubscription.pending_update !== null;
+      if (
+        !providerConfirmationPending &&
+        !stripeSubscriptionMatchesCommandV125(verifiedSubscription, commandType, data)
+      ) {
+        throw new Error('Stripe subscription does not match the requested command');
+      }
     } else if (
       !providerResolved &&
       (commandType === 'cancel_at_period_end' || commandType === 'resume')
     ) {
       if (!subscriptionId) throw new Error('Stripe subscription is not linked');
       providerCallStarted = true;
+      await enforceProviderNoTaxV125(
+        stripe,
+        subscriptionId,
+        idempotencyKey,
+      );
       const subscription = await stripe.subscriptions.update(
         subscriptionId,
-        { cancel_at_period_end: commandType === 'cancel_at_period_end' },
+        {
+          cancel_at_period_end: commandType === 'cancel_at_period_end',
+        },
         { idempotencyKey },
       );
+      const verifiedSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+      if (!stripeSubscriptionHasNoTaxV125(verifiedSubscription)) {
+        throw new Error('Stripe subscription retained a tax configuration');
+      }
+      if (!stripeSubscriptionMatchesCommandV125(verifiedSubscription, commandType, data)) {
+        throw new Error('Stripe subscription does not match the requested command');
+      }
       providerObjectId = subscription.id;
     } else if (!providerResolved) {
       throw new Error('billing command is not executable');

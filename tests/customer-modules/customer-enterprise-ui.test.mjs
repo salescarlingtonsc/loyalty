@@ -205,7 +205,7 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
   assert.match(mobile,/\.settings-page \.row\{[^}]*flex-wrap:wrap[^}]*width:100%/s);
   assert.match(mobile,/\.settings-page \.row>input,\.settings-page \.row>select\{[^}]*width:100%[^}]*max-width:100%!important/s);
   assert.match(app,/\.settings-choice\{[^}]*min-height:44px/s);
-  assert.match(settings,/<p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="\$\{location\.origin\}\$\{location\.pathname\}#\/b\/\$\{S\.biz\.slug\}">/);
+  assert.match(settings,/<p class="small portal-link-row"><a class="portal-link" target="_blank" rel="noopener noreferrer" href="\$\{publicAppUrl\(`/);
   assert.match(app,/\.portal-link\{[^}]*display:flex[^}]*width:100%[^}]*max-width:100%[^}]*min-height:44px[^}]*overflow-wrap:anywhere[^}]*word-break:break-word/s);
   assert.match(mobile,/\.portal-link-row,\.portal-link\{[^}]*width:100%[^}]*max-width:100%[^}]*min-width:0/s);
   assert.ok(contrast('#A64020','#FFFFFF')>=4.5,'portal URL text must meet WCAG AA on white');
@@ -222,7 +222,7 @@ test('customer sign-up join URL is a safe 44px target without 390px overflow',()
   assert.match(signup,/business_get_customer_join_qr_status_v91/);
   assert.match(signup,/business_ensure_customer_join_qr_v91/);
   assert.match(signup,/statusResult\.data\?\.created===true&&statusResult\.data\?\.join_token[\s\S]*showJoinQr\(statusResult\.data\)/);
-  assert.match(signup,/#\/join\?token=\$\{encodeURIComponent\(data\.join_token\)\}/);
+  assert.match(signup,/publicAppUrl\(`join\?token=\$\{encodeURIComponent\(data\.join_token\)\}`\)/);
   assert.match(app,/\.portal-link\{[^}]*display:flex[^}]*width:100%[^}]*max-width:100%[^}]*min-height:44px[^}]*overflow-wrap:anywhere[^}]*word-break:break-word/s);
   assert.match(mobile,/\.portal-link-row,\.portal-link\{[^}]*width:100%[^}]*max-width:100%[^}]*min-width:0/s);
 });
