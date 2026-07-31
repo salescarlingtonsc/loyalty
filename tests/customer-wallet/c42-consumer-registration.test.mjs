@@ -129,11 +129,13 @@ test('customer authentication defaults to password while signup and recovery alo
   assert.doesNotMatch(customerRoute, /id="customerOtpSend"[^>]*\$\{smsAvailable\?'disabled':''\}/,
     'an unavailable SMS provider must not render an enabled button without a handler');
   assert.match(customerRoute, /id="customerDob" type="date"/);
-  assert.match(customerRoute, /id="customerTerms" type="checkbox"/);
-  assert.match(customerRoute, /id="customerPrivacy" type="checkbox"/);
-  assert.doesNotMatch(customerRoute, /id="customerTerms"[^>]*\schecked/i);
-  assert.doesNotMatch(customerRoute, /id="customerPrivacy"[^>]*\schecked/i);
-  assert.match(customerRoute, /This does not opt me into messages from any business/i);
+  assert.match(customerRoute, /id="customerSignupLegal" type="checkbox"/);
+  assert.match(customerRoute, /id="customerLegal" type="checkbox"/);
+  assert.doesNotMatch(customerRoute, /id="customerSignupLegal"[^>]*checked=["']checked["']/i);
+  assert.match(customerRoute, /selected partners as described in the Privacy Notice/i);
+  assert.match(customerRoute, /I can withdraw this consent at any time/i);
+  assert.match(customerRoute, /if\(!\$\('customerSignupLegal'\)\.checked\)/);
+  assert.match(customerRoute, /if\(!legalInput\.checked\)/);
   assert.match(customerRoute, /Resend available in 30 seconds/);
   assert.match(customerRoute, /customer_register_verified_phone/);
   assert.match(app, /customer_join_business_from_qr_v89/);

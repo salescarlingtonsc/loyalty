@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nestly V120 staff blocked-time visual acceptance</title>
+<style>
+:root{--bg:#F4F2EE;--card:#fff;--ink:#17161A;--muted:#6B6673;--line:#EAE6DF;--hair:rgba(23,22,26,.06);--coral:#C24135;--red:#9D352C;--tint:#FFF0EC;--r:18px;--r-sm:12px;--shadow:0 1px 2px rgba(23,22,26,.04),0 4px 12px rgba(23,22,26,.045);--shadow-lg:0 2px 6px rgba(23,22,26,.05),0 18px 44px rgba(23,22,26,.10);--sf:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14.5px var(--sf)}button,input,select{font:inherit}button{cursor:pointer}.main{padding:28px;max-width:1180px;margin:auto}.topbar{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px}.topbar h1{margin:0;font-size:1.85rem}.muted{color:var(--muted)}.small{font-size:12.5px}.row{display:flex;align-items:center;gap:10px}.spacer{flex:1}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;border:0;border-radius:100px;background:linear-gradient(135deg,#C24135,#9D352C);color:#fff;font-weight:650}.btn.ghost{border:1px solid #817B88;background:#fff;color:var(--ink);box-shadow:var(--shadow)}.btn.sm{padding:8px 14px}.card{padding:22px;border:1px solid var(--hair);border-radius:var(--r);background:#fff;box-shadow:var(--shadow)}.appointment-primary-action{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:14px}.appointment-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.appointment-toolbar select{width:auto}.qbtn{min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}.qbtn.act{border-color:var(--coral);background:var(--tint);color:var(--coral)}select,input{width:100%;min-height:44px;padding:11px 13px;border:1px solid #817B88;border-radius:var(--r-sm);background:#fff;color:var(--ink)}label{display:block;margin:16px 0 6px;color:var(--muted);font-size:12.5px;font-weight:650}.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}.day-timeline-intro{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0 8px}.day-timeline-scroll{max-height:72vh;overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}.day-timeline{display:grid;grid-template-columns:64px repeat(2,minmax(190px,1fr));grid-template-rows:auto 616px;min-width:444px}.day-timeline-head{position:sticky;top:0;z-index:8;background:#FBFAF8;border-bottom:1px solid var(--line)}.day-team-head{position:sticky;top:0;z-index:7;display:flex;align-items:center;gap:10px;min-height:72px;padding:10px 12px;border-left:1px solid var(--hair);border-bottom:1px solid var(--line);background:#FBFAF8}.day-team-head h3,.day-team-head p{margin:0}.day-team-avatar{display:grid;place-items:center;width:38px;height:38px;border:3px solid var(--staff-color);border-radius:50%;background:#fff;font-weight:800}.day-time-axis{position:sticky;left:0;z-index:5;border-right:1px solid var(--line);background:#fff}.day-time-axis span{position:absolute;right:8px;transform:translateY(-8px);font-size:10.5px;color:var(--muted)}.day-team-track{position:relative;border-right:1px solid var(--hair);background-image:linear-gradient(to bottom,transparent calc(100% - 1px),var(--line) 0);background-size:100% 88px}.day-schedule-window{position:absolute;inset:0 3px;border:1px solid #CFE6D8;border-radius:8px;background:#F3FBF6}.day-slot-button{position:absolute;left:7px;right:7px;z-index:2;min-height:44px;border:1px dashed #83C59E;border-radius:7px;background:#F0FAF4;color:#276840;font-size:11px;font-weight:750}.day-blocked-window{position:absolute;left:5px;right:5px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;padding:5px 7px;border:1px solid #C9B9B5;border-left:4px solid #7B6D69;border-radius:7px;background:repeating-linear-gradient(135deg,#F2EFED,#F2EFED 8px,#E7E1DE 8px,#E7E1DE 16px);color:#403936;font-size:10.5px}.day-blocked-window b,.day-blocked-window span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.day-blocked-window button{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--red);font-weight:750}.day-timeline-event{position:absolute;left:6px;right:6px;z-index:6;min-height:44px;padding:6px 8px;border:1px solid #8CA7D0;border-left:4px solid #5579AA;border-radius:7px;background:#EEF3FA;text-align:left}.day-timeline-event span,.day-timeline-event b,.day-timeline-event small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(23,22,26,.36)}.modal[hidden]{display:none}.modal-card{width:min(520px,100%);max-height:calc(100dvh - 40px);overflow:auto;padding:24px;border-radius:24px;background:#fff;box-shadow:var(--shadow-lg)}.modal-card h2,.modal-card p{margin:0}.err{margin-top:12px;padding:10px 14px;border-radius:var(--r-sm);background:#FBEAE7;color:#C0392B}.cui-empty{display:grid;justify-items:center;gap:8px;padding:52px 20px;text-align:center;color:var(--muted)}.cui-empty h2,.cui-empty p{margin:0}
+@media(max-width:560px){.main{padding:18px}.appointment-primary-action .btn{width:100%}.split{grid-template-columns:1fr}.topbar h1{font-size:1.55rem}.modal{padding:10px}.modal-card{max-height:calc(100dvh - 20px);padding:20px}}
+</style>
+</head>
+<body>
+<main class="main">
+  <header class="topbar"><div><h1>Appointments</h1><p class="muted small">See today’s appointments by team member and add a booking in a few taps.</p></div></header>
+  <div class="appointment-primary-action" id="actions"><button class="btn ghost" id="blockButton">Block time</button><button class="btn">New appointment</button></div>
+  <section class="card">
+    <div class="appointment-toolbar"><b>Calendar</b><span class="spacer"></span><select aria-label="Calendar branch"><option>Orchard</option></select><select aria-label="Book service"><option>Spa Ritual · 60 min</option></select><button class="qbtn act">Day</button><button class="qbtn">Week</button><button class="qbtn">List</button></div>
+    <div id="status"></div>
+    <div id="calendar">
+      <div class="day-timeline-intro"><p class="small muted">Friday, 31 July 2026 · Singapore time</p><p class="small">Choose a green start time for Spa Ritual 60 · 60 min.</p></div>
+      <div class="day-timeline-scroll"><div class="day-timeline">
+        <div class="day-timeline-head"></div>
+        <div class="day-team-head"><span class="day-team-avatar" style="--staff-color:#C24135">C</span><div><h3>Chen Wei</h3><p class="small">09:00–18:00 · 1 appointment</p></div></div>
+        <div class="day-team-head"><span class="day-team-avatar" style="--staff-color:#5579AA">A</span><div><h3>Aisha Rahman</h3><p class="small">10:00–19:00 · 0 appointments</p></div></div>
+        <div class="day-time-axis"><span style="top:0">09:00</span><span style="top:88px">10:00</span><span style="top:176px">11:00</span><span style="top:264px">12:00</span><span style="top:352px">13:00</span><span style="top:440px">14:00</span><span style="top:528px">15:00</span><span style="top:616px">16:00</span></div>
+        <div class="day-team-track"><div class="day-schedule-window"></div><button class="day-slot-button" style="top:0">09:00 · Book</button><div class="day-blocked-window" style="top:440px;height:88px"><span><b>14:00–15:00</b>Supplier training</span><button id="removeButton">Remove</button></div><button class="day-timeline-event" style="top:528px;height:88px"><span>15:00–16:00</span><b>Mei Lin</b><small>Spa Ritual 60</small></button></div>
+        <div class="day-team-track"><div class="day-schedule-window"></div><button class="day-slot-button" style="top:0">10:00 · Book</button><button class="day-slot-button" style="top:440px">15:00 · Book</button></div>
+      </div></div>
+    </div>
+  </section>
+</main>
+<div class="modal" id="blockModal" role="dialog" aria-modal="true" aria-labelledby="blockTitle" hidden>
+  <div class="modal-card"><div class="row"><div><h2 id="blockTitle">Block time</h2><p class="muted small">Mark one team member unavailable in this branch. Customers never see the reason.</p></div><span class="spacer"></span><button class="btn ghost sm" id="closeModal">Close</button></div>
+    <label>Team member<select><option>Chen Wei</option><option>Aisha Rahman</option></select></label>
+    <label>Date<input type="date" value="2026-07-31"></label>
+    <div class="split"><label>Start<input type="time" value="14:00"></label><label>End<input type="time" value="15:00"></label></div>
+    <label>Reason (optional)<input value="Supplier training" maxlength="160"></label>
+    <div id="modalError"></div><div class="row" style="margin-top:16px"><span class="spacer"></span><button class="btn ghost" id="cancelModal">Cancel</button><button class="btn" id="saveModal">Save block</button></div>
+  </div>
+</div>
+<script>
+const params=new URLSearchParams(location.search),state=params.get('state')||'normal';
+const modal=document.getElementById('blockModal'),status=document.getElementById('status');
+const showModal=()=>modal.hidden=false,hideModal=()=>modal.hidden=true;
+blockButton.onclick=showModal;closeModal.onclick=hideModal;cancelModal.onclick=hideModal;
+saveModal.onclick=()=>{modalError.innerHTML=state==='save-error'?'<div class="err">This time is already blocked. Change the time or remove the existing block.</div>':'';if(state!=='save-error')hideModal()};
+removeButton.onclick=()=>{status.innerHTML=state==='remove-error'?'<div class="err">Blocked time could not be removed. Retry is safe.</div>':'<p class="small muted">Blocked time removed.</p>'};
+if(state==='modal'||state==='save-error')showModal();
+if(state==='readonly'){actions.remove();removeButton.remove()}
+if(state==='empty'){calendar.innerHTML='<div class="cui-empty"><h2>No team member assigned</h2><p>Assign an active team member to this branch before blocking time.</p></div>'}
+if(state==='error'){calendar.innerHTML='<div class="cui-empty"><h2>Calendar unavailable</h2><p>Appointments and blocked times could not be loaded.</p><button class="btn ghost">Try again</button></div>'}
+</script>
+</body>
+</html>

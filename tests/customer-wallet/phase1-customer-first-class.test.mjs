@@ -29,6 +29,8 @@ test('root is customer-first and business sign-in is a separate clean entry path
   assert.match(auth,/class="entry-path-switch" aria-label="Account type"/);
   assert.match(auth,/href="\/business" aria-current="page"/);
   assert.match(auth,/href="\/"/);
+  assert.match(auth,/<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessAuthTitle">/);
+  assert.match(auth,/<h1 id="businessAuthTitle"[^>]*>\$\{admin\?'Super admin sign in':mode==='in'\?'Sign in':'Create your account'\}<\/h1>/);
 
   const routing=section('function entryRouteForLocation','/* ---------- customer wallet ---------- */');
   assert.match(routing,/if\(cleanPath==='\/business'\)return '#\/business'/);

@@ -282,7 +282,7 @@ test('v97 localization preserves merchant/customer records even when values coll
 
 test('v97 named templates are an exact reviewed inventory with locale and placeholder parity',()=>{
   const keys=Object.keys(templateCopy);
-  assert.equal(keys.length,116,'mixed-interface interpolation inventory changed without review');
+  assert.equal(keys.length,117,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -358,7 +358,7 @@ test('v97 exhaustively classifies signed-in workspace interpolated accessibility
     'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
     'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
     'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
-    'calendarAppointment','removeFromWaitlist','joinedAt',
+    'calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   ];
   assert.deepEqual([...interpolatedAttributeInventory].sort(),expected.sort());
   assert.equal(new Set(interpolatedAttributeInventory).size,interpolatedAttributeInventory.length);

@@ -721,7 +721,8 @@ begin
   ) values(
     v_business,'cus_v94','in_v94','SGD','open',false,
     10000,900,10900,10900,0,10900,
-    '2026-07-01 00:00:00+08',false,now(),10,'evt_v94_due'
+    '2026-07-01 00:00:00+08',false,
+    '2026-07-01 00:00:00+00',10,'evt_v94_due'
   );
   perform pg_temp.as_v94_user(v_super);
   v_result:=public.run_subscription_lifecycle_v94('2026-07-01');

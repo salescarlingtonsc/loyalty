@@ -67,8 +67,8 @@ test('frontline Quick earn minimizes choices and keeps hardened sale attribution
   assert.match(till,/^\s*if\(!\/\^\\d\+\(\?:\\\.\\d\{1,2\}\)\?\$\/\.test\(rawAmount\)\)/m);
   assert.match(till,/keydown[\s\S]*Enter[\s\S]*tConfirm/i);
   assert.doesNotMatch(till,/Points balance|Store credit|Visits/i);
-  assert.match(till,/Scan customer QR/);
-  assert.match(till,/openMerchantRedemptionScanner/);
+  assert.match(till,/Scan customer QR/,
+    'the intentionally added post-sale reward scanner must remain a clear, single-purpose action');
   assert.match(quick,/staff\.user_id=auth\.uid\(\)[\s\S]*p_staff is distinct from v_actor_staff/i);
   assert.match(quick,/p_idem is null or char_length\(btrim\(p_idem\)\) not between 8 and 200/i);
   assert.match(quick,/p_kind is distinct from 'quick_sale'/i);
@@ -79,21 +79,39 @@ test('frontline Quick earn minimizes choices and keeps hardened sale attribution
   assert.match(migration,/grant execute on function public\.record_sale_by_phone\(\s*uuid,text,integer,text,text,uuid,text,uuid,text\) to authenticated/i);
 });
 
-test('calendar UI exposes everyone or individual staff and never writes appointments directly', () => {
+test('calendar UI opens day-by-team, keeps week/list secondary, and never writes appointments directly', () => {
   const start = app.indexOf('async function appointmentsPage');
   const end = app.indexOf('/* ---------- waitlist',start);
   const calendar = app.slice(start,end);
   assert.match(calendar,/Everyone/);
-  assert.match(calendar,/Best available · fair rotation/);
+  assert.match(calendar,/Auto-assign · fair rotation/);
   assert.match(calendar,/suggest_appointment_staff_v47/);
   assert.match(calendar,/book_appointment_smart_v47/);
   assert.match(calendar,/set_appointment_status_v47/);
   assert.match(calendar,/next_best_slots/);
+  assert.match(calendar,/let view='day'/);
+  assert.match(calendar,/<button class="qbtn act" id="vDay">Day<\/button>/);
+  assert.match(calendar,/day-timeline/);
+  assert.match(calendar,/staff_hours/);
+  assert.match(calendar,/staff_off_days/);
+  assert.match(calendar,/branch_hours/);
+  assert.match(calendar,/branch_breaks/);
+  assert.match(calendar,/Working hours not set/);
+  assert.match(calendar,/day-schedule-window/);
+  assert.doesNotMatch(calendar,/No appointments scheduled[\s\S]{0,80}available/i);
   assert.match(calendar,/calendar-week/);
   assert.match(calendar,/calendar-agenda/);
   assert.match(calendar,/layoutCalendarDay[\s\S]*laneEnds[\s\S]*laneCount/i);
   assert.match(calendar,/left:calc\(\$\{left\}% \+ 3px\)[\s\S]*width:calc\(\$\{width\}% - 6px\)/i);
-  assert.match(calendar,/shortestDuration[\s\S]*Math\.max\(64,Math\.ceil\(44\*60\/shortestDuration\)\)/i);
+  assert.match(calendar,/selectedCalendarServiceTiming[\s\S]*duration_min[\s\S]*buffer_before_min[\s\S]*buffer_after_min/i);
+  assert.match(calendar,/availableCalendarStarts[\s\S]*hitsBreak[\s\S]*hitsAppointment/i);
+  assert.match(calendar,/inactiveAppointmentStatuses/);
+  assert.match(calendar,/No opening hours are recorded for this weekday/i);
+  assert.match(calendar,/const hourHeight=176/);
+  assert.match(calendar,/<div class="day-schedule-window"[\s\S]*aria-hidden="true"><\/div>/i);
+  assert.match(calendar,/<button type="button" class="day-slot-button"[\s\S]*data-day="\$\{day\}"[\s\S]*data-staff="\$\{column\.id\}"[\s\S]*data-time="\$\{minuteClock\(start\)\}"[\s\S]*data-service=/i);
+  assert.match(calendar,/querySelectorAll\('\.day-slot-button'\)[\s\S]*openNewAppointmentForm\(\{[\s\S]*date:button\.dataset\.day[\s\S]*staffId:button\.dataset\.staff[\s\S]*time:button\.dataset\.time[\s\S]*serviceId:button\.dataset\.service/i);
+  assert.match(calendar,/calendarService'\)\.onchange[\s\S]*loadCalendar/i);
   assert.match(calendar,/--calendar-hour-height:\$\{hourHeight\}px/i);
   assert.match(calendar,/height=\(to-from\)\/60\*hourHeight/i);
   assert.doesNotMatch(calendar,/from\('appointments'\)\.insert|from\('appointments'\)\.update|from\('appointments'\)\.delete/);
@@ -103,20 +121,18 @@ test('calendar UI exposes everyone or individual staff and never writes appointm
   assert.match(calendar,/const stillCurrent=bookingGate\.begin\(\)[\s\S]*if\(!stillCurrent\(\)\)return/i);
   assert.match(calendar,/const stillCurrent=statusGate\.begin\(\)[\s\S]*if\(!stillCurrent\(\)\)return/i);
   assert.match(calendar,/\['ad','at','astf','apDuration'\][\s\S]*invalidateFormRequests/i);
-  assert.match(calendar,/canComplete=canWrite&&hasRoleCapability\('create_sales'\)/);
+  assert.match(calendar,/canComplete=canWrite&&projectionCanWrite\(selectedProjection,'till'\)&&hasRoleCapability\('create_sales'\)/);
   assert.match(calendar,/appointmentOutcomeIsDue/);
   assert.match(calendar,/Complete and No-show become available after the appointment starts/i);
 });
 
-test('short adjacent appointments retain 44px targets without vertical overlap', () => {
-  for (const durationMinutes of [15,30,60]) {
-    const hourHeight=Math.max(64,Math.ceil(44*60/durationMinutes));
-    const renderedHeight=durationMinutes/60*hourHeight;
-    const nextStart=durationMinutes/60*hourHeight;
-    assert.ok(renderedHeight>=44,'adaptive hour scale must preserve a 44px target');
-    assert.equal(nextStart,renderedHeight,
-      `${durationMinutes}-minute adjacent events must not visually overlap`);
-  }
+test('15-minute day slots retain 44px targets without overlap', () => {
+  const hourHeight=176;
+  const slotMinutes=15;
+  const renderedHeight=slotMinutes/60*hourHeight;
+  const nextStart=slotMinutes/60*hourHeight;
+  assert.equal(renderedHeight,44,'a 15-minute exact start must have a 44px target');
+  assert.equal(nextStart,renderedHeight,'adjacent exact starts must not overlap');
 });
 
 test('completion is sales-authorized and preserves branch attribution', () => {

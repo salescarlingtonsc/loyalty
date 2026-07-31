@@ -41,6 +41,7 @@ declare
   v_invite jsonb;
   v_claim jsonb;
   v_token text;
+  v_b_token text;
   v_expired_token text := repeat('e', 64);
   v_link uuid;
   v_acl_table text;
@@ -89,19 +90,21 @@ begin
 
   perform pg_temp.as_customer(v_customer_a);
   v_identity_a := (public.customer_create_identity('v31-identity-a')->>'identity_id')::uuid;
-  if public.customer_claim_link_by_email(v_business_slug, 'v31-duplicate-email')->>'outcome'
-       is distinct from 'no_link_created' then
-    raise exception 'duplicate normalized email candidates were linked or enumerated';
-  end if;
+  begin
+    perform public.customer_claim_link_by_email(v_business_slug, 'v31-duplicate-email');
+    raise exception 'authenticated customer used the final service-only email claim seam';
+  exception when insufficient_privilege then null;
+  end;
   reset role;
   if exists (select 1 from public.customer_links where identity_id = v_identity_a) then
     raise exception 'duplicate normalized email candidates created a link';
   end if;
   perform pg_temp.as_customer(v_customer_a);
-  if public.customer_claim_link_by_email(v_business_slug, 'v31-duplicate-email')->>'outcome'
-       is distinct from 'no_link_created' then
-    raise exception 'email claim replay did not return the stored generic outcome';
-  end if;
+  begin
+    perform public.customer_claim_link_by_email(v_business_slug, 'v31-duplicate-email');
+    raise exception 'authenticated email claim replay bypassed the final ACL';
+  exception when insufficient_privilege then null;
+  end;
 
   -- Make a one-candidate email relationship and prove it cannot cross business.
   reset role;
@@ -131,19 +134,46 @@ begin
   if auth.uid() is distinct from v_customer_b then
     raise exception 'v31 customer session did not switch to the expected auth user';
   end if;
-  v_claim := public.customer_claim_link_by_email(
-    v_business_slug, 'v31-single-match');
+  begin
+    perform public.customer_claim_link_by_email(v_business_slug, 'v31-single-match');
+    raise exception 'verified email enabled an authenticated self-link';
+  exception when insufficient_privilege then null;
+  end;
+  reset role;
+  if exists (
+    select 1 from public.customer_links
+     where identity_id = v_identity_b and business_id = v_business
+  ) then
+    raise exception 'denied authenticated email claim created a relationship';
+  end if;
+  perform pg_temp.as_customer(v_customer_b);
+  begin
+    perform public.customer_claim_link_by_email(v_other_business_slug, 'v31-cross-business');
+    raise exception 'cross-business authenticated email claim bypassed the final ACL';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- The final customer join contract is owner-issued invitation / QR possession,
+  -- not customer-directed email matching. Create customer B's relationship using
+  -- that retained path so the unlink acceptance below remains meaningful.
+  perform pg_temp.as_customer(v_owner);
+  v_invite := public.customer_issue_link_invitation(
+    v_business, v_client_duplicate, 'v31-issue-b-invite', 60
+  );
+  v_b_token := v_invite->>'token';
+  if v_b_token is null or length(v_b_token) <> 64 then
+    raise exception 'customer B invitation did not return one raw token';
+  end if;
+  perform pg_temp.as_customer(v_customer_b);
+  v_claim := public.customer_claim_link_invitation(v_b_token, 'v31-claim-b-invite');
   if v_claim->>'outcome' is distinct from 'linked' then
-    raise exception 'exact unique verified email did not link: %', v_claim;
+    raise exception 'customer B invitation did not create a verified relationship: %', v_claim;
   end if;
   reset role;
-  select id into v_link from public.customer_links where identity_id = v_identity_b and business_id = v_business and state = 'verified';
-  if v_link is null then raise exception 'email claim did not create a verified link'; end if;
-  perform pg_temp.as_customer(v_customer_b);
-  if public.customer_claim_link_by_email(v_other_business_slug, 'v31-cross-business')->>'outcome'
-       is distinct from 'no_link_created' then
-    raise exception 'email claim crossed the business boundary';
-  end if;
+  select id into v_link
+    from public.customer_links
+   where identity_id = v_identity_b and business_id = v_business and state = 'verified';
+  if v_link is null then raise exception 'invitation claim did not create a verified link'; end if;
 
   -- Owner-issued invitation returns a secret once, stores only a SHA-256 hash, and does not replay it.
   reset role;
@@ -212,17 +242,19 @@ begin
   update auth.users set email = 'changed-contact@example.test', email_confirmed_at = now()
    where id = v_customer_a;
   perform pg_temp.as_customer(v_customer_a);
-  if public.customer_claim_link_by_email(
-       v_business_slug, 'v31-changed-auth-contact'
-     )->>'outcome' <> 'linked' then
-    raise exception 'changed confirmed Auth contact did not become the current email authority';
-  end if;
+  begin
+    perform public.customer_claim_link_by_email(
+      v_business_slug, 'v31-changed-auth-contact'
+    );
+    raise exception 'changed Auth contact bypassed the final service-only email claim ACL';
+  exception when insufficient_privilege then null;
+  end;
   reset role;
-  if not exists (
+  if exists (
     select 1 from public.customer_links
      where identity_id = v_identity_a and client_id = v_client_changed and state = 'verified'
   ) then
-    raise exception 'changed Auth contact linked a stale email candidate';
+    raise exception 'denied changed Auth contact created a customer link';
   end if;
 
   -- Expired invitations cannot create a link.
@@ -280,6 +312,14 @@ begin
       raise exception 'v31 raw table ACL is open for %', v_acl_table;
     end if;
   end loop;
+  if has_function_privilege(
+       'authenticated','public.customer_claim_link_by_email(text,text)','execute'
+     )
+     or not has_function_privilege(
+       'service_role','public.customer_claim_link_by_email(text,text)','execute'
+     ) then
+    raise exception 'final service-only email claim ACL contract is incorrect';
+  end if;
   if exists (
     select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
      where n.nspname = 'public' and p.proname in (

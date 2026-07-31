@@ -57,6 +57,54 @@ test('customer can scan a business-issued QR from first use and from persistent 
   assert.match(app,/id="customerNavScan"/);
 });
 
+test('customer can switch linked programmes without returning to the programme index',async()=>{
+  const app=await read('app/index.html');
+  const helperSource=app.match(/function customerProgrammeSwitcherMarkup\(cards=\[\],activeSlug=''\)\{[\s\S]*?\n\}/)?.[0];
+  assert.ok(helperSource,'missing programme switcher helper');
+  const switcher=vm.runInNewContext(`(()=>{
+    const ct=key=>key==='chooseProgramme'?'Choose a programme':key;
+    const esc=value=>String(value);
+    ${helperSource};
+    return customerProgrammeSwitcherMarkup;
+  })()`);
+  const glow={business:{slug:'glow-atelier',name:'Glow Atelier'}};
+  const harbour={business:{slug:'harbour-kopi',name:'Harbour Kopi'}};
+  assert.equal(switcher([glow],'glow-atelier'),'',
+    'one linked programme must not create a redundant switcher');
+  const markup=switcher([glow,harbour],'glow-atelier');
+  assert.match(markup,/class="customer-programme-switcher"/);
+  assert.match(markup,/role="navigation" aria-label="Choose a programme"/);
+  assert.match(markup,/href="#\/wallet\/glow-atelier" aria-current="true"/);
+  assert.match(markup,/href="#\/wallet\/harbour-kopi" aria-current="false"/);
+  const experience=section(app,'function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
+  assert.match(experience,/customerProgrammeSwitcherMarkup\(programmeCards,business\.slug\)/,
+    'programme detail must render the switcher without returning to the index');
+});
+
+test('customer Home keeps programme guidance primary and exposes one header notification action',async()=>{
+  const app=await read('app/index.html');
+  const home=section(app,'function renderActionableWalletHome','async function renderCustomerWallet');
+  assert.match(home,/customerHomeNextActionMarkup\(cards\[0\]\)/);
+  assert.match(home,/customerProgrammeGridMarkupV96\(cards\)/);
+  assert.doesNotMatch(home,/#\/customer\/messages|Messages/,
+    'Home must not duplicate the notification destination as a dashboard module');
+
+  const primaryNav=section(app,'const CUSTOMER_PRIMARY_NAV','function customerJoinTokenFromQr');
+  assert.match(primaryNav,/\{key:'bookings',href:'#\/customer\/bookings'/,
+    'Bookings remains a primary customer destination');
+
+  const shell=section(app,'function renderCustomerShell','function focusCustomerRoute');
+  assert.equal((shell.match(/href="#\/customer\/messages"/g)||[]).length,1,
+    'the customer shell must contain exactly one notification link');
+  assert.match(shell,/id="customerInboxBellSlot"/);
+
+  const wallet=section(app,'async function renderCustomerWallet','async function renderCustomerInAppInbox');
+  assert.match(wallet,/customer_sync_in_app_inbox_global/);
+  assert.match(wallet,/customer_get_in_app_inbox_global_count/);
+  assert.match(wallet,/customerInboxBellSlot/);
+  assert.match(wallet,/Open messages, \$\{unread\} unread/);
+});
+
 test('scanned QR waits for a completed profile, then outranks wallet destinations and is consumed',async()=>{
   const app=await read('app/index.html');
   const prioritySource=app.match(/function customerRegistrationDestinationPriority\(joinToken,businessSlug\)\{[\s\S]*?\n\}/)?.[0];
@@ -90,7 +138,7 @@ test('passkey sign-in and complete customer passkey management are capability ga
   assert.match(app,/\.modal\{position:fixed;inset:0;z-index:210/,
     'passkey setup must stay above the delayed PWA install prompt on mobile');
   assert.match(app,/sb\.auth\.signInWithPasskey\(\{options:\{captchaToken:challenge\}\}\)/);
-  assert.match(app,/if\(!passkeySupported\|\|!captchaToken\)[\s\S]*Complete the security check before using your passkey/);
+  assert.match(app,/if\(!passkeySupported\|\|!captchaToken\)[\s\S]*Complete the security check before using Face ID, Touch ID or your passkey/);
   assert.match(app,/captchaToken='';[\s\S]*signInWithPasskey[\s\S]*captchaControl\?\.reset\(\)/);
   assert.match(app,/sb\.auth\.registerPasskey\(\)/);
   assert.match(app,/sb\.auth\.passkey\.list\(\)/);
@@ -190,6 +238,14 @@ test('redemption is pending until merchant scan and scanner supports iPhone came
   assert.match(app,/id="merchantScannerImage" type="file" accept="image\/\*"/);
   assert.match(app,/createImageBitmap|URL\.createObjectURL/);
   assert.match(app,/customer_cancel_redemption_intent_v89/);
+  assert.match(app,/customer_get_redemption_intent_v89/);
+  assert.match(app,/CUI\.activateDialog\(overlay/);
+  assert.match(app,/activeCustomerRedemptionCleanup=close/);
+  assert.match(app,/setTimeout\(poll/);
+  assert.match(app,/if\(state==='completed'\)finish\('completed',data\)/);
+  assert.match(app,/Redeemed!/);
+  assert.match(app,/customer-redemption-complete/);
+  assert.match(app,/customerSuccessCue\(\)/);
   assert.match(app,/Close — keep pending/);
   assert.match(app,/Cancel redemption/);
   assert.match(app,/writeAttemptKey\(slot,String\(intent\.intent_id\)\)/);

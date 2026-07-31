@@ -31,9 +31,10 @@ test('v80 canonical migration is byte-identical to its Nestly source', () => {
   assert.match(sql, /^commit;$/m);
 });
 
-test('v80 approved digests are exact SHA-256 hashes of the live Nestly legal pages', () => {
+test('v80 preserves its historical approved digests while its Terms remain live', () => {
   assert.equal(sha256(terms), approved.terms);
-  assert.equal(sha256(privacy), approved.privacy);
+  assert.notEqual(sha256(privacy), approved.privacy,
+    'the live Privacy Notice has advanced through a later manifest');
   assert.match(sql, new RegExp(`'terms'[\\s\\S]*'2026-07-26'[\\s\\S]*'${approved.terms}'`));
   assert.match(sql, new RegExp(`'privacy'[\\s\\S]*'2026-07-26'[\\s\\S]*'${approved.privacy}'`));
   assert.ok((sql.match(/timestamptz '2026-07-26 00:00:00\+08:00'/g) || []).length >= 6);

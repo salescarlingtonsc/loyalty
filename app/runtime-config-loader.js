@@ -52,7 +52,7 @@
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) fail('CONFIG_MISSING');
     exactKeys(raw, [
       'schemaVersion', 'environment', 'projectRef', 'supabaseUrl',
-      'supabasePublishableKey', 'customerPhoneOtpEnabled'
+      'supabasePublishableKey', 'customerPhoneOtpEnabled', 'webPushPublicKey'
     ], 'CONFIG_SCHEMA');
     if (raw.schemaVersion !== 2) fail('CONFIG_SCHEMA');
     if (!ENVIRONMENTS.has(raw.environment)) fail('CONFIG_ENVIRONMENT');
@@ -60,6 +60,10 @@
     if (typeof raw.supabaseUrl !== 'string') fail('CONFIG_URL');
     if (typeof raw.supabasePublishableKey !== 'string') fail('CONFIG_KEY');
     if (typeof raw.customerPhoneOtpEnabled !== 'boolean') fail('CONFIG_SCHEMA');
+    if (typeof raw.webPushPublicKey !== 'string'
+        || (raw.webPushPublicKey !== '' && !/^[A-Za-z0-9_-]{80,120}$/.test(raw.webPushPublicKey))) {
+      fail('CONFIG_WEB_PUSH_KEY');
+    }
 
     let url;
     try {
@@ -101,7 +105,8 @@
       projectRef: raw.projectRef,
       supabaseUrl: url.origin,
       supabasePublishableKey: raw.supabasePublishableKey,
-      customerPhoneOtpEnabled: raw.customerPhoneOtpEnabled
+      customerPhoneOtpEnabled: raw.customerPhoneOtpEnabled,
+      webPushPublicKey: raw.webPushPublicKey
     });
   }
 

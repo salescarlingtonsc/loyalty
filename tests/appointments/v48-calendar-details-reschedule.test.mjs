@@ -101,7 +101,7 @@ test('appointment detail sheet exposes authorized particulars and safe call/edit
 });
 
 test('calendar rows minimize PII and fetch one branch-scoped detail record on demand',()=>{
-  const minimal="select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name)')";
+  const minimal="select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)')";
   assert.equal(calendar.split(minimal).length-1,2,'week and list queries must use the minimal projection');
   assert.match(calendar,/async function openAppointmentDetails\(summary,\{startEditing=false\}=\{\}\)[\s\S]*Loading customer and service information/);
   assert.match(calendar,/select\('id,branch_id,service_id,starts_at,ends_at,status,staff_id,note,total_cents,clients\(full_name,phone,phone_norm,email,birth_date,notes\),services!appointments_service_id_fkey\(name,duration_min,price_cents\)'\)[\s\S]*eq\('branch_id',summary\.branch_id\)[\s\S]*eq\('id',summary\.id\)\.maybeSingle\(\)/);
@@ -141,7 +141,7 @@ test('route changes dispose loaded and pending appointment dialogs without PII, 
   assert.match(app,/function renderShell\(page\)\{[\s\S]{0,160}disposeCurrentRoute\(\)/);
   assert.match(calendar,/async function appointmentsPage\(\)\{\s*disposeCurrentRoute\(\);\s*const routeMain=M\(\)/,
     'realtime direct page refresh must dispose the previous appointment route before registering a new owner');
-  assert.match(calendar,/routeDispose=closeAppointmentDetails/);
+  assert.match(calendar,/routeDispose=\(\)=>\{closeAppointmentDetails\(\);closeBlockedTimeDialog\(\{restoreFocus:false\}\)\}/);
   assert.match(customerUi,/return \(\{restoreFocus=true\}=\{\}\)=>\{[\s\S]*if\(restoreFocus&&returnFocus\?\.isConnected\)returnFocus\.focus\(\)/);
   assert.match(calendar,/if\(!stillCurrent\(\)\|\|!loading\.isConnected\)\{removeLoading\(\{restoreFocus:false\}\);return\}[\s\S]*removeLoading\(\);renderAppointmentDetails\(data,\{startEditing\}\)/,
     'only stale/route disposal may suppress focus restoration; a successful detail transition must preserve the calendar trigger');

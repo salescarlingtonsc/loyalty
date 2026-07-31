@@ -48,22 +48,59 @@ test('Quick Earn sends the selected accessible till branch to the current scanne
   );
   assert.match(
     till,
+    /assignedTillBranches=\(tillBranches\|\|\[\]\)\.filter\(branch=>canSeeAllTillBranches\|\|tillAssignedBranchIds\.has\(branch\.id\)\)/,
+  );
+  assert.match(
+    till,
     /accessibleTillBranches=assignedTillBranches\.filter\(branch=>\s*branchCanWrite\(branch\.id,'till'\)&&branchCanRead\(branch\.id,'clients'\)\s*\)/,
   );
   assert.match(
     till,
-    /openMerchantRedemptionScanner\(\{\s*businessId:S\.biz\.id,branchId:tillBranchId,/,
+    /let tillBranchId=accessibleTillBranches\.some\(branch=>branch\.id===selectedBranchId\)\?selectedBranchId:/,
+  );
+  assert.match(
+    till,
+    /tillBranchId=\$\('tBranch'\)\.value;selectedBranchId=tillBranchId;/,
+  );
+  assert.equal(
+    (till.match(/openMerchantRedemptionScanner\(\{\s*businessId:S\.biz\.id,branchId:tillBranchId,/g)||[]).length,
+    4,
+    'the header, selected-customer, standard receipt, and cart receipt scanners must use the active accessible branch',
   );
 });
 
-test('rollback-only campaign proves denial, branch provenance, replay, and zero residue', async () => {
-  const campaign = await read('db/tests/v93_synthetic_e2e_campaign.sql');
+test('completed-sale receipt scanners preserve branch scope and missing branch fails before RPC', async () => {
+  const app = await read('app/index.html');
+  const scanner = app.slice(
+    app.indexOf('function openMerchantRedemptionScanner'),
+    app.indexOf('function renderMerchantRedemptionComplete', app.indexOf('function openMerchantRedemptionScanner')),
+  );
+  const till = app.slice(
+    app.indexOf('async function tillPage'),
+    app.indexOf('async function appointmentsPage', app.indexOf('async function tillPage')),
+  );
+  assert.match(
+    scanner,
+    /payload\.kind!=='growth'&&!branchId[\s\S]*Choose an accessible branch before confirming this reward\.[\s\S]*return;/,
+  );
+  assert.match(
+    till,
+    /id="tRedeemOffer"[\s\S]*openMerchantRedemptionScanner\(\{\s*businessId:S\.biz\.id,branchId:tillBranchId,\s*saleId:doneInfo\.saleId/,
+  );
+  assert.match(
+    till,
+    /id="tRedeemOffer"[\s\S]*openMerchantRedemptionScanner\(\{\s*businessId:S\.biz\.id,branchId:tillBranchId,\s*saleId:d\.saleId/,
+  );
+});
+
+test('rollback-only v117 campaign proves exact branch denial and no-mutation boundaries', async () => {
+  const campaign = await read('db/tests/v117_effective_loyalty_boundaries.sql');
   assert.match(campaign, /^begin;/m);
   assert.match(campaign, /^rollback;/m);
-  assert.match(campaign, /front desk completed a redemption outside its assigned branch/i);
-  assert.match(campaign, /front desk downgraded to the branchless v89 scanner/i);
-  assert.match(campaign, /denied legacy scan changed redemption state/i);
-  assert.match(campaign, /eligibility_snapshot#>>'\{selected,branch_id\}'/i);
-  assert.match(campaign, /merchant QR replay produced another economic effect/i);
-  assert.match(campaign, /synthetic campaign left database residue after rollback/i);
+  assert.match(campaign, /firm-disabled Loyalty exposed customer capability/i);
+  assert.match(campaign, /firm-disabled Loyalty created a redemption intent/i);
+  assert.match(campaign, /branch-disabled Loyalty changed redemption state/i);
+  assert.match(campaign, /branch-enabled Loyalty scanner did not complete once/i);
+  assert.match(campaign, /branch-disabled gift-card issuance created value/i);
+  assert.match(campaign, /existing gift liability was not redeemable through Till/i);
 });

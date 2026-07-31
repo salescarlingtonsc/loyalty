@@ -13,7 +13,13 @@ functions, invokes `customerPromotionCardV104` for two realistic spa offers,
 and records a SHA-256 provenance value.
 
 Production source SHA-256:
-`8ce04134679052e1f5e182a438ea564779b995a1f72fbdfece30818613daf8ad`
+`79e261312fa7b6cf400e7ecafbb63c85c6754237ee6484b0dfa5f80c4f6df0e2`
+
+The v118 regeneration adds only task-first dashboard, appointment and report
+selectors that do not match this promotion harness. The recorded card and modal
+geometry therefore remains applicable. A fresh interactive capture was not
+claimed: the in-app browser rejected the local `file://` fixture under its URL
+policy, so the screenshots remain the prior deterministic Chrome captures.
 
 The only harness CSS is a small provenance label. The offer media is a
 deterministic text-free SVG so visual layout is reproducible; it is not evidence
@@ -49,7 +55,7 @@ Terms expansion passed:
   content width and `57px` total height; its terms value was
   `318px / 318px` scroll/client width and `36px / 36px` scroll/client height;
 - at 412px, the long-token Terms block expanded to the full `340px` available
-  content width and `112px` total height; its terms value was
+  content width and `111px` total height; its terms value was
   `340px / 340px` scroll/client width and `91px / 91px` scroll/client height.
 
 The second card begins below the first at both mobile widths. Long coupon text

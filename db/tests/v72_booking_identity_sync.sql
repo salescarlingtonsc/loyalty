@@ -28,6 +28,8 @@ declare
   v_other_client uuid;
   v_identity uuid;
   v_successor_identity uuid;
+  v_link uuid := gen_random_uuid();
+  v_successor_link uuid := gen_random_uuid();
   v_request uuid;
   v_saturation_request uuid;
   v_guest_request uuid;
@@ -66,11 +68,24 @@ begin
     );
 
   insert into public.businesses(name, slug, industry, enabled_modules)
-  values ('V72 booking identity fixture', v_slug, 'test', array['appointments'])
+  values (
+    'V72 booking identity fixture', v_slug, 'test',
+    array['appointments','bookings']
+  )
   returning id into v_business;
   insert into public.businesses(name, slug, industry, enabled_modules)
   values ('V72 foreign fixture', v_other_slug, 'test', array['appointments'])
   returning id into v_other_business;
+
+  -- v89's later default-closed gate applies to the authenticated bound-booking
+  -- path under test. Explicitly enable that capability on a full-final replay.
+  if to_regclass('public.business_customer_capabilities_v89') is not null then
+    execute
+      'insert into public.business_customer_capabilities_v89(
+         business_id,booking_enabled,redemption_enabled,appointment_changes_enabled
+       ) values ($1,true,false,false)'
+      using v_business;
+  end if;
 
   insert into public.clients(business_id, full_name, email, phone)
   values (
@@ -82,13 +97,15 @@ begin
 
   insert into public.customer_identities(auth_user_id)
   values (v_user) returning id into v_identity;
+  perform set_config('app.customer_link_insert_id', v_link::text, true);
   insert into public.customer_links(
-    business_id, identity_id, auth_user_id, client_id, state,
+    id, business_id, identity_id, auth_user_id, client_id, state,
     verification_method, verified_at
   ) values (
-    v_business, v_identity, v_user, v_client, 'verified',
+    v_link, v_business, v_identity, v_user, v_client, 'verified',
     'email_claim', clock_timestamp()
   );
+  perform set_config('app.customer_link_insert_id', '', true);
 
   v_result := public.internal_public_booking_submit(
     v_slug, 'Submitted Booking Name', null, '+6581234567',
@@ -262,9 +279,9 @@ begin
       business_id, booking_request_id, authenticated_user_id,
       customer_client_id, expires_at, initial_response
     ) values (
-      digest('v72-active-token-' || v_i, 'sha256'),
-      digest('v72-active-idempotency-' || v_i, 'sha256'),
-      digest('v72-active-fingerprint-' || v_i, 'sha256'),
+      extensions.digest('v72-active-token-' || v_i, 'sha256'),
+      extensions.digest('v72-active-idempotency-' || v_i, 'sha256'),
+      extensions.digest('v72-active-fingerprint-' || v_i, 'sha256'),
       v_business, v_latest_request, v_user, v_client,
       v_preferred + interval '60 days',
       jsonb_build_object('status', 'pending', 'request_id', v_latest_request)
@@ -329,9 +346,9 @@ begin
       business_id, booking_request_id, authenticated_user_id,
       customer_client_id, expires_at, initial_response
     ) values (
-      digest('v72-terminal-token-' || v_terminal_status, 'sha256'),
-      digest('v72-terminal-idempotency-' || v_terminal_status, 'sha256'),
-      digest('v72-terminal-fingerprint-' || v_terminal_status, 'sha256'),
+      extensions.digest('v72-terminal-token-' || v_terminal_status, 'sha256'),
+      extensions.digest('v72-terminal-idempotency-' || v_terminal_status, 'sha256'),
+      extensions.digest('v72-terminal-fingerprint-' || v_terminal_status, 'sha256'),
       v_business, v_terminal_request, v_user, v_client,
       v_preferred + interval '60 days',
       jsonb_build_object(
@@ -352,9 +369,9 @@ begin
     business_id, booking_request_id, authenticated_user_id,
     customer_client_id, expires_at, initial_response
   ) values (
-    digest('v72-old-terminal-token', 'sha256'),
-    digest('v72-old-terminal-idempotency', 'sha256'),
-    digest('v72-old-terminal-fingerprint', 'sha256'),
+    extensions.digest('v72-old-terminal-token', 'sha256'),
+    extensions.digest('v72-old-terminal-idempotency', 'sha256'),
+    extensions.digest('v72-old-terminal-fingerprint', 'sha256'),
     v_business, v_old_terminal_request, v_user, v_client,
     v_preferred + interval '60 days',
     jsonb_build_object(
@@ -403,9 +420,9 @@ begin
       business_id, booking_request_id, authenticated_user_id,
       customer_client_id, expires_at, initial_response
     ) values (
-      digest('v72-confirmed-token-' || v_i, 'sha256'),
-      digest('v72-confirmed-idempotency-' || v_i, 'sha256'),
-      digest('v72-confirmed-fingerprint-' || v_i, 'sha256'),
+      extensions.digest('v72-confirmed-token-' || v_i, 'sha256'),
+      extensions.digest('v72-confirmed-idempotency-' || v_i, 'sha256'),
+      extensions.digest('v72-confirmed-fingerprint-' || v_i, 'sha256'),
       v_business, v_saturation_request, v_user, v_client,
       v_preferred + interval '60 days',
       jsonb_build_object(
@@ -431,6 +448,7 @@ begin
 
   -- A replacement identity may form a new verified relationship with the same
   -- merchant client, but immutable submission evidence remains with v_user.
+  perform set_config('app.customer_link_transition_id', v_link::text, true);
   update public.customer_links
      set state = 'unlinked',
          unlinked_at = clock_timestamp(),
@@ -439,16 +457,19 @@ begin
    where business_id = v_business
      and identity_id = v_identity
      and state = 'verified';
+  perform set_config('app.customer_link_transition_id', '', true);
 
   insert into public.customer_identities(auth_user_id)
   values (v_other_user) returning id into v_successor_identity;
+  perform set_config('app.customer_link_insert_id', v_successor_link::text, true);
   insert into public.customer_links(
-    business_id, identity_id, auth_user_id, client_id, state,
+    id, business_id, identity_id, auth_user_id, client_id, state,
     verification_method, verified_at
   ) values (
-    v_business, v_successor_identity, v_other_user, v_client, 'verified',
+    v_successor_link, v_business, v_successor_identity, v_other_user, v_client, 'verified',
     'email_claim', clock_timestamp()
   );
+  perform set_config('app.customer_link_insert_id', '', true);
 
   perform pg_temp.as_v72_user(v_user);
   if jsonb_array_length(public.customer_get_booking_requests(20)->'items') <> 0 then
@@ -492,10 +513,17 @@ begin
     raise exception 'v72 browser role ACL is not least privilege';
   end if;
 
-  if pg_get_functiondef('public.convert_booking_request(uuid)'::regprocedure)
-       !~ 'customer_client_id is not null'
+  if to_regprocedure(
+       'public.staff_decide_booking_request_v73(uuid,uuid,text,uuid)'
+     ) is not null then
+    if pg_get_functiondef('public.convert_booking_request(uuid)'::regprocedure)
+         !~ 'staff_decide_booking_request_v73' then
+      raise exception 'later v73 conversion wrapper did not preserve v72 semantics';
+    end if;
+  elsif pg_get_functiondef('public.convert_booking_request(uuid)'::regprocedure)
+          !~ 'customer_client_id is not null'
      or pg_get_functiondef('public.convert_booking_request(uuid)'::regprocedure)
-       !~ 'app.upsert_portal_client' then
+          !~ 'app.upsert_portal_client' then
     raise exception 'v72 conversion did not preserve bound and guest paths';
   end if;
 

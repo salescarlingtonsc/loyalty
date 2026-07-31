@@ -88,12 +88,16 @@ begin
    where id = v_cust;
   update app.platform_feature_flags set enabled = true, changed_at = statement_timestamp()
    where feature_key in ('customer_phone_registration', 'customer_phone_otp');
-  insert into app.customer_legal_documents(document_key, document_version, document_sha256, published_at, active)
-  values ('terms', 'v50b-1', md5('v50b-terms')||md5('terms-v50b'), now(), true),
-         ('privacy', 'v50b-1', md5('v50b-privacy')||md5('privacy-v50b'), now(), true)
-  on conflict (document_key) do update set
-    document_version = excluded.document_version, document_sha256 = excluded.document_sha256,
-    published_at = excluded.published_at, active = true;
+  -- Preserve the authoritative v92 manifest during a full-final-schema replay;
+  -- only a historical through-v50b run needs temporary legal prerequisites.
+  if to_regprocedure('public.customer_get_platform_marketing_preference()') is null then
+    insert into app.customer_legal_documents(document_key, document_version, document_sha256, published_at, active)
+    values ('terms', 'v50b-1', md5('v50b-terms')||md5('terms-v50b'), now(), true),
+           ('privacy', 'v50b-1', md5('v50b-privacy')||md5('privacy-v50b'), now(), true)
+    on conflict (document_key) do update set
+      document_version = excluded.document_version, document_sha256 = excluded.document_sha256,
+      published_at = excluded.published_at, active = true;
+  end if;
 
   perform pg_temp.as_v50b(v_cust, 'authenticated');
   v_response := public.customer_register_verified_phone(

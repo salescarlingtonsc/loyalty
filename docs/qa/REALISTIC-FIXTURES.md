@@ -44,6 +44,21 @@ Configuration cases:
 - package purchase points on, then off;
 - one firm-level module override and one Tampines branch override;
 - logo upload success, replacement, invalid type, and denied-role attempts.
+- Orchard staff availability: Chen Wei works 09:00–18:00, Aisha Rahman works
+  10:00–19:00, the branch has a 12:30–13:30 break, and Chen has one
+  **Supplier training** block on 31 July 2026 from 14:00–15:00 Singapore time.
+  Keep one adjacent 15:00 appointment and use Spa Ritual 60 with configured
+  before/after buffers to prove a block suppresses every overlapping start
+  without hiding Aisha's availability.
+- Appointment completion truth: Olivia completes `CUS-MEI`'s booked SGD 60
+  Spa ritual 60 at Orchard. With exact-branch Loyalty `rw`, one linked sale and
+  one +600 earn persist and all customer-safe wallet/summary/history readers
+  agree after refresh. The same status call replays without duplication.
+  Repeat with firm-disabled, branch-disabled, and branch-read-only Loyalty:
+  checkout still records one sale, no new earn is created, and the prior 600
+  balance remains persistent but is exposed only while effective policy permits
+  customer Loyalty reads. Farah, assigned only to Orchard, cannot complete the
+  Tampines comparison appointment.
 
 Promotion cases:
 

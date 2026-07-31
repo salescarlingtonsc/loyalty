@@ -4,40 +4,99 @@ do $pristine_chain_fixture$
 declare
   v_owner_a uuid := gen_random_uuid();
   v_owner_b uuid := gen_random_uuid();
+  v_owner_a_email text := 'pristine-owner-a-'||v_owner_a::text||'@example.test';
+  v_owner_b_email text := 'pristine-owner-b-'||v_owner_b::text||'@example.test';
   v_business_a uuid;
   v_business_b uuid;
   v_client_a uuid;
   v_client_b uuid;
   v_draft uuid;
+  v_application uuid;
+  v_token text;
+  v_sector text;
+  v_result jsonb;
 begin
   reset role;
   insert into auth.users(
     instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at
   ) values
     ('00000000-0000-0000-0000-000000000000',v_owner_a,'authenticated','authenticated',
-     'pristine-owner-a-'||v_owner_a::text||'@example.test','',now(),now(),now()),
+     v_owner_a_email,'',now(),now(),now()),
     ('00000000-0000-0000-0000-000000000000',v_owner_b,'authenticated','authenticated',
-     'pristine-owner-b-'||v_owner_b::text||'@example.test','',now(),now(),now());
+     v_owner_b_email,'',now(),now(),now());
+  insert into public.super_admins(user_id,email,note)
+  values(v_owner_b,v_owner_b_email,'rollback-only approval fixture');
+  select sector_key into v_sector
+  from public.sector_bundle_versions
+  where status='published' and modules @> array[
+    'dashboard','clients','sales','loyalty','packages','retention','appointments'
+  ]::text[]
+  order by sector_key
+  limit 1;
+  if v_sector is null then
+    raise exception 'pristine fixture requires a published full-service sector';
+  end if;
 
-  perform set_config('request.jwt.claim.sub',v_owner_a::text,true);
-  perform set_config('request.jwt.claims',json_build_object(
-    'sub',v_owner_a,'role','authenticated'
-  )::text,true);
-  v_business_a := (public.create_business(
-    'Pristine chain fixture A',
-    'pristine-a-'||replace(v_owner_a::text,'-',''),
-    'test',array['dashboard','clients','sales','loyalty','packages','retention','appointments']
-  )::jsonb->>'id')::uuid;
-
+  -- Seed both legacy-suite tenants through the current approval-first contract.
+  perform set_config('request.jwt.claim.sub','',true);
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object('sub',null,'role','service_role')::text,true
+  );
+  execute 'set local role service_role';
+  v_result:=public.internal_submit_business_application_v95(
+    'Pristine Owner A',v_owner_a_email,'+6590000101',
+    'Pristine chain fixture A',v_sector,null,'en',gen_random_uuid()
+  );
+  v_application:=(v_result->>'application_id')::uuid;
+  reset role;
   perform set_config('request.jwt.claim.sub',v_owner_b::text,true);
   perform set_config('request.jwt.claims',json_build_object(
     'sub',v_owner_b,'role','authenticated'
   )::text,true);
-  v_business_b := (public.create_business(
-    'Pristine chain fixture B',
-    'pristine-b-'||replace(v_owner_b::text,'-',''),
-    'test',array['dashboard','clients','sales','loyalty','packages','retention']
-  )::jsonb->>'id')::uuid;
+  execute 'set local role authenticated';
+  v_result:=public.platform_decide_business_application_v95(
+    v_application,'approved','rollback fixture approval',1
+  );
+  v_token:=v_result->>'invitation_token';
+  reset role;
+  perform set_config('request.jwt.claim.sub',v_owner_a::text,true);
+  perform set_config('request.jwt.claims',json_build_object(
+    'sub',v_owner_a,'role','authenticated'
+  )::text,true);
+  execute 'set local role authenticated';
+  v_result:=public.activate_approved_business_application_v95(
+    v_token,'pristine-a-'||replace(v_owner_a::text,'-',''),gen_random_uuid()
+  );
+  v_business_a:=(v_result->>'business_id')::uuid;
+  reset role;
+
+  perform set_config('request.jwt.claim.sub','',true);
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object('sub',null,'role','service_role')::text,true
+  );
+  execute 'set local role service_role';
+  v_result:=public.internal_submit_business_application_v95(
+    'Pristine Owner B',v_owner_b_email,'+6590000102',
+    'Pristine chain fixture B',v_sector,null,'en',gen_random_uuid()
+  );
+  v_application:=(v_result->>'application_id')::uuid;
+  reset role;
+  perform set_config('request.jwt.claim.sub',v_owner_b::text,true);
+  perform set_config('request.jwt.claims',json_build_object(
+    'sub',v_owner_b,'role','authenticated'
+  )::text,true);
+  execute 'set local role authenticated';
+  v_result:=public.platform_decide_business_application_v95(
+    v_application,'approved','rollback fixture approval',1
+  );
+  v_token:=v_result->>'invitation_token';
+  v_result:=public.activate_approved_business_application_v95(
+    v_token,'pristine-b-'||replace(v_owner_b::text,'-',''),gen_random_uuid()
+  );
+  v_business_b:=(v_result->>'business_id')::uuid;
+  reset role;
 
   reset role;
   update public.businesses set created_at='2000-01-01 00:00:00+00' where id=v_business_a;
@@ -79,8 +138,6 @@ begin
   perform public.publish_loyalty_config(v_draft);
 
   reset role;
-  insert into public.super_admins(user_id,email,note)
-  values(v_owner_b,'pristine-owner-b@example.test','rollback-only RLS fixture');
   perform set_config('request.jwt.claim.sub','',true);
   perform set_config('request.jwt.claims','{}',true);
 end
