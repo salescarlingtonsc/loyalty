@@ -28,6 +28,7 @@ Catalogue:
 | Spa ritual | 30 min | SGD 40 |
 | Spa ritual | 60 min | SGD 60 |
 | Spa ritual | 90 min | SGD 85 |
+| Glow serum (retail) | N/A | SGD 68 selling price / SGD 24 product cost |
 
 Packages:
 
@@ -59,6 +60,21 @@ Configuration cases:
   balance remains persistent but is exposed only while effective policy permits
   customer Loyalty reads. Farah, assigned only to Orchard, cannot complete the
   Tampines comparison appointment.
+- Two-staff calendar authoring: click Chen Wei's free 10:15 Day-view slot and
+  save a Spa Ritual 60 appointment, then click Aisha Rahman's independently
+  eligible column. Both staff/date/time values must be prefilled from the
+  selected calendar cell, conflicts and Supplier training must stay
+  non-selectable, and the saved appointments must survive refresh.
+- Profitability setup: Glow serum sells for SGD 68 with SGD 24 product cost.
+  The owner must see SGD 44 gross profit and about 64.7% gross margin before
+  choosing a reward. A reward proposal must state its cost assumption and show
+  contribution after reward; it is never auto-published.
+- Feedback: `CUS-MEI` submits one four-star internal rating and one separate
+  five-star fixture. The company has a syntactically valid, synthetic Google
+  Business review URL configured; both persisted ratings offer the same
+  optional external link so the product does not selectively solicit positive
+  reviews. Five-star copy may be warmer. A comparison tenant cannot read either
+  record.
 
 Promotion cases:
 
@@ -91,6 +107,9 @@ Catalogue:
 Programme:
 
 - stamp or points configuration using café-specific recommendations;
+- an ordered stamp path: stamp 5 unlocks one Kopi; stamp 10 unlocks one Kaya
+  toast set, with the second threshold displayed as the next five stamps after
+  the first unlock;
 - birthday benefit disabled;
 - gift-card issuance enabled in one run;
 - a seasonal reward published by platform campaign controls.
@@ -109,6 +128,15 @@ Catalogue:
 
 Use it for bookings, memberships, package expiry, class capacity, staff
 assignment, and mobile booking acceptance.
+
+## Customer category projection
+
+Use `CUS-MEI` with existing QR-created links to `SPA-GLOW`,
+`CAFE-HARBOUR`, and `FIT-NORTHSTAR`. The customer selector groups them under
+Personal care, Food & drink, and Fitness while preserving the existing
+programme links. Add one governed but unmapped synthetic sector to verify an
+Other fallback. The fixture must not add business search or create any new
+relationship.
 
 ## Customers
 

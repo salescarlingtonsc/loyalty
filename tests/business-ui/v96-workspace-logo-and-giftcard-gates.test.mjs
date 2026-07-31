@@ -64,7 +64,7 @@ test('Workspace & brand provides owner preview and replace controls wired only t
   assert.doesNotMatch(logo,/business_upsert_media_asset_v95|business_set_brand_presentation_v95/);
 });
 
-test('Quick Earn gift cards require owner enablement plus create-sales and effective module access',()=>{
+test('gift-card authority remains explicit for the dedicated Gift Cards workspace',()=>{
   const source=declaredFunction('giftCardAbilitiesV102');
   const abilities=vm.runInNewContext(`(()=>{${source};return giftCardAbilitiesV102})()`);
   assert.equal(abilities({
@@ -72,10 +72,10 @@ test('Quick Earn gift cards require owner enablement plus create-sales and effec
   }).canIssue,true);
   assert.equal(abilities({
     createSales:true,giftcardsReadable:true,giftcardsWritable:true,businessEnabled:false
-  }).canIssue,false,'a business that has not enabled gift cards must not see issuance in Quick Earn');
+  }).canIssue,false,'a business that has not enabled gift cards must not issue value');
   assert.equal(abilities({
     createSales:true,giftcardsReadable:false,giftcardsWritable:false,businessEnabled:true
-  }).canIssue,false,'an absent module must hide gift-card checkout');
+  }).canIssue,false,'an absent module must hide gift-card actions');
   assert.equal(abilities({
     createSales:true,giftcardsReadable:true,giftcardsWritable:false,businessEnabled:true
   }).canIssue,false,'read-only gift-card access must not issue value');
@@ -84,14 +84,9 @@ test('Quick Earn gift cards require owner enablement plus create-sales and effec
   }).canIssue,false,'gift-card write access cannot bypass create-sales capability');
 });
 
-test('Quick Earn removes unauthorized gift-card lines and never calls issue_gift_card after access loss',()=>{
+test('Quick Earn contains no gift-card checkout while the dedicated page retains issuance',()=>{
   const till=section('async function tillPage(){','async function salesPage(){');
-  assert.match(till,/const canGift=canIssueGiftCards\(\)/);
-  assert.match(till,/!canGift&&cart\.some\(line=>line\.type==='giftcard'\)[\s\S]*?cart=cart\.filter\(line=>line\.type!=='giftcard'\)/);
-  assert.match(till,/\$\{canGift\?`<div class="split"[\s\S]*?id="tGiftAdd"/);
-  assert.match(till,/if\(cartLocked\(\)\|\|!canIssueGiftCards\(\)\)return/);
-  const finalGate=till.indexOf("if(!canIssueGiftCards()){");
-  const issueCall=till.indexOf("sb.rpc('issue_gift_card_at_branch_v117'",finalGate);
-  assert.ok(finalGate>=0&&issueCall>finalGate,
-    'the final authority gate must execute before the gift-card issuance RPC');
+  const gifts=section('async function giftcardsPage(','async function settingsPage(){');
+  assert.doesNotMatch(till,/tGiftAdd|tGiftRedeem|issue_gift_card_at_branch_v117|redeem_gift_card_at_branch_v117/);
+  assert.match(gifts,/issue_gift_card_at_branch_v117/);
 });

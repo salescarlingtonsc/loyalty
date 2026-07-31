@@ -1743,8 +1743,20 @@
   ],
   "allowlist": [
     {
-      "id": "browser.rpc:app/index.html:business_has_active_gift_liability_v117",
-      "reason": "browser RPC 'business_has_active_gift_liability_v117' is a read-only exact-branch liability projection. It permits authorized Till + Clients staff to discover whether previously issued gift-card balance still requires servicing after the Gift cards sales module is disabled. It performs no DML and resolves to no value writer."
+      "id": "browser.rpc:app/index.html:customer_get_pending_promotion_prompt_v122",
+      "reason": "V122 read-only customer projection. It returns at most one exact, current, customer-visible promotion only when an unread immutable event and current explicit promotion-alert consent both exist; it performs no DML or customer-value write."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_set_in_app_inbox_state",
+      "reason": "Existing C46 customer-scoped inbox-state writer used by V122 to mark the authoritative promotion event read or dismissed with an idempotency key. It changes only non-economic read/dismiss state and immutable operation evidence."
+    },
+    {
+      "id": "browser.rpc:app/index.html:owner_list_reward_profitability_products_v122",
+      "reason": "V122 owner-and-Loyalty-write scoped read-only projection of active product retail price and owner-entered unit cost for reward economics. It performs no DML and cannot expose another tenant."
+    },
+    {
+      "id": "browser.rpc:app/index.html:owner_set_product_cost_v122",
+      "reason": "V122 narrow owner-and-Loyalty-write scoped configuration writer used because Inventory remains globally disabled. It uses tenant/product checks plus optimistic concurrency and changes only one active product's non-economic unit-cost input; it cannot create a sale, payment, reward, entitlement, loyalty movement, or stored-value record."
     },
     {
       "id": "browser.rpc:app/index.html:record_product_interaction_v100",

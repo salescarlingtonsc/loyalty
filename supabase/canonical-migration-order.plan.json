@@ -970,6 +970,12 @@
       "version": "20260731130000",
       "name": "nestly_v121_effective_loyalty_sale_earn_boundary",
       "sourcePath": "db/migrations/20260731_nestly_v121_effective_loyalty_sale_earn_boundary.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260731140000",
+      "name": "nestly_v122_owner_seven_workflows",
+      "sourcePath": "db/migrations/20260731_nestly_v122_owner_seven_workflows.sql"
     }
   ]
 }

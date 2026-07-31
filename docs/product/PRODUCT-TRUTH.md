@@ -38,7 +38,11 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   individual programme, points/value, benefits, progress, packages/vouchers,
   visits, transactions, bookings, and relevant actions.
 - The programme selector uses compact logo-led cards, up to five per desktop
-  row, with a mobile-friendly layout.
+  row, with a mobile-friendly layout. When a customer has programmes from
+  several sectors, the selector groups only those already-linked businesses
+  into plain-language categories such as Personal care, Food & drink, and
+  Fitness. Categories never create a business relationship or permit arbitrary
+  search/self-linking.
 - Business logos, programme images, reward images, and enabled catalogue
   content sync from the owner configuration to the customer portal.
 - Notification is a header action, not a duplicate dashboard module. Profile is
@@ -74,7 +78,9 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 - A customer redemption creates a pending, time-limited QR. Value changes only
   after authorized business staff scan and confirm it in Quick Earn.
 - Quick Earn shows a selected customer's owned and eligible packages, vouchers,
-  memberships, gift cards, and pending redemptions. Applying an entitlement
+  memberships, and pending redemptions. Gift-card issuance, lookup, transfer,
+  and redemption are not Quick Earn actions; they remain in the dedicated Gift
+  Cards workflow so checkout stays focused. Applying any visible entitlement
   must update the business record and customer portal consistently.
 - Gift-card issuance controls appear only when gift-card issuance is enabled.
   Disabling new issuance must not erase or strand valid existing customer value.
@@ -114,6 +120,18 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   information but must not be the primary operational label.
 - Appointments can be created, viewed, amended, rescheduled, assigned,
   completed, marked no-show, and cancelled according to role.
+- The Appointments calendar is an operational writer, not a read-only report:
+  an authorized user can select a free time inside a named staff member's
+  column to create an appointment with that exact staff/date/time prefilled.
+  The two-staff day view must make conflicts, leave, breaks, blocks, and
+  available time visually distinct and persist new appointments after refresh.
+- Customer feedback is stored once and projects consistently to the business
+  workspace after refresh/reconnect. A business may configure its verified
+  Google review URL. After any genuine internal rating is saved, the success
+  state may offer the same clearly labelled external Google review link.
+  Wording may thank a five-star customer warmly, but link access must not depend
+  on the score because selective positive-review solicitation is prohibited by
+  Google Maps policy. External navigation is always an explicit customer action.
 - Navigation must preserve the user's position and state; left navigation must
   not hard-refresh, jump to the top, or show an unexplained blank workspace.
 - Owner analytics include returning-customer count, visit frequency, revenue
@@ -126,6 +144,15 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   be created.
 - The overview explains the whole programme in plain language, shows the
   customer-facing result, and makes each section directly editable.
+- The business-owner overview shows every configured reward and birthday
+  benefit as an ordered, game-like path: what the customer does, current
+  progress unit, what unlocks at each milestone, and what comes next. It must
+  not invent a milestone where no rule exists.
+- Product/service cost and selling price feed an understandable profitability
+  view showing gross profit, margin, estimated reward cost, and the remaining
+  contribution after reward. AI-assisted programme setup must explain its
+  assumptions in plain language, use the firm's real catalogue costs/prices,
+  and require explicit owner review before saving or publishing.
 - Everyday rewards, bring-backs, referrals, memberships, gift cards, and
   advanced rules must not feel like disconnected technical submodules.
 - Recommendations use the firm's actual sector and prices. They state their
@@ -171,6 +198,13 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   business's own factual offer, image, dates, terms, and one approved CTA. This
   is in-programme content, not permission to broadcast an unrestricted
   campaign.
+- A linked customer may receive one consent-aware in-app promotion prompt and,
+  where Web Push permission and delivery configuration exist, one deduplicated
+  company-scoped notification for a newly published promotion. Transactional
+  expiry reminders remain limited to configured customer value that expires in
+  three days and one day. Denied permission, missing delivery configuration,
+  duplicate jobs, and expired/inactive offers fail safely without claiming a
+  notification was sent.
 - The complimentary launch allowance is ten first-published offer slots per
   company through 31 October 2026; unpublishing an offer does not restore its
   slot. V104 offers are company-wide: one published offer is consistent for

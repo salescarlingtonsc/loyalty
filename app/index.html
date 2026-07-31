@@ -432,6 +432,12 @@ input[type=range]:focus{box-shadow:none}
 .grow-flow-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--tint);color:var(--coral)}
 .grow-flow-step h2{font-size:16px;margin:12px 0 3px}.grow-flow-step p{font-size:12.5px;line-height:1.45;color:var(--muted);margin:0 0 12px}
 .grow-flow-foot{display:flex;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}.grow-flow-foot .btn{min-height:44px}
+.reward-milestone-track{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;list-style:none;margin:14px 0 0;padding:0}
+.reward-milestone-track li,.birthday-reward-overview{display:flex;gap:11px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:14px;background:#FBFAF8}
+.reward-milestone-number{display:grid;place-items:center;flex:0 0 32px;height:32px;border-radius:50%;background:var(--tint);color:var(--coral);font-weight:700}
+.birthday-reward-overview{margin-top:10px}.profitability-product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px}
+.profitability-product-grid article{padding:14px;border:1px solid var(--line);border-radius:14px}.profitability-product-grid dl{display:grid;gap:6px;margin:10px 0}
+.profitability-product-grid dl div{display:flex;justify-content:space-between;gap:12px}.profitability-product-grid dt{color:var(--muted);font-size:12px}.profitability-product-grid dd{font-weight:650;text-align:right}
 .grow-guide{border:1px solid var(--coral);border-radius:var(--r-sm);background:#fff;padding:0 16px}
 .grow-guide>summary,.grow-advanced>summary{display:flex;align-items:center;gap:10px;min-height:52px;cursor:pointer;font-weight:700}
 .grow-guide-body{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:0 0 16px}
@@ -559,9 +565,10 @@ input[type=range]:focus{box-shadow:none}
 .task-launcher-card b{display:block}.task-launcher-card span{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.35}
 .performance-panel{margin-top:18px}.performance-panel>summary{cursor:pointer;font-weight:750;list-style:none;min-height:44px;display:flex;align-items:center;justify-content:space-between}.performance-panel>summary::-webkit-details-marker{display:none}.performance-panel>summary::after{content:'+';float:right}.performance-panel[open]>summary::after{content:'−'}
 .appointment-primary-action{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:0 0 14px}
-.appointment-layout{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+.appointment-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;min-width:0;width:100%}
 .appointment-layout.form-open{grid-template-columns:minmax(300px,360px) minmax(0,1fr)}
-.appointment-form-card{position:sticky;top:82px}
+.appointment-layout>*{min-width:0;max-width:100%}
+.appointment-form-card{position:sticky;top:82px;min-width:0;width:100%;max-width:100%}
 .appointment-form-card[hidden]{display:none}
 .appointment-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .appointment-toolbar select{width:auto;min-width:150px;margin:0}
@@ -666,7 +673,8 @@ input[type=range]:focus{box-shadow:none}
   .global-search{flex:1 1 200px}
   .global-quick{display:none}
   .global-act{flex:1 1 auto;justify-content:center}
-  .charts,.split,.appointment-layout,.appointment-layout.form-open{grid-template-columns:1fr}
+  .charts,.split{grid-template-columns:1fr}
+  .appointment-layout,.appointment-layout.form-open{grid-template-columns:minmax(0,1fr)}
   .task-launcher-grid,.report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .appointment-form-card{position:static}
   .chart-frame{block-size:220px}
@@ -799,7 +807,9 @@ input[type=range]:focus{box-shadow:none}
 .customer-home-quick a:hover{border-color:rgba(194,65,53,.28)}
 .customer-home-quick b{display:block;font-size:14px}.customer-home-quick p{margin-top:3px;line-height:1.4}
 .customer-programme-list,.customer-booking-list{display:grid;gap:12px}
-.customer-programme-grid-v96{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.customer-programme-grid-v96{grid-template-columns:1fr;gap:22px}
+.customer-programme-category{display:grid;gap:10px}.customer-programme-category-head{display:flex;align-items:center;gap:8px}
+.customer-programme-category-head h2{font-size:16px}.customer-programme-category-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .customer-programme-card{display:block;min-height:44px}
 .customer-programme-card-v95{position:relative;overflow:hidden;min-height:152px;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease)}
 .customer-programme-card-v95:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
@@ -903,9 +913,9 @@ input[type=range]:focus{box-shadow:none}
   .customer-primary-nav a{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
   .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
-  .customer-programme-grid-v96{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .customer-programme-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-@media(min-width:721px) and (max-width:1100px){.customer-programme-grid-v96{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:721px) and (max-width:1100px){.customer-programme-category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){
   .wallet-shell{padding:max(20px,env(safe-area-inset-top))
     max(14px,env(safe-area-inset-right)) calc(44px + env(safe-area-inset-bottom))
@@ -915,7 +925,7 @@ input[type=range]:focus{box-shadow:none}
   .wallet-metrics{grid-template-columns:1fr}.wallet-section{padding:15px}.wallet-line,.wallet-appt{flex-wrap:wrap}.walletChange{width:100%}
   .entry-choice-card{padding:22px}.entry-choice-grid{grid-template-columns:1fr}.entry-choice{min-height:148px}
 }
-@media(max-width:420px){.customer-programme-grid-v96{grid-template-columns:1fr}.customer-programme-card-v95{min-height:128px}}
+@media(max-width:420px){.customer-programme-category-grid{grid-template-columns:1fr}.customer-programme-card-v95{min-height:128px}}
 @media(max-width:560px){.customer-next-action>.row{align-items:stretch}.customer-next-action .btn{width:100%;justify-content:center}}
 .strike{text-decoration:line-through;opacity:.55}
 /* v53 visit feedback & service recovery (shared by the customer wallet and the staff queue) */
@@ -3996,6 +4006,50 @@ function openCustomerPromotionDetailsV104(card){
   });
   $('customerPromotionDetailsClose').onclick=$('customerPromotionDetailsDone').onclick=close;
 }
+function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=null}={}){
+  if(!prompt?.event_id||!prompt?.promotion_id||!businessSlug||!Array.isArray(items))return false;
+  const promotionId=String(prompt.promotion_id);
+  const item=items.find(candidate=>String(candidate?.id||'')===promotionId);
+  if(!item||$('customerPromotionPopupV122'))return false;
+  const endingSoon=prompt.source_kind==='v122_promotion_expiry';
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerPromotionPopupV122" role="dialog" aria-modal="true" aria-labelledby="customerPromotionPopupTitle" tabindex="-1"><div class="modal-card customer-promotion-popup-card">
+    <p class="customer-quest-kicker">${endingSoon?'Ending soon':'New promotion'} · ${esc(business?.name||'Your programme')}</p>
+    <h2 id="customerPromotionPopupTitle" style="margin-top:7px">${esc(item.name||'Latest offer')}</h2>
+    <p class="muted" style="margin-top:8px">${esc(item.description||item.tagline||item?.metadata?.offer_facts||'Open the programme to see this promotion.')}</p>
+    <p class="small" style="margin-top:10px">${esc(customerPromotionValidityV104(item))}</p>
+    <div class="row" style="margin-top:18px"><button type="button" class="btn" data-promotion-popup-view>View offer</button><button type="button" class="btn ghost" data-promotion-popup-dismiss>Not now</button></div>
+    <p class="muted small" data-promotion-popup-status role="status" aria-live="polite" style="margin-top:9px"></p>
+  </div></div>`);
+  const dialog=$('customerPromotionPopupV122');
+  let deactivate,closing=false;
+  const operationKeys={read:crypto.randomUUID(),dismiss:crypto.randomUUID()};
+  const close=async(operation='dismiss',afterClose=null)=>{
+    if(closing)return;
+    closing=true;
+    dialog.querySelectorAll('button').forEach(button=>button.disabled=true);
+    const {error}=await sb.rpc('customer_set_in_app_inbox_state',{
+      p_business_slug:businessSlug,p_event_id:prompt.event_id,
+      p_operation:operation,p_idempotency_key:operationKeys[operation]
+    });
+    if(error){
+      closing=false;
+      dialog.querySelectorAll('button').forEach(button=>button.disabled=false);
+      const status=dialog.querySelector('[data-promotion-popup-status]');
+      if(status)status.textContent='This promotion could not be dismissed. Check your connection and try again.';
+      return;
+    }
+    if(deactivate)deactivate();else dialog?.remove();
+    afterClose?.();
+  };
+  deactivate=CUI.activateDialog(dialog,{onClose:()=>close('dismiss'),initialFocus:'[data-promotion-popup-view]'});
+  dialog.querySelector('[data-promotion-popup-dismiss]').onclick=()=>close('dismiss');
+  dialog.querySelector('[data-promotion-popup-view]').onclick=()=>close('read',()=>{
+    const card=document.querySelector(`[data-promotion-id="${CSS.escape(promotionId)}"]`);
+    card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+    card?.querySelector('button,a')?.focus();
+  });
+  return true;
+}
 function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
@@ -4097,8 +4151,26 @@ function customerProgrammeTileMarkupV96(card){
   const unit=ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points');
   return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${Number(loyalty.balance||0)}</b><span>${esc(unit)}</span></div></div></a>`;
 }
+function customerBusinessCategoryV122(industry=''){
+  const value=String(industry||'').trim().toLowerCase();
+  if(/facial|spa|salon|beauty|hair|massage|personal care|aesthetic|wellness/.test(value))
+    return 'Personal care';
+  if(/cafe|café|coffee|restaurant|food|beverage|f&b|fnb|bakery|bar/.test(value))
+    return 'Food & drink';
+  if(/fitness|gym|yoga|pilates|sport/.test(value))return 'Fitness';
+  if(/retail|shop|fashion|boutique|grocer/.test(value))return 'Shopping';
+  return 'Other';
+}
 function customerProgrammeGridMarkupV96(cards=[]){
-  return `<div class="customer-programme-list customer-programme-grid-v96">${cards.map(customerProgrammeTileMarkupV96).join('')}</div>`;
+  const order=['Personal care','Food & drink','Fitness','Shopping','Other'];
+  const grouped=new Map(order.map(category=>[category,[]]));
+  cards.forEach(card=>grouped.get(customerBusinessCategoryV122(card?.business?.industry)).push(card));
+  return `<div class="customer-programme-list customer-programme-grid-v96">${order
+    .filter(category=>grouped.get(category).length)
+    .map(category=>`<section class="customer-programme-category" aria-labelledby="customerCategory-${category.replaceAll(' ','-').toLowerCase()}">
+      <div class="customer-programme-category-head"><h2 id="customerCategory-${category.replaceAll(' ','-').toLowerCase()}">${esc(category)}</h2><span class="pill">${grouped.get(category).length}</span></div>
+      <div class="customer-programme-category-grid">${grouped.get(category).map(customerProgrammeTileMarkupV96).join('')}</div>
+    </section>`).join('')}</div>`;
 }
 function customerHomeNextActionMarkup(card){
   const business=card?.business||{},reason=String(card?.action?.reason||'');
@@ -4233,10 +4305,14 @@ async function renderCustomerWallet(businessSlug=null){
   const unavailableBusinessId=()=>Promise.resolve({
     data:null,error:{code:'business_id_unavailable',message:'Business identifier is unavailable'}
   });
-  const [businessActionsResult,presentationResult,promotionsResult]=await Promise.all([
+  const promotionPromptRequest=customerFeatures.customer_in_app_inbox===true
+    ?sb.rpc('customer_get_pending_promotion_prompt_v122',{p_business_slug:businessSlug})
+    :Promise.resolve({data:null,error:null});
+  const [businessActionsResult,presentationResult,promotionsResult,promotionPromptResult]=await Promise.all([
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
-    businessId?sb.rpc('customer_get_promotions_v104',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId()
+    businessId?sb.rpc('customer_get_promotions_v104',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
+    promotionPromptRequest
   ]);
   if(!isWalletCurrent())return;
   const businessActions=businessActionsResult.error?null:businessActionsResult.data;
@@ -4283,6 +4359,10 @@ async function renderCustomerWallet(businessSlug=null){
   });
   document.querySelectorAll('[data-promotion-details]').forEach(button=>button.onclick=()=>{
     openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
+  });
+  showCustomerPromotionPopupV122({
+    business:b,businessSlug,items:presentation.offers,
+    prompt:promotionPromptResult.error?null:promotionPromptResult.data
   });
   focusCustomerRoute();
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
@@ -4604,7 +4684,7 @@ async function renderCustomerWallet(businessSlug=null){
     const general=items.find(f=>!f.sale_id)||null;
     const stars=n=>'★'.repeat(Number(n)||0)+'☆'.repeat(Math.max(0,5-(Number(n)||0)));
     const reviewLink=walletReviewUrl?`<p style="margin-top:16px"><a class="fb-review-link" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('loyalty',{size:16})}<span>Leave a public review for ${esc(b.name||'this business')}</span></a></p>`:'';
-    const shareCard=(opts.highlightShare&&walletReviewUrl)?`<div class="fb-share"><b>Thanks for the kind words!</b><p class="muted small" style="margin:4px 0 10px">A quick public review helps ${esc(b.name||'this business')} more than you know.</p><a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer">Share it publicly</a></div>`:'';
+    const shareCard=(opts.highlightShare&&walletReviewUrl)?`<div class="fb-share"><b>Thank you for sharing</b><p class="muted small" style="margin:4px 0 10px">You can also leave an honest public review for ${esc(b.name||'this business')}. This option is the same for every rating.</p><a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer">Leave a public review</a></div>`:'';
     const words=['','Poor','Not great','Okay','Good','Great'];
     const promptHtml=general
       ?`<div class="wallet-line"><div><b>Thanks for sharing your feedback</b><p class="muted small" style="margin-top:4px">You rated this <span class="fb-rating" aria-hidden="true">${stars(general.rating)}</span><span class="sr-only">${general.rating} out of 5</span>. ${esc(feedbackStatusWord(general))}.</p></div></div>`
@@ -4642,9 +4722,8 @@ async function renderCustomerWallet(businessSlug=null){
         return;
       }
       feedbackSubmitIdem=null;
-      const rating=Number(result?.rating||val);
       toast('Thanks for your feedback');
-      loadFeedback({highlightShare:rating>=4});
+      loadFeedback({highlightShare:true});
     };
   };
   await Promise.all([loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback()]);
@@ -4669,7 +4748,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
   const topicLabels={
     value_expiry:expiryReminderLabel,reward_ready:'Reward ready reminders',
     visit_progress:'Visit progress reminders',birthday_benefit:'Birthday benefit reminders',
-    booking_updates:'Booking update reminders'
+    booking_updates:'Booking update reminders',promotion_alerts:'Promotion alerts'
   };
   const request=(name,args)=>sb.rpc(name,args);
   const refreshBell=async()=>{
@@ -5687,7 +5766,8 @@ function timeAgo(iso){
    explicit map (not a blanket default) so a future new kind is a deliberate decision, not
    an accident. */
 const NOTIF_ROUTE={booking_new:'#/bookings',booking_waitlisted:'#/bookings',change_request:'#/bookings',
-  booking_expired:'#/bookings',waitlist_ready:'#/bookings',subscription_payment_due:'#/home'};
+  booking_expired:'#/bookings',waitlist_ready:'#/bookings',subscription_payment_due:'#/home',
+  feedback_new:'#/customers'};
 async function loadNotifications(){
   const {data,error}=await sb.rpc('get_notifications',{p_business:S.biz.id,p_limit:30});
   if(error){notifError=error.message||'Could not load notifications';return}
@@ -5776,7 +5856,7 @@ function renderBell(page){
    is meant to fix. Only wired for the pages where booking/waitlist activity is visible. */
 function autoRefreshIfRelevant(){
   const key=(currentPage&&currentPage[0])||'';
-  const P={bookings:bookingsPage,appointments:appointmentsPage,waitlist:waitlistPage};
+  const P={bookings:bookingsPage,appointments:appointmentsPage,waitlist:waitlistPage,customers:clientsPage};
   if(P[key]) P[key](currentPage[1]);
 }
 function ensureRealtimeChannel(){
@@ -5787,6 +5867,7 @@ function ensureRealtimeChannel(){
       notifState.unread=(notifState.unread||0)+1;
       notifState.items=[payload.new,...(notifState.items||[])].slice(0,30);
       renderBell(currentPage);
+      autoRefreshIfRelevant();
       if(S.biz.notify_new_bookings&&!muteAlerts) toast('🔔 '+(payload.new?.title||'New notification'));
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'booking_requests',filter:'business_id=eq.'+S.biz.id},()=>autoRefreshIfRelevant())
@@ -7453,7 +7534,7 @@ async function tillPage(){
   if(!isTillCurrent())return;
   const branchModuleFailure=branchModuleResults.find(item=>item.result.error||!item.result.data);
   if(branchModuleFailure){
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Branch access could not be checked safely.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn could not be loaded',description:'No purchase, redemption, package use, or gift card was recorded.',body:'<button type="button" class="btn ghost" id="tBranchModulesRetry">Try again</button>'})}`;
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Branch access could not be checked safely.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn could not be loaded',description:'No purchase, redemption, or package use was recorded.',body:'<button type="button" class="btn ghost" id="tBranchModulesRetry">Try again</button>'})}`;
     $('tBranchModulesRetry').onclick=tillPage;
     return;
   }
@@ -7475,28 +7556,11 @@ async function tillPage(){
     clientsReadable:branchCanRead(tillBranchId,'clients'),
     loyaltyWritable:branchCanWrite(tillBranchId,'loyalty')
   });
-  const canIssueGiftCards=()=>giftCardAbilitiesV102({
-    createSales:hasRoleCapability('create_sales'),
-    giftcardsReadable:branchCanRead(tillBranchId,'giftcards'),
-    giftcardsWritable:branchCanWrite(tillBranchId,'giftcards'),
-    businessEnabled:S.biz.gift_card_sales_enabled===true
-  }).canIssue;
   if(!tillStaffId||!tillBranchId){
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'A staff identity and branch with Quick earn access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn is not available',description:'Ask an owner or Nestly administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, package use, or gift card was recorded.</p>'})}`;
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'A staff identity and branch with Quick earn access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn is not available',description:'Ask an owner or Nestly administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
     return;
   }
   selectedBranchId=tillBranchId;
-  let hasActiveGiftLiability=false;
-  const refreshGiftLiability=async()=>{
-    const {data,error}=await sb.rpc('business_has_active_gift_liability_v117',{
-      p_business:S.biz.id,p_branch:tillBranchId
-    });
-    if(!isTillCurrent())return false;
-    hasActiveGiftLiability=!error&&data===true;
-    return hasActiveGiftLiability;
-  };
-  await refreshGiftLiability();
-  if(!isTillCurrent())return;
   recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
     branchId:tillBranchId,
     context:{action_key:'quick_earn',entry_point:'workspace_route',locale:workspaceLocale,surface_version:'v100'}
@@ -7520,7 +7584,7 @@ async function tillPage(){
      catalogue-first; only an explicit false enables the legacy amount-only flow. This keeps new
      firms on itemized sales while allowing the platform backend to disable it per firm. */
   let catalogueSelectionEnabled=S.biz.quick_earn_catalogue_enabled!==false;
-  let cart=[];            // lines: {lineId,type:'service'|'product'|'custom'|'giftcard'|'package'|'membership',ref,label,unit_cents,qty,reason?,key?}
+  let cart=[];            // lines: {lineId,type:'service'|'product'|'custom'|'package'|'membership',ref,label,unit_cents,qty,reason?,key?}
                            // service/product/custom = evaluated by evaluate_checkout, then finalised by ONE record_cart_sale (PS-1C.1);
                            // custom carries a mandatory staff `reason`; giftcard/package/membership = each its own server-idempotent RPC per line.
   let catalog=null;       // catalogue + customer package/voucher entitlements, loaded together
@@ -7547,12 +7611,11 @@ async function tillPage(){
   let svTender=null;       // null | {reservation_id,reserved_cents,remaining_due_cents,requested_cents}
   let svBusy=false;
   const FINALISE_SLOT='frenly.till.cartFinalise'; // sessionStorage slot for the STABLE finalise idempotency key (writeAttemptKey pattern, F2)
-  const GIFT_REDEEM_SLOT='nestly.till.giftCardRedeem';
   // The cart is LOCKED (no picker, qty or remove) whenever a finalise is mid-recovery or extras are pending,
   // so a retry reuses the same idempotency key instead of minting a fresh one and double-charging.
   const cartLocked=()=>!!(checkoutError||staleConfirm||payError);
   // A cart-sale line (service/product/custom) is priced by evaluate_checkout and finalised by ONE record_cart_sale;
-  // everything else (giftcard/package/membership) is an "extra" line with its own idempotency key + RPC.
+  // everything else (package/membership) is an "extra" line with its own idempotency key + RPC.
   const isCartSaleLine=l=>l.type==='service'||l.type==='product'||l.type==='custom';
   // Backend not yet on the kernel: evaluate_checkout / record_cart_sale absent (undefined_function
   // 42883, or PostgREST 404 / PGRST202). Detect so checkout can say "update needed", never fall back.
@@ -7809,12 +7872,7 @@ async function tillPage(){
     cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1,reason});
     CUI.announce('Item added');onSaleLinesChanged();
   }
-  function addGiftLine(cents){
-    if(cartLocked()||!canIssueGiftCards())return;
-    cart.push({lineId:crypto.randomUUID(),type:'giftcard',ref:null,label:'Gift card',unit_cents:cents,qty:1,key:crypto.randomUUID()});
-    CUI.announce('Gift card added');draw(); // extras are NOT part of the kernel evaluation — no re-evaluate
-  }
-  /* Package/membership lines mirror gift cards: qty 1, a stable per-line uuid key minted at
+  /* Package/membership lines use qty 1 and a stable per-line uuid key minted at
      add-time (reused verbatim on retry so the authoritative writer dedupes), always a NEW line. */
   function addPlanLine(type,plan){
     if(cartLocked())return;
@@ -7854,10 +7912,9 @@ async function tillPage(){
     if(wasSale)onSaleLinesChanged();else draw(); // removing an extra does not touch the kernel price
   }
   function cartSaleLines(){return cart.filter(isCartSaleLine)}   // service/product/custom -> evaluate + record_cart_sale
-  function extraLines(){return cart.filter(l=>!isCartSaleLine(l))} // giftcard/package/membership -> own RPC
+  function extraLines(){return cart.filter(l=>!isCartSaleLine(l))} // package/membership -> own RPC
   function extrasTotalCents(){return extraLines().reduce((s,l)=>s+l.unit_cents*l.qty,0)} // NOT part of the kernel/evaluation total
   function extraLineBadge(l,succeeded,failed){
-    if(l.type==='giftcard')return succeeded?`Issued · <span class="till-receipt-code">${esc(l._code||'')}</span>`:failed?`Not issued — ${esc(l._error||'failed')}`:'Gift card — issued at checkout';
     if(l.type==='package')return succeeded
       ?`Sold · ${Number(l._packageResult?.pointsEarned||0)} points earned · ${Number(l._packageResult?.pointsTotal||0)} total`
       :failed?`Not sold — ${esc(l._error||'failed')}`:'Package — charged at checkout';
@@ -8010,10 +8067,6 @@ async function tillPage(){
 
   function drawCartComposer(){
     if(catalog===null&&!catalogError)loadCatalog();
-    const canGift=canIssueGiftCards();
-    if(!canGift&&cart.some(line=>line.type==='giftcard')){
-      cart=cart.filter(line=>line.type!=='giftcard');
-    }
     const canPkg=branchCanWrite(tillBranchId,'packages');
     const canMem=branchCanWrite(tillBranchId,'memberships');
     // §6 custom-price ('Other item') entry is OWNER AND MANAGER ONLY (Option A). This is a role,
@@ -8062,18 +8115,6 @@ async function tillPage(){
         picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
-          ${hasActiveGiftLiability?`<div class="permission-banner" style="margin-top:14px">
-            <b>Redeem an existing gift card</b>
-            <p class="muted small" style="margin:4px 0 8px">Enter the customer’s card code. Existing value remains usable even when new card sales are off.</p>
-            <div class="split" style="align-items:end">
-              <div><label for="tGiftRedeem">Gift card code</label><input id="tGiftRedeem" autocomplete="off" placeholder="GC-XXXXXXXX" style="text-transform:uppercase"></div>
-              <div><button type="button" class="btn ghost" id="tGiftRedeemGo" style="width:100%">${CUI.icon('redeem',{size:16})} Load balance</button></div>
-            </div>
-          </div>`:''}
-          ${canGift?`<div class="split" style="margin-top:10px;align-items:end">
-            <div><label for="tGift">Gift card value (${S.biz.currency||'SGD'})</label><input id="tGift" inputmode="decimal" placeholder="0.00"></div>
-            <div><button type="button" class="btn ghost" id="tGiftAdd" style="width:100%">${CUI.icon('giftcard',{size:16})} Add card</button></div>
-          </div><p class="muted small" style="margin-top:6px">A gift card is issued as its own record and does not earn points.</p>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
             ?'Package purchases earn points once at purchase.'
             :catalog.packageEarnsPoints===false
@@ -8092,7 +8133,7 @@ async function tillPage(){
       const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})}>${CUI.icon('close',{size:16})}</button>`;
       return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
     }).join('')}</ul>`:'';
-    // extras (gift card / package / membership) — charged as their OWN records, NOT part of the
+    // extras (package / membership) — charged as their OWN records, NOT part of the
     // kernel total; shown as "Also processing" so the panel TOTAL matches the evaluation exactly.
     const extrasHtml=extras.length?`<div style="margin-top:14px"><b class="small">Also processing (charged separately)</b>
       <ul class="ck-extras">${extras.map(l=>{
@@ -8138,9 +8179,6 @@ async function tillPage(){
       /* A branch change invalidates every item and evaluation. Clear the cart, then ask the
          server for this branch's effective catalogue before another selection is possible. */
       cart=[];catalog=null;catalogError=null;clearCheckoutState();
-      hasActiveGiftLiability=false;
-      await refreshGiftLiability();
-      if(!isTillCurrent())return;
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
     };
     if($('tCatRetry'))$('tCatRetry').onclick=()=>{catalogError=null;catalog=null;draw()};
@@ -8160,37 +8198,6 @@ async function tillPage(){
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
     });
     if($('tCustomOpen'))$('tCustomOpen').onclick=openCustomModal;
-    if($('tGiftAdd'))$('tGiftAdd').onclick=()=>{
-      const raw=($('tGift').value||'').trim();
-      if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return cartErr('Enter a gift-card value, for example 50.00');
-      const c=Math.round(Number(raw)*100);if(!(c>0)||c>100000000)return cartErr('Gift card must be between 0.01 and 1,000,000.00');
-      addGiftLine(c);
-    };
-    if($('tGiftRedeemGo'))$('tGiftRedeemGo').onclick=async()=>{
-      const code=($('tGiftRedeem').value||'').trim();
-      if(!code)return cartErr('Enter the customer’s gift card code');
-      const button=$('tGiftRedeemGo');button.disabled=true;
-      const giftRedeemFingerprint=JSON.stringify([
-        S.biz.id,tillBranchId,cust.client_id,code.toUpperCase(),null
-      ]);
-      const {data,error}=await sb.rpc('redeem_gift_card_at_branch_v117',{
-        p_business:S.biz.id,p_branch:tillBranchId,p_code:code,
-        p_client:cust.client_id,p_amount:null,
-        p_idempotency_key:writeAttemptKey(
-          GIFT_REDEEM_SLOT,giftRedeemFingerprint
-        )
-      });
-      if(!isTillCurrent())return;
-      button.disabled=false;
-      if(error)return cartErr('That gift card could not be redeemed. Check the code and remaining balance.');
-      clearWriteAttempt(GIFT_REDEEM_SLOT);
-      cust.credit_cents=Number(cust.credit_cents||0)+Number(data?.loaded_cents||0);
-      $('tGiftRedeem').value='';
-      await refreshGiftLiability();
-      if(!isTillCurrent())return;
-      toast(workspaceTemplateTextV97('giftCardLoaded',{amount:money(data?.loaded_cents||0)}));
-      draw();
-    };
     document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>changeQty(b.dataset.line,parseInt(b.dataset.qty,10)));
     document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removeLine(b.dataset.remove));
     document.querySelectorAll('[data-tender]').forEach(button=>button.onclick=()=>{
@@ -8262,8 +8269,8 @@ async function tillPage(){
 
   /* PS-1C.1 FINALISE (step 2 of the kernel journey) + honest extras sequencing.
      Order: (1) ONE record_cart_sale that CONSUMES the evaluation token (p_evaluation_id; p_lines is
-     null — the token is authoritative), then (2) one call per extra line — issue_gift_card, the
-     sell_package_v102 with an explicit branch, or the 4-arg enroll_membership_v41. Idempotency: the finalise reuses ONE
+     null — the token is authoritative), then (2) one call per package or membership line.
+     Idempotency: the finalise reuses ONE
      STABLE key (writeAttemptKey/FINALISE_SLOT) across retries, cleared only on success or an explicit
      cancel/cart-change; each extra carries its own stable uuid `key`. If the kernel finalise fails we
      STOP (no extra attempted) and recover per §2 (stale re-confirm / retry / conflict). If it
@@ -8304,23 +8311,14 @@ async function tillPage(){
     for(const l of extras){
       if(l._status==='issued'||l._status==='done')continue;
       let res;
-      if(l.type==='giftcard'){
-        if(!canIssueGiftCards()){
-          anyExtraFailed=true;l._status='failed';
-          l._error='Gift cards are not enabled for this account';continue;
-        }
-        res=await sb.rpc('issue_gift_card_at_branch_v117',{p_business:S.biz.id,p_branch:tillBranchId,p_amount:l.unit_cents,
-          p_purchaser:cust.client_id,p_recipient_email:null,p_idempotency_key:l.key});
-      }
-      else if(l.type==='package')res=await sb.rpc('sell_package_v102',{p_business:S.biz.id,p_client:cust.client_id,
+      if(l.type==='package')res=await sb.rpc('sell_package_v102',{p_business:S.biz.id,p_client:cust.client_id,
         p_plan:l.ref,p_branch:tillBranchId,p_idempotency_key:l.key});
       else res=await sb.rpc('enroll_membership_v41',{p_business:S.biz.id,p_client:cust.client_id,
         p_plan:l.ref,p_idempotency_key:l.key});
       if(!isTillCurrent())return;
       if(res.error){anyExtraFailed=true;l._status='failed';
         l._error=isBackendMissing(res.error)?'needs the latest system update':(res.error.message||'failed');continue}
-      if(l.type==='giftcard'){l._status='issued';l._code=res.data&&res.data.code;l._error=null}
-      else if(l.type==='package'){
+      if(l.type==='package'){
         const result=packageSaleResultV102(res.data);
         if(!result){anyExtraFailed=true;l._status='failed';l._error='server receipt was incomplete';continue}
         l._packageResult=result;l._status='done';l._error=null;
@@ -8416,8 +8414,7 @@ async function tillPage(){
       </div>`:'';
     const extraRows=d.extras.map(x=>{
       const failed=x.status==='failed';
-      const name=x.type==='giftcard'?`Gift card ${failed?'(not issued)':`· <span class="till-receipt-code">${esc(x.code||'')}</span>`}`
-        :x.type==='package'?`${esc(x.label)} ${failed?'(not sold)':`· sold${x.pointsEarned>0?` · +${x.pointsEarned} points`:''}`}`
+      const name=x.type==='package'?`${esc(x.label)} ${failed?'(not sold)':`· sold${x.pointsEarned>0?` · +${x.pointsEarned} points`:''}`}`
         :`${esc(x.label)} ${failed?'(not enrolled)':'· enrolled'}`;
       return `<li><span>${name}</span><span>${failed?'—':money(x.amount)}</span></li>`;
     }).join('');
@@ -8989,19 +8986,43 @@ async function bookingsPage(){
 const GROWREC=()=>window.FrenlyGrowRec;
 const growMoney=cents=>money(Math.round(cents||0));
 const growPctText=value=>`${Number(value).toFixed(2)}%`;
+function productProfitabilityV122({priceCents,costCents,rewardCostCents=0}={}){
+  const price=Math.max(0,Math.round(Number(priceCents)||0));
+  const cost=Math.max(0,Math.round(Number(costCents)||0));
+  const reward=Math.max(0,Math.round(Number(rewardCostCents)||0));
+  const gross=price-cost,after=gross-reward;
+  return {
+    priceCents:price,costCents:cost,grossProfitCents:gross,
+    marginPct:price?Number((gross/price*100).toFixed(1)):0,
+    rewardCostCents:reward,profitAfterRewardCents:after,
+    profitableAfterReward:after>=0
+  };
+}
 /* Reads the firm's own price list and reduces it to catalogMetrics(). Returns a plain result
    object instead of throwing, so each caller can render its own loading/empty/error/denied state. */
 async function growCatalogMetrics(){
-  const [{data:services,error:servicesError},{data:products,error:productsError}]=await Promise.all([
+  const [{data:services,error:servicesError},productResult]=await Promise.all([
     sb.from('services').select('name,price_cents').eq('business_id',S.biz.id),
-    sb.from('products').select('name,retail_price_cents').eq('business_id',S.biz.id)]);
+    S.myRole==='owner'
+      ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
+      :Promise.resolve({data:{items:[]},error:null})]);
+  const products=Array.isArray(productResult.data?.items)?productResult.data.items:[];
+  const productsError=productResult.error;
   const error=servicesError||productsError;
   if(error)return {ok:false,denied:error.code==='42501'||error.code==='PGRST301',error,metrics:null};
   const items=[
     ...(services||[]).map(s=>({name:s.name,price_cents:s.price_cents})),
-    ...(products||[]).map(p=>({name:p.name,price_cents:p.retail_price_cents}))
+    ...products.map(p=>({name:p.name,price_cents:p.retail_price_cents}))
   ].filter(item=>Number.isFinite(item.price_cents)&&item.price_cents>0);
-  return {ok:true,denied:false,error:null,metrics:GROWREC().catalogMetrics(items)};
+  const costedProducts=products.filter(product=>
+    Number.isFinite(product.retail_price_cents)&&product.retail_price_cents>0&&
+    Number.isFinite(product.cost_cents)&&product.cost_cents>=0
+  );
+  return {
+    ok:true,denied:false,error:null,
+    metrics:{...GROWREC().catalogMetrics(items),costedProducts},
+    products
+  };
 }
 /* Shared markup: the reasoning trail, the labelled lift RANGE, and the standing estimate note. */
 const growWhyList=(reasoning)=>(reasoning||[]).length
@@ -9398,6 +9419,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         <p class="small" style="margin-top:12px">That works out to <b>${esc(growPctText(rec.actualGivebackPct))}</b> give-back — about <b>${esc(growMoney(rec.costPerVisitCents))}</b> a visit, or <b>${esc(growMoney(rec.costPer100VisitsCents))}</b> per 100 visits.</p>
         ${growRecMetrics.sampleItems.length?`<b class="small" style="display:block;margin-top:14px">On your own prices</b>
           <ul class="rec-why">${growRecMetrics.sampleItems.map(item=>`<li>${esc(growPctText(rec.actualGivebackPct))} of your ${esc(growMoney(item.price_cents))} ${esc(item.name||'item')} ≈ ${esc(growMoney(Math.round(item.price_cents*rec.actualGivebackPct/100)))} per visit.</li>`).join('')}</ul>`:''}
+        ${growRecMetrics.costedProducts?.length?`<b class="small" style="display:block;margin-top:14px">Cost check on your products</b>
+          <ul class="rec-why">${growRecMetrics.costedProducts.slice(0,3).map(product=>{
+            const result=productProfitabilityV122({
+              priceCents:product.retail_price_cents,costCents:product.cost_cents,
+              rewardCostCents:rec.rewardCreditCents
+            });
+            return `<li>If the ${esc(growMoney(rec.rewardCreditCents))} credit is fully used, ${esc(product.name||'this product')} leaves ${esc(growMoney(result.profitAfterRewardCents))} after product and reward cost${result.profitableAfterReward?'':'; review this before saving'}.</li>`;
+          }).join('')}</ul>`:''}
         ${growWhyList(rec.reasoning)}
         ${growLiftNote('points')}
         <p class="muted small" style="margin-top:10px">${esc(growEstimateNote)}</p>
@@ -9844,16 +9873,25 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurren
     ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const rewardsRequest=canRewards
-    ?sb.from('loyalty_rewards').select('id,active').eq('business_id',S.biz.id)
+    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort').eq('business_id',S.biz.id).order('sort')
     :Promise.resolve(none);
-  const [{data:business,error:businessError},{data:loyalty,error:loyaltyError},{data:rewards,error:rewardsError}]
-    =await Promise.all([businessRequest,loyaltyRequest,rewardsRequest]);
+  const productsRequest=S.myRole==='owner'
+    ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
+    :Promise.resolve(none);
+  const [{data:business,error:businessError},{data:loyalty,error:loyaltyError},
+    {data:rewards,error:rewardsError},{data:products,error:productsError}]
+    =await Promise.all([businessRequest,loyaltyRequest,rewardsRequest,productsRequest]);
   if(!isCurrent())return null;
   if(businessError)throw businessError;
   const currentVersion=business?.active_config_version_id||null;
   const retentionRequest=canWinback&&currentVersion
     ?sb.from('retention_programs').select('id,active').eq('business_id',S.biz.id)
       .eq('current_config_version_id',currentVersion)
+    :Promise.resolve(none);
+  const birthdayRequest=canRewards&&currentVersion
+    ?sb.from('birthday_program_versions')
+      .select('id,active,customer_label,customer_description,fulfillment_kind,discount_percent,manual_item,window_days_before,window_days_after')
+      .eq('business_id',S.biz.id).eq('config_version_id',currentVersion).limit(1)
     :Promise.resolve(none);
   let draftRequest=Promise.resolve(none);
   if(canSetupGrow){
@@ -9862,8 +9900,9 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurren
     query=currentVersion?query.eq('based_on_version_id',currentVersion):query.is('based_on_version_id',null);
     draftRequest=query.order('version_no',{ascending:false}).limit(1);
   }
-  const [{data:retention,error:retentionError},{data:drafts,error:draftError}]
-    =await Promise.all([retentionRequest,draftRequest]);
+  const [{data:retention,error:retentionError},{data:drafts,error:draftError},
+    {data:birthday,error:birthdayError}]
+    =await Promise.all([retentionRequest,draftRequest,birthdayRequest]);
   if(!isCurrent())return null;
   /* Overview reads are intentionally fail-soft. A missing optional engine must not hide the
      rest of Grow; its node reports Needs setup while its dedicated surface keeps the full error. */
@@ -9871,9 +9910,32 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurren
     currentVersion,
     loyalty:loyaltyError?null:(loyalty||[])[0]||null,
     rewards:rewardsError?[]:rewards||[],
+    products:productsError?[]:(Array.isArray(products?.items)?products.items:[]),
+    birthday:birthdayError?null:(birthday||[])[0]||null,
     retention:retentionError?[]:retention||[],
     draft:draftError?null:(drafts||[])[0]||null
   };
+}
+function ownerRewardJourneyV122({rewards=[],birthday=null,loyaltyModel='points'}={}){
+  const unit=loyaltyModel==='stamps'?'stamps':'points';
+  const ordered=(Array.isArray(rewards)?rewards:[])
+    .filter(reward=>reward?.active!==false)
+    .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0)||Number(a.sort||0)-Number(b.sort||0));
+  const milestones=ordered
+    .map((reward,index)=>({
+      id:reward.id||String(index),name:reward.customer_name||reward.name||'Reward',
+      threshold:Math.max(0,Number(reward.cost_points||0)),unit,
+      additional:index?Math.max(0,Number(reward.cost_points||0)-Number(ordered[index-1]?.cost_points||0)):Math.max(0,Number(reward.cost_points||0)),
+      estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0))
+    }));
+  const birthdayReward=birthday?.active===false||!birthday?null:{
+    name:birthday.customer_label||'Birthday reward',
+    description:birthday.customer_description||'Available in the configured birthday window.',
+    value:birthday.fulfillment_kind==='discount_pct'
+      ?`${Number(birthday.discount_percent||0)}% off`
+      :birthday.manual_item||'Configured birthday benefit'
+  };
+  return {unit,milestones,birthday:birthdayReward};
 }
 function growStatus(label,tone=''){
   return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
@@ -10393,6 +10455,7 @@ async function growPage(routedSurface,hashParam){
   const canRewards=modules.includes('loyalty'),canWinback=modules.includes('retention');
   const isOwner=S.myRole==='owner';
   const canSetupGrow=isOwner&&canRewards&&canWriteModule('loyalty');
+  const canEditProductCosts=isOwner&&canRewards&&canWriteModule('loyalty');
   recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
@@ -10401,6 +10464,16 @@ async function growPage(routedSurface,hashParam){
   if(!snapshot||!isGrowCurrent())return;
   let growDraftVersionId=hashParam&&['rewards','winback'].includes(routedSurface)?hashParam:(snapshot.draft?.id||null);
   const rewardCount=snapshot.rewards.filter(x=>x.active!==false).length;
+  const rewardJourney=ownerRewardJourneyV122({
+    rewards:snapshot.rewards,birthday:snapshot.birthday,
+    loyaltyModel:snapshot.loyalty?.loyalty_model||'points'
+  });
+  const profitabilityProducts=(snapshot.products||[]).map(product=>({
+    ...product,
+    profit:product.cost_cents==null?null:productProfitabilityV122({
+      priceCents:product.retail_price_cents,costCents:product.cost_cents
+    })
+  }));
   const bringBackCount=snapshot.retention.filter(x=>x.active!==false).length;
   const loyaltyLive=Boolean(snapshot.loyalty?.active&&snapshot.currentVersion);
   const bringBackLive=bringBackCount>0;
@@ -10442,6 +10515,28 @@ async function growPage(routedSurface,hashParam){
         <h2>Result</h2><p>${bringBackCount?workspaceTemplateHtmlV97(bringBackCount===1?'growPublishedBringBackRule':'growPublishedBringBackRules',{count:bringBackCount}):'Measure repeat visits and bring customers back before they drift.'}</p>
         <div class="grow-flow-foot">${growStatus(nodeStatus(bringBackLive),nodeTone(bringBackLive))}${editorAction('winback','Edit bring-back','rn')}</div></li>
     </ol>
+    ${isOwner?`<section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle">
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programme overview</p><h2 id="rewardJourneyTitle">Reward journey</h2><p class="muted small">The exact milestones customers are working toward in the published programme.</p></div>
+        ${canSetupGrow?'<button type="button" class="btn ghost sm" data-grow-open="rewards" data-grow-focus="rwAdd">Edit rewards</button>':''}</div>
+      ${rewardJourney.milestones.length?`<ol class="reward-milestone-track">${rewardJourney.milestones.map((milestone,index)=>`<li data-reward-milestone>
+        <span class="reward-milestone-number">${index+1}</span><div><b>${esc(milestone.name)}</b><p class="muted small">Reach ${milestone.threshold} ${esc(milestone.unit)}${index?` · ${milestone.additional} more after the previous reward`:''}${milestone.estimatedCostCents?` · estimated fulfilment cost ${money(milestone.estimatedCostCents)}`:''}</p></div></li>`).join('')}</ol>`:
+        CUI.emptyState({iconName:'loyalty',title:'No reward milestones yet',body:'Add the first published milestone so owners and staff can explain the journey consistently.'})}
+      <div class="birthday-reward-overview"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday reward</b>${rewardJourney.birthday
+        ?`<p class="muted small">${esc(rewardJourney.birthday.name)} · ${esc(rewardJourney.birthday.value)}. ${esc(rewardJourney.birthday.description)}</p>`
+        :'<p class="muted small">Not configured in the published programme.</p>'}</div></div>
+    </section>
+    <section class="card profitability-overview-v122" aria-labelledby="profitabilityTitle">
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Reward economics</p><h2 id="profitabilityTitle">Product cost and profitability</h2><p class="muted small">Use real cost, not retail price, when deciding what a reward can safely cost.</p></div></div>
+      ${profitabilityProducts.length?`<div class="profitability-product-grid">${profitabilityProducts.slice(0,6).map(product=>{
+        const safeReward=product.profit?Math.max(0,Math.round(product.profit.grossProfitCents*.25)):null;
+        return `<article data-product-profitability="${esc(product.id)}" data-price-cents="${Number(product.retail_price_cents)||0}" data-cost-cents="${product.cost_cents==null?'':Number(product.cost_cents)}"><b>${esc(product.name)}</b><dl><div><dt>Sell for</dt><dd>${money(product.retail_price_cents)}</dd></div><div><dt>Product cost</dt><dd>${product.cost_cents==null?'Not set':money(product.cost_cents)}</dd></div>${product.profit?`<div><dt>Gross profit</dt><dd>${money(product.profit.grossProfitCents)} · ${product.profit.marginPct}%</dd></div>`:''}</dl>
+          ${canEditProductCosts?`<label for="productCost-${esc(product.id)}" style="margin-top:10px">Unit cost (${esc(S.biz.currency||'SGD')})</label><div class="row"><input id="productCost-${esc(product.id)}" data-product-cost="${esc(product.id)}" inputmode="decimal" placeholder="e.g. 24.00" value="${product.cost_cents==null?'':(Number(product.cost_cents)/100).toFixed(2)}"><button type="button" class="btn ghost sm" data-product-cost-save="${esc(product.id)}" data-expected-cost="${product.cost_cents==null?'':Number(product.cost_cents)}">Save cost</button></div>`:''}
+          ${product.profit&&canSetupGrow?`<label for="rewardCost-${esc(product.id)}" style="margin-top:10px">Proposed reward cost (${esc(S.biz.currency||'SGD')})</label><div class="row"><input id="rewardCost-${esc(product.id)}" data-reward-cost="${esc(product.id)}" inputmode="decimal" value="${(safeReward/100).toFixed(2)}"><button type="button" class="btn ghost sm" data-reward-cost-use="${esc(product.id)}">Use in reward setup</button></div><p class="small" data-profit-after-reward="${esc(product.id)}" style="margin-top:8px">Reward cost ${money(safeReward)} leaves ${money(product.profit.grossProfitCents-safeReward)} profit after reward.</p>`:''}
+          <p class="muted small" style="margin-top:9px">${product.profit?`Assistant starting point: ${money(safeReward)} is 25% of gross profit. Edit the proposed cost, inspect the remaining profit, then send it to the reward draft.`:'Add the real unit cost to calculate gross profit and a cautious reward-cost starting point.'}</p></article>`;
+      }).join('')}</div>`:CUI.emptyState({iconName:'inventory',title:'No products available',body:'Add a real product through your catalogue setup, then return here to record its cost and review profitability.'})}
+      ${canEditProductCosts?'':`<p class="muted small" style="margin-top:12px">Product costs are read-only because this workspace does not grant Inventory write access.</p>`}
+      <p class="muted small" style="margin-top:12px">Guidance is deterministic and editable. It never publishes or changes a reward automatically.</p>
+    </section>`:''}
     ${canSetupGrow?`<details class="grow-guide" id="growSetupGuide" ${growDraftVersionId?'open':''}>
       <summary>Guided setup</summary><div class="grow-guide-body">
         <div class="grow-guide-step"><b>1. Goal</b><p>Choose the repeat behaviour you want Grow to encourage.</p>
@@ -10473,8 +10568,29 @@ async function growPage(routedSurface,hashParam){
     <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
+  document.querySelectorAll('[data-product-cost-save]').forEach(button=>button.onclick=async()=>{
+    const productId=button.dataset.productCostSave;
+    const input=document.querySelector(`[data-product-cost="${CSS.escape(productId)}"]`);
+    const raw=String(input?.value||'').trim();
+    if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter a product cost, for example 24.00');
+    const costCents=Math.round(Number(raw)*100);
+    if(costCents<0||costCents>2147483647)return toast('Product cost is outside the supported range');
+    button.disabled=true;
+    const expectedRaw=button.dataset.expectedCost;
+    const {data,error}=await sb.rpc('owner_set_product_cost_v122',{
+      p_business:S.biz.id,p_product:productId,p_cost_cents:costCents,
+      p_expected_cost_cents:expectedRaw===''?null:Number(expectedRaw)
+    });
+    if(!isGrowCurrent())return;
+    if(error||data?.id!==productId){
+      button.disabled=false;
+      return fail(error||new Error('Product cost was not confirmed. Nothing was changed.'));
+    }
+    toast('Product cost saved');
+    await growPage(routedSurface,hashParam);
+  });
   const panelHost=$('growpanelhost');
-  let activeSurface=null,preparingDraft=false,pendingGuideAction=null;
+  let activeSurface=null,preparingDraft=false,pendingGuideAction=null,pendingRewardEstimateCents=null;
   const surfaceDefinition={
     rewards:{hash:'#/loyalty',label:'Rewards and earning'},
     winback:{hash:'#/retention',label:'Bring-back rules'},
@@ -10491,7 +10607,21 @@ async function growPage(routedSurface,hashParam){
     return true;
   };
   async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false}={}){
-    if(activeSurface===surface){if(focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});return}
+    const applyPendingRewardEstimate=()=>{
+      if(surface!=='rewards'||pendingRewardEstimateCents===null)return false;
+      const estimate=$('rwEstimate');
+      if(!estimate)return false;
+      estimate.value=(pendingRewardEstimateCents/100).toFixed(2);
+      estimate.dispatchEvent(new Event('input',{bubbles:true}));
+      pendingRewardEstimateCents=null;
+      toast('Proposed fulfilment cost added to the editable reward');
+      return true;
+    };
+    if(activeSurface===surface){
+      if(focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
+      applyPendingRewardEstimate();
+      return;
+    }
     if((surface==='rewards'&&!canRewards)||(surface==='winback'&&!canWinback))return;
     if(['studio','storedvalue'].includes(surface)&&!isOwner)return;
     activeSurface=surface;
@@ -10512,6 +10642,7 @@ async function growPage(routedSurface,hashParam){
     else await studioPage(draft||hashParam||null);
     if(focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(focus&&panel.isConnected)panel.focus({preventScroll:true});
+    applyPendingRewardEstimate();
   }
   document.querySelectorAll('[data-grow-open]').forEach(button=>button.onclick=()=>mountGrowSurface(button.dataset.growOpen,{
     focusTarget:button.dataset.growFocus||null}));
@@ -10557,6 +10688,40 @@ async function growPage(routedSurface,hashParam){
       fail(error);
     }finally{preparingDraft=false}
   };
+  document.querySelectorAll('[data-reward-cost]').forEach(input=>input.addEventListener('input',()=>{
+    const productId=input.dataset.rewardCost;
+    const card=input.closest('[data-product-profitability]');
+    const status=card?.querySelector(`[data-profit-after-reward="${CSS.escape(productId)}"]`);
+    const raw=String(input.value||'').trim();
+    if(!status)return;
+    if(!/^\d+(?:\.\d{1,2})?$/.test(raw)){
+      status.textContent='Enter a reward cost, for example 9.00.';return;
+    }
+    const calculation=productProfitabilityV122({
+      priceCents:Number(card.dataset.priceCents),
+      costCents:Number(card.dataset.costCents),
+      rewardCostCents:Math.round(Number(raw)*100)
+    });
+    status.textContent=[
+      'Reward cost ',money(calculation.rewardCostCents),' leaves ',
+      money(calculation.profitAfterRewardCents),' profit after reward.'
+    ].join('');
+    status.style.color=calculation.profitableAfterReward?'':'var(--red)';
+  }));
+  document.querySelectorAll('[data-reward-cost-use]').forEach(button=>button.onclick=()=>{
+    const productId=button.dataset.rewardCostUse;
+    const input=document.querySelector(`[data-reward-cost="${CSS.escape(productId)}"]`);
+    const raw=String(input?.value||'').trim();
+    if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter a valid proposed reward cost first');
+    pendingRewardEstimateCents=Math.round(Number(raw)*100);
+    const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
+    if(!growDraftVersionId){
+      pendingGuideAction=action;
+      setupButton?.click();
+      return;
+    }
+    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+  });
   /* A deep link is a deliberate request to open an engine. The normal #/loyalty and
      #/retention destinations stop at this overview, so ordinary Grow use stays coherent. */
   if((hashParam&&isOwner)||['studio','storedvalue'].includes(routedSurface)){
@@ -14000,7 +14165,9 @@ async function inventoryPage(){
     <div class="split">
     ${canWrite?`<div class="card"><b>Add product</b>
       <label>Name</label><input id="pn2"><label>SKU (optional)</label><input id="ps2">
-      <label>Retail price (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01">
+      <div class="split"><div><label>Retail price (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01"></div>
+      <div><label>Product cost (${S.biz.currency||'SGD'})</label><input id="pc2" type="number" min="0" step="0.01" aria-describedby="productProfitPreview"></div></div>
+      <div class="permission-banner" id="productProfitPreview" style="margin-top:12px"><div><b>Add price and cost</b><p class="muted small" style="margin-top:4px">Nestly will show gross profit and a safe reward-cost starting point. Nothing is published automatically.</p></div></div>
       <div style="margin-top:14px"><button class="btn" id="padd2">Add product</button></div>
       <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
       <b>Receive stock</b>
@@ -14021,16 +14188,28 @@ async function inventoryPage(){
     const pr=productsResult.data,st=stockResult.data;
     const SM=Object.fromEntries((st||[]).map(x=>[x.product_id,x.stock]));
     if(canWrite)$('bp2').innerHTML=(pr||[]).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">— add a product first —</option>';
-    $('ilist').innerHTML=(pr&&pr.length)?`<table><tr><th>Product</th><th>SKU</th><th>Price</th><th>Stock</th></tr>
-      ${pr.map(p=>{const s=SM[p.id]||0;return `<tr><td><b>${esc(p.name)}</b></td><td class="small">${esc(p.sku||'—')}</td>
-      <td>${money(p.retail_price_cents)}</td><td>${s} ${s<5?'<span class="pill no">low</span>':''}</td></tr>`}).join('')}</table>`
+    $('ilist').innerHTML=(pr&&pr.length)?`<table><tr><th>Product</th><th>SKU</th><th>Price</th><th>Cost</th><th>Gross profit</th><th>Stock</th></tr>
+      ${pr.map(p=>{const s=SM[p.id]||0,profit=p.cost_cents==null?null:productProfitabilityV122({priceCents:p.retail_price_cents,costCents:p.cost_cents});return `<tr><td><b>${esc(p.name)}</b></td><td class="small">${esc(p.sku||'—')}</td>
+      <td>${money(p.retail_price_cents)}</td><td>${p.cost_cents==null?'Not set':money(p.cost_cents)}</td><td>${profit?`${money(profit.grossProfitCents)} · ${profit.marginPct}%`:'Add cost'}</td><td>${s} ${s<5?'<span class="pill no">low</span>':''}</td></tr>`}).join('')}</table>`
       :`<div class="empty"><div class="big">📦</div>No products yet.</div>`;
   }
+  const paintProductProfit=()=>{
+    if(!canWrite)return;
+    const price=Math.round(Number($('pp2').value||0)*100),cost=Math.round(Number($('pc2').value||0)*100);
+    const host=$('productProfitPreview');if(!host)return;
+    if(!(price>0)||!$('pc2').value){host.innerHTML='<div><b>Add price and cost</b><p class="muted small" style="margin-top:4px">Nestly will show gross profit and a safe reward-cost starting point. Nothing is published automatically.</p></div>';return}
+    const result=productProfitabilityV122({priceCents:price,costCents:cost});
+    const suggested=Math.max(0,Math.round(result.grossProfitCents*.25));
+    host.innerHTML=`<div><b>${money(result.grossProfitCents)} gross profit · ${result.marginPct}% margin</b><p class="muted small" style="margin-top:4px">A cautious starting reward cost is up to ${money(suggested)} (25% of gross profit). Review the real fulfilment cost before publishing.</p></div>`;
+  };
+  if(canWrite){$('pp2').oninput=paintProductProfit;$('pc2').oninput=paintProductProfit}
   if(canWrite)$('padd2').onclick=async()=>{
     if($('pn2').value.trim().length<2) return toast('Name required');
+    if(!$('pc2').value)return toast('Add the product cost so profitability stays understandable');
     const {error}=await sb.from('products').insert({business_id:S.biz.id,name:$('pn2').value.trim(),
-      sku:$('ps2').value||null,retail_price_cents:Math.round(parseFloat($('pp2').value||'0')*100)});
-    if(error) return fail(error);toast('Product added');$('pn2').value='';loadInv();
+      sku:$('ps2').value||null,retail_price_cents:Math.round(parseFloat($('pp2').value||'0')*100),
+      cost_cents:Math.round(parseFloat($('pc2').value||'0')*100)});
+    if(error) return fail(error);toast('Product added');$('pn2').value='';$('pp2').value='';$('pc2').value='';paintProductProfit();loadInv();
   };
   if(canWrite)$('badd2').onclick=async()=>{
     if(!$('bp2').value) return toast('Pick a product');

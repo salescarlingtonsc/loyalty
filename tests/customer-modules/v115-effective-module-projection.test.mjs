@@ -54,9 +54,9 @@ test('Quick Earn resolves every assigned branch before showing write controls',a
   assert.match(till,/sb\.rpc\('get_my_modules_at_v115'/);
   assert.match(till,/branchModulePermsById=new Map/);
   assert.match(till,/branchCanWrite\(branch\.id,'till'\)&&branchCanRead\(branch\.id,'clients'\)/);
-  assert.match(till,/giftcardsReadable:branchCanRead\(tillBranchId,'giftcards'\)/);
-  assert.match(till,/giftcardsWritable:branchCanWrite\(tillBranchId,'giftcards'\)/);
+  assert.doesNotMatch(till,/giftcardsReadable|giftcardsWritable/,
+    'owner-directed v122 Quick Earn must not expose gift-card controls');
   assert.match(till,/wantPackages=branchCanWrite\(tillBranchId,'packages'\)/);
   assert.match(till,/wantMemberships=branchCanWrite\(tillBranchId,'memberships'\)/);
-  assert.match(till,/No purchase, redemption, package use, or gift card was recorded/);
+  assert.match(till,/No purchase, redemption, or package use was recorded/);
 });

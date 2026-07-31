@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="003e01a7fc50021fff37a1eb1d28fa7b99b9c07fafbed8674096f4c6aaf547d4">
+<meta name="v104-production-source-sha256" content="13c174514409e7953a22bfc2901e460960a19372d638bc6b23e08ac60d03c82e">
 <title>Nestly v104 production-render visual acceptance</title>
 <style>
 
@@ -416,6 +416,12 @@ input[type=range]:focus{box-shadow:none}
 .grow-flow-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--tint);color:var(--coral)}
 .grow-flow-step h2{font-size:16px;margin:12px 0 3px}.grow-flow-step p{font-size:12.5px;line-height:1.45;color:var(--muted);margin:0 0 12px}
 .grow-flow-foot{display:flex;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}.grow-flow-foot .btn{min-height:44px}
+.reward-milestone-track{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;list-style:none;margin:14px 0 0;padding:0}
+.reward-milestone-track li,.birthday-reward-overview{display:flex;gap:11px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:14px;background:#FBFAF8}
+.reward-milestone-number{display:grid;place-items:center;flex:0 0 32px;height:32px;border-radius:50%;background:var(--tint);color:var(--coral);font-weight:700}
+.birthday-reward-overview{margin-top:10px}.profitability-product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px}
+.profitability-product-grid article{padding:14px;border:1px solid var(--line);border-radius:14px}.profitability-product-grid dl{display:grid;gap:6px;margin:10px 0}
+.profitability-product-grid dl div{display:flex;justify-content:space-between;gap:12px}.profitability-product-grid dt{color:var(--muted);font-size:12px}.profitability-product-grid dd{font-weight:650;text-align:right}
 .grow-guide{border:1px solid var(--coral);border-radius:var(--r-sm);background:#fff;padding:0 16px}
 .grow-guide>summary,.grow-advanced>summary{display:flex;align-items:center;gap:10px;min-height:52px;cursor:pointer;font-weight:700}
 .grow-guide-body{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:0 0 16px}
@@ -543,9 +549,10 @@ input[type=range]:focus{box-shadow:none}
 .task-launcher-card b{display:block}.task-launcher-card span{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.35}
 .performance-panel{margin-top:18px}.performance-panel>summary{cursor:pointer;font-weight:750;list-style:none;min-height:44px;display:flex;align-items:center;justify-content:space-between}.performance-panel>summary::-webkit-details-marker{display:none}.performance-panel>summary::after{content:'+';float:right}.performance-panel[open]>summary::after{content:'−'}
 .appointment-primary-action{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:0 0 14px}
-.appointment-layout{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+.appointment-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;min-width:0;width:100%}
 .appointment-layout.form-open{grid-template-columns:minmax(300px,360px) minmax(0,1fr)}
-.appointment-form-card{position:sticky;top:82px}
+.appointment-layout>*{min-width:0;max-width:100%}
+.appointment-form-card{position:sticky;top:82px;min-width:0;width:100%;max-width:100%}
 .appointment-form-card[hidden]{display:none}
 .appointment-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .appointment-toolbar select{width:auto;min-width:150px;margin:0}
@@ -650,7 +657,8 @@ input[type=range]:focus{box-shadow:none}
   .global-search{flex:1 1 200px}
   .global-quick{display:none}
   .global-act{flex:1 1 auto;justify-content:center}
-  .charts,.split,.appointment-layout,.appointment-layout.form-open{grid-template-columns:1fr}
+  .charts,.split{grid-template-columns:1fr}
+  .appointment-layout,.appointment-layout.form-open{grid-template-columns:minmax(0,1fr)}
   .task-launcher-grid,.report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .appointment-form-card{position:static}
   .chart-frame{block-size:220px}
@@ -783,7 +791,9 @@ input[type=range]:focus{box-shadow:none}
 .customer-home-quick a:hover{border-color:rgba(194,65,53,.28)}
 .customer-home-quick b{display:block;font-size:14px}.customer-home-quick p{margin-top:3px;line-height:1.4}
 .customer-programme-list,.customer-booking-list{display:grid;gap:12px}
-.customer-programme-grid-v96{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.customer-programme-grid-v96{grid-template-columns:1fr;gap:22px}
+.customer-programme-category{display:grid;gap:10px}.customer-programme-category-head{display:flex;align-items:center;gap:8px}
+.customer-programme-category-head h2{font-size:16px}.customer-programme-category-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .customer-programme-card{display:block;min-height:44px}
 .customer-programme-card-v95{position:relative;overflow:hidden;min-height:152px;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease)}
 .customer-programme-card-v95:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
@@ -887,9 +897,9 @@ input[type=range]:focus{box-shadow:none}
   .customer-primary-nav a{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
   .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
-  .customer-programme-grid-v96{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .customer-programme-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-@media(min-width:721px) and (max-width:1100px){.customer-programme-grid-v96{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:721px) and (max-width:1100px){.customer-programme-category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){
   .wallet-shell{padding:max(20px,env(safe-area-inset-top))
     max(14px,env(safe-area-inset-right)) calc(44px + env(safe-area-inset-bottom))
@@ -899,7 +909,7 @@ input[type=range]:focus{box-shadow:none}
   .wallet-metrics{grid-template-columns:1fr}.wallet-section{padding:15px}.wallet-line,.wallet-appt{flex-wrap:wrap}.walletChange{width:100%}
   .entry-choice-card{padding:22px}.entry-choice-grid{grid-template-columns:1fr}.entry-choice{min-height:148px}
 }
-@media(max-width:420px){.customer-programme-grid-v96{grid-template-columns:1fr}.customer-programme-card-v95{min-height:128px}}
+@media(max-width:420px){.customer-programme-category-grid{grid-template-columns:1fr}.customer-programme-card-v95{min-height:128px}}
 @media(max-width:560px){.customer-next-action>.row{align-items:stretch}.customer-next-action .btn{width:100%;justify-content:center}}
 .strike{text-decoration:line-through;opacity:.55}
 /* v53 visit feedback & service recovery (shared by the customer wallet and the staff queue) */
@@ -936,7 +946,7 @@ input[type=range]:focus{box-shadow:none}
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 003e01a7fc50021fff37a1eb1d28fa7b99b9c07fafbed8674096f4c6aaf547d4</p>
+  <p class="v104-provenance">Local production-render harness · source 13c174514409e7953a22bfc2901e460960a19372d638bc6b23e08ac60d03c82e</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -948,7 +958,7 @@ input[type=range]:focus{box-shadow:none}
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="003e01a7fc50021fff37a1eb1d28fa7b99b9c07fafbed8674096f4c6aaf547d4";
+const PRODUCTION_SOURCE_SHA256="13c174514409e7953a22bfc2901e460960a19372d638bc6b23e08ac60d03c82e";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -1031,6 +1041,50 @@ function openCustomerPromotionDetailsV104(card){
     onClose:close,initialFocus:'#customerPromotionDetailsClose'
   });
   $('customerPromotionDetailsClose').onclick=$('customerPromotionDetailsDone').onclick=close;
+}
+function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=null}={}){
+  if(!prompt?.event_id||!prompt?.promotion_id||!businessSlug||!Array.isArray(items))return false;
+  const promotionId=String(prompt.promotion_id);
+  const item=items.find(candidate=>String(candidate?.id||'')===promotionId);
+  if(!item||$('customerPromotionPopupV122'))return false;
+  const endingSoon=prompt.source_kind==='v122_promotion_expiry';
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerPromotionPopupV122" role="dialog" aria-modal="true" aria-labelledby="customerPromotionPopupTitle" tabindex="-1"><div class="modal-card customer-promotion-popup-card">
+    <p class="customer-quest-kicker">${endingSoon?'Ending soon':'New promotion'} · ${esc(business?.name||'Your programme')}</p>
+    <h2 id="customerPromotionPopupTitle" style="margin-top:7px">${esc(item.name||'Latest offer')}</h2>
+    <p class="muted" style="margin-top:8px">${esc(item.description||item.tagline||item?.metadata?.offer_facts||'Open the programme to see this promotion.')}</p>
+    <p class="small" style="margin-top:10px">${esc(customerPromotionValidityV104(item))}</p>
+    <div class="row" style="margin-top:18px"><button type="button" class="btn" data-promotion-popup-view>View offer</button><button type="button" class="btn ghost" data-promotion-popup-dismiss>Not now</button></div>
+    <p class="muted small" data-promotion-popup-status role="status" aria-live="polite" style="margin-top:9px"></p>
+  </div></div>`);
+  const dialog=$('customerPromotionPopupV122');
+  let deactivate,closing=false;
+  const operationKeys={read:crypto.randomUUID(),dismiss:crypto.randomUUID()};
+  const close=async(operation='dismiss',afterClose=null)=>{
+    if(closing)return;
+    closing=true;
+    dialog.querySelectorAll('button').forEach(button=>button.disabled=true);
+    const {error}=await sb.rpc('customer_set_in_app_inbox_state',{
+      p_business_slug:businessSlug,p_event_id:prompt.event_id,
+      p_operation:operation,p_idempotency_key:operationKeys[operation]
+    });
+    if(error){
+      closing=false;
+      dialog.querySelectorAll('button').forEach(button=>button.disabled=false);
+      const status=dialog.querySelector('[data-promotion-popup-status]');
+      if(status)status.textContent='This promotion could not be dismissed. Check your connection and try again.';
+      return;
+    }
+    if(deactivate)deactivate();else dialog?.remove();
+    afterClose?.();
+  };
+  deactivate=CUI.activateDialog(dialog,{onClose:()=>close('dismiss'),initialFocus:'[data-promotion-popup-view]'});
+  dialog.querySelector('[data-promotion-popup-dismiss]').onclick=()=>close('dismiss');
+  dialog.querySelector('[data-promotion-popup-view]').onclick=()=>close('read',()=>{
+    const card=document.querySelector(`[data-promotion-id="${CSS.escape(promotionId)}"]`);
+    card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+    card?.querySelector('button,a')?.focus();
+  });
+  return true;
 }
 const business={name:'Glow Atelier',slug:'glow-atelier'};
 $('promotionCards').innerHTML=FIXTURE_OFFERS.map(offer=>customerPromotionCardV104(offer,business,true)).join('');
