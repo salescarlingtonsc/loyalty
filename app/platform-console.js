@@ -284,6 +284,17 @@
       'Work areas':'工作区域','Open onboarding':'打开入驻流程',
       'Today':'今天','Tomorrow':'明天','Unmapped':'未映射','Warning':'警告','Yesterday':'昨天',
       'Your account always has every module with read and write access. Admins default to full access and can be customized here. Sales staff are restricted to their own-created or assigned CRM records and scoped reports.':'您的账户始终拥有所有模块的读写权限。管理员默认拥有完整权限，并可在此自定义。销售人员仅能访问自己创建或获分配的客户关系记录和范围报告。',
+      'Account deletion requests':'账户删除请求','Privacy operations remain separate from provider reconciliation.':'隐私操作与服务商对账分开处理。',
+      'Privacy requests are private and never expose contact details in this queue.':'隐私请求为私密信息，此队列不会显示联系方式。','No account deletion requests':'没有账户删除请求','No pending privacy work was returned.':'未返回待处理的隐私工作。',
+      'Claim each request, complete the controlled privacy runbook, then record the reviewed outcome before its due date.':'请先领取每项请求，完成受控隐私操作流程，再于到期日前记录审核结果。','Account deletion requests could not be loaded':'无法加载账户删除请求',
+      'No privacy request state was assumed. Retry this private queue before recording any outcome.':'未假设任何隐私请求状态。请先重试此私密队列，再记录任何结果。','Retry privacy queue':'重试隐私队列','More privacy requests could not be loaded. Existing requests remain visible.':'无法加载更多隐私请求。现有请求仍然可见。','Load more privacy requests':'加载更多隐私请求',
+      'Deleted where permitted':'已在允许范围内删除','Anonymised where permitted':'已在允许范围内匿名化','Retained under legal obligation':'因法律义务保留','Request invalid':'请求无效',
+      '{disposition} · retained until {date}':'{disposition} · 保留至 {date}','Requested {requested} · response due {due}':'请求于 {requested} · 回复截止 {due}','Claim request':'领取请求','Record outcome':'记录结果','Retention review due':'保留复核已到期','Claimed by operator {id}':'由操作员 {id} 领取','Review retention':'复核保留',
+      'Request {id}':'请求 {id}','Subject reference:':'主体参考：','Claim account deletion request':'领取账户删除请求','Assign this request to privacy operations':'将此请求分配给隐私操作',
+      'Complete identity verification and the controlled privacy runbook before recording an outcome.':'完成身份验证及受控隐私操作流程后再记录结果。','Account deletion request claimed.':'已领取账户删除请求。',
+      'Record reviewed privacy outcome':'记录已审核的隐私结果','Review legal retention':'复核依法保留','Record retention review':'记录保留复核','Complete the privacy runbook first':'请先完成隐私操作流程','This records the reviewed outcome; it does not delete data. Do not mark the request complete until deletion, anonymisation, retention, or invalid-request review has actually finished.':'此操作仅记录审核结果，不会删除数据。在删除、匿名化、保留或无效请求审查实际完成前，请勿将请求标记为完成。',
+      'Reviewed outcome':'已审核结果','Request invalid after identity review':'身份审核后请求无效','Retention deadline (only when legally retained)':'保留截止日期（仅限依法保留）','Controlled evidence reference':'受控证据参考',
+      'Privacy case or runbook receipt reference':'隐私案件或流程收据参考','Outcome reason':'结果原因','Add the legal retention deadline.':'请填写依法保留截止日期。','Reviewed privacy outcome recorded.':'已记录审核后的隐私结果。',
       'pending':'待处理','{count} days ago':'{count} 天前','{title} unavailable':'{title}不可用'
     }),
     ms:Object.freeze({
@@ -384,6 +395,17 @@
       'Work areas':'Kawasan kerja','Open onboarding':'Buka penerimaan',
       'Today':'Hari ini','Tomorrow':'Esok','Unmapped':'Belum dipetakan','Warning':'Amaran','Yesterday':'Semalam',
       'Your account always has every module with read and write access. Admins default to full access and can be customized here. Sales staff are restricted to their own-created or assigned CRM records and scoped reports.':'Akaun anda sentiasa mempunyai akses baca dan tulis untuk setiap modul. Pentadbir mendapat akses penuh secara lalai dan boleh disesuaikan di sini. Kakitangan jualan dihadkan kepada rekod CRM yang mereka cipta atau ditugaskan serta laporan berskop.',
+      'Account deletion requests':'Permintaan pemadaman akaun','Privacy operations remain separate from provider reconciliation.':'Operasi privasi kekal berasingan daripada penyelarasan penyedia.',
+      'Privacy requests are private and never expose contact details in this queue.':'Permintaan privasi adalah sulit dan baris gilir ini tidak memaparkan butiran hubungan.','No account deletion requests':'Tiada permintaan pemadaman akaun','No pending privacy work was returned.':'Tiada kerja privasi tertunda dikembalikan.',
+      'Claim each request, complete the controlled privacy runbook, then record the reviewed outcome before its due date.':'Tuntut setiap permintaan, lengkapkan prosedur privasi terkawal, kemudian rekod hasil yang disemak sebelum tarikh akhir.','Account deletion requests could not be loaded':'Permintaan pemadaman akaun tidak dapat dimuatkan',
+      'No privacy request state was assumed. Retry this private queue before recording any outcome.':'Tiada status permintaan privasi diandaikan. Cuba semula baris gilir sulit ini sebelum merekodkan hasil.','Retry privacy queue':'Cuba semula baris gilir privasi','More privacy requests could not be loaded. Existing requests remain visible.':'Lebih banyak permintaan privasi tidak dapat dimuatkan. Permintaan sedia ada kekal kelihatan.','Load more privacy requests':'Muatkan lebih banyak permintaan privasi',
+      'Deleted where permitted':'Dipadam apabila dibenarkan','Anonymised where permitted':'Dianonimkan apabila dibenarkan','Retained under legal obligation':'Disimpan kerana kewajipan undang-undang','Request invalid':'Permintaan tidak sah',
+      '{disposition} · retained until {date}':'{disposition} · disimpan hingga {date}','Requested {requested} · response due {due}':'Diminta {requested} · respons perlu pada {due}','Claim request':'Tuntut permintaan','Record outcome':'Rekod hasil','Retention review due':'Semakan penyimpanan perlu dibuat','Claimed by operator {id}':'Dituntut oleh pengendali {id}','Review retention':'Semak penyimpanan',
+      'Request {id}':'Permintaan {id}','Subject reference:':'Rujukan subjek:','Claim account deletion request':'Tuntut permintaan pemadaman akaun','Assign this request to privacy operations':'Tugaskan permintaan ini kepada operasi privasi',
+      'Complete identity verification and the controlled privacy runbook before recording an outcome.':'Lengkapkan pengesahan identiti dan prosedur privasi terkawal sebelum merekodkan hasil.','Account deletion request claimed.':'Permintaan pemadaman akaun telah dituntut.',
+      'Record reviewed privacy outcome':'Rekod hasil privasi yang disemak','Review legal retention':'Semak penyimpanan sah','Record retention review':'Rekod semakan penyimpanan','Complete the privacy runbook first':'Lengkapkan prosedur privasi dahulu','This records the reviewed outcome; it does not delete data. Do not mark the request complete until deletion, anonymisation, retention, or invalid-request review has actually finished.':'Ini merekodkan hasil yang disemak; ia tidak memadam data. Jangan tandakan permintaan selesai sehingga pemadaman, penganoniman, penyimpanan atau semakan permintaan tidak sah benar-benar selesai.',
+      'Reviewed outcome':'Hasil yang disemak','Request invalid after identity review':'Permintaan tidak sah selepas semakan identiti','Retention deadline (only when legally retained)':'Tarikh akhir penyimpanan (hanya apabila disimpan secara sah)','Controlled evidence reference':'Rujukan bukti terkawal',
+      'Privacy case or runbook receipt reference':'Rujukan kes privasi atau resit prosedur','Outcome reason':'Sebab hasil','Add the legal retention deadline.':'Tambah tarikh akhir penyimpanan sah.','Reviewed privacy outcome recorded.':'Hasil privasi yang disemak telah direkodkan.',
       'pending':'menunggu','{count} days ago':'{count} hari lalu','{title} unavailable':'{title} tidak tersedia'
     })
   });
@@ -2138,6 +2160,7 @@
     'call','whatsapp','email','meeting','inbound','outbound','insert','skip','review','merge',
     'monthly','quarterly','half_yearly','annual','exclusive','inclusive','unspecified',
     'senior','junior','accrued','paid','forfeited','draft','manual','automatic',
+    'deleted_where_permitted','anonymised_where_permitted','retained_legal','request_invalid',
     ...prospectStages.map(stage=>stage.key),...operationalLanes.map(lane=>lane.key),
     ...sectorModuleCatalog.map(module=>module.key),...lostReasons
   ]);
@@ -2196,6 +2219,24 @@
 
   const idempotencyKey = () => globalObject.crypto?.randomUUID?.()
     || `platform-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const privacyOperationFallbackAttempts=new Map();
+  function privacyOperationAttempt(action,requestId,payload){
+    const slot=`nestly:v133:privacy:${action}:${requestId}`;
+    const fingerprint=JSON.stringify(payload);
+    let storage=null;
+    try{storage=globalObject.sessionStorage}catch{}
+    let saved=privacyOperationFallbackAttempts.get(slot)||null;
+    if(storage){try{saved=JSON.parse(storage.getItem(slot)||'null')}catch{}}
+    if(!saved||saved.fingerprint!==fingerprint){
+      saved={key:idempotencyKey(),fingerprint};
+      if(storage){try{storage.setItem(slot,JSON.stringify(saved))}catch{privacyOperationFallbackAttempts.set(slot,saved)}}
+      else privacyOperationFallbackAttempts.set(slot,saved);
+    }
+    return{key:saved.key,clear:()=>{
+      try{storage?.removeItem(slot)}catch{}
+      privacyOperationFallbackAttempts.delete(slot);
+    }};
+  }
   const asObject = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   function normalizePlatformAccess(payload) {
     const value=asObject(payload),role=String(value.role||'');
@@ -6111,6 +6152,118 @@
     ]);
   }
 
+  function accountDeletionDispositionLabel(value){
+    return({
+      deleted_where_permitted:pt('Deleted where permitted'),
+      anonymised_where_permitted:pt('Anonymised where permitted'),
+      retained_legal:pt('Retained under legal obligation'),
+      request_invalid:pt('Request invalid')
+    })[value]||platformStatus(value||'—');
+  }
+  function accountDeletionQueueHtml(rows,CUI,{error=false,hasMore=false,loadError=false}={}){
+    const requests=asArray(rows);
+    if(error){
+      const body=`<div role="alert"><b>${escapeHtml(pt('Account deletion requests could not be loaded'))}</b><p class="muted small" style="margin-top:6px">${escapeHtml(pt('No privacy request state was assumed. Retry this private queue before recording any outcome.'))}</p><button type="button" class="btn ghost sm" data-deletion-retry style="margin-top:12px">${escapeHtml(pt('Retry privacy queue'))}</button></div>`;
+      return CUI.card?CUI.card({title:'Account deletion requests',description:'Privacy operations remain separate from provider reconciliation.',body}):`<section><h2>Account deletion requests</h2>${body}</section>`;
+    }
+    if(!requests.length)return CUI.card?CUI.card({
+      title:'Account deletion requests',
+      description:'Privacy requests are private and never expose contact details in this queue.',
+      body:CUI.emptyState({iconName:'check',title:'No account deletion requests',body:'No pending privacy work was returned.'})
+    }):CUI.emptyState({title:'No account deletion requests',body:'No pending privacy work was returned.'});
+    const requestBody=requests.map(row=>{
+      const pending=row.status==='pending',processing=row.status==='processing';
+      const retentionReviewDue=row.status==='completed'&&row.resolution_code==='retained_legal'&&row.is_overdue;
+      const status=retentionReviewDue
+        ?CUI.status('Retention review due','no')
+        :row.is_overdue&&(pending||processing)
+          ?CUI.status('Overdue','no')
+        :CUI.status(platformStatus(row.status),row.status==='completed'?'ok':processing?'new':'off');
+      const disposition=accountDeletionDispositionLabel(row.resolution_code);
+      const outcomeText=row.resolution_code
+        ?row.retention_until
+          ?pt('{disposition} · retained until {date}',{disposition,date:dateTime(row.retention_until)})
+          :disposition
+        :pt('Requested {requested} · response due {due}',{requested:dateTime(row.requested_at),due:dateTime(row.response_due_at)});
+      const claimant=row.claimed_by?`<p class="muted small">${escapeHtml(pt('Claimed by operator {id}',{id:String(row.claimed_by).slice(0,8)}))}</p>`:'';
+      const outcome=`<p class="muted small">${escapeHtml(outcomeText)}</p>${claimant}`;
+      const action=pending
+        ?`<button type="button" class="btn sm" data-automation-write data-deletion-claim="${escapeHtml(row.request_id)}">${escapeHtml(pt('Claim request'))}</button>`
+        :processing
+          ?`<button type="button" class="btn sm" data-automation-write data-deletion-resolve="${escapeHtml(row.request_id)}">${escapeHtml(pt('Record outcome'))}</button>`
+          :retentionReviewDue
+            ?`<button type="button" class="btn sm" data-automation-write data-deletion-review="${escapeHtml(row.request_id)}">${escapeHtml(pt('Review retention'))}</button>`
+          :'';
+      return `<article class="platform-action-item" data-deletion-request="${escapeHtml(row.request_id)}"><div><b>${escapeHtml(pt('Request {id}',{id:String(row.request_id).slice(0,8)}))}</b>${outcome}<p class="muted small">${escapeHtml(pt('Subject reference:'))} <code>${escapeHtml(row.subject_ref||'—')}</code></p></div><div class="platform-actions">${status}${action}</div></article>`;
+    }).join('');
+    const loadState=loadError
+      ?`<div role="alert" class="muted small" style="margin-top:12px">${escapeHtml(pt('More privacy requests could not be loaded. Existing requests remain visible.'))}</div>`
+      :hasMore
+        ?`<button type="button" class="btn ghost sm" data-deletion-more style="margin-top:12px">${escapeHtml(pt('Load more privacy requests'))}</button>`
+        :'';
+    const body=requestBody+loadState;
+    return CUI.card?CUI.card({
+      title:'Account deletion requests',
+      description:'Claim each request, complete the controlled privacy runbook, then record the reviewed outcome before its due date.',
+      body
+    }):`<section><h2>Account deletion requests</h2>${body}</section>`;
+  }
+
+  function claimAccountDeletionRequest(requestId,context){
+    const {CUI,sb}=context;
+    previewThenConfirm({title:pt('Claim account deletion request'),preview:{
+      request_id:requestId,
+      action:pt('Assign this request to privacy operations'),
+      next:pt('Complete identity verification and the controlled privacy runbook before recording an outcome.')
+    },CUI,onConfirm:async controls=>{
+      const payload={
+        p_request:requestId,p_action:'claim',
+        p_reason:'Accepted by privacy operations for reviewed fulfilment',
+        p_disposition:null,p_retention_until:null,p_evidence_reference:null
+      };
+      const attempt=privacyOperationAttempt('claim',requestId,payload);
+      await rpc(sb,'platform_transition_account_deletion_request_v133',{
+        ...payload,p_idempotency_key:attempt.key
+      });
+      attempt.clear();
+      controls.close();await renderAutomation(context);CUI.announce('Account deletion request claimed.');
+    }});
+  }
+
+  function resolveAccountDeletionRequest(requestId,context,action='resolve'){
+    const {CUI,sb}=context;
+    const retentionReview=action==='retention_review';
+    modal({title:pt(retentionReview?'Review legal retention':'Record reviewed privacy outcome'),submitLabel:pt(retentionReview?'Record retention review':'Record outcome'),CUI,body:`
+      <div class="platform-route-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt('Complete the privacy runbook first'))}</b><p class="small">${escapeHtml(pt('This records the reviewed outcome; it does not delete data. Do not mark the request complete until deletion, anonymisation, retention, or invalid-request review has actually finished.'))}</p></div></div>
+      <div class="platform-form-grid" style="margin-top:16px">
+        ${CUI.field({id:'deletionDisposition',label:'Reviewed outcome',control:'select',required:true,options:[
+          {value:'deleted_where_permitted',label:'Deleted where permitted'},
+          {value:'anonymised_where_permitted',label:'Anonymised where permitted'},
+          {value:'retained_legal',label:'Retained under legal obligation'},
+          {value:'request_invalid',label:'Request invalid after identity review'}
+        ].filter(option=>!retentionReview||option.value!=='request_invalid'),attributes:'name="disposition"'})}
+        ${CUI.field({id:'deletionRetentionUntil',label:'Retention deadline (only when legally retained)',type:'datetime-local',attributes:'name="retention_until"'})}
+        ${CUI.field({id:'deletionEvidenceReference',label:'Controlled evidence reference',hint:'Privacy case or runbook receipt reference',required:true,attributes:'name="evidence_reference" minlength="8" maxlength="200"'})}
+        <div class="wide">${CUI.field({id:'deletionReason',label:'Outcome reason',control:'textarea',required:true,attributes:'name="reason" minlength="8" maxlength="1000" rows="4"'})}</div>
+      </div>`,onSubmit:async(form,controls)=>{
+        const disposition=String(form.get('disposition')||'');
+        const retentionValue=String(form.get('retention_until')||'');
+        if(disposition==='retained_legal'&&!retentionValue)throw new Error(pt('Add the legal retention deadline.'));
+        const payload={
+          p_request:requestId,p_action:action,p_reason:form.get('reason'),
+          p_disposition:disposition,
+          p_retention_until:disposition==='retained_legal'?new Date(retentionValue).toISOString():null,
+          p_evidence_reference:form.get('evidence_reference')
+        };
+        const attempt=privacyOperationAttempt(action,requestId,payload);
+        await rpc(sb,'platform_transition_account_deletion_request_v133',{
+          ...payload,p_idempotency_key:attempt.key
+        });
+        attempt.clear();
+        controls.close();await renderAutomation(context);CUI.announce('Reviewed privacy outcome recorded.');
+      }});
+  }
+
   async function renderBilling(context) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Billing','Loading platform billing truth…','reports');
@@ -6433,20 +6586,35 @@
       onSubmit:async(form,controls)=>{const preview={consultant_id:consultantId,departed_at:new Date(form.get('departed_at')).toISOString(),reason:form.get('reason')};controls.close();previewThenConfirm({title:'Confirm commission forfeiture',preview,CUI,onConfirm:async confirmControls=>{await rpc(sb,'forfeit_consultant_open_commission_v78',{p_consultant:consultantId,p_departed_at:preview.departed_at,p_reason:preview.reason});confirmControls.close();await renderCommission(context);CUI.announce('Open commission forfeited.')}})}});
   }
 
-  async function renderAutomation(context) {
+  async function renderAutomation(context,deletionPage={offset:0,rows:[]}) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'System health','Loading reconciliation and billing event health…','retention');
     try{
-      const [reconciliation,billing]=await Promise.all([
+      const [reconciliation,billing,deletionResult]=await Promise.all([
         rpc(sb,'platform_get_automation_reconciliation_v89',{p_run:null,p_limit:50}),
-        rpc(sb,'platform_get_automation_billing_v89',{p_business:null,p_limit:250})
+        rpc(sb,'platform_get_automation_billing_v89',{p_business:null,p_limit:250}),
+        rpc(sb,'platform_list_account_deletion_requests_v133',{p_status:null,p_limit:100,p_offset:deletionPage.offset})
+          .then(value=>({value,error:null})).catch(error=>({value:null,error}))
       ]);
-      const runs=asArray(reconciliation?.runs),items=asArray(reconciliation?.items),rows=asArray(billing);
+      const runs=asArray(reconciliation?.runs),items=asArray(reconciliation?.items),rows=asArray(billing),privacyPageRows=asArray(deletionResult.value);
+      const privacyRows=deletionResult.error&&deletionPage.rows.length
+        ?deletionPage.rows
+        :[...deletionPage.rows,...privacyPageRows];
+      const privacyTotal=Number(privacyPageRows[0]?.total_count||privacyRows.length);
+      const hasMore=!deletionResult.error&&privacyRows.length<privacyTotal;
       const failedEvents=rows.reduce((value,row)=>value+Number(row.failed_event_count||0),0);
       main.innerHTML=`${CUI.pageHeader({title:'System health',subtitle:'Technical reconciliation runs and provider event health. Resolve affected firm payments in Finance.',iconName:'retention'})}
         <section class="platform-health-grid"><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('retention',{size:17})}<span>${escapeHtml(pt('Reconciliation runs'))}</span></div><div class="platform-kpi-value">${runs.length}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('info',{size:17})}<span>${escapeHtml(pt('Failed billing events'))}</span></div><div class="platform-kpi-value">${failedEvents}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt('Reconciliation items'))}</span></div><div class="platform-kpi-value">${items.length}</div></article></section>
         ${CUI.card({title:'Reconciliation exceptions',body:items.length?items.map(item=>`<article class="platform-action-item" tabindex="-1" data-incident-id="${escapeHtml(item.id||item.provider_object_id||item.created_at||'')}"><div><b>${escapeHtml(platformStatus(item.object_type||'provider object'))}</b><p class="muted small">${escapeHtml(item.provider_object_id||pt('Provider object'))}</p></div>${CUI.status(platformStatus(item.result||item.status||'exception'),item.result==='matched'?'ok':'no')}</article>`).join(''):localizedEmptyHtml('No reconciliation exceptions were returned.')})}
-        ${CUI.card({title:'Reconciliation history',body:runs.length?CUI.table({caption:'Billing reconciliation runs',headers:['Started','Mode','Status','Finished','Summary'],rows:automationRunRows(runs,CUI)}):CUI.emptyState({iconName:'retention',title:'No reconciliation runs',body:'No billing reconciliation history was returned.'})})}`;
+        ${CUI.card({title:'Reconciliation history',body:runs.length?CUI.table({caption:'Billing reconciliation runs',headers:['Started','Mode','Status','Finished','Summary'],rows:automationRunRows(runs,CUI)}):CUI.emptyState({iconName:'retention',title:'No reconciliation runs',body:'No billing reconciliation history was returned.'})})}
+        <div id="platformDeletionQueue">${accountDeletionQueueHtml(privacyRows,CUI,{error:Boolean(deletionResult.error)&&!deletionPage.rows.length,hasMore,loadError:Boolean(deletionResult.error)&&Boolean(deletionPage.rows.length)})}</div>`;
+      main.querySelectorAll('[data-deletion-claim]').forEach(button=>button.onclick=()=>claimAccountDeletionRequest(button.dataset.deletionClaim,context));
+      main.querySelectorAll('[data-deletion-resolve]').forEach(button=>button.onclick=()=>resolveAccountDeletionRequest(button.dataset.deletionResolve,context));
+      main.querySelectorAll('[data-deletion-review]').forEach(button=>button.onclick=()=>resolveAccountDeletionRequest(button.dataset.deletionReview,context,'retention_review'));
+      const deletionRetry=main.querySelector('[data-deletion-retry]');
+      if(deletionRetry)deletionRetry.onclick=()=>renderAutomation(context);
+      const deletionMore=main.querySelector('[data-deletion-more]');
+      if(deletionMore)deletionMore.onclick=()=>renderAutomation(context,{offset:privacyRows.length,rows:privacyRows});
       CUI.focusRoute(main);
       const requestedIncident=platformRouteParam(context.hash,'incident');
       if(requestedIncident){
@@ -7608,6 +7776,7 @@
     enterpriseReportHash,enterpriseFirmHash,enterpriseReportFiltersFromHash,fetchEnterpriseFirmPage,fetchFirmDirectoryPageV88,fetchAllFirmAttentionV88,fetchScopedFirms,fetchAllScopedFirms,
     buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
     moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
+    accountDeletionQueueHtml,privacyOperationAttempt,
     onboardingHash,onboardingStateFromHash,
     platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
     setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,

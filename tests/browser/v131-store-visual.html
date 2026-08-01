@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="95db2365c7038376bbc295ce3b92120e761b35e04265121c1582729195b3cb0f"><link rel="icon" href="data:,"><title>Nestly V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="6eb08a4c18348d66e207df9d710273cb277a78ccdeb6f58d37f23fdd0512c8b5"><link rel="icon" href="data:,"><title>Nestly V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -967,7 +967,9 @@ body{padding:16px}.v131-nav{position:fixed;z-index:300;top:8px;right:8px;display
   const sortStaffWorkspaces=staff=>[...(staff||[])].sort((a,b)=>String(a.business_name).localeCompare(String(b.business_name)));
   const fixtureState=new URLSearchParams(location.search).get('state')||'ready';window.__rpcCalls=[];
   const pendingRequest={request_id:'00000000-0000-0000-0000-000000000131',status:'pending',requested_at:'2026-08-01T13:00:00Z',response_due_at:'2026-08-31T13:00:00Z'};
-  const sb={auth:{signOut:async()=>{window.__signOuts+=1;return {}}},rpc:async(name,args)=>{window.__rpcCalls.push({name,args});if(name==='get_account_deletion_request_v131'){if(fixtureState==='load-error')return {data:null,error:{message:'synthetic load error'}};return {data:fixtureState==='pending'?pendingRequest:null,error:null}}if(name==='request_account_deletion_v131'){if(fixtureState==='submit-error')return {data:null,error:{message:'synthetic submit error'}};return {data:pendingRequest,error:null}}return {data:null,error:null}}};
+  const completedDeletedRequest={...pendingRequest,status:'completed',resolution_code:'deleted_where_permitted',retention_until:null};
+  const completedRetainedRequest={...pendingRequest,status:'completed',resolution_code:'retained_legal',retention_until:'2031-08-31T13:00:00Z'};
+  const sb={auth:{signOut:async()=>{window.__signOuts+=1;return {}}},rpc:async(name,args)=>{window.__rpcCalls.push({name,args});if(name==='get_account_deletion_request_v131'){if(fixtureState==='load-error')return {data:null,error:{message:'synthetic load error'}};if(fixtureState==='pending')return {data:pendingRequest,error:null};if(fixtureState==='completed-deleted')return {data:completedDeletedRequest,error:null};if(fixtureState==='completed-retained')return {data:completedRetainedRequest,error:null};return {data:null,error:null}}if(name==='request_account_deletion_v131'){if(fixtureState==='submit-error')return {data:null,error:{message:'synthetic submit error'}};return {data:pendingRequest,error:null}}return {data:null,error:null}}};
   const CUI={icon:()=>'',announce:()=>{},focusRoute:node=>node?.focus(),activateDialog(modal,{onClose,initialFocus}){const prior=document.activeElement;const close=()=>{modal.remove();prior?.focus()};modal.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}});setTimeout(()=>modal.querySelector(initialFocus)?.focus(),0);return ()=>close()}};
   function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
   globalThis.document?.documentElement?.setAttribute('lang','en');
@@ -1082,6 +1084,19 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
     body.setAttribute('aria-busy','false');
     body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request received</b><p class="small" style="margin-top:6px">Status: ${esc(request?.status||'pending')} · response due ${esc(due)}.</p></div><p class="muted small" style="margin-top:12px">We will respond within 30 days. Your subscription and any outstanding payment obligations are handled separately.</p>`;
   };
+  const renderCompleted=request=>{
+    const outcomes={
+      deleted_where_permitted:'Deleted where permitted',
+      anonymised_where_permitted:'Anonymised where permitted',
+      retained_legal:'Retained under legal obligation',
+      request_invalid:'Request invalid after identity review'
+    };
+    const outcome=outcomes[request?.resolution_code]||'Reviewed outcome recorded';
+    const retention=request?.resolution_code==='retained_legal'&&request?.retention_until
+      ?`<p class="small" style="margin-top:6px">Retention review date: ${esc(sgt(request.retention_until))}.</p>`:'';
+    body.setAttribute('aria-busy','false');
+    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Nestly if you need to challenge or clarify it.</p>`;
+  };
   const renderForm=()=>{
     body.setAttribute('aria-busy','false');
     body.innerHTML=`<p class="muted small" style="margin-top:16px">This affects your customer and business personas that use this same login. We will respond within 30 days. Type DELETE to confirm.</p>
@@ -1106,7 +1121,9 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
   if(!modal.isConnected)return;
   if(error){body.setAttribute('aria-busy','false');body.innerHTML='<div class="err" role="alert">Deletion status could not be loaded. No request was created.</div><button class="btn ghost" id="accountDeletionRetry" style="margin-top:12px">Try again</button>';$('accountDeletionRetry').onclick=()=>{close();openAccountDeletionDialog(trigger)};return}
   const request=Array.isArray(data)?data[0]:data;
-  if(request&&['pending','processing'].includes(request.status))renderPending(request);else renderForm();
+  if(request&&['pending','processing'].includes(request.status))renderPending(request);
+  else if(request?.status==='completed')renderCompleted(request);
+  else renderForm();
 }
   function show(view){document.querySelectorAll('[data-view]').forEach(button=>button.className=button.dataset.view===view?'btn':'btn ghost');if(view==='native')return renderNativeBusinessCompanion();if(view==='persona')return renderPersonaChoice({staff:[{business_slug:'radiant-skin',business_name:'Radiant Skin Studio'},{business_slug:'harbour-cafe',business_name:'Harbour Café'}],customer:[{}]});if(view==='customer-unavailable')return renderCustomerWalletUnavailable();if(view==='customer-error')return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');if(view==='persona-error')return renderPersonaResolutionUnavailable();if(view==='workspace-error')return renderWorkspaceAccessUnavailable();root.innerHTML='<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card"><h1>Customer profile</h1>'+accountDeletionCardHtml()+'</section></main>';wireAccountDeletionButton()}
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>show(button.dataset.view));

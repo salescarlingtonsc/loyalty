@@ -1030,6 +1030,12 @@
       "version": "20260801223000",
       "name": "nestly_v132_release_gap_closure",
       "sourcePath": "db/migrations/20260801_nestly_v132_release_gap_closure.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260801235900",
+      "name": "nestly_v133_operational_closure",
+      "sourcePath": "db/migrations/20260801_nestly_v133_operational_closure.sql"
     }
   ]
 }

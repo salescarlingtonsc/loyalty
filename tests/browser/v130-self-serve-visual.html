@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ddbd3998171eab77184efbf14ceecf6efddb1cf9de0bb1831e09fc66ef2abcf8"><link rel="icon" href="data:,"><title>Nestly V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="06173e5039c6bc8a3669c03f9b019c3d125d37b8b58546a28ba63c91e4cb6c0b"><link rel="icon" href="data:,"><title>Nestly V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1063,6 +1063,19 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
     body.setAttribute('aria-busy','false');
     body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request received</b><p class="small" style="margin-top:6px">Status: ${esc(request?.status||'pending')} · response due ${esc(due)}.</p></div><p class="muted small" style="margin-top:12px">We will respond within 30 days. Your subscription and any outstanding payment obligations are handled separately.</p>`;
   };
+  const renderCompleted=request=>{
+    const outcomes={
+      deleted_where_permitted:'Deleted where permitted',
+      anonymised_where_permitted:'Anonymised where permitted',
+      retained_legal:'Retained under legal obligation',
+      request_invalid:'Request invalid after identity review'
+    };
+    const outcome=outcomes[request?.resolution_code]||'Reviewed outcome recorded';
+    const retention=request?.resolution_code==='retained_legal'&&request?.retention_until
+      ?`<p class="small" style="margin-top:6px">Retention review date: ${esc(sgt(request.retention_until))}.</p>`:'';
+    body.setAttribute('aria-busy','false');
+    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Nestly if you need to challenge or clarify it.</p>`;
+  };
   const renderForm=()=>{
     body.setAttribute('aria-busy','false');
     body.innerHTML=`<p class="muted small" style="margin-top:16px">This affects your customer and business personas that use this same login. We will respond within 30 days. Type DELETE to confirm.</p>
@@ -1087,7 +1100,9 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
   if(!modal.isConnected)return;
   if(error){body.setAttribute('aria-busy','false');body.innerHTML='<div class="err" role="alert">Deletion status could not be loaded. No request was created.</div><button class="btn ghost" id="accountDeletionRetry" style="margin-top:12px">Try again</button>';$('accountDeletionRetry').onclick=()=>{close();openAccountDeletionDialog(trigger)};return}
   const request=Array.isArray(data)?data[0]:data;
-  if(request&&['pending','processing'].includes(request.status))renderPending(request);else renderForm();
+  if(request&&['pending','processing'].includes(request.status))renderPending(request);
+  else if(request?.status==='completed')renderCompleted(request);
+  else renderForm();
 }
   function renderOnboard(){
   if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}

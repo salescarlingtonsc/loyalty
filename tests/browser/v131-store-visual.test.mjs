@@ -19,4 +19,8 @@ test('V131 browser fixture executes the current production native companion and 
   assert.match(fixture,/fixtureState==='load-error'/);
   assert.match(fixture,/fixtureState==='submit-error'/);
   assert.match(fixture,/fixtureState==='pending'/);
+  assert.match(fixture,/fixtureState==='completed-deleted'/);
+  assert.match(fixture,/fixtureState==='completed-retained'/);
+  assert.match(fixture,/Deletion request reviewed/);
+  assert.match(fixture,/Retention review date/);
 });
