@@ -148,6 +148,16 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   benefit as an ordered, game-like path: what the customer does, current
   progress unit, what unlocks at each milestone, and what comes next. It must
   not invent a milestone where no rule exists.
+- Owner clarification 2026-08-01: that overview is one complete working view,
+  not a decorative summary. It shows the published earning model and rate
+  (points or stamps), the classic redemption promise when that model is used,
+  every configured catalogue reward, and the configured birthday benefit.
+  Selecting a specific reward or birthday benefit opens the editor for that
+  exact stable record; duplicate names must never route to the wrong editor.
+  A paused programme, a future reward, or a reward whose claim window ended is
+  labelled with that exact state and is never described as currently earnable
+  or unlockable. Published birthday copy is read through a tenant-scoped
+  Loyalty-read contract; its private version table remains browser-closed.
 - Product/service cost and selling price feed an understandable profitability
   view showing gross profit, margin, estimated reward cost, and the remaining
   contribution after reward. AI-assisted programme setup must explain its

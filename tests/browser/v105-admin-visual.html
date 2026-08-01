@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-style-sha256" content="c8668564380aa232831af96121786b0bb79c4ba646574e06d740d66a0ddabf14">
+<meta name="v105-production-style-sha256" content="483ca3d76a2db17d2eb617487ecfdd973357daa9c5eb28f68483c51137d2f33f">
 <title>Nestly v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -418,6 +418,14 @@ input[type=range]:focus{box-shadow:none}
 .grow-flow-step h2{font-size:16px;margin:12px 0 3px}.grow-flow-step p{font-size:12.5px;line-height:1.45;color:var(--muted);margin:0 0 12px}
 .grow-flow-foot{display:flex;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}.grow-flow-foot .btn{min-height:44px}
 .reward-milestone-track{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;list-style:none;margin:14px 0 0;padding:0}
+.rewards-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.rewards-overview-card{appearance:none;width:100%;min-height:92px;display:flex;gap:11px;align-items:flex-start;padding:14px;
+  border:1px solid var(--line);border-radius:14px;background:#FBFAF8;color:var(--ink);font:inherit;text-align:left;min-width:0}
+button.rewards-overview-card{cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+button.rewards-overview-card:hover{border-color:var(--coral);box-shadow:0 7px 18px rgba(201,67,51,.1);transform:translateY(-1px)}
+button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25);outline-offset:2px;border-color:var(--coral)}
+.rewards-overview-card>div{min-width:0;flex:1}.rewards-overview-card b,.rewards-overview-card p{overflow-wrap:anywhere}
+.rewards-overview-edit-label{display:inline-flex;align-items:center;min-height:44px;margin-top:7px;color:var(--coral);font-size:12px;font-weight:700}
 .reward-milestone-track li,.birthday-reward-overview{display:flex;gap:11px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:14px;background:#FBFAF8}
 .reward-milestone-number{display:grid;place-items:center;flex:0 0 32px;height:32px;border-radius:50%;background:var(--tint);color:var(--coral);font-weight:700}
 .birthday-reward-overview{margin-top:10px}.profitability-product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px}
@@ -450,6 +458,7 @@ input[type=range]:focus{box-shadow:none}
   .grow-flow{grid-template-columns:1fr}.grow-flow-step{min-height:0}.grow-flow-step::after{display:none}
   .grow-flow-foot .btn,.grow-advanced-actions .btn,.grow-optional-card .btn{flex:1 1 100%}
   .grow-optional-card{flex-direction:column;overflow-wrap:anywhere}}
+@media(max-width:600px){.rewards-overview-grid{grid-template-columns:1fr}.rewards-overview-card{min-height:88px}}
 @media(prefers-reduced-motion:reduce){.grow-panel-shell.grow-panel-updating{transition:none}}
 /* Program Studio (PS-1A authoring surface) — theme-aware via existing tokens only */
 .studio-row{padding:12px 0;border-bottom:1px solid var(--line)}
@@ -1548,7 +1557,7 @@ input[type=range]:focus{box-shadow:none}
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · c8668564380a</span>
+<span class="v105-provenance">v105 production-component harness · 483ca3d76a2d</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -1673,7 +1682,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'c8668564380aa232831af96121786b0bb79c4ba646574e06d740d66a0ddabf14',
+  sourceHash:'483ca3d76a2db17d2eb617487ecfdd973357daa9c5eb28f68483c51137d2f33f',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

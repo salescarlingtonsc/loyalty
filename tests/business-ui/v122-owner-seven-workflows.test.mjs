@@ -56,12 +56,12 @@ test('two named staff calendars support contextual click-to-book and persist man
     'the click-to-book form must not expand the 390px workspace');
 });
 
-test('owner reward overview explains ordered milestones and configured birthday benefit',()=>{
+test('owner rewards overview explains ordered milestones and configured birthday benefit',()=>{
   assert.match(app,/function ownerRewardJourneyV122\(/);
   const grow=section('async function growPage(','/* ---------- Bring-back playbooks');
-  assert.match(grow,/Reward journey/);
+  assert.match(grow,/Rewards overview/);
   assert.match(grow,/data-reward-milestone/);
-  assert.match(grow,/Birthday reward/);
+  assert.match(grow,/birthday benefit/i);
   assert.doesNotMatch(grow,/href="#\/inventory"/,
     'Inventory is intentionally hidden, so Grow must not link to a dead route');
 });

@@ -75,6 +75,13 @@ Configuration cases:
   optional external link so the product does not selectively solicit positive
   reviews. Five-star copy may be warmer. A comparison tenant cannot read either
   record.
+- Unified rewards overview: publish classic loyalty at 10 points per SGD with
+  1,000 points redeeming SGD 10, plus an active **Birthday Glow** benefit. In a
+  catalogue-model run, add two active rewards with the same customer-facing
+  name but different UUIDs, costs and fulfilment so clicking either card proves
+  stable-ID editor routing rather than name matching. A read-only manager sees
+  the same published overview with no edit controls; a draft change must not
+  appear to customers until explicit publication and owner/customer refresh.
 
 Promotion cases:
 

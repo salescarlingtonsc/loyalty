@@ -1,12 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="8f0f2c6b90d952f2127ff7a4c9f43d81118df5270af1e4a9adfddfa5d30878d7">
-<title>Nestly v104 production-render visual acceptance</title>
-<style>
-
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="production-source-sha256" content="0182cb17b13417c9a89de0165374554857fbf001c22cb3a1903aa32ad4b2a33e"><title>Nestly rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -954,215 +947,512 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   body{background:#fff}
 }
 
-/* Evidence label only. Layout and customer promotion components are production CSS. */
-.v104-provenance{margin-bottom:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-</style>
-</head>
-<body>
-<div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 8f0f2c6b90d952f2127ff7a4c9f43d81118df5270af1e4a9adfddfa5d30878d7</p>
-  <header class="customer-programme-compact-head">
-    <div class="customer-programme-logo"><span>G</span></div>
-    <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
-    <div class="customer-programme-compact-balance"><b>1,240</b><span>points</span></div>
-  </header>
-  <section class="customer-promotions-section" aria-labelledby="latestOffersTitle">
-    <div class="customer-promotions-head"><div><p class="customer-quest-kicker">From Glow Atelier</p><h2 id="latestOffersTitle">Latest offers</h2></div></div>
-    <div class="customer-promotions-grid" id="promotionCards"></div>
-  </section>
-</div></div>
-<script>
-const PRODUCTION_SOURCE_SHA256="8f0f2c6b90d952f2127ff7a4c9f43d81118df5270af1e4a9adfddfa5d30878d7";
-const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
-const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
-const $=id=>document.getElementById(id);
-const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-const customerMediaUrlV95=value=>String(value||'');
-const CUI={activateDialog(modal,{onClose,initialFocus}={}){
-  const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
-  document.addEventListener('keydown',keydown);
-  requestAnimationFrame(()=>modal.querySelector(initialFocus)?.focus());
-  return ()=>{document.removeEventListener('keydown',keydown);modal.remove()};
-}};
-function promotionDateTextV104(value){
-  if(!value)return '';
-  const instant=/^\d{4}-\d{2}-\d{2}$/.test(String(value))
-    ?new Date(`${value}T12:00:00+08:00`):new Date(value);
-  return new Intl.DateTimeFormat('en-SG',{timeZone:'Asia/Singapore',day:'numeric',month:'long',year:'numeric'}).format(instant);
-}
-function customerPromotionCtaV104(item,business,bookingEnabled){
-  const metadata=item?.metadata||{},cta=metadata.cta||{},
-    requestedKind=String(cta.kind||metadata.cta_kind||'programme'),
-    kind=requestedKind==='book'&&!bookingEnabled?'programme':requestedKind;
-  const configured=String(cta.label||metadata.cta_label||'').trim();
-  if(kind==='book'&&bookingEnabled){
-    return `<a class="btn sm" href="#/b/${encodeURIComponent(business.slug||'')}">${esc(configured||'Book now')}</a>`;
+    body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0182cb17b13417c9a89de0165374554857fbf001c22cb3a1903aa32ad4b2a33e</p><main id="main"></main></div>
+    <script>
+    const $=id=>document.getElementById(id);
+    const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const money=cents=>'SGD '+(Number(cents||0)/100).toFixed(2);
+    const CUI={icon:(name)=>'<span aria-hidden="true">'+({till:'◎',loyalty:'★',customers:'●',retention:'↺',inventory:'□',referrals:'↗',memberships:'◇',giftcard:'▣'}[name]||'•')+'</span>',
+      loadingState:({title})=>'<section class="card">Loading '+esc(title)+'…</section>',
+      emptyState:({title,body})=>'<div class="empty"><b>'+esc(title)+'</b><p>'+esc(body)+'</p></div>',announce:()=>{}};
+    const workspaceLocale='en';
+    const workspaceTemplateHtmlV97=(key,{count,version}={})=>key==='growDraftReady'?'Draft '+version+' is ready. Review every step before publishing.':count+' published '+(count===1?'reward':'rewards');
+    const recordProductInteractionV100=()=>{};
+    const localizeWorkspaceSubtreeV97=()=>{};
+    const productProfitabilityV122=()=>null;
+    const fail=error=>{throw error};
+    const toast=message=>{window.__lastToast=message};
+    const nav=()=>{};
+    const routeDispose=null;
+    const M=()=>document.getElementById('main');
+    const evidenceParams=new URLSearchParams(location.search);
+    const isManager=evidenceParams.get('role')==='manager';
+    const S={myRole:isManager?'manager':'owner',myModules:['loyalty'],biz:{id:'business-spa-glow',currency:'SGD',industry:'Facial / Spa'}};
+    const canWriteModule=module=>!isManager&&module==='loyalty';
+    const fixture={currentVersion:'published-v1',draft:isManager?null:{id:'draft-v2',version_no:2},
+      loyalty:{id:'programme-1',active:true,loyalty_model:'points_tiers',earn_points_per_dollar:10,redeem_points:1000,reward_credit_cents:1000,expiry_mode:'inactivity',expiry_days:365},
+      rewards:[
+        {id:'11111111-1111-4111-8111-111111111111',active:true,customer_name:'Signature reward',cost_points:500,estimated_cost_cents:400,sort:1},
+        {id:'22222222-2222-4222-8222-222222222222',active:true,customer_name:'Signature reward',cost_points:1500,estimated_cost_cents:900,sort:2},
+        {id:'33333333-3333-4333-8333-333333333333',active:false,customer_name:'Seasonal facial',cost_points:750,sort:3}],
+      birthday:{program_id:'birthday-1',active:true,customer_label:'Birthday Glow',customer_description:'Available during the birthday month.',fulfillment_kind:'discount_pct',discount_percent:20},
+      products:[],retention:[]};
+    window.__tableReads=[];window.__rpcCalls=[];
+    function fixtureQuery(table){
+      const state={single:false};
+      const query={select(){return query},eq(){return query},is(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
+        then(resolve,reject){window.__tableReads.push(table);let data=[];
+          if(table==='businesses')data={active_config_version_id:fixture.currentVersion};
+          else if(table==='loyalty_programs')data=[fixture.loyalty];
+          else if(table==='loyalty_rewards')data=fixture.rewards;
+          else if(table==='retention_programs')data=fixture.retention;
+          else if(table==='firm_config_versions')data=fixture.draft?[fixture.draft]:[];
+          return Promise.resolve({data,error:null}).then(resolve,reject)}};
+      return query;
+    }
+    const sb={from:fixtureQuery,rpc:async(name)=>{window.__rpcCalls.push(name);
+      if(name==='get_active_birthday_program')return {data:{status:'published',as_of:'2026-08-01T00:00:00.000Z',programs:[fixture.birthday]},error:null};
+      if(name==='owner_list_reward_profitability_products_v122')return {data:{items:fixture.products},error:null};
+      return {data:{version_id:'draft-v2'},error:null};
+    }};
+    async function loyaltyPage(){
+      const host=M();
+      host.innerHTML='<section class="card"><h2>Rewards and earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
+      host.querySelectorAll('.rwEdit').forEach(button=>button.onclick=()=>{
+        const reward=fixture.rewards.find(item=>item.id===button.dataset.rewardId);
+        window.__openedRewardId=reward?.id||null;
+        $('rwEditor').innerHTML='<div class="reward-editor"><label for="rwCustomerName">Customer-facing name</label><input id="rwCustomerName" value="'+esc(reward?.customer_name||'')+'"><p id="openedRewardIdentity">'+esc(reward?.id||'')+'</p></div>';
+      });
+      $('rwAdd').onclick=()=>{$('rwEditor').innerHTML='<div class="reward-editor"><input id="rwCustomerName" value=""></div>'};
+    }
+    async function retentionPage(){} async function storedValuePage(){} async function studioPage(){}
+    async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurrent}){
+  const none={data:[],error:null};
+  const businessRequest=sb.from('businesses').select('active_config_version_id').eq('id',S.biz.id).single();
+  const loyaltyRequest=canRewards
+    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_per_cents,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
+    :Promise.resolve(none);
+  const rewardsRequest=canRewards
+    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort,claim_available_from,claim_available_until').eq('business_id',S.biz.id).order('sort')
+    :Promise.resolve(none);
+  const productsRequest=S.myRole==='owner'
+    ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
+    :Promise.resolve(none);
+  const [{data:business,error:businessError},{data:loyalty,error:loyaltyError},
+    {data:rewards,error:rewardsError},{data:products,error:productsError}]
+    =await Promise.all([businessRequest,loyaltyRequest,rewardsRequest,productsRequest]);
+  if(!isCurrent())return null;
+  if(businessError)throw businessError;
+  const currentVersion=business?.active_config_version_id||null;
+  const retentionRequest=canWinback&&currentVersion
+    ?sb.from('retention_programs').select('id,active').eq('business_id',S.biz.id)
+      .eq('current_config_version_id',currentVersion)
+    :Promise.resolve(none);
+  const birthdayRequest=canRewards&&currentVersion
+    ?sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id})
+    :Promise.resolve(none);
+  let draftRequest=Promise.resolve(none);
+  if(canSetupGrow){
+    let query=sb.from('firm_config_versions').select('id,version_no,based_on_version_id,status')
+      .eq('business_id',S.biz.id).eq('status','draft');
+    query=currentVersion?query.eq('based_on_version_id',currentVersion):query.is('based_on_version_id',null);
+    draftRequest=query.order('version_no',{ascending:false}).limit(1);
   }
-  if(kind==='counter'){
-    return `<button class="btn sm" type="button" data-promotion-counter>${esc(configured||'Show at counter')}</button>`;
-  }
-  const label=requestedKind==='book'&&!bookingEnabled?'View details':configured||'View details';
-  return `<button class="btn sm" type="button" data-promotion-details>${esc(label)}</button>`;
+  const [{data:retention,error:retentionError},{data:drafts,error:draftError},
+    {data:birthday,error:birthdayError}]
+    =await Promise.all([retentionRequest,draftRequest,birthdayRequest]);
+  if(!isCurrent())return null;
+  /* Overview reads are intentionally fail-soft. A missing optional engine must not hide the
+     rest of Grow; its node reports Needs setup while its dedicated surface keeps the full error. */
+  return {
+    currentVersion,
+    asOf:birthdayError?null:birthday?.as_of||null,
+    loyalty:loyaltyError?null:(loyalty||[])[0]||null,
+    rewards:rewardsError?[]:rewards||[],
+    products:productsError?[]:(Array.isArray(products?.items)?products.items:[]),
+    birthday:birthdayError?null:(Array.isArray(birthday?.programs)?birthday.programs[0]:null)||null,
+    retention:retentionError?[]:retention||[],
+    draft:draftError?null:(drafts||[])[0]||null,
+    overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError)}
+  };
 }
-function customerPromotionValidityV104(item={}){
-  const starts=promotionDateTextV104(item.starts_at),ends=promotionDateTextV104(item.ends_at);
-  if(starts&&ends)return `Valid ${starts} – ${ends}`;
-  if(ends)return `Valid until ${ends}`;
-  return starts?`Valid from ${starts}`:'';
-}
-function customerPromotionCardV104(item,business,bookingEnabled){
-  const image=customerMediaUrlV95(item?.image_url),
-    validity=customerPromotionValidityV104(item),
-    facts=String(item?.metadata?.offer_facts||'').trim(),
-    terms=String(item?.terms||'').trim();
-  return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
-    ${image?`<div class="customer-promotion-card-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:''}
-    <div class="customer-promotion-card-copy">
-      <p class="customer-quest-kicker">Limited-time offer</p>
-      <h3>${esc(item?.name||'Latest offer')}</h3>
-      ${item?.tagline||item?.description?`<p>${esc(item.tagline||item.description)}</p>`:''}
-      ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
-      <div class="customer-promotion-card-actions">
-        ${customerPromotionCtaV104(item,business,bookingEnabled)}
-        ${terms?`<details><summary class="small">Terms</summary><p class="small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
-      </div>
-      <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>
-      <template data-promotion-details-template>
-        <p>${esc(item?.description||item?.tagline||facts||item?.name||'Latest offer')}</p>
-        <dl class="customer-promotion-detail-list">
-          ${facts?`<div><dt>Offer</dt><dd>${esc(facts)}</dd></div>`:''}
-          ${validity?`<div><dt>Validity</dt><dd>${esc(validity)}</dd></div>`:''}
-          ${terms?`<div><dt>Terms</dt><dd>${esc(terms)}</dd></div>`:''}
-        </dl>
-        <p class="muted small">Show these details to the team when you visit.</p>
-      </template>
-    </div>
-  </article>`;
-}
-function openCustomerPromotionDetailsV104(card){
-  const template=card?.querySelector('template[data-promotion-details-template]');
-  if(!template)return;
-  $('customerPromotionDetailsModal')?.remove();
-  const title=card.querySelector('h3')?.textContent?.trim()||'Offer details';
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerPromotionDetailsModal" role="dialog" aria-modal="true" aria-labelledby="customerPromotionDetailsTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
-    <div class="row"><h2 id="customerPromotionDetailsTitle">${esc(title)}</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerPromotionDetailsClose">Close</button></div>
-    <div style="margin-top:16px">${template.innerHTML}</div>
-    <button type="button" class="btn" id="customerPromotionDetailsDone" style="margin-top:18px">Done</button>
-  </div></div>`);
-  let deactivate;
-  const close=()=>{if(deactivate)deactivate();else $('customerPromotionDetailsModal')?.remove()};
-  deactivate=CUI.activateDialog($('customerPromotionDetailsModal'),{
-    onClose:close,initialFocus:'#customerPromotionDetailsClose'
-  });
-  $('customerPromotionDetailsClose').onclick=$('customerPromotionDetailsDone').onclick=close;
-}
-function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=null}={}){
-  if(!prompt?.event_id||!prompt?.promotion_id||!businessSlug||!Array.isArray(items))return false;
-  const promotionId=String(prompt.promotion_id);
-  const item=items.find(candidate=>String(candidate?.id||'')===promotionId);
-  if(!item||$('customerPromotionPopupV122'))return false;
-  const endingSoon=prompt.source_kind==='v122_promotion_expiry';
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerPromotionPopupV122" role="dialog" aria-modal="true" aria-labelledby="customerPromotionPopupTitle" tabindex="-1"><div class="modal-card customer-promotion-popup-card">
-    <p class="customer-quest-kicker">${endingSoon?'Ending soon':'New promotion'} · ${esc(business?.name||'Your programme')}</p>
-    <h2 id="customerPromotionPopupTitle" style="margin-top:7px">${esc(item.name||'Latest offer')}</h2>
-    <p class="muted" style="margin-top:8px">${esc(item.description||item.tagline||item?.metadata?.offer_facts||'Open the programme to see this promotion.')}</p>
-    <p class="small" style="margin-top:10px">${esc(customerPromotionValidityV104(item))}</p>
-    <div class="row" style="margin-top:18px"><button type="button" class="btn" data-promotion-popup-view>View offer</button><button type="button" class="btn ghost" data-promotion-popup-dismiss>Not now</button></div>
-    <p class="muted small" data-promotion-popup-status role="status" aria-live="polite" style="margin-top:9px"></p>
-  </div></div>`);
-  const dialog=$('customerPromotionPopupV122');
-  let deactivate,closing=false;
-  const operationKeys={read:crypto.randomUUID(),dismiss:crypto.randomUUID()};
-  const close=async(operation='dismiss',afterClose=null)=>{
-    if(closing)return;
-    closing=true;
-    dialog.querySelectorAll('button').forEach(button=>button.disabled=true);
-    const {error}=await sb.rpc('customer_set_in_app_inbox_state',{
-      p_business_slug:businessSlug,p_event_id:prompt.event_id,
-      p_operation:operation,p_idempotency_key:operationKeys[operation]
+    function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null}={}){
+  const model=loyalty?.loyalty_model||loyaltyModel||'points';
+  const unit=model==='stamps'?'stamps':'points';
+  const programmeActive=loyalty?.active===true;
+  const asOfMs=Number.isFinite(Date.parse(asOf||''))?Date.parse(asOf):Date.now();
+  const compactNumber=value=>Number.isInteger(Number(value))?String(Number(value)):String(Number(value)).replace(/\.0+$/,'');
+  const pointsRate=Math.max(0,Number(loyalty?.earn_points_per_dollar||0));
+  const stampSpendCents=Math.max(0,Number(loyalty?.stamp_per_cents||0));
+  const earning=!loyalty?null:model==='stamps'
+    ?{model,unit,rate:stampSpendCents,availableToCustomers:programmeActive,label:`Earn 1 stamp per SGD ${(stampSpendCents/100).toFixed(2)} spent`}
+    :{model,unit,rate:pointsRate,availableToCustomers:programmeActive,label:`Earn ${compactNumber(pointsRate)} points per SGD 1 spent`};
+  const allRewards=Array.isArray(rewards)?rewards:[];
+  const ordered=allRewards
+    .filter(reward=>reward?.active!==false)
+    .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0)||Number(a.sort||0)-Number(b.sort||0));
+  const milestones=ordered
+    .map((reward,index)=>{
+      const startsAt=reward.claim_available_from?Date.parse(reward.claim_available_from):null;
+      const endsAt=reward.claim_available_until?Date.parse(reward.claim_available_until):null;
+      const availability=!loyalty?'programme_unconfigured':!programmeActive?'programme_paused':model==='classic'?'not_current_model'
+        :Number.isFinite(startsAt)&&startsAt>asOfMs?'not_started'
+        :Number.isFinite(endsAt)&&endsAt<=asOfMs?'ended':'available';
+      return {
+        id:reward.id||String(index),name:reward.customer_name||reward.name||'Reward',
+        threshold:Math.max(0,Number(reward.cost_points||0)),unit,
+        additional:index?Math.max(0,Number(reward.cost_points||0)-Number(ordered[index-1]?.cost_points||0)):Math.max(0,Number(reward.cost_points||0)),
+        estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0)),
+        availability,availableToCustomers:availability==='available'
+      };
     });
-    if(error){
-      closing=false;
-      dialog.querySelectorAll('button').forEach(button=>button.disabled=false);
-      const status=dialog.querySelector('[data-promotion-popup-status]');
-      if(status)status.textContent='This promotion could not be dismissed. Check your connection and try again.';
+  const archivedRewards=allRewards.filter(reward=>reward?.active===false)
+    .sort((a,b)=>Number(a.sort||0)-Number(b.sort||0)||Number(a.cost_points||0)-Number(b.cost_points||0))
+    .map((reward,index)=>({
+      id:reward.id||reward.reward_id||`archived-${index}`,
+      name:reward.customer_name||reward.name||'Reward',threshold:Math.max(0,Number(reward.cost_points||0)),unit,
+      estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0)),active:false
+    }));
+  const redeemPoints=Math.max(0,Number(loyalty?.redeem_points||0));
+  const rewardCreditCents=Math.max(0,Number(loyalty?.reward_credit_cents||0));
+  const classicReward=model==='classic'&&redeemPoints>0&&rewardCreditCents>0?{
+    id:`classic:${loyalty?.id||'programme'}`,name:'Points redemption',threshold:redeemPoints,unit:'points',
+    value:`SGD ${(rewardCreditCents/100).toFixed(2)} store credit`,availableToCustomers:programmeActive
+  }:null;
+  const birthdayReward=!birthday?null:{
+    id:birthday.id||birthday.program_id||'birthday',
+    active:birthday.active!==false,
+    name:birthday.customer_label||'Birthday reward',
+    description:birthday.customer_description||'Available in the configured birthday window.',
+    value:birthday.fulfillment_kind==='discount_pct'
+      ?`${Number(birthday.discount_percent||0)}% off`
+      :birthday.manual_item||'Configured birthday benefit'
+  };
+  return {model,unit,earning,milestones,archivedRewards,classicReward,birthday:birthdayReward};
+}
+    function growStatus(label,tone=''){
+  return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
+}
+    async function growPage(routedSurface,hashParam){
+  const outerMain=M(),isGrowCurrent=()=>outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
+  const modules=S.myModules||[];
+  const canRewards=modules.includes('loyalty'),canWinback=modules.includes('retention');
+  const isOwner=S.myRole==='owner';
+  const canSetupGrow=isOwner&&canRewards&&canWriteModule('loyalty');
+  const canEditProductCosts=isOwner&&canRewards&&canWriteModule('loyalty');
+  recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
+    context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
+  });
+  outerMain.innerHTML=CUI.loadingState({title:'Grow',iconName:'loyalty'});
+  const snapshot=await growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurrent:isGrowCurrent});
+  if(!snapshot||!isGrowCurrent())return;
+  let growDraftVersionId=hashParam&&['rewards','winback'].includes(routedSurface)?hashParam:(snapshot.draft?.id||null);
+  const rewardJourney=ownerRewardJourneyV122({
+    rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
+  });
+  const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
+  const earningOverviewCopy=rewardJourney.earning?.availableToCustomers
+    ?rewardJourney.earning.label:`Programme paused · configured as ${rewardJourney.earning?.label||'no earning rule'}`;
+  const milestoneOverviewCopy=(milestone,index)=>{
+    const cost=milestone.estimatedCostCents?` · estimated fulfilment cost ${money(milestone.estimatedCostCents)}`:'';
+    if(milestone.availableToCustomers)return `Reach ${milestone.threshold} ${milestone.unit}${index?` · ${milestone.additional} more after the previous reward`:''}${cost}`;
+    const state=milestone.availability==='programme_paused'?'Programme paused'
+      :milestone.availability==='not_started'?'Scheduled · not available yet'
+      :milestone.availability==='ended'?'Claim period ended'
+      :milestone.availability==='not_current_model'?'Not used by the current Simple points programme'
+      :'Programme not configured';
+    return `${state} · configured at ${milestone.threshold} ${milestone.unit}${cost}`;
+  };
+  const rewardsOverviewIncomplete=Boolean(snapshot.overviewErrors?.loyalty||snapshot.overviewErrors?.rewards||snapshot.overviewErrors?.birthday);
+  const profitabilityProducts=(snapshot.products||[]).map(product=>({
+    ...product,
+    profit:product.cost_cents==null?null:productProfitabilityV122({
+      priceCents:product.retail_price_cents,costCents:product.cost_cents
+    })
+  }));
+  const bringBackCount=snapshot.retention.filter(x=>x.active!==false).length;
+  const loyaltyLive=Boolean(snapshot.loyalty?.active&&snapshot.currentVersion);
+  const bringBackLive=bringBackCount>0;
+  const draftLabel=growDraftVersionId?'Draft ready':null;
+  const nodeStatus=live=>draftLabel|| (live?'Live':'Needs setup');
+  const nodeTone=live=>draftLabel?'new':live?'on':'off';
+  const optionalTools=[
+    isOwner&&canRewards?{key:'promotions',icon:'loyalty',title:'Promotions',copy:'Publish up to two timely offers at the top of your customer programme.'}:null,
+    modules.includes('referrals')?{key:'referrals',icon:'referrals',title:'Referrals',copy:'Turn happy customers into trusted introductions.'}:null,
+    modules.includes('memberships')?{key:'memberships',icon:'memberships',title:'Memberships',copy:'Build recurring value for your most regular customers.'}:null,
+    modules.includes('giftcards')?{key:'giftcards',icon:'giftcard',title:'Gift cards',copy:'Let customers share prepaid value with someone new.'}:null
+  ].filter(Boolean);
+  const editorAction=(surface,label,target)=>{
+    const available=surface==='rewards'?canRewards:canWinback;
+    if(!isOwner||!available||!growDraftVersionId)return '';
+    return `<button type="button" class="btn ghost sm" data-grow-open="${surface}" data-grow-focus="${esc(target||'')}">${esc(label)}</button>`;
+  };
+  outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-workspace-i18n>
+    <section class="grow-hero" aria-labelledby="growTitle">
+      <div class="grow-hero-copy"><h1 id="growTitle">Grow</h1>
+        <p class="muted">Turn visits into repeat business through one clear journey.</p>
+        ${isOwner?`<p class="muted small">Nothing goes live until you review and publish.</p>`:
+          '<p class="muted small">This is the programme customers are using now.</p>'}</div>
+      ${canSetupGrow?`<button type="button" class="btn grow-primary" id="growSetupPrimary"
+        aria-describedby="growSetupSafety">${growDraftVersionId?'Continue Grow setup':'Set up Grow'}</button>`:''}
+    </section>
+    ${canSetupGrow?'<p class="muted small" id="growSetupSafety" style="margin:-10px 2px 0">Setup prepares an editable draft only. Customers keep using the published programme until you publish.</p>':''}
+    <ol class="grow-flow" aria-label="Grow customer journey">
+      <li class="grow-flow-step" data-grow-step="trigger"><span class="grow-flow-icon">${CUI.icon('till',{size:22})}</span>
+        <h2>Trigger</h2><p>Choose which eligible sale or visit starts the journey.</p>
+        <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit earning','lm')}</div></li>
+      <li class="grow-flow-step" data-grow-step="who"><span class="grow-flow-icon">${CUI.icon('customers',{size:22})}</span>
+        <h2>Who</h2><p>Decide who earns, progresses, or receives a bring-back.</p>
+        <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit audience','loyaltyAudienceSettings')}</div></li>
+      <li class="grow-flow-step" data-grow-step="reward"><span class="grow-flow-icon">${CUI.icon('loyalty',{size:22})}</span>
+        <h2>Reward</h2><p>${rewardCount?workspaceTemplateHtmlV97(rewardCount===1?'growPublishedReward':'growPublishedRewards',{count:rewardCount}):'Define a clear reward your team can fulfil.'}</p>
+        <div class="grow-flow-foot">${growStatus(nodeStatus(rewardCount>0),nodeTone(rewardCount>0))}${editorAction('rewards','Edit reward','rwAdd')}</div></li>
+      <li class="grow-flow-step" data-grow-step="result"><span class="grow-flow-icon">${CUI.icon('retention',{size:22})}</span>
+        <h2>Result</h2><p>${bringBackCount?workspaceTemplateHtmlV97(bringBackCount===1?'growPublishedBringBackRule':'growPublishedBringBackRules',{count:bringBackCount}):'Measure repeat visits and bring customers back before they drift.'}</p>
+        <div class="grow-flow-foot">${growStatus(nodeStatus(bringBackLive),nodeTone(bringBackLive))}${editorAction('winback','Edit bring-back','rn')}</div></li>
+    </ol>
+    ${canRewards?`<section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle">
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programme overview</p><h2 id="rewardJourneyTitle">Rewards overview</h2><p class="muted small">One published view of how customers earn, what they can unlock, and the birthday benefit. ${canSetupGrow?'Select any item to edit its exact rule.':'Only the owner with Loyalty edit access can change these rules.'}</p></div>
+        ${canSetupGrow?'<button type="button" class="btn ghost sm" data-rewards-overview-edit="add">Add reward</button>':''}</div>
+      ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Rewards could not be loaded completely.</b><p class="small" style="margin-top:5px">The overview may be missing published items. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry rewards overview</button></div>`:''}
+      <div class="rewards-overview-grid">
+        ${rewardJourney.earning?(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="earning">
+          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p><span class="rewards-overview-edit-label">Edit earning rule</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div></article>`)
+          :(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning not configured</b><p class="muted small">Choose points or stamps and set the earning rate.</p><span class="rewards-overview-edit-label">Set up earning</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning not configured</b><p class="muted small">The owner has not published an earning rule.</p></div></article>`)}
+        ${rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="classic">
+          <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p><span class="rewards-overview-edit-label">Edit this redemption</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div></article>`):''}
+        ${rewardJourney.milestones.map((milestone,index)=>canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="catalogue" data-reward-id="${esc(milestone.id)}">
+          <span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p><span class="rewards-overview-edit-label">Edit this reward</span></div></button>`
+          :`<article class="rewards-overview-card" data-reward-milestone><span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div></article>`).join('')}
+        ${rewardJourney.birthday?(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
+          <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p><span class="rewards-overview-edit-label">Edit birthday benefit</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div></article>`)
+          :(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit not configured</b><p class="muted small">Add an optional birthday benefit and choose its eligibility window.</p><span class="rewards-overview-edit-label">Set up birthday benefit</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit not configured</b><p class="muted small">No birthday benefit is published.</p></div></article>`)}
+      </div>
+      ${!rewardJourney.classicReward&&!rewardJourney.milestones.length?`<p class="muted small" style="margin-top:12px">No redeemable rewards are published yet. ${canSetupGrow?'Use Add reward to create the first protected draft.':'The owner can add a reward from Grow setup.'}</p>`:''}
+      ${rewardJourney.archivedRewards.length?`<details style="margin-top:12px"><summary>Paused or archived rewards (${rewardJourney.archivedRewards.length})</summary><div class="rewards-overview-grid">${rewardJourney.archivedRewards.map(reward=>canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="catalogue" data-reward-id="${esc(reward.id)}"><span class="reward-milestone-number">${CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(reward.name)}</b><p class="muted small">${reward.threshold} ${esc(reward.unit)} · not available to customers</p><span class="rewards-overview-edit-label">Review or reactivate</span></div></button>`:`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(reward.name)}</b><p class="muted small">Not available to customers</p></div></article>`).join('')}</div></details>`:''}
+    </section>`:''}
+    ${isOwner?`<section class="card profitability-overview-v122" aria-labelledby="profitabilityTitle">
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Reward economics</p><h2 id="profitabilityTitle">Product cost and profitability</h2><p class="muted small">Use real cost, not retail price, when deciding what a reward can safely cost.</p></div></div>
+      ${profitabilityProducts.length?`<div class="profitability-product-grid">${profitabilityProducts.slice(0,6).map(product=>{
+        const safeReward=product.profit?Math.max(0,Math.round(product.profit.grossProfitCents*.25)):null;
+        return `<article data-product-profitability="${esc(product.id)}" data-price-cents="${Number(product.retail_price_cents)||0}" data-cost-cents="${product.cost_cents==null?'':Number(product.cost_cents)}"><b>${esc(product.name)}</b><dl><div><dt>Sell for</dt><dd>${money(product.retail_price_cents)}</dd></div><div><dt>Product cost</dt><dd>${product.cost_cents==null?'Not set':money(product.cost_cents)}</dd></div>${product.profit?`<div><dt>Gross profit</dt><dd>${money(product.profit.grossProfitCents)} · ${product.profit.marginPct}%</dd></div>`:''}</dl>
+          ${canEditProductCosts?`<label for="productCost-${esc(product.id)}" style="margin-top:10px">Unit cost (${esc(S.biz.currency||'SGD')})</label><div class="row"><input id="productCost-${esc(product.id)}" data-product-cost="${esc(product.id)}" inputmode="decimal" placeholder="e.g. 24.00" value="${product.cost_cents==null?'':(Number(product.cost_cents)/100).toFixed(2)}"><button type="button" class="btn ghost sm" data-product-cost-save="${esc(product.id)}" data-expected-cost="${product.cost_cents==null?'':Number(product.cost_cents)}">Save cost</button></div>`:''}
+          ${product.profit&&canSetupGrow?`<label for="rewardCost-${esc(product.id)}" style="margin-top:10px">Proposed reward cost (${esc(S.biz.currency||'SGD')})</label><div class="row"><input id="rewardCost-${esc(product.id)}" data-reward-cost="${esc(product.id)}" inputmode="decimal" value="${(safeReward/100).toFixed(2)}"><button type="button" class="btn ghost sm" data-reward-cost-use="${esc(product.id)}">Use in reward setup</button></div><p class="small" data-profit-after-reward="${esc(product.id)}" style="margin-top:8px">Reward cost ${money(safeReward)} leaves ${money(product.profit.grossProfitCents-safeReward)} profit after reward.</p>`:''}
+          <p class="muted small" style="margin-top:9px">${product.profit?`Assistant starting point: ${money(safeReward)} is 25% of gross profit. Edit the proposed cost, inspect the remaining profit, then send it to the reward draft.`:'Add the real unit cost to calculate gross profit and a cautious reward-cost starting point.'}</p></article>`;
+      }).join('')}</div>`:CUI.emptyState({iconName:'inventory',title:'No products available',body:'Add a real product through your catalogue setup, then return here to record its cost and review profitability.'})}
+      ${canEditProductCosts?'':`<p class="muted small" style="margin-top:12px">Product costs are read-only because this workspace does not grant Inventory write access.</p>`}
+      <p class="muted small" style="margin-top:12px">Guidance is deterministic and editable. It never publishes or changes a reward automatically.</p>
+    </section>`:''}
+    ${canSetupGrow?`<details class="grow-guide" id="growSetupGuide" ${growDraftVersionId?'open':''}>
+      <summary>Guided setup</summary><div class="grow-guide-body">
+        <div class="grow-guide-step"><b>1. Goal</b><p>Choose the repeat behaviour you want Grow to encourage.</p>
+          <button type="button" class="btn ghost sm" data-grow-guide="rewards" data-grow-focus="lm">Edit goal</button></div>
+        <div class="grow-guide-step"><b>2. Who and when</b><p>Choose the eligible customers, visits, branches, and timing.</p>
+          <button type="button" class="btn ghost sm" data-grow-guide="rewards" data-grow-focus="loyaltyAudienceSettings">Edit who and when</button></div>
+        <div class="grow-guide-step"><b>3. Reward</b><p>Set the customer promise and the fulfilment your team will deliver.</p>
+          <button type="button" class="btn ghost sm" data-grow-guide="rewards" data-grow-focus="rwAdd">Edit reward</button></div>
+        <div class="grow-guide-step"><b>4. Review and save draft</b><p>Check the full customer journey. Publishing remains a separate protected action.</p>
+          <button type="button" class="btn ghost sm" data-grow-guide="studio" data-grow-focus="studioPublish" data-grow-activate="true">Review draft</button></div>
+        <p class="grow-draft-note" id="growDraftNote" role="status" aria-live="polite">${growDraftVersionId?
+          workspaceTemplateHtmlV97('growDraftReady',{version:snapshot.draft?.version_no||''}):
+          'Start once, then edit the shared draft in any order.'}</p>
+      </div></details>`:''}
+    ${optionalTools.length?`<section aria-labelledby="growOptionalTitle"><div class="grow-section-heading">
+      <div><h2 id="growOptionalTitle">Optional growth tools</h2><p class="muted small">Add another growth loop only when it supports your programme.</p></div></div>
+      <div class="grow-optional">${optionalTools.map(tool=>`<article class="grow-optional-card"><div>
+        <b>${CUI.icon(tool.icon,{size:17})} ${esc(tool.title)}</b><p>${esc(tool.copy)}</p></div>
+        <a class="btn ghost sm" href="#/${tool.key}">Open</a></article>`).join('')}</div></section>`:''}
+    ${isOwner?`<details class="grow-advanced" id="growAdvanced" ${['studio','storedvalue'].includes(routedSurface)?'open':''}>
+      <summary>Advanced tools</summary>
+      <p class="muted small">Technical programme authoring, taxonomy, versions and rollback, and stored-value controls stay separate from everyday Grow setup.</p>
+      <div class="grow-advanced-actions">
+        <button type="button" class="btn ghost" data-grow-open="studio">Program Studio</button>
+        <button type="button" class="btn ghost" data-grow-open="storedvalue">Stored value</button>
+        ${canRewards?'<button type="button" class="btn ghost" data-grow-open="rewards">Rewards and versions</button>':''}
+        ${canWinback?'<button type="button" class="btn ghost" data-grow-open="winback">Bring-back rules and taxonomy</button>':''}
+      </div></details>`:''}
+    <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
+  </div>`;
+  localizeWorkspaceSubtreeV97(outerMain);
+  document.querySelectorAll('[data-product-cost-save]').forEach(button=>button.onclick=async()=>{
+    const productId=button.dataset.productCostSave;
+    const input=document.querySelector(`[data-product-cost="${CSS.escape(productId)}"]`);
+    const raw=String(input?.value||'').trim();
+    if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter a product cost, for example 24.00');
+    const costCents=Math.round(Number(raw)*100);
+    if(costCents<0||costCents>2147483647)return toast('Product cost is outside the supported range');
+    button.disabled=true;
+    const expectedRaw=button.dataset.expectedCost;
+    const {data,error}=await sb.rpc('owner_set_product_cost_v122',{
+      p_business:S.biz.id,p_product:productId,p_cost_cents:costCents,
+      p_expected_cost_cents:expectedRaw===''?null:Number(expectedRaw)
+    });
+    if(!isGrowCurrent())return;
+    if(error||data?.id!==productId){
+      button.disabled=false;
+      return fail(error||new Error('Product cost was not confirmed. Nothing was changed.'));
+    }
+    toast('Product cost saved');
+    await growPage(routedSurface,hashParam);
+  });
+  const panelHost=$('growpanelhost');
+  let activeSurface=null,preparingDraft=false,pendingGuideAction=null,pendingRewardEstimateCents=null;
+  const surfaceDefinition={
+    rewards:{hash:'#/loyalty',label:'Rewards and earning'},
+    winback:{hash:'#/retention',label:'Bring-back rules'},
+    studio:{hash:'#/studio',label:'Program Studio'},
+    storedvalue:{hash:'#/storedvalue',label:'Stored value'}
+  };
+  const focusGrowTarget=(target,{activate=false}={})=>{
+    const element=target?$(target):null;
+    if(!element)return false;
+    if(activate){element.click();return true}
+    if(element.tagName==='DETAILS')element.open=true;
+    element.focus?.({preventScroll:true});
+    element.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    return true;
+  };
+  async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null}={}){
+    const openExactReward=()=>{
+      if(surface!=='rewards'||!rewardId)return false;
+      const editButton=panelHost.querySelector(`.rwEdit[data-reward-id="${CSS.escape(rewardId)}"]`);
+      if(!editButton){
+        const notice=document.createElement('p');notice.className='notice warn small';notice.setAttribute('role','status');
+        notice.textContent='This published reward is not present in the current draft. Review the draft before changing another reward.';
+        panelHost.querySelector('#main')?.prepend(notice);notice.focus?.({preventScroll:true});return false;
+      }
+      editButton.click();
+      const editor=$('rwEditor');
+      editor?.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+      $('rwCustomerName')?.focus({preventScroll:true});
+      return true;
+    };
+    const applyPendingRewardEstimate=()=>{
+      if(surface!=='rewards'||pendingRewardEstimateCents===null)return false;
+      const estimate=$('rwEstimate');
+      if(!estimate)return false;
+      estimate.value=(pendingRewardEstimateCents/100).toFixed(2);
+      estimate.dispatchEvent(new Event('input',{bubbles:true}));
+      pendingRewardEstimateCents=null;
+      toast('Proposed fulfilment cost added to the editable reward');
+      return true;
+    };
+    if(activeSurface===surface){
+      if(!openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
+      applyPendingRewardEstimate();
       return;
     }
-    if(deactivate)deactivate();else dialog?.remove();
-    afterClose?.();
-  };
-  deactivate=CUI.activateDialog(dialog,{onClose:()=>close('dismiss'),initialFocus:'[data-promotion-popup-view]'});
-  dialog.querySelector('[data-promotion-popup-dismiss]').onclick=()=>close('dismiss');
-  dialog.querySelector('[data-promotion-popup-view]').onclick=()=>close('read',()=>{
-    const card=document.querySelector(`[data-promotion-id="${CSS.escape(promotionId)}"]`);
-    card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
-    card?.querySelector('button,a')?.focus();
+    if((surface==='rewards'&&!canRewards)||(surface==='winback'&&!canWinback))return;
+    if(['studio','storedvalue'].includes(surface)&&!isOwner)return;
+    activeSurface=surface;
+    const definition=surfaceDefinition[surface],draft=draftOverride||growDraftVersionId;
+    const suffix=draft&&['rewards','winback','studio'].includes(surface)?`/${draft}`:'';
+    history.replaceState(null,'',`${location.pathname}${location.search}${definition.hash}${suffix}`);
+    const oldPanel=panelHost.firstElementChild;
+    if(oldPanel)oldPanel.remove();
+    const panel=document.createElement('section');
+    panel.setAttribute('aria-label',definition.label);panel.tabIndex=-1;
+    panelHost.append(panel);
+    if(outerMain.id==='main')outerMain.removeAttribute('id');
+    panel.id='main';
+    CUI.announce(definition.label);
+    if(surface==='rewards')await loyaltyPage(undefined,draft);
+    else if(surface==='winback')await retentionPage(draft);
+    else if(surface==='storedvalue')await storedValuePage(hashParam||null);
+    else await studioPage(draft||hashParam||null);
+    const exactRewardOpened=openExactReward();
+    if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
+    else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
+    applyPendingRewardEstimate();
+  }
+  document.querySelectorAll('[data-grow-open]').forEach(button=>button.onclick=()=>mountGrowSurface(button.dataset.growOpen,{
+    focusTarget:button.dataset.growFocus||null}));
+  document.querySelectorAll('[data-grow-guide]').forEach(button=>button.onclick=()=>{
+    const action={surface:button.dataset.growGuide,focusTarget:button.dataset.growFocus||null,
+      activateTarget:button.dataset.growActivate==='true'};
+    if(!growDraftVersionId){pendingGuideAction=action;setupButton?.click();return}
+    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
   });
-  return true;
-}
-const business={name:'Glow Atelier',slug:'glow-atelier'};
-$('promotionCards').innerHTML=FIXTURE_OFFERS.map(offer=>customerPromotionCardV104(offer,business,true)).join('');
-document.querySelectorAll('[data-promotion-details]').forEach(button=>button.addEventListener('click',()=>{
-  openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
-}));
-window.v104OpenTerms=(index=0)=>{
-  const details=document.querySelectorAll('.customer-promotion-card details')[index];
-  if(details)details.open=true;
-};
-window.v104AcceptanceMetrics=()=>({
-  sourceHash:PRODUCTION_SOURCE_SHA256,
-  viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
-  cards:[...document.querySelectorAll('.customer-promotion-card')].map(card=>({
-    rect:card.getBoundingClientRect().toJSON(),
-    validity:card.querySelector('.customer-promotion-validity')?.textContent?.trim(),
-    ctaHeight:card.querySelector('.btn')?.getBoundingClientRect().height,
-    details:(()=>{
-      const details=card.querySelector('details');
-      if(!details)return null;
-      const rect=details.getBoundingClientRect(),cardRect=card.getBoundingClientRect();
-      return {
-        open:details.open,
-        width:rect.width,
-        height:rect.height,
-        cardWidth:cardRect.width,
-        availableContentWidth:card.querySelector('h3')?.getBoundingClientRect().width||0,
-        scrollWidth:details.scrollWidth,
-        clientWidth:details.clientWidth,
-        scrollHeight:details.scrollHeight,
-        clientHeight:details.clientHeight
-      };
-    })(),
-    textOverflow:[...card.querySelectorAll('h3,p,summary,dd')].map(node=>({
-      text:node.textContent.trim(),clientWidth:node.clientWidth,scrollWidth:node.scrollWidth,
-      clientHeight:node.clientHeight,scrollHeight:node.scrollHeight
-    }))
-  })),
-  longTokenVisible:document.body.textContent.includes(FIXTURE_LONG_TOKEN),
-  modal:document.querySelector('#customerPromotionDetailsModal')?{
-    role:document.querySelector('#customerPromotionDetailsModal').getAttribute('role'),
-    ariaModal:document.querySelector('#customerPromotionDetailsModal').getAttribute('aria-modal'),
-    labelledBy:document.querySelector('#customerPromotionDetailsModal').getAttribute('aria-labelledby'),
-    activeElement:document.activeElement?.id||'',
-    textOverflow:[...document.querySelectorAll('#customerPromotionDetailsModal h2,#customerPromotionDetailsModal p,#customerPromotionDetailsModal dd')].map(node=>({
-      text:node.textContent.trim(),clientWidth:node.clientWidth,scrollWidth:node.scrollWidth,
-      clientHeight:node.clientHeight,scrollHeight:node.scrollHeight
-    }))
-  }:null
-});
-const evidenceParams=new URLSearchParams(location.search);
-if(evidenceParams.has('openTerms'))window.v104OpenTerms(Number(evidenceParams.get('openTerms')||0));
-if(evidenceParams.get('openModal')==='1'){
-  document.querySelector('[data-promotion-details]')?.click();
-}
-if(evidenceParams.get('evidence')==='1'){
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const report=document.createElement('pre');
-    report.id='v104AcceptanceReport';
-    report.hidden=true;
-    report.textContent=JSON.stringify(window.v104AcceptanceMetrics());
-    document.body.append(report);
+  const setupButton=$('growSetupPrimary');
+  document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
+    const kind=button.dataset.rewardsOverviewEdit;
+    const action={surface:'rewards',focusTarget:kind==='earning'?'lm':kind==='classic'?'lr':kind==='birthday'?'birthdayLabel':kind==='add'?'rwAdd':null,
+      activateTarget:kind==='add',rewardId:kind==='catalogue'?button.dataset.rewardId||null:null};
+    if(!growDraftVersionId){pendingGuideAction=action;setupButton?.click();return}
+    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+  });
+  const growRewardsRetry=$('growRewardsRetry');
+  if(growRewardsRetry)growRewardsRetry.onclick=()=>growPage(routedSurface,hashParam);
+  if(setupButton)setupButton.onclick=async()=>{
+    if(preparingDraft)return;
+    recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
+      context:{action_key:growDraftVersionId?'continue_existing_draft':'prepare_new_draft',
+        entry_point:'grow_overview',locale:workspaceLocale,surface_version:'v100'}
+    });
+    preparingDraft=true;setupButton.disabled=true;
+    const priorLabel=setupButton.textContent;
+    setupButton.textContent=growDraftVersionId?'Opening draft…':'Preparing editable draft…';
+    const note=$('growDraftNote');if(note)note.textContent='Preparing one editable draft. Nothing is being published.';
+    try{
+      if(!growDraftVersionId){
+        const prepareRewardsDraft=pendingGuideAction?.surface==='rewards'||!canWinback;
+        const recommendation=snapshot.currentVersion&&!prepareRewardsDraft
+          ?await sb.rpc('generate_retention_recommendation',{p_business:S.biz.id,p_idempotency_key:crypto.randomUUID()})
+          :await sb.rpc('create_loyalty_config_draft',{
+            p_business:S.biz.id,p_based_on:snapshot.currentVersion||null,
+            p_source:prepareRewardsDraft?'owner_rewards_overview':'grow_overview'});
+        const {data,error}=recommendation;
+        if(!isGrowCurrent())return;
+        if(error)throw error;
+        growDraftVersionId=data?.draft_config_version_id||data?.version_id;
+        if(!growDraftVersionId)throw new Error('Grow draft was not returned. Nothing was changed.');
+      }
+      setupButton.textContent='Continue Grow setup';
+      const guide=$('growSetupGuide');if(guide)guide.open=true;
+      if(note)note.textContent='Draft prepared. Review the full journey before publishing.';
+      const action=pendingGuideAction||{surface:'rewards',focusTarget:'lm',activateTarget:false};
+      pendingGuideAction=null;
+      await mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+      if(setupButton.isConnected)setupButton.disabled=false;
+    }catch(error){
+      setupButton.disabled=false;setupButton.textContent=priorLabel;
+      if(note)note.textContent='Grow setup could not be prepared. Nothing was changed.';
+      fail(error);
+    }finally{preparingDraft=false}
+  };
+  document.querySelectorAll('[data-reward-cost]').forEach(input=>input.addEventListener('input',()=>{
+    const productId=input.dataset.rewardCost;
+    const card=input.closest('[data-product-profitability]');
+    const status=card?.querySelector(`[data-profit-after-reward="${CSS.escape(productId)}"]`);
+    const raw=String(input.value||'').trim();
+    if(!status)return;
+    if(!/^\d+(?:\.\d{1,2})?$/.test(raw)){
+      status.textContent='Enter a reward cost, for example 9.00.';return;
+    }
+    const calculation=productProfitabilityV122({
+      priceCents:Number(card.dataset.priceCents),
+      costCents:Number(card.dataset.costCents),
+      rewardCostCents:Math.round(Number(raw)*100)
+    });
+    status.textContent=[
+      'Reward cost ',money(calculation.rewardCostCents),' leaves ',
+      money(calculation.profitAfterRewardCents),' profit after reward.'
+    ].join('');
+    status.style.color=calculation.profitableAfterReward?'':'var(--red)';
   }));
+  document.querySelectorAll('[data-reward-cost-use]').forEach(button=>button.onclick=()=>{
+    const productId=button.dataset.rewardCostUse;
+    const input=document.querySelector(`[data-reward-cost="${CSS.escape(productId)}"]`);
+    const raw=String(input?.value||'').trim();
+    if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter a valid proposed reward cost first');
+    pendingRewardEstimateCents=Math.round(Number(raw)*100);
+    const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
+    if(!growDraftVersionId){
+      pendingGuideAction=action;
+      setupButton?.click();
+      return;
+    }
+    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+  });
+  /* A deep link is a deliberate request to open an engine. The normal #/loyalty and
+     #/retention destinations stop at this overview, so ordinary Grow use stays coherent. */
+  if((hashParam&&isOwner)||['studio','storedvalue'].includes(routedSurface)){
+    await mountGrowSurface(routedSurface,{focus:false,draftOverride:hashParam||growDraftVersionId});
+  }
 }
-</script>
-</body>
-</html>
+    window.rewardOverviewMetrics=()=>({sourceHash:'0182cb17b13417c9a89de0165374554857fbf001c22cb3a1903aa32ad4b2a33e',role:S.myRole,
+      viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+      title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.rewards-overview-card')].map(card=>({tag:card.tagName,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
+      editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
+      birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,
+      birthdayTableReads:window.__tableReads.filter(name=>name==='birthday_program_versions').length,
+      activeElement:document.activeElement?.id||'',consoleErrors:window.__consoleErrors||[]});
+    window.__consoleErrors=[];window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
+    growPage('overview',null).catch(error=>{window.__consoleErrors.push(String(error?.stack||error));document.body.dataset.renderError='true'});
+    </script></body></html>

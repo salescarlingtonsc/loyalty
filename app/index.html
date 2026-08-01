@@ -437,6 +437,14 @@ input[type=range]:focus{box-shadow:none}
 .grow-flow-step h2{font-size:16px;margin:12px 0 3px}.grow-flow-step p{font-size:12.5px;line-height:1.45;color:var(--muted);margin:0 0 12px}
 .grow-flow-foot{display:flex;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}.grow-flow-foot .btn{min-height:44px}
 .reward-milestone-track{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;list-style:none;margin:14px 0 0;padding:0}
+.rewards-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.rewards-overview-card{appearance:none;width:100%;min-height:92px;display:flex;gap:11px;align-items:flex-start;padding:14px;
+  border:1px solid var(--line);border-radius:14px;background:#FBFAF8;color:var(--ink);font:inherit;text-align:left;min-width:0}
+button.rewards-overview-card{cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+button.rewards-overview-card:hover{border-color:var(--coral);box-shadow:0 7px 18px rgba(201,67,51,.1);transform:translateY(-1px)}
+button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25);outline-offset:2px;border-color:var(--coral)}
+.rewards-overview-card>div{min-width:0;flex:1}.rewards-overview-card b,.rewards-overview-card p{overflow-wrap:anywhere}
+.rewards-overview-edit-label{display:inline-flex;align-items:center;min-height:44px;margin-top:7px;color:var(--coral);font-size:12px;font-weight:700}
 .reward-milestone-track li,.birthday-reward-overview{display:flex;gap:11px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:14px;background:#FBFAF8}
 .reward-milestone-number{display:grid;place-items:center;flex:0 0 32px;height:32px;border-radius:50%;background:var(--tint);color:var(--coral);font-weight:700}
 .birthday-reward-overview{margin-top:10px}.profitability-product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px}
@@ -469,6 +477,7 @@ input[type=range]:focus{box-shadow:none}
   .grow-flow{grid-template-columns:1fr}.grow-flow-step{min-height:0}.grow-flow-step::after{display:none}
   .grow-flow-foot .btn,.grow-advanced-actions .btn,.grow-optional-card .btn{flex:1 1 100%}
   .grow-optional-card{flex-direction:column;overflow-wrap:anywhere}}
+@media(max-width:600px){.rewards-overview-grid{grid-template-columns:1fr}.rewards-overview-card{min-height:88px}}
 @media(prefers-reduced-motion:reduce){.grow-panel-shell.grow-panel-updating{transition:none}}
 /* Program Studio (PS-1A authoring surface) — theme-aware via existing tokens only */
 .studio-row{padding:12px 0;border-bottom:1px solid var(--line)}
@@ -9253,10 +9262,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     product:groupEligibility(rp||[],'product_id')};
   const activeItems=(items)=>items.filter(x=>x.active!==false);
   const branchOverrideById=Object.fromEntries((bo||[]).map(x=>[x.branch_id,x]));
+  const rewardId=(reward)=>reward?(reward.reward_id||reward.id||''):'';
   const rewardLabel=(r)=>r.customer_name||r.name||'Unnamed reward';
   const rewardKind=(r)=>r.fulfillment_kind||((r.credit_cents||0)>0?'credit':'manual_item');
   const eligibilitySummary=(r)=>['branch','service','product'].map((k)=>{
-    const n=(eligibility[k][r.id]||[]).length;
+    const n=(eligibility[k][rewardId(r)]||[]).length;
     return n?`${n} ${k}${n===1?'':'s'}`:`all ${k}s`;
   }).join(' · ');
   const renderEligibilityGroup=(key,label,items,selected)=>`<div class="eligibility-group">
@@ -9301,7 +9311,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
         ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}</div>
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'live':'archived'}</span>
-        ${canManageLoyalty?`<button class="btn ghost sm rwEdit" data-id="${r.id}">Edit</button>`:''}</div></div>`).join('')
+        ${canManageLoyalty?`<button class="btn ghost sm rwEdit" data-reward-id="${esc(rewardId(r))}">Edit</button>`:''}</div></div>`).join('')
       :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}</div>
     <div id="rwEditor" aria-live="polite"></div>
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
@@ -9661,10 +9671,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   function openRewardEditor(reward){
     editorReward=reward;
     const r=reward||{};
+    const stableRewardId=rewardId(r);
     const selected={
-      branch:new Set(eligibility.branch[r.id]||[]),
-      service:new Set(eligibility.service[r.id]||[]),
-      product:new Set(eligibility.product[r.id]||[])};
+      branch:new Set(eligibility.branch[stableRewardId]||[]),
+      service:new Set(eligibility.service[stableRewardId]||[]),
+      product:new Set(eligibility.product[stableRewardId]||[])};
     $('rwEditor').innerHTML=`<div class="reward-editor">
       <div class="row" style="justify-content:space-between;gap:12px"><b>${reward?'Edit reward':'New reward'}</b><button class="btn ghost sm" id="rwClose" type="button">Close</button></div>
       <div class="field-grid">
@@ -9743,7 +9754,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   }
   const ra=$('rwAdd');
   if(ra) ra.onclick=()=>openRewardEditor(null);
-  document.querySelectorAll('.rwEdit').forEach(b=>b.onclick=()=>openRewardEditor(rewards.find(r=>r.id===b.dataset.id)));
+  document.querySelectorAll('.rwEdit').forEach(b=>b.onclick=()=>openRewardEditor(
+    rewards.find(reward=>rewardId(reward)===b.dataset.rewardId)));
   let editingTier=null;
   const fillTier=(tier)=>{editingTier=tier;$('trName').value=tier?.name||'';
     $('trTh').value=tier?.threshold??'';$('trMul').value=tier?.points_multiplier??'';
@@ -9923,10 +9935,10 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurren
   const none={data:[],error:null};
   const businessRequest=sb.from('businesses').select('active_config_version_id').eq('id',S.biz.id).single();
   const loyaltyRequest=canRewards
-    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id').eq('business_id',S.biz.id).limit(1)
+    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_per_cents,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const rewardsRequest=canRewards
-    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort').eq('business_id',S.biz.id).order('sort')
+    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort,claim_available_from,claim_available_until').eq('business_id',S.biz.id).order('sort')
     :Promise.resolve(none);
   const productsRequest=S.myRole==='owner'
     ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
@@ -9942,9 +9954,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurren
       .eq('current_config_version_id',currentVersion)
     :Promise.resolve(none);
   const birthdayRequest=canRewards&&currentVersion
-    ?sb.from('birthday_program_versions')
-      .select('id,active,customer_label,customer_description,fulfillment_kind,discount_percent,manual_item,window_days_before,window_days_after')
-      .eq('business_id',S.biz.id).eq('config_version_id',currentVersion).limit(1)
+    ?sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id})
     :Promise.resolve(none);
   let draftRequest=Promise.resolve(none);
   if(canSetupGrow){
@@ -9961,34 +9971,69 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurren
      rest of Grow; its node reports Needs setup while its dedicated surface keeps the full error. */
   return {
     currentVersion,
+    asOf:birthdayError?null:birthday?.as_of||null,
     loyalty:loyaltyError?null:(loyalty||[])[0]||null,
     rewards:rewardsError?[]:rewards||[],
     products:productsError?[]:(Array.isArray(products?.items)?products.items:[]),
-    birthday:birthdayError?null:(birthday||[])[0]||null,
+    birthday:birthdayError?null:(Array.isArray(birthday?.programs)?birthday.programs[0]:null)||null,
     retention:retentionError?[]:retention||[],
-    draft:draftError?null:(drafts||[])[0]||null
+    draft:draftError?null:(drafts||[])[0]||null,
+    overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError)}
   };
 }
-function ownerRewardJourneyV122({rewards=[],birthday=null,loyaltyModel='points'}={}){
-  const unit=loyaltyModel==='stamps'?'stamps':'points';
-  const ordered=(Array.isArray(rewards)?rewards:[])
+function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null}={}){
+  const model=loyalty?.loyalty_model||loyaltyModel||'points';
+  const unit=model==='stamps'?'stamps':'points';
+  const programmeActive=loyalty?.active===true;
+  const asOfMs=Number.isFinite(Date.parse(asOf||''))?Date.parse(asOf):Date.now();
+  const compactNumber=value=>Number.isInteger(Number(value))?String(Number(value)):String(Number(value)).replace(/\.0+$/,'');
+  const pointsRate=Math.max(0,Number(loyalty?.earn_points_per_dollar||0));
+  const stampSpendCents=Math.max(0,Number(loyalty?.stamp_per_cents||0));
+  const earning=!loyalty?null:model==='stamps'
+    ?{model,unit,rate:stampSpendCents,availableToCustomers:programmeActive,label:`Earn 1 stamp per SGD ${(stampSpendCents/100).toFixed(2)} spent`}
+    :{model,unit,rate:pointsRate,availableToCustomers:programmeActive,label:`Earn ${compactNumber(pointsRate)} points per SGD 1 spent`};
+  const allRewards=Array.isArray(rewards)?rewards:[];
+  const ordered=allRewards
     .filter(reward=>reward?.active!==false)
     .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0)||Number(a.sort||0)-Number(b.sort||0));
   const milestones=ordered
+    .map((reward,index)=>{
+      const startsAt=reward.claim_available_from?Date.parse(reward.claim_available_from):null;
+      const endsAt=reward.claim_available_until?Date.parse(reward.claim_available_until):null;
+      const availability=!loyalty?'programme_unconfigured':!programmeActive?'programme_paused':model==='classic'?'not_current_model'
+        :Number.isFinite(startsAt)&&startsAt>asOfMs?'not_started'
+        :Number.isFinite(endsAt)&&endsAt<=asOfMs?'ended':'available';
+      return {
+        id:reward.id||String(index),name:reward.customer_name||reward.name||'Reward',
+        threshold:Math.max(0,Number(reward.cost_points||0)),unit,
+        additional:index?Math.max(0,Number(reward.cost_points||0)-Number(ordered[index-1]?.cost_points||0)):Math.max(0,Number(reward.cost_points||0)),
+        estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0)),
+        availability,availableToCustomers:availability==='available'
+      };
+    });
+  const archivedRewards=allRewards.filter(reward=>reward?.active===false)
+    .sort((a,b)=>Number(a.sort||0)-Number(b.sort||0)||Number(a.cost_points||0)-Number(b.cost_points||0))
     .map((reward,index)=>({
-      id:reward.id||String(index),name:reward.customer_name||reward.name||'Reward',
-      threshold:Math.max(0,Number(reward.cost_points||0)),unit,
-      additional:index?Math.max(0,Number(reward.cost_points||0)-Number(ordered[index-1]?.cost_points||0)):Math.max(0,Number(reward.cost_points||0)),
-      estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0))
+      id:reward.id||reward.reward_id||`archived-${index}`,
+      name:reward.customer_name||reward.name||'Reward',threshold:Math.max(0,Number(reward.cost_points||0)),unit,
+      estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0)),active:false
     }));
-  const birthdayReward=birthday?.active===false||!birthday?null:{
+  const redeemPoints=Math.max(0,Number(loyalty?.redeem_points||0));
+  const rewardCreditCents=Math.max(0,Number(loyalty?.reward_credit_cents||0));
+  const classicReward=model==='classic'&&redeemPoints>0&&rewardCreditCents>0?{
+    id:`classic:${loyalty?.id||'programme'}`,name:'Points redemption',threshold:redeemPoints,unit:'points',
+    value:`SGD ${(rewardCreditCents/100).toFixed(2)} store credit`,availableToCustomers:programmeActive
+  }:null;
+  const birthdayReward=!birthday?null:{
+    id:birthday.id||birthday.program_id||'birthday',
+    active:birthday.active!==false,
     name:birthday.customer_label||'Birthday reward',
     description:birthday.customer_description||'Available in the configured birthday window.',
     value:birthday.fulfillment_kind==='discount_pct'
       ?`${Number(birthday.discount_percent||0)}% off`
       :birthday.manual_item||'Configured birthday benefit'
   };
-  return {unit,milestones,birthday:birthdayReward};
+  return {model,unit,earning,milestones,archivedRewards,classicReward,birthday:birthdayReward};
 }
 function growStatus(label,tone=''){
   return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
@@ -10516,11 +10561,23 @@ async function growPage(routedSurface,hashParam){
   const snapshot=await growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurrent:isGrowCurrent});
   if(!snapshot||!isGrowCurrent())return;
   let growDraftVersionId=hashParam&&['rewards','winback'].includes(routedSurface)?hashParam:(snapshot.draft?.id||null);
-  const rewardCount=snapshot.rewards.filter(x=>x.active!==false).length;
   const rewardJourney=ownerRewardJourneyV122({
-    rewards:snapshot.rewards,birthday:snapshot.birthday,
-    loyaltyModel:snapshot.loyalty?.loyalty_model||'points'
+    rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
   });
+  const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
+  const earningOverviewCopy=rewardJourney.earning?.availableToCustomers
+    ?rewardJourney.earning.label:`Programme paused · configured as ${rewardJourney.earning?.label||'no earning rule'}`;
+  const milestoneOverviewCopy=(milestone,index)=>{
+    const cost=milestone.estimatedCostCents?` · estimated fulfilment cost ${money(milestone.estimatedCostCents)}`:'';
+    if(milestone.availableToCustomers)return `Reach ${milestone.threshold} ${milestone.unit}${index?` · ${milestone.additional} more after the previous reward`:''}${cost}`;
+    const state=milestone.availability==='programme_paused'?'Programme paused'
+      :milestone.availability==='not_started'?'Scheduled · not available yet'
+      :milestone.availability==='ended'?'Claim period ended'
+      :milestone.availability==='not_current_model'?'Not used by the current Simple points programme'
+      :'Programme not configured';
+    return `${state} · configured at ${milestone.threshold} ${milestone.unit}${cost}`;
+  };
+  const rewardsOverviewIncomplete=Boolean(snapshot.overviewErrors?.loyalty||snapshot.overviewErrors?.rewards||snapshot.overviewErrors?.birthday);
   const profitabilityProducts=(snapshot.products||[]).map(product=>({
     ...product,
     profit:product.cost_cents==null?null:productProfitabilityV122({
@@ -10568,17 +10625,32 @@ async function growPage(routedSurface,hashParam){
         <h2>Result</h2><p>${bringBackCount?workspaceTemplateHtmlV97(bringBackCount===1?'growPublishedBringBackRule':'growPublishedBringBackRules',{count:bringBackCount}):'Measure repeat visits and bring customers back before they drift.'}</p>
         <div class="grow-flow-foot">${growStatus(nodeStatus(bringBackLive),nodeTone(bringBackLive))}${editorAction('winback','Edit bring-back','rn')}</div></li>
     </ol>
-    ${isOwner?`<section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programme overview</p><h2 id="rewardJourneyTitle">Reward journey</h2><p class="muted small">The exact milestones customers are working toward in the published programme.</p></div>
-        ${canSetupGrow?'<button type="button" class="btn ghost sm" data-grow-open="rewards" data-grow-focus="rwAdd">Edit rewards</button>':''}</div>
-      ${rewardJourney.milestones.length?`<ol class="reward-milestone-track">${rewardJourney.milestones.map((milestone,index)=>`<li data-reward-milestone>
-        <span class="reward-milestone-number">${index+1}</span><div><b>${esc(milestone.name)}</b><p class="muted small">Reach ${milestone.threshold} ${esc(milestone.unit)}${index?` · ${milestone.additional} more after the previous reward`:''}${milestone.estimatedCostCents?` · estimated fulfilment cost ${money(milestone.estimatedCostCents)}`:''}</p></div></li>`).join('')}</ol>`:
-        CUI.emptyState({iconName:'loyalty',title:'No reward milestones yet',body:'Add the first published milestone so owners and staff can explain the journey consistently.'})}
-      <div class="birthday-reward-overview"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday reward</b>${rewardJourney.birthday
-        ?`<p class="muted small">${esc(rewardJourney.birthday.name)} · ${esc(rewardJourney.birthday.value)}. ${esc(rewardJourney.birthday.description)}</p>`
-        :'<p class="muted small">Not configured in the published programme.</p>'}</div></div>
-    </section>
-    <section class="card profitability-overview-v122" aria-labelledby="profitabilityTitle">
+    ${canRewards?`<section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle">
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programme overview</p><h2 id="rewardJourneyTitle">Rewards overview</h2><p class="muted small">One published view of how customers earn, what they can unlock, and the birthday benefit. ${canSetupGrow?'Select any item to edit its exact rule.':'Only the owner with Loyalty edit access can change these rules.'}</p></div>
+        ${canSetupGrow?'<button type="button" class="btn ghost sm" data-rewards-overview-edit="add">Add reward</button>':''}</div>
+      ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Rewards could not be loaded completely.</b><p class="small" style="margin-top:5px">The overview may be missing published items. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry rewards overview</button></div>`:''}
+      <div class="rewards-overview-grid">
+        ${rewardJourney.earning?(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="earning">
+          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p><span class="rewards-overview-edit-label">Edit earning rule</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div></article>`)
+          :(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning not configured</b><p class="muted small">Choose points or stamps and set the earning rate.</p><span class="rewards-overview-edit-label">Set up earning</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning not configured</b><p class="muted small">The owner has not published an earning rule.</p></div></article>`)}
+        ${rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="classic">
+          <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p><span class="rewards-overview-edit-label">Edit this redemption</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div></article>`):''}
+        ${rewardJourney.milestones.map((milestone,index)=>canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="catalogue" data-reward-id="${esc(milestone.id)}">
+          <span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p><span class="rewards-overview-edit-label">Edit this reward</span></div></button>`
+          :`<article class="rewards-overview-card" data-reward-milestone><span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div></article>`).join('')}
+        ${rewardJourney.birthday?(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
+          <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p><span class="rewards-overview-edit-label">Edit birthday benefit</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div></article>`)
+          :(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit not configured</b><p class="muted small">Add an optional birthday benefit and choose its eligibility window.</p><span class="rewards-overview-edit-label">Set up birthday benefit</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit not configured</b><p class="muted small">No birthday benefit is published.</p></div></article>`)}
+      </div>
+      ${!rewardJourney.classicReward&&!rewardJourney.milestones.length?`<p class="muted small" style="margin-top:12px">No redeemable rewards are published yet. ${canSetupGrow?'Use Add reward to create the first protected draft.':'The owner can add a reward from Grow setup.'}</p>`:''}
+      ${rewardJourney.archivedRewards.length?`<details style="margin-top:12px"><summary>Paused or archived rewards (${rewardJourney.archivedRewards.length})</summary><div class="rewards-overview-grid">${rewardJourney.archivedRewards.map(reward=>canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="catalogue" data-reward-id="${esc(reward.id)}"><span class="reward-milestone-number">${CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(reward.name)}</b><p class="muted small">${reward.threshold} ${esc(reward.unit)} · not available to customers</p><span class="rewards-overview-edit-label">Review or reactivate</span></div></button>`:`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(reward.name)}</b><p class="muted small">Not available to customers</p></div></article>`).join('')}</div></details>`:''}
+    </section>`:''}
+    ${isOwner?`<section class="card profitability-overview-v122" aria-labelledby="profitabilityTitle">
       <div class="grow-section-heading"><div><p class="customer-quest-kicker">Reward economics</p><h2 id="profitabilityTitle">Product cost and profitability</h2><p class="muted small">Use real cost, not retail price, when deciding what a reward can safely cost.</p></div></div>
       ${profitabilityProducts.length?`<div class="profitability-product-grid">${profitabilityProducts.slice(0,6).map(product=>{
         const safeReward=product.profit?Math.max(0,Math.round(product.profit.grossProfitCents*.25)):null;
@@ -10659,7 +10731,21 @@ async function growPage(routedSurface,hashParam){
     element.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
     return true;
   };
-  async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false}={}){
+  async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null}={}){
+    const openExactReward=()=>{
+      if(surface!=='rewards'||!rewardId)return false;
+      const editButton=panelHost.querySelector(`.rwEdit[data-reward-id="${CSS.escape(rewardId)}"]`);
+      if(!editButton){
+        const notice=document.createElement('p');notice.className='notice warn small';notice.setAttribute('role','status');
+        notice.textContent='This published reward is not present in the current draft. Review the draft before changing another reward.';
+        panelHost.querySelector('#main')?.prepend(notice);notice.focus?.({preventScroll:true});return false;
+      }
+      editButton.click();
+      const editor=$('rwEditor');
+      editor?.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+      $('rwCustomerName')?.focus({preventScroll:true});
+      return true;
+    };
     const applyPendingRewardEstimate=()=>{
       if(surface!=='rewards'||pendingRewardEstimateCents===null)return false;
       const estimate=$('rwEstimate');
@@ -10671,7 +10757,7 @@ async function growPage(routedSurface,hashParam){
       return true;
     };
     if(activeSurface===surface){
-      if(focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
+      if(!openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
       applyPendingRewardEstimate();
       return;
     }
@@ -10693,8 +10779,9 @@ async function growPage(routedSurface,hashParam){
     else if(surface==='winback')await retentionPage(draft);
     else if(surface==='storedvalue')await storedValuePage(hashParam||null);
     else await studioPage(draft||hashParam||null);
-    if(focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
-    else if(focus&&panel.isConnected)panel.focus({preventScroll:true});
+    const exactRewardOpened=openExactReward();
+    if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
+    else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
     applyPendingRewardEstimate();
   }
   document.querySelectorAll('[data-grow-open]').forEach(button=>button.onclick=()=>mountGrowSurface(button.dataset.growOpen,{
@@ -10706,6 +10793,15 @@ async function growPage(routedSurface,hashParam){
     mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
   });
   const setupButton=$('growSetupPrimary');
+  document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
+    const kind=button.dataset.rewardsOverviewEdit;
+    const action={surface:'rewards',focusTarget:kind==='earning'?'lm':kind==='classic'?'lr':kind==='birthday'?'birthdayLabel':kind==='add'?'rwAdd':null,
+      activateTarget:kind==='add',rewardId:kind==='catalogue'?button.dataset.rewardId||null:null};
+    if(!growDraftVersionId){pendingGuideAction=action;setupButton?.click();return}
+    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+  });
+  const growRewardsRetry=$('growRewardsRetry');
+  if(growRewardsRetry)growRewardsRetry.onclick=()=>growPage(routedSurface,hashParam);
   if(setupButton)setupButton.onclick=async()=>{
     if(preparingDraft)return;
     recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
@@ -10718,10 +10814,12 @@ async function growPage(routedSurface,hashParam){
     const note=$('growDraftNote');if(note)note.textContent='Preparing one editable draft. Nothing is being published.';
     try{
       if(!growDraftVersionId){
-        const recommendation=snapshot.currentVersion
+        const prepareRewardsDraft=pendingGuideAction?.surface==='rewards'||!canWinback;
+        const recommendation=snapshot.currentVersion&&!prepareRewardsDraft
           ?await sb.rpc('generate_retention_recommendation',{p_business:S.biz.id,p_idempotency_key:crypto.randomUUID()})
           :await sb.rpc('create_loyalty_config_draft',{
-            p_business:S.biz.id,p_based_on:null,p_source:'grow_overview'});
+            p_business:S.biz.id,p_based_on:snapshot.currentVersion||null,
+            p_source:prepareRewardsDraft?'owner_rewards_overview':'grow_overview'});
         const {data,error}=recommendation;
         if(!isGrowCurrent())return;
         if(error)throw error;

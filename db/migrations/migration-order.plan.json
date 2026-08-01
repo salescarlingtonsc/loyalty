@@ -993,6 +993,12 @@
       "path": "db/migrations/20260801_nestly_v125_no_gst_and_native_store_readiness.sql",
       "semanticVersion": "v125",
       "proposedDeployVersion": "20260731182246"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v127_rewards_overview_birthday_reader.sql",
+      "semanticVersion": "v127",
+      "proposedDeployVersion": "20260801063103"
     }
   ]
 }

@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 163,
-  "executableCount": 149,
+  "itemCount": 164,
+  "executableCount": 150,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -235,10 +235,11 @@
     },
     {
       "sourceDeployVersion": "20260801",
-      "count": 2,
+      "count": 3,
       "paths": [
         "db/migrations/20260801_nestly_v124_stripe_launch_pricing.sql",
-        "db/migrations/20260801_nestly_v125_no_gst_and_native_store_readiness.sql"
+        "db/migrations/20260801_nestly_v125_no_gst_and_native_store_readiness.sql",
+        "db/migrations/20260801_nestly_v127_rewards_overview_birthday_reader.sql"
       ]
     }
   ],
@@ -1546,6 +1547,14 @@
       "semanticVersion": "v125",
       "proposedDeployVersion": "20260731182246",
       "sha256": "d431296c548d22517f92afa4c67603dc517e2050286b906b656b50cf7c40a915"
+    },
+    {
+      "order": 164,
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v127_rewards_overview_birthday_reader.sql",
+      "semanticVersion": "v127",
+      "proposedDeployVersion": "20260801063103",
+      "sha256": "dbb95b3a67b81abf0a0274a060947659cbdb28be36ab03ecabae419eabe4e0c2"
     }
   ]
 }
