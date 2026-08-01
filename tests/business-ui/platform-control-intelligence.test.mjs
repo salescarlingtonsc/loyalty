@@ -60,8 +60,8 @@ test('Quick Earn is catalogue-first and an explicit firm setting can fall back t
 
 test('customer profile cannot bypass the branch-scoped QR redemption workflow',()=>{
   const detail=section('async function clientDetail(id){','async function tillPage(){');
-  assert.match(detail,/Customer redemptions are completed only after scanning the customer’s pending QR in Quick Earn/);
-  assert.match(detail,/Open Quick Earn scanner/);
+  assert.match(detail,/To complete a customer reward, scan their pending QR in Record sale\. Points change only after confirmation\./);
+  assert.match(detail,/Open Record sale scanner/);
   assert.doesNotMatch(detail,/sb\.rpc\('redeem_points'/);
   assert.doesNotMatch(detail,/sb\.rpc\('redeem_reward(?:_at_context)?'/);
   assert.doesNotMatch(detail,/class="btn sm rewardGo"/);
@@ -130,10 +130,10 @@ test('business routes fail closed before modules when approval or billing blocks
   assert.match(blocked,/href="tel:\$\{esc\(hotline\)\}"/);
 });
 
-test('new firms cannot create owner access before the super-admin application approval route',()=>{
+test('new self-service firms remain locked until provider-confirmed payment',()=>{
   const onboard=section('function renderOnboard(){','/* ============================================================================');
-  assert.match(onboard,/An approved invitation is required/);
-  assert.match(onboard,/id="applyBusiness"/);
-  assert.match(onboard,/renderBusinessApplication\(\)/);
+  assert.match(onboard,/start_self_serve_business_v130/);
+  assert.match(onboard,/request_self_serve_checkout_v130/);
+  assert.match(onboard,/remains locked until Stripe confirms the first paid invoice/);
   assert.doesNotMatch(onboard,/create_business|p_modules|Workspace ready/);
 });

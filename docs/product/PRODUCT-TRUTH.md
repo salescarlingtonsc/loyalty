@@ -97,8 +97,22 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 ## Business onboarding and modules
 
-- A firm requests onboarding; a super admin must approve it before an owner can
-  create or activate the business account.
+- Owner clarification 2026-08-01: the public business signup is self-service.
+  A new owner creates and confirms an account, enters the business and sector,
+  selects annual or monthly billing plus customer capacity, reviews the exact
+  recurring amount, and continues to Stripe Checkout. No super-admin approval
+  request is part of this ordinary signup path.
+- A self-service workspace is created in a payment-pending state and exposes no
+  business data or operational writer until a signed Stripe webhook proves the
+  matching snapshotted Price IDs, cadence, customer capacity, exact SGD charge,
+  zero GST and zero remaining balance on the subscription's first successful
+  payment. Manual platform approval/rejection is unavailable for that
+  payment-managed state. A canceled, failed,
+  abandoned, forged, replayed, or merely completed Checkout Session cannot open
+  the workspace. Provider-confirmed payment opens it idempotently; refresh then
+  takes the owner directly into guided setup.
+- Assisted sales/platform onboarding may remain for consultant-led firms, but
+  it must not intercept or gate the public self-service signup path.
 - Super admin owns sector templates. Selecting a sector assigns its cookie-cutter
   module bundle.
 - Only super admin can add or remove firm-level or branch-level modules outside
@@ -116,6 +130,20 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 - Customer search and tagging support name and phone number so duplicate names
   remain distinguishable.
+- The everyday checkout action is labelled **Record sale**. “Quick Earn” is a
+  legacy internal name and must not appear in the business workspace.
+- Customer lists let an authorised operator show customers whose last valid
+  visit was at least 30, 60, or 90 complete Singapore-calendar days ago.
+  Customers who have never visited are included and clearly labelled, rather
+  than silently omitted.
+- A last valid visit is the newest original `counts_as_visit` sale that has not
+  been reversed. Canonical SGD 0 package-session usage is a visit; a partial
+  refund does not erase the visit; a full sale reversal or restored package
+  session does. Revenue residual value is not the visit contract.
+- Ordinary customer operations and dashboard summaries omit gender selection,
+  empty gender copy and the gender demographic chart. Historical stored values
+  are retained. Customer profiles explain loyalty in plain language and label
+  the unified commercial activity feed **Sales history**.
 - Staff are displayed by their working name; email may remain secondary identity
   information but must not be the primary operational label.
 - Appointments can be created, viewed, amended, rescheduled, assigned,
@@ -271,6 +299,11 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 - Basic in-app/Web Push can cover transactional events such as points credited,
   redemption completed, booking changes, package use, and value expiring in
   three days and one day.
+- Until an approved WhatsApp Business provider, sender, templates, consent
+  policy, and delivery receipts are configured, Appointments may offer only an
+  explicit staff-initiated **Message on WhatsApp** action. It opens a prefilled
+  appointment summary for a valid customer mobile number and must not claim an
+  automatic reminder or a sent/delivered message.
 - An owner may publish customer-programme promotion cards made from the
   business's own factual offer, image, dates, terms, and one approved CTA. This
   is in-programme content, not permission to broadcast an unrestricted

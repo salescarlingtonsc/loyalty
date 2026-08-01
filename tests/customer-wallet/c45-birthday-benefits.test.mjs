@@ -167,7 +167,7 @@ test('C45 wallet UI has a truthful separate consent seam, no DOB disclosure, acc
     'staff detail must not call the birthday reader while C45 is disabled');
   assert.match(clientDetail, /birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit\.status!=='unavailable'/i,
     'staff detail must omit the birthday card when C45 is disabled');
-  assert.match(clientDetail, /select\('id,business_id,full_name,phone,email,gender,referral_code,marketing_consent'\)/i,
+  assert.match(clientDetail, /select\('id,business_id,full_name,phone,email,referral_code,marketing_consent'\)/i,
     'staff detail must not fetch DOB to render a birthday benefit');
   assert.doesNotMatch(clientDetail, /c\.birth_date/i,
     'staff detail must not display DOB');

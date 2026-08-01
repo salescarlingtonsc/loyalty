@@ -48,7 +48,7 @@ test('v47 fair rotation, conflict alternatives and booking replay are determinis
   assert.match(migration,/p_assignment_mode not in \('manual','round_robin'\)/i);
 });
 
-test('frontline Quick earn minimizes choices and keeps hardened sale attribution', () => {
+test('frontline Record sale minimizes choices and keeps hardened sale attribution', () => {
   const tillStart = app.indexOf('async function tillPage');
   const tillEnd = app.indexOf('/* ----------',tillStart + 1);
   const till = app.slice(tillStart,tillEnd);
@@ -56,7 +56,7 @@ test('frontline Quick earn minimizes choices and keeps hardened sale attribution
   const quickEnd = migration.indexOf('-- Preserve completion behavior',quickStart);
   const quick = migration.slice(quickStart,quickEnd);
   assert.ok(tillStart >= 0,'Quick earn page must exist');
-  assert.match(app,/>Quick earn</);
+  assert.match(app,/>Record sale</);
   assert.match(till,/Phone number[\s\S]*id="tfind"[\s\S]*Next/i);
   assert.match(till,/id="tAmt"[\s\S]*Payment received[\s\S]*Cash[\s\S]*Card[\s\S]*PayNow[\s\S]*Save & add points/i);
   assert.match(till,/record_sale_by_phone/);

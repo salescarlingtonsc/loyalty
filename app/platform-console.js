@@ -3025,16 +3025,18 @@
   function firmGovernanceHtml(firm,CUI,control,effective,context,{sectorProfiles=[],sectorAssignment={}}={}) {
     const approval=asObject(control.approval),subscription=asObject(control.subscription);
     const representative=asObject(control.representative),catalogue=asObject(control.catalogue_intelligence);
+    const selfService=asObject(control.self_service);
     const canWrite=context.access?.role==='super_admin';
     const approvalStatus=approval.status||'pending';
+    const paymentManaged=selfService.status==='payment_pending';
     const subscriptionState=subscription.state||'unknown';
     const contact=normalizePlatformPhone(representative.hotline_phone);
     return `<section class="card platform-detail-section platform-governance" aria-labelledby="firmGovernanceTitle">
       <div class="platform-list-row"><div><h2 id="firmGovernanceTitle">${escapeHtml(pt("Workspace control"))}</h2><p class="muted small">${escapeHtml(pt("Approval, payment access and module policy are enforced by the server as well as this console."))}</p></div>${CUI.status(control.workspace_access?'Workspace open':'Workspace blocked',control.workspace_access?'ok':'no')}</div>
       <div class="platform-detail-grid">
         ${CUI.card({title:'Firm approval',body:`<div class="platform-control-status">${CUI.status(platformStatus(approvalStatus),workspaceControlTone(approvalStatus))}<span class="muted small">${escapeHtml(pt("Version"))} ${escapeHtml(approval.version??0)}</span></div>
-          <p class="muted small">${escapeHtml(pt(approvalStatus==='approved'?'Approved firms may enter the workspace when billing is also clear.':approvalStatus==='rejected'?'This application was rejected. The firm cannot enter the workspace.':'Awaiting a super-admin decision. No business data is exposed in the workspace.'))}</p>
-          ${canWrite&&approvalStatus!=='approved'?`<div class="platform-actions"><button type="button" class="btn sm" data-business-approval="approved">${escapeHtml(pt("Approve firm"))}</button><button type="button" class="btn danger sm" data-business-approval="rejected">${escapeHtml(pt("Reject"))}</button></div>`:''}`})}
+          <p class="muted small">${escapeHtml(pt(paymentManaged?'Self-service signup is awaiting provider-confirmed payment. Manual approval and rejection are disabled.':approvalStatus==='approved'?'Approved firms may enter the workspace when billing is also clear.':approvalStatus==='rejected'?'This application was rejected. The firm cannot enter the workspace.':'Awaiting a super-admin decision. No business data is exposed in the workspace.'))}</p>
+          ${canWrite&&approvalStatus!=='approved'&&!paymentManaged?`<div class="platform-actions"><button type="button" class="btn sm" data-business-approval="approved">${escapeHtml(pt("Approve firm"))}</button><button type="button" class="btn danger sm" data-business-approval="rejected">${escapeHtml(pt("Reject"))}</button></div>`:''}`})}
         ${CUI.card({title:'Subscription access',body:`<div class="platform-control-status">${CUI.status(platformStatus(subscriptionState),workspaceControlTone(subscriptionState))}<span class="muted small">${subscription.overdue_day===null||subscription.overdue_day===undefined?escapeHtml(pt('No overdue day')):escapeHtml(pt('Day {count} overdue',{count:subscription.overdue_day}))}</span></div>
           <dl class="platform-context-list"><div><dt>${escapeHtml(pt("Due date"))}</dt><dd>${escapeHtml(subscription.due_date||'—')}</dd></div><div><dt>${escapeHtml(pt("Workspace paused"))}</dt><dd>${subscription.workspace_paused?pt('Yes'):pt('No')}</dd></div></dl>
           ${subscription.workspace_paused?`<p class="small">${escapeHtml(pt("Owner access resumes only after provider payment truth is reconciled."))}</p>${contact?`<a class="btn ghost sm" href="tel:${escapeHtml(contact.tel)}">${escapeHtml(pt("Contact"))} ${escapeHtml(representative.display_name||'assigned representative')}</a>`:''}`:`<p class="muted small">${escapeHtml(pt("Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid."))}</p>`}`})}
@@ -3157,12 +3159,16 @@
       bind();
     };
     const refreshControls=async()=>{
-      const [nextControl,nextEffective,sectorPayload]=await Promise.all([
+      const [nextControl,nextEffective,sectorPayload,selfServePayload]=await Promise.all([
         rpc(sb,'platform_get_business_control_v94',{p_business:firmId(firm)}),
         rpc(sb,'platform_get_effective_modules_v105',{p_business:firmId(firm),p_branch:null}),
-        rpc(sb,'platform_list_sector_entitlements_v75')
+        rpc(sb,'platform_list_sector_entitlements_v75'),
+        context.access?.role==='super_admin'
+          ?rpc(sb,'get_self_serve_checkout_v130',{p_business:firmId(firm)})
+          :Promise.resolve(null)
       ]);
-      control=asObject(nextControl);effective=asObject(nextEffective);
+      control={...asObject(nextControl),self_service:asObject(selfServePayload).onboarding};
+      effective=asObject(nextEffective);
       const sectors=asObject(sectorPayload);
       sectorProfiles=asArray(sectors.profiles);
       sectorAssignment=asArray(sectors.businesses).find(row=>String(row.business_id)===firmId(firm))
@@ -3231,12 +3237,16 @@
     Promise.all([
       fetchEnterpriseCustomerPage(sb,scopedFilters,snapshot),
       rpc(sb,'platform_get_business_control_v94',{p_business:firmId(firm)}),
-      rpc(sb,'platform_get_effective_modules_v105',{p_business:firmId(firm),p_branch:null})
-    ]).then(([payload,controlPayload,effectivePayload])=>{
+      rpc(sb,'platform_get_effective_modules_v105',{p_business:firmId(firm),p_branch:null}),
+      context.access?.role==='super_admin'
+        ?rpc(sb,'get_self_serve_checkout_v130',{p_business:firmId(firm)})
+        :Promise.resolve(null)
+    ]).then(([payload,controlPayload,effectivePayload,selfServePayload])=>{
       if(!body.isConnected)return;
       snapshot=snapshot||payload.snapshot_at;
       customers=asArray(payload,['customers']);page=asObject(payload.pagination);
-      control=asObject(controlPayload);effective=asObject(effectivePayload);
+      control={...asObject(controlPayload),self_service:asObject(selfServePayload).onboarding};
+      effective=asObject(effectivePayload);
       renderBody();
     }).catch(error=>{
       if(body.isConnected)body.innerHTML=CUI.errorState({

@@ -164,6 +164,18 @@ relationship.
 | `CUS-ARUN` | Arun Kumar, synthetic mobile ending 8877 | Owns a valid $50 legacy gift while new issuance is disabled. |
 | `CUS-NEW` | New synthetic identity | No programmes before QR join. |
 
+Customer inactivity cases as of 1 August 2026 Singapore time:
+
+- `CUS-MEI`: latest valid visit 20 July 2026 (active; excluded from 30/60/90).
+- `CUS-LEE-A`: latest valid visit 15 June 2026 (shown at 30 days only).
+- `CUS-LEE-B`: latest valid visit 15 May 2026 (shown at 30 and 60 days).
+- `CUS-ARUN`: latest valid visit 15 March 2026 (shown at 30, 60, and 90 days).
+- `CUS-NEW`: no valid visit yet (shown in every inactivity filter as **Never visited**).
+
+Appointment WhatsApp acceptance uses `CUS-MEI`'s synthetic Singapore mobile
+ending 4567. The invalid-phone comparison customer has no mobile number; the UI
+must not expose a dead WhatsApp action.
+
 All automated credentials must come from a non-committed test-secret mechanism.
 
 ## Platform CRM and billing
@@ -215,6 +227,25 @@ All automated credentials must come from a non-committed test-secret mechanism.
   `2026-08-15T00:00:00Z` (day 14). `CUS-MEI` retains the same points, packages,
   history and customer access throughout. A causally newer paid event restores
   owner access and advances `next_payment_at`; duplicate/stale events do not.
+
+### `SPA-GLOW-BILLING-NEW` — self-service owner signup
+
+- Synthetic owner: Sofia Ng with a newly confirmed synthetic business email
+  and no existing staff or customer persona.
+- Business: Radiant Skin Studio, facial sector, synthetic UEN `202699999N`,
+  workspace address `radiant-skin-studio`.
+- Annual/1,000 is the first render and totals SGD 1,188.00 with GST not charged.
+  Monthly/3,000 totals SGD 169.00. Neither selection contains staff quantity.
+- Starting setup creates exactly one payment-pending workspace, owner staff row,
+  default branch, published facial sector assignment, draft loyalty preset and
+  V124 checkout command under stable replay keys.
+- Stripe Checkout creation alone, cancellation, expiration or an unpaid
+  subscription never opens the workspace. Only the matching normalized paid
+  invoice after the V124 subscription projection creates the immutable 30-day
+  request window and opens this exact workspace once.
+- Re-run with an unconfirmed email, another user's business ID, a reused key
+  with changed business/plan data, duplicate slug, inactive Stripe catalogue,
+  forged amount, and a paid invoice for another subscription.
 
 ## Required state variations
 

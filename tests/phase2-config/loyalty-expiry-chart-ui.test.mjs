@@ -93,7 +93,7 @@ test('every responsive Chart.js canvas is isolated in a bounded frame', () => {
   assert.match(app, /@media\(max-width:960px\)[\s\S]*\.chart-frame\{block-size:220px\}/);
   const canvases = app.match(/<canvas\b/g) || [];
   const framedCanvases = app.match(/<div class="chart-frame"><canvas\b/g) || [];
-  assert.equal(canvases.length, 8);
+  assert.equal(canvases.length, 7);
   assert.equal(framedCanvases.length, canvases.length, 'no canvas may size a chart card directly');
 
   const dashboard = app.match(/async function dashboard\(\)\{[\s\S]*?\/\* ---------- customers ---------- \*\//)?.[0] || '';
@@ -106,7 +106,7 @@ test('every responsive Chart.js canvas is isolated in a bounded frame', () => {
   assert.match(app, /async function route\(\)\{\s*const isRouteCurrent=beginRouteInvocation\(\);\s*dashboardRenderEpoch\+=1/);
   assert.match(app, /if\(!isCurrent\(\)\|\|!wrap\.isConnected\|\|\$\('branchWrap'\)!==wrap\)return/);
   assert.match(app, /const sel=wrap\.querySelector\('#branchSel'\)/);
-  assert.equal((dashboard.match(/class="chart-frame"/g) || []).length, 4);
+  assert.equal((dashboard.match(/class="chart-frame"/g) || []).length, 3);
 });
 
 test('dashboard request gate rejects out-of-order results, stale errors and old render instances', async () => {

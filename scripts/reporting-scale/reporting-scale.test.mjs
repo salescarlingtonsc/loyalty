@@ -155,8 +155,8 @@ test('SPA uses aggregates, bounded customer pages, and paged sales export',()=>{
 
   assert.match(dashboard,/sb\.rpc\('get_dashboard_summary'/);
   assert.doesNotMatch(dashboard,/\.from\('sales'\)/);
-  assert.match(clients,/\.range\(from,from\+CLIENT_PAGE_SIZE-1\)/);
-  assert.match(clients,/\.in\('client_id',ids\)/);
+  assert.match(clients,/sb\.rpc\('staff_list_customers_v129'/);
+  assert.match(clients,/p_limit:CLIENT_PAGE_SIZE,p_offset:clientPage\*CLIENT_PAGE_SIZE/);
   assert.match(clients,/fetchAllRows/);
   assert.match(reports,/sb\.rpc\('get_reports_summary'/);
   assert.match(reports,/lastSales=await fetchAllRows/);

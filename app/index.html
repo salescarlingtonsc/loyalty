@@ -1275,7 +1275,7 @@ const INDUSTRIES={
   retail:{em:'🛍️',label:'Retail',mods:['dashboard','till','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
   other:{em:'🏪',label:'Other',mods:ALLMODS}
 };
-const MODULES={dashboard:['home','Dashboard'],till:['till','Quick earn'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
+const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
   sales:['sales','Sales'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
   inventory:['inventory','Inventory'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
@@ -1321,7 +1321,7 @@ const NAVGROUPS=[
 ];
 let navOpen={};
 /* Global top-bar action state (no localStorage in this stack — plain in-session vars). A global
-   search hands a name to Customers or a phone to Quick earn via these, reusing each page's own
+   search hands a name to Customers or a phone to Record sale via these, reusing each page's own
    existing lookup — no new query is introduced. settingsActiveTab keeps the Settings tab in place
    across the in-place re-renders that adding/retiring a customer field trigger. */
 let pendingCustomerSearch='';
@@ -5004,6 +5004,28 @@ function renderWorkspaceAccessUnavailable(){
 function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
+  if(approvalStatus==='pending'&&control._selfServeChecked!==true){
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" style="text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.5rem;margin-top:18px">Checking payment status…</h1></section></main>`;
+    sb.rpc('get_self_serve_checkout_v130',{p_business:control.business_id}).then(({data})=>{
+      const onboarding=data?.onboarding;
+      if(!onboarding||onboarding.status!=='payment_pending'){
+        renderBusinessWorkspaceControl({...control,_selfServeChecked:true});return;
+      }
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Nestly opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${legalLinks()}</section></main>`;
+      $('businessControlPay').onclick=async()=>{
+        const button=$('businessControlPay'),status=$('businessControlPayStatus');button.disabled=true;status.textContent='Opening secure Stripe Checkout…';
+        const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;let key=sessionStorage.getItem(storageKey);if(!key){key=crypto.randomUUID();sessionStorage.setItem(storageKey,key)}
+        const requested=await sb.rpc('request_self_serve_checkout_v130',{p_business:onboarding.business_id,p_cadence:onboarding.cadence,p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:key});
+        if(requested.error||!requested.data?.command_id){button.disabled=false;status.textContent='We could not recover the saved checkout. Retry the same payment step.';return}
+        const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.data.command_id}});
+        if(executed.data?.redirect_url){sessionStorage.removeItem(storageKey);location.assign(executed.data.redirect_url);return}
+        button.disabled=false;status.textContent='Stripe is still processing this payment. Check again after payment is confirmed.';
+      };
+      $('businessControlRetry').onclick=route;
+      $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+    });
+    return;
+  }
   const paused=subscription.workspace_paused===true;
   const rejected=approvalStatus==='rejected';
   const title=paused?'Business access paused':rejected?'Application not approved':'Approval pending';
@@ -5126,24 +5148,27 @@ function renderBusinessApplication(){
   destroyMountedTurnstiles();
   let locale=businessApplicationLanguage();
   globalThis.document?.documentElement?.setAttribute('lang',locale);
-  const t=key=>businessApplicationCopy(locale,key);
+  const accountCopy={
+    en:{heading:'Create your Nestly owner account',intro:'Create your secure login, confirm your email, choose your business plan, then pay through Stripe. Your workspace opens after payment is confirmed.',email:'Business email',password:'Password',confirm:'Confirm password',consent:'I have read and agree to the Terms and Privacy Policy',consentLead:'I have read and agree to the',terms:'Terms',and:'and',privacy:'Privacy Policy',create:'Create owner account',back:'Back to sign in',accept:'Please accept the Terms and Privacy Policy.',passwordRule:'Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.',error:'We could not create this account. Check the email and password, then try again.',check:'Check your email and confirm your account. Then sign in to choose your business and Stripe plan.'},
+    'zh-CN':{heading:'创建 Nestly 店主账户',intro:'创建安全登录并确认邮箱，然后选择商家方案并通过 Stripe 付款。付款确认后，工作区才会开放。',email:'商家邮箱',password:'密码',confirm:'确认密码',consent:'我已阅读并同意条款及隐私政策',consentLead:'我已阅读并同意',terms:'条款',and:'和',privacy:'隐私政策',create:'创建店主账户',back:'返回登录',accept:'请接受条款和隐私政策。',passwordRule:'请使用至少 12 个字符，并包含大小写字母、数字和符号；两次密码必须一致。',error:'无法创建此账户。请检查邮箱和密码后重试。',check:'请查看邮箱并确认账户，然后登录以选择商家和 Stripe 方案。'},
+    ms:{heading:'Cipta akaun pemilik Nestly',intro:'Cipta log masuk selamat dan sahkan e-mel, kemudian pilih pelan perniagaan dan bayar melalui Stripe. Ruang kerja dibuka selepas bayaran disahkan.',email:'E-mel perniagaan',password:'Kata laluan',confirm:'Sahkan kata laluan',consent:'Saya telah membaca dan bersetuju dengan Terma dan Dasar Privasi',consentLead:'Saya telah membaca dan bersetuju dengan',terms:'Terma',and:'dan',privacy:'Dasar Privasi',create:'Cipta akaun pemilik',back:'Kembali ke log masuk',accept:'Sila terima Terma dan Dasar Privasi.',passwordRule:'Gunakan sekurang-kurangnya 12 aksara dengan huruf besar/kecil, nombor dan simbol; kedua-dua kata laluan mesti sepadan.',error:'Akaun ini tidak dapat dicipta. Semak e-mel dan kata laluan, kemudian cuba lagi.',check:'Semak e-mel dan sahkan akaun, kemudian log masuk untuk memilih perniagaan dan pelan Stripe.'}
+  };
+  const a=accountCopy[locale]||accountCopy.en;
   root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    <div class="row"><h2 style="margin:14px 0 2px">${esc(t('apply'))}</h2><span class="spacer"></span>
-      <select id="businessApplicationLocale" aria-label="${esc(t('language'))}" style="width:auto"><option value="en"${locale==='en'?' selected':''}>English</option><option value="zh-CN"${locale==='zh-CN'?' selected':''}>中文</option><option value="ms"${locale==='ms'?' selected':''}>Bahasa Melayu</option></select></div>
-    <p class="muted small" style="margin-top:6px">${esc(t('applyIntro'))}</p>
-    <label for="applicationContactName">${esc(t('contactName'))}</label><input id="applicationContactName" autocomplete="name">
-    <label for="applicationContactEmail">${esc(t('contactEmail'))}</label><input id="applicationContactEmail" type="email" autocomplete="email">
-    <label for="applicationContactPhone">${esc(t('contactPhone'))}</label><input id="applicationContactPhone" type="tel" inputmode="tel" placeholder="+65 8123 4567">
-    <label for="applicationBusinessName">${esc(t('businessName'))}</label><input id="applicationBusinessName" autocomplete="organization">
-    <label for="applicationSector">${esc(t('sector'))}</label><select id="applicationSector">${Object.entries(INDUSTRIES).map(([key,value])=>`<option value="${esc(key)}">${esc(businessApplicationSectorLabel(locale,key,value.label))}</option>`).join('')}</select>
-    <label for="applicationRegistration">${esc(t('registration'))}</label><input id="applicationRegistration" autocomplete="off">
-    <label class="checkrow" for="applicationConsent" style="margin-top:16px"><input id="applicationConsent" type="checkbox"><span>${esc(t('consent'))} <a href="/terms.html">${esc(t('terms'))}</a> · <a href="/privacy.html">${esc(t('privacy'))}</a></span></label>
+    <div class="row"><h2 style="margin:14px 0 2px">${esc(a.heading)}</h2><span class="spacer"></span>
+      <select id="businessApplicationLocale" aria-label="Preferred language" style="width:auto"><option value="en"${locale==='en'?' selected':''}>English</option><option value="zh-CN"${locale==='zh-CN'?' selected':''}>中文</option><option value="ms"${locale==='ms'?' selected':''}>Bahasa Melayu</option></select></div>
+    <p class="muted small" style="margin-top:6px">${esc(a.intro)}</p>
+    <label for="applicationContactEmail">${esc(a.email)}</label><input id="applicationContactEmail" type="email" autocomplete="email" placeholder="you@business.com">
+    <label for="businessOwnerPassword">${esc(a.password)}</label>${passwordControlHtml('businessOwnerPassword',{autocomplete:'new-password',locale})}
+    <label for="businessOwnerPasswordConfirm">${esc(a.confirm)}</label>${passwordControlHtml('businessOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
+    <label class="checkrow" for="applicationConsent" style="margin-top:16px"><input id="applicationConsent" type="checkbox" aria-label="${esc(a.consent)}"><span>${esc(a.consentLead)} <a href="/terms.html">${esc(a.terms)}</a> ${esc(a.and)} <a href="/privacy.html">${esc(a.privacy)}</a>.</span></label>
     <div id="businessApplicationError"></div>
     ${authChallengeHtml(locale)}
-    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px" disabled>${esc(t('submit'))}</button>
-    <button class="btn ghost" id="businessApplicationBack" style="width:100%;margin-top:10px">${esc(t('signIn'))}</button>
+    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px" disabled>${esc(a.create)}</button>
+    <button class="btn ghost" id="businessApplicationBack" style="width:100%;margin-top:10px">${esc(a.back)}</button>
     ${legalLinks(locale)}</div></div>`;
+  bindPasswordVisibility(root);
   $('businessApplicationLocale').onchange=event=>{
     sessionStorage.setItem('nestly-business-application-locale',event.target.value);
     renderBusinessApplication();
@@ -5151,36 +5176,33 @@ function renderBusinessApplication(){
   $('businessApplicationBack').onclick=()=>renderAuth('in');
   let token='',control=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'business_application',locale,
+    retry:'authTurnstileRetry',action:'frenly_auth',locale,
     onToken:value=>{token=value;$('businessApplicationSubmit').disabled=!value}})
     .then(value=>control=value);
   $('businessApplicationSubmit').onclick=async()=>{
-    const phone=$('applicationContactPhone').value.replace(/[\s()-]/g,'');
-    const payload={
-      contact_name:$('applicationContactName').value.trim(),
-      contact_email:$('applicationContactEmail').value.trim().toLowerCase(),
-      contact_phone:phone.startsWith('+')?phone:`+65${phone}`,
-      business_name:$('applicationBusinessName').value.trim(),
-      sector_key:$('applicationSector').value,
-      registration_number:$('applicationRegistration').value.trim()||null,
-      locale,legal_consent:$('applicationConsent').checked,
-      idempotency_key:crypto.randomUUID(),turnstile_token:token
-    };
-    if(!payload.legal_consent){
-      $('businessApplicationError').innerHTML=`<div class="err">${esc(t('acceptLegal'))}</div>`;return;
+    const email=$('applicationContactEmail').value.trim().toLowerCase();
+    const password=$('businessOwnerPassword').value;
+    if(!$('applicationConsent').checked){
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(a.accept)}</div>`;return;
     }
-    $('businessApplicationSubmit').disabled=true;token='';
-    try{
-      const result=await publicGateway('public-business-application',{body:payload});
-      root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><div class="logo">${brandWordmark()}</div>
-        <h2 style="margin-top:18px">${esc(t('submitted'))}</h2><p class="muted" style="margin-top:7px">${esc(t('await'))}</p>
-        <div class="card" style="margin-top:18px"><b>${esc(t('reference'))}</b><p style="font-family:monospace;margin-top:7px;overflow-wrap:anywhere">${esc(result.public_reference||'')}</p></div>
-        <button class="btn ghost" id="businessApplicationDone" style="width:100%;margin-top:18px">${esc(t('signIn'))}</button>${legalLinks(locale)}</div></div>`;
-      $('businessApplicationDone').onclick=()=>renderAuth('in');
-    }catch(error){
+    if(!validNewPassword(password)||password!==$('businessOwnerPasswordConfirm').value){
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(a.passwordRule)}</div>`;return;
+    }
+    $('businessApplicationSubmit').disabled=true;
+    const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));
+    returnUrl.searchParams.set('selfserve','1');
+    const {data,error}=await sb.auth.signUp({
+      email,password,options:{captchaToken:token,emailRedirectTo:returnUrl.toString(),
+        data:{account_type:'business_owner',preferred_locale:locale}}
+    });
+    token='';
+    if(error){
       if(control)control.reset();
-      $('businessApplicationError').innerHTML=`<div class="err">${esc(t('genericError'))}</div>`;
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(a.error)}</div>`;
+      $('businessApplicationSubmit').disabled=false;return;
     }
+    if(data.session){history.replaceState(null,'','/business');route();return}
+    $('businessApplicationError').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)">${esc(a.check)}</div>`;
   };
 }
 async function renderApprovedBusinessInviteSignup(inviteToken){
@@ -5416,26 +5438,91 @@ async function consumePasswordRecoveryRedirect(){
 
 /* ---------- onboarding ---------- */
 function renderOnboard(){
-  root.innerHTML=`<div class="center-wrap"><div class="card" style="width:640px;max-width:100%">
-      <div class="logo" style="margin-bottom:4px">${brandWordmark()}</div>
-      <h2 style="margin:10px 0 4px">An approved invitation is required</h2>
-      <p class="muted small">This signed-in account has no approved Nestly business workspace. A super admin must approve the business application before an owner account or workspace can be created.</p>
-      <div class="row" style="margin-top:20px"><button class="btn" id="applyBusiness">Apply for a business account</button>
-      <span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>
-      <hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px">
-      <b>Joining a team instead?</b>
-      <div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px">
-      <button class="btn ghost" id="join">Join team</button></div>
-    </div></div>`;
-  $('applyBusiness').onclick=async()=>{await sb.auth.signOut();resetClientSessionState();history.replaceState(null,'','/business');renderBusinessApplication()};
-  $('out').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();route()};
-  $('join').onclick=async()=>{
-    if(!$('ic').value.trim()) return toast('Enter your invite code');
-    $('join').disabled=true;
-    const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});
-    if(error){toast(error.message);$('join').disabled=false;return}
-    S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard');
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.55rem;margin-top:18px">Loading secure business setup…</h1><p class="muted small" style="margin-top:7px">Checking current plans and any saved payment step.</p></section></main>`;
+  const finishCheckout=async(onboarding,statusNode,button)=>{
+    if(button)button.disabled=true;
+    if(statusNode)statusNode.textContent='Opening secure Stripe Checkout…';
+    const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;
+    let idempotencyKey=sessionStorage.getItem(storageKey);
+    if(!idempotencyKey){idempotencyKey=crypto.randomUUID();sessionStorage.setItem(storageKey,idempotencyKey)}
+    const requested=await sb.rpc('request_self_serve_checkout_v130',{
+      p_business:onboarding.business_id,p_cadence:onboarding.cadence,
+      p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:idempotencyKey
+    });
+    if(requested.error||!requested.data?.command_id){
+      if(button)button.disabled=false;
+      if(statusNode)statusNode.textContent='We could not confirm the saved checkout request. Retry; the same request will be reused.';
+      return;
+    }
+    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.data.command_id}});
+    if(executed.error){
+      if(button)button.disabled=false;
+      if(statusNode)statusNode.textContent='Stripe could not be reached. Retry to recover the same secure checkout.';
+      return;
+    }
+    const result=executed.data||requested.data;
+    if(result.redirect_url){sessionStorage.removeItem(storageKey);location.assign(result.redirect_url);return}
+    if(button)button.disabled=false;
+    if(statusNode)statusNode.textContent='Payment confirmation is still pending. Nestly will open the workspace only after Stripe confirms a paid invoice.';
   };
+  (async()=>{
+    const state=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
+    if(state.error||!state.data){
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">Business setup unavailable</h1><p class="muted small" style="margin-top:8px">We could not safely load the current Stripe plans. No workspace or charge was created.</p><button class="btn" id="onboardRetry" style="margin-top:18px">Retry</button><button class="btn ghost" id="out" style="margin:18px 0 0 8px">Sign out</button></section></main>`;
+      $('onboardRetry').onclick=renderOnboard;$('out').onclick=async()=>{await sb.auth.signOut();resetClientSessionState();route()};return;
+    }
+    const onboarding=state.data.onboarding;
+    if(onboarding?.status==='active'){
+      nav(`#/workspace/${encodeURIComponent(onboarding.business_slug)}/dashboard`);return;
+    }
+    if(onboarding?.status==='payment_pending'){
+      const paymentState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
+      const canceled=paymentState==='canceled';
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':'Nestly has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p><div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · 30-day money-back request period starts from confirmed first payment</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">Checkout success pages do not unlock access; provider-confirmed payment does.</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button><button class="btn ghost" id="out" style="width:100%;margin-top:10px">Sign out</button>${legalLinks()}</section></main>`;
+      $('selfServePay').onclick=()=>finishCheckout(onboarding,$('selfServePayStatus'),$('selfServePay'));
+      $('onboardRetry').onclick=route;
+      $('out').onclick=async()=>{await sb.auth.signOut();resetClientSessionState();route()};return;
+    }
+    const plans=Array.isArray(state.data.plans)?state.data.plans:[];
+    const sectors=Array.isArray(state.data.sectors)?state.data.sectors:[];
+    const annual=plans.find(plan=>plan.cadence==='annual'),monthly=plans.find(plan=>plan.cadence==='monthly');
+    if(!annual||!monthly||!sectors.length){
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">New subscriptions are temporarily unavailable</h1><p class="muted small" style="margin-top:8px">Nestly has not published a complete Stripe plan and sector catalogue. No workspace or charge was created.</p><button class="btn" id="onboardRetry" style="margin-top:18px">Retry</button></section></main>`;$('onboardRetry').onclick=renderOnboard;return;
+    }
+    const capacityOptions=Array.from({length:10},(_,index)=>(index+1)*1000);
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Choose the workspace and exact subscription. Stripe securely collects payment; Nestly opens access only after confirmed payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">nestly.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · ${money(annual.base_amount_cents)}/year</strong><p class="muted small" style="margin-top:5px">${money(Math.round(annual.base_amount_cents/12))}/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · ${money(monthly.base_amount_cents)}/month</strong><p class="muted small" style="margin-top:5px">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity">Customer capacity</label><select id="customerCapacity">${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customers</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · 30-day money-back guarantee from confirmed first payment</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox"><span>I have read and agree to the <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Nestly.</p><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${legalLinks()}</section></main>`;
+    let slugEdited=false;
+    const slugify=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80);
+    $('businessName').oninput=()=>{if(!slugEdited)$('businessSlug').value=slugify($('businessName').value)};
+    $('businessSlug').oninput=()=>{slugEdited=true;$('businessSlug').value=slugify($('businessSlug').value)};
+    const updateTotal=()=>{
+      const cadence=root.querySelector('[name="selfServeCadence"]:checked')?.value||'annual';
+      const plan=plans.find(item=>item.cadence===cadence),capacity=Number($('customerCapacity').value||1000);
+      const extra=Math.max(capacity/Number(plan.capacity_block_size)-1,0);
+      const total=Number(plan.base_amount_cents)+extra*Number(plan.capacity_block_amount_cents);
+      $('selfServeTotal').textContent=`${money(total)} / ${cadence==='annual'?'year':'month'}`;
+      $('selfServeCapacityNote').textContent=`1,000 customers included. Each additional 1,000 is ${money(plan.capacity_block_amount_cents)} per ${cadence==='annual'?'year':'month'}. Capacity can be increased later.`;
+    };
+    root.querySelectorAll('[name="selfServeCadence"]').forEach(input=>input.onchange=updateTotal);$('customerCapacity').onchange=updateTotal;updateTotal();
+    $('startSelfServe').onclick=async()=>{
+      const cadence=root.querySelector('[name="selfServeCadence"]:checked')?.value||'annual';
+      const setupKey=sessionStorage.getItem('nestly-self-serve-setup')||crypto.randomUUID();sessionStorage.setItem('nestly-self-serve-setup',setupKey);
+      if(!$('onboardLegalConsent').checked){$('onboardError').innerHTML='<div class="err">Please accept the Terms and Privacy Policy.</div>';return}
+      $('startSelfServe').disabled=true;$('onboardStatus').textContent='Saving the locked workspace and server-priced plan…';
+      const started=await sb.rpc('start_self_serve_business_v130',{
+        p_owner_name:$('ownerFullName').value.trim(),p_business_name:$('businessName').value.trim(),
+        p_business_slug:$('businessSlug').value.trim(),p_sector_key:$('businessSector').value,
+        p_registration_number:$('businessRegistration').value.trim()||null,p_locale:businessApplicationLanguage(),
+        p_cadence:cadence,p_customer_capacity:Number($('customerCapacity').value),
+        p_legal_accepted:true,p_idempotency_key:setupKey
+      });
+      if(started.error||!started.data?.business_id){$('startSelfServe').disabled=false;$('onboardStatus').textContent='We could not save this setup. Check every field and choose another workspace address if it is already used.';return}
+      const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
+      await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
+    };
+    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(error.message);$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
+    $('out').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();route()};
+  })();
 }
 
 /* ============================================================================
@@ -5446,12 +5533,11 @@ function renderOnboard(){
    ============================================================================ */
 const IMPORT_CONFIGS={
   customers:{title:'Customers',table:'clients',
-    hint:'Columns we recognise: name (required), phone, email, gender, birthday (YYYY-MM-DD), notes. Duplicates (same phone) are skipped.',
+    hint:'Columns we recognise: name (required), phone, email, birthday (YYYY-MM-DD), notes. Duplicates (same phone) are skipped.',
     fields:[
       {key:'full_name',aliases:['name','full name','fullname','customer','client'],required:true},
       {key:'phone',aliases:['phone','mobile','contact','hp','number','tel']},
       {key:'email',aliases:['email','e-mail','mail']},
-      {key:'gender',aliases:['gender','sex']},
       {key:'birth_date',aliases:['birthday','birth date','birth','dob']},
       {key:'notes',aliases:['notes','note','remark','remarks']}],
     build:o=>({business_id:S.biz.id,...o})},
@@ -5694,7 +5780,7 @@ function staffMobileActionsHtml(page){
     loyaltyWritable:canWriteModule('loyalty')
   });
   const canViewAppts=canReadModule('appointments');
-  if(canQuickEarn)items.push(`<button type="button" class="staff-mobile-action ${active==='till'?'act':''}" id="staffMobileQuickEarn" aria-label="Quick earn">${CUI.icon('till',{size:20})}<span data-workspace-i18n>Quick earn</span></button>`);
+  if(canQuickEarn)items.push(`<button type="button" class="staff-mobile-action ${active==='till'?'act':''}" id="staffMobileQuickEarn" aria-label="Record sale">${CUI.icon('till',{size:20})}<span data-workspace-i18n>Record sale</span></button>`);
   if(canScanRedemption)items.push(`<button type="button" class="staff-mobile-action" id="staffMobileScan" aria-label="Scan redemption QR">${CUI.icon('scan',{size:20})}<span data-workspace-i18n>Scan QR</span></button>`);
   if(canViewAppts)items.push(`<button type="button" class="staff-mobile-action ${active==='appointments'?'act':''}" id="staffMobileAppointments" aria-label="Appointments">${CUI.icon('appointments',{size:20})}<span data-workspace-i18n>Appointments</span></button>`);
   items.push(`<details class="staff-mobile-more" id="staffMobileMore"><summary class="staff-mobile-action" aria-label="More workspace modules">${CUI.icon('menu',{size:20})}<span data-workspace-i18n>More</span></summary><div class="staff-mobile-drawer"><nav class="nav" aria-label="More workspace modules">${navHtml(page,'mobile-nav')}</nav></div></details>`);
@@ -5732,7 +5818,7 @@ function globalActionsHtml(){
       <button type="button" class="global-search-go" id="globalSearchGo" aria-label="Search customers">${CUI.icon('forward',{size:16})}</button>
     </div>`:''}
     <div class="global-quick">
-      ${canQuickEarn?`<button type="button" class="btn sm global-act" id="globalQuickEarn" title="Quick earn"><span class="ic" aria-hidden="true">${CUI.icon('till',{size:17})}</span><span>Quick earn</span></button>`:''}
+      ${canQuickEarn?`<button type="button" class="btn sm global-act" id="globalQuickEarn" title="Record sale"><span class="ic" aria-hidden="true">${CUI.icon('till',{size:17})}</span><span>Record sale</span></button>`:''}
       ${canViewAppts?`<button type="button" class="btn ghost sm global-act" id="globalNewAppt" data-workspace-i18n title="${canNewAppt?'New appointment':'View calendar'}"><span class="ic" aria-hidden="true">${CUI.icon('appointments',{size:17})}</span><span>${canNewAppt?'New appointment':'View calendar'}</span></button>`:''}
     </div>
   </div>`;
@@ -5740,7 +5826,7 @@ function globalActionsHtml(){
 function wireGlobalActions(){
   const input=$('globalSearch');
   if(input){
-    /* Route the query into an EXISTING lookup — a phone-shaped term to Quick earn's phone lookup,
+    /* Route the query into an EXISTING lookup — a phone-shaped term to Record sale's phone lookup,
        otherwise a name to the Customers search — so no new database query is introduced. When the
        target route is already open, re-run route() directly (setting the hash to its current value
        fires no hashchange). */
@@ -5962,7 +6048,7 @@ async function initNotifications(){
 const WORKSPACE_LOCALES_V97=Object.freeze(['en','zh-CN','ms']);
 const WORKSPACE_COPY_V97=Object.freeze({
   'zh-CN':Object.freeze({
-    'Dashboard':'仪表板','Home':'首页','Customers':'顾客','Serve & sell':'服务与销售','Quick earn':'快速记账',
+    'Dashboard':'仪表板','Home':'首页','Customers':'顾客','Serve & sell':'服务与销售','Record sale':'记录销售',
     'Appointments':'预约','Bookings':'预订','Waitlist':'候补名单','Sales':'销售','Grow':'增长',
     'Rewards & bring-backs':'奖励与回流','Referrals':'推荐','Memberships':'会员','Gift cards':'礼品卡',
     'Money':'财务','Reports':'报告','Daily report':'每日报告','P&L':'损益','Expenses':'支出',
@@ -6001,7 +6087,7 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'No-show':'未到店','Referrer':'推荐人','Resolve':'解决','Sessions':'次数',
     'Spendable':'可消费','booked':'已预约','completed':'已完成','cancelled':'已取消',
     'no show':'未到店','trialing':'试用中','staff':'员工',
-    'Available in Quick Earn':'可在快速记录中使用','Hidden from Quick Earn':'已从快速记录中隐藏',
+    'Available in Record sale':'可在记录销售中使用','Hidden from Record sale':'已从记录销售中隐藏',
     'Not offered at this branch':'此分店不提供','Hide':'隐藏','Make available':'设为可用',
     'reversal of':'冲销自','reversed →':'已冲销 →','min':'分钟','Products':'产品',
     'Team members':'团队成员','Validating':'正在验证','Saving':'正在保存','First issues:':'首批问题：','Row':'行',
@@ -6055,7 +6141,7 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'Offer records created':'已创建优惠记录','Recording offer records…':'正在创建优惠记录…'
   }),
   ms:Object.freeze({
-    'Dashboard':'Papan pemuka','Home':'Utama','Customers':'Pelanggan','Serve & sell':'Khidmat & jualan','Quick earn':'Rekod pantas',
+    'Dashboard':'Papan pemuka','Home':'Utama','Customers':'Pelanggan','Serve & sell':'Khidmat & jualan','Record sale':'Rekod jualan',
     'Appointments':'Janji temu','Bookings':'Tempahan','Waitlist':'Senarai menunggu','Sales':'Jualan',
     'Grow':'Pertumbuhan','Rewards & bring-backs':'Ganjaran & pelanggan kembali','Referrals':'Rujukan',
     'Memberships':'Keahlian','Gift cards':'Kad hadiah','Money':'Kewangan','Reports':'Laporan',
@@ -6097,7 +6183,7 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'Resume':'Sambung','Walk-in':'Pelanggan datang terus','no':'tidak',
     'Bring-backs':'Pelanggan kembali','Net':'Bersih','booked':'ditempah','completed':'selesai',
     'cancelled':'dibatalkan','no show':'tidak hadir','trialing':'percubaan','staff':'kakitangan',
-    'Available in Quick Earn':'Tersedia dalam Rekod pantas','Hidden from Quick Earn':'Disembunyikan daripada Rekod pantas',
+    'Available in Record sale':'Tersedia dalam Rekod jualan','Hidden from Record sale':'Disembunyikan daripada Rekod jualan',
     'Not offered at this branch':'Tidak ditawarkan di cawangan ini','Hide':'Sembunyikan','Make available':'Sediakan',
     'reversal of':'pembalikan bagi','reversed →':'dibalikkan →','min':'min','Products':'Produk',
     'Team members':'Ahli pasukan','Validating':'Mengesahkan','Saving':'Menyimpan','First issues:':'Isu pertama:','Row':'Baris',
@@ -6817,11 +6903,9 @@ async function dashboard(){
     charts.innerHTML=`
       <div class="card"><b>Busiest days</b><p class="muted small">Visits by day of week</p><div class="chart-frame"><canvas id="c1"></canvas></div></div>
       <div class="card"><b>Revenue over time</b><p class="muted small">Daily total in range</p><div class="chart-frame"><canvas id="c2"></canvas></div></div>
-      <div class="card"><b>Customer gender</b><p class="muted small">All customers on file</p><div class="chart-frame"><canvas id="c3"></canvas></div></div>
       <div class="card"><b>Age groups</b><p class="muted small">From birth dates on file</p><div class="chart-frame"><canvas id="c4"></canvas></div></div>`;
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const revenueDays=d.revenue_by_day||[],dk=revenueDays.map(x=>x.day);
-    const g={female:0,male:0,other:0,unknown:0,...(d.gender_counts||{})};
     const ac=d.age_counts||{};
     const ages={'<25':ac.under_25||0,'25–34':ac.age_25_34||0,'35–44':ac.age_35_44||0,
       '45–54':ac.age_45_54||0,'55+':ac.age_55_plus||0,'—':ac.unknown||0};
@@ -6829,7 +6913,6 @@ async function dashboard(){
     const coral='#FF6B5E',amber='#FFB86B',ink='#1C1A22';
     C('c1',{type:'bar',data:{labels:days,datasets:[{data:wd,backgroundColor:days.map((_,i)=>wd[i]===Math.max(...wd)&&wd[i]>0?coral:amber),borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     C('c2',{type:'line',data:{labels:dk,datasets:[{data:revenueDays.map(x=>x.amount_cents/100),borderColor:coral,backgroundColor:'rgba(255,107,94,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false}}}});
-    C('c3',{type:'doughnut',data:{labels:['Female','Male','Other','Not set'],datasets:[{data:[g.female,g.male,g.other,g.unknown],backgroundColor:[coral,amber,'#8B7BC7','#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});
     C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
   }
   refreshBranchFilter(()=>{renderTasks();load()},isDashboardCurrent);
@@ -6847,8 +6930,8 @@ async function clientsPage(){
   const canWriteReferrals=canWriteModule('referrals');
   const customerActions=CUI.action({id:'exp',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'})+
     (canWrite?importBtn('customers')+CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
-  routeMain.innerHTML=`<section id="customersView"><div data-workspace-i18n>${CUI.pageHeader({title:'Customers',subtitle:'Search, review, import, and manage your member base.',iconName:'customers',actions:customerActions,canWrite,moduleLabel:'Customer management'})}</div>
-    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,260px)"><label for="clientSearch" style="margin-top:0">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear',variant:'secondary'})}</div></div>
+  routeMain.innerHTML=`<section id="customersView"><div data-workspace-i18n>${CUI.pageHeader({title:'Customers',subtitle:'Find a customer or see who has not visited recently.',iconName:'customers',actions:customerActions,canWrite,moduleLabel:'Customer management'})}</div>
+    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch" style="margin-top:0">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,210px)"><label for="clientInactivity" style="margin-top:0">Last visit</label><select id="clientInactivity"><option value="">All customers</option><option value="30">30+ days inactive</option><option value="60">60+ days inactive</option><option value="90">90+ days inactive</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive means no valid visit for at least the selected number of complete Singapore days. Customers who have never visited are included.</p></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list"><div class="empty">Loading…</div></div>
     <div class="card" id="fbQueueCard" style="margin-top:16px"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
@@ -6859,6 +6942,7 @@ async function clientsPage(){
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
   const CLIENT_PAGE_SIZE=100;
   let clientPage=0;
+  let clientInactiveDays=null;
   /* A name handed in from the global app-bar search pre-fills and runs the existing name search
      (same query, no new call). Consumed once so a later visit starts clean. */
   let clientSearch=pendingCustomerSearch||'';
@@ -6868,6 +6952,7 @@ async function clientsPage(){
   $('clientSearchGo').onclick=runClientSearch;
   $('clientSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runClientSearch()}};
   $('clientSearchClear').onclick=()=>{$('clientSearch').value='';clientSearch='';clientPage=0;load();$('clientSearch').focus()};
+  $('clientInactivity').onchange=()=>{clientInactiveDays=$('clientInactivity').value?Number($('clientInactivity').value):null;clientPage=0;load()};
   $('exp').onclick=async()=>{
     const exportButton=$('exp');exportButton.disabled=true;
     let cl,pb,cb;
@@ -6881,8 +6966,8 @@ async function clientsPage(){
     if(!isCustomersCurrent())return;
     const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
           C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
-    const rows=[['name','phone','email','gender','birth_date','consent','points','credit'],
-      ...(cl||[]).map(c=>[c.full_name,c.phone||'',c.email||'',c.gender||'',c.birth_date||'',
+    const rows=[['name','phone','email','birth_date','consent','points','credit'],
+      ...(cl||[]).map(c=>[c.full_name,c.phone||'',c.email||'',c.birth_date||'',
         c.marketing_consent?'yes':'no',P[c.id]||0,((C[c.id]||0)/100).toFixed(2)])];
     const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-customers.csv`;a.click();
@@ -6895,8 +6980,7 @@ async function clientsPage(){
     $('form').innerHTML=`<div class="cui-card-head"><h2>New customer</h2><p>Only the name is required. Contact and consent details can be added now or later.</p></div>
       <div class="split"><div><label for="cn">Full name <span aria-hidden="true">*</span></label><input id="cn" required autocomplete="name"></div><div><label for="cp">Phone</label><input id="cp" type="tel" autocomplete="tel" placeholder="+65"></div></div>
       <div class="split"><div><label for="ce">Email</label><input id="ce" type="email" autocomplete="email"></div><div><label for="cb">Birth date</label><input id="cb" type="date"></div></div>
-      <div class="split"><div><label for="cg">Gender</label><select id="cg"><option value="">Not set</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></div>
-      <div><label for="cc">Marketing consent (PDPA)</label><select id="cc"><option value="false">No</option><option value="true">Yes — consented</option></select></div></div>
+      <label for="cc">Marketing consent (PDPA)</label><select id="cc"><option value="false">No</option><option value="true">Yes — consented</option></select>
       ${canWriteReferrals?`<label for="cr">Referred by (friend's code, optional)</label><input id="cr" placeholder="e.g. 4F7K2A" style="text-transform:uppercase">`:''}
       <div class="row" style="margin-top:16px">${CUI.action({id:'save',label:'Save customer',iconName:'check'})}
       ${CUI.action({id:'cancel',label:'Cancel',variant:'secondary',className:'sm'})}</div>`;
@@ -6909,7 +6993,7 @@ async function clientsPage(){
       saveButton.disabled=true;
       const {data:created,error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,
         p_idempotency_key:createClientIdempotencyKey,p_full_name:full_name,p_phone:$('cp').value||null,
-        p_email:$('ce').value||null,p_birth_date:$('cb').value||null,p_gender:$('cg').value||null,
+        p_email:$('ce').value||null,p_birth_date:$('cb').value||null,p_gender:null,
         p_marketing_consent:consent,p_referrer_code:canWriteReferrals?($('cr').value||null):null,p_source:'admin add-customer'});
       if(!isCustomersCurrent())return;
       if(error){saveButton.disabled=false;return fail(error)}
@@ -6921,33 +7005,21 @@ async function clientsPage(){
   };
   async function load(){
     const isCurrent=customerLoadGate.begin();
-    const from=clientPage*CLIENT_PAGE_SIZE;
-    let clientQuery=sb.from('clients').select('*',{count:'exact'}).eq('business_id',S.biz.id);
-    if(clientSearch){
-      const phoneDigits=normalizeCustomerSearchPhoneDigits(clientSearch);
-      const phoneSearch=phoneDigits.length>=4&&/^[+\s()\-\d]+$/.test(clientSearch);
-      clientQuery=phoneSearch
-        ?clientQuery.ilike('phone_norm',`%${phoneDigits}%`)
-        :clientQuery.ilike('full_name',`%${clientSearch}%`);
-    }
-    const {data:cl,error,count}=await clientQuery.order('created_at',{ascending:false}).order('id').range(from,from+CLIENT_PAGE_SIZE-1);
+    const customerRpcSearch=normalizeCustomerSearchPhoneDigits(clientSearch)||clientSearch;
+    const {data:result,error}=await sb.rpc('staff_list_customers_v129',{
+      p_business:S.biz.id,p_search:customerRpcSearch||null,p_inactive_days:clientInactiveDays,
+      p_limit:CLIENT_PAGE_SIZE,p_offset:clientPage*CLIENT_PAGE_SIZE
+    });
     if(!isCurrent())return;
     if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
-    if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':canWrite?'Add your first customer to start earning loyalty automatically.':'Customers will appear here when an authorized teammate adds them.'});return}
-    const ids=cl.map(c=>c.id);
-    const [{data:pb,error:pe},{data:cb,error:ce}]=await Promise.all([
-      sb.from('client_points_balance').select('client_id,points').eq('business_id',S.biz.id).in('client_id',ids),
-      sb.from('client_credit_balance').select('client_id,balance_cents').eq('business_id',S.biz.id).in('client_id',ids)]);
-    if(!isCurrent())return;
-    if(pe||ce) return fail(pe||ce);
-    const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
-          C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
-    const total=count||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
-    $('list').innerHTML=`<table><tr><th>Name</th><th>Phone</th><th>Gender</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
+    const cl=Array.isArray(result?.customers)?result.customers:[];
+    if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveDays?`No customers inactive for ${clientInactiveDays}+ days`:'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveDays?'Choose a shorter period or All customers.':canWrite?'Add your first customer to start recording sales.':'Customers will appear here when an authorized teammate adds them.'});return}
+    const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
+    $('list').innerHTML=`<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th>Name</th><th>Phone</th><th>Last visit</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
       ${cl.map(c=>`<tr>
-        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${esc(c.gender||'—')}</td>
-        <td>${P[c.id]||0} pts</td><td>${money(C[c.id]||0)}</td>
-        <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table>
+        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`Last visit ${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td>
+        <td>${Number(c.points)||0} pts</td><td>${money(Number(c.balance_cents)||0)}</td>
+        <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
         <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
         <button class="btn ghost sm" id="clNext" ${clientPage+1>=pages?'disabled':''}>Next</button></div>`;
@@ -7041,7 +7113,7 @@ async function clientDetail(id){
   const [{data:c,error},{data:pb},{data:cb},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:cfDefs},{data:cfVals},{data:cfOpts},{data:birthdayBenefit},{data:msRows},{data:cpRows}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
-    sb.from('clients').select('id,business_id,full_name,phone,email,gender,referral_code,marketing_consent').eq('id',id).single(),
+    sb.from('clients').select('id,business_id,full_name,phone,email,referral_code,marketing_consent').eq('id',id).single(),
     sb.from('client_points_balance').select('points').eq('client_id',id),
     sb.from('client_credit_balance').select('balance_cents').eq('client_id',id),
     sb.rpc('staff_get_reward_entitlements_v99',{p_business:S.biz.id,p_client:id}),
@@ -7149,7 +7221,7 @@ async function clientDetail(id){
   }
   const activeMembership=(msRows||[]).find(m=>m.status==='active');
   const activePackage=(cpRows||[]).find(k=>k.status==='active'&&k.remaining>0);
-  /* Deep-link plumbing to EXISTING write surfaces only. Quick earn needs a usable SG mobile on file
+  /* Deep-link plumbing to EXISTING write surfaces only. Record sale needs a usable SG mobile on file
      (the till identifies the customer by phone); New appointment prefills the existing dropdown. */
   const digitsPhone=String(c.phone||'').replace(/\D/g,'');
   const localMobile=digitsPhone.length===10&&digitsPhone.startsWith('65')?digitsPhone.slice(2):digitsPhone.slice(-8);
@@ -7194,7 +7266,7 @@ async function clientDetail(id){
     }else{
       candidates.push({actionKey:'quickearn',iconName:'till',title:'Points expire soon',
         reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${nextExp.expires_at.slice(0,10)} (in ${expDays} day${expDays===1?'':'s'})${pointsToUnlock?`, ${pointsToUnlock} short of ${rewardReadyLabel}`:''}. Invite a visit so they build toward a reward before then.`,
-        ctaLabel:'Quick earn',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
+        ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
     }
   }
   if(rewardReady){
@@ -7205,21 +7277,21 @@ async function clientDetail(id){
   if(netVisits>=3&&lastVisitDays!=null&&lastVisitDays>45){
     candidates.push({actionKey:canBookAppt?'appt':'quickearn',iconName:'appointments',title:'Regular customer is overdue',
       reason:`${netVisits} visits on record, but none in ${lastVisitDays} days. Book them back in before you lose them.`,
-      ctaLabel:canBookAppt?'New appointment':'Quick earn',run:canBookAppt?goNewAppt:(canQuickEarn?goQuickEarn:null)});
+      ctaLabel:canBookAppt?'New appointment':'Record sale',run:canBookAppt?goNewAppt:(canQuickEarn?goQuickEarn:null)});
   }
   if(cred>0){
     candidates.push({actionKey:'quickearn',iconName:'giftcard',title:'Store credit is waiting',
       reason:`${money(cred)} in spendable credit is sitting unused. Remind them to spend it on the next visit.`,
-      ctaLabel:'Quick earn',run:canQuickEarn?goQuickEarn:null});
+      ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:null});
   }
   if(netVisits<=0){
     candidates.push({actionKey:'quickearn',iconName:'till',title:'New customer — no visits yet',
       reason:'Record their first purchase to start earning points and unlock loyalty automatically.',
-      ctaLabel:'Quick earn',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
+      ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
   }
   candidates.push({actionKey:'quickearn',iconName:'check',title:'Everything looks healthy',
     reason:`${lastVisitDays!=null?`Last visit ${lastVisitDays} day${lastVisitDays===1?'':'s'} ago.`:'No recent activity to flag.'} Record the next visit when they come in.`,
-    ctaLabel:'Quick earn',run:canQuickEarn?goQuickEarn:null});
+    ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:null});
   const primaryNba=candidates.find(x=>x.run)||candidates[0];
   const nbaSeen=new Set([primaryNba.actionKey]);
   const secondaryNba=candidates.filter(x=>x!==primaryNba&&x.run&&!nbaSeen.has(x.actionKey)&&nbaSeen.add(x.actionKey)).slice(0,4);
@@ -7236,10 +7308,10 @@ async function clientDetail(id){
       </div>
     </div>
   </section>`;
-  const detailSubtitle=`${c.phone||''} ${c.email||''} · ${c.gender||'gender not set'}`.trim();
+  const detailSubtitle=[c.phone,c.email].filter(Boolean).join(' · ')||'No contact details';
   const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:17})}<span>All customers</span></a>`;
   const headerActions=[
-    canQuickEarn?CUI.action({id:'c360QuickEarn',label:'Quick earn',iconName:'till'}):'',
+    canQuickEarn?CUI.action({id:'c360QuickEarn',label:'Record sale',iconName:'till'}):'',
     canBookAppt?CUI.action({id:'c360NewAppt',label:'New appointment',iconName:'appointments',variant:'secondary'}):'',
     allCustomersAction
   ].filter(Boolean).join('');
@@ -7259,6 +7331,34 @@ async function clientDetail(id){
       <p class="muted small" style="margin-top:5px">${birthdayBenefit.status==='available'?'Available to redeem now.':birthdayBenefit.status==='expired'?'No longer available.':'Fulfilment status is shown above.'} The team never sees the customer’s birthday date or validity window.</p>
       ${birthdayRedeemMarkup}${birthdayReverseMarkup}</div>`;
   }
+  let rewardsMarkup='';
+  if(prog&&prog.active){
+    const stamps=prog.loyalty_model==='stamps';
+    const unit=stamps?'stamps':'points';
+    const earnCopy=stamps
+      ?`1 stamp for every ${money(prog.stamp_per_cents||500)} spent`
+      :`${Number(prog.earn_points_per_dollar)||0} points for every SGD 1 spent`;
+    const availableRewards=(rwList||[]).filter(reward=>reward.active!==false).sort((a,b)=>Number(a.cost_points)-Number(b.cost_points));
+    const nextReward=availableRewards.find(reward=>Number(reward.cost_points)>pts)||availableRewards.at(-1)||null;
+    let nextCopy='No reward milestone has been added yet.';
+    if(nextReward){
+      const cost=Number(nextReward.cost_points)||0,name=nextReward.customer_name||nextReward.name||'reward';
+      nextCopy=pts>=cost?`${name} is ready now`:`${cost-pts} more ${unit} for ${name}`;
+    }else if(prog.redeem_points){
+      const remaining=Math.max(0,Number(prog.redeem_points)-pts);
+      nextCopy=remaining?`${remaining} more points for ${money(prog.reward_credit_cents)} credit`:`${money(prog.reward_credit_cents)} credit is ready now`;
+    }
+    rewardsMarkup=`<p class="eyebrow" style="margin-top:8px">How rewards work</p>
+      <p class="small" style="margin-top:6px"><b>Balance:</b> ${pts} ${unit}</p>
+      <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
+      <p class="small" style="margin-top:5px"><b>Next reward:</b> ${esc(nextCopy)}</p>
+      ${availableRewards.length?`<div style="margin-top:10px">${availableRewards.map(reward=>{const cost=Number(reward.cost_points)||0;return `<div class="row" style="margin-top:7px;flex-wrap:wrap"><span>${esc(reward.customer_name||reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${pts>=cost?'ok':'off'}">${pts>=cost?'Ready now':`${Math.max(0,cost-pts)} more ${unit}`}</span></div>`}).join('')}</div>`:''}
+      ${canWriteLoyalty?`<p class="muted small" style="margin-top:12px">To complete a customer reward, scan their pending QR in Record sale. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:'<span class="pill off" style="margin-top:10px">Rewards are read only for this role</span>'}
+      ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+      ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
+  }else{
+    rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
+  }
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:headerActions,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
     ${badgesHtml}
     ${nbaHtml}
@@ -7269,25 +7369,7 @@ async function clientDetail(id){
       <div class="card kpi"><div class="l">Spendable credit</div><div class="v">${money(cred)}</div></div>
     </div>
     <div class="split" style="margin-top:16px">
-      <div class="card" id="c360-loyalty"><b>Loyalty</b>
-        ${prog&&prog.active?(prog.loyalty_model&&prog.loyalty_model!=='classic'
-        ?`<p class="muted small" style="margin:6px 0 10px">${prog.loyalty_model==='stamps'
-            ?`Stamp card — 1 stamp per ${money(prog.stamp_per_cents||500)} spent · balance <b>${pts} stamps</b>`
-            :`Earns ${prog.earn_points_per_dollar} pt/$ · balance <b>${pts} points</b>`}</p>
-          ${(rwList&&rwList.length)?rwList.map(r=>`<div class="row" style="margin-top:8px;flex-wrap:wrap"><span>${esc(r.customer_name||r.name)}</span><span class="spacer"></span>
-            <span class="pill ${pts>=r.cost_points?'ok':'off'}">${r.cost_points} ${prog.loyalty_model==='stamps'?'stamps':'pts'}${pts>=r.cost_points?' · ready':' required'}</span></div>`).join('')
-            :`<p class="muted small" style="margin-top:6px">No ${prog.loyalty_model==='stamps'?'milestones':'rewards'} defined yet — add them in Loyalty.</p>`}
-          ${canWriteLoyalty?`<p class="muted small" style="margin-top:12px">Customer redemptions are completed only after scanning the customer’s pending QR in Quick Earn.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Quick Earn scanner</span></a>`:'<span class="pill off">Redemption unavailable for this role</span>'}
-          ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
-          ${S.myRole==='owner'&&canWriteLoyalty?`<div class="row" style="margin-top:14px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit:prog.loyalty_model==='stamps'?'stamps':'points'})} style="max-width:120px">
-          <input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>`:''}`
-        :`<p class="muted small" style="margin:6px 0 14px">Earns ${prog.earn_points_per_dollar} pt/$ · Redeem ${prog.redeem_points} pts → ${money(prog.reward_credit_cents)} credit</p>
-        ${canWriteLoyalty?`<p class="muted small">Customer redemptions are completed only after scanning the customer’s pending QR in Quick Earn.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Quick Earn scanner</span></a>`:'<span class="pill off">Redemption unavailable for this role</span>'}
-        ${pts<prog.redeem_points?`<p class="muted small" style="margin-top:8px">${prog.redeem_points-pts} more points to unlock</p>`:''}
-        ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} pts expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
-        ${S.myRole==='owner'&&canWriteLoyalty?'<div class="row" style="margin-top:14px"><input id="adjV" type="number" placeholder="+/- points" style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div>':''}`)
-        :'<p class="muted small" style="margin-top:6px">No active loyalty program. Configure it in Loyalty.</p>'}
-      </div>
+      <div class="card" id="c360-loyalty"><b>Rewards</b>${rewardsMarkup}</div>
       <div class="card"><b>Referral & consent</b>
         <p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
         <div class="row"><b style="font-size:1.3rem;letter-spacing:.15em">${esc(c.referral_code||'—')}</b>
@@ -7305,7 +7387,7 @@ async function clientDetail(id){
       ${birthdayCardMarkup}${feedbackStripMarkup}</div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
-    <div class="card" style="margin-top:16px"><b>Timeline</b><p class="muted small" style="margin:4px 0 8px">Every visit, sale, appointment, reward, membership and package — newest first.</p>
+    <div class="card" style="margin-top:16px"><b>Sales history</b><p class="muted small" style="margin:4px 0 8px">Sales, visits, appointments, rewards, memberships and packages — newest first.</p>
       <div id="histBody">${renderHistPage(history,histShown)}</div>
       ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
     </div>`;
@@ -7571,10 +7653,10 @@ async function tillPage(){
   const isTillCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canRecordSalesAtWorkspace=hasRoleCapability('create_sales')&&canReadModule('clients');
   if(!canRecordSalesAtWorkspace){
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Customer lookup and purchase recording are unavailable for this role.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Additional access required',description:'Quick earn requires customer read access and permission to record purchases.',body:'<p class="muted small">Ask an owner to review your Customers and Quick earn assignments.</p>'})}`;
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Customer lookup and purchase recording are unavailable for this role.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Additional access required',description:'Record sale requires customer read access and permission to record purchases.',body:'<p class="muted small">Ask an owner to review your Customers and Record sale assignments.</p>'})}`;
     return;
   }
-  routeMain.innerHTML=CUI.loadingState({title:'Quick earn',iconName:'till'});
+  routeMain.innerHTML=CUI.loadingState({title:'Record sale',iconName:'till'});
   const [
     {data:tillStaff,error:tillStaffError},{data:tillBranches,error:tillBranchError},
     {data:tillStaffBranches,error:tillStaffBranchError}
@@ -7598,7 +7680,7 @@ async function tillPage(){
   if(!isTillCurrent())return;
   const branchModuleFailure=branchModuleResults.find(item=>item.result.error||!item.result.data);
   if(branchModuleFailure){
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Branch access could not be checked safely.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn could not be loaded',description:'No purchase, redemption, or package use was recorded.',body:'<button type="button" class="btn ghost" id="tBranchModulesRetry">Try again</button>'})}`;
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Branch access could not be checked safely.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Record sale could not be loaded',description:'No purchase, redemption, or package use was recorded.',body:'<button type="button" class="btn ghost" id="tBranchModulesRetry">Try again</button>'})}`;
     $('tBranchModulesRetry').onclick=tillPage;
     return;
   }
@@ -7621,7 +7703,7 @@ async function tillPage(){
     loyaltyWritable:branchCanWrite(tillBranchId,'loyalty')
   });
   if(!tillStaffId||!tillBranchId){
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'A staff identity and branch with Quick earn access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Quick earn'})}${CUI.card({title:'Quick earn is not available',description:'Ask an owner or Nestly administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'A staff identity and branch with Record sale access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Record sale is not available',description:'Ask an owner or Nestly administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
     return;
   }
   selectedBranchId=tillBranchId;
@@ -7643,7 +7725,7 @@ async function tillPage(){
   let quickAddIdem=null;   // stable while retrying one Till customer creation
   let tender=null;         // intentionally selected received tender for this purchase
 
-  /* Catalogue-first is the firm-level Quick Earn policy. The business row is selected with `*`,
+  /* Catalogue-first is the firm-level Record sale policy. The business row is selected with `*`,
      so the UI consumes the optional backend setting without a second request. Missing/true means
      catalogue-first; only an explicit false enables the legacy amount-only flow. This keeps new
      firms on itemized sales while allowing the platform backend to disable it per firm. */
@@ -7706,7 +7788,7 @@ async function tillPage(){
   }
 
   function drawStep1(){
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn',actions:canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="8186 3833" value="${esc(phone)}">
@@ -7758,7 +7840,7 @@ async function tillPage(){
     return catalogueSelectionEnabled?drawCartComposer():drawCustomerCard();
   }
   function drawInvalid(){
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'The phone number could not be used.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'The phone number could not be used.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('info',{size:40})}
         <div class="err" style="margin-top:10px">${esc(invalidMsg)}</div>
@@ -7767,7 +7849,7 @@ async function tillPage(){
     $('tBack').onclick=()=>{invalidMsg=null;step=1;draw()};
   }
   function drawNewCustomer(){
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'This number is new. Add the customer once, then continue.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'This number is new. Add the customer once, then continue.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('customers',{size:40})}
         <h2 style="margin:8px 0 2px">New customer</h2>
@@ -7800,7 +7882,7 @@ async function tillPage(){
     };
   }
   function drawCustomerCard(){
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} saves the purchase and points together.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} saves the purchase and points together.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card">
         <div style="text-align:center">
           <div data-merchant-content style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em">${esc(cust.full_name)}</div>
@@ -8218,7 +8300,7 @@ async function tillPage(){
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
     const actionHtml=checkoutError?'':checkoutActionHtml();
 
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Choose products or services, review the checked total, then select how the customer paid.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Choose products or services, review the checked total, then select how the customer paid.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
           <div><div data-merchant-content style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">${esc(cust.full_name)}</div><p class="muted small" data-merchant-content style="margin:0">${esc(cust.phone||'')}</p></div>
@@ -8446,7 +8528,7 @@ async function tillPage(){
   }
   function drawStep3(){
     if(doneInfo&&doneInfo.receipt)return drawCartReceipt();
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:'Points added. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Points added. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:56})}
         <h2 style="margin:8px 0 4px">${doneInfo.duplicate?'Already recorded':'Done'}</h2>
@@ -8484,7 +8566,7 @@ async function tillPage(){
     }).join('');
     const extrasBlock=d.extras.length?`<div style="margin-top:12px;text-align:left"><b class="small">Also charged (separate records)</b>
       <ul class="till-receipt-lines">${extraRows}</ul></div>`:'';
-    M().innerHTML=`${CUI.pageHeader({title:'Quick earn',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Quick earn'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
@@ -9362,7 +9444,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:canManageLoyalty?'Choose the model and publish deliberate, versioned changes.':'Review the current program, rewards, tiers, and branch settings.',iconName:'loyalty',actions:loyaltyActions,canWrite:canManageLoyalty,moduleLabel:'Loyalty configuration'})}
     ${p?.configuration_status==='draft'?`<div class="imp-note" style="margin-bottom:16px"><b>Draft recommendation</b><br>${recommendation?esc(recommendation.rationale):'Nothing is earning or redeeming yet.'} Review every number below, then publish only when it fits your business.</div>`:''}
     <section class="card" id="loyaltyCustomerRedemption" style="margin-bottom:16px" aria-busy="true">
-      <div class="row"><div><b>Customer app redemption</b><p class="muted small" style="margin-top:5px">Customers prepare a pending reward QR. Points change only after your team scans and confirms it in Quick earn.</p></div><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="saveLoyaltyCustomerRedemption" type="button" disabled>Save</button>':'<span class="pill off">Owner only</span>'}</div>
+      <div class="row"><div><b>Customer app redemption</b><p class="muted small" style="margin-top:5px">Customers prepare a pending reward QR. Points change only after your team scans and confirms it in Record sale.</p></div><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="saveLoyaltyCustomerRedemption" type="button" disabled>Save</button>':'<span class="pill off">Owner only</span>'}</div>
       <label class="checkrow" for="loyaltyCustomerRedemptionEnabled"><input id="loyaltyCustomerRedemptionEnabled" type="checkbox" disabled><span><b>Enable customer redemption QR</b><br><span class="muted small">Available to loyalty firms even when online bookings are not part of their modules.</span></span></label>
       <p id="loyaltyCustomerRedemptionStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading redemption setting…</p>
     </section>
@@ -12956,7 +13038,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     if(!alive())return; st.busy=false;
     if(error){st.err=error.message||'Lookup failed.';render();return;}
     if(data.status==='found'){st.cust={client_id:data.client_id,full_name:data.full_name,phone:data.phone||phone};loadPlans();return;}
-    if(data.status==='not_found'){st.cust=null;st.err='No customer with that number. A top-up needs an existing customer; add them first from Customers or Quick earn.';render();return;}
+    if(data.status==='not_found'){st.cust=null;st.err='No customer with that number. A top-up needs an existing customer; add them first from Customers or Record sale.';render();return;}
     st.err=(data&&data.message)||'Enter a valid Singapore number.';render();
   }
   async function doPreview(){
@@ -13326,7 +13408,7 @@ async function giftcardsPage(){
     ${operationalBranches.length>1?`<div class="card" style="margin-bottom:16px"><label for="giftBranch">Branch</label><select id="giftBranch">${operationalBranches.map(branch=>`<option value="${branch.id}" ${branch.id===giftBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select></div>`:`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> ${esc(operationalBranches[0].name)}</p>`}
     ${canConfigure&&preferencesAvailable?`<div class="card" style="margin-bottom:16px"><label style="display:flex;align-items:flex-start;gap:10px;color:var(--ink);cursor:pointer;margin:0">
       <input id="giftCardEnabled" type="checkbox" style="width:auto;margin-top:3px" ${giftCardsEnabled?'checked':''}>
-      <span><b>Offer gift cards</b><small class="muted" style="display:block;margin-top:3px">When off, gift-card selling is hidden from Quick Earn. Existing balances and history remain safe.</small></span>
+      <span><b>Offer gift cards</b><small class="muted" style="display:block;margin-top:3px">When off, gift-card selling is hidden from Record sale. Existing balances and history remain safe.</small></span>
     </label></div>`:canConfigure&&!preferencesAvailable?`<div class="permission-banner" style="margin-bottom:16px"><b>Gift-card sale setting unavailable</b><p class="muted small" style="margin-top:4px">Selling is paused. Existing cards can still be redeemed with the required authority.</p><button class="btn ghost sm" id="giftPreferencesRetry" style="margin-top:8px">Try again</button></div>`:!giftCardsEnabled?`<div class="permission-banner" style="margin-bottom:16px"><b>Gift-card sales are off</b><p class="muted small" style="margin-top:4px">An owner can enable them here when the business is ready. Existing card redemption remains available.</p></div>`:''}
     <div class="split">
     <div class="card">${giftCardWorkspace}</div>
@@ -13372,7 +13454,7 @@ async function giftcardsPage(){
     checkbox.disabled=false;
     if(error){checkbox.checked=!checkbox.checked;return fail(error)}
     S.biz.gift_card_sales_enabled=checkbox.checked;
-    toast(checkbox.checked?'Gift cards enabled':'Gift cards hidden from Quick Earn');
+    toast(checkbox.checked?'Gift cards enabled':'Gift cards hidden from Record sale');
     giftcardsPage();
   };
   if(canIssue&&$('gsell'))$('gsell').onclick=async()=>{
@@ -13423,6 +13505,28 @@ async function giftcardsPage(){
 }
 
 /* ---------- appointments ---------- */
+function appointmentWhatsAppUrlV129(options){
+  const {phone,businessName,branchName,customerName,serviceName,startsAt,staffName,status}=options||{};
+  const digits=String(phone||'').replace(/\D/g,'');
+  const mobile=/^[89]\d{7}$/.test(digits)?`65${digits}`:/^65[89]\d{7}$/.test(digits)?digits:null;
+  const start=new Date(startsAt);
+  if(!mobile||Number.isNaN(start.getTime()))return null;
+  const when=new Intl.DateTimeFormat('en-SG',{
+    day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true,
+    timeZone:'Asia/Singapore'
+  }).format(start);
+  const lines=[
+    customerName?`Hi ${String(customerName).trim()},`:'Hello,',
+    `This is ${String(businessName||'the team').trim()} about your appointment.`,
+    `Appointment: ${String(serviceName||'General visit').trim()}`,
+    `When: ${when} (Singapore time)`,
+    branchName?`Where: ${String(branchName).trim()}`:null,
+    staffName?`With: ${String(staffName).trim()}`:null,
+    status?`Status: ${String(status).replaceAll('_',' ').trim()}`:null,
+    'Please reply here if you need help with this appointment.'
+  ].filter(Boolean);
+  return `https://wa.me/${mobile}?text=${encodeURIComponent(lines.join('\n'))}`;
+}
 async function appointmentsPage(){
   disposeCurrentRoute();
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -13823,13 +13927,20 @@ async function appointmentsPage(){
     const outcomeIsDue=appointmentOutcomeIsDue(item),duration=appointmentDuration(item),callNumber=safeCallNumber(item);
     const amendableBooked=item.status==='booked'&&canWrite;
     const local=sgInput(item.starts_at),service=item.services||{},client=item.clients||{};
+    const branchName=visibleBranches.find(branch=>branch.id===item.branch_id)?.name||'Branch';
+    const whatsAppUrl=appointmentWhatsAppUrlV129({
+      phone:client.phone_norm||client.phone,businessName:S.biz.name,branchName,
+      customerName:client.full_name,serviceName:service.name,startsAt:item.starts_at,
+      staffName:staffName[item.staff_id],status:item.status
+    });
     const bookedPriceCents=resolveBookedPriceCents(item.total_cents,service.price_cents);
     const dialog=document.createElement('div');dialog.className='modal appointment-detail-modal';dialog.id='appointmentDetailDialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','appointmentDetailTitle');dialog.tabIndex=-1;
     dialog.innerHTML=`<div class="modal-card"><div class="row appointment-detail-head"><div><h2 id="appointmentDetailTitle" data-merchant-content>${esc(client.full_name||'Appointment')}</h2><p class="muted small" style="margin-top:4px">${esc(sgt(item.starts_at)?.slice(0,10)||'')} · ${esc(appointmentTimeRange(item))} · ${duration} min</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentDialogClose" aria-label="Close appointment details">Close</button></div>
       <div class="appointment-detail-grid"><section aria-labelledby="appointmentServiceTitle"><h3 id="appointmentServiceTitle">Service</h3><dl class="appointment-detail-list"><div><dt>Service</dt><dd data-merchant-content>${esc(service.name||'General visit')}</dd></div><div><dt>Duration</dt><dd>${duration} minutes</dd></div><div><dt>Booked price</dt><dd>${bookedPriceCents===null?'Not available':esc(money(bookedPriceCents))}</dd></div><div><dt>Appointment note</dt><dd data-merchant-content>${esc(item.note||'None')}</dd></div></dl></section>
       <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd data-merchant-content>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd data-merchant-content>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd data-merchant-content>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd data-merchant-content>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p data-merchant-content>${esc(client.notes||'None')}</p></div></section></div>
-      <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(visibleBranches.find(b=>b.id===item.branch_id)?.name||'Branch')}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
-      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">Call customer</a>`:''}${amendableBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Amend appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(branchName)}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
+      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">Call customer</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">Message on WhatsApp</a>`:''}${amendableBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Amend appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Nestly does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
       ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
     const close=()=>closeAppointmentDetails();
@@ -14205,7 +14316,7 @@ async function waitlistPage(){
     return true;
   }
   /* Seat now → resolve to 'booked' and, when the phone is a usable SG mobile and the role can
-     ring a sale, deep-link into Quick earn pre-filled (consume-once pendingTillPhone). */
+     ring a sale, deep-link into Record sale pre-filled (consume-once pendingTillPhone). */
   window.wlSeat=async id=>{
     const row=currentRows.find(r=>r.id===id);
     const local=tillLocalMobile(row?.phone);
@@ -15989,7 +16100,7 @@ async function settingsPage(){
     </div>
     <div id="commissionWrap"></div></section>
     <section class="settings-panel" id="setpanel-data" role="tabpanel" aria-labelledby="settab-data" tabindex="-1" hidden><div class="split"><div class="card"><b>Import customers (CSV)</b>
-      <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, gender, birth_date (YYYY-MM-DD).</p>
+      <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, birth_date (YYYY-MM-DD).</p>
       <label for="csvf">Customer CSV file</label>
       <input type="file" id="csvf" accept=".csv,text/csv" aria-describedby="csvHelp">
       <div id="csvprev" style="margin-top:12px"></div></div>
@@ -16079,7 +16190,7 @@ async function settingsPage(){
       const branchAvailable=item.branch_available!==false;
       const active=item.checkout_active===true;
       const type=item.item_type==='service'?'Service':'Product';
-      const status=!branchAvailable?'Not offered at this branch':active?'Available in Quick Earn':'Hidden from Quick Earn';
+      const status=!branchAvailable?'Not offered at this branch':active?'Available in Record sale':'Hidden from Record sale';
       return `<article class="checkout-catalogue-item">
         <div>${item.name?`<b data-merchant-content>${esc(item.name)}</b>`:`<b data-workspace-i18n>${type}</b>`}<p class="muted small"><span data-workspace-i18n>${type}</span> · <span data-merchant-content>${money(item.unit_cents||0)}</span> · <span data-workspace-i18n>${esc(status)}</span></p></div>
         <button type="button" class="btn ghost sm" data-checkout-item="${esc(item.item_id)}" data-item-type="${item.item_type}" data-item-active="${active?'true':'false'}" data-item-version="${esc(item.version??0)}" ${!platformAllowed||!branchAvailable?'disabled':''}>${active?'Hide':'Make available'}</button>
@@ -16090,7 +16201,7 @@ async function settingsPage(){
       body:'Create a service or sale product first. Stock management is not part of Checkout Catalogue.'
     });
     host.innerHTML=`<div class="checkout-catalogue-head"><div><h2>Checkout catalogue</h2>
-      <p class="muted small" style="margin-top:5px">Choose which existing products and services staff can select in Quick Earn. This does not manage stock.</p></div>
+      <p class="muted small" style="margin-top:5px">Choose which existing products and services staff can select in Record sale. This does not manage stock.</p></div>
       <button type="button" class="btn ${enabled?'ghost':''} sm" id="checkoutCatalogueEnabled" ${!platformAllowed?'disabled':''}>${enabled?'Disable catalogue-first':'Enable catalogue-first'}</button>
     </div>
     ${!platformAllowed?'<div class="permission-banner" role="note" style="margin-top:14px">Catalogue checkout is not available for this firm’s plan. Contact Nestly to enable it.</div>':''}
@@ -16373,12 +16484,11 @@ async function settingsPage(){
     if(rows.length<2) return toast('CSV needs a header row + data');
     const hdr=rows[0].map(h=>h.trim().toLowerCase());
     const col=n=>hdr.findIndex(h=>h.includes(n));
-    const iN=col('name'),iP=col('phone'),iE=col('email'),iG=col('gender'),iB=col('birth');
+    const iN=col('name'),iP=col('phone'),iE=col('email'),iB=col('birth');
     if(iN<0) return toast('No "name" column found');
     const recs=rows.slice(1).filter(r=>r[iN]&&r[iN].trim().length>1).map(r=>({
       idempotency_key:crypto.randomUUID(),full_name:r[iN].trim(),
       phone:iP>=0?(r[iP]||null):null,email:iE>=0?(r[iE]||null):null,
-      gender:iG>=0&&['female','male','other'].includes((r[iG]||'').toLowerCase())?r[iG].toLowerCase():null,
       birth_date:iB>=0&&/^\d{4}-\d{2}-\d{2}$/.test(r[iB]||'')?r[iB]:null}));
     const firstCustomers=[recs[0]?.full_name,recs[1]?.full_name].filter(Boolean).join(', ')||'—';
     $('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersReady',{ready:recs.length,rows:rows.length-1})}<br>
@@ -16389,7 +16499,7 @@ async function settingsPage(){
       for(const rec of recs){
         const {error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,
           p_idempotency_key:rec.idempotency_key,p_full_name:rec.full_name,p_phone:rec.phone,
-          p_email:rec.email,p_birth_date:rec.birth_date,p_gender:rec.gender,
+          p_email:rec.email,p_birth_date:rec.birth_date,p_gender:null,
           p_marketing_consent:false,p_referrer_code:null,p_source:'settings CSV import'});
         if(error){toast(workspaceTemplateTextV97('importPartial',{count:done,error:error.message}));return}
         done+=1;

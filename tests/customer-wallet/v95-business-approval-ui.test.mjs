@@ -6,10 +6,12 @@ const app=fs.readFileSync(new URL('../../app/index.html',import.meta.url),'utf8'
 const platform=fs.readFileSync(new URL('../../app/platform-console.js',import.meta.url),'utf8');
 const mediaSync=fs.readFileSync(new URL('../../app/v95-media-sync.js',import.meta.url),'utf8');
 
-test('public owner signup is an application, never direct Auth signup',()=>{
+test('public owner signup creates Auth first while assisted approval remains separate',()=>{
   assert.match(app,/function renderBusinessApplication\(\)/);
-  assert.match(app,/publicGateway\('public-business-application'/);
-  assert.match(app,/legal_consent:\$\('applicationConsent'\)\.checked/);
+  assert.match(app,/sb\.auth\.signUp/);
+  assert.match(app,/account_type:'business_owner'/);
+  assert.match(app,/start_self_serve_business_v130/);
+  assert.match(app,/request_self_serve_checkout_v130/);
   assert.match(app,/mode==='up'\)return renderBusinessApplication\(\)/);
   assert.doesNotMatch(app,/function renderOnboard\(\)[\s\S]*?sb\.rpc\('create_business'/);
 });
@@ -25,7 +27,7 @@ test('approved owner creation is invite-bound and workspace activation is server
   assert.match(app,/p_idempotency_key:activationKey/);
 });
 
-test('business application surfaces offer English, Chinese and Bahasa Melayu copy',()=>{
+test('self-service locale choices and assisted invitations retain English, Chinese and Bahasa Melayu copy',()=>{
   assert.match(app,/'zh-CN'/);
   assert.match(app,/申请 Nestly 商家账户/);
   assert.match(app,/超级管理员批准后/);
@@ -36,7 +38,7 @@ test('business application surfaces offer English, Chinese and Bahasa Melayu cop
   assert.match(app,/invitationUnavailable:'Jemputan tidak tersedia'/);
   assert.match(app,/workspaceCreateError:'Ruang kerja ini tidak dapat dicipta\.'/);
   assert.match(app,/legalLinks\(locale\)/);
-  assert.match(app,/locale,legal_consent:/);
+  assert.match(app,/preferred_locale:locale/);
   assert.doesNotMatch(app,/locale==='ms'\?'en'/);
 });
 

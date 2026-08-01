@@ -389,8 +389,10 @@ export async function checkPublicPageForms(root = repoRoot) {
     'reusable password controls must render password inputs by default.'
   );
   assertTagContains(index, /<button\b[^>]*id=["']go["'][^>]*>/, 'app auth page must retain sign-in/sign-up button.');
-  assertTagContains(index, /<button\b[^>]*id=["']applyBusiness["'][^>]*>/,
-    'business users without a workspace must be sent to the approval-first application.');
+  assertTagContains(index, /<button\b[^>]*id=["']businessApplicationSubmit["'][^>]*>/,
+    'public business signup must retain the owner-account creation control.');
+  assertTagContains(index, /<button\b[^>]*id=["']startSelfServe["'][^>]*>/,
+    'confirmed owners without a workspace must retain the server-priced Stripe setup control.');
   assert.doesNotMatch(index, /id=["']mk["']/,
     'the legacy authenticated self-service workspace creation button must stay retired.');
 }

@@ -174,7 +174,7 @@ test('v97 workspace exposes and persists English, Chinese and Bahasa Melayu',()=
 
 test('v97 catalog covers every signed-in workspace route plus dialogs, states and feedback',()=>{
   const required=[
-    'Dashboard','Customers','Quick earn','Appointments','Bookings','Waitlist','Sales',
+    'Dashboard','Customers','Record sale','Appointments','Bookings','Waitlist','Sales',
     'Rewards & bring-backs','Referrals','Memberships','Gift cards','Reports',
     'Customer intelligence','Staff performance','Daily report','Expenses','P&L',
     'Inventory','Packages','Branches','Services','Settings','Get started',
@@ -467,7 +467,7 @@ test('v97 checkout and responsive tables localize interface parts while preservi
   assert.match(appointments,/<span class="pill \$\{[^}]+\}">\$\{esc\(a\.status\.replace/);
   assert.match(appointments,/>Details<\/button>/);
   assert.match(appointments,/>Amend<\/button>/);
-  for(const source of ['booked','completed','cancelled','no show','Available in Quick Earn','Hidden from Quick Earn','Not offered at this branch']){
+  for(const source of ['booked','completed','cancelled','no show','Available in Record sale','Hidden from Record sale','Not offered at this branch']){
     assert.notEqual(translated('zh-CN',source),source,`Chinese ${source}`);
     assert.notEqual(translated('ms',source),source,`Malay ${source}`);
   }
@@ -526,7 +526,7 @@ test('v97 public application security and password controls follow its locale wh
     '正在加载安全验证…','显示密码','隐藏密码',
   ]) assert.ok(challenge.includes(phrase),phrase);
   assert.match(application,/authChallengeHtml\(locale\)/);
-  assert.match(application,/action:'business_application',locale/);
+  assert.match(application,/action:'frenly_auth',locale/);
   assert.match(invite,/passwordControlHtml\('approvedOwnerPassword',\{autocomplete:'new-password',locale\}\)/);
   assert.match(invite,/authChallengeHtml\(locale\)/);
   assert.match(invite,/action:'frenly_auth',locale/);

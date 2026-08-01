@@ -60,7 +60,7 @@ test('Luna C45: expiry is derived, and the staff projection cannot disclose cale
   assert.match(staffRead, /return app\.c45_staff_safe_birthday_entitlement\(v_entitlement,statement_timestamp\(\)\)/i);
   assert.doesNotMatch(redeem, /update public\.customer_birthday_entitlements set status='expired'/i,
     'a failed expired redemption must never persist a doomed status transition');
-  assert.match(clientDetail, /select\('id,business_id,full_name,phone,email,gender,referral_code,marketing_consent'\)/i);
+  assert.match(clientDetail, /select\('id,business_id,full_name,phone,email,referral_code,marketing_consent'\)/i);
   assert.doesNotMatch(clientDetail, /c\.birth_date|birthdayBenefit\.validity|birthdayBenefit\.description|birthdayBenefit\.terms/i);
   assert.match(suite, /loyalty-r reader was not a staff-safe available projection/i);
   assert.match(suite, /non-leap Feb 29 window failed/i);

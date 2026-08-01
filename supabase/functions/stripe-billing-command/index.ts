@@ -128,9 +128,9 @@ Deno.serve(async (req) => {
   let redirectUrl = '';
   try {
     admin = billingAdminClient();
-    // V124 is the dispatcher; the SQL function delegates historical commands
-    // to claim_billing_command_v77 so outstanding v77 retries remain recoverable.
-    const { data, error } = await admin.rpc('claim_billing_command_v124', {
+    // V130 decorates the V124 dispatcher with the locked self-service return
+    // route; V124 still delegates historical commands to V77.
+    const { data, error } = await admin.rpc('claim_billing_command_v130', {
       p_command: commandId,
       p_actor: actor,
     });
@@ -225,6 +225,7 @@ Deno.serve(async (req) => {
         });
       }
       providerCallStarted = true;
+      const selfServiceOnboarding = data.self_service_onboarding === true;
       const session = await stripe.checkout.sessions.create(
         {
           mode: 'subscription',
@@ -232,8 +233,12 @@ Deno.serve(async (req) => {
           client_reference_id: businessId,
           line_items: lineItems,
           automatic_tax: { enabled: false },
-          success_url: `${origin}/#/settings?billing=processing`,
-          cancel_url: `${origin}/#/settings?billing=canceled`,
+          success_url: selfServiceOnboarding
+            ? `${origin}/business#/onboarding/payment?status=processing`
+            : `${origin}/#/settings?billing=processing`,
+          cancel_url: selfServiceOnboarding
+            ? `${origin}/business#/onboarding/payment?status=canceled`
+            : `${origin}/#/settings?billing=canceled`,
           metadata: {
             business_id: businessId,
             cadence,

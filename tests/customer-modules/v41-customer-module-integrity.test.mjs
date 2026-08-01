@@ -333,7 +333,7 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
 
   const clientDetail = app.match(/async function clientDetail\(id\)\{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(clientDetail, /const canWriteLoyalty=canWriteModule\('loyalty'\)/i);
-  assert.match(clientDetail, /canWriteLoyalty\?`<p class="muted small"[\s\S]*?Open Quick Earn scanner/i,
+  assert.match(clientDetail, /canWriteLoyalty\?`<p class="muted small"[\s\S]*?Open Record sale scanner/i,
     'loyalty writers may only be directed to the branch-scoped scanner');
   assert.doesNotMatch(clientDetail, /id="redeem"|rewardGo|sb\.rpc\('redeem_(?:points|reward)/i,
     'customer detail must not expose direct classic or catalog redemption');

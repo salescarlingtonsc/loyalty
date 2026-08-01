@@ -43,7 +43,7 @@ test('v124 first-paid money-back request window is immutable and exact', async (
 
 test('Stripe executor uses base plus capacity-block items and proration for upgrades', async () => {
   const edge = await read('supabase/functions/stripe-billing-command/index.ts');
-  assert.match(edge, /claim_billing_command_v124/i);
+  assert.match(edge, /claim_billing_command_v130/i);
   assert.match(edge, /extra_capacity_blocks/i);
   assert.match(edge, /provider_capacity_price_id/i);
   assert.match(edge, /requested_customer_capacity/i);
