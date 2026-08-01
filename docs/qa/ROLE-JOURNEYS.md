@@ -106,10 +106,18 @@ order. A hidden navigation item without server-side denial is a failure.
    one primary action. Healthy/paid records do not appear as work.
 2. Sales staff lands on its own Today and sees only firms it created or was
    assigned.
-3. Website firm request appears in platform onboarding.
-4. Assigned consultant can manage it; unassigned consultant cannot.
-5. Owner cannot activate before Super Admin approval.
-6. Approved firm appears as won/active with all branches and customers.
+3. A public self-service owner creates and confirms an account, chooses the
+   business/sector, annual or monthly billing and customer capacity, and sees
+   the exact server-derived recurring amount before Stripe Checkout. This path
+   does not request super-admin approval.
+4. Checkout creation, cancellation or an unpaid subscription leaves the new
+   workspace payment-locked. Only the matching signed, normalized paid invoice
+   opens it; refresh enters guided setup.
+5. A consultant-led assisted firm may still appear in platform onboarding;
+   assigned consultants can manage that separate path and unassigned
+   consultants cannot.
+6. A paid self-service or approved assisted firm appears as won/active with all
+   branches and customers.
 7. Consultant generates branch and whole-firm intelligence with source window,
    data sufficiency, and actionable recommendations.
 8. Billing success sets paid/next date; overdue schedules daily notices and day

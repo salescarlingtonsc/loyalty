@@ -18,16 +18,15 @@ test('customer directory normalizes common Singapore phone formats to phone_norm
   assert.equal(normalize('123'),null);
 });
 
-test('clients-only customer search uses tenant-scoped normalized phone data without Till access',async()=>{
+test('clients-only customer search uses the tenant-scoped V129 reader without Till access',async()=>{
   const app=await readFile(new URL('app/index.html',root),'utf8');
   const start=app.indexOf('async function clientsPage()');
   const end=app.indexOf('async function clientDetail(',start);
   const clients=app.slice(start,end);
   assert.ok(start>=0&&end>start);
-  assert.match(clients,/sb\.from\('clients'\).*\.eq\('business_id',S\.biz\.id\)/s);
-  assert.match(clients,/const phoneDigits=normalizeCustomerSearchPhoneDigits\(clientSearch\)/);
-  assert.match(clients,/const phoneSearch=phoneDigits\.length>=4/);
-  assert.match(clients,/clientQuery\.ilike\('phone_norm',`%\$\{phoneDigits\}%`\)/);
+  assert.match(clients,/sb\.rpc\('staff_list_customers_v129'/);
+  assert.match(clients,/const customerRpcSearch=normalizeCustomerSearchPhoneDigits\(clientSearch\)\|\|clientSearch/);
+  assert.match(clients,/p_business:S\.biz\.id,p_search:customerRpcSearch\|\|null/);
   assert.doesNotMatch(clients,/lookup_client_by_phone/);
   assert.doesNotMatch(clients,/canWriteModule\('till'\)/);
 });

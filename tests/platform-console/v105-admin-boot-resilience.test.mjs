@@ -34,7 +34,7 @@ test('admin route exposes a loading state and awaits the async platform renderer
   const source=await read('app/index.html');
   const route=source.slice(source.indexOf('async function route(){'),source.indexOf('\n/* ---------- customer wallet ---------- */'));
   assert.match(source,/<link rel="stylesheet" href="\/platform-console\.css\?v=20260729-v105">/);
-  assert.match(source,/<script src="\/platform-console\.js\?v=20260729-v105"><\/script>/);
+  assert.match(source,/<script src="\/platform-console\.js\?v=20260801-v133"><\/script>/);
   assert.match(route,/Opening Nestly admin/);
   assert.match(route,/role="status"/);
   assert.match(route,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);

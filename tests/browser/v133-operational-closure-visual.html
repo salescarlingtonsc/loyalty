@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nestly V133 operational closure acceptance</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/app/platform-console.css">
+  <style>
+    :root{--bg:#f4f2ee;--card:#fff;--ink:#17161a;--ink2:#3d3b44;--muted:#6b6673;--line:#eae6df;--hair:rgba(23,22,26,.06);--coral:#c24135;--red:#9d352c;--green:#1f6b48;--tint:#fff0ec;--grad:linear-gradient(135deg,#c24135,#9d352c);--r:18px;--r-sm:12px;--shadow:0 1px 2px rgba(23,22,26,.04),0 4px 12px rgba(23,22,26,.045);--sf:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--ink);font:14.5px/1.45 var(--sf)}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}button{border:0;cursor:pointer}.muted{color:var(--muted)}.small{font-size:12.5px}.card{background:var(--card);border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);padding:22px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border-radius:999px;background:var(--grad);color:#fff;font-weight:650}.btn.ghost{background:#fff;color:var(--ink);border:1px solid #817b88}.btn.sm{min-height:44px;padding:8px 14px}.pill{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:12px}.pill.ok{background:#e7f6ee;color:var(--green)}.pill.new{background:var(--tint);color:var(--coral)}.pill.no{background:#fbeae7;color:var(--red)}.pill.off{background:#f1eee9;color:var(--muted)}input,select,textarea{width:100%;min-height:44px;padding:10px 12px;border:1px solid #817b88;border-radius:12px;background:#fff}.cui-field label,.field-label{display:block;margin:12px 0 6px;font-size:12.5px;font-weight:650;color:var(--muted)}.cui-card-head{margin-bottom:14px}.cui-card-head p{margin-top:4px;color:var(--muted)}.cui-page-head{display:flex;justify-content:space-between;gap:16px;margin-bottom:20px}.cui-page-title{display:flex;gap:12px}.cui-page-title h1{font-size:1.85rem}.cui-empty{display:grid;justify-items:center;gap:8px;padding:20px;text-align:center}.platform-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.platform-route-note{display:flex;gap:10px;padding:14px;border-radius:12px;background:#fff6e8}.platform-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.platform-form-grid .wide{grid-column:1/-1}.cui-icon{display:inline-block}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+    @media(max-width:760px){.platform-form-grid{grid-template-columns:1fr}.platform-form-grid .wide{grid-column:auto}.card{padding:16px}.platform-action-item{align-items:flex-start}.platform-actions{width:100%}.platform-actions .btn{width:100%}}
+  </style>
+</head>
+<body>
+  <div id="v133Root"></div>
+  <script src="/app/brand-config.js"></script>
+  <script src="/app/customer-ui.js"></script>
+  <script src="/app/platform-console.js"></script>
+  <script>
+    const fixtureState=new URLSearchParams(location.search).get('state')||'ready';
+    const privacyRows=[
+      {request_id:'51000000-0000-4000-8000-000000000001',subject_ref:'61000000-0000-4000-8000-000000000001',status:'pending',requested_at:'2026-06-01T00:00:00Z',response_due_at:'2026-07-01T00:00:00Z',is_overdue:true},
+      {request_id:'51000000-0000-4000-8000-000000000002',subject_ref:'61000000-0000-4000-8000-000000000002',status:'processing',requested_at:'2026-07-25T00:00:00Z',response_due_at:'2026-08-24T00:00:00Z',claimed_at:'2026-07-26T00:00:00Z',is_overdue:false},
+      {request_id:'51000000-0000-4000-8000-000000000003',subject_ref:'61000000-0000-4000-8000-000000000003',status:'completed',requested_at:'2026-07-01T00:00:00Z',response_due_at:'2026-07-31T00:00:00Z',resolution_code:'retained_legal',retention_until:'2031-07-31T00:00:00Z',is_overdue:false},
+      {request_id:'51000000-0000-4000-8000-000000000004',subject_ref:'61000000-0000-4000-8000-000000000004',status:'completed',requested_at:'2025-07-01T00:00:00Z',response_due_at:'2025-07-31T00:00:00Z',resolution_code:'retained_legal',retention_until:'2026-07-31T00:00:00Z',is_overdue:true}
+    ];
+    const responses={
+      get_workspace_locale_preference_v97:{locale:'en',version:1},
+      platform_list_my_access_v89:{role:'super_admin',scope:'all',module_perms:{}},
+      platform_get_automation_reconciliation_v89:{runs:[],items:[]},
+      platform_get_automation_billing_v89:[],
+      platform_list_account_deletion_requests_v133:fixtureState==='empty'?[]:privacyRows
+    };
+    window.__v133RpcCalls=[];
+    const sb={rpc:async(name,args)=>{window.__v133RpcCalls.push({name,args});if(name==='platform_list_account_deletion_requests_v133'&&fixtureState==='error')return{data:null,error:{code:'PGRST500',message:'synthetic private queue failure'}};return{data:responses[name]??null,error:null}}};
+    const root=document.getElementById('v133Root');
+    window.NestlyPlatformConsole.render({root,sb,CUI:window.FrenlyCustomerUI,brand:window.NestlyBrand,hash:'#/platform/automation',isCurrent:()=>true,onSignOut:()=>{},workspaceHash:'#/workspace'}).then(()=>document.documentElement.dataset.ready='true').catch(error=>{document.documentElement.dataset.ready='error';root.textContent=error.message});
+    window.v133AcceptanceMetrics=()=>({
+      ready:document.documentElement.dataset.ready,
+      viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+      requests:document.querySelectorAll('[data-deletion-request]').length,
+      claims:document.querySelectorAll('[data-deletion-claim]').length,
+      resolutions:document.querySelectorAll('[data-deletion-resolve]').length,
+      retentionReviews:document.querySelectorAll('[data-deletion-review]').length,
+      buttons:[...document.querySelectorAll('[data-deletion-claim],[data-deletion-resolve],[data-deletion-review]')].map(node=>({text:node.textContent.trim(),width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height})),
+      visibleText:document.body.innerText
+    });
+  </script>
+</body>
+</html>

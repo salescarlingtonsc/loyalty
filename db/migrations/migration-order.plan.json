@@ -1005,6 +1005,36 @@
       "path": "db/migrations/20260801_nestly_v128_simple_rewards_recommender.sql",
       "semanticVersion": "v128",
       "proposedDeployVersion": "20260801153000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v129_trial_test_ux.sql",
+      "semanticVersion": "v129",
+      "proposedDeployVersion": "20260801170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v130_self_serve_business_onboarding.sql",
+      "semanticVersion": "v130",
+      "proposedDeployVersion": "20260801193000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v131_store_publication_readiness.sql",
+      "semanticVersion": "v131",
+      "proposedDeployVersion": "20260801210000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v132_release_gap_closure.sql",
+      "semanticVersion": "v132",
+      "proposedDeployVersion": "20260801223000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v133_operational_closure.sql",
+      "semanticVersion": "v133",
+      "proposedDeployVersion": "20260801235900"
     }
   ]
 }

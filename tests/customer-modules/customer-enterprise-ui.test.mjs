@@ -242,8 +242,9 @@ test('progressive enhancement is scoped to approved customer routes',()=>{
 test('customer list has search, keyboard links, pagination, export/import, and latest-response safety',()=>{
   assert.match(clients,/id="clientSearch" type="search"/);
   assert.match(clients,/Search customers by name or phone/);
-  assert.match(clients,/normalizeCustomerSearchPhoneDigits\(clientSearch\)/);
-  assert.match(clients,/clientQuery\.ilike\('phone_norm',`%\$\{phoneDigits\}%`\)/);
+  assert.match(clients,/sb\.rpc\('staff_list_customers_v129'/);
+  assert.match(clients,/const customerRpcSearch=normalizeCustomerSearchPhoneDigits\(clientSearch\)\|\|clientSearch/);
+  assert.match(clients,/p_search:customerRpcSearch\|\|null/);
   const normalizerLine = app.split('\n')
     .find((line) => line.startsWith('const normalizeCustomerSearchPhoneDigits='));
   assert.ok(normalizerLine, 'customer phone-search normalizer must be defined');
@@ -257,7 +258,7 @@ test('customer list has search, keyboard links, pagination, export/import, and l
   assert.match(clients,/CUI\.action\(\{id:'add',label:'Add customer'/);
   assert.match(clients,/createLatestRequestGate\(isCustomersCurrent\)/);
   assert.match(clients,/const isCurrent=customerLoadGate\.begin\(\)/);
-  assert.ok((clients.match(/if\(!isCurrent\(\)\)return/g)||[]).length>=2);
+  assert.ok((clients.match(/if\(!isCurrent\(\)\)return/g)||[]).length>=1);
   assert.match(clients,/<a class="customer-link" href="#\/client\/\$\{c\.id\}"/);
   assert.doesNotMatch(clients,/<tr class="click" onclick=/);
   assert.match(clients,/id="clPrev"/);assert.match(clients,/id="clNext"/);
@@ -287,7 +288,7 @@ test('financial UI actions require module rights plus server-mirrored create-sal
   assert.match(till,/if\(!canRecordSalesAtWorkspace\)[\s\S]*Additional access required/);
   assert.match(till,/const accessibleTillBranches=assignedTillBranches\.filter\(branch=>\s*branchCanWrite\(branch\.id,'till'\)&&branchCanRead\(branch\.id,'clients'\)\s*\)/);
   assert.match(till,/const canRecordSales=hasRoleCapability\('create_sales'\)&&Boolean\(tillBranchId\)/);
-  assert.match(till,/if\(!tillStaffId\|\|!tillBranchId\)[\s\S]*Quick earn is not available/);
+  assert.match(till,/if\(!tillStaffId\|\|!tillBranchId\)[\s\S]*Record sale is not available/);
   assert.match(detail,/const canWriteLoyalty=canWriteModule\('loyalty'\)/);
 });
 

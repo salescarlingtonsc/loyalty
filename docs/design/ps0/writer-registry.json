@@ -2585,6 +2585,30 @@
     {
       "id": "browser.rpc:app/index.html:create_service_bundle_v123",
       "reason": "V123 replay-safe Services catalogue writer. It atomically creates one bundle and its service membership plus non-economic audit/idempotency evidence after tenant, module-write, active-service and input validation. It cannot create or mutate a sale, payment, discount, points balance, reward entitlement, package, gift card, stored value, stock movement, or other customer-value ledger."
+    },
+    {
+      "id": "browser.rpc:app/index.html:staff_list_customers_v129",
+      "reason": "V129 authenticated, tenant- and Clients-read-authorised customer directory projection. It performs no DML; it returns one bounded page with point and credit balances, last valid visit, and an optional exact 30/60/90-day Singapore-calendar inactivity filter."
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_self_serve_checkout_v130",
+      "reason": "V130 confirmed-owner read-only projection. It exposes safe plan, sector and caller-owned onboarding state without provider Price IDs, table grants, DML, or customer-value effects."
+    },
+    {
+      "id": "browser.rpc:app/index.html:start_self_serve_business_v130",
+      "reason": "V130 idempotent non-value tenant-staging writer. It creates one locked business, owner, default branch and incomplete subscription from server-governed sector and plan truth; it cannot open workspace access, charge a payment method, or write customer-value ledgers."
+    },
+    {
+      "id": "browser.rpc:app/index.html:request_self_serve_checkout_v130",
+      "reason": "V130 idempotent billing-intent writer. It creates or reuses one server-priced Stripe command for the caller's locked staging workspace; it does not collect payment, project a paid invoice, open access, or mutate any customer-value ledger."
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_account_deletion_request_v131",
+      "reason": "V131 authenticated subject-only read projection of the caller's latest account-deletion request. It performs no DML, exposes no email, phone, tenant, payment, or customer-value data, and cannot read another identity's request."
+    },
+    {
+      "id": "browser.rpc:app/index.html:request_account_deletion_v131",
+      "reason": "V131 idempotent privacy-operations intake. It appends one non-economic pending deletion request after explicit confirmation and does not immediately delete or mutate identities, tenant records, sales, payments, points, rewards, packages, gift cards, stored value, or any customer-value ledger."
     }
   ]
 }

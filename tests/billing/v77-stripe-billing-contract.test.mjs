@@ -210,7 +210,7 @@ test('v77 billing commands use DB fingerprints and a real idempotent Stripe exec
   assert.match(executor, /billingCorsFor\(req\)/);
   assert.match(executor, /authentication_required/);
   assert.match(executor, /command_not_available/);
-  assert.match(executor, /claim_billing_command_v77/);
+  assert.match(executor, /claim_billing_command_v130/);
   assert.match(executor, /provider_idempotency_key/);
   assert.match(executor, /stripe\.checkout\.sessions\.create/);
   assert.match(executor, /stripe\.billingPortal\.sessions\.create/);
