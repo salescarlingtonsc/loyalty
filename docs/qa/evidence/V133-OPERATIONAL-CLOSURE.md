@@ -135,6 +135,37 @@ After a fresh retained-state navigation the reviewed outcome remains visible. Th
 load-error state says no request was created and its retry repeats the safe status
 read without exposing a request form.
 
+## Authorized production release evidence
+
+The independently accepted candidate was committed as
+`c754d9d feat(privacy): close V133 operational lifecycle`, pushed on
+`codex/v133-operational-closure`, reviewed in GitHub pull request #9, and merged
+to `main` as `396c1a21447faa2946261e8112b6127f06f52191`.
+
+Before the production database change, a read-only preflight found zero legacy
+`processing` or `completed` deletion requests requiring migration evidence. The
+exact reviewed migration was then applied to production project
+`gadpooereceldfpfxsod` as `nestly_v133_operational_closure`. Read-only
+post-migration checks proved all of the following:
+
+- the immutable event table exists and has forced RLS;
+- anonymous lifecycle transitions are denied;
+- direct `service_role` event mutation is denied;
+- the authenticated RPC boundary is executable;
+- the event immutability triggers are present; and
+- the final lifecycle shape is valid.
+
+GitHub/Vercel reported the `396c1a2` Production deployment successful. A
+cache-bypassed public check of `https://www.nestly.asia/api/build` returned HTTP
+200 with environment `production` and the exact 40-character merge commit.
+The public root, `platform-console.js?v=20260801-v133`, Privacy, Terms, and Data
+Request pages each returned HTTP 200. The deployed operator bundle contains the
+V133 **Review legal retention** control. This proves exact artifact publication;
+it does not substitute for an authenticated production operator journey.
+
+No production customer data was created or changed for acceptance testing. The
+only authorized production write was the reviewed schema migration.
+
 ## Remaining gates
 
 V133 closes only the reproducible in-repository deletion-operations gap. It does
@@ -150,5 +181,7 @@ not prove the whole app release-ready. Still required:
 7. Apple/Google signing and physical-device/store evidence; and
 8. live Stripe catalogue and provider payment lifecycle.
 
-No production migration, production data, secret, commit, push, merge, or deploy
-was performed in this phase.
+The exact V133 artifact and schema are now deployed and externally identifiable.
+The broader launch status remains open because the eight gates above require
+provider, authenticated-role, operational-owner, legal, or store evidence that
+this scoped release did not supply.
