@@ -13,13 +13,13 @@ functions, invokes `customerPromotionCardV104` for two realistic spa offers,
 and records a SHA-256 provenance value.
 
 Production source SHA-256:
-`79e261312fa7b6cf400e7ecafbb63c85c6754237ee6484b0dfa5f80c4f6df0e2`
+`8f0f2c6b90d952f2127ff7a4c9f43d81118df5270af1e4a9adfddfa5d30878d7`
 
-The v118 regeneration adds only task-first dashboard, appointment and report
-selectors that do not match this promotion harness. The recorded card and modal
-geometry therefore remains applicable. A fresh interactive capture was not
-claimed: the in-app browser rejected the local `file://` fixture under its URL
-policy, so the screenshots remain the prior deterministic Chrome captures.
+The shared production stylesheet changed during the 2026-08-01 rewards
+overview work. `verify-v104-promotions-visual.mjs` therefore refreshed the
+three Chromium captures and metrics from the newly generated fixture rather
+than carrying forward the former source hash. The promotion-specific geometry
+and acceptance thresholds still pass.
 
 The only harness CSS is a small provenance label. The offer media is a
 deterministic text-free SVG so visual layout is reproducible; it is not evidence

@@ -1,11 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-style-sha256" content="6e04da288a28d11f5ca28f0bb6b566bfaba6c58fc92e24a6e816be2f8fae7560">
-<title>Nestly v105 admin visual acceptance</title>
-<style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="production-source-sha256" content="438a10a11c3cac1e7f8c5ac396a38c8a378449e181faaaf6ce9a08317ce4e71e"><title>Nestly rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -967,761 +961,542 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   body{background:#fff}
 }
 
-.platform-console{
-  min-height:100dvh;background:var(--bg);color:var(--ink);
-  display:grid;grid-template-columns:264px minmax(0,1fr)
-}
-.platform-rail{
-  position:sticky;top:0;height:100dvh;overflow-y:auto;
-  padding:max(22px,env(safe-area-inset-top)) 16px max(22px,env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;background:#FCFBF9;border-right:1px solid var(--line)
-}
-.platform-brand{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  min-height:44px;padding:0 10px 18px
-}
-.platform-brand .logo{font-size:1.6rem}.platform-tag{
-  display:inline-flex;align-items:center;min-height:28px;padding:4px 9px;border-radius:999px;
-  background:var(--tint);color:var(--coral);font-size:11px;font-weight:750;
-  letter-spacing:.06em;text-transform:uppercase
-}
-.platform-nav{display:grid;gap:3px}
-.platform-nav a{
-  display:flex;align-items:center;gap:10px;min-height:44px;padding:9px 12px;
-  border-radius:10px;color:var(--ink2);font-weight:550
-}
-.platform-nav a:hover{background:#F2EFEA;color:var(--ink)}
-.platform-nav a[aria-current="page"]{background:var(--tint);color:var(--coral);font-weight:700}
-.platform-nav .cui-icon{width:19px;height:19px}
-.platform-nav-group{display:grid}
-.platform-nav-group-row{display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:center}
-.platform-nav-group-home{min-width:0}
-.platform-nav-group-toggle{
-  display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:9px;background:transparent;
-  color:var(--muted);cursor:pointer
-}
-.platform-nav-group-toggle:hover,.platform-nav-group-toggle:focus-visible{background:#F2EFEA;color:var(--ink)}
-.platform-nav-group-toggle span{font-size:20px;line-height:1;rotate:90deg;transition:rotate .16s ease}
-.platform-nav-group-toggle[aria-expanded="true"] span{rotate:270deg}
-.platform-nav-group[data-active="true"]>.platform-nav-group-row>.platform-nav-group-home{color:var(--coral);font-weight:700}
-.platform-nav-group-items{display:grid;gap:2px;margin:2px 0 5px 21px;padding-left:10px;border-left:1px solid var(--line)}
-.platform-nav-group-items[hidden]{display:none}
-.platform-nav-group-items a{min-height:44px;padding-block:7px;font-size:12.5px}
-.platform-nav-group-items .cui-icon{width:17px;height:17px}
-.platform-nav-secondary{display:grid;gap:2px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
-.platform-rail-foot{margin-top:auto;padding:18px 10px 0}
-.platform-back{
-  display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--muted);
-  font-size:13px;font-weight:650
-}
-.platform-column{min-width:0}
-.platform-topbar{
-  position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;
-  gap:16px;min-height:68px;padding:max(12px,env(safe-area-inset-top))
-    max(32px,env(safe-area-inset-right)) 12px max(32px,env(safe-area-inset-left));
-  border-bottom:1px solid var(--hair);
-  background:rgba(244,242,238,.82);
-  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)
-}
-.platform-topbar-title{font-weight:750;letter-spacing:-.015em}
-.platform-topbar-actions{display:flex;align-items:center;gap:8px}
-.platform-locale-switcher{
-  display:flex;align-items:center;gap:3px;padding:3px;border:1px solid var(--hair);
-  border-radius:12px;background:#fff
-}
-.platform-locale-switcher button{
-  min-height:44px;padding:8px 11px;border:0;border-radius:9px;background:transparent;
-  color:var(--muted);font:inherit;font-size:12px;font-weight:750;cursor:pointer
-}
-.platform-locale-switcher button[aria-pressed="true"]{background:var(--tint);color:var(--coral)}
-.platform-locale-switcher button:focus-visible{outline:3px solid rgba(194,65,53,.25);outline-offset:1px}
-.platform-locale-switcher button:disabled{opacity:.55;cursor:wait}
-.platform-main{width:100%;max-width:1500px;margin:0 auto;
-  padding:30px max(32px,env(safe-area-inset-right))
-    calc(56px + env(safe-area-inset-bottom)) max(32px,env(safe-area-inset-left))}
-.platform-kpis{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px
-}
-.platform-kpi{min-width:0}
-.platform-kpi-label{
-  display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;font-weight:700
-}
-.platform-kpi-value{
-  margin-top:9px;font-size:clamp(1.55rem,3vw,2.2rem);font-weight:750;
-  letter-spacing:-.04em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere
-}
-.platform-section-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.7fr);gap:16px}
-.platform-context-list{display:grid;gap:0}
-.platform-context-list div{
-  display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)
-}
-.platform-context-list div:last-child{border-bottom:0}
-.platform-context-list dt{color:var(--muted);font-size:12.5px}
-.platform-context-list dd{text-align:right;font-weight:650}
-.platform-context-list a{display:inline-flex;align-items:center;min-height:44px}
-.platform-route-note{
-  display:flex;align-items:flex-start;gap:12px;padding:15px;border:1px solid var(--line);
-  border-radius:var(--r-sm);background:#FBFAF8;color:var(--ink2)
-}
-.platform-route-note p{margin-top:3px;line-height:1.55}
-.platform-firms-table td,.platform-firms-table th{white-space:nowrap}
-.platform-firms-table td:first-child,.platform-firms-table th:first-child{white-space:normal;min-width:180px}
-.platform-state-card{min-height:300px;display:grid;align-content:center}
-.platform-state-card .cui-empty{padding:34px 18px}
-.platform-state-card .cui-empty p{max-width:62ch}
-.platform-mobile-nav{display:none}
-@media(min-width:761px){.platform-topbar-workspace{display:none}}
-.platform-toolbar{
-  display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-bottom:16px
-}
-.platform-toolbar .cui-field{flex:1 1 170px}.platform-toolbar .cui-field label{margin-top:0}
-.platform-toolbar .btn{flex:0 0 auto}
-.platform-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.platform-status-note{margin-bottom:16px}
-.platform-kanban{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-  gap:12px;align-items:start;padding:2px 2px 18px
-}
-.platform-kanban-column{
-  min-width:0;padding:10px;border:1px solid var(--line);border-radius:15px;background:#EFEBE5
-}
-.platform-kanban-head{
-  display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
-  min-height:64px;padding:9px 5px;background:#EFEBE5
-}
-.platform-kanban-head h2{font-size:13px;letter-spacing:-.01em}
-.platform-kanban-head p{max-width:23ch;margin-top:3px;color:var(--muted);font-size:10.5px;line-height:1.35}
-.platform-count{
-  display:inline-grid;place-items:center;min-width:25px;height:25px;padding:0 7px;border-radius:999px;
-  background:#fff;color:var(--muted);font-size:11px;font-weight:750
-}
-.platform-card-list{display:grid;gap:8px}
-.platform-prospect-card{
-  width:100%;padding:14px;border:1px solid var(--hair);border-radius:12px;background:#fff;
-  box-shadow:var(--shadow);text-align:left;color:var(--ink)
-}
-.platform-prospect-card:hover{border-color:rgba(194,65,53,.32);box-shadow:var(--shadow-lg)}
-.platform-prospect-card[aria-grabbed="true"]{opacity:.56}
-.platform-prospect-name{font-size:14px;font-weight:750;line-height:1.35}
-.platform-prospect-meta{display:grid;gap:4px;margin-top:7px;color:var(--muted);font-size:11.5px}
-.platform-card-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
-.platform-card-badges .pill{font-size:10px;padding:3px 7px}
-.platform-card-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:10px}
-.platform-card-actions select{min-height:44px;font-size:12px;padding:8px}
-.platform-card-actions .btn{min-width:44px;padding-inline:10px}
-.platform-card-managed{display:block}
-.platform-contact-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
-.platform-contact-actions .btn{min-width:44px;min-height:44px;padding-inline:10px}
-.platform-lane-empty{padding:10px 5px}
-.platform-prospect-list{display:none}
-.platform-drawer{
-  position:fixed;inset:0;z-index:120;display:flex;justify-content:flex-end;
-  background:rgba(23,22,26,.32);padding-left:min(8vw,90px)
-}
-.platform-drawer-panel{
-  width:min(720px,100%);height:100%;overflow-y:auto;background:var(--bg);
-  box-shadow:-16px 0 48px rgba(23,22,26,.18);padding:24px
-}
-.platform-drawer-head{
-  display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px
-}
-.platform-drawer-close{min-width:44px;padding:10px}
-.platform-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.platform-detail-section{margin-top:14px}.platform-detail-section h2{font-size:15px;margin-bottom:8px}
-.platform-detail-section pre{
-  white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;
-  background:#F8F6F2;border:1px solid var(--line);border-radius:10px;padding:12px
-}
-.platform-modal{
-  position:fixed;inset:0;z-index:130;display:grid;place-items:center;padding:18px;
-  background:rgba(23,22,26,.36)
-}
-.platform-modal-panel{
-  width:min(680px,100%);max-height:92dvh;overflow-y:auto;background:var(--card);
-  border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:24px
-}
-.platform-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
-.platform-form-grid .wide{grid-column:1/-1}
-.platform-form-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:20px}
-.platform-import-preview{max-height:320px;overflow:auto;margin-top:14px}
-.platform-error-list{margin:10px 0 0 20px;color:var(--red);font-size:12px}
-.platform-sector-list,.platform-commission-list,.platform-billing-list{display:grid;gap:12px}
-.platform-sector-card-head,.platform-list-row{
-  display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap
-}
-.platform-module-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.platform-sector-actions{margin-top:14px}
-.platform-module-picker{grid-column:1/-1;margin:4px 0 0;padding:0;border:0}
-.platform-module-picker>legend{font-size:14px;font-weight:750}
-.platform-module-picker>p{margin-top:4px}
-.platform-module-group{margin-top:15px}
-.platform-module-group h2,.platform-bundle-review h2{font-size:12px;letter-spacing:.01em}
-.platform-module-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:7px}
-.platform-module-option{
-  display:flex;align-items:center;gap:10px;min-height:52px;padding:9px 11px;
-  border:1px solid var(--hair);border-radius:11px;background:#FBFAF8;cursor:pointer
-}
-.platform-module-option:has(input:checked){border-color:rgba(194,65,53,.4);background:var(--tint)}
-.platform-module-option input,.platform-review-confirm input{width:20px;height:20px;flex:0 0 auto;accent-color:var(--coral)}
-.platform-module-option span{display:grid;gap:2px;min-width:0}
-.platform-module-option b{font-size:12.5px}.platform-module-option small{color:var(--muted);font-size:10px}
-.platform-module-selection{
-  position:sticky;bottom:-1px;display:grid;gap:3px;margin-top:16px;padding:12px 14px;
-  border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.96);
-  box-shadow:0 -8px 20px rgba(23,22,26,.06)
-}
-.platform-module-selection b{font-size:12px}.platform-module-selection span{color:var(--muted);font-size:11px;line-height:1.4}
-.platform-module-policy-intro{
-  display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px;
-  padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--tint)
-}
-.platform-module-policy-intro h2{font-size:17px;margin:2px 0 4px}
-.platform-module-policy-intro p{margin:0;max-width:520px}
-.platform-module-policy-list{display:grid;gap:16px;margin:0 0 18px}
-.platform-module-policy-group{display:grid;gap:8px}
-.platform-module-policy-group h3{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-.platform-module-policy-options{display:grid;gap:7px}
-.platform-module-policy-row{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,190px);align-items:center;gap:14px;
-  padding:10px 12px;border:1px solid var(--hair);border-radius:11px;background:#FBFAF8
-}
-.platform-module-policy-row:focus-within{border-color:rgba(194,65,53,.55);box-shadow:0 0 0 3px rgba(194,65,53,.09)}
-.platform-module-policy-copy{display:grid;gap:3px;min-width:0}
-.platform-module-policy-copy b{font-size:13px}.platform-module-policy-copy small{color:var(--muted);font-size:11px;line-height:1.35}
-.platform-module-policy-row select{width:100%;min-height:40px}
-.platform-paged-summary{
-  display:flex;align-items:center;justify-content:space-between;gap:14px;
-  margin-top:16px;padding:12px 14px;border:1px solid var(--hair);
-  border-radius:12px;background:#fff
-}
-.platform-paged-summary p{margin:0}
-.platform-bundle-review{display:grid;gap:16px}
-.platform-bundle-diff{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.platform-bundle-diff section{padding:12px;border:1px solid var(--hair);border-radius:10px;background:#FBFAF8}
-.platform-bundle-diff ul{margin:7px 0 0 18px;font-size:12px}
-.platform-review-confirm{
-  display:flex;align-items:flex-start;gap:10px;min-height:52px;padding:12px;
-  border:1px solid var(--line);border-radius:11px;background:#FBFAF8;cursor:pointer;
-  font-size:12.5px;line-height:1.45
-}
-.platform-money{font-variant-numeric:tabular-nums;font-weight:750}
-.platform-health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.platform-action-queue{display:grid;gap:9px}.platform-action-item{
-  display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
-  padding:13px 0;border-bottom:1px solid var(--hair)
-}
-.platform-today{display:grid;gap:16px;margin-bottom:16px}
-.platform-today-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
-.platform-today-head h2{margin-top:3px;font-size:1.45rem}
-.platform-today-head p:last-child{margin-top:5px}
-.platform-today-list{display:grid;gap:10px}
-.platform-today-item{
-  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;
-  padding:15px;border:1px solid var(--line);border-radius:14px;background:#FBFAF8
-}
-.platform-today-main{display:grid;gap:7px;min-width:0}
-.platform-today-main h3{font-size:14px}
-.platform-today-reason{color:var(--ink2);font-size:12.5px;font-weight:750}
-.platform-today-meta{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0
-}
-.platform-today-meta div{min-width:0}
-.platform-today-meta dt{
-  color:var(--muted);font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase
-}
-.platform-today-meta dd{margin:2px 0 0;font-size:11.5px;overflow-wrap:anywhere}
-.platform-today-action{white-space:nowrap}
-.platform-today-more{margin-top:-4px}
-.platform-today-coverage{
-  border:1px solid var(--line);border-radius:12px;background:#FBFAF8;
-  color:var(--ink2);font-size:12px
-}
-.platform-today-coverage summary{
-  min-height:44px;display:flex;align-items:center;padding:10px 13px;
-  color:var(--ink);font-weight:800;cursor:pointer
-}
-.platform-today-coverage ul{display:grid;gap:8px;margin:0;padding:0 13px 13px;list-style:none}
-.platform-today-coverage li{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
-.platform-today-coverage li span{text-align:right}
-.platform-today-coverage [data-coverage-state="partial"] b{color:#8A5A00}
-.platform-today-coverage [data-coverage-state="unavailable"] b{color:var(--coral)}
-.platform-control-status{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.platform-control-heading{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
-.platform-control-heading h3,.platform-consultative-report h3{font-size:14px}
-.platform-branch-control-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
-.platform-branch-control-list .platform-action-item{border:1px solid var(--line);border-radius:14px;padding:12px}
-.platform-consultative-report{margin-top:16px}
-.platform-action-item:last-child{border-bottom:0}
-.platform-preview{
-  margin-top:14px;padding:14px;border:1px solid rgba(194,65,53,.3);
-  border-radius:var(--r-sm);background:var(--tint)
-}
-.platform-preview pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
-.platform-enterprise-filters{margin-bottom:16px}
-.platform-enterprise-filter-grid{
-  display:grid;grid-template-columns:minmax(180px,1fr) minmax(170px,.7fr) minmax(240px,1.3fr);
-  gap:0 14px;align-items:start
-}
-.platform-enterprise-filter-grid .cui-field label{margin-top:0}
-.platform-enterprise-search{grid-column:span 2}
-.platform-enterprise-search .cui-field label{margin-top:0}
-.platform-enterprise-search>p{margin-top:-7px;line-height:1.4}
-.platform-enterprise-firms{grid-row:span 2}
-.platform-enterprise-firms select{min-height:148px}
-.platform-enterprise-table .platform-link-button{
-  appearance:none;border:0;background:none;min-height:44px;padding:10px 0;color:var(--ink);text-align:left;
-  text-decoration:underline;text-decoration-color:rgba(194,65,53,.28);
-  text-underline-offset:3px;cursor:pointer
-}
-.platform-enterprise-table .platform-link-button:hover{color:var(--coral)}
-.platform-enterprise-table .platform-contact-actions{margin-top:0;flex-wrap:nowrap}
-.platform-firm-secondary{display:block;margin-top:3px}
-.platform-table-link{
-  appearance:none;border:0;background:transparent;color:var(--ink);cursor:pointer;
-  display:inline-flex;flex-direction:column;font:inherit;padding:0;text-align:left
-}
-.platform-table-link b{
-  color:var(--accent,#c63f32);text-decoration:underline;
-  text-decoration-thickness:1px;text-underline-offset:3px
-}
-.platform-table-link:hover b,.platform-table-link:focus-visible b{text-decoration-thickness:2px}
-.platform-enterprise-drawer{width:min(1040px,100%)}
-.platform-enterprise-drawer .table-wrap{max-height:390px;overflow:auto}
-.platform-report-host{margin-top:18px;scroll-margin-top:86px}
-.platform-report-sheet{display:grid;gap:20px}
-.platform-report-sheet h2,.platform-report-sheet h3{letter-spacing:-.025em}
-.platform-report-insights{display:grid;gap:10px}
-.platform-insight{
-  display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:14px;
-  border:1px solid var(--hair);border-radius:12px;background:#FBFAF8
-}
-.platform-insight p{margin-top:4px;color:var(--ink2);line-height:1.55}
-.platform-insight small{
-  display:block;margin-top:7px;color:var(--muted);overflow-wrap:anywhere
-}
-.platform-report-method{
-  padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px
-}
-.platform-report-method p{margin-top:5px;line-height:1.5}
-.platform-attention-summary{
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px
-}
-.platform-attention-card{
-  min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:11px 13px;border:1px solid var(--hair);border-radius:12px;background:#fff;
-  color:var(--ink2);text-align:left;cursor:pointer
-}
-.platform-attention-card:hover,.platform-attention-card:focus-visible{border-color:var(--coral);box-shadow:var(--shadow)}
-.platform-attention-card span{font-size:11.5px;font-weight:700}
-.platform-attention-card b{font-size:1.25rem;font-variant-numeric:tabular-nums}
-.platform-attention-card.no{background:#FBE8E5;color:#8F2A23}
-.platform-attention-card.new{background:#FFF3DA;color:#75500D}
-.platform-attention-card.ok{background:#E7F5EC;color:#167247}
-.platform-filter-panel{margin-bottom:16px}
-.platform-filter-primary{
-  display:grid;grid-template-columns:minmax(240px,1.4fr) repeat(3,minmax(145px,.6fr));
-  align-items:end;gap:0 14px
-}
-.platform-filter-primary .cui-field label,.platform-filter-grid .cui-field label{margin-top:0}
-.platform-filter-submit{
-  grid-column:1/-1;display:flex;align-items:center;justify-content:flex-end;
-  gap:8px;padding-top:8px
-}
-.platform-filter-more{margin-top:12px;padding-top:12px;border-top:1px solid var(--hair)}
-.platform-filter-more>summary{
-  min-height:44px;display:flex;align-items:center;cursor:pointer;color:var(--ink2);
-  font-size:13px;font-weight:700
-}
-.platform-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 14px}
-.platform-active-filters{
-  display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:12px;
-  color:var(--muted);font-size:12px
-}
-.platform-prospect-contact{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;margin-top:5px;font-size:11.5px}
-.platform-prospect-contact span{color:var(--muted)}
-.platform-card-facts{display:grid;gap:5px;margin-top:10px}
-.platform-card-facts div{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px}
-.platform-card-facts dt{color:var(--muted);font-size:10.5px}.platform-card-facts dd{font-size:11px;overflow-wrap:anywhere}
-.platform-card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
-.platform-card-tags span{
-  max-width:100%;padding:3px 7px;border:1px solid var(--hair);border-radius:999px;
-  background:#F8F6F2;color:var(--ink2);font-size:10px;overflow-wrap:anywhere
-}
-.platform-import-step{display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;align-items:start;margin:12px 0}
-.platform-import-step>span{
-  display:grid;place-items:center;width:32px;height:32px;border-radius:999px;
-  background:var(--tint);color:var(--coral);font-size:12px;font-weight:800
-}
-.platform-import-map-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
-.platform-import-map-grid label{display:block;margin:0 0 5px;font-size:11px;font-weight:700}
-.platform-import-map-grid select{min-height:44px}
-.platform-import-summary{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0;padding:11px 12px;
-  border:1px solid var(--hair);border-radius:10px;background:#FBFAF8;font-size:12px
-}
-.platform-import-summary span{padding-left:10px;border-left:1px solid var(--line);color:var(--ink2)}
-.platform-import-review-list{max-height:330px;overflow:auto;border-block:1px solid var(--hair)}
-.platform-import-review-row{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,.4fr);gap:12px;
-  align-items:center;padding:12px 2px;border-bottom:1px solid var(--hair)
-}
-.platform-confirm-row{align-items:flex-start!important;gap:9px;min-height:44px;padding:9px 0;color:var(--ink2)}
-.platform-confirm-row input{width:20px;min-width:20px;height:20px;margin:1px 0 0}
-.platform-detail-nav{
-  position:sticky;top:-24px;z-index:4;display:flex;gap:4px;overflow-x:auto;
-  margin:-6px -4px 12px;padding:7px 4px;border-bottom:1px solid var(--hair);
-  background:rgba(244,242,238,.96);backdrop-filter:blur(12px)
-}
-.platform-detail-nav button{
-  flex:0 0 auto;min-height:40px;padding:7px 10px;border:0;border-radius:9px;
-  background:transparent;color:var(--muted);font-size:11.5px;font-weight:700;cursor:pointer
-}
-.platform-detail-nav button:hover,.platform-detail-nav button:focus-visible{background:var(--tint);color:var(--coral)}
-.platform-detail-shortcuts{margin-bottom:14px}
-.platform-action-disclosure{position:relative}
-.platform-action-disclosure>summary{list-style:none;cursor:pointer}
-.platform-action-disclosure>summary::-webkit-details-marker{display:none}
-.platform-action-disclosure-menu{position:absolute;z-index:8;right:0;top:calc(100% + 6px);display:grid;gap:6px;min-width:230px;padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow)}
-.platform-action-disclosure-menu .btn{justify-content:flex-start;width:100%}
-.platform-detail-section{scroll-margin-top:64px}
-.platform-typed-list dd{max-width:60%;overflow-wrap:anywhere}
-.platform-detail-more{margin-top:14px;border-top:1px solid var(--hair);padding-top:10px}
-.platform-detail-more summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:12.5px;font-weight:700}
-.platform-contact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.platform-contact-card{padding:14px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8}
-.platform-timeline-item{
-  position:relative;display:grid;grid-template-columns:12px minmax(0,1fr);gap:10px;
-  padding:10px 0;border-bottom:1px solid var(--hair)
-}
-.platform-timeline-marker{width:10px;height:10px;margin-top:5px;border:2px solid var(--coral);border-radius:999px;background:#fff}
-.platform-quality-rules{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-.platform-quality-rules span{
-  display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;
-  font-size:10.5px;font-weight:700
-}
-.platform-quality-rules .pass{background:#E7F5EC;color:#167247}.platform-quality-rules .fail{background:#FBE8E5;color:#9F3027}
-.platform-upload-progress{min-height:24px;margin-top:10px}
-.platform-upload-progress p{padding:9px 10px;border-radius:9px;background:#F8F6F2}
-.platform-report-sheet>.platform-detail-section{padding-top:10px;border-top:1px solid var(--hair)}
-.platform-report-sheet .platform-report-sheet{padding:0;border:0;box-shadow:none;background:transparent}
-.platform-access-summary{
-  display:grid;gap:2px;margin:0 6px 14px;padding:11px 12px;border:1px solid var(--hair);
-  border-radius:11px;background:#fff
-}
-.platform-access-summary b{font-size:12px}.platform-access-summary span{color:var(--muted);font-size:10.5px;line-height:1.4}
-.platform-denied{
-  width:min(680px,calc(100% - 28px));min-height:100dvh;margin:auto;
-  display:grid;align-content:center;gap:18px;padding:max(24px,env(safe-area-inset-top))
-}
-.platform-denied-brand{font-size:1.7rem}.platform-denied>.platform-actions{justify-content:center}
-.platform-access-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.platform-access-card{min-width:0}.platform-access-card-head{
-  display:flex;align-items:flex-start;justify-content:space-between;gap:12px
-}
-.platform-access-card-head h2{font-size:15px;overflow-wrap:anywhere}
-.platform-access-card-head p{overflow-wrap:anywhere}
-.platform-access-facts{display:grid;gap:7px;margin-top:14px;padding-block:12px;border-block:1px solid var(--hair)}
-.platform-access-facts div{display:flex;justify-content:space-between;gap:14px}
-.platform-access-facts dt{color:var(--muted);font-size:11px}.platform-access-facts dd{text-align:right;font-size:11.5px;font-weight:650}
-.platform-access-actions{justify-content:flex-end;margin-top:14px}
-.platform-active-toggle,.platform-permission-row{
-  display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:56px;
-  padding:10px 12px;border:1px solid var(--hair);border-radius:11px;background:#FBFAF8
-}
-.platform-active-toggle{justify-content:flex-start;margin-top:12px;cursor:pointer}
-.platform-active-toggle input{width:22px;height:22px;flex:0 0 auto;accent-color:var(--coral)}
-.platform-active-toggle span,.platform-permission-row>span{display:grid;gap:2px}
-.platform-active-toggle small,.platform-permission-row small{color:var(--muted);font-size:10.5px;line-height:1.4}
-.platform-permission-editor{margin-top:16px;padding:0;border:0}.platform-permission-editor legend{font-size:14px;font-weight:750}
-.platform-permission-editor>[data-permission-rows]{display:grid;gap:8px;margin-top:10px}
-.platform-permission-row select{width:min(160px,42%);min-height:44px}
-.platform-scoped-search{
-  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px;margin-bottom:16px
-}
-.platform-scoped-search .cui-field label{margin-top:0}.platform-scoped-search .btn{min-height:44px}
-.platform-scoped-report-form{display:grid;gap:16px}.platform-scoped-report-form fieldset{padding:0;border:0}
-.platform-scoped-report-form legend{font-size:14px;font-weight:750}
-.platform-scoped-report-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
-.platform-scoped-report-options label{
-  display:flex;align-items:center;gap:10px;min-height:56px;padding:10px 12px;
-  border:1px solid var(--hair);border-radius:11px;background:#FBFAF8;cursor:pointer
-}
-.platform-scoped-report-options label:has(input:checked){border-color:rgba(194,65,53,.4);background:var(--tint)}
-.platform-scoped-report-options input{width:22px;height:22px;flex:0 0 auto;accent-color:var(--coral)}
-.platform-scoped-report-options span{display:grid;gap:2px}.platform-scoped-report-options small{color:var(--muted);font-size:10.5px}
-@media print{
-  .platform-rail,.platform-topbar,.platform-mobile-nav,.platform-enterprise-filters,
-  .platform-main>.page-head,.platform-main>.card:not(.platform-report-sheet){display:none!important}
-  .platform-console{display:block;background:#fff}.platform-main{max-width:none;padding:0}
-  .platform-report-host{margin:0}.platform-report-sheet{border:0;box-shadow:none;padding:0}
-  .platform-report-sheet .table-wrap{overflow:visible}
-}
-@media(max-width:1080px){
-  .platform-console{grid-template-columns:220px minmax(0,1fr)}
-  .platform-main{padding:26px max(24px,env(safe-area-inset-right))
-    calc(48px + env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}
-  .platform-topbar{padding-inline:max(24px,env(safe-area-inset-left))}
-  .platform-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .platform-section-grid{grid-template-columns:1fr}
-  .platform-enterprise-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .platform-enterprise-search{grid-column:1/-1}
-  .platform-enterprise-firms{grid-row:auto}
-  .platform-attention-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .platform-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .platform-filter-primary{grid-template-columns:minmax(220px,1fr) minmax(170px,.6fr)}
-  .platform-filter-submit{grid-column:1/-1}
-}
-@media(max-width:760px){
-  .platform-console{display:block;padding-bottom:84px}
-  .platform-rail{display:none}
-  .platform-topbar{min-height:60px;padding:max(8px,env(safe-area-inset-top))
-    max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left));
-    align-items:center}
-  .platform-topbar-title{font-size:13px}
-  .platform-topbar-actions .btn{
-    width:44px;min-width:44px;height:44px;min-height:44px;padding:9px;justify-content:center
+    body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 438a10a11c3cac1e7f8c5ac396a38c8a378449e181faaaf6ce9a08317ce4e71e</p><main id="main"></main></div>
+    <script>
+    const $=id=>document.getElementById(id);
+    const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const money=cents=>'SGD '+(Number(cents||0)/100).toFixed(2);
+    const CUI={icon:(name)=>'<span aria-hidden="true">'+({till:'◎',loyalty:'★',customers:'●',retention:'↺',inventory:'□',referrals:'↗',memberships:'◇',giftcard:'▣'}[name]||'•')+'</span>',
+      loadingState:({title})=>'<section class="card">Loading '+esc(title)+'…</section>',
+      emptyState:({title,body})=>'<div class="empty"><b>'+esc(title)+'</b><p>'+esc(body)+'</p></div>',announce:()=>{},
+      activateDialog:(modal,{onClose,initialFocus}={})=>{const prior=document.activeElement;
+        const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
+        document.addEventListener('keydown',keydown);queueMicrotask(()=>modal.querySelector(initialFocus)?.focus());
+        return ({restoreFocus=true}={})=>{document.removeEventListener('keydown',keydown);modal.remove();if(restoreFocus)prior?.focus?.()};}};
+    const workspaceLocale='en';
+    const workspaceTemplateHtmlV97=(key,{count,version}={})=>key==='growDraftReady'?'Draft '+version+' is ready. Review every step before publishing.':count+' published '+(count===1?'reward':'rewards');
+    const recordProductInteractionV100=()=>{};
+    const localizeWorkspaceSubtreeV97=()=>{};
+    const productProfitabilityV122=()=>null;
+    const fail=error=>{throw error};
+    const toast=message=>{window.__lastToast=message};
+    const nav=()=>{};
+    const routeDispose=null;
+    const M=()=>document.getElementById('main');
+    const evidenceParams=new URLSearchParams(location.search);
+    const isManager=evidenceParams.get('role')==='manager';
+    const hasExistingDraft=evidenceParams.get('draft')==='existing';
+    const failRecommendationOnce=evidenceParams.get('failOnce')==='1';
+    const concurrentDraft=evidenceParams.get('concurrentDraft')==='1';
+    const S={myRole:isManager?'manager':'owner',myModules:['loyalty'],biz:{id:'business-spa-glow',currency:'SGD',industry:'facial'}};
+    const canWriteModule=module=>!isManager&&module==='loyalty';
+    const fixture={currentVersion:'published-v1',draft:hasExistingDraft?{id:'draft-v2',version_no:2}:null,
+      loyalty:{id:'programme-1',active:true,loyalty_model:'points_tiers',earn_points_per_dollar:10,redeem_points:1000,reward_credit_cents:1000,expiry_mode:'inactivity',expiry_days:365},
+      rewards:[
+        {id:'11111111-1111-4111-8111-111111111111',active:true,customer_name:'Signature reward',cost_points:500,estimated_cost_cents:400,sort:1},
+        {id:'22222222-2222-4222-8222-222222222222',active:true,customer_name:'Signature reward',cost_points:1500,estimated_cost_cents:900,sort:2},
+        {id:'33333333-3333-4333-8333-333333333333',active:false,customer_name:'Seasonal facial',cost_points:750,sort:3}],
+      birthday:{program_id:'birthday-1',active:true,customer_label:'Birthday Glow',customer_description:'Available during the birthday month.',fulfillment_kind:'discount_pct',discount_percent:20},
+      products:[],retention:[]};
+    window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];window.__recommendationFailed=false;
+    function fixtureQuery(table){
+      const state={single:false};
+      const query={select(){return query},eq(){return query},is(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
+        then(resolve,reject){window.__tableReads.push(table);let data=[];
+          if(table==='businesses')data={active_config_version_id:fixture.currentVersion};
+          else if(table==='loyalty_programs')data=[fixture.loyalty];
+          else if(table==='loyalty_rewards')data=fixture.rewards;
+          else if(table==='retention_programs')data=fixture.retention;
+          else if(table==='firm_config_versions')data=fixture.draft?[fixture.draft]:[];
+          return Promise.resolve({data,error:null}).then(resolve,reject)}};
+      return query;
+    }
+    const sb={from:fixtureQuery,rpc:async(name,args)=>{window.__rpcCalls.push(name);window.__rpcArgs.push({name,args});
+      if(name==='get_active_birthday_program')return {data:{status:'published',as_of:'2026-08-01T00:00:00.000Z',programs:[fixture.birthday]},error:null};
+      if(name==='owner_list_reward_profitability_products_v122')return {data:{items:fixture.products},error:null};
+      if(name==='generate_retention_recommendation'){
+        if(failRecommendationOnce&&!window.__recommendationFailed){window.__recommendationFailed=true;return {data:null,error:{message:'Synthetic lost response'}}}
+        const data=concurrentDraft
+          ?{draft_config_version_id:'draft-concurrent',status:'existing_draft',resumed_existing:true,model:'points_tiers',published:false}
+          :{draft_config_version_id:'draft-v2',status:'draft_ready',resumed_existing:false,model:'points_tiers',published:false};
+        window.__lastRecommendation=data;
+        return {data,error:null};
+      }
+      return {data:{version_id:'draft-v2'},error:null};
+    }};
+    async function loyaltyPage(){
+      const host=M();
+      host.innerHTML='<section class="card"><h2>Rewards and earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
+      host.querySelectorAll('.rwEdit').forEach(button=>button.onclick=()=>{
+        const reward=fixture.rewards.find(item=>item.id===button.dataset.rewardId);
+        window.__openedRewardId=reward?.id||null;
+        $('rwEditor').innerHTML='<div class="reward-editor"><label for="rwCustomerName">Customer-facing name</label><input id="rwCustomerName" value="'+esc(reward?.customer_name||'')+'"><p id="openedRewardIdentity">'+esc(reward?.id||'')+'</p></div>';
+      });
+      $('rwAdd').onclick=()=>{$('rwEditor').innerHTML='<div class="reward-editor"><input id="rwCustomerName" value=""></div>'};
+    }
+    async function retentionPage(){} async function storedValuePage(){} async function studioPage(){}
+    async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurrent}){
+  const none={data:[],error:null};
+  const businessRequest=sb.from('businesses').select('active_config_version_id').eq('id',S.biz.id).single();
+  const loyaltyRequest=canRewards
+    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_per_cents,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
+    :Promise.resolve(none);
+  const rewardsRequest=canRewards
+    ?sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,estimated_cost_cents,sort,claim_available_from,claim_available_until').eq('business_id',S.biz.id).order('sort')
+    :Promise.resolve(none);
+  const productsRequest=S.myRole==='owner'
+    ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
+    :Promise.resolve(none);
+  const [{data:business,error:businessError},{data:loyalty,error:loyaltyError},
+    {data:rewards,error:rewardsError},{data:products,error:productsError}]
+    =await Promise.all([businessRequest,loyaltyRequest,rewardsRequest,productsRequest]);
+  if(!isCurrent())return null;
+  if(businessError)throw businessError;
+  const currentVersion=business?.active_config_version_id||null;
+  const retentionRequest=canWinback&&currentVersion
+    ?sb.from('retention_programs').select('id,active').eq('business_id',S.biz.id)
+      .eq('current_config_version_id',currentVersion)
+    :Promise.resolve(none);
+  const birthdayRequest=canRewards&&currentVersion
+    ?sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id})
+    :Promise.resolve(none);
+  let draftRequest=Promise.resolve(none);
+  if(canSetupGrow){
+    let query=sb.from('firm_config_versions').select('id,version_no,based_on_version_id,status')
+      .eq('business_id',S.biz.id).eq('status','draft');
+    query=currentVersion?query.eq('based_on_version_id',currentVersion):query.is('based_on_version_id',null);
+    draftRequest=query.order('version_no',{ascending:false}).limit(1);
   }
-  .platform-topbar-actions .btn span{display:none}
-  .platform-locale-switcher{max-width:188px;overflow-x:auto;scrollbar-width:none}
-  .platform-locale-switcher::-webkit-scrollbar{display:none}
-  .platform-locale-switcher button{min-width:44px;padding-inline:8px;font-size:10px;white-space:nowrap}
-  .platform-main{padding:20px max(14px,env(safe-area-inset-right))
-    calc(38px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
-  .platform-kpis{grid-template-columns:1fr 1fr;gap:10px}
-  .platform-kpi{padding:17px}.platform-kpi-value{font-size:1.55rem}
-  .platform-mobile-nav{
-    position:fixed;z-index:70;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));
-    display:grid;grid-template-columns:repeat(var(--platform-mobile-count,5),minmax(0,1fr));gap:3px;padding:5px;border:1px solid var(--hair);
-    border-radius:16px;background:rgba(255,255,255,.94);box-shadow:var(--shadow-lg);
-    -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)
-  }
-  .platform-mobile-nav>a,.platform-mobile-more>summary{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:3px;min-height:58px;padding:5px 4px;border-radius:11px;color:var(--muted);
-    font-size:10px;font-weight:700;text-align:center;cursor:pointer;list-style:none
-  }
-  .platform-mobile-more>summary::-webkit-details-marker{display:none}
-  .platform-mobile-nav>a[aria-current="page"],.platform-mobile-more[data-active="true"]>summary,
-  .platform-mobile-more[open]>summary{background:var(--tint);color:var(--coral)}
-  .platform-mobile-nav .cui-icon{width:18px;height:18px}
-  .platform-mobile-more{position:relative;min-width:0}
-  .platform-mobile-more-menu{
-    position:absolute;right:0;bottom:calc(100% + 10px);width:min(240px,calc(100vw - 24px));
-    display:grid;gap:3px;padding:7px;border:1px solid var(--hair);border-radius:14px;
-    background:#fff;box-shadow:var(--shadow-lg)
-  }
-  .platform-mobile-more-menu a{
-    display:flex;align-items:center;gap:10px;min-height:44px;padding:9px 11px;
-    border-radius:9px;color:var(--ink2);font-size:12px;font-weight:700;text-align:left
-  }
-  .platform-mobile-more-menu a[aria-current="page"]{background:var(--tint);color:var(--coral)}
-  .platform-kanban{display:none}
-  .platform-prospect-list{display:grid;gap:10px}
-  .platform-prospect-list .platform-prospect-card{display:block}
-  .platform-detail-grid,.platform-form-grid,.platform-health-grid{grid-template-columns:1fr}
-  .platform-form-grid .wide{grid-column:auto}
-  .platform-enterprise-filter-grid{grid-template-columns:1fr}
-  .platform-enterprise-search{grid-column:auto}
-  .platform-attention-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .platform-filter-primary,.platform-filter-grid,.platform-import-map-grid{grid-template-columns:1fr}
-  .platform-filter-submit{grid-column:auto}
-  .platform-filter-submit .btn{flex:1 1 auto}
-  .platform-contact-grid{grid-template-columns:1fr}
-  .platform-import-review-row{grid-template-columns:1fr}
-  .platform-import-review-row select{width:100%}
-  .platform-detail-nav{top:-20px}
-  .platform-detail-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-  .platform-detail-shortcuts .btn{justify-content:center}
-  .platform-detail-shortcuts .platform-action-disclosure{position:static}
-  .platform-action-disclosure-menu{position:fixed;z-index:30;left:12px;right:12px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom));max-height:min(70vh,520px);overflow:auto}
-  .platform-typed-list dd{max-width:55%}
-  .platform-enterprise-firms select{min-height:132px}
-  .platform-insight{grid-template-columns:1fr}
-  .platform-drawer{padding-left:0;align-items:flex-end}
-  .platform-drawer-panel{height:min(92dvh,900px);border-radius:20px 20px 0 0;padding:20px 16px}
-  .platform-modal{align-items:end;padding:0}
-  .platform-modal-panel{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:20px 16px}
-  .platform-form-actions>.btn{flex:1 1 auto}
-  .platform-module-options,.platform-bundle-diff{grid-template-columns:1fr}
-  .platform-module-policy-intro{display:grid}
-  .platform-module-policy-row{grid-template-columns:1fr}
-  .platform-paged-summary{align-items:stretch;flex-direction:column}
-  .platform-paged-summary .btn{width:100%;justify-content:center}
-  .platform-branch-control-list{grid-template-columns:1fr}
-  .platform-today-item{grid-template-columns:1fr;gap:12px}
-  .platform-today-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .platform-today-action{width:100%;justify-content:center}
-  .platform-today-coverage li{display:grid;gap:2px}
-  .platform-today-coverage li span{text-align:left}
-  .platform-access-list,.platform-scoped-report-options{grid-template-columns:1fr}
-  .platform-scoped-search{grid-template-columns:1fr}
-  .platform-scoped-search .btn{width:100%;justify-content:center}
-  .platform-permission-row{align-items:flex-start;flex-direction:column}
-  .platform-permission-row select{width:100%}
+  const [{data:retention,error:retentionError},{data:drafts,error:draftError},
+    {data:birthday,error:birthdayError}]
+    =await Promise.all([retentionRequest,draftRequest,birthdayRequest]);
+  if(!isCurrent())return null;
+  /* Overview reads are intentionally fail-soft. A missing optional engine must not hide the
+     rest of Grow; its node reports Needs setup while its dedicated surface keeps the full error. */
+  return {
+    currentVersion,
+    asOf:birthdayError?null:birthday?.as_of||null,
+    loyalty:loyaltyError?null:(loyalty||[])[0]||null,
+    rewards:rewardsError?[]:rewards||[],
+    products:productsError?[]:(Array.isArray(products?.items)?products.items:[]),
+    birthday:birthdayError?null:(Array.isArray(birthday?.programs)?birthday.programs[0]:null)||null,
+    retention:retentionError?[]:retention||[],
+    draft:draftError?null:(drafts||[])[0]||null,
+    overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError)}
+  };
 }
-@media(max-width:390px){
-  .platform-kpis{grid-template-columns:1fr}
-  .platform-main{padding-inline:max(12px,env(safe-area-inset-left))}
+    function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null}={}){
+  const model=loyalty?.loyalty_model||loyaltyModel||'points';
+  const unit=model==='stamps'?'stamps':'points';
+  const programmeActive=loyalty?.active===true;
+  const asOfMs=Number.isFinite(Date.parse(asOf||''))?Date.parse(asOf):Date.now();
+  const compactNumber=value=>Number.isInteger(Number(value))?String(Number(value)):String(Number(value)).replace(/\.0+$/,'');
+  const pointsRate=Math.max(0,Number(loyalty?.earn_points_per_dollar||0));
+  const stampSpendCents=Math.max(0,Number(loyalty?.stamp_per_cents||0));
+  const earning=!loyalty?null:model==='stamps'
+    ?{model,unit,rate:stampSpendCents,availableToCustomers:programmeActive,label:`Earn 1 stamp per SGD ${(stampSpendCents/100).toFixed(2)} spent`}
+    :{model,unit,rate:pointsRate,availableToCustomers:programmeActive,label:`Earn ${compactNumber(pointsRate)} points per SGD 1 spent`};
+  const allRewards=Array.isArray(rewards)?rewards:[];
+  const ordered=allRewards
+    .filter(reward=>reward?.active!==false)
+    .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0)||Number(a.sort||0)-Number(b.sort||0));
+  const milestones=ordered
+    .map((reward,index)=>{
+      const startsAt=reward.claim_available_from?Date.parse(reward.claim_available_from):null;
+      const endsAt=reward.claim_available_until?Date.parse(reward.claim_available_until):null;
+      const availability=!loyalty?'programme_unconfigured':!programmeActive?'programme_paused':model==='classic'?'not_current_model'
+        :Number.isFinite(startsAt)&&startsAt>asOfMs?'not_started'
+        :Number.isFinite(endsAt)&&endsAt<=asOfMs?'ended':'available';
+      return {
+        id:reward.id||String(index),name:reward.customer_name||reward.name||'Reward',
+        threshold:Math.max(0,Number(reward.cost_points||0)),unit,
+        additional:index?Math.max(0,Number(reward.cost_points||0)-Number(ordered[index-1]?.cost_points||0)):Math.max(0,Number(reward.cost_points||0)),
+        estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0)),
+        availability,availableToCustomers:availability==='available'
+      };
+    });
+  const archivedRewards=allRewards.filter(reward=>reward?.active===false)
+    .sort((a,b)=>Number(a.sort||0)-Number(b.sort||0)||Number(a.cost_points||0)-Number(b.cost_points||0))
+    .map((reward,index)=>({
+      id:reward.id||reward.reward_id||`archived-${index}`,
+      name:reward.customer_name||reward.name||'Reward',threshold:Math.max(0,Number(reward.cost_points||0)),unit,
+      estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0)),active:false
+    }));
+  const redeemPoints=Math.max(0,Number(loyalty?.redeem_points||0));
+  const rewardCreditCents=Math.max(0,Number(loyalty?.reward_credit_cents||0));
+  const classicReward=model==='classic'&&redeemPoints>0&&rewardCreditCents>0?{
+    id:`classic:${loyalty?.id||'programme'}`,name:'Points redemption',threshold:redeemPoints,unit:'points',
+    value:`SGD ${(rewardCreditCents/100).toFixed(2)} store credit`,availableToCustomers:programmeActive
+  }:null;
+  const birthdayReward=!birthday?null:{
+    id:birthday.id||birthday.program_id||'birthday',
+    active:birthday.active!==false,
+    name:birthday.customer_label||'Birthday reward',
+    description:birthday.customer_description||'Available in the configured birthday window.',
+    value:birthday.fulfillment_kind==='discount_pct'
+      ?`${Number(birthday.discount_percent||0)}% off`
+      :birthday.manual_item||'Configured birthday benefit'
+  };
+  return {model,unit,earning,milestones,archivedRewards,classicReward,birthday:birthdayReward};
 }
-
-.v105-provenance{position:fixed;right:8px;bottom:8px;z-index:99;padding:4px 8px;border-radius:999px;background:#fff;border:1px solid #ddd;color:#67616d;font:11px/1.2 system-ui}
-</style>
-</head>
-<body>
-<div id="appStatus" class="sr-only" aria-live="polite"></div>
-<div id="appAlert" class="sr-only" aria-live="assertive"></div>
-<div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 6e04da288a28</span>
-<script src="../../app/customer-ui.js"></script>
-<script src="../../app/platform-console.js"></script>
-<script>
-const params=new URLSearchParams(location.search);
-const role=params.get('role')||'super_admin';
-const failure=params.get('failure')||'';
-const route=params.get('route')||'overview';
-const now='2026-07-29T10:00:00+08:00';
-const responses={
-  get_workspace_locale_preference_v97:{locale:'en',version:1},
-  platform_list_my_access_v89:role==='denied'?{role:'business_owner'}:{
-    role,scope:role==='sales_staff'?'own_created_or_assigned':'all',
-    module_perms:role==='admin'?{overview:'r',onboarding:'rw',firms:'r',reports:'rw'}
-      :role==='sales_staff'?{overview:'r',onboarding:'rw',firms:'r',reports:'r'}:{}
-  },
-  platform_list_firm_onboarding_v88:{
-    items:[
-      {business_id:'firm-glow',name:'Glow Atelier',sector_key:'facial',lane_key:'contacting',
-       source_stage_key:'appt_set',attention_severity:'warning',attention_due:true,
-       days_unattended:3,owner_name:'Aisha Tan',boss_phone:'81234567'},
-      {business_id:'firm-cafe',name:'Harbour Bean',sector_key:'fnb',lane_key:'case_won',
-       source_stage_key:'onboarding',attention_severity:'info',attention_due:false,
-       days_unattended:1,owner_name:'Marcus Lim',boss_phone:'82345678'}
-    ],
-    total_count:148,snapshot_at:now,attention_summary:{due:1,warning:1,info:1}
-  },
-  platform_list_firm_attention_v88:{items:[
-    {business_id:'firm-glow',name:'Glow Atelier',lane_key:'contacting',source_stage_key:'appt_set',
-     attention_severity:'warning',attention_due:true,days_unattended:3,
-     next_action_at:'2026-07-29T09:00:00+08:00',owner_name:'Aisha Tan'}
-  ]},
-  get_platform_billing_v77:[
-    {business_id:'firm-well',business_name:'Wellness House',status:'past_due',
-     payment_status:'past_due',days_past_due:4,owner_name:'Nadia Lee',updated_at:now}
-  ],
-  get_consultant_commission_dashboard_v78:{accruals:[
-    {id:'commission-1',consultant_name:'Marcus Lim',status:'payable',due_at:'2026-07-30T10:00:00+08:00'}
-  ]},
-  platform_list_business_applications_v95:{applications:[
-    {id:'application-1',business_name:'Little Orchard Salon',status:'submitted',
-     submitted_at:'2026-07-28T09:00:00+08:00',owner_name:'Unassigned'}
-  ]},
-  platform_get_automation_reconciliation_v89:{runs:[]},
-  platform_list_my_firms_v105:{items:[
-    {business_id:'firm-glow',name:'Glow Atelier',prospect_id:'prospect-1',
-     row_id:'11111111-1111-4111-8111-111111111111',updated_at:'2026-07-29T09:00:00+08:00',
-     lane_key:'contacting',source_stage_key:'appt_set',attention_due:true,
-     attention_severity:'warning',days_unattended:3,owner_name:'Aisha Tan'},
-    {business_id:'firm-cafe',name:'Harbour Bean',prospect_id:'prospect-2',
-     row_id:'22222222-2222-4222-8222-222222222222',updated_at:'2026-07-28T09:00:00+08:00',
-     lane_key:'case_won',source_stage_key:'onboarding',attention_due:false,
-     attention_severity:'none',owner_name:'Aisha Tan'}
-  ],scope:role==='sales_staff'?'own_created_or_assigned':'all',
-    snapshot_at:now,total_count:2,next_cursor:null},
-  platform_get_enterprise_hierarchy_v82:{
-    firms:[{
-      business_id:'firm-glow',id:'firm-glow',name:'Glow Atelier',
-      legal_name:'Glow Atelier Pte Ltd',industry:'facial',sector_key:'facial',
-      registration_number:'202612345N',owner_name:'Aisha Tan',
-      owner_email:'owner@glow.test',owner_phone:'81234567',
-      branch_count:2,staff_count:8,customer_count:164,currency:'SGD',
-      created_at:'2026-01-10T10:00:00+08:00',
-      summary:{
-        net_revenue_cents:18425000,cash_collected_cents:18000000,
-        returning_customers:71,completed_transactions:428
-      },
-      branches:[
-        {branch_id:'branch-orchard',name:'Orchard',active:true,is_default:true,
-         customer_count:101,staff_count:5,net_revenue_cents:11500000,completed_transactions:271},
-        {branch_id:'branch-tampines',name:'Tampines',active:true,is_default:false,
-         customer_count:63,staff_count:3,net_revenue_cents:6925000,completed_transactions:157}
-      ]
-    }],
-    snapshot_at:now,
-    pagination:{total_firms:1,returned_firms:1,has_more:false,next_cursor:null}
-  },
-  platform_list_enterprise_customers_v82:{
-    customers:[
-      {client_id:'customer-1',full_name:'Mei Lin Tan',phone:'89881234',
-       email:'mei@example.test',net_revenue_cents:48600,cash_collected_cents:48600,
-       completed_transactions:8,visit_count:8,first_purchase_at:'2026-02-11T10:00:00+08:00',
-       last_purchase_at:'2026-07-28T17:30:00+08:00'}
-    ],
-    snapshot_at:now,
-    pagination:{total_customers:164,returned_customers:1,has_more:false,next_cursor:null}
-  },
-  platform_get_business_control_v94:{
-    approval:{status:'approved',version:2},
-    subscription:{state:'active',due_date:'2026-08-01',workspace_paused:false},
-    representative:{display_name:'Nadia Lee',hotline_phone:'81234567'},
-    catalogue_intelligence:{enabled:true,version:1},
-    workspace_access:true
-  },
-  platform_get_effective_modules_v105:{
-    business_id:'firm-glow',branch_id:null,workspace_access:true,inventory_global_disabled:true,
-    modules:[
-      {module_key:'dashboard',mode:'rw',source:'sector',version:null,override_mode:'inherit',override_version:null},
-      {module_key:'clients',mode:'rw',source:'sector',version:null,override_mode:'inherit',override_version:null},
-      {module_key:'appointments',mode:'rw',source:'sector',version:null,override_mode:'inherit',override_version:null},
-      {module_key:'loyalty',mode:'rw',source:'sector',version:null,override_mode:'inherit',override_version:null},
-      {module_key:'reports',mode:'r',source:'firm',version:3,override_mode:'r',override_version:3}
-    ]
-  },
-  platform_set_module_overrides_v105:{business_id:'firm-glow',branch_id:null,updated_count:2,modules:[]},
-  platform_list_sector_entitlements_v75:{profiles:[
-    {sector_key:'facial',name:'Facial / Spa',status:'active',versions:[{version:1,status:'published'}]}
-  ],businesses:[
-    {business_id:'firm-glow',business_name:'Glow Atelier',sector_key:'facial',assignment_version:1}
-  ]}
-};
-const sb={rpc:async(name)=>{
-  if(failure===name)return{data:null,error:{code:'PGRST500',message:'fixture failure'}};
-  return{data:Object.prototype.hasOwnProperty.call(responses,name)?responses[name]:null,error:null};
-}};
-const root=document.getElementById('v105AdminRoot');
-const CUI=window.FrenlyCustomerUI;
-window.NestlyPlatformConsole.render({
-  root,sb,CUI,brand:{productName:'Nestly',wordmark:'nestly.'},
-  hash:'#/platform/'+route,isCurrent:()=>true,onSignOut:()=>{},workspaceHash:'#/workspace'
-}).then(()=>document.documentElement.dataset.ready='true').catch(error=>{
-  document.documentElement.dataset.ready='error';
-  root.textContent='Harness error: '+error.message;
-});
-window.v105AcceptanceMetrics=()=>({
-  sourceHash:'6e04da288a28d11f5ca28f0bb6b566bfaba6c58fc92e24a6e816be2f8fae7560',
-  ready:document.documentElement.dataset.ready,
-  viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
-  role,
-  primaryGroups:[...document.querySelectorAll('.platform-nav-group:not(.platform-nav-secondary)')].map(node=>node.textContent.trim()),
-  secondaryGroups:[...document.querySelectorAll('.platform-nav-secondary')].map(node=>node.textContent.trim()),
-  todayItems:document.querySelectorAll('[data-platform-today-item]').length,
-  primaryActions:document.querySelectorAll('[data-today-primary-action]').length,
-  firmDirectoryRows:document.querySelectorAll('[data-enterprise-firm]').length,
-  firmModuleManagers:document.querySelectorAll('[data-module-control]').length,
-  perModuleEditButtons:[...document.querySelectorAll('button')].filter(node=>/^edit$/i.test(node.textContent.trim())).length,
-  modulePolicy:{
-    open:Boolean(document.querySelector('.platform-module-policy-list')),
-    groups:document.querySelectorAll('.platform-module-policy-group').length,
-    rows:document.querySelectorAll('.platform-module-policy-row').length,
-    selectors:document.querySelectorAll('[data-module-mode]').length,
-    resetButtons:document.querySelectorAll('[data-reset-module-policy]').length,
-    saveButtons:[...document.querySelectorAll('button')].filter(node=>/save module access/i.test(node.textContent.trim())).length
-  },
-  touchTargets:[...document.querySelectorAll('button,.btn,a.platform-nav-link')].map(node=>({
-    text:node.textContent.trim(),width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height,
-    visible:Boolean(node.getClientRects().length)
-  })),
-  horizontalOverflow:document.documentElement.scrollWidth>document.documentElement.clientWidth,
-  visibleText:document.body.innerText
-});
-</script>
-</body>
-</html>
+    function growStatus(label,tone=''){
+  return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
+}
+    async function growPage(routedSurface,hashParam){
+  const outerMain=M(),isGrowCurrent=()=>outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
+  const modules=S.myModules||[];
+  const canRewards=modules.includes('loyalty'),canWinback=modules.includes('retention');
+  const isOwner=S.myRole==='owner';
+  const canSetupGrow=isOwner&&canRewards&&canWriteModule('loyalty');
+  const canEditProductCosts=isOwner&&canRewards&&canWriteModule('loyalty');
+  recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
+    context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
+  });
+  outerMain.innerHTML=CUI.loadingState({title:'Grow',iconName:'loyalty'});
+  const snapshot=await growOverviewSnapshot({canRewards,canWinback,canSetupGrow,isCurrent:isGrowCurrent});
+  if(!snapshot||!isGrowCurrent())return;
+  let growDraftVersionId=hashParam&&['rewards','winback'].includes(routedSurface)?hashParam:(snapshot.draft?.id||null);
+  const rewardJourney=ownerRewardJourneyV122({
+    rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
+  });
+  const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
+  const earningOverviewCopy=rewardJourney.earning?.availableToCustomers
+    ?rewardJourney.earning.label:`Programme paused · configured as ${rewardJourney.earning?.label||'no earning rule'}`;
+  const milestoneOverviewCopy=(milestone,index)=>{
+    const cost=milestone.estimatedCostCents?` · estimated fulfilment cost ${money(milestone.estimatedCostCents)}`:'';
+    if(milestone.availableToCustomers)return `Reach ${milestone.threshold} ${milestone.unit}${index?` · ${milestone.additional} more after the previous reward`:''}${cost}`;
+    const state=milestone.availability==='programme_paused'?'Programme paused'
+      :milestone.availability==='not_started'?'Scheduled · not available yet'
+      :milestone.availability==='ended'?'Claim period ended'
+      :milestone.availability==='not_current_model'?'Not used by the current Simple points programme'
+      :'Programme not configured';
+    return `${state} · configured at ${milestone.threshold} ${milestone.unit}${cost}`;
+  };
+  const rewardsOverviewIncomplete=Boolean(snapshot.overviewErrors?.loyalty||snapshot.overviewErrors?.rewards||snapshot.overviewErrors?.birthday);
+  const profitabilityProducts=(snapshot.products||[]).map(product=>({
+    ...product,
+    profit:product.cost_cents==null?null:productProfitabilityV122({
+      priceCents:product.retail_price_cents,costCents:product.cost_cents
+    })
+  }));
+  const bringBackCount=snapshot.retention.filter(x=>x.active!==false).length;
+  const loyaltyLive=Boolean(snapshot.loyalty?.active&&snapshot.currentVersion);
+  const bringBackLive=bringBackCount>0;
+  const draftLabel=growDraftVersionId?'Draft ready':null;
+  const nodeStatus=live=>draftLabel|| (live?'Live':'Needs setup');
+  const nodeTone=live=>draftLabel?'new':live?'on':'off';
+  const optionalTools=[
+    isOwner&&canRewards?{key:'promotions',icon:'loyalty',title:'Promotions',copy:'Publish up to two timely offers at the top of your customer programme.'}:null,
+    modules.includes('referrals')?{key:'referrals',icon:'referrals',title:'Referrals',copy:'Turn happy customers into trusted introductions.'}:null,
+    modules.includes('memberships')?{key:'memberships',icon:'memberships',title:'Memberships',copy:'Build recurring value for your most regular customers.'}:null,
+    modules.includes('giftcards')?{key:'giftcards',icon:'giftcard',title:'Gift cards',copy:'Let customers share prepaid value with someone new.'}:null
+  ].filter(Boolean);
+  const editorAction=(surface,label,target)=>{
+    const available=surface==='rewards'?canRewards:canWinback;
+    if(!isOwner||!available||!growDraftVersionId)return '';
+    return `<button type="button" class="btn ghost sm" data-grow-open="${surface}" data-grow-focus="${esc(target||'')}">${esc(label)}</button>`;
+  };
+  outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-workspace-i18n>
+    <section class="grow-hero" aria-labelledby="growTitle">
+      <div class="grow-hero-copy"><h1 id="growTitle">Grow</h1>
+        <p class="muted">See every customer reward in one place, or let Nestly prepare a simple starting draft for you.</p>
+        ${isOwner?`<p class="muted small">Nothing goes live until you review and publish.</p>`:
+          '<p class="muted small">This is the programme customers are using now.</p>'}</div>
+      ${canSetupGrow?`<button type="button" class="btn grow-primary" id="growAutoSetup"
+        aria-describedby="growSetupSafety">Set up rewards automatically</button>`:''}
+    </section>
+    ${canSetupGrow?'<p class="muted small" id="growSetupSafety" style="margin:-10px 2px 0">Automatic setup creates an editable draft only. Customers keep using the published programme until you publish.</p>':''}
+    ${canRewards?`<section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle">
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programme overview</p><h2 id="rewardJourneyTitle">Rewards overview</h2><p class="muted small">One published view of how customers earn, what they can unlock, and the birthday benefit. ${canSetupGrow?'Select any item to edit its exact rule.':'Only the owner with Loyalty edit access can change these rules.'}</p></div>
+        ${canSetupGrow?'<button type="button" class="btn ghost sm" data-rewards-overview-edit="add">Add reward</button>':''}</div>
+      ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Rewards could not be loaded completely.</b><p class="small" style="margin-top:5px">The overview may be missing published items. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry rewards overview</button></div>`:''}
+      <div class="rewards-overview-grid">
+        ${rewardJourney.earning?(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="earning">
+          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p><span class="rewards-overview-edit-label">Edit earning rule</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div></article>`)
+          :(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning not configured</b><p class="muted small">Choose points or stamps and set the earning rate.</p><span class="rewards-overview-edit-label">Set up earning</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning not configured</b><p class="muted small">The owner has not published an earning rule.</p></div></article>`)}
+        ${rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="classic">
+          <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p><span class="rewards-overview-edit-label">Edit this redemption</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div></article>`):''}
+        ${rewardJourney.milestones.map((milestone,index)=>canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="catalogue" data-reward-id="${esc(milestone.id)}">
+          <span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p><span class="rewards-overview-edit-label">Edit this reward</span></div></button>`
+          :`<article class="rewards-overview-card" data-reward-milestone><span class="reward-milestone-number">${milestone.availableToCustomers?index+1:CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(milestone.name)}</b><p class="muted small">${esc(milestoneOverviewCopy(milestone,index))}</p></div></article>`).join('')}
+        ${rewardJourney.birthday?(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
+          <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p><span class="rewards-overview-edit-label">Edit birthday benefit</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div></article>`)
+          :(canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit not configured</b><p class="muted small">Add an optional birthday benefit and choose its eligibility window.</p><span class="rewards-overview-edit-label">Set up birthday benefit</span></div></button>`
+          :`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit not configured</b><p class="muted small">No birthday benefit is published.</p></div></article>`)}
+      </div>
+      ${!rewardJourney.classicReward&&!rewardJourney.milestones.length?`<p class="muted small" style="margin-top:12px">No redeemable rewards are published yet. ${canSetupGrow?'Use Add reward to create the first protected draft.':'The owner can add a reward from Grow setup.'}</p>`:''}
+      ${rewardJourney.archivedRewards.length?`<details style="margin-top:12px"><summary>Paused or archived rewards (${rewardJourney.archivedRewards.length})</summary><div class="rewards-overview-grid">${rewardJourney.archivedRewards.map(reward=>canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="catalogue" data-reward-id="${esc(reward.id)}"><span class="reward-milestone-number">${CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(reward.name)}</b><p class="muted small">${reward.threshold} ${esc(reward.unit)} · not available to customers</p><span class="rewards-overview-edit-label">Review or reactivate</span></div></button>`:`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(reward.name)}</b><p class="muted small">Not available to customers</p></div></article>`).join('')}</div></details>`:''}
+    </section>`:''}
+    <details class="grow-secondary" id="growSecondarySettings">
+      <summary>More reward settings</summary><div class="grow-secondary-body">
+      <div class="grow-secondary-intro"><h2>How the programme fits together</h2><p class="muted small">Open these controls only when you want to fine-tune the automatic draft or review reward economics.</p></div>
+      <ol class="grow-flow" aria-label="Grow customer journey">
+        <li class="grow-flow-step" data-grow-step="trigger"><span class="grow-flow-icon">${CUI.icon('till',{size:22})}</span>
+          <h2>Trigger</h2><p>Choose which eligible sale or visit starts the journey.</p>
+          <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit earning','lm')}</div></li>
+        <li class="grow-flow-step" data-grow-step="who"><span class="grow-flow-icon">${CUI.icon('customers',{size:22})}</span>
+          <h2>Who</h2><p>Decide who earns, progresses, or receives a bring-back.</p>
+          <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit audience','loyaltyAudienceSettings')}</div></li>
+        <li class="grow-flow-step" data-grow-step="reward"><span class="grow-flow-icon">${CUI.icon('loyalty',{size:22})}</span>
+          <h2>Reward</h2><p>${rewardCount?workspaceTemplateHtmlV97(rewardCount===1?'growPublishedReward':'growPublishedRewards',{count:rewardCount}):'Define a clear reward your team can fulfil.'}</p>
+          <div class="grow-flow-foot">${growStatus(nodeStatus(rewardCount>0),nodeTone(rewardCount>0))}${editorAction('rewards','Edit reward','rwAdd')}</div></li>
+        <li class="grow-flow-step" data-grow-step="result"><span class="grow-flow-icon">${CUI.icon('retention',{size:22})}</span>
+          <h2>Result</h2><p>${bringBackCount?workspaceTemplateHtmlV97(bringBackCount===1?'growPublishedBringBackRule':'growPublishedBringBackRules',{count:bringBackCount}):'Measure repeat visits and bring customers back before they drift.'}</p>
+          <div class="grow-flow-foot">${growStatus(nodeStatus(bringBackLive),nodeTone(bringBackLive))}${editorAction('winback','Edit bring-back','rn')}</div></li>
+      </ol>
+    ${isOwner?`<section class="card profitability-overview-v122" aria-labelledby="profitabilityTitle">
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Reward economics</p><h2 id="profitabilityTitle">Product cost and profitability</h2><p class="muted small">Use real cost, not retail price, when deciding what a reward can safely cost.</p></div></div>
+      ${profitabilityProducts.length?`<div class="profitability-product-grid">${profitabilityProducts.slice(0,6).map(product=>{
+        const safeReward=product.profit?Math.max(0,Math.round(product.profit.grossProfitCents*.25)):null;
+        return `<article data-product-profitability="${esc(product.id)}" data-price-cents="${Number(product.retail_price_cents)||0}" data-cost-cents="${product.cost_cents==null?'':Number(product.cost_cents)}"><b>${esc(product.name)}</b><dl><div><dt>Sell for</dt><dd>${money(product.retail_price_cents)}</dd></div><div><dt>Product cost</dt><dd>${product.cost_cents==null?'Not set':money(product.cost_cents)}</dd></div>${product.profit?`<div><dt>Gross profit</dt><dd>${money(product.profit.grossProfitCents)} · ${product.profit.marginPct}%</dd></div>`:''}</dl>
+          ${canEditProductCosts?`<label for="productCost-${esc(product.id)}" style="margin-top:10px">Unit cost (${esc(S.biz.currency||'SGD')})</label><div class="row"><input id="productCost-${esc(product.id)}" data-product-cost="${esc(product.id)}" inputmode="decimal" placeholder="e.g. 24.00" value="${product.cost_cents==null?'':(Number(product.cost_cents)/100).toFixed(2)}"><button type="button" class="btn ghost sm" data-product-cost-save="${esc(product.id)}" data-expected-cost="${product.cost_cents==null?'':Number(product.cost_cents)}">Save cost</button></div>`:''}
+          ${product.profit&&canSetupGrow?`<label for="rewardCost-${esc(product.id)}" style="margin-top:10px">Proposed reward cost (${esc(S.biz.currency||'SGD')})</label><div class="row"><input id="rewardCost-${esc(product.id)}" data-reward-cost="${esc(product.id)}" inputmode="decimal" value="${(safeReward/100).toFixed(2)}"><button type="button" class="btn ghost sm" data-reward-cost-use="${esc(product.id)}">Use in reward setup</button></div><p class="small" data-profit-after-reward="${esc(product.id)}" style="margin-top:8px">Reward cost ${money(safeReward)} leaves ${money(product.profit.grossProfitCents-safeReward)} profit after reward.</p>`:''}
+          <p class="muted small" style="margin-top:9px">${product.profit?`Assistant starting point: ${money(safeReward)} is 25% of gross profit. Edit the proposed cost, inspect the remaining profit, then send it to the reward draft.`:'Add the real unit cost to calculate gross profit and a cautious reward-cost starting point.'}</p></article>`;
+      }).join('')}</div>`:CUI.emptyState({iconName:'inventory',title:'No products available',body:'Add a real product through your catalogue setup, then return here to record its cost and review profitability.'})}
+      ${canEditProductCosts?'':`<p class="muted small" style="margin-top:12px">Product costs are read-only because this workspace does not grant Inventory write access.</p>`}
+      <p class="muted small" style="margin-top:12px">Guidance is deterministic and editable. It never publishes or changes a reward automatically.</p>
+    </section>`:''}
+    ${optionalTools.length?`<section aria-labelledby="growOptionalTitle"><div class="grow-section-heading">
+      <div><h2 id="growOptionalTitle">Optional growth tools</h2><p class="muted small">Add another growth loop only when it supports your programme.</p></div></div>
+      <div class="grow-optional">${optionalTools.map(tool=>`<article class="grow-optional-card"><div>
+        <b>${CUI.icon(tool.icon,{size:17})} ${esc(tool.title)}</b><p>${esc(tool.copy)}</p></div>
+        <a class="btn ghost sm" href="#/${tool.key}">Open</a></article>`).join('')}</div></section>`:''}
+    ${isOwner?`<details class="grow-advanced" id="growAdvanced" ${['studio','storedvalue'].includes(routedSurface)?'open':''}>
+      <summary>Advanced tools</summary>
+      <p class="muted small">Technical programme authoring, taxonomy, versions and rollback, and stored-value controls stay separate from everyday Grow setup.</p>
+      <div class="grow-advanced-actions">
+        <button type="button" class="btn ghost" data-grow-open="studio">Program Studio</button>
+        <button type="button" class="btn ghost" data-grow-open="storedvalue">Stored value</button>
+        ${canRewards?'<button type="button" class="btn ghost" data-grow-open="rewards">Rewards and versions</button>':''}
+        ${canWinback?'<button type="button" class="btn ghost" data-grow-open="winback">Bring-back rules and taxonomy</button>':''}
+      </div></details>`:''}
+      </div>
+    </details>
+    <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
+  </div>`;
+  localizeWorkspaceSubtreeV97(outerMain);
+  document.querySelectorAll('[data-product-cost-save]').forEach(button=>button.onclick=async()=>{
+    const productId=button.dataset.productCostSave;
+    const input=document.querySelector(`[data-product-cost="${CSS.escape(productId)}"]`);
+    const raw=String(input?.value||'').trim();
+    if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter a product cost, for example 24.00');
+    const costCents=Math.round(Number(raw)*100);
+    if(costCents<0||costCents>2147483647)return toast('Product cost is outside the supported range');
+    button.disabled=true;
+    const expectedRaw=button.dataset.expectedCost;
+    const {data,error}=await sb.rpc('owner_set_product_cost_v122',{
+      p_business:S.biz.id,p_product:productId,p_cost_cents:costCents,
+      p_expected_cost_cents:expectedRaw===''?null:Number(expectedRaw)
+    });
+    if(!isGrowCurrent())return;
+    if(error||data?.id!==productId){
+      button.disabled=false;
+      return fail(error||new Error('Product cost was not confirmed. Nothing was changed.'));
+    }
+    toast('Product cost saved');
+    await growPage(routedSurface,hashParam);
+  });
+  const panelHost=$('growpanelhost');
+  let activeSurface=null,pendingGuideAction=null,pendingRewardEstimateCents=null,rewardAutoSetupRequestKey=null;
+  const surfaceDefinition={
+    rewards:{hash:'#/loyalty',label:'Rewards and earning'},
+    winback:{hash:'#/retention',label:'Bring-back rules'},
+    studio:{hash:'#/studio',label:'Program Studio'},
+    storedvalue:{hash:'#/storedvalue',label:'Stored value'}
+  };
+  const focusGrowTarget=(target,{activate=false}={})=>{
+    const element=target?$(target):null;
+    if(!element)return false;
+    if(activate){element.click();return true}
+    if(element.tagName==='DETAILS')element.open=true;
+    element.focus?.({preventScroll:true});
+    element.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    return true;
+  };
+  async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null}={}){
+    const openExactReward=()=>{
+      if(surface!=='rewards'||!rewardId)return false;
+      const editButton=panelHost.querySelector(`.rwEdit[data-reward-id="${CSS.escape(rewardId)}"]`);
+      if(!editButton){
+        const notice=document.createElement('p');notice.className='notice warn small';notice.setAttribute('role','status');
+        notice.textContent='This published reward is not present in the current draft. Review the draft before changing another reward.';
+        panelHost.querySelector('#main')?.prepend(notice);notice.focus?.({preventScroll:true});return false;
+      }
+      editButton.click();
+      const editor=$('rwEditor');
+      editor?.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+      $('rwCustomerName')?.focus({preventScroll:true});
+      return true;
+    };
+    const applyPendingRewardEstimate=()=>{
+      if(surface!=='rewards'||pendingRewardEstimateCents===null)return false;
+      const estimate=$('rwEstimate');
+      if(!estimate)return false;
+      estimate.value=(pendingRewardEstimateCents/100).toFixed(2);
+      estimate.dispatchEvent(new Event('input',{bubbles:true}));
+      pendingRewardEstimateCents=null;
+      toast('Proposed fulfilment cost added to the editable reward');
+      return true;
+    };
+    if(activeSurface===surface){
+      if(!openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
+      applyPendingRewardEstimate();
+      return;
+    }
+    if((surface==='rewards'&&!canRewards)||(surface==='winback'&&!canWinback))return;
+    if(['studio','storedvalue'].includes(surface)&&!isOwner)return;
+    activeSurface=surface;
+    const definition=surfaceDefinition[surface],draft=draftOverride||growDraftVersionId;
+    const suffix=draft&&['rewards','winback','studio'].includes(surface)?`/${draft}`:'';
+    history.replaceState(null,'',`${location.pathname}${location.search}${definition.hash}${suffix}`);
+    const oldPanel=panelHost.firstElementChild;
+    if(oldPanel)oldPanel.remove();
+    const panel=document.createElement('section');
+    panel.setAttribute('aria-label',definition.label);panel.tabIndex=-1;
+    panelHost.append(panel);
+    if(outerMain.id==='main')outerMain.removeAttribute('id');
+    panel.id='main';
+    CUI.announce(definition.label);
+    if(surface==='rewards')await loyaltyPage(undefined,draft);
+    else if(surface==='winback')await retentionPage(draft);
+    else if(surface==='storedvalue')await storedValuePage(hashParam||null);
+    else await studioPage(draft||hashParam||null);
+    const exactRewardOpened=openExactReward();
+    if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
+    else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
+    applyPendingRewardEstimate();
+  }
+  function openRewardsAutoSetup(action={surface:'rewards',focusTarget:'lm',activateTarget:false}){
+    if(!canSetupGrow)return;
+    pendingGuideAction=action;
+    $('rewardAutoSetupModal')?.remove();
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal reward-auto-modal" id="rewardAutoSetupModal" role="dialog" aria-modal="true" aria-labelledby="rewardAutoTitle" tabindex="-1">
+      <section class="modal-card reward-auto-dialog"><div class="reward-auto-head"><div><p class="customer-quest-kicker">Simple rewards setup</p><h2 id="rewardAutoTitle">Set up rewards automatically</h2><p class="muted small" style="margin-top:5px">Three short checks, then Nestly prepares one editable draft.</p></div>
+        <button type="button" class="btn ghost sm" id="rewardAutoClose" aria-label="Close automatic rewards setup">Close</button></div>
+        <div id="rewardAutoBody"></div><p class="reward-auto-status muted small" id="rewardAutoStatus" role="status" aria-live="polite"></p>
+        <div class="reward-auto-actions" id="rewardAutoActions"></div></section></div>`);
+    const modal=$('rewardAutoSetupModal');
+    let step=1,busy=false,deactivateDialog=null;
+    const close=(restoreFocus=true)=>{
+      if(deactivateDialog){const cleanup=deactivateDialog;deactivateDialog=null;cleanup({restoreFocus})}
+      else modal.remove();
+    };
+    const rewardLabel=rewardJourney.milestones.length||rewardJourney.classicReward
+      ?`${rewardJourney.milestones.length+(rewardJourney.classicReward?1:0)} published reward${rewardJourney.milestones.length+(rewardJourney.classicReward?1:0)===1?'':'s'} to use as a reference`
+      :'A first reward that remains editable before publishing';
+    const render=()=>{
+      const body=$('rewardAutoBody'),actions=$('rewardAutoActions');
+      if(step===1)body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle"><p class="customer-quest-kicker">Step 1 of 3</p><h3 id="rewardAutoStepTitle" tabindex="-1">Confirm the goal</h3><div class="reward-auto-choice"><input type="radio" id="rewardAutoGoal" name="rewardAutoGoal" value="repeat_visits" checked><label for="rewardAutoGoal">Bring customers back more often<p class="muted small">Recommended for a clear first programme. You can change every number in the draft.</p></label></div></section>`;
+      else if(step===2)body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle" tabindex="-1"><p class="customer-quest-kicker">Step 2 of 3</p><h3 id="rewardAutoStepTitle">See what Nestly will use</h3><dl class="reward-auto-summary"><div><dt>Goal</dt><dd>More repeat visits</dd></div><div><dt>Business type</dt><dd>${esc(S.biz.industry||'Your business')}</dd></div><div><dt>Current rewards</dt><dd>${esc(rewardLabel)}</dd></div><div><dt>Output</dt><dd>One editable recommendation draft</dd></div></dl><p class="muted small" style="margin-top:12px">Nestly uses your governed business type and active service and product prices to choose a starting model. Product costs are not used in this automatic calculation; check profitability under More reward settings before publishing.</p></section>`;
+      else body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle" tabindex="-1"><p class="customer-quest-kicker">Step 3 of 3</p><h3 id="rewardAutoStepTitle">Review the safety check</h3><p class="reward-auto-safety"><b>Nothing goes live until you review and publish.</b><br>${growDraftVersionId?`${workspaceTemplateHtmlV97('growDraftReady',{version:snapshot.draft?.version_no||''})} Nestly will open it without replacing it.`:'Nestly will create one editable recommendation draft. Staff and customers keep using the published programme.'}</p></section>`;
+      actions.innerHTML=`${step>1?'<button type="button" class="btn ghost" id="rewardAutoBack">Back</button>':''}<button type="button" class="btn ghost" id="rewardAutoCancel">Cancel</button><button type="button" class="btn" id="${step===3?'rewardAutoConfirm':'rewardAutoNext'}">${step===3?(growDraftVersionId?'Open editable draft':'Create editable draft'):'Next'}</button>`;
+      $('rewardAutoCancel').onclick=()=>close();
+      if($('rewardAutoBack'))$('rewardAutoBack').onclick=()=>{step--;render();$('rewardAutoStepTitle')?.focus({preventScroll:true})};
+      if($('rewardAutoNext'))$('rewardAutoNext').onclick=()=>{step++;render();$('rewardAutoStepTitle')?.focus({preventScroll:true})};
+      if($('rewardAutoConfirm'))$('rewardAutoConfirm').onclick=confirmDraft;
+    };
+    async function confirmDraft(){
+      if(busy)return;
+      const rewardAutoConfirm=$('rewardAutoConfirm'),status=$('rewardAutoStatus');
+      if(growDraftVersionId){
+        const nextAction=pendingGuideAction||action;pendingGuideAction=null;close(false);
+        await mountGrowSurface(nextAction.surface,{draftOverride:growDraftVersionId,...nextAction});return;
+      }
+      busy=true;rewardAutoConfirm.disabled=true;rewardAutoConfirm.textContent='Creating draft…';
+      status.textContent='Preparing one editable draft. Nothing is being published.';
+      rewardAutoSetupRequestKey??=crypto.randomUUID();
+      recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
+        context:{action_key:'automatic_rewards_setup',entry_point:'grow_overview',locale:workspaceLocale,surface_version:'v128'}
+      });
+      try{
+        const {data,error}=await sb.rpc('generate_retention_recommendation',{
+          p_business:S.biz.id,p_idempotency_key:rewardAutoSetupRequestKey
+        });
+        if(!modal.isConnected||!isGrowCurrent())return;
+        if(error)throw error;
+        growDraftVersionId=data?.draft_config_version_id||data?.version_id;
+        if(!growDraftVersionId)throw new Error('Editable reward draft was not returned.');
+        const nextAction=pendingGuideAction||action;pendingGuideAction=null;rewardAutoSetupRequestKey=null;
+        close(false);await mountGrowSurface(nextAction.surface,{draftOverride:growDraftVersionId,...nextAction});
+      }catch(error){
+        if(!modal.isConnected)return;
+        busy=false;rewardAutoConfirm.disabled=false;rewardAutoConfirm.textContent='Try creating draft again';
+        status.textContent='Draft could not be created. Nothing was published. Try again.';
+      }
+    }
+    render();
+    deactivateDialog=CUI.activateDialog(modal,{onClose:()=>close(),initialFocus:'#rewardAutoGoal'});
+    $('rewardAutoClose').onclick=()=>close();
+  }
+  document.querySelectorAll('[data-grow-open]').forEach(button=>button.onclick=()=>mountGrowSurface(button.dataset.growOpen,{
+    focusTarget:button.dataset.growFocus||null}));
+  const autoSetupButton=$('growAutoSetup');
+  if(autoSetupButton)autoSetupButton.onclick=()=>openRewardsAutoSetup();
+  document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
+    const kind=button.dataset.rewardsOverviewEdit;
+    const action={surface:'rewards',focusTarget:kind==='earning'?'lm':kind==='classic'?'lr':kind==='birthday'?'birthdayLabel':kind==='add'?'rwAdd':null,
+      activateTarget:kind==='add',rewardId:kind==='catalogue'?button.dataset.rewardId||null:null};
+    if(!growDraftVersionId){openRewardsAutoSetup(action);return}
+    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+  });
+  const growRewardsRetry=$('growRewardsRetry');
+  if(growRewardsRetry)growRewardsRetry.onclick=()=>growPage(routedSurface,hashParam);
+  document.querySelectorAll('[data-reward-cost]').forEach(input=>input.addEventListener('input',()=>{
+    const productId=input.dataset.rewardCost;
+    const card=input.closest('[data-product-profitability]');
+    const status=card?.querySelector(`[data-profit-after-reward="${CSS.escape(productId)}"]`);
+    const raw=String(input.value||'').trim();
+    if(!status)return;
+    if(!/^\d+(?:\.\d{1,2})?$/.test(raw)){
+      status.textContent='Enter a reward cost, for example 9.00.';return;
+    }
+    const calculation=productProfitabilityV122({
+      priceCents:Number(card.dataset.priceCents),
+      costCents:Number(card.dataset.costCents),
+      rewardCostCents:Math.round(Number(raw)*100)
+    });
+    status.textContent=[
+      'Reward cost ',money(calculation.rewardCostCents),' leaves ',
+      money(calculation.profitAfterRewardCents),' profit after reward.'
+    ].join('');
+    status.style.color=calculation.profitableAfterReward?'':'var(--red)';
+  }));
+  document.querySelectorAll('[data-reward-cost-use]').forEach(button=>button.onclick=()=>{
+    const productId=button.dataset.rewardCostUse;
+    const input=document.querySelector(`[data-reward-cost="${CSS.escape(productId)}"]`);
+    const raw=String(input?.value||'').trim();
+    if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return toast('Enter a valid proposed reward cost first');
+    pendingRewardEstimateCents=Math.round(Number(raw)*100);
+    const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
+    if(!growDraftVersionId){
+      openRewardsAutoSetup(action);
+      return;
+    }
+    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+  });
+  /* A deep link is a deliberate request to open an engine. The normal #/loyalty and
+     #/retention destinations stop at this overview, so ordinary Grow use stays coherent. */
+  if((hashParam&&isOwner)||['studio','storedvalue'].includes(routedSurface)){
+    await mountGrowSurface(routedSurface,{focus:false,draftOverride:hashParam||growDraftVersionId});
+  }
+}
+    window.rewardOverviewMetrics=()=>({sourceHash:'438a10a11c3cac1e7f8c5ac396a38c8a378449e181faaaf6ce9a08317ce4e71e',role:S.myRole,
+      viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+      title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.rewards-overview-card')].map(card=>({tag:card.tagName,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
+      editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
+      autoSetupButtons:document.querySelectorAll('#growAutoSetup').length,secondaryOpen:$('growSecondarySettings')?.open||false,
+      overviewTop:$('rewardJourneyTitle')?.getBoundingClientRect().top||null,secondaryTop:$('growSecondarySettings')?.getBoundingClientRect().top||null,
+      recommendationCalls:window.__rpcArgs.filter(call=>call.name==='generate_retention_recommendation').map(call=>call.args),
+      recommendationResult:window.__lastRecommendation||null,
+      dialogOpen:Boolean($('rewardAutoSetupModal')),dialogStep:$('rewardAutoStepTitle')?.textContent||'',
+      birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,
+      birthdayTableReads:window.__tableReads.filter(name=>name==='birthday_program_versions').length,
+      activeElement:document.activeElement?.id||'',consoleErrors:window.__consoleErrors||[]});
+    window.__consoleErrors=[];window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
+    growPage('overview',null).catch(error=>{window.__consoleErrors.push(String(error?.stack||error));document.body.dataset.renderError='true'});
+    </script></body></html>

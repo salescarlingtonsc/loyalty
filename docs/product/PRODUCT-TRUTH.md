@@ -142,12 +142,31 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 - Grow is introduced through one guided setup and a visual overview of what will
   be created.
+- Owner clarification 2026-08-01: the everyday Grow page has one dominant
+  starting action, **Set up rewards automatically**. It opens a short popup
+  that explains the recommendation in owner language and creates an editable
+  draft only after explicit confirmation. Opening or dismissing the popup must
+  write nothing, retries must reuse the same request identity, an existing
+  draft must never be silently replaced, and publication remains a separate
+  protected owner action. The complete Rewards overview appears immediately
+  after the starting action; profitability, journey anatomy, optional tools and
+  technical editors are secondary disclosures rather than competing starts.
 - The overview explains the whole programme in plain language, shows the
   customer-facing result, and makes each section directly editable.
 - The business-owner overview shows every configured reward and birthday
   benefit as an ordered, game-like path: what the customer does, current
   progress unit, what unlocks at each milestone, and what comes next. It must
   not invent a milestone where no rule exists.
+- Owner clarification 2026-08-01: that overview is one complete working view,
+  not a decorative summary. It shows the published earning model and rate
+  (points or stamps), the classic redemption promise when that model is used,
+  every configured catalogue reward, and the configured birthday benefit.
+  Selecting a specific reward or birthday benefit opens the editor for that
+  exact stable record; duplicate names must never route to the wrong editor.
+  A paused programme, a future reward, or a reward whose claim window ended is
+  labelled with that exact state and is never described as currently earnable
+  or unlockable. Published birthday copy is read through a tenant-scoped
+  Loyalty-read contract; its private version table remains browser-closed.
 - Product/service cost and selling price feed an understandable profitability
   view showing gross profit, margin, estimated reward cost, and the remaining
   contribution after reward. AI-assisted programme setup must explain its
