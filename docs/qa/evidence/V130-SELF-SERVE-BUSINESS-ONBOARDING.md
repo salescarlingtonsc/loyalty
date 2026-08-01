@@ -92,10 +92,25 @@ it. Exact retries reuse the same setup and billing identities.
   missing legal consent, and called the setup plus Checkout RPC sequence.
 - Screenshots are in `docs/qa/evidence/v130-self-serve-browser/`.
 
+## Database rehearsal closure
+
+On 1 August 2026 the existing non-production Supabase `migration-rehearsal`
+branch was advanced through V132. The first V130 rollback execution reproduced
+`owner loyalty configuration access required` when provider-paid activation
+seeded the draft preset without the locked owner claims. V132 now uses only the
+active owner recorded on the locked onboarding row for that governed insert,
+restores the prior provider claims in the same transaction, and changes no C45
+predicate, RLS policy, table grant or browser RPC grant.
+
+`db/tests/v130_self_serve_business_onboarding.sql` then passed with the exact
+annual 3,000 / SGD 1,428.00 zero-tax invoice, owner-authored draft version,
+wrong-payment denial, provider-claim restoration, replay and rollback. Queries
+after V129/V130/V131 returned zero synthetic Auth users, businesses and account
+deletion requests. The repository gate passes 1,381/1,381 plus build.
+
 ## Remaining evidence
 
-Docker is not running on this machine, so the rollback SQL has not executed
-against a disposable PostgreSQL/Supabase stack. Stripe test-mode Checkout and
-signed webhook evidence, commit/push/release approval, migration application
-and production deployment also remain. The lifecycle therefore remains
-`IMPLEMENTED_UNVERIFIED`, not closed or live-ready.
+Stripe test-mode Checkout, signed webhook/provider evidence, independent V132
+review, release approval, production migration/deployment and production smoke
+remain. The lifecycle therefore remains `IMPLEMENTED_UNVERIFIED`, not closed
+or live-ready.

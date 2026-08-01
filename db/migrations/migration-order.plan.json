@@ -1023,6 +1023,12 @@
       "path": "db/migrations/20260801_nestly_v131_store_publication_readiness.sql",
       "semanticVersion": "v131",
       "proposedDeployVersion": "20260801210000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v132_release_gap_closure.sql",
+      "semanticVersion": "v132",
+      "proposedDeployVersion": "20260801223000"
     }
   ]
 }

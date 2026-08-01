@@ -57,6 +57,7 @@ begin
   if v_first->>'request_id'<>v_replay->>'request_id' then
     raise exception 'V131 created a duplicate open request';
   end if;
+  reset role;
   if (select count(*) from public.account_deletion_requests where subject_ref=v_customer)<>1 then
     raise exception 'V131 request count is not exactly one';
   end if;
@@ -67,6 +68,7 @@ begin
     raise exception 'V131 request destructively changed auth users';
   end if;
 
+  perform pg_temp.as_v131_user(v_customer);
   v_denied:=false;
   begin
     perform 1 from public.account_deletion_requests;

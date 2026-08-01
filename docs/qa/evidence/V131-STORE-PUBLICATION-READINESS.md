@@ -123,8 +123,8 @@ credentials are complete, and physical iPhone/Android journeys pass.
   state and only then renders sign-in; an extracted-helper regression verifies
   that exact order and a browser click reaches the truthful signed-out state.
   Sol independently **ACCEPTED** the final local V131 candidate with no
-  P0/P1/P2 findings. This does not replace the unexecuted database, signing,
-  live-association, store-console or physical-device evidence below.
+  P0/P1/P2 findings. Database rehearsal is recorded below; signing,
+  live-association, store-console and physical-device evidence remain external.
 - Visual evidence:
   `v131-native-business-desktop.png`,
   `v131-native-business-mobile-390.png`,
@@ -134,13 +134,19 @@ credentials are complete, and physical iPhone/Android journeys pass.
   `v131-persona-deletion-desktop.png`, and
   `v131-payment-pending-deletion-desktop.png` in this evidence directory.
 
+## Additional database evidence
+
+- The existing non-production Supabase `migration-rehearsal` branch was
+  advanced through V132. `db/tests/v131_store_publication_readiness.sql` passed
+  after its harness restored the privileged role before inspecting the private
+  queue, then deliberately re-entered `authenticated` for the denial check.
+  The executed test proves byte-exact confirmation, exact retry, one open
+  request, the 30-day deadline, other-user/anonymous/table denial and zero Auth
+  deletion. A post-test query returned zero synthetic Auth users, businesses
+  and deletion requests.
+
 ## Evidence not available on this Mac
 
-- The rollback-only PostgreSQL suite exists at
-  `db/tests/v131_store_publication_readiness.sql`, but the local Supabase stack
-  is not running. Homebrew PostgreSQL alone does not provide the canonical
-  Supabase Auth/storage environment, so persistence/ACL behavior is not claimed
-  as executed database proof.
 - The root filesystem has about 225 MiB free, Xcode resolves only to Command
   Line Tools, Java and Android SDK variables/tools are absent, and macOS reports
   zero valid signing identities. A signed archive/AAB and physical-device run
@@ -148,6 +154,6 @@ credentials are complete, and physical iPhone/Android journeys pass.
 - Live AASA and assetlinks are still HTTP 404 until the real Apple Team ID and
   Play signing SHA-256 are supplied and the generated payloads are deployed.
 
-Because database, signing, live-association, store-console and physical-device
-proof remain external, this phase is `IMPLEMENTED_UNVERIFIED`; it is not
-`CLOSED`, production-ready, or submitted to either store.
+Because signing, live-association, store-console and physical-device proof
+remain external, this phase is `IMPLEMENTED_UNVERIFIED`; it is not `CLOSED`,
+production-ready, or submitted to either store.

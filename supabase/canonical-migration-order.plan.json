@@ -1024,6 +1024,12 @@
       "version": "20260801210000",
       "name": "nestly_v131_store_publication_readiness",
       "sourcePath": "db/migrations/20260801_nestly_v131_store_publication_readiness.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260801223000",
+      "name": "nestly_v132_release_gap_closure",
+      "sourcePath": "db/migrations/20260801_nestly_v132_release_gap_closure.sql"
     }
   ]
 }

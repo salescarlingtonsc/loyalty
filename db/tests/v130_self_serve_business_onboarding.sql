@@ -86,6 +86,15 @@ begin
   raise exception 'v130_expected_negative_rollback' using errcode='P0001';
 exception
   when sqlstate 'P0001' then return;
+  when check_violation then
+    if p_case='nonzero_tax'
+       and sqlerrm='V125 GST not charged: invoice tax must be zero' then
+      -- V125 rejects non-zero tax at the invoice boundary before V130 can
+      -- evaluate activation. That stronger fail-closed result is the expected
+      -- outcome for this negative fixture.
+      return;
+    end if;
+    raise;
   when others then raise;
 end
 $$;
@@ -94,6 +103,7 @@ grant execute on function pg_temp.assert_v130_payment_rejected(uuid,text) to pub
 do $v130_test$
 declare
   v_owner uuid:=gen_random_uuid();
+  v_non_loyalty_owner uuid:=gen_random_uuid();
   v_outsider uuid:=gen_random_uuid();
   v_superadmin uuid:=gen_random_uuid();
   v_bundle uuid;
@@ -112,6 +122,8 @@ begin
   ) values
     ('00000000-0000-0000-0000-000000000000',v_owner,
      'authenticated','authenticated','sofia.v130@example.test','',now(),now(),now()),
+    ('00000000-0000-0000-0000-000000000000',v_non_loyalty_owner,
+     'authenticated','authenticated','nonloyalty.v130@example.test','',now(),now(),now()),
     ('00000000-0000-0000-0000-000000000000',v_outsider,
      'authenticated','authenticated','outsider.v130@example.test','',now(),now(),now()),
     ('00000000-0000-0000-0000-000000000000',v_superadmin,
@@ -128,6 +140,15 @@ begin
     'v130_facial',1,'V130 Facial and Spa launch',
     'published',array['dashboard','clients','appointments','loyalty'],now()
   ) returning id into v_bundle;
+  insert into public.sector_profiles(sector_key,label,active)
+  values('v130_no_loyalty','V130 Non-loyalty sector',true)
+  on conflict(sector_key) do update set active=true;
+  insert into public.sector_bundle_versions(
+    sector_key,version,label,status,modules,published_at
+  ) values(
+    'v130_no_loyalty',1,'V130 Non-loyalty launch',
+    'published',array['dashboard','clients'],now()
+  );
 
   update public.billing_plan_catalog_v124
      set active=false,effective_to=now()
@@ -142,6 +163,38 @@ begin
      118800,12000,'exclusive',now()-interval '1 second'),
     ('SGD','monthly',1,'price_v130_monthly_base','price_v130_monthly_capacity',
      14900,1000,'exclusive',now()-interval '1 second');
+
+  perform pg_temp.as_v130_user(v_non_loyalty_owner);
+  v_result:=public.get_self_serve_checkout_v130(null);
+  if exists(
+    select 1 from jsonb_array_elements(v_result->'sectors') sector
+     where sector->>'sector_key'='v130_no_loyalty'
+  ) then
+    raise exception 'V132 offered a sector that cannot accept the included Loyalty programme';
+  end if;
+  v_denied:=false;
+  begin
+    perform public.start_self_serve_business_v130(
+      'No Loyalty Owner','No Loyalty Studio',
+      'no-loyalty-v130-'||substr(v_non_loyalty_owner::text,1,8),
+      'v130_no_loyalty','202688888N','en','annual',1000,true,gen_random_uuid()
+    );
+  exception when check_violation then
+    if sqlerrm='self-service launch requires a published Loyalty-capable sector' then
+      v_denied:=true;
+    else
+      raise;
+    end if;
+  end;
+  reset role;
+  if not v_denied
+     or exists(
+       select 1 from public.businesses
+        where slug='no-loyalty-v130-'||substr(v_non_loyalty_owner::text,1,8)
+     )
+     or exists(select 1 from public.staff where user_id=v_non_loyalty_owner) then
+    raise exception 'V132 staged or retained a non-Loyalty self-service workspace';
+  end if;
 
   perform pg_temp.as_v130_user(v_owner);
   v_result:=public.start_self_serve_business_v130(
@@ -322,10 +375,23 @@ begin
     142800,0,142800,142800,142800,0,v_paid_at,false,
     v_paid_at+interval '1 second',100,'evt_v130_paid'
   );
+  if auth.uid() is not null
+     or coalesce(current_setting('request.jwt.claims',true)::jsonb->>'role','')<>'service_role' then
+    raise exception 'V132 did not restore the provider request claims after draft seeding';
+  end if;
   if not app.business_workspace_open_v94(v_business)
      or not exists(select 1 from public.self_serve_business_onboarding_v130 where business_id=v_business and status='active' and activation_invoice_id='in_v130_paid')
      or not exists(select 1 from public.business_sector_assignments where business_id=v_business and bundle_version_id=v_bundle)
-     or not exists(select 1 from public.loyalty_programs where business_id=v_business and configuration_status='draft' and not active)
+     or not exists(
+       select 1 from public.loyalty_programs programme
+       join public.firm_config_versions version
+         on version.id=programme.current_config_version_id
+        and version.business_id=programme.business_id
+      where programme.business_id=v_business
+        and programme.configuration_status='draft' and not programme.active
+        and programme.recommendation_source='self_service_onboarding_preset'
+        and version.status='draft' and version.created_by=v_owner
+     )
      or not exists(select 1 from public.billing_money_back_windows_v124 where business_id=v_business and first_paid_invoice_id='in_v130_paid' and money_back_request_until=v_paid_at+interval '30 days') then
     raise exception 'V130 matching provider-paid evidence did not atomically open the workspace';
   end if;

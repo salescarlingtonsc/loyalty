@@ -8,6 +8,10 @@ const migrationUrl=new URL(
   import.meta.url
 );
 const migration=existsSync(migrationUrl)?readFileSync(migrationUrl,'utf8'):'';
+const v132Migration=readFileSync(new URL(
+  '../../supabase/migrations/20260801223000_nestly_v132_release_gap_closure.sql',
+  import.meta.url
+),'utf8');
 const edge=readFileSync(new URL('../../supabase/functions/stripe-billing-command/index.ts',import.meta.url),'utf8');
 const platform=readFileSync(new URL('../../app/platform-console.js',import.meta.url),'utf8');
 
@@ -74,6 +78,18 @@ test('payment-pending workspace is explicit and only provider-paid evidence acti
   assert.match(migration,/invoice\.amount_remaining_cents=0/);
   assert.match(migration,/invoice\.total_cents=app\.self_serve_plan_total_v130/);
   assert.doesNotMatch(migration,/checkout\.session\.completed/);
+});
+
+test('self-service cannot offer or stage a sector that lacks the included Loyalty programme',()=>{
+  assert.match(v132Migration,/V132 preflight: payment-pending self-service bundle lacks Loyalty/);
+  assert.match(v132Migration,/create trigger self_serve_loyalty_bundle_guard_v132/);
+  assert.match(v132Migration,/before insert or update of bundle_version_id,sector_key/);
+  assert.match(v132Migration,/bundle\.status='published'/);
+  assert.match(v132Migration,/'loyalty'=any\(bundle\.modules\)/);
+  assert.match(v132Migration,/self-service launch requires a published Loyalty-capable sector/);
+  assert.match(v132Migration,/perform set_config\(\s*'request\.jwt\.claim\.sub',v_onboarding\.owner_user_id::text,true/);
+  assert.match(v132Migration,/perform set_config\('request\.jwt\.claim\.sub',coalesce\(v_prior_sub,''\),true\)/);
+  assert.doesNotMatch(v132Migration,/grant (?:select|insert|update|delete) on/i);
 });
 
 test('Firm 360 initial load fetches the payment marker and exposes no manual decision',()=>{
