@@ -54,7 +54,7 @@ test('owner surface accepts only server-governed templates and still requires ap
   assert.match(module,/welcome_back:'Warm welcome back'/);
   assert.match(module,/member_thank_you:'Member thank-you'/);
   assert.match(module,/simple_saving:'Simple saving'/);
-  assert.match(module,/Nestly writes the final title, message and CTA/);
+  assert.match(module,/Peekaa writes the final title, message and CTA/);
   assert.match(module,/free-form claims are not accepted/);
   assert.doesNotMatch(module,/data-growth-owner-field="label"/);
   assert.doesNotMatch(module,/data-growth-owner-action="improve-copy"/);

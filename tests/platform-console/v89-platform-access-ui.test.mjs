@@ -78,7 +78,7 @@ test('console resolves active access before shell and shows an inactive-role den
   const accessCall=source.indexOf("platform_list_my_access_v89");
   const shellRender=source.lastIndexOf('root.innerHTML = shellHtml');
   assert.ok(accessCall>0&&accessCall<shellRender);
-  assert.match(source,/This account has no active Nestly platform role/);
+  assert.match(source,/This account has no active Peekaa platform role/);
   assert.match(source,/allowedRoutes\.find\(route=>route\.key===requestedKey\)\|\|allowedRoutes\[0\]/);
   assert.match(source,/history\.replaceState\(null,'',activeRoute\.hash\)/);
 });

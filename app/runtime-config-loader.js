@@ -1,7 +1,7 @@
 (function initFrenlyRuntimeConfig(globalObject) {
   'use strict';
 
-  const PRODUCT_NAME = globalObject.NestlyBrand?.productName || 'Nestly';
+  const PRODUCT_NAME = globalObject.NestlyBrand?.productName || 'Peekaa';
   const PRODUCTION_PROJECT_REF = 'gadpooereceldfpfxsod';
   const ENVIRONMENTS = new Set(['development', 'test', 'staging', 'production']);
   const REMOTE_HOST = /^(?<ref>[a-z0-9]{20})\.supabase\.co$/;

@@ -95,7 +95,7 @@
   }
 
   function loadingState({title='Loading',iconName='info',body='Loading the latest information…'}={}){
-    const productName=global.NestlyBrand?.productName||'Nestly';
+    const productName=global.NestlyBrand?.productName||'Peekaa';
     return `<section class="cui-route-state" aria-busy="true" aria-labelledby="route-loading-title">${pageHeader({title,subtitle:body,iconName})}<div class="card empty" role="status"><h2 id="route-loading-title">Loading…</h2><p class="muted small">Please wait while ${escapeHtml(productName)} prepares this page.</p></div></section>`;
   }
 

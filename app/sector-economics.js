@@ -538,7 +538,7 @@
         <div class="sector-economics-section-head"><div>
           <span class="sector-economics-eyebrow">Period economics</span>
           <h2 id="periodEconomicsHeading">Profit and ROI are unavailable</h2>
-          <p>${escapeHtml(completeCoverageText)}. Nestly will not estimate missing costs.</p>
+          <p>${escapeHtml(completeCoverageText)}. Peekaa will not estimate missing costs.</p>
         </div><span class="sector-economics-badge sector-economics-badge--withheld">Withheld</span></div>
         <div class="sector-economics-coverage" aria-label="Traceable cost coverage summary">
           <strong>${escapeHtml(percentageFromBps(coverage.transactionCoverageBps))}</strong>
@@ -666,7 +666,7 @@
           <span class="sector-economics-eyebrow">Revenue drivers</span>
           <h2 id="revenueDriversHeading">Revenue drivers are unavailable</h2>
           <p>${escapeHtml(unavailableReason(drivers.unavailableReason||
-            'The revenue bridge did not reconcile, so Nestly withheld it.'))}</p>
+            'The revenue bridge did not reconcile, so Peekaa withheld it.'))}</p>
         </div><span class="sector-economics-badge sector-economics-badge--withheld">Withheld</span></div>
       </section>`;
     }
@@ -743,7 +743,7 @@
         <p>${escapeHtml(policy.resolvedSector)} starting policy · ${escapeHtml(version)}</p>
       </div><span class="sector-economics-badge">${policy.usedFallbackSector?'Fallback sector':'Sector matched'}</span></div>
       ${policy.usedFallbackSector?`<div class="sector-policy-callout" role="note">
-        No reviewed policy matched “${escapeHtml(policy.requestedSector)}”, so Nestly used the
+        No reviewed policy matched “${escapeHtml(policy.requestedSector)}”, so Peekaa used the
         “${escapeHtml(policy.resolvedSector)}” fallback. Local evidence is still required.
       </div>`:''}
       <div class="sector-policy-parameters">
@@ -761,13 +761,13 @@
           <p><strong>${escapeHtml(policy.base.fallback.when)}:</strong>
             ${escapeHtml(policy.base.fallback.action)}</p>
         </details>
-        <details class="sector-economics-disclosure"><summary>When Nestly suppresses this</summary>
+        <details class="sector-economics-disclosure"><summary>When Peekaa suppresses this</summary>
           <ul>${policy.base.suppressions.map(item=>`<li><strong>Unavailable</strong> —
             ${escapeHtml(item.explanation)} <code>${escapeHtml(item.code)}</code></li>`).join('')}</ul>
         </details>
         <details class="sector-economics-disclosure"><summary>Limitations</summary>
           <ul>${policy.base.limitations.map(item=>`<li>${escapeHtml(item)}</li>`).join('')}</ul>
-          <p>Nestly does not supply a universal churn number. The business’s own evidence must be reviewed.</p>
+          <p>Peekaa does not supply a universal churn number. The business’s own evidence must be reviewed.</p>
         </details>
       </div>
       ${view.canOverride?overrideForm(policy):''}

@@ -291,9 +291,9 @@ test('customer QR preparation is one idempotent request under double-click and r
 
 test('growth offer QR uses its own deep link and cannot collide with classic reward QR',()=>{
   const url=UI.buildGrowthRedeemUrl('opaque token',{
-    origin:'https://www.nestly.asia',pathname:'/business'
+    origin:'https://www.peekaa.asia',pathname:'/business'
   });
-  assert.equal(url,'https://www.nestly.asia/business#/growth-redeem?token=opaque%20token');
+  assert.equal(url,'https://www.peekaa.asia/business#/growth-redeem?token=opaque%20token');
   assert.doesNotMatch(url,/#\/redeem\?/);
 });
 

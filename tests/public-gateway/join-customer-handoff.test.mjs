@@ -29,7 +29,7 @@ function extractedDestinationPriority(){
 }
 
 test('successful public join hands the opaque QR token to customer registration',()=>{
-  assert.match(brand,/customerLabel:\s*'My Nestly'/);
+  assert.match(brand,/customerLabel:\s*'My Peekaa'/);
   const customerHandoffUrl=extractedCustomerHandoffUrl();
   const token='A'.repeat(43);
   const handoff=customerHandoffUrl(token,'https://frenly.example/join.html?token=ignored');

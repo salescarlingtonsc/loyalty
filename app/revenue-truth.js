@@ -307,7 +307,7 @@
     partial:{
       label:'Partial coverage',
       title:'Useful, but not the whole business',
-      body:'Nestly can explain the recorded rows below. Missing or unreconciled sources may make the true business total higher.'
+      body:'Peekaa can explain the recorded rows below. Missing or unreconciled sources may make the true business total higher.'
     },
     empty:{
       label:'No sales yet',
@@ -317,7 +317,7 @@
     insufficient:{
       label:'Building evidence',
       title:'Not enough reliable data yet',
-      body:'Nestly is withholding ratios and recommendations until their denominators and evidence are defensible.'
+      body:'Peekaa is withholding ratios and recommendations until their denominators and evidence are defensible.'
     },
     stale:{
       label:'Needs refresh',
@@ -362,10 +362,10 @@
     if(view.state==='permission'||view.state==='branch')return '';
     const recorded=truth.totals.knownRevenueMinor===null
       ?'No recorded revenue total is available.'
-      :`${money(truth.totals.knownRevenueMinor,currency)} is recorded in the Nestly sales ledger.`;
+      :`${money(truth.totals.knownRevenueMinor,currency)} is recorded in the Peekaa sales ledger.`;
     const reconciliation=truth.coverage.reconciledTransactionPct===null
       ?'External reconciliation coverage is not available.'
-      :`${percentage(truth.coverage.reconciledTransactionPct)} of native Nestly sale records have a linked external reconciliation.`;
+      :`${percentage(truth.coverage.reconciledTransactionPct)} of native Peekaa sale records have a linked external reconciliation.`;
     const recordedHelper=`${recorded} ${reconciliation} This does not prove merchant-source completeness, so total business revenue remains unavailable.`;
     const identifiedHelper=truth.coverage.identityRevenuePct===null
       ?'Linked customer coverage cannot be calculated yet.'
@@ -375,13 +375,13 @@
       :'Recorded revenue with no linked customer identity.';
     const coverageHelper=truth.coverage.identityRevenuePct===null
       ?'A zero denominator is shown as not enough data, never 0%.'
-      :'Identified customer revenue ÷ revenue recorded in Nestly.';
+      :'Identified customer revenue ÷ revenue recorded in Peekaa.';
     return `<section class="revenue-truth-section" aria-labelledby="revenueTruthHeading">
       <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Revenue truth</span>
-      <h2 id="revenueTruthHeading">What Nestly can prove</h2></div>
+      <h2 id="revenueTruthHeading">What Peekaa can prove</h2></div>
       <span class="revenue-truth-asof">As of ${escapeHtml(safeDate(truth.asOf)||'not supplied')}</span></div>
       <div class="revenue-truth-metrics">
-        ${metricCard('Nestly recorded revenue',truth.totals.knownRevenueMinor===null?'Not available':money(truth.totals.knownRevenueMinor,currency),recordedHelper,{tone:'caution'})}
+        ${metricCard('Peekaa recorded revenue',truth.totals.knownRevenueMinor===null?'Not available':money(truth.totals.knownRevenueMinor,currency),recordedHelper,{tone:'caution'})}
         ${metricCard('Identified customer revenue',money(truth.totals.identifiedRevenueMinor,currency),identifiedHelper)}
         ${metricCard('Anonymous / unattributed revenue',money(truth.totals.anonymousRevenueMinor,currency),anonymousHelper)}
         ${metricCard('Customer revenue coverage',percentage(truth.coverage.identityRevenuePct),coverageHelper,{tone:truth.coverage.identityRevenuePct===null?'caution':'neutral'})}
@@ -430,7 +430,7 @@
       return `<section class="revenue-opportunity revenue-opportunity--withheld" aria-labelledby="dailyActionHeading">
         <div><span class="revenue-truth-eyebrow">Today’s best action</span>
         <h2 id="dailyActionHeading">No reliable action to recommend yet</h2>
-        <p>Nestly is withholding the suggestion rather than guessing.</p></div>
+        <p>Peekaa is withholding the suggestion rather than guessing.</p></div>
         <ul>${reasons.slice(0,4).map(reason=>`<li>${escapeHtml(reason)}</li>`).join('')}</ul>
         <div data-growth-recommendation-refresh-mount></div>
       </section>`;

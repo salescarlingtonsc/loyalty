@@ -10,7 +10,7 @@ const args=process.argv.slice(2);
 const wantsGenerate=args.includes('--generate');
 const outputIndex=args.indexOf('--output');
 const output=outputIndex>=0?resolve(args[outputIndex+1]||''):null;
-const packageName='asia.nestly.app';
+const packageName='asia.peekaa.app';
 const teamId=String(process.env.APPLE_TEAM_ID||'').trim();
 const fingerprint=String(process.env.ANDROID_SHA256_CERT_FINGERPRINT||'').trim().toUpperCase();
 const fingerprintPattern=/^(?:[0-9A-F]{2}:){31}[0-9A-F]{2}$/;

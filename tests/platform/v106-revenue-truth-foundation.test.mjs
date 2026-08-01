@@ -14,9 +14,10 @@ test('v106 source and canonical migrations are exact mirrors',async()=>{
 });
 
 test('v106 makes known total, identity coverage and empty-state math explicit',async()=>{
-  const source=await read(
-    'db/migrations/20260729_nestly_v106_revenue_truth_foundation.sql'
-  );
+  const [source,v134]=await Promise.all([
+    read('db/migrations/20260729_nestly_v106_revenue_truth_foundation.sql'),
+    read('db/migrations/20260802_nestly_v134_peekaa_brand_legal.sql')
+  ]);
   assert.match(
     source,
     /known_revenue_minor = identified_revenue_minor \+ anonymous_revenue_minor/
@@ -35,6 +36,7 @@ test('v106 makes known total, identity coverage and empty-state math explicit',a
     source,
     /Known revenue covers the Nestly sales ledger; it is not merchant-total revenue/
   );
+  assert.match(v134,/'Known revenue covers the Nestly sales ledger',\s*\n\s*'Known revenue covers the Peekaa sales ledger'/);
 });
 
 test('v106 external envelope is idempotent, append-only and never rewrites old ledgers',async()=>{

@@ -18,8 +18,8 @@ const section=(start,end)=>{
 };
 
 test('root is customer-first and business sign-in is a separate clean entry path',()=>{
-  assert.match(brand,/productName:\s*'Nestly'/);
-  assert.match(brand,/customerLabel:\s*'My Nestly'/);
+  assert.match(brand,/productName:\s*'Peekaa'/);
+  assert.match(brand,/customerLabel:\s*'My Peekaa'/);
   const entry=section('function customerRegistrationShell(body)','function renderCustomerOtpVerification');
   assert.match(entry,/class="customer-entry-footer"/);
   assert.match(entry,/class="customer-business-link" href="\/business">Business sign in<\/a>/);
@@ -149,7 +149,7 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/p_cursor:\{limit:20\}/);
   assert.match(surfaces,/renderCustomerWalletRetry\('Your programmes are temporarily unavailable\.',null,\(\)=>renderCustomerProgrammes\(\)\)/);
   assert.match(surfaces,/Your booking requests and appointments are temporarily unavailable/);
-  assert.match(surfaces,/Visit the business and scan its Nestly QR/);
+  assert.match(surfaces,/Visit the business and scan its Peekaa QR/);
   assert.match(surfaces,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
   assert.doesNotMatch(surfaces,/href="#\/claim"/);
   assert.match(surfaces,/Active requests, confirmed appointments, and recent request outcomes stay separate/);

@@ -25,7 +25,7 @@ export function buildV129TrialTestVisual(app,customerUi){
     style,customerUi,customers,profile,historyRenderer,till,whatsapp,appointmentRenderer
   ].join('\n')).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="${sourceHash}"><title>Nestly V129 actual-renderer browser acceptance</title><style>${style}
+  <meta name="production-source-sha256" content="${sourceHash}"><title>Peekaa V129 actual-renderer browser acceptance</title><style>${style}
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
   </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ${sourceHash}</p>
@@ -33,7 +33,7 @@ export function buildV129TrialTestVisual(app,customerUi){
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   ${customerUi}
   const CUI=window.FrenlyCustomerUI;
-  const BRAND={productName:'Nestly',downloadPrefix:'nestly'};
+  const BRAND={productName:'Peekaa',downloadPrefix:'nestly'};
   const $=id=>document.getElementById(id);
   const M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

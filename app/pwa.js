@@ -85,7 +85,7 @@
     }
     host.replaceChildren();
     const copy=document.createElement('span');
-    copy.textContent='You’re offline. Reconnect to load live Nestly data.';
+    copy.textContent='You’re offline. Reconnect to load live Peekaa data.';
     const retry=document.createElement('button');
     retry.type='button';retry.textContent='Retry';
     retry.addEventListener('click',()=>globalObject.location.reload());
@@ -107,7 +107,7 @@
     if(isStandalone()||isNative()||!globalObject.navigator.onLine)return;
     if(installEvent){
       showPrompt({
-        title:'Install Nestly',
+        title:'Install Peekaa',
         body:'Keep customer and business tools one tap away in a standalone app window.',
         actionLabel:'Install',onAction:requestInstall
       });
@@ -115,7 +115,7 @@
     }
     if(isIos()){
       showPrompt({
-        title:'Add Nestly to your Home Screen',
+        title:'Add Peekaa to your Home Screen',
         body:'In Safari, tap Share, then choose “Add to Home Screen”.'
       });
     }
@@ -123,7 +123,7 @@
 
   function offerUpdate(worker){
     showPrompt({
-      title:'A Nestly update is ready',
+      title:'A Peekaa update is ready',
       body:'Refresh once to use the latest app shell. Your saved business data is not stored in this cache.',
       actionLabel:'Update now',
       onAction:()=>{
@@ -154,7 +154,7 @@
     try{
       watchRegistration(await globalObject.navigator.serviceWorker.register(SW_URL,{scope:'/',updateViaCache:'none'}));
     }catch(error){
-      console.warn('Nestly offline shell could not be registered.',error);
+      console.warn('Peekaa offline shell could not be registered.',error);
     }
   }
 

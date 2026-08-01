@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Nestly</string>
-    <string name="title_activity_main">Nestly</string>
-    <string name="package_name">asia.nestly.app</string>
-    <string name="custom_url_scheme">asia.nestly.app</string>
+    <string name="app_name">Peekaa</string>
+    <string name="title_activity_main">Peekaa</string>
+    <string name="package_name">asia.peekaa.app</string>
+    <string name="custom_url_scheme">asia.peekaa.app</string>
 </resources>

@@ -1,0 +1,60 @@
+{
+  "capturedAt": "2026-08-02",
+  "browserSurface": "owner-attached Chrome extension",
+  "authDesktop1440": {
+    "url": "http://127.0.0.1:4174/#/auth",
+    "sourceFile": "app/index.html",
+    "sourceSha256": "dc6c4e5f9acaf1bfa519207b958788ac220bce2eda72e66306c29d2524184ac8",
+    "title": "Peekaa — Loyalty & retention for every business",
+    "viewport": {"clientWidth": 1440, "scrollWidth": 1440},
+    "logo": {"src": "/brand/peekaa-logo.png", "alt": "Peekaa", "clientWidth": 78, "clientHeight": 50},
+    "state": "signed-out brand plus recoverable Turnstile connection error"
+  },
+  "authMobile390": {
+    "url": "http://127.0.0.1:4174/#/auth",
+    "sourceFile": "app/index.html",
+    "sourceSha256": "dc6c4e5f9acaf1bfa519207b958788ac220bce2eda72e66306c29d2524184ac8",
+    "viewport": {"clientWidth": 390, "scrollWidth": 390},
+    "logo": {"src": "/brand/peekaa-logo.png", "alt": "Peekaa", "clientWidth": 78, "clientHeight": 50},
+    "visibleControlHeights": [44, 50, 50, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44],
+    "installPrompt": "Install Peekaa",
+    "state": "signed-out brand plus recoverable Turnstile connection error"
+  },
+  "ownerDesktop1440": {
+    "url": "http://127.0.0.1:4173/tests/browser/v130-self-serve-visual.html?view=onboard",
+    "sourceFile": "tests/browser/v130-self-serve-visual.html",
+    "sourceSha256": "9a284b39f42ab9a9adbc08eda29d7678ff9e5738d0fac5ed4861e3d625b52d17",
+    "productionSourceSha256": "d061a8955bf144c62a8b8914e81c38ac0f42572dd927881fe751915303645a9b",
+    "heading": "Set up your business",
+    "viewport": {"clientWidth": 1440, "scrollWidth": 1440},
+    "facts": ["Peekaa", "peekaa.asia/business/", "SGD 1188.00/year", "SGD 149.00/month", "GST not charged", "Continue to secure Stripe Checkout"]
+  },
+  "ownerMobile390": {
+    "url": "http://127.0.0.1:4173/tests/browser/v130-self-serve-visual.html?view=onboard",
+    "sourceFile": "tests/browser/v130-self-serve-visual.html",
+    "sourceSha256": "9a284b39f42ab9a9adbc08eda29d7678ff9e5738d0fac5ed4861e3d625b52d17",
+    "productionSourceSha256": "d061a8955bf144c62a8b8914e81c38ac0f42572dd927881fe751915303645a9b",
+    "heading": "Set up your business",
+    "viewport": {"clientWidth": 390, "scrollWidth": 390},
+    "visibleButtonHeights": [44, 44, 44, 44, 44, 55, 48, 44]
+  },
+  "platformDesktop1440": {
+    "url": "http://127.0.0.1:4173/tests/browser/v105-admin-visual.html?route=overview",
+    "sourceFile": "tests/browser/v105-admin-visual.html",
+    "sourceSha256": "67b4bd5caa1f9d0df20748db6db1a618af069f133f637d541b70b43785c11789",
+    "productionSourceSha256": "d14fc86e3e30a68dc629890c96f93ef7fac739d34b3b2f155a012ae61342f750",
+    "ready": true,
+    "viewport": {"clientWidth": 1440, "scrollWidth": 1440},
+    "logo": {"src": "/app/brand/peekaa-logo.png", "alt": "Peekaa", "naturalWidth": 890, "naturalHeight": 568}
+  },
+  "platformMobile390": {
+    "url": "http://127.0.0.1:4173/tests/browser/v105-admin-visual.html?route=overview",
+    "sourceFile": "tests/browser/v105-admin-visual.html",
+    "sourceSha256": "67b4bd5caa1f9d0df20748db6db1a618af069f133f637d541b70b43785c11789",
+    "productionSourceSha256": "d14fc86e3e30a68dc629890c96f93ef7fac739d34b3b2f155a012ae61342f750",
+    "ready": true,
+    "viewport": {"clientWidth": 390, "scrollWidth": 390},
+    "logo": {"src": "/app/brand/peekaa-logo.png", "alt": "Peekaa", "naturalWidth": 890, "naturalHeight": 568},
+    "visibleControlHeights": [44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 58, 58, 58, 58, 44, 44, 44, 44, 44]
+  }
+}

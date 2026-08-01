@@ -1,4 +1,4 @@
-# Nestly PDPA Operations Runbook
+# Peekaa PDPA Operations Runbook
 
 Status: **pre-launch control document**
 Owner: **Founder — Interim Privacy Contact, retention and incident owner for the mock pilot**
@@ -14,9 +14,9 @@ Public launch is **blocked** until every item in this table has a named owner, d
 | Gate | Current evidence | Required owner action | Pass evidence |
 |---|---|---|---|
 | Legal operator identity | Owner-supplied ACRA business profile inspected 1 August 2026 identifies **NESTLY TECHNOLOGIES PTE. LTD.**, UEN **202634502E**, incorporated 29 July 2026, registered office **29 Fernvale Road, #11-36, High Park Residences, Singapore 797416**. The source also contains a director identity number, which must never enter this repository or ordinary product surfaces. | Insert the legal identity and service details consistently into Terms, Privacy Notice, subscription/order flow and merchant contract, then obtain Singapore counsel review. | Counsel-approved entity details appear consistently in all public and commercial surfaces; identity-number and source-document scans are clean. |
-| Formal DPO designation | The owner supplied `nestlyasia@gmail.com` as the monitored business contact. There is no evidence that this mailbox or a person has been formally designated as DPO. | Before public commercial launch, the governing owner must designate at least one DPO in writing, define authority and reporting line, provide a monitored business contact, and record acceptance of the role. | Signed designation record, role description, escalation cover and monitoring test. |
-| DPO registration and public contact | No registration evidence exists. | Formally designate the DPO, then register or update the DPO through the current [PDPC online process](https://www.pdpc.gov.sg/dp-professional/register-your-dpo-with-pdpc). ACRA-registered and non-ACRA entities can use the PDPC form; a non-ACRA entity may register directly with PDPC and must not wait for incorporation merely to begin this action. Update the public notice from interim contact to the verified DPO business contact after designation. | PDPC submission acknowledgement, screenshot/export of submitted details, and live public contact test. Formal designation and public availability are legal duties; registration is an additional Nestly launch-control requirement based on current PDPC guidance. |
-| Role allocation with merchants | Public wording distinguishes the roles, but no merchant data-processing agreement is present. | Approve a merchant agreement/DPA that maps activities where the merchant is the organisation and Nestly is its data intermediary, and activities where Nestly acts as an organisation for its own purposes. | Signed template, processing instructions, security schedule, subprocessor terms, breach-notice obligation and deletion/return terms. |
+| Formal DPO designation | The owner supplied `admin.peekaa@gmail.com` as the monitored business contact. There is no evidence that this mailbox or a person has been formally designated as DPO. | Before public commercial launch, the governing owner must designate at least one DPO in writing, define authority and reporting line, provide a monitored business contact, and record acceptance of the role. | Signed designation record, role description, escalation cover and monitoring test. |
+| DPO registration and public contact | No registration evidence exists. | Formally designate the DPO, then register or update the DPO through the current [PDPC online process](https://www.pdpc.gov.sg/dp-professional/register-your-dpo-with-pdpc). ACRA-registered and non-ACRA entities can use the PDPC form; a non-ACRA entity may register directly with PDPC and must not wait for incorporation merely to begin this action. Update the public notice from interim contact to the verified DPO business contact after designation. | PDPC submission acknowledgement, screenshot/export of submitted details, and live public contact test. Formal designation and public availability are legal duties; registration is an additional Peekaa launch-control requirement based on current PDPC guidance. |
+| Role allocation with merchants | Public wording distinguishes the roles, but no merchant data-processing agreement is present. | Approve a merchant agreement/DPA that maps activities where the merchant is the organisation and Peekaa is its data intermediary, and activities where Peekaa acts as an organisation for its own purposes. | Signed template, processing instructions, security schedule, subprocessor terms, breach-notice obligation and deletion/return terms. |
 | Production location and transfers | The notice says the production database is configured in Singapore and that other providers may process abroad. Database transfer is still in progress. | Complete Singapore cutover, verify the live application no longer sends personal data to the legacy region, inventory every provider/location and document transfer safeguards. Do not publish the location statement before the fact is true. | Live endpoint evidence, provider list, data-flow map, contractual transfer assessment and owner sign-off. |
 | Data inventory and retention | Code and audit documents identify broad fields, but there is no approved record-level retention schedule. | Inventory each field/system, purpose, role, source, disclosure, location and disposal rule. Approve legal/business retention triggers rather than arbitrary universal periods. | Approved inventory and schedule with tested deletion/anonymisation jobs and backup-expiry evidence. |
 | Data requests | A manual public email process now exists; there is no demonstrated case log, identity-verification procedure or trained backup owner. | Establish the register, verification matrix, merchant routing, exception review, secure response method and absence cover. Rehearse access, correction, withdrawal and deletion cases. | Completed tabletop records and evidence that the mailbox is monitored and cases are auditable. |
@@ -26,24 +26,24 @@ Public launch is **blocked** until every item in this table has a named owner, d
 
 ## 1. Role model
 
-Nestly must determine its PDPA role per processing activity, not once for the whole product.
+Peekaa must determine its PDPA role per processing activity, not once for the whole product.
 
-| Activity | Merchant role | Nestly role | Operational consequence |
+| Activity | Merchant role | Peekaa role | Operational consequence |
 |---|---|---|---|
-| Merchant customer profile, booking, sale, loyalty balance, notes and merchant marketing | Usually the organisation deciding purposes and means | Usually data intermediary processing under contract and instructions | Merchant provides the customer notice and decides requests; Nestly secures, retains and returns/deletes data under the DPA and assists promptly. |
-| Merchant staff records and permissions entered for workforce operations | Usually the organisation/employer | Usually data intermediary | Merchant controls employment purpose and access; Nestly applies role isolation, audit and instruction handling. |
-| Nestly account authentication, platform security, abuse prevention, direct support and legal compliance | May provide user information and cooperate | Organisation for Nestly's own purposes | Nestly must notify purposes, limit collection, handle rights, make retention decisions and maintain direct accountability. |
-| Nestly subscription administration and commercial relationship | Customer organisation | Organisation | Commercial records require their own purpose, access and retention controls. Do not describe a ledger entry as regulated payment processing. |
+| Merchant customer profile, booking, sale, loyalty balance, notes and merchant marketing | Usually the organisation deciding purposes and means | Usually data intermediary processing under contract and instructions | Merchant provides the customer notice and decides requests; Peekaa secures, retains and returns/deletes data under the DPA and assists promptly. |
+| Merchant staff records and permissions entered for workforce operations | Usually the organisation/employer | Usually data intermediary | Merchant controls employment purpose and access; Peekaa applies role isolation, audit and instruction handling. |
+| Peekaa account authentication, platform security, abuse prevention, direct support and legal compliance | May provide user information and cooperate | Organisation for Peekaa's own purposes | Peekaa must notify purposes, limit collection, handle rights, make retention decisions and maintain direct accountability. |
+| Peekaa subscription administration and commercial relationship | Customer organisation | Organisation | Commercial records require their own purpose, access and retention controls. Do not describe a ledger entry as regulated payment processing. |
 | Merchant campaign content, recipient selection and DNC compliance | Organisation and sender/authoriser | Data intermediary if only executing instructions; may incur direct DNC responsibility depending on sending role | Contractually allocate checks, suppression, sender identification, consent evidence and complaint handling. Block sending unless evidence passes. |
-| Aggregated service improvement | Merchant role depends on source and agreement | Organisation if Nestly determines a separate purpose | Use genuinely anonymised data where possible. Do not repurpose identifiable tenant data without a documented lawful basis, notice and contract right. |
+| Aggregated service improvement | Merchant role depends on source and agreement | Organisation if Peekaa determines a separate purpose | Use genuinely anonymised data where possible. Do not repurpose identifiable tenant data without a documented lawful basis, notice and contract right. |
 
-The PDPC explains that a data intermediary processes personal data on behalf of another organisation and has role-specific duties; the engaging organisation remains responsible for data processed on its behalf. Nestly may occupy both roles for different activities.
+The PDPC explains that a data intermediary processes personal data on behalf of another organisation and has role-specific duties; the engaging organisation remains responsible for data processed on its behalf. Peekaa may occupy both roles for different activities.
 
 ## 2. Required registers
 
 Keep these in a controlled system with access logs. Do not store request identity documents or customer exports in this repository.
 
-1. **Personal data inventory:** field/category, data subject, collection source, purpose, legal/consent basis, Nestly role, merchant role, systems, region, recipients, retention trigger and disposal method.
+1. **Personal data inventory:** field/category, data subject, collection source, purpose, legal/consent basis, Peekaa role, merchant role, systems, region, recipients, retention trigger and disposal method.
 2. **Vendor/subprocessor register:** service, data categories, purpose, locations/support access, contract, transfer safeguard, security review, breach contact, exit/export/deletion method and annual review date.
 3. **Consent register:** merchant, customer, channel, action, exact notice/version, source, time, actor, evidence, withdrawal time and suppression result.
 4. **Data request register:** reference, received date, scope, responsible organisation, identity method, searches, exceptions, fee if lawfully applicable, response date, disclosure channel and evidence deleted after completion.
@@ -55,10 +55,10 @@ Keep these in a controlled system with access logs. Do not store request identit
 
 ### Intake and acknowledgement
 
-- Monitor `nestlyasia@gmail.com` every business day until a formally designated and registered DPO contact replaces the interim contact.
+- Monitor `admin.peekaa@gmail.com` every business day until a formally designated and registered DPO contact replaces the interim contact.
 - Create a case reference immediately. Acknowledge receipt without confirming that the named record exists.
 - Identify request type: access, correction, withdrawal, deletion/closure, complaint, incident or merchant service dispute.
-- Identify whether Nestly or the merchant controls the requested processing. If the merchant is responsible, obtain the requester's permission where needed to route it; do not silently disclose the request to an unrelated merchant.
+- Identify whether Peekaa or the merchant controls the requested processing. If the merchant is responsible, obtain the requester's permission where needed to route it; do not silently disclose the request to an unrelated merchant.
 
 ### Identity and authority
 
@@ -86,7 +86,7 @@ No merchant campaign should send until these checks are machine-enforced and aud
 3. A prior withdrawal or suppression always wins over an import, duplicate profile or later bulk edit.
 4. For covered marketing to Singapore telephone numbers, a valid DNC check is recorded unless a documented exception or clear and unambiguous consent applies.
 5. The message identifies the sender, gives contact information where required and provides an opt-out using the same medium.
-6. The opt-out updates the suppression list without requiring login, purchase or excessive information. PDPC guidance says telephone marketing must stop within 21 days after an opt-out; Nestly's operational target should be immediate suppression.
+6. The opt-out updates the suppression list without requiring login, purchase or excessive information. PDPC guidance says telephone marketing must stop within 21 days after an opt-out; Peekaa's operational target should be immediate suppression.
 7. Service messages are separated from promotional content. Do not add marketing to a service message to avoid campaign controls.
 
 ## 5. Retention and disposal
@@ -127,7 +127,7 @@ Run quarterly disposal checks and sample evidence. A deletion statement is not c
 
 1. **Detect and contain:** page the incident owner, stop exposure, preserve evidence and avoid destructive cleanup.
 2. **Scope:** identify systems, data categories, encryption/access status, affected people/merchants, dates, recipients and ongoing risk.
-3. **Notify merchants:** where Nestly is a data intermediary, notify the responsible organisation without undue delay and provide information needed for its assessment.
+3. **Notify merchants:** where Peekaa is a data intermediary, notify the responsible organisation without undue delay and provide information needed for its assessment.
 4. **Assess:** the responsible organisation assesses whether the breach is likely to cause significant harm and/or is of significant scale. Record the reasoning even when not notifiable.
 5. **Notify:** where notifiable, notify the PDPC as soon as practicable and no later than three calendar days after making the assessment; notify affected individuals as soon as practicable where required. Do not wait for a perfect forensic report before meeting a deadline.
 6. **Recover and learn:** validate containment, rotate credentials, restore safely, monitor recurrence, complete root-cause analysis and track corrective actions to closure.

@@ -1,4 +1,4 @@
-// Production browser PushSubscription endpoints supported by Nestly:
+// Production browser PushSubscription endpoints supported by Peekaa:
 // - Chromium: fcm.googleapis.com, current /wp/ and retained /fcm/send/ shapes.
 // - Firefox: updates.push.services.mozilla.com, current /wpush/v2/ and retained /push/.
 // - Safari/WebKit: any Apple-controlled subdomain of push.apple.com, as WebKit

@@ -4,6 +4,8 @@ export const PHONE_PATTERN = /^\+[1-9][0-9]{7,14}$/;
 export const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const NESTLY_PUBLIC_ORIGINS = Object.freeze([
+  'https://peekaa.asia',
+  'https://www.peekaa.asia',
   'https://nestly.asia',
   'https://www.nestly.asia',
 ]);

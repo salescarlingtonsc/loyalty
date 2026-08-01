@@ -10,7 +10,9 @@ In Supabase Dashboard, open the `loyalty` project, then **Edge Functions →
 Secrets**.
 
 1. Set `PUBLIC_GATEWAY_ALLOWED_ORIGINS` to the exact comma-separated value:
-   `https://nestly.asia,https://www.nestly.asia`.
+   `https://peekaa.asia,https://www.peekaa.asia,https://nestly.asia,https://www.nestly.asia`.
+   The two old Nestly origins are temporary redirect compatibility only and
+   must be removed after the documented migration window and traffic check.
 2. Do not use `*`, paths, trailing routes, credentials, or an HTTP production
    origin. Preview/staging origins are additive and must be individually
    reviewed.
@@ -23,16 +25,16 @@ Secrets**.
    implement their own exact-origin, Turnstile, rate-limit and capability
    controls.
 
-The shared code always trusts only the two canonical Nestly HTTPS origins even
-if the environment value is accidentally empty. The environment value remains
-explicit operational evidence and is the only way to add a reviewed preview
-origin.
+The shared code trusts the two canonical Peekaa HTTPS origins plus the two
+temporary exact legacy redirect origins even if the environment value is
+accidentally empty. The environment value remains explicit operational evidence
+and is the only way to add a reviewed preview origin.
 
 After deployment, run both checks:
 
 ```sh
 curl -i -X OPTIONS \
-  -H 'Origin: https://www.nestly.asia' \
+  -H 'Origin: https://www.peekaa.asia' \
   -H 'Access-Control-Request-Method: POST' \
   -H 'Access-Control-Request-Headers: content-type,apikey,authorization' \
   'https://gadpooereceldfpfxsod.supabase.co/functions/v1/public-join'
@@ -44,7 +46,7 @@ curl -i -X OPTIONS \
 ```
 
 The first response must be `204` with
-`Access-Control-Allow-Origin: https://www.nestly.asia`. The hostile origin must
+`Access-Control-Allow-Origin: https://www.peekaa.asia`. The hostile origin must
 remain `403` with no allow-origin header. Repeat for `public-booking` and
 `manage-booking`.
 
@@ -64,7 +66,7 @@ In Supabase Dashboard, open **Authentication → Providers → Phone**.
    Production must not use `888888` or any other fixed OTP.
 3. Keep phone auto-confirm disabled; possession is proved by the received OTP.
 4. In **Authentication → Attack Protection → CAPTCHA**, confirm Cloudflare
-   Turnstile is enabled with the production secret matching Nestly's public site
+   Turnstile is enabled with the production secret matching Peekaa's public site
    key.
 5. Confirm the private platform feature flags for customer phone registration
    and customer phone OTP are enabled only when the provider is ready.
@@ -74,10 +76,10 @@ The tracked `supabase/config.toml` intentionally contains no
 fixed OTP. Do not add one to the tracked project config and do not use
 `supabase config push` as a substitute for the reviewed Auth settings above.
 Fixed OTPs may be used only in a separate disposable non-production Supabase
-project whose configuration cannot target the Nestly production project.
+project whose configuration cannot target the Peekaa production project.
 
 Acceptance evidence must use a real Singapore mobile on the final
-`https://www.nestly.asia` build: request one SMS, reject one wrong code, accept
+`https://www.peekaa.asia` build: request one SMS, reject one wrong code, accept
 the received code, finish profile registration, sign out, and sign in again.
 Do not record the OTP or full phone number in the evidence.
 
@@ -85,9 +87,9 @@ Do not record the OTP or full phone number in the evidence.
 
 After OTP succeeds, confirm the customer can enroll a passkey on a physical
 iPhone and later sign in with Face ID. Configure the stable relying-party ID as
-`nestly.asia` with both exact Nestly HTTPS origins before enrolling production
-credentials. Changing the relying-party ID later invalidates enrolled
-passkeys.
+`peekaa.asia` with both exact Peekaa HTTPS origins before enrolling production
+credentials. Existing passkeys tied to `nestly.asia` cannot be transferred:
+users must sign in once with password/OTP and enrol a new Peekaa passkey.
 
 ## Stop conditions
 

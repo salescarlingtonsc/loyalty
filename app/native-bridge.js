@@ -4,10 +4,10 @@
   const capacitor = global.Capacitor;
   const isNative = Boolean(capacitor?.isNativePlatform?.());
   const plugins = capacitor?.Plugins || {};
-  const publicOrigin = 'https://www.nestly.asia';
+  const publicOrigin = 'https://www.peekaa.asia';
   const publicUrl = (path = '/') => {
     const target = new URL(String(path || '/'), `${publicOrigin}/`);
-    if (target.origin !== publicOrigin) throw new Error('Nestly public links must use the canonical origin');
+    if (target.origin !== publicOrigin) throw new Error('Peekaa public links must use the canonical origin');
     return target.href;
   };
 
@@ -27,7 +27,7 @@
       await plugins.Haptics.impact({ style });
       return true;
     },
-    async share({ title = 'Nestly', text = '', url = '' } = {}) {
+    async share({ title = 'Peekaa', text = '', url = '' } = {}) {
       if (isNative && plugins.Share?.share) {
         await plugins.Share.share({ title, text, url, dialogTitle: title });
         return true;
@@ -56,7 +56,7 @@
   plugins.App?.addListener?.('appUrlOpen', ({ url }) => {
     try {
       const target = new URL(url);
-      if (target.protocol !== 'https:' || target.hostname !== 'www.nestly.asia') return;
+      if (target.protocol !== 'https:' || target.hostname !== 'www.peekaa.asia') return;
       global.location.assign(`${target.pathname}${target.search}${target.hash}`);
     } catch {
       // Ignore malformed provider callbacks rather than navigating unexpectedly.

@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const root = new URL('../..', import.meta.url);
 const read = relativePath => readFile(new URL(relativePath, root), 'utf8');
 
-test('visible Nestly brand configuration is immutable and canonical', async () => {
+test('visible Peekaa brand configuration is immutable and canonical', async () => {
   const source = await read('app/brand-config.js');
   const context = { Object };
   context.globalThis = context;
@@ -15,17 +15,20 @@ test('visible Nestly brand configuration is immutable and canonical', async () =
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.NestlyBrand)),
     {
-      productName:'Nestly',
-      wordmark:'nestly.',
-      customerLabel:'My Nestly',
-      canonicalPublicDomain:'https://www.nestly.asia',
-      downloadPrefix:'nestly'
+      productName:'Peekaa',
+      wordmark:'peekaa',
+      customerLabel:'My Peekaa',
+      canonicalPublicDomain:'https://www.peekaa.asia',
+      contactEmail:'admin.peekaa@gmail.com',
+      logoPath:'/brand/peekaa-logo.png',
+      markPath:'/brand/peekaa-mark.png',
+      downloadPrefix:'peekaa'
     }
   );
   assert.equal(Object.isFrozen(context.NestlyBrand), true);
 });
 
-test('deployable public surfaces use Nestly while compatibility identifiers remain intact', async () => {
+test('deployable public surfaces use Peekaa while compatibility identifiers remain intact', async () => {
   const [index,join,terms,privacy,dataRequest,customerUi,runtimeLoader] = await Promise.all([
     read('app/index.html'),
     read('app/join.html'),
@@ -36,8 +39,8 @@ test('deployable public surfaces use Nestly while compatibility identifiers rema
     read('app/runtime-config-loader.js')
   ]);
 
-  assert.match(index, /<title>Nestly —/);
-  assert.match(join, /<title>Join — Nestly<\/title>/);
+  assert.match(index, /<title>Peekaa —/);
+  assert.match(join, /<title>Join — Peekaa<\/title>/);
   assert.match(index, /<script src="\/brand-config\.js"><\/script>[\s\S]*<script src="\/runtime-config\.js\?v=2"><\/script>/);
   assert.match(join, /<script src="\/brand-config\.js"><\/script>[\s\S]*<script src="\/runtime-config\.js\?v=2"><\/script>/);
   assert.match(index, /BRAND\.downloadPrefix}-customers\.csv/);
@@ -48,8 +51,8 @@ test('deployable public surfaces use Nestly while compatibility identifiers rema
     ['terms',terms],['privacy',privacy],['data request',dataRequest]
   ]) {
     assert.doesNotMatch(source,/frenly/i,`${name} still exposes the legacy product name`);
-    assert.match(source,/Nestly/);
-    assert.match(source,/nestly<span>\.<\/span>/);
+    assert.match(source,/Peekaa/);
+    assert.match(source,/\/brand\/peekaa-logo\.png/);
   }
 
   assert.match(index,/window\.FrenlyRuntimeConfig/);
@@ -102,8 +105,8 @@ test('platform console is routed before workspace onboarding and uses versioned 
   assert.ok(onboardingFallback > platformRoute);
   assert.match(index,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
   assert.match(index,/if\(requestedPlatformRoute\)\{[\s\S]*return await platformConsole\.render\(/);
-  assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css\?v=20260729-v105">/);
-  assert.match(index,/<script src="\/platform-console\.js\?v=20260801-v133"><\/script>/);
+  assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css\?v=20260802-v134">/);
+  assert.match(index,/<script src="\/platform-console\.js\?v=20260802-v134"><\/script>/);
   assert.match(consoleSource,/sb\.rpc\('super_admin_list_businesses'\)/);
   assert.match(consoleSource,/platform_list_firm_onboarding_v88/);
   assert.match(consoleSource,/platform_list_prospects_v76/);

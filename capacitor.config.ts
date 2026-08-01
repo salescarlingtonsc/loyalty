@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'asia.nestly.app',
-  appName: 'Nestly',
+  appId: 'asia.peekaa.app',
+  appName: 'Peekaa',
   webDir: 'dist/mobile',
   server: {
     androidScheme: 'https',

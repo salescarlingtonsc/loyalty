@@ -29,7 +29,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="www.nestly.asia"
+                    android:host="www.peekaa.asia"
                     android:pathPrefix="/" />
             </intent-filter>
 

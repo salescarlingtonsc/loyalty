@@ -29,10 +29,10 @@ test('approved owner creation is invite-bound and workspace activation is server
 
 test('self-service locale choices and assisted invitations retain English, Chinese and Bahasa Melayu copy',()=>{
   assert.match(app,/'zh-CN'/);
-  assert.match(app,/申请 Nestly 商家账户/);
+  assert.match(app,/申请 Peekaa 商家账户/);
   assert.match(app,/超级管理员批准后/);
   assert.match(app,/I have read and agree to the Terms and Privacy Policy/);
-  assert.match(app,/Mohon akaun perniagaan Nestly/);
+  assert.match(app,/Mohon akaun perniagaan Peekaa/);
   assert.match(app,/>Bahasa Melayu<\/option>/);
   assert.match(app,/ms:\{fnb:'Makanan & minuman \/ Kafe'/);
   assert.match(app,/invitationUnavailable:'Jemputan tidak tersedia'/);
@@ -48,7 +48,7 @@ test('only the superadmin platform queue can decide applications and exposes one
   assert.match(platform,/platform_decide_business_application_v105/);
   assert.match(platform,/p_expected_version:application\.version/);
   assert.match(platform,/p_idempotency_key:decisionAttemptKey/);
-  assert.match(platform,/Nestly stores only its hash and cannot show the token again/);
+  assert.match(platform,/Peekaa stores only its hash and cannot show the token again/);
   assert.match(platform,/Copy secure owner link/);
 });
 

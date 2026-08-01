@@ -27,8 +27,12 @@ verify_jwt = true
 
 [auth]
 enabled = true
-site_url = "https://www.nestly.asia"
+site_url = "https://www.peekaa.asia"
 additional_redirect_urls = [
+  "https://www.peekaa.asia",
+  "https://www.peekaa.asia/**",
+  "https://peekaa.asia",
+  "https://peekaa.asia/**",
   "https://www.nestly.asia",
   "https://www.nestly.asia/**",
   "https://nestly.asia",
@@ -69,9 +73,9 @@ verify_enabled = false
 enabled = true
 
 [auth.webauthn]
-rp_display_name = "Nestly"
-rp_id = "nestly.asia"
+rp_display_name = "Peekaa"
+rp_id = "peekaa.asia"
 rp_origins = [
-  "https://nestly.asia",
-  "https://www.nestly.asia"
+  "https://peekaa.asia",
+  "https://www.peekaa.asia"
 ]

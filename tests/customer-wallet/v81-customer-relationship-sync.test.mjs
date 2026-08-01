@@ -165,7 +165,7 @@ test('legacy relationship sync fallback remains bounded but customer surfaces ne
   assert.match(noDestination,/const relationshipRetry=customerRelationshipSyncCanRecover\(\)/);
   assert.match(noDestination,/\$\{relationshipRetry\?[\s\S]*customerRelationshipCheckActionHtml\(\)/);
   assert.match(noDestination,/if\(relationshipRetry\)wireCustomerRelationshipCheck/);
-  assert.match(app,/participating business[\s\S]{0,100}scan[\s\S]{0,50}Nestly QR/i,
+  assert.match(app,/participating business[\s\S]{0,100}scan[\s\S]{0,50}Peekaa QR/i,
     'customer guidance must direct an in-person participating-business QR join without coupling the contract to exact copy');
   assert.ok((app.match(/customerRelationshipCheckActionHtml\(\)/g)||[]).length<=2,
     'the legacy retry helper may remain as a dormant compatibility fallback but not across customer programme surfaces');

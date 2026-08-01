@@ -1,4 +1,4 @@
-# Nestly product truth
+# Peekaa product truth
 
 Last consolidated: 2026-08-01
 
@@ -8,8 +8,17 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 ## Product and audiences
 
-- The brand is **Nestly** and the public domain is `nestly.asia`.
-- Nestly serves businesses, their staff, customers, and Nestly platform staff.
+- Owner rebrand decision 2026-08-02: the customer-facing product brand is
+  **Peekaa** (spelled with two final “a” characters), the canonical public
+  domain is `peekaa.asia`, and the monitored public/commercial mailbox is
+  `admin.peekaa@gmail.com`. Historical evidence and internal compatibility
+  identifiers may retain Nestly/Frenly wording, but no current customer,
+  merchant, store-listing, email-link, share-link, favicon, install icon, splash,
+  or public metadata surface may present the retired product brand/domain.
+- The contracting legal entity remains **NESTLY TECHNOLOGIES PTE. LTD.** (UEN
+  **202634502E**) unless the owner supplies a later legal-entity decision. A
+  product rebrand does not rewrite executed agreements or misstate the operator.
+- Peekaa serves businesses, their staff, customers, and Peekaa platform staff.
 - The customer entry is the default public experience. Business sign-in lives
   at `/business`. The platform administration entry is not promoted publicly.
 - The experience must be understandable to a busy, non-technical SME operator
@@ -119,8 +128,8 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   the sector template. Owners may control staff access only within the firm's
   effective module set.
 - Inventory is not part of the default firm experience.
-- Customer Intelligence is a Nestly platform/consulting capability, not a
-  self-service owner module. Authorized Nestly consultants can generate it for
+- Customer Intelligence is a Peekaa platform/consulting capability, not a
+  self-service owner module. Authorized Peekaa consultants can generate it for
   assigned firms.
 - A business can enable or disable catalogue-led Quick Earn. When enabled,
   Quick Earn uses the firm's products, services, packages, and variants rather
@@ -207,7 +216,7 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 - English, Simplified Chinese, and Malay are workspace UI choices that translate
   the interface. They are not side-by-side merchant content fields.
 
-## Nestly platform administration
+## Peekaa platform administration
 
 - Platform roles are Super Admin, Admin, and Sales/Consultant.
 - Super Admin can read/write all platform data and configure admin permissions.
@@ -224,14 +233,14 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 - The contracting operator is **NESTLY TECHNOLOGIES PTE. LTD.** (Singapore UEN
   **202634502E**). The monitored commercial/privacy mailbox currently supplied
-  by the owner is **nestlyasia@gmail.com**. Formal DPO designation and counsel
+  by the owner is **admin.peekaa@gmail.com**. Formal DPO designation and counsel
   approval remain separate launch gates.
 - One launch plan is offered in SGD: **SGD 149 billed monthly** or **SGD 1,188
   billed annually** (SGD 99/month equivalent), with annual selected by default.
   **SGD 168/month** is display-only comparison pricing and must never be sent to
   Stripe as the amount due unless a later explicit owner decision introduces an
   actual billable price at that amount.
-- Nestly is not GST-registered at launch. Nestly subscription checkout,
+- NESTLY TECHNOLOGIES PTE. LTD. is not GST-registered at launch. Peekaa subscription checkout,
   invoices, receipts, platform billing projections, and exports therefore show
   **GST not charged (SGD 0.00)** and the amount due equals the pre-tax recurring
   total. Stripe Tax and automatic tax collection remain disabled, and every
@@ -248,7 +257,7 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   pending while Stripe reports `pending_update`; it is never presented as
   complete before provider confirmation. Self-service decreases are
   intentionally unavailable through either capacity or cadence commands.
-- Individual staff access is included at launch. Nestly must encourage unique
+- Individual staff access is included at launch. Peekaa must encourage unique
   staff accounts and least-privilege roles rather than create a pricing reason
   to share credentials. A later pricing change requires a new owner decision
   and migration; legacy seat fields are historical data, not the launch offer.
@@ -280,11 +289,11 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   processing fees, usage-priced external messaging, custom integrations,
   platform-only administration and any disabled/unconfigured module are not
   implied to be included or available.
-- Nestly subscription status is automated from the billing provider, including
+- Peekaa subscription status is automated from the billing provider, including
   paid state and next payment date.
 - Overdue businesses receive daily notices from the due date. At 14 days
   overdue, business-owner access is paused with a clear contact for the assigned
-  Nestly representative; customer value and records are not silently deleted.
+  Peekaa representative; customer value and records are not silently deleted.
 - Commission excludes GST, refunds, and chargebacks. An onboarding fee, if
   introduced, is commissionable.
 - Eligibility begins from onboarding start and requires the responsible staff
@@ -295,11 +304,11 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 ## Native store distribution
 
-- Owner clarification 2026-08-01: Nestly must be prepared for public App Store
+- Owner clarification 2026-08-01: Peekaa must be prepared for public App Store
   and Google Play distribution, but a generated wrapper or passing browser suite
   is not publication proof.
 - The public website remains the only place where a new business owner selects
-  a paid Nestly subscription and continues to Stripe Checkout. Packaged iOS and
+  a paid Peekaa subscription and continues to Stripe Checkout. Packaged iOS and
   Android builds are purchase-free companion apps: customers may create their
   free account, and already-subscribed owners/staff may sign in and operate, but
   the native build must expose no Stripe Checkout, Billing Portal, paid-plan
@@ -309,7 +318,7 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   **Delete account** request inside account/profile settings. The destructive
   action explains subscription and legally retained records, requires an
   explicit confirmation, persists one tenant-safe request, and tells the user
-  that Nestly will complete or respond to the request within 30 calendar days.
+  that Peekaa will complete or respond to the request within 30 calendar days.
   Sending an email is not a prerequisite to start the request.
 - Universal Links and Android App Links are not accepted until the live
   no-redirect association files contain the exact Apple Team ID and Google Play
@@ -362,7 +371,7 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   an already-recorded exact receipt for support recovery, but cannot originate
   merchant marketing copy or a new publication through these writers.
 - Promotion images use UUID object paths in the public customer-media bucket.
-  Draft media is not surfaced by Nestly's customer readers, but it is not
+  Draft media is not surfaced by Peekaa's customer readers, but it is not
   described as private because possession of its object URL permits access.
 - Promotion wording assistance must preserve every merchant-supplied number,
   date, eligibility condition, and term. It must not invent scarcity, prices,
@@ -375,5 +384,5 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 No feature is accepted merely because a component, RPC, migration, or button
 exists. Acceptance requires realistic end-to-end evidence for every surface
-that consumes the value. Nestly is not described as production-ready while any
+that consumes the value. Peekaa is not described as production-ready while any
 required acceptance row is unverified.

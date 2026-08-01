@@ -31,7 +31,7 @@ function platformSection(start,end){
 
 test('public business signup creates an owner account instead of requesting admin approval',()=>{
   const signup=section('function renderBusinessApplication(){','async function renderApprovedBusinessInviteSignup(');
-  assert.match(signup,/Create your Nestly owner account/);
+  assert.match(signup,/Create your Peekaa owner account/);
   assert.match(signup,/sb\.auth\.signUp/);
   assert.match(signup,/validNewPassword/);
   assert.match(signup,/I have read and agree to the Terms and Privacy Policy/);

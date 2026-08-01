@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX='nestly-shell-';
-const CACHE_VERSION='v3-20260728-auth-controls';
+const CACHE_VERSION='v4-20260802-peekaa-brand';
 const CACHE_NAME=`${CACHE_PREFIX}${CACHE_VERSION}`;
 const APP_SHELL=Object.freeze([
   '/offline.html',
@@ -9,8 +9,11 @@ const APP_SHELL=Object.freeze([
   '/pwa.js',
   '/customer-push.js',
   '/manifest.webmanifest',
-  '/icons/nestly-192.png',
-  '/icons/nestly-512.png',
+  '/brand/peekaa-logo.png',
+  '/brand/peekaa-mark.png',
+  '/icons/peekaa-32.png',
+  '/icons/peekaa-192.png',
+  '/icons/peekaa-512.png',
   '/icons/apple-touch-icon.png'
 ]);
 const STATIC_PATHS=new Set(APP_SHELL.filter(path=>path!=='/'));
@@ -90,13 +93,13 @@ self.addEventListener('push',event=>{
     let payload={};
     try{payload=event.data?.json?.()||{}}catch{return}
     if(!CUSTOMER_PUSH_TYPES.has(payload.event_type))return;
-    const title=String(payload.title||'Nestly update').slice(0,120);
-    const body=String(payload.body||'Open Nestly to view your update.').slice(0,240);
+    const title=String(payload.title||'Peekaa update').slice(0,120);
+    const body=String(payload.body||'Open Peekaa to view your update.').slice(0,240);
     const route=customerPushRoute(payload);
     await self.registration.showNotification(title,{
       body,
-      icon:'/icons/nestly-192.png',
-      badge:'/icons/nestly-192.png',
+      icon:'/icons/peekaa-192.png',
+      badge:'/icons/peekaa-32.png',
       tag:String(payload.notification_id||`${payload.event_type}:${payload.business_slug||''}`).slice(0,160),
       renotify:false,
       data:{route,event_type:payload.event_type,business_slug:payload.business_slug||null}

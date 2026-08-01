@@ -119,14 +119,14 @@ test('public legal surfaces use the supplied company identity and business mailb
     const page = await read(path);
     assert.match(page, /NESTLY TECHNOLOGIES PTE\. LTD\./);
     assert.match(page, /202634502E/);
-    assert.match(page, /nestlyasia@gmail\.com/);
-    assert.doesNotMatch(page, /nestly\.asia@gmail\.com|leechuanseng\.biz@gmail\.com/);
+    assert.match(page, /admin\.peekaa@gmail\.com/);
+    assert.doesNotMatch(page, /nestlyasia@gmail\.com|nestly\.asia@gmail\.com|leechuanseng\.biz@gmail\.com/);
   }
 });
 
-test('V124 publishes the exact live Terms and Privacy digests without rewriting acceptance history', async () => {
+test('V134 publishes the exact live Peekaa Terms and Privacy digests without rewriting acceptance history', async () => {
   const [sql, terms, privacy] = await Promise.all([
-    read('supabase/migrations/20260731164709_nestly_v124_stripe_launch_pricing.sql'),
+    read('supabase/migrations/20260802010000_nestly_v134_peekaa_brand_legal.sql'),
     read('app/terms.html'),
     read('app/privacy.html'),
   ]);
@@ -134,7 +134,7 @@ test('V124 publishes the exact live Terms and Privacy digests without rewriting 
     const digest = createHash('sha256').update(page).digest('hex');
     assert.match(sql, new RegExp(digest));
   }
-  assert.match(sql, /document_version='2026-08-01'/);
+  assert.match(sql, /document_version='2026-08-02'/);
   assert.doesNotMatch(sql, /(?:delete from|truncate)\s+(?:app\.)?customer_legal_documents/i);
   assert.doesNotMatch(sql, /(?:insert into|update|delete from|truncate)\s+public\.customer_legal_acceptances/i);
 });

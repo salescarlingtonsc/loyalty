@@ -63,7 +63,7 @@ export function buildV104PromotionVisualFixture(app){
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="v104-production-source-sha256" content="${sourceHash}">
-<title>Nestly v104 production-render visual acceptance</title>
+<title>Peekaa v104 production-render visual acceptance</title>
 <style>
 ${style}
 /* Evidence label only. Layout and customer promotion components are production CSS. */

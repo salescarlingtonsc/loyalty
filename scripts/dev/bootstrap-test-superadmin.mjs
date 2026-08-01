@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
-const DEFAULT_EMAIL = 'nestlyasia@gmail.com';
+const DEFAULT_EMAIL = 'admin.peekaa@gmail.com';
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 export function localSupabaseUrl(value) {
@@ -66,7 +66,7 @@ async function createOrUpdateUser(config) {
         email: config.email,
         password: config.password,
         email_confirm: true,
-        user_metadata: { full_name: 'Nestly Test Super Admin' }
+        user_metadata: { full_name: 'Peekaa Test Super Admin' }
       })
     });
   } catch (error) {
@@ -81,7 +81,7 @@ async function createOrUpdateUser(config) {
         email_confirm: true,
         user_metadata: {
           ...(existing.user_metadata || {}),
-          full_name: existing.user_metadata?.full_name || 'Nestly Test Super Admin'
+          full_name: existing.user_metadata?.full_name || 'Peekaa Test Super Admin'
         }
       })
     });

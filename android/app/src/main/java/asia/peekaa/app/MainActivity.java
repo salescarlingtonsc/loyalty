@@ -1,4 +1,4 @@
-package asia.nestly.app;
+package asia.peekaa.app;
 
 import com.getcapacitor.BridgeActivity;
 
