@@ -5174,6 +5174,54 @@ function businessApplicationLanguage(){
   const locale=sessionStorage.getItem('nestly-business-application-locale');
   return WORKSPACE_LOCALES_V97.includes(locale)?locale:'en';
 }
+function businessOAuthRedirectUrl(){
+  const redirect=new URL(NestlyNativeBridge.publicUrl('/business'));
+  redirect.searchParams.set('oauth','business');
+  return redirect.toString();
+}
+function businessGoogleButtonHtml(id){
+  return `<button class="btn ghost" id="${esc(id)}" type="button" style="width:100%;min-height:44px;margin-top:12px"><span aria-hidden="true" style="font-weight:800;font-size:18px">G</span><span>Continue with Google</span></button>`;
+}
+function ensureCanonicalBusinessOAuthOrigin(){
+  const canonical=new URL(NestlyNativeBridge.publicUrl('/business'));
+  if(location.origin===canonical.origin)return true;
+  location.replace(canonical.toString());
+  return false;
+}
+function beginBusinessGoogleOAuthAttempt({legalAccepted=false}={}){
+  if(legalAccepted!==true)return false;
+  try{
+    sessionStorage.setItem('nestly-business-google-oauth',JSON.stringify({startedAt:Date.now(),returnPath:'/business',legalAccepted:true}));
+    return true;
+  }catch{return false}
+}
+function takeBusinessGoogleOAuthAttempt(){
+  const key='nestly-business-google-oauth',raw=sessionStorage.getItem(key);
+  sessionStorage.removeItem(key);
+  if(!raw)return false;
+  try{
+    const attempt=JSON.parse(raw),age=Date.now()-Number(attempt?.startedAt);
+    return attempt?.returnPath==='/business'&&attempt?.legalAccepted===true&&Number.isFinite(age)&&age>=0&&age<=30*60*1000;
+  }catch{return false}
+}
+async function startBusinessGoogleAuth({button,errorHostId,legalAccepted=false}){
+  if(!ensureCanonicalBusinessOAuthOrigin())return;
+  const errorHost=$(errorHostId);
+  if(button)button.disabled=true;
+  if(errorHost)errorHost.innerHTML='';
+  if(beginBusinessGoogleOAuthAttempt({legalAccepted})){
+    try{
+      const {error}=await sb.auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo:businessOAuthRedirectUrl(),scopes:'openid email profile',queryParams:{prompt:'select_account'}}
+      });
+      if(!error)return;
+    }catch{}
+  }
+  sessionStorage.removeItem('nestly-business-google-oauth');
+  if(button)button.disabled=false;
+  if(errorHost)errorHost.innerHTML='<div class="err">Google sign-in could not be started. Try again or use email and password.</div>';
+}
 function renderBusinessApplication(){
   destroyMountedTurnstiles();
   let locale=businessApplicationLanguage();
@@ -5189,10 +5237,12 @@ function renderBusinessApplication(){
     <div class="row"><h2 style="margin:14px 0 2px">${esc(a.heading)}</h2><span class="spacer"></span>
       <select id="businessApplicationLocale" aria-label="Preferred language" style="width:auto"><option value="en"${locale==='en'?' selected':''}>English</option><option value="zh-CN"${locale==='zh-CN'?' selected':''}>中文</option><option value="ms"${locale==='ms'?' selected':''}>Bahasa Melayu</option></select></div>
     <p class="muted small" style="margin-top:6px">${esc(a.intro)}</p>
+    <label class="checkrow" for="applicationConsent" style="margin-top:16px"><input id="applicationConsent" type="checkbox" aria-label="${esc(a.consent)}"><span>${esc(a.consentLead)} <a href="/terms.html">${esc(a.terms)}</a> ${esc(a.and)} <a href="/privacy.html">${esc(a.privacy)}</a>.</span></label>
+    ${businessGoogleButtonHtml('businessApplicationGoogle')}
+    <div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>
     <label for="applicationContactEmail">${esc(a.email)}</label><input id="applicationContactEmail" type="email" autocomplete="email" placeholder="you@business.com">
     <label for="businessOwnerPassword">${esc(a.password)}</label>${passwordControlHtml('businessOwnerPassword',{autocomplete:'new-password',locale})}
     <label for="businessOwnerPasswordConfirm">${esc(a.confirm)}</label>${passwordControlHtml('businessOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
-    <label class="checkrow" for="applicationConsent" style="margin-top:16px"><input id="applicationConsent" type="checkbox" aria-label="${esc(a.consent)}"><span>${esc(a.consentLead)} <a href="/terms.html">${esc(a.terms)}</a> ${esc(a.and)} <a href="/privacy.html">${esc(a.privacy)}</a>.</span></label>
     <div id="businessApplicationError"></div>
     ${authChallengeHtml(locale)}
     <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px" disabled>${esc(a.create)}</button>
@@ -5204,6 +5254,14 @@ function renderBusinessApplication(){
     renderBusinessApplication();
   };
   $('businessApplicationBack').onclick=()=>renderAuth('in');
+  $('businessApplicationGoogle').onclick=event=>{
+    if(!$('applicationConsent').checked){
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(a.accept)}</div>`;
+      $('applicationConsent').focus();
+      return;
+    }
+    startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'businessApplicationError',legalAccepted:true});
+  };
   let token='',control=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
     retry:'authTurnstileRetry',action:'frenly_auth',locale,
@@ -5358,9 +5416,10 @@ function renderAuth(mode='in',{admin=false}={}){
     ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
     <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
     <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
+    ${!admin&&!NestlyNativeBridge.isNative?`<label class="checkrow" for="businessGoogleLegal" style="margin-top:16px"><input id="businessGoogleLegal" type="checkbox"><span>If Google creates a new Peekaa account, I agree to the <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.</span></label>${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
     <label for="em">Email</label><input id="em" type="email" placeholder="you@business.com">
     <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
-    <div id="autherr"></div>
+    <div id="autherr">${!admin&&sessionStorage.getItem('nestly-business-oauth-notice')?'<div class="err">Could not complete Google sign-in. Try again or use email and password.</div>':''}</div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
     ${authChallengeHtml()}
     <div class="row" style="margin-top:18px">
@@ -5369,6 +5428,7 @@ function renderAuth(mode='in',{admin=false}={}){
     </div>
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
+  if(!admin&&sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
   if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
@@ -5379,6 +5439,14 @@ function renderAuth(mode='in',{admin=false}={}){
     .then(control=>authControl=control);
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
+  if($('businessGoogleSignIn'))$('businessGoogleSignIn').onclick=event=>{
+    if(!$('businessGoogleLegal').checked){
+      $('autherr').innerHTML='<div class="err">Please accept the Terms and Privacy Policy before continuing with Google.</div>';
+      $('businessGoogleLegal').focus();
+      return;
+    }
+    startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'autherr',legalAccepted:true});
+  };
   $('go').onclick=async()=>{
     const email=$('em').value.trim(),password=$('pw').value;
     if(!authToken) return;
@@ -5519,6 +5587,34 @@ sb.auth.onAuthStateChange((event,session)=>{
     setTimeout(()=>renderPasswordUpdate(),0);
   }
 });
+
+async function consumeBusinessOAuthRedirect(){
+  const search=new URLSearchParams(location.search);
+  if(search.get('oauth')!=='business')return;
+  const hash=new URLSearchParams((location.hash||'').replace(/^#/,'').replace(/^\?/,'') );
+  const providerError=search.get('error_description')||search.get('error')||hash.get('error_description')||hash.get('error');
+  const oauthAccessToken=hash.get('access_token'),oauthRefreshToken=hash.get('refresh_token');
+  /* OAuth fragments contain credentials. Remove them from browser history before
+     any network or rendering work, then establish only the Supabase session.
+     Business authority remains server-derived after route() loads the persona. */
+  history.replaceState(null,'','/business');
+  const validPendingAttempt=takeBusinessGoogleOAuthAttempt();
+  if(!validPendingAttempt||providerError){
+    sessionStorage.setItem('nestly-business-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  if(!oauthAccessToken||!oauthRefreshToken){
+    sessionStorage.setItem('nestly-business-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  try{
+    const {error}=await sb.auth.setSession({access_token:oauthAccessToken,refresh_token:oauthRefreshToken});
+    if(error)throw error;
+  }catch{
+    await sb.auth.signOut().catch(()=>{});
+    sessionStorage.setItem('nestly-business-oauth-notice','Could not complete Google sign-in');
+  }
+}
 
 async function consumePasswordRecoveryRedirect(){
   const search=new URLSearchParams(location.search);
@@ -17243,6 +17339,7 @@ async function renderPortal(slug){
 }
 
 async function boot(){
+  try{await consumeBusinessOAuthRedirect()}catch{}
   try{await consumePasswordRecoveryRedirect()}catch{}
   loadBuildIdentity();
   route();

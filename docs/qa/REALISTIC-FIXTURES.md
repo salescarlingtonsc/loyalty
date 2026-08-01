@@ -16,6 +16,8 @@ Branches:
 Roles:
 
 - Owner: Olivia Tan
+- Google self-service owner: Sofia Ng, synthetic identity
+  `qa.v135.google.owner@peekaa.invalid`
 - Manager: Maya Lim
 - Front desk: Farah Noor
 - Service staff: Chen Wei, Aisha Rahman

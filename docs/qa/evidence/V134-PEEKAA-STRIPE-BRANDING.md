@@ -199,8 +199,11 @@ evidence. No setting was saved and no provider mutation occurred during the
 audit.
 
 No Stripe login, OTP, identity, representative, bank, catalogue, webhook,
-secret or live-mode change has been performed. No production data, migration,
-domain, deployment, commit or push was performed.
+secret or live-mode change was performed during that audit. No production
+data, migration, domain or deployment action has been performed. The corrected
+V134 candidate was subsequently committed as `957560540e2fb301b92043e2418c4b21bc831bfa`
+and pushed to `origin/codex/v134-peekaa-stripe-branding`; neither that feature
+branch nor its migration is live.
 
 ## Remaining release gates
 
@@ -209,17 +212,19 @@ domain, deployment, commit or push was performed.
 2. Configure and verify the four Prices in Stripe test mode, signed webhook,
    checkout, payment projection, next date, refund window, failure/replay,
    day-14 handling and reconciliation using synthetic data.
-3. Obtain a fresh independent Sol review of the corrected exact V134 candidate.
-4. Obtain a subsequent owner approval explicitly scoped to V134 before any
-   commit, push, production migration, production secret, live Stripe catalogue,
-   domain/DNS or production deployment action.
+3. Preserve the fresh independent Sol acceptance of exact commit `9575605` as
+   the V134 brand/legal boundary; it does not accept Google OAuth or live Stripe.
+4. Obtain a subsequent owner approval explicitly scoped to the accepted V134
+   boundary before merge, production migration, domain/DNS or production
+   deployment action.
 5. After an authorised release, prove the new domain and association files over
    HTTP 200, preserve old-domain redirects, re-enrol passkeys, run signed native
    device acceptance, and complete a separately authorised live Stripe smoke.
 
 The corrected V134 application and migration candidate is locally browser- and
-database-verified. It is not yet provider-verified, independently accepted,
-committed, pushed, deployed or live.
+database-verified, independently accepted, committed and pushed to its feature
+branch. It is not merged, deployed or live. Live Stripe remains outside the
+accepted V134 brand/legal boundary and is not provider-verified.
 
 ## Independent Sol review, 2026-08-02
 
@@ -244,3 +249,20 @@ provider-object convergence, runtime fallback removal, executable final-chain
 legal compatibility, fresh Chrome artifacts and a completely green 1,395-test
 gate. It requires a fresh independent Sol verdict before a new owner release
 approval can authorize live Stripe or production mutations.
+
+## Fresh exact-commit Sol re-review, 2026-08-02
+
+Sol independently re-reviewed exact commit
+`957560540e2fb301b92043e2418c4b21bc831bfa` and returned **ACCEPT**, narrowly
+for the V134 Peekaa brand/legal candidate. The reviewer reproduced 46/46
+focused passes, 1,395/1,395 complete validation, native-store configuration,
+byte-identical canonical web/native bundles, matching DB/Supabase V134 SQL, and
+a disposable PostgreSQL 17 V129-to-V134 final-chain rehearsal with the V134
+legal and V124 Stripe SQL suites passing and rolling back. P0/P1 findings were
+none within that boundary.
+
+The acceptance does not include Google OAuth, native-store publication, live
+Stripe mutation, catalogue, webhook, branding/portal provider setup or live
+billing. It also does not itself authorize merge, migration or deployment;
+those remain subject to a subsequent owner release approval for the exact
+accepted boundary.

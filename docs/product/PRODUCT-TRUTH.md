@@ -106,6 +106,14 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 ## Business onboarding and modules
 
+- A business owner may sign in or create the owner identity with email/password
+  or Google. Google authentication returns to the canonical Peekaa business
+  entry and preserves the self-service onboarding path. A successful Google
+  authentication never grants a business role by itself; server-side persona,
+  workspace and payment state remain authoritative. Because Google sign-in may
+  create an unknown identity, both Google entry points require explicit Terms
+  and Privacy acceptance before provider handoff; new business creation remains
+  durably server-gated by the accepted legal flag.
 - Owner clarification 2026-08-01: the public business signup is self-service.
   A new owner creates and confirms an account, enters the business and sector,
   selects annual or monthly billing plus customer capacity, reviews the exact
