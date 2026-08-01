@@ -247,6 +247,30 @@ All automated credentials must come from a non-committed test-secret mechanism.
   with changed business/plan data, duplicate slug, inactive Stripe catalogue,
   forged amount, and a paid invoice for another subscription.
 
+## `NESTLY-MOBILE-RELEASE-01` — store publication candidate
+
+- Canonical source: exact V129/V131 `app/` bundle under application identifier
+  `asia.nestly.app`; website origin `https://www.nestly.asia`; packaged origins
+  `capacitor://localhost` and `https://localhost`.
+- People: existing `SPA-GLOW` owner Sofia Ng, front desk Maya Lim, dual-role
+  operator, and newly created synthetic customer `CUS-NEW`. No real customer
+  identity, store credential, signing key or OTP is stored in evidence.
+- Website path: a new owner may choose the reviewed annual/monthly V124 plan and
+  continue to Stripe only on the public website.
+- Packaged path: customer account creation and existing customer/owner/staff
+  sign-in remain available; all paid subscription purchase/change/portal actions
+  are absent with no external purchase link.
+- Deletion path: the authenticated identity confirms **Delete account**, one
+  pending request persists, exact replay returns the same request, another user
+  and anonymous caller receive no request data, and no operational/financial
+  record is deleted by the request writer.
+- Device states: iPhone-class 390px and Android-class 412px portrait, one
+  landscape pass, camera denied/allowed, offline cold start, reconnect,
+  background/resume, expired session and universal/app-link launch.
+- Distribution states: missing then valid Apple Team ID, missing then valid Play
+  signing SHA-256, association 404/redirect/wrong type/valid 200, unsigned then
+  signed archive/bundle, and store privacy/review metadata absent then complete.
+
 ## Required state variations
 
 Every relevant journey chooses from this list and records which variants were

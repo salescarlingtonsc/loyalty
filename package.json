@@ -15,6 +15,8 @@
     "canonical-migrations:check": "node scripts/migrations/materialize-canonical-order.mjs --check",
     "mobile:prepare": "node scripts/mobile/prepare-web.mjs",
     "mobile:sync": "npm run mobile:prepare && cap sync",
+    "mobile:store:validate": "node scripts/mobile/store-readiness.mjs",
+    "mobile:store:associations": "node scripts/mobile/store-readiness.mjs --generate",
     "mobile:open:ios": "cap open ios",
     "mobile:open:android": "cap open android",
     "dev:bootstrap-superadmin": "node scripts/dev/bootstrap-test-superadmin.mjs",

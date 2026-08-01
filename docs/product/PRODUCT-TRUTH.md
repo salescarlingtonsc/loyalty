@@ -293,6 +293,36 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   renewal. Default junior rates are 20% plus 5% after one completed year, then
   5% on renewal. Rates must be super-admin configurable.
 
+## Native store distribution
+
+- Owner clarification 2026-08-01: Nestly must be prepared for public App Store
+  and Google Play distribution, but a generated wrapper or passing browser suite
+  is not publication proof.
+- The public website remains the only place where a new business owner selects
+  a paid Nestly subscription and continues to Stripe Checkout. Packaged iOS and
+  Android builds are purchase-free companion apps: customers may create their
+  free account, and already-subscribed owners/staff may sign in and operate, but
+  the native build must expose no Stripe Checkout, Billing Portal, paid-plan
+  change, external purchase link, or copy that steers a user to another payment
+  method. Website billing behavior remains unchanged.
+- Every authenticated customer, owner, or staff account has an easy-to-find
+  **Delete account** request inside account/profile settings. The destructive
+  action explains subscription and legally retained records, requires an
+  explicit confirmation, persists one tenant-safe request, and tells the user
+  that Nestly will complete or respond to the request within 30 calendar days.
+  Sending an email is not a prerequisite to start the request.
+- Universal Links and Android App Links are not accepted until the live
+  no-redirect association files contain the exact Apple Team ID and Google Play
+  signing-certificate fingerprint. Placeholder teams, certificates and links
+  are prohibited.
+- Store publication requires the exact signed archive/bundle, current store SDK
+  targets, store privacy/data-safety declarations, review credentials, and
+  physical iPhone and Android evidence for cold start, authentication, QR,
+  denied permissions, offline/reconnect, background/resume and deep links.
+- Native promotional/transactional push must not be claimed merely because Web
+  Push works in a browser. APNs/FCM credentials, native token persistence,
+  consent, provider receipts and physical-device evidence are separate gates.
+
 ## Notifications and communications
 
 - Account OTP SMS is limited to creation and forgotten password.

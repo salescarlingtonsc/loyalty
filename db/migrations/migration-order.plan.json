@@ -1017,6 +1017,12 @@
       "path": "db/migrations/20260801_nestly_v130_self_serve_business_onboarding.sql",
       "semanticVersion": "v130",
       "proposedDeployVersion": "20260801193000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v131_store_publication_readiness.sql",
+      "semanticVersion": "v131",
+      "proposedDeployVersion": "20260801210000"
     }
   ]
 }

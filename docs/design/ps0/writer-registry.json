@@ -2601,6 +2601,14 @@
     {
       "id": "browser.rpc:app/index.html:request_self_serve_checkout_v130",
       "reason": "V130 idempotent billing-intent writer. It creates or reuses one server-priced Stripe command for the caller's locked staging workspace; it does not collect payment, project a paid invoice, open access, or mutate any customer-value ledger."
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_account_deletion_request_v131",
+      "reason": "V131 authenticated subject-only read projection of the caller's latest account-deletion request. It performs no DML, exposes no email, phone, tenant, payment, or customer-value data, and cannot read another identity's request."
+    },
+    {
+      "id": "browser.rpc:app/index.html:request_account_deletion_v131",
+      "reason": "V131 idempotent privacy-operations intake. It appends one non-economic pending deletion request after explicit confirmation and does not immediately delete or mutate identities, tenant records, sales, payments, points, rewards, packages, gift cards, stored value, or any customer-value ledger."
     }
   ]
 }

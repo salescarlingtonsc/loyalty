@@ -1018,6 +1018,12 @@
       "version": "20260801193000",
       "name": "nestly_v130_self_serve_business_onboarding",
       "sourcePath": "db/migrations/20260801_nestly_v130_self_serve_business_onboarding.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260801210000",
+      "name": "nestly_v131_store_publication_readiness",
+      "sourcePath": "db/migrations/20260801_nestly_v131_store_publication_readiness.sql"
     }
   ]
 }

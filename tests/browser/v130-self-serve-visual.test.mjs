@@ -11,5 +11,6 @@ test('V130 browser fixture executes current production signup, setup and payment
   assert.match(fixture,/function renderBusinessApplication\(\)/);
   assert.match(fixture,/function renderOnboard\(\)/);
   assert.match(fixture,/function renderBusinessWorkspaceControl\(/);
+  assert.match(fixture,/function accountDeletionCardHtml\(\)/);
   assert.match(fixture,/provider-confirmed payment/);
 });

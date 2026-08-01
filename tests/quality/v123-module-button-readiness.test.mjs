@@ -15,7 +15,7 @@ test('every mapped module and literal control passes the V123 readiness inventor
   const report=JSON.parse(run.stdout);
   assert.equal(report.business.expected,25);
   assert.equal(report.platform.expected,9);
-  assert.equal(report.controls.buttons,265);
+  assert.equal(report.controls.buttons,269);
   assert.deepEqual(report.controls.hiddenRouteTargets,[]);
   assert.deepEqual(report.controls.nonSemanticClickTargets,[]);
 });

@@ -2260,8 +2260,9 @@ async function route(){
       S.staffWorkspaces=sortStaffWorkspaces(personas?.staff||[]);
       workspaceStaffPersona=!personaError&&(personas?.staff||[]).find(p=>p.business_slug===workspaceSlug);
       if(!workspaceStaffPersona){
-        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p><button class="btn" id="workspaceHome" style="margin-top:16px">Continue</button></section></main>`;
+        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p><button class="btn" id="workspaceHome" style="margin-top:16px">Continue</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
         $('main').focus();
+        wireAccountDeletionButton();
         $('workspaceHome').onclick=()=>nav(personas?.default_route||'#/');return;
       }
       S.hasCustomerPersona=(personas?.customer||[]).length>0?true:null;
@@ -2275,7 +2276,7 @@ async function route(){
       const {data:workspace,error:workspaceError}=await sb.from('businesses').select('*').eq('slug',workspaceSlug).single();
       if(!isRouteCurrent())return;
       if(workspaceError||!workspace){
-        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p></section></main>`;$('main').focus();return;
+        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;$('main').focus();wireAccountDeletionButton();return;
       }
       if(S.biz?.id!==workspace.id){
         S.biz=workspace;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.isSA=false;S.saChecked=false;S.hasCustomerPersona=null;
@@ -3510,8 +3511,8 @@ async function renderCustomerProfile(){
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
   renderCustomerShell({active:'profile',staffWorkspaces:context.staffWorkspaces,body:'<div class="card"><p class="muted">Loading your profile…</p></div>'});
   if(context.features.customer_phone_registration!==true||!context.profile){
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Profile</h1><p class="muted">Your ${esc(BRAND.customerLabel)} account details.</p></div></header><section class="card"><h2>Profile editing is not available</h2><p class="muted small" style="margin-top:6px">This account uses the earlier customer identity path. No details have been changed.</p></section>`;
-    focusCustomerRoute();return;
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Profile</h1><p class="muted">Your ${esc(BRAND.customerLabel)} account details.</p></div></header><section class="card"><h2>Profile editing is not available</h2><p class="muted small" style="margin-top:6px">This account uses the earlier customer identity path. No details have been changed.</p></section>${accountDeletionCardHtml()}`;
+    wireAccountDeletionButton();focusCustomerRoute();return;
   }
   const marketingResult=await sb.rpc('customer_get_platform_marketing_preference');
   if(!isCurrent())return;
@@ -3538,7 +3539,8 @@ async function renderCustomerProfile(){
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Update password</span></button>
     </section>
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:17})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
-    <section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">Only service updates such as bookings, points, rewards, quests, and birthday benefits. Businesses cannot send promotional push notifications from this control.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`;
+    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">Only service updates such as bookings, points, rewards, quests, and birthday benefits. Businesses cannot send promotional push notifications from this control.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}
+    ${accountDeletionCardHtml()}`;
   bindPasswordVisibility($('walletBody'));
   const successSound=$('customerSuccessSound');
   if(successSound){
@@ -3555,6 +3557,7 @@ async function renderCustomerProfile(){
     profilePush.bindButton($('customerPushProfileControl'),{statusHost:$('customerDeviceNotifications')?.querySelector('[data-push-status]')});
     profilePush.reconcile().catch(()=>{});
   }
+  wireAccountDeletionButton();
   let profileAttempt=null;
   $('customerProfileSave').onclick=async()=>{
     const fullName=$('customerProfileName').value.trim(),language=$('customerProfileLanguage').value;
@@ -3813,7 +3816,8 @@ function renderCustomerWalletUnavailable(message='Customer wallet access is not 
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
     <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
-    </div></div></div>`;
+    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+  wireAccountDeletionButton();
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
 
@@ -3823,7 +3827,8 @@ function renderCustomerCapabilityRetry(message){
     <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
       <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
-    </div></div></div>`;
+    </div>${accountDeletionCardHtml()}${legalLinks()}</div></div>`;
+  wireAccountDeletionButton();
   $('customerCapabilityRetry').onclick=()=>{customerFeatureCapabilities=null;route()};
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
@@ -4982,11 +4987,12 @@ function renderPersonaResolutionUnavailable(){
     <p class="muted" style="line-height:1.6">Your account is still signed in. Retry to open the correct business or customer view.</p>
     <button class="btn" id="accountAccessRetry" style="width:100%;margin-top:18px">Retry</button>
     <button class="btn ghost" id="accountAccessSignOut" style="width:100%;margin-top:10px">Sign out</button>
-    ${legalLinks()}</section></main>`;
+    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   const main=$('main');main.focus();
   CUI.announce('Account access could not be loaded.',{assertive:true});
   $('accountAccessRetry').onclick=route;
   $('accountAccessSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  wireAccountDeletionButton();
 }
 
 function renderWorkspaceAccessUnavailable(){
@@ -4995,10 +5001,29 @@ function renderWorkspaceAccessUnavailable(){
     <h1 id="workspaceAccessTitle" style="font-size:1.5rem;margin:14px 0 6px">Workspace access unavailable</h1>
     <p class="muted" style="line-height:1.6">Your staff access is inactive or no longer assigned. Ask the workspace owner to reactivate your access before trying again.</p>
     <button class="btn ghost" id="workspaceAccessSignOut" style="width:100%;margin-top:18px">Sign out</button>
-    ${legalLinks()}</section></main>`;
+    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   const main=$('main');main.focus();
   CUI.announce('Workspace access is inactive or unavailable.',{assertive:true});
   $('workspaceAccessSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  wireAccountDeletionButton();
+}
+
+async function returnToNativeSignIn(){
+  if(S.user){killChannels();await sb.auth.signOut();resetClientSessionState()}
+  renderAuth('in');
+}
+
+function renderNativeBusinessCompanion(){
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="nativeBusinessTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <h1 id="nativeBusinessTitle" style="font-size:1.55rem;margin:14px 0 6px">Nestly for existing business accounts</h1>
+    <p class="muted" style="line-height:1.6">This app is a purchase-free companion for businesses with an existing Nestly subscription.</p>
+    <p class="muted small" style="line-height:1.6;margin-top:8px">New business accounts, subscription setup, and subscription changes are not available in this app.</p>
+    <button class="btn" id="nativeBusinessSignIn" style="width:100%;margin-top:18px">${S.user?'Sign out and return to sign in':'Back to sign in'}</button>
+    ${S.user?accountDeletionCardHtml():''}${legalLinks()}</section></main>`;
+  $('main')?.focus();
+  $('nativeBusinessSignIn').onclick=returnToNativeSignIn;
+  wireAccountDeletionButton();
 }
 
 function renderBusinessWorkspaceControl(control={}){
@@ -5011,7 +5036,8 @@ function renderBusinessWorkspaceControl(control={}){
       if(!onboarding||onboarding.status!=='payment_pending'){
         renderBusinessWorkspaceControl({...control,_selfServeChecked:true});return;
       }
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Nestly opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${legalLinks()}</section></main>`;
+      if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Nestly opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
       $('businessControlPay').onclick=async()=>{
         const button=$('businessControlPay'),status=$('businessControlPayStatus');button.disabled=true;status.textContent='Opening secure Stripe Checkout…';
         const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;let key=sessionStorage.getItem(storageKey);if(!key){key=crypto.randomUUID();sessionStorage.setItem(storageKey,key)}
@@ -5023,6 +5049,7 @@ function renderBusinessWorkspaceControl(control={}){
       };
       $('businessControlRetry').onclick=route;
       $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+      wireAccountDeletionButton();
     });
     return;
   }
@@ -5048,11 +5075,12 @@ function renderBusinessWorkspaceControl(control={}){
     <button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:12px">Check again</button>
     ${S.hasCustomerPersona?'<a class="btn ghost" href="#/wallet" style="width:100%;margin-top:10px">Open customer view</a>':''}
     <button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>
-    ${legalLinks()}</section></main>`;
+    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   $('main').focus();
   CUI.announce(title+'.',{assertive:true});
   $('businessControlRetry').onclick=route;
   $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  wireAccountDeletionButton();
 }
 
 /* ---------- auth ---------- */
@@ -5068,8 +5096,9 @@ function renderPersonaChoice(personas,{includeCustomer=true}={}){
       ${hasCustomer?`<a class="entry-choice" href="#/wallet"><span class="entry-choice-icon">${CUI.icon('customers',{size:25})}</span><div><h2>${esc(BRAND.customerLabel)}</h2><p class="muted">See your customer programmes, rewards, value, visits, bookings, and messages.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Open ${esc(BRAND.customerLabel)} ${CUI.icon('forward',{size:17})}</span></a>`:''}
     </div>
     <button class="btn ghost sm" id="personaChoiceSignOut" type="button" style="margin-top:18px">${CUI.icon('back',{size:17})}<span>Sign out</span></button>
-    ${legalLinks()}</section></main>`;
+    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
+  wireAccountDeletionButton();
   $('personaChoiceSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
 
@@ -5288,6 +5317,7 @@ function renderAuth(mode='in',{admin=false}={}){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   destroyMountedTurnstiles();
   if(!admin&&businessApplicationInviteToken())return renderApprovedBusinessInviteSignup(businessApplicationInviteToken());
+  if(!admin&&mode==='up'&&NestlyNativeBridge.isNative)return renderNativeBusinessCompanion();
   if(!admin&&mode==='up')return renderBusinessApplication();
   if(mode==='forgot'){
     root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="authResetTitle">
@@ -5338,6 +5368,9 @@ function renderAuth(mode='in',{admin=false}={}){
     </div>
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
+  if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
+    $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
+  }
   let authToken='',authControl=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
     retry:'authTurnstileRetry',action:'frenly_auth',
@@ -5373,6 +5406,57 @@ function renderAuth(mode='in',{admin=false}={}){
 function validNewPassword(password){
   return password.length>=12 && /[a-z]/.test(password) && /[A-Z]/.test(password)
     && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password);
+}
+
+function accountDeletionCardHtml(){
+  return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Nestly to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
+}
+
+function wireAccountDeletionButton(button=$('openAccountDeletion')){
+  if(button)button.onclick=()=>openAccountDeletionDialog(button);
+}
+
+async function openAccountDeletionDialog(trigger=document.activeElement){
+  $('accountDeletionModal')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="accountDeletionModal" role="dialog" aria-modal="true" aria-labelledby="accountDeletionTitle" tabindex="-1"><section class="modal-card" style="max-width:540px">
+    <div class="row"><div><h2 id="accountDeletionTitle">Delete your Nestly account</h2><p class="muted small" style="margin-top:5px">This requests deletion; it does not erase records immediately.</p></div><span class="spacer"></span><button class="btn ghost sm" id="accountDeletionClose" type="button" aria-label="Close account deletion">Close</button></div>
+    <div id="accountDeletionBody" aria-busy="true"><p class="muted small" style="margin-top:16px">Checking for an existing request…</p></div>
+  </section></div>`);
+  const modal=$('accountDeletionModal'),body=$('accountDeletionBody');
+  let deactivate=null;
+  const close=()=>{if(deactivate){const cleanup=deactivate;deactivate=null;cleanup()}else modal.remove();trigger?.focus?.()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#accountDeletionClose'});
+  $('accountDeletionClose').onclick=close;
+  const renderPending=request=>{
+    const due=request?.response_due_at?sgt(request.response_due_at):'within 30 days';
+    body.setAttribute('aria-busy','false');
+    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request received</b><p class="small" style="margin-top:6px">Status: ${esc(request?.status||'pending')} · response due ${esc(due)}.</p></div><p class="muted small" style="margin-top:12px">We will respond within 30 days. Your subscription and any outstanding payment obligations are handled separately.</p>`;
+  };
+  const renderForm=()=>{
+    body.setAttribute('aria-busy','false');
+    body.innerHTML=`<p class="muted small" style="margin-top:16px">This affects your customer and business personas that use this same login. We will respond within 30 days. Type DELETE to confirm.</p>
+      <label for="accountDeletionConfirm">Type DELETE to confirm</label><input id="accountDeletionConfirm" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div id="accountDeletionStatus" role="alert" aria-live="assertive"></div>
+      <button class="btn danger" id="accountDeletionSubmit" type="button" style="width:100%;margin-top:16px" disabled>Submit deletion request</button>`;
+    const input=$('accountDeletionConfirm'),submit=$('accountDeletionSubmit'),status=$('accountDeletionStatus');
+    input.oninput=()=>{submit.disabled=input.value.trim()!=='DELETE'};
+    submit.onclick=async()=>{
+      if(input.value.trim()!=='DELETE')return;
+      const slot='nestly:v131:account-deletion';
+      let key=sessionStorage.getItem(slot);if(!key){key=crypto.randomUUID();sessionStorage.setItem(slot,key)}
+      submit.disabled=true;status.innerHTML='<p class="muted small" style="margin-top:10px">Submitting the same safe request…</p>';
+      const {data,error}=await sb.rpc('request_account_deletion_v131',{p_confirmation:'DELETE',p_idempotency_key:key});
+      if(!modal.isConnected)return;
+      if(error||!data?.request_id){submit.disabled=false;status.innerHTML='<div class="err">We could not confirm whether the request was saved. Retry; Nestly will reuse the same request.</div>';return}
+      sessionStorage.removeItem(slot);renderPending(data);
+    };
+    input.focus({preventScroll:true});
+  };
+  const {data,error}=await sb.rpc('get_account_deletion_request_v131');
+  if(!modal.isConnected)return;
+  if(error){body.setAttribute('aria-busy','false');body.innerHTML='<div class="err" role="alert">Deletion status could not be loaded. No request was created.</div><button class="btn ghost" id="accountDeletionRetry" style="margin-top:12px">Try again</button>';$('accountDeletionRetry').onclick=()=>{close();openAccountDeletionDialog(trigger)};return}
+  const request=Array.isArray(data)?data[0]:data;
+  if(request&&['pending','processing'].includes(request.status))renderPending(request);else renderForm();
 }
 function renderPasswordUpdate(){
   globalThis.document?.documentElement?.setAttribute('lang','en');
@@ -5438,7 +5522,9 @@ async function consumePasswordRecoveryRedirect(){
 
 /* ---------- onboarding ---------- */
 function renderOnboard(){
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.55rem;margin-top:18px">Loading secure business setup…</h1><p class="muted small" style="margin-top:7px">Checking current plans and any saved payment step.</p></section></main>`;
+  if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.55rem;margin-top:18px">Loading secure business setup…</h1><p class="muted small" style="margin-top:7px">Checking current plans and any saved payment step.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  wireAccountDeletionButton();
   const finishCheckout=async(onboarding,statusNode,button)=>{
     if(button)button.disabled=true;
     if(statusNode)statusNode.textContent='Opening secure Stripe Checkout…';
@@ -5468,8 +5554,8 @@ function renderOnboard(){
   (async()=>{
     const state=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
     if(state.error||!state.data){
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">Business setup unavailable</h1><p class="muted small" style="margin-top:8px">We could not safely load the current Stripe plans. No workspace or charge was created.</p><button class="btn" id="onboardRetry" style="margin-top:18px">Retry</button><button class="btn ghost" id="out" style="margin:18px 0 0 8px">Sign out</button></section></main>`;
-      $('onboardRetry').onclick=renderOnboard;$('out').onclick=async()=>{await sb.auth.signOut();resetClientSessionState();route()};return;
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">Business setup unavailable</h1><p class="muted small" style="margin-top:8px">We could not safely load the current Stripe plans. No workspace or charge was created.</p><button class="btn" id="onboardRetry" style="margin-top:18px">Retry</button><button class="btn ghost" id="out" style="margin:18px 0 0 8px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+      wireAccountDeletionButton();$('onboardRetry').onclick=renderOnboard;$('out').onclick=async()=>{await sb.auth.signOut();resetClientSessionState();route()};return;
     }
     const onboarding=state.data.onboarding;
     if(onboarding?.status==='active'){
@@ -5478,7 +5564,8 @@ function renderOnboard(){
     if(onboarding?.status==='payment_pending'){
       const paymentState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
       const canceled=paymentState==='canceled';
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':'Nestly has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p><div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · 30-day money-back request period starts from confirmed first payment</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">Checkout success pages do not unlock access; provider-confirmed payment does.</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button><button class="btn ghost" id="out" style="width:100%;margin-top:10px">Sign out</button>${legalLinks()}</section></main>`;
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':'Nestly has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p><div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · 30-day money-back request period starts from confirmed first payment</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">Checkout success pages do not unlock access; provider-confirmed payment does.</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button><button class="btn ghost" id="out" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+      wireAccountDeletionButton();
       $('selfServePay').onclick=()=>finishCheckout(onboarding,$('selfServePayStatus'),$('selfServePay'));
       $('onboardRetry').onclick=route;
       $('out').onclick=async()=>{await sb.auth.signOut();resetClientSessionState();route()};return;
@@ -5487,10 +5574,11 @@ function renderOnboard(){
     const sectors=Array.isArray(state.data.sectors)?state.data.sectors:[];
     const annual=plans.find(plan=>plan.cadence==='annual'),monthly=plans.find(plan=>plan.cadence==='monthly');
     if(!annual||!monthly||!sectors.length){
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">New subscriptions are temporarily unavailable</h1><p class="muted small" style="margin-top:8px">Nestly has not published a complete Stripe plan and sector catalogue. No workspace or charge was created.</p><button class="btn" id="onboardRetry" style="margin-top:18px">Retry</button></section></main>`;$('onboardRetry').onclick=renderOnboard;return;
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">New subscriptions are temporarily unavailable</h1><p class="muted small" style="margin-top:8px">Nestly has not published a complete Stripe plan and sector catalogue. No workspace or charge was created.</p><button class="btn" id="onboardRetry" style="margin-top:18px">Retry</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;wireAccountDeletionButton();$('onboardRetry').onclick=renderOnboard;return;
     }
     const capacityOptions=Array.from({length:10},(_,index)=>(index+1)*1000);
-    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Choose the workspace and exact subscription. Stripe securely collects payment; Nestly opens access only after confirmed payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">nestly.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · ${money(annual.base_amount_cents)}/year</strong><p class="muted small" style="margin-top:5px">${money(Math.round(annual.base_amount_cents/12))}/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · ${money(monthly.base_amount_cents)}/month</strong><p class="muted small" style="margin-top:5px">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity">Customer capacity</label><select id="customerCapacity">${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customers</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · 30-day money-back guarantee from confirmed first payment</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox"><span>I have read and agree to the <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Nestly.</p><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${legalLinks()}</section></main>`;
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Choose the workspace and exact subscription. Stripe securely collects payment; Nestly opens access only after confirmed payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">nestly.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · ${money(annual.base_amount_cents)}/year</strong><p class="muted small" style="margin-top:5px">${money(Math.round(annual.base_amount_cents/12))}/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · ${money(monthly.base_amount_cents)}/month</strong><p class="muted small" style="margin-top:5px">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity">Customer capacity</label><select id="customerCapacity">${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customers</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · 30-day money-back guarantee from confirmed first payment</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox"><span>I have read and agree to the <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Nestly.</p><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+    wireAccountDeletionButton();
     let slugEdited=false;
     const slugify=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80);
     $('businessName').oninput=()=>{if(!slugEdited)$('businessSlug').value=slugify($('businessName').value)};
@@ -5868,6 +5956,7 @@ function profileHtml(){
         ${S.myRole==='owner'?`<a href="#/setup" id="pmSetup">${CUI.icon('setup',{size:18})}Get started</a>`:''}
         ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:18})}Settings</a>`:''}
         ${S.isSA?`<a href="#/platform" id="pmPlatform">${CUI.icon('platform',{size:18})}Platform</a>`:''}
+        <a href="#" id="pmDeleteAccount" style="color:var(--red)">${CUI.icon('back',{size:18})}Account &amp; privacy</a>
         <a href="#" id="pmSignout" style="color:var(--red)">${CUI.icon('back',{size:18})}Sign out</a>
       </div>`:''}
     </div>`;
@@ -5886,6 +5975,7 @@ function wireProfile(page){
     const pmS=$('pmSettings');if(pmS) pmS.onclick=()=>{profileOpen=false};
     const pmP=$('pmPlatform');if(pmP) pmP.onclick=()=>{profileOpen=false};
     const pmW=$('pmWallet');if(pmW) pmW.onclick=()=>{profileOpen=false};
+    const pmD=$('pmDeleteAccount');if(pmD)pmD.onclick=e=>{e.preventDefault();profileOpen=false;openAccountDeletionDialog(pmD)};
     /* click-away to dismiss — expected of a native popover, and without it the menu
        could only be closed by re-clicking the chip. One-shot listener, re-armed on
        each open, so it can't stack up across renders. */
@@ -16524,6 +16614,16 @@ async function loadBillingConfig(){
   if(error||!b||b.business_id!==S.biz.id){
     wrap.innerHTML=`<b>Billing</b><div class="empty small" role="alert">Billing details could not load. Check your connection and try again.</div><button type="button" class="btn ghost sm" id="billingRetry">Retry billing</button>`;
     $('billingRetry').onclick=()=>loadBillingConfig();return;
+  }
+  if(NestlyNativeBridge.isNative){
+    const statusPill=b.status==='active'?'ok':b.status==='trialing'?'new':'off';
+    const cadence=b.terms?.cadence==='annual'?'Annual':b.terms?.cadence==='monthly'?'Monthly':'Not available';
+    const capacity=Number(b.terms?.customer_capacity||0);
+    const nextPayment=b.next_payment_at?sgt(b.next_payment_at):b.provider?.current_period_end?sgt(b.provider.current_period_end):'Not available';
+    wrap.innerHTML=`<div class="row"><div><b>Nestly subscription</b><p class="muted small" style="margin-top:3px">Current provider-confirmed access.</p></div><span class="spacer"></span><span class="pill ${statusPill}">${esc(b.status||'not started')}</span></div>
+      <dl class="cui-readonly-list"><div class="cui-readonly-row"><dt>Billing cycle</dt><dd>${esc(cadence)}</dd></div><div class="cui-readonly-row"><dt>Customer capacity</dt><dd>${capacity?`Up to ${capacity.toLocaleString('en-SG')}`:'Not available'}</dd></div><div class="cui-readonly-row"><dt>Next payment date</dt><dd>${esc(nextPayment)}</dd></div></dl>
+      <p class="muted small" style="margin-top:14px">Subscription changes are not available in this app.</p>`;
+    return;
   }
   const plans=Array.isArray(b.plans)?b.plans:[],byCadence=Object.fromEntries(plans.map(plan=>[plan.cadence,plan]));
   const currentCustomers=Math.max(0,Number(b.current_customer_count||0));
