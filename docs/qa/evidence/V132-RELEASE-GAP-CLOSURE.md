@@ -59,8 +59,8 @@ to count the private deletion queue while still running as `authenticated`.
 - `EXPECTED_SUPABASE_PROJECT_REF=gadpooereceldfpfxsod npm run validate`:
   1,381/1,381 plus static build.
 
-Production migrations, data, functions, secrets and deployment were not
-changed.
+Before owner approval, production migrations, data, functions, secrets and
+deployment were not changed.
 
 ## Independent review
 
@@ -75,4 +75,32 @@ workspace, while a payment-pending V130 workspace is closed.
 The owner subsequently gave the exact V132 release approval on 1 August 2026
 for commit, push, production migrations V129–V132, the reviewed function and
 web production deployment. This evidence remains `VERIFIED_DATABASE` until
-those live steps and their post-deployment checks succeed.
+the live provider-payment journey is configured and verified; the authorized
+migration, function and web release evidence is recorded below.
+
+## Authorized production release
+
+Released on 1 August 2026 after the recorded owner approval:
+
+- Git commit `fbb79882c85b04293686a86d85bf1c31ce77a40c` was pushed on
+  `codex/v129-trial-test`.
+- Production migration ledger contains, in order,
+  `nestly_v129_trial_test_ux`, `nestly_v130_self_serve_business_onboarding`,
+  `nestly_v131_store_publication_readiness`, and
+  `nestly_v132_release_gap_closure`.
+- Read-only production checks confirm the V129 reader, V130 onboarding table,
+  V131 deletion queue and V132 guard exist. The self-service checkout reader is
+  executable by `authenticated` and not by `anon`.
+- Supabase `stripe-billing-command` version 5 is `ACTIVE` with gateway JWT
+  verification enabled.
+- Vercel deployment `dpl_Gtmut4ur9XA7iXLJGAu8FB2npjza` is `READY` and promoted.
+  `https://www.nestly.asia/api/build` reports the exact full commit above;
+  root, Privacy and Terms return HTTP 200; the served source contains the V130
+  self-service and V131 account-deletion calls.
+- The first post-promotion Vercel runtime-error scan returned no error groups.
+
+The production V124 catalogue still has zero active rows, so no live Stripe
+Checkout or paid-invoice activation was attempted or claimed. Apple and Android
+association files also remain HTTP 404 pending the owner-controlled signing
+identifiers. Consequently this row remains `VERIFIED_DATABASE` rather than
+`VERIFIED_PRODUCTION` or `CLOSED`.
