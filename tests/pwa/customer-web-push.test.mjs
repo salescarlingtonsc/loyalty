@@ -157,7 +157,7 @@ test('A logout then B sign-in never leaks enabled state or lets B revoke A, and 
   assert.equal(customerB.status().state,'account_conflict');
   assert.equal(button.dataset.pushState,'account_conflict');
   assert.equal(label.textContent,'Reset for this account');
-  assert.match(customerB.status().detail,/another Nestly account/);
+  assert.match(customerB.status().detail,/another Peekaa account/);
 
   await customerB.disable();
   assert.equal(
@@ -182,7 +182,7 @@ test('iOS requires the installed PWA before notification permission can be reque
   const harness=pushControllerHarness(source);
   harness.client.status();
   assert.match(source,/isIos\(\)&&!isStandalone\(\)/);
-  assert.match(source,/add Nestly to your Home Screen/i);
+  assert.match(source,/add Peekaa to your Home Screen/i);
   assert.doesNotMatch(source,/(setTimeout|DOMContentLoaded)[\s\S]{0,160}requestPermission/);
 });
 

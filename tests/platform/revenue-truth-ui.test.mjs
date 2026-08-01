@@ -79,7 +79,7 @@ const briefing=(overrides={})=>({
 test('renders exact SQL-shaped recorded revenue without calling it total business revenue',()=>{
   const view=UI.buildViewModel({truth:truth(),lifecycle:lifecycle(),briefing:briefing()});
   const html=UI.render(view);
-  assert.match(html,/Nestly recorded revenue/);
+  assert.match(html,/Peekaa recorded revenue/);
   assert.match(html,/Identified customer revenue/);
   assert.match(html,/Anonymous \/ unattributed revenue/);
   assert.match(html,/Customer revenue coverage/);
@@ -88,7 +88,7 @@ test('renders exact SQL-shaped recorded revenue without calling it total busines
   assert.doesNotMatch(html,/>Total business revenue</);
 });
 
-test('partial reconciliation refuses to relabel the Nestly ledger as total business revenue',()=>{
+test('partial reconciliation refuses to relabel the Peekaa ledger as total business revenue',()=>{
   const partialTruth=truth({
     status:'partial_coverage',
     coverage:{identity_revenue_pct:75,identity_transaction_pct:75,itemization_transaction_pct:87.5,reconciled_transaction_pct:null},
@@ -97,8 +97,8 @@ test('partial reconciliation refuses to relabel the Nestly ledger as total busin
   const view=UI.buildViewModel({truth:partialTruth,lifecycle:lifecycle(),briefing:briefing()});
   const html=UI.render(view);
   assert.equal(view.state,'partial');
-  assert.match(html,/Nestly recorded revenue/);
-  assert.match(html,/SGD(?:\s|&nbsp;)*1,000\.00 is recorded in the Nestly sales ledger/);
+  assert.match(html,/Peekaa recorded revenue/);
+  assert.match(html,/SGD(?:\s|&nbsp;)*1,000\.00 is recorded in the Peekaa sales ledger/);
   assert.match(html,/total business revenue remains unavailable/);
   assert.doesNotMatch(html,/>Total business revenue</);
 });

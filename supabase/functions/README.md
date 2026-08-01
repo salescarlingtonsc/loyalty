@@ -16,8 +16,8 @@ Required secrets:
 
 - `PUBLIC_GATEWAY_ALLOWED_ORIGINS`: optional comma/newline-separated exact
   origins (or a JSON string array) for deliberately supported preview/staging
-  hosts. The two canonical production origins, `https://nestly.asia` and
-  `https://www.nestly.asia`, are immutable trusted defaults in the shared
+  hosts. The two canonical production origins, `https://peekaa.asia` and
+  `https://www.peekaa.asia`, are immutable trusted defaults in the shared
   gateway. Wildcards, credentials, paths, query strings and non-loopback HTTP
   origins are rejected. Keep preview or legacy origins only when they are
   deliberately supported and included in release smoke tests.
@@ -90,7 +90,7 @@ unguessable public reference and returns no applicant PII, decision reason, invi
 Do not deploy the frontend until the migration and all public functions it calls are live and
 smoke-tested.
 
-## Nestly platform billing functions
+## Peekaa platform billing functions
 
 The v77 billing pipeline uses three separate functions:
 
@@ -99,7 +99,7 @@ The v77 billing pipeline uses three separate functions:
 - `stripe-billing-command` executes owner/super-admin checkout, portal and
   cadence commands. A redirect is never treated as payment.
 - `stripe-billing-reconcile` is the scheduled independent check. It compares
-  Stripe subscription and invoice snapshots against Nestly, records a bounded
+  Stripe subscription and invoice snapshots against Peekaa, records a bounded
   reconciliation run and its mismatches, and never fabricates or repairs paid
   state.
 
@@ -123,7 +123,7 @@ Then register Stripe webhook delivery for the event allowlist documented by
 v77, invoke one test-mode reconciliation, and retain its run ID as launch
 evidence. A `mismatch` or `failed` result blocks billing launch.
 
-## Nestly private SME documents
+## Peekaa private SME documents
 
 The v86 document flow keeps the `sme-private` bucket private. An authorized
 platform user first reserves an upload or requests a read through the v86
@@ -152,5 +152,5 @@ supabase functions deploy sme-document-signer
 ```
 
 `PUBLIC_GATEWAY_ALLOWED_ORIGINS` may add intentional non-production origins;
-it cannot remove or broaden the two exact canonical Nestly origins. Retain a
+it cannot remove or broaden the two exact canonical Peekaa origins. Retain a
 private-bucket upload/read/finalize acceptance run as launch evidence.

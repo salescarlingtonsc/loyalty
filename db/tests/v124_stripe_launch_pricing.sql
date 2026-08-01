@@ -33,11 +33,16 @@ declare
   v_conflict boolean:=false;
 begin
   if (select count(*) from app.customer_legal_documents d
-       where d.active and d.document_version='2026-08-01' and (
-         (d.document_key='terms' and d.document_sha256='e581bbd1f20e9b8b1958f75f100950c50d20a9810d82fce8467b1ed74859643f')
-         or (d.document_key='privacy' and d.document_sha256='08ee39b8c678552699cf2438b7c0803a5ee441b6426ddee3418e88f04a29ba84')
+       where d.active and (
+         (d.document_key='terms' and (
+           (d.document_version='2026-08-01' and d.document_sha256='e581bbd1f20e9b8b1958f75f100950c50d20a9810d82fce8467b1ed74859643f')
+           or (d.document_version='2026-08-02' and d.document_sha256='2e31dbece128befd9b504034505ba93e93069dc9cd7782a66974431740d330c8')
+         )) or (d.document_key='privacy' and (
+           (d.document_version='2026-08-01' and d.document_sha256='08ee39b8c678552699cf2438b7c0803a5ee441b6426ddee3418e88f04a29ba84')
+           or (d.document_version='2026-08-02' and d.document_sha256='67e51a7c59a214a4df43fd533835d528034f0d20884f72244e25e0e0bf928c5c')
+         ))
        ))<>2 then
-    raise exception 'V124 live legal manifest does not match the shipped pages';
+    raise exception 'V124/V134 active legal manifest does not match a shipped page set';
   end if;
   if pg_get_functiondef('public.customer_get_platform_marketing_preference()'::regprocedure)
        not like '%994400cadc703134d9c8bd3868fe054f94e37153c47c2d2e688064bdc75138c9%'

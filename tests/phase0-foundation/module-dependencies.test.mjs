@@ -32,7 +32,7 @@ test('legacy module RPC remains owner-authorized while tenant settings are platf
   assert.match(migration, /revoke all privileges on table public\.module_registry from public, anon, authenticated/i);
   assert.match(migration, /grant select on table public\.module_registry to authenticated/i);
   assert.doesNotMatch(app, /sb\.rpc\('set_business_modules',\{p_business:S\.biz\.id,p_modules:on\}\)/);
-  assert.match(app, /Set by Nestly for your sector/);
+  assert.match(app, /Set by Peekaa for your sector/);
   assert.match(app, /<select id="bi" disabled/);
   assert.doesNotMatch(app, /from\('businesses'\)\.update\(\{enabled_modules:on\}/);
 });

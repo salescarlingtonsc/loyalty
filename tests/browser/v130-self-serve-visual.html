@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="06173e5039c6bc8a3669c03f9b019c3d125d37b8b58546a28ba63c91e4cb6c0b"><link rel="icon" href="data:,"><title>Nestly V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="04847ba1bb235079f954c87bd1aa489ff7348efd843213b887a1b166c039acf5"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -119,9 +119,9 @@ tr.click:hover td{background:#FBFAF8}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
 .challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
-.logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;letter-spacing:-.02em}
+.logo{display:inline-flex;align-items:center;min-height:44px}
+.brand-logo{display:block;width:auto;height:50px;max-width:126px;object-fit:contain}
 .wallet-head>a.logo{display:inline-flex;align-items:center;min-height:44px}
-.logo span{color:var(--coral)}
 .ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:8px}
 .ind{border:1.5px solid var(--line);border-radius:var(--r-sm);padding:14px;text-align:center;cursor:pointer;
   background:#fff;transition:border-color .18s var(--ease),transform .22s var(--spring),box-shadow .2s}
@@ -963,29 +963,77 @@ body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const money=cents=>'SGD '+(Number(cents||0)/100).toFixed(2);const sgt=value=>new Date(value).toLocaleString('en-SG');
-  const brandWordmark=()=>'<span>Nestly</span>';const legalLinks=()=>'<div class="legal-links"><a href="#">Terms</a> · <a href="#">Privacy</a></div>';
+  const brandWordmark=()=>'<span>Peekaa</span>';const legalLinks=()=>'<div class="legal-links"><a href="#">Terms</a> · <a href="#">Privacy</a></div>';
   const passwordControlHtml=id=>'<div class="password-control"><input id="'+id+'" type="password"></div>';
   const authChallengeHtml=()=>'<div class="challenge"><div class="challenge-status">Security check complete</div></div>';
   const bindPasswordVisibility=()=>{},destroyMountedTurnstiles=()=>{};
   const businessApplicationLanguage=()=>{const locale=sessionStorage.getItem('nestly-business-application-locale');return WORKSPACE_LOCALES_V97.includes(locale)?locale:'en'};
   const mountTurnstile=(_site,options)=>{setTimeout(()=>options.onToken('synthetic-browser-token'),0);return Promise.resolve({reset(){}})};
   const validNewPassword=value=>String(value).length>=12;const AUTH_TURNSTILE_SITE_KEY='synthetic';
-  const NestlyNativeBridge={publicUrl:path=>'https://nestly.asia'+path};const WORKSPACE_LOCALES_V97=['en','zh-CN','ms'];
+  const NestlyNativeBridge={publicUrl:path=>'https://www.peekaa.asia'+path};const WORKSPACE_LOCALES_V97=['en','zh-CN','ms'];
   const renderAuth=()=>{},route=()=>{},resetClientSessionState=()=>{},killChannels=()=>{},nav=value=>{window.__lastNavigation=value},toast=()=>{};
   const CUI={icon:()=>'',activateDialog(modal,{onClose,initialFocus}){const prior=document.activeElement;const close=()=>{modal.remove();prior?.focus()};modal.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}});setTimeout(()=>modal.querySelector(initialFocus)?.focus(),0);return ()=>close()}};const S={user:{id:'v131-browser-user'},hasCustomerPersona:false};
   let currentView='signup';window.__consoleErrors=[];window.__rpcCalls=[];
   const plans=[{cadence:'annual',cadence_months:12,base_amount_cents:118800,included_customer_capacity:1000,capacity_block_size:1000,capacity_block_amount_cents:12000,compare_at_monthly_cents:16800,tax_behavior:'exclusive'},{cadence:'monthly',cadence_months:1,base_amount_cents:14900,included_customer_capacity:1000,capacity_block_size:1000,capacity_block_amount_cents:1000,compare_at_monthly_cents:16800,tax_behavior:'exclusive'}];
   const modules=['Customer CRM and QR signup','Loyalty points, stamps and rewards','Appointments, team schedule and waitlist','Promotions and AI-assisted promotion copy'];
   const pending={business_id:'00000000-0000-0000-0000-000000000130',business_slug:'radiant-skin-studio',business_name:'Radiant Skin Studio',cadence:'annual',customer_capacity:3000,total_cents:142800,status:'payment_pending'};
-  const sb={auth:{signUp:async()=>({data:{session:null},error:null}),signOut:async()=>({})},rpc:async(name,args)=>{window.__rpcCalls.push({name,args});if(name==='get_self_serve_checkout_v130')return {data:{onboarding:currentView==='pending'||currentView==='control'?pending:null,plans,sectors:[{sector_key:'facial',label:'Facial / Spa'}],gst_registered:false,money_back_days:30,included_modules:modules},error:null};if(name==='start_self_serve_business_v130')return {data:{...pending},error:null};if(name==='request_self_serve_checkout_v130')return {data:{command_id:'00000000-0000-0000-0000-000000000131'},error:null};return {data:null,error:null}},functions:{invoke:async()=>({data:{status:'processing'},error:null})}};
+  const sb={auth:{signUp:async()=>({data:{session:null},error:null}),signOut:async()=>({}),signInWithOAuth:async()=>({data:{url:'https://accounts.google.com/'},error:null})},rpc:async(name,args)=>{window.__rpcCalls.push({name,args});if(name==='get_self_serve_checkout_v130')return {data:{onboarding:currentView==='pending'||currentView==='control'?pending:null,plans,sectors:[{sector_key:'facial',label:'Facial / Spa'}],gst_registered:false,money_back_days:30,included_modules:modules},error:null};if(name==='start_self_serve_business_v130')return {data:{...pending},error:null};if(name==='request_self_serve_checkout_v130')return {data:{command_id:'00000000-0000-0000-0000-000000000131'},error:null};return {data:null,error:null}},functions:{invoke:async()=>({data:{status:'processing'},error:null})}};
+  function businessOAuthRedirectUrl(){
+  const redirect=new URL(NestlyNativeBridge.publicUrl('/business'));
+  redirect.searchParams.set('oauth','business');
+  return redirect.toString();
+}
+function businessGoogleButtonHtml(id){
+  return `<button class="btn ghost" id="${esc(id)}" type="button" style="width:100%;min-height:44px;margin-top:12px"><span aria-hidden="true" style="font-weight:800;font-size:18px">G</span><span>Continue with Google</span></button>`;
+}
+function ensureCanonicalBusinessOAuthOrigin(){
+  const canonical=new URL(NestlyNativeBridge.publicUrl('/business'));
+  if(location.origin===canonical.origin)return true;
+  location.replace(canonical.toString());
+  return false;
+}
+function beginBusinessGoogleOAuthAttempt({legalAccepted=false}={}){
+  if(legalAccepted!==true)return false;
+  try{
+    sessionStorage.setItem('nestly-business-google-oauth',JSON.stringify({startedAt:Date.now(),returnPath:'/business',legalAccepted:true}));
+    return true;
+  }catch{return false}
+}
+function takeBusinessGoogleOAuthAttempt(){
+  const key='nestly-business-google-oauth',raw=sessionStorage.getItem(key);
+  sessionStorage.removeItem(key);
+  if(!raw)return false;
+  try{
+    const attempt=JSON.parse(raw),age=Date.now()-Number(attempt?.startedAt);
+    return attempt?.returnPath==='/business'&&attempt?.legalAccepted===true&&Number.isFinite(age)&&age>=0&&age<=30*60*1000;
+  }catch{return false}
+}
+async function startBusinessGoogleAuth({button,errorHostId,legalAccepted=false}){
+  if(!ensureCanonicalBusinessOAuthOrigin())return;
+  const errorHost=$(errorHostId);
+  if(button)button.disabled=true;
+  if(errorHost)errorHost.innerHTML='';
+  if(beginBusinessGoogleOAuthAttempt({legalAccepted})){
+    try{
+      const {error}=await sb.auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo:businessOAuthRedirectUrl(),scopes:'openid email profile',queryParams:{prompt:'select_account'}}
+      });
+      if(!error)return;
+    }catch{}
+  }
+  sessionStorage.removeItem('nestly-business-google-oauth');
+  if(button)button.disabled=false;
+  if(errorHost)errorHost.innerHTML='<div class="err">Google sign-in could not be started. Try again or use email and password.</div>';
+}
   function renderBusinessApplication(){
   destroyMountedTurnstiles();
   let locale=businessApplicationLanguage();
   globalThis.document?.documentElement?.setAttribute('lang',locale);
   const accountCopy={
-    en:{heading:'Create your Nestly owner account',intro:'Create your secure login, confirm your email, choose your business plan, then pay through Stripe. Your workspace opens after payment is confirmed.',email:'Business email',password:'Password',confirm:'Confirm password',consent:'I have read and agree to the Terms and Privacy Policy',consentLead:'I have read and agree to the',terms:'Terms',and:'and',privacy:'Privacy Policy',create:'Create owner account',back:'Back to sign in',accept:'Please accept the Terms and Privacy Policy.',passwordRule:'Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.',error:'We could not create this account. Check the email and password, then try again.',check:'Check your email and confirm your account. Then sign in to choose your business and Stripe plan.'},
-    'zh-CN':{heading:'创建 Nestly 店主账户',intro:'创建安全登录并确认邮箱，然后选择商家方案并通过 Stripe 付款。付款确认后，工作区才会开放。',email:'商家邮箱',password:'密码',confirm:'确认密码',consent:'我已阅读并同意条款及隐私政策',consentLead:'我已阅读并同意',terms:'条款',and:'和',privacy:'隐私政策',create:'创建店主账户',back:'返回登录',accept:'请接受条款和隐私政策。',passwordRule:'请使用至少 12 个字符，并包含大小写字母、数字和符号；两次密码必须一致。',error:'无法创建此账户。请检查邮箱和密码后重试。',check:'请查看邮箱并确认账户，然后登录以选择商家和 Stripe 方案。'},
-    ms:{heading:'Cipta akaun pemilik Nestly',intro:'Cipta log masuk selamat dan sahkan e-mel, kemudian pilih pelan perniagaan dan bayar melalui Stripe. Ruang kerja dibuka selepas bayaran disahkan.',email:'E-mel perniagaan',password:'Kata laluan',confirm:'Sahkan kata laluan',consent:'Saya telah membaca dan bersetuju dengan Terma dan Dasar Privasi',consentLead:'Saya telah membaca dan bersetuju dengan',terms:'Terma',and:'dan',privacy:'Dasar Privasi',create:'Cipta akaun pemilik',back:'Kembali ke log masuk',accept:'Sila terima Terma dan Dasar Privasi.',passwordRule:'Gunakan sekurang-kurangnya 12 aksara dengan huruf besar/kecil, nombor dan simbol; kedua-dua kata laluan mesti sepadan.',error:'Akaun ini tidak dapat dicipta. Semak e-mel dan kata laluan, kemudian cuba lagi.',check:'Semak e-mel dan sahkan akaun, kemudian log masuk untuk memilih perniagaan dan pelan Stripe.'}
+    en:{heading:'Create your Peekaa owner account',intro:'Create your secure login, confirm your email, choose your business plan, then pay through Stripe. Your workspace opens after payment is confirmed.',email:'Business email',password:'Password',confirm:'Confirm password',consent:'I have read and agree to the Terms and Privacy Policy',consentLead:'I have read and agree to the',terms:'Terms',and:'and',privacy:'Privacy Policy',create:'Create owner account',back:'Back to sign in',accept:'Please accept the Terms and Privacy Policy.',passwordRule:'Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.',error:'We could not create this account. Check the email and password, then try again.',check:'Check your email and confirm your account. Then sign in to choose your business and Stripe plan.'},
+    'zh-CN':{heading:'创建 Peekaa 店主账户',intro:'创建安全登录并确认邮箱，然后选择商家方案并通过 Stripe 付款。付款确认后，工作区才会开放。',email:'商家邮箱',password:'密码',confirm:'确认密码',consent:'我已阅读并同意条款及隐私政策',consentLead:'我已阅读并同意',terms:'条款',and:'和',privacy:'隐私政策',create:'创建店主账户',back:'返回登录',accept:'请接受条款和隐私政策。',passwordRule:'请使用至少 12 个字符，并包含大小写字母、数字和符号；两次密码必须一致。',error:'无法创建此账户。请检查邮箱和密码后重试。',check:'请查看邮箱并确认账户，然后登录以选择商家和 Stripe 方案。'},
+    ms:{heading:'Cipta akaun pemilik Peekaa',intro:'Cipta log masuk selamat dan sahkan e-mel, kemudian pilih pelan perniagaan dan bayar melalui Stripe. Ruang kerja dibuka selepas bayaran disahkan.',email:'E-mel perniagaan',password:'Kata laluan',confirm:'Sahkan kata laluan',consent:'Saya telah membaca dan bersetuju dengan Terma dan Dasar Privasi',consentLead:'Saya telah membaca dan bersetuju dengan',terms:'Terma',and:'dan',privacy:'Dasar Privasi',create:'Cipta akaun pemilik',back:'Kembali ke log masuk',accept:'Sila terima Terma dan Dasar Privasi.',passwordRule:'Gunakan sekurang-kurangnya 12 aksara dengan huruf besar/kecil, nombor dan simbol; kedua-dua kata laluan mesti sepadan.',error:'Akaun ini tidak dapat dicipta. Semak e-mel dan kata laluan, kemudian cuba lagi.',check:'Semak e-mel dan sahkan akaun, kemudian log masuk untuk memilih perniagaan dan pelan Stripe.'}
   };
   const a=accountCopy[locale]||accountCopy.en;
   root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
@@ -993,10 +1041,12 @@ body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display
     <div class="row"><h2 style="margin:14px 0 2px">${esc(a.heading)}</h2><span class="spacer"></span>
       <select id="businessApplicationLocale" aria-label="Preferred language" style="width:auto"><option value="en"${locale==='en'?' selected':''}>English</option><option value="zh-CN"${locale==='zh-CN'?' selected':''}>中文</option><option value="ms"${locale==='ms'?' selected':''}>Bahasa Melayu</option></select></div>
     <p class="muted small" style="margin-top:6px">${esc(a.intro)}</p>
+    <label class="checkrow" for="applicationConsent" style="margin-top:16px"><input id="applicationConsent" type="checkbox" aria-label="${esc(a.consent)}"><span>${esc(a.consentLead)} <a href="/terms.html">${esc(a.terms)}</a> ${esc(a.and)} <a href="/privacy.html">${esc(a.privacy)}</a>.</span></label>
+    ${businessGoogleButtonHtml('businessApplicationGoogle')}
+    <div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>
     <label for="applicationContactEmail">${esc(a.email)}</label><input id="applicationContactEmail" type="email" autocomplete="email" placeholder="you@business.com">
     <label for="businessOwnerPassword">${esc(a.password)}</label>${passwordControlHtml('businessOwnerPassword',{autocomplete:'new-password',locale})}
     <label for="businessOwnerPasswordConfirm">${esc(a.confirm)}</label>${passwordControlHtml('businessOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
-    <label class="checkrow" for="applicationConsent" style="margin-top:16px"><input id="applicationConsent" type="checkbox" aria-label="${esc(a.consent)}"><span>${esc(a.consentLead)} <a href="/terms.html">${esc(a.terms)}</a> ${esc(a.and)} <a href="/privacy.html">${esc(a.privacy)}</a>.</span></label>
     <div id="businessApplicationError"></div>
     ${authChallengeHtml(locale)}
     <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px" disabled>${esc(a.create)}</button>
@@ -1008,6 +1058,14 @@ body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display
     renderBusinessApplication();
   };
   $('businessApplicationBack').onclick=()=>renderAuth('in');
+  $('businessApplicationGoogle').onclick=event=>{
+    if(!$('applicationConsent').checked){
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(a.accept)}</div>`;
+      $('applicationConsent').focus();
+      return;
+    }
+    startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'businessApplicationError',legalAccepted:true});
+  };
   let token='',control=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
     retry:'authTurnstileRetry',action:'frenly_auth',locale,
@@ -1040,7 +1098,7 @@ body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display
   };
 }
   function accountDeletionCardHtml(){
-  return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Nestly to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
+  return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Peekaa to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
 }
 
 function wireAccountDeletionButton(button=$('openAccountDeletion')){
@@ -1050,7 +1108,7 @@ function wireAccountDeletionButton(button=$('openAccountDeletion')){
 async function openAccountDeletionDialog(trigger=document.activeElement){
   $('accountDeletionModal')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="accountDeletionModal" role="dialog" aria-modal="true" aria-labelledby="accountDeletionTitle" tabindex="-1"><section class="modal-card" style="max-width:540px">
-    <div class="row"><div><h2 id="accountDeletionTitle">Delete your Nestly account</h2><p class="muted small" style="margin-top:5px">This requests deletion; it does not erase records immediately.</p></div><span class="spacer"></span><button class="btn ghost sm" id="accountDeletionClose" type="button" aria-label="Close account deletion">Close</button></div>
+    <div class="row"><div><h2 id="accountDeletionTitle">Delete your Peekaa account</h2><p class="muted small" style="margin-top:5px">This requests deletion; it does not erase records immediately.</p></div><span class="spacer"></span><button class="btn ghost sm" id="accountDeletionClose" type="button" aria-label="Close account deletion">Close</button></div>
     <div id="accountDeletionBody" aria-busy="true"><p class="muted small" style="margin-top:16px">Checking for an existing request…</p></div>
   </section></div>`);
   const modal=$('accountDeletionModal'),body=$('accountDeletionBody');
@@ -1074,7 +1132,7 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
     const retention=request?.resolution_code==='retained_legal'&&request?.retention_until
       ?`<p class="small" style="margin-top:6px">Retention review date: ${esc(sgt(request.retention_until))}.</p>`:'';
     body.setAttribute('aria-busy','false');
-    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Nestly if you need to challenge or clarify it.</p>`;
+    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Peekaa if you need to challenge or clarify it.</p>`;
   };
   const renderForm=()=>{
     body.setAttribute('aria-busy','false');
@@ -1091,7 +1149,7 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
       submit.disabled=true;status.innerHTML='<p class="muted small" style="margin-top:10px">Submitting the same safe request…</p>';
       const {data,error}=await sb.rpc('request_account_deletion_v131',{p_confirmation:'DELETE',p_idempotency_key:key});
       if(!modal.isConnected)return;
-      if(error||!data?.request_id){submit.disabled=false;status.innerHTML='<div class="err">We could not confirm whether the request was saved. Retry; Nestly will reuse the same request.</div>';return}
+      if(error||!data?.request_id){submit.disabled=false;status.innerHTML='<div class="err">We could not confirm whether the request was saved. Retry; Peekaa will reuse the same request.</div>';return}
       sessionStorage.removeItem(slot);renderPending(data);
     };
     input.focus({preventScroll:true});
@@ -1132,7 +1190,7 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
     const result=executed.data||requested.data;
     if(result.redirect_url){sessionStorage.removeItem(storageKey);location.assign(result.redirect_url);return}
     if(button)button.disabled=false;
-    if(statusNode)statusNode.textContent='Payment confirmation is still pending. Nestly will open the workspace only after Stripe confirms a paid invoice.';
+    if(statusNode)statusNode.textContent='Payment confirmation is still pending. Peekaa will open the workspace only after Stripe confirms a paid invoice.';
   };
   (async()=>{
     const state=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
@@ -1147,7 +1205,7 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
     if(onboarding?.status==='payment_pending'){
       const paymentState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
       const canceled=paymentState==='canceled';
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':'Nestly has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p><div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · 30-day money-back request period starts from confirmed first payment</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">Checkout success pages do not unlock access; provider-confirmed payment does.</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button><button class="btn ghost" id="out" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p><div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · 30-day money-back request period starts from confirmed first payment</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">Checkout success pages do not unlock access; provider-confirmed payment does.</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button><button class="btn ghost" id="out" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
       wireAccountDeletionButton();
       $('selfServePay').onclick=()=>finishCheckout(onboarding,$('selfServePayStatus'),$('selfServePay'));
       $('onboardRetry').onclick=route;
@@ -1157,10 +1215,10 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
     const sectors=Array.isArray(state.data.sectors)?state.data.sectors:[];
     const annual=plans.find(plan=>plan.cadence==='annual'),monthly=plans.find(plan=>plan.cadence==='monthly');
     if(!annual||!monthly||!sectors.length){
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">New subscriptions are temporarily unavailable</h1><p class="muted small" style="margin-top:8px">Nestly has not published a complete Stripe plan and sector catalogue. No workspace or charge was created.</p><button class="btn" id="onboardRetry" style="margin-top:18px">Retry</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;wireAccountDeletionButton();$('onboardRetry').onclick=renderOnboard;return;
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">New subscriptions are temporarily unavailable</h1><p class="muted small" style="margin-top:8px">Peekaa has not published a complete Stripe plan and sector catalogue. No workspace or charge was created.</p><button class="btn" id="onboardRetry" style="margin-top:18px">Retry</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;wireAccountDeletionButton();$('onboardRetry').onclick=renderOnboard;return;
     }
     const capacityOptions=Array.from({length:10},(_,index)=>(index+1)*1000);
-    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Choose the workspace and exact subscription. Stripe securely collects payment; Nestly opens access only after confirmed payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">nestly.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · ${money(annual.base_amount_cents)}/year</strong><p class="muted small" style="margin-top:5px">${money(Math.round(annual.base_amount_cents/12))}/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · ${money(monthly.base_amount_cents)}/month</strong><p class="muted small" style="margin-top:5px">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity">Customer capacity</label><select id="customerCapacity">${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customers</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · 30-day money-back guarantee from confirmed first payment</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox"><span>I have read and agree to the <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Nestly.</p><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Choose the workspace and exact subscription. Stripe securely collects payment; Peekaa opens access only after confirmed payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">peekaa.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · ${money(annual.base_amount_cents)}/year</strong><p class="muted small" style="margin-top:5px">${money(Math.round(annual.base_amount_cents/12))}/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · ${money(monthly.base_amount_cents)}/month</strong><p class="muted small" style="margin-top:5px">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity">Customer capacity</label><select id="customerCapacity">${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customers</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · 30-day money-back guarantee from confirmed first payment</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox"><span>I have read and agree to the <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Peekaa.</p><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
     wireAccountDeletionButton();
     let slugEdited=false;
     const slugify=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80);
@@ -1206,7 +1264,7 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
         renderBusinessWorkspaceControl({...control,_selfServeChecked:true});return;
       }
       if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Nestly opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Peekaa opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
       $('businessControlPay').onclick=async()=>{
         const button=$('businessControlPay'),status=$('businessControlPayStatus');button.disabled=true;status.textContent='Opening secure Stripe Checkout…';
         const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;let key=sessionStorage.getItem(storageKey);if(!key){key=crypto.randomUUID();sessionStorage.setItem(storageKey,key)}
@@ -1228,8 +1286,8 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
   const message=paused
     ?`Payment is ${Number(subscription.overdue_day||14)} days overdue. Business-owner access is paused until provider payment is confirmed.`
     :rejected
-      ?'This business application was not approved. Contact your assigned Nestly representative if the information should be reviewed.'
-      :'Your business application has been received. A Nestly super admin must approve it before any business information or functions are available.';
+      ?'This business application was not approved. Contact your assigned Peekaa representative if the information should be reviewed.'
+      :'Your business application has been received. A Peekaa super admin must approve it before any business information or functions are available.';
   const rawPhone=String(representative.hotline_phone||'').replace(/[^\d+]/g,'');
   const phoneDigits=rawPhone.replace(/\D/g,'');
   const hotline=/^\+?\d{8,15}$/.test(rawPhone)
@@ -1240,7 +1298,7 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
     <div class="entry-choice-icon" style="margin-top:18px">${CUI.icon(paused?'info':'branch',{size:25})}</div>
     <h1 id="businessControlTitle" style="font-size:1.65rem;margin:14px 0 6px">${esc(title)}</h1>
     <p class="muted" style="line-height:1.6">${esc(message)}</p>
-    ${representative.display_name||hotline?`<section class="workspace-control-contact" style="margin-top:16px"><b>Assigned representative</b><p class="muted small" style="margin-top:4px">${esc(representative.display_name||'Nestly support')}</p>${hotline?`<a class="btn" href="tel:${esc(hotline)}" style="width:100%;margin-top:12px">${CUI.icon('till',{size:17})}<span>Call ${esc(hotline)}</span></a>`:''}</section>`:''}
+    ${representative.display_name||hotline?`<section class="workspace-control-contact" style="margin-top:16px"><b>Assigned representative</b><p class="muted small" style="margin-top:4px">${esc(representative.display_name||'Peekaa support')}</p>${hotline?`<a class="btn" href="tel:${esc(hotline)}" style="width:100%;margin-top:12px">${CUI.icon('till',{size:17})}<span>Call ${esc(hotline)}</span></a>`:''}</section>`:''}
     <button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:12px">Check again</button>
     ${S.hasCustomerPersona?'<a class="btn ghost" href="#/wallet" style="width:100%;margin-top:10px">Open customer view</a>':''}
     <button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>

@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#F4F2EE">
-<meta name="application-name" content="Nestly">
+<meta name="application-name" content="Peekaa">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Nestly">
+<meta name="apple-mobile-web-app-title" content="Peekaa">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://challenges.cloudflare.com; worker-src 'self'; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com; upgrade-insecure-requests">
-<title>Join — Nestly</title>
+<title>Join — Peekaa</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="/icons/nestly-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pwa.css">
@@ -57,8 +57,8 @@ label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:16px 
     max(36px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
 .join{width:440px;max-width:100%}
 .jhead{text-align:center;margin-bottom:18px}
-.logo{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600;color:var(--muted);margin-bottom:16px}
-.logo span{color:var(--coral)}
+.logo{display:inline-flex;align-items:center;min-height:44px;margin-bottom:16px}
+.brand-logo{display:block;width:auto;height:58px;max-width:145px;object-fit:contain}
 .jhead h1{font-size:1.6rem;color:var(--coral);margin-bottom:4px}
 .help{font-size:12.5px;color:var(--muted);margin-top:6px}
 .legal-links{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 14px;margin-top:18px;color:var(--muted);font-size:11.5px}
@@ -81,18 +81,19 @@ label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:16px 
 <script src="/runtime-config-loader.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <script>
-/* ============ Nestly — public customer join page (legacy API identifiers remain compatible) ============ */
+/* ============ Peekaa — public customer join page (legacy API identifiers remain compatible) ============ */
 const RUNTIME_CONFIG=(()=>{try{return window.FrenlyRuntimeConfig.require(window)}catch{
   window.FrenlyRuntimeConfig?.renderFailure(document.getElementById('root'));
-  throw new Error('Nestly runtime configuration is unavailable.');
+  throw new Error('Peekaa runtime configuration is unavailable.');
 }})();
 const BRAND=window.NestlyBrand;
 const SB_URL=RUNTIME_CONFIG.supabaseUrl;
 const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 const brandWordmark=()=>{
-  const wordmark=String(BRAND?.wordmark||'nestly.');
-  return wordmark.endsWith('.')?`${esc(wordmark.slice(0,-1))}<span>.</span>`:esc(wordmark);
+  const productName=String(BRAND?.productName||'Peekaa');
+  const logoPath=String(BRAND?.logoPath||'/brand/peekaa-logo.png');
+  return `<img class="brand-logo" src="${esc(logoPath)}" alt="${esc(productName)}">`;
 };
 const legalLinks=()=>`<div class="legal-links"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/data-request.html">Data request</a></div>`;
 let turnstileLoader;
@@ -223,7 +224,7 @@ function renderInvalidLink(){
   shellOpen(`<div class="card"><div class="empty">
     <div class="state-icon" aria-hidden="true">${icon('link',26)}</div>
     <h2 style="margin-bottom:8px">${legacySlug?'This QR was replaced':'This link isn’t active'}</h2>
-    <p class="muted">${legacySlug?'This is an older Nestly QR. Please ask the business to display its current “Customer sign-up” QR.':'Please check with the business for its current Nestly QR code.'}</p>
+    <p class="muted">${legacySlug?'This is an older Peekaa QR. Please ask the business to display its current “Customer sign-up” QR.':'Please check with the business for its current Peekaa QR code.'}</p>
   </div></div>`);
 }
 

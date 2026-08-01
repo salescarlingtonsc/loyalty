@@ -167,7 +167,7 @@
       return {ok:false,message:'Enter a credit of at least 1.00 in the workspace currency.'};
     }
     if(!Object.hasOwn(OFFER_TEMPLATES,offerLabel)){
-      return {ok:false,message:'Choose one of the Nestly verified message styles.'};
+      return {ok:false,message:'Choose one of the Peekaa verified message styles.'};
     }
     return {ok:true,valueCents:cents,label:offerLabel};
   }
@@ -775,7 +775,7 @@
     return `<section class="growth-delivery-status" aria-labelledby="growthDeliveryHeading">
       <div class="growth-section-heading"><div><span class="growth-eyebrow">Verified delivery lifecycle</span>
       <h4 id="growthDeliveryHeading">Live execution status</h4>
-      <p>These states come from Nestly's delivery service. A queued or delivering item is not a delivered offer.</p></div>
+      <p>These states come from Peekaa's delivery service. A queued or delivering item is not a delivered offer.</p></div>
       <button class="growth-button growth-button--secondary" type="button" data-growth-delivery-action="load"${mode==='loading'?' disabled':''}>${mode==='loading'?'Refreshing…':'Refresh status'}</button></div>
       ${errorMarkup(state.error)}
       ${summary?`<ul class="growth-delivery-summary">${summary}</ul>`:''}
@@ -932,7 +932,7 @@
             ${Object.entries(OFFER_TEMPLATES).map(([identifier,title])=>`<option value="${escapeHtml(identifier)}"${identifier===offerTemplate?' selected':''}>${escapeHtml(title)}</option>`).join('')}
           </select>
         </label>
-        <p class="growth-privacy-note">Nestly writes the final title, message and CTA from this verified style. Credit, eligibility, expiry and conditions stay locked by the server; free-form claims are not accepted.</p>
+        <p class="growth-privacy-note">Peekaa writes the final title, message and CTA from this verified style. Credit, eligibility, expiry and conditions stay locked by the server; free-form claims are not accepted.</p>
         <p class="growth-cost-preview">Maximum issued credit before consent and frequency suppressions: <strong data-growth-cost>${escapeHtml(money(maximumCost,action.currency))}</strong>.</p>
       </div>`:''}
       ${approveConfirmation?`<section class="growth-confirmation" role="alertdialog" aria-labelledby="growthConfirmHeading">

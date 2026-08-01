@@ -160,20 +160,22 @@ test('native store projects are generated from the canonical app source with a s
   ]);
   assert.match(pkg, /"@capacitor\/core"/);
   assert.match(pkg, /"mobile:sync"/);
-  assert.match(config, /appId:\s*'asia\.nestly\.app'/);
+  assert.match(config, /appId:\s*'asia\.peekaa\.app'/);
   assert.match(config, /webDir:\s*'dist\/mobile'/);
   assert.match(wrapper, /owner activated\s+native-store work on 2026-08-01/i);
   await access(new URL('ios/App/App.xcodeproj/project.pbxproj', root));
   await access(new URL('android/app/build.gradle', root));
   const android = await read('android/app/build.gradle');
   assert.match(android, /targetSdkVersion\s+rootProject\.ext\.targetSdkVersion/);
-  assert.match(androidTest, /package asia\.nestly\.app/);
-  assert.match(androidTest, /assertEquals\("asia\.nestly\.app"/);
+  assert.match(androidTest, /package asia\.peekaa\.app/);
+  assert.match(androidTest, /assertEquals\("asia\.peekaa\.app"/);
   assert.doesNotMatch(androidTest, /com\.getcapacitor\.(?:app|myapp)/);
 });
 
 test('native origins are exact, Turnstile-bound, and outbound links stay on the public HTTPS origin', async () => {
   assert.deepEqual(publicGatewayOrigins(''), [
+    'https://peekaa.asia',
+    'https://www.peekaa.asia',
     'https://nestly.asia',
     'https://www.nestly.asia',
     'capacitor://localhost',
@@ -186,7 +188,7 @@ test('native origins are exact, Turnstile-bound, and outbound links stay on the 
     false,
   ), true);
   assert.equal(turnstileBindingValid(
-    { success: true, action: 'frenly_customer_password', hostname: 'www.nestly.asia' },
+    { success: true, action: 'frenly_customer_password', hostname: 'www.peekaa.asia' },
     'frenly_customer_password',
     'localhost',
     false,
@@ -201,7 +203,7 @@ test('native origins are exact, Turnstile-bound, and outbound links stay on the 
   vm.runInNewContext(source, { window, URL, CustomEvent: class {} });
   assert.equal(
     window.NestlyNativeBridge.publicUrl('/#/join?token=fixture'),
-    'https://www.nestly.asia/#/join?token=fixture',
+    'https://www.peekaa.asia/#/join?token=fixture',
   );
   assert.throws(
     () => window.NestlyNativeBridge.publicUrl('https://attacker.invalid/#/join'),

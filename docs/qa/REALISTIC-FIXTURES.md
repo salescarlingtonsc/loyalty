@@ -16,6 +16,8 @@ Branches:
 Roles:
 
 - Owner: Olivia Tan
+- Google self-service owner: Sofia Ng, synthetic identity
+  `qa.v135.google.owner@peekaa.invalid`
 - Manager: Maya Lim
 - Front desk: Farah Noor
 - Service staff: Chen Wei, Aisha Rahman
@@ -270,6 +272,27 @@ All automated credentials must come from a non-committed test-secret mechanism.
 - Distribution states: missing then valid Apple Team ID, missing then valid Play
   signing SHA-256, association 404/redirect/wrong type/valid 200, unsigned then
   signed archive/bundle, and store privacy/review metadata absent then complete.
+
+## `PEEKAA-MOBILE-RELEASE-01` — V134 rebrand candidate
+
+- Canonical source is the exact V134 `app/` bundle. Product display name is
+  **Peekaa**, canonical website is `https://www.peekaa.asia`, and monitored
+  contact is `admin.peekaa@gmail.com`. NESTLY TECHNOLOGIES PTE. LTD. (UEN
+  202634502E) remains the legal operator.
+- Master artwork is the owner-supplied opaque 1254×1254 RGB PNG. Derivatives
+  cover browser favicon, Apple touch icon, PWA 192/512 maskable-safe icons, iOS
+  opaque 1024px store icon and Android launcher foreground/background assets.
+- Run signed-out, customer, owner/staff and platform entrypoints at desktop,
+  390px and 412px. Test fresh install, cached V133 update, offline shell,
+  notification icon context, splash, camera prompt and share/auth/join URLs.
+- Existing `nestly.asia` routes redirect to `peekaa.asia` without losing query,
+  fragment or deep-link intent. No current app/store/public copy presents Nestly,
+  but historical evidence, migration names and legal entity records remain
+  untouched.
+- Stripe comparison uses the existing `SPA-GLOW-BILLING-NEW` arithmetic and a
+  synthetic provider customer. The browser may pause for the owner to complete
+  Stripe login, OTP, identity, representative, bank and final contractual
+  confirmation. Credentials and identity evidence are never stored in git.
 
 ## Required state variations
 

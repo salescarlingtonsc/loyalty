@@ -17,7 +17,7 @@ test('admin visual acceptance fixture composes the real production components',a
   assert.equal(generated,fixture,'checked-in visual evidence must be regenerated from current production components');
   assert.match(fixture,/<script src="\.\.\/\.\.\/app\/customer-ui\.js"><\/script>/);
   assert.match(fixture,/<script src="\.\.\/\.\.\/app\/platform-console\.js"><\/script>/);
-  assert.match(fixture,/name="v105-production-style-sha256"/);
+  assert.match(fixture,/name="v105-production-component-sha256"/);
   assert.doesNotMatch(fixture,/class="platform-today-item"/,
     'the fixture must not duplicate component markup that could drift from the application');
   assert.match(platformConsole,/data-platform-today-item/);

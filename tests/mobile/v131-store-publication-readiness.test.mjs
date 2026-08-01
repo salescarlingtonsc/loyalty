@@ -89,8 +89,8 @@ test('store association generator fails closed and emits exact real identifiers'
   });
   const aasa=JSON.parse(readFileSync(join(out,'apple-app-site-association'),'utf8'));
   const links=JSON.parse(readFileSync(join(out,'assetlinks.json'),'utf8'));
-  assert.equal(aasa.applinks.details[0].appID,'A1B2C3D4E5.asia.nestly.app');
-  assert.equal(links[0].target.package_name,'asia.nestly.app');
+  assert.equal(aasa.applinks.details[0].appID,'A1B2C3D4E5.asia.peekaa.app');
+  assert.equal(links[0].target.package_name,'asia.peekaa.app');
 });
 
 test('the App Store icon is a 1024px PNG without an alpha-bearing colour type',()=>{
@@ -111,7 +111,7 @@ test('the App Store icon is a 1024px PNG without an alpha-bearing colour type',(
   mkdirSync(join(sandbox,'node_modules/@capacitor/ios/Capacitor/Capacitor'),{recursive:true});
   mkdirSync(join(sandbox,'node_modules/@capacitor/ios/CapacitorCordova/CapacitorCordova'),{recursive:true});
   copyFileSync(join(root,'scripts/mobile/store-readiness.mjs'),join(scriptDir,'store-readiness.mjs'));
-  writeFileSync(join(sandbox,'capacitor.config.ts'),"export default { appId: 'asia.nestly.app' };\n");
+  writeFileSync(join(sandbox,'capacitor.config.ts'),"export default { appId: 'asia.peekaa.app' };\n");
   writeFileSync(join(sandbox,'node_modules/@capacitor/ios/Capacitor/Capacitor/PrivacyInfo.xcprivacy'),'fixture');
   writeFileSync(join(sandbox,'node_modules/@capacitor/ios/CapacitorCordova/CapacitorCordova/PrivacyInfo.xcprivacy'),'fixture');
   const iend=icon.lastIndexOf(Buffer.from('IEND'))-4;

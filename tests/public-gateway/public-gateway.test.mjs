@@ -84,16 +84,20 @@ test('validation rejects malformed, cross-shape and tokenless requests', () => {
   assert.equal(validManagePayload({ action: 'change', token, submission_id, kind: 'reschedule', proposed: null }), false);
 });
 
-test('canonical Nestly origins remain exact and cannot expand to arbitrary origins', () => {
+test('canonical Peekaa and legacy redirect origins remain exact and cannot expand to arbitrary origins', () => {
   assert.deepEqual(publicGatewayOrigins(''), [
+    'https://peekaa.asia',
+    'https://www.peekaa.asia',
     'https://nestly.asia',
     'https://www.nestly.asia',
     'capacitor://localhost',
     'https://localhost',
   ], 'an unset dashboard secret must retain canonical web and packaged native origins');
   assert.deepEqual(publicGatewayOrigins(
-    'https://www.nestly.asia/, https://preview.example, https://preview.example'
+    'https://www.peekaa.asia/, https://preview.example, https://preview.example'
   ), [
+    'https://peekaa.asia',
+    'https://www.peekaa.asia',
     'https://nestly.asia',
     'https://www.nestly.asia',
     'capacitor://localhost',
@@ -101,16 +105,16 @@ test('canonical Nestly origins remain exact and cannot expand to arbitrary origi
     'https://preview.example',
   ]);
   assert.deepEqual(normalizeOriginList(JSON.stringify([
-    'https://nestly.asia',
-    'https://www.nestly.asia',
+    'https://peekaa.asia',
+    'https://www.peekaa.asia',
   ])), [
-    'https://nestly.asia',
-    'https://www.nestly.asia',
+    'https://peekaa.asia',
+    'https://www.peekaa.asia',
   ], 'dashboard JSON-array formatting is normalized safely');
   assert.deepEqual(normalizeOriginList([
-    'https://*.nestly.asia',
+    'https://*.peekaa.asia',
     'https://attacker.invalid/path',
-    'https://user:secret@nestly.asia',
+    'https://user:secret@peekaa.asia',
     'javascript:alert(1)',
   ].join(',')), []);
   assert.deepEqual(normalizeOriginList(
@@ -124,7 +128,7 @@ test('canonical Nestly origins remain exact and cannot expand to arbitrary origi
 test('owner runbook requires canonical and hostile-origin evidence without production demo OTPs', async () => {
   const runbook = await read('docs/release/owner-dashboard-environment-steps-v89.md');
   assert.match(runbook, /https:\/\/nestly\.asia,https:\/\/www\.nestly\.asia/);
-  assert.match(runbook, /Access-Control-Allow-Origin: https:\/\/www\.nestly\.asia/);
+  assert.match(runbook, /Access-Control-Allow-Origin: https:\/\/www\.peekaa\.asia/);
   assert.match(runbook, /https:\/\/attacker\.invalid/);
   assert.match(runbook, /hostile origin must[\s\S]*remain `403` with no allow-origin header/);
   assert.match(runbook, /"customerPhoneOtpEnabled": true/);

@@ -56,7 +56,7 @@ function serviceWorkerHarness(source, { fetchImpl } = {}) {
     }
   };
   const self = {
-    location: { origin: 'https://www.nestly.asia' },
+    location: { origin: 'https://www.peekaa.asia' },
     clients: { async claim() {} },
     addEventListener(type, listener) {
       listeners.set(type, listener);
@@ -109,8 +109,8 @@ test('manifest has a stable install identity and real maskable icons', async () 
   assert.equal(manifest.scope, '/');
   assert.equal(manifest.start_url, '/?source=pwa');
   assert.equal(manifest.display, 'standalone');
-  assert.equal(manifest.name, 'Nestly');
-  assert.equal(manifest.short_name, 'Nestly');
+  assert.equal(manifest.name, 'Peekaa');
+  assert.equal(manifest.short_name, 'Peekaa');
   assert.deepEqual(
     manifest.shortcuts.map(({ name, url }) => ({ name, url })),
     [
@@ -122,21 +122,21 @@ test('manifest has a stable install identity and real maskable icons', async () 
     manifest.icons.map(({ src, sizes, type, purpose }) => ({ src, sizes, type, purpose })),
     [
       {
-        src: '/icons/nestly-192.png',
+        src: '/icons/peekaa-192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any maskable'
       },
       {
-        src: '/icons/nestly-512.png',
+        src: '/icons/peekaa-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any maskable'
       }
     ]
   );
-  assert.deepEqual(await pngDimensions('icons/nestly-192.png'), { width: 192, height: 192 });
-  assert.deepEqual(await pngDimensions('icons/nestly-512.png'), { width: 512, height: 512 });
+  assert.deepEqual(await pngDimensions('icons/peekaa-192.png'), { width: 192, height: 192 });
+  assert.deepEqual(await pngDimensions('icons/peekaa-512.png'), { width: 512, height: 512 });
   assert.deepEqual(await pngDimensions('icons/apple-touch-icon.png'), { width: 180, height: 180 });
 });
 
@@ -177,7 +177,7 @@ test('service worker installs only the versioned public fallback shell', async (
   const shell = harness.addedShells[0];
   assert.ok(shell.includes('/offline.html'));
   assert.ok(shell.includes('/manifest.webmanifest'));
-  assert.ok(shell.includes('/icons/nestly-512.png'));
+  assert.ok(shell.includes('/icons/peekaa-512.png'));
   assert.ok(!shell.includes('/'));
   assert.ok(!shell.includes('/index.html'));
   assert.ok(!shell.includes('/join.html'));
@@ -190,7 +190,7 @@ test('cold offline navigation returns the self-contained fallback, not a broken 
   const harness = serviceWorkerHarness(source);
   const response = await dispatchFetch(
     harness.listeners.get('fetch'),
-    request('https://www.nestly.asia/#/customer', { mode: 'navigate' })
+    request('https://www.peekaa.asia/#/customer', { mode: 'navigate' })
   );
 
   assert.equal(response, harness.offlineResponse);
@@ -210,7 +210,7 @@ test('customer, business and admin navigation stay network-first and are never p
   for (const route of ['/#/wallet', '/business', '/admin']) {
     const response = await dispatchFetch(
       harness.listeners.get('fetch'),
-      request(`https://www.nestly.asia${route}`, { mode: 'navigate' })
+      request(`https://www.peekaa.asia${route}`, { mode: 'navigate' })
     );
     assert.equal(response, onlineResponse);
   }
@@ -222,12 +222,12 @@ test('authenticated, API, cross-origin and mutation requests bypass PWA caching'
   const harness = serviceWorkerHarness(await text('sw.js'));
   const fetchListener = harness.listeners.get('fetch');
   const cases = [
-    request('https://www.nestly.asia/api/session'),
-    request('https://www.nestly.asia/pwa.css', {
+    request('https://www.peekaa.asia/api/session'),
+    request('https://www.peekaa.asia/pwa.css', {
       headers: { has: (name) => name.toLowerCase() === 'authorization' }
     }),
     request('https://gadpooereceldfpfxsod.supabase.co/rest/v1/customers'),
-    request('https://www.nestly.asia/pwa.css', { method: 'POST' })
+    request('https://www.peekaa.asia/pwa.css', { method: 'POST' })
   ];
 
   for (const nextRequest of cases) {

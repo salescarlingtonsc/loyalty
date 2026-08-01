@@ -4,22 +4,28 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 
 const APP_URL=new URL('../../app/index.html',import.meta.url);
 const PLATFORM_CSS_URL=new URL('../../app/platform-console.css',import.meta.url);
+const PLATFORM_JS_URL=new URL('../../app/platform-console.js',import.meta.url);
+const PEEKAA_LOGO_URL=new URL('../../app/brand/peekaa-logo.png',import.meta.url);
 const FIXTURE_URL=new URL('./v105-admin-visual.html',import.meta.url);
 
 export async function buildV105AdminVisualFixture(){
-  const [app,platformCss]=await Promise.all([
-    readFile(APP_URL,'utf8'),readFile(PLATFORM_CSS_URL,'utf8')
+  const [app,platformCss,platformJs,peekaaLogo]=await Promise.all([
+    readFile(APP_URL,'utf8'),readFile(PLATFORM_CSS_URL,'utf8'),
+    readFile(PLATFORM_JS_URL,'utf8'),readFile(PEEKAA_LOGO_URL)
   ]);
   const baseCss=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];
   if(!baseCss)throw new Error('production inline stylesheet missing');
-  const sourceHash=createHash('sha256').update(`${baseCss}\n${platformCss}`).digest('hex');
+  const sourceHash=createHash('sha256')
+    .update(baseCss).update('\n').update(platformCss).update('\n')
+    .update(platformJs).update('\n/app/brand/peekaa-logo.png\n').update(peekaaLogo)
+    .digest('hex');
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-style-sha256" content="${sourceHash}">
-<title>Nestly v105 admin visual acceptance</title>
+<meta name="v105-production-component-sha256" content="${sourceHash}">
+<title>Peekaa v105 admin visual acceptance</title>
 <style>${baseCss}\n${platformCss}
 .v105-provenance{position:fixed;right:8px;bottom:8px;z-index:99;padding:4px 8px;border-radius:999px;background:#fff;border:1px solid #ddd;color:#67616d;font:11px/1.2 system-ui}
 </style>
@@ -146,7 +152,7 @@ const sb={rpc:async(name)=>{
 const root=document.getElementById('v105AdminRoot');
 const CUI=window.FrenlyCustomerUI;
 window.NestlyPlatformConsole.render({
-  root,sb,CUI,brand:{productName:'Nestly',wordmark:'nestly.'},
+  root,sb,CUI,brand:{productName:'Peekaa',logoPath:'/app/brand/peekaa-logo.png'},
   hash:'#/platform/'+route,isCurrent:()=>true,onSignOut:()=>{},workspaceHash:'#/workspace'
 }).then(()=>document.documentElement.dataset.ready='true').catch(error=>{
   document.documentElement.dataset.ready='error';

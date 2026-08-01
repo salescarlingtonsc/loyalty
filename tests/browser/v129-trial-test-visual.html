@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="da0b0a3d1df50285a67c82a1431a3744f1fb4ce3c1340f5338c3edb0fd8d1c92"><title>Nestly V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="117a1acc73c5a5f12de855799d6cdd82b66e2009a1c0900552ba057c5ef3698d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -120,9 +120,9 @@ tr.click:hover td{background:#FBFAF8}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
 .challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
-.logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;letter-spacing:-.02em}
+.logo{display:inline-flex;align-items:center;min-height:44px}
+.brand-logo{display:block;width:auto;height:50px;max-width:126px;object-fit:contain}
 .wallet-head>a.logo{display:inline-flex;align-items:center;min-height:44px}
-.logo span{color:var(--coral)}
 .ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:8px}
 .ind{border:1.5px solid var(--line);border-radius:var(--r-sm);padding:14px;text-align:center;cursor:pointer;
   background:#fff;transition:border-color .18s var(--ease),transform .22s var(--spring),box-shadow .2s}
@@ -963,7 +963,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · da0b0a3d1df50285a67c82a1431a3744f1fb4ce3c1340f5338c3edb0fd8d1c92</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 117a1acc73c5a5f12de855799d6cdd82b66e2009a1c0900552ba057c5ef3698d</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -1063,7 +1063,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   }
 
   function loadingState({title='Loading',iconName='info',body='Loading the latest information…'}={}){
-    const productName=global.NestlyBrand?.productName||'Nestly';
+    const productName=global.NestlyBrand?.productName||'Peekaa';
     return `<section class="cui-route-state" aria-busy="true" aria-labelledby="route-loading-title">${pageHeader({title,subtitle:body,iconName})}<div class="card empty" role="status"><h2 id="route-loading-title">Loading…</h2><p class="muted small">Please wait while ${escapeHtml(productName)} prepares this page.</p></div></section>`;
   }
 
@@ -1190,7 +1190,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 })(typeof window !== 'undefined' ? window : globalThis);
 
   const CUI=window.FrenlyCustomerUI;
-  const BRAND={productName:'Nestly',downloadPrefix:'nestly'};
+  const BRAND={productName:'Peekaa',downloadPrefix:'nestly'};
   const $=id=>document.getElementById(id);
   const M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2036,7 +2036,7 @@ async function tillPage(){
     loyaltyWritable:branchCanWrite(tillBranchId,'loyalty')
   });
   if(!tillStaffId||!tillBranchId){
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'A staff identity and branch with Record sale access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Record sale is not available',description:'Ask an owner or Nestly administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'A staff identity and branch with Record sale access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Record sale is not available',description:'Ask an owner or Peekaa administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
     return;
   }
   selectedBranchId=tillBranchId;
@@ -2962,7 +2962,7 @@ async function salesPage(){
       <label>Branch</label><select id="qb">${saleBranches.map(b=>`<option value="${b.id}" ${b.id===initialSaleBranch?'selected':''}>${esc(b.name)}</option>`).join('')||'<option value="">No active permitted branch</option>'}</select>
       <label for="qstaff">Team member</label><select id="qstaff"><option value="">Unattributed</option>
         ${saleTeam.map(person=>`<option value="${person.id}" ${person.id===signedInStaff?.id?'selected':''}>${esc(person.full_name||'Team member')}</option>`).join('')}</select>
-      <p class="muted small" style="margin-top:6px">Choose by name. Nestly stores the team member’s internal ID behind the label.</p>
+      <p class="muted small" style="margin-top:6px">Choose by name. Peekaa stores the team member’s internal ID behind the label.</p>
       <label>Amount (${S.biz.currency||'SGD'})</label><input id="qa" type="number" min="0" step="0.01" placeholder="45.00">
       <div class="split"><div><label>Payment state</label><select id="qpaid"><option value="true">Paid now</option><option value="false">Unpaid</option></select></div>
       <div><label>Payment method</label><select id="qm"><option data-method="cash">Cash</option><option data-method="card">Card</option><option data-method="paynow">PayNow</option><option data-method="bank_transfer">Bank transfer</option><option data-method="other">Other</option></select></div></div>
@@ -3217,8 +3217,8 @@ async function bookingsPage(){
     <div class="card" style="margin-bottom:16px"><b>Your customer portal</b>
       <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
       <p class="small portal-link-row"><a class="portal-link" href="${portal}" target="_blank" rel="noopener noreferrer">${portal}</a></p></div>
-    ${isOwner?`<section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Nestly supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
-      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Nestly programme.</span></span></label>
+    ${isOwner?`<section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
+      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
       <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
       <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
       <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>`:''}
@@ -3266,7 +3266,7 @@ async function bookingsPage(){
     $('businessCustomerCapabilities').setAttribute('aria-busy','false');
     if(capabilityResult.error){
       status.textContent=capabilityResult.error.code==='PGRST202'||capabilityResult.error.code==='42883'
-        ?'These controls need the latest Nestly service update. All three remain off.'
+        ?'These controls need the latest Peekaa service update. All three remain off.'
         :'Customer action settings could not be loaded. Nothing was changed.';
     }else{
       const value=capabilityResult.data||{};
@@ -3823,7 +3823,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   $('loyaltyCustomerRedemption').setAttribute('aria-busy','false');
   if(redemptionCapability.error){
     redemptionStatus.textContent=redemptionCapability.error.code==='PGRST202'||redemptionCapability.error.code==='42883'
-      ?'Customer redemption needs the latest Nestly service update.'
+      ?'Customer redemption needs the latest Peekaa service update.'
       :'Customer redemption setting could not be loaded. Nothing was changed.';
   }else{
     redemptionToggle.checked=redemptionCapability.data?.redemption_enabled===true;
@@ -3952,7 +3952,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           <div class="row" style="align-items:center;gap:12px"><input id="growRecTarget" type="range" min="0.5" max="30" step="0.5" value="${sectorProfile.start}" style="flex:1">
             <input id="growRecTargetNumber" type="number" min="0.5" max="50" step="0.5" value="${sectorProfile.start}" aria-label="Give-back percentage" style="width:100px"></div>
           <div class="gb-scale"><span>0.5%</span><span>Suggested starting range for ${esc(sectorProfile.label)}: ${sectorProfile.low}–${sectorProfile.high}%</span><span>30% slider · type up to 50%</span></div>
-          <p class="muted small" style="margin-top:6px">This is Nestly setup guidance, not an external market benchmark. You can choose outside the range.</p>
+          <p class="muted small" style="margin-top:6px">This is Peekaa setup guidance, not an external market benchmark. You can choose outside the range.</p>
           <div id="growRecOut" style="margin-top:12px"></div>
         </div>`;
       $('growRecTarget').addEventListener('input',()=>{
@@ -4471,7 +4471,7 @@ function growStatus(label,tone=''){
    model from the browser or expose a provider key. The policy below is also the contract for
    a future server-side model: merchant facts are immutable inputs, never suggestions. */
 const PROMOTION_COPY_POLICY_V104=Object.freeze({
-  system:'You are Nestly’s SME promotion copy assistant. Transform only the merchant-provided facts into concise Singapore English. Preserve every number, percentage, date, named item, eligibility condition and term exactly. Never invent scarcity, prices, availability, outcomes, endorsements or legal claims. Return one headline and one short message. End the message with the matching call to action from the approved CTA list. Do not add hashtags or emojis.',
+  system:'You are Peekaa’s SME promotion copy assistant. Transform only the merchant-provided facts into concise Singapore English. Preserve every number, percentage, date, named item, eligibility condition and term exactly. Never invent scarcity, prices, availability, outcomes, endorsements or legal claims. Return one headline and one short message. End the message with the matching call to action from the approved CTA list. Do not add hashtags or emojis.',
   ctas:Object.freeze({book:'Book now',programme:'View offer',counter:'Show at counter'}),
   messageCtas:Object.freeze({
     book:'Book now to enjoy this offer.',
@@ -4612,7 +4612,7 @@ async function promotionsPage(selectedPromotionId=null){
       <li><strong>3. Publish</strong>Add photo, preview, publish</li>
     </ol>
     <div class="promotion-editor-grid"><section class="card" data-merchant-content>
-      <div class="row"><div><h2>${selected?'Edit promotion':'Create promotion'}</h2><p class="muted small" style="margin-top:4px">Facts remain yours. Nestly will not invent discount, timing, eligibility, or claims.</p></div><span class="spacer"></span>${selected?'<button type="button" class="btn ghost sm" id="promotionNew">New promotion</button>':''}</div>
+      <div class="row"><div><h2>${selected?'Edit promotion':'Create promotion'}</h2><p class="muted small" style="margin-top:4px">Facts remain yours. Peekaa will not invent discount, timing, eligibility, or claims.</p></div><span class="spacer"></span>${selected?'<button type="button" class="btn ghost sm" id="promotionNew">New promotion</button>':''}</div>
       <label for="promotionFacts">What is the offer?</label><input id="promotionFacts" maxlength="140" value="${esc(initial.offerFacts)}" placeholder="e.g. 30% off Spa Ritual 60">
       <label for="promotionOccasion">Occasion or reason (optional)</label><input id="promotionOccasion" maxlength="80" value="${esc(initial.occasion)}" placeholder="e.g. National Day">
       <div class="split"><div><label for="promotionStart">Starts</label><input id="promotionStart" type="date" value="${esc(promotionDateInputV104(initial.starts_at)||today)}"></div>
@@ -4935,7 +4935,7 @@ async function promotionsPage(selectedPromotionId=null){
         buttons.forEach(button=>button.disabled=false);
         if(promotionRpcErrorIsAmbiguousV104(finalized.error)){
           status.textContent='The save outcome is unconfirmed. Check your connection, then press again.';
-          field('promotionImageStatus').textContent='Photo upload is held safely while Nestly confirms the save.';
+          field('promotionImageStatus').textContent='Photo upload is held safely while Peekaa confirms the save.';
           return;
         }
         status.textContent=unpublish?'Offer was not unpublished.':publish
@@ -5033,7 +5033,7 @@ async function growPage(routedSurface,hashParam){
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-workspace-i18n>
     <section class="grow-hero" aria-labelledby="growTitle">
       <div class="grow-hero-copy"><h1 id="growTitle">Grow</h1>
-        <p class="muted">See every customer reward in one place, or let Nestly prepare a simple starting draft for you.</p>
+        <p class="muted">See every customer reward in one place, or let Peekaa prepare a simple starting draft for you.</p>
         ${isOwner?`<p class="muted small">Nothing goes live until you review and publish.</p>`:
           '<p class="muted small">This is the programme customers are using now.</p>'}</div>
       ${canSetupGrow?`<button type="button" class="btn grow-primary" id="growAutoSetup"
@@ -5209,7 +5209,7 @@ async function growPage(routedSurface,hashParam){
     pendingGuideAction=action;
     $('rewardAutoSetupModal')?.remove();
     document.body.insertAdjacentHTML('beforeend',`<div class="modal reward-auto-modal" id="rewardAutoSetupModal" role="dialog" aria-modal="true" aria-labelledby="rewardAutoTitle" tabindex="-1">
-      <section class="modal-card reward-auto-dialog"><div class="reward-auto-head"><div><p class="customer-quest-kicker">Simple rewards setup</p><h2 id="rewardAutoTitle">Set up rewards automatically</h2><p class="muted small" style="margin-top:5px">Three short checks, then Nestly prepares one editable draft.</p></div>
+      <section class="modal-card reward-auto-dialog"><div class="reward-auto-head"><div><p class="customer-quest-kicker">Simple rewards setup</p><h2 id="rewardAutoTitle">Set up rewards automatically</h2><p class="muted small" style="margin-top:5px">Three short checks, then Peekaa prepares one editable draft.</p></div>
         <button type="button" class="btn ghost sm" id="rewardAutoClose" aria-label="Close automatic rewards setup">Close</button></div>
         <div id="rewardAutoBody"></div><p class="reward-auto-status muted small" id="rewardAutoStatus" role="status" aria-live="polite"></p>
         <div class="reward-auto-actions" id="rewardAutoActions"></div></section></div>`);
@@ -5225,8 +5225,8 @@ async function growPage(routedSurface,hashParam){
     const render=()=>{
       const body=$('rewardAutoBody'),actions=$('rewardAutoActions');
       if(step===1)body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle"><p class="customer-quest-kicker">Step 1 of 3</p><h3 id="rewardAutoStepTitle" tabindex="-1">Confirm the goal</h3><div class="reward-auto-choice"><input type="radio" id="rewardAutoGoal" name="rewardAutoGoal" value="repeat_visits" checked><label for="rewardAutoGoal">Bring customers back more often<p class="muted small">Recommended for a clear first programme. You can change every number in the draft.</p></label></div></section>`;
-      else if(step===2)body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle" tabindex="-1"><p class="customer-quest-kicker">Step 2 of 3</p><h3 id="rewardAutoStepTitle">See what Nestly will use</h3><dl class="reward-auto-summary"><div><dt>Goal</dt><dd>More repeat visits</dd></div><div><dt>Business type</dt><dd>${esc(S.biz.industry||'Your business')}</dd></div><div><dt>Current rewards</dt><dd>${esc(rewardLabel)}</dd></div><div><dt>Output</dt><dd>One editable recommendation draft</dd></div></dl><p class="muted small" style="margin-top:12px">Nestly uses your governed business type and active service and product prices to choose a starting model. Product costs are not used in this automatic calculation; check profitability under More reward settings before publishing.</p></section>`;
-      else body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle" tabindex="-1"><p class="customer-quest-kicker">Step 3 of 3</p><h3 id="rewardAutoStepTitle">Review the safety check</h3><p class="reward-auto-safety"><b>Nothing goes live until you review and publish.</b><br>${growDraftVersionId?`${workspaceTemplateHtmlV97('growDraftReady',{version:snapshot.draft?.version_no||''})} Nestly will open it without replacing it.`:'Nestly will create one editable recommendation draft. Staff and customers keep using the published programme.'}</p></section>`;
+      else if(step===2)body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle" tabindex="-1"><p class="customer-quest-kicker">Step 2 of 3</p><h3 id="rewardAutoStepTitle">See what Peekaa will use</h3><dl class="reward-auto-summary"><div><dt>Goal</dt><dd>More repeat visits</dd></div><div><dt>Business type</dt><dd>${esc(S.biz.industry||'Your business')}</dd></div><div><dt>Current rewards</dt><dd>${esc(rewardLabel)}</dd></div><div><dt>Output</dt><dd>One editable recommendation draft</dd></div></dl><p class="muted small" style="margin-top:12px">Peekaa uses your governed business type and active service and product prices to choose a starting model. Product costs are not used in this automatic calculation; check profitability under More reward settings before publishing.</p></section>`;
+      else body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle" tabindex="-1"><p class="customer-quest-kicker">Step 3 of 3</p><h3 id="rewardAutoStepTitle">Review the safety check</h3><p class="reward-auto-safety"><b>Nothing goes live until you review and publish.</b><br>${growDraftVersionId?`${workspaceTemplateHtmlV97('growDraftReady',{version:snapshot.draft?.version_no||''})} Peekaa will open it without replacing it.`:'Peekaa will create one editable recommendation draft. Staff and customers keep using the published programme.'}</p></section>`;
       actions.innerHTML=`${step>1?'<button type="button" class="btn ghost" id="rewardAutoBack">Back</button>':''}<button type="button" class="btn ghost" id="rewardAutoCancel">Cancel</button><button type="button" class="btn" id="${step===3?'rewardAutoConfirm':'rewardAutoNext'}">${step===3?(growDraftVersionId?'Open editable draft':'Create editable draft'):'Next'}</button>`;
       $('rewardAutoCancel').onclick=()=>close();
       if($('rewardAutoBack'))$('rewardAutoBack').onclick=()=>{step--;render();$('rewardAutoStepTitle')?.focus({preventScroll:true})};
@@ -5508,7 +5508,7 @@ function pbResultsHtml(r,ctx){
     headSub='Observed differences are shown, but no statistical-significance test is implemented.';
   }else{
     headline='Measurement status unavailable';
-    headSub='Nestly cannot safely interpret this campaign result yet.';
+    headSub='Peekaa cannot safely interpret this campaign result yet.';
   }
   const serverNote=String(r.measurement_note||'Observed differences are descriptive. No lift, ROI, delivery, or statistical-significance claim is made.');
   const canRecord=ctx.isOwner&&hasWindow&&['active','completed'].includes(campaignStatus);
@@ -5631,7 +5631,7 @@ function pbOpenIssueModal(c,targets,ctx){
   const total=targets.length;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="pbIssueModal" role="dialog" aria-modal="true" aria-labelledby="pbIssueTitle" tabindex="-1"><div class="modal-card" style="max-width:680px">
     <div class="row"><div><h2 id="pbIssueTitle">Prepare rewards, then confirm receipt</h2><p class="muted small">${esc(c.name)} · ${total} treatment customer${total===1?'':'s'}</p></div><span class="spacer"></span><button class="btn ghost sm" id="pbIssueClose">Close</button></div>
-    <div class="imp-note"><b>Three truthful steps.</b> First, Nestly creates a reward entitlement visible in customer history. This does not add spendable points or store credit, and merchant fulfilment remains pending. Next, actually show or send the reward. Only then confirm receipt below. Nestly has no delivery provider receipt.</div>
+    <div class="imp-note"><b>Three truthful steps.</b> First, Peekaa creates a reward entitlement visible in customer history. This does not add spendable points or store credit, and merchant fulfilment remains pending. Next, actually show or send the reward. Only then confirm receipt below. Peekaa has no delivery provider receipt.</div>
     <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:8px"><button class="btn ghost sm" id="pbCopyContacts" disabled>${CUI.icon('copy',{size:16})}<span>Copy prepared contacts</span></button>
       <button class="btn" id="pbIssueRun">${CUI.icon('redeem',{size:16})}<span>Create reward entitlements</span></button></div>
     <div id="pbIssueProgress" style="margin-top:14px" role="status" aria-live="polite"></div>
@@ -5849,13 +5849,13 @@ function openPlaybookWizard(ctx){
   function stepSafety(){
     return `<div class="card" style="background:var(--tint);border:none">
         <b>Friendly measurement defaults</b>
-        <p class="muted small" style="margin-top:6px">Nestly will place 90% of matched customers in the treatment group and hold 10% back. Reward entitlements are prepared only when you choose Prepare rewards; customer contact and receipt confirmation remain manual.</p>
+        <p class="muted small" style="margin-top:6px">Peekaa will place 90% of matched customers in the treatment group and hold 10% back. Reward entitlements are prepared only when you choose Prepare rewards; customer contact and receipt confirmation remain manual.</p>
       </div>
       <details class="studio-advanced" style="margin-top:12px">
         <summary>Advanced measurement settings</summary>
         <label for="pbHoldout">Hold back for proof (%)</label>
         <input id="pbHoldout" type="number" min="0" max="90" value="${state.holdout}">
-        <p class="muted small" style="margin-top:6px">Held-back customers receive no campaign reward entitlement, so Nestly can compare observed return rates. This comparison alone does not prove causation. 10% is the recommended default.</p>
+        <p class="muted small" style="margin-top:6px">Held-back customers receive no campaign reward entitlement, so Peekaa can compare observed return rates. This comparison alone does not prove causation. 10% is the recommended default.</p>
         <div class="split" style="margin-top:12px">
           <div><label for="pbCap">Budget cap (${esc(pbCur())}, 0 = none)</label><input id="pbCap" type="number" min="0" step="0.01" value="${esc(state.capDollars)}"></div>
           <div><label for="pbWindow">Measure returns for (days)</label><input id="pbWindow" type="number" min="1" max="365" value="${state.windowDays}"></div>
@@ -7597,7 +7597,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     loyaltyWritable:branchCanWrite(tillBranchId,'loyalty')
   });
   if(!tillStaffId||!tillBranchId){
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'A staff identity and branch with Record sale access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Record sale is not available',description:'Ask an owner or Nestly administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'A staff identity and branch with Record sale access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Record sale is not available',description:'Ask an owner or Peekaa administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
     return;
   }
   selectedBranchId=tillBranchId;
@@ -8553,7 +8553,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd data-merchant-content>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd data-merchant-content>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd data-merchant-content>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd data-merchant-content>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p data-merchant-content>${esc(client.notes||'None')}</p></div></section></div>
       <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(branchName)}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
       <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">Call customer</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">Message on WhatsApp</a>`:''}${amendableBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Amend appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>':''}${outcomeIsDue?'<button type="button" class="btn ghost statusAction" data-status="no_show">No-show</button>':''}<button type="button" class="btn danger statusAction" data-status="cancelled">Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
-      <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Nestly does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
+      <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Peekaa does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
       ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
     const close=()=>closeAppointmentDetails();
@@ -8611,6 +8611,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'da0b0a3d1df50285a67c82a1431a3744f1fb4ce3c1340f5338c3edb0fd8d1c92',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'117a1acc73c5a5f12de855799d6cdd82b66e2009a1c0900552ba057c5ef3698d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

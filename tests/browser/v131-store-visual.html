@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="6eb08a4c18348d66e207df9d710273cb277a78ccdeb6f58d37f23fdd0512c8b5"><link rel="icon" href="data:,"><title>Nestly V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="bcc732b130a3d732ab7bfea16e1ad4c24dfa2284c5affc7a0375c75817167585"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -119,9 +119,9 @@ tr.click:hover td{background:#FBFAF8}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
 .challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
-.logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;letter-spacing:-.02em}
+.logo{display:inline-flex;align-items:center;min-height:44px}
+.brand-logo{display:block;width:auto;height:50px;max-width:126px;object-fit:contain}
 .wallet-head>a.logo{display:inline-flex;align-items:center;min-height:44px}
-.logo span{color:var(--coral)}
 .ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:8px}
 .ind{border:1.5px solid var(--line);border-radius:var(--r-sm);padding:14px;text-align:center;cursor:pointer;
   background:#fff;transition:border-color .18s var(--ease),transform .22s var(--spring),box-shadow .2s}
@@ -962,7 +962,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 body{padding:16px}.v131-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px;max-width:calc(100vw - 16px);overflow:auto}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v131-nav{position:relative;top:auto;right:auto;padding:8px}.center-wrap{padding:12px}.modal-card{margin:12px;max-height:calc(100dvh - 24px)}}</style></head><body><nav class="v131-nav"><button class="btn" data-view="native">Native</button><button class="btn ghost" data-view="deletion">Profile</button><button class="btn ghost" data-view="persona">Workspaces</button><button class="btn ghost" data-view="customer-unavailable">Customer blocked</button><button class="btn ghost" data-view="customer-error">Customer error</button><button class="btn ghost" data-view="persona-error">Account error</button><button class="btn ghost" data-view="workspace-error">Staff blocked</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  const brandWordmark=()=>'<span>Nestly</span>',legalLinks=()=>'<div class="legal-links">Terms · Privacy</div>',sgt=value=>new Date(value).toLocaleString('en-SG');
+  const brandWordmark=()=>'<span>Peekaa</span>',legalLinks=()=>'<div class="legal-links">Terms · Privacy</div>',sgt=value=>new Date(value).toLocaleString('en-SG');
   const BRAND={customerLabel:'Loyalty'};const S={user:{id:'v131-browser-user'}};window.__signOuts=0;const killChannels=()=>{},resetClientSessionState=()=>{S.user=null},renderAuth=()=>show('native'),route=()=>show('persona'),nav=()=>{};let customerFeatureCapabilities=null;
   const sortStaffWorkspaces=staff=>[...(staff||[])].sort((a,b)=>String(a.business_name).localeCompare(String(b.business_name)));
   const fixtureState=new URLSearchParams(location.search).get('state')||'ready';window.__rpcCalls=[];
@@ -1034,8 +1034,8 @@ async function returnToNativeSignIn(){
 function renderNativeBusinessCompanion(){
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="nativeBusinessTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    <h1 id="nativeBusinessTitle" style="font-size:1.55rem;margin:14px 0 6px">Nestly for existing business accounts</h1>
-    <p class="muted" style="line-height:1.6">This app is a purchase-free companion for businesses with an existing Nestly subscription.</p>
+    <h1 id="nativeBusinessTitle" style="font-size:1.55rem;margin:14px 0 6px">Peekaa for existing business accounts</h1>
+    <p class="muted" style="line-height:1.6">This app is a purchase-free companion for businesses with an existing Peekaa subscription.</p>
     <p class="muted small" style="line-height:1.6;margin-top:8px">New business accounts, subscription setup, and subscription changes are not available in this app.</p>
     <button class="btn" id="nativeBusinessSignIn" style="width:100%;margin-top:18px">${S.user?'Sign out and return to sign in':'Back to sign in'}</button>
     ${S.user?accountDeletionCardHtml():''}${legalLinks()}</section></main>`;
@@ -1061,7 +1061,7 @@ function renderNativeBusinessCompanion(){
   $('personaChoiceSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
   function accountDeletionCardHtml(){
-  return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Nestly to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
+  return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Peekaa to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
 }
 
 function wireAccountDeletionButton(button=$('openAccountDeletion')){
@@ -1071,7 +1071,7 @@ function wireAccountDeletionButton(button=$('openAccountDeletion')){
 async function openAccountDeletionDialog(trigger=document.activeElement){
   $('accountDeletionModal')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="accountDeletionModal" role="dialog" aria-modal="true" aria-labelledby="accountDeletionTitle" tabindex="-1"><section class="modal-card" style="max-width:540px">
-    <div class="row"><div><h2 id="accountDeletionTitle">Delete your Nestly account</h2><p class="muted small" style="margin-top:5px">This requests deletion; it does not erase records immediately.</p></div><span class="spacer"></span><button class="btn ghost sm" id="accountDeletionClose" type="button" aria-label="Close account deletion">Close</button></div>
+    <div class="row"><div><h2 id="accountDeletionTitle">Delete your Peekaa account</h2><p class="muted small" style="margin-top:5px">This requests deletion; it does not erase records immediately.</p></div><span class="spacer"></span><button class="btn ghost sm" id="accountDeletionClose" type="button" aria-label="Close account deletion">Close</button></div>
     <div id="accountDeletionBody" aria-busy="true"><p class="muted small" style="margin-top:16px">Checking for an existing request…</p></div>
   </section></div>`);
   const modal=$('accountDeletionModal'),body=$('accountDeletionBody');
@@ -1095,7 +1095,7 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
     const retention=request?.resolution_code==='retained_legal'&&request?.retention_until
       ?`<p class="small" style="margin-top:6px">Retention review date: ${esc(sgt(request.retention_until))}.</p>`:'';
     body.setAttribute('aria-busy','false');
-    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Nestly if you need to challenge or clarify it.</p>`;
+    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Peekaa if you need to challenge or clarify it.</p>`;
   };
   const renderForm=()=>{
     body.setAttribute('aria-busy','false');
@@ -1112,7 +1112,7 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
       submit.disabled=true;status.innerHTML='<p class="muted small" style="margin-top:10px">Submitting the same safe request…</p>';
       const {data,error}=await sb.rpc('request_account_deletion_v131',{p_confirmation:'DELETE',p_idempotency_key:key});
       if(!modal.isConnected)return;
-      if(error||!data?.request_id){submit.disabled=false;status.innerHTML='<div class="err">We could not confirm whether the request was saved. Retry; Nestly will reuse the same request.</div>';return}
+      if(error||!data?.request_id){submit.disabled=false;status.innerHTML='<div class="err">We could not confirm whether the request was saved. Retry; Peekaa will reuse the same request.</div>';return}
       sessionStorage.removeItem(slot);renderPending(data);
     };
     input.focus({preventScroll:true});

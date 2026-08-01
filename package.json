@@ -2,7 +2,7 @@
   "name": "nestly-static-production-baseline",
   "version": "0.0.0",
   "private": true,
-  "description": "Production-readiness checks for the Nestly business and customer app.",
+  "description": "Production-readiness checks for the Peekaa business and customer app.",
   "engines": {
     "node": ">=22"
   },

@@ -20,7 +20,7 @@
       'whole onboarding':'整个入驻流程',
       'Record {type}':'记录{type}',
       'New immutable version {version}':'新的不可变版本 {version}',
-      'Nestly added {count} required dependencies automatically.':'Nestly 已自动添加 {count} 个必需依赖项。',
+      'Peekaa added {count} required dependencies automatically.':'Peekaa 已自动添加 {count} 个必需依赖项。',
       'Provider object':'服务商对象',
       'Confirm {action}':'确认{action}',
       'Year-one base {base}% · 12-month service bonus {bonus}% · Renewal {renewal}%':'首年基础 {base}% · 满 12 个月服务奖金 {bonus}% · 续约 {renewal}%',
@@ -66,7 +66,7 @@
       'Only firms you created or are assigned to':'仅限您创建或获分配的企业',
       'All platform records':'所有平台记录','Read and write':'可读写','Read only':'只读',
       'Platform access unavailable':'平台权限不可用',
-      'This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.':'此账户没有有效的 Nestly 平台角色。请联系超级管理员授予或重新启用权限。',
+      'This account has no active Peekaa platform role. Ask a super admin to grant or reactivate access.':'此账户没有有效的 Peekaa 平台角色。请联系超级管理员授予或重新启用权限。',
       'This platform area':'此平台区域','System update required':'需要系统更新',
       'This console is ready, but its platform data contract is not available in this environment.':'控制台已就绪，但此环境尚未提供相应的平台数据接口。',
       'No data was changed. Apply the corresponding reviewed platform backend phase, then retry.':'没有更改任何数据。请先应用已审核的平台后端阶段，然后重试。',
@@ -131,7 +131,7 @@
       'Only firms you created or are assigned to':'Hanya firma yang anda cipta atau ditugaskan kepada anda',
       'All platform records':'Semua rekod platform','Read and write':'Baca dan tulis','Read only':'Baca sahaja',
       'Platform access unavailable':'Akses platform tidak tersedia',
-      'This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.':'Akaun ini tiada peranan platform Nestly yang aktif. Minta pentadbir super memberikan atau mengaktifkan semula akses.',
+      'This account has no active Peekaa platform role. Ask a super admin to grant or reactivate access.':'Akaun ini tiada peranan platform Peekaa yang aktif. Minta pentadbir super memberikan atau mengaktifkan semula akses.',
       'This platform area':'Bahagian platform ini','System update required':'Kemas kini sistem diperlukan',
       'This console is ready, but its platform data contract is not available in this environment.':'Konsol ini sedia, tetapi kontrak data platformnya tidak tersedia dalam persekitaran ini.',
       'No data was changed. Apply the corresponding reviewed platform backend phase, then retry.':'Tiada data diubah. Gunakan fasa backend platform yang telah disemak, kemudian cuba lagi.',
@@ -467,14 +467,14 @@
       'CSV, TSV and Excel are accepted. Nothing is inserted until review is complete.':'支持 CSV、TSV 和 Excel；完成审核前不会插入任何数据。',
       'Choose by consultant name. Assignment changes are recorded in the prospect history.':'按顾问姓名选择；分配更改会记录在潜在客户历史中。',
       'Choose by consultant name. Sales staff continue to see only firms they created or are assigned to.':'按顾问姓名选择；销售人员仍只能看到自己创建或获分配的企业。',
-      'Copy this secure invitation now. Nestly stores only its hash and cannot show the token again.':'请立即复制此安全邀请。Nestly 只保存其哈希值，之后无法再次显示令牌。',
+      'Copy this secure invitation now. Peekaa stores only its hash and cannot show the token again.':'请立即复制此安全邀请。Peekaa 只保存其哈希值，之后无法再次显示令牌。',
       'Final waivers, blocking decisions, and firm activation are completed by a super admin.':'最终豁免、阻碍决定和企业激活由超级管理员完成。',
       'Firm performance respects sector, firm, branch, search and date. SME pipeline analytics respects date and operator visibility; the report labels that separate scope. Currency totals remain separated.':'企业表现遵循行业、企业、分店、搜索和日期范围。中小企业流程分析遵循日期与操作员可见范围，报告会明确标示不同范围；币种总额始终分开。',
       'I reviewed the mapping, validation results, and every conflict decision.':'我已查看映射、验证结果及每项冲突决定。',
       'I reviewed the module list and understand this publishes a new immutable version.':'我已查看模块清单，并明白这会发布一个不可更改的新版本。',
       'Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence.':'针对这一企业、分店和日期范围的项目级顾客洞察；每项建议均关联返回的证据。',
-      'Nestly keeps inventory off for every firm, independent of sector or branch settings.':'无论行业或分店设置如何，Nestly 都会为所有企业关闭库存功能。',
-      'Nestly suppresses advice when the exact scope has insufficient or unreliable data.':'当指定范围的数据不足或不可靠时，Nestly 不会提供建议。',
+      'Peekaa keeps inventory off for every firm, independent of sector or branch settings.':'无论行业或分店设置如何，Peekaa 都会为所有企业关闭库存功能。',
+      'Peekaa suppresses advice when the exact scope has insufficient or unreliable data.':'当指定范围的数据不足或不可靠时，Peekaa 不会提供建议。',
       'Off modules are hidden and blocked. Read-only modules never show editing controls.':'关闭的模块会隐藏并阻止访问；只读模块绝不显示编辑控件。',
       'Owner access resumes only after provider payment truth is reconciled.':'只有在服务商付款真实状态完成对账后，负责人权限才会恢复。',
       'PDF, CSV, XLSX, PNG, JPEG, WebP or ZIP · maximum 25 MB.':'支持 PDF、CSV、XLSX、PNG、JPEG、WebP 或 ZIP；最大 25 MB。',
@@ -559,14 +559,14 @@
       'CSV, TSV and Excel are accepted. Nothing is inserted until review is complete.':'CSV, TSV dan Excel diterima. Tiada apa dimasukkan sehingga semakan selesai.',
       'Choose by consultant name. Assignment changes are recorded in the prospect history.':'Pilih mengikut nama perunding. Perubahan tugasan direkodkan dalam sejarah prospek.',
       'Choose by consultant name. Sales staff continue to see only firms they created or are assigned to.':'Pilih mengikut nama perunding. Kakitangan jualan terus melihat hanya firma yang mereka cipta atau ditugaskan.',
-      'Copy this secure invitation now. Nestly stores only its hash and cannot show the token again.':'Salin jemputan selamat ini sekarang. Nestly hanya menyimpan hashnya dan tidak boleh memaparkan token semula.',
+      'Copy this secure invitation now. Peekaa stores only its hash and cannot show the token again.':'Salin jemputan selamat ini sekarang. Peekaa hanya menyimpan hashnya dan tidak boleh memaparkan token semula.',
       'Final waivers, blocking decisions, and firm activation are completed by a super admin.':'Pengecualian akhir, keputusan sekatan dan pengaktifan firma diselesaikan oleh pentadbir super.',
       'Firm performance respects sector, firm, branch, search and date. SME pipeline analytics respects date and operator visibility; the report labels that separate scope. Currency totals remain separated.':'Prestasi firma mematuhi sektor, firma, cawangan, carian dan tarikh. Analitik aliran PKS mematuhi tarikh dan keterlihatan pengendali; laporan melabel skop berasingan itu. Jumlah mata wang kekal berasingan.',
       'I reviewed the mapping, validation results, and every conflict decision.':'Saya telah menyemak pemetaan, hasil pengesahan dan setiap keputusan konflik.',
       'I reviewed the module list and understand this publishes a new immutable version.':'Saya telah menyemak senarai modul dan memahami bahawa ini menerbitkan versi baharu yang tidak boleh diubah.',
       'Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence.':'Cerapan pelanggan peringkat item untuk skop firma, cawangan dan tarikh ini. Setiap cadangan dikaitkan dengan bukti yang dikembalikan.',
-      'Nestly keeps inventory off for every firm, independent of sector or branch settings.':'Nestly mematikan inventori untuk setiap firma tanpa mengira tetapan sektor atau cawangan.',
-      'Nestly suppresses advice when the exact scope has insufficient or unreliable data.':'Nestly tidak memberi nasihat apabila skop tepat mempunyai data tidak mencukupi atau tidak boleh dipercayai.',
+      'Peekaa keeps inventory off for every firm, independent of sector or branch settings.':'Peekaa mematikan inventori untuk setiap firma tanpa mengira tetapan sektor atau cawangan.',
+      'Peekaa suppresses advice when the exact scope has insufficient or unreliable data.':'Peekaa tidak memberi nasihat apabila skop tepat mempunyai data tidak mencukupi atau tidak boleh dipercayai.',
       'Off modules are hidden and blocked. Read-only modules never show editing controls.':'Modul dimatikan disembunyikan dan disekat. Modul baca sahaja tidak pernah menunjukkan kawalan edit.',
       'Owner access resumes only after provider payment truth is reconciled.':'Akses pemilik disambung hanya selepas data sebenar bayaran penyedia diselaraskan.',
       'PDF, CSV, XLSX, PNG, JPEG, WebP or ZIP · maximum 25 MB.':'PDF, CSV, XLSX, PNG, JPEG, WebP atau ZIP · maksimum 25 MB.',
@@ -623,7 +623,7 @@
       'Completed transactions':'已完成交易','Configure account':'配置账户','Contact':'联系',
       'Contacts and buying committee':'联系人与采购决策团队',
       'Conversion and account configuration':'转换与账户配置',
-      'Create Nestly account':'创建 Nestly 账户',
+      'Create Peekaa account':'创建 Peekaa 账户',
       'Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid.':'从到期日起每日提醒；若发票仍未支付，第 14 天暂停负责人访问。',
       'Default':'默认','Documents':'文件','Due date':'到期日',
       'Edit firm modules':'编辑企业模块','Edit operating profile':'编辑运营资料',
@@ -660,7 +660,7 @@
       'This stage is controlled by account conversion and onboarding evidence.':'此阶段由账户转换及入驻证据控制。',
       'Firm sector assigned.':'企业行业已分配。','Firm module override applied.':'企业模块覆盖已应用。','Stripe price version activated.':'Stripe 价格版本已启用。',
       'V124 bills customer capacity, never staff access. Active versions drive checkout and upgrades; prior versions remain history.':'V124 按顾客容量计费，不按员工访问人数计费。有效版本用于结账和升级；旧版本保留为历史记录。',
-      'V125 bills customer capacity, never staff access. Nestly is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.':'V125 按顾客容量计费，不按员工访问人数计费。Nestly 尚未注册消费税：Stripe 价格采用不含税模式，并停用自动税费。',
+      'V125 bills customer capacity, never staff access. Peekaa is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.':'V125 按顾客容量计费，不按员工访问人数计费。Peekaa 尚未注册消费税：Stripe 价格采用不含税模式，并停用自动税费。',
       'Create matching monthly and annual Stripe Price versions with exclusive tax behavior before opening checkout.':'开放结账前，请创建采用不含税模式的月付和年付 Stripe 价格版本。',
       'GST treatment':'消费税处理','GST not charged · Stripe Price tax behavior must be exclusive · automatic tax remains disabled.':'未收取消费税 · Stripe 价格必须采用不含税模式 · 自动税费保持停用。','Price tax mode':'价格税务模式',
       'Per +1,000 customers':'每增加 1,000 位顾客','Customers included':'包含顾客数',
@@ -690,9 +690,9 @@
       'Schedule the next attempt or enter a terminal disposition.':'请安排下一次尝试或填写最终处理结果。','Add a meeting URL or physical location.':'请添加会议网址或实际地点。',
       'Add a decision date or next follow-up.':'请添加决定日期或下次跟进。','Review the module list and tick the confirmation before publishing.':'发布前请审核模块列表并勾选确认。',
       'Choose at least one module for this sector.':'请为此行业选择至少一个模块。','The billing command executor is unavailable.':'账单指令执行服务不可用。',
-      'Add a prospect ID or business ID.':'请添加潜在客户编号或企业编号。','Find and select an existing Nestly user first.':'请先查找并选择现有 Nestly 用户。',
-      'Enter at least 3 characters of a name or email.':'请输入姓名或电邮的至少 3 个字符。','Searching existing Nestly users…':'正在搜索现有 Nestly 用户…',
-      'More than one user matched. Choose the correct name and email.':'匹配到多位用户，请选择正确的姓名和电邮。','No existing Nestly sign-in matched that search.':'没有现有 Nestly 登录账户匹配该搜索。',
+      'Add a prospect ID or business ID.':'请添加潜在客户编号或企业编号。','Find and select an existing Peekaa user first.':'请先查找并选择现有 Peekaa 用户。',
+      'Enter at least 3 characters of a name or email.':'请输入姓名或电邮的至少 3 个字符。','Searching existing Peekaa users…':'正在搜索现有 Peekaa 用户…',
+      'More than one user matched. Choose the correct name and email.':'匹配到多位用户，请选择正确的姓名和电邮。','No existing Peekaa sign-in matched that search.':'没有现有 Peekaa 登录账户匹配该搜索。',
       'Platform console dependencies are unavailable.':'平台控制台依赖项不可用。','Platform access is required.':'需要平台访问权限。'
       ,'Version':'版本','No overdue day':'无逾期天数','Day {count} overdue':'逾期第 {count} 天',
       'Firm status updated to {status}.':'企业状态已更新为{status}。','{module} policy updated.':'{module}政策已更新。',
@@ -723,8 +723,8 @@
       'Explain what must change before re-applying':'说明重新申请前必须更改的内容',' · required':' · 必填',' · optional':' · 可选','Update evidence':'更新证据',
       'Commercial terms are ready for account creation.':'商业条款已准备好，可创建账户。','Accepted commercial terms are required before account creation.':'创建账户前必须有已接受的商业条款。',
       'Contact updated.':'联系人已更新。','Contact added.':'联系人已添加。','Token copied. Keep it in a secure handoff channel.':'令牌已复制，请通过安全交接渠道保存。',
-      'Copy was unavailable. Select the token and copy it manually.':'无法自动复制，请选择令牌并手动复制。','The Nestly account already exists.':'Nestly 账户已存在。',
-      'Nestly account created. Save the owner invitation token.':'Nestly 账户已创建，请保存负责人邀请令牌。','Unblock checklist item':'解除检查项目阻止',
+      'Copy was unavailable. Select the token and copy it manually.':'无法自动复制，请选择令牌并手动复制。','The Peekaa account already exists.':'Peekaa 账户已存在。',
+      'Peekaa account created. Save the owner invitation token.':'Peekaa 账户已创建，请保存负责人邀请令牌。','Unblock checklist item':'解除检查项目阻止',
       'Retired':'已停用','Consultant updated.':'顾问已更新。','Consultant created.':'顾问已创建。','The firm roster requires a system update.':'企业名册需要系统更新。',
       'The firm roster returned no records.':'企业名册未返回记录。','Scoped analytics and report generation':'范围分析与报告生成','Platform console module':'平台控制台模块',
       'Edit platform access':'编辑平台权限','Add platform access':'添加平台权限','Save access':'保存权限','Grant access':'授予权限',
@@ -756,7 +756,7 @@
       'Completed transactions':'Transaksi selesai','Configure account':'Konfigurasi akaun','Contact':'Hubungi',
       'Contacts and buying committee':'Kenalan dan jawatankuasa pembelian',
       'Conversion and account configuration':'Penukaran dan konfigurasi akaun',
-      'Create Nestly account':'Cipta akaun Nestly',
+      'Create Peekaa account':'Cipta akaun Peekaa',
       'Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid.':'Peringatan harian bermula pada tarikh akhir. Akses pemilik dijeda pada hari ke-14 jika invois belum dibayar.',
       'Default':'Lalai','Documents':'Dokumen','Due date':'Tarikh akhir',
       'Edit':'Sunting','Edit firm modules':'Sunting modul firma','Edit operating profile':'Sunting profil operasi',
@@ -793,7 +793,7 @@
       'This stage is controlled by account conversion and onboarding evidence.':'Peringkat ini dikawal oleh penukaran akaun dan bukti penerimaan.',
       'Firm sector assigned.':'Sektor firma ditugaskan.','Firm module override applied.':'Penggantian modul firma digunakan.','Stripe price version activated.':'Versi harga Stripe diaktifkan.',
       'V124 bills customer capacity, never staff access. Active versions drive checkout and upgrades; prior versions remain history.':'V124 mengebil kapasiti pelanggan, bukan akses kakitangan. Versi aktif digunakan untuk pembayaran dan peningkatan; versi terdahulu kekal sebagai sejarah.',
-      'V125 bills customer capacity, never staff access. Nestly is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.':'V125 mengebil kapasiti pelanggan, bukan akses kakitangan. Nestly belum berdaftar GST: tingkah laku cukai Harga Stripe adalah eksklusif dan cukai automatik dilumpuhkan.',
+      'V125 bills customer capacity, never staff access. Peekaa is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.':'V125 mengebil kapasiti pelanggan, bukan akses kakitangan. Peekaa belum berdaftar GST: tingkah laku cukai Harga Stripe adalah eksklusif dan cukai automatik dilumpuhkan.',
       'Create matching monthly and annual Stripe Price versions with exclusive tax behavior before opening checkout.':'Cipta versi Harga Stripe bulanan dan tahunan dengan tingkah laku cukai eksklusif sebelum membuka pembayaran.',
       'GST treatment':'Pengendalian GST','GST not charged · Stripe Price tax behavior must be exclusive · automatic tax remains disabled.':'GST tidak dikenakan · Tingkah laku cukai Harga Stripe mesti eksklusif · cukai automatik kekal dilumpuhkan.','Price tax mode':'Mod cukai harga',
       'Per +1,000 customers':'Bagi setiap tambahan 1,000 pelanggan','Customers included':'Pelanggan disertakan',
@@ -823,9 +823,9 @@
       'Schedule the next attempt or enter a terminal disposition.':'Jadualkan percubaan seterusnya atau masukkan keputusan akhir.','Add a meeting URL or physical location.':'Tambah URL mesyuarat atau lokasi fizikal.',
       'Add a decision date or next follow-up.':'Tambah tarikh keputusan atau susulan seterusnya.','Review the module list and tick the confirmation before publishing.':'Semak senarai modul dan tandakan pengesahan sebelum menerbitkan.',
       'Choose at least one module for this sector.':'Pilih sekurang-kurangnya satu modul untuk sektor ini.','The billing command executor is unavailable.':'Pelaksana arahan pengebilan tidak tersedia.',
-      'Add a prospect ID or business ID.':'Tambah ID prospek atau ID perniagaan.','Find and select an existing Nestly user first.':'Cari dan pilih pengguna Nestly sedia ada dahulu.',
-      'Enter at least 3 characters of a name or email.':'Masukkan sekurang-kurangnya 3 aksara nama atau e-mel.','Searching existing Nestly users…':'Mencari pengguna Nestly sedia ada…',
-      'More than one user matched. Choose the correct name and email.':'Lebih daripada satu pengguna sepadan. Pilih nama dan e-mel yang betul.','No existing Nestly sign-in matched that search.':'Tiada log masuk Nestly sedia ada sepadan dengan carian itu.',
+      'Add a prospect ID or business ID.':'Tambah ID prospek atau ID perniagaan.','Find and select an existing Peekaa user first.':'Cari dan pilih pengguna Peekaa sedia ada dahulu.',
+      'Enter at least 3 characters of a name or email.':'Masukkan sekurang-kurangnya 3 aksara nama atau e-mel.','Searching existing Peekaa users…':'Mencari pengguna Peekaa sedia ada…',
+      'More than one user matched. Choose the correct name and email.':'Lebih daripada satu pengguna sepadan. Pilih nama dan e-mel yang betul.','No existing Peekaa sign-in matched that search.':'Tiada log masuk Peekaa sedia ada sepadan dengan carian itu.',
       'Platform console dependencies are unavailable.':'Kebergantungan konsol platform tidak tersedia.','Platform access is required.':'Akses platform diperlukan.'
       ,'Version':'Versi','No overdue day':'Tiada hari tertunggak','Day {count} overdue':'Tertunggak hari ke-{count}',
       'Firm status updated to {status}.':'Status firma dikemas kini kepada {status}.','{module} policy updated.':'Polisi {module} dikemas kini.',
@@ -856,8 +856,8 @@
       'Explain what must change before re-applying':'Terangkan perubahan yang diperlukan sebelum memohon semula',' · required':' · diperlukan',' · optional':' · pilihan','Update evidence':'Kemas kini bukti',
       'Commercial terms are ready for account creation.':'Terma komersial sedia untuk penciptaan akaun.','Accepted commercial terms are required before account creation.':'Terma komersial yang diterima diperlukan sebelum penciptaan akaun.',
       'Contact updated.':'Kenalan dikemas kini.','Contact added.':'Kenalan ditambah.','Token copied. Keep it in a secure handoff channel.':'Token disalin. Simpan dalam saluran penyerahan selamat.',
-      'Copy was unavailable. Select the token and copy it manually.':'Salinan tidak tersedia. Pilih token dan salin secara manual.','The Nestly account already exists.':'Akaun Nestly telah wujud.',
-      'Nestly account created. Save the owner invitation token.':'Akaun Nestly dicipta. Simpan token jemputan pemilik.','Unblock checklist item':'Nyahsekat item senarai semak',
+      'Copy was unavailable. Select the token and copy it manually.':'Salinan tidak tersedia. Pilih token dan salin secara manual.','The Peekaa account already exists.':'Akaun Peekaa telah wujud.',
+      'Peekaa account created. Save the owner invitation token.':'Akaun Peekaa dicipta. Simpan token jemputan pemilik.','Unblock checklist item':'Nyahsekat item senarai semak',
       'Retired':'Ditamatkan','Consultant updated.':'Perunding dikemas kini.','Consultant created.':'Perunding dicipta.','The firm roster requires a system update.':'Senarai firma memerlukan kemas kini sistem.',
       'The firm roster returned no records.':'Senarai firma tidak mengembalikan rekod.','Scoped analytics and report generation':'Analitik berskop dan penjanaan laporan','Platform console module':'Modul konsol platform',
       'Edit platform access':'Sunting akses platform','Add platform access':'Tambah akses platform','Save access':'Simpan akses','Grant access':'Berikan akses',
@@ -950,7 +950,7 @@
     'Company, UEN, owner, email or phone':'企业、UEN、所有者、电子邮件或电话',
     'Competitor':'竞争者',
     'Configuration coverage':'配置覆盖范围',
-    'Configure the future Nestly account':'配置未来的 Nestly 帐户',
+    'Configure the future Peekaa account':'配置未来的 Peekaa 帐户',
     'Confirm commercial terms':'确认商业条款',
     'Confirm commission forfeiture':'确认没收佣金',
     'Confirm commission policy':'确认佣金政策',
@@ -1173,7 +1173,7 @@
     'Save qualification version':'保存资格版本',
     'Save this owner invitation token':'保存此所有者邀请令牌',
     'Scope summary':'范围摘要',
-    'Search an existing Nestly sign-in. You will confirm the matched person before granting access.':'搜索现有的 Nestly 登录。您将在授予访问权限之前确认匹配的人员。',
+    'Search an existing Peekaa sign-in. You will confirm the matched person before granting access.':'搜索现有的 Peekaa 登录。您将在授予访问权限之前确认匹配的人员。',
     'Search every firm field':'搜索每个企业领域',
     'Search inside scope':'范围内搜索',
     'Seat limit':'座位限制',
@@ -1241,7 +1241,7 @@
       'whole onboarding':'keseluruhan penerimaan',
       'Record {type}':'Rekod {type}',
       'New immutable version {version}':'Versi kekal baharu {version}',
-      'Nestly added {count} required dependencies automatically.':'Nestly menambah {count} kebergantungan wajib secara automatik.',
+      'Peekaa added {count} required dependencies automatically.':'Peekaa menambah {count} kebergantungan wajib secara automatik.',
       'Provider object':'Objek penyedia',
       'Confirm {action}':'Sahkan {action}',
       'Year-one base {base}% · 12-month service bonus {bonus}% · Renewal {renewal}%':'Asas tahun pertama {base}% · bonus perkhidmatan 12 bulan {bonus}% · pembaharuan {renewal}%',
@@ -1372,7 +1372,7 @@
     'Company, UEN, owner, email or phone':'Syarikat, UEN, pemilik, e-mel atau telefon',
     'Competitor':'Pesaing',
     'Configuration coverage':'Liputan konfigurasi',
-    'Configure the future Nestly account':'Konfigurasikan akaun Nestly masa hadapan',
+    'Configure the future Peekaa account':'Konfigurasikan akaun Peekaa masa hadapan',
     'Confirm commercial terms':'Sahkan syarat komersial',
     'Confirm commission forfeiture':'Sahkan pelucuthakan komisen',
     'Confirm commission policy':'Sahkan dasar komisen',
@@ -1595,7 +1595,7 @@
     'Save qualification version':'Simpan versi kelayakan',
     'Save this owner invitation token':'Simpan token jemputan pemilik ini',
     'Scope summary':'Ringkasan skop',
-    'Search an existing Nestly sign-in. You will confirm the matched person before granting access.':'Cari log masuk Nestly sedia ada. Anda akan mengesahkan orang yang dipadankan sebelum memberikan akses.',
+    'Search an existing Peekaa sign-in. You will confirm the matched person before granting access.':'Cari log masuk Peekaa sedia ada. Anda akan mengesahkan orang yang dipadankan sebelum memberikan akses.',
     'Search every firm field':'Cari setiap bidang firma',
     'Search inside scope':'Cari dalam skop',
     'Seat limit':'Had tempat duduk',
@@ -1665,7 +1665,7 @@
       '{from} to {to} · snapshot {date}':'{from} 至 {to} · 数据快照 {date}',
       'Checklist version {version} · only recorded evidence changes readiness.':'检查清单版本 {version} · 只有已记录的证据会改变就绪状态。',
       'Blocked: {reason}':'受阻：{reason}','Waived: {reason}':'已豁免：{reason}','Evidence: {evidence}':'证据：{evidence}',
-      'For privacy, Nestly will not show this full token again. Save it now and share it only with {owner}.':'为保护隐私，Nestly 不会再次显示此完整令牌。请立即保存，并仅与{owner}分享。',
+      'For privacy, Peekaa will not show this full token again. Save it now and share it only with {owner}.':'为保护隐私，Peekaa 不会再次显示此完整令牌。请立即保存，并仅与{owner}分享。',
       'the workspace owner':'工作区负责人',
       'The invitation expires {date}.':'邀请将于 {date} 到期。'
       ,'{count} firm available.':'有 {count} 家企业可用。','{count} firms available.':'有 {count} 家企业可用。',
@@ -1699,7 +1699,7 @@
       '{from} to {to} · snapshot {date}':'{from} hingga {to} · petikan data {date}',
       'Checklist version {version} · only recorded evidence changes readiness.':'Versi senarai semak {version} · hanya bukti yang direkodkan mengubah tahap kesediaan.',
       'Blocked: {reason}':'Disekat: {reason}','Waived: {reason}':'Dikecualikan: {reason}','Evidence: {evidence}':'Bukti: {evidence}',
-      'For privacy, Nestly will not show this full token again. Save it now and share it only with {owner}.':'Demi privasi, Nestly tidak akan menunjukkan token penuh ini lagi. Simpan sekarang dan kongsikannya hanya dengan {owner}.',
+      'For privacy, Peekaa will not show this full token again. Save it now and share it only with {owner}.':'Demi privasi, Peekaa tidak akan menunjukkan token penuh ini lagi. Simpan sekarang dan kongsikannya hanya dengan {owner}.',
       'the workspace owner':'pemilik ruang kerja',
       'The invitation expires {date}.':'Jemputan tamat tempoh pada {date}.'
       ,'{count} firm available.':'{count} firma tersedia.','{count} firms available.':'{count} firma tersedia.',
@@ -1748,12 +1748,12 @@
       'Sector defaults are managed here. To assign a sector or change one firm or branch, open the firm in Firms and use Firm module policy.':'行业默认模块在此管理。若要分配行业或更改单个企业或分店，请在“企业”中打开该企业并使用企业模块政策。',
       'Advanced provider mapping':'高级支付服务商映射',
       'Only change these values when connecting an already-created Stripe price.':'仅在连接已创建的 Stripe 价格时更改这些值。',
-      'Enter customer-facing amounts in dollars. Nestly stores the exact cents automatically.':'请输入面向客户的新币金额；Nestly 会自动精确存储为分。',
-      'Existing Nestly user':'现有 Nestly 用户',
-      'If the connection is interrupted, submit this same decision again. Nestly will revoke the unseen link and return a fresh secure invitation.':'若连接中断，请再次提交相同决定。Nestly 会撤销未显示的链接并返回新的安全邀请。',
+      'Enter customer-facing amounts in dollars. Peekaa stores the exact cents automatically.':'请输入面向客户的新币金额；Peekaa 会自动精确存储为分。',
+      'Existing Peekaa user':'现有 Peekaa 用户',
+      'If the connection is interrupted, submit this same decision again. Peekaa will revoke the unseen link and return a fresh secure invitation.':'若连接中断，请再次提交相同决定。Peekaa 会撤销未显示的链接并返回新的安全邀请。',
       'Unnamed user':'未命名用户',
       '{count} matching users found.':'找到 {count} 个匹配用户。',
-      'No matching Nestly user was found.':'未找到匹配的 Nestly 用户。',
+      'No matching Peekaa user was found.':'未找到匹配的 Peekaa 用户。',
       'User search is unavailable.':'用户搜索暂不可用。',
       'Unnamed consultant':'未命名顾问',
       'Choose a firm.':'请选择企业。',
@@ -1783,7 +1783,7 @@
       'Per-seat charge (SGD)':'每席位费用（新币）',
       'Commission is calculated on subscription amounts before GST. Enter money in SGD and rates as percentages.':'佣金按 GST 前的订阅金额计算。金额以新币输入，费率以百分比输入。',
       'Set the first-year, service-anniversary bonus, and renewal percentages paid to each consultant tier.':'设置各顾问级别的首年、服务周年奖金及续约佣金百分比。',
-      'Find Nestly user by email or name':'按电邮或姓名查找 Nestly 用户',
+      'Find Peekaa user by email or name':'按电邮或姓名查找 Peekaa 用户',
       'Search for the staff account that will receive consultant access.':'搜索将获得顾问权限的员工账户。',
       'Year-one base rate (%)':'首年基础费率（%）',
       '12-month service bonus (%)':'满 12 个月服务奖金（%）',
@@ -1797,7 +1797,7 @@
       'This account does not currently have an active platform role.':'此账户目前没有有效的平台角色。',
       'Access required':'需要平台权限',
       'Try again':'重试',
-      'Nestly could not verify this account’s platform role. Your access has not been removed. Use the button below to check again.':'Nestly 暂时无法验证此账户的平台角色。您的权限并未被移除，请使用下方按钮再次检查。',
+      'Peekaa could not verify this account’s platform role. Your access has not been removed. Use the button below to check again.':'Peekaa 暂时无法验证此账户的平台角色。您的权限并未被移除，请使用下方按钮再次检查。',
       'Manage branch modules':'管理分店模块',
       'Reset all to firm settings':'全部恢复为企业设置',
       'Reset all to sector defaults':'全部恢复为行业默认设置',
@@ -1888,12 +1888,12 @@
       'Sector defaults are managed here. To assign a sector or change one firm or branch, open the firm in Firms and use Firm module policy.':'Lalai sektor diuruskan di sini. Untuk menetapkan sektor atau mengubah satu firma atau cawangan, buka firma dalam Firma dan gunakan polisi modul firma.',
       'Advanced provider mapping':'Pemetaan penyedia lanjutan',
       'Only change these values when connecting an already-created Stripe price.':'Ubah nilai ini hanya apabila menyambungkan harga Stripe yang telah dicipta.',
-      'Enter customer-facing amounts in dollars. Nestly stores the exact cents automatically.':'Masukkan amaun pelanggan dalam dolar. Nestly menyimpan nilai sen yang tepat secara automatik.',
-      'Existing Nestly user':'Pengguna Nestly sedia ada',
-      'If the connection is interrupted, submit this same decision again. Nestly will revoke the unseen link and return a fresh secure invitation.':'Jika sambungan terputus, hantar semula keputusan yang sama. Nestly akan membatalkan pautan yang belum dipaparkan dan memberikan jemputan selamat yang baharu.',
+      'Enter customer-facing amounts in dollars. Peekaa stores the exact cents automatically.':'Masukkan amaun pelanggan dalam dolar. Peekaa menyimpan nilai sen yang tepat secara automatik.',
+      'Existing Peekaa user':'Pengguna Peekaa sedia ada',
+      'If the connection is interrupted, submit this same decision again. Peekaa will revoke the unseen link and return a fresh secure invitation.':'Jika sambungan terputus, hantar semula keputusan yang sama. Peekaa akan membatalkan pautan yang belum dipaparkan dan memberikan jemputan selamat yang baharu.',
       'Unnamed user':'Pengguna tanpa nama',
       '{count} matching users found.':'{count} pengguna sepadan ditemui.',
-      'No matching Nestly user was found.':'Tiada pengguna Nestly sepadan ditemui.',
+      'No matching Peekaa user was found.':'Tiada pengguna Peekaa sepadan ditemui.',
       'User search is unavailable.':'Carian pengguna tidak tersedia.',
       'Unnamed consultant':'Perunding tanpa nama',
       'Choose a firm.':'Pilih sebuah firma.',
@@ -1923,7 +1923,7 @@
       'Per-seat charge (SGD)':'Caj setiap tempat (SGD)',
       'Commission is calculated on subscription amounts before GST. Enter money in SGD and rates as percentages.':'Komisen dikira atas amaun langganan sebelum GST. Masukkan wang dalam SGD dan kadar sebagai peratusan.',
       'Set the first-year, service-anniversary bonus, and renewal percentages paid to each consultant tier.':'Tetapkan peratusan tahun pertama, bonus ulang tahun perkhidmatan dan pembaharuan bagi setiap peringkat perunding.',
-      'Find Nestly user by email or name':'Cari pengguna Nestly melalui e-mel atau nama',
+      'Find Peekaa user by email or name':'Cari pengguna Peekaa melalui e-mel atau nama',
       'Search for the staff account that will receive consultant access.':'Cari akaun kakitangan yang akan menerima akses perunding.',
       'Year-one base rate (%)':'Kadar asas tahun pertama (%)',
       '12-month service bonus (%)':'Bonus perkhidmatan 12 bulan (%)',
@@ -1937,7 +1937,7 @@
       'This account does not currently have an active platform role.':'Akaun ini tidak mempunyai peranan platform yang aktif pada masa ini.',
       'Access required':'Akses diperlukan',
       'Try again':'Cuba lagi',
-      'Nestly could not verify this account’s platform role. Your access has not been removed. Use the button below to check again.':'Nestly tidak dapat mengesahkan peranan platform akaun ini buat sementara. Akses anda belum dibuang. Gunakan butang di bawah untuk menyemak semula.',
+      'Peekaa could not verify this account’s platform role. Your access has not been removed. Use the button below to check again.':'Peekaa tidak dapat mengesahkan peranan platform akaun ini buat sementara. Akses anda belum dibuang. Gunakan butang di bawah untuk menyemak semula.',
       'Manage branch modules':'Urus modul cawangan',
       'Reset all to firm settings':'Tetapkan semula semua kepada tetapan firma',
       'Reset all to sector defaults':'Tetapkan semula semua kepada lalai sektor',
@@ -2529,9 +2529,9 @@
   }
 
   function wordmarkHtml(brand) {
-    const wordmark = String(brand.wordmark || 'nestly.');
-    const dot = wordmark.endsWith('.') ? '<span>.</span>' : '';
-    return `${escapeHtml(dot ? wordmark.slice(0,-1) : wordmark)}${dot}`;
+    const productName=String(brand.productName||'Peekaa');
+    const logoPath=String(brand.logoPath||'/brand/peekaa-logo.png');
+    return `<img class="platform-logo-img" src="${escapeHtml(logoPath)}" alt="${escapeHtml(productName)}">`;
   }
 
   function shellHtml({CUI,brand,activeKey,workspaceHash,access,allowedRoutes}) {
@@ -2570,7 +2570,7 @@
         subtitle:pt('This account does not currently have an active platform role.'),
         iconName:'info'
       })}
-      ${CUI.card({title:'Access required',body:`<p>${escapeHtml(pt('This account has no active Nestly platform role. Ask a super admin to grant or reactivate access.'))}</p>`})}
+      ${CUI.card({title:'Access required',body:`<p>${escapeHtml(pt('This account has no active Peekaa platform role. Ask a super admin to grant or reactivate access.'))}</p>`})}
       <div class="platform-actions">
         <a class="btn ghost" href="${escapeHtml(workspaceHash)}">${escapeHtml(pt('Back to workspace'))}</a>
         <button type="button" class="btn ghost" id="platformDeniedSignOut">${escapeHtml(pt('Sign out'))}</button>
@@ -2582,7 +2582,7 @@
       <div class="platform-denied-brand logo">${wordmarkHtml(brand||{})}</div>
       ${CUI.errorState({
         title:pt('Platform access could not be checked'),
-        message:platformErrorMessage(error,'Nestly could not verify this account’s platform role. Your access has not been removed. Use the button below to check again.'),
+        message:platformErrorMessage(error,'Peekaa could not verify this account’s platform role. Your access has not been removed. Use the button below to check again.'),
         retryId:'platformAccessRetry'
       })}
       <div class="platform-actions">
@@ -3152,7 +3152,7 @@
         </section>`).join('')}
       </div>
       ${CUI.field({id:'moduleControlReason',label:'Why are you changing access?',control:'textarea',required:true,hint:'One short note covers every changed module.',attributes:'name="reason" rows="3" minlength="3" maxlength="1000"'})}
-      <div class="platform-route-note"><b>${escapeHtml(pt("Inventory is not available here"))}</b><p class="small">${escapeHtml(pt("Nestly keeps inventory off for every firm, independent of sector or branch settings."))}</p></div>`,
+      <div class="platform-route-note"><b>${escapeHtml(pt("Inventory is not available here"))}</b><p class="small">${escapeHtml(pt("Peekaa keeps inventory off for every firm, independent of sector or branch settings."))}</p></div>`,
       onSubmit:async(form,controls)=>{
         const changes=available.map(module=>{
           const current=effectiveByKey.get(module.key);
@@ -3395,7 +3395,7 @@
         <article class="platform-insight"><div>${CUI.status(platformStatus(action.priority),action.priority==='high'?'no':action.priority==='medium'?'new':'off')}</div>
           <div><b>${escapeHtml(action.title)}</b><p>${escapeHtml(action.recommended_action)}</p>
           <small>${escapeHtml(action.category?`${platformStatus(action.category)} · `:'')}${escapeHtml(JSON.stringify(action.evidence||{}))}</small></div>
-        </article>`).join(''):localizedRouteNoteHtml('No recommendation claimed','Nestly suppresses advice when the exact scope has insufficient or unreliable data.')}</section>
+        </article>`).join(''):localizedRouteNoteHtml('No recommendation claimed','Peekaa suppresses advice when the exact scope has insufficient or unreliable data.')}</section>
       <footer class="platform-report-method"><b>${escapeHtml(pt("Data quality"))}</b><p>${escapeHtml(quality.message||quality.reason||'Recommendations are suppressed below the configured evidence threshold.')}</p></footer>
     </section>`;
   }
@@ -3435,7 +3435,7 @@
         try{
           const customers=await fetchAllEnterpriseCustomers(sb,filters,report.snapshot_at);
           downloadCsv(
-            `${context.brand?.downloadPrefix||'nestly'}-enterprise-report-${filters.from}-${filters.to}.csv`,
+            `${context.brand?.downloadPrefix||'peekaa'}-enterprise-report-${filters.from}-${filters.to}.csv`,
             reportCsvRows(report,customers)
           );
           button.textContent=pt('Downloaded {count} customers',{count:customers.length});
@@ -3695,7 +3695,7 @@
           const legacy=reportCsvRows(reportObject,customers),header=legacy[0];
           const extendedHeader=['record_type','scope','name','group','metric','value','currency','from','to','snapshot_at'];
           const convertLegacy=row=>[row[0],row[1]||row[2]||row[3]||'',row[3]||row[1]||'',row[4]||'',row[6],row[7],row[5],row[8],row[9],row[10]];
-          downloadCsv(`${context.brand?.downloadPrefix||'nestly'}-enterprise-cross-domain-${filters.from}-${filters.to}.csv`,[
+          downloadCsv(`${context.brand?.downloadPrefix||'peekaa'}-enterprise-cross-domain-${filters.from}-${filters.to}.csv`,[
             extendedHeader,...legacy.slice(1).map(convertLegacy),
             ...(sectionAccess.onboarding?analyticsReportRows(asObject(analytics)).slice(1):[]),
             ...(sectionAccess.billing?billingReportRows(billing,filters,reportObject.snapshot_at).slice(1):[])
@@ -4545,7 +4545,7 @@
         </div>
         <label for="businessApplicationDecisionReason">${escapeHtml(pt("Decision note"))}</label>
         <textarea id="businessApplicationDecisionReason" name="reason" rows="4" required placeholder="${escapeHtml(pt(isApproval?'Approval basis and onboarding note':'Explain what must change before re-applying'))}"></textarea>
-        ${isApproval?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("If the connection is interrupted, submit this same decision again. Nestly will revoke the unseen link and return a fresh secure invitation."))}</p>`:''}`,
+        ${isApproval?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("If the connection is interrupted, submit this same decision again. Peekaa will revoke the unseen link and return a fresh secure invitation."))}</p>`:''}`,
       onSubmit:async(form,controls)=>{
         const result=await rpc(sb,'platform_decide_business_application_v105',{
           p_application:application.id,p_decision:isApproval?'approved':'rejected',
@@ -4557,7 +4557,7 @@
           if(!/^[0-9a-f]{64}$/i.test(token))throw new Error(pt('Approval succeeded but the one-time invitation was not returned. Inspect the application before proceeding.'));
           const url=new URL(globalObject.NestlyNativeBridge.publicUrl('/business'));url.searchParams.set('invite',token);
           controls.overlay.querySelector('.modal-card').innerHTML=`<h2>${escapeHtml(pt("Application approved"))}</h2>
-            <p class="muted small" style="margin-top:7px">${escapeHtml(pt("Copy this secure invitation now. Nestly stores only its hash and cannot show the token again."))}</p>
+            <p class="muted small" style="margin-top:7px">${escapeHtml(pt("Copy this secure invitation now. Peekaa stores only its hash and cannot show the token again."))}</p>
             <label for="approvedOwnerInviteUrl">${escapeHtml(pt("Approved owner link"))}</label><textarea id="approvedOwnerInviteUrl" rows="4" readonly>${escapeHtml(url.toString())}</textarea>
             <div class="row" style="margin-top:14px"><button type="button" class="btn" id="copyApprovedOwnerInvite">${escapeHtml(pt("Copy secure owner link"))}</button>
             <span class="spacer"></span><button type="button" class="btn ghost" id="closeApprovedOwnerInvite">${escapeHtml(pt("Done"))}</button></div>`;
@@ -4800,7 +4800,7 @@
     }finally{select.disabled=false}
   }
   function downloadImportErrors(rows,batch,context) {
-    downloadCsv(`${context.brand?.downloadPrefix||'nestly'}-import-${batch}-errors.csv`,[
+    downloadCsv(`${context.brand?.downloadPrefix||'peekaa'}-import-${batch}-errors.csv`,[
       ['row_number','status','errors','candidate_matches','raw_payload'],
       ...rows.map(row=>[
         row.row_number,row.row_status,asArray(row.errors).join('|'),
@@ -5036,7 +5036,7 @@
     const accountAction=converted
       ?`<span class="muted small">${escapeHtml(pt('Account lifecycle is controlled by onboarding evidence.'))}</span>`
       :stage==='client'
-        ?`<button type="button" class="btn" data-create-account${termsAccepted?'':` disabled title="${escapeHtml(pt('Accepted or signed commercial terms are required.'))}"`}>${CUI.icon('branch',{size:16})}<span>${escapeHtml(pt('Create Nestly account'))}</span></button>`
+        ?`<button type="button" class="btn" data-create-account${termsAccepted?'':` disabled title="${escapeHtml(pt('Accepted or signed commercial terms are required.'))}"`}>${CUI.icon('branch',{size:16})}<span>${escapeHtml(pt('Create Peekaa account'))}</span></button>`
         :`<button type="button" class="btn ghost sm" data-convert>${escapeHtml(pt('Convert to client'))}</button>`;
     const lostAction=converted||stage==='lost'
       ?''
@@ -5395,7 +5395,7 @@
   function conversionConfigurationModal(detail,context) {
     const {CUI,sb}=context,prospect=asObject(detail.prospect),company=asObject(detail.company);
     const current=asObject(detail.conversion_configuration),primary=contactBase(asArray(detail.contacts).find(row=>contactBase(row).is_primary)||{});
-    modal({title:'Configure the future Nestly account',submitLabel:'Save configuration version',CUI,body:`<div class="platform-form-grid">
+    modal({title:'Configure the future Peekaa account',submitLabel:'Save configuration version',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'configWorkspaceName',label:'Workspace name',required:true,value:current.workspace_name||company.trading_name||company.legal_name||'',attributes:'name="workspace_name"'})}
       ${CUI.field({id:'configWorkspaceSlug',label:'Workspace slug',value:current.workspace_slug||'',attributes:'name="workspace_slug" pattern="[a-z0-9-]+"'})}
       ${CUI.field({id:'configOwnerEmail',label:'Owner email',type:'email',required:true,value:current.owner_email||primary.email||'',attributes:'name="owner_email"'})}
@@ -5523,7 +5523,7 @@
   }
   function oneTimeInvitationBodyHtml(invitation,CUI) {
     const token=String(invitation?.raw_token||'');
-    return `<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Shown once"))}</b><p class="small">${escapeHtml(pt('For privacy, Nestly will not show this full token again. Save it now and share it only with {owner}.',{owner:invitation.owner_email||pt('the workspace owner')}))}</p></div></div>
+    return `<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Shown once"))}</b><p class="small">${escapeHtml(pt('For privacy, Peekaa will not show this full token again. Save it now and share it only with {owner}.',{owner:invitation.owner_email||pt('the workspace owner')}))}</p></div></div>
       <label for="ownerInvitationToken">${escapeHtml(pt("Invitation token"))}</label>
       <div class="row"><input id="ownerInvitationToken" value="${escapeHtml(token)}" readonly spellcheck="false" style="font-family:monospace"><button type="button" class="btn ghost" data-copy-token>${escapeHtml(pt("Copy token"))}</button></div>
       <p class="muted small" data-copy-status aria-live="polite">${escapeHtml(pt('The invitation expires {date}.',{date:dateTime(invitation.expires_at)}))}</p>`;
@@ -5557,9 +5557,9 @@
     const {CUI,sb}=context,prospect=asObject(detail.prospect),company=asObject(detail.company);
     const terms=asObject(detail.commercial_terms);
     previewThenConfirm({
-      title:'Create Nestly account',
+      title:'Create Peekaa account',
       preview:{
-        action:'Create an inactive Nestly workspace and evidence checklist',
+        action:'Create an inactive Peekaa workspace and evidence checklist',
         prospect_id:prospect.id,
         prospect_version:prospectVersion(prospect),
         company:{legal_name:company.legal_name,trading_name:company.trading_name,registration_number:company.registration_number,sector:company.sector_key||company.industry},
@@ -5583,7 +5583,7 @@
           CUI.announce('Existing firm matched. No workspace was created.',{assertive:true});
           return;
         }
-        CUI.announce(pt(result.outcome==='already_converted'?'The Nestly account already exists.':'Nestly account created. Save the owner invitation token.'));
+        CUI.announce(pt(result.outcome==='already_converted'?'The Peekaa account already exists.':'Peekaa account created. Save the owner invitation token.'));
         if(result.owner_invitation?.raw_token)showOneTimeInvitation(result.owner_invitation,context);
       }
     });
@@ -6069,7 +6069,7 @@
           <section><h2>${escapeHtml(pt("Added"))}</h2>${added.length?`<ul>${added.map(module=>`<li>${escapeHtml(moduleLabel(module))}</li>`).join('')}</ul>`:localizedEmptyHtml('No modules added.')}</section>
           <section><h2>${escapeHtml(pt("Removed"))}</h2>${removed.length?`<ul>${removed.map(module=>`<li>${escapeHtml(moduleLabel(module))}</li>`).join('')}</ul>`:localizedEmptyHtml('No modules removed.')}</section>
         </div>
-        ${resolved.length!==requested.length?`<p class="muted small">${escapeHtml(pt('Nestly added {count} required dependencies automatically.',{count:resolved.length-requested.length}))}</p>`:''}
+        ${resolved.length!==requested.length?`<p class="muted small">${escapeHtml(pt('Peekaa added {count} required dependencies automatically.',{count:resolved.length-requested.length}))}</p>`:''}
         <label class="platform-review-confirm"><input type="checkbox" name="reviewed" value="yes"><span>${escapeHtml(pt("I reviewed the module list and understand this publishes a new immutable version."))}</span></label>
       </div>`,onSubmit:async(form,controls)=>{
         if(form.get('reviewed')!=='yes')throw new Error(pt('Review the module list and tick the confirmation before publishing.'));
@@ -6284,7 +6284,7 @@
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Billing summary'))}">${[
           ['Period amount due',currency(totals.total),'reports'],['Paid firms',totals.paid,'check'],['Overdue firms',totals.overdue,'info'],['Failed events',totals.failed,'retention']
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
-        ${CUI.card({title:'Stripe price catalogue',description:'V125 bills customer capacity, never staff access. Nestly is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per +1,000 customers','Customers included','Price tax mode','Status','Effective'],rows:billingCatalogueRows(catalog,CUI)}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create matching monthly and annual Stripe Price versions with exclusive tax behavior before opening checkout.'})})}
+        ${CUI.card({title:'Stripe price catalogue',description:'V125 bills customer capacity, never staff access. Peekaa is not GST-registered: Price tax behavior is exclusive and automatic tax is disabled.',body:catalog.length?CUI.table({caption:'Stripe price catalogue',headers:['Currency','Cadence','Base','Per +1,000 customers','Customers included','Price tax mode','Status','Effective'],rows:billingCatalogueRows(catalog,CUI)}):CUI.emptyState({iconName:'reports',title:'No Stripe prices configured',body:'Create matching monthly and annual Stripe Price versions with exclusive tax behavior before opening checkout.'})})}
         ${CUI.card({title:'Billing exception queue',description:exceptions.length?pt('{count} firms require payment follow-up.',{count:exceptions.length}):'No overdue or failed firm billing records.',body:exceptions.length?exceptions.map(row=>`<div class="platform-action-item"><div><button type="button" class="platform-link-button" data-billing-firm="${escapeHtml(row.business_id)}"><b>${escapeHtml(row.business_name)}</b></button><p class="muted small">${escapeHtml(platformStatus(row.payment_status||row.status))} · ${escapeHtml(pt('next payment {date}',{date:dateTime(row.next_payment_at)}))}</p></div>${CUI.status(pt('{count} failed',{count:Number(row.failed_event_count||0)}),'no')}</div>`).join(''):localizedEmptyHtml('Payments and provider status are currently reconciled.')})}
         ${billingFirmCardHtml(rows,CUI)}`;
       main.querySelector('#platformNewBillingPrice').onclick=()=>billingPriceModal(context);
@@ -6468,8 +6468,8 @@
   function consultantModal(consultant,context) {
     const {CUI,sb}=context;
     const userPicker=consultant
-      ?`<div class="platform-route-note"><b>${escapeHtml(consultant.display_name||pt('Consultant'))}</b><p class="small">${escapeHtml(consultant.email||pt('Existing Nestly user'))}</p></div><input type="hidden" name="user_id" value="${escapeHtml(consultant.user_id||'')}">`
-      :`${CUI.field({id:'consultantUserQuery',label:'Find Nestly user by email or name',required:true,hint:'Search for the staff account that will receive consultant access.',attributes:'autocomplete="off" minlength="3" maxlength="160"'})}
+      ?`<div class="platform-route-note"><b>${escapeHtml(consultant.display_name||pt('Consultant'))}</b><p class="small">${escapeHtml(consultant.email||pt('Existing Peekaa user'))}</p></div><input type="hidden" name="user_id" value="${escapeHtml(consultant.user_id||'')}">`
+      :`${CUI.field({id:'consultantUserQuery',label:'Find Peekaa user by email or name',required:true,hint:'Search for the staff account that will receive consultant access.',attributes:'autocomplete="off" minlength="3" maxlength="160"'})}
         <button type="button" class="btn ghost" id="consultantUserLookup">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt('Find user'))}</span></button>
         <label for="consultantUser" style="margin-top:12px">${escapeHtml(pt('Selected user'))}</label>
         <select id="consultantUser" name="user_id" disabled required><option value="">${escapeHtml(pt('Search by email or name first'))}</option></select>
@@ -6496,7 +6496,7 @@
       lookup.onclick=async()=>{
         const value=String(query.value||'').trim();
         if(value.length<3){status.textContent=pt('Enter at least 3 characters of a name or email.');return}
-        lookup.disabled=true;picker.disabled=true;status.textContent=pt('Searching existing Nestly users…');
+        lookup.disabled=true;picker.disabled=true;status.textContent=pt('Searching existing Peekaa users…');
         try{
           const payload=asObject(await rpc(sb,'platform_lookup_access_user_v89',{p_query:value}));
           const items=asArray(payload,['items']);
@@ -6505,7 +6505,7 @@
             :`<option value="">${escapeHtml(pt('No matching user'))}</option>`;
           picker.disabled=!items.length;
           if(payload.status==='matched'&&items.length===1)picker.value=items[0].user_id;
-          status.textContent=items.length?pt('{count} matching users found.',{count:items.length}):pt('No matching Nestly user was found.');
+          status.textContent=items.length?pt('{count} matching users found.',{count:items.length}):pt('No matching Peekaa user was found.');
         }catch(error){status.textContent=platformErrorMessage(error,pt('User search is unavailable.'))}
         finally{lookup.disabled=false}
       };
@@ -6811,7 +6811,7 @@
       ?`<div class="platform-route-note"><b>${escapeHtml(seed.display_name||seed.email||'Platform user')}</b><p class="small">${escapeHtml(seed.email||'Email unavailable')}</p></div><input type="hidden" name="user_id" value="${escapeHtml(seed.user_id)}">`
       :`${CUI.field({
         id:'platformAccessUserQuery',label:'Find user by email or name',required:true,
-        hint:'Search an existing Nestly sign-in. You will confirm the matched person before granting access.',
+        hint:'Search an existing Peekaa sign-in. You will confirm the matched person before granting access.',
         attributes:'autocomplete="off" minlength="3" maxlength="160"'
       })}
       <button type="button" class="btn ghost" id="platformAccessUserLookup">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt("Find user"))}</span></button>
@@ -6837,7 +6837,7 @@
       onSubmit:async(form,controls)=>{
         const role=String(form.get('role')||''),requestedPerms={};
         const selectedUser=String(form.get('user_id')||'').trim();
-        if(!selectedUser)throw new Error(pt('Find and select an existing Nestly user first.'));
+        if(!selectedUser)throw new Error(pt('Find and select an existing Peekaa user first.'));
         platformModuleKeys.forEach(key=>{
           const value=String(form.get(`permission_${key}`)||'off');
           if(value==='r'||value==='rw')requestedPerms[key]=value;
@@ -6859,7 +6859,7 @@
       lookup.onclick=async()=>{
         const value=String(query.value||'').trim();
         if(value.length<3){lookupStatus.textContent=pt('Enter at least 3 characters of a name or email.');return}
-        lookup.disabled=true;picker.disabled=true;lookupStatus.textContent=pt('Searching existing Nestly users…');
+        lookup.disabled=true;picker.disabled=true;lookupStatus.textContent=pt('Searching existing Peekaa users…');
         try{
           const payload=asObject(await rpc(sb,'platform_lookup_access_user_v89',{p_query:value}));
           const items=asArray(payload,['items']);
@@ -6873,7 +6873,7 @@
           }else if(payload.status==='ambiguous'&&items.length){
             lookupStatus.textContent=pt('More than one user matched. Choose the correct name and email.');
           }else{
-            lookupStatus.textContent=pt('No existing Nestly sign-in matched that search.');
+            lookupStatus.textContent=pt('No existing Peekaa sign-in matched that search.');
           }
           picker.onchange=()=>{
             const item=items.find(row=>String(row.user_id)===picker.value);

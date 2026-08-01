@@ -1,8 +1,8 @@
-# Nestly native-wrapper seam
+# Peekaa native-wrapper seam
 
-Nestly is a mobile-first installable web application. The owner activated
+Peekaa is a mobile-first installable web application. The owner activated
 native-store work on 2026-08-01. V125 uses Capacitor with the stable application
-identifier `asia.nestly.app`; `app/` remains the only application source and
+identifier `asia.peekaa.app`; `app/` remains the only application source and
 `npm run mobile:sync` prepares the reviewed web bundle before native sync.
 
 ## Wrapper boundary
@@ -26,10 +26,10 @@ identifier `asia.nestly.app`; `app/` remains the only application source and
 
 ## Deep links and authentication
 
-The application identifier is `asia.nestly.app`. Associated-domain ownership,
+The application identifier is `asia.peekaa.app`. Associated-domain ownership,
 signing-team identifiers and callback URLs still require owner-controlled Apple
 and Google credentials. Use verified universal/app links under
-`https://www.nestly.asia/`; do not rely on a custom scheme alone. Preserve the
+`https://www.peekaa.asia/`; do not rely on a custom scheme alone. Preserve the
 same customer and business hash routes after the link reaches the web layer.
 Password-recovery and sign-in callbacks must be tested on web, installed PWA,
 iOS and Android independently.
@@ -44,7 +44,7 @@ closed and is a release blocker.
 
 Every customer-facing QR, portal, join, booking-management and platform invite
 link is generated under the one canonical public origin
-`https://www.nestly.asia`. A local WebView origin must never be copied, shared
+`https://www.peekaa.asia`. A local WebView origin must never be copied, shared
 or encoded into a QR. The bundled `index.html` carries its own restrictive CSP
 because Vercel response headers do not protect packaged files.
 

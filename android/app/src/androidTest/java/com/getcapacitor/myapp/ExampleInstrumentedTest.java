@@ -1,4 +1,4 @@
-package asia.nestly.app;
+package asia.peekaa.app;
 
 import static org.junit.Assert.*;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("asia.nestly.app", appContext.getPackageName());
+        assertEquals("asia.peekaa.app", appContext.getPackageName());
     }
 }

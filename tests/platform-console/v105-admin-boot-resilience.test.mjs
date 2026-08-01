@@ -33,9 +33,9 @@ test('localized platform UI works with the real frozen helper contract',async()=
 test('admin route exposes a loading state and awaits the async platform renderer',async()=>{
   const source=await read('app/index.html');
   const route=source.slice(source.indexOf('async function route(){'),source.indexOf('\n/* ---------- customer wallet ---------- */'));
-  assert.match(source,/<link rel="stylesheet" href="\/platform-console\.css\?v=20260729-v105">/);
-  assert.match(source,/<script src="\/platform-console\.js\?v=20260801-v133"><\/script>/);
-  assert.match(route,/Opening Nestly admin/);
+  assert.match(source,/<link rel="stylesheet" href="\/platform-console\.css\?v=20260802-v134">/);
+  assert.match(source,/<script src="\/platform-console\.js\?v=20260802-v134"><\/script>/);
+  assert.match(route,/Opening Peekaa admin/);
   assert.match(route,/role="status"/);
   assert.match(route,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
   assert.match(route,/const requestedPlatformRoute=platformRoutePath==='#\/platform'\|\|platformRoutePath\.startsWith\('#\/platform\/'\)/);
@@ -77,7 +77,7 @@ test('a missing platform module renders a recoverable error instead of falling t
   for(const routeHash of ['#/platform','#/platform?view=attention','#/platform/firms?view=won']){
     const html=await runMissingModuleRoute(routeHash);
     assert.match(html,/Something went wrong/,routeHash);
-    assert.match(html,/Nestly admin could not be loaded/,routeHash);
+    assert.match(html,/Peekaa admin could not be loaded/,routeHash);
     assert.doesNotMatch(html,/Workspace unavailable/,routeHash);
   }
 });

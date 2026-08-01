@@ -26,7 +26,7 @@ test('package plans snapshot their server-derived list value and expose an hones
   assert.match(migration,/v_service\.price_cents::bigint\*p_sessions::bigint/);
   const packages=section('async function packagesPage(){','async function branchesPage(){');
   assert.match(packages,/Exact service \/ variation/);
-  assert.match(packages,/Nestly compares the package price with the exact service price × sessions/);
+  assert.match(packages,/Peekaa compares the package price with the exact service price × sessions/);
   assert.match(packages,/save_package_plan_v102/);
   assert.match(packages,/No discount/);
   assert.match(packages,/% discount/);

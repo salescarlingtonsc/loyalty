@@ -50,10 +50,10 @@
     const expiry=shortDate(expiresAt);
     const safe=safeContext(context);
     const lead=safe?`${safe}. `:'We would love to welcome you back. ';
-    const message=`${lead}Enjoy ${value} in welcome-back credit. Redeem in Nestly by ${expiry}.`;
+    const message=`${lead}Enjoy ${value} in welcome-back credit. Redeem in Peekaa by ${expiry}.`;
     const copy=message.length<=120
       ?message
-      :`Enjoy ${value} in welcome-back credit. Redeem in Nestly by ${expiry}.`;
+      :`Enjoy ${value} in welcome-back credit. Redeem in Peekaa by ${expiry}.`;
     return Object.freeze({
       contractVersion:CONTRACT_VERSION,
       message:copy,

@@ -532,7 +532,7 @@ test('all localized empty and omitted branches render translated HTML without te
     'No active contacts.','No activity recorded.','No tasks.'
   ];
   const notes=[
-    ['No recommendation claimed','Nestly suppresses advice when the exact scope has insufficient or unreliable data.'],
+    ['No recommendation claimed','Peekaa suppresses advice when the exact scope has insufficient or unreliable data.'],
     ['SME acquisition and onboarding omitted','This account does not have Onboarding access. The customer and firm report above remains complete for the selected scope.'],
     ['Subscription billing omitted','This account does not have Billing access. No billing or reconciliation reader was called.']
   ];
@@ -627,7 +627,7 @@ test('Chinese and Malay full report, onboarding, and invitation renderers contai
     owner_invitations:[],events:[]
   };
   const invitation={raw_token:'live-token',expires_at:'2026-07-30T01:00:00Z'};
-  const forbidden=/\b(?:Net revenue|Cash collected|Returning rate|Active customers|Customers|Transactions|Revenue|Pipeline leads|Deals won|Activated|Billing exceptions|Checklist version|Blocked:|Waived:|Evidence:|For privacy, Nestly|the workspace owner|The invitation expires|Money remains separated|returning-rate denominator)\b/i;
+  const forbidden=/\b(?:Net revenue|Cash collected|Returning rate|Active customers|Customers|Transactions|Revenue|Pipeline leads|Deals won|Activated|Billing exceptions|Checklist version|Blocked:|Waived:|Evidence:|For privacy, Peekaa|the workspace owner|The invitation expires|Money remains separated|returning-rate denominator)\b/i;
   for(const locale of ['zh-CN','ms']){
     api.setPlatformLocaleForTest(locale);
     const CUI=api.localizedPlatformCUI(rendererCUI());

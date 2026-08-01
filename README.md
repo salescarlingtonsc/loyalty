@@ -1,8 +1,8 @@
-# Nestly — customer growth and operations SaaS
+# Peekaa — customer growth and operations SaaS
 
 Multi-tenant SaaS: each business signs up, picks an industry (F&B, salon, facial,
 massage, fitness, retail...), gets the right modules auto-selected, and runs
-Nestly connects business operations, customer relationships, loyalty, bookings,
+Peekaa connects business operations, customer relationships, loyalty, bookings,
 billing, and growth intelligence in one installable web app.
 Rewards are real spendable in-store credit — not vanity points.
 

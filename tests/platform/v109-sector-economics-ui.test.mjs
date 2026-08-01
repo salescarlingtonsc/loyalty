@@ -7,6 +7,16 @@ const require=createRequire(import.meta.url);
 const UI=require('../../app/sector-economics.js');
 const read=path=>readFile(new URL(`../../${path}`,import.meta.url),'utf8');
 
+test('V134 converts the actual V109 policy payload before the UI renders it',async()=>{
+  const [v109,v134]=await Promise.all([
+    read('db/migrations/20260729_nestly_v109_economics_driver_sector_policy.sql'),
+    read('db/migrations/20260802_nestly_v134_peekaa_brand_legal.sql')
+  ]);
+  assert.equal((v109.match(/Nestly pilot starting policy/g)||[]).length,6);
+  assert.match(v134,/'Nestly pilot starting policy',\s*\n\s*'Peekaa pilot starting policy'/);
+  assert.match(v134,/unexpected legacy row count/);
+});
+
 test('economics overrides never use Math.random for authoritative request identifiers',async()=>{
   const source=await read('app/sector-economics.js');
   assert.doesNotMatch(source,/Math\.random/);
@@ -92,7 +102,7 @@ const policy=(overrides={})=>({
   base_policy:{
     id:'policy-1',version_no:1,effective_from:'2026-07-29T00:00:00Z',
     evidence_basis:[
-      'Nestly pilot starting policy; treatment intervals must be checked against each firm',
+      'Peekaa pilot starting policy; treatment intervals must be checked against each firm',
       'No universal salon or spa churn threshold is asserted'
     ],
     parameters:{
@@ -135,7 +145,7 @@ test('economics withholds profit and ROI unless complete traceable cost coverage
   assert.equal(view.economics.profit.available,false);
   assert.equal(view.economics.roi.available,false);
   assert.match(html,/Profit and ROI are unavailable/);
-  assert.match(html,/Nestly will not estimate missing costs/);
+  assert.match(html,/Peekaa will not estimate missing costs/);
   assert.match(html,/70%/);
   assert.doesNotMatch(html,/Gross profit with complete cost coverage/);
 });
@@ -305,8 +315,8 @@ test('sector policy is plain-language, versioned, evidence-based and owner overr
   assert.match(html,/Minimum prior visits/);
   assert.match(html,/3 visits/);
   assert.match(html,/When a customer’s usual visit interval cannot be calculated/);
-  assert.match(html,/When Nestly suppresses this/);
-  assert.match(html,/Nestly does not supply a universal churn number/);
+  assert.match(html,/When Peekaa suppresses this/);
+  assert.match(html,/Peekaa does not supply a universal churn number/);
   assert.match(html,/<details class="sector-policy-override">/);
   assert.match(html,/Reason for this change/);
 

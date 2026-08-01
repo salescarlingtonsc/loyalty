@@ -39,7 +39,7 @@ async function validateV124Prices(
 ): Promise<void> {
   if (data.pricing_model !== 'v124_customer_capacity') return;
   if (data.tax_behavior !== 'exclusive') {
-    throw new Error('Nestly is not GST-registered; catalogue tax behavior must be exclusive');
+    throw new Error('Peekaa is not GST-registered; catalogue tax behavior must be exclusive');
   }
   const cadence = String(data.requested_cadence || '');
   const expectedInterval = cadence === 'annual' ? 'year' : 'month';

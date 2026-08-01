@@ -32,12 +32,12 @@
   function status(){
     const permission=globalObject.Notification?.permission||'default';
     if(!supported())return {state:'unsupported',label:'Unavailable',detail:'Push notifications are not supported in this browser.'};
-    if(isIos()&&!isStandalone())return {state:'install_required',label:'Install required',detail:'On iPhone or iPad, add Nestly to your Home Screen, open the installed app, then enable notifications here.'};
-    if(!vapidKey())return {state:'unconfigured',label:'Unavailable',detail:'Notifications are not configured for this Nestly environment yet.'};
-    if(permission==='denied')return {state:'blocked',label:'Blocked',detail:'Notifications are blocked in your device settings. Allow Nestly there, then return to this page.'};
+    if(isIos()&&!isStandalone())return {state:'install_required',label:'Install required',detail:'On iPhone or iPad, add Peekaa to your Home Screen, open the installed app, then enable notifications here.'};
+    if(!vapidKey())return {state:'unconfigured',label:'Unavailable',detail:'Notifications are not configured for this Peekaa environment yet.'};
+    if(permission==='denied')return {state:'blocked',label:'Blocked',detail:'Notifications are blocked in your device settings. Allow Peekaa there, then return to this page.'};
     if(!currentUserId)return {state:'signed_out',label:'Off',detail:'Sign in to manage device notifications.'};
     if(foreignSubscription.endpoint&&foreignSubscription.ownerUserId!==currentUserId){
-      return {state:'account_conflict',label:'Needs reset',detail:'This browser notification connection belongs to another Nestly account. Reset it explicitly to enable notifications for this account; the other account will not be revoked.'};
+      return {state:'account_conflict',label:'Needs reset',detail:'This browser notification connection belongs to another Peekaa account. Reset it explicitly to enable notifications for this account; the other account will not be revoked.'};
     }
     if(confirmedEndpoint&&confirmedUserId===currentUserId)return {state:'enabled',label:'On',detail:'Transactional updates are enabled on this device.'};
     return {state:'disabled',label:'Off',detail:'Get booking, points, reward, quest, and birthday updates on this device.'};

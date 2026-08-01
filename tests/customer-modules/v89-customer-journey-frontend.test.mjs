@@ -16,7 +16,7 @@ test('customer programmes are QR-joined only and automatic global matching is no
   const context=section(app,'async function loadCustomerSurfaceContext','async function renderCustomerProgrammes');
   assert.doesNotMatch(context,/syncVerifiedCustomerRelationshipsOnce|customer_sync_verified_relationships_v81/);
   const programmes=section(app,'async function renderCustomerProgrammes','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
-  assert.match(programmes,/scan its Nestly QR/i);
+  assert.match(programmes,/scan its Peekaa QR/i);
   assert.match(programmes,/renderCustomerFirstProgrammeQuest\(\)/);
   assert.doesNotMatch(programmes,/href="#\/claim"|Add programme|customerRelationshipCheckActionHtml/);
   const claim=section(app,'async function renderCustomerClaim','function renderCustomerWalletUnavailable');
@@ -343,6 +343,6 @@ test('unlinked public booking remains guest-capable but programme joining is QR-
   const portal=section(app,'async function renderPortal','async function boot');
   const unlinked=section(portal,'Booking as an unlinked guest','  }).catch(()=>{});');
   assert.match(unlinked,/booking can still be submitted safely/i);
-  assert.match(unlinked,/visit the participating business and scan its current Nestly QR/i);
+  assert.match(unlinked,/visit the participating business and scan its current Peekaa QR/i);
   assert.doesNotMatch(unlinked,/href="#\/claim|Add programme/);
 });
