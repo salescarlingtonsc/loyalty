@@ -29,33 +29,34 @@ const curatedCopy=Function(`"use strict";return (${expressionBetween(
 const templateText=(key,values,locale)=>templateCopy[key][locale]
   .replace(/\{([a-z][a-z0-9_]*)\}/gi,(_,name)=>String(values[name]??''));
 
-test('Grow is one status-first journey rather than four peer tabs',()=>{
+test('Grow is one overview-first journey with secondary anatomy rather than four peer tabs',()=>{
   assert.match(grow,/class="grow-overview"/);
   assert.match(grow,/aria-label="Grow customer journey"/);
   for(const step of ['trigger','who','reward','result']){
     assert.match(grow,new RegExp(`data-grow-step="${step}"`));
   }
   assert.doesNotMatch(grow,/role="tablist"|data-growtab|settings-tabs/);
-  assert.equal((grow.match(/id="growSetupPrimary"/g)||[]).length,1);
+  assert.equal((grow.match(/id="growAutoSetup"/g)||[]).length,1);
+  assert.ok(grow.indexOf('id="rewardJourneyTitle"')<grow.indexOf('id="growSecondarySettings"'));
+  assert.match(grow,/<details class="grow-secondary" id="growSecondarySettings">[\s\S]*?aria-label="Grow customer journey"/);
   for(const status of ['Live','Draft ready','Needs setup'])assert.match(grow,new RegExp(`['"]${status}['"]`));
 });
 
 test('first-time setup is idempotent, guarded, draft-only and recommendation-led',()=>{
-  const setup=grow.slice(grow.indexOf("setupButton.onclick"),grow.indexOf("/* A deep link"));
-  assert.match(setup,/if\(preparingDraft\)return/);
-  assert.match(setup,/if\(!growDraftVersionId\)/);
+  const setup=grow.slice(grow.indexOf('function openRewardsAutoSetup('),grow.indexOf("document.querySelectorAll('[data-reward-cost]')"));
+  assert.match(setup,/if\(busy\)return/);
+  assert.match(setup,/if\(growDraftVersionId\)/);
   assert.match(setup,/generate_retention_recommendation/);
-  assert.match(setup,/create_loyalty_config_draft/);
   assert.match(setup,/draft_config_version_id\|\|data\?\.version_id/);
-  assert.equal((setup.match(/await sb\.rpc\(/g)||[]).length,2,
-    'the first-time branch chooses one of two single-RPC draft creators');
-  const creationGuard=setup.slice(setup.indexOf('if(!growDraftVersionId){'),setup.indexOf("setupButton.textContent='Continue Grow setup'"));
-  assert.match(creationGuard,/await sb\.rpc/);
-  assert.doesNotMatch(setup.slice(0,setup.indexOf('if(!growDraftVersionId){')),/await sb\.rpc/,
+  assert.equal((setup.match(/await sb\.rpc\(/g)||[]).length,1,
+    'confirmation has one recommendation draft writer');
+  const existingDraft=setup.slice(setup.indexOf('if(growDraftVersionId){'),setup.indexOf("busy=true"));
+  assert.doesNotMatch(existingDraft,/await sb\.rpc/,
     'resuming an existing draft performs no creation RPC');
   assert.doesNotMatch(setup,/publish_loyalty_config|location\.reload|route\(\)/);
-  assert.match(setup,/setupButton\.disabled=false/);
-  assert.match(grow,/Setup prepares an editable draft only/);
+  assert.match(setup,/rewardAutoSetupRequestKey\?\?=crypto\.randomUUID\(\)/);
+  assert.match(setup,/rewardAutoConfirm\.disabled=false/);
+  assert.match(grow,/Automatic setup creates an editable draft only/);
   assert.match(grow,/Customers keep using the published programme until you publish/);
 });
 
@@ -64,15 +65,17 @@ test('one coherent Grow draft is passed to earning and bring-back editors',()=>{
   assert.match(grow,/surface==='rewards'\)await loyaltyPage\(undefined,draft\)/);
   assert.match(grow,/surface==='winback'\)await retentionPage\(draft\)/);
   assert.match(grow,/draftOverride:growDraftVersionId/);
-  assert.match(grow,/growDraftVersionId\?'Continue Grow setup':'Set up Grow'/);
+  assert.match(grow,/growDraftVersionId\?'Open editable draft':'Create editable draft'/);
 });
 
-test('guided setup steps are actions and review opens the protected preview',()=>{
-  for(const target of ['lm','loyaltyAudienceSettings','rwAdd','studioPublish']){
-    assert.match(grow,new RegExp(`data-grow-focus="${target}"`));
+test('automatic popup is the guided start while detailed edits remain secondary',()=>{
+  for(const target of ['lm','loyaltyAudienceSettings','rwAdd']){
+    assert.match(grow,new RegExp(`['"]${target}['"]`));
   }
-  assert.equal((grow.match(/data-grow-guide=/g)||[]).length,4);
-  assert.match(grow,/data-grow-guide="studio" data-grow-focus="studioPublish" data-grow-activate="true"/);
+  for(const step of ['Step 1 of 3','Step 2 of 3','Step 3 of 3'])assert.match(grow,new RegExp(step));
+  assert.match(grow,/id="growAutoSetup"/);
+  assert.match(grow,/id="growSecondarySettings"/);
+  assert.doesNotMatch(grow,/data-grow-guide=/);
   assert.match(grow,/if\(activate\)\{element\.click\(\);return true\}/);
   assert.match(grow,/else await studioPage\(draft\|\|hashParam\|\|null\)/);
   const publishFlow=html.slice(html.indexOf('async function openPublishFlow()'),html.indexOf('function studioEffLabel'));

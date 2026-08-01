@@ -999,6 +999,12 @@
       "path": "db/migrations/20260801_nestly_v127_rewards_overview_birthday_reader.sql",
       "semanticVersion": "v127",
       "proposedDeployVersion": "20260801063103"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v128_simple_rewards_recommender.sql",
+      "semanticVersion": "v128",
+      "proposedDeployVersion": "20260801153000"
     }
   ]
 }

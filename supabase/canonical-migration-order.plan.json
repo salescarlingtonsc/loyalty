@@ -1000,6 +1000,12 @@
       "version": "20260801063103",
       "name": "nestly_v127_rewards_overview_birthday_reader",
       "sourcePath": "db/migrations/20260801_nestly_v127_rewards_overview_birthday_reader.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260801153000",
+      "name": "nestly_v128_simple_rewards_recommender",
+      "sourcePath": "db/migrations/20260801_nestly_v128_simple_rewards_recommender.sql"
     }
   ]
 }

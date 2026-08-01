@@ -29,7 +29,11 @@ export function buildRewardOverviewVisualFixture(app){
     const money=cents=>'SGD '+(Number(cents||0)/100).toFixed(2);
     const CUI={icon:(name)=>'<span aria-hidden="true">'+({till:'◎',loyalty:'★',customers:'●',retention:'↺',inventory:'□',referrals:'↗',memberships:'◇',giftcard:'▣'}[name]||'•')+'</span>',
       loadingState:({title})=>'<section class="card">Loading '+esc(title)+'…</section>',
-      emptyState:({title,body})=>'<div class="empty"><b>'+esc(title)+'</b><p>'+esc(body)+'</p></div>',announce:()=>{}};
+      emptyState:({title,body})=>'<div class="empty"><b>'+esc(title)+'</b><p>'+esc(body)+'</p></div>',announce:()=>{},
+      activateDialog:(modal,{onClose,initialFocus}={})=>{const prior=document.activeElement;
+        const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
+        document.addEventListener('keydown',keydown);queueMicrotask(()=>modal.querySelector(initialFocus)?.focus());
+        return ({restoreFocus=true}={})=>{document.removeEventListener('keydown',keydown);modal.remove();if(restoreFocus)prior?.focus?.()};}};
     const workspaceLocale='en';
     const workspaceTemplateHtmlV97=(key,{count,version}={})=>key==='growDraftReady'?'Draft '+version+' is ready. Review every step before publishing.':count+' published '+(count===1?'reward':'rewards');
     const recordProductInteractionV100=()=>{};
@@ -42,9 +46,12 @@ export function buildRewardOverviewVisualFixture(app){
     const M=()=>document.getElementById('main');
     const evidenceParams=new URLSearchParams(location.search);
     const isManager=evidenceParams.get('role')==='manager';
-    const S={myRole:isManager?'manager':'owner',myModules:['loyalty'],biz:{id:'business-spa-glow',currency:'SGD',industry:'Facial / Spa'}};
+    const hasExistingDraft=evidenceParams.get('draft')==='existing';
+    const failRecommendationOnce=evidenceParams.get('failOnce')==='1';
+    const concurrentDraft=evidenceParams.get('concurrentDraft')==='1';
+    const S={myRole:isManager?'manager':'owner',myModules:['loyalty'],biz:{id:'business-spa-glow',currency:'SGD',industry:'facial'}};
     const canWriteModule=module=>!isManager&&module==='loyalty';
-    const fixture={currentVersion:'published-v1',draft:isManager?null:{id:'draft-v2',version_no:2},
+    const fixture={currentVersion:'published-v1',draft:hasExistingDraft?{id:'draft-v2',version_no:2}:null,
       loyalty:{id:'programme-1',active:true,loyalty_model:'points_tiers',earn_points_per_dollar:10,redeem_points:1000,reward_credit_cents:1000,expiry_mode:'inactivity',expiry_days:365},
       rewards:[
         {id:'11111111-1111-4111-8111-111111111111',active:true,customer_name:'Signature reward',cost_points:500,estimated_cost_cents:400,sort:1},
@@ -52,7 +59,7 @@ export function buildRewardOverviewVisualFixture(app){
         {id:'33333333-3333-4333-8333-333333333333',active:false,customer_name:'Seasonal facial',cost_points:750,sort:3}],
       birthday:{program_id:'birthday-1',active:true,customer_label:'Birthday Glow',customer_description:'Available during the birthday month.',fulfillment_kind:'discount_pct',discount_percent:20},
       products:[],retention:[]};
-    window.__tableReads=[];window.__rpcCalls=[];
+    window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];window.__recommendationFailed=false;
     function fixtureQuery(table){
       const state={single:false};
       const query={select(){return query},eq(){return query},is(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
@@ -65,9 +72,17 @@ export function buildRewardOverviewVisualFixture(app){
           return Promise.resolve({data,error:null}).then(resolve,reject)}};
       return query;
     }
-    const sb={from:fixtureQuery,rpc:async(name)=>{window.__rpcCalls.push(name);
+    const sb={from:fixtureQuery,rpc:async(name,args)=>{window.__rpcCalls.push(name);window.__rpcArgs.push({name,args});
       if(name==='get_active_birthday_program')return {data:{status:'published',as_of:'2026-08-01T00:00:00.000Z',programs:[fixture.birthday]},error:null};
       if(name==='owner_list_reward_profitability_products_v122')return {data:{items:fixture.products},error:null};
+      if(name==='generate_retention_recommendation'){
+        if(failRecommendationOnce&&!window.__recommendationFailed){window.__recommendationFailed=true;return {data:null,error:{message:'Synthetic lost response'}}}
+        const data=concurrentDraft
+          ?{draft_config_version_id:'draft-concurrent',status:'existing_draft',resumed_existing:true,model:'points_tiers',published:false}
+          :{draft_config_version_id:'draft-v2',status:'draft_ready',resumed_existing:false,model:'points_tiers',published:false};
+        window.__lastRecommendation=data;
+        return {data,error:null};
+      }
       return {data:{version_id:'draft-v2'},error:null};
     }};
     async function loyaltyPage(){
@@ -89,6 +104,11 @@ export function buildRewardOverviewVisualFixture(app){
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.rewards-overview-card')].map(card=>({tag:card.tagName,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
+      autoSetupButtons:document.querySelectorAll('#growAutoSetup').length,secondaryOpen:$('growSecondarySettings')?.open||false,
+      overviewTop:$('rewardJourneyTitle')?.getBoundingClientRect().top||null,secondaryTop:$('growSecondarySettings')?.getBoundingClientRect().top||null,
+      recommendationCalls:window.__rpcArgs.filter(call=>call.name==='generate_retention_recommendation').map(call=>call.args),
+      recommendationResult:window.__lastRecommendation||null,
+      dialogOpen:Boolean($('rewardAutoSetupModal')),dialogStep:$('rewardAutoStepTitle')?.textContent||'',
       birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,
       birthdayTableReads:window.__tableReads.filter(name=>name==='birthday_program_versions').length,
       activeElement:document.activeElement?.id||'',consoleErrors:window.__consoleErrors||[]});

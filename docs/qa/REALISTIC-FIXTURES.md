@@ -82,6 +82,15 @@ Configuration cases:
   stable-ID editor routing rather than name matching. A read-only manager sees
   the same published overview with no edit controls; a draft change must not
   appear to customers until explicit publication and owner/customer refresh.
+- Simplified automatic setup: Olivia opens Grow with Loyalty `rw`, the same
+  published Signature rewards and Birthday Glow, and no draft. The complete
+  overview is visible before secondary controls. Opening and cancelling the
+  three-step automatic-setup popup creates no draft. Confirming the recommended
+  repeat-visit goal creates one editable recommendation draft with a stable
+  request key and no publication; an induced lost response reuses that key.
+  Repeat with draft version 2 already present (open it, do not replace it), with
+  Maya's read-only role (no setup control), and at 1440px and 390px. Only after
+  Olivia explicitly publishes may Chen/Farah fulfil it and `CUS-MEI` see it.
 
 Promotion cases:
 

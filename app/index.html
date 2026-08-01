@@ -429,6 +429,18 @@ input[type=range]:focus{box-shadow:none}
 .grow-hero-copy{max-width:680px}.grow-hero-copy h1{font-size:clamp(1.8rem,4vw,2.45rem);margin:0}
 .grow-hero-copy p{max-width:62ch;margin-top:7px;line-height:1.55}
 .grow-primary{min-height:48px;flex:0 0 auto;white-space:nowrap}
+.grow-secondary{border:1px solid var(--line);border-radius:var(--r);background:#fff;padding:0 18px;box-shadow:var(--shadow)}
+.grow-secondary>summary{display:flex;align-items:center;min-height:56px;cursor:pointer;font-weight:700;color:var(--ink)}
+.grow-secondary-body{display:grid;gap:18px;padding:0 0 18px}.grow-secondary-intro{padding:2px 2px 0}
+.reward-auto-dialog{width:min(560px,100%);max-width:560px}
+.reward-auto-head{display:flex;align-items:flex-start;gap:14px}.reward-auto-head>div{min-width:0;flex:1}
+.reward-auto-step{margin-top:18px}.reward-auto-step h3{font-size:18px;margin-top:4px}
+.reward-auto-choice{display:flex;align-items:flex-start;gap:12px;min-height:64px;padding:13px;margin-top:14px;border:1px solid var(--coral);border-radius:14px;background:var(--tint)}
+.reward-auto-choice input{flex:0 0 auto;width:22px;min-height:22px;margin-top:2px}.reward-auto-choice label{margin:0;color:var(--ink);font-size:14px}.reward-auto-choice p{margin-top:4px}
+.reward-auto-summary{display:grid;gap:9px;margin-top:14px}.reward-auto-summary>div{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--hair)}
+.reward-auto-summary dt{color:var(--muted)}.reward-auto-summary dd{font-weight:700;text-align:right;overflow-wrap:anywhere}
+.reward-auto-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:20px}.reward-auto-actions .btn{min-height:44px}
+.reward-auto-status{min-height:22px;margin-top:12px}.reward-auto-safety{padding:12px;border-radius:12px;background:#E7F6EE;color:#1f6c46;line-height:1.5}
 .grow-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;list-style:none;padding:0;margin:0}
 .grow-flow-step{position:relative;display:flex;flex-direction:column;min-width:0;min-height:178px;padding:16px;
   border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;box-shadow:var(--shadow)}
@@ -474,6 +486,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @media(max-width:900px){.grow-flow{grid-template-columns:repeat(2,minmax(0,1fr))}
   .grow-flow-step:nth-child(2)::after{display:none}.grow-guide-body{grid-template-columns:1fr}.grow-optional{grid-template-columns:1fr}}
 @media(max-width:640px){.grow-hero{flex-direction:column;padding:18px}.grow-primary{width:100%}
+  .reward-auto-dialog{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))}
+  .reward-auto-modal{align-items:flex-end;padding:0}.reward-auto-actions{display:grid;grid-template-columns:1fr}.reward-auto-actions .btn{width:100%}
   .grow-flow{grid-template-columns:1fr}.grow-flow-step{min-height:0}.grow-flow-step::after{display:none}
   .grow-flow-foot .btn,.grow-advanced-actions .btn,.grow-optional-card .btn{flex:1 1 100%}
   .grow-optional-card{flex-direction:column;overflow-wrap:anywhere}}
@@ -10604,27 +10618,13 @@ async function growPage(routedSurface,hashParam){
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-workspace-i18n>
     <section class="grow-hero" aria-labelledby="growTitle">
       <div class="grow-hero-copy"><h1 id="growTitle">Grow</h1>
-        <p class="muted">Turn visits into repeat business through one clear journey.</p>
+        <p class="muted">See every customer reward in one place, or let Nestly prepare a simple starting draft for you.</p>
         ${isOwner?`<p class="muted small">Nothing goes live until you review and publish.</p>`:
           '<p class="muted small">This is the programme customers are using now.</p>'}</div>
-      ${canSetupGrow?`<button type="button" class="btn grow-primary" id="growSetupPrimary"
-        aria-describedby="growSetupSafety">${growDraftVersionId?'Continue Grow setup':'Set up Grow'}</button>`:''}
+      ${canSetupGrow?`<button type="button" class="btn grow-primary" id="growAutoSetup"
+        aria-describedby="growSetupSafety">Set up rewards automatically</button>`:''}
     </section>
-    ${canSetupGrow?'<p class="muted small" id="growSetupSafety" style="margin:-10px 2px 0">Setup prepares an editable draft only. Customers keep using the published programme until you publish.</p>':''}
-    <ol class="grow-flow" aria-label="Grow customer journey">
-      <li class="grow-flow-step" data-grow-step="trigger"><span class="grow-flow-icon">${CUI.icon('till',{size:22})}</span>
-        <h2>Trigger</h2><p>Choose which eligible sale or visit starts the journey.</p>
-        <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit earning','lm')}</div></li>
-      <li class="grow-flow-step" data-grow-step="who"><span class="grow-flow-icon">${CUI.icon('customers',{size:22})}</span>
-        <h2>Who</h2><p>Decide who earns, progresses, or receives a bring-back.</p>
-        <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit audience','loyaltyAudienceSettings')}</div></li>
-      <li class="grow-flow-step" data-grow-step="reward"><span class="grow-flow-icon">${CUI.icon('loyalty',{size:22})}</span>
-        <h2>Reward</h2><p>${rewardCount?workspaceTemplateHtmlV97(rewardCount===1?'growPublishedReward':'growPublishedRewards',{count:rewardCount}):'Define a clear reward your team can fulfil.'}</p>
-        <div class="grow-flow-foot">${growStatus(nodeStatus(rewardCount>0),nodeTone(rewardCount>0))}${editorAction('rewards','Edit reward','rwAdd')}</div></li>
-      <li class="grow-flow-step" data-grow-step="result"><span class="grow-flow-icon">${CUI.icon('retention',{size:22})}</span>
-        <h2>Result</h2><p>${bringBackCount?workspaceTemplateHtmlV97(bringBackCount===1?'growPublishedBringBackRule':'growPublishedBringBackRules',{count:bringBackCount}):'Measure repeat visits and bring customers back before they drift.'}</p>
-        <div class="grow-flow-foot">${growStatus(nodeStatus(bringBackLive),nodeTone(bringBackLive))}${editorAction('winback','Edit bring-back','rn')}</div></li>
-    </ol>
+    ${canSetupGrow?'<p class="muted small" id="growSetupSafety" style="margin:-10px 2px 0">Automatic setup creates an editable draft only. Customers keep using the published programme until you publish.</p>':''}
     ${canRewards?`<section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle">
       <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programme overview</p><h2 id="rewardJourneyTitle">Rewards overview</h2><p class="muted small">One published view of how customers earn, what they can unlock, and the birthday benefit. ${canSetupGrow?'Select any item to edit its exact rule.':'Only the owner with Loyalty edit access can change these rules.'}</p></div>
         ${canSetupGrow?'<button type="button" class="btn ghost sm" data-rewards-overview-edit="add">Add reward</button>':''}</div>
@@ -10650,6 +10650,23 @@ async function growPage(routedSurface,hashParam){
       ${!rewardJourney.classicReward&&!rewardJourney.milestones.length?`<p class="muted small" style="margin-top:12px">No redeemable rewards are published yet. ${canSetupGrow?'Use Add reward to create the first protected draft.':'The owner can add a reward from Grow setup.'}</p>`:''}
       ${rewardJourney.archivedRewards.length?`<details style="margin-top:12px"><summary>Paused or archived rewards (${rewardJourney.archivedRewards.length})</summary><div class="rewards-overview-grid">${rewardJourney.archivedRewards.map(reward=>canSetupGrow?`<button type="button" class="rewards-overview-card" data-rewards-overview-edit="catalogue" data-reward-id="${esc(reward.id)}"><span class="reward-milestone-number">${CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(reward.name)}</b><p class="muted small">${reward.threshold} ${esc(reward.unit)} · not available to customers</p><span class="rewards-overview-edit-label">Review or reactivate</span></div></button>`:`<article class="rewards-overview-card"><span class="reward-milestone-number">${CUI.icon('retention',{size:16})}</span><div><b data-merchant-content>${esc(reward.name)}</b><p class="muted small">Not available to customers</p></div></article>`).join('')}</div></details>`:''}
     </section>`:''}
+    <details class="grow-secondary" id="growSecondarySettings">
+      <summary>More reward settings</summary><div class="grow-secondary-body">
+      <div class="grow-secondary-intro"><h2>How the programme fits together</h2><p class="muted small">Open these controls only when you want to fine-tune the automatic draft or review reward economics.</p></div>
+      <ol class="grow-flow" aria-label="Grow customer journey">
+        <li class="grow-flow-step" data-grow-step="trigger"><span class="grow-flow-icon">${CUI.icon('till',{size:22})}</span>
+          <h2>Trigger</h2><p>Choose which eligible sale or visit starts the journey.</p>
+          <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit earning','lm')}</div></li>
+        <li class="grow-flow-step" data-grow-step="who"><span class="grow-flow-icon">${CUI.icon('customers',{size:22})}</span>
+          <h2>Who</h2><p>Decide who earns, progresses, or receives a bring-back.</p>
+          <div class="grow-flow-foot">${growStatus(nodeStatus(loyaltyLive),nodeTone(loyaltyLive))}${editorAction('rewards','Edit audience','loyaltyAudienceSettings')}</div></li>
+        <li class="grow-flow-step" data-grow-step="reward"><span class="grow-flow-icon">${CUI.icon('loyalty',{size:22})}</span>
+          <h2>Reward</h2><p>${rewardCount?workspaceTemplateHtmlV97(rewardCount===1?'growPublishedReward':'growPublishedRewards',{count:rewardCount}):'Define a clear reward your team can fulfil.'}</p>
+          <div class="grow-flow-foot">${growStatus(nodeStatus(rewardCount>0),nodeTone(rewardCount>0))}${editorAction('rewards','Edit reward','rwAdd')}</div></li>
+        <li class="grow-flow-step" data-grow-step="result"><span class="grow-flow-icon">${CUI.icon('retention',{size:22})}</span>
+          <h2>Result</h2><p>${bringBackCount?workspaceTemplateHtmlV97(bringBackCount===1?'growPublishedBringBackRule':'growPublishedBringBackRules',{count:bringBackCount}):'Measure repeat visits and bring customers back before they drift.'}</p>
+          <div class="grow-flow-foot">${growStatus(nodeStatus(bringBackLive),nodeTone(bringBackLive))}${editorAction('winback','Edit bring-back','rn')}</div></li>
+      </ol>
     ${isOwner?`<section class="card profitability-overview-v122" aria-labelledby="profitabilityTitle">
       <div class="grow-section-heading"><div><p class="customer-quest-kicker">Reward economics</p><h2 id="profitabilityTitle">Product cost and profitability</h2><p class="muted small">Use real cost, not retail price, when deciding what a reward can safely cost.</p></div></div>
       ${profitabilityProducts.length?`<div class="profitability-product-grid">${profitabilityProducts.slice(0,6).map(product=>{
@@ -10662,20 +10679,6 @@ async function growPage(routedSurface,hashParam){
       ${canEditProductCosts?'':`<p class="muted small" style="margin-top:12px">Product costs are read-only because this workspace does not grant Inventory write access.</p>`}
       <p class="muted small" style="margin-top:12px">Guidance is deterministic and editable. It never publishes or changes a reward automatically.</p>
     </section>`:''}
-    ${canSetupGrow?`<details class="grow-guide" id="growSetupGuide" ${growDraftVersionId?'open':''}>
-      <summary>Guided setup</summary><div class="grow-guide-body">
-        <div class="grow-guide-step"><b>1. Goal</b><p>Choose the repeat behaviour you want Grow to encourage.</p>
-          <button type="button" class="btn ghost sm" data-grow-guide="rewards" data-grow-focus="lm">Edit goal</button></div>
-        <div class="grow-guide-step"><b>2. Who and when</b><p>Choose the eligible customers, visits, branches, and timing.</p>
-          <button type="button" class="btn ghost sm" data-grow-guide="rewards" data-grow-focus="loyaltyAudienceSettings">Edit who and when</button></div>
-        <div class="grow-guide-step"><b>3. Reward</b><p>Set the customer promise and the fulfilment your team will deliver.</p>
-          <button type="button" class="btn ghost sm" data-grow-guide="rewards" data-grow-focus="rwAdd">Edit reward</button></div>
-        <div class="grow-guide-step"><b>4. Review and save draft</b><p>Check the full customer journey. Publishing remains a separate protected action.</p>
-          <button type="button" class="btn ghost sm" data-grow-guide="studio" data-grow-focus="studioPublish" data-grow-activate="true">Review draft</button></div>
-        <p class="grow-draft-note" id="growDraftNote" role="status" aria-live="polite">${growDraftVersionId?
-          workspaceTemplateHtmlV97('growDraftReady',{version:snapshot.draft?.version_no||''}):
-          'Start once, then edit the shared draft in any order.'}</p>
-      </div></details>`:''}
     ${optionalTools.length?`<section aria-labelledby="growOptionalTitle"><div class="grow-section-heading">
       <div><h2 id="growOptionalTitle">Optional growth tools</h2><p class="muted small">Add another growth loop only when it supports your programme.</p></div></div>
       <div class="grow-optional">${optionalTools.map(tool=>`<article class="grow-optional-card"><div>
@@ -10690,6 +10693,8 @@ async function growPage(routedSurface,hashParam){
         ${canRewards?'<button type="button" class="btn ghost" data-grow-open="rewards">Rewards and versions</button>':''}
         ${canWinback?'<button type="button" class="btn ghost" data-grow-open="winback">Bring-back rules and taxonomy</button>':''}
       </div></details>`:''}
+      </div>
+    </details>
     <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
@@ -10715,7 +10720,7 @@ async function growPage(routedSurface,hashParam){
     await growPage(routedSurface,hashParam);
   });
   const panelHost=$('growpanelhost');
-  let activeSurface=null,preparingDraft=false,pendingGuideAction=null,pendingRewardEstimateCents=null;
+  let activeSurface=null,pendingGuideAction=null,pendingRewardEstimateCents=null,rewardAutoSetupRequestKey=null;
   const surfaceDefinition={
     rewards:{hash:'#/loyalty',label:'Rewards and earning'},
     winback:{hash:'#/retention',label:'Bring-back rules'},
@@ -10784,61 +10789,81 @@ async function growPage(routedSurface,hashParam){
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
     applyPendingRewardEstimate();
   }
+  function openRewardsAutoSetup(action={surface:'rewards',focusTarget:'lm',activateTarget:false}){
+    if(!canSetupGrow)return;
+    pendingGuideAction=action;
+    $('rewardAutoSetupModal')?.remove();
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal reward-auto-modal" id="rewardAutoSetupModal" role="dialog" aria-modal="true" aria-labelledby="rewardAutoTitle" tabindex="-1">
+      <section class="modal-card reward-auto-dialog"><div class="reward-auto-head"><div><p class="customer-quest-kicker">Simple rewards setup</p><h2 id="rewardAutoTitle">Set up rewards automatically</h2><p class="muted small" style="margin-top:5px">Three short checks, then Nestly prepares one editable draft.</p></div>
+        <button type="button" class="btn ghost sm" id="rewardAutoClose" aria-label="Close automatic rewards setup">Close</button></div>
+        <div id="rewardAutoBody"></div><p class="reward-auto-status muted small" id="rewardAutoStatus" role="status" aria-live="polite"></p>
+        <div class="reward-auto-actions" id="rewardAutoActions"></div></section></div>`);
+    const modal=$('rewardAutoSetupModal');
+    let step=1,busy=false,deactivateDialog=null;
+    const close=(restoreFocus=true)=>{
+      if(deactivateDialog){const cleanup=deactivateDialog;deactivateDialog=null;cleanup({restoreFocus})}
+      else modal.remove();
+    };
+    const rewardLabel=rewardJourney.milestones.length||rewardJourney.classicReward
+      ?`${rewardJourney.milestones.length+(rewardJourney.classicReward?1:0)} published reward${rewardJourney.milestones.length+(rewardJourney.classicReward?1:0)===1?'':'s'} to use as a reference`
+      :'A first reward that remains editable before publishing';
+    const render=()=>{
+      const body=$('rewardAutoBody'),actions=$('rewardAutoActions');
+      if(step===1)body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle"><p class="customer-quest-kicker">Step 1 of 3</p><h3 id="rewardAutoStepTitle" tabindex="-1">Confirm the goal</h3><div class="reward-auto-choice"><input type="radio" id="rewardAutoGoal" name="rewardAutoGoal" value="repeat_visits" checked><label for="rewardAutoGoal">Bring customers back more often<p class="muted small">Recommended for a clear first programme. You can change every number in the draft.</p></label></div></section>`;
+      else if(step===2)body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle" tabindex="-1"><p class="customer-quest-kicker">Step 2 of 3</p><h3 id="rewardAutoStepTitle">See what Nestly will use</h3><dl class="reward-auto-summary"><div><dt>Goal</dt><dd>More repeat visits</dd></div><div><dt>Business type</dt><dd>${esc(S.biz.industry||'Your business')}</dd></div><div><dt>Current rewards</dt><dd>${esc(rewardLabel)}</dd></div><div><dt>Output</dt><dd>One editable recommendation draft</dd></div></dl><p class="muted small" style="margin-top:12px">Nestly uses your governed business type and active service and product prices to choose a starting model. Product costs are not used in this automatic calculation; check profitability under More reward settings before publishing.</p></section>`;
+      else body.innerHTML=`<section class="reward-auto-step" aria-labelledby="rewardAutoStepTitle" tabindex="-1"><p class="customer-quest-kicker">Step 3 of 3</p><h3 id="rewardAutoStepTitle">Review the safety check</h3><p class="reward-auto-safety"><b>Nothing goes live until you review and publish.</b><br>${growDraftVersionId?`${workspaceTemplateHtmlV97('growDraftReady',{version:snapshot.draft?.version_no||''})} Nestly will open it without replacing it.`:'Nestly will create one editable recommendation draft. Staff and customers keep using the published programme.'}</p></section>`;
+      actions.innerHTML=`${step>1?'<button type="button" class="btn ghost" id="rewardAutoBack">Back</button>':''}<button type="button" class="btn ghost" id="rewardAutoCancel">Cancel</button><button type="button" class="btn" id="${step===3?'rewardAutoConfirm':'rewardAutoNext'}">${step===3?(growDraftVersionId?'Open editable draft':'Create editable draft'):'Next'}</button>`;
+      $('rewardAutoCancel').onclick=()=>close();
+      if($('rewardAutoBack'))$('rewardAutoBack').onclick=()=>{step--;render();$('rewardAutoStepTitle')?.focus({preventScroll:true})};
+      if($('rewardAutoNext'))$('rewardAutoNext').onclick=()=>{step++;render();$('rewardAutoStepTitle')?.focus({preventScroll:true})};
+      if($('rewardAutoConfirm'))$('rewardAutoConfirm').onclick=confirmDraft;
+    };
+    async function confirmDraft(){
+      if(busy)return;
+      const rewardAutoConfirm=$('rewardAutoConfirm'),status=$('rewardAutoStatus');
+      if(growDraftVersionId){
+        const nextAction=pendingGuideAction||action;pendingGuideAction=null;close(false);
+        await mountGrowSurface(nextAction.surface,{draftOverride:growDraftVersionId,...nextAction});return;
+      }
+      busy=true;rewardAutoConfirm.disabled=true;rewardAutoConfirm.textContent='Creating draft…';
+      status.textContent='Preparing one editable draft. Nothing is being published.';
+      rewardAutoSetupRequestKey??=crypto.randomUUID();
+      recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
+        context:{action_key:'automatic_rewards_setup',entry_point:'grow_overview',locale:workspaceLocale,surface_version:'v128'}
+      });
+      try{
+        const {data,error}=await sb.rpc('generate_retention_recommendation',{
+          p_business:S.biz.id,p_idempotency_key:rewardAutoSetupRequestKey
+        });
+        if(!modal.isConnected||!isGrowCurrent())return;
+        if(error)throw error;
+        growDraftVersionId=data?.draft_config_version_id||data?.version_id;
+        if(!growDraftVersionId)throw new Error('Editable reward draft was not returned.');
+        const nextAction=pendingGuideAction||action;pendingGuideAction=null;rewardAutoSetupRequestKey=null;
+        close(false);await mountGrowSurface(nextAction.surface,{draftOverride:growDraftVersionId,...nextAction});
+      }catch(error){
+        if(!modal.isConnected)return;
+        busy=false;rewardAutoConfirm.disabled=false;rewardAutoConfirm.textContent='Try creating draft again';
+        status.textContent='Draft could not be created. Nothing was published. Try again.';
+      }
+    }
+    render();
+    deactivateDialog=CUI.activateDialog(modal,{onClose:()=>close(),initialFocus:'#rewardAutoGoal'});
+    $('rewardAutoClose').onclick=()=>close();
+  }
   document.querySelectorAll('[data-grow-open]').forEach(button=>button.onclick=()=>mountGrowSurface(button.dataset.growOpen,{
     focusTarget:button.dataset.growFocus||null}));
-  document.querySelectorAll('[data-grow-guide]').forEach(button=>button.onclick=()=>{
-    const action={surface:button.dataset.growGuide,focusTarget:button.dataset.growFocus||null,
-      activateTarget:button.dataset.growActivate==='true'};
-    if(!growDraftVersionId){pendingGuideAction=action;setupButton?.click();return}
-    mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
-  });
-  const setupButton=$('growSetupPrimary');
+  const autoSetupButton=$('growAutoSetup');
+  if(autoSetupButton)autoSetupButton.onclick=()=>openRewardsAutoSetup();
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action={surface:'rewards',focusTarget:kind==='earning'?'lm':kind==='classic'?'lr':kind==='birthday'?'birthdayLabel':kind==='add'?'rwAdd':null,
       activateTarget:kind==='add',rewardId:kind==='catalogue'?button.dataset.rewardId||null:null};
-    if(!growDraftVersionId){pendingGuideAction=action;setupButton?.click();return}
+    if(!growDraftVersionId){openRewardsAutoSetup(action);return}
     mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
   });
   const growRewardsRetry=$('growRewardsRetry');
   if(growRewardsRetry)growRewardsRetry.onclick=()=>growPage(routedSurface,hashParam);
-  if(setupButton)setupButton.onclick=async()=>{
-    if(preparingDraft)return;
-    recordProductInteractionV100('merchant.grow_draft_started',S.biz.id,{
-      context:{action_key:growDraftVersionId?'continue_existing_draft':'prepare_new_draft',
-        entry_point:'grow_overview',locale:workspaceLocale,surface_version:'v100'}
-    });
-    preparingDraft=true;setupButton.disabled=true;
-    const priorLabel=setupButton.textContent;
-    setupButton.textContent=growDraftVersionId?'Opening draft…':'Preparing editable draft…';
-    const note=$('growDraftNote');if(note)note.textContent='Preparing one editable draft. Nothing is being published.';
-    try{
-      if(!growDraftVersionId){
-        const prepareRewardsDraft=pendingGuideAction?.surface==='rewards'||!canWinback;
-        const recommendation=snapshot.currentVersion&&!prepareRewardsDraft
-          ?await sb.rpc('generate_retention_recommendation',{p_business:S.biz.id,p_idempotency_key:crypto.randomUUID()})
-          :await sb.rpc('create_loyalty_config_draft',{
-            p_business:S.biz.id,p_based_on:snapshot.currentVersion||null,
-            p_source:prepareRewardsDraft?'owner_rewards_overview':'grow_overview'});
-        const {data,error}=recommendation;
-        if(!isGrowCurrent())return;
-        if(error)throw error;
-        growDraftVersionId=data?.draft_config_version_id||data?.version_id;
-        if(!growDraftVersionId)throw new Error('Grow draft was not returned. Nothing was changed.');
-      }
-      setupButton.textContent='Continue Grow setup';
-      const guide=$('growSetupGuide');if(guide)guide.open=true;
-      if(note)note.textContent='Draft prepared. Review the full journey before publishing.';
-      const action=pendingGuideAction||{surface:'rewards',focusTarget:'lm',activateTarget:false};
-      pendingGuideAction=null;
-      await mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
-      if(setupButton.isConnected)setupButton.disabled=false;
-    }catch(error){
-      setupButton.disabled=false;setupButton.textContent=priorLabel;
-      if(note)note.textContent='Grow setup could not be prepared. Nothing was changed.';
-      fail(error);
-    }finally{preparingDraft=false}
-  };
   document.querySelectorAll('[data-reward-cost]').forEach(input=>input.addEventListener('input',()=>{
     const productId=input.dataset.rewardCost;
     const card=input.closest('[data-product-profitability]');
@@ -10867,8 +10892,7 @@ async function growPage(routedSurface,hashParam){
     pendingRewardEstimateCents=Math.round(Number(raw)*100);
     const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
     if(!growDraftVersionId){
-      pendingGuideAction=action;
-      setupButton?.click();
+      openRewardsAutoSetup(action);
       return;
     }
     mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});

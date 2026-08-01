@@ -142,6 +142,15 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 - Grow is introduced through one guided setup and a visual overview of what will
   be created.
+- Owner clarification 2026-08-01: the everyday Grow page has one dominant
+  starting action, **Set up rewards automatically**. It opens a short popup
+  that explains the recommendation in owner language and creates an editable
+  draft only after explicit confirmation. Opening or dismissing the popup must
+  write nothing, retries must reuse the same request identity, an existing
+  draft must never be silently replaced, and publication remains a separate
+  protected owner action. The complete Rewards overview appears immediately
+  after the starting action; profitability, journey anatomy, optional tools and
+  technical editors are secondary disclosures rather than competing starts.
 - The overview explains the whole programme in plain language, shows the
   customer-facing result, and makes each section directly editable.
 - The business-owner overview shows every configured reward and birthday

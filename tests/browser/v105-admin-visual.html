@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-style-sha256" content="483ca3d76a2db17d2eb617487ecfdd973357daa9c5eb28f68483c51137d2f33f">
+<meta name="v105-production-style-sha256" content="6e04da288a28d11f5ca28f0bb6b566bfaba6c58fc92e24a6e816be2f8fae7560">
 <title>Nestly v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -410,6 +410,18 @@ input[type=range]:focus{box-shadow:none}
 .grow-hero-copy{max-width:680px}.grow-hero-copy h1{font-size:clamp(1.8rem,4vw,2.45rem);margin:0}
 .grow-hero-copy p{max-width:62ch;margin-top:7px;line-height:1.55}
 .grow-primary{min-height:48px;flex:0 0 auto;white-space:nowrap}
+.grow-secondary{border:1px solid var(--line);border-radius:var(--r);background:#fff;padding:0 18px;box-shadow:var(--shadow)}
+.grow-secondary>summary{display:flex;align-items:center;min-height:56px;cursor:pointer;font-weight:700;color:var(--ink)}
+.grow-secondary-body{display:grid;gap:18px;padding:0 0 18px}.grow-secondary-intro{padding:2px 2px 0}
+.reward-auto-dialog{width:min(560px,100%);max-width:560px}
+.reward-auto-head{display:flex;align-items:flex-start;gap:14px}.reward-auto-head>div{min-width:0;flex:1}
+.reward-auto-step{margin-top:18px}.reward-auto-step h3{font-size:18px;margin-top:4px}
+.reward-auto-choice{display:flex;align-items:flex-start;gap:12px;min-height:64px;padding:13px;margin-top:14px;border:1px solid var(--coral);border-radius:14px;background:var(--tint)}
+.reward-auto-choice input{flex:0 0 auto;width:22px;min-height:22px;margin-top:2px}.reward-auto-choice label{margin:0;color:var(--ink);font-size:14px}.reward-auto-choice p{margin-top:4px}
+.reward-auto-summary{display:grid;gap:9px;margin-top:14px}.reward-auto-summary>div{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--hair)}
+.reward-auto-summary dt{color:var(--muted)}.reward-auto-summary dd{font-weight:700;text-align:right;overflow-wrap:anywhere}
+.reward-auto-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:20px}.reward-auto-actions .btn{min-height:44px}
+.reward-auto-status{min-height:22px;margin-top:12px}.reward-auto-safety{padding:12px;border-radius:12px;background:#E7F6EE;color:#1f6c46;line-height:1.5}
 .grow-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;list-style:none;padding:0;margin:0}
 .grow-flow-step{position:relative;display:flex;flex-direction:column;min-width:0;min-height:178px;padding:16px;
   border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;box-shadow:var(--shadow)}
@@ -455,6 +467,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @media(max-width:900px){.grow-flow{grid-template-columns:repeat(2,minmax(0,1fr))}
   .grow-flow-step:nth-child(2)::after{display:none}.grow-guide-body{grid-template-columns:1fr}.grow-optional{grid-template-columns:1fr}}
 @media(max-width:640px){.grow-hero{flex-direction:column;padding:18px}.grow-primary{width:100%}
+  .reward-auto-dialog{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))}
+  .reward-auto-modal{align-items:flex-end;padding:0}.reward-auto-actions{display:grid;grid-template-columns:1fr}.reward-auto-actions .btn{width:100%}
   .grow-flow{grid-template-columns:1fr}.grow-flow-step{min-height:0}.grow-flow-step::after{display:none}
   .grow-flow-foot .btn,.grow-advanced-actions .btn,.grow-optional-card .btn{flex:1 1 100%}
   .grow-optional-card{flex-direction:column;overflow-wrap:anywhere}}
@@ -1557,7 +1571,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 483ca3d76a2d</span>
+<span class="v105-provenance">v105 production-component harness · 6e04da288a28</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -1682,7 +1696,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'483ca3d76a2db17d2eb617487ecfdd973357daa9c5eb28f68483c51137d2f33f',
+  sourceHash:'6e04da288a28d11f5ca28f0bb6b566bfaba6c58fc92e24a6e816be2f8fae7560',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
