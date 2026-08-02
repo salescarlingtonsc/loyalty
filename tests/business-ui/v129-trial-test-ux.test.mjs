@@ -70,7 +70,7 @@ test('all business-workspace sale entry points say Record sale while retaining t
 test('Customers exposes exact all, 30, 60 and 90 day inactivity filters backed by one reader',()=>{
   assert.match(customers,/id="clientInactivity"/);
   assert.match(customers,/<option value="">All customers<\/option>/);
-  for(const days of [30,60,90])assert.match(customers,new RegExp(`<option value="${days}">${days}\\+ days inactive<\\/option>`));
+  for(const days of [30,60,90])assert.match(customers,new RegExp(`<option value="${days}">Inactive ${days}\\+ days<\\/option>`));
   assert.match(customers,/sb\.rpc\('staff_list_customers_v129'/);
   assert.match(customers,/p_inactive_days:clientInactiveDays/);
   assert.match(customers,/Never visited/);

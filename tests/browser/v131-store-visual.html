@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="85ec27c08988552b16147bd795024232464d9a2aa9293bcf5b1166bbf62362d2"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="da68d98bbbc179bb0fc7a25e419af8e64ef5f662333792e8071ef9d082eea286"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -165,7 +165,7 @@ tr.click:hover td{background:#FBFAF8}
 .appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;
   gap:10px;padding:max(12px,env(safe-area-inset-top)) max(34px,env(safe-area-inset-right))
     12px max(34px,env(safe-area-inset-left));border-bottom:1px solid var(--hair);
-  background:rgba(244,242,238,.72);
+  background:rgba(232,227,218,.94);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
 .profile{position:relative}
 .profile .who{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px 6px 6px;border-radius:100px;
@@ -233,6 +233,8 @@ tr.click:hover td{background:#FBFAF8}
 .global-search-go:active{transform:scale(.92)}
 .global-quick{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .global-act{white-space:nowrap}.global-act svg{flex-shrink:0}
+.dashboard-appbar-branch{display:block;flex:0 1 196px;min-width:150px}
+.dashboard-appbar-branch select{width:100%;min-width:0;margin:0;background:#fff;box-shadow:var(--shadow);font-size:13px}
 /* Phone-first staff navigation. The high-frequency jobs stay thumb-reachable while the
    complete, permission-filtered workspace navigation remains available behind More. */
 .staff-mobile-dock{display:none}
@@ -575,12 +577,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .ck-notice{margin-top:12px;padding:10px 14px;border-radius:var(--r-sm);font-size:13.5px}
 .ck-notice.warn{background:#FBF3E7;color:var(--amber)}
 .ck-notice.info{background:#EFF4F1;color:var(--green)}
-.task-launcher-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
-.task-launcher-card{display:flex;align-items:center;gap:12px;min-height:92px;padding:16px;border:1px solid var(--hair);border-radius:var(--r);background:#fff;color:var(--ink);text-decoration:none;box-shadow:var(--shadow)}
-.task-launcher-card:hover,.task-launcher-card:focus-visible{border-color:var(--coral);transform:translateY(-1px)}
-.task-launcher-card .task-icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 auto;border-radius:12px;background:var(--tint);color:var(--coral)}
-.task-launcher-card b{display:block}.task-launcher-card span{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.35}
-.performance-panel{margin-top:18px}.performance-panel>summary{cursor:pointer;font-weight:750;list-style:none;min-height:44px;display:flex;align-items:center;justify-content:space-between}.performance-panel>summary::-webkit-details-marker{display:none}.performance-panel>summary::after{content:'+';float:right}.performance-panel[open]>summary::after{content:'−'}
+.dashboard-page{display:grid;gap:16px}
+.dashboard-intro{display:flex;align-items:flex-start;gap:13px;padding:18px 20px;border:1px solid #DED7CC;border-radius:var(--r);background:#EDE7DE}
+.dashboard-intro>.cui-icon{color:var(--coral);margin-top:3px}.dashboard-intro h1{font-size:1.85rem}.dashboard-intro p{margin-top:4px;line-height:1.5}
+.performance-panel{padding:0;overflow:hidden;background:#fff}
+.performance-heading{display:flex;align-items:center;gap:12px;padding:17px 20px;background:#F7EEE8;border-bottom:1px solid #EADFD8}
+.performance-heading>.cui-icon{color:var(--coral)}.performance-heading h2{font-size:1.08rem}.performance-heading p{margin-top:3px}
+.performance-body{padding:20px}
+.dashboard-kpis{margin-top:16px}
+.dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
+.dashboard-metric:hover,.dashboard-metric:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:#DDB9AE}
+.dashboard-metric .metric-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.dashboard-metric .metric-arrow{color:var(--coral)}
+.dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
+.dashboard-charts{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dashboard-chart-card{padding:0;overflow:hidden;min-width:0}
+.dashboard-chart-head{display:flex;align-items:flex-start;gap:10px;padding:15px 17px;background:#FBF5F0;border-bottom:1px solid #EEE2DA}
+.dashboard-chart-head>.cui-icon{color:var(--coral);margin-top:1px}.dashboard-chart-head>div{min-width:0;flex:1}.dashboard-chart-head b{display:block}.dashboard-chart-head p{margin-top:3px}.dashboard-chart-link{display:inline-flex;align-items:center;min-height:44px;padding:7px 9px;color:var(--coral);font-size:12px;font-weight:700;white-space:nowrap;border-radius:9px}
+.dashboard-chart-link:hover{background:var(--tint)}
+.dashboard-chart-card .chart-frame{margin:8px 14px 16px}
+.dashboard-read-note{margin-top:12px;padding:10px 12px;border-radius:10px;background:#F7F4EF;color:var(--muted);font-size:11.5px;line-height:1.45}
 .appointment-primary-action{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:0 0 14px}
 .appointment-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;min-width:0;width:100%}
 .appointment-layout.form-open{grid-template-columns:minmax(300px,360px) minmax(0,1fr)}
@@ -638,13 +653,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .c360-badge.member{background:#EAF1FB;color:#1F5199;border-color:#D2E0F4}
 .c360-badge.package{background:#FFF6E8;color:#8A5A12;border-color:#EBD9B4}
 .c360-badge.consent-no{background:#F1EEE9;color:var(--muted)}
-.c360-nba{border:1px solid var(--hair);border-left:4px solid var(--coral);background:linear-gradient(180deg,#FFF7F4,#fff 62%);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;display:flex;gap:15px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--shadow)}
-.c360-nba-ic{flex:0 0 auto;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:var(--tint);color:var(--coral)}
+.c360-nba{border:1px solid #EBD9A8;border-left:4px solid #A75514;background:linear-gradient(145deg,#FFF7DE,#FFFDF7 68%);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;display:flex;gap:15px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--shadow)}
+.c360-nba-ic{flex:0 0 auto;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:#FFF0C7;color:#8A5A12}
 .c360-nba-body{flex:1 1 260px;min-width:0}
-.c360-nba-body .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--coral)}
+.c360-nba-body .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8A5A12}
 .c360-nba-body h2{font-size:1.16rem;margin:3px 0 4px;letter-spacing:-.02em}
 .c360-nba-body p{color:var(--ink2);font-size:13.5px;line-height:1.5}
 .c360-nba-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:13px}
+.c360-points-expiry{display:flex;align-items:center;gap:5px;margin-top:7px;color:var(--amber);font-size:11.5px;font-weight:650;line-height:1.35}
+.c360-rewards-card{overflow:hidden;padding:0}
+.c360-rewards-head{display:flex;align-items:center;gap:10px;padding:15px 18px;background:#FFF3EE;border-bottom:1px solid #F1DDD6;color:var(--coral)}
+.c360-rewards-head b{display:block;color:var(--ink)}
+.c360-rewards-head span{display:block;margin-top:2px;color:var(--muted);font-size:11.5px}
+.c360-rewards-body{padding:18px}
 .c360-more{position:relative}
 .c360-more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:#fff;border:1px solid var(--hair);border-radius:var(--r-sm);box-shadow:var(--shadow-lg);padding:6px;min-width:230px;display:grid;gap:2px}
 .c360-more-menu[hidden]{display:none}
@@ -690,15 +711,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .global-search{flex:1 1 200px}
   .global-quick{display:none}
   .global-act{flex:1 1 auto;justify-content:center}
+  .dashboard-appbar-branch{flex:1 1 210px}
   .charts,.split{grid-template-columns:1fr}
+  .dashboard-charts{grid-template-columns:1fr}
   .appointment-layout,.appointment-layout.form-open{grid-template-columns:minmax(0,1fr)}
-  .task-launcher-grid,.report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .appointment-form-card{position:static}
   .chart-frame{block-size:220px}
   .main{padding:18px max(18px,env(safe-area-inset-right))
     calc(92px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
 }
-@media(max-width:560px){.task-launcher-grid,.report-decision-grid{grid-template-columns:1fr}.task-launcher-card{min-height:76px}.appointment-primary-action .btn{width:100%}}
+@media(max-width:560px){.dashboard-appbar-branch{order:2;flex:1 1 100%}.report-decision-grid{grid-template-columns:1fr}.appointment-primary-action .btn{width:100%}.performance-body{padding:16px}.dashboard-intro{padding:16px}.dashboard-chart-link{padding-inline:6px}}
 @media(max-width:767px){
   .cui-page-head,.topbar{align-items:flex-start}.cui-page-actions,.topbar>.row{width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{flex:1 1 auto}
   .topbar>.row{min-width:0;max-width:100%;flex-wrap:wrap}
