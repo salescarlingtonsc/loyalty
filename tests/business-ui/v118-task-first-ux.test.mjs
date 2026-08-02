@@ -12,22 +12,15 @@ function section(start, end) {
   return html.slice(from, to);
 }
 
-test('workspace home leads with permission-aware daily tasks and keeps analytics secondary', () => {
+test('V141 supersedes duplicate home tasks: app bar keeps primary jobs and dashboard leads with visible analytics', () => {
   const dashboard = section('async function dashboard(){', '/* ---------- customers ---------- */');
-  assert.match(dashboard, /Common tasks/);
-  assert.match(dashboard, /Record a sale/);
-  assert.match(dashboard, /Add appointment/);
-  assert.match(dashboard, /Find a customer/);
-  assert.match(dashboard, /Set up rewards/);
-  assert.match(dashboard, /projectionCanWrite\(projection,'till'\)/);
-  assert.match(dashboard, /projectionCanWrite\(projection,'appointments'\)/);
-  assert.match(dashboard, /projectionCanRead\(projection,'clients'\)/);
-  assert.match(dashboard, /projectionCanWrite\(projection,'loyalty'\)/);
-  assert.match(dashboard, /loadBranchModuleProjection\(selectedBranchId\)/);
-  assert.match(dashboard, /Tasks could not be loaded/);
-  assert.match(dashboard, /No tasks are assigned here/);
-  assert.match(dashboard, /<details class="card performance-panel">/);
-  assert.doesNotMatch(dashboard, /<details class="card performance-panel" open/);
+  const shell = section('function renderShell(page){', '/* ---------- dashboard ---------- */');
+  assert.doesNotMatch(dashboard, /Common tasks|Record a sale|Add appointment|Find a customer|Set up rewards/);
+  assert.match(shell, /globalActionsHtml\(\)/);
+  assert.match(shell, /dashboardBranchWrap/);
+  assert.match(dashboard, /<section class="card performance-panel"/);
+  assert.match(dashboard, /<h2 id="performanceTitle">Performance<\/h2>/);
+  assert.doesNotMatch(dashboard, /<details class="card performance-panel"/);
 });
 
 test('appointments open in a simple day-by-team view with advanced controls secondary', () => {
@@ -114,9 +107,9 @@ test('reports answer money, capacity and returning-customer questions from recor
   assert.match(reports, /Overbooked by/);
 });
 
-test('task and report layouts collapse to one column on narrow phones', () => {
-  assert.match(html, /@media\(max-width:560px\)\{\.task-launcher-grid,\.report-decision-grid\{grid-template-columns:1fr\}/);
-  assert.match(html, /\.task-launcher-card\{[^}]*min-height:92px/);
+test('dashboard and report layouts collapse to one column on narrow phones', () => {
+  assert.match(html, /@media\(max-width:960px\)\{[\s\S]*?\.dashboard-charts\{grid-template-columns:1fr\}/);
+  assert.match(html, /<button type="button" class="dashboard-metric kpi"/);
   assert.match(html, /\.report-decision-card\{[^}]*min-height:150px/);
   assert.match(html, /\.day-timeline-scroll\{[^}]*overflow:auto/);
   assert.match(html, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);

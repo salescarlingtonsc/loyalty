@@ -15,7 +15,7 @@ function between(source,start,end){
 export function buildV129TrialTestVisual(app,customerUi){
   const style=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];
   if(!style)throw new Error('production inline stylesheet missing');
-  const customers=between(app,'async function clientsPage()','async function clientDetail(');
+  const customers=between(app,'function normalizeSingaporeCustomerSearch(value)','async function clientDetail(');
   const profile=between(app,'async function clientDetail(','/* ---------- referrals');
   const historyRenderer=between(app,'function renderHistPage(','/* ---------- quick earn');
   const till=between(app,'async function tillPage()','/* ---------- sales ---------- */');
@@ -52,9 +52,10 @@ export function buildV129TrialTestVisual(app,customerUi){
   const createLatestRequestGate=isCurrent=>{let generation=0;return {begin(){const mine=++generation;return ()=>mine===generation&&isCurrent()},invalidate(){generation++}}};
   const normalizeCustomerSearchPhoneDigits=value=>{let digits=String(value||'').replace(/\D/g,'');if(digits.length===10&&digits.startsWith('65'))digits=digits.slice(2);return /^\d{8}$/.test(digits)?digits:null};
   const fetchAllRows=async factory=>{const result=await factory();return result.data||[]};
-  let pendingCustomerSearch='',pendingTillPhone='',pendingApptClientId='';
+  let pendingCustomerSearch='',pendingTillPhone='',pendingApptClientId='',pendingCustomerInactivity=null;
   let currentView='customers';
-  const S={myRole:'owner',user:{id:'owner-v129'},biz:{id:'business-v129',name:'Glow Atelier',currency:'SGD'}};
+  const fixtureRole=new URLSearchParams(location.search).get('role')||'owner';
+  const S={myRole:fixtureRole==='readonly'?'frontdesk':'owner',user:{id:fixtureRole+'-v129'},biz:{id:'business-v129',name:'Glow Atelier',currency:'SGD'}};
   const canWriteModule=module=>new URLSearchParams(location.search).get('role')!=='readonly'&&['clients','loyalty','appointments'].includes(module);
   const canReadModule=module=>['clients','loyalty','appointments','till'].includes(module);
   const hasRoleCapability=capability=>currentView==='sale'?false:capability==='create_sales';
@@ -66,26 +67,27 @@ export function buildV129TrialTestVisual(app,customerUi){
   const staffQ=query=>query;
   const normalizeSingaporeCustomerPhone=value=>{let digits=String(value||'').replace(/\D/g,'');if(digits.length===10&&digits.startsWith('65'))digits=digits.slice(2);return /^\d{8}$/.test(digits)?'+65'+digits:''};
   const fixtureCustomers=[
-    {id:'active-20',full_name:'Mei Active',phone:'8123 0001',marketing_consent:true,last_visit_at:'2026-07-12T06:00:00.000Z',days_since_last_visit:20,points:320,balance_cents:0},
-    {id:'exact-30',full_name:'Lee Thirty',phone:'8123 0030',marketing_consent:true,last_visit_at:'2026-07-02T06:00:00.000Z',days_since_last_visit:30,points:90,balance_cents:0},
-    {id:'exact-60',full_name:'Lee Sixty',phone:'8123 0060',marketing_consent:false,last_visit_at:'2026-06-02T06:00:00.000Z',days_since_last_visit:60,points:50,balance_cents:0},
-    {id:'exact-90',full_name:'Arun Ninety',phone:'8123 0090',marketing_consent:true,last_visit_at:'2026-05-03T06:00:00.000Z',days_since_last_visit:90,points:510,balance_cents:1200},
-    {id:'package-active',full_name:'Package Active',phone:'8123 0777',marketing_consent:true,last_visit_at:'2026-07-31T06:00:00.000Z',days_since_last_visit:1,points:0,balance_cents:0},
-    {id:'never',full_name:'New Never',phone:'8123 0999',marketing_consent:false,last_visit_at:null,days_since_last_visit:null,points:0,balance_cents:0}
+    {id:'active-20',full_name:'Mei Active',phone:'8123 0001',created_at:'2026-01-12T06:00:00.000Z',marketing_consent:true,last_visit_at:'2026-07-12T06:00:00.000Z',days_since_last_visit:20,points:320,balance_cents:0},
+    {id:'exact-30',full_name:'Lee Thirty',phone:'8123 0030',created_at:'2026-02-03T06:00:00.000Z',marketing_consent:true,last_visit_at:'2026-07-02T06:00:00.000Z',days_since_last_visit:30,points:90,balance_cents:0},
+    {id:'exact-60',full_name:'Lee Sixty',phone:'8123 0060',created_at:'2026-03-15T06:00:00.000Z',marketing_consent:false,last_visit_at:'2026-06-02T06:00:00.000Z',days_since_last_visit:60,points:50,balance_cents:0},
+    {id:'exact-90',full_name:'Arun Ninety',phone:'8123 0090',created_at:'2026-04-08T06:00:00.000Z',marketing_consent:true,last_visit_at:'2026-05-03T06:00:00.000Z',days_since_last_visit:90,points:510,balance_cents:1200},
+    {id:'package-active',full_name:'Package Active',phone:'8123 0777',created_at:'2026-05-19T06:00:00.000Z',marketing_consent:true,last_visit_at:'2026-07-31T06:00:00.000Z',days_since_last_visit:1,points:0,balance_cents:0},
+    {id:'never',full_name:'New Never',phone:'8123 0999',created_at:'2026-07-29T06:00:00.000Z',marketing_consent:false,last_visit_at:null,days_since_last_visit:null,points:0,balance_cents:0}
   ];
   const profileClient={id:'profile-client',business_id:'business-v129',full_name:'Mei Lin',phone:'8123 4567',email:'mei@example.test',referral_code:'MEI2026',marketing_consent:true};
   const profileSales=[{id:'sale-one',occurred_at:'2026-07-24T06:00:00.000Z',kind:'service',amount_cents:8800,note:'Signature facial',counts_as_visit:true,counts_as_revenue:true,reversal_of:null,staff_id:null}];
   const profileProgram=[{id:'programme-one',active:true,loyalty_model:'points_tiers',earn_points_per_dollar:10,redeem_points:500,reward_credit_cents:1000}];
   const profileRewards=[{id:'reward-one',active:true,customer_name:'Signature facial reward',cost_points:500,sort:1,created_at:'2026-01-01'}];
-  window.__rpcCalls=[];window.__consoleErrors=[];window.__customerErrorUsed=false;
+  window.__rpcCalls=[];window.__consoleErrors=[];window.__customerErrorUsed=false;window.__joinedErrorUsed=false;window.__expiryErrorUsed=false;
   function queryData(table,single){
-    const rows={clients:profileClient,client_points_balance:[{points:320}],client_credit_balance:[{balance_cents:0}],loyalty_programs:profileProgram,points_batches:[],loyalty_rewards:profileRewards,sales:profileSales,appointments:[],staff:[],client_field_definitions:[],client_field_values:[],client_field_options:[],memberships:[],client_packages:[],branches:[],staff_branches:[]}[table]??[];
+    const params=new URLSearchParams(location.search);
+    const rows={clients:profileClient,client_points_balance:[{points:320}],client_credit_balance:[{balance_cents:0}],loyalty_programs:params.get('no_programme')==='1'?[]:profileProgram,points_batches:params.get('no_expiry')==='1'?[]:[{remaining:300,expires_at:'2026-09-28T00:00:00.000Z'}],loyalty_rewards:profileRewards,sales:profileSales,appointments:[],staff:[],client_field_definitions:[],client_field_values:[],client_field_options:[],memberships:[],client_packages:[],branches:[],staff_branches:[]}[table]??[];
     return single&&!Array.isArray(rows)?rows:rows;
   }
   function fixtureQuery(table){
-    let single=false;
-    const query={select(){return query},eq(){return query},gt(){return query},gte(){return query},lt(){return query},not(){return query},is(){return query},order(){return query},limit(){return query},range(){return query},upsert(){return query},delete(){return query},single(){single=true;return query},maybeSingle(){single=true;return query},
-      then(resolve,reject){const data=queryData(table,single);return Promise.resolve({data,error:null,count:Array.isArray(data)?data.length:1}).then(resolve,reject)}};
+    let single=false,fields='';
+    const query={select(value){fields=value||'';return query},eq(){return query},gt(){return query},gte(){return query},lt(){return query},not(){return query},is(){return query},in(){return query},order(){return query},limit(){return query},range(){return query},upsert(){return query},delete(){return query},single(){single=true;return query},maybeSingle(){single=true;return query},
+      then(resolve,reject){const params=new URLSearchParams(location.search);if(table==='clients'&&fields==='id,created_at'&&params.get('joined_error')==='1'&&!window.__joinedErrorUsed){window.__joinedErrorUsed=true;return Promise.resolve({data:null,error:{message:'Synthetic Date joined interruption'},count:0}).then(resolve,reject)}if(table==='points_batches'&&params.get('expiry_error')==='1'&&!window.__expiryErrorUsed){window.__expiryErrorUsed=true;return Promise.resolve({data:null,error:{message:'Synthetic expiry interruption'},count:0}).then(resolve,reject)}const data=table==='clients'&&fields==='id,created_at'?fixtureCustomers.map(({id,created_at})=>({id,created_at})):queryData(table,single);return Promise.resolve({data,error:null,count:Array.isArray(data)?data.length:1}).then(resolve,reject)}};
     return query;
   }
   const sb={from:fixtureQuery,rpc:async(name,args)=>{
@@ -138,7 +140,7 @@ export function buildV129TrialTestVisual(app,customerUi){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'${sourceHash}',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'${sourceHash}',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>`;
 }

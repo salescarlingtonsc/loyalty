@@ -93,20 +93,24 @@ test('every responsive Chart.js canvas is isolated in a bounded frame', () => {
   assert.match(app, /@media\(max-width:960px\)[\s\S]*\.chart-frame\{block-size:220px\}/);
   const canvases = app.match(/<canvas\b/g) || [];
   const framedCanvases = app.match(/<div class="chart-frame"><canvas\b/g) || [];
-  assert.equal(canvases.length, 7);
+  assert.equal(canvases.length, 5);
   assert.equal(framedCanvases.length, canvases.length, 'no canvas may size a chart card directly');
 
   const dashboard = app.match(/async function dashboard\(\)\{[\s\S]*?\/\* ---------- customers ---------- \*\//)?.[0] || '';
   assert.match(dashboard, /const renderEpoch=\+\+dashboardRenderEpoch/);
   assert.match(dashboard, /const isDashboardCurrent=\(\)=>dashboardRenderEpoch===renderEpoch&&dashboardRoot\.isConnected&&\$\('dashboardView'\)===dashboardRoot/);
-  assert.match(dashboard, /async function load\(\)\{\s*const isCurrent=requestGate\.begin\(\);\s*if\(!isCurrent\(\)\)return;\s*killCharts\(\)/);
-  assert.match(dashboard, /try\{response=await sb\.rpc\('get_dashboard_summary'[\s\S]*catch\(error\)\{if\(isCurrent\(\)\)fail\(error\);return\}[\s\S]*if\(!isCurrent\(\)\)return;[\s\S]*if\(error\) return fail\(error\)/);
+  assert.match(dashboard, /async function load\(\)\{\s*const isCurrent=requestGate\.begin\(\);\s*if\(!isCurrent\(\)\)return;[\s\S]*if\(!from\|\|!to\|\|from>to\)[\s\S]*killCharts\(\)/);
+  assert.match(dashboard, /try\{\[response,inactiveResponse,saleMixRows\]=await Promise\.all\(\[[\s\S]*sb\.rpc\('get_dashboard_summary'[\s\S]*catch\(error\)\{if\(isCurrent\(\)\)showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'\);return\}[\s\S]*if\(!isCurrent\(\)\)return;[\s\S]*if\(error\)\{showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'\);return\}/);
+  assert.match(dashboard, /id="dashboardStatus" aria-live="polite"/);
+  assert.match(dashboard, /dashboardInactiveRetry/);
+  assert.match(dashboard, /dashboardSaleMixRetry/);
   assert.match(dashboard, /const C=\(id,cfg\)=>\{if\(isCurrent\(\)\)/);
-  assert.match(dashboard, /refreshBranchFilter\(\(\)=>\{renderTasks\(\);load\(\)\},isDashboardCurrent\)/);
+  assert.equal((dashboard.match(/dashboardChartCardV141\(\{/g) || []).length, 5);
+  assert.match(dashboard, /refreshBranchFilter\(load,isDashboardCurrent,'dashboardBranchWrap'\)/);
   assert.match(app, /async function route\(\)\{\s*const isRouteCurrent=beginRouteInvocation\(\);\s*dashboardRenderEpoch\+=1/);
-  assert.match(app, /if\(!isCurrent\(\)\|\|!wrap\.isConnected\|\|\$\('branchWrap'\)!==wrap\)return/);
+  assert.match(app, /if\(!isCurrent\(\)\|\|!wrap\.isConnected\|\|\$\(targetId\)!==wrap\)return/);
   assert.match(app, /const sel=wrap\.querySelector\('#branchSel'\)/);
-  assert.equal((dashboard.match(/class="chart-frame"/g) || []).length, 3);
+  assert.equal((dashboard.match(/class="chart-frame"/g) || []).length, 1);
 });
 
 test('dashboard request gate rejects out-of-order results, stale errors and old render instances', async () => {

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="c56943502ebf0dc1f920c844137470f3377342f135d819c1f628b6fe4ab5f448"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="0a2d2db2027d68e8786923251577cefb145dbc2c6b0fcc369d9fd184a6cc99b0"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -166,7 +166,7 @@ tr.click:hover td{background:#FBFAF8}
 .appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;
   gap:10px;padding:max(12px,env(safe-area-inset-top)) max(34px,env(safe-area-inset-right))
     12px max(34px,env(safe-area-inset-left));border-bottom:1px solid var(--hair);
-  background:rgba(244,242,238,.72);
+  background:rgba(232,227,218,.94);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
 .profile{position:relative}
 .profile .who{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px 6px 6px;border-radius:100px;
@@ -234,6 +234,8 @@ tr.click:hover td{background:#FBFAF8}
 .global-search-go:active{transform:scale(.92)}
 .global-quick{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .global-act{white-space:nowrap}.global-act svg{flex-shrink:0}
+.dashboard-appbar-branch{display:block;flex:0 1 196px;min-width:150px}
+.dashboard-appbar-branch select{width:100%;min-width:0;margin:0;background:#fff;box-shadow:var(--shadow);font-size:13px}
 /* Phone-first staff navigation. The high-frequency jobs stay thumb-reachable while the
    complete, permission-filtered workspace navigation remains available behind More. */
 .staff-mobile-dock{display:none}
@@ -576,12 +578,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .ck-notice{margin-top:12px;padding:10px 14px;border-radius:var(--r-sm);font-size:13.5px}
 .ck-notice.warn{background:#FBF3E7;color:var(--amber)}
 .ck-notice.info{background:#EFF4F1;color:var(--green)}
-.task-launcher-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
-.task-launcher-card{display:flex;align-items:center;gap:12px;min-height:92px;padding:16px;border:1px solid var(--hair);border-radius:var(--r);background:#fff;color:var(--ink);text-decoration:none;box-shadow:var(--shadow)}
-.task-launcher-card:hover,.task-launcher-card:focus-visible{border-color:var(--coral);transform:translateY(-1px)}
-.task-launcher-card .task-icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 auto;border-radius:12px;background:var(--tint);color:var(--coral)}
-.task-launcher-card b{display:block}.task-launcher-card span{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.35}
-.performance-panel{margin-top:18px}.performance-panel>summary{cursor:pointer;font-weight:750;list-style:none;min-height:44px;display:flex;align-items:center;justify-content:space-between}.performance-panel>summary::-webkit-details-marker{display:none}.performance-panel>summary::after{content:'+';float:right}.performance-panel[open]>summary::after{content:'−'}
+.dashboard-page{display:grid;gap:16px}
+.dashboard-intro{display:flex;align-items:flex-start;gap:13px;padding:18px 20px;border:1px solid #DED7CC;border-radius:var(--r);background:#EDE7DE}
+.dashboard-intro>.cui-icon{color:var(--coral);margin-top:3px}.dashboard-intro h1{font-size:1.85rem}.dashboard-intro p{margin-top:4px;line-height:1.5}
+.performance-panel{padding:0;overflow:hidden;background:#fff}
+.performance-heading{display:flex;align-items:center;gap:12px;padding:17px 20px;background:#F7EEE8;border-bottom:1px solid #EADFD8}
+.performance-heading>.cui-icon{color:var(--coral)}.performance-heading h2{font-size:1.08rem}.performance-heading p{margin-top:3px}
+.performance-body{padding:20px}
+.dashboard-kpis{margin-top:16px}
+.dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
+.dashboard-metric:hover,.dashboard-metric:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:#DDB9AE}
+.dashboard-metric .metric-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.dashboard-metric .metric-arrow{color:var(--coral)}
+.dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
+.dashboard-charts{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dashboard-chart-card{padding:0;overflow:hidden;min-width:0}
+.dashboard-chart-head{display:flex;align-items:flex-start;gap:10px;padding:15px 17px;background:#FBF5F0;border-bottom:1px solid #EEE2DA}
+.dashboard-chart-head>.cui-icon{color:var(--coral);margin-top:1px}.dashboard-chart-head>div{min-width:0;flex:1}.dashboard-chart-head b{display:block}.dashboard-chart-head p{margin-top:3px}.dashboard-chart-link{display:inline-flex;align-items:center;min-height:44px;padding:7px 9px;color:var(--coral);font-size:12px;font-weight:700;white-space:nowrap;border-radius:9px}
+.dashboard-chart-link:hover{background:var(--tint)}
+.dashboard-chart-card .chart-frame{margin:8px 14px 16px}
+.dashboard-read-note{margin-top:12px;padding:10px 12px;border-radius:10px;background:#F7F4EF;color:var(--muted);font-size:11.5px;line-height:1.45}
 .appointment-primary-action{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:0 0 14px}
 .appointment-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;min-width:0;width:100%}
 .appointment-layout.form-open{grid-template-columns:minmax(300px,360px) minmax(0,1fr)}
@@ -639,13 +654,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .c360-badge.member{background:#EAF1FB;color:#1F5199;border-color:#D2E0F4}
 .c360-badge.package{background:#FFF6E8;color:#8A5A12;border-color:#EBD9B4}
 .c360-badge.consent-no{background:#F1EEE9;color:var(--muted)}
-.c360-nba{border:1px solid var(--hair);border-left:4px solid var(--coral);background:linear-gradient(180deg,#FFF7F4,#fff 62%);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;display:flex;gap:15px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--shadow)}
-.c360-nba-ic{flex:0 0 auto;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:var(--tint);color:var(--coral)}
+.c360-nba{border:1px solid #EBD9A8;border-left:4px solid #A75514;background:linear-gradient(145deg,#FFF7DE,#FFFDF7 68%);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;display:flex;gap:15px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--shadow)}
+.c360-nba-ic{flex:0 0 auto;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:#FFF0C7;color:#8A5A12}
 .c360-nba-body{flex:1 1 260px;min-width:0}
-.c360-nba-body .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--coral)}
+.c360-nba-body .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8A5A12}
 .c360-nba-body h2{font-size:1.16rem;margin:3px 0 4px;letter-spacing:-.02em}
 .c360-nba-body p{color:var(--ink2);font-size:13.5px;line-height:1.5}
 .c360-nba-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:13px}
+.c360-points-expiry{display:flex;align-items:center;gap:5px;margin-top:7px;color:var(--amber);font-size:11.5px;font-weight:650;line-height:1.35}
+.c360-rewards-card{overflow:hidden;padding:0}
+.c360-rewards-head{display:flex;align-items:center;gap:10px;padding:15px 18px;background:#FFF3EE;border-bottom:1px solid #F1DDD6;color:var(--coral)}
+.c360-rewards-head b{display:block;color:var(--ink)}
+.c360-rewards-head span{display:block;margin-top:2px;color:var(--muted);font-size:11.5px}
+.c360-rewards-body{padding:18px}
 .c360-more{position:relative}
 .c360-more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:#fff;border:1px solid var(--hair);border-radius:var(--r-sm);box-shadow:var(--shadow-lg);padding:6px;min-width:230px;display:grid;gap:2px}
 .c360-more-menu[hidden]{display:none}
@@ -691,15 +712,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .global-search{flex:1 1 200px}
   .global-quick{display:none}
   .global-act{flex:1 1 auto;justify-content:center}
+  .dashboard-appbar-branch{flex:1 1 210px}
   .charts,.split{grid-template-columns:1fr}
+  .dashboard-charts{grid-template-columns:1fr}
   .appointment-layout,.appointment-layout.form-open{grid-template-columns:minmax(0,1fr)}
-  .task-launcher-grid,.report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .appointment-form-card{position:static}
   .chart-frame{block-size:220px}
   .main{padding:18px max(18px,env(safe-area-inset-right))
     calc(92px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
 }
-@media(max-width:560px){.task-launcher-grid,.report-decision-grid{grid-template-columns:1fr}.task-launcher-card{min-height:76px}.appointment-primary-action .btn{width:100%}}
+@media(max-width:560px){.dashboard-appbar-branch{order:2;flex:1 1 100%}.report-decision-grid{grid-template-columns:1fr}.appointment-primary-action .btn{width:100%}.performance-body{padding:16px}.dashboard-intro{padding:16px}.dashboard-chart-link{padding-inline:6px}}
 @media(max-width:767px){
   .cui-page-head,.topbar{align-items:flex-start}.cui-page-actions,.topbar>.row{width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{flex:1 1 auto}
   .topbar>.row{min-width:0;max-width:100%;flex-wrap:wrap}
@@ -979,7 +1002,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · c56943502ebf0dc1f920c844137470f3377342f135d819c1f628b6fe4ab5f448</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 0a2d2db2027d68e8786923251577cefb145dbc2c6b0fcc369d9fd184a6cc99b0</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -1021,6 +1044,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
     redeem:'M12 2v20M17 6.5A4.5 4.5 0 0 0 12.5 3h-1A4.5 4.5 0 0 0 7 7.5c0 6 10 3 10 9A4.5 4.5 0 0 1 12.5 21h-1A4.5 4.5 0 0 1 7 17.5',
     check:'m5 12 4 4L19 6',
     info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 11v6M12 7h.01',
+    insight:'M9 18h6M10 22h4M8.6 14.8A6 6 0 1 1 15.4 14.8C14.5 15.5 14 16.5 14 18h-4c0-1.5-.5-2.5-1.4-3.2ZM12 2v2M4.9 4.9l1.4 1.4M19.1 4.9l-1.4 1.4',
     empty:'M4 5h16v14H4zM8 9h8M8 13h5',
     close:'M6 6l12 12M18 6 6 18',
     copy:'M8 8h12v12H8zM4 16H3V4h12v1',
@@ -1225,9 +1249,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   const createLatestRequestGate=isCurrent=>{let generation=0;return {begin(){const mine=++generation;return ()=>mine===generation&&isCurrent()},invalidate(){generation++}}};
   const normalizeCustomerSearchPhoneDigits=value=>{let digits=String(value||'').replace(/D/g,'');if(digits.length===10&&digits.startsWith('65'))digits=digits.slice(2);return /^d{8}$/.test(digits)?digits:null};
   const fetchAllRows=async factory=>{const result=await factory();return result.data||[]};
-  let pendingCustomerSearch='',pendingTillPhone='',pendingApptClientId='';
+  let pendingCustomerSearch='',pendingTillPhone='',pendingApptClientId='',pendingCustomerInactivity=null;
   let currentView='customers';
-  const S={myRole:'owner',user:{id:'owner-v129'},biz:{id:'business-v129',name:'Glow Atelier',currency:'SGD'}};
+  const fixtureRole=new URLSearchParams(location.search).get('role')||'owner';
+  const S={myRole:fixtureRole==='readonly'?'frontdesk':'owner',user:{id:fixtureRole+'-v129'},biz:{id:'business-v129',name:'Glow Atelier',currency:'SGD'}};
   const canWriteModule=module=>new URLSearchParams(location.search).get('role')!=='readonly'&&['clients','loyalty','appointments'].includes(module);
   const canReadModule=module=>['clients','loyalty','appointments','till'].includes(module);
   const hasRoleCapability=capability=>currentView==='sale'?false:capability==='create_sales';
@@ -1239,26 +1264,27 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   const staffQ=query=>query;
   const normalizeSingaporeCustomerPhone=value=>{let digits=String(value||'').replace(/D/g,'');if(digits.length===10&&digits.startsWith('65'))digits=digits.slice(2);return /^d{8}$/.test(digits)?'+65'+digits:''};
   const fixtureCustomers=[
-    {id:'active-20',full_name:'Mei Active',phone:'8123 0001',marketing_consent:true,last_visit_at:'2026-07-12T06:00:00.000Z',days_since_last_visit:20,points:320,balance_cents:0},
-    {id:'exact-30',full_name:'Lee Thirty',phone:'8123 0030',marketing_consent:true,last_visit_at:'2026-07-02T06:00:00.000Z',days_since_last_visit:30,points:90,balance_cents:0},
-    {id:'exact-60',full_name:'Lee Sixty',phone:'8123 0060',marketing_consent:false,last_visit_at:'2026-06-02T06:00:00.000Z',days_since_last_visit:60,points:50,balance_cents:0},
-    {id:'exact-90',full_name:'Arun Ninety',phone:'8123 0090',marketing_consent:true,last_visit_at:'2026-05-03T06:00:00.000Z',days_since_last_visit:90,points:510,balance_cents:1200},
-    {id:'package-active',full_name:'Package Active',phone:'8123 0777',marketing_consent:true,last_visit_at:'2026-07-31T06:00:00.000Z',days_since_last_visit:1,points:0,balance_cents:0},
-    {id:'never',full_name:'New Never',phone:'8123 0999',marketing_consent:false,last_visit_at:null,days_since_last_visit:null,points:0,balance_cents:0}
+    {id:'active-20',full_name:'Mei Active',phone:'8123 0001',created_at:'2026-01-12T06:00:00.000Z',marketing_consent:true,last_visit_at:'2026-07-12T06:00:00.000Z',days_since_last_visit:20,points:320,balance_cents:0},
+    {id:'exact-30',full_name:'Lee Thirty',phone:'8123 0030',created_at:'2026-02-03T06:00:00.000Z',marketing_consent:true,last_visit_at:'2026-07-02T06:00:00.000Z',days_since_last_visit:30,points:90,balance_cents:0},
+    {id:'exact-60',full_name:'Lee Sixty',phone:'8123 0060',created_at:'2026-03-15T06:00:00.000Z',marketing_consent:false,last_visit_at:'2026-06-02T06:00:00.000Z',days_since_last_visit:60,points:50,balance_cents:0},
+    {id:'exact-90',full_name:'Arun Ninety',phone:'8123 0090',created_at:'2026-04-08T06:00:00.000Z',marketing_consent:true,last_visit_at:'2026-05-03T06:00:00.000Z',days_since_last_visit:90,points:510,balance_cents:1200},
+    {id:'package-active',full_name:'Package Active',phone:'8123 0777',created_at:'2026-05-19T06:00:00.000Z',marketing_consent:true,last_visit_at:'2026-07-31T06:00:00.000Z',days_since_last_visit:1,points:0,balance_cents:0},
+    {id:'never',full_name:'New Never',phone:'8123 0999',created_at:'2026-07-29T06:00:00.000Z',marketing_consent:false,last_visit_at:null,days_since_last_visit:null,points:0,balance_cents:0}
   ];
   const profileClient={id:'profile-client',business_id:'business-v129',full_name:'Mei Lin',phone:'8123 4567',email:'mei@example.test',referral_code:'MEI2026',marketing_consent:true};
   const profileSales=[{id:'sale-one',occurred_at:'2026-07-24T06:00:00.000Z',kind:'service',amount_cents:8800,note:'Signature facial',counts_as_visit:true,counts_as_revenue:true,reversal_of:null,staff_id:null}];
   const profileProgram=[{id:'programme-one',active:true,loyalty_model:'points_tiers',earn_points_per_dollar:10,redeem_points:500,reward_credit_cents:1000}];
   const profileRewards=[{id:'reward-one',active:true,customer_name:'Signature facial reward',cost_points:500,sort:1,created_at:'2026-01-01'}];
-  window.__rpcCalls=[];window.__consoleErrors=[];window.__customerErrorUsed=false;
+  window.__rpcCalls=[];window.__consoleErrors=[];window.__customerErrorUsed=false;window.__joinedErrorUsed=false;window.__expiryErrorUsed=false;
   function queryData(table,single){
-    const rows={clients:profileClient,client_points_balance:[{points:320}],client_credit_balance:[{balance_cents:0}],loyalty_programs:profileProgram,points_batches:[],loyalty_rewards:profileRewards,sales:profileSales,appointments:[],staff:[],client_field_definitions:[],client_field_values:[],client_field_options:[],memberships:[],client_packages:[],branches:[],staff_branches:[]}[table]??[];
+    const params=new URLSearchParams(location.search);
+    const rows={clients:profileClient,client_points_balance:[{points:320}],client_credit_balance:[{balance_cents:0}],loyalty_programs:params.get('no_programme')==='1'?[]:profileProgram,points_batches:params.get('no_expiry')==='1'?[]:[{remaining:300,expires_at:'2026-09-28T00:00:00.000Z'}],loyalty_rewards:profileRewards,sales:profileSales,appointments:[],staff:[],client_field_definitions:[],client_field_values:[],client_field_options:[],memberships:[],client_packages:[],branches:[],staff_branches:[]}[table]??[];
     return single&&!Array.isArray(rows)?rows:rows;
   }
   function fixtureQuery(table){
-    let single=false;
-    const query={select(){return query},eq(){return query},gt(){return query},gte(){return query},lt(){return query},not(){return query},is(){return query},order(){return query},limit(){return query},range(){return query},upsert(){return query},delete(){return query},single(){single=true;return query},maybeSingle(){single=true;return query},
-      then(resolve,reject){const data=queryData(table,single);return Promise.resolve({data,error:null,count:Array.isArray(data)?data.length:1}).then(resolve,reject)}};
+    let single=false,fields='';
+    const query={select(value){fields=value||'';return query},eq(){return query},gt(){return query},gte(){return query},lt(){return query},not(){return query},is(){return query},in(){return query},order(){return query},limit(){return query},range(){return query},upsert(){return query},delete(){return query},single(){single=true;return query},maybeSingle(){single=true;return query},
+      then(resolve,reject){const params=new URLSearchParams(location.search);if(table==='clients'&&fields==='id,created_at'&&params.get('joined_error')==='1'&&!window.__joinedErrorUsed){window.__joinedErrorUsed=true;return Promise.resolve({data:null,error:{message:'Synthetic Date joined interruption'},count:0}).then(resolve,reject)}if(table==='points_batches'&&params.get('expiry_error')==='1'&&!window.__expiryErrorUsed){window.__expiryErrorUsed=true;return Promise.resolve({data:null,error:{message:'Synthetic expiry interruption'},count:0}).then(resolve,reject)}const data=table==='clients'&&fields==='id,created_at'?fixtureCustomers.map(({id,created_at})=>({id,created_at})):queryData(table,single);return Promise.resolve({data,error:null,count:Array.isArray(data)?data.length:1}).then(resolve,reject)}};
     return query;
   }
   const sb={from:fixtureQuery,rpc:async(name,args)=>{
@@ -1274,14 +1300,24 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
     if(name==='staff_get_reward_entitlements_v99')return {data:[],error:null};
     return {data:null,error:null};
   }};
-  async function clientsPage(){
+  function normalizeSingaporeCustomerSearch(value){
+  let digits=String(value||'').replace(/\D/g,'');
+  if(digits.length===10&&digits.startsWith('65'))digits=digits.slice(2);
+  return digits.length===8?digits:null;
+}
+function formatCustomerJoinedDateV141(value){
+  if(!value)return 'Unavailable';
+  const date=new Date(value);if(Number.isNaN(date.getTime()))return 'Unavailable';
+  return new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(date);
+}
+async function clientsPage(){
   const routeMain=M();
   const canWrite=canWriteModule('clients');
   const canWriteReferrals=canWriteModule('referrals');
   const customerActions=CUI.action({id:'exp',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'})+
     (canWrite?importBtn('customers')+CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView"><div data-workspace-i18n>${CUI.pageHeader({title:'Customers',subtitle:'Find a customer or see who has not visited recently.',iconName:'customers',actions:customerActions,canWrite,moduleLabel:'Customer management'})}</div>
-    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch" style="margin-top:0">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,210px)"><label for="clientInactivity" style="margin-top:0">Last visit</label><select id="clientInactivity"><option value="">All customers</option><option value="30">30+ days inactive</option><option value="60">60+ days inactive</option><option value="90">90+ days inactive</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive means no valid visit for at least the selected number of complete Singapore days. Customers who have never visited are included.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch" style="margin-top:0">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity" style="margin-top:0">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30">Inactive 30+ days</option><option value="60">Inactive 60+ days</option><option value="90">Inactive 90+ days</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive means no valid visit for at least the selected number of complete Singapore days. Customers who have never visited are included.</p></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list"><div class="empty">Loading…</div></div>
     <div class="card" id="fbQueueCard" style="margin-top:16px"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
@@ -1292,16 +1328,18 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
   const CLIENT_PAGE_SIZE=100;
   let clientPage=0;
-  let clientInactiveDays=null;
+  let clientInactiveDays=pendingCustomerInactivity;
+  pendingCustomerInactivity=null;
   /* A name handed in from the global app-bar search pre-fills and runs the existing name search
      (same query, no new call). Consumed once so a later visit starts clean. */
   let clientSearch=pendingCustomerSearch||'';
   pendingCustomerSearch='';
   if(clientSearch&&$('clientSearch'))$('clientSearch').value=clientSearch;
+  if(clientInactiveDays&&$('clientInactivity'))$('clientInactivity').value=String(clientInactiveDays);
   const runClientSearch=()=>{clientSearch=$('clientSearch').value.trim();clientPage=0;load()};
   $('clientSearchGo').onclick=runClientSearch;
   $('clientSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runClientSearch()}};
-  $('clientSearchClear').onclick=()=>{$('clientSearch').value='';clientSearch='';clientPage=0;load();$('clientSearch').focus()};
+  $('clientSearchClear').onclick=()=>{$('clientSearch').value='';$('clientInactivity').value='';clientSearch='';clientInactiveDays=null;clientPage=0;load();$('clientSearch').focus()};
   $('clientInactivity').onchange=()=>{clientInactiveDays=$('clientInactivity').value?Number($('clientInactivity').value):null;clientPage=0;load()};
   $('exp').onclick=async()=>{
     const exportButton=$('exp');exportButton.disabled=true;
@@ -1316,9 +1354,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
     if(!isCustomersCurrent())return;
     const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
           C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
-    const rows=[['name','phone','email','birth_date','consent','points','credit'],
+    const rows=[['name','phone','email','birth_date','date_joined','consent','points','credit'],
       ...(cl||[]).map(c=>[c.full_name,c.phone||'',c.email||'',c.birth_date||'',
-        c.marketing_consent?'yes':'no',P[c.id]||0,((C[c.id]||0)/100).toFixed(2)])];
+        c.created_at||'',c.marketing_consent?'yes':'no',P[c.id]||0,((C[c.id]||0)/100).toFixed(2)])];
     const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-customers.csv`;a.click();
     exportButton.disabled=false;
@@ -1364,10 +1402,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
     if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
     if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveDays?`No customers inactive for ${clientInactiveDays}+ days`:'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveDays?'Choose a shorter period or All customers.':canWrite?'Add your first customer to start recording sales.':'Customers will appear here when an authorized teammate adds them.'});return}
+    let joinedById={},joinedError='';
+    try{
+      const joined=await sb.from('clients').select('id,created_at').eq('business_id',S.biz.id).in('id',cl.map(customer=>customer.id));
+      if(joined.error)throw joined.error;
+      joinedById=Object.fromEntries((joined.data||[]).map(customer=>[customer.id,customer.created_at]));
+    }catch(joinError){joinedError=joinError.message||'Date joined could not be loaded.'}
+    if(!isCurrent())return;
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
-    $('list').innerHTML=`<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th>Name</th><th>Phone</th><th>Last visit</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
+    $('list').innerHTML=`${joinedError?`<div class="err" role="status" style="margin-bottom:12px">Customer results loaded, but Date joined is temporarily unavailable. <button type="button" class="btn ghost sm" id="customerJoinedRetry">Retry</button></div>`:''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th>Name</th><th>Phone</th><th>Last visit</th><th>Date joined</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
       ${cl.map(c=>`<tr>
-        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`Last visit ${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td>
+        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`Last visit ${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(joinedById[c.id]))}</td>
         <td>${Number(c.points)||0} pts</td><td>${money(Number(c.balance_cents)||0)}</td>
         <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
@@ -1375,6 +1420,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
         <button class="btn ghost sm" id="clNext" ${clientPage+1>=pages?'disabled':''}>Next</button></div>`;
     $('clPrev').onclick=()=>{if(clientPage>0){clientPage--;load()}};
     $('clNext').onclick=()=>{if(clientPage+1<pages){clientPage++;load()}};
+    if($('customerJoinedRetry'))$('customerJoinedRetry').onclick=load;
   }
   /* v53 service-recovery queue — rides the clients module (staff_list_visit_feedback gates on
      can_module_read('clients'), so no new MODULES key). Owner/manager hold refund_sales (the same
@@ -1459,7 +1505,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   const canReverseBirthday=birthdayBenefitsEnabled&&S.myRole==='owner'&&canWriteModule('loyalty');
   let birthdayRedemptionIdem=null;
   let birthdayReversalIdem=null;
-  const [{data:c,error},{data:pb},{data:cb},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:cfDefs},{data:cfVals},{data:cfOpts},{data:birthdayBenefit},{data:msRows},{data:cpRows}]=await Promise.all([
+  const [{data:c,error},{data:pb},{data:cb},{data:rg},{data:lp},{data:xb,error:xbError},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:cfDefs},{data:cfVals},{data:cfOpts},{data:birthdayBenefit},{data:msRows},{data:cpRows}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
     sb.from('clients').select('id,business_id,full_name,phone,email,referral_code,marketing_consent').eq('id',id).single(),
@@ -1645,9 +1691,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   const nbaSeen=new Set([primaryNba.actionKey]);
   const secondaryNba=candidates.filter(x=>x!==primaryNba&&x.run&&!nbaSeen.has(x.actionKey)&&nbaSeen.add(x.actionKey)).slice(0,4);
   const nbaHtml=`<section class="c360-nba" aria-label="Recommended next action">
-    <div class="c360-nba-ic" aria-hidden="true">${CUI.icon(primaryNba.iconName,{size:24})}</div>
+    <div class="c360-nba-ic" aria-hidden="true">${CUI.icon('insight',{size:24})}</div>
     <div class="c360-nba-body">
-      <p class="eyebrow">Next best action</p>
+      <p class="eyebrow">Peekaa's suggestion</p>
       <h2>${esc(primaryNba.title)}</h2>
       <p>${esc(primaryNba.reason)}</p>
       <div class="c360-nba-actions">
@@ -1708,17 +1754,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
   }
+  const pointsUnit=prog?.loyalty_model==='stamps'?'stamps':'points';
+  const nextExpiryLabel=nextExp
+    ?`${nextExp.remaining} ${pointsUnit} expire ${new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(nextExp.expires_at))}`
+    :xbError?'Expiry schedule is temporarily unavailable.':'No points are currently scheduled to expire.';
+  const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:14})}<span>${esc(nextExpiryLabel)}</span>${xbError?'<button type="button" class="btn ghost sm" id="c360ExpiryRetry">Retry</button>':''}</div>`;
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:headerActions,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
     ${badgesHtml}
     ${nbaHtml}
     <div class="kpis">
       <div class="card kpi"><div class="l">Visits</div><div class="v">${netVisits}</div></div>
       <div class="card kpi"><div class="l">Lifetime spend</div><div class="v">${money(lifetimeSpendCents)}</div></div>
-      <div class="card kpi"><div class="l">Points</div><div class="v">${pts}</div></div>
+      <div class="card kpi"><div class="l">Points</div><div class="v">${pts}</div>${pointsExpiryMarkup}</div>
       <div class="card kpi"><div class="l">Spendable credit</div><div class="v">${money(cred)}</div></div>
     </div>
     <div class="split" style="margin-top:16px">
-      <div class="card" id="c360-loyalty"><b>Rewards</b>${rewardsMarkup}</div>
+      <section class="card c360-rewards-card" id="c360-loyalty">
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards</b><span>Balance, earning and next unlock</span></div></header>
+        <div class="c360-rewards-body">${rewardsMarkup}</div>
+      </section>
       <div class="card"><b>Referral & consent</b>
         <p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
         <div class="row"><b style="font-size:1.3rem;letter-spacing:.15em">${esc(c.referral_code||'—')}</b>
@@ -1832,6 +1886,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
     bindReversalButtons(()=>clientDetail(id));
     if(histShown>=history.length) histMore.parentElement.style.display='none';
   };
+  if($('c360ExpiryRetry'))$('c360ExpiryRetry').onclick=()=>clientDetail(id);
   bindReversalButtons(()=>clientDetail(id));
 }
 /* Renders the first n entries of the unified Customer 360 timeline. Each entry keeps its own
@@ -8847,6 +8902,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'c56943502ebf0dc1f920c844137470f3377342f135d819c1f628b6fe4ab5f448',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'0a2d2db2027d68e8786923251577cefb145dbc2c6b0fcc369d9fd184a6cc99b0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

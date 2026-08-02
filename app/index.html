@@ -191,7 +191,7 @@ tr.click:hover td{background:#FBFAF8}
 .appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;
   gap:10px;padding:max(12px,env(safe-area-inset-top)) max(34px,env(safe-area-inset-right))
     12px max(34px,env(safe-area-inset-left));border-bottom:1px solid var(--hair);
-  background:rgba(244,242,238,.72);
+  background:rgba(232,227,218,.94);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
 .profile{position:relative}
 .profile .who{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px 6px 6px;border-radius:100px;
@@ -259,6 +259,8 @@ tr.click:hover td{background:#FBFAF8}
 .global-search-go:active{transform:scale(.92)}
 .global-quick{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .global-act{white-space:nowrap}.global-act svg{flex-shrink:0}
+.dashboard-appbar-branch{display:block;flex:0 1 196px;min-width:150px}
+.dashboard-appbar-branch select{width:100%;min-width:0;margin:0;background:#fff;box-shadow:var(--shadow);font-size:13px}
 /* Phone-first staff navigation. The high-frequency jobs stay thumb-reachable while the
    complete, permission-filtered workspace navigation remains available behind More. */
 .staff-mobile-dock{display:none}
@@ -601,12 +603,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .ck-notice{margin-top:12px;padding:10px 14px;border-radius:var(--r-sm);font-size:13.5px}
 .ck-notice.warn{background:#FBF3E7;color:var(--amber)}
 .ck-notice.info{background:#EFF4F1;color:var(--green)}
-.task-launcher-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
-.task-launcher-card{display:flex;align-items:center;gap:12px;min-height:92px;padding:16px;border:1px solid var(--hair);border-radius:var(--r);background:#fff;color:var(--ink);text-decoration:none;box-shadow:var(--shadow)}
-.task-launcher-card:hover,.task-launcher-card:focus-visible{border-color:var(--coral);transform:translateY(-1px)}
-.task-launcher-card .task-icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 auto;border-radius:12px;background:var(--tint);color:var(--coral)}
-.task-launcher-card b{display:block}.task-launcher-card span{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.35}
-.performance-panel{margin-top:18px}.performance-panel>summary{cursor:pointer;font-weight:750;list-style:none;min-height:44px;display:flex;align-items:center;justify-content:space-between}.performance-panel>summary::-webkit-details-marker{display:none}.performance-panel>summary::after{content:'+';float:right}.performance-panel[open]>summary::after{content:'−'}
+.dashboard-page{display:grid;gap:16px}
+.dashboard-intro{display:flex;align-items:flex-start;gap:13px;padding:18px 20px;border:1px solid #DED7CC;border-radius:var(--r);background:#EDE7DE}
+.dashboard-intro>.cui-icon{color:var(--coral);margin-top:3px}.dashboard-intro h1{font-size:1.85rem}.dashboard-intro p{margin-top:4px;line-height:1.5}
+.performance-panel{padding:0;overflow:hidden;background:#fff}
+.performance-heading{display:flex;align-items:center;gap:12px;padding:17px 20px;background:#F7EEE8;border-bottom:1px solid #EADFD8}
+.performance-heading>.cui-icon{color:var(--coral)}.performance-heading h2{font-size:1.08rem}.performance-heading p{margin-top:3px}
+.performance-body{padding:20px}
+.dashboard-kpis{margin-top:16px}
+.dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
+.dashboard-metric:hover,.dashboard-metric:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:#DDB9AE}
+.dashboard-metric .metric-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.dashboard-metric .metric-arrow{color:var(--coral)}
+.dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
+.dashboard-charts{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dashboard-chart-card{padding:0;overflow:hidden;min-width:0}
+.dashboard-chart-head{display:flex;align-items:flex-start;gap:10px;padding:15px 17px;background:#FBF5F0;border-bottom:1px solid #EEE2DA}
+.dashboard-chart-head>.cui-icon{color:var(--coral);margin-top:1px}.dashboard-chart-head>div{min-width:0;flex:1}.dashboard-chart-head b{display:block}.dashboard-chart-head p{margin-top:3px}.dashboard-chart-link{display:inline-flex;align-items:center;min-height:44px;padding:7px 9px;color:var(--coral);font-size:12px;font-weight:700;white-space:nowrap;border-radius:9px}
+.dashboard-chart-link:hover{background:var(--tint)}
+.dashboard-chart-card .chart-frame{margin:8px 14px 16px}
+.dashboard-read-note{margin-top:12px;padding:10px 12px;border-radius:10px;background:#F7F4EF;color:var(--muted);font-size:11.5px;line-height:1.45}
 .appointment-primary-action{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:0 0 14px}
 .appointment-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;min-width:0;width:100%}
 .appointment-layout.form-open{grid-template-columns:minmax(300px,360px) minmax(0,1fr)}
@@ -664,13 +679,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .c360-badge.member{background:#EAF1FB;color:#1F5199;border-color:#D2E0F4}
 .c360-badge.package{background:#FFF6E8;color:#8A5A12;border-color:#EBD9B4}
 .c360-badge.consent-no{background:#F1EEE9;color:var(--muted)}
-.c360-nba{border:1px solid var(--hair);border-left:4px solid var(--coral);background:linear-gradient(180deg,#FFF7F4,#fff 62%);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;display:flex;gap:15px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--shadow)}
-.c360-nba-ic{flex:0 0 auto;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:var(--tint);color:var(--coral)}
+.c360-nba{border:1px solid #EBD9A8;border-left:4px solid #A75514;background:linear-gradient(145deg,#FFF7DE,#FFFDF7 68%);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;display:flex;gap:15px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--shadow)}
+.c360-nba-ic{flex:0 0 auto;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:#FFF0C7;color:#8A5A12}
 .c360-nba-body{flex:1 1 260px;min-width:0}
-.c360-nba-body .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--coral)}
+.c360-nba-body .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8A5A12}
 .c360-nba-body h2{font-size:1.16rem;margin:3px 0 4px;letter-spacing:-.02em}
 .c360-nba-body p{color:var(--ink2);font-size:13.5px;line-height:1.5}
 .c360-nba-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:13px}
+.c360-points-expiry{display:flex;align-items:center;gap:5px;margin-top:7px;color:var(--amber);font-size:11.5px;font-weight:650;line-height:1.35}
+.c360-rewards-card{overflow:hidden;padding:0}
+.c360-rewards-head{display:flex;align-items:center;gap:10px;padding:15px 18px;background:#FFF3EE;border-bottom:1px solid #F1DDD6;color:var(--coral)}
+.c360-rewards-head b{display:block;color:var(--ink)}
+.c360-rewards-head span{display:block;margin-top:2px;color:var(--muted);font-size:11.5px}
+.c360-rewards-body{padding:18px}
 .c360-more{position:relative}
 .c360-more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:#fff;border:1px solid var(--hair);border-radius:var(--r-sm);box-shadow:var(--shadow-lg);padding:6px;min-width:230px;display:grid;gap:2px}
 .c360-more-menu[hidden]{display:none}
@@ -716,15 +737,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .global-search{flex:1 1 200px}
   .global-quick{display:none}
   .global-act{flex:1 1 auto;justify-content:center}
+  .dashboard-appbar-branch{flex:1 1 210px}
   .charts,.split{grid-template-columns:1fr}
+  .dashboard-charts{grid-template-columns:1fr}
   .appointment-layout,.appointment-layout.form-open{grid-template-columns:minmax(0,1fr)}
-  .task-launcher-grid,.report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .appointment-form-card{position:static}
   .chart-frame{block-size:220px}
   .main{padding:18px max(18px,env(safe-area-inset-right))
     calc(92px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
 }
-@media(max-width:560px){.task-launcher-grid,.report-decision-grid{grid-template-columns:1fr}.task-launcher-card{min-height:76px}.appointment-primary-action .btn{width:100%}}
+@media(max-width:560px){.dashboard-appbar-branch{order:2;flex:1 1 100%}.report-decision-grid{grid-template-columns:1fr}.appointment-primary-action .btn{width:100%}.performance-body{padding:16px}.dashboard-intro{padding:16px}.dashboard-chart-link{padding-inline:6px}}
 @media(max-width:767px){
   .cui-page-head,.topbar{align-items:flex-start}.cui-page-actions,.topbar>.row{width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{flex:1 1 auto}
   .topbar>.row{min-width:0;max-width:100%;flex-wrap:wrap}
@@ -1328,7 +1351,7 @@ const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?m
    collapsible navhead/navbody headers as before. Every module key still maps to its original
    route, so this is pure regrouping + relabelling, not a routing change. */
 const NAVGROUPS=[
-  {key:'home',icon:'home',flat:'Home',items:['dashboard']},
+  {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
   {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist','sales']},
   {key:'grow',icon:'retention',label:'Grow',items:['loyalty','retention','referrals','memberships','giftcards']},
@@ -1341,6 +1364,7 @@ let navOpen={};
    existing lookup — no new query is introduced. settingsActiveTab keeps the Settings tab in place
    across the in-place re-renders that adding/retiring a customer field trigger. */
 let pendingCustomerSearch='';
+let pendingCustomerInactivity=null;
 let pendingTillPhone='';
 let pendingTillRedemptionScan=false;
 let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
@@ -6314,6 +6338,36 @@ const WORKSPACE_LOCALES_V97=Object.freeze(['en','zh-CN','ms']);
 const WORKSPACE_COPY_V97=Object.freeze({
   'zh-CN':Object.freeze({
     'Dashboard':'仪表板','Home':'首页','Customers':'顾客','Serve & sell':'服务与销售','Record sale':'记录销售',
+    'Performance':'经营表现','Performance detail':'经营详情','Today':'今天','Date joined':'加入日期',
+    'Inactive customers':'不活跃顾客','Recorded gender':'已记录性别','Services and goods':'服务与商品',
+    'Services and goods sold':'已售服务与商品',"Peekaa's suggestion":'Peekaa 建议','View details →':'查看详情 →',
+    'Visit entries':'到店记录','Revenue':'营收','Unique customers':'独立顾客','New customers':'新顾客',
+    'Points issued':'已发放积分','Credit liability':'顾客余额负债','Busiest days':'最繁忙日','Revenue over time':'营收趋势',
+    'Age groups':'年龄组','Services':'服务','Goods':'商品','Other':'其他','View sales':'查看销售','View customers':'查看顾客',
+    'View rewards':'查看奖励','View inactive customers':'查看不活跃顾客','Unavailable':'暂时无法提供',
+    'Loading performance…':'正在加载经营表现…','Performance data could not be loaded.':'无法加载经营数据。',
+    'Inactive customer count could not be loaded.':'无法加载不活跃顾客人数。',
+    'Services and goods detail could not be loaded.':'无法加载服务与商品明细。',
+    'Choose a valid dashboard date range.':'请选择有效的仪表板日期范围。',
+    'All business customers':'全企业顾客','All permitted branches':'所有获准分店','Current balance/status':'当前余额／状态',
+    'Visit-marked entries; reversals are separate':'标记为到店的记录；冲销会单独列出',
+    'Net sales in this period':'此期间的净销售额','Each identified customer counted once':'每位已识别顾客只计算一次',
+    'Business-wide · profiles joined in this period':'全企业 · 此期间加入的顾客资料',
+    'Business-wide · qualifying points earned':'全企业 · 符合条件的已赚积分',
+    'Business-wide · current credit still owed':'全企业 · 当前仍欠顾客的余额',
+    'Business-wide · 30+ days or never visited':'全企业 · 30 天以上未到店或从未到店',
+    'Sale rows marked as visits in this selected period. Recorded reversal rows are separate entries, so use Sales when reviewing the net customer history.':'所选期间内标记为到店的销售记录。冲销记录会单独列出；查看顾客净历史时请使用“销售”。',
+    'Net revenue from sale records in this selected period, after recorded reversals.':'所选期间销售记录在计入已记录冲销后的净营收。',
+    'Distinct identified customers attached to a sale entry in this selected period. A customer is counted once even after several entries.':'所选期间内与销售记录关联的不同已识别顾客。同一顾客即使有多笔记录也只计算一次。',
+    'Customer profiles first joined to this business during the selected period. This figure is business-wide.':'在所选期间首次加入本企业的顾客资料。此数字为全企业范围。',
+    'Loyalty points earned across this business in the selected period. This figure is business-wide.':'所选期间本企业所有分店发放的忠诚积分。此数字为全企业范围。',
+    'Current positive customer credit that this business still owes. This is a business-wide current balance, not a period or branch value.':'企业当前仍欠顾客的正余额。这是全企业当前余额，不属于某个期间或分店。',
+    'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.':'全企业至少连续 30 个新加坡完整日没有有效到店的顾客，包括从未到店的顾客。',
+    'Visit-entry activity; reversals are separate. Green is quieter, amber medium, red busiest.':'到店记录活动；冲销单独列出。绿色较空闲、琥珀色中等、红色最繁忙。',
+    'Daily net revenue in SGD.':'每日净营收（SGD）。','Business-wide from birth dates on file; unknown stays visible.':'根据档案出生日期统计的全企业数据；未知仍会显示。',
+    'Business-wide historical aggregate; unknown stays visible.':'全企业历史汇总；未知仍会显示。',
+    'Gross positive itemised line value by type; discounts, reversals and receipt-level adjustments are excluded.':'按类型统计的正数商品明细总值；不含折扣、冲销和收据级调整。',
+    'Services and goods detail is available to owners. Other performance figures remain current.':'服务与商品明细仅供业主查看。其他经营数据仍为最新。',
     'Appointments':'预约','Bookings':'预订','Waitlist':'候补名单','Sales':'销售','Grow':'增长',
     'Rewards & bring-backs':'奖励与回流','Referrals':'推荐','Memberships':'会员','Gift cards':'礼品卡',
     'Money':'财务','Reports':'报告','Daily report':'每日报告','P&L':'损益','Expenses':'支出',
@@ -6407,6 +6461,36 @@ const WORKSPACE_COPY_V97=Object.freeze({
   }),
   ms:Object.freeze({
     'Dashboard':'Papan pemuka','Home':'Utama','Customers':'Pelanggan','Serve & sell':'Khidmat & jualan','Record sale':'Rekod jualan',
+    'Performance':'Prestasi','Performance detail':'Butiran prestasi','Today':'Hari ini','Date joined':'Tarikh menyertai',
+    'Inactive customers':'Pelanggan tidak aktif','Recorded gender':'Jantina direkodkan','Services and goods':'Perkhidmatan dan barangan',
+    'Services and goods sold':'Perkhidmatan dan barangan dijual',"Peekaa's suggestion":'Cadangan Peekaa','View details →':'Lihat butiran →',
+    'Visit entries':'Entri kunjungan','Revenue':'Hasil','Unique customers':'Pelanggan unik','New customers':'Pelanggan baharu',
+    'Points issued':'Mata dikeluarkan','Credit liability':'Liabiliti kredit','Busiest days':'Hari tersibuk','Revenue over time':'Hasil mengikut masa',
+    'Age groups':'Kumpulan umur','Services':'Perkhidmatan','Goods':'Barangan','Other':'Lain-lain','View sales':'Lihat jualan','View customers':'Lihat pelanggan',
+    'View rewards':'Lihat ganjaran','View inactive customers':'Lihat pelanggan tidak aktif','Unavailable':'Tidak tersedia',
+    'Loading performance…':'Memuatkan prestasi…','Performance data could not be loaded.':'Data prestasi tidak dapat dimuatkan.',
+    'Inactive customer count could not be loaded.':'Bilangan pelanggan tidak aktif tidak dapat dimuatkan.',
+    'Services and goods detail could not be loaded.':'Butiran perkhidmatan dan barangan tidak dapat dimuatkan.',
+    'Choose a valid dashboard date range.':'Pilih julat tarikh papan pemuka yang sah.',
+    'All business customers':'Semua pelanggan perniagaan','All permitted branches':'Semua cawangan dibenarkan','Current balance/status':'Baki/status semasa',
+    'Visit-marked entries; reversals are separate':'Entri bertanda kunjungan; pembalikan diasingkan',
+    'Net sales in this period':'Jualan bersih dalam tempoh ini','Each identified customer counted once':'Setiap pelanggan dikenal pasti dikira sekali',
+    'Business-wide · profiles joined in this period':'Seluruh perniagaan · profil menyertai dalam tempoh ini',
+    'Business-wide · qualifying points earned':'Seluruh perniagaan · mata layak diperoleh',
+    'Business-wide · current credit still owed':'Seluruh perniagaan · kredit semasa masih terhutang',
+    'Business-wide · 30+ days or never visited':'Seluruh perniagaan · 30+ hari atau tidak pernah berkunjung',
+    'Sale rows marked as visits in this selected period. Recorded reversal rows are separate entries, so use Sales when reviewing the net customer history.':'Baris jualan yang ditanda sebagai kunjungan dalam tempoh dipilih. Baris pembalikan ialah entri berasingan; gunakan Jualan untuk menyemak sejarah bersih pelanggan.',
+    'Net revenue from sale records in this selected period, after recorded reversals.':'Hasil bersih daripada rekod jualan dalam tempoh dipilih selepas pembalikan direkodkan.',
+    'Distinct identified customers attached to a sale entry in this selected period. A customer is counted once even after several entries.':'Pelanggan dikenal pasti yang berbeza dan dikaitkan dengan entri jualan dalam tempoh dipilih. Setiap pelanggan dikira sekali walaupun mempunyai beberapa entri.',
+    'Customer profiles first joined to this business during the selected period. This figure is business-wide.':'Profil pelanggan yang mula menyertai perniagaan ini dalam tempoh dipilih. Angka ini meliputi seluruh perniagaan.',
+    'Loyalty points earned across this business in the selected period. This figure is business-wide.':'Mata kesetiaan yang diperoleh di seluruh perniagaan dalam tempoh dipilih. Angka ini meliputi seluruh perniagaan.',
+    'Current positive customer credit that this business still owes. This is a business-wide current balance, not a period or branch value.':'Kredit pelanggan positif semasa yang masih terhutang. Ini ialah baki semasa seluruh perniagaan, bukan nilai tempoh atau cawangan.',
+    'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.':'Pelanggan seluruh perniagaan tanpa kunjungan sah selama sekurang-kurangnya 30 hari penuh Singapura, termasuk pelanggan yang tidak pernah berkunjung.',
+    'Visit-entry activity; reversals are separate. Green is quieter, amber medium, red busiest.':'Aktiviti entri kunjungan; pembalikan diasingkan. Hijau lebih lengang, ambar sederhana dan merah paling sibuk.',
+    'Daily net revenue in SGD.':'Hasil bersih harian dalam SGD.','Business-wide from birth dates on file; unknown stays visible.':'Seluruh perniagaan berdasarkan tarikh lahir dalam fail; nilai tidak diketahui kekal dipaparkan.',
+    'Business-wide historical aggregate; unknown stays visible.':'Agregat sejarah seluruh perniagaan; nilai tidak diketahui kekal dipaparkan.',
+    'Gross positive itemised line value by type; discounts, reversals and receipt-level adjustments are excluded.':'Nilai baris item positif kasar mengikut jenis; diskaun, pembalikan dan pelarasan peringkat resit dikecualikan.',
+    'Services and goods detail is available to owners. Other performance figures remain current.':'Butiran perkhidmatan dan barangan tersedia kepada pemilik. Angka prestasi lain kekal terkini.',
     'Appointments':'Janji temu','Bookings':'Tempahan','Waitlist':'Senarai menunggu','Sales':'Jualan',
     'Grow':'Pertumbuhan','Rewards & bring-backs':'Ganjaran & pelanggan kembali','Referrals':'Rujukan',
     'Memberships':'Keahlian','Gift cards':'Kad hadiah','Money':'Kewangan','Reports':'Laporan',
@@ -6635,6 +6719,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   bookAppointmentSlot:Object.freeze({en:'Book {service} with {staff} at {time}','zh-CN':'预约 {service}：{staff}，{time}',ms:'Tempah {service} dengan {staff} pada {time}'}),
   removeFromWaitlist:Object.freeze({en:'Remove {customer} from waitlist','zh-CN':'将 {customer} 从候补名单中移除',ms:'Alih keluar {customer} daripada senarai menunggu'}),
   joinedAt:Object.freeze({en:'Joined {date} SGT','zh-CN':'加入时间：{date}（新加坡时间）',ms:'Menyertai pada {date} SGT'}),
+  viewDashboardMetricDetails:Object.freeze({en:'View details for {metric}','zh-CN':'查看 {metric} 的详细信息',ms:'Lihat butiran untuk {metric}'}),
   growPublishedReward:Object.freeze({en:'{count} published reward ready for customers.','zh-CN':'已有 {count} 项已发布奖励可供顾客使用。',ms:'{count} ganjaran diterbitkan sedia untuk pelanggan.'}),
   growPublishedRewards:Object.freeze({en:'{count} published rewards ready for customers.','zh-CN':'已有 {count} 项已发布奖励可供顾客使用。',ms:'{count} ganjaran diterbitkan sedia untuk pelanggan.'}),
   growPublishedBringBackRule:Object.freeze({en:'{count} published bring-back rule measuring return visits.','zh-CN':'已有 {count} 条已发布回流规则正在衡量回访。',ms:'{count} peraturan pelanggan kembali yang diterbitkan sedang mengukur lawatan kembali.'}),
@@ -6677,6 +6762,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
   'removeItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
   'viewAppointmentAgenda','calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt',
+  'viewDashboardMetricDetails',
   'growPublishedReward','growPublishedRewards','growPublishedBringBackRule',
   'growPublishedBringBackRules','growDraftReady','publishImpactAction',
   'publishImpactActions','publishMoneyLive','publishMoneyNone',
@@ -6687,7 +6773,7 @@ const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
   'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
-  'calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt'
+  'calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails'
 ]);
 const workspaceTemplateTextV97=(key,values={},locale=workspaceLocale)=>{
   const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';
@@ -6848,6 +6934,7 @@ function renderShell(page){
     <div class="col">
       <header class="appbar">
         ${globalActionsHtml()}
+        ${page[0]==='dashboard'?'<span class="dashboard-appbar-branch" id="dashboardBranchWrap" aria-label="Dashboard branch"><span class="muted small">Loading branches…</span></span>':''}
         ${workspaceLanguagePickerV97()}
         ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
         ${bellHtml()}
@@ -7091,13 +7178,13 @@ async function visibleBranchesForCurrentUser(){
   }
   return {isAdmin,branches};
 }
-async function refreshBranchFilter(onChange,isCurrent=()=>true){
-  const wrap=$('branchWrap');
+async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchWrap'){
+  const wrap=$(targetId);
   if(!wrap){ onChange(); return; }
   let isAdmin=S.myRole==='owner'||S.myRole==='manager',branches=[];
   try{({isAdmin,branches}=await visibleBranchesForCurrentUser())}
-  catch(e){if(isCurrent()&&wrap.isConnected&&$('branchWrap')===wrap)console.error(e)}
-  if(!isCurrent()||!wrap.isConnected||$('branchWrap')!==wrap)return;
+  catch(e){if(isCurrent()&&wrap.isConnected&&$(targetId)===wrap)console.error(e)}
+  if(!isCurrent()||!wrap.isConnected||$(targetId)!==wrap)return;
   if(!isAdmin&&(!selectedBranchId||!branches.some(b=>b.id===selectedBranchId))){
     /* Employees can't request consolidated (the server raises branch_visibility on
        p_branch=null for them) — default to their first assigned branch so the page loads
@@ -7120,83 +7207,141 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true){
 
 /* ---------- dashboard ---------- */
 async function dashboard(){
-  const today=new Date(),d30=new Date(Date.now()-29*864e5);
-  const iso=d=>d.toISOString().slice(0,10);
+  const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const renderEpoch=++dashboardRenderEpoch;
-  M().innerHTML=`<section id="dashboardView" data-render-epoch="${renderEpoch}"><div class="topbar" data-workspace-i18n><div><h1>Today</h1><p class="muted small">Choose a branch, then choose what you need to do.</p></div><span id="branchWrap"></span></div>
-    <div id="taskLauncher" class="task-launcher-grid" aria-label="Common tasks"><div class="card"><p class="muted small">Loading your available tasks…</p></div></div>
-    <details class="card performance-panel"><summary>Performance</summary><p class="muted small" style="margin:6px 0 14px">${workspaceTemplateHtmlV97('dashboardSummary',{business:S.biz.name})}</p>
-    <div class="range">
-      <button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
-      <label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${iso(d30)}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${iso(today)}">
+  M().innerHTML=`<section id="dashboardView" class="dashboard-page" data-render-epoch="${renderEpoch}" data-workspace-i18n>
+    <header class="dashboard-intro">${CUI.icon('home',{size:25})}<div><h1>Dashboard</h1><p class="muted small">A clear view of how <span data-merchant-content>${esc(S.biz.name)}</span> is doing. Choose the branch in the app bar and a period below. Business-wide figures are labelled.</p></div></header>
+    <section class="card performance-panel" aria-labelledby="performanceTitle">
+      <header class="performance-heading">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small">${workspaceTemplateHtmlV97('dashboardSummary',{business:S.biz.name})}</p></div></header>
+      <div class="performance-body"><div class="range">
+      <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
+      <label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}">
       <button class="btn sm" id="apply">Apply</button>
-    </div><div class="kpis" id="kpis"></div><div class="charts" id="charts"></div></details></section>`;
+    </div><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis" id="kpis" aria-live="polite"></div><div class="charts dashboard-charts" id="charts"></div></div>
+    </section></section>`;
   const dashboardRoot=$('dashboardView');
   const isDashboardCurrent=()=>dashboardRenderEpoch===renderEpoch&&dashboardRoot.isConnected&&$('dashboardView')===dashboardRoot;
   const requestGate=createLatestRequestGate(isDashboardCurrent);
+  const dashboardWeekdayColoursV141=values=>{
+    const numbers=values.map(Number),busiest=Math.max(0,...numbers),medium=Math.max(2,busiest*.5),quiet='#76B89B';
+    return numbers.map(value=>value>0&&value===busiest?'#C24135':value>=medium?'#F0A35B':quiet);
+  };
+  const dashboardSaleMixV141=rows=>(rows||[]).reduce((totals,row)=>{
+    const cents=Number(row.line_cents)||0;
+    /* This is a gross positive item mix, not receipt reconciliation. Checkout
+       discount lines are signed adjustments and must never be presented as a
+       product category or make a doughnut segment negative. */
+    if(row.item_type==='studio_discount'||cents<=0)return totals;
+    const key=row.item_type==='service'?'services':['retail','product'].includes(row.item_type)?'goods':'other';
+    totals[key]+=cents;return totals;
+  },{services:0,goods:0,other:0});
+  const dashboardChartCardV141=({title,subtitle,canvas,route,unavailable='',retryId=''})=>`<section class="card dashboard-chart-card"><header class="dashboard-chart-head">${CUI.icon('reports',{size:20})}<div><b>${esc(title)}</b><p class="muted small">${esc(subtitle)}</p></div><a class="dashboard-chart-link" href="${route}">View details →</a></header>${unavailable?`<div class="empty" role="status"><p>${esc(unavailable)}</p>${retryId?`<button type="button" class="btn ghost sm" id="${retryId}" style="margin-top:12px">Retry</button>`:''}</div>`:`<div class="chart-frame"><canvas id="${canvas}"></canvas></div>`}</section>`;
+  const dashboardMetricDefinitionsV141={
+    visits:{label:'Visit entries',definition:'Sale rows marked as visits in this selected period. Recorded reversal rows are separate entries, so use Sales when reviewing the net customer history.',route:'#/sales',action:'View sales',scope:'branch'},
+    revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',scope:'branch'},
+    unique:{label:'Unique customers',definition:'Distinct identified customers attached to a sale entry in this selected period. A customer is counted once even after several entries.',route:'#/clients',action:'View customers',scope:'branch'},
+    new:{label:'New customers',definition:'Customer profiles first joined to this business during the selected period. This figure is business-wide.',route:'#/clients',action:'View customers',scope:'business'},
+    points:{label:'Points issued',definition:'Loyalty points earned across this business in the selected period. This figure is business-wide.',route:'#/grow',action:'View rewards',scope:'business'},
+    credit:{label:'Credit liability',definition:'Current positive customer credit that this business still owes. This is a business-wide current balance, not a period or branch value.',route:'#/clients',action:'View customers',scope:'business-current'},
+    inactive:{label:'Inactive customers',definition:'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.',route:'#/clients',action:'View inactive customers',scope:'business-current'}
+  };
+  let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
+  function openDashboardMetricDetailV141(key,value){
+    const metric=dashboardMetricDefinitionsV141[key];if(!metric)return;
+    const allBusiness=workspaceTranslationV97('All business customers');
+    const branchName=appliedDashboardScopeV141.branchId?appliedDashboardScopeV141.branchName:workspaceTranslationV97('All permitted branches');
+    const scope=metric.scope==='branch'
+      ?`${branchName} · ${appliedDashboardScopeV141.from} – ${appliedDashboardScopeV141.to}`
+      :metric.scope==='business'
+        ?`${allBusiness} · ${appliedDashboardScopeV141.from} – ${appliedDashboardScopeV141.to}`
+        :`${allBusiness} · ${workspaceTranslationV97('Current balance/status')}`;
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="dashboardMetricModal" role="dialog" aria-modal="true" aria-labelledby="dashboardMetricTitle" tabindex="-1" data-workspace-i18n><div class="modal-card" style="max-width:520px"><p class="eyebrow">Performance detail</p><h2 id="dashboardMetricTitle" style="margin-top:4px">${esc(metric.label)}</h2><p style="font-size:2rem;font-weight:750;margin-top:13px">${esc(value)}</p><p class="muted" style="margin-top:10px;line-height:1.55">${esc(metric.definition)}</p><p class="dashboard-read-note">${esc(scope)}</p><div class="row" style="margin-top:18px;flex-wrap:wrap"><button class="btn" id="dashboardMetricGo">${esc(metric.action)}</button><button class="btn ghost sm" id="dashboardMetricClose">Close</button></div></div></div>`);
+    const dialog=$('dashboardMetricModal');
+    localizeWorkspaceSubtreeV97(dialog);
+    let deactivate;
+    const close=()=>deactivate?.();
+    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#dashboardMetricGo'});
+    $('dashboardMetricClose').onclick=close;
+    $('dashboardMetricGo').onclick=()=>{if(key==='inactive')pendingCustomerInactivity=30;close();nav(metric.route)};
+  }
   dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(b=>b.onclick=()=>{
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
-    dashboardRoot.querySelector('#df').value=iso(new Date(Date.now()-(b.dataset.d-1)*864e5));dashboardRoot.querySelector('#dt').value=iso(new Date());load();
+    dashboardRoot.querySelector('#df').value=shiftSgDateInput(sgDateInputValue(),-(Number(b.dataset.d)-1));dashboardRoot.querySelector('#dt').value=sgDateInputValue();load();
   });
+  dashboardRoot.querySelectorAll('input[type="date"]').forEach(input=>input.oninput=()=>dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>button.classList.remove('act')));
   dashboardRoot.querySelector('#apply').onclick=()=>load();
-  async function renderTasks(){
-    const launcher=dashboardRoot.querySelector('#taskLauncher');
-    if(!launcher)return;
-    if(!selectedBranchId){
-      launcher.innerHTML=`<div class="card" style="grid-column:1/-1"><b>Choose a branch to start</b><p class="muted small" style="margin-top:5px">All branches is for consolidated performance only. Select one branch before recording or changing anything.</p></div>`;
-      return;
-    }
-    let projection;
-    try{projection=await loadBranchModuleProjection(selectedBranchId)}
-    catch(error){
-      launcher.innerHTML=`<div class="card" style="grid-column:1/-1"><b>Tasks could not be loaded</b><p class="muted small" style="margin-top:5px">${esc(error.message||'Try selecting the branch again.')}</p></div>`;
-      return;
-    }
-    if(!isDashboardCurrent())return;
-    const tasks=[
-      projectionCanWrite(projection,'till')&&{href:'#/till',icon:'till',title:'Record a sale',body:'Find the customer, add items and confirm payment.'},
-      projectionCanWrite(projection,'appointments')&&{href:'#/appointments',icon:'appointments',title:'Add appointment',body:'Open the team day, then check staff availability.'},
-      projectionCanRead(projection,'clients')&&{href:'#/clients',icon:'customers',title:'Find a customer',body:'Search by name or phone number.'},
-      projectionCanWrite(projection,'loyalty')&&{href:'#/loyalty',icon:'rewards',title:'Set up rewards',body:'Use the guided programme overview.'}
-    ].filter(Boolean);
-    launcher.innerHTML=tasks.length
-      ?tasks.map(task=>`<a class="task-launcher-card" href="${task.href}"><span class="task-icon">${CUI.icon(task.icon,{size:22})}</span><span><b>${esc(task.title)}</b><span>${esc(task.body)}</span></span></a>`).join('')
-      :`<div class="card" style="grid-column:1/-1"><b>No tasks are assigned here</b><p class="muted small" style="margin-top:5px">Ask the owner to enable a module or give this role access for the selected branch.</p></div>`;
-  }
   async function load(){
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
+    const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value,branchId=selectedBranchId||null;
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts');
+    const showLoadError=(message,retryId)=>{
+      if(!status)return;
+      kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');
+      status.innerHTML=`<div class="err" role="alert">${esc(message)} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
+      status.querySelector('#'+retryId).onclick=load;
+      localizeWorkspaceSubtreeV97(status);
+    };
+    if(!from||!to||from>to){showLoadError('Choose a valid dashboard date range.','dashboardReportRetry');return}
     killCharts();
-    let response;
-    try{response=await sb.rpc('get_dashboard_summary',{
-      p_business:S.biz.id,p_from:dashboardRoot.querySelector('#df').value,
-      p_to:dashboardRoot.querySelector('#dt').value,p_branch:selectedBranchId||null})}
-    catch(error){if(isCurrent())fail(error);return}
+    status.innerHTML='<p class="muted small" style="margin-top:12px">Loading performance…</p>';
+    if(kpis)kpis.innerHTML='';if(charts)charts.innerHTML='';
+    kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');
+    const canReadSaleItems=S.myRole==='owner'||S.isSA===true;
+    let response,inactiveResponse={data:null,error:null},saleMixRows=[],saleMixUnavailable='',saleMixRetryable=false;
+    try{[response,inactiveResponse,saleMixRows]=await Promise.all([
+      sb.rpc('get_dashboard_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:branchId}),
+      canReadModule('clients')?sb.rpc('staff_list_customers_v129',{p_business:S.biz.id,p_search:null,p_inactive_days:30,p_limit:1,p_offset:0}):Promise.resolve({data:null,error:null}),
+      canReadSaleItems?(async()=>{try{return await fetchAllRows(()=>{let query=sb.from('sale_items').select('id,item_type,line_cents,sales!inner(occurred_at,branch_id,counts_as_revenue)',{count:'exact'}).eq('business_id',S.biz.id).eq('sales.counts_as_revenue',true).gte('sales.occurred_at',sgDateBoundary(from)).lt('sales.occurred_at',sgDateBoundary(to,1)).order('id');if(branchId)query=query.eq('sales.branch_id',branchId);return query})}catch(error){saleMixUnavailable='Services and goods detail could not be loaded.';saleMixRetryable=true;return []}})():Promise.resolve([])
+    ])}
+    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
     if(!isCurrent())return;
     const {data,error}=response;
-    if(error) return fail(error);
+    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
     const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
-    const kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts');
+    if(!canReadSaleItems)saleMixUnavailable='Services and goods detail is available to owners. Other performance figures remain current.';
+    const branchSelect=$('dashboardBranchWrap')?.querySelector('select');
+    appliedDashboardScopeV141={from,to,branchId,branchName:branchId?(branchSelect?.selectedOptions?.[0]?.textContent||'Selected branch'):'All permitted branches'};
     if(!kpis||!charts)return;
-    kpis.innerHTML=[['Visits (sales)',d.visits||0],['Revenue',money(d.revenue_cents||0)],['Unique customers',d.unique_customers||0],
-      ['New customers',d.new_customers||0],['Points issued',d.points_issued||0],['Credit liability',money(d.credit_liability_cents||0)]]
-      .map(([l,v])=>`<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
-    charts.innerHTML=`
-      <div class="card"><b>Busiest days</b><p class="muted small">Visits by day of week</p><div class="chart-frame"><canvas id="c1"></canvas></div></div>
-      <div class="card"><b>Revenue over time</b><p class="muted small">Daily total in range</p><div class="chart-frame"><canvas id="c2"></canvas></div></div>
-      <div class="card"><b>Age groups</b><p class="muted small">From birth dates on file</p><div class="chart-frame"><canvas id="c4"></canvas></div></div>`;
+    status.innerHTML=inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
+    const metrics=[
+      {key:'visits',value:String(d.visits||0),hint:'Visit-marked entries; reversals are separate'},
+      {key:'revenue',value:money(d.revenue_cents||0),hint:'Net sales in this period'},
+      {key:'unique',value:String(d.unique_customers||0),hint:'Each identified customer counted once'},
+      {key:'new',value:String(d.new_customers||0),hint:'Business-wide · profiles joined in this period'},
+      {key:'points',value:String(d.points_issued||0),hint:'Business-wide · qualifying points earned'},
+      {key:'credit',value:money(d.credit_liability_cents||0),hint:'Business-wide · current credit still owed'}
+    ];
+    if(canReadModule('clients'))metrics.push({key:'inactive',value:inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0),hint:'Business-wide · 30+ days or never visited'});
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="v">${esc(metric.value)}</span><span class="metric-hint">${esc(metric.hint)}</span></button>`}).join('');
+    kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>openDashboardMetricDetailV141(button.dataset.dashboardMetric,button.querySelector('.v')?.textContent||'—'));
+    charts.innerHTML=[
+      dashboardChartCardV141({title:'Busiest days',subtitle:'Visit-entry activity; reversals are separate. Green is quieter, amber medium, red busiest.',canvas:'c1',route:'#/sales'}),
+      dashboardChartCardV141({title:'Revenue over time',subtitle:'Daily net revenue in SGD.',canvas:'c2',route:'#/sales'}),
+      dashboardChartCardV141({title:'Age groups',subtitle:'Business-wide from birth dates on file; unknown stays visible.',canvas:'c4',route:'#/clients'}),
+      dashboardChartCardV141({title:'Recorded gender',subtitle:'Business-wide historical aggregate; unknown stays visible.',canvas:'c5',route:'#/clients'}),
+      dashboardChartCardV141({title:'Services and goods sold',subtitle:'Gross positive itemised line value by type; discounts, reversals and receipt-level adjustments are excluded.',canvas:'c6',route:'#/sales',unavailable:saleMixUnavailable,retryId:saleMixRetryable?'dashboardSaleMixRetry':''})
+    ].join('');
+    status.querySelector('#dashboardInactiveRetry')?.addEventListener('click',load);
+    charts.querySelector('#dashboardSaleMixRetry')?.addEventListener('click',load);
+    kpis.setAttribute('aria-busy','false');charts.setAttribute('aria-busy','false');
+    localizeWorkspaceSubtreeV97(dashboardRoot);
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const revenueDays=d.revenue_by_day||[],dk=revenueDays.map(x=>x.day);
     const ac=d.age_counts||{};
     const ages={'<25':ac.under_25||0,'25–34':ac.age_25_34||0,'35–44':ac.age_35_44||0,
       '45–54':ac.age_45_54||0,'55+':ac.age_55_plus||0,'—':ac.unknown||0};
+    const gc=d.gender_counts||{},genders={Female:gc.female||0,Male:gc.male||0,Other:gc.other||0,Unknown:gc.unknown||0};
+    const saleMix=dashboardSaleMixV141(saleMixRows);
     const C=(id,cfg)=>{if(isCurrent()){const canvas=dashboardRoot.querySelector('#'+id);if(canvas)S.charts.push(new Chart(canvas,cfg))}};
-    const coral='#FF6B5E',amber='#FFB86B',ink='#1C1A22';
-    C('c1',{type:'bar',data:{labels:days,datasets:[{data:wd,backgroundColor:days.map((_,i)=>wd[i]===Math.max(...wd)&&wd[i]>0?coral:amber),borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
-    C('c2',{type:'line',data:{labels:dk,datasets:[{data:revenueDays.map(x=>x.amount_cents/100),borderColor:coral,backgroundColor:'rgba(255,107,94,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false}}}});
+    const coral='#C24135',amber='#F0A35B',green='#76B89B',muted='#C9C1B7';
+    C('c1',{type:'bar',data:{labels:days,datasets:[{data:wd,backgroundColor:dashboardWeekdayColoursV141(wd),borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
+    C('c2',{type:'line',data:{labels:dk,datasets:[{data:revenueDays.map(x=>x.amount_cents/100),borderColor:coral,backgroundColor:'rgba(194,65,53,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>money(Math.round(Number(context.parsed.y||0)*100))}}},scales:{y:{ticks:{callback:value=>`SGD ${Number(value).toLocaleString('en-SG')}`}}}}});
     C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
+    C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
+    if(!saleMixUnavailable)C('c6',{type:'doughnut',data:{labels:['Services','Goods','Other'],datasets:[{data:[saleMix.services/100,saleMix.goods/100,saleMix.other/100],backgroundColor:[coral,amber,green],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:context=>`${context.label}: ${money(Math.round(Number(context.raw||0)*100))}`}}}}});
   }
-  refreshBranchFilter(()=>{renderTasks();load()},isDashboardCurrent);
+  refreshBranchFilter(load,isDashboardCurrent,'dashboardBranchWrap');
 }
 
 /* ---------- customers ---------- */
@@ -7205,6 +7350,11 @@ function normalizeSingaporeCustomerSearch(value){
   if(digits.length===10&&digits.startsWith('65'))digits=digits.slice(2);
   return digits.length===8?digits:null;
 }
+function formatCustomerJoinedDateV141(value){
+  if(!value)return 'Unavailable';
+  const date=new Date(value);if(Number.isNaN(date.getTime()))return 'Unavailable';
+  return new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(date);
+}
 async function clientsPage(){
   const routeMain=M();
   const canWrite=canWriteModule('clients');
@@ -7212,7 +7362,7 @@ async function clientsPage(){
   const customerActions=CUI.action({id:'exp',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'})+
     (canWrite?importBtn('customers')+CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView"><div data-workspace-i18n>${CUI.pageHeader({title:'Customers',subtitle:'Find a customer or see who has not visited recently.',iconName:'customers',actions:customerActions,canWrite,moduleLabel:'Customer management'})}</div>
-    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch" style="margin-top:0">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,210px)"><label for="clientInactivity" style="margin-top:0">Last visit</label><select id="clientInactivity"><option value="">All customers</option><option value="30">30+ days inactive</option><option value="60">60+ days inactive</option><option value="90">90+ days inactive</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive means no valid visit for at least the selected number of complete Singapore days. Customers who have never visited are included.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch" style="margin-top:0">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity" style="margin-top:0">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30">Inactive 30+ days</option><option value="60">Inactive 60+ days</option><option value="90">Inactive 90+ days</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive means no valid visit for at least the selected number of complete Singapore days. Customers who have never visited are included.</p></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list"><div class="empty">Loading…</div></div>
     <div class="card" id="fbQueueCard" style="margin-top:16px"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
@@ -7223,16 +7373,18 @@ async function clientsPage(){
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
   const CLIENT_PAGE_SIZE=100;
   let clientPage=0;
-  let clientInactiveDays=null;
+  let clientInactiveDays=pendingCustomerInactivity;
+  pendingCustomerInactivity=null;
   /* A name handed in from the global app-bar search pre-fills and runs the existing name search
      (same query, no new call). Consumed once so a later visit starts clean. */
   let clientSearch=pendingCustomerSearch||'';
   pendingCustomerSearch='';
   if(clientSearch&&$('clientSearch'))$('clientSearch').value=clientSearch;
+  if(clientInactiveDays&&$('clientInactivity'))$('clientInactivity').value=String(clientInactiveDays);
   const runClientSearch=()=>{clientSearch=$('clientSearch').value.trim();clientPage=0;load()};
   $('clientSearchGo').onclick=runClientSearch;
   $('clientSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runClientSearch()}};
-  $('clientSearchClear').onclick=()=>{$('clientSearch').value='';clientSearch='';clientPage=0;load();$('clientSearch').focus()};
+  $('clientSearchClear').onclick=()=>{$('clientSearch').value='';$('clientInactivity').value='';clientSearch='';clientInactiveDays=null;clientPage=0;load();$('clientSearch').focus()};
   $('clientInactivity').onchange=()=>{clientInactiveDays=$('clientInactivity').value?Number($('clientInactivity').value):null;clientPage=0;load()};
   $('exp').onclick=async()=>{
     const exportButton=$('exp');exportButton.disabled=true;
@@ -7247,9 +7399,9 @@ async function clientsPage(){
     if(!isCustomersCurrent())return;
     const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
           C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
-    const rows=[['name','phone','email','birth_date','consent','points','credit'],
+    const rows=[['name','phone','email','birth_date','date_joined','consent','points','credit'],
       ...(cl||[]).map(c=>[c.full_name,c.phone||'',c.email||'',c.birth_date||'',
-        c.marketing_consent?'yes':'no',P[c.id]||0,((C[c.id]||0)/100).toFixed(2)])];
+        c.created_at||'',c.marketing_consent?'yes':'no',P[c.id]||0,((C[c.id]||0)/100).toFixed(2)])];
     const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-customers.csv`;a.click();
     exportButton.disabled=false;
@@ -7295,10 +7447,17 @@ async function clientsPage(){
     if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
     if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveDays?`No customers inactive for ${clientInactiveDays}+ days`:'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveDays?'Choose a shorter period or All customers.':canWrite?'Add your first customer to start recording sales.':'Customers will appear here when an authorized teammate adds them.'});return}
+    let joinedById={},joinedError='';
+    try{
+      const joined=await sb.from('clients').select('id,created_at').eq('business_id',S.biz.id).in('id',cl.map(customer=>customer.id));
+      if(joined.error)throw joined.error;
+      joinedById=Object.fromEntries((joined.data||[]).map(customer=>[customer.id,customer.created_at]));
+    }catch(joinError){joinedError=joinError.message||'Date joined could not be loaded.'}
+    if(!isCurrent())return;
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
-    $('list').innerHTML=`<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th>Name</th><th>Phone</th><th>Last visit</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
+    $('list').innerHTML=`${joinedError?`<div class="err" role="status" style="margin-bottom:12px">Customer results loaded, but Date joined is temporarily unavailable. <button type="button" class="btn ghost sm" id="customerJoinedRetry">Retry</button></div>`:''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th>Name</th><th>Phone</th><th>Last visit</th><th>Date joined</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
       ${cl.map(c=>`<tr>
-        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`Last visit ${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td>
+        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`Last visit ${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(joinedById[c.id]))}</td>
         <td>${Number(c.points)||0} pts</td><td>${money(Number(c.balance_cents)||0)}</td>
         <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
@@ -7306,6 +7465,7 @@ async function clientsPage(){
         <button class="btn ghost sm" id="clNext" ${clientPage+1>=pages?'disabled':''}>Next</button></div>`;
     $('clPrev').onclick=()=>{if(clientPage>0){clientPage--;load()}};
     $('clNext').onclick=()=>{if(clientPage+1<pages){clientPage++;load()}};
+    if($('customerJoinedRetry'))$('customerJoinedRetry').onclick=load;
   }
   /* v53 service-recovery queue — rides the clients module (staff_list_visit_feedback gates on
      can_module_read('clients'), so no new MODULES key). Owner/manager hold refund_sales (the same
@@ -7391,7 +7551,7 @@ async function clientDetail(id){
   const canReverseBirthday=birthdayBenefitsEnabled&&S.myRole==='owner'&&canWriteModule('loyalty');
   let birthdayRedemptionIdem=null;
   let birthdayReversalIdem=null;
-  const [{data:c,error},{data:pb},{data:cb},{data:rg},{data:lp},{data:xb},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:cfDefs},{data:cfVals},{data:cfOpts},{data:birthdayBenefit},{data:msRows},{data:cpRows}]=await Promise.all([
+  const [{data:c,error},{data:pb},{data:cb},{data:rg},{data:lp},{data:xb,error:xbError},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:cfDefs},{data:cfVals},{data:cfOpts},{data:birthdayBenefit},{data:msRows},{data:cpRows}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
     sb.from('clients').select('id,business_id,full_name,phone,email,referral_code,marketing_consent').eq('id',id).single(),
@@ -7577,9 +7737,9 @@ async function clientDetail(id){
   const nbaSeen=new Set([primaryNba.actionKey]);
   const secondaryNba=candidates.filter(x=>x!==primaryNba&&x.run&&!nbaSeen.has(x.actionKey)&&nbaSeen.add(x.actionKey)).slice(0,4);
   const nbaHtml=`<section class="c360-nba" aria-label="Recommended next action">
-    <div class="c360-nba-ic" aria-hidden="true">${CUI.icon(primaryNba.iconName,{size:24})}</div>
+    <div class="c360-nba-ic" aria-hidden="true">${CUI.icon('insight',{size:24})}</div>
     <div class="c360-nba-body">
-      <p class="eyebrow">Next best action</p>
+      <p class="eyebrow">Peekaa's suggestion</p>
       <h2>${esc(primaryNba.title)}</h2>
       <p>${esc(primaryNba.reason)}</p>
       <div class="c360-nba-actions">
@@ -7640,17 +7800,25 @@ async function clientDetail(id){
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
   }
+  const pointsUnit=prog?.loyalty_model==='stamps'?'stamps':'points';
+  const nextExpiryLabel=nextExp
+    ?`${nextExp.remaining} ${pointsUnit} expire ${new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(nextExp.expires_at))}`
+    :xbError?'Expiry schedule is temporarily unavailable.':'No points are currently scheduled to expire.';
+  const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:14})}<span>${esc(nextExpiryLabel)}</span>${xbError?'<button type="button" class="btn ghost sm" id="c360ExpiryRetry">Retry</button>':''}</div>`;
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:headerActions,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
     ${badgesHtml}
     ${nbaHtml}
     <div class="kpis">
       <div class="card kpi"><div class="l">Visits</div><div class="v">${netVisits}</div></div>
       <div class="card kpi"><div class="l">Lifetime spend</div><div class="v">${money(lifetimeSpendCents)}</div></div>
-      <div class="card kpi"><div class="l">Points</div><div class="v">${pts}</div></div>
+      <div class="card kpi"><div class="l">Points</div><div class="v">${pts}</div>${pointsExpiryMarkup}</div>
       <div class="card kpi"><div class="l">Spendable credit</div><div class="v">${money(cred)}</div></div>
     </div>
     <div class="split" style="margin-top:16px">
-      <div class="card" id="c360-loyalty"><b>Rewards</b>${rewardsMarkup}</div>
+      <section class="card c360-rewards-card" id="c360-loyalty">
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards</b><span>Balance, earning and next unlock</span></div></header>
+        <div class="c360-rewards-body">${rewardsMarkup}</div>
+      </section>
       <div class="card"><b>Referral & consent</b>
         <p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
         <div class="row"><b style="font-size:1.3rem;letter-spacing:.15em">${esc(c.referral_code||'—')}</b>
@@ -7764,6 +7932,7 @@ async function clientDetail(id){
     bindReversalButtons(()=>clientDetail(id));
     if(histShown>=history.length) histMore.parentElement.style.display='none';
   };
+  if($('c360ExpiryRetry'))$('c360ExpiryRetry').onclick=()=>clientDetail(id);
   bindReversalButtons(()=>clientDetail(id));
 }
 /* Renders the first n entries of the unified Customer 360 timeline. Each entry keeps its own

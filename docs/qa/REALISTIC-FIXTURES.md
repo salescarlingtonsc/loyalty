@@ -99,6 +99,20 @@ Configuration cases:
   role (no setup control), at 1440px, 375/390/412px portrait and 844×390
   landscape. No primary action begins outside the viewport. Only after Olivia
   explicitly publishes may Chen/Farah fulfil it and `CUS-MEI` see it.
+- V141 dashboard/customer usability: use Orchard plus the all-branches view
+  with 22 visit entries and an explicit reversal-row comparison, SGD 1,737.30 revenue, three distinct identified
+  purchasing customers, four customers joined in range, 75,831 points issued
+  and zero current credit liability. Weekday visits are Mon 1, Tue 3, Wed 9,
+  Thu 2, Fri 1, Sat 1, Sun 5 so quiet/medium/busiest colours are observable.
+  Existing historical gender values include female, male and unknown; the UI
+  does not add a gender-entry control. Sale items include Facial services,
+  Glow serum retail goods, one Other/custom line, and a signed discount line
+  that must be excluded from the gross positive item-mix chart. `CUS-MEI` has 300 points,
+  Free tofu ready and one 300-point batch expiring 28 September 2026. Give
+  `CUS-MEI`, both duplicate Lees, `CUS-ARUN` and `CUS-NEW` distinct synthetic
+  joined dates. Run owner, manager and front desk at 1440px, 1180px iPad-class
+  and 390px; include report, inactivity, item-detail, join-date and expiry
+  error/retry states plus no-expiry/no-programme comparisons.
 
 Promotion cases:
 

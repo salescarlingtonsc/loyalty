@@ -166,10 +166,13 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   been reversed. Canonical SGD 0 package-session usage is a visit; a partial
   refund does not erase the visit; a full sale reversal or restored package
   session does. Revenue residual value is not the visit contract.
-- Ordinary customer operations and dashboard summaries omit gender selection,
-  empty gender copy and the gender demographic chart. Historical stored values
-  are retained. Customer profiles explain loyalty in plain language and label
-  the unified commercial activity feed **Sales history**.
+- Ordinary customer operations omit gender selection and empty gender copy.
+  Historical stored values are retained. Owner clarification 2026-08-02: the
+  Performance dashboard may show an aggregate **Recorded gender** demographic
+  beside age groups when those historical values exist, must include an
+  **Unknown** group, and must never imply that staff need to collect gender.
+  Customer profiles explain loyalty in plain language and label the unified
+  commercial activity feed **Sales history**.
 - Staff are displayed by their working name; email may remain secondary identity
   information but must not be the primary operational label.
 - Appointments can be created, viewed, amended, rescheduled, assigned,
@@ -188,6 +191,37 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   Google Maps policy. External navigation is always an explicit customer action.
 - Navigation must preserve the user's position and state; left navigation must
   not hard-refresh, jump to the top, or show an unexplained blank workspace.
+- Owner annotated iPad review 2026-08-02: the business landing destination is
+  labelled **Dashboard**, not Home. The branch selector sits with the persistent
+  app-bar actions. The dashboard does not repeat Record sale, New appointment,
+  customer search, or Grow as four page cards because those actions are already
+  in the app bar/navigation. Performance is always visible and cannot be
+  collapsed. Its Today/7/30/90/custom range, KPIs and charts form one distinct
+  analytical surface below the app bar.
+- Every dashboard KPI is a semantic 44px-or-larger control. Activating it opens
+  a concise definition, the selected scope/value, and one relevant drill-down.
+  **Visit entries** reports rows marked as visits and discloses that recorded
+  reversal rows remain separate entries; it must not be presented as a net
+  visit count. Branch-scoped values name the applied branch, while values from
+  business-wide readers are labelled business-wide. Edited dates do not relabel
+  existing figures until a fresh read succeeds.
+  **Unique customers** means distinct identified customers attached to a sale
+  in the selected range. **Inactive customers** means no unreversed valid visit
+  for at least 30 complete Singapore-calendar days, including never-visited
+  customers. Charts label SGD values as currency; weekday intensity uses green
+  for quieter, amber for medium and red for busiest; demographic and
+  service-versus-goods summaries disclose unknown/other data instead of
+  inventing detail. The services/goods chart is an owner-only gross positive
+  item-line mix: signed discounts, non-positive reversal lines and receipt-level
+  adjustments are excluded rather than misclassified as a product category.
+  Other roles receive an explicit unavailable state without issuing the raw
+  item-detail read. Report, inactivity and permitted item-detail failures stay
+  in context with a Retry action.
+- The Customers directory keeps name/phone duplicate safety, makes the
+  30/60/90-day last-visit filter obvious, and displays **Date joined**. Customer
+  profiles label the deterministic recommendation **Peekaa's suggestion**,
+  state the practical reason/action, show the next expiring points amount/date
+  when one exists, and give the Rewards card its own recognisable header.
 - Owner analytics include returning-customer count, visit frequency, revenue
   per customer, customer histories, and cautiously labelled projections only
   after sufficient data exists.

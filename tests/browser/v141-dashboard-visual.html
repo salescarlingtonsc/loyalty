@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="1bc9bc5f32d3f73285033b4168c792e177fd1c3620018a8e7155c4b33b51844f">
-<title>Peekaa v104 production-render visual acceptance</title>
-<style>
-
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="production-source-sha256" content="d4d100f9de200cff7fe71f71365b5312c93ad723acb17bc1ae52d942ba40d69b"><title>Peekaa V141 dashboard acceptance</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1007,215 +1001,468 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   body{background:#fff}
 }
 
-/* Evidence label only. Layout and customer promotion components are production CSS. */
-.v104-provenance{margin-bottom:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-</style>
-</head>
-<body>
-<div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 1bc9bc5f32d3f73285033b4168c792e177fd1c3620018a8e7155c4b33b51844f</p>
-  <header class="customer-programme-compact-head">
-    <div class="customer-programme-logo"><span>G</span></div>
-    <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
-    <div class="customer-programme-compact-balance"><b>1,240</b><span>points</span></div>
-  </header>
-  <section class="customer-promotions-section" aria-labelledby="latestOffersTitle">
-    <div class="customer-promotions-head"><div><p class="customer-quest-kicker">From Glow Atelier</p><h2 id="latestOffersTitle">Latest offers</h2></div></div>
-    <div class="customer-promotions-grid" id="promotionCards"></div>
-  </section>
-</div></div>
-<script>
-const PRODUCTION_SOURCE_SHA256="1bc9bc5f32d3f73285033b4168c792e177fd1c3620018a8e7155c4b33b51844f";
-const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
-const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
-const $=id=>document.getElementById(id);
-const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-const customerMediaUrlV95=value=>String(value||'');
-const CUI={activateDialog(modal,{onClose,initialFocus}={}){
-  const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
-  document.addEventListener('keydown',keydown);
-  requestAnimationFrame(()=>modal.querySelector(initialFocus)?.focus());
-  return ()=>{document.removeEventListener('keydown',keydown);modal.remove()};
-}};
-function promotionDateTextV104(value){
-  if(!value)return '';
-  const instant=/^\d{4}-\d{2}-\d{2}$/.test(String(value))
-    ?new Date(`${value}T12:00:00+08:00`):new Date(value);
-  return new Intl.DateTimeFormat('en-SG',{timeZone:'Asia/Singapore',day:'numeric',month:'long',year:'numeric'}).format(instant);
-}
-function customerPromotionCtaV104(item,business,bookingEnabled){
-  const metadata=item?.metadata||{},cta=metadata.cta||{},
-    requestedKind=String(cta.kind||metadata.cta_kind||'programme'),
-    kind=requestedKind==='book'&&!bookingEnabled?'programme':requestedKind;
-  const configured=String(cta.label||metadata.cta_label||'').trim();
-  if(kind==='book'&&bookingEnabled){
-    return `<a class="btn sm" href="#/b/${encodeURIComponent(business.slug||'')}">${esc(configured||'Book now')}</a>`;
-  }
-  if(kind==='counter'){
-    return `<button class="btn sm" type="button" data-promotion-counter>${esc(configured||'Show at counter')}</button>`;
-  }
-  const label=requestedKind==='book'&&!bookingEnabled?'View details':configured||'View details';
-  return `<button class="btn sm" type="button" data-promotion-details>${esc(label)}</button>`;
-}
-function customerPromotionValidityV104(item={}){
-  const starts=promotionDateTextV104(item.starts_at),ends=promotionDateTextV104(item.ends_at);
-  if(starts&&ends)return `Valid ${starts} – ${ends}`;
-  if(ends)return `Valid until ${ends}`;
-  return starts?`Valid from ${starts}`:'';
-}
-function customerPromotionCardV104(item,business,bookingEnabled){
-  const image=customerMediaUrlV95(item?.image_url),
-    validity=customerPromotionValidityV104(item),
-    facts=String(item?.metadata?.offer_facts||'').trim(),
-    terms=String(item?.terms||'').trim();
-  return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
-    ${image?`<div class="customer-promotion-card-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:''}
-    <div class="customer-promotion-card-copy">
-      <p class="customer-quest-kicker">Limited-time offer</p>
-      <h3>${esc(item?.name||'Latest offer')}</h3>
-      ${item?.tagline||item?.description?`<p>${esc(item.tagline||item.description)}</p>`:''}
-      ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
-      <div class="customer-promotion-card-actions">
-        ${customerPromotionCtaV104(item,business,bookingEnabled)}
-        ${terms?`<details><summary class="small">Terms</summary><p class="small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
-      </div>
-      <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>
-      <template data-promotion-details-template>
-        <p>${esc(item?.description||item?.tagline||facts||item?.name||'Latest offer')}</p>
-        <dl class="customer-promotion-detail-list">
-          ${facts?`<div><dt>Offer</dt><dd>${esc(facts)}</dd></div>`:''}
-          ${validity?`<div><dt>Validity</dt><dd>${esc(validity)}</dd></div>`:''}
-          ${terms?`<div><dt>Terms</dt><dd>${esc(terms)}</dd></div>`:''}
-        </dl>
-        <p class="muted small">Show these details to the team when you visit.</p>
-      </template>
-    </div>
-  </article>`;
-}
-function openCustomerPromotionDetailsV104(card){
-  const template=card?.querySelector('template[data-promotion-details-template]');
-  if(!template)return;
-  $('customerPromotionDetailsModal')?.remove();
-  const title=card.querySelector('h3')?.textContent?.trim()||'Offer details';
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerPromotionDetailsModal" role="dialog" aria-modal="true" aria-labelledby="customerPromotionDetailsTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
-    <div class="row"><h2 id="customerPromotionDetailsTitle">${esc(title)}</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerPromotionDetailsClose">Close</button></div>
-    <div style="margin-top:16px">${template.innerHTML}</div>
-    <button type="button" class="btn" id="customerPromotionDetailsDone" style="margin-top:18px">Done</button>
-  </div></div>`);
-  let deactivate;
-  const close=()=>{if(deactivate)deactivate();else $('customerPromotionDetailsModal')?.remove()};
-  deactivate=CUI.activateDialog($('customerPromotionDetailsModal'),{
-    onClose:close,initialFocus:'#customerPromotionDetailsClose'
-  });
-  $('customerPromotionDetailsClose').onclick=$('customerPromotionDetailsDone').onclick=close;
-}
-function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=null}={}){
-  if(!prompt?.event_id||!prompt?.promotion_id||!businessSlug||!Array.isArray(items))return false;
-  const promotionId=String(prompt.promotion_id);
-  const item=items.find(candidate=>String(candidate?.id||'')===promotionId);
-  if(!item||$('customerPromotionPopupV122'))return false;
-  const endingSoon=prompt.source_kind==='v122_promotion_expiry';
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerPromotionPopupV122" role="dialog" aria-modal="true" aria-labelledby="customerPromotionPopupTitle" tabindex="-1"><div class="modal-card customer-promotion-popup-card">
-    <p class="customer-quest-kicker">${endingSoon?'Ending soon':'New promotion'} · ${esc(business?.name||'Your programme')}</p>
-    <h2 id="customerPromotionPopupTitle" style="margin-top:7px">${esc(item.name||'Latest offer')}</h2>
-    <p class="muted" style="margin-top:8px">${esc(item.description||item.tagline||item?.metadata?.offer_facts||'Open the programme to see this promotion.')}</p>
-    <p class="small" style="margin-top:10px">${esc(customerPromotionValidityV104(item))}</p>
-    <div class="row" style="margin-top:18px"><button type="button" class="btn" data-promotion-popup-view>View offer</button><button type="button" class="btn ghost" data-promotion-popup-dismiss>Not now</button></div>
-    <p class="muted small" data-promotion-popup-status role="status" aria-live="polite" style="margin-top:9px"></p>
-  </div></div>`);
-  const dialog=$('customerPromotionPopupV122');
-  let deactivate,closing=false;
-  const operationKeys={read:crypto.randomUUID(),dismiss:crypto.randomUUID()};
-  const close=async(operation='dismiss',afterClose=null)=>{
-    if(closing)return;
-    closing=true;
-    dialog.querySelectorAll('button').forEach(button=>button.disabled=true);
-    const {error}=await sb.rpc('customer_set_in_app_inbox_state',{
-      p_business_slug:businessSlug,p_event_id:prompt.event_id,
-      p_operation:operation,p_idempotency_key:operationKeys[operation]
-    });
-    if(error){
-      closing=false;
-      dialog.querySelectorAll('button').forEach(button=>button.disabled=false);
-      const status=dialog.querySelector('[data-promotion-popup-status]');
-      if(status)status.textContent='This promotion could not be dismissed. Check your connection and try again.';
-      return;
-    }
-    if(deactivate)deactivate();else dialog?.remove();
-    afterClose?.();
+  .v141-wordmark{font-size:1.35rem;font-weight:750;letter-spacing:-.04em;padding:4px 10px 22px}.v141-profile{display:flex;align-items:center;gap:8px;min-height:44px;padding:5px 10px;border-radius:999px;background:#fff;border:1px solid var(--hair)}
+  </style></head><body><div class="shell"><aside class="side"><div class="v141-wordmark">◉◉<br>peekaa</div><nav class="nav"><a class="act" href="#/dashboard"> Dashboard</a><a href="#/clients">Customers</a><button class="navhead"><span>Serve &amp; sell</span><span class="chev">+</span></button><button class="navhead"><span>Grow</span><span class="chev">+</span></button><button class="navhead"><span>Money</span><span class="chev">+</span></button><button class="navhead"><span>Operations setup</span><span class="chev">+</span></button></nav><div class="foot">V141 source-bound candidate</div></aside>
+  <div class="col"><header class="appbar"><div class="global-actions"><div class="global-search"><span class="global-search-ic">⌕</span><input aria-label="Find a customer" placeholder="Find a customer  ( / )"><button class="global-search-go" aria-label="Search customers">›</button></div><div class="global-quick"><button class="btn sm global-act">Record sale</button><button class="btn ghost sm global-act">New appointment</button></div></div><span class="dashboard-appbar-branch" id="dashboardBranchWrap"><span class="muted small">Loading branches…</span></span><select aria-label="Language" style="width:auto"><option>English</option></select><button class="v141-profile"><span class="avatar">G</span><b>Glow Atelier</b></button></header><main class="main" id="main"></main></div></div><div id="toast" class="toast"></div><script>
+  (function customerUiFactory(global){
+  'use strict';
+
+  const paths={
+    home:'M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5H15v-6H9v6H3.5a.5.5 0 0 1-.5-.5z',
+    customers:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+    till:'M4 6h16v12H4zM8 10h8M8 14h3M16 14h.01',
+    loyalty:'M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
+    retention:'M20 7h-5V2M4 17h5v5M20 7a8 8 0 0 0-13.7-2.7L4 7m0 10a8 8 0 0 0 13.7 2.7L20 17',
+    referrals:'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 8h6M20 5v6',
+    memberships:'M12 3 4 7l8 14 8-14zM4 7h16M8 7l4 14 4-14',
+    giftcard:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
+    appointments:'M7 3v4M17 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v13H3V7a2 2 0 0 1 2-2Z',
+    sales:'M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h3',
+    services:'M14.7 6.3a4 4 0 0 0-5-5L7 4 4 7 1.3 4.3a4 4 0 0 0 5 5L15 18a2.1 2.1 0 1 0 3-3z',
+    bookings:'M6 2v4M18 2v4M3 8h18M5 4h14a2 2 0 0 1 2 2v15H3V6a2 2 0 0 1 2-2Zm3 9h6v6H9z',
+    waitlist:'M6 2h12M6 22h12M8 2v5l4 5-4 5v5M16 2v5l-4 5 4 5v5',
+    inventory:'M21 8 12 3 3 8l9 5 9-5ZM3 8v8l9 5 9-5V8M12 13v8',
+    packages:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7',
+    branch:'M4 22V4h10v18M14 10h6v12M8 8h2M8 12h2M8 16h2M17 14h.01M17 18h.01M2 22h20',
+    reports:'M4 20V10M10 20V4M16 20v-7M22 20V7M2 20h22',
+    staff:'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M20 8v6M17 11h6',
+    daily:'M4 4h16v16H4zM8 2v4M16 2v4M4 9h16M8 13h3M8 17h6',
+    pnl:'M3 3v18h18M7 16l4-5 4 3 5-7',
+    expenses:'M12 2v20M17 6.5A4.5 4.5 0 0 0 12.5 3h-1A4.5 4.5 0 0 0 7 7.5c0 6 10 3 10 9A4.5 4.5 0 0 1 12.5 21h-1A4.5 4.5 0 0 1 7 17.5',
+    settings:'M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1 1.56V20h-3v-.08a1.7 1.7 0 0 0-1-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 14.7a1.7 1.7 0 0 0-1.56-1H5v-3h.08a1.7 1.7 0 0 0 1.56-1A1.7 1.7 0 0 0 6.3 8.8l-.06-.06 2.12-2.12.06.06A1.7 1.7 0 0 0 10.3 7a1.7 1.7 0 0 0 1-1.56V5h3v.08a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19 10.3a1.7 1.7 0 0 0 1.56 1H21v3h-.08a1.7 1.7 0 0 0-1.52.7Z',
+    setup:'m5 12 4 4L19 6M4 3h16v18H4z',
+    platform:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-3-10 2 2 4-4',
+    wallet:'M3 7h18v13H3zM3 9V6a2 2 0 0 1 2-2h13M16 13h5',
+    bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',
+    export:'M12 3v12M7 10l5 5 5-5M4 21h16',
+    import:'M12 21V9M7 14l5-5 5 5M4 3h16',
+    add:'M12 5v14M5 12h14',
+    back:'m15 18-6-6 6-6',
+    forward:'m9 18 6-6-6-6',
+    search:'m21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
+    redeem:'M12 2v20M17 6.5A4.5 4.5 0 0 0 12.5 3h-1A4.5 4.5 0 0 0 7 7.5c0 6 10 3 10 9A4.5 4.5 0 0 1 12.5 21h-1A4.5 4.5 0 0 1 7 17.5',
+    check:'m5 12 4 4L19 6',
+    info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 11v6M12 7h.01',
+    insight:'M9 18h6M10 22h4M8.6 14.8A6 6 0 1 1 15.4 14.8C14.5 15.5 14 16.5 14 18h-4c0-1.5-.5-2.5-1.4-3.2ZM12 2v2M4.9 4.9l1.4 1.4M19.1 4.9l-1.4 1.4',
+    empty:'M4 5h16v14H4zM8 9h8M8 13h5',
+    close:'M6 6l12 12M18 6 6 18',
+    copy:'M8 8h12v12H8zM4 16H3V4h12v1',
+    scan:'M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4M7 12h10',
+    eye:'M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6ZM12 15.25A3.25 3.25 0 1 0 12 8.75a3.25 3.25 0 0 0 0 6.5Z',
+    eyeOff:'M3 3l18 18M10.6 6.12A10.8 10.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17.4 17.4 0 0 1-2.1 2.7M6.2 6.2C3.77 7.9 2.5 12 2.5 12s3.5 6 9.5 6a9.9 9.9 0 0 0 3.2-.52M9.7 9.7a3.25 3.25 0 0 0 4.6 4.6',
+    faceId:'M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M9 9h.01M15 9h.01M12 9v4h-1M8.5 16c1 .8 2.17 1.2 3.5 1.2s2.5-.4 3.5-1.2',
+    edit:'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4'
   };
-  deactivate=CUI.activateDialog(dialog,{onClose:()=>close('dismiss'),initialFocus:'[data-promotion-popup-view]'});
-  dialog.querySelector('[data-promotion-popup-dismiss]').onclick=()=>close('dismiss');
-  dialog.querySelector('[data-promotion-popup-view]').onclick=()=>close('read',()=>{
-    const card=document.querySelector(`[data-promotion-id="${CSS.escape(promotionId)}"]`);
-    card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
-    card?.querySelector('button,a')?.focus();
+
+  function icon(name,{size=20,label='',className=''}={}){
+    const path=paths[name]||paths.info;
+    const a11y=label?`role="img" aria-label="${escapeHtml(label)}"`:'aria-hidden="true" focusable="false"';
+    return `<svg class="cui-icon ${className}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" ${a11y}><path d="${path}"></path></svg>`;
+  }
+
+  function escapeHtml(value){
+    return String(value??'').replace(/[&<>"']/g,char=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[char]));
+  }
+
+  function action({id='',label,iconName='',variant='primary',className='',attributes=''}={}){
+    const classes=['btn',variant==='secondary'?'ghost':'',variant==='danger'?'danger':'',className].filter(Boolean).join(' ');
+    return `<button class="${classes}"${id?` id="${escapeHtml(id)}"`:''} type="button" ${attributes}>${iconName?icon(iconName,{size:17}):''}<span>${escapeHtml(label)}</span></button>`;
+  }
+
+  function status(text,tone='neutral'){
+    return `<span class="pill ${tone}" role="status">${escapeHtml(text)}</span>`;
+  }
+
+  function permissionBanner({canWrite,moduleLabel='This area'}={}){
+    if(canWrite)return '';
+    return `<aside class="permission-banner" role="note">${icon('info',{size:19})}<div><b>Read-only access</b><p>${escapeHtml(moduleLabel)} is available to review. Ask an owner for write access to make changes.</p></div></aside>`;
+  }
+
+  function pageHeader({title,subtitle='',iconName='info',actions='',canWrite=true,moduleLabel='This area'}={}){
+    return `<header class="cui-page-head"><div class="cui-page-title">${icon(iconName,{size:24})}<div><h1>${escapeHtml(title)}</h1>${subtitle?`<p>${escapeHtml(subtitle)}</p>`:''}</div></div>${actions?`<div class="cui-page-actions">${actions}</div>`:''}</header>${permissionBanner({canWrite,moduleLabel})}`;
+  }
+
+  function card({title='',description='',body='',className='',id=''}={}){
+    return `<section class="card cui-card ${className}"${id?` id="${escapeHtml(id)}"`:''}>${title?`<div class="cui-card-head"><h2>${escapeHtml(title)}</h2>${description?`<p>${escapeHtml(description)}</p>`:''}</div>`:''}${body}</section>`;
+  }
+
+  function field({id,label,control='input',type='text',value='',placeholder='',options=[],required=false,hint='',attributes=''}={}){
+    const labelHtml=`<label for="${escapeHtml(id)}">${escapeHtml(label)}${required?' <span aria-hidden="true">*</span><span class="sr-only"> (required)</span>':''}</label>`;
+    let input;
+    if(control==='select')input=`<select id="${escapeHtml(id)}" ${required?'required ':''}${attributes}>${options.map(option=>`<option value="${escapeHtml(option.value)}"${option.selected?' selected':''}>${escapeHtml(option.label)}</option>`).join('')}</select>`;
+    else if(control==='textarea')input=`<textarea id="${escapeHtml(id)}" placeholder="${escapeHtml(placeholder)}" ${required?'required ':''}${attributes}>${escapeHtml(value)}</textarea>`;
+    else input=`<input id="${escapeHtml(id)}" type="${escapeHtml(type)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" ${required?'required ':''}${attributes}>`;
+    return `<div class="cui-field">${labelHtml}${input}${hint?`<p class="cui-field-hint" id="${escapeHtml(id)}-hint">${escapeHtml(hint)}</p>`:''}</div>`;
+  }
+
+  function emptyState({iconName='empty',title='Nothing here yet',body='',actionHtml=''}={}){
+    return `<div class="empty cui-empty">${icon(iconName,{size:32})}<h2>${escapeHtml(title)}</h2>${body?`<p>${escapeHtml(body)}</p>`:''}${actionHtml?`<div class="cui-empty-action">${actionHtml}</div>`:''}</div>`;
+  }
+
+  function loadingState({title='Loading',iconName='info',body='Loading the latest information…'}={}){
+    const productName=global.NestlyBrand?.productName||'Peekaa';
+    return `<section class="cui-route-state" aria-busy="true" aria-labelledby="route-loading-title">${pageHeader({title,subtitle:body,iconName})}<div class="card empty" role="status"><h2 id="route-loading-title">Loading…</h2><p class="muted small">Please wait while ${escapeHtml(productName)} prepares this page.</p></div></section>`;
+  }
+
+  function errorState({title='Unable to load this page',message='Try again.',retryId='routeRetry'}={}){
+    return `<section class="cui-route-state" aria-labelledby="route-error-title">${pageHeader({title,subtitle:'The latest information could not be loaded.',iconName:'info'})}<div class="card"><div class="err" role="alert"><h2 id="route-error-title">Something went wrong</h2><p>${escapeHtml(message)}</p></div><div style="margin-top:16px">${action({id:retryId,label:'Try again',iconName:'retention'})}</div></div></section>`;
+  }
+
+  function table({caption,headers,rows,className=''}={}){
+    return `<div class="cui-table-wrap" role="region" aria-label="${escapeHtml(caption)}" tabindex="0"><table class="cui-table ${className}" data-responsive="true"><caption>${escapeHtml(caption)}</caption><thead><tr>${headers.map(header=>`<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((cell,index)=>`<td data-label="${escapeHtml(headers[index]||'')}">${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+
+  let generatedFieldId=0;
+  function associateLabels(root){
+    root.querySelectorAll('label:not([for])').forEach(label=>{
+      let control=label.querySelector('input,select,textarea');
+      if(!control){
+        const next=label.nextElementSibling;
+        control=next?.matches?.('input,select,textarea')?next:next?.querySelector?.('input,select,textarea');
+      }
+      if(!control)return;
+      if(!control.id)control.id=`cui-field-${++generatedFieldId}`;
+      label.htmlFor=control.id;
+    });
+  }
+
+  function tableCaption(table){
+    const card=table.closest('.card');
+    const heading=card?.querySelector('h2,h3,.cui-card-head,b');
+    const page=table.closest('main')?.querySelector('h1');
+    return (heading?.textContent||page?.textContent||'Data table').trim();
+  }
+
+  function enhanceTables(root){
+    root.querySelectorAll('table').forEach(table=>{
+      table.classList.add('cui-table');
+      const isComplex=!!table.querySelector('[colspan],[rowspan]');
+      table.dataset.responsive=isComplex?'false':'true';
+      let caption=table.querySelector(':scope > caption');
+      if(!caption){caption=document.createElement('caption');caption.textContent=tableCaption(table);table.prepend(caption)}
+      let head=table.querySelector(':scope > thead');
+      const firstRow=table.querySelector('tr');
+      if(!head&&firstRow?.querySelector('th')){
+        head=document.createElement('thead');head.append(firstRow);table.insertBefore(head,table.querySelector('tbody'));
+      }
+      let body=table.querySelector(':scope > tbody');
+      const looseRows=[...table.children].filter(child=>child.tagName==='TR');
+      if(looseRows.length){
+        if(!body){body=document.createElement('tbody');table.append(body)}
+        looseRows.forEach(row=>body.append(row));
+      }
+      head?.querySelectorAll('th').forEach(th=>th.scope='col');
+      const headers=[...(head?.querySelectorAll('th')||[])].map(th=>th.textContent.trim());
+      table.querySelectorAll('tr').forEach(row=>{if(row.closest('thead'))return;[...row.children].forEach((cell,index)=>{
+        if(cell.tagName==='TD'&&!cell.dataset.label)cell.dataset.label=headers[index]||'Details';
+      })});
+      if(!table.parentElement?.classList.contains('cui-table-wrap')){
+        const wrap=document.createElement('div');wrap.className='cui-table-wrap';wrap.tabIndex=0;
+        wrap.setAttribute('role','region');wrap.setAttribute('aria-label',caption.textContent.trim()||'Data table');
+        table.parentNode.insertBefore(wrap,table);wrap.append(table);
+      }
+    });
+  }
+
+  function enhance(root){associateLabels(root);enhanceTables(root)}
+
+  function mountMain(root){
+    enhance(root);
+    const observer=new MutationObserver(()=>enhance(root));
+    observer.observe(root,{childList:true,subtree:true});
+    return observer;
+  }
+
+  function focusRoute(root,{enhanceContent=true}={}){
+    if(enhanceContent)enhance(root);
+    const heading=root.querySelector('h1');
+    const target=heading||root;
+    if(!target)return;
+    if(!target.id)target.id='route-title';
+    target.tabIndex=-1;
+    requestAnimationFrame(()=>target.focus({preventScroll:true}));
+  }
+
+  const liveRegionState=new WeakMap();
+  function announce(message,{assertive=false}={}){
+    const target=document.getElementById(assertive?'appAlert':'appStatus');
+    if(!target)return;
+    const previous=liveRegionState.get(target);
+    if(previous?.timer)clearTimeout(previous.timer);
+    const generation=(previous?.generation||0)+1;
+    liveRegionState.set(target,{generation,timer:null});
+    target.textContent='';
+    requestAnimationFrame(()=>{
+      if(liveRegionState.get(target)?.generation!==generation)return;
+      target.textContent=String(message??'');
+      const timer=setTimeout(()=>{
+        if(liveRegionState.get(target)?.generation!==generation)return;
+        target.textContent='';liveRegionState.delete(target);
+      },5000);
+      liveRegionState.set(target,{generation,timer});
+    });
+  }
+
+  function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]'}={}){
+    const returnFocus=document.activeElement;
+    const focusable=()=>[...dialog.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+      .filter(element=>!element.hidden&&element.getClientRects().length);
+    const keydown=event=>{
+      if(event.key==='Escape'){event.preventDefault();onClose?.();return}
+      if(event.key!=='Tab')return;
+      const items=focusable();if(!items.length){event.preventDefault();dialog.focus();return}
+      const first=items[0],last=items[items.length-1];
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+    };
+    dialog.addEventListener('keydown',keydown);
+    requestAnimationFrame(()=>{const target=dialog.querySelector(initialFocus)||focusable()[0]||dialog;target.focus()});
+    return ({restoreFocus=true}={})=>{dialog.removeEventListener('keydown',keydown);dialog.remove();if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus()};
+  }
+
+  global.FrenlyCustomerUI=Object.freeze({
+    icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
+    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog
   });
-  return true;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+  const CUI=window.FrenlyCustomerUI,$=id=>document.getElementById(id),M=()=>document.getElementById('main');
+  const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const money=cents=>'SGD '+(Number(cents||0)/100).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fixtureParams=new URLSearchParams(location.search);
+  const fixtureRole=fixtureParams.get('role')||'owner';
+  const S={myRole:fixtureRole,isSA:false,user:{id:fixtureRole+'-v141'},biz:{id:'business-v141',name:'Glow Atelier'}};
+  let dashboardRenderEpoch=0,selectedBranchId=null,pendingCustomerInactivity=null;
+  const workspaceTemplateHtmlV97=(key,values)=>'How '+esc(values.business)+' is doing';
+  const workspaceTemplateAttributeV97=(attribute,key,values)=>attribute+'="'+esc(key+': '+values.metric)+'"';
+  const workspaceTranslationV97=value=>value;
+  const localizeWorkspaceSubtreeV97=()=>{};
+  const createLatestRequestGate=isCurrent=>{let generation=0;return {begin(){const mine=++generation;return ()=>mine===generation&&isCurrent()},invalidate(){generation++}}};
+  const canReadModule=()=>true,hasRoleCapability=()=>true;
+  const sgDateInputValue=()=>new URLSearchParams(location.search).get('today')||'2026-08-02';
+  const shiftSgDateInput=(date,days)=>{const value=new Date(date+'T00:00:00Z');value.setUTCDate(value.getUTCDate()+days);return value.toISOString().slice(0,10)};
+  const sgDateBoundary=(date,plusDays=0)=>new Date(shiftSgDateInput(date,plusDays)+'T00:00:00+08:00').toISOString();
+  const fetchAllRows=async factory=>(await factory()).data||[];
+  const fail=error=>window.__consoleErrors.push(String(error?.message||error));
+  const nav=route=>{window.__lastNavigation=route};
+  const killCharts=()=>{for(const chart of S.charts||[])chart.destroy?.();S.charts=[]};S.charts=[];
+  const branches=[{id:'branch-one',name:'Orchard'},{id:'branch-two',name:'Tampines'}];
+  const saleItems=[
+    {id:'line-1',item_type:'service',line_cents:128000},{id:'line-2',item_type:'retail',line_cents:39200},{id:'line-3',item_type:'custom',line_cents:6500},
+    {id:'line-discount',item_type:'studio_discount',line_cents:-1500}
+  ];
+  const visitSales=[...Array.from({length:23},(_,index)=>({id:'visit-'+index,occurred_at:new Date(Date.UTC(2026,6,20+(index%13),4+(index%4),0)).toISOString(),counts_as_visit:true,reversal_of:null})),{id:'reversal-one',occurred_at:'2026-07-29T06:00:00.000Z',counts_as_visit:true,reversal_of:'visit-1'}];
+  window.__saleItemsReads=0;window.__dashboardReportReads=0;window.__inactiveReads=0;
+  function fixtureQuery(table){
+    const query={select(){return query},eq(){return query},gte(){return query},lt(){return query},order(){return query},limit(){return query},range(){return query},
+      then(resolve,reject){
+        if(table==='sale_items'){
+          window.__saleItemsReads++;
+          if(fixtureParams.get('item_error')==='1'&&window.__saleItemsReads===1)return Promise.reject(new Error('Injected item-detail interruption')).then(resolve,reject);
+        }
+        const data=table==='branches'?branches:table==='staff'?[{id:'staff-v141'}]:table==='staff_branches'?[{branches:branches[0]}]:table==='sale_items'&&fixtureRole==='owner'?saleItems:table==='sales'?visitSales:[];
+        return Promise.resolve({data,error:null,count:data.length}).then(resolve,reject)
+      }};
+    return query;
+  }
+  window.__consoleErrors=[];
+  const sb={from:fixtureQuery,rpc:async name=>{
+    if(name==='get_dashboard_summary'){
+      window.__dashboardReportReads++;
+      if(fixtureParams.get('report_error')==='1'&&window.__dashboardReportReads===1)return {data:null,error:{message:'Injected report interruption'}};
+      return {data:{visits:22,revenue_cents:173730,unique_customers:3,new_customers:4,points_issued:75831,credit_liability_cents:0,visits_by_weekday:[1,3,9,2,1,1,5],revenue_by_day:[{day:'20 Jul',amount_cents:10000},{day:'22 Jul',amount_cents:40000},{day:'29 Jul',amount_cents:63500},{day:'31 Jul',amount_cents:50230}],age_counts:{under_25:1,age_25_34:2,age_35_44:0,age_45_54:0,age_55_plus:0,unknown:1},gender_counts:{female:2,male:1,other:0,unknown:1}},error:null};
+    }
+    if(name==='staff_list_customers_v129'){
+      window.__inactiveReads++;
+      if(fixtureParams.get('inactive_error')==='1'&&window.__inactiveReads===1)return {data:null,error:{message:'Injected inactivity interruption'}};
+      return {data:{total:2,customers:[]},error:null};
+    }
+    return {data:null,error:null};
+  }};
+  async function visibleBranchesForCurrentUser(){
+  const isAdmin=S.myRole==='owner'||S.myRole==='manager';
+  let branches=[];
+  if(isAdmin){
+    const {data,error}=await sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name');
+    if(error)throw error;
+    branches=data||[];
+  }else{
+    const {data:me,error:staffError}=await sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
+    if(staffError)throw staffError;
+    if(me&&me.length){
+      const {data,error}=await sb.from('staff_branches').select('branches(id,name,active)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
+      if(error)throw error;
+      branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    }
+  }
+  return {isAdmin,branches};
 }
-const business={name:'Glow Atelier',slug:'glow-atelier'};
-$('promotionCards').innerHTML=FIXTURE_OFFERS.map(offer=>customerPromotionCardV104(offer,business,true)).join('');
-document.querySelectorAll('[data-promotion-details]').forEach(button=>button.addEventListener('click',()=>{
-  openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
-}));
-window.v104OpenTerms=(index=0)=>{
-  const details=document.querySelectorAll('.customer-promotion-card details')[index];
-  if(details)details.open=true;
-};
-window.v104AcceptanceMetrics=()=>({
-  sourceHash:PRODUCTION_SOURCE_SHA256,
-  viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
-  cards:[...document.querySelectorAll('.customer-promotion-card')].map(card=>({
-    rect:card.getBoundingClientRect().toJSON(),
-    validity:card.querySelector('.customer-promotion-validity')?.textContent?.trim(),
-    ctaHeight:card.querySelector('.btn')?.getBoundingClientRect().height,
-    details:(()=>{
-      const details=card.querySelector('details');
-      if(!details)return null;
-      const rect=details.getBoundingClientRect(),cardRect=card.getBoundingClientRect();
-      return {
-        open:details.open,
-        width:rect.width,
-        height:rect.height,
-        cardWidth:cardRect.width,
-        availableContentWidth:card.querySelector('h3')?.getBoundingClientRect().width||0,
-        scrollWidth:details.scrollWidth,
-        clientWidth:details.clientWidth,
-        scrollHeight:details.scrollHeight,
-        clientHeight:details.clientHeight
-      };
-    })(),
-    textOverflow:[...card.querySelectorAll('h3,p,summary,dd')].map(node=>({
-      text:node.textContent.trim(),clientWidth:node.clientWidth,scrollWidth:node.scrollWidth,
-      clientHeight:node.clientHeight,scrollHeight:node.scrollHeight
-    }))
-  })),
-  longTokenVisible:document.body.textContent.includes(FIXTURE_LONG_TOKEN),
-  modal:document.querySelector('#customerPromotionDetailsModal')?{
-    role:document.querySelector('#customerPromotionDetailsModal').getAttribute('role'),
-    ariaModal:document.querySelector('#customerPromotionDetailsModal').getAttribute('aria-modal'),
-    labelledBy:document.querySelector('#customerPromotionDetailsModal').getAttribute('aria-labelledby'),
-    activeElement:document.activeElement?.id||'',
-    textOverflow:[...document.querySelectorAll('#customerPromotionDetailsModal h2,#customerPromotionDetailsModal p,#customerPromotionDetailsModal dd')].map(node=>({
-      text:node.textContent.trim(),clientWidth:node.clientWidth,scrollWidth:node.scrollWidth,
-      clientHeight:node.clientHeight,scrollHeight:node.scrollHeight
-    }))
-  }:null
-});
-const evidenceParams=new URLSearchParams(location.search);
-if(evidenceParams.has('openTerms'))window.v104OpenTerms(Number(evidenceParams.get('openTerms')||0));
-if(evidenceParams.get('openModal')==='1'){
-  document.querySelector('[data-promotion-details]')?.click();
+async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchWrap'){
+  const wrap=$(targetId);
+  if(!wrap){ onChange(); return; }
+  let isAdmin=S.myRole==='owner'||S.myRole==='manager',branches=[];
+  try{({isAdmin,branches}=await visibleBranchesForCurrentUser())}
+  catch(e){if(isCurrent()&&wrap.isConnected&&$(targetId)===wrap)console.error(e)}
+  if(!isCurrent()||!wrap.isConnected||$(targetId)!==wrap)return;
+  if(!isAdmin&&(!selectedBranchId||!branches.some(b=>b.id===selectedBranchId))){
+    /* Employees can't request consolidated (the server raises branch_visibility on
+       p_branch=null for them) — default to their first assigned branch so the page loads
+       clean instead of surfacing that error on first paint. */
+    selectedBranchId=branches.length?branches[0].id:null;
+  }
+  wrap.innerHTML=(branches.length||isAdmin)
+    ? `<select id="branchSel" class="qbtn" aria-label="Business branch" style="padding-right:22px">
+        ${isAdmin?`<option value="">All branches (consolidated)</option>`:''}
+        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}${b.active===false?' (inactive)':''}</option>`).join('')}
+      </select>`
+    : `<span class="muted small">No branch assigned — ask the owner</span>`;
+  const sel=wrap.querySelector('#branchSel');
+  if(sel){
+    sel.value=selectedBranchId||'';
+    sel.onchange=()=>{selectedBranchId=sel.value||null;onChange()};
+  }
+  onChange();
 }
-if(evidenceParams.get('evidence')==='1'){
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const report=document.createElement('pre');
-    report.id='v104AcceptanceReport';
-    report.hidden=true;
-    report.textContent=JSON.stringify(window.v104AcceptanceMetrics());
-    document.body.append(report);
-  }));
+  async function dashboard(){
+  const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
+  const renderEpoch=++dashboardRenderEpoch;
+  M().innerHTML=`<section id="dashboardView" class="dashboard-page" data-render-epoch="${renderEpoch}" data-workspace-i18n>
+    <header class="dashboard-intro">${CUI.icon('home',{size:25})}<div><h1>Dashboard</h1><p class="muted small">A clear view of how <span data-merchant-content>${esc(S.biz.name)}</span> is doing. Choose the branch in the app bar and a period below. Business-wide figures are labelled.</p></div></header>
+    <section class="card performance-panel" aria-labelledby="performanceTitle">
+      <header class="performance-heading">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small">${workspaceTemplateHtmlV97('dashboardSummary',{business:S.biz.name})}</p></div></header>
+      <div class="performance-body"><div class="range">
+      <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
+      <label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}">
+      <button class="btn sm" id="apply">Apply</button>
+    </div><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis" id="kpis" aria-live="polite"></div><div class="charts dashboard-charts" id="charts"></div></div>
+    </section></section>`;
+  const dashboardRoot=$('dashboardView');
+  const isDashboardCurrent=()=>dashboardRenderEpoch===renderEpoch&&dashboardRoot.isConnected&&$('dashboardView')===dashboardRoot;
+  const requestGate=createLatestRequestGate(isDashboardCurrent);
+  const dashboardWeekdayColoursV141=values=>{
+    const numbers=values.map(Number),busiest=Math.max(0,...numbers),medium=Math.max(2,busiest*.5),quiet='#76B89B';
+    return numbers.map(value=>value>0&&value===busiest?'#C24135':value>=medium?'#F0A35B':quiet);
+  };
+  const dashboardSaleMixV141=rows=>(rows||[]).reduce((totals,row)=>{
+    const cents=Number(row.line_cents)||0;
+    /* This is a gross positive item mix, not receipt reconciliation. Checkout
+       discount lines are signed adjustments and must never be presented as a
+       product category or make a doughnut segment negative. */
+    if(row.item_type==='studio_discount'||cents<=0)return totals;
+    const key=row.item_type==='service'?'services':['retail','product'].includes(row.item_type)?'goods':'other';
+    totals[key]+=cents;return totals;
+  },{services:0,goods:0,other:0});
+  const dashboardChartCardV141=({title,subtitle,canvas,route,unavailable='',retryId=''})=>`<section class="card dashboard-chart-card"><header class="dashboard-chart-head">${CUI.icon('reports',{size:20})}<div><b>${esc(title)}</b><p class="muted small">${esc(subtitle)}</p></div><a class="dashboard-chart-link" href="${route}">View details →</a></header>${unavailable?`<div class="empty" role="status"><p>${esc(unavailable)}</p>${retryId?`<button type="button" class="btn ghost sm" id="${retryId}" style="margin-top:12px">Retry</button>`:''}</div>`:`<div class="chart-frame"><canvas id="${canvas}"></canvas></div>`}</section>`;
+  const dashboardMetricDefinitionsV141={
+    visits:{label:'Visit entries',definition:'Sale rows marked as visits in this selected period. Recorded reversal rows are separate entries, so use Sales when reviewing the net customer history.',route:'#/sales',action:'View sales',scope:'branch'},
+    revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',scope:'branch'},
+    unique:{label:'Unique customers',definition:'Distinct identified customers attached to a sale entry in this selected period. A customer is counted once even after several entries.',route:'#/clients',action:'View customers',scope:'branch'},
+    new:{label:'New customers',definition:'Customer profiles first joined to this business during the selected period. This figure is business-wide.',route:'#/clients',action:'View customers',scope:'business'},
+    points:{label:'Points issued',definition:'Loyalty points earned across this business in the selected period. This figure is business-wide.',route:'#/grow',action:'View rewards',scope:'business'},
+    credit:{label:'Credit liability',definition:'Current positive customer credit that this business still owes. This is a business-wide current balance, not a period or branch value.',route:'#/clients',action:'View customers',scope:'business-current'},
+    inactive:{label:'Inactive customers',definition:'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.',route:'#/clients',action:'View inactive customers',scope:'business-current'}
+  };
+  let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
+  function openDashboardMetricDetailV141(key,value){
+    const metric=dashboardMetricDefinitionsV141[key];if(!metric)return;
+    const allBusiness=workspaceTranslationV97('All business customers');
+    const branchName=appliedDashboardScopeV141.branchId?appliedDashboardScopeV141.branchName:workspaceTranslationV97('All permitted branches');
+    const scope=metric.scope==='branch'
+      ?`${branchName} · ${appliedDashboardScopeV141.from} – ${appliedDashboardScopeV141.to}`
+      :metric.scope==='business'
+        ?`${allBusiness} · ${appliedDashboardScopeV141.from} – ${appliedDashboardScopeV141.to}`
+        :`${allBusiness} · ${workspaceTranslationV97('Current balance/status')}`;
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="dashboardMetricModal" role="dialog" aria-modal="true" aria-labelledby="dashboardMetricTitle" tabindex="-1" data-workspace-i18n><div class="modal-card" style="max-width:520px"><p class="eyebrow">Performance detail</p><h2 id="dashboardMetricTitle" style="margin-top:4px">${esc(metric.label)}</h2><p style="font-size:2rem;font-weight:750;margin-top:13px">${esc(value)}</p><p class="muted" style="margin-top:10px;line-height:1.55">${esc(metric.definition)}</p><p class="dashboard-read-note">${esc(scope)}</p><div class="row" style="margin-top:18px;flex-wrap:wrap"><button class="btn" id="dashboardMetricGo">${esc(metric.action)}</button><button class="btn ghost sm" id="dashboardMetricClose">Close</button></div></div></div>`);
+    const dialog=$('dashboardMetricModal');
+    localizeWorkspaceSubtreeV97(dialog);
+    let deactivate;
+    const close=()=>deactivate?.();
+    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#dashboardMetricGo'});
+    $('dashboardMetricClose').onclick=close;
+    $('dashboardMetricGo').onclick=()=>{if(key==='inactive')pendingCustomerInactivity=30;close();nav(metric.route)};
+  }
+  dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(b=>b.onclick=()=>{
+    dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
+    dashboardRoot.querySelector('#df').value=shiftSgDateInput(sgDateInputValue(),-(Number(b.dataset.d)-1));dashboardRoot.querySelector('#dt').value=sgDateInputValue();load();
+  });
+  dashboardRoot.querySelectorAll('input[type="date"]').forEach(input=>input.oninput=()=>dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>button.classList.remove('act')));
+  dashboardRoot.querySelector('#apply').onclick=()=>load();
+  async function load(){
+    const isCurrent=requestGate.begin();
+    if(!isCurrent())return;
+    const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value,branchId=selectedBranchId||null;
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts');
+    const showLoadError=(message,retryId)=>{
+      if(!status)return;
+      kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');
+      status.innerHTML=`<div class="err" role="alert">${esc(message)} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
+      status.querySelector('#'+retryId).onclick=load;
+      localizeWorkspaceSubtreeV97(status);
+    };
+    if(!from||!to||from>to){showLoadError('Choose a valid dashboard date range.','dashboardReportRetry');return}
+    killCharts();
+    status.innerHTML='<p class="muted small" style="margin-top:12px">Loading performance…</p>';
+    if(kpis)kpis.innerHTML='';if(charts)charts.innerHTML='';
+    kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');
+    const canReadSaleItems=S.myRole==='owner'||S.isSA===true;
+    let response,inactiveResponse={data:null,error:null},saleMixRows=[],saleMixUnavailable='',saleMixRetryable=false;
+    try{[response,inactiveResponse,saleMixRows]=await Promise.all([
+      sb.rpc('get_dashboard_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:branchId}),
+      canReadModule('clients')?sb.rpc('staff_list_customers_v129',{p_business:S.biz.id,p_search:null,p_inactive_days:30,p_limit:1,p_offset:0}):Promise.resolve({data:null,error:null}),
+      canReadSaleItems?(async()=>{try{return await fetchAllRows(()=>{let query=sb.from('sale_items').select('id,item_type,line_cents,sales!inner(occurred_at,branch_id,counts_as_revenue)',{count:'exact'}).eq('business_id',S.biz.id).eq('sales.counts_as_revenue',true).gte('sales.occurred_at',sgDateBoundary(from)).lt('sales.occurred_at',sgDateBoundary(to,1)).order('id');if(branchId)query=query.eq('sales.branch_id',branchId);return query})}catch(error){saleMixUnavailable='Services and goods detail could not be loaded.';saleMixRetryable=true;return []}})():Promise.resolve([])
+    ])}
+    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
+    if(!isCurrent())return;
+    const {data,error}=response;
+    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
+    const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
+    if(!canReadSaleItems)saleMixUnavailable='Services and goods detail is available to owners. Other performance figures remain current.';
+    const branchSelect=$('dashboardBranchWrap')?.querySelector('select');
+    appliedDashboardScopeV141={from,to,branchId,branchName:branchId?(branchSelect?.selectedOptions?.[0]?.textContent||'Selected branch'):'All permitted branches'};
+    if(!kpis||!charts)return;
+    status.innerHTML=inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
+    const metrics=[
+      {key:'visits',value:String(d.visits||0),hint:'Visit-marked entries; reversals are separate'},
+      {key:'revenue',value:money(d.revenue_cents||0),hint:'Net sales in this period'},
+      {key:'unique',value:String(d.unique_customers||0),hint:'Each identified customer counted once'},
+      {key:'new',value:String(d.new_customers||0),hint:'Business-wide · profiles joined in this period'},
+      {key:'points',value:String(d.points_issued||0),hint:'Business-wide · qualifying points earned'},
+      {key:'credit',value:money(d.credit_liability_cents||0),hint:'Business-wide · current credit still owed'}
+    ];
+    if(canReadModule('clients'))metrics.push({key:'inactive',value:inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0),hint:'Business-wide · 30+ days or never visited'});
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="v">${esc(metric.value)}</span><span class="metric-hint">${esc(metric.hint)}</span></button>`}).join('');
+    kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>openDashboardMetricDetailV141(button.dataset.dashboardMetric,button.querySelector('.v')?.textContent||'—'));
+    charts.innerHTML=[
+      dashboardChartCardV141({title:'Busiest days',subtitle:'Visit-entry activity; reversals are separate. Green is quieter, amber medium, red busiest.',canvas:'c1',route:'#/sales'}),
+      dashboardChartCardV141({title:'Revenue over time',subtitle:'Daily net revenue in SGD.',canvas:'c2',route:'#/sales'}),
+      dashboardChartCardV141({title:'Age groups',subtitle:'Business-wide from birth dates on file; unknown stays visible.',canvas:'c4',route:'#/clients'}),
+      dashboardChartCardV141({title:'Recorded gender',subtitle:'Business-wide historical aggregate; unknown stays visible.',canvas:'c5',route:'#/clients'}),
+      dashboardChartCardV141({title:'Services and goods sold',subtitle:'Gross positive itemised line value by type; discounts, reversals and receipt-level adjustments are excluded.',canvas:'c6',route:'#/sales',unavailable:saleMixUnavailable,retryId:saleMixRetryable?'dashboardSaleMixRetry':''})
+    ].join('');
+    status.querySelector('#dashboardInactiveRetry')?.addEventListener('click',load);
+    charts.querySelector('#dashboardSaleMixRetry')?.addEventListener('click',load);
+    kpis.setAttribute('aria-busy','false');charts.setAttribute('aria-busy','false');
+    localizeWorkspaceSubtreeV97(dashboardRoot);
+    const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const revenueDays=d.revenue_by_day||[],dk=revenueDays.map(x=>x.day);
+    const ac=d.age_counts||{};
+    const ages={'<25':ac.under_25||0,'25–34':ac.age_25_34||0,'35–44':ac.age_35_44||0,
+      '45–54':ac.age_45_54||0,'55+':ac.age_55_plus||0,'—':ac.unknown||0};
+    const gc=d.gender_counts||{},genders={Female:gc.female||0,Male:gc.male||0,Other:gc.other||0,Unknown:gc.unknown||0};
+    const saleMix=dashboardSaleMixV141(saleMixRows);
+    const C=(id,cfg)=>{if(isCurrent()){const canvas=dashboardRoot.querySelector('#'+id);if(canvas)S.charts.push(new Chart(canvas,cfg))}};
+    const coral='#C24135',amber='#F0A35B',green='#76B89B',muted='#C9C1B7';
+    C('c1',{type:'bar',data:{labels:days,datasets:[{data:wd,backgroundColor:dashboardWeekdayColoursV141(wd),borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
+    C('c2',{type:'line',data:{labels:dk,datasets:[{data:revenueDays.map(x=>x.amount_cents/100),borderColor:coral,backgroundColor:'rgba(194,65,53,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>money(Math.round(Number(context.parsed.y||0)*100))}}},scales:{y:{ticks:{callback:value=>`SGD ${Number(value).toLocaleString('en-SG')}`}}}}});
+    C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
+    C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
+    if(!saleMixUnavailable)C('c6',{type:'doughnut',data:{labels:['Services','Goods','Other'],datasets:[{data:[saleMix.services/100,saleMix.goods/100,saleMix.other/100],backgroundColor:[coral,amber,green],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:context=>`${context.label}: ${money(Math.round(Number(context.raw||0)*100))}`}}}}});
+  }
+  refreshBranchFilter(load,isDashboardCurrent,'dashboardBranchWrap');
 }
-</script>
-</body>
-</html>
+  window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
+  window.v141DashboardMetrics=()=>({sourceHash:'d4d100f9de200cff7fe71f71365b5312c93ad723acb17bc1ae52d942ba40d69b',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
+  </script></body></html>
