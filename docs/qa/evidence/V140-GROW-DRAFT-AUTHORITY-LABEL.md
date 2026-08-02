@@ -47,5 +47,28 @@ function, configuration, security or production change. Frozen reviewed
 content-manifest digest:
 `6f7e98c7bcc16a414934a2e9bf6fa74c4ef6b990d3b682727d5012def5688b75`.
 
-No V140 commit, push, merge or production deployment is authorized by the
-earlier V139 approval. A subsequent scoped owner approval remains required.
+The earlier V139 approval did not authorize a V140 commit, push, merge or
+production deployment. The owner subsequently supplied the separate scoped
+V140 approval recorded below.
+
+## Production release evidence
+
+The owner subsequently approved the scoped V140 release. Commit `e086a91` was
+pushed, PR #15 was merged into `main` as `370c5bfcc3507765d87c4a7b3e96cfe75d67723c`,
+and Vercel production deployment `dpl_8GDnyWe6UrhVbed3qF4gy7fENdMY` reached
+**Ready** with `www.peekaa.asia` and the canonical Peekaa aliases attached.
+
+Read-only production checks found:
+
+- bare `peekaa.asia/business` returns HTTP 308 to canonical
+  `https://www.peekaa.asia/business`;
+- `/api/build` reports production commit `370c5bfcc350`;
+- canonical HTML contains `loyaltyAuthorityActionV140` and **Editable draft**
+  and no longer contains the old combined authority/draft ternary;
+- authenticated Cubbly Earn renders one visible **Editable draft**, one enabled
+  **Save draft**, one enabled **Review & publish**, and no visible Birthday
+  sibling editor;
+- the deployment log query returned no runtime errors.
+
+The authenticated verification was deliberately non-mutating: no draft was
+saved, no programme was published and no customer record was changed.
