@@ -165,6 +165,16 @@ production data. No production deployment has occurred.
 
 ## Status
 
-`VERIFIED_BROWSER` — independently accepted by Sol. Release approval has not
-been requested or exercised, and authenticated target-production proof remains
-outstanding.
+`VERIFIED_BROWSER` — independently accepted by Sol and released under the
+owner's explicit V141 approval on 2026-08-02. Commit
+`ebdac8b12d6dc739a799a73a399578644122664d` was pushed to
+`origin/codex/v141-dashboard-customer-ux`. Vercel production deployment
+`dpl_87Rg8gyADszJTZFkmgzErH3zn9oA` reached `READY` and was aliased to
+`https://www.peekaa.asia`. The canonical `index.html` SHA-256 is exactly the
+accepted `2a81ac189e36c6e10fe99edb79208cfa46ab334c4cb85fc8ee000fb3e6bc56bd`;
+`/business` returned HTTP 200; bare `peekaa.asia` returned HTTP 308 to `www`;
+and the served source contains **Visit entries**, **Peekaa's suggestion**, and
+the dashboard item-detail Retry marker. This proves exact production artifact
+delivery, not an authenticated owner/manager/front-desk journey. The three
+ledger rows therefore remain `VERIFIED_BROWSER`, not `CLOSED`, until that
+target-authenticated proof is captured.
