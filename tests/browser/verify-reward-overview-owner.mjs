@@ -136,6 +136,10 @@ try{
   metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
   assert.equal(metrics.openedRewardId,'22222222-2222-4222-8222-222222222222','duplicate-name click opens exact stable ID');
   assert.equal(metrics.activeElement,'rwCustomerName','exact reward editor keeps input focus');
+  assert.equal(metrics.editorIntent,'reward');
+  assert.equal(metrics.overviewHomeVisible,false,'selecting a programme replaces the overview instead of appending an editor below it');
+  assert.deepEqual({program:metrics.programEditors,reward:metrics.rewardEditors,birthday:metrics.birthdayEditors,redemption:metrics.redemptionEditors,list:metrics.rewardLists},
+    {program:0,reward:1,birthday:0,redemption:0,list:0},'exact reward mounts one reward form and no sibling editor');
   assert.equal(await page.evaluate(()=>location.hash),'#/loyalty/draft-v2/reward~22222222-2222-4222-8222-222222222222');
   assert.equal(await page.locator('#openedRewardIdentity').textContent(),'22222222-2222-4222-8222-222222222222');
   await page.screenshot({path:new URL('owner-exact-reward-editor-desktop-1440.png',evidenceDir).pathname,fullPage:true});
@@ -143,6 +147,24 @@ try{
   metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
   assert.equal(metrics.openedRewardId,'22222222-2222-4222-8222-222222222222','exact stable-ID intent survives refresh');
   assert.equal(metrics.activeElement,'rwCustomerName');
+  assert.equal(metrics.birthdayEditors,0,'refresh cannot reintroduce the Birthday editor below an exact reward');
+
+  await page.goto(`${base}?draft=existing&route=earning#/loyalty/draft-v2/earning`,{waitUntil:'networkidle'});await page.waitForSelector('#lm');
+  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
+  assert.deepEqual({intent:metrics.editorIntent,program:metrics.programEditors,reward:metrics.rewardEditors,birthday:metrics.birthdayEditors,redemption:metrics.redemptionEditors},
+    {intent:'earning',program:1,reward:0,birthday:0,redemption:0},'Earn opens only the earning form');
+  assert.equal(metrics.overviewHomeVisible,false);
+
+  await page.goto(`${base}?draft=existing&route=birthday#/loyalty/draft-v2/birthday`,{waitUntil:'networkidle'});await page.waitForSelector('#birthdayLabel');
+  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
+  assert.deepEqual({intent:metrics.editorIntent,program:metrics.programEditors,reward:metrics.rewardEditors,birthday:metrics.birthdayEditors,redemption:metrics.redemptionEditors},
+    {intent:'birthday',program:0,reward:0,birthday:1,redemption:0},'Birthday opens only the Birthday form');
+  assert.equal(metrics.overviewHomeVisible,false);
+
+  await page.goto(`${base}?draft=existing&route=add#/loyalty/draft-v2/add`,{waitUntil:'networkidle'});await page.waitForSelector('#rwCustomerName');
+  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
+  assert.deepEqual({intent:metrics.editorIntent,program:metrics.programEditors,reward:metrics.rewardEditors,birthday:metrics.birthdayEditors,list:metrics.rewardLists},
+    {intent:'add',program:0,reward:1,birthday:0,list:0},'Add opens one blank reward form without the reward list or Birthday');
 
   await page.goto(`${base}?draft=none&retentionExact=1`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
   await page.locator('[data-program-id="bring-back-1"]').click();await page.waitForSelector('#rn');
@@ -239,6 +261,13 @@ try{
   assert.ok((await page.locator('.grow-programme-row').evaluateAll(rows=>rows.map(row=>row.getBoundingClientRect().height))).every(height=>height>=44));
 
   await page.setViewportSize({width:390,height:844});
+  await page.goto(`${base}?draft=existing&route=reward-mobile#/loyalty/draft-v2/reward~22222222-2222-4222-8222-222222222222`,{waitUntil:'networkidle'});await page.waitForSelector('#rwCustomerName');
+  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
+  assert.equal(metrics.birthdayEditors,0,'390px exact reward cannot mount Birthday below it');
+  assert.equal(metrics.rewardLists,0,'390px exact reward cannot leave the catalogue mounted above it');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390,'390px exact reward editor must not overflow');
+  await page.screenshot({path:new URL('owner-exact-reward-editor-mobile-390.png',evidenceDir).pathname,fullPage:true});
+
   await page.goto(`${base}?role=manager`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
   metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
   assert.equal(metrics.role,'manager');assert.equal(metrics.editButtons,0,'read-only manager receives no edit control');

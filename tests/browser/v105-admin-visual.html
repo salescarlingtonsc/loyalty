@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="a606d203b9cb169b4da0241d3b194923154db793c88b2ea35ca5ffd73a6f2686">
+<meta name="v105-production-component-sha256" content="a19e4b3d3e18bc73216512b11d06edf2a4c2c8335b8a769c7a7ff950109be34a">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -469,6 +469,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-optional-card p{margin:4px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
 .grow-optional-card .btn{min-height:44px;flex:0 0 auto}
 .grow-panel-shell{position:relative;min-height:0}.grow-panel-shell:empty{display:none}
+.grow-overview.grow-editor-active>:not(.grow-panel-shell){display:none}
+.grow-overview.grow-editor-active .grow-panel-shell{display:block}
+.grow-editor-single{grid-template-columns:minmax(0,760px);justify-content:start}
 .grow-panel-shell.grow-panel-updating{opacity:.72;pointer-events:none;transition:opacity .18s ease}
 .grow-inline-feedback{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);
   border-radius:var(--r-sm);background:#fff;color:var(--muted);font-size:13px}
@@ -1586,7 +1589,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · a606d203b9cb</span>
+<span class="v105-provenance">v105 production-component harness · a19e4b3d3e18</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -1711,7 +1714,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'a606d203b9cb169b4da0241d3b194923154db793c88b2ea35ca5ffd73a6f2686',
+  sourceHash:'a19e4b3d3e18bc73216512b11d06edf2a4c2c8335b8a769c7a7ff950109be34a',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="3273ef5391b7e7248f3b2ffe7cdec3832fac8f73bc8e831077bd1486a136f7c3"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="b80039cbe1b6f77fd928c0e2d46577282fdd861a9c8bf87d7e022afca9745d7a"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -463,6 +463,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-optional-card p{margin:4px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
 .grow-optional-card .btn{min-height:44px;flex:0 0 auto}
 .grow-panel-shell{position:relative;min-height:0}.grow-panel-shell:empty{display:none}
+.grow-overview.grow-editor-active>:not(.grow-panel-shell){display:none}
+.grow-overview.grow-editor-active .grow-panel-shell{display:block}
+.grow-editor-single{grid-template-columns:minmax(0,760px);justify-content:start}
 .grow-panel-shell.grow-panel-updating{opacity:.72;pointer-events:none;transition:opacity .18s ease}
 .grow-inline-feedback{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);
   border-radius:var(--r-sm);background:#fff;color:var(--muted);font-size:13px}
@@ -975,7 +978,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 3273ef5391b7e7248f3b2ffe7cdec3832fac8f73bc8e831077bd1486a136f7c3</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b80039cbe1b6f77fd928c0e2d46577282fdd861a9c8bf87d7e022afca9745d7a</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -1019,6 +1022,36 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    still only ever sees that one module key pass the filter, so hasRewards/hasWinback below
    can never both be false while this renders. Links to whichever tab is already open if the
    staff member is already on the Grow surface, else defaults to Everyday rewards. */
+    function growLoyaltyEditorIntentV139({focusTarget=null,rewardId=null}={}){
+  if(rewardId)return {kind:'reward',rewardId};
+  if(focusTarget==='birthdayLabel')return {kind:'birthday'};
+  if(focusTarget==='rwAdd')return {kind:'add'};
+  if(focusTarget==='lr')return {kind:'classic'};
+  if(focusTarget==='lm')return {kind:'earning'};
+  return null;
+}
+function applyGrowLoyaltyEditorIsolationV139(root,editorIntent){
+  if(!editorIntent)return;
+  root.dataset.growEditorIntent=editorIntent.kind;
+  const keepByKind={
+    earning:new Set(['loyaltyProgramEditor']),classic:new Set(['loyaltyProgramEditor']),
+    reward:new Set(['loyaltyRewardEditor']),add:new Set(['loyaltyRewardEditor']),
+    birthday:new Set(['birthdayEditorCard'])
+  };
+  const keep=keepByKind[editorIntent.kind]||new Set();
+  ['loyaltyCustomerRedemption','loyaltyProgramEditor','loyaltyRewardEditor','birthdayEditorCard']
+    .forEach(id=>{const element=root.querySelector(`#${id}`);if(element&&!keep.has(id))element.remove()});
+  const split=root.querySelector('.split');
+  if(split){
+    if(!split.children.length)split.remove();
+    else split.classList.add('grow-editor-single');
+  }
+}
+function pruneRewardSiblingsV139(root){
+  root.querySelector('#rwList')?.remove();
+  root.querySelector('#rwAdd')?.remove();
+  root.querySelector('#loyaltyRewardEditor>p')?.remove();
+}
     const routeDispose=null;
     const M=()=>document.getElementById('main');
     const evidenceParams=new URLSearchParams(location.search);
@@ -1093,15 +1126,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
       }
       return {data:{version_id:'draft-v2'},error:null};
     }};
-    async function loyaltyPage(){
+    async function loyaltyPage(modelOverride,draftVersionId,recommendation,stableRefresh,editorIntent){
       const host=M();
-      host.innerHTML='<section class="card"><h2>Rewards and earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
+      host.innerHTML='<section class="card" id="loyaltyCustomerRedemption">Customer redemption</section><div class="split"><section class="card" id="loyaltyProgramEditor"><h2>Earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"></section><section class="card" id="loyaltyRewardEditor"><h2>Reward editor</h2><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list" id="rwList">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div></section></div><section class="card" id="birthdayEditorCard"><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
+      applyGrowLoyaltyEditorIsolationV139(host,editorIntent);
       host.querySelectorAll('.rwEdit').forEach(button=>button.onclick=()=>{
         const reward=fixture.rewards.find(item=>item.id===button.dataset.rewardId);
         window.__openedRewardId=reward?.id||null;
         $('rwEditor').innerHTML='<div class="reward-editor"><label for="rwCustomerName">Customer-facing name</label><input id="rwCustomerName" value="'+esc(reward?.customer_name||'')+'"><p id="openedRewardIdentity">'+esc(reward?.id||'')+'</p></div>';
+        pruneRewardSiblingsV139(host);
       });
-      $('rwAdd').onclick=()=>{$('rwEditor').innerHTML='<div class="reward-editor"><input id="rwCustomerName" value=""></div>'};
+      if($('rwAdd'))$('rwAdd').onclick=()=>{$('rwEditor').innerHTML='<div class="reward-editor"><label for="rwCustomerName">Customer-facing name</label><input id="rwCustomerName" value=""></div>';pruneRewardSiblingsV139(host)};
     }
     async function storedValuePage(){} async function studioPage(){}
     async function retentionPage(draftVersionId=null,editProgramId=null,stableRefresh=false){
@@ -1596,6 +1631,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   };
   async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null,birthdayId=null,editProgramId=null}={}){
     const draft=draftOverride||growDraftVersionId;
+    const editorIntent=surface==='rewards'?growLoyaltyEditorIntentV139({focusTarget,rewardId}):null;
+    $('growOverview')?.classList.add('grow-editor-active');
     const definition=surfaceDefinition[surface];
     const suffix=draft&&['rewards','winback','studio'].includes(surface)?`/${draft}`:'';
     const exactPath=growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId});
@@ -1646,7 +1683,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
           return false;
         }
         draftSnapshotHash=data.snapshot_hash||draftSnapshotHash;
-        await loyaltyPage(undefined,draft);
+        await loyaltyPage(undefined,draft,null,false,editorIntent);
         if(!isGrowCurrent())return false;
         return openExactReward({allowMaterialize:false});
       }
@@ -1672,9 +1709,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
         if(!await materializeExactProgramme('retention',editProgramId))return;
         await retentionPage(draft,editProgramId,true);
       }
-      if(surface==='rewards'&&focusTarget==='birthdayLabel'&&birthdayId){
-        if(!await materializeExactProgramme('birthday',birthdayId))return;
-        await loyaltyPage(undefined,draft);
+      if(surface==='rewards'){
+        if(focusTarget==='birthdayLabel'&&birthdayId
+           &&!await materializeExactProgramme('birthday',birthdayId))return;
+        await loyaltyPage(undefined,draft,null,false,editorIntent);
       }
       if(!await openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
       applyPendingRewardEstimate();
@@ -1695,7 +1733,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
     if(surface==='rewards'){
       if(focusTarget==='birthdayLabel'&&birthdayId
          &&!await materializeExactProgramme('birthday',birthdayId))return;
-      await loyaltyPage(undefined,draft);
+      await loyaltyPage(undefined,draft,null,false,editorIntent);
     }
     else if(surface==='winback'){
       if(editProgramId&&!await materializeExactProgramme('retention',editProgramId))return;
@@ -1853,7 +1891,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'3273ef5391b7e7248f3b2ffe7cdec3832fac8f73bc8e831077bd1486a136f7c3',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'b80039cbe1b6f77fd928c0e2d46577282fdd861a9c8bf87d7e022afca9745d7a',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
@@ -1866,6 +1904,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
       birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,
       birthdayTableReads:window.__tableReads.filter(name=>name==='birthday_program_versions').length,
       retentionName:$('rn')?.value||'',retentionMissing:Boolean($('retentionExactProgramMissing')),
+      editorIntent:M()?.dataset.growEditorIntent||'',programEditors:document.querySelectorAll('#loyaltyProgramEditor').length,
+      rewardEditors:document.querySelectorAll('#loyaltyRewardEditor').length,birthdayEditors:document.querySelectorAll('#birthdayEditorCard').length,
+      redemptionEditors:document.querySelectorAll('#loyaltyCustomerRedemption').length,rewardLists:document.querySelectorAll('#rwList').length,
+      overviewHomeVisible:Boolean(document.querySelector('.grow-hero')?.offsetParent),
       activeElement:document.activeElement?.id||'',consoleErrors:window.__consoleErrors||[]});
     window.__consoleErrors=[];window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
     const routed=(location.hash.startsWith('#/')?location.hash.slice(2):location.hash).split('/');

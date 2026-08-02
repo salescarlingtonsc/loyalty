@@ -488,6 +488,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-optional-card p{margin:4px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
 .grow-optional-card .btn{min-height:44px;flex:0 0 auto}
 .grow-panel-shell{position:relative;min-height:0}.grow-panel-shell:empty{display:none}
+.grow-overview.grow-editor-active>:not(.grow-panel-shell){display:none}
+.grow-overview.grow-editor-active .grow-panel-shell{display:block}
+.grow-editor-single{grid-template-columns:minmax(0,760px);justify-content:start}
 .grow-panel-shell.grow-panel-updating{opacity:.72;pointer-events:none;transition:opacity .18s ease}
 .grow-inline-feedback{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);
   border-radius:var(--r-sm);background:#fff;color:var(--muted);font-size:13px}
@@ -9547,8 +9550,38 @@ async function withGrowEditorContinuity(render,{message='Draft updated.',preserv
     growHost.classList.remove('grow-panel-updating');growHost.removeAttribute('aria-busy');
   }
 }
-const refreshLoyaltyPanel=(model,draftVersionId,recommendation,message='Grow draft updated.',preserveFields=true)=>
-  withGrowEditorContinuity(stable=>loyaltyPage(model,draftVersionId,recommendation,stable),{message,preserveFields});
+function growLoyaltyEditorIntentV139({focusTarget=null,rewardId=null}={}){
+  if(rewardId)return {kind:'reward',rewardId};
+  if(focusTarget==='birthdayLabel')return {kind:'birthday'};
+  if(focusTarget==='rwAdd')return {kind:'add'};
+  if(focusTarget==='lr')return {kind:'classic'};
+  if(focusTarget==='lm')return {kind:'earning'};
+  return null;
+}
+function applyGrowLoyaltyEditorIsolationV139(root,editorIntent){
+  if(!editorIntent)return;
+  root.dataset.growEditorIntent=editorIntent.kind;
+  const keepByKind={
+    earning:new Set(['loyaltyProgramEditor']),classic:new Set(['loyaltyProgramEditor']),
+    reward:new Set(['loyaltyRewardEditor']),add:new Set(['loyaltyRewardEditor']),
+    birthday:new Set(['birthdayEditorCard'])
+  };
+  const keep=keepByKind[editorIntent.kind]||new Set();
+  ['loyaltyCustomerRedemption','loyaltyProgramEditor','loyaltyRewardEditor','birthdayEditorCard']
+    .forEach(id=>{const element=root.querySelector(`#${id}`);if(element&&!keep.has(id))element.remove()});
+  const split=root.querySelector('.split');
+  if(split){
+    if(!split.children.length)split.remove();
+    else split.classList.add('grow-editor-single');
+  }
+}
+function pruneRewardSiblingsV139(root){
+  root.querySelector('#rwList')?.remove();
+  root.querySelector('#rwAdd')?.remove();
+  root.querySelector('#loyaltyRewardEditor>p')?.remove();
+}
+const refreshLoyaltyPanel=(model,draftVersionId,recommendation,message='Grow draft updated.',preserveFields=true,editorIntent=null)=>
+  withGrowEditorContinuity(stable=>loyaltyPage(model,draftVersionId,recommendation,stable,editorIntent),{message,preserveFields});
 const refreshRetentionPanel=(draftVersionId,editProgramId=null,message='Bring-back draft updated.',preserveFields=true)=>
   withGrowEditorContinuity(stable=>retentionPage(draftVersionId,editProgramId,stable),{message,preserveFields});
 function openProtectedGrowPublishReview(draftVersionId){
@@ -9557,7 +9590,7 @@ function openProtectedGrowPublishReview(draftVersionId){
   nav(`#/studio/${draftVersionId}`);
 }
 
-async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null,stableRefresh=false){
+async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null,stableRefresh=false,editorIntent=null){
   const routeMain=M();
   const isLoyaltyCurrent=()=>routeMain.isConnected&&M()===routeMain;
   if(!stableRefresh)routeMain.innerHTML=CUI.loadingState({title:'Loyalty',iconName:'loyalty'});
@@ -9715,8 +9748,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     ?`<div class="wallet-line" style="margin-top:12px"><div><b>${esc(publishedBirthdayProgram.customer_label||'Birthday benefit')}</b><p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.fulfillment_kind==='discount_pct'?`${publishedBirthdayProgram.discount_percent}% off`:publishedBirthdayProgram.manual_item||'Manual benefit')} · ${publishedBirthdayProgram.active?'Live for eligible customers':'Published but paused'} · window ${Number(publishedBirthdayProgram.window_days_before||0)} day(s) before to ${Number(publishedBirthdayProgram.window_days_after||0)} day(s) after</p>${publishedBirthdayProgram.customer_description?`<p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.customer_description)}</p>`:''}</div><span class="spacer"></span><span class="pill ${publishedBirthdayProgram.active?'on':'off'}">Published</span></div>`
     :'<p class="muted small" style="margin-top:10px">No birthday benefit is published. Starting a draft makes no offer until you complete, explicitly enable, and publish it.</p>';
   const birthdayEditor=canManageLoyalty
-    ?!draftVersionId?`<div class="card" style="margin-top:16px"><b>Birthday benefit</b><p class="muted small" style="margin-top:6px">Customer participation is separately opt-in and birthday details are never shared with your team.</p>${publishedBirthdaySummary}<button class="btn ghost sm" id="birthdayStartDraft" style="margin-top:12px">${publishedBirthdayProgram?'Create change draft':'Configure birthday benefit'}</button></div>`
-    :`<div class="card" style="margin-top:16px"><div class="row"><div><b>Birthday benefit</b><p class="muted small" style="margin-top:5px">One programme per configuration version. A new programme starts blank and paused; no customer promise exists until you complete, explicitly enable, and publish it.</p></div><span class="spacer"></span><span class="pill">Draft</span></div>
+    ?!draftVersionId?`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><b>Birthday benefit</b><p class="muted small" style="margin-top:6px">Customer participation is separately opt-in and birthday details are never shared with your team.</p>${publishedBirthdaySummary}<button class="btn ghost sm" id="birthdayStartDraft" style="margin-top:12px">${publishedBirthdayProgram?'Create change draft':'Configure birthday benefit'}</button></div>`
+    :`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><div class="row"><div><b>Birthday benefit</b><p class="muted small" style="margin-top:5px">One programme per configuration version. A new programme starts blank and paused; no customer promise exists until you complete, explicitly enable, and publish it.</p></div><span class="spacer"></span><span class="pill">Draft</span></div>
       <div class="field-grid" style="margin-top:10px"><div class="full"><label for="birthdayLabel">Customer-facing label</label><input id="birthdayLabel" value="${esc(birthdayProgram?.customer_label||'')}"></div><div class="full"><label for="birthdayDescription">Customer description</label><textarea id="birthdayDescription" rows="2">${esc(birthdayProgram?.customer_description||'')}</textarea></div><div class="full"><label for="birthdayTerms">Terms</label><textarea id="birthdayTerms" rows="2">${esc(birthdayProgram?.customer_terms||'')}</textarea></div><div><label for="birthdayKind">Benefit type</label><select id="birthdayKind"><option value="" ${birthdayProgram?.fulfillment_kind?'':'selected'}>Choose a benefit type</option><option value="discount_pct" ${birthdayProgram?.fulfillment_kind==='discount_pct'?'selected':''}>Percentage discount</option><option value="free_item" ${birthdayProgram?.fulfillment_kind==='free_item'?'selected':''}>Free item / manual benefit</option></select></div><div id="birthdayDiscountField"><label for="birthdayDiscount">Discount percentage</label><input id="birthdayDiscount" type="number" min="0.01" max="100" step="0.01" value="${birthdayProgram?.discount_percent??''}"></div><div id="birthdayItemField"><label for="birthdayItem">Free item / benefit</label><input id="birthdayItem" value="${esc(birthdayProgram?.manual_item||'')}"></div><div><label for="birthdayBefore">Days before birthday</label><input id="birthdayBefore" type="number" min="0" max="182" value="${birthdayProgram?.window_days_before??0}"></div><div><label for="birthdayAfter">Days after birthday</label><input id="birthdayAfter" type="number" min="0" max="182" value="${birthdayProgram?.window_days_after??0}"></div></div><label class="row" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="birthdayActive" type="checkbox" style="width:auto" ${birthdayProgram?.active===true?'checked':''}> I explicitly enable this benefit for eligible customers after publication</label><div class="row" style="margin-top:14px"><button class="btn sm" id="birthdaySaveDraft">Save birthday benefit draft</button><p id="birthdayDraftStatus" class="muted small" role="status" aria-live="polite"></p></div></div>`
     :'';
   routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:canManageLoyalty?'Choose the model and publish deliberate, versioned changes.':'Review the current program, rewards, tiers, and branch settings.',iconName:'loyalty',actions:`${growBackActionHtmlV138()}${loyaltyActions}`,canWrite:canManageLoyalty,moduleLabel:'Loyalty configuration'})}
@@ -9726,7 +9759,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <label class="checkrow" for="loyaltyCustomerRedemptionEnabled"><input id="loyaltyCustomerRedemptionEnabled" type="checkbox" disabled><span><b>Enable customer redemption QR</b><br><span class="muted small">Available to loyalty firms even when online bookings are not part of their modules.</span></span></label>
       <p id="loyaltyCustomerRedemptionStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading redemption setting…</p>
     </section>
-    <div class="split"><div class="card"><b>Program settings</b>
+    <div class="split"><div class="card" id="loyaltyProgramEditor"><b>Program settings</b>
       <label>Status</label><select id="la"${loyaltyControlDisabled}><option value="true" ${p?.active?'selected':''}>Active</option><option value="false" ${!p?.active?'selected':''}>Paused</option></select>
       <label>Loyalty model</label><select id="lm"${loyaltyControlDisabled}>
         <option value="classic" ${model==='classic'?'selected':''}>Simple points — fixed redeem into credit</option>
@@ -9749,7 +9782,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       ${canManageLoyalty?`<div class="row" style="margin-top:16px;flex-wrap:wrap">
         <button class="btn" id="lsave">${draftVersionId?'Save draft':'Save program'}</button>
         ${draftVersionId?'<button class="btn ghost" id="loyaltyReviewPublish" type="button">Review &amp; publish</button>':''}</div>`:''}</div>
-    <div class="card">
+    <div class="card" id="loyaltyRewardEditor">
       ${model==='classic'
         ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">Every sale earns points automatically. At ${p?.redeem_points??800} points, one tap converts them into ${money(p?.reward_credit_cents??2000)} of real in-store credit. Switch models above any time — balances carry over.</p>
           ${canManageLoyalty?`<div class="rec-panel"><b>Not sure what numbers to use?</b>
@@ -9760,35 +9793,38 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.</p>${rewardRows('Your milestones')}`
         :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
     </div></div>${birthdayEditor}`;
+  applyGrowLoyaltyEditorIsolationV139(routeMain,editorIntent);
   const redemptionToggle=$('loyaltyCustomerRedemptionEnabled');
   const redemptionStatus=$('loyaltyCustomerRedemptionStatus');
   const redemptionSave=$('saveLoyaltyCustomerRedemption');
-  const redemptionCapability=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
-  if(!isLoyaltyCurrent())return;
-  $('loyaltyCustomerRedemption').setAttribute('aria-busy','false');
-  if(redemptionCapability.error){
-    redemptionStatus.textContent=redemptionCapability.error.code==='PGRST202'||redemptionCapability.error.code==='42883'
-      ?'Customer redemption needs the latest Peekaa service update.'
-      :'Customer redemption setting could not be loaded. Nothing was changed.';
-  }else{
-    redemptionToggle.checked=redemptionCapability.data?.redemption_enabled===true;
-    redemptionStatus.textContent=canManageLoyalty
-      ?'This switch affects customer QR redemption only. Booking settings are preserved.'
-      :`Customer QR redemption is ${redemptionToggle.checked?'enabled':'off'}.`;
-    if(canManageLoyalty){
-      redemptionToggle.disabled=false;redemptionSave.disabled=false;
-      redemptionSave.onclick=async()=>{
-        redemptionToggle.disabled=true;redemptionSave.disabled=true;
-        redemptionStatus.textContent='Saving customer QR redemption…';
-        const result=await saveCustomerRedemptionCapabilityV89({
-          businessId:S.biz.id,redemptionEnabled:redemptionToggle.checked
-        });
-        if(!isLoyaltyCurrent())return;
+  if(redemptionToggle&&redemptionStatus){
+    const redemptionCapability=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
+    if(!isLoyaltyCurrent())return;
+    $('loyaltyCustomerRedemption')?.setAttribute('aria-busy','false');
+    if(redemptionCapability.error){
+      redemptionStatus.textContent=redemptionCapability.error.code==='PGRST202'||redemptionCapability.error.code==='42883'
+        ?'Customer redemption needs the latest Peekaa service update.'
+        :'Customer redemption setting could not be loaded. Nothing was changed.';
+    }else{
+      redemptionToggle.checked=redemptionCapability.data?.redemption_enabled===true;
+      redemptionStatus.textContent=canManageLoyalty
+        ?'This switch affects customer QR redemption only. Booking settings are preserved.'
+        :`Customer QR redemption is ${redemptionToggle.checked?'enabled':'off'}.`;
+      if(canManageLoyalty){
         redemptionToggle.disabled=false;redemptionSave.disabled=false;
-        redemptionStatus.textContent=result.error
-          ?'Customer QR redemption was not changed. Refresh and try again.'
-          :`Customer QR redemption is ${result.data?.redemption_enabled===true?'enabled':'off'}. Booking and appointment settings were preserved.`;
-      };
+        redemptionSave.onclick=async()=>{
+          redemptionToggle.disabled=true;redemptionSave.disabled=true;
+          redemptionStatus.textContent='Saving customer QR redemption…';
+          const result=await saveCustomerRedemptionCapabilityV89({
+            businessId:S.biz.id,redemptionEnabled:redemptionToggle.checked
+          });
+          if(!isLoyaltyCurrent())return;
+          redemptionToggle.disabled=false;redemptionSave.disabled=false;
+          redemptionStatus.textContent=result.error
+            ?'Customer QR redemption was not changed. Refresh and try again.'
+            :`Customer QR redemption is ${result.data?.redemption_enabled===true?'enabled':'off'}. Booking and appointment settings were preserved.`;
+        };
+      }
     }
   }
   /* --- live give-back meter -------------------------------------------------------------
@@ -9919,7 +9955,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_birthday_editor'});
     if(!isLoyaltyCurrent())return;
     if(error){birthdayStartDraft.disabled=false;return fail(error)}
-    refreshLoyaltyPanel(model,data.version_id,recommendation,'Birthday draft ready.',false);
+    refreshLoyaltyPanel(model,data.version_id,recommendation,'Birthday draft ready.',false,editorIntent);
   };
   const birthdaySaveDraft=$('birthdaySaveDraft');
   if(birthdaySaveDraft){
@@ -9952,7 +9988,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       if(!isLoyaltyCurrent())return;
       if(error){birthdaySaveDraft.disabled=false;const status=$('birthdayDraftStatus');if(status)status.textContent='Birthday benefit draft could not be saved. Reload and review the fields.';return;}
       const status=$('birthdayDraftStatus');if(status)status.textContent=data?.replayed?'Saved previously.':'Birthday benefit draft saved. Review then publish the configuration.';
-      refreshLoyaltyPanel(model,draftVersionId,recommendation,'Birthday benefit draft saved.');
+      if(editorIntent){toast('Birthday benefit draft saved');nav('#/grow');return}
+      refreshLoyaltyPanel(model,draftVersionId,recommendation,'Birthday benefit draft saved.',true,editorIntent);
     };
   }
   const recommend=$('loyaltyRecommend');
@@ -9963,10 +10000,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!isLoyaltyCurrent())return;
     if(error){recommend.disabled=false;recommend.textContent='Create recommended draft';return fail(error)}
     toast('Recommended draft created — review every number before publishing');
-    refreshLoyaltyPanel(data.model,data.draft_config_version_id,data,'Recommended Grow draft ready.',false);
+    refreshLoyaltyPanel(data.model,data.draft_config_version_id,data,'Recommended Grow draft ready.',false,editorIntent);
   };
-  $('lm').onchange=()=>refreshLoyaltyPanel($('lm').value,draftVersionId,recommendation,'Earning model preview updated.',false);
-  bindExpiryModeUi($('lx'),$('lxd'),$('lxdField'));
+  const loyaltyModelInput=$('lm');
+  if(loyaltyModelInput)loyaltyModelInput.onchange=()=>refreshLoyaltyPanel(loyaltyModelInput.value,draftVersionId,recommendation,'Earning model preview updated.',false,editorIntent);
+  if($('lx')&&$('lxd')&&$('lxdField'))bindExpiryModeUi($('lx'),$('lxd'),$('lxdField'));
   document.querySelectorAll('[data-bo-expiry]').forEach(modeInput=>{
     const idx=modeInput.dataset.boExpiry;
     bindExpiryModeUi(modeInput,document.querySelector(`[data-bo-days="${idx}"]`),document.querySelector(`[data-bo-days-field="${idx}"]`));
@@ -9993,7 +10031,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {error}=await sb.rpc('save_loyalty_branch_override_draft',args);
     if(!isLoyaltyCurrent())return;
     if(error){button.disabled=false;button.textContent='Save branch';return fail(error)}
-    toast('Branch setting saved');refreshLoyaltyPanel(model,draftVersionId,recommendation,'Branch settings saved.');
+    toast('Branch setting saved');refreshLoyaltyPanel(model,draftVersionId,recommendation,'Branch settings saved.',true,editorIntent);
   });
   document.querySelectorAll('.boInherit').forEach(button=>button.onclick=async()=>{
     button.disabled=true;button.textContent='Clearing…';
@@ -10002,9 +10040,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {error}=await sb.rpc('remove_loyalty_branch_override_draft',args);
     if(!isLoyaltyCurrent())return;
     if(error){button.disabled=false;button.textContent='Inherit firm setting';return fail(error)}
-    toast('Branch now inherits firm setting');refreshLoyaltyPanel(model,draftVersionId,recommendation,'Branch now inherits the firm setting.');
+    toast('Branch now inherits firm setting');refreshLoyaltyPanel(model,draftVersionId,recommendation,'Branch now inherits the firm setting.',true,editorIntent);
   });
-  $('lsave').onclick=async()=>{
+  const loyaltySave=$('lsave');
+  if(loyaltySave)loyaltySave.onclick=async()=>{
     const expiryMode=$('lx').value,expiryDays=expiryDaysForMode(expiryMode,$('lxd'));
     if(Number.isNaN(expiryDays)){toast('Enter a positive whole-number expiry window');$('lxd').focus();return}
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
@@ -10031,16 +10070,21 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(saveError){$('lsave').disabled=false;return fail(saveError)}
     if(draftVersionId){
       toast('Grow draft saved — customers are still using the published programme');
-      refreshLoyaltyPanel(model,draftVersionId,recommendation,'Grow draft saved. Nothing was published.');
+      if(editorIntent){nav('#/grow');return}
+      refreshLoyaltyPanel(model,draftVersionId,recommendation,'Grow draft saved. Nothing was published.',true,editorIntent);
       return;
     }
     const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
     if(!isLoyaltyCurrent())return;
     if(publishError){$('lsave').disabled=false;return fail(publishError)}
-    toast(p?.configuration_status==='draft'?'Loyalty program published':'Loyalty program saved');loyaltyPage();
+    toast(p?.configuration_status==='draft'?'Loyalty program published':'Loyalty program saved');
+    if(editorIntent){nav('#/grow');return}
+    loyaltyPage();
   };
   const loyaltyReviewPublish=$('loyaltyReviewPublish');
   if(loyaltyReviewPublish)loyaltyReviewPublish.onclick=()=>openProtectedGrowPublishReview(draftVersionId);
+  const finishGrowEditorV139=()=>editorIntent?nav('#/grow'):nav('#/loyalty');
+  const isExactRewardIntentV139=editorIntent?.kind==='reward'||editorIntent?.kind==='add';
   let editorReward=null;
   function openRewardEditor(reward){
     editorReward=reward;
@@ -10077,7 +10121,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       </details>
       <div class="row" style="margin-top:16px"><button class="btn" id="rwSave">${reward?'Save changes':'Create reward'}</button><span class="spacer"></span>${reward?'<button class="btn danger sm" id="rwArchive" type="button">Archive</button>':''}</div>
     </div>`;
-    $('rwClose').onclick=()=>nav('#/loyalty');
+    if(isExactRewardIntentV139)pruneRewardSiblingsV139(routeMain);
+    $('rwClose').onclick=finishGrowEditorV139;
     const kind=$('rwKind'),creditWrap=$('rwCreditWrap');
     const syncKind=()=>{creditWrap.style.display=kind.value==='credit'?'block':'none';if(kind.value!=='credit')$('rwCredit').value='0'};
     kind.onchange=syncKind;syncKind();
@@ -10124,7 +10169,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       if(publishError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(publishError)}
     }
     toast(draftVersionId?'Draft reward saved':archive?'Reward archived':editorReward?'Reward saved':'Reward created');
-    nav('#/loyalty');
+    finishGrowEditorV139();
   }
   const ra=$('rwAdd');
   if(ra) ra.onclick=()=>openRewardEditor(null);
@@ -10147,7 +10192,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!isLoyaltyCurrent())return;
     if(error)return fail(error);
     if(!draftVersionId){const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});if(publishError)return fail(publishError)}
-    refreshLoyaltyPanel(model,draftVersionId,recommendation,'Tier draft saved.');
+    refreshLoyaltyPanel(model,draftVersionId,recommendation,'Tier draft saved.',true,editorIntent);
   }
   const ta=$('trAdd');
   if(ta) ta.onclick=async()=>{
@@ -11176,6 +11221,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   };
   async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null,birthdayId=null,editProgramId=null}={}){
     const draft=draftOverride||growDraftVersionId;
+    const editorIntent=surface==='rewards'?growLoyaltyEditorIntentV139({focusTarget,rewardId}):null;
+    $('growOverview')?.classList.add('grow-editor-active');
     const definition=surfaceDefinition[surface];
     const suffix=draft&&['rewards','winback','studio'].includes(surface)?`/${draft}`:'';
     const exactPath=growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId});
@@ -11226,7 +11273,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           return false;
         }
         draftSnapshotHash=data.snapshot_hash||draftSnapshotHash;
-        await loyaltyPage(undefined,draft);
+        await loyaltyPage(undefined,draft,null,false,editorIntent);
         if(!isGrowCurrent())return false;
         return openExactReward({allowMaterialize:false});
       }
@@ -11252,9 +11299,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         if(!await materializeExactProgramme('retention',editProgramId))return;
         await retentionPage(draft,editProgramId,true);
       }
-      if(surface==='rewards'&&focusTarget==='birthdayLabel'&&birthdayId){
-        if(!await materializeExactProgramme('birthday',birthdayId))return;
-        await loyaltyPage(undefined,draft);
+      if(surface==='rewards'){
+        if(focusTarget==='birthdayLabel'&&birthdayId
+           &&!await materializeExactProgramme('birthday',birthdayId))return;
+        await loyaltyPage(undefined,draft,null,false,editorIntent);
       }
       if(!await openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
       applyPendingRewardEstimate();
@@ -11275,7 +11323,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     if(surface==='rewards'){
       if(focusTarget==='birthdayLabel'&&birthdayId
          &&!await materializeExactProgramme('birthday',birthdayId))return;
-      await loyaltyPage(undefined,draft);
+      await loyaltyPage(undefined,draft,null,false,editorIntent);
     }
     else if(surface==='winback'){
       if(editProgramId&&!await materializeExactProgramme('retention',editProgramId))return;

@@ -35,7 +35,7 @@ test('owner UI opens and edits the generated draft before an explicit publish',a
   const html=await read('app/index.html');
   assert.match(html,/Create recommended draft/i);
   assert.match(html,/generate_retention_recommendation/i);
-  assert.match(html,/refreshLoyaltyPanel\(data\.model,data\.draft_config_version_id,data,'Recommended Grow draft ready\.',false\)/i);
+  assert.match(html,/refreshLoyaltyPanel\(data\.model,data\.draft_config_version_id,data,'Recommended Grow draft ready\.',false,editorIntent\)/i);
   assert.match(html,/if\(!stableRefresh\)routeMain\.innerHTML=CUI\.loadingState/i);
   assert.match(html,/let versionId=draftVersionId/i);
   assert.match(html,/Draft reward saved/i);

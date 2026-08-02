@@ -15,12 +15,13 @@ export function buildRewardOverviewVisualFixture(app){
   const style=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];
   if(!style)throw new Error('production inline stylesheet missing');
   const growBack=sourceBetween(app,'function growBackActionHtmlV138','function growNavItemHtml');
+  const loyaltyIsolation=sourceBetween(app,'function growLoyaltyEditorIntentV139','const refreshLoyaltyPanel');
   const snapshotAdapter=sourceBetween(app,'async function growOverviewSnapshot','function ownerRewardJourneyV122');
   const journey=sourceBetween(app,'function ownerRewardJourneyV122','function growStatus');
   const status=sourceBetween(app,'function growStatus','/* v104 starts');
   const retention=sourceBetween(app,'async function retentionPage(','/* ---------- Grow: one customer journey');
   const grow=sourceBetween(app,'async function growPage(','/* ---------- Bring-back playbooks');
-  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}`).digest('hex');
+  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}`).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
     <meta name="production-source-sha256" content="${sourceHash}"><title>Peekaa rewards overview browser acceptance</title><style>${style}
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -58,6 +59,7 @@ export function buildRewardOverviewVisualFixture(app){
     const refreshRetentionPanel=()=>{};
     const renderPlaybooks=()=>{};
     ${growBack}
+    ${loyaltyIsolation}
     const routeDispose=null;
     const M=()=>document.getElementById('main');
     const evidenceParams=new URLSearchParams(location.search);
@@ -132,15 +134,17 @@ export function buildRewardOverviewVisualFixture(app){
       }
       return {data:{version_id:'draft-v2'},error:null};
     }};
-    async function loyaltyPage(){
+    async function loyaltyPage(modelOverride,draftVersionId,recommendation,stableRefresh,editorIntent){
       const host=M();
-      host.innerHTML='<section class="card"><h2>Rewards and earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
+      host.innerHTML='<section class="card" id="loyaltyCustomerRedemption">Customer redemption</section><div class="split"><section class="card" id="loyaltyProgramEditor"><h2>Earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"></section><section class="card" id="loyaltyRewardEditor"><h2>Reward editor</h2><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list" id="rwList">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div></section></div><section class="card" id="birthdayEditorCard"><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
+      applyGrowLoyaltyEditorIsolationV139(host,editorIntent);
       host.querySelectorAll('.rwEdit').forEach(button=>button.onclick=()=>{
         const reward=fixture.rewards.find(item=>item.id===button.dataset.rewardId);
         window.__openedRewardId=reward?.id||null;
         $('rwEditor').innerHTML='<div class="reward-editor"><label for="rwCustomerName">Customer-facing name</label><input id="rwCustomerName" value="'+esc(reward?.customer_name||'')+'"><p id="openedRewardIdentity">'+esc(reward?.id||'')+'</p></div>';
+        pruneRewardSiblingsV139(host);
       });
-      $('rwAdd').onclick=()=>{$('rwEditor').innerHTML='<div class="reward-editor"><input id="rwCustomerName" value=""></div>'};
+      if($('rwAdd'))$('rwAdd').onclick=()=>{$('rwEditor').innerHTML='<div class="reward-editor"><label for="rwCustomerName">Customer-facing name</label><input id="rwCustomerName" value=""></div>';pruneRewardSiblingsV139(host)};
     }
     async function storedValuePage(){} async function studioPage(){}
     ${retention}
@@ -161,6 +165,10 @@ export function buildRewardOverviewVisualFixture(app){
       birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,
       birthdayTableReads:window.__tableReads.filter(name=>name==='birthday_program_versions').length,
       retentionName:$('rn')?.value||'',retentionMissing:Boolean($('retentionExactProgramMissing')),
+      editorIntent:M()?.dataset.growEditorIntent||'',programEditors:document.querySelectorAll('#loyaltyProgramEditor').length,
+      rewardEditors:document.querySelectorAll('#loyaltyRewardEditor').length,birthdayEditors:document.querySelectorAll('#birthdayEditorCard').length,
+      redemptionEditors:document.querySelectorAll('#loyaltyCustomerRedemption').length,rewardLists:document.querySelectorAll('#rwList').length,
+      overviewHomeVisible:Boolean(document.querySelector('.grow-hero')?.offsetParent),
       activeElement:document.activeElement?.id||'',consoleErrors:window.__consoleErrors||[]});
     window.__consoleErrors=[];window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
     const routed=(location.hash.startsWith('#/')?location.hash.slice(2):location.hash).split('/');
