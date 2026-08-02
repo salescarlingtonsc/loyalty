@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="b80039cbe1b6f77fd928c0e2d46577282fdd861a9c8bf87d7e022afca9745d7a"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="501f65ed9f290deab2cc36cfbff18910e4af834ed05fd70f0336ef1076055130"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -978,7 +978,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b80039cbe1b6f77fd928c0e2d46577282fdd861a9c8bf87d7e022afca9745d7a</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 501f65ed9f290deab2cc36cfbff18910e4af834ed05fd70f0336ef1076055130</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -987,6 +987,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
       loadingState:({title})=>'<section class="card">Loading '+esc(title)+'…</section>',
       emptyState:({title,body})=>'<div class="empty"><b>'+esc(title)+'</b><p>'+esc(body)+'</p></div>',announce:()=>{},
       pageHeader:({title,subtitle})=>'<header class="cui-page-head"><div class="cui-page-title"><div><h1>'+esc(title)+'</h1><p>'+esc(subtitle||'')+'</p></div></div></header>',
+      action:({id,label,variant='primary'})=>'<button class="btn '+esc(variant)+'" id="'+esc(id)+'">'+esc(label)+'</button>',
       activateDialog:(modal,{onClose,initialFocus}={})=>{const prior=document.activeElement;
         const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
         document.addEventListener('keydown',keydown);queueMicrotask(()=>modal.querySelector(initialFocus)?.focus());
@@ -1022,6 +1023,11 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    still only ever sees that one module key pass the filter, so hasRewards/hasWinback below
    can never both be false while this renders. Links to whichever tab is already open if the
    staff member is already on the Grow surface, else defaults to Everyday rewards. */
+    function loyaltyAuthorityActionV140({canManage=false,draftVersionId=null}={}){
+  if(!canManage)return '<span class="pill off">Read only</span>';
+  if(draftVersionId)return '<span class="pill new">Editable draft</span>';
+  return CUI.action({id:'loyaltyRecommend',label:'Create recommended draft',iconName:'add',variant:'secondary'});
+}
     function growLoyaltyEditorIntentV139({focusTarget=null,rewardId=null}={}){
   if(rewardId)return {kind:'reward',rewardId};
   if(focusTarget==='birthdayLabel')return {kind:'birthday'};
@@ -1128,7 +1134,7 @@ function pruneRewardSiblingsV139(root){
     }};
     async function loyaltyPage(modelOverride,draftVersionId,recommendation,stableRefresh,editorIntent){
       const host=M();
-      host.innerHTML='<section class="card" id="loyaltyCustomerRedemption">Customer redemption</section><div class="split"><section class="card" id="loyaltyProgramEditor"><h2>Earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"></section><section class="card" id="loyaltyRewardEditor"><h2>Reward editor</h2><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list" id="rwList">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div></section></div><section class="card" id="birthdayEditorCard"><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
+      host.innerHTML='<div id="loyaltyAuthority">'+loyaltyAuthorityActionV140({canManage:!isManager,draftVersionId})+'</div><section class="card" id="loyaltyCustomerRedemption">Customer redemption</section><div class="split"><section class="card" id="loyaltyProgramEditor"><h2>Earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"></section><section class="card" id="loyaltyRewardEditor"><h2>Reward editor</h2><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list" id="rwList">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div></section></div><section class="card" id="birthdayEditorCard"><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
       applyGrowLoyaltyEditorIsolationV139(host,editorIntent);
       host.querySelectorAll('.rwEdit').forEach(button=>button.onclick=()=>{
         const reward=fixture.rewards.find(item=>item.id===button.dataset.rewardId);
@@ -1891,7 +1897,7 @@ function pruneRewardSiblingsV139(root){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'b80039cbe1b6f77fd928c0e2d46577282fdd861a9c8bf87d7e022afca9745d7a',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'501f65ed9f290deab2cc36cfbff18910e4af834ed05fd70f0336ef1076055130',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
@@ -1904,6 +1910,7 @@ function pruneRewardSiblingsV139(root){
       birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,
       birthdayTableReads:window.__tableReads.filter(name=>name==='birthday_program_versions').length,
       retentionName:$('rn')?.value||'',retentionMissing:Boolean($('retentionExactProgramMissing')),
+      authorityLabel:$('loyaltyAuthority')?.textContent.trim()||'',
       editorIntent:M()?.dataset.growEditorIntent||'',programEditors:document.querySelectorAll('#loyaltyProgramEditor').length,
       rewardEditors:document.querySelectorAll('#loyaltyRewardEditor').length,birthdayEditors:document.querySelectorAll('#birthdayEditorCard').length,
       redemptionEditors:document.querySelectorAll('#loyaltyCustomerRedemption').length,rewardLists:document.querySelectorAll('#rwList').length,
