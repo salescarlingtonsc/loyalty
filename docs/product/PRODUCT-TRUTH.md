@@ -196,6 +196,17 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   protected owner action. The complete Rewards overview appears immediately
   after the starting action; profitability, journey anatomy, optional tools and
   technical editors are secondary disclosures rather than competing starts.
+- Owner follow-up 2026-08-02: automatic setup must not make a busy owner click
+  through read-only pseudo-steps. With no draft, the everyday action truthfully
+  offers to create a recommended rewards draft and requires at most one compact
+  review sheet plus one explicit create confirmation. With an existing draft,
+  **Continue rewards setup** opens that draft directly in one action and performs
+  no recommendation write. The review states exactly what will be created, what
+  is not included, which price inputs are used, and that real fulfilment cost
+  still requires owner review. Successful creation shows a concise draft-ready
+  handoff before the detailed editor. Primary actions remain visible without a
+  scroll gesture at 375px portrait and phone landscape; publication stays a
+  separate protected owner action.
 - The overview explains the whole programme in plain language, shows the
   customer-facing result, and makes each section directly editable.
 - The business-owner overview shows every configured reward and birthday

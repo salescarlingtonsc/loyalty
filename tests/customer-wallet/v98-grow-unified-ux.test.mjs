@@ -45,34 +45,33 @@ test('Grow is one overview-first journey with secondary anatomy rather than four
 test('first-time setup is idempotent, guarded, draft-only and recommendation-led',()=>{
   const setup=grow.slice(grow.indexOf('function openRewardsAutoSetup('),grow.indexOf("document.querySelectorAll('[data-reward-cost]')"));
   assert.match(setup,/if\(busy\)return/);
-  assert.match(setup,/if\(growDraftVersionId\)/);
   assert.match(setup,/generate_retention_recommendation/);
   assert.match(setup,/draft_config_version_id\|\|data\?\.version_id/);
   assert.equal((setup.match(/await sb\.rpc\(/g)||[]).length,1,
     'confirmation has one recommendation draft writer');
-  const existingDraft=setup.slice(setup.indexOf('if(growDraftVersionId){'),setup.indexOf("busy=true"));
-  assert.doesNotMatch(existingDraft,/await sb\.rpc/,
-    'resuming an existing draft performs no creation RPC');
+  assert.match(grow,/if\(growDraftVersionId\)return mountGrowSurface\('rewards',\{draftOverride:growDraftVersionId,focusTarget:'lm'\}\)/,
+    'resuming an existing draft bypasses the creation popup and RPC');
   assert.doesNotMatch(setup,/publish_loyalty_config|location\.reload|route\(\)/);
   assert.match(setup,/rewardAutoSetupRequestKey\?\?=crypto\.randomUUID\(\)/);
   assert.match(setup,/rewardAutoConfirm\.disabled=false/);
-  assert.match(grow,/Automatic setup creates an editable draft only/);
-  assert.match(grow,/Customers keep using the published programme until you publish/);
+  assert.match(grow,/Nothing goes live until you review and publish/);
+  assert.match(grow,/Staff and customers keep using the published programme/);
 });
 
 test('one coherent Grow draft is passed to earning and bring-back editors',()=>{
   assert.match(grow,/let growDraftVersionId=/);
   assert.match(grow,/surface==='rewards'\)await loyaltyPage\(undefined,draft\)/);
-  assert.match(grow,/surface==='winback'\)await retentionPage\(draft\)/);
+  assert.match(grow,/surface==='winback'\)await retentionPage\(draft,editProgramId\)/);
   assert.match(grow,/draftOverride:growDraftVersionId/);
-  assert.match(grow,/growDraftVersionId\?'Open editable draft':'Create editable draft'/);
+  assert.match(grow,/growDraftVersionId\?'Continue rewards setup':'Create recommended rewards draft'/);
 });
 
-test('automatic popup is the guided start while detailed edits remain secondary',()=>{
+test('one-sheet automatic popup is the guided start while detailed edits remain secondary',()=>{
   for(const target of ['lm','loyaltyAudienceSettings','rwAdd']){
     assert.match(grow,new RegExp(`['"]${target}['"]`));
   }
-  for(const step of ['Step 1 of 3','Step 2 of 3','Step 3 of 3'])assert.match(grow,new RegExp(step));
+  assert.match(grow,/Review the recommended starting point/);
+  assert.doesNotMatch(grow,/Step 1 of 3|Step 2 of 3|Step 3 of 3/);
   assert.match(grow,/id="growAutoSetup"/);
   assert.match(grow,/id="growSecondarySettings"/);
   assert.doesNotMatch(grow,/data-grow-guide=/);
@@ -97,7 +96,8 @@ test('draft saves never publish and publication is a separate protected review',
   assert.match(rewardSave,/if\(!draftVersionId\)\{[\s\S]*publish_loyalty_config/);
   assert.match(tierSave,/if\(!draftVersionId\)\{[\s\S]*publish_loyalty_config/);
 
-  const retentionDraftActions=html.slice(html.indexOf('if(isOwner&&draftVersionId){'),html.indexOf('if(isOwner){',html.indexOf('if(isOwner&&draftVersionId){')));
+  const retentionDraftStart=html.indexOf('if(isOwner&&draftVersionId&&exactProgramMissing){');
+  const retentionDraftActions=html.slice(retentionDraftStart,html.indexOf('if(isOwner){',retentionDraftStart));
   assert.match(retentionDraftActions,/publishRetention'\)\.onclick=\(\)=>openProtectedGrowPublishReview\(draftVersionId\)/);
   assert.doesNotMatch(retentionDraftActions,/publish_loyalty_config/);
 
@@ -119,7 +119,7 @@ test('staff receive published summaries while authoring and Advanced remain owne
   assert.match(grow,/const canSetupGrow=isOwner&&canRewards&&canWriteModule\('loyalty'\)/);
   assert.match(grow,/if\(!isOwner\|\|!available\|\|!growDraftVersionId\)return ''/);
   assert.match(grow,/\$\{isOwner\?`<details class="grow-advanced"/);
-  assert.match(grow,/if\(\(hashParam&&isOwner\)\|\|\['studio','storedvalue'\]\.includes\(routedSurface\)\)/);
+  assert.match(grow,/if\(\(routedAction&&isOwner\)\|\|\(hashParam&&isOwner\)\|\|\['studio','storedvalue'\]\.includes\(routedSurface\)\)/);
   assert.match(grow,/if\(canSetupGrow\)[\s\S]*firm_config_versions/);
 });
 
@@ -164,7 +164,7 @@ test('Grow is touch-safe, vertical on phones, and honours reduced motion',()=>{
   assert.match(css,/\.grow-primary\{min-height:48px/);
   assert.match(css,/\.grow-flow-foot \.btn\{min-height:44px/);
   assert.match(css,/@media\(max-width:640px\)/);
-  assert.match(css,/\.grow-flow\{grid-template-columns:1fr\}/);
+  assert.match(css,/\.grow-flow\{[^}]*grid-template-columns:1fr/);
   assert.match(css,/overflow-wrap:anywhere/);
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 });
@@ -193,7 +193,6 @@ test('dynamic Grow and publish-preview grammar executes named templates in both 
     ['growPublishedRewards',{count:7},'7'],
     ['growPublishedBringBackRule',{count:1},'1'],
     ['growPublishedBringBackRules',{count:4},'4'],
-    ['growDraftReady',{version:23},'23'],
     ['publishImpactAction',{live:1,shadow:2,unbuilt:3},'1'],
     ['publishImpactActions',{live:6,shadow:2,unbuilt:3},'6'],
     ['publishDraftVersion',{version:31},'31'],
