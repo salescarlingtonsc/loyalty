@@ -86,13 +86,19 @@ Configuration cases:
   appear to customers until explicit publication and owner/customer refresh.
 - Simplified automatic setup: Olivia opens Grow with Loyalty `rw`, the same
   published Signature rewards and Birthday Glow, and no draft. The complete
-  overview is visible before secondary controls. Opening and cancelling the
-  three-step automatic-setup popup creates no draft. Confirming the recommended
-  repeat-visit goal creates one editable recommendation draft with a stable
-  request key and no publication; an induced lost response reuses that key.
-  Repeat with draft version 2 already present (open it, do not replace it), with
-  Maya's read-only role (no setup control), and at 1440px and 390px. Only after
-  Olivia explicitly publishes may Chen/Farah fulfil it and `CUS-MEI` see it.
+  overview is visible before secondary controls. **Create recommended rewards
+  draft** opens one compact review sheet that truthfully lists repeat visits,
+  Facial, one earning rule plus one return reward, catalogue-price use, the
+  missing fulfilment-cost assumption, excluded programme families and the
+  unpublished boundary. Opening/cancelling writes nothing; the second tap
+  creates one editable recommendation draft under a stable request key, and an
+  induced lost response reuses that key. The success handoff summarizes model,
+  threshold and reference price before **Review draft** opens the exact editor.
+  With draft version 2 already present, **Continue rewards setup** opens it in
+  one tap and performs no recommendation write. Repeat with Maya's read-only
+  role (no setup control), at 1440px, 375/390/412px portrait and 844×390
+  landscape. No primary action begins outside the viewport. Only after Olivia
+  explicitly publishes may Chen/Farah fulfil it and `CUS-MEI` see it.
 
 Promotion cases:
 

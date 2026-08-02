@@ -6,6 +6,8 @@ const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
 const migration=readFileSync(new URL('../../db/migrations/20260801_nestly_v128_simple_rewards_recommender.sql',import.meta.url),'utf8');
 const browserFixture=readFileSync(new URL('../browser/reward-overview-owner-visual.html',import.meta.url),'utf8');
 const evidence=readFileSync(new URL('../../docs/qa/evidence/V128-SIMPLE-REWARDS-SETUP.md',import.meta.url),'utf8');
+const currentEvidence=readFileSync(new URL('../../docs/qa/evidence/V136-GROW-STREAMLINE.md',import.meta.url),'utf8');
+const latestEvidence=readFileSync(new URL('../../docs/qa/evidence/V137-MINIMAL-AUTO-REWARDS.md',import.meta.url),'utf8');
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -18,7 +20,8 @@ const grow=section('async function growPage(','/* ---------- Bring-back playbook
 
 test('Grow presents one automatic setup start followed immediately by the complete overview',()=>{
   assert.equal((grow.match(/id="growAutoSetup"/g)||[]).length,1);
-  assert.match(grow,/>Set up rewards automatically</);
+  assert.match(grow,/Create recommended rewards draft/);
+  assert.match(grow,/Continue rewards setup/);
   assert.ok(grow.indexOf('id="growAutoSetup"')<grow.indexOf('id="rewardJourneyTitle"'));
   assert.ok(grow.indexOf('id="rewardJourneyTitle"')<grow.indexOf('id="growSecondarySettings"'),
     'the complete published overview must precede secondary settings');
@@ -27,18 +30,16 @@ test('Grow presents one automatic setup start followed immediately by the comple
   assert.doesNotMatch(grow,/id="growSetupPrimary"/);
 });
 
-test('automatic setup is an accessible three-step popup with an explicit draft-only promise',()=>{
+test('automatic setup is an accessible one-sheet review with an explicit draft-only promise',()=>{
   assert.match(grow,/function openRewardsAutoSetup\(/);
   assert.match(grow,/role="dialog"/);
   assert.match(grow,/aria-modal="true"/);
-  assert.match(grow,/Step 1 of 3/);
-  assert.match(grow,/Step 2 of 3/);
-  assert.match(grow,/Step 3 of 3/);
-  assert.match(grow,/Create editable draft/);
+  assert.match(grow,/Review the recommended starting point/);
+  assert.match(grow,/Create draft/);
   assert.match(grow,/Nothing goes live until you review and publish/);
-  assert.match(grow,/Product costs are not used/);
+  assert.match(grow,/Real fulfilment cost is not included/);
   assert.match(grow,/tabindex="-1"/);
-  assert.match(grow,/CUI\.activateDialog\([\s\S]*?initialFocus:'#rewardAutoGoal'/);
+  assert.match(grow,/CUI\.activateDialog\([\s\S]*?initialFocus:'#rewardAutoConfirm'/);
 });
 
 test('opening and cancelling do not write while confirm creates one idempotent recommendation draft',()=>{
@@ -49,8 +50,8 @@ test('opening and cancelling do not write while confirm creates one idempotent r
   assert.match(popup,/rewardAutoSetupRequestKey\?\?=crypto\.randomUUID\(\)/);
   assert.equal((popup.match(/sb\.rpc\('generate_retention_recommendation'/g)||[]).length,1);
   assert.doesNotMatch(popup,/publish_(?:config|loyalty)|studio_publish|publishProgram/);
-  assert.match(popup,/if\(growDraftVersionId\)[\s\S]*?mountGrowSurface\(nextAction\.surface,\{draftOverride:growDraftVersionId/,
-    'an existing draft must be opened instead of replaced');
+  assert.match(grow,/if\(growDraftVersionId\)return mountGrowSurface\('rewards',\{draftOverride:growDraftVersionId,focusTarget:'lm'\}\)/,
+    'an existing draft must open directly instead of being replaced');
 });
 
 test('failed automatic setup remains retryable and prevents duplicate submission',()=>{
@@ -88,5 +89,5 @@ test('server recommendation uses governed sectors and serializes stale tabs onto
 test('checked-in browser evidence identifies the exact extracted production component',()=>{
   const sourceHash=browserFixture.match(/name="production-source-sha256" content="([a-f0-9]{64})"/)?.[1];
   assert.ok(sourceHash,'generated browser fixture must carry its production source hash');
-  assert.match(evidence,new RegExp(sourceHash));
+  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}`,new RegExp(sourceHash));
 });

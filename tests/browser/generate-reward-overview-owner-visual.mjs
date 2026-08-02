@@ -17,10 +17,11 @@ export function buildRewardOverviewVisualFixture(app){
   const snapshotAdapter=sourceBetween(app,'async function growOverviewSnapshot','function ownerRewardJourneyV122');
   const journey=sourceBetween(app,'function ownerRewardJourneyV122','function growStatus');
   const status=sourceBetween(app,'function growStatus','/* v104 starts');
+  const retention=sourceBetween(app,'async function retentionPage(','/* ---------- Grow: one customer journey');
   const grow=sourceBetween(app,'async function growPage(','/* ---------- Bring-back playbooks');
-  const sourceHash=createHash('sha256').update(`${style}\n${snapshotAdapter}\n${journey}\n${status}\n${grow}`).digest('hex');
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="production-source-sha256" content="${sourceHash}"><title>Nestly rewards overview browser acceptance</title><style>${style}
+  const sourceHash=createHash('sha256').update(`${style}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}`).digest('hex');
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
+    <meta name="production-source-sha256" content="${sourceHash}"><title>Peekaa rewards overview browser acceptance</title><style>${style}
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
     @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · ${sourceHash}</p><main id="main"></main></div>
     <script>
@@ -30,18 +31,31 @@ export function buildRewardOverviewVisualFixture(app){
     const CUI={icon:(name)=>'<span aria-hidden="true">'+({till:'◎',loyalty:'★',customers:'●',retention:'↺',inventory:'□',referrals:'↗',memberships:'◇',giftcard:'▣'}[name]||'•')+'</span>',
       loadingState:({title})=>'<section class="card">Loading '+esc(title)+'…</section>',
       emptyState:({title,body})=>'<div class="empty"><b>'+esc(title)+'</b><p>'+esc(body)+'</p></div>',announce:()=>{},
+      pageHeader:({title,subtitle})=>'<header class="cui-page-head"><div class="cui-page-title"><div><h1>'+esc(title)+'</h1><p>'+esc(subtitle||'')+'</p></div></div></header>',
       activateDialog:(modal,{onClose,initialFocus}={})=>{const prior=document.activeElement;
         const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
         document.addEventListener('keydown',keydown);queueMicrotask(()=>modal.querySelector(initialFocus)?.focus());
         return ({restoreFocus=true}={})=>{document.removeEventListener('keydown',keydown);modal.remove();if(restoreFocus)prior?.focus?.()};}};
     const workspaceLocale='en';
-    const workspaceTemplateHtmlV97=(key,{count,version}={})=>key==='growDraftReady'?'Draft '+version+' is ready. Review every step before publishing.':count+' published '+(count===1?'reward':'rewards');
+    const workspaceTemplateHtmlV97=(key,{count}={})=>key==='growDraftReady'?'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.':count+' published '+(count===1?'reward':'rewards');
     const recordProductInteractionV100=()=>{};
     const localizeWorkspaceSubtreeV97=()=>{};
     const productProfitabilityV122=()=>null;
+    const sgDateInputValue=(date=new Date())=>{
+      const values={};
+      new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'})
+        .formatToParts(date).forEach(part=>{if(part.type!=='literal')values[part.type]=part.value});
+      return values.year+'-'+values.month+'-'+values.day;
+    };
+    const promotionDateTextV104=value=>new Intl.DateTimeFormat('en-SG',{
+      timeZone:'Asia/Singapore',day:'numeric',month:'long',year:'numeric'
+    }).format(new Date(value+'T12:00:00+08:00'));
     const fail=error=>{throw error};
     const toast=message=>{window.__lastToast=message};
     const nav=()=>{};
+    const openProtectedGrowPublishReview=()=>{};
+    const refreshRetentionPanel=()=>{};
+    const renderPlaybooks=()=>{};
     const routeDispose=null;
     const M=()=>document.getElementById('main');
     const evidenceParams=new URLSearchParams(location.search);
@@ -49,37 +63,66 @@ export function buildRewardOverviewVisualFixture(app){
     const hasExistingDraft=evidenceParams.get('draft')==='existing';
     const failRecommendationOnce=evidenceParams.get('failOnce')==='1';
     const concurrentDraft=evidenceParams.get('concurrentDraft')==='1';
-    const S={myRole:isManager?'manager':'owner',myModules:['loyalty'],biz:{id:'business-spa-glow',currency:'SGD',industry:'facial'}};
-    const canWriteModule=module=>!isManager&&module==='loyalty';
+    const emptyPrograms=evidenceParams.get('empty')==='1';
+    const partialOverview=evidenceParams.get('partial')||'';
+    const configuredOff=evidenceParams.get('configured')==='off';
+    const futureRetention=evidenceParams.get('futureRetention')==='1';
+    const fixtureSector=evidenceParams.get('sector')||'facial';
+    const cafeFixture=fixtureSector==='cafe';
+    const classicFixture=fixtureSector==='other';
+    const requestedModules=evidenceParams.get('modules');
+    const selectedModules=requestedModules?requestedModules.split(',').filter(Boolean):['loyalty','retention','referrals','memberships','giftcards'];
+    const S={myRole:isManager?'manager':'owner',myModules:selectedModules,biz:{id:cafeFixture?'business-cafe-harbour':classicFixture?'business-other':'business-spa-glow',currency:'SGD',industry:fixtureSector}};
+    const canWriteModule=module=>!isManager&&S.myModules.includes(module);
     const fixture={currentVersion:'published-v1',draft:hasExistingDraft?{id:'draft-v2',version_no:2}:null,
-      loyalty:{id:'programme-1',active:true,loyalty_model:'points_tiers',earn_points_per_dollar:10,redeem_points:1000,reward_credit_cents:1000,expiry_mode:'inactivity',expiry_days:365},
-      rewards:[
+      loyalty:emptyPrograms?null:{id:'programme-1',active:true,loyalty_model:'points_tiers',earn_points_per_dollar:10,redeem_points:1000,reward_credit_cents:1000,expiry_mode:'inactivity',expiry_days:365},
+      rewards:emptyPrograms?[]:[
         {id:'11111111-1111-4111-8111-111111111111',active:true,customer_name:'Signature reward',cost_points:500,estimated_cost_cents:400,sort:1},
         {id:'22222222-2222-4222-8222-222222222222',active:true,customer_name:'Signature reward',cost_points:1500,estimated_cost_cents:900,sort:2},
         {id:'33333333-3333-4333-8333-333333333333',active:false,customer_name:'Seasonal facial',cost_points:750,sort:3}],
-      birthday:{program_id:'birthday-1',active:true,customer_label:'Birthday Glow',customer_description:'Available during the birthday month.',fulfillment_kind:'discount_pct',discount_percent:20},
-      products:[],retention:[]};
+      birthday:emptyPrograms?null:{program_id:'birthday-1',active:true,customer_label:'Birthday Glow',customer_description:'Available during the birthday month.',fulfillment_kind:'discount_pct',discount_percent:20},
+      products:[],retention:emptyPrograms?[]:[
+        {id:'bring-back-1',program_id:'bring-back-1',name:'Glow regular return',active:!configuredOff,goal_visits:2,period_days:30,reward_taxonomy_id:'taxonomy-1',reward_label:'Glow credit',fulfillment_kind:'credit',credit_cents:1000,starts_on:futureRetention?'2099-01-01':'2026-08-01'},
+        {id:'bring-back-2',program_id:'bring-back-2',name:'Paused facial return',active:false,goal_visits:1,period_days:60,reward_taxonomy_id:'taxonomy-1',reward_label:'Glow credit',fulfillment_kind:'credit',credit_cents:500,starts_on:'2026-08-01'}],
+      taxonomy:[{id:'taxonomy-1',label:'Glow credit',fulfillment_kind:'credit',active:true,sort:1}],
+      referral:emptyPrograms?null:{id:'referral-1',enabled:!configuredOff,reward_cents:1000,min_spend_cents:5000},
+      memberships:emptyPrograms?[]:[{id:'membership-1',name:'Glow Monthly',active:!configuredOff}],
+      giftcardPreferences:{status:'available',gift_card_sales_enabled:false,package_earns_points:false}};
     window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];window.__recommendationFailed=false;
     function fixtureQuery(table){
-      const state={single:false};
-      const query={select(){return query},eq(){return query},is(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
+      const state={single:false,equals:{}};
+      const query={select(){return query},eq(column,value){state.equals[column]=value;return query},is(){return query},in(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
         then(resolve,reject){window.__tableReads.push(table);let data=[];
           if(table==='businesses')data={active_config_version_id:fixture.currentVersion};
-          else if(table==='loyalty_programs')data=[fixture.loyalty];
+          else if(table==='loyalty_programs')data=fixture.loyalty?[fixture.loyalty]:[];
           else if(table==='loyalty_rewards')data=fixture.rewards;
           else if(table==='retention_programs')data=fixture.retention;
-          else if(table==='firm_config_versions')data=fixture.draft?[fixture.draft]:[];
-          return Promise.resolve({data,error:null}).then(resolve,reject)}};
+          else if(table==='referral_programs')data=fixture.referral?[fixture.referral]:[];
+          else if(table==='membership_plans')data=fixture.memberships;
+          else if(table==='firm_config_versions')data=state.equals.status==='draft'?(fixture.draft?[fixture.draft]:[]):[{id:'published-v1',version_no:1,status:'published',snapshot_hash:'published-hash'}];
+          else if(table==='firm_reward_taxonomy')data=fixture.taxonomy;
+          const failedTables=partialOverview==='all'
+            ?new Set(['loyalty_programs','loyalty_rewards','retention_programs','referral_programs','membership_plans'])
+            :new Set(partialOverview==='1'?['referral_programs']:[]);
+          const error=failedTables.has(table)?{message:'Synthetic programme status failure'}:null;
+          return Promise.resolve({data:error?null:data,error}).then(resolve,reject)}};
       return query;
     }
     const sb={from:fixtureQuery,rpc:async(name,args)=>{window.__rpcCalls.push(name);window.__rpcArgs.push({name,args});
-      if(name==='get_active_birthday_program')return {data:{status:'published',as_of:'2026-08-01T00:00:00.000Z',programs:[fixture.birthday]},error:null};
+      if(name==='get_active_birthday_program')return partialOverview==='all'?{data:null,error:{message:'Synthetic birthday failure'}}:{data:{status:'published',as_of:'2026-08-01T00:00:00.000Z',programs:fixture.birthday?[fixture.birthday]:[]},error:null};
       if(name==='owner_list_reward_profitability_products_v122')return {data:{items:fixture.products},error:null};
+      if(name==='business_get_checkout_preferences_v102')return partialOverview==='all'?{data:null,error:{message:'Synthetic gift-card failure'}}:{data:fixture.giftcardPreferences,error:null};
+      if(name==='get_retention_config_draft')return {data:{programs:fixture.retention,taxonomy:fixture.taxonomy,snapshot_hash:'draft-hash'},error:null};
       if(name==='generate_retention_recommendation'){
         if(failRecommendationOnce&&!window.__recommendationFailed){window.__recommendationFailed=true;return {data:null,error:{message:'Synthetic lost response'}}}
+        const governedRecommendation=cafeFixture
+          ?{model:'stamps',reference_price_cents:1200,suggested_spend_per_stamp_cents:600,suggested_reward_cost:8}
+          :classicFixture
+          ?{model:'classic',reference_price_cents:3000,suggested_spend_per_stamp_cents:null,suggested_reward_cost:null}
+          :{model:'points_tiers',reference_price_cents:6400,suggested_reward_cost:320};
         const data=concurrentDraft
-          ?{draft_config_version_id:'draft-concurrent',status:'existing_draft',resumed_existing:true,model:'points_tiers',published:false}
-          :{draft_config_version_id:'draft-v2',status:'draft_ready',resumed_existing:false,model:'points_tiers',published:false};
+          ?{draft_config_version_id:'draft-concurrent',status:'existing_draft',resumed_existing:true,...governedRecommendation,published:false}
+          :{draft_config_version_id:'draft-v2',status:'draft_ready',resumed_existing:false,...governedRecommendation,published:false};
         window.__lastRecommendation=data;
         return {data,error:null};
       }
@@ -95,14 +138,15 @@ export function buildRewardOverviewVisualFixture(app){
       });
       $('rwAdd').onclick=()=>{$('rwEditor').innerHTML='<div class="reward-editor"><input id="rwCustomerName" value=""></div>'};
     }
-    async function retentionPage(){} async function storedValuePage(){} async function studioPage(){}
+    async function storedValuePage(){} async function studioPage(){}
+    ${retention}
     ${snapshotAdapter}
     ${journey}
     ${status}
     ${grow}
     window.rewardOverviewMetrics=()=>({sourceHash:'${sourceHash}',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
-      title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.rewards-overview-card')].map(card=>({tag:card.tagName,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
+      title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
       autoSetupButtons:document.querySelectorAll('#growAutoSetup').length,secondaryOpen:$('growSecondarySettings')?.open||false,
       overviewTop:$('rewardJourneyTitle')?.getBoundingClientRect().top||null,secondaryTop:$('growSecondarySettings')?.getBoundingClientRect().top||null,
@@ -111,9 +155,12 @@ export function buildRewardOverviewVisualFixture(app){
       dialogOpen:Boolean($('rewardAutoSetupModal')),dialogStep:$('rewardAutoStepTitle')?.textContent||'',
       birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,
       birthdayTableReads:window.__tableReads.filter(name=>name==='birthday_program_versions').length,
+      retentionName:$('rn')?.value||'',retentionMissing:Boolean($('retentionExactProgramMissing')),
       activeElement:document.activeElement?.id||'',consoleErrors:window.__consoleErrors||[]});
     window.__consoleErrors=[];window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-    growPage('overview',null).catch(error=>{window.__consoleErrors.push(String(error?.stack||error));document.body.dataset.renderError='true'});
+    const routed=(location.hash.startsWith('#/')?location.hash.slice(2):location.hash).split('/');
+    const routedSurface=routed[0]==='loyalty'?'rewards':routed[0]==='retention'?'winback':'overview';
+    growPage(routedSurface,routed[1]||null,routed[2]||null).catch(error=>{window.__consoleErrors.push(String(error?.stack||error));document.body.dataset.renderError='true'});
     </script></body></html>`;
 }
 

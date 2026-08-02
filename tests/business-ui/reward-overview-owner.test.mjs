@@ -136,12 +136,12 @@ test('owner cards route by stable ID to the exact reward and birthday editors',(
 
 test('read-only and recoverable states do not expose a dead writer',()=>{
   const grow=section('async function growPage(','/* ---------- Bring-back playbooks');
-  assert.match(grow,/canRewards\?`<section class="card reward-journey-v122/,
-    'a manager with Loyalty read access can review published rewards');
-  assert.match(grow,/canSetupGrow\?`<button[^>]+data-rewards-overview-edit/,
+  assert.match(grow,/<section class="card reward-journey-v122/,
+    'a manager can review the complete programme status surface');
+  assert.match(grow,/canSetupGrow\?`<button[^>]+data-programme-kind="earning"[^>]+data-rewards-overview-edit/,
     'edit controls are owner plus Loyalty-write only');
   assert.match(grow,/id="growRewardsRetry"/);
-  assert.match(grow,/Rewards could not be loaded/);
-  assert.match(app,/\.rewards-overview-card/);
-  assert.match(app,/@media\(max-width:600px\)[\s\S]*\.rewards-overview-grid/);
+  assert.match(grow,/programme details could not be loaded/);
+  assert.match(app,/\.grow-programme-row/);
+  assert.match(app,/@media\(max-width:640px\)[\s\S]*\.grow-programme-row/);
 });
