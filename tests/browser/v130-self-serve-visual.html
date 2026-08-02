@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1b8bd46682a48130e3f699b8bac78b0126fa063bb0255e151c5614c6795e30ab"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="e6555f072f097b89eb3a5fa729228d255c0bc63d330ef14c69384cee0d0d9eb5"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -462,6 +462,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-optional-card p{margin:4px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
 .grow-optional-card .btn{min-height:44px;flex:0 0 auto}
 .grow-panel-shell{position:relative;min-height:0}.grow-panel-shell:empty{display:none}
+.grow-overview.grow-editor-active>:not(.grow-panel-shell){display:none}
+.grow-overview.grow-editor-active .grow-panel-shell{display:block}
+.grow-editor-single{grid-template-columns:minmax(0,760px);justify-content:start}
 .grow-panel-shell.grow-panel-updating{opacity:.72;pointer-events:none;transition:opacity .18s ease}
 .grow-inline-feedback{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);
   border-radius:var(--r-sm);background:#fff;color:var(--muted);font-size:13px}

@@ -251,6 +251,14 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   older editable draft, the owner may copy only that stable record into the
   draft under optimistic concurrency. A lost-response retry returns the same
   draft record and never publishes, duplicates or replaces unrelated work.
+- Owner screenshot clarification 2026-08-02: an exact Grow deep link is a
+  single-task editor, not a long combined configuration page. Selecting Earn
+  renders only Earn; selecting one stable reward renders only that reward;
+  selecting Birthday renders only Birthday; the same isolation applies to
+  Bring-back, Referrals, Memberships and Gift cards. The overview home is hidden
+  while an editor is open; an editor is never appended below the overview. No
+  adjacent programme form may appear above or below the selected editor. Save/Done returns to the one
+  Grow overview; browser Back remains predictable and direct links remain valid.
 - Every programme has a clear owner-controlled on/off state where that module's
   governing contract permits it. Turning a programme off keeps its draft and
   historical value but removes the inactive programme from new customer-facing

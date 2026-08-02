@@ -60,7 +60,7 @@ test('first-time setup is idempotent, guarded, draft-only and recommendation-led
 
 test('one coherent Grow draft is passed to earning and bring-back editors',()=>{
   assert.match(grow,/let growDraftVersionId=/);
-  assert.match(grow,/if\(surface==='rewards'\)\{[\s\S]*await loyaltyPage\(undefined,draft\)/);
+  assert.match(grow,/if\(surface==='rewards'\)\{[\s\S]*await loyaltyPage\(undefined,draft,null,false,editorIntent\)/);
   assert.match(grow,/else if\(surface==='winback'\)\{[\s\S]*await retentionPage\(draft,editProgramId\)/);
   assert.match(grow,/draftOverride:growDraftVersionId/);
   assert.match(grow,/growDraftVersionId\?'Continue rewards setup':'Create recommended rewards draft'/);
@@ -84,7 +84,7 @@ test('one-sheet automatic popup is the guided start while detailed edits remain 
 });
 
 test('draft saves never publish and publication is a separate protected review',()=>{
-  const loyaltySave=html.slice(html.indexOf("$('lsave').onclick=async()=>"),html.indexOf("const loyaltyReviewPublish="));
+  const loyaltySave=html.slice(html.indexOf("const loyaltySave=$('lsave')"),html.indexOf("const loyaltyReviewPublish="));
   const draftReturn=loyaltySave.slice(loyaltySave.indexOf('if(draftVersionId){'),loyaltySave.indexOf("const {error:publishError}"));
   assert.match(draftReturn,/refreshLoyaltyPanel/);
   assert.match(draftReturn,/Nothing was published/);

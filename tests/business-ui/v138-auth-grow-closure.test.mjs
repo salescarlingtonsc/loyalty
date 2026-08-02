@@ -71,8 +71,9 @@ test('every editable Grow submodule offers a stable return to the one overview',
 
 test('reward completion returns to the Grow overview instead of leaving the owner in an editor',()=>{
   assert.match(app,/id="rwClose" type="button">Done<\/button>/);
-  assert.match(app,/\$\('rwClose'\)\.onclick=\(\)=>nav\('#\/loyalty'\)/);
-  assert.match(app,/toast\(draftVersionId\?'Draft reward saved'[\s\S]{0,260}?nav\('#\/loyalty'\)/);
+  assert.match(app,/const finishGrowEditorV139=\(\)=>editorIntent\?nav\('#\/grow'\):nav\('#\/loyalty'\)/);
+  assert.match(app,/\$\('rwClose'\)\.onclick=finishGrowEditorV139/);
+  assert.match(app,/toast\(draftVersionId\?'Draft reward saved'[\s\S]{0,260}?finishGrowEditorV139\(\)/);
 });
 
 test('the install surface contains no customer-visible Nestly brand',()=>{
@@ -82,7 +83,7 @@ test('the install surface contains no customer-visible Nestly brand',()=>{
 test('clicking a live reward missing from a stale draft safely materializes and opens the exact editor',()=>{
   assert.match(grow,/ensure_published_reward_in_draft_v138/);
   assert.match(grow,/p_expected_snapshot_hash:draftSnapshotHash/);
-  assert.match(grow,/await loyaltyPage\(undefined,draft\)/);
+  assert.match(grow,/await loyaltyPage\(undefined,draft,null,false,editorIntent\)/);
   assert.match(grow,/openExactReward\(\{allowMaterialize:false\}\)/);
   assert.doesNotMatch(grow,/This published reward is not present in the current draft\. Review the draft before changing another reward\./);
 });
