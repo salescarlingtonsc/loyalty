@@ -320,7 +320,8 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   staff accounts and least-privilege roles rather than create a pricing reason
   to share credentials. A later pricing change requires a new owner decision
   and migration; legacy seat fields are historical data, not the launch offer.
-- Every eligible V124 provider subscription has one 30-day money-back-request
+- Historical subscriptions accepted under the V124 launch terms retain one
+  30-day money-back-request
   window. The deadline is the exact timestamp 30 days after that provider
   subscription's earliest successful invoice payment, including an earlier
   matching invoice found by backfill; an unrelated legacy renewal cannot start
@@ -328,6 +329,14 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   capacity, cancellation or reactivation changes. It is a refund-request
   eligibility policy, not a free trial or an automatic refund; approved refunds
   still follow fraud, chargeback, tax and provider controls.
+- Owner decision 2026-08-03 supersedes that launch promise for new business
+  subscription purchases accepted under the 2026-08-03 Terms. Those fees are
+  non-refundable once payment completes, except where applicable law requires
+  a refund or Peekaa expressly agrees otherwise in writing. The change is
+  prospective: it must not erase or shorten a request window already earned
+  under earlier accepted terms. A paid-invoice webhook still opens the exact
+  payment-pending workspace without a management approval step; returning from
+  Checkout alone never grants access.
 - Complete Stripe subscription snapshots are authoritative for item membership:
   a local capacity item absent from a newer complete snapshot is removed. The
   owner browser reuses one durable request key and command ID for the same

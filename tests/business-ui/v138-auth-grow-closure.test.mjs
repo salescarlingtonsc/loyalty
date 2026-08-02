@@ -31,8 +31,8 @@ test('Google sign-in cannot become implicit signup and consented signup records 
   assert.match(app,/storageKey:'nestly-business-oauth-admission-v138',persistSession:false/);
   assert.match(app,/autoRefreshToken:false,detectSessionInUrl:false/);
   assert.ok(callback.indexOf("admissionClient.rpc('complete_business_google_oauth_v138'")<callback.indexOf('await sb.auth.setSession('));
-  assert.match(app,/terms:Object\.freeze\(\{version:'2026-08-02',sha256:'2e31dbece128befd9b504034505ba93e93069dc9cd7782a66974431740d330c8'/);
-  assert.match(app,/privacy:Object\.freeze\(\{version:'2026-08-02',sha256:'67e51a7c59a214a4df43fd533835d528034f0d20884f72244e25e0e0bf928c5c'/);
+  assert.match(app,/terms:Object\.freeze\(\{version:'2026-08-03',sha256:'1c7437280e9ba8386b5ef3998a919fefcdeca8e06cc497b31621633ae23dab04'/);
+  assert.match(app,/privacy:Object\.freeze\(\{version:'2026-08-03',sha256:'8e152d208b271da5a1f71630b17c5c82e8b7bd930c5508da8b4d95597c0a1568'/);
   assert.match(migration,/create table app\.business_google_oauth_attempts_v138/);
   assert.match(migration,/create table app\.business_account_legal_acceptances_v138/);
   assert.match(migration,/where staff_row\.user_id=v_actor and staff_row\.active/);

@@ -6,6 +6,12 @@ This is the mandatory planning artifact before application code changes. The
 state is deliberately conservative: implementation presence does not prove the
 journey.
 
+## V144 self-service signup expansion
+
+| ID | Owner configuration | Staff operation | Customer/platform projection | Realistic fixture | Negative states | Evidence | State |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `SELF-SERVE-CONSENT-002` | Public owner account creation uses the active 2026-08-03 Terms/Privacy manifest; the separately configured Stripe catalogue must contain complete active annual/monthly rows and a published Loyalty-capable sector. | Owner checks one signup checkbox labelled “I agree to the Terms of Service and acknowledge the Privacy Policy”, optionally opens either visibly underlined link, returns without losing the intended signup route, selects the exact plan/capacity and continues to hosted Checkout. No manual approval action exists. | Missing catalogue creates no workspace/charge and identifies configuration unavailability honestly. A matching signed paid invoice activates once; the 2026-08-03 purchase has no money-back window, while pre-existing V124 windows remain immutable. | `SPA-GLOW-BILLING-NEW`: Sofia Ng, annual/1,000 SGD 1,188 and monthly/3,000 SGD 169, GST not charged. | Checkbox off; link opened/not opened; browser back/no referrer/direct legal URL; empty/partial catalogue; canceled/unpaid/duplicate/out-of-order/invalid-signature payment; prior-policy business; refresh/retry; desktop/390px. | `tests/business-ui/v144-self-serve-consent.test.mjs` 5/5; final-schema `db/tests/v130_self_serve_business_onboarding.sql` and `db/tests/v144_self_serve_subscription_consent.sql` pass through rollback after 175/175 migrations with zero tenant/user residue; `tests/browser/verify-v138-business-google-auth.mjs` and `tests/browser/verify-v144-self-serve-consent.mjs` pass at 390px/1440px. Evidence: `V144-SELF-SERVE-SUBSCRIPTION-CONSENT.md`. Production catalogue/provider proof remains separate. | `VERIFIED_DATABASE` |
+
 ## Working matrix
 
 | ID | Owner configuration | Staff operation | Customer/platform projection | Realistic fixture | Negative and recovery states | Current evidence | State |

@@ -132,13 +132,16 @@ order. A hidden navigation item without server-side denial is a failure.
     SGD 1,188/1,428. An increase requests immediate provider proration but stays
     pending when payment confirmation or SCA is outstanding. Neither cadence
     nor capacity commands can decrease capacity.
-12. The earliest successful paid invoice for the matching V124 provider
-    subscription fixes one 30-day refund-request deadline; a matching earlier
-    invoice is backfilled and an unrelated legacy renewal is excluded.
-    Cadence/capacity changes, cancellation, reactivation, duplicate events and
-    lost-response retries reuse exact evidence and do not move it. A refund
-    request is not represented as approved or paid until the provider event
-    confirms it.
+12. For Terms accepted before 3 August 2026, the earliest successful paid
+    invoice for the matching V124 provider subscription fixes one 30-day
+    refund-request deadline; a matching earlier invoice is backfilled and an
+    unrelated legacy renewal is excluded. For Terms accepted on or after
+    3 August 2026, that same first-paid evidence activates access but does not
+    create a refund window. Cadence/capacity changes, cancellation,
+    reactivation, duplicate events and lost-response retries reuse exact
+    evidence and do not move it. A refund is never represented as approved or
+    paid until the provider event confirms it, and mandatory rights remain
+    unaffected.
 13. If payment confirmation remains pending, the same command recovers after
     its webhook projects the requested capacity. A later catalogue rollover
     cannot alter that command's snapshotted Stripe prices. Terminal failed or

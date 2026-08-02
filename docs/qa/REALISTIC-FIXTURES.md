@@ -254,6 +254,13 @@ All automated credentials must come from a non-committed test-secret mechanism.
 - Re-run with an unconfirmed email, another user's business ID, a reused key
   with changed business/plan data, duplicate slug, inactive Stripe catalogue,
   forged amount, and a paid invoice for another subscription.
+- V144 prospective-policy run: Sofia accepts the 2026-08-03 Terms using the
+  single account-creation checkbox, optionally opens each legal link and
+  returns to signup, then buys annual/1,000. The matching paid invoice activates
+  once but creates no money-back window. A comparison business that earned a
+  V124 window under earlier Terms keeps the exact immutable deadline. Empty or
+  half-published Stripe catalogue rows show an actionable unavailable state and
+  create neither a workspace nor a charge.
 
 ## `NESTLY-MOBILE-RELEASE-01` — store publication candidate
 

@@ -1048,6 +1048,12 @@
       "version": "20260802120000",
       "name": "nestly_v138_auth_grow_closure",
       "sourcePath": "db/migrations/20260802_nestly_v138_auth_grow_closure.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260803120000",
+      "name": "nestly_v144_self_serve_subscription_consent",
+      "sourcePath": "db/migrations/20260803_nestly_v144_self_serve_subscription_consent.sql"
     }
   ]
 }
