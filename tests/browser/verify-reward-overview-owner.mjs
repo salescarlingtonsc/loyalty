@@ -154,6 +154,8 @@ try{
   assert.deepEqual({intent:metrics.editorIntent,program:metrics.programEditors,reward:metrics.rewardEditors,birthday:metrics.birthdayEditors,redemption:metrics.redemptionEditors},
     {intent:'earning',program:1,reward:0,birthday:0,redemption:0},'Earn opens only the earning form');
   assert.equal(metrics.overviewHomeVisible,false);
+  assert.equal(metrics.authorityLabel,'Editable draft','writable owner draft is never mislabelled read only');
+  await page.screenshot({path:new URL('owner-editable-draft-authority-desktop-1440.png',evidenceDir).pathname,fullPage:true});
 
   await page.goto(`${base}?draft=existing&route=birthday#/loyalty/draft-v2/birthday`,{waitUntil:'networkidle'});await page.waitForSelector('#birthdayLabel');
   metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
@@ -277,5 +279,12 @@ try{
   assert.ok(metrics.cards.every(card=>card.tag==='ARTICLE'));
   assert.equal(metrics.viewport.clientWidth,metrics.viewport.scrollWidth);
   await page.screenshot({path:new URL('manager-read-only-mobile-390.png',evidenceDir).pathname,fullPage:true});
+
+  await page.evaluate(()=>loyaltyPage(undefined,'draft-v2',null,false,{kind:'earning'}));await page.waitForSelector('#lm');
+  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
+  assert.equal(metrics.authorityLabel,'Read only','manager retains explicit read-only authority copy');
+  assert.equal(await page.locator('#loyaltyAuthority button').count(),0,'read-only authority state exposes no draft action');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390,'390px read-only editor does not overflow');
+  await page.screenshot({path:new URL('manager-read-only-draft-authority-mobile-390.png',evidenceDir).pathname,fullPage:true});
   process.stdout.write(JSON.stringify({status:'PASS',sourceHash:metrics.sourceHash,evidenceDir:evidenceDir.pathname},null,2)+'\n');
 }finally{await browser.close()}

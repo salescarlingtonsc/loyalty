@@ -259,6 +259,12 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   while an editor is open; an editor is never appended below the overview. No
   adjacent programme form may appear above or below the selected editor. Save/Done returns to the one
   Grow overview; browser Back remains predictable and direct links remain valid.
+- Owner production verification clarification 2026-08-02: Grow authority copy
+  must describe the user's actual permission. An owner who can manage Loyalty
+  and has an editable draft sees `Editable draft`; that state must never be
+  labelled `Read only`. A user without Loyalty write authority sees `Read only`
+  and receives no write control. When no draft exists, an authorized owner sees
+  the explicit create-draft action.
 - Every programme has a clear owner-controlled on/off state where that module's
   governing contract permits it. Turning a programme off keeps its draft and
   historical value but removes the inactive programme from new customer-facing

@@ -9550,6 +9550,11 @@ async function withGrowEditorContinuity(render,{message='Draft updated.',preserv
     growHost.classList.remove('grow-panel-updating');growHost.removeAttribute('aria-busy');
   }
 }
+function loyaltyAuthorityActionV140({canManage=false,draftVersionId=null}={}){
+  if(!canManage)return '<span class="pill off">Read only</span>';
+  if(draftVersionId)return '<span class="pill new">Editable draft</span>';
+  return CUI.action({id:'loyaltyRecommend',label:'Create recommended draft',iconName:'add',variant:'secondary'});
+}
 function growLoyaltyEditorIntentV139({focusTarget=null,rewardId=null}={}){
   if(rewardId)return {kind:'reward',rewardId};
   if(focusTarget==='birthdayLabel')return {kind:'birthday'};
@@ -9743,7 +9748,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const firmExpiryMode=p?.expiry_mode??'none';
   const firmExpiryDays=positiveExpiryDays(p?.expiry_days)||365;
   const firmExpiryNeedsDays=expiryModeRequiresDays(firmExpiryMode);
-  const loyaltyActions=canManageLoyalty&&!draftVersionId?CUI.action({id:'loyaltyRecommend',label:'Create recommended draft',iconName:'add',variant:'secondary'}):'<span class="pill off">Read only</span>';
+  const loyaltyActions=loyaltyAuthorityActionV140({canManage:canManageLoyalty,draftVersionId});
   const publishedBirthdaySummary=publishedBirthdayProgram
     ?`<div class="wallet-line" style="margin-top:12px"><div><b>${esc(publishedBirthdayProgram.customer_label||'Birthday benefit')}</b><p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.fulfillment_kind==='discount_pct'?`${publishedBirthdayProgram.discount_percent}% off`:publishedBirthdayProgram.manual_item||'Manual benefit')} · ${publishedBirthdayProgram.active?'Live for eligible customers':'Published but paused'} · window ${Number(publishedBirthdayProgram.window_days_before||0)} day(s) before to ${Number(publishedBirthdayProgram.window_days_after||0)} day(s) after</p>${publishedBirthdayProgram.customer_description?`<p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.customer_description)}</p>`:''}</div><span class="spacer"></span><span class="pill ${publishedBirthdayProgram.active?'on':'off'}">Published</span></div>`
     :'<p class="muted small" style="margin-top:10px">No birthday benefit is published. Starting a draft makes no offer until you complete, explicitly enable, and publish it.</p>';

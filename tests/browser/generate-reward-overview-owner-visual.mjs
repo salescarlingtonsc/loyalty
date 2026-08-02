@@ -15,13 +15,14 @@ export function buildRewardOverviewVisualFixture(app){
   const style=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];
   if(!style)throw new Error('production inline stylesheet missing');
   const growBack=sourceBetween(app,'function growBackActionHtmlV138','function growNavItemHtml');
+  const loyaltyAuthority=sourceBetween(app,'function loyaltyAuthorityActionV140','function growLoyaltyEditorIntentV139');
   const loyaltyIsolation=sourceBetween(app,'function growLoyaltyEditorIntentV139','const refreshLoyaltyPanel');
   const snapshotAdapter=sourceBetween(app,'async function growOverviewSnapshot','function ownerRewardJourneyV122');
   const journey=sourceBetween(app,'function ownerRewardJourneyV122','function growStatus');
   const status=sourceBetween(app,'function growStatus','/* v104 starts');
   const retention=sourceBetween(app,'async function retentionPage(','/* ---------- Grow: one customer journey');
   const grow=sourceBetween(app,'async function growPage(','/* ---------- Bring-back playbooks');
-  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}`).digest('hex');
+  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyAuthority}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}`).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
     <meta name="production-source-sha256" content="${sourceHash}"><title>Peekaa rewards overview browser acceptance</title><style>${style}
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -34,6 +35,7 @@ export function buildRewardOverviewVisualFixture(app){
       loadingState:({title})=>'<section class="card">Loading '+esc(title)+'…</section>',
       emptyState:({title,body})=>'<div class="empty"><b>'+esc(title)+'</b><p>'+esc(body)+'</p></div>',announce:()=>{},
       pageHeader:({title,subtitle})=>'<header class="cui-page-head"><div class="cui-page-title"><div><h1>'+esc(title)+'</h1><p>'+esc(subtitle||'')+'</p></div></div></header>',
+      action:({id,label,variant='primary'})=>'<button class="btn '+esc(variant)+'" id="'+esc(id)+'">'+esc(label)+'</button>',
       activateDialog:(modal,{onClose,initialFocus}={})=>{const prior=document.activeElement;
         const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
         document.addEventListener('keydown',keydown);queueMicrotask(()=>modal.querySelector(initialFocus)?.focus());
@@ -59,6 +61,7 @@ export function buildRewardOverviewVisualFixture(app){
     const refreshRetentionPanel=()=>{};
     const renderPlaybooks=()=>{};
     ${growBack}
+    ${loyaltyAuthority}
     ${loyaltyIsolation}
     const routeDispose=null;
     const M=()=>document.getElementById('main');
@@ -136,7 +139,7 @@ export function buildRewardOverviewVisualFixture(app){
     }};
     async function loyaltyPage(modelOverride,draftVersionId,recommendation,stableRefresh,editorIntent){
       const host=M();
-      host.innerHTML='<section class="card" id="loyaltyCustomerRedemption">Customer redemption</section><div class="split"><section class="card" id="loyaltyProgramEditor"><h2>Earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"></section><section class="card" id="loyaltyRewardEditor"><h2>Reward editor</h2><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list" id="rwList">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div></section></div><section class="card" id="birthdayEditorCard"><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
+      host.innerHTML='<div id="loyaltyAuthority">'+loyaltyAuthorityActionV140({canManage:!isManager,draftVersionId})+'</div><section class="card" id="loyaltyCustomerRedemption">Customer redemption</section><div class="split"><section class="card" id="loyaltyProgramEditor"><h2>Earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"></section><section class="card" id="loyaltyRewardEditor"><h2>Reward editor</h2><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list" id="rwList">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div></section></div><section class="card" id="birthdayEditorCard"><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
       applyGrowLoyaltyEditorIsolationV139(host,editorIntent);
       host.querySelectorAll('.rwEdit').forEach(button=>button.onclick=()=>{
         const reward=fixture.rewards.find(item=>item.id===button.dataset.rewardId);
@@ -165,6 +168,7 @@ export function buildRewardOverviewVisualFixture(app){
       birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,
       birthdayTableReads:window.__tableReads.filter(name=>name==='birthday_program_versions').length,
       retentionName:$('rn')?.value||'',retentionMissing:Boolean($('retentionExactProgramMissing')),
+      authorityLabel:$('loyaltyAuthority')?.textContent.trim()||'',
       editorIntent:M()?.dataset.growEditorIntent||'',programEditors:document.querySelectorAll('#loyaltyProgramEditor').length,
       rewardEditors:document.querySelectorAll('#loyaltyRewardEditor').length,birthdayEditors:document.querySelectorAll('#birthdayEditorCard').length,
       redemptionEditors:document.querySelectorAll('#loyaltyCustomerRedemption').length,rewardLists:document.querySelectorAll('#rwList').length,
