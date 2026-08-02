@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="625e3c3e2e7d5300016cd76646cc473b4ec99d5c2918b5d950314e9e79985493"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1b8bd46682a48130e3f699b8bac78b0126fa063bb0255e151c5614c6795e30ab"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -972,7 +972,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .main{padding:0;max-width:100%}
   body{background:#fff}
 }
-body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px}.v130-nav .btn{padding:8px 12px}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v130-nav{position:relative;top:auto;right:auto;padding:8px;overflow:auto}.center-wrap{padding:12px}.grid2{grid-template-columns:1fr}}</style></head><body><nav class="v130-nav" aria-label="V130 acceptance views"><button class="btn" data-view="signup">Account</button><button class="btn ghost" data-view="setup">Setup</button><button class="btn ghost" data-view="pending">Pending</button><button class="btn ghost" data-view="control">Control</button></nav><div id="root"></div><script>
+body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px}.v130-nav .btn{padding:8px 12px}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v130-nav{position:relative;top:auto;right:auto;padding:8px;overflow:auto}.center-wrap{padding:12px}.grid2{grid-template-columns:1fr}}</style></head><body><nav class="v130-nav" aria-label="V130 acceptance views"><button class="btn" data-view="signup">Signup</button><button class="btn ghost" data-view="login">Login</button><button class="btn ghost" data-view="setup">Setup</button><button class="btn ghost" data-view="pending">Pending</button><button class="btn ghost" data-view="control">Control</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const money=cents=>'SGD '+(Number(cents||0)/100).toFixed(2);const sgt=value=>new Date(value).toLocaleString('en-SG');
@@ -983,19 +983,35 @@ body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display
   const businessApplicationLanguage=()=>{const locale=sessionStorage.getItem('nestly-business-application-locale');return WORKSPACE_LOCALES_V97.includes(locale)?locale:'en'};
   const mountTurnstile=(_site,options)=>{setTimeout(()=>options.onToken('synthetic-browser-token'),0);return Promise.resolve({reset(){}})};
   const validNewPassword=value=>String(value).length>=12;const AUTH_TURNSTILE_SITE_KEY='synthetic';
-  const NestlyNativeBridge={publicUrl:path=>'https://www.peekaa.asia'+path};const WORKSPACE_LOCALES_V97=['en','zh-CN','ms'];
-  const renderAuth=()=>{},route=()=>{},resetClientSessionState=()=>{},killChannels=()=>{},nav=value=>{window.__lastNavigation=value},toast=()=>{};
+  const NestlyNativeBridge={isNative:false,publicUrl:path=>location.origin+path};const WORKSPACE_LOCALES_V97=['en','zh-CN','ms'];
+  const SB_URL='https://synthetic.supabase.co',SB_KEY='synthetic-publishable-key';
+  const businessApplicationInviteToken=()=>'',renderNativeBusinessCompanion=()=>{},route=()=>{},resetClientSessionState=()=>{},killChannels=()=>{},nav=value=>{window.__lastNavigation=value},toast=()=>{};
   const CUI={icon:()=>'',activateDialog(modal,{onClose,initialFocus}){const prior=document.activeElement;const close=()=>{modal.remove();prior?.focus()};modal.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}});setTimeout(()=>modal.querySelector(initialFocus)?.focus(),0);return ()=>close()}};const S={user:{id:'v131-browser-user'},hasCustomerPersona:false};
-  let currentView='signup';window.__consoleErrors=[];window.__rpcCalls=[];
+  let currentView='signup';window.__consoleErrors=[];window.__rpcCalls=[];window.__oauthStarts=[];window.__persistentSetSessionCalls=0;window.__transientSetSessionCalls=0;window.__signOutCalls=0;window.__admission={data:{admitted:true},error:null};window.__holdAdmission=false;
   const plans=[{cadence:'annual',cadence_months:12,base_amount_cents:118800,included_customer_capacity:1000,capacity_block_size:1000,capacity_block_amount_cents:12000,compare_at_monthly_cents:16800,tax_behavior:'exclusive'},{cadence:'monthly',cadence_months:1,base_amount_cents:14900,included_customer_capacity:1000,capacity_block_size:1000,capacity_block_amount_cents:1000,compare_at_monthly_cents:16800,tax_behavior:'exclusive'}];
   const modules=['Customer CRM and QR signup','Loyalty points, stamps and rewards','Appointments, team schedule and waitlist','Promotions and AI-assisted promotion copy'];
   const pending={business_id:'00000000-0000-0000-0000-000000000130',business_slug:'radiant-skin-studio',business_name:'Radiant Skin Studio',cadence:'annual',customer_capacity:3000,total_cents:142800,status:'payment_pending'};
-  const sb={auth:{signUp:async()=>({data:{session:null},error:null}),signOut:async()=>({}),signInWithOAuth:async()=>({data:{url:'https://accounts.google.com/'},error:null})},rpc:async(name,args)=>{window.__rpcCalls.push({name,args});if(name==='get_self_serve_checkout_v130')return {data:{onboarding:currentView==='pending'||currentView==='control'?pending:null,plans,sectors:[{sector_key:'facial',label:'Facial / Spa'}],gst_registered:false,money_back_days:30,included_modules:modules},error:null};if(name==='start_self_serve_business_v130')return {data:{...pending},error:null};if(name==='request_self_serve_checkout_v130')return {data:{command_id:'00000000-0000-0000-0000-000000000131'},error:null};return {data:null,error:null}},functions:{invoke:async()=>({data:{status:'processing'},error:null})}};
+  const sb={auth:{signUp:async()=>({data:{session:null},error:null}),signOut:async()=>{window.__signOutCalls+=1;localStorage.removeItem('v138-persistent-session');return {}},signInWithPassword:async()=>({error:null}),setSession:async()=>{window.__persistentSetSessionCalls+=1;localStorage.setItem('v138-persistent-session','admitted');return {error:null}},signInWithOAuth:async args=>{window.__oauthStarts.push(args);return {data:{url:'https://accounts.google.com/'},error:null}}},rpc:async(name,args)=>{window.__rpcCalls.push({name,args,client:'persistent'});if(name==='begin_business_google_oauth_signup_v138')return {data:{accepted:true},error:null};if(name==='get_self_serve_checkout_v130')return {data:{onboarding:currentView==='pending'||currentView==='control'?pending:null,plans,sectors:[{sector_key:'facial',label:'Facial / Spa'}],gst_registered:false,money_back_days:30,included_modules:modules},error:null};if(name==='start_self_serve_business_v130')return {data:{...pending},error:null};if(name==='request_self_serve_checkout_v130')return {data:{command_id:'00000000-0000-0000-0000-000000000131'},error:null};return {data:null,error:null}},functions:{invoke:async()=>({data:{status:'processing'},error:null})}};
+  const transientAdmissionClient={auth:{setSession:async()=>{window.__transientSetSessionCalls+=1;return {error:null}}},rpc:async(name,args)=>{window.__rpcCalls.push({name,args,client:'transient'});if(window.__holdAdmission)await new Promise(()=>{});if(name==='complete_business_google_oauth_v138')return window.__admission;return {data:null,error:null}}};
+  window.supabase={createClient:()=>transientAdmissionClient};
   function businessOAuthRedirectUrl(){
   const redirect=new URL(NestlyNativeBridge.publicUrl('/business'));
   redirect.searchParams.set('oauth','business');
   return redirect.toString();
 }
+function createBusinessOAuthAdmissionClient(){
+  /* OAuth provider tokens are untrusted for business access until the V138
+     server admission succeeds. Keep this session memory-only so a tab close,
+     crash, reload or second tab cannot observe an unadmitted Google identity. */
+  return window.supabase.createClient(SB_URL,SB_KEY,{auth:{
+    storageKey:'nestly-business-oauth-admission-v138',persistSession:false,
+    autoRefreshToken:false,detectSessionInUrl:false,flowType:'implicit'
+  }});
+}
+const BUSINESS_LEGAL_V138=Object.freeze({
+  terms:Object.freeze({version:'2026-08-02',sha256:'2e31dbece128befd9b504034505ba93e93069dc9cd7782a66974431740d330c8'}),
+  privacy:Object.freeze({version:'2026-08-02',sha256:'67e51a7c59a214a4df43fd533835d528034f0d20884f72244e25e0e0bf928c5c'})
+});
 function businessGoogleButtonHtml(id){
   return `<button class="btn ghost" id="${esc(id)}" type="button" style="width:100%;min-height:44px;margin-top:12px"><span aria-hidden="true" style="font-weight:800;font-size:18px">G</span><span>Continue with Google</span></button>`;
 }
@@ -1005,10 +1021,26 @@ function ensureCanonicalBusinessOAuthOrigin(){
   location.replace(canonical.toString());
   return false;
 }
-function beginBusinessGoogleOAuthAttempt({legalAccepted=false}={}){
-  if(legalAccepted!==true)return false;
+async function beginBusinessGoogleOAuthAttempt({intent='signin',legalAccepted=false}={}){
+  if(!['signin','signup'].includes(intent))return false;
+  if(intent==='signup'&&legalAccepted!==true)return false;
+  let attemptToken=null,idempotencyKey=null;
+  if(intent==='signup'){
+    attemptToken=crypto.randomUUID();idempotencyKey=crypto.randomUUID();
+    const {data,error}=await sb.rpc('begin_business_google_oauth_signup_v138',{
+      p_attempt_token:attemptToken,p_idempotency_key:idempotencyKey,
+      p_terms_version:BUSINESS_LEGAL_V138.terms.version,
+      p_terms_sha256:BUSINESS_LEGAL_V138.terms.sha256,
+      p_privacy_version:BUSINESS_LEGAL_V138.privacy.version,
+      p_privacy_sha256:BUSINESS_LEGAL_V138.privacy.sha256,p_accepted:true
+    });
+    if(error||data?.accepted!==true)return false;
+  }
   try{
-    sessionStorage.setItem('nestly-business-google-oauth',JSON.stringify({startedAt:Date.now(),returnPath:'/business',legalAccepted:true}));
+    sessionStorage.setItem('nestly-business-google-oauth',JSON.stringify({
+      startedAt:Date.now(),returnPath:'/business',intent,legalAccepted:intent==='signup',
+      attemptToken
+    }));
     return true;
   }catch{return false}
 }
@@ -1018,15 +1050,23 @@ function takeBusinessGoogleOAuthAttempt(){
   if(!raw)return false;
   try{
     const attempt=JSON.parse(raw),age=Date.now()-Number(attempt?.startedAt);
-    return attempt?.returnPath==='/business'&&attempt?.legalAccepted===true&&Number.isFinite(age)&&age>=0&&age<=30*60*1000;
+    const validIntent=attempt?.intent==='signin'||(attempt?.intent==='signup'&&attempt?.legalAccepted===true);
+    const validToken=attempt?.intent==='signin'||(
+      typeof attempt?.attemptToken==='string'
+      &&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(attempt.attemptToken)
+    );
+    return attempt?.returnPath==='/business'&&validIntent&&validToken
+      &&Number.isFinite(age)&&age>=0&&age<=30*60*1000
+      ?{intent:attempt.intent,legalAccepted:attempt.legalAccepted===true,
+        attemptToken:attempt.attemptToken||null}:false;
   }catch{return false}
 }
-async function startBusinessGoogleAuth({button,errorHostId,legalAccepted=false}){
+async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legalAccepted=false}){
   if(!ensureCanonicalBusinessOAuthOrigin())return;
   const errorHost=$(errorHostId);
   if(button)button.disabled=true;
   if(errorHost)errorHost.innerHTML='';
-  if(beginBusinessGoogleOAuthAttempt({legalAccepted})){
+  if(await beginBusinessGoogleOAuthAttempt({intent,legalAccepted})){
     try{
       const {error}=await sb.auth.signInWithOAuth({
         provider:'google',
@@ -1077,7 +1117,7 @@ async function startBusinessGoogleAuth({button,errorHostId,legalAccepted=false})
       $('applicationConsent').focus();
       return;
     }
-    startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'businessApplicationError',legalAccepted:true});
+    startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'businessApplicationError',intent:'signup',legalAccepted:true});
   };
   let token='',control=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
@@ -1109,6 +1149,136 @@ async function startBusinessGoogleAuth({button,errorHostId,legalAccepted=false})
     if(data.session){history.replaceState(null,'','/business');route();return}
     $('businessApplicationError').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)">${esc(a.check)}</div>`;
   };
+}
+  function renderAuth(mode='in',{admin=false}={}){
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  destroyMountedTurnstiles();
+  if(!admin&&businessApplicationInviteToken())return renderApprovedBusinessInviteSignup(businessApplicationInviteToken());
+  if(!admin&&mode==='up'&&NestlyNativeBridge.isNative)return renderNativeBusinessCompanion();
+  if(!admin&&mode==='up')return renderBusinessApplication();
+  if(mode==='forgot'){
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="authResetTitle">
+      <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+      <h1 id="authResetTitle" style="margin:14px 0 2px">Reset your password</h1>
+      <p class="muted small" style="margin-top:6px">Enter your account email and we will send a secure reset link.</p>
+      <label for="em">Email</label><input id="em" type="email" autocomplete="email" placeholder="you@business.com">
+      <div id="autherr"></div>
+      ${authChallengeHtml()}
+      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest" disabled>Send reset link</button>
+      <span class="spacer"></span><button class="btn ghost sm" id="backSignIn">Back to sign in</button></div>
+      ${legalLinks()}</section></main>`;
+    let authToken='',authControl=null;
+    mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+      retry:'authTurnstileRetry',action:'frenly_auth',
+      onToken:(token)=>{authToken=token;$('resetRequest').disabled=!token}})
+      .then(control=>authControl=control);
+    $('backSignIn').onclick=()=>renderAuth('in',{admin});
+    $('resetRequest').onclick=async()=>{
+      const email=$('em').value.trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        $('autherr').innerHTML='<div class="err">Enter a valid email address.</div>';return;
+      }
+      if(!authToken) return;
+      $('resetRequest').disabled=true;
+      const redirect=new URL(NestlyNativeBridge.publicUrl(admin?'/admin':'/business'));
+      redirect.searchParams.set('recovery','1');
+      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString(),captchaToken:authToken})}catch{}
+      /* Turnstile tokens are single-use: clear and reset so a retry gets a fresh challenge. */
+      authToken='';if(authControl)authControl.reset();
+      $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
+    };
+    return;
+  }
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessAuthTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
+    <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
+    <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
+    ${!admin&&!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
+    <label for="em">Email</label><input id="em" type="email" placeholder="you@business.com">
+    <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
+    <div id="autherr">${!admin&&sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
+    ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
+    ${authChallengeHtml()}
+    <div class="row" style="margin-top:18px">
+      <button class="btn" id="go" disabled>${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
+      ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
+    </div>
+    ${legalLinks()}</section></main>`;
+  bindPasswordVisibility(root);
+  if(!admin&&sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
+  if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
+    $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
+  }
+  let authToken='',authControl=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+    retry:'authTurnstileRetry',action:'frenly_auth',
+    onToken:(token)=>{authToken=token;$('go').disabled=!token}})
+    .then(control=>authControl=control);
+  if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
+  if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
+  if($('businessGoogleSignIn'))$('businessGoogleSignIn').onclick=event=>
+    startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'autherr',intent:'signin'});
+  $('go').onclick=async()=>{
+    const email=$('em').value.trim(),password=$('pw').value;
+    if(!authToken) return;
+    $('go').disabled=true;
+    /* Tokens are single-use: consume, then reset the widget for any follow-up attempt. */
+    const captchaToken=authToken;authToken='';
+    try{
+      if(mode==='up'){
+        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken}});
+        if(error) throw error;
+        if(!data.session){
+          if(authControl)authControl.reset();
+          $('autherr').innerHTML='<div class="err">Check your email to confirm your account, then sign in.</div>';return}
+      }else{
+        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
+        if(error) throw error;
+      }
+      resetClientSessionState({preserveInvitation:true});route();
+    }catch(e){
+      if(authControl)authControl.reset();
+      $('autherr').innerHTML=`<div class="err">${esc(e.message)}</div>`;
+    }
+  };
+}
+  async function consumeBusinessOAuthRedirect(){
+  const search=new URLSearchParams(location.search);
+  if(search.get('oauth')!=='business')return;
+  const hash=new URLSearchParams((location.hash||'').replace(/^#/,'').replace(/^\?/,'') );
+  const providerError=search.get('error_description')||search.get('error')||hash.get('error_description')||hash.get('error');
+  const oauthAccessToken=hash.get('access_token'),oauthRefreshToken=hash.get('refresh_token');
+  /* OAuth fragments contain credentials. Remove them from browser history before
+     any network or rendering work, then establish only the Supabase session.
+     Business authority remains server-derived after route() loads the persona. */
+  history.replaceState(null,'','/business');
+  const pendingAttempt=takeBusinessGoogleOAuthAttempt();
+  if(!pendingAttempt||providerError){
+    sessionStorage.setItem('nestly-business-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  if(!oauthAccessToken||!oauthRefreshToken){
+    sessionStorage.setItem('nestly-business-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  try{
+    const admissionClient=createBusinessOAuthAdmissionClient();
+    const {error}=await admissionClient.auth.setSession({access_token:oauthAccessToken,refresh_token:oauthRefreshToken});
+    if(error)throw error;
+    const {data:admission,error:admissionError}=await admissionClient.rpc('complete_business_google_oauth_v138',{
+      p_intent:pendingAttempt.intent,p_attempt_token:pendingAttempt.attemptToken
+    });
+    if(admissionError||admission?.admitted!==true)throw admissionError||new Error('Google OAuth admission was not confirmed');
+    /* Persist only the exact provider session that the server has admitted. */
+    const {error:persistError}=await sb.auth.setSession({access_token:oauthAccessToken,refresh_token:oauthRefreshToken});
+    if(persistError)throw persistError;
+  }catch{
+    await sb.auth.signOut({scope:'local'}).catch(()=>{});
+    sessionStorage.setItem('nestly-business-oauth-notice',pendingAttempt.intent==='signin'
+      ?'No business account was found for that Google login. Choose New here? Sign up and accept the Terms and Privacy Policy first.'
+      :'Could not verify the consented Google signup. Return to signup and try again.');
+  }
 }
   function accountDeletionCardHtml(){
   return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Peekaa to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
@@ -1322,9 +1492,22 @@ async function openAccountDeletionDialog(trigger=document.activeElement){
   $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   wireAccountDeletionButton();
 }
-  function showView(view){currentView=view;document.querySelectorAll('[data-view]').forEach(button=>button.className=button.dataset.view===view?'btn':'btn ghost');if(view==='signup')renderBusinessApplication();else if(view==='control')renderBusinessWorkspaceControl({business_id:pending.business_id,approval:{status:'pending'},subscription:{workspace_paused:false}});else renderOnboard()}
+  function showView(view){currentView=view;document.querySelectorAll('[data-view]').forEach(button=>button.className=button.dataset.view===view?'btn':'btn ghost');if(view==='signup')renderBusinessApplication();else if(view==='login')renderAuth('in');else if(view==='control')renderBusinessWorkspaceControl({business_id:pending.business_id,approval:{status:'pending'},subscription:{workspace_paused:false}});else renderOnboard()}
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
+  window.runBusinessOAuthCallback=async({intent='signin',attemptToken=null,admitted=true}={})=>{
+    window.__admission=admitted?{data:{admitted:true},error:null}:{data:null,error:{message:'rejected'}};
+    sessionStorage.setItem('nestly-business-google-oauth',JSON.stringify({startedAt:Date.now(),returnPath:'/business',intent,legalAccepted:intent==='signup',attemptToken}));
+    history.replaceState(null,'',location.pathname+'?oauth=business#access_token=access&refresh_token=refresh');
+    await consumeBusinessOAuthRedirect();
+    return {persistentSetSessionCalls:window.__persistentSetSessionCalls,transientSetSessionCalls:window.__transientSetSessionCalls,signOutCalls:window.__signOutCalls,notice:sessionStorage.getItem('nestly-business-oauth-notice'),rpcCalls:window.__rpcCalls,persistedSession:localStorage.getItem('v138-persistent-session')};
+  };
+  window.startInterruptedBusinessOAuthCallback=async()=>{
+    window.__holdAdmission=true;
+    sessionStorage.setItem('nestly-business-google-oauth',JSON.stringify({startedAt:Date.now(),returnPath:'/business',intent:'signin',legalAccepted:false,attemptToken:null}));
+    history.replaceState(null,'',location.pathname+'?oauth=business#access_token=access&refresh_token=refresh');
+    void consumeBusinessOAuthRedirect();
+  };
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v130Metrics=()=>({view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,heading:document.querySelector('h1,h2')?.textContent.trim()||'',buttons:[...document.querySelectorAll('button')].filter(item=>item.offsetParent!==null).map(item=>({text:item.textContent.trim(),height:item.getBoundingClientRect().height})),fields:[...document.querySelectorAll('input,select')].filter(item=>item.offsetParent!==null).map(item=>item.id),errors:window.__consoleErrors,rpcCalls:window.__rpcCalls});
+  window.v130Metrics=()=>({view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,heading:document.querySelector('h1,h2')?.textContent.trim()||'',buttons:[...document.querySelectorAll('button')].filter(item=>item.offsetParent!==null).map(item=>({text:item.textContent.trim(),height:item.getBoundingClientRect().height})),fields:[...document.querySelectorAll('input,select')].filter(item=>item.offsetParent!==null).map(item=>item.id),errors:window.__consoleErrors,rpcCalls:window.__rpcCalls,oauthStarts:window.__oauthStarts,persistentSetSessionCalls:window.__persistentSetSessionCalls,transientSetSessionCalls:window.__transientSetSessionCalls,signOutCalls:window.__signOutCalls,persistedSession:localStorage.getItem('v138-persistent-session')});
   showView(new URLSearchParams(location.search).get('view')||'signup');
   </script></body></html>

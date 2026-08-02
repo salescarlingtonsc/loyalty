@@ -1743,6 +1743,30 @@
   ],
   "allowlist": [
     {
+      "id": "browser.rpc:app/index.html:begin_business_google_oauth_signup_v138",
+      "reason": "V138 no-PII pre-OAuth legal-consent writer. It accepts only an explicit true acceptance of the exact active Terms and Privacy versions/hashes, stores one 30-minute opaque-token digest under an idempotency key, exposes no table, identity or tenant data, and cannot create an Auth user, business, payment, or customer-value record."
+    },
+    {
+      "id": "browser.rpc:app/index.html:complete_business_google_oauth_v138",
+      "reason": "V138 authenticated Google admission and legal-evidence writer. Existing active business staff are admitted without a signup checkbox; signup must consume one unexpired server-recorded exact-version consent attempt bound to the current Google identity. It appends only private legal evidence and cannot create a business, publish configuration, charge payment, or move customer value."
+    },
+    {
+      "id": "browser.rpc:app/index.html:create_grow_config_draft_v138",
+      "reason": "V138 owner-only shared Grow draft writer. It accepts only an owner with Loyalty or retention write authority, serializes per business, clones the current published configuration into one replay-safe draft, records non-economic audit evidence, and cannot publish or mutate customer value."
+    },
+    {
+      "id": "browser.rpc:app/index.html:ensure_published_birthday_in_draft_v138",
+      "reason": "V138 owner-only configuration continuity writer. It idempotently copies the one currently published birthday programme into an older editable draft under row lock and optimistic snapshot hash, records non-economic audit evidence, and cannot publish or alter an existing customer entitlement or history."
+    },
+    {
+      "id": "browser.rpc:app/index.html:ensure_published_retention_in_draft_v138",
+      "reason": "V138 owner-only configuration continuity writer. It idempotently copies one currently published Bring-back rule into an older editable draft under row lock and optimistic snapshot hash, records non-economic audit evidence, preserves unrelated draft rows, and cannot issue a grant or publish."
+    },
+    {
+      "id": "browser.rpc:app/index.html:ensure_published_reward_in_draft_v138",
+      "reason": "V138 owner-only configuration continuity writer. It idempotently copies one currently published loyalty reward and its eligibility into an older editable draft under row lock and optimistic snapshot hash, records non-economic audit evidence, preserves unrelated draft rows, and explicitly cannot publish or change the active configuration. It writes no sale, payment, points movement, entitlement, redemption, stored value, package, gift card, or other customer-value ledger."
+    },
+    {
       "id": "browser.rpc:app/index.html:customer_get_pending_promotion_prompt_v122",
       "reason": "V122 read-only customer projection. It returns at most one exact, current, customer-visible promotion only when an unread immutable event and current explicit promotion-alert consent both exist; it performs no DML or customer-value write."
     },

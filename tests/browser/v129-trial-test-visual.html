@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="fdbe6b564f0f53c41128e775dc14a77ed1f59ce7ae0aff68cf9b587d9d624797"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="2f9a7f9e564b30824aa878cc61ecb8d439bab86088776e3cc71043900a5f041d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -976,7 +976,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · fdbe6b564f0f53c41128e775dc14a77ed1f59ce7ae0aff68cf9b587d9d624797</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 2f9a7f9e564b30824aa878cc61ecb8d439bab86088776e3cc71043900a5f041d</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -3787,7 +3787,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     :`<div class="card" style="margin-top:16px"><div class="row"><div><b>Birthday benefit</b><p class="muted small" style="margin-top:5px">One programme per configuration version. A new programme starts blank and paused; no customer promise exists until you complete, explicitly enable, and publish it.</p></div><span class="spacer"></span><span class="pill">Draft</span></div>
       <div class="field-grid" style="margin-top:10px"><div class="full"><label for="birthdayLabel">Customer-facing label</label><input id="birthdayLabel" value="${esc(birthdayProgram?.customer_label||'')}"></div><div class="full"><label for="birthdayDescription">Customer description</label><textarea id="birthdayDescription" rows="2">${esc(birthdayProgram?.customer_description||'')}</textarea></div><div class="full"><label for="birthdayTerms">Terms</label><textarea id="birthdayTerms" rows="2">${esc(birthdayProgram?.customer_terms||'')}</textarea></div><div><label for="birthdayKind">Benefit type</label><select id="birthdayKind"><option value="" ${birthdayProgram?.fulfillment_kind?'':'selected'}>Choose a benefit type</option><option value="discount_pct" ${birthdayProgram?.fulfillment_kind==='discount_pct'?'selected':''}>Percentage discount</option><option value="free_item" ${birthdayProgram?.fulfillment_kind==='free_item'?'selected':''}>Free item / manual benefit</option></select></div><div id="birthdayDiscountField"><label for="birthdayDiscount">Discount percentage</label><input id="birthdayDiscount" type="number" min="0.01" max="100" step="0.01" value="${birthdayProgram?.discount_percent??''}"></div><div id="birthdayItemField"><label for="birthdayItem">Free item / benefit</label><input id="birthdayItem" value="${esc(birthdayProgram?.manual_item||'')}"></div><div><label for="birthdayBefore">Days before birthday</label><input id="birthdayBefore" type="number" min="0" max="182" value="${birthdayProgram?.window_days_before??0}"></div><div><label for="birthdayAfter">Days after birthday</label><input id="birthdayAfter" type="number" min="0" max="182" value="${birthdayProgram?.window_days_after??0}"></div></div><label class="row" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="birthdayActive" type="checkbox" style="width:auto" ${birthdayProgram?.active===true?'checked':''}> I explicitly enable this benefit for eligible customers after publication</label><div class="row" style="margin-top:14px"><button class="btn sm" id="birthdaySaveDraft">Save birthday benefit draft</button><p id="birthdayDraftStatus" class="muted small" role="status" aria-live="polite"></p></div></div>`
     :'';
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:canManageLoyalty?'Choose the model and publish deliberate, versioned changes.':'Review the current program, rewards, tiers, and branch settings.',iconName:'loyalty',actions:loyaltyActions,canWrite:canManageLoyalty,moduleLabel:'Loyalty configuration'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:canManageLoyalty?'Choose the model and publish deliberate, versioned changes.':'Review the current program, rewards, tiers, and branch settings.',iconName:'loyalty',actions:`${growBackActionHtmlV138()}${loyaltyActions}`,canWrite:canManageLoyalty,moduleLabel:'Loyalty configuration'})}
     ${p?.configuration_status==='draft'?`<div class="imp-note" style="margin-bottom:16px"><b>Draft recommendation</b><br>${recommendation?esc(recommendation.rationale):'Nothing is earning or redeeming yet.'} Review every number below, then publish only when it fits your business.</div>`:''}
     <section class="card" id="loyaltyCustomerRedemption" style="margin-bottom:16px" aria-busy="true">
       <div class="row"><div><b>Customer app redemption</b><p class="muted small" style="margin-top:5px">Customers prepare a pending reward QR. Points change only after your team scans and confirms it in Record sale.</p></div><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="saveLoyaltyCustomerRedemption" type="button" disabled>Save</button>':'<span class="pill off">Owner only</span>'}</div>
@@ -4119,7 +4119,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       service:new Set(eligibility.service[stableRewardId]||[]),
       product:new Set(eligibility.product[stableRewardId]||[])};
     $('rwEditor').innerHTML=`<div class="reward-editor">
-      <div class="row" style="justify-content:space-between;gap:12px"><b>${reward?'Edit reward':'New reward'}</b><button class="btn ghost sm" id="rwClose" type="button">Close</button></div>
+      <div class="row" style="justify-content:space-between;gap:12px"><b>${reward?'Edit reward':'New reward'}</b><button class="btn ghost sm" id="rwClose" type="button">Done</button></div>
       <div class="field-grid">
         <div class="full"><label>Customer-facing name *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"></div>
         <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
@@ -4145,7 +4145,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       </details>
       <div class="row" style="margin-top:16px"><button class="btn" id="rwSave">${reward?'Save changes':'Create reward'}</button><span class="spacer"></span>${reward?'<button class="btn danger sm" id="rwArchive" type="button">Archive</button>':''}</div>
     </div>`;
-    $('rwClose').onclick=()=>{$('rwEditor').innerHTML='';editorReward=null};
+    $('rwClose').onclick=()=>nav('#/loyalty');
     const kind=$('rwKind'),creditWrap=$('rwCreditWrap');
     const syncKind=()=>{creditWrap.style.display=kind.value==='credit'?'block':'none';if(kind.value!=='credit')$('rwCredit').value='0'};
     kind.onchange=syncKind;syncKind();
@@ -4192,7 +4192,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       if(publishError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(publishError)}
     }
     toast(draftVersionId?'Draft reward saved':archive?'Reward archived':editorReward?'Reward saved':'Reward created');
-    refreshLoyaltyPanel(model,draftVersionId,recommendation,'Reward draft saved.');
+    nav('#/loyalty');
   }
   const ra=$('rwAdd');
   if(ra) ra.onclick=()=>openRewardEditor(null);
@@ -4304,7 +4304,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Versioned return-visit rules with immutable reward behavior and grant history.',iconName:'retention',canWrite:isOwner,moduleLabel:'Retention configuration'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Versioned return-visit rules with immutable reward behavior and grant history.',iconName:'retention',actions:growBackActionHtmlV138(),canWrite:isOwner,moduleLabel:'Retention configuration'})}
     ${draftVersionId?'':'<section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
     ${versionTools}
     ${exactProgramMissing?`<div class="notice warn" id="retentionExactProgramMissing" role="alert" tabindex="-1" style="margin-bottom:16px"><b>This Bring-back rule is not present in the editable draft.</b><p class="small" style="margin-top:5px">Return to the programme overview and refresh before changing another rule.</p></div>`:''}
@@ -4418,8 +4418,8 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     ?sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id})
     :Promise.resolve(none);
   let draftRequest=Promise.resolve(none);
-  if(canSetupGrow){
-    let query=sb.from('firm_config_versions').select('id,version_no,based_on_version_id,status')
+  if(canSetupGrow||(S.myRole==='owner'&&canWinback&&canWriteModule('retention'))){
+    let query=sb.from('firm_config_versions').select('id,version_no,based_on_version_id,status,snapshot_hash')
       .eq('business_id',S.biz.id).eq('status','draft');
     query=currentVersion?query.eq('based_on_version_id',currentVersion):query.is('based_on_version_id',null);
     draftRequest=query.order('version_no',{ascending:false}).limit(1);
@@ -4639,7 +4639,7 @@ async function promotionsPage(selectedPromotionId=null){
   const canPublishThis=initial.active||Boolean(initial.metadata?.published_once_at)||canPublishNew,
     quotaProgress=max?Math.min(100,Math.round((quotaUsed/max)*100)):100;
   host.innerHTML=`<div class="promotion-studio" data-workspace-i18n>
-    ${CUI.pageHeader({title:'Promotions',subtitle:'Turn one factual offer and photo into clear customer-ready marketing.',iconName:'loyalty',canWrite:true,moduleLabel:'Customer programme'})}
+    ${CUI.pageHeader({title:'Promotions',subtitle:'Turn one factual offer and photo into clear customer-ready marketing.',iconName:'loyalty',actions:growBackActionHtmlV138(),canWrite:true,moduleLabel:'Customer programme'})}
     <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} launch offer slots used</b>
       <p class="muted small" style="margin-top:4px">${published} currently published. Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}. Customers see no more than two current offers at once.</p></div>
       <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} launch offer slots used" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
@@ -5023,6 +5023,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const canRewards=modules.includes('loyalty'),canWinback=modules.includes('retention');
   const isOwner=S.myRole==='owner';
   const canSetupGrow=isOwner&&canRewards&&canWriteModule('loyalty');
+  const canSetupWinback=isOwner&&canWinback&&canWriteModule('retention');
   const canEditProductCosts=isOwner&&canRewards&&canWriteModule('loyalty');
   recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
@@ -5072,6 +5073,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const bringBackLive=bringBackCount>0;
   const referralLive=snapshot.referral?.enabled===true;
   const giftCardsLive=snapshot.giftcards?.enabled===true;
+  let draftSnapshotHash=snapshot.draft?.snapshot_hash||null;
   const draftLabel=growDraftVersionId?'Draft ready':null;
   const nodeStatus=live=>draftLabel|| (live?'Live':'Needs setup');
   const nodeTone=live=>draftLabel?'new':live?'on':'off';
@@ -5148,7 +5150,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">${canRewards?'No birthday benefit is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
-        ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:isOwner&&canWriteModule('retention')&&canSetupGrow,readOnly:!(isOwner&&canWriteModule('retention')),access:isOwner&&canWriteModule('retention')&&!canSetupGrow?'Loyalty edit access required':null,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupGrow?'Invite inactive customers back with a clear reward.':'Loyalty edit access is required before Bring-back can be configured.',status:'Not set up',canWrite:isOwner&&canWriteModule('retention')&&canSetupGrow,readOnly:!(isOwner&&canWriteModule('retention')),access:isOwner&&canWriteModule('retention')&&!canSetupGrow?'Loyalty edit access required':null,editKind:'bringback',actionLabel:'Set up'})}
+        ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
         ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
@@ -5240,7 +5242,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     element.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
     return true;
   };
-  async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null,editProgramId=null}={}){
+  async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null,birthdayId=null,editProgramId=null}={}){
     const draft=draftOverride||growDraftVersionId;
     const definition=surfaceDefinition[surface];
     const suffix=draft&&['rewards','winback','studio'].includes(surface)?`/${draft}`:'';
@@ -5250,13 +5252,51 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       if(location.hash===targetHash)return;
       history.pushState(null,'',`${location.pathname}${location.search}${targetHash}`);
     };
-    const openExactReward=()=>{
+    const materializeExactProgramme=async(kind,id)=>{
+      if(!draft||!id)return true;
+      let response;
+      if(kind==='birthday')response=await sb.rpc('ensure_published_birthday_in_draft_v138',{
+        p_config_version:draft,p_program:id,p_expected_snapshot_hash:draftSnapshotHash
+      });
+      else if(kind==='retention')response=await sb.rpc('ensure_published_retention_in_draft_v138',{
+        p_config_version:draft,p_program:id,p_expected_snapshot_hash:draftSnapshotHash
+      });
+      else return true;
+      const {data,error}=response;
+      if(!isGrowCurrent())return false;
+      if(error||data?.program_id!==id){
+        panelHost.innerHTML=`<section class="notice warn" role="alert"><b>This ${kind==='birthday'?'birthday benefit':'Bring-back rule'} could not be prepared for editing.</b><p class="small" style="margin-top:5px">Nothing was published. Return to the overview, refresh, and try again.</p><a class="btn ghost sm" href="#/grow" style="margin-top:10px">Back to Grow overview</a></section>`;
+        return false;
+      }
+      draftSnapshotHash=data.snapshot_hash||draftSnapshotHash;
+      return true;
+    };
+    const openExactReward=async({allowMaterialize=true}={})=>{
       if(surface!=='rewards'||!rewardId)return false;
       const editButton=panelHost.querySelector(`.rwEdit[data-reward-id="${CSS.escape(rewardId)}"]`);
       if(!editButton){
-        const notice=document.createElement('p');notice.className='notice warn small';notice.setAttribute('role','status');
-        notice.textContent='This published reward is not present in the current draft. Review the draft before changing another reward.';
-        panelHost.querySelector('#main')?.prepend(notice);notice.focus?.({preventScroll:true});return false;
+        if(!allowMaterialize||!draft||!canSetupGrow){
+          const unavailable=document.createElement('div');unavailable.className='notice warn small';unavailable.setAttribute('role','alert');
+          unavailable.textContent='This reward could not be prepared for editing. Return to the overview and try again.';
+          panelHost.querySelector('#main')?.prepend(unavailable);unavailable.focus?.({preventScroll:true});return false;
+        }
+        const notice=document.createElement('p');notice.className='notice small';notice.setAttribute('role','status');
+        notice.textContent='Preparing this published reward in your editable draft…';
+        panelHost.querySelector('#main')?.prepend(notice);
+        const {data,error}=await sb.rpc('ensure_published_reward_in_draft_v138',{
+          p_config_version:draft,p_reward:rewardId,p_expected_snapshot_hash:draftSnapshotHash
+        });
+        if(!isGrowCurrent())return false;
+        if(error||data?.reward_id!==rewardId){
+          notice.className='notice warn small';notice.setAttribute('role','alert');
+          notice.innerHTML='The editable copy could not be confirmed. Nothing was published. <button type="button" class="btn ghost sm" id="retryExactReward">Try again</button>';
+          $('retryExactReward').onclick=()=>{notice.remove();openExactReward()};
+          return false;
+        }
+        draftSnapshotHash=data.snapshot_hash||draftSnapshotHash;
+        await loyaltyPage(undefined,draft);
+        if(!isGrowCurrent())return false;
+        return openExactReward({allowMaterialize:false});
       }
       editButton.click();
       const editor=$('rwEditor');
@@ -5276,8 +5316,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     };
     if(activeSurface===surface){
       preserveExactRoute();
-      if(surface==='winback'&&focusTarget==='rn')await retentionPage(draft,editProgramId,true);
-      if(!openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
+      if(surface==='winback'&&focusTarget==='rn'){
+        if(!await materializeExactProgramme('retention',editProgramId))return;
+        await retentionPage(draft,editProgramId,true);
+      }
+      if(surface==='rewards'&&focusTarget==='birthdayLabel'&&birthdayId){
+        if(!await materializeExactProgramme('birthday',birthdayId))return;
+        await loyaltyPage(undefined,draft);
+      }
+      if(!await openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
       applyPendingRewardEstimate();
       return;
     }
@@ -5293,11 +5340,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     if(outerMain.id==='main')outerMain.removeAttribute('id');
     panel.id='main';
     CUI.announce(definition.label);
-    if(surface==='rewards')await loyaltyPage(undefined,draft);
-    else if(surface==='winback')await retentionPage(draft,editProgramId);
+    if(surface==='rewards'){
+      if(focusTarget==='birthdayLabel'&&birthdayId
+         &&!await materializeExactProgramme('birthday',birthdayId))return;
+      await loyaltyPage(undefined,draft);
+    }
+    else if(surface==='winback'){
+      if(editProgramId&&!await materializeExactProgramme('retention',editProgramId))return;
+      await retentionPage(draft,editProgramId);
+    }
     else if(surface==='storedvalue')await storedValuePage(hashParam||null);
     else await studioPage(draft||hashParam||null);
-    const exactRewardOpened=openExactReward();
+    const exactRewardOpened=await openExactReward();
     if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
     applyPendingRewardEstimate();
@@ -5385,8 +5439,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     const action=kind==='bringback'
       ?{surface:'winback',focusTarget:'rn',editProgramId:button.dataset.programId||null}
       :{surface:'rewards',focusTarget:kind==='earning'?'lm':kind==='classic'?'lr':kind==='birthday'?'birthdayLabel':kind==='add'?'rwAdd':null,
-        activateTarget:kind==='add',rewardId:kind==='catalogue'?button.dataset.rewardId||null:null};
-    if(!growDraftVersionId){openRewardsAutoSetup(action);return}
+        activateTarget:kind==='add',rewardId:kind==='catalogue'?button.dataset.rewardId||null:null,
+        birthdayId:kind==='birthday'?button.dataset.birthdayId||null:null};
+    if(!growDraftVersionId){
+      if(action.surface==='winback'&&canSetupWinback){
+        (async()=>{
+          const {data,error}=await sb.rpc('create_grow_config_draft_v138',{
+            p_business:S.biz.id,p_based_on:snapshot.currentVersion,p_source:'grow_retention_edit'
+          });
+          if(!isGrowCurrent())return;
+          if(error||!data?.version_id)return fail(error||new Error('Editable Bring-back draft was not returned.'));
+          growDraftVersionId=data.version_id;
+          draftSnapshotHash=data.snapshot_hash||draftSnapshotHash;
+          await mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+        })();
+        return;
+      }
+      openRewardsAutoSetup(action);return
+    }
     mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
   });
   const growRewardsRetry=$('growRewardsRetry');
@@ -8724,6 +8794,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'fdbe6b564f0f53c41128e775dc14a77ed1f59ce7ae0aff68cf9b587d9d624797',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'2f9a7f9e564b30824aa878cc61ecb8d439bab86088776e3cc71043900a5f041d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

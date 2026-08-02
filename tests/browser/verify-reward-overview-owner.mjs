@@ -145,12 +145,13 @@ try{
   assert.equal(metrics.activeElement,'rwCustomerName');
 
   await page.goto(`${base}?draft=none&retentionExact=1`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
-  await page.locator('[data-program-id="bring-back-1"]').click();await page.waitForSelector('#rewardAutoSetupModal');
-  await page.locator('#rewardAutoConfirm').click();await page.waitForSelector('#rewardAutoReady');await page.locator('#rewardAutoReviewDraft').click();
-  await page.waitForSelector('#rn');
+  await page.locator('[data-program-id="bring-back-1"]').click();await page.waitForSelector('#rn');
   metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
   assert.equal(metrics.retentionName,'Glow regular return','configured Bring-back click opens the exact production editor record');
   assert.equal(metrics.activeElement,'rn');
+  assert.deepEqual(metrics.growDraftCalls,[{
+    p_business:'business-spa-glow',p_based_on:'published-v1',p_source:'grow_retention_edit'
+  }],'configured Bring-back click creates or resumes one shared editable draft');
   assert.equal(await page.evaluate(()=>location.hash),'#/retention/draft-v2/program~bring-back-1');
   await page.screenshot({path:new URL('owner-exact-bringback-editor-desktop-1440.png',evidenceDir).pathname,fullPage:true});
   await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rn');
@@ -170,10 +171,10 @@ try{
   assert.match(await page.locator('[data-programme-kind="earning"]').first().textContent(),/Not set up/);
   assert.match(await page.locator('[data-programme-kind="redeemable"]').first().textContent(),/Not set up/);
   assert.match(await page.locator('[data-programme-kind="birthday"]').first().textContent(),/Not set up/);
-  await page.locator('[data-programme-kind="bringback"]').click();await page.waitForSelector('#rewardAutoSetupModal');
-  await page.locator('#rewardAutoConfirm').click();await page.waitForSelector('#rewardAutoReady');await page.locator('#rewardAutoReviewDraft').click();
-  await page.waitForSelector('#rn');
+  await page.locator('[data-programme-kind="bringback"]').click();await page.waitForSelector('#rn');
   assert.equal(await page.locator('#rn').inputValue(),'','not-yet-configured Bring-back opens the exact new-program editor');
+  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
+  assert.equal(metrics.growDraftCalls.length,1,'not-yet-configured Bring-back creates or resumes one shared editable draft');
   assert.equal(await page.evaluate(()=>location.hash),'#/retention/draft-v2/new');
 
   await page.goto(`${base}?draft=none&partial=1`,{waitUntil:'networkidle'});await page.waitForSelector('#growRewardsRetry');
@@ -198,8 +199,14 @@ try{
   assert.equal(await page.locator('#growAutoSetup').count(),0,'retention-only owner has no loyalty setup action');
   const retentionOnlyRows=page.locator('[data-programme-kind="bringback"]');
   assert.equal(await retentionOnlyRows.count(),2);
-  assert.ok((await retentionOnlyRows.evaluateAll(rows=>rows.map(row=>row.tagName))).every(tag=>tag==='ARTICLE'),'retention-only owner receives no dead writer');
-  assert.ok((await retentionOnlyRows.allTextContents()).every(text=>/Loyalty edit access required/.test(text)));
+  assert.ok((await retentionOnlyRows.evaluateAll(rows=>rows.map(row=>row.tagName))).every(tag=>tag==='BUTTON'),'retention-only owner receives a working exact editor action');
+  await retentionOnlyRows.first().click();await page.waitForSelector('#rn');
+  assert.equal(await page.locator('#rn').inputValue(),'Glow regular return');
+  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
+  assert.deepEqual(metrics.growDraftCalls,[{
+    p_business:'business-spa-glow',p_based_on:'published-v1',p_source:'grow_retention_edit'
+  }]);
+  assert.equal(await page.evaluate(()=>location.hash),'#/retention/draft-v2/program~bring-back-1');
 
   await page.goto(`${base}?draft=none&modules=loyalty`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
   for(const kind of ['bringback','referrals','memberships','giftcards']){

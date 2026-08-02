@@ -235,7 +235,7 @@ test('foreign workspace denials expose a focused main landmark and page heading'
 });
 
 test('progressive enhancement is scoped to approved customer routes',()=>{
-  assert.match(app,/const customerUiRoutes=new Set\(\['till','clients','client','loyalty','retention','promotions','referrals','memberships','giftcards'\]\)/);
+  assert.match(app,/const customerUiRoutes=new Set\(\['till','clients','client','grow','loyalty','retention','promotions','referrals','memberships','giftcards'\]\)/);
   assert.match(app,/if\(enhanceCustomerUi\)customerUiObserver=CUI\.mountMain\(main\)/);
 });
 

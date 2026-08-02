@@ -93,8 +93,8 @@ test('read-only and unavailable rows expose status but no dead writer',()=>{
   assert.match(grow,/canWriteModule\('giftcards'\)/);
   assert.match(grow,/programmeAction/);
   assert.match(grow,/if\(!canWrite\)return ''/);
-  assert.match(grow,/canWriteModule\('retention'\)&&canSetupGrow/);
-  assert.match(grow,/Loyalty edit access required/);
+  assert.match(grow,/const canSetupWinback=isOwner&&canWinback&&canWriteModule\('retention'\)/);
+  assert.match(grow,/need owner edit access to configure it/);
 });
 
 test('advanced journey, profitability and technical tools remain collapsed after the overview',()=>{

@@ -1041,6 +1041,12 @@
       "path": "db/migrations/20260802_nestly_v134_peekaa_brand_legal.sql",
       "semanticVersion": "v134",
       "proposedDeployVersion": "20260802010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260802_nestly_v138_auth_grow_closure.sql",
+      "semanticVersion": "v138",
+      "proposedDeployVersion": "20260802120000"
     }
   ]
 }

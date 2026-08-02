@@ -43,7 +43,7 @@ test('Grow is one overview-first journey with secondary anatomy rather than four
 });
 
 test('first-time setup is idempotent, guarded, draft-only and recommendation-led',()=>{
-  const setup=grow.slice(grow.indexOf('function openRewardsAutoSetup('),grow.indexOf("document.querySelectorAll('[data-reward-cost]')"));
+  const setup=grow.slice(grow.indexOf('function openRewardsAutoSetup('),grow.indexOf("document.querySelectorAll('[data-grow-open]')"));
   assert.match(setup,/if\(busy\)return/);
   assert.match(setup,/generate_retention_recommendation/);
   assert.match(setup,/draft_config_version_id\|\|data\?\.version_id/);
@@ -60,8 +60,8 @@ test('first-time setup is idempotent, guarded, draft-only and recommendation-led
 
 test('one coherent Grow draft is passed to earning and bring-back editors',()=>{
   assert.match(grow,/let growDraftVersionId=/);
-  assert.match(grow,/surface==='rewards'\)await loyaltyPage\(undefined,draft\)/);
-  assert.match(grow,/surface==='winback'\)await retentionPage\(draft,editProgramId\)/);
+  assert.match(grow,/if\(surface==='rewards'\)\{[\s\S]*await loyaltyPage\(undefined,draft\)/);
+  assert.match(grow,/else if\(surface==='winback'\)\{[\s\S]*await retentionPage\(draft,editProgramId\)/);
   assert.match(grow,/draftOverride:growDraftVersionId/);
   assert.match(grow,/growDraftVersionId\?'Continue rewards setup':'Create recommended rewards draft'/);
 });
@@ -120,7 +120,7 @@ test('staff receive published summaries while authoring and Advanced remain owne
   assert.match(grow,/if\(!isOwner\|\|!available\|\|!growDraftVersionId\)return ''/);
   assert.match(grow,/\$\{isOwner\?`<details class="grow-advanced"/);
   assert.match(grow,/if\(\(routedAction&&isOwner\)\|\|\(hashParam&&isOwner\)\|\|\['studio','storedvalue'\]\.includes\(routedSurface\)\)/);
-  assert.match(grow,/if\(canSetupGrow\)[\s\S]*firm_config_versions/);
+  assert.match(grow,/if\(canSetupGrow\|\|\(S\.myRole==='owner'&&canWinback&&canWriteModule\('retention'\)\)\)[\s\S]*firm_config_versions/);
 });
 
 test('advanced authoring is collapsed and optional growth tools are acknowledged',()=>{

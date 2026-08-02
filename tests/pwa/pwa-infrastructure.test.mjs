@@ -29,6 +29,7 @@ function serviceWorkerHarness(source, { fetchImpl } = {}) {
   const openedCaches = [];
   const matchedPaths = [];
   const addedShells = [];
+  let skipWaitingCount = 0;
   const offlineResponse = Object.freeze({ kind: 'offline-document' });
   const cache = {
     async addAll(paths) {
@@ -61,7 +62,9 @@ function serviceWorkerHarness(source, { fetchImpl } = {}) {
     addEventListener(type, listener) {
       listeners.set(type, listener);
     },
-    skipWaiting() {}
+    skipWaiting() {
+      skipWaitingCount += 1;
+    }
   };
   const context = vm.createContext({
     URL,
@@ -77,7 +80,10 @@ function serviceWorkerHarness(source, { fetchImpl } = {}) {
     listeners,
     matchedPaths,
     offlineResponse,
-    openedCaches
+    openedCaches,
+    get skipWaitingCount() {
+      return skipWaitingCount;
+    }
   };
 }
 
@@ -183,6 +189,23 @@ test('service worker installs only the versioned public fallback shell', async (
   assert.ok(!shell.includes('/join.html'));
   assert.doesNotMatch(source, /cache\.put\s*\(/);
   assert.doesNotMatch(shell.join('\n'), /supabase|runtime-config|customer-ui|brand-config/i);
+  assert.equal(harness.skipWaitingCount, 1, 'critical Peekaa shell updates activate without waiting on an old Nestly cache');
+});
+
+test('brand and lifecycle assets prefer the network so an old Nestly shell cannot remain visible', async () => {
+  const networkResponse = Object.freeze({ kind: 'fresh-peekaa-asset' });
+  const harness = serviceWorkerHarness(await text('sw.js'), {
+    fetchImpl: async () => networkResponse
+  });
+
+  for (const pathname of ['/pwa.js', '/manifest.webmanifest', '/brand/peekaa-logo.png']) {
+    const response = await dispatchFetch(
+      harness.listeners.get('fetch'),
+      request(`https://www.peekaa.asia${pathname}`)
+    );
+    assert.equal(response, networkResponse, `${pathname} should refresh from the network`);
+  }
+  assert.deepEqual(harness.matchedPaths, []);
 });
 
 test('cold offline navigation returns the self-contained fallback, not a broken app shell', async () => {

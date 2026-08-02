@@ -37,11 +37,14 @@ grant execute on function pg_temp.expect_c45_denied(text,text,text) to public;
 
 do $c45$
 declare
-  v_business uuid; v_slug text; v_owner uuid:=gen_random_uuid(); v_owner_staff uuid; v_branch uuid;
+  v_business uuid:=gen_random_uuid(); v_slug text; v_owner uuid:=gen_random_uuid(); v_owner_staff uuid; v_branch uuid:=gen_random_uuid();
   v_customer uuid:=gen_random_uuid(); v_identity uuid:=gen_random_uuid(); v_client uuid:=gen_random_uuid(); v_link uuid:=gen_random_uuid();
+  v_customer_after_off uuid:=gen_random_uuid(); v_identity_after_off uuid:=gen_random_uuid();
+  v_client_after_off uuid:=gen_random_uuid(); v_link_after_off uuid:=gen_random_uuid();
   v_loyalty_r uuid:=gen_random_uuid(); v_loyalty_rw uuid:=gen_random_uuid(); v_denied uuid:=gen_random_uuid();
   v_foreign uuid:=gen_random_uuid(); v_loyalty_r_staff uuid; v_loyalty_rw_staff uuid; v_foreign_business uuid;
   v_draft uuid; v_program uuid:=gen_random_uuid(); v_hash text; v_saved jsonb; v_replay jsonb;
+  v_active_config uuid; v_off_draft uuid; v_seed_config uuid:=gen_random_uuid();
   v_benefit jsonb; v_activated jsonb; v_activated_replay jsonb; v_redeemed jsonb; v_reversed jsonb; v_staff_benefit jsonb;
   v_activation_key uuid:=gen_random_uuid();
   v_entitlement public.customer_birthday_entitlements%rowtype;
@@ -54,13 +57,37 @@ begin
   insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
   values ('00000000-0000-0000-0000-000000000000',v_owner,'authenticated','authenticated',
     'c45-owner-'||v_owner::text||'@example.test','',now(),now(),now());
-  perform pg_temp.as_c45_user(v_owner);
-  v_business := (public.create_business(
-    'C45 birthday fixture '||substr(v_owner::text,1,8),
-    'c45-birthday-suite-'||substr(v_owner::text,1,8),'test',
-    array['dashboard','clients','sales','loyalty']
-  )::jsonb->>'id')::uuid;
-  reset role;
+  v_slug:='c45-birthday-suite-'||substr(v_owner::text,1,8);
+  insert into public.businesses(id,name,slug,industry,is_synthetic,enabled_modules)
+  values(v_business,'C45 birthday fixture '||substr(v_owner::text,1,8),v_slug,'test',true,
+    array['dashboard','clients','sales','loyalty']);
+  insert into public.staff(business_id,user_id,role,full_name,active)
+  values(v_business,v_owner,'owner','C45 rollback owner',true)
+  returning id into v_owner_staff;
+  insert into public.branches(id,business_id,name,is_default,active)
+  values(v_branch,v_business,'C45 main',true,true);
+  update public.business_workspace_controls_v94
+     set approval_status='approved',version=version+1,
+         decided_at=clock_timestamp(),decision_reason='C45 rollback acceptance fixture',
+         updated_at=clock_timestamp()
+   where business_id=v_business;
+  insert into public.firm_config_versions(
+    id,business_id,version_no,status,source,snapshot_hash,created_by
+  ) values(v_seed_config,v_business,1,'draft','manual',md5('c45-seed'),v_owner);
+  perform set_config('request.jwt.claim.sub',v_owner::text,true);
+  perform set_config('request.jwt.claims',json_build_object('sub',v_owner,'role','authenticated')::text,true);
+  insert into public.loyalty_program_versions(
+    config_version_id,business_id,kind,loyalty_model,active,
+    earn_points_per_dollar,redeem_points,reward_credit_cents,tier_basis,expiry_mode
+  ) values(v_seed_config,v_business,'points','classic',true,1,100,500,'points_earned','none');
+  update public.firm_config_versions set status='published',published_at=clock_timestamp()
+   where id=v_seed_config;
+  insert into public.loyalty_programs(
+    business_id,kind,active,loyalty_model,configuration_status,current_config_version_id
+  ) values(v_business,'points',true,'classic','published',v_seed_config);
+  perform set_config('app.v79_system_transition','on',true);
+  update public.businesses set active_config_version_id=v_seed_config where id=v_business;
+  perform set_config('app.v79_system_transition','',true);
   select b.id,b.slug,s.user_id,s.id,br.id
     into v_business,v_slug,v_owner,v_owner_staff,v_branch
     from public.businesses b
@@ -118,8 +145,12 @@ begin
     raise exception 'C45 December/January birthday window failed';
   end if;
 
-  -- Default off remains a catalog invariant before this rollback fixture turns
-  -- the gate on locally. Raw C45 tables remain RLS/ACL closed to browsers.
+  -- Exercise the feature-off boundary deterministically before this rollback
+  -- fixture turns the gate on locally. Migration source tests separately pin
+  -- the production default-off catalog value. Raw C45 tables remain RLS/ACL
+  -- closed to browsers.
+  update app.platform_feature_flags set enabled=false,changed_at=statement_timestamp()
+   where feature_key='customer_birthday_benefits';
   if not exists(select 1 from app.platform_feature_flags where feature_key='customer_birthday_benefits' and enabled=false) then
     raise exception 'C45 default off feature gate is missing';
   end if;
@@ -180,12 +211,14 @@ begin
   insert into public.staff_branches(business_id,staff_id,branch_id)
   values(v_business,v_loyalty_rw_staff,v_branch) on conflict do nothing;
   perform pg_temp.as_c45_user(v_foreign);
-  v_foreign_business:=(public.create_business(
-    'C45 foreign matrix '||substr(v_foreign::text,1,8),
-    'c45-foreign-'||substr(v_foreign::text,1,8),
-    'test',array['dashboard','clients','sales','loyalty']
-  )::jsonb->>'id')::uuid;
   reset role;
+  v_foreign_business:=gen_random_uuid();
+  insert into public.businesses(id,name,slug,industry,is_synthetic,enabled_modules)
+  values(v_foreign_business,'C45 foreign matrix '||substr(v_foreign::text,1,8),
+    'c45-foreign-'||substr(v_foreign::text,1,8),'test',true,
+    array['dashboard','clients','sales','loyalty']);
+  insert into public.staff(business_id,user_id,role,full_name,active)
+  values(v_foreign_business,v_foreign,'owner','C45 foreign owner',true);
   if v_foreign_business is null then raise exception 'C45 foreign matrix business was not created'; end if;
 
   -- Owner draft/hash/replay/conflict/publish. The rule is explicit and typed;
@@ -332,6 +365,47 @@ begin
        + (select count(*) from public.points_ledger where business_id=v_business and client_id=v_client)
     into v_ledger_after;
   if v_ledger_before<>v_ledger_after then raise exception 'C45 birthday flow touched money/points ledger'; end if;
+
+  -- Owner OFF is a customer-visibility boundary for new customers, while an
+  -- already activated immutable promise remains available as history. This is
+  -- the exact owner toggle -> publish -> customer refresh contract used by the
+  -- consolidated Grow overview.
+  perform pg_temp.as_c45_user(v_owner);
+  select active_config_version_id into v_active_config from public.businesses where id=v_business;
+  v_off_draft:=(public.create_loyalty_config_draft(v_business,v_active_config,'c45-owner-off-visibility')::jsonb->>'version_id')::uuid;
+  select snapshot_hash into v_hash from public.firm_config_versions where id=v_off_draft;
+  perform public.save_birthday_program_draft(v_off_draft,v_program,jsonb_build_object('active',false),v_hash);
+  perform public.publish_loyalty_config(v_off_draft);
+
+  perform pg_temp.as_c45_user(v_customer);
+  v_benefit:=public.customer_get_birthday_benefit(v_slug);
+  if v_benefit->>'status' not in ('available','redeemed','expired') then
+    raise exception 'C45 owner OFF hid an existing immutable birthday promise: %',v_benefit;
+  end if;
+
+  reset role;
+  insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
+  values('00000000-0000-0000-0000-000000000000',v_customer_after_off,'authenticated','authenticated',
+    'c45-after-off-'||v_customer_after_off::text||'@example.test','',now(),now(),now());
+  insert into public.clients(id,business_id,full_name)
+  values(v_client_after_off,v_business,'C45 customer after owner off');
+  insert into public.customer_identities(id,auth_user_id,status,created_via)
+  values(v_identity_after_off,v_customer_after_off,'active','phone_registration');
+  perform set_config('app.c42_profile_identity',v_identity_after_off::text,true);
+  insert into public.customer_profiles(identity_id,auth_user_id,full_name,birth_date)
+  values(v_identity_after_off,v_customer_after_off,'C45 customer after owner off',
+    (timezone('Asia/Singapore',statement_timestamp()))::date);
+  perform set_config('app.customer_link_insert_id',v_link_after_off::text,true);
+  insert into public.customer_links(id,business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
+  values(v_link_after_off,v_business,v_identity_after_off,v_customer_after_off,v_client_after_off,
+    'verified','phone_claim',now());
+  perform set_config('app.customer_link_insert_id','',true);
+  perform pg_temp.as_c45_user(v_customer_after_off);
+  perform public.customer_set_birthday_participation(true,gen_random_uuid());
+  v_benefit:=public.customer_get_birthday_benefit(v_slug);
+  if v_benefit->>'status'<>'unavailable' then
+    raise exception 'C45 owner OFF exposed birthday setup to a new customer: %',v_benefit;
+  end if;
 end;
 $c45$;
 

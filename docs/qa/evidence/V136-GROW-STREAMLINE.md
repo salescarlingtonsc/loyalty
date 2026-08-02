@@ -4,6 +4,10 @@ Date: 2026-08-02
 Issue: `GROW-002`
 Fixture: `SPA-GLOW` owner, published points programme, two duplicate-name active rewards with distinct UUIDs, one birthday benefit, one archived reward, editable draft present.
 
+> Superseded interaction note (V138): configured and new Bring-back rows now
+> create or resume one governed shared draft and open the exact editor directly;
+> the V136 three-step-confirmation evidence below describes the earlier release.
+
 ## Owner complaint preserved
 
 > “relook into the grow modules - the page is too flooded with information and left right bottom are so much information. It needs to be streamline and easy to create or edit. They must be able to use the module even without anyone teaching them. The overview should include all the rewards program & program yet to set up. Ensure that clicking in will bring them directly to the specific page and specific edits”

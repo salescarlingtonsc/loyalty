@@ -14,12 +14,13 @@ function sourceBetween(source,start,end){
 export function buildRewardOverviewVisualFixture(app){
   const style=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];
   if(!style)throw new Error('production inline stylesheet missing');
+  const growBack=sourceBetween(app,'function growBackActionHtmlV138','function growNavItemHtml');
   const snapshotAdapter=sourceBetween(app,'async function growOverviewSnapshot','function ownerRewardJourneyV122');
   const journey=sourceBetween(app,'function ownerRewardJourneyV122','function growStatus');
   const status=sourceBetween(app,'function growStatus','/* v104 starts');
   const retention=sourceBetween(app,'async function retentionPage(','/* ---------- Grow: one customer journey');
   const grow=sourceBetween(app,'async function growPage(','/* ---------- Bring-back playbooks');
-  const sourceHash=createHash('sha256').update(`${style}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}`).digest('hex');
+  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}`).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
     <meta name="production-source-sha256" content="${sourceHash}"><title>Peekaa rewards overview browser acceptance</title><style>${style}
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -56,6 +57,7 @@ export function buildRewardOverviewVisualFixture(app){
     const openProtectedGrowPublishReview=()=>{};
     const refreshRetentionPanel=()=>{};
     const renderPlaybooks=()=>{};
+    ${growBack}
     const routeDispose=null;
     const M=()=>document.getElementById('main');
     const evidenceParams=new URLSearchParams(location.search);
@@ -113,6 +115,8 @@ export function buildRewardOverviewVisualFixture(app){
       if(name==='owner_list_reward_profitability_products_v122')return {data:{items:fixture.products},error:null};
       if(name==='business_get_checkout_preferences_v102')return partialOverview==='all'?{data:null,error:{message:'Synthetic gift-card failure'}}:{data:fixture.giftcardPreferences,error:null};
       if(name==='get_retention_config_draft')return {data:{programs:fixture.retention,taxonomy:fixture.taxonomy,snapshot_hash:'draft-hash'},error:null};
+      if(name==='create_grow_config_draft_v138')return {data:{version_id:'draft-v2',version_no:2,status:'draft',snapshot_hash:'draft-hash',replayed:false,published:false},error:null};
+      if(name==='ensure_published_retention_in_draft_v138')return {data:{program_id:args.p_program,config_version_id:args.p_config_version,snapshot_hash:'draft-after-retention',replayed:false,published:false},error:null};
       if(name==='generate_retention_recommendation'){
         if(failRecommendationOnce&&!window.__recommendationFailed){window.__recommendationFailed=true;return {data:null,error:{message:'Synthetic lost response'}}}
         const governedRecommendation=cafeFixture
@@ -151,6 +155,7 @@ export function buildRewardOverviewVisualFixture(app){
       autoSetupButtons:document.querySelectorAll('#growAutoSetup').length,secondaryOpen:$('growSecondarySettings')?.open||false,
       overviewTop:$('rewardJourneyTitle')?.getBoundingClientRect().top||null,secondaryTop:$('growSecondarySettings')?.getBoundingClientRect().top||null,
       recommendationCalls:window.__rpcArgs.filter(call=>call.name==='generate_retention_recommendation').map(call=>call.args),
+      growDraftCalls:window.__rpcArgs.filter(call=>call.name==='create_grow_config_draft_v138').map(call=>call.args),
       recommendationResult:window.__lastRecommendation||null,
       dialogOpen:Boolean($('rewardAutoSetupModal')),dialogStep:$('rewardAutoStepTitle')?.textContent||'',
       birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,

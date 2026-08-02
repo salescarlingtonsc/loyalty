@@ -110,10 +110,19 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   or Google. Google authentication returns to the canonical Peekaa business
   entry and preserves the self-service onboarding path. A successful Google
   authentication never grants a business role by itself; server-side persona,
-  workspace and payment state remain authoritative. Because Google sign-in may
-  create an unknown identity, both Google entry points require explicit Terms
-  and Privacy acceptance before provider handoff; new business creation remains
-  durably server-gated by the accepted legal flag.
+  workspace and payment state remain authoritative. Owner clarification
+  2026-08-02: ordinary sign-in shows no Terms/Privacy checkbox. Explicit legal
+  acceptance appears only while creating a new account, including the Google
+  signup entry. If Google sign-in returns an identity with no existing business
+  persona, the server rejects that login and the user must return through the
+  consent-gated signup path. Google signup is admitted only after consuming a
+  short-lived server consent attempt pinned to the exact active Terms and
+  Privacy versions and hashes; the acceptance is then retained as private,
+  append-only, user-bound evidence before any workspace can be created.
+- Browser sessions persist on the user's device and refresh automatically until
+  the user explicitly signs out, the provider invalidates/revokes the session,
+  or a security-sensitive action ends it. Reloading, closing the tab, installing
+  the PWA, or returning on an ordinary later day must not force a fresh login.
 - Owner clarification 2026-08-01: the public business signup is self-service.
   A new owner creates and confirms an account, enters the business and sector,
   selects annual or monthly billing plus customer capacity, reviews the exact
@@ -230,6 +239,23 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   and require explicit owner review before saving or publishing.
 - Everyday rewards, bring-backs, referrals, memberships, gift cards, and
   advanced rules must not feel like disconnected technical submodules.
+- Owner clarification 2026-08-02: Grow is one workspace destination. Its
+  overview contains Earn, every reward milestone, Birthday, Bring-back,
+  Referrals, Memberships and Gift cards; these are not separate equal-weight
+  items in the left navigation. Selecting one row opens that exact submodule in
+  the same Grow workspace, and Save/Done returns to the overview with its prior
+  position and state preserved. The neutral `#/grow` entry is available when
+  the user can read any Grow family; it must not require Loyalty merely to open
+  a retention-, referral-, membership- or gift-card entitlement. If an exact
+  published reward, Birthday benefit or Bring-back rule is missing from an
+  older editable draft, the owner may copy only that stable record into the
+  draft under optimistic concurrency. A lost-response retry returns the same
+  draft record and never publishes, duplicates or replaces unrelated work.
+- Every programme has a clear owner-controlled on/off state where that module's
+  governing contract permits it. Turning a programme off keeps its draft and
+  historical value but removes the inactive programme from new customer-facing
+  projections after refresh. Existing customer liabilities and immutable
+  history are never erased or stranded by a visibility toggle.
 - Recommendations use the firm's actual sector and prices. They state their
   assumptions and permit owner customization beyond a benchmark range.
 - English, Simplified Chinese, and Malay are workspace UI choices that translate

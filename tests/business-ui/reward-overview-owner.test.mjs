@@ -125,7 +125,7 @@ test('owner cards route by stable ID to the exact reward and birthday editors',(
     'clicking from a published overview must prepare a protected draft before editing');
   assert.match(grow,/\.rwEdit\[data-reward-id=/,
     'the embedded editor must select by stable reward ID rather than display name');
-  assert.match(grow,/const exactRewardOpened=openExactReward\(\);[\s\S]{0,180}?else if\(!exactRewardOpened&&focus&&panel\.isConnected\)/,
+  assert.match(grow,/const exactRewardOpened=await openExactReward\(\);[\s\S]{0,220}?else if\(!exactRewardOpened&&focus&&panel\.isConnected\)/,
     'panel focus must not override the exact reward input focus');
 
   const loyalty=section('async function loyaltyPage(','/* ---------- Grow: one customer journey');

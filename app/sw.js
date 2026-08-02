@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX='nestly-shell-';
-const CACHE_VERSION='v4-20260802-peekaa-brand';
+const CACHE_VERSION='v5-20260802-v138-peekaa-convergence';
 const CACHE_NAME=`${CACHE_PREFIX}${CACHE_VERSION}`;
 const APP_SHELL=Object.freeze([
   '/offline.html',
@@ -27,7 +27,11 @@ function isSensitive(request,url){
 }
 
 self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)));
+  event.waitUntil((async()=>{
+    const cache=await caches.open(CACHE_NAME);
+    await cache.addAll(APP_SHELL);
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate',event=>{
@@ -64,9 +68,11 @@ self.addEventListener('fetch',event=>{
 
   if(!STATIC_PATHS.has(url.pathname))return;
   event.respondWith((async()=>{
-    const cached=await caches.match(request,{cacheName:CACHE_NAME});
-    if(cached)return cached;
-    return fetch(request);
+    try{
+      return await fetch(request);
+    }catch{
+      return caches.match(request,{cacheName:CACHE_NAME});
+    }
   })());
 });
 
