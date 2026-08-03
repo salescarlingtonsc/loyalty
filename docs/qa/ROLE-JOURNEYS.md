@@ -199,3 +199,38 @@ order. A hidden navigation item without server-side denial is a failure.
    the complimentary authoring window ends.
 9. Failed image upload, lost response, retry, double tap, refresh, back/forward,
    and 390px/412px layouts preserve an understandable draft or published state.
+
+## Journey L — merchant onboarding to fixed PayNow receipt
+
+1. `CAFE-HARBOUR-PAYMENTS` owner opens Settings -> Payments and selects **Set up
+   Stripe**. Peekaa creates or reuses the business's connected account and opens
+   a single-use Stripe-hosted onboarding link; the owner supplies legal,
+   representative and payout-bank information only to Stripe.
+2. Returning from an incomplete or expired session shows **More information
+   needed** and a resume action. Only provider-reported ready capabilities show
+   **Ready to accept payments**. Manager/front desk cannot create or rebind an
+   account; another merchant cannot see the provider identifier.
+3. At Tanjong Pagar, authorised staff chooses `CUS-MEI`, adds Harbour Lunch Set
+   and accepts the authoritative SGD 10.00 evaluation. **PayNow QR** asks the
+   server for one payment under Harbour's connected account. The returned QR
+   displays SGD 10.00 and the merchant/branch; amount and merchant are not
+   editable. The same exact server evaluation remains held for Stripe's full
+   one-hour QR payment window, and any direct-finalise attempt from another tab
+   fails without a sale, points or inventory effect.
+4. Before a signed success event, the screen says Awaiting payment and no sale,
+   payment, stock, points or paid receipt exists. Refresh/reconnect recovers the
+   same attempt. Cancel, expiry and provider failure retain the cart and allow a
+   safe replacement attempt.
+5. The exact signed success event for Harbour, SGD and 1,000 cents atomically
+   consumes the evaluation and creates one sale/payment/economic result. A
+   duplicate or older event returns the same result without a second effect;
+   wrong account/amount/currency/business is quarantined and finalises nothing.
+   Refund creation remains pending until a signed `refund.updated` succeeds;
+   `refund.failed` tells staff to resolve the refund manually in Stripe, and a
+   delayed API response cannot overwrite that signed failure.
+6. Staff sees Paid and one **Print receipt** action. The receipt shows Harbour
+   Kopi, Tanjong Pagar, Singapore paid time, safe references, items, discounts,
+   GST truth, SGD 10.00 and PayNow; it excludes Peekaa service-phone details.
+   Customer history/points reflect the same sale after refresh.
+7. Repeat with `SPA-GLOW-PAYMENTS` and SGD 88.00 to prove that two merchant
+   accounts, attempts, webhook events, receipts and settlements never cross.

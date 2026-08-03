@@ -1051,6 +1051,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260802134128",
+      "name": "nestly_v142_connect_paynow_pos",
+      "sourcePath": "db/migrations/20260802_nestly_v142_connect_paynow_pos.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260803120000",
       "name": "nestly_v144_self_serve_subscription_consent",
       "sourcePath": "db/migrations/20260803_nestly_v144_self_serve_subscription_consent.sql"

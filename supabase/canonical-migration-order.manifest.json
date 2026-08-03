@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 134,
-  "itemCount": 179,
+  "pendingCount": 135,
+  "itemCount": 180,
   "items": [
     {
       "order": 1,
@@ -1752,6 +1752,16 @@
     {
       "order": 175,
       "kind": "pending",
+      "version": "20260802134128",
+      "name": "nestly_v142_connect_paynow_pos",
+      "path": "supabase/migrations/20260802134128_nestly_v142_connect_paynow_pos.sql",
+      "octetLength": 54950,
+      "sha256": "84c04827a2a2b93ccaed6468f85467612b28c4322543db5f4eaada3907bceceb",
+      "provenance": "local-source"
+    },
+    {
+      "order": 176,
+      "kind": "pending",
       "version": "20260803120000",
       "name": "nestly_v144_self_serve_subscription_consent",
       "path": "supabase/migrations/20260803120000_nestly_v144_self_serve_subscription_consent.sql",
@@ -1760,7 +1770,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 176,
+      "order": 177,
       "kind": "pending",
       "version": "20260803160000",
       "name": "nestly_v145_launch_freeze_metrics",
@@ -1770,7 +1780,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 177,
+      "order": 178,
       "kind": "pending",
       "version": "20260803170000",
       "name": "nestly_v146_platform_finance",
@@ -1780,7 +1790,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 178,
+      "order": 179,
       "kind": "pending",
       "version": "20260803180000",
       "name": "nestly_v147_platform_accounting",
@@ -1790,13 +1800,13 @@
       "provenance": "local-source"
     },
     {
-      "order": 179,
+      "order": 180,
       "kind": "pending",
       "version": "20260803190000",
       "name": "nestly_v148_owner_launch_closure",
       "path": "supabase/migrations/20260803190000_nestly_v148_owner_launch_closure.sql",
-      "octetLength": 21797,
-      "sha256": "ec7d32612699f455085eb35614d78b733d9acf235b3e98cc70fa8986dcba8de1",
+      "octetLength": 21796,
+      "sha256": "fd23bfd06122ea44c399e4736d0305a472a0573ea511446e25ea23184ce4cf73",
       "provenance": "local-source"
     }
   ]

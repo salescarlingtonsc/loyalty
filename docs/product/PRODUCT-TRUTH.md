@@ -178,6 +178,21 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 - A business can enable or disable catalogue-led Quick Earn. When enabled,
   Quick Earn uses the firm's products, services, packages, and variants rather
   than replacing them with payment-method choices.
+- Owner decision 2026-08-02: Peekaa's own Stripe subscription account and a
+  merchant's customer-payment account are separate authorities. Each legal
+  business that wants provider-backed POS payments onboards one Stripe Connect
+  account in **Settings -> Payments**. Its branches share that account unless a
+  branch is a different legal merchant or must settle to a different bank
+  account. Peekaa never asks staff to paste API keys or create webhook endpoints.
+- Stripe-hosted Connect onboarding collects the merchant's legal identity,
+  representative, required verification and payout-bank details. Peekaa stores
+  only the connected-account identifier and provider capability/status
+  projection. An onboarding link is single-use and short-lived; the owner can
+  resume from a truthful **More information needed** state.
+- Stripe test and live objects are isolated. A test connected account is never
+  retrieved with live credentials; production onboarding explicitly promotes
+  the business to a new live connected account and cannot silently downgrade a
+  live binding back to test mode.
 
 ## Business operations
 
@@ -185,6 +200,35 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   remain distinguishable.
 - The everyday checkout action is labelled **Record sale**. “Quick Earn” is a
   legacy internal name and must not appear in the business workspace.
+- Provider-backed PayNow is transaction-specific. Record sale asks the server
+  to create one SGD PayNow payment for the evaluated cart's exact total under
+  that business's connected account, then locally renders Stripe's raw PayNow
+  QR payload. Stripe keeps the QR payable for up to one hour, so Peekaa extends
+  and reserves that same immutable exact-price checkout evaluation for the full
+  provider window. There is no second consumable checkout: another staff tab
+  cannot finalise the held evaluation while the QR is payable. The browser
+  cannot edit the amount, choose another business account, mark the payment
+  paid, or reuse the QR for a later sale.
+- Opening or scanning a QR is not payment proof. Only a correctly signed,
+  causally current provider event for the same connected account, currency,
+  amount and payment attempt may atomically complete the sale, payment record,
+  points, inventory and receipt. Duplicate/out-of-order events and lost-response
+  retries create no second economic effect. Failed, canceled or expired attempts
+  leave the checkout uncompleted and may be safely replaced.
+- PayNow refunds are asynchronous. A refund creation response is only
+  **Refund pending**; Peekaa may say **Refunded** only after a signed terminal
+  `refund.updated` success. `refund.failed` remains a manual-action state and
+  must never be described as money returned.
+- Cash, an external card terminal and externally received/manual PayNow remain
+  explicit staff-attested tenders. Their wording must never imply Stripe
+  verification. Provider-backed PayNow is available only while the business
+  account is ready; a restricted or unconfigured account shows the owner setup
+  action and exposes no dead QR control to staff.
+- A completed POS transaction has a printable merchant receipt containing the
+  business and branch, receipt/reference number, Singapore timestamp, line
+  items, discounts, GST truth, exact total, payment method/status and provider
+  reference. It does not show Peekaa's customer-service phone number and does
+  not expose secrets or full payment credentials.
 - Customer lists let an authorised operator show customers whose last valid
   visit was at least 30, 60, or 90 complete Singapore-calendar days ago.
   Customers who have never visited are included and clearly labelled, rather

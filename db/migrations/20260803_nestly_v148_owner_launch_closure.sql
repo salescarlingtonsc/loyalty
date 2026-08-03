@@ -574,4 +574,3 @@ grant execute on function public.customer_get_effective_tier_v143(uuid)
   to authenticated;
 
 commit;
-
