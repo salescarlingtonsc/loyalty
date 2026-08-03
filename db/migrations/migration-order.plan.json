@@ -1089,6 +1089,12 @@
       "path": "db/migrations/20260803_nestly_v151_mobile_staff_invites.sql",
       "semanticVersion": "v151",
       "proposedDeployVersion": "20260803210000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v154_multibranch_foundation.sql",
+      "semanticVersion": "v154",
+      "proposedDeployVersion": "20260803220000"
     }
   ]
 }
