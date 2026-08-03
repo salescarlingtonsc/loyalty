@@ -111,6 +111,43 @@ tr.click:hover td{background:#FBFAF8}
 .cui-page-title{display:flex;align-items:flex-start;gap:12px}.cui-page-title>svg{color:var(--coral);margin-top:4px}
 .cui-page-title h1{font-size:1.85rem;font-weight:700}.cui-page-title p{color:var(--muted);font-size:13px;margin-top:3px;max-width:72ch;line-height:1.5}
 .cui-page-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.v150-titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.v150-titlebar h1{font-size:1.85rem;font-weight:700}.v150-titlebar p{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.45}
+.v150-title-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.v150-section{margin-top:18px}.v150-section-title{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.v150-section-title h2{font-size:1.25rem}.v150-section-title p{font-size:12.5px;color:var(--muted);margin-top:2px}
+.v150-soft-head{background:linear-gradient(180deg,#FFF7F4,#FFFDFC);border-bottom:1px solid var(--line);border-radius:var(--r) var(--r) 0 0;margin:-22px -22px 16px;padding:16px 22px}
+.v150-soft-head b{display:block;font-size:15px}.v150-soft-head p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+.v150-segment{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:var(--shadow)}
+.v150-segment button{min-height:38px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px}
+.v150-segment button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
+.v150-kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:750}
+.v150-kpi .v{font-size:1.65rem;font-weight:760;margin-top:8px}.v150-kpi .hint{font-size:12px;color:var(--muted);line-height:1.35;margin-top:6px}
+.v150-kpi-head{background:var(--tint);border-radius:14px;padding:10px 12px;margin:-8px -8px 12px;color:var(--coral)}
+.nav-label{min-width:0;overflow-wrap:anywhere}.nav-badge{margin-left:auto;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.dashboard-range{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(4,minmax(150px,1fr))}
+.dashboard-charts.v150-understand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:14px 18px;display:flex;gap:10px;align-items:flex-start}
+.dashboard-chart-head .dashboard-chart-link{margin-left:auto;color:var(--coral);font-weight:700;font-size:12px;white-space:nowrap}
+.client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+.client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
+.client-summary-card[aria-pressed="true"]{border-color:var(--coral);background:var(--tint);color:var(--coral)}
+.client-summary-card b{display:block;font-size:1.2rem}.client-summary-card span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.sortable-th{background:transparent;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0}
+.till-found-card{background:linear-gradient(135deg,#F0FFF7,#FFFDFC);border:1px solid #CDEADA!important}
+.choice-button{border:1px solid var(--control-border);background:#fff;border-radius:18px;padding:14px;text-align:left;min-height:58px;box-shadow:var(--shadow);transition:background .16s var(--ease),border-color .16s var(--ease),transform .18s var(--spring)}
+.choice-button:hover{background:#FBFAF8;border-color:#D6CFC6;transform:translateY(-1px)}
+.choice-button:active{transform:scale(.98)}.choice-button.selected,.choice-button[aria-pressed="true"]{background:var(--tint);border-color:var(--coral);box-shadow:0 0 0 3px rgba(194,65,53,.12)}
+.sales-ledger-card{overflow:hidden}.sales-ledger-card .cui-table-wrap{background:#fff;border:1px solid var(--line)}
+.expenses-segment-body,.services-segment-body{margin-top:14px}.highlight-new{animation:v150flash 2.8s ease}
+@keyframes v150flash{0%,50%{box-shadow:0 0 0 4px rgba(31,107,72,.18);background:#F0FFF7}100%{box-shadow:none;background:transparent}}
+.current-time-line{position:absolute;left:0;right:0;height:2px;background:var(--coral);z-index:3;pointer-events:none}
+.current-time-line span{position:absolute;left:6px;top:-12px;background:var(--coral);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:2px 6px}
+@media(max-width:1100px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-charts.v150-understand{grid-template-columns:1fr}.v150-title-actions{justify-content:flex-start}}
+@media(max-width:760px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:1fr}.v150-titlebar{display:block}.v150-title-actions{margin-top:12px}.client-summary-card{flex:1 1 100%}}
 .permission-banner{display:flex;gap:11px;align-items:flex-start;background:#FFF6E8;color:#65400C;border:1px solid #E7C994;border-radius:var(--r-sm);padding:13px 15px;margin:-7px 0 18px}
 .permission-banner p{font-size:12.5px;line-height:1.5;margin-top:2px}.permission-banner svg{margin-top:1px}
 .cui-card-head{margin-bottom:14px}.cui-card-head h2,.cui-empty h2{font-size:16px}.cui-card-head p,.cui-empty p,.cui-field-hint{color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:4px}
@@ -652,7 +689,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .day-break-window{position:absolute;left:3px;right:3px;z-index:3;display:grid;place-items:center;border-block:1px dashed #D3A87D;background:repeating-linear-gradient(135deg,#FFF3E6,#FFF3E6 8px,#FCE8D3 8px,#FCE8D3 16px);color:#79512D;font-size:11px;font-weight:700;pointer-events:none}
 .day-blocked-window{position:absolute;left:5px;right:5px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;overflow:hidden;padding:5px 7px;border:1px solid #C9B9B5;border-left:4px solid #7B6D69;border-radius:7px;background:repeating-linear-gradient(135deg,#F2EFED,#F2EFED 8px,#E7E1DE 8px,#E7E1DE 16px);color:#403936;font-size:10.5px;line-height:1.2}.day-blocked-window b,.day-blocked-window span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.day-blocked-window button{flex:0 0 auto;min-width:44px;min-height:44px;border:0;background:transparent;color:var(--red);font-weight:750;cursor:pointer}
 .day-track-state{position:absolute;inset:16px;display:grid;place-content:center;gap:4px;text-align:center;color:var(--muted)}.day-track-state span{font-size:12px}
-.day-now-line{position:absolute;left:0;right:0;height:2px;background:#D72F43;z-index:5;pointer-events:none}.day-now-line::before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#D72F43}
+.day-now-line{position:absolute;left:0;right:0;height:2px;background:#D72F43;z-index:5;pointer-events:none}.day-now-line::before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#D72F43}.day-now-line span{position:absolute;left:8px;top:-13px;background:#D72F43;color:#fff;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:800;box-shadow:0 4px 12px rgba(215,47,67,.18)}
 .day-timeline-event{position:absolute;z-index:6;min-height:44px;overflow:hidden;padding:5px 8px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 14%,#fff);color:var(--ink);text-align:left;line-height:1.15}.day-timeline-event:hover,.day-timeline-event:focus-visible{z-index:9;box-shadow:var(--shadow)}.day-timeline-event span,.day-timeline-event b,.day-timeline-event small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.day-timeline-event span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums}.day-timeline-event small{margin-top:1px;color:var(--muted)}
 .report-decision-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.report-decision-card{display:flex;flex-direction:column;align-items:flex-start;min-height:150px;padding:18px;border:1px solid var(--hair);border-radius:var(--r);background:#fff;color:var(--ink);text-decoration:none;box-shadow:var(--shadow)}.report-decision-card:hover,.report-decision-card:focus-visible{border-color:var(--coral)}.report-decision-card .task-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--tint);color:var(--coral)}.report-decision-card b{margin-top:13px;font-size:16px}.report-decision-card span{margin-top:5px;color:var(--muted);font-size:12.5px;line-height:1.4}
 .schedule-suggestion{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
@@ -1387,9 +1424,9 @@ const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?m
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
-  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist','sales']},
+  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
   {key:'grow',icon:'retention',label:'Grow',items:['loyalty','retention','referrals','memberships','giftcards']},
-  {key:'money',icon:'reports',label:'Money',items:['reports','customerintel','dailyreport','pnl','expenses','staffperf']},
+  {key:'money',icon:'reports',label:'Money',items:['sales','reports','customerintel','pnl','expenses','staffperf']},
   {key:'setup',icon:'services',label:'Operations setup',items:['services','inventory','packages','branches']}
 ];
 let navOpen={};
@@ -1408,6 +1445,8 @@ let customerUiObserver=null;
 let shellRenderEpoch=0;
 let routeDispose=()=>{};
 let activeCustomerRedemptionCleanup=()=>{};
+let waitlistActiveCount=0;
+let waitlistBadgeRequest=0;
 function disposeCurrentRoute(){
   const dispose=routeDispose;routeDispose=()=>{};
   dispose({restoreFocus:false});
@@ -6253,6 +6292,24 @@ function growNavItemHtml(items,activeKey){
   const onGrowSurface=['grow','loyalty','retention','studio','storedvalue','promotions','referrals','memberships','giftcards'].includes(activeKey);
   return `<a href="#/grow" class="${onGrowSurface?'act':''}"${onGrowSurface?' aria-current="page"':''}><span class="ic">${CUI.icon('loyalty',{size:18})}</span>Grow</a>`;
 }
+function waitlistBadgeHtml(){
+  const count=Number(waitlistActiveCount)||0;
+  return count>0?`<span class="nav-badge" data-waitlist-badge>${count}</span>`:'';
+}
+function setWaitlistBadgeCount(count){
+  waitlistActiveCount=Math.max(0,Number(count)||0);
+  document.querySelectorAll('[data-waitlist-badge-slot]').forEach(slot=>{
+    slot.innerHTML=waitlistBadgeHtml();
+  });
+}
+async function refreshWaitlistBadge(){
+  if(!S?.biz?.id||!canReadModule('waitlist')){setWaitlistBadgeCount(0);return}
+  const ticket=++waitlistBadgeRequest;
+  const {count,error}=await sb.from('waitlist').select('id',{count:'exact',head:true})
+    .eq('business_id',S.biz.id).in('status',['waiting','contacted']);
+  if(ticket!==waitlistBadgeRequest||error)return;
+  setWaitlistBadgeCount(count||0);
+}
 function navHtml(page,idPrefix='nav'){
   const enabled=filterResolvedModulesForRole(S.myModules||S.biz.enabled_modules||[],S.myRole)
     .filter(module=>!HIDDEN_BUSINESS_SURFACES.has(module));
@@ -6271,7 +6328,7 @@ function navHtml(page,idPrefix='nav'){
       <button type="button" class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}" aria-expanded="${isOpen}" aria-controls="${idPrefix}-${g.key}"><span class="ic">${CUI.icon(g.icon,{size:18})}</span>${g.label}<span class="chev" aria-hidden="true">${isOpen?'−':'+'}</span></button>
       <div class="navbody" id="${idPrefix}-${g.key}" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
         ${g.key==='grow'?growNavItemHtml(g.items,activeKey):''}
-        ${restItems.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span>${MODULES[m][1]}</a>`).join('')}
+        ${restItems.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span><span class="nav-label">${MODULES[m][1]}</span>${m==='waitlist'?`<span data-waitlist-badge-slot>${waitlistBadgeHtml()}</span>`:''}</a>`).join('')}
       </div></div>`;
   }).join('');
 }
@@ -7291,6 +7348,7 @@ function renderShell(page){
     });
   });
   initNotifications(); // fire-and-forget, like the page fn above — loads badge + (re)uses the realtime channel
+  refreshWaitlistBadge(); // same waitlist queue source, hidden at zero
 }
 const M=()=> $('main');
 function focusRoutedWorkspaceControl(routedFocus,fallback=null){
@@ -7509,14 +7567,18 @@ async function dashboard(){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const renderEpoch=++dashboardRenderEpoch;
   M().innerHTML=`<section id="dashboardView" class="dashboard-page" data-render-epoch="${renderEpoch}" data-workspace-i18n>
-    <header class="dashboard-intro">${CUI.icon('home',{size:25})}<div><h1>Dashboard</h1><p class="muted small">A clear view of how <span data-merchant-content>${esc(S.biz.name)}</span> is doing. Choose the branch in the app bar and a period below. Business-wide figures are labelled.</p></div></header>
+    <header class="v150-titlebar">
+      <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><h1>Dashboard</h1></div></div>
+      <div class="v150-title-actions dashboard-range">
+        <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
+        <label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}">
+        <button class="btn sm" id="apply">Apply</button>
+      </div>
+    </header>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
-      <header class="performance-heading">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small">${workspaceTemplateHtmlV97('dashboardSummary',{business:S.biz.name})}</p></div></header>
-      <div class="performance-body"><div class="range">
-      <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
-      <label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}">
-      <button class="btn sm" id="apply">Apply</button>
-    </div><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis" id="kpis" aria-live="polite"></div><div class="charts dashboard-charts" id="charts"></div></div>
+      <header class="performance-heading">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div></header>
+      <div class="performance-body"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div>
+      <section class="v150-section" aria-labelledby="understandBusinessTitle"><div class="v150-section-title">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div></div><div class="charts dashboard-charts v150-understand" id="charts"></div></section></div>
     </section></section>`;
   const dashboardRoot=$('dashboardView');
   const isDashboardCurrent=()=>dashboardRenderEpoch===renderEpoch&&dashboardRoot.isConnected&&$('dashboardView')===dashboardRoot;
@@ -7529,10 +7591,7 @@ async function dashboard(){
   const dashboardMetricDefinitionsV141={
     visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',scope:'branch'},
     revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',scope:'branch'},
-    unique:{label:'Customers with valid visits',definition:'Distinct identified customers attached to at least one valid visit in this selected period. Each customer is counted once.',route:'#/clients',action:'View customers',scope:'branch'},
-    new:{label:'Customer records added',definition:'Customer profiles added to this business during the selected period. This figure is business-wide and is not a count of first purchases.',route:'#/clients',action:'View customers',scope:'business'},
-    points:{label:'Gross points earned',definition:'Qualifying loyalty points earned in this selected period. When a branch is selected, only sale-linked earning at that branch is included; consolidated view is business-wide.',route:'#/grow',action:'View rewards',scope:'branch'},
-    credit:{label:'Credit liability',definition:'Current positive customer credit that this business still owes. This is a business-wide current balance, not a period or branch value.',route:'#/clients',action:'View customers',scope:'business-current'},
+    new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',scope:'business'},
     inactive:{label:'Inactive customers',definition:'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.',route:'#/clients',action:'View inactive customers',scope:'business-current'}
   };
   let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
@@ -7606,8 +7665,6 @@ async function dashboard(){
       return;
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
-    const loyaltyMetricsAvailable=d.availability?.loyalty===true;
-    const creditLiabilityAvailable=d.availability?.credit_liability===true;
     const branchSelect=$('dashboardBranchWrap')?.querySelector('select');
     appliedDashboardScopeV141={from,to,branchId,branchName:branchId?(branchSelect?.selectedOptions?.[0]?.textContent||'Selected branch'):'All permitted branches'};
     if(!kpis||!charts)return;
@@ -7615,26 +7672,19 @@ async function dashboard(){
     const metrics=[
       {key:'visits',value:String(d.visits||0),hint:'Valid original visits; reversed visits excluded'},
       {key:'revenue',value:money(d.revenue_cents||0),hint:'Net sales in this period'},
-      {key:'unique',value:String(d.unique_customers||0),hint:'Customer records with a valid visit; counted once'},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'Business-wide · records added in selected period'},
-      loyaltyMetricsAvailable&&{key:'points',value:String(d.points_issued??0),hint:branchId?'Selected branch · sale-linked gross points earned':'Business-wide · gross points earned'},
-      creditLiabilityAvailable&&{key:'credit',value:money(d.credit_liability_cents??0),hint:'Business-wide · current credit still owed'}
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'Joined during the selected period.'}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients'))metrics.push({key:'inactive',value:inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0),hint:'Business-wide · 30+ days or never visited'});
     kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="v">${esc(metric.value)}</span><span class="metric-hint">${esc(metric.hint)}</span></button>`}).join('');
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
-      const drill=!customerMetricsAvailable&&key==='unique'
-        ?{route:'#/sales',action:'View sales'}
-        :key==='credit'&&(!customerMetricsAvailable||!loyaltyMetricsAvailable||!creditLiabilityAvailable)
-          ?{route:null,action:null}:{};
-      openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',drill);
+      openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
     });
     charts.innerHTML=[
-      dashboardChartCardV141({title:'Busiest days',subtitle:'Valid visits only. Green is quieter, amber medium, red busiest.',canvas:'c1',route:'#/sales'}),
-      dashboardChartCardV141({title:'Revenue over time',subtitle:'Daily net revenue in SGD.',canvas:'c2',route:'#/sales'}),
-      customerMetricsAvailable&&dashboardChartCardV141({title:'Age groups',subtitle:'Business-wide from birth dates on file; unknown stays visible.',canvas:'c4',route:'#/clients'}),
-      customerMetricsAvailable&&dashboardChartCardV141({title:'Recorded gender',subtitle:'Business-wide historical aggregate; unknown stays visible.',canvas:'c5',route:'#/clients'})
+      dashboardChartCardV141({title:'Busiest days',subtitle:'See which days receive the most visits.',canvas:'c1',route:'#/sales'}),
+      dashboardChartCardV141({title:'Revenue over time',subtitle:'See how revenue changes over the selected period.',canvas:'c2',route:'#/sales'}),
+      customerMetricsAvailable&&dashboardChartCardV141({title:'Age groups',subtitle:'Understand the age profile of recorded customers.',canvas:'c4',route:'#/clients'}),
+      customerMetricsAvailable&&dashboardChartCardV141({title:'Recorded gender',subtitle:'Understand the recorded gender mix of customers.',canvas:'c5',route:'#/clients'})
     ].filter(Boolean).join('');
     status.querySelector('#dashboardInactiveRetry')?.addEventListener('click',load);
     kpis.setAttribute('aria-busy','false');charts.setAttribute('aria-busy','false');
@@ -7673,9 +7723,18 @@ async function clientsPage(){
   const canWrite=canWriteModule('clients');
   const canWriteReferrals=canWriteModule('referrals');
   const customerActions=CUI.action({id:'exp',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'})+
-    (canWrite?importBtn('customers')+CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
-  routeMain.innerHTML=`<section id="customersView"><div data-workspace-i18n>${CUI.pageHeader({title:'Customers',subtitle:'Find a customer or see who has not visited recently.',iconName:'customers',actions:customerActions,canWrite,moduleLabel:'Customer management'})}</div>
-    <div class="card" style="margin-bottom:16px"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch" style="margin-top:0">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity" style="margin-top:0">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30">Inactive 30+ days</option><option value="60">Inactive 60+ days</option><option value="90">Inactive 90+ days</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive means no valid visit for at least the selected number of complete Singapore days. Customers who have never visited are included.</p></div>
+    (canWrite?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
+  routeMain.innerHTML=`<section id="customersView">
+    <header class="v150-titlebar" data-workspace-i18n>
+      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1><p>Find customers, manage consent, and follow up with people who have not visited recently.</p></div></div>
+      <div class="client-summary-cards" id="inactiveCards" aria-label="Inactive customer shortcuts">
+        <button type="button" class="client-summary-card" data-inactive-bucket="30_59" aria-pressed="false"><b>—</b><span>Inactive 30–59 days</span></button>
+        <button type="button" class="client-summary-card" data-inactive-bucket="60_89" aria-pressed="false"><b>—</b><span>Inactive 60–89 days</span></button>
+        <button type="button" class="client-summary-card" data-inactive-bucket="90_plus" aria-pressed="false"><b>—</b><span>Inactive 90+ days</span></button>
+      </div>
+    </header>
+    <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days / never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Never-visited customers appear in 90+ because they have no valid visit on record.</p></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list"><div class="empty">Loading…</div></div>
     <div class="card" id="fbQueueCard" style="margin-top:16px"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
@@ -7686,18 +7745,51 @@ async function clientsPage(){
   const customerLoadGate=createLatestRequestGate(isCustomersCurrent);
   const CLIENT_PAGE_SIZE=100;
   let clientPage=0;
-  let clientInactiveDays=pendingCustomerInactivity;
+  let clientInactiveBucket=pendingCustomerInactivity?(pendingCustomerInactivity>=90?'90_plus':pendingCustomerInactivity>=60?'60_89':'30_59'):null;
   pendingCustomerInactivity=null;
   /* A name handed in from the global app-bar search pre-fills and runs the existing name search
      (same query, no new call). Consumed once so a later visit starts clean. */
   let clientSearch=pendingCustomerSearch||'';
   pendingCustomerSearch='';
   if(clientSearch&&$('clientSearch'))$('clientSearch').value=clientSearch;
-  if(clientInactiveDays&&$('clientInactivity'))$('clientInactivity').value=String(clientInactiveDays);
+  if(clientInactiveBucket&&$('clientInactivity'))$('clientInactivity').value=String(clientInactiveBucket);
   const customerDirectoryPage=(search,inactiveDays,offset)=>sb.rpc('staff_list_customers_v129',{
     p_business:S.biz.id,p_search:search||null,p_inactive_days:inactiveDays,
     p_limit:CLIENT_PAGE_SIZE,p_offset:offset
   });
+  const customerBucketMatch=(c,bucket)=>{
+    if(!bucket)return true;
+    const never=!c.last_visit_at;
+    const days=Number(c.days_since_last_visit);
+    if(bucket==='30_59')return !never&&days>=30&&days<=59;
+    if(bucket==='60_89')return !never&&days>=60&&days<=89;
+    if(bucket==='90_plus')return never||days>=90;
+    return true;
+  };
+  const sortCustomersV150=(rows,sortKey)=>{
+    const list=[...(rows||[])];
+    const num=v=>Number(v)||0,ts=v=>v?new Date(v).getTime():0;
+    if(sortKey==='last_visit_desc')list.sort((a,b)=>ts(b.last_visit_at)-ts(a.last_visit_at));
+    else if(sortKey==='joined_desc')list.sort((a,b)=>ts(b.created_at)-ts(a.created_at));
+    else if(sortKey==='points_desc')list.sort((a,b)=>num(b.points)-num(a.points));
+    else if(sortKey==='credit_desc')list.sort((a,b)=>num(b.balance_cents)-num(a.balance_cents));
+    else if(sortKey==='consent_desc')list.sort((a,b)=>Number(!!b.marketing_consent)-Number(!!a.marketing_consent));
+    else list.sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||'')));
+    return list;
+  };
+  async function refreshInactiveCards(){
+    const host=$('inactiveCards');if(!host)return;
+    try{
+      const directory=await allCustomerDirectoryRows();
+      if(!isCustomersCurrent())return;
+      const counts={'30_59':0,'60_89':0,'90_plus':0};
+      directory.customers.forEach(c=>{if(customerBucketMatch(c,'30_59'))counts['30_59']++;else if(customerBucketMatch(c,'60_89'))counts['60_89']++;else if(customerBucketMatch(c,'90_plus'))counts['90_plus']++});
+      host.querySelectorAll('[data-inactive-bucket]').forEach(btn=>{
+        btn.querySelector('b').textContent=String(counts[btn.dataset.inactiveBucket]||0);
+        btn.setAttribute('aria-pressed',String(clientInactiveBucket===btn.dataset.inactiveBucket));
+      });
+    }catch(error){if(isCustomersCurrent())host.querySelectorAll('[data-inactive-bucket] b').forEach(b=>b.textContent='—')}
+  }
   const allCustomerDirectoryRows=async()=>{
     const customers=[];let offset=0,total=null,loyaltyAvailable=null;
     while(total===null||offset<total){
@@ -7716,8 +7808,10 @@ async function clientsPage(){
   const runClientSearch=()=>{clientSearch=$('clientSearch').value.trim();clientPage=0;load()};
   $('clientSearchGo').onclick=runClientSearch;
   $('clientSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runClientSearch()}};
-  $('clientSearchClear').onclick=()=>{$('clientSearch').value='';$('clientInactivity').value='';clientSearch='';clientInactiveDays=null;clientPage=0;load();$('clientSearch').focus()};
-  $('clientInactivity').onchange=()=>{clientInactiveDays=$('clientInactivity').value?Number($('clientInactivity').value):null;clientPage=0;load()};
+  $('clientSearchClear').onclick=()=>{$('clientSearch').value='';$('clientInactivity').value='';clientSearch='';clientInactiveBucket=null;clientPage=0;load();refreshInactiveCards();$('clientSearch').focus()};
+  $('clientInactivity').onchange=()=>{clientInactiveBucket=$('clientInactivity').value||null;clientPage=0;load();refreshInactiveCards()};
+  $('clientSort').onchange=()=>{clientPage=0;load()};
+  $('inactiveCards').querySelectorAll('[data-inactive-bucket]').forEach(btn=>btn.onclick=()=>{clientInactiveBucket=clientInactiveBucket===btn.dataset.inactiveBucket?null:btn.dataset.inactiveBucket;$('clientInactivity').value=clientInactiveBucket||'';clientPage=0;load();refreshInactiveCards()});
   $('exp').onclick=async()=>{
     const exportButton=$('exp');exportButton.disabled=true;
     let directory;
@@ -7767,16 +7861,28 @@ async function clientsPage(){
   async function load(){
     const isCurrent=customerLoadGate.begin();
     const customerRpcSearch=normalizeCustomerSearchPhoneDigits(clientSearch)||clientSearch;
-    const {data:result,error}=await customerDirectoryPage(
-      customerRpcSearch,clientInactiveDays,clientPage*CLIENT_PAGE_SIZE
-    );
+    let result,error;
+    if(clientInactiveBucket){
+      try{
+        const directory=await allCustomerDirectoryRows();
+        let rows=directory.customers.filter(c=>customerBucketMatch(c,clientInactiveBucket));
+        const search=String(customerRpcSearch||'').toLowerCase();
+        if(search)rows=rows.filter(c=>String(c.full_name||'').toLowerCase().includes(search)||String(c.phone||'').toLowerCase().includes(search)||String(c.email||'').toLowerCase().includes(search));
+        rows=sortCustomersV150(rows,$('clientSort')?.value||'name_asc');
+        result={customers:rows.slice(clientPage*CLIENT_PAGE_SIZE,clientPage*CLIENT_PAGE_SIZE+CLIENT_PAGE_SIZE),total:rows.length,loyalty_available:directory.loyaltyAvailable};
+      }catch(e){error=e}
+    }else{
+      ({data:result,error}=await customerDirectoryPage(customerRpcSearch,null,clientPage*CLIENT_PAGE_SIZE));
+      if(result?.customers)result.customers=sortCustomersV150(result.customers,$('clientSort')?.value||'name_asc');
+    }
     if(!isCurrent())return;
     if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
-    if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveDays?`No customers inactive for ${clientInactiveDays}+ days`:'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveDays?'Choose a shorter period or All customers.':canWrite?'Add your first customer to start recording sales.':'Customers will appear here when an authorized teammate adds them.'});return}
+    if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveBucket?'No customers in this inactive group':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveBucket?'Choose another inactive group or All customers.':canWrite?'Add your first customer to start recording sales.':'Customers will appear here when an authorized teammate adds them.'});return}
     const loyaltyAvailable=result?.loyalty_available===true;
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
-    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points and spendable credit are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th>Name</th><th>Phone</th><th>Last visit</th><th>Date joined</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
+    const sortGlyph='↕';
+    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points and spendable credit are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">Points ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="credit_desc">Credit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="consent_desc">Consent ${sortGlyph}</button></th></tr>
       ${cl.map(c=>`<tr>
         <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`Last visit ${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
         <td>${loyaltyAvailable?`${Number(c.points)||0} pts`:'Unavailable'}</td><td>${loyaltyAvailable?money(Number(c.balance_cents)||0):'Unavailable'}</td>
@@ -7786,6 +7892,7 @@ async function clientsPage(){
         <button class="btn ghost sm" id="clNext" ${clientPage+1>=pages?'disabled':''}>Next</button></div>`;
     $('clPrev').onclick=()=>{if(clientPage>0){clientPage--;load()}};
     $('clNext').onclick=()=>{if(clientPage+1<pages){clientPage++;load()}};
+    $('list').querySelectorAll('[data-sort]').forEach(btn=>btn.onclick=()=>{$('clientSort').value=btn.dataset.sort;clientPage=0;load()});
   }
   /* v53 service-recovery queue — rides the clients module (staff_list_visit_feedback gates on
      can_module_read('clients'), so no new MODULES key). Owner/manager hold refund_sales (the same
@@ -7865,6 +7972,7 @@ async function clientsPage(){
   }
   renderFeedbackChips();
   loadFeedbackQueue();
+  refreshInactiveCards();
   load();
 }
 
@@ -9152,13 +9260,13 @@ async function tillPage(){
       }else{
         const noCheckoutItems=!catalog.services.length&&!(catalog.products&&catalog.products.length);
         const svcBtns=catalog.services.length
-          ?`<div class="till-cart-catalog">${catalog.services.map(s=>`<button type="button" class="btn ghost" data-add="service" data-id="${s.id}">${esc(s.name)}<span class="till-cart-price">${money(s.unit_cents)}</span></button>`).join('')}</div>`
+          ?`<div class="till-cart-catalog">${catalog.services.map(s=>`<button type="button" class="choice-button" data-add="service" data-id="${s.id}"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></button>`).join('')}</div>`
           :'';
         const prodBtns=(catalog.products&&catalog.products.length)
-          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>`<button type="button" class="btn ghost" data-add="product" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
+          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>`<button type="button" class="choice-button" data-add="product" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
-          ?`<b class="small" style="display:block;margin-top:14px">Packages</b><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="btn ghost" data-plan="package" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
+          ?`<b class="small" style="display:block;margin-top:14px">Packages</b><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
@@ -9226,9 +9334,9 @@ async function tillPage(){
     const actionHtml=(checkoutError||paynowAttempt)?'':checkoutActionHtml();
 
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Choose products or services, review the checked total, then select how the customer paid.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
-      <div class="card frontline-card till-cart-card">
+      <div class="card frontline-card till-cart-card till-found-card">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
-          <div><div data-merchant-content style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">${esc(cust.full_name)}</div><p class="muted small" data-merchant-content style="margin:0">${esc(cust.phone||'')}</p></div>
+          <div><div data-merchant-content style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">${esc(cust.full_name)}</div><p class="muted small" data-merchant-content style="margin:0">${esc(cust.phone||'')}</p><p class="muted small" style="margin-top:4px">Member since: ${esc(formatCustomerJoinedDateV141(cust.created_at))} · Last visit: ${cust.last_visit_at?esc(formatCustomerJoinedDateV141(cust.last_visit_at)):'Never visited'}</p></div>
           <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>
         </div>
         <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
@@ -9677,56 +9785,41 @@ async function salesPage(){
   const signedInStaff=saleTeam.find(person=>person.user_id===S.user?.id);
   const initialSaleBranch=saleBranches.some(b=>b.id===selectedBranchId)
     ?selectedBranchId:(saleBranches.find(b=>b.is_default)?.id||saleBranches[0]?.id||'');
-  let quickSaleAttempt=null;
-  M().innerHTML=`<div class="topbar"><div><h1>Sales</h1><p class="muted small">Record a sale — eligible customer-linked sales apply active published loyalty and retention rules</p></div></div>
-    <div class="split">
-    <div class="card"><b>Quick sale</b>
-      <label>Customer</label><select id="qc"><option value="">Walk-in (no loyalty)</option>
-        ${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')}</select>
-      <label>Branch</label><select id="qb">${saleBranches.map(b=>`<option value="${b.id}" ${b.id===initialSaleBranch?'selected':''}>${esc(b.name)}</option>`).join('')||'<option value="">No active permitted branch</option>'}</select>
-      <label for="qstaff">Team member</label><select id="qstaff"><option value="">Unattributed</option>
-        ${saleTeam.map(person=>`<option value="${person.id}" ${person.id===signedInStaff?.id?'selected':''}>${esc(person.full_name||'Team member')}</option>`).join('')}</select>
-      <p class="muted small" style="margin-top:6px">Choose by name. Peekaa stores the team member’s internal ID behind the label.</p>
-      <label>Amount (${S.biz.currency||'SGD'})</label><input id="qa" type="number" min="0" step="0.01" placeholder="45.00">
-      <div class="split"><div><label>Payment state</label><select id="qpaid"><option value="true">Paid now</option><option value="false">Unpaid</option></select></div>
-      <div><label>Payment method</label><select id="qm"><option data-method="cash">Cash</option><option data-method="card">Card</option><option data-method="paynow">PayNow</option><option data-method="bank_transfer">Bank transfer</option><option data-method="other">Other</option></select></div></div>
-      <label>Note</label><input id="qn" placeholder="optional">
-      <div style="margin-top:16px"><button class="btn" id="rec">Record sale</button></div></div>
-    <div class="card"><b>Latest 50 sales</b><p class="muted small" style="margin-top:4px">Use Reports for a complete date-range ledger and export.</p><div id="recent" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
-  $('rec').onclick=async()=>{
-    const amt=Math.round(parseFloat($('qa').value||'0')*100);
-    if(!(amt>0)) return toast('Enter an amount');
-    if(!$('qb').value) return toast('Choose an active branch');
-    const request={p_business:S.biz.id,p_amount_cents:amt,p_method:$('qm').selectedOptions[0].dataset.method,
-      p_client:$('qc').value||null,p_staff:$('qstaff').value||null,p_branch:$('qb').value,
-      p_note:$('qn').value.trim()||null,p_paid:$('qpaid').value==='true'};
-    const fingerprint=JSON.stringify(request);
-    if(!quickSaleAttempt||quickSaleAttempt.fingerprint!==fingerprint){
-      quickSaleAttempt={fingerprint,key:crypto.randomUUID()};
-    }
-    $('rec').disabled=true;
-    const {data,error}=await sb.rpc('record_quick_sale',{
-      ...request,p_idempotency_key:quickSaleAttempt.key});
-    $('rec').disabled=false;
-    if(error) return fail(error);
-    quickSaleAttempt=null;
-    toast(data?.replayed?'Quick sale retry verified — no duplicate created':
-      request.p_paid?'Quick sale and payment recorded atomically ✓':'Unpaid quick sale recorded ✓');
-    $('qa').value='';$('qn').value='';loadRecent();
-  };
+  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Historical sales ledger, corrections and reversals. Use Record sale to create a new sale.</p></div></div><div class="v150-title-actions"><a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>
+    <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
+      <div class="v150-filterbar">
+        <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${shiftSgDateInput(sgDateInputValue(),-29)}"></div>
+        <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${sgDateInputValue()}"></div>
+        <div><label for="salesBranch">Branch</label><select id="salesBranch"><option value="">All branches</option>${saleBranches.map(b=>`<option value="${b.id}" ${b.id===initialSaleBranch?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div>
+        <div><label for="salesCustomer">Customer search</label><input id="salesCustomer" type="search" placeholder="Name"></div>
+        <div><label for="salesStaff">Team member</label><select id="salesStaff"><option value="">All staff</option>${saleTeam.map(person=>`<option value="${person.id}">${esc(person.full_name||'Team member')}</option>`).join('')}</select></div>
+        <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="membership">Membership</option></select></div>
+        <div><label for="salesPayment">Payment state</label><select id="salesPayment"><option value="">All states</option><option value="true">Paid</option><option value="false">Unpaid</option></select></div>
+        <button class="btn sm" id="salesApply">Apply filters</button><button class="btn ghost sm" id="salesClear">Clear filters</button>
+      </div>
+      <div id="recent" style="margin-top:8px"><p class="muted small">Loading…</p></div></section>`;
   async function loadRecent(){
-    const [{data:sl,error},workflow]=await Promise.all([
-      sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id).order('occurred_at',{ascending:false}).limit(50),
-      loadReversalWorkflows(null,50).catch(e=>{fail(e);return null})]);
+    let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
+    const from=$('salesFrom')?.value,to=$('salesTo')?.value,branch=$('salesBranch')?.value,staff=$('salesStaff')?.value,type=$('salesType')?.value,paid=$('salesPayment')?.value;
+    if(from)query=query.gte('occurred_at',sgIso(from+'T00:00'));
+    if(to)query=query.lte('occurred_at',sgIso(to+'T23:59'));
+    if(branch)query=query.eq('branch_id',branch);
+    if(staff)query=query.eq('staff_id',staff);
+    if(type)query=query.eq('kind',type);
+    if(paid)query=query.eq('paid',paid==='true');
+    const {data:sl,error}=await fetchAllRowsResult(()=>query.order('occurred_at',{ascending:false}).order('id',{ascending:false}));
     if(error)return fail(error);
+    const workflow=await loadReversalWorkflows(null,Math.max(100,(sl||[]).length)).catch(e=>{fail(e);return null});
     const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
-    $('recent').innerHTML=(sl&&sl.length)?`<table><tr><th>When</th><th>Customer</th><th>Team member</th><th>Relationship</th><th>Gross</th><th>Net</th><th></th></tr>
-      ${sl.map(s=>{const w=W[s.id]||{};return `<tr><td>${sgt(s.occurred_at)}</td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
+    const customerSearch=String($('salesCustomer')?.value||'').trim().toLowerCase();
+    const rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
+    $('recent').innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table><tr><th>When</th><th>Customer</th><th>Team member</th><th>Relationship</th><th>Gross</th><th>Net</th><th></th></tr>
+      ${rows.map(s=>{const w=W[s.id]||{};return `<tr><td>${sgt(s.occurred_at)}</td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
         <td>${s.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of</span> <span data-merchant-content>${esc(s.reversal_of)}</span></span>`:w.reversal_sale_id?`<span class="pill off"><span data-workspace-i18n>reversed →</span> <span data-merchant-content>${esc(w.reversal_sale_id)}</span></span>`:'<span class="pill ok">original</span>'}${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}</td>
         <td>${money(s.amount_cents)}</td><td><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
-        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Correct amount</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table>`
-      :`<div class="empty"><div class="big">🧾</div>No sales yet. Record the first one on the left.</div>`;
+        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Correct amount</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>`
+      :`<div class="empty"><div class="big">🧾</div>No sales match these filters.</div>`;
     bindReversalButtons(loadRecent);
     document.querySelectorAll('[data-correct-sale]').forEach(button=>button.onclick=()=>{
       const sale=(sl||[]).find(row=>row.id===button.dataset.correctSale);
@@ -9735,6 +9828,10 @@ async function salesPage(){
       },loadRecent);
     });
   }
+  ['salesApply','salesFrom','salesTo','salesBranch','salesStaff','salesType','salesPayment'].forEach(id=>{const el=$(id);if(el)el.onchange=loadRecent});
+  $('salesApply').onclick=loadRecent;
+  $('salesCustomer').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();loadRecent()}};
+  $('salesClear').onclick=()=>{['salesCustomer','salesStaff','salesType','salesPayment'].forEach(id=>$(id).value='');$('salesBranch').value='';loadRecent()};
   loadRecent();
 }
 
@@ -9742,17 +9839,18 @@ async function salesPage(){
 async function servicesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('services');
-  M().innerHTML=`<div class="topbar"><div><h1>Services</h1><p class="muted small">What customers can book on your portal</p></div>
-    <div class="row">${canWrite?importBtn('services'):''}</div></div>
-    ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services, bundles, resources, and product links. Ask for Services edit access to change them.</p></div>`}
-    <div class="split">${canWrite?`<div class="card"><b>Add service</b>
+  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:25})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
+    <div class="v150-title-actions">${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
+    ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services and bundles. Ask for Services edit access to change them.</p></div>`}
+    <div class="v150-segment" role="tablist" aria-label="Services catalogue"><button type="button" id="servicesSeg" aria-pressed="true">Services</button><button type="button" id="bundlesSeg" aria-pressed="false">Bundles</button></div>
+    <div class="services-segment-body" id="serviceSegmentBody">${canWrite?`<div class="card" id="serviceFormCard" style="display:none;margin-bottom:16px"><div class="v150-soft-head"><b>Add service</b><p>Save one bookable service, then return to the catalogue.</p></div>
       <label>Name</label><input id="sn" placeholder="e.g. Signature Facial">
       <label>Variation (optional)</label><input id="sv" placeholder="e.g. 30 min, 60 min, Deep tissue">
       <p class="muted small" style="margin-top:5px">Use the same service name with different variations, durations and prices.</p>
       <label>Price (${S.biz.currency||'SGD'})</label><input id="sp" type="number" min="0" step="0.01">
       <label>Duration (minutes)</label><input id="sd" type="number" min="5" step="5" value="60">
-      <div style="margin-top:16px"><button class="btn" id="sadd">Add service</button></div></div>`:''}
-    <div class="card"><b>Your services</b><div id="slist" style="margin-top:8px"></div></div></div>`;
+      <div style="margin-top:16px" class="row"><button class="btn" id="sadd">Save service</button><button class="btn ghost sm" id="cancelServiceForm">Cancel</button></div></div>`:''}
+    <div class="card"><div class="v150-soft-head"><b>Services catalogue</b><p>Active services can be selected for bookings and sales.</p></div><div id="slist" style="margin-top:8px"></div></div></div>`;
   /* Keep the list in memory so an add reflects INSTANTLY (one insert round-trip that
      returns the row, then local splice + re-render) instead of a second full re-fetch. */
   let svCache=[];
@@ -9760,7 +9858,7 @@ async function servicesPage(){
     const sv=svCache;
     $('slist').innerHTML=(sv&&sv.length)?`<table><tr><th>Service</th><th>Price</th><th>Mins</th><th>Status</th><th></th></tr>
       ${sv.map(s=>`<tr><td><b>${esc(serviceDisplayName(s))}</b></td><td>${money(s.price_cents)}</td><td>${s.duration_min}</td>
-      <td><span class="pill ${s.active?'on':'off'}">${s.active?'active':'off'}</span></td>
+      <td><span class="pill ${s.active?'on':'off'}">${s.active?'Active':'Inactive'}</span></td>
       <td>${canWrite?`<button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table>`
       :`<div class="empty"><div class="big">🛠️</div>No services yet.</div>`;
   }
@@ -9777,7 +9875,10 @@ async function servicesPage(){
     svCache=[...svCache,data].sort((a,b)=>a.name.localeCompare(b.name));
     renderSvc();
     toast('Service added');$('sn').value='';$('sv').value='';$('sp').value='';$('sn').focus();
+    if($('serviceFormCard'))$('serviceFormCard').style.display='none';
   };
+  if(canWrite&&$('openServiceForm'))$('openServiceForm').onclick=()=>{$('serviceFormCard').style.display='block';$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false');$('sn')?.focus()};
+  if(canWrite&&$('cancelServiceForm'))$('cancelServiceForm').onclick=()=>{$('serviceFormCard').style.display='none'};
   window.toggleSvc=async(id,to)=>{
     if(!canWrite)return;
     const {error}=await sb.from('services').update({active:to}).eq('id',id);
@@ -9794,39 +9895,33 @@ async function servicesPage(){
     svCache=sv||[];renderSvc();
   }
   load();
-  /* bundles + resources */
-  M().insertAdjacentHTML('beforeend',`<div class="split" style="margin-top:16px">
-    <div class="card"><b>Bundles</b><p class="muted small" style="margin:6px 0 10px">Several services at one price.</p>
+  /* bundles */
+  M().insertAdjacentHTML('beforeend',`<div class="services-segment-body" id="bundleSegmentBody" style="display:none">
+    <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b>Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
       ${canWrite?`
       <label>Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
       <label>Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
       <label>Included services</label><div id="bsv" class="small"></div>
-      <div style="margin-top:12px"><button class="btn sm" id="badd3">Create bundle</button></div>`:''}
-      <div id="blist3" style="margin-top:12px"></div></div>
-    <div class="card"><b>Resources</b><p class="muted small" style="margin:6px 0 10px">Rooms, chairs, equipment you can assign to appointments.</p>
-      ${canWrite?`<div class="row"><input id="rnm" placeholder="e.g. Room 2"><button class="btn sm" id="radd3">Add</button></div>`:''}
-      <div id="rlist3" style="margin-top:12px"></div></div></div>`);
+      <div style="margin-top:12px" class="row"><button class="btn sm" id="badd3">Save bundle</button><button class="btn ghost sm" id="cancelBundleForm">Cancel</button></div></div>`:''}
+      <div class="v150-soft-head"><b>Bundles catalogue</b><p>Several services at one price. Packages remain in the Packages module.</p></div>
+      <div id="blist3" style="margin-top:12px"></div></div></div>`);
   async function loadBR(){
-    const [servicesResult,bundlesResult,resourcesResult]=await Promise.all([
+    const [servicesResult,bundlesResult]=await Promise.all([
       sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
-      sb.from('bundles').select('*, bundle_items(service_id, services(name))').eq('business_id',S.biz.id).order('name'),
-      sb.from('resources').select('*').eq('business_id',S.biz.id).order('name')]);
+      sb.from('bundles').select('*, bundle_items(service_id, services(name))').eq('business_id',S.biz.id).order('name')]);
     if(!isCurrent())return;
-    const loadError=servicesResult.error||bundlesResult.error||resourcesResult.error;
+    const loadError=servicesResult.error||bundlesResult.error;
     if(loadError){
-      $('blist3').innerHTML=`<div class="err">Bundles and resources could not be loaded. <button class="btn ghost sm" id="servicesBRRetry">Retry</button></div>`;
-      $('rlist3').innerHTML='<p class="muted small">Unavailable.</p>';$('servicesBRRetry').onclick=loadBR;return;
+      $('blist3').innerHTML=`<div class="err">Bundles could not be loaded. <button class="btn ghost sm" id="servicesBRRetry">Retry</button></div>`;
+      $('servicesBRRetry').onclick=loadBR;return;
     }
-    const sv2=servicesResult.data,bu=bundlesResult.data,rs=resourcesResult.data;
+    const sv2=servicesResult.data,bu=bundlesResult.data;
     if(canWrite)$('bsv').innerHTML=(sv2||[]).map(s=>`<label data-merchant-content style="display:inline-flex;gap:6px;margin:4px 10px 0 0;cursor:pointer;color:var(--ink)">
       <input type="checkbox" style="width:auto" data-bs="${s.id}">${esc(s.name)}</label>`).join('')||'<span class="muted">add services first</span>';
     $('blist3').innerHTML=(bu&&bu.length)?bu.map(b=>`<div class="row small" style="padding:5px 0;border-bottom:1px solid var(--line)">
       <b data-merchant-content>${esc(b.name)}</b><span data-merchant-content class="muted">${money(b.price_cents)} · ${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</span>
-      <span class="spacer"></span><span class="pill ${b.active?'on':'off'}">${b.active?'active':'off'}</span></div>`).join('')
+      <span class="spacer"></span><span class="pill ${b.active?'on':'off'}">${b.active?'Active':'Inactive'}</span></div>`).join('')
       :'<p class="muted small">No bundles yet.</p>';
-    $('rlist3').innerHTML=(rs&&rs.length)?rs.map(r=>`<div class="row small" style="padding:5px 0;border-bottom:1px solid var(--line)">
-      <b data-merchant-content>${esc(r.name)}</b><span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'active':'off'}</span></div>`).join('')
-      :'<p class="muted small">No resources yet.</p>';
   }
   if(canWrite)$('badd3').onclick=async()=>{
     const badd3=$('badd3');
@@ -9847,17 +9942,16 @@ async function servicesPage(){
       clearWriteAttempt(bundleSlot);
       toast(isReplayResult(data)?'Bundle already created — no duplicate':'Bundle created');
       $('bnm').value='';document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=false});
+      if($('bundleFormCard'))$('bundleFormCard').style.display='none';
       await loadBR();
     }finally{
       if(badd3.isConnected){badd3.disabled=false;badd3.textContent='Create bundle'}
     }
   };
-  if(canWrite)$('radd3').onclick=async()=>{
-    if($('rnm').value.trim().length<2) return toast('Name it');
-    const {error}=await sb.from('resources').insert({business_id:S.biz.id,name:$('rnm').value.trim()});
-    if(error) return fail(error);
-    toast('Resource added');$('rnm').value='';loadBR();
-  };
+  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');$('bundleFormCard').style.display='block';$('bnm')?.focus()};
+  if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>{$('bundleFormCard').style.display='none'};
+  $('servicesSeg').onclick=()=>{$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false')};
+  $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true')};
   loadBR();
   /* products used per service */
   M().insertAdjacentHTML('beforeend',`<div class="card" style="margin-top:16px"><b>Products used per service</b>
@@ -15067,7 +15161,8 @@ async function appointmentsPage(){
   let staffFilter=canSeeAll?'all':(myStaff?myStaff.id:'all');
   let calendarServiceId='';
   let view='day',dayOffset=0,wkOff=0,listPage=0,calendarItems=[],calendarBlocks=[],bookingAttempt=null,
-    rescheduleAttempt=null,blockCreateAttempt=null,closeAppointmentDialog=null,closeBlockDialog=null;
+    rescheduleAttempt=null,blockCreateAttempt=null,closeAppointmentDialog=null,closeBlockDialog=null,
+    dayAutoScrolled=false,calendarMinuteTimer=null;
   const blockDeleteAttempts=new Map();
   const availabilityGate=createLatestRequestGate(isCurrent);
   const bookingGate=createLatestRequestGate(isCurrent);
@@ -15083,9 +15178,9 @@ async function appointmentsPage(){
   });
   const staffOpts=(sel,id)=>`${canSeeAll?`<option value="all" ${sel==='all'?'selected':''}>Everyone</option>`:''}`+
     branchStaff(id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(staffLabel(s))}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
-  routeMain.innerHTML=`<div data-workspace-i18n>${CUI.pageHeader({title:'Appointments',subtitle:'See today’s appointments by team member and add a booking in a few taps.',iconName:'appointments',canWrite,moduleLabel:'Appointment scheduling'})}</div>
+  const apptHeaderActions=canWrite?`<button class="btn ghost" id="openBlockTime">${CUI.icon('staff',{size:18})} Block time</button><button class="btn" id="openAppointmentForm">${CUI.icon('appointments',{size:18})} New appointment</button>`:'';
+  routeMain.innerHTML=`<div data-workspace-i18n>${CUI.pageHeader({title:'Appointments',subtitle:'See today’s appointments by team member and add a booking in a few taps.',iconName:'appointments',actions:apptHeaderActions,canWrite,moduleLabel:'Appointment scheduling'})}</div>
     ${!visibleBranches.length?CUI.card({title:'No appointment access',description:'This account has no active branch where Appointments is enabled.'}):`
-    ${canWrite?`<div class="appointment-primary-action"><button class="btn ghost" id="openBlockTime">${CUI.icon('staff',{size:18})} Block time</button><button class="btn" id="openAppointmentForm">${CUI.icon('appointments',{size:18})} New appointment</button></div>`:''}
     <div class="appointment-layout" id="appointmentLayout">
       ${canWrite?`<section class="card appointment-form-card" id="appointmentFormCard" aria-labelledby="newAppointmentTitle" hidden><div class="row"><h2 id="newAppointmentTitle" style="font-size:17px">New appointment</h2><span class="spacer"></span><button class="btn ghost sm" type="button" id="closeAppointmentForm">Close</button></div>
         <label for="apBranch">Branch</label><select id="apBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select>
@@ -15103,11 +15198,11 @@ async function appointmentsPage(){
         <div class="row" style="margin-top:16px;flex-wrap:wrap"><button class="btn ghost" id="checkAvailability">${CUI.icon('staff',{size:18})} Check staff</button>
           <button class="btn" id="ago">${CUI.icon('check',{size:18})} Book appointment</button></div>
       </section>`:''}
-      <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><b>Calendar</b><span class="spacer"></span>
+      <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><div class="v150-segment" role="tablist" aria-label="Appointment view"><button type="button" id="appointmentCalendarSeg" aria-pressed="true">Calendar</button><button type="button" id="appointmentListSeg" aria-pressed="false">List</button></div><span class="spacer"></span>
         <label class="sr-only" for="calendarBranch">Calendar branch</label><select id="calendarBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select>
         <label class="small" for="calendarService">Book</label><select id="calendarService"><option value="" ${!calendarServiceId?'selected':''}>General visit · 60 min</option>${branchServices(branchId).map(service=>`<option value="${service.id}" ${calendarServiceId===service.id?'selected':''}>${esc(serviceDisplayName(service))} · ${Number(service.duration_min)||60} min</option>`).join('')}</select>
         <label class="sr-only" for="stfFilter">Calendar staff</label><select id="stfFilter">${staffOpts(staffFilter,branchId)}</select>
-        <button class="qbtn act" id="vDay">Day</button><button class="qbtn" id="vWeek">Week</button><button class="qbtn" id="vList">List</button>
+        <button class="qbtn act" id="vDay">Day</button><button class="qbtn" id="vWeek">Week</button>
         <button class="qbtn" id="wkToday">Today</button><button class="qbtn" id="wkPrev" aria-label="Previous period">${CUI.icon('back',{size:17})}</button><button class="qbtn" id="wkNext" aria-label="Next period">${CUI.icon('forward',{size:17})}</button>
         <details class="appointment-more"><summary class="qbtn">More</summary><div class="appointment-more-menu"><button class="qbtn" id="apPrint">Print</button><button class="qbtn" id="apCsv">Download CSV</button></div></details></div>
         <div id="calendarSelection"></div><div id="alist" style="margin-top:12px"><p class="muted small">Loading calendar…</p></div>
@@ -15307,15 +15402,18 @@ async function appointmentsPage(){
   function setCalendarView(next){
     if(next==='list'&&view!=='list')listPage=0;
     view=next;
-    ['Day','Week','List'].forEach(name=>$(`v${name}`)?.classList.toggle('act',next===name.toLowerCase()));
+    ['Day','Week'].forEach(name=>$(`v${name}`)?.classList.toggle('act',next===name.toLowerCase()));
+    $('appointmentCalendarSeg')?.setAttribute('aria-pressed',String(next!=='list'));
+    $('appointmentListSeg')?.setAttribute('aria-pressed',String(next==='list'));
     loadCalendar();
   }
   $('vDay').onclick=()=>setCalendarView('day');
   $('vWeek').onclick=()=>setCalendarView('week');
-  $('vList').onclick=()=>setCalendarView('list');
-  $('wkToday').onclick=()=>{dayOffset=0;wkOff=0;if(view==='list')view='day';setCalendarView(view)};
-  $('wkPrev').onclick=()=>{if(view==='week')wkOff--;else{dayOffset--;if(view==='list')view='day'}setCalendarView(view)};
-  $('wkNext').onclick=()=>{if(view==='week')wkOff++;else{dayOffset++;if(view==='list')view='day'}setCalendarView(view)};
+  $('appointmentCalendarSeg').onclick=()=>setCalendarView(view==='week'?'week':'day');
+  $('appointmentListSeg').onclick=()=>setCalendarView('list');
+  $('wkToday').onclick=()=>{dayAutoScrolled=false;dayOffset=0;wkOff=0;if(view==='list')view='day';setCalendarView(view)};
+  $('wkPrev').onclick=()=>{dayAutoScrolled=false;if(view==='week')wkOff--;else{dayOffset--;if(view==='list')view='day'}setCalendarView(view)};
+  $('wkNext').onclick=()=>{dayAutoScrolled=false;if(view==='week')wkOff++;else{dayOffset++;if(view==='list')view='day'}setCalendarView(view)};
   $('apPrint').onclick=()=>window.print();
   $('apCsv').onclick=()=>{
     const rows=[['when_sgt','customer','service','staff','status'],...calendarItems.map(a=>[
@@ -15323,6 +15421,22 @@ async function appointmentsPage(){
     const blob=new Blob([csvRows(rows)],{type:'text/csv;charset=utf-8'});
     const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`${BRAND.downloadPrefix}-appointments.csv`;link.click();URL.revokeObjectURL(url);toast('Calendar CSV downloaded');
   };
+  function updateCurrentTimeLine(){
+    if(view!=='day'||addDays(todaySg,dayOffset)!==todaySg)return;
+    const timeline=routeMain.querySelector('.day-timeline'),line=routeMain.querySelector('.day-now-line');
+    if(!timeline||!line)return loadCalendar();
+    const rangeStart=Number(timeline.dataset.rangeStart),rangeEnd=Number(timeline.dataset.rangeEnd),hourHeight=Number(timeline.dataset.hourHeight);
+    const minutes=clockMinutes(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(new Date()));
+    if(!Number.isFinite(minutes)||!Number.isFinite(rangeStart)||!Number.isFinite(rangeEnd)||!Number.isFinite(hourHeight))return;
+    if(minutes<rangeStart||minutes>rangeEnd)return loadCalendar();
+    line.style.top=`${(minutes-rangeStart)/60*hourHeight}px`;
+    const label=line.querySelector('span');
+    if(label)label.textContent=minuteClock(minutes);
+  }
+  calendarMinuteTimer=setInterval(()=>{
+    if(!isCurrent()){clearInterval(calendarMinuteTimer);calendarMinuteTimer=null;return}
+    updateCurrentTimeLine();
+  },60000);
   const staffQ=q=>staffFilter&&staffFilter!=='all'?q.eq('staff_id',staffFilter):q;
   function weekStart(offset=0){
     const now=new Date(Date.now()+8*3600000),day=(now.getUTCDay()+6)%7;
@@ -15342,7 +15456,7 @@ async function appointmentsPage(){
   const calendarDayLabel=iso=>{const date=eventParts(iso).date,d=new Date(`${date}T00:00:00Z`),weekdays=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${weekdays[d.getUTCDay()]} ${d.getUTCDate()} ${months[d.getUTCMonth()]}`};
   const appointmentOutcomeIsDue=item=>Number.isFinite(new Date(item?.starts_at).getTime())&&new Date(item.starts_at).getTime()<=Date.now();
   const closeAppointmentDetails=({restoreFocus=true}={})=>{detailGate.invalidate();rescheduleGate.invalidate();rescheduleAttempt=null;if(closeAppointmentDialog){const close=closeAppointmentDialog;closeAppointmentDialog=null;close({restoreFocus})}};
-  routeDispose=()=>{closeAppointmentDetails();closeBlockedTimeDialog({restoreFocus:false})};
+  routeDispose=()=>{if(calendarMinuteTimer)clearInterval(calendarMinuteTimer);closeAppointmentDetails();closeBlockedTimeDialog({restoreFocus:false})};
   function renderRescheduleSuggestions(host,payload){
     const available=payload?.available_staff||[],next=payload?.next_best_slots||[];
     host.innerHTML=`<div class="schedule-suggestion"><h3>That time is not available</h3><p class="muted small" style="margin-top:5px">Choose another available staff member or one of the next times below. The appointment has not changed.</p>
@@ -15632,14 +15746,14 @@ async function appointmentsPage(){
     const eventMinutes=columns.flatMap(column=>column.items.flatMap(item=>[eventParts(item.starts_at).minutes,eventParts(item.ends_at).minutes]));
     const scheduleMinutes=columns.filter(column=>column.schedule.state==='working').flatMap(column=>[column.schedule.start,column.schedule.end]);
     const blockMinutes=columns.flatMap(column=>column.blocks.flatMap(block=>[eventParts(block.starts_at).minutes,eventParts(block.ends_at).minutes]));
-    const allMinutes=[...eventMinutes,...scheduleMinutes,...blockMinutes];
+    const todayMinutes=day===todaySg?clockMinutes(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(new Date())):null;
+    const allMinutes=[...eventMinutes,...scheduleMinutes,...blockMinutes,...(Number.isFinite(todayMinutes)?[todayMinutes]:[])];
     const rangeStart=Math.max(0,Math.floor((allMinutes.length?Math.min(...allMinutes):8*60)/60)*60);
     const rangeEnd=Math.min(1440,Math.max(rangeStart+6*60,Math.ceil((allMinutes.length?Math.max(...allMinutes):20*60)/60)*60));
     const hourHeight=176,bodyHeight=(rangeEnd-rangeStart)/60*hourHeight;
-    const todayMinutes=day===todaySg?clockMinutes(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(new Date())):null;
     const hasWorking=columns.some(column=>column.schedule.state==='working');
     $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small">Choose a green start time for ${esc(selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit')} · ${selectedTiming.duration} min.</p>`:''}</div>
-      <div class="day-timeline-scroll"><div class="day-timeline" style="--day-columns:${columns.length};--day-height:${bodyHeight}px">
+      <div class="day-timeline-scroll"><div class="day-timeline" data-range-start="${rangeStart}" data-range-end="${rangeEnd}" data-hour-height="${hourHeight}" style="--day-columns:${columns.length};--day-height:${bodyHeight}px">
         <div class="day-timeline-head" aria-hidden="true"></div>${columns.map(column=>`<div class="day-team-head"><span class="day-team-avatar" style="--staff-color:${esc(column.color)}">${esc(column.label.slice(0,1).toUpperCase())}</span><div><h3>${esc(column.label)}</h3><p class="small ${column.schedule.state==='working'?'':'muted'}">${esc(column.schedule.label)} · ${column.items.length} appointment${column.items.length===1?'':'s'}</p></div></div>`).join('')}
         <div class="day-time-axis" style="height:${bodyHeight}px">${[...Array(Math.floor((rangeEnd-rangeStart)/60)+1)].map((_,i)=>`<span style="top:${i*hourHeight}px">${minuteClock(rangeStart+i*60)}</span>`).join('')}</div>
         ${columns.map(column=>{
@@ -15661,10 +15775,19 @@ async function appointmentsPage(){
           const slots=canWrite&&column.id?availableCalendarStarts(column).map(start=>{
             return `<button type="button" class="day-slot-button" data-day="${day}" data-staff="${column.id}" data-time="${minuteClock(start)}" data-service="${esc(calendarServiceId)}" style="top:${(start-rangeStart)/60*hourHeight}px;height:44px" ${workspaceTemplateAttributeV97('aria-label','bookAppointmentSlot',{service:selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit',staff:column.label,time:minuteClock(start)})}><span>${minuteClock(start)}</span><b>Book</b></button>`;
           }).join(''):'';
-          const now=Number.isFinite(todayMinutes)&&todayMinutes>=rangeStart&&todayMinutes<=rangeEnd?`<div class="day-now-line" style="top:${(todayMinutes-rangeStart)/60*hourHeight}px" aria-hidden="true"></div>`:'';
+          const now=Number.isFinite(todayMinutes)&&todayMinutes>=rangeStart&&todayMinutes<=rangeEnd?`<div class="day-now-line" style="top:${(todayMinutes-rangeStart)/60*hourHeight}px"><span>${minuteClock(todayMinutes)}</span></div>`:'';
           return `<div class="day-team-track" style="height:${bodyHeight}px">${working}${slots}${breaks}${blocks}${now}${state}${events}</div>`;
         }).join('')}
       </div></div>`;
+    if(day===todaySg&&!dayAutoScrolled){
+      requestAnimationFrame(()=>{
+        const scroller=routeMain.querySelector('.day-timeline-scroll');
+        if(scroller&&Number.isFinite(todayMinutes)){
+          scroller.scrollTop=Math.max(0,(todayMinutes-rangeStart)/60*hourHeight-160);
+          dayAutoScrolled=true;
+        }
+      });
+    }
     routeMain.querySelectorAll('.day-slot-button').forEach(button=>button.onclick=()=>openNewAppointmentForm({
       date:button.dataset.day,
       staffId:button.dataset.staff,
@@ -15873,12 +15996,14 @@ async function waitlistPage(){
     const kpis=$('wlkpis');
     if(error){
       if(kpis)kpis.innerHTML='';
+      setWaitlistBadgeCount(0);
       const denied=error.code==='42501';
       wlist.innerHTML=`<div class="err" role="alert"><b>${denied?'Access needed':'Could not load the queue'}</b><p style="margin-top:4px">${esc(denied?'Ask an owner for waitlist access.':(error.message||'Please try again.'))}</p></div>${denied?'':'<button class="btn ghost sm" id="wlRetry" style="margin-top:12px">Try again</button>'}`;
       const rb=$('wlRetry');if(rb)rb.onclick=loadWl;
       return;
     }
     const {queue,added,bookedToday,removedToday}=waitlistTodaySummary(rows,dayStartMs);
+    setWaitlistBadgeCount(queue.length);
     currentRows=queue;
     if(kpis)kpis.innerHTML=`
       <div class="card kpi"><div class="l">Waiting now</div><div class="v">${queue.length}</div></div>
@@ -16558,17 +16683,17 @@ async function reportsPage(){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const canSeeReturningAnswer=canReadModule('clients')&&hasRoleCapability('view_finance');
   const decisions=[
-    {id:'moneyAnswer',icon:'reports',title:'How is money moving?',body:'Revenue, reversals, liabilities and exports.'},
-    canReadModule('appointments')&&{id:'busyAnswer',icon:'appointments',title:'How busy are we?',body:'Booked hours, outcomes and scheduled capacity.'},
-    canSeeReturningAnswer&&{id:'returningAnswer',icon:'customers',title:'Who is coming back?',body:'New, returning and reactivated customers.'},
-    canReadModule('staffperf')&&{href:'#/staffperf',icon:'staff',title:'How is the team doing?',body:'Compare activity and staff performance.'}
+    {id:'moneyAnswer',icon:'reports',title:'Sales & revenue',body:'Revenue, reversals, liabilities and exports.'},
+    canReadModule('appointments')&&{id:'busyAnswer',icon:'appointments',title:'Appointments & busy times',body:'Booked hours, outcomes and scheduled capacity.'},
+    canSeeReturningAnswer&&{id:'returningAnswer',icon:'customers',title:'Customer retention',body:'New, returning and reactivated customers.'},
+    canReadModule('staffperf')&&{href:'#/staffperf',icon:'staff',title:'Team performance',body:'Staff activity and performance.'}
   ].filter(Boolean);
-  M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Business answers</h1><p class="muted small">Start with the question you want answered.</p></div></div>
+  M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Reports</h1><p class="muted small">Choose a report category and run it for the selected period.</p></div></div>
     <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span></a>`:`<button type="button" class="report-decision-card" id="${item.id}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span></button>`).join('')}</div>
-    <div class="card report-scope-card"><b>Answer period</b><div class="range" style="margin-top:10px">
+    <div class="card report-scope-card"><div class="v150-soft-head"><b>Shared report filters</b><p>Use one period and branch for every report category.</p></div><div class="range" style="margin-top:10px">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
-      <span id="branchWrap"></span><button class="btn sm" id="rgo">Update open answers</button>
+      <span id="branchWrap"></span><button class="btn sm" id="rgo">Run report</button>
       <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div>
       <p class="muted small" style="margin-top:8px">Operational flows use the selected Singapore period and branch. Business-wide current balances are labelled separately.</p></div>
     <details class="card" id="moneyDetails"><summary style="cursor:pointer;font-weight:750">Money answer</summary>
@@ -17252,7 +17377,8 @@ async function expensesPage(){
   const expenseBranches=branchResult.data||[];
   M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only expenses access</b><p class="muted small" style="margin-top:5px">You can review finance-authorized expenses. Ask for Expenses edit access to add or void entries.</p></div>`}
-    <div class="split">${canWrite?`<div class="card"><b>Add expense</b>
+    <div class="v150-segment" role="tablist" aria-label="Expenses"><button type="button" id="expenseListSeg" aria-pressed="true">Expense list</button>${canWrite?'<button type="button" id="expenseAddSeg" aria-pressed="false">Add expense</button>':''}</div>
+    <div class="expenses-segment-body" id="expenseAddBody" style="display:none">${canWrite?`<div class="card"><div class="v150-soft-head"><b>Add expense</b><p>Record one cost. It appears in P&amp;L after saving.</p></div>
       <label>Category</label><input id="exCat" placeholder="e.g. Supplies, Rent, Utilities">
       <label>Supplier (optional)</label><input id="exSup">
       <label>Description</label><input id="exDesc">
@@ -17260,8 +17386,8 @@ async function expensesPage(){
       <label>Date</label><input id="exDate" type="date" value="${todayIso}">
       <label>Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
-      <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}
-    <div class="card"><b>Expenses</b><div id="exList" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+      <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
+    <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
   const EXPENSE_PAGE_SIZE=100;
   let expensePage=0;
   const expenseLoadGate=createLatestRequestGate(isCurrent);
@@ -17284,8 +17410,17 @@ async function expensesPage(){
     }
     clearWriteAttempt(expenseSlot);addButton.disabled=false;
     toast(isReplayResult(data)?'Already added — no duplicate expense':'Expense added');
-    $('exCat').value='';$('exSup').value='';$('exDesc').value='';$('exAmt').value='';expensePage=0;load();
+    $('exCat').value='';$('exSup').value='';$('exDesc').value='';$('exAmt').value='';expensePage=0;showExpenseSegment('list');load();
   };
+  function showExpenseSegment(which){
+    const list=which==='list';
+    $('expenseListBody').style.display=list?'block':'none';
+    if($('expenseAddBody'))$('expenseAddBody').style.display=list?'none':'block';
+    $('expenseListSeg').setAttribute('aria-pressed',String(list));
+    if($('expenseAddSeg'))$('expenseAddSeg').setAttribute('aria-pressed',String(!list));
+  }
+  $('expenseListSeg').onclick=()=>showExpenseSegment('list');
+  if(canWrite&&$('expenseAddSeg'))$('expenseAddSeg').onclick=()=>showExpenseSegment('add');
   async function load(){
     const isLatest=expenseLoadGate.begin();
     const from=expensePage*EXPENSE_PAGE_SIZE,to=from+EXPENSE_PAGE_SIZE-1;
@@ -17405,14 +17540,14 @@ async function pnlPage(){
     lastMonthly=monthly;lastScope=scope;lastSummary={cash,accrual,expenses:expTotal,net,branchSpecific};button.disabled=false;$('plCsv').disabled=false;
     const mk=Object.keys(monthly).sort();
     $('plBody').innerHTML=`<div class="kpis">
-        <div class="card kpi"><div class="l">Cash-basis revenue (earned and settled)</div><div class="v">${money(cash)}</div></div>
-        <div class="card kpi"><div class="l">Revenue (accrual — earned incl. unpaid)</div><div class="v">${money(accrual)}</div></div>
-        <div class="card kpi"><div class="l">${branchSpecific?'Selected-branch expenses':'All business expenses'}</div><div class="v">${money(expTotal)}</div></div>
-        <div class="card kpi"><div class="l">Cash-basis revenue less ${branchSpecific?'selected-branch expenses':'all business expenses'}</div><div class="v" style="color:${net>=0?'#2FA36B':'#C0392B'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div></div>
+        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash-basis revenue</div></div><div class="v">${money(cash)}</div><p class="hint">Earned and settled in the selected period.</p></div>
+        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Accrual revenue</div></div><div class="v">${money(accrual)}</div><p class="hint">Earned including unpaid amounts.</p></div>
+        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">${branchSpecific?'Selected-branch expenses':'All business expenses'}</div></div><div class="v">${money(expTotal)}</div><p class="hint">${branchSpecific?'Business-wide overhead excluded.':'All recorded expenses in scope.'}</p></div>
+        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'#2FA36B':'#C0392B'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">Cash-basis revenue less ${branchSpecific?'selected-branch':'all business'} expenses.</p></div>
       </div>
       <p class="muted small" style="margin:12px 0">${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}Gift card issuance is deferred revenue. Only recorded eligible payments count toward cash-basis revenue; the gift-card value becomes accrual revenue when it is redeemed and spent.</p>
-      <div class="charts"><div class="card"><b>Expenses by category</b>${Object.keys(byCat).length?'<div class="chart-frame"><canvas id="plC1"></canvas></div>':'<div class="empty" id="plCategoryEmpty">No recorded expenses in this scope.</div>'}</div>
-        <div class="card"><b>${mk.length?'Accrual revenue vs expenses by month':'Add a wider range to see month-by-month'}</b>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':''}</div></div>`;
+      <div class="charts"><div class="card"><div class="v150-soft-head"><b>Expenses by category</b></div>${Object.keys(byCat).length?'<div class="chart-frame"><canvas id="plC1"></canvas></div>':'<div class="empty" id="plCategoryEmpty">No recorded expenses in this scope.</div>'}</div>
+        <div class="card"><div class="v150-soft-head"><b>${mk.length?'Accrual revenue vs expenses by month':'Add a wider range to see month-by-month'}</b></div>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':''}</div></div>`;
     if(Object.keys(byCat).length||mk.length){try{await loadChartLibrary()}catch{if(isLatest())$('plBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified P&amp;L totals remain available.</div>');return}}
     if(!isLatest())return;
     const coral='#FF6B5E',amber='#FFB86B',green='#2FA36B';

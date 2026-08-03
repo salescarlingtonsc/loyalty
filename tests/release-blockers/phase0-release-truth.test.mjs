@@ -17,16 +17,27 @@ function functionBlock(name){
 }
 
 function invokeBuild(method,environment){
-  const prior={sha:process.env.VERCEL_GIT_COMMIT_SHA,env:process.env.VERCEL_ENV};
+  const prior={
+    sha:process.env.VERCEL_GIT_COMMIT_SHA,
+    env:process.env.VERCEL_ENV,
+    manualSha:process.env.PEEKAA_BUILD_COMMIT_SHA,
+    manualEnv:process.env.PEEKAA_BUILD_ENV
+  };
   if(environment.sha===undefined)delete process.env.VERCEL_GIT_COMMIT_SHA;
   else process.env.VERCEL_GIT_COMMIT_SHA=environment.sha;
   if(environment.env===undefined)delete process.env.VERCEL_ENV;
   else process.env.VERCEL_ENV=environment.env;
+  if(environment.manualSha===undefined)delete process.env.PEEKAA_BUILD_COMMIT_SHA;
+  else process.env.PEEKAA_BUILD_COMMIT_SHA=environment.manualSha;
+  if(environment.manualEnv===undefined)delete process.env.PEEKAA_BUILD_ENV;
+  else process.env.PEEKAA_BUILD_ENV=environment.manualEnv;
   const headers={};let body='';
   const response={statusCode:0,setHeader(name,value){headers[name.toLowerCase()]=value},end(value=''){body=value}};
   try{buildHandler({method},response)}finally{
     if(prior.sha===undefined)delete process.env.VERCEL_GIT_COMMIT_SHA;else process.env.VERCEL_GIT_COMMIT_SHA=prior.sha;
     if(prior.env===undefined)delete process.env.VERCEL_ENV;else process.env.VERCEL_ENV=prior.env;
+    if(prior.manualSha===undefined)delete process.env.PEEKAA_BUILD_COMMIT_SHA;else process.env.PEEKAA_BUILD_COMMIT_SHA=prior.manualSha;
+    if(prior.manualEnv===undefined)delete process.env.PEEKAA_BUILD_ENV;else process.env.PEEKAA_BUILD_ENV=prior.manualEnv;
   }
   return {status:response.statusCode,headers,body};
 }
@@ -92,6 +103,11 @@ test('build identity endpoint exposes only validated non-secret deployment facts
   assert.equal(ok.headers['cache-control'],'public, max-age=0, must-revalidate');
   assert.deepEqual(JSON.parse(ok.body),{
     schemaVersion:1,service:'loyalty',available:true,environment:'preview',commitSha:sha,shortSha:sha.slice(0,12)
+  });
+  const manual=invokeBuild('GET',{manualSha:sha,manualEnv:'production'});
+  assert.equal(manual.status,200);
+  assert.deepEqual(JSON.parse(manual.body),{
+    schemaVersion:1,service:'loyalty',available:true,environment:'production',commitSha:sha,shortSha:sha.slice(0,12)
   });
   const unavailable=invokeBuild('GET',{sha:'not-a-sha',env:'production'});
   assert.equal(unavailable.status,503);

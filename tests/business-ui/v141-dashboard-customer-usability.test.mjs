@@ -31,13 +31,16 @@ test('V141 dashboard removes duplicate launchers and keeps branch-scoped perform
   assert.doesNotMatch(dashboard,/performance-panel>summary|<summary>Performance/);
 });
 
-test('V141 every KPI is a semantic drilldown with plain definitions',()=>{
-  for(const key of ['visits','revenue','unique','new','points','credit','inactive']){
+test('V141/V150 every visible KPI is a semantic drilldown with plain definitions',()=>{
+  for(const key of ['visits','revenue','new','inactive']){
     assert.match(dashboard,new RegExp(`${key}:\\{label:`));
     assert.match(dashboard,new RegExp(`key:'${key}'`));
   }
+  for(const removedKey of ['unique','points','credit']){
+    assert.doesNotMatch(dashboard,new RegExp(`key:'${removedKey}'`));
+  }
   assert.match(dashboard,/data-dashboard-metric="\$\{metric\.key\}"/);
-  assert.match(dashboard,/Distinct identified customers attached to at least one valid visit in this selected period/);
+  assert.match(dashboard,/Customer membership or customer records created during the selected period/);
   assert.match(dashboard,/Business-wide customers with no valid visit for at least 30 complete Singapore days/);
   assert.match(dashboard,/openDashboardMetricDetailV141/);
   assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
@@ -47,7 +50,9 @@ test('V141 every KPI is a semantic drilldown with plain definitions',()=>{
 
 test('V141 charts communicate reconciled intensity, SGD and demographics while unsafe gross sale mix stays hidden',()=>{
   assert.match(dashboard,/dashboardWeekdayColoursV141/);
-  assert.match(dashboard,/quiet.*medium.*busiest/s);
+  assert.match(dashboard,/quiet/);
+  assert.match(dashboard,/medium/);
+  assert.match(dashboard,/busiest/);
   assert.match(dashboard,/Recorded gender/);
   assert.match(dashboard,/gender_counts/);
   assert.doesNotMatch(dashboard,/Services and goods sold|dashboardSaleMixV141|sale_items/);
@@ -78,7 +83,7 @@ test('V141 customer directory exposes last-visit choice and date joined',()=>{
   assert.match(customers,/Show customers by last visit/);
   assert.match(customers,/sb\.rpc\('staff_list_customers_v129'/);
   assert.match(customers,/formatCustomerJoinedDateV141\(c\.created_at\)/);
-  assert.match(customers,/<th>Date joined<\/th>/);
+  assert.match(customers,/Date joined/);
   assert.match(customers,/formatCustomerJoinedDateV141/);
   assert.match(customers,/Never visited/);
 });
