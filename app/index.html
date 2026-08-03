@@ -147,6 +147,19 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
 .client-summary-card[aria-pressed="true"]{border-color:var(--coral);background:var(--tint);color:var(--coral)}
 .client-summary-card b{display:block;font-size:1.2rem}.client-summary-card span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.merchant-insights{margin-top:18px}.merchant-insights-head,.retention-readiness-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+.merchant-insights-head h2,.retention-readiness-head h2{margin:0;font-size:1.22rem}.merchant-insights-head p,.retention-readiness-head p{margin:3px 0 0}
+.merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
+.insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
+.insight-card-head{display:flex;align-items:flex-start;gap:10px}.insight-card-head .insight-icon{width:34px;height:34px;border-radius:12px;background:var(--tint);color:var(--coral);display:grid;place-items:center;flex:0 0 auto}
+.insight-card h3{margin:0;font-size:1.04rem}.insight-card p{margin:0;line-height:1.45}.insight-meta{display:flex;flex-wrap:wrap;gap:6px}.insight-meta .pill{font-size:11px}
+.insight-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}.insight-actions .btn{min-height:38px}
+.business-health-list{display:grid;gap:8px}.health-row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:8px}.health-row:first-child{border-top:0;padding-top:0}.health-row b{font-size:13px}.health-row span{font-size:12px;color:var(--muted);text-align:right}
+.retention-readiness{margin-bottom:16px}.retention-readiness-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.retention-audience-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:15px;display:grid;gap:8px;min-width:0}
+.retention-audience-card b{font-size:1.45rem}.retention-audience-card h3{font-size:.98rem;margin:0}.retention-audience-card p{margin:0;line-height:1.45}.retention-audience-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.campaign-prep-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}.campaign-prep-panel{border:1px solid var(--line);border-radius:16px;background:#FBFAF8;padding:13px}.campaign-prep-panel h3{font-size:.98rem;margin:0 0 8px}.campaign-prep-panel p{margin:0 0 6px;line-height:1.45}.campaign-prep-warning{border-left:4px solid var(--coral);background:#FFF7F4;border-radius:14px;padding:12px;margin-top:12px}
 .sortable-th{background:transparent;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0}
 .till-found-card{background:linear-gradient(135deg,#F0FFF7,#FFFDFC);border:1px solid #CDEADA!important}
 .choice-button{border:1px solid var(--control-border);background:#fff;border-radius:18px;padding:14px;text-align:left;min-height:58px;box-shadow:var(--shadow);transition:background .16s var(--ease),border-color .16s var(--ease),transform .18s var(--spring)}
@@ -158,7 +171,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .current-time-line{position:absolute;left:0;right:0;height:2px;background:var(--coral);z-index:3;pointer-events:none}
 .current-time-line span{position:absolute;left:6px;top:-12px;background:var(--coral);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:2px 6px}
 @media(max-width:1100px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-charts.v150-understand{grid-template-columns:1fr}.v150-title-actions{justify-content:flex-start}.cui-skeleton-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:1fr}.v150-titlebar{display:block}.v150-title-actions{margin-top:12px}.client-summary-card{flex:1 1 100%}.cui-skeleton-grid{grid-template-columns:1fr}.card{padding:18px}.v150-soft-head,.dashboard-chart-head{margin:-18px -18px 14px;padding:14px 18px}.cui-page-head{gap:12px}.cui-page-title h1{font-size:1.58rem}.cui-page-actions,.v150-title-actions{width:100%}.cui-page-actions .btn,.v150-title-actions .btn{flex:1 1 160px}.dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start}.dashboard-chart-head .dashboard-chart-link{grid-column:2;margin-left:0;margin-top:4px}.cui-table-wrap{border:1px solid var(--line)}table[data-responsive="true"] thead{display:none}table[data-responsive="true"] tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:12px;border-bottom:0;padding:9px 12px}table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700}.toast{width:min(calc(100vw - 28px),520px);bottom:calc(78px + env(safe-area-inset-bottom));border-radius:18px;text-align:center}.btn{width:auto;min-width:44px}input,select,textarea{font-size:16px}}
+@media(max-width:760px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:1fr}.v150-titlebar{display:block}.v150-title-actions{margin-top:12px}.client-summary-card{flex:1 1 100%}.merchant-insights-grid,.retention-readiness-grid,.campaign-prep-grid{grid-template-columns:1fr}.merchant-insights-head,.retention-readiness-head{display:block}.health-row{display:block}.health-row span{text-align:left;display:block;margin-top:2px}.cui-skeleton-grid{grid-template-columns:1fr}.card{padding:18px}.v150-soft-head,.dashboard-chart-head{margin:-18px -18px 14px;padding:14px 18px}.cui-page-head{gap:12px}.cui-page-title h1{font-size:1.58rem}.cui-page-actions,.v150-title-actions{width:100%}.cui-page-actions .btn,.v150-title-actions .btn{flex:1 1 160px}.dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start}.dashboard-chart-head .dashboard-chart-link{grid-column:2;margin-left:0;margin-top:4px}.cui-table-wrap{border:1px solid var(--line)}table[data-responsive="true"] thead{display:none}table[data-responsive="true"] tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:12px;border-bottom:0;padding:9px 12px}table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700}.toast{width:min(calc(100vw - 28px),520px);bottom:calc(78px + env(safe-area-inset-bottom));border-radius:18px;text-align:center}.btn{width:auto;min-width:44px}input,select,textarea{font-size:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}.cui-fade-in{animation:none}}
 .permission-banner{display:flex;gap:11px;align-items:flex-start;background:#FFF6E8;color:#65400C;border:1px solid #E7C994;border-radius:var(--r-sm);padding:13px 15px;margin:-7px 0 18px}
 .permission-banner p{font-size:12.5px;line-height:1.5;margin-top:2px}.permission-banner svg{margin-top:1px}
@@ -7898,7 +7911,7 @@ async function dashboard(){
     </header>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div></header>
-      <div class="performance-body"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div>
+      <div class="performance-body"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardInsights" aria-live="polite"></div>
       <section class="v150-section" aria-labelledby="understandBusinessTitle"><div class="v150-section-title">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div></div><div class="charts dashboard-charts v150-understand" id="charts"></div></section></div>
     </section></section>`;
   const dashboardRoot=$('dashboardView');
@@ -7938,9 +7951,10 @@ async function dashboard(){
   }
   const invalidatePerformance=()=>{
     requestGate.invalidate();killCharts();
-    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts');
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights');
     if(status)status.innerHTML='';
     if(kpis)kpis.innerHTML=`<div class="card" style="grid-column:1/-1">${CUI.emptyState({iconName:'reports',title:'Date range changed',body:'Apply the new range to refresh these figures.'})}</div>`;
+    if(insights)insights.innerHTML='';
     if(charts)charts.innerHTML='';
   };
   dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(b=>b.onclick=()=>{
@@ -7956,10 +7970,10 @@ async function dashboard(){
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
     const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value,branchId=selectedBranchId||null;
-    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts');
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights');
     const showLoadError=(message,retryId)=>{
       if(!status)return;
-      kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');
+      kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');insights?.setAttribute('aria-busy','false');
       status.innerHTML=`<div class="err" role="alert">${esc(message)} <button type="button" class="btn ghost sm" id="${retryId}" style="margin-left:8px">Retry</button></div>`;
       status.querySelector('#'+retryId).onclick=load;
       localizeWorkspaceSubtreeV97(status);
@@ -7968,12 +7982,16 @@ async function dashboard(){
     killCharts();
     status.innerHTML='';
     if(kpis)kpis.innerHTML=Array.from({length:4},()=>CUI.skeletonCard({lines:3,className:'v150-kpi'})).join('');
+    if(insights)insights.innerHTML=`<section class="merchant-insights"><div class="merchant-insights-head"><div><h2>Merchant insights</h2><p class="muted small">Loading recommendations…</p></div></div><div class="merchant-insights-grid">${Array.from({length:3},()=>CUI.skeletonCard({lines:4})).join('')}</div></section>`;
     if(charts)charts.innerHTML=['Busiest days','Revenue over time','Age groups','Recorded gender'].map(title=>CUI.chartSkeleton({title})).join('');
-    kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');
-    let response,inactiveResponse={data:null,error:null};
-    try{[response,inactiveResponse]=await Promise.all([
+    kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');insights?.setAttribute('aria-busy','true');
+    const previousRange=previousEquivalentRangeV153(from,to);
+    let response,previousResponse={data:null,error:null},inactiveResponse={data:null,error:null},inactive60Response={data:null,error:null};
+    try{[response,previousResponse,inactiveResponse,inactive60Response]=await Promise.all([
       sb.rpc('get_dashboard_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:branchId}),
-      canReadModule('clients')?sb.rpc('staff_list_customers_v129',{p_business:S.biz.id,p_search:null,p_inactive_days:30,p_limit:1,p_offset:0}):Promise.resolve({data:null,error:null})
+      sb.rpc('get_dashboard_summary',{p_business:S.biz.id,p_from:previousRange.previousFrom,p_to:previousRange.previousTo,p_branch:branchId}),
+      canReadModule('clients')?sb.rpc('staff_list_customers_v129',{p_business:S.biz.id,p_search:null,p_inactive_days:30,p_limit:1,p_offset:0}):Promise.resolve({data:null,error:null}),
+      canReadModule('clients')?sb.rpc('staff_list_customers_v129',{p_business:S.biz.id,p_search:null,p_inactive_days:60,p_limit:1,p_offset:0}):Promise.resolve({data:null,error:null})
     ])}
     catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
     if(!isCurrent())return;
@@ -7983,6 +8001,7 @@ async function dashboard(){
     if(d.availability?.sales===false){
       status.innerHTML='';
       if(kpis)kpis.innerHTML=`<div class="card" style="grid-column:1/-1">${CUI.emptyState({iconName:'info',title:'Performance unavailable',body:'Sales access is not complete for this branch scope. Choose an authorized branch.'})}</div>`;
+      if(insights)insights.innerHTML='';
       if(charts)charts.innerHTML='';
       return;
     }
@@ -8002,6 +8021,12 @@ async function dashboard(){
       const key=button.dataset.dashboardMetric;
       openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
     });
+    if(insights){
+      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?0:Number(inactive60Response.data?.total)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId,branchName:appliedDashboardScopeV141.branchName});
+      insights.setAttribute('aria-busy','false');
+      insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=Number(link.dataset.insightInactive)||60}));
+      insights.querySelectorAll('[data-campaign-prep-v153]').forEach(button=>button.addEventListener('click',()=>openCampaignPrepV153({audienceKey:button.dataset.audienceKey,audienceLabel:button.dataset.audienceLabel,definition:'Customers with no valid visit for at least 60 complete Singapore days.',count:Number(button.dataset.audienceCount)||0,branchLabel:'Business-wide customer inactivity'})));
+    }
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const revenueDays=d.revenue_by_day||[],dk=revenueDays.map(x=>x.day);
     const ac=d.age_counts||{};
@@ -8046,6 +8071,132 @@ function formatCustomerJoinedDateV141(value){
   const date=new Date(value);if(Number.isNaN(date.getTime()))return 'Unavailable';
   return new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(date);
 }
+const MIN_INSIGHT_REVENUE_CHANGE_PCT_V153=10;
+const MIN_INSIGHT_BUSIEST_VISITS_V153=2;
+function daysBetweenSgInputsV153(from,to){
+  const start=Date.parse(`${from}T00:00:00Z`),end=Date.parse(`${to}T00:00:00Z`);
+  if(!Number.isFinite(start)||!Number.isFinite(end)||end<start)return 0;
+  return Math.floor((end-start)/86400000)+1;
+}
+function previousEquivalentRangeV153(from,to){
+  const days=Math.max(1,daysBetweenSgInputsV153(from,to));
+  const previousTo=shiftSgDateInput(from,-1);
+  return {previousFrom:shiftSgDateInput(previousTo,-(days-1)),previousTo,days};
+}
+function percentageChangeV153(current,previous){
+  const currentNumber=Number(current)||0,previousNumber=Number(previous)||0;
+  if(previousNumber<=0)return null;
+  return Math.round(((currentNumber-previousNumber)/previousNumber)*100);
+}
+function insightScopeLabelV153(branchId,branchName){
+  return branchId?`Branch: ${branchName||'Selected branch'}`:'All branches consolidated';
+}
+function insightPeriodLabelV153(from,to){return `${from} – ${to}`}
+function classifyInactiveCustomersV153(customers){
+  const buckets={
+    '30_59':{label:'Inactive 30–59 days',definition:'No valid visit for 30 to 59 complete Singapore days.',customers:[]},
+    '60_89':{label:'Inactive 60–89 days',definition:'No valid visit for 60 to 89 complete Singapore days.',customers:[]},
+    '90_plus':{label:'Inactive 90+ days / never visited',definition:'No valid visit for at least 90 complete Singapore days, or no valid visit on record.',customers:[]}
+  };
+  (customers||[]).forEach(customer=>{
+    const never=!customer.last_visit_at,days=Number(customer.days_since_last_visit);
+    if(!never&&days>=30&&days<=59)buckets['30_59'].customers.push(customer);
+    else if(!never&&days>=60&&days<=89)buckets['60_89'].customers.push(customer);
+    else if(never||days>=90)buckets['90_plus'].customers.push(customer);
+  });
+  return buckets;
+}
+function campaignTemplateMessageV153(type,audienceLabel){
+  if(type==='birthday')return 'Happy birthday month — here is a reward to enjoy on your next visit.';
+  if(type==='weekend')return 'Weekend slots are open. Book early and enjoy your next visit.';
+  if(type==='new_service')return 'A new service is available. Tap to see what is new.';
+  if(type==='flash')return 'Limited-time promotion available for eligible customers.';
+  return `We miss you. ${audienceLabel||'Selected customers'} can return for the latest rewards and offers.`;
+}
+function openCampaignPrepV153({audienceKey='inactive_60_plus',audienceLabel='Inactive customers',definition='',count=0,consentEligible=null,branchLabel='All branches consolidated'}={}){
+  document.querySelector('#campaignPrepModalV153')?.remove();
+  const exclusionCopy=consentEligible===null
+    ?'Notification-device eligibility is not enabled yet, so Peekaa only shows the audience rule and consent warning.'
+    :`${Math.max(0,Number(count)-Number(consentEligible))} customers are missing recorded marketing consent or eligibility evidence.`;
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="campaignPrepModalV153" role="dialog" aria-modal="true" aria-labelledby="campaignPrepTitleV153" tabindex="-1">
+    <section class="modal-card" style="max-width:720px">
+      <div class="row"><div><p class="eyebrow">Campaign preparation</p><h2 id="campaignPrepTitleV153" style="margin-top:4px">Prepare a campaign draft</h2><p class="muted small" style="margin-top:5px">Draft the audience and message now. Delivery is intentionally not enabled in this release.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="campaignPrepCloseV153" aria-label="Close campaign preparation">Close</button></div>
+      <div class="campaign-prep-grid">
+        <div><label for="campaignNameV153">Campaign name</label><input id="campaignNameV153" value="${esc(audienceLabel)} follow-up" autocomplete="off"></div>
+        <div><label for="campaignTypeV153">Campaign type</label><select id="campaignTypeV153"><option value="winback">We miss you</option><option value="birthday">Birthday reward</option><option value="weekend">Weekend promotion</option><option value="new_service">New service or menu</option><option value="flash">Flash promotion</option></select></div>
+      </div>
+      <div class="campaign-prep-grid">
+        <div class="campaign-prep-panel"><h3>Audience</h3><p><b>${esc(audienceLabel)}</b></p><p class="muted small">${esc(definition||'Customers matching the selected audience rule.')}</p><p class="muted small">Branch scope: ${esc(branchLabel)}</p></div>
+        <div class="campaign-prep-panel"><h3>Audience preview</h3><p><b>${Number(count)||0}</b> matching customers</p><p class="muted small">${esc(exclusionCopy)}</p></div>
+      </div>
+      <label for="campaignMessageV153" style="margin-top:12px">Message preview</label><textarea id="campaignMessageV153" rows="4">${esc(campaignTemplateMessageV153('winback',audienceLabel))}</textarea>
+      <div class="campaign-prep-warning" role="note"><b>Delivery is not enabled yet</b><p class="muted small">Campaign delivery is not enabled yet. You can prepare and save this campaign for future use. Push notifications are available only for eligible customers who have installed Peekaa and enabled notifications.</p></div>
+      <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn" id="campaignSaveDraftV153">Save draft</button><button type="button" class="btn ghost sm" id="campaignCancelV153">Cancel</button></div>
+    </section></div>`);
+  const dialog=$('campaignPrepModalV153');
+  const typeSelect=$('campaignTypeV153'),message=$('campaignMessageV153');
+  typeSelect.onchange=()=>{message.value=campaignTemplateMessageV153(typeSelect.value,audienceLabel)};
+  let deactivate;
+  const close=()=>deactivate?.();
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#campaignNameV153'});
+  $('campaignPrepCloseV153').onclick=close;$('campaignCancelV153').onclick=close;
+  $('campaignSaveDraftV153').onclick=()=>{
+    const key=`peekaa.v153.campaignDrafts.${S.biz?.id||'local'}`;
+    const drafts=JSON.parse(localStorage.getItem(key)||'[]');
+    drafts.unshift({id:crypto.randomUUID(),created_at:new Date().toISOString(),audienceKey,name:$('campaignNameV153').value.trim(),type:typeSelect.value,audienceLabel,count:Number(count)||0,branchLabel,message:message.value});
+    localStorage.setItem(key,JSON.stringify(drafts.slice(0,25)));
+    toast('Campaign draft saved');
+    close();
+  };
+}
+function insightCardV153(insight){
+  const tone=insight.tone||'neutral';
+  const actions=(insight.actions||[]).map(action=>action.href
+    ?`<a class="btn ${action.variant||'ghost'} sm" href="${action.href}" ${action.dataset||''}>${esc(action.label)}</a>`
+    :`<button type="button" class="btn ${action.variant||'ghost'} sm" ${action.dataset||''}>${esc(action.label)}</button>`).join('');
+  return `<article class="insight-card" data-tone="${esc(tone)}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon(insight.icon||'reports',{size:18})}</span><div><p class="eyebrow">${esc(insight.category||'Insight')}</p><h3>${esc(insight.title)}</h3></div></div><p>${esc(insight.explanation)}</p>${insight.why?`<p class="muted small">${esc(insight.why)}</p>`:''}<div class="insight-meta">${(insight.meta||[]).map(m=>`<span class="pill">${esc(m)}</span>`).join('')}</div>${actions?`<div class="insight-actions">${actions}</div>`:''}</article>`;
+}
+function businessHealthSummaryV153({current,previous,inactive60Total,from,to}){
+  const revenueChange=percentageChangeV153(current?.revenue_cents,previous?.revenue_cents);
+  const visitsChange=percentageChangeV153(current?.visits,previous?.visits);
+  const status=(label,value,detail)=>`<div class="health-row"><b>${esc(label)}</b><span>${esc(value)} · ${esc(detail)}</span></div>`;
+  const revenueStatus=revenueChange===null?'Not enough data':revenueChange>MIN_INSIGHT_REVENUE_CHANGE_PCT_V153?'Improving':revenueChange<-MIN_INSIGHT_REVENUE_CHANGE_PCT_V153?'Needs attention':'Stable';
+  const visitsStatus=visitsChange===null?'Not enough data':visitsChange>10?'Improving':visitsChange<-10?'Needs attention':'Stable';
+  const retentionStatus=Number(inactive60Total)>0?'Needs attention':'Stable';
+  return `<article class="insight-card business-health" data-tone="${revenueStatus==='Needs attention'||retentionStatus==='Needs attention'?'attention':'neutral'}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon('info',{size:18})}</span><div><p class="eyebrow">Business health summary</p><h3>Separate indicators, not a fake score</h3></div></div><div class="business-health-list">${status('Revenue trend',revenueStatus,revenueChange===null?'previous period has no comparable revenue':`${revenueChange>0?'+':''}${revenueChange}% vs previous period`)}${status('Visit activity',visitsStatus,visitsChange===null?'previous period has no comparable visits':`${visitsChange>0?'+':''}${visitsChange}% vs previous period`)}${status('Retention',retentionStatus,`${Number(inactive60Total)||0} customers inactive 60+ days`)}</div><div class="insight-meta"><span class="pill">${esc(insightPeriodLabelV153(from,to))}</span></div></article>`;
+}
+function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,previousFrom,previousTo,branchId,branchName}){
+  const scope=insightScopeLabelV153(branchId,branchName);
+  const period=insightPeriodLabelV153(from,to);
+  const insights=[];
+  const revenueChange=percentageChangeV153(current?.revenue_cents,previous?.revenue_cents);
+  if(revenueChange!==null&&Math.abs(revenueChange)>=MIN_INSIGHT_REVENUE_CHANGE_PCT_V153){
+    insights.push({
+      tone:revenueChange>0?'positive':'attention',icon:'reports',category:'Revenue trend',
+      title:revenueChange>0?'Revenue is increasing':'Revenue is lower',
+      explanation:`Revenue ${revenueChange>0?'increased':'decreased'} by ${Math.abs(revenueChange)}% compared with the previous equivalent period.`,
+      why:revenueChange>0?'Review which services and days contributed most to the increase.':'Review inactive customers and recent visit trends before planning promotions.',
+      meta:[scope,period,`Compared with ${previousFrom} – ${previousTo}`],
+      actions:[{label:'View sales report',href:'#/reports',variant:'ghost'},{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'}]
+    });
+  }else if((Number(previous?.revenue_cents)||0)===0&&(Number(current?.revenue_cents)||0)>0){
+    insights.push({tone:'positive',icon:'reports',category:'Revenue trend',title:'Revenue has started',explanation:'Revenue was recorded in this period, but the previous period had no comparable revenue.',why:'Keep recording sales so Peekaa can show a reliable trend next time.',meta:[scope,period],actions:[{label:'View sales report',href:'#/reports',variant:'ghost'}]});
+  }
+  if(Number(inactive60Total)>0){
+    insights.push({tone:'attention',icon:'customers',category:'Retention',title:'Customers may be drifting away',explanation:`${Number(inactive60Total)} customers have not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience before they forget the business.',meta:['Business-wide customer inactivity',period],actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
+  }
+  const weekdayValues=(current?.visits_by_weekday||[]).map(Number);
+  const busiest=Math.max(0,...weekdayValues);
+  const totalVisits=weekdayValues.reduce((sum,value)=>sum+value,0);
+  if(totalVisits>=MIN_INSIGHT_BUSIEST_VISITS_V153&&busiest>0){
+    const day=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][weekdayValues.indexOf(busiest)]||'One day';
+    insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:`${day} is your busiest day`,explanation:`${day} recorded the highest number of valid visits in the selected period.`,why:`Review staffing and appointment availability for ${day}s.`,meta:[scope,period],actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
+  }
+  if(!insights.length){
+    insights.push({tone:'neutral',icon:'info',category:'Readiness',title:'More business activity is needed',explanation:'Peekaa will show stronger recommendations after enough sales, visits, or appointments are recorded.',why:'Continue recording sales and customer visits.',meta:[scope,period],actions:[{label:'Record sale',href:'#/sell',variant:'ghost'},{label:'Add customers',href:'#/clients',variant:'ghost'}]});
+  }
+  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Deterministic recommendations from verified business activity.</p></div><span class="pill">${esc(scope)}</span></div><div class="merchant-insights-grid">${insights.slice(0,4).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
+}
 async function clientsPage(){
   const routeMain=M();
   const canWrite=canWriteModule('clients');
@@ -8063,6 +8214,7 @@ async function clientsPage(){
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
     <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days / never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Never-visited customers appear in 90+ because they have no valid visit on record.</p></div>
+    <section class="retention-readiness card" id="retentionReadiness" aria-labelledby="retentionReadinessTitle">${CUI.skeletonCard({lines:4})}</section>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list">${CUI.tableSkeleton({rows:5,columns:7})}</div>
     <div class="card" id="fbQueueCard" style="margin-top:16px"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
@@ -8116,6 +8268,7 @@ async function clientsPage(){
         btn.querySelector('b').textContent=String(counts[btn.dataset.inactiveBucket]||0);
         btn.setAttribute('aria-pressed',String(clientInactiveBucket===btn.dataset.inactiveBucket));
       });
+      renderRetentionReadinessV153(directory.customers,directory.loyaltyAvailable);
     }catch(error){if(isCustomersCurrent())host.querySelectorAll('[data-inactive-bucket] b').forEach(b=>b.textContent='—')}
   }
   const allCustomerDirectoryRows=async()=>{
@@ -8132,6 +8285,28 @@ async function clientsPage(){
     }
     if(customers.length<Number(total||0))throw new Error('Customer export is larger than the supported directory range.');
     return {customers,loyaltyAvailable:loyaltyAvailable===true};
+  };
+  const renderRetentionReadinessV153=(customers,loyaltyAvailable)=>{
+    const host=$('retentionReadiness');if(!host)return;
+    const buckets=classifyInactiveCustomersV153(customers);
+    const cards=Object.entries(buckets).map(([key,bucket])=>{
+      const count=bucket.customers.length;
+      const consentEligible=bucket.customers.filter(customer=>customer.marketing_consent).length;
+      return `<article class="retention-audience-card" data-retention-group="${key}"><h3>${esc(bucket.label)}</h3><b>${count}</b><p class="muted small">${esc(bucket.definition)}</p><p class="muted small">${esc(loyaltyAvailable?'Points and credit shown from the customer balance authority.':'Points and credit are hidden because complete Loyalty access could not be confirmed.')}</p><div class="retention-audience-actions"><button type="button" class="btn ghost sm" data-retention-view="${key}">View customers</button><button type="button" class="btn ghost sm" data-retention-export="${key}">Export CSV</button><button type="button" class="btn ghost sm" data-retention-campaign="${key}" data-retention-count="${count}" data-retention-consent="${consentEligible}">Prepare campaign</button></div></article>`;
+    }).join('');
+    host.innerHTML=`<div class="retention-readiness-head"><div><h2 id="retentionReadinessTitle">Retention readiness</h2><p class="muted small">Prepare follow-up audiences using the same business-wide inactivity definition as the customer list.</p></div><span class="pill">Business-wide customer inactivity</span></div><div class="retention-readiness-grid">${cards}</div>`;
+    host.querySelectorAll('[data-retention-view]').forEach(button=>button.onclick=()=>{clientInactiveBucket=button.dataset.retentionView;$('clientInactivity').value=clientInactiveBucket;clientPage=0;load();refreshInactiveCards();$('clientInactivity').focus()});
+    host.querySelectorAll('[data-retention-export]').forEach(button=>button.onclick=()=>{
+      const bucket=buckets[button.dataset.retentionExport];if(!bucket)return;
+      const rows=[['name','phone','last_visit','member_since','points','credit','consent'],
+        ...bucket.customers.map(customer=>[customer.full_name,customer.phone||'',customer.last_visit_at||'Never visited',customer.created_at||'',loyaltyAvailable?Number(customer.points||0):'unavailable',loyaltyAvailable?(Number(customer.balance_cents||0)/100).toFixed(2):'unavailable',customer.marketing_consent?'yes':'no'])];
+      const blob=new Blob([rows.map(row=>row.map(value=>String(value).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-${button.dataset.retentionExport}-customers.csv`;a.click();toast('Retention CSV downloaded');
+    });
+    host.querySelectorAll('[data-retention-campaign]').forEach(button=>button.onclick=()=>{
+      const bucket=buckets[button.dataset.retentionCampaign];if(!bucket)return;
+      openCampaignPrepV153({audienceKey:button.dataset.retentionCampaign,audienceLabel:bucket.label,definition:bucket.definition,count:Number(button.dataset.retentionCount)||0,consentEligible:Number(button.dataset.retentionConsent)||0,branchLabel:'Business-wide customer inactivity'});
+    });
   };
   const runClientSearch=()=>{clientSearch=$('clientSearch').value.trim();clientPage=0;load()};
   $('clientSearchGo').onclick=runClientSearch;
