@@ -1083,6 +1083,12 @@
       "path": "db/migrations/20260803_nestly_v148_owner_launch_closure.sql",
       "semanticVersion": "v148",
       "proposedDeployVersion": "20260803190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v151_mobile_staff_invites.sql",
+      "semanticVersion": "v151",
+      "proposedDeployVersion": "20260803210000"
     }
   ]
 }

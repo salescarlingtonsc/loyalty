@@ -1084,6 +1084,12 @@
       "version": "20260803190000",
       "name": "nestly_v148_owner_launch_closure",
       "sourcePath": "db/migrations/20260803_nestly_v148_owner_launch_closure.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260803210000",
+      "name": "nestly_v151_mobile_staff_invites",
+      "sourcePath": "db/migrations/20260803_nestly_v151_mobile_staff_invites.sql"
     }
   ]
 }

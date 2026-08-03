@@ -305,6 +305,22 @@ tr.click:hover td{background:#FBFAF8}
 .global-act{white-space:nowrap}.global-act svg{flex-shrink:0}
 .dashboard-appbar-branch{display:block;flex:0 1 196px;min-width:150px}
 .dashboard-appbar-branch select{width:100%;min-width:0;margin:0;background:#fff;box-shadow:var(--shadow);font-size:13px}
+.dashboard-mobile-branch{display:none}
+.mobile-page-title,.mobile-search-trigger,.mobile-search-sheet{display:none}
+.mobile-page-title{min-width:0;align-items:center;gap:9px;font-weight:750;color:var(--ink)}
+.mobile-page-title .mobile-page-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--tint);color:var(--coral)}
+.mobile-page-title span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mobile-search-trigger{width:44px;height:44px;border-radius:999px;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);color:var(--ink2);align-items:center;justify-content:center}
+.mobile-search-sheet[open]{display:block;position:fixed;inset:0;z-index:190;background:rgba(23,22,26,.22);padding:max(16px,env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom))}
+.mobile-search-panel{margin:0 auto;background:#fff;border:1px solid var(--hair);border-radius:20px;padding:14px;box-shadow:var(--shadow-lg);max-width:520px}
+.mobile-search-panel .row{gap:8px}.mobile-search-panel input{font-size:16px}
+.mobile-action-sheet{display:grid;gap:10px;padding:8px 6px 12px;border-bottom:1px solid var(--hair);margin-bottom:8px}
+.mobile-action-sheet .workspace-language-picker{width:100%;min-width:0;border-radius:12px;font-size:16px}
+.mobile-action-sheet .btn{width:100%;justify-content:center}
+.mobile-language-label{font-size:11.5px;font-weight:750;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.mobile-workspace-summary{padding:10px 11px;border:1px solid var(--hair);border-radius:13px;background:#FBFAF8}
+.mobile-workspace-summary b,.mobile-workspace-summary span{display:block;overflow-wrap:anywhere}
+.mobile-workspace-summary .muted{font-size:12px;line-height:1.35}
 /* Phone-first staff navigation. The high-frequency jobs stay thumb-reachable while the
    complete, permission-filtered workspace navigation remains available behind More. */
 .staff-mobile-dock{display:none}
@@ -323,6 +339,14 @@ tr.click:hover td{background:#FBFAF8}
 .staff-mobile-action svg{width:20px;height:20px}
 .staff-mobile-action.act{color:var(--coral);background:var(--tint)}
 .staff-mobile-action:active{transform:scale(.96)}
+.team-member-card,.staff-invite-card{padding:11px 0;border-bottom:1px solid var(--line)}
+.team-member-card .row,.staff-invite-card .row{gap:8px}
+.team-member-main,.staff-invite-main{min-width:0}
+.team-member-main b,.staff-invite-main b{overflow-wrap:anywhere}
+.staff-invite-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.09em;font-weight:800;color:var(--ink)}
+.staff-invite-meta{display:grid;gap:4px;margin-top:7px;color:var(--muted);font-size:12.5px}
+.staff-invite-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.staff-invite-actions .btn{min-height:40px}
 /* settings — tabbed sections so each save has a clear, small scope instead of one long page */
 .settings-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--line)}
 .settings-tab{min-height:44px;padding:10px 15px;border:0;border-bottom:2px solid transparent;background:transparent;
@@ -665,6 +689,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .dashboard-chart-head>.cui-icon{color:var(--coral);margin-top:1px}.dashboard-chart-head>div{min-width:0;flex:1}.dashboard-chart-head b{display:block}.dashboard-chart-head p{margin-top:3px}.dashboard-chart-link{display:inline-flex;align-items:center;min-height:44px;padding:7px 9px;color:var(--coral);font-size:12px;font-weight:700;white-space:nowrap;border-radius:9px}
 .dashboard-chart-link:hover{background:var(--tint)}
 .dashboard-chart-card .chart-frame{margin:8px 14px 16px}
+.dashboard-chart-empty{display:grid;place-items:center;min-height:176px;margin:10px 14px 16px;padding:20px;border:1px dashed var(--line);border-radius:14px;background:#FBFAF8;color:var(--muted);text-align:center;line-height:1.45}
+.dashboard-chart-empty b{display:block;color:var(--ink);margin-bottom:4px}
 .dashboard-read-note{margin-top:12px;padding:10px 12px;border-radius:10px;background:#F7F4EF;color:var(--muted);font-size:11.5px;line-height:1.45}
 .appointment-primary-action{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:0 0 14px}
 .appointment-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;min-width:0;width:100%}
@@ -772,11 +798,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
       max(8px,env(safe-area-inset-left));background:rgba(255,255,255,.94);border-top:1px solid var(--hair);
     box-shadow:0 -8px 30px rgba(31,28,24,.08);
     -webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px)}
-  .appbar{padding:max(10px,env(safe-area-inset-top))
-    max(18px,env(safe-area-inset-right)) 10px max(18px,env(safe-area-inset-left));
-    flex-wrap:wrap;row-gap:8px}
-  /* two-row app bar on tablet/phone: bell + profile stay top-right, the action cluster
-     drops to its own full-width row underneath so search + quick actions never overflow */
+  .appbar{padding:max(8px,env(safe-area-inset-top))
+    max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));
+    gap:8px;min-height:58px;flex-wrap:nowrap}
+  .mobile-page-title{display:flex;flex:1 1 auto}
+  .mobile-search-trigger{display:inline-flex;flex:0 0 44px}
+  .appbar>.global-actions,.appbar>.workspace-language-picker,.appbar>.business-workspace-switch,.appbar>.dashboard-appbar-branch{display:none!important}
+  .bellwrap,.profile{flex:0 0 auto}
+  .profile .who{width:44px;height:44px;padding:6px;justify-content:center}
+  .profile .who>div:not(.avatar),.profile .who .chev{display:none}
+  .profile .avatar{width:30px;height:30px}
+  .profile .menu,.business-workspace-switch .menu{right:0;max-width:calc(100vw - 24px)}
   .global-actions{order:3;flex:1 1 100%;min-width:0;margin-right:0;flex-wrap:wrap}
   .global-search{flex:1 1 200px}
   .global-quick{display:none}
@@ -788,10 +820,18 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .report-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .appointment-form-card{position:static}
   .chart-frame{block-size:220px}
-  .main{padding:18px max(18px,env(safe-area-inset-right))
-    calc(92px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
+  .main{padding:16px max(14px,env(safe-area-inset-right))
+    calc(86px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));overflow-x:hidden}
+  input,select,textarea{font-size:16px}
+  .dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px}
+  .dashboard-chart-link{grid-column:2;justify-self:start;min-height:36px;padding:4px 0;white-space:normal}
+  .dashboard-chart-card .chart-frame{height:190px;margin:8px 10px 12px}
+  .dashboard-chart-empty{min-height:150px;margin:8px 10px 12px}
+  .dashboard-mobile-branch{display:block;flex:1 1 100%}
+  .dashboard-mobile-branch select{width:100%;margin:0}
+  .staff-mobile-action{min-height:56px;font-size:11px}
 }
-@media(max-width:560px){.dashboard-appbar-branch{order:2;flex:1 1 100%}.report-decision-grid{grid-template-columns:1fr}.appointment-primary-action .btn{width:100%}.performance-body{padding:16px}.dashboard-intro{padding:16px}.dashboard-chart-link{padding-inline:6px}}
+@media(max-width:560px){.dashboard-appbar-branch{order:2;flex:1 1 100%}.report-decision-grid{grid-template-columns:1fr}.appointment-primary-action .btn{width:100%}.performance-body{padding:16px}.dashboard-intro{padding:16px}.dashboard-chart-link{padding-inline:0}}
 @media(max-width:767px){
   .cui-page-head,.topbar{align-items:flex-start}.cui-page-actions,.topbar>.row{width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{flex:1 1 auto}
   .topbar>.row{min-width:0;max-width:100%;flex-wrap:wrap}
@@ -2428,6 +2468,8 @@ async function route(){
     if(passwordRecoveryActive) return renderPasswordUpdate();
     let h=entryRouteForLocation();
     if(h==='#/login')h='#/business';
+    if(h.startsWith('#/business?'))h='#/business';
+    const staffInviteCodeV151=businessStaffInviteCodeV151();
     const platformConsole=globalThis.NestlyPlatformConsole;
     const platformRoutePath=String(h).split('?')[0].replace(/\/+$/,'');
     const requestedPlatformRoute=platformRoutePath==='#/platform'||platformRoutePath.startsWith('#/platform/');
@@ -2485,7 +2527,8 @@ async function route(){
       return renderCustomerRegistration(isRouteCurrent);
     }
     if(!S.user&&h==='#/join')return renderCustomerRegistration(isRouteCurrent);
-    if(!S.user&&h==='#/business'&&new URLSearchParams(location.search).get('signup')==='1')return renderBusinessApplication();
+    if(!S.user&&h==='#/business'&&staffInviteCodeV151)return renderStaffInviteAuthV151('in',staffInviteCodeV151);
+    if(!S.user&&h==='#/business'&&new URLSearchParams(location.search).get('signup')==='1')return renderBusinessSignupChoice();
     if(!S.user)return renderAuth('in',{admin:requestedPlatformRoute});
     /* Platform routes are resolved before workspace discovery/onboarding. The platform
        console derives the active role, module rights and sales scope from auth.uid() through
@@ -2507,6 +2550,7 @@ async function route(){
       });
     }
     if(h==='#/business'){
+      if(staffInviteCodeV151)return renderBusinessStaffInviteAcceptV151(staffInviteCodeV151);
       const approvedInvite=String(location.search||'').match(/(?:^\?|&)invite=([0-9a-f]{64})(?:&|$)/i)?.[1]?.toLowerCase()||'';
       if(/^[0-9a-f]{64}$/.test(approvedInvite))return renderApprovedBusinessActivation(approvedInvite,isRouteCurrent);
       const {data:businessPersonas,error:businessPersonaError}=await sb.rpc('get_my_personas');
@@ -5398,6 +5442,177 @@ function businessApplicationInviteToken(){
   const token=new URLSearchParams(location.search).get('invite')||'';
   return /^[0-9a-f]{64}$/i.test(token)?token.toLowerCase():'';
 }
+const STAFF_INVITE_STORAGE_V151='peekaa:pending-staff-invite:v151';
+function normalizeCompanyInviteCodeV151(value){
+  const code=String(value||'').replace(/[\s-]+/g,'').trim().toUpperCase();
+  return /^[A-Z0-9]{4,32}$/.test(code)?code:'';
+}
+function businessStaffInviteCodeV151(){
+  const params=new URLSearchParams(location.search||'');
+  const hashParams=new URLSearchParams(String(location.hash||'').split('?')[1]||'');
+  const query=params.get('staff_invite')||params.get('company_invite')||params.get('invite_code')||'';
+  const hash=query||hashParams.get('staff_invite')||hashParams.get('company_invite')||hashParams.get('invite_code')||'';
+  return normalizeCompanyInviteCodeV151(hash)||normalizeCompanyInviteCodeV151(sessionStorage.getItem(STAFF_INVITE_STORAGE_V151));
+}
+function rememberBusinessStaffInviteV151(code){
+  const normalized=normalizeCompanyInviteCodeV151(code);
+  if(normalized)sessionStorage.setItem(STAFF_INVITE_STORAGE_V151,normalized);
+  return normalized;
+}
+function staffInviteLinkV151(code){
+  const url=new URL(NestlyNativeBridge.publicUrl('/business'));
+  url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
+  return url.toString();
+}
+function staffInvitePreviewMarkupV151(preview){
+  if(!preview)return '<p class="muted small">Enter a company invite code to check the business and role.</p>';
+  const role=ROLE_LABELS[preview.role]||preview.role||'Team member';
+  if(preview.status==='valid'){
+    return `<div class="ok" style="margin-top:10px;background:#E7F6EE;color:var(--green)">
+      <b>${esc(preview.business_name||'Business found')}</b>
+      <p class="small" style="margin-top:5px">Role offered: ${esc(role)}</p>
+      <p class="small" style="margin-top:5px">${preview.restricted_email?`Restricted to: ${esc(preview.restricted_email)}`:'No email restriction on this invite.'}</p>
+    </div>`;
+  }
+  const messages={
+    invalid:'This company invite code is invalid.',
+    expired:'This company invite has expired.',
+    revoked:'This company invite has been revoked.',
+    already_used:'This company invite has already been used.',
+    business_unavailable:'The business for this invite is unavailable.'
+  };
+  return `<div class="err">${esc(messages[preview.status]||'This company invite cannot be used.')}</div>`;
+}
+async function previewStaffInviteV151(code,targetId){
+  const target=$(targetId);
+  const normalized=rememberBusinessStaffInviteV151(code);
+  if(!target)return null;
+  if(!normalized){target.innerHTML=staffInvitePreviewMarkupV151(null);return null}
+  target.innerHTML='<p class="muted small">Checking company invite…</p>';
+  const {data,error}=await sb.rpc('preview_staff_invite',{p_code:normalized});
+  const preview=error?{status:'invalid'}:data;
+  target.innerHTML=staffInvitePreviewMarkupV151(preview);
+  return preview;
+}
+function renderBusinessSignupChoice(){
+  destroyMountedTurnstiles();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card entry-choice-card auth-card" aria-labelledby="businessSignupChoiceTitle">
+    <div class="logo">${brandWordmark()}</div>
+    <h1 id="businessSignupChoiceTitle" style="font-size:clamp(1.8rem,6vw,2.45rem);margin-top:18px">How would you like to use Peekaa?</h1>
+    <p class="muted" style="margin-top:7px;line-height:1.55">Choose the path that matches what you are doing now.</p>
+    <div class="entry-choice-grid">
+      <button type="button" class="entry-choice" id="startBusinessChoice"><span class="entry-choice-icon">${CUI.icon('branch',{size:25})}</span><div><h2>Start a new business</h2><p class="muted">Create a new Peekaa workspace for your business.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Continue ${CUI.icon('forward',{size:17})}</span></button>
+      <button type="button" class="entry-choice" id="joinBusinessChoice"><span class="entry-choice-icon">${CUI.icon('staff',{size:25})}</span><div><h2>Join an existing business</h2><p class="muted">Use an invitation from your business owner or manager.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Enter invite ${CUI.icon('forward',{size:17})}</span></button>
+    </div>
+    <button class="btn ghost" id="businessSignupBack" style="width:100%;margin-top:18px">Back to sign in</button>
+    ${legalLinks()}</section></main>`;
+  CUI.focusRoute($('main'),{enhanceContent:true});
+  $('startBusinessChoice').onclick=()=>{return renderBusinessApplication()};
+  $('joinBusinessChoice').onclick=()=>renderStaffInviteAuthV151('in',businessStaffInviteCodeV151());
+  $('businessSignupBack').onclick=()=>renderAuth('in');
+}
+function renderStaffInviteAuthV151(mode='in',initialCode=''){
+  destroyMountedTurnstiles();
+  const saved=rememberBusinessStaffInviteV151(initialCode)||businessStaffInviteCodeV151();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="staffInviteAuthTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <h1 id="staffInviteAuthTitle" style="margin:14px 0 2px">Join an existing business</h1>
+    <p class="muted small" style="margin-top:6px">Enter your company invite code, then sign in or create a staff account. Stripe is not required for invited staff.</p>
+    <label for="staffInviteCodeV151">Company invite code</label><input id="staffInviteCodeV151" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="e.g. 7FE22596" value="${esc(saved)}">
+    <div id="staffInvitePreviewV151" role="status" aria-live="polite" style="margin-top:8px">${staffInvitePreviewMarkupV151(null)}</div>
+    <div class="row" style="gap:8px;margin-top:14px"><button type="button" class="btn ${mode==='in'?'':'ghost'} sm" id="staffInviteSignInTab">Sign in</button><button type="button" class="btn ${mode==='up'?'':'ghost'} sm" id="staffInviteSignUpTab">Create account</button></div>
+    <label for="staffInviteEmailV151">Email</label><input id="staffInviteEmailV151" type="email" autocomplete="email" placeholder="you@business.com">
+    <label for="staffInvitePasswordV151">Password</label>${passwordControlHtml('staffInvitePasswordV151',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
+    ${mode==='up'?`<label for="staffInvitePasswordConfirmV151">Confirm password</label>${passwordControlHtml('staffInvitePasswordConfirmV151',{autocomplete:'new-password',placeholder:'••••••••'})}`:''}
+    <div id="staffInviteAuthError"></div>
+    ${authChallengeHtml()}
+    <button class="btn" id="staffInviteAuthGo" style="width:100%;margin-top:18px" disabled>${mode==='in'?'Sign in and continue':'Create account and continue'}</button>
+    <button class="btn ghost" id="staffInviteBack" style="width:100%;margin-top:10px">Back</button>
+    ${legalLinks()}</section></main>`;
+  bindPasswordVisibility(root);
+  CUI.focusRoute($('main'),{enhanceContent:true});
+  $('staffInviteSignInTab').onclick=()=>renderStaffInviteAuthV151('in',$('staffInviteCodeV151').value);
+  $('staffInviteSignUpTab').onclick=()=>renderStaffInviteAuthV151('up',$('staffInviteCodeV151').value);
+  $('staffInviteBack').onclick=()=>renderBusinessSignupChoice();
+  if(saved)previewStaffInviteV151(saved,'staffInvitePreviewV151');
+  $('staffInviteCodeV151').addEventListener('blur',()=>previewStaffInviteV151($('staffInviteCodeV151').value,'staffInvitePreviewV151'));
+  let authToken='',authControl=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+    retry:'authTurnstileRetry',action:'frenly_staff_invite',
+    onToken:(token)=>{authToken=token;$('staffInviteAuthGo').disabled=!token}})
+    .then(control=>authControl=control);
+  $('staffInviteAuthGo').onclick=async()=>{
+    const code=rememberBusinessStaffInviteV151($('staffInviteCodeV151').value);
+    const email=$('staffInviteEmailV151').value.trim();
+    const password=$('staffInvitePasswordV151').value;
+    if(!code){$('staffInviteAuthError').innerHTML='<div class="err">Enter a valid company invite code.</div>';return}
+    const preview=await previewStaffInviteV151(code,'staffInvitePreviewV151');
+    if(preview?.status&&preview.status!=='valid'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing.</div>';return}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$('staffInviteAuthError').innerHTML='<div class="err">Enter the email you want to use for this workspace.</div>';return}
+    if(mode==='up'&&(!validNewPassword(password)||password!==$('staffInvitePasswordConfirmV151').value)){
+      $('staffInviteAuthError').innerHTML='<div class="err">Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.</div>';return;
+    }
+    if(!authToken)return;
+    $('staffInviteAuthGo').disabled=true;
+    const captchaToken=authToken;authToken='';
+    try{
+      if(mode==='up'){
+        const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));returnUrl.searchParams.set('staff_invite',code);
+        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken,emailRedirectTo:returnUrl.toString(),data:{account_type:'business_staff_invite'}}});
+        if(error)throw error;
+        if(!data.session){
+          if(authControl)authControl.reset();
+          $('staffInviteAuthError').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Check your email to confirm your account, then return to this invite link.</div>';return;
+        }
+      }else{
+        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
+        if(error)throw error;
+      }
+      history.replaceState(null,'',`/business?staff_invite=${encodeURIComponent(code)}`);
+      resetClientSessionState({preserveInvitation:true});route();
+    }catch(error){
+      if(authControl)authControl.reset();
+      $('staffInviteAuthError').innerHTML=`<div class="err">${esc(error.message||'Invite sign-in could not be completed.')}</div>`;
+      $('staffInviteAuthGo').disabled=false;
+    }
+  };
+}
+function renderBusinessStaffInviteAcceptV151(code){
+  const normalized=rememberBusinessStaffInviteV151(code);
+  if(!normalized)return renderStaffInviteAuthV151('in','');
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="staffInviteAcceptTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <h1 id="staffInviteAcceptTitle" style="margin:14px 0 2px">Join business workspace</h1>
+    <p class="muted small" style="margin-top:6px">Peekaa will validate this invite on the server. The company, role, module access, expiry, and reuse rules come from the invitation record.</p>
+    <section class="card" style="margin-top:16px;background:var(--sand);text-align:left"><span class="muted small">Company invite code</span><p class="staff-invite-code" style="font-size:1.15rem;margin-top:6px">${esc(normalized)}</p><p class="muted small" style="margin-top:8px;overflow-wrap:anywhere">Signed in as ${esc(S.user?.email||'Email unavailable')}</p></section>
+    <div id="staffInviteAcceptPreviewV151" role="status" aria-live="polite" style="margin-top:10px">${staffInvitePreviewMarkupV151(null)}</div>
+    <div id="staffInviteAcceptStatus" role="alert" aria-live="assertive"></div>
+    <button class="btn" id="staffInviteAcceptGo" style="width:100%;margin-top:18px">Join business</button>
+    <button class="btn ghost" id="staffInviteAcceptSignOut" style="width:100%;margin-top:10px">Use a different account</button>
+    ${legalLinks()}</section></main>`;
+  CUI.focusRoute($('main'),{enhanceContent:true});
+  previewStaffInviteV151(normalized,'staffInviteAcceptPreviewV151');
+  $('staffInviteAcceptGo').onclick=async()=>{
+    $('staffInviteAcceptGo').disabled=true;
+    $('staffInviteAcceptStatus').innerHTML='<p class="muted small" style="margin-top:10px">Checking invite and creating membership…</p>';
+    const preview=await previewStaffInviteV151(normalized,'staffInviteAcceptPreviewV151');
+    if(preview?.status&&preview.status!=='valid'){
+      $('staffInviteAcceptStatus').innerHTML='<div class="err">This invite is not active. Ask the business owner for a new company invite link.</div>';
+      $('staffInviteAcceptGo').disabled=false;return;
+    }
+    const {data,error}=await sb.rpc('accept_invite',{p_code:normalized});
+    if(error){
+      $('staffInviteAcceptStatus').innerHTML=`<div class="err">${esc(error.message||'This invite could not be accepted. It may be invalid, expired, revoked, already used, or restricted to another email.')}</div>`;
+      $('staffInviteAcceptGo').disabled=false;return;
+    }
+    sessionStorage.removeItem(STAFF_INVITE_STORAGE_V151);
+    S.biz=data;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.staffWorkspaces=[];
+    const slug=data?.slug||data?.business_slug||'';
+    toast('Welcome to the team');
+    if(slug)nav(`#/workspace/${encodeURIComponent(slug)}/dashboard`);else nav('#/dashboard');
+  };
+  $('staffInviteAcceptSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();renderStaffInviteAuthV151('in',normalized)};
+}
 function businessApplicationCopy(locale,key){
   const copy={
     en:{
@@ -5705,7 +5920,7 @@ function renderAuth(mode='in',{admin=false}={}){
   destroyMountedTurnstiles();
   if(!admin&&businessApplicationInviteToken())return renderApprovedBusinessInviteSignup(businessApplicationInviteToken());
   if(!admin&&mode==='up'&&NestlyNativeBridge.isNative)return renderNativeBusinessCompanion();
-  if(!admin&&mode==='up')return renderBusinessApplication();
+  if(!admin&&mode==='up')return renderBusinessSignupChoice();
   if(mode==='forgot'){
     root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="authResetTitle">
       <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
@@ -6021,12 +6236,30 @@ function renderOnboard(){
       nav(`#/workspace/${encodeURIComponent(onboarding.business_slug)}/dashboard`);return;
     }
     if(onboarding?.status==='payment_pending'){
-      const paymentState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
-      const canceled=paymentState==='canceled';
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">Checkout success pages do not unlock access; provider-confirmed payment does.</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+      const hashState=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('status');
+      const searchState=new URLSearchParams(location.search||'').get('status');
+      const paymentState=hashState||searchState||'';
+      const canceled=paymentState==='canceled'||paymentState==='cancelled';
+      const processing=['success','paid','processing','complete','completed'].includes(paymentState);
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
       wireBusinessSetupAccount();wireAccountDeletionButton();
       $('selfServePay').onclick=()=>finishCheckout(onboarding,$('selfServePayStatus'),$('selfServePay'));
       $('onboardRetry').onclick=route;
+      if(processing){
+        let attempts=0;
+        const poll=async()=>{
+          if(setupEpoch!==businessSetupRenderEpoch)return;
+          attempts+=1;
+          const current=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
+          if(setupEpoch!==businessSetupRenderEpoch)return;
+          const next=current.data?.onboarding;
+          if(next?.status==='active'){nav(`#/workspace/${encodeURIComponent(next.business_slug)}/dashboard`);return}
+          const status=$('selfServePayStatus');
+          if(status)status.textContent=attempts<15?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
+          if(attempts<15)setTimeout(poll,2000);
+        };
+        setTimeout(poll,1200);
+      }
       return;
     }
     const plans=Array.isArray(state.data.plans)?state.data.plans:[];
@@ -6355,7 +6588,13 @@ function staffMobileActionsHtml(page){
   if(canQuickEarn)items.push(`<button type="button" class="staff-mobile-action ${active==='till'?'act':''}" id="staffMobileQuickEarn" aria-label="Record sale">${CUI.icon('till',{size:20})}<span data-workspace-i18n>Record sale</span></button>`);
   if(canScanRedemption)items.push(`<button type="button" class="staff-mobile-action" id="staffMobileScan" aria-label="Scan redemption QR">${CUI.icon('scan',{size:20})}<span data-workspace-i18n>Scan QR</span></button>`);
   if(canViewAppts)items.push(`<button type="button" class="staff-mobile-action ${active==='appointments'?'act':''}" id="staffMobileAppointments" aria-label="Appointments">${CUI.icon('appointments',{size:20})}<span data-workspace-i18n>Appointments</span></button>`);
-  items.push(`<details class="staff-mobile-more" id="staffMobileMore"><summary class="staff-mobile-action" aria-label="More workspace modules">${CUI.icon('menu',{size:20})}<span data-workspace-i18n>More</span></summary><div class="staff-mobile-drawer"><nav class="nav" aria-label="More workspace modules">${navHtml(page,'mobile-nav')}</nav></div></details>`);
+  items.push(`<details class="staff-mobile-more" id="staffMobileMore"><summary class="staff-mobile-action" aria-label="More workspace modules">${CUI.icon('menu',{size:20})}<span data-workspace-i18n>More</span></summary><div class="staff-mobile-drawer">
+    <div class="mobile-action-sheet">
+      <div class="mobile-workspace-summary" aria-label="Current workspace"><b data-merchant-content>${esc(S.biz?.name||BRAND.productName)}</b><span class="muted" data-merchant-content>${esc(INDUSTRIES[S.biz?.industry]?.label||S.biz?.industry||'Workspace')}</span><span class="muted">Signed in as ${esc(S.user?.email||'Email unavailable')}</span></div>
+      <label class="mobile-language-label" for="workspaceLanguageMobileV151">Language</label>${workspaceLanguagePickerV97('workspaceLanguageMobileV151')}
+      <a class="btn ghost sm" href="#/settings?tab=workspace">Workspace settings</a>
+    </div>
+    <nav class="nav" aria-label="More workspace modules">${navHtml(page,'mobile-nav')}</nav></div></details>`);
   return `<div class="staff-mobile-dock" style="--staff-mobile-count:${items.length}" aria-label="Staff quick actions">${items.join('')}</div>`;
 }
 function wireStaffMobileActions(){
@@ -6395,6 +6634,48 @@ function globalActionsHtml(){
     </div>
   </div>`;
 }
+function mobileWorkspaceTitleHtml(page){
+  const key=page?.[0]||'dashboard';
+  const meta=MODULES[key]||['home',key==='till'?'Record sale':key==='clients'?'Customers':key==='dashboard'?'Dashboard':'Peekaa'];
+  return `<div class="mobile-page-title" aria-label="Current page">${CUI.icon(meta[0]||'home',{size:19})}<span>${esc(meta[1]||'Peekaa')}</span></div>`;
+}
+function mobileSearchShellHtml(){
+  const canFindCustomer=canReadModule('clients')||canReadModule('till');
+  if(!canFindCustomer)return '';
+  return `<button type="button" class="mobile-search-trigger" id="mobileSearchOpen" aria-label="Find customer">${CUI.icon('search',{size:19})}</button>
+    <div class="mobile-search-sheet" id="mobileSearchSheet" aria-modal="true" role="dialog" aria-labelledby="mobileSearchTitle">
+      <div class="mobile-search-panel">
+        <div class="row"><div><b id="mobileSearchTitle">Find customer</b><p class="muted small">Search by name or phone number.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="mobileSearchClose">Close</button></div>
+        <label class="sr-only" for="mobileSearchInput">Customer search</label>
+        <div class="global-search" role="search" style="margin-top:12px;max-width:none;flex:1 1 auto">
+          <span class="global-search-ic">${CUI.icon('search',{size:17})}</span>
+          <input id="mobileSearchInput" type="search" autocomplete="off" enterkeyhint="search" placeholder="Name or phone number">
+          <button type="button" class="global-search-go" id="mobileSearchGo" aria-label="Search customers">${CUI.icon('forward',{size:16})}</button>
+        </div>
+      </div>
+    </div>`;
+}
+function runWorkspaceCustomerLookup(query){
+  const q=String(query||'').trim();
+  if(!q)return false;
+  const digits=q.replace(/\D/g,'');
+  const looksPhone=digits.length>=4&&/^[+\s()\-\d]+$/.test(q);
+  const goTo=target=>{if(location.hash===target){route()}else{nav(target)}};
+  if(looksPhone&&canReadModule('till')){pendingTillPhone=digits;goTo('#/till');return true}
+  if(canReadModule('clients')){pendingCustomerSearch=q;goTo('#/clients');return true}
+  if(canReadModule('till')){pendingTillPhone=digits;goTo('#/till');return true}
+  return false;
+}
+function wireMobileSearchShell(){
+  const open=$('mobileSearchOpen'),sheet=$('mobileSearchSheet'),close=$('mobileSearchClose'),input=$('mobileSearchInput'),go=$('mobileSearchGo');
+  if(!open||!sheet||!input)return;
+  const show=()=>{sheet.setAttribute('open','');requestAnimationFrame(()=>input.focus({preventScroll:true}))};
+  const hide=()=>sheet.removeAttribute('open');
+  const run=()=>{if(runWorkspaceCustomerLookup(input.value)){input.value='';hide()}};
+  open.onclick=show;close&&(close.onclick=hide);go&&(go.onclick=run);
+  sheet.addEventListener('click',event=>{if(event.target===sheet)hide()});
+  input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();run()}else if(e.key==='Escape'){e.preventDefault();hide()}};
+}
 function wireGlobalActions(){
   const input=$('globalSearch');
   if(input){
@@ -6402,16 +6683,10 @@ function wireGlobalActions(){
        otherwise a name to the Customers search — so no new database query is introduced. When the
        target route is already open, re-run route() directly (setting the hash to its current value
        fires no hashchange). */
-    const goTo=target=>{if(location.hash===target){route()}else{nav(target)}};
     const run=()=>{
       const q=input.value.trim();
       if(!q)return;
-      const digits=q.replace(/\D/g,'');
-      const looksPhone=digits.length>=4&&/^[+\s()\-\d]+$/.test(q);
-      input.value='';
-      if(looksPhone&&canReadModule('till')){pendingTillPhone=digits;goTo('#/till');return}
-      if(canReadModule('clients')){pendingCustomerSearch=q;goTo('#/clients');return}
-      if(canReadModule('till')){pendingTillPhone=digits;goTo('#/till')}
+      if(runWorkspaceCustomerLookup(q))input.value='';
     };
     input.onkeydown=e=>{
       if(e.key==='Enter'){e.preventDefault();run()}
@@ -6954,9 +7229,9 @@ const workspaceTextSourcesV97=new WeakMap(),workspaceAttributeSourcesV97=new Wea
 const workspaceTemplateValuesV97=new WeakMap();
 let workspaceLocale='en',workspaceLocaleVersion=0,workspaceLocaleLoadedFor='',workspaceLocalizationObserver=null;
 const normalizeWorkspaceLocaleV97=value=>WORKSPACE_LOCALES_V97.includes(String(value||''))?String(value):'en';
-function workspaceLanguagePickerV97(){
-  return `<label class="sr-only" for="workspaceLanguageV97">Workspace interface language</label>
-    <select id="workspaceLanguageV97" class="workspace-language-picker" aria-label="Workspace interface language">
+function workspaceLanguagePickerV97(id='workspaceLanguageV97'){
+  return `<label class="sr-only" for="${esc(id)}">Workspace interface language</label>
+    <select id="${esc(id)}" class="workspace-language-picker" aria-label="Workspace interface language">
       <option value="en" ${workspaceLocale==='en'?'selected':''}>English</option>
       <option value="zh-CN" ${workspaceLocale==='zh-CN'?'selected':''}>中文</option>
       <option value="ms" ${workspaceLocale==='ms'?'selected':''}>Bahasa Melayu</option>
@@ -7257,11 +7532,12 @@ async function setWorkspaceLocaleV97(locale){
   localizeWorkspaceSubtreeV97();return true;
 }
 function wireWorkspaceLanguageV97(){
-  const picker=$('workspaceLanguageV97');
-  if(picker)picker.onchange=async()=>{
+  const wirePicker=picker=>{if(!picker)return;picker.onchange=async()=>{
     picker.disabled=true;await setWorkspaceLocaleV97(picker.value);
     if(picker.isConnected){picker.value=workspaceLocale;picker.disabled=false}
-  };
+  }};
+  wirePicker($('workspaceLanguageV97'));
+  wirePicker($('workspaceLanguageMobileV151'));
 }
 
 function renderShell(page){
@@ -7281,7 +7557,9 @@ function renderShell(page){
     </aside>
     <div class="col">
       <header class="appbar">
+        ${mobileWorkspaceTitleHtml(page)}
         ${globalActionsHtml()}
+        ${mobileSearchShellHtml()}
         ${page[0]==='dashboard'?'<span class="dashboard-appbar-branch" id="dashboardBranchWrap" aria-label="Dashboard branch"><span class="muted small">Loading branches…</span></span>':''}
         ${workspaceLanguagePickerV97()}
         ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
@@ -7305,6 +7583,7 @@ function renderShell(page){
   if(enhanceCustomerUi)customerUiObserver=CUI.mountMain(main);
   wireNav();
   wireGlobalActions();
+  wireMobileSearchShell();
   wireStaffMobileActions();
   wireWorkspaceLanguageV97();
   wireBell(page);
@@ -7528,19 +7807,26 @@ async function visibleBranchesForCurrentUser(){
   return {isAdmin,branches};
 }
 async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchWrap'){
-  const wrap=$(targetId);
-  if(!wrap){ onChange(); return; }
+  const targetIds=Array.isArray(targetId)?targetId:[targetId];
+  const currentWraps=()=>targetIds.map(id=>({id,wrap:$(id)})).filter(item=>item.wrap);
+  const initialWraps=currentWraps();
+  if(!initialWraps.length){ onChange(); return; }
   let isAdmin=S.myRole==='owner'||S.myRole==='manager',branches=[];
   try{({isAdmin,branches}=await visibleBranchesForCurrentUser())}
   catch(e){
-    if(!isCurrent()||!wrap.isConnected||$(targetId)!==wrap)return;
+    const wraps=currentWraps();
+    if(!isCurrent()||!wraps.length)return;
     console.error(e);
-    wrap.innerHTML=`<span class="err small">Branch list unavailable.</span> <button type="button" class="btn ghost sm" id="branchFilterRetry">Retry</button>`;
-    const retry=wrap.querySelector('#branchFilterRetry');
-    if(retry)retry.onclick=()=>refreshBranchFilter(onChange,isCurrent,targetId);
+    wraps.forEach(({id,wrap})=>{
+      if(!wrap.isConnected||$(id)!==wrap)return;
+      wrap.innerHTML=`<span class="err small">Branch list unavailable.</span> <button type="button" class="btn ghost sm">Retry</button>`;
+      const retry=wrap.querySelector('button');
+      if(retry)retry.onclick=()=>refreshBranchFilter(onChange,isCurrent,targetId);
+    });
     return;
   }
-  if(!isCurrent()||!wrap.isConnected||$(targetId)!==wrap)return;
+  const wraps=currentWraps();
+  if(!isCurrent()||!wraps.length)return;
   if(!branches.some(branch=>branch.id===selectedBranchId)){
     /* Employees can't request consolidated (the server raises branch_visibility on
        p_branch=null for them) — default to their first assigned branch so the page loads
@@ -7548,17 +7834,26 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
        fall back to the truthful consolidated choice when a remembered branch disappeared. */
     selectedBranchId=isAdmin?null:(branches[0]?.id||null);
   }
-  wrap.innerHTML=(branches.length||isAdmin)
-    ? `<select id="branchSel" class="qbtn" aria-label="Business branch" style="padding-right:22px">
+  const syncSelections=()=>{
+    currentWraps().forEach(({wrap})=>{
+      const select=wrap.querySelector('select');
+      if(select)select.value=selectedBranchId||'';
+    });
+  };
+  wraps.forEach(({id,wrap})=>{
+    if(!wrap.isConnected||$(id)!==wrap)return;
+    wrap.innerHTML=(branches.length||isAdmin)
+      ? `<select class="qbtn" aria-label="Business branch" style="padding-right:22px">
         ${isAdmin?`<option value="">All branches (consolidated)</option>`:''}
         ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}${b.active===false?' (inactive)':''}</option>`).join('')}
       </select>`
-    : `<span class="muted small">No branch assigned — ask the owner</span>`;
-  const sel=wrap.querySelector('#branchSel');
-  if(sel){
-    sel.value=selectedBranchId||'';
-    sel.onchange=()=>{selectedBranchId=sel.value||null;onChange(branches.find(branch=>branch.id===selectedBranchId)||null)};
-  }
+      : `<span class="muted small">No branch assigned — ask the owner</span>`;
+    const sel=wrap.querySelector('select');
+    if(sel){
+      sel.value=selectedBranchId||'';
+      sel.onchange=()=>{selectedBranchId=sel.value||null;syncSelections();onChange(branches.find(branch=>branch.id===selectedBranchId)||null)};
+    }
+  });
   onChange(branches.find(branch=>branch.id===selectedBranchId)||null);
 }
 
@@ -7570,6 +7865,7 @@ async function dashboard(){
     <header class="v150-titlebar">
       <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><h1>Dashboard</h1></div></div>
       <div class="v150-title-actions dashboard-range">
+        <span class="dashboard-mobile-branch" id="dashboardMobileBranchWrap" aria-label="Dashboard mobile branch"><span class="muted small">Loading branches…</span></span>
         <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
         <label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}">
         <button class="btn sm" id="apply">Apply</button>
@@ -7587,7 +7883,7 @@ async function dashboard(){
     const numbers=values.map(Number),busiest=Math.max(0,...numbers),medium=Math.max(2,busiest*.5),quiet='#76B89B';
     return numbers.map(value=>value>0&&value===busiest?'#C24135':value>=medium?'#F0A35B':quiet);
   };
-  const dashboardChartCardV141=({title,subtitle,canvas,route,unavailable='',retryId=''})=>`<section class="card dashboard-chart-card"><header class="dashboard-chart-head">${CUI.icon('reports',{size:20})}<div><b>${esc(title)}</b><p class="muted small">${esc(subtitle)}</p></div><a class="dashboard-chart-link" href="${route}">View details →</a></header>${unavailable?`<div class="empty" role="status"><p>${esc(unavailable)}</p>${retryId?`<button type="button" class="btn ghost sm" id="${retryId}" style="margin-top:12px">Retry</button>`:''}</div>`:`<div class="chart-frame"><canvas id="${canvas}"></canvas></div>`}</section>`;
+  const dashboardChartCardV141=({title,subtitle,canvas,route,unavailable='',retryId=''})=>`<section class="card dashboard-chart-card"><header class="dashboard-chart-head">${CUI.icon('reports',{size:20})}<div><b>${esc(title)}</b><p class="muted small">${esc(subtitle)}</p></div>${route?`<a class="dashboard-chart-link" href="${route}">View details →</a>`:''}</header>${unavailable?`<div class="dashboard-chart-empty" role="status"><div><b>Not enough data yet</b><p>${esc(unavailable)}</p>${retryId?`<button type="button" class="btn ghost sm" id="${retryId}" style="margin-top:12px">Retry</button>`:''}</div></div>`:`<div class="chart-frame"><canvas id="${canvas}"></canvas></div>`}</section>`;
   const dashboardMetricDefinitionsV141={
     visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',scope:'branch'},
     revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',scope:'branch'},
@@ -7665,7 +7961,7 @@ async function dashboard(){
       return;
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
-    const branchSelect=$('dashboardBranchWrap')?.querySelector('select');
+    const branchSelect=$('dashboardBranchWrap')?.querySelector('select')||$('dashboardMobileBranchWrap')?.querySelector('select');
     appliedDashboardScopeV141={from,to,branchId,branchName:branchId?(branchSelect?.selectedOptions?.[0]?.textContent||'Selected branch'):'All permitted branches'};
     if(!kpis||!charts)return;
     status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
@@ -7680,21 +7976,27 @@ async function dashboard(){
       const key=button.dataset.dashboardMetric;
       openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
     });
-    charts.innerHTML=[
-      dashboardChartCardV141({title:'Busiest days',subtitle:'See which days receive the most visits.',canvas:'c1',route:'#/sales'}),
-      dashboardChartCardV141({title:'Revenue over time',subtitle:'See how revenue changes over the selected period.',canvas:'c2',route:'#/sales'}),
-      customerMetricsAvailable&&dashboardChartCardV141({title:'Age groups',subtitle:'Understand the age profile of recorded customers.',canvas:'c4',route:'#/clients'}),
-      customerMetricsAvailable&&dashboardChartCardV141({title:'Recorded gender',subtitle:'Understand the recorded gender mix of customers.',canvas:'c5',route:'#/clients'})
-    ].filter(Boolean).join('');
-    status.querySelector('#dashboardInactiveRetry')?.addEventListener('click',load);
-    kpis.setAttribute('aria-busy','false');charts.setAttribute('aria-busy','false');
-    localizeWorkspaceSubtreeV97(dashboardRoot);
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const revenueDays=d.revenue_by_day||[],dk=revenueDays.map(x=>x.day);
     const ac=d.age_counts||{};
     const ages={'<25':ac.under_25||0,'25–34':ac.age_25_34||0,'35–44':ac.age_35_44||0,
       '45–54':ac.age_45_54||0,'55+':ac.age_55_plus||0,'—':ac.unknown||0};
     const gc=d.gender_counts||{},genders={Female:gc.female||0,Male:gc.male||0,Other:gc.other||0,Unknown:gc.unknown||0};
+    const revenueValues=revenueDays.map(x=>Number(x.amount_cents||0));
+    const revenueHasData=revenueValues.some(value=>value>0);
+    const revenueHasTrend=revenueDays.length>1&&revenueHasData;
+    const busiestHasData=wd.map(Number).some(value=>value>0);
+    const ageHasData=Object.values(ages).map(Number).some(value=>value>0);
+    const genderHasData=Object.values(genders).map(Number).some(value=>value>0);
+    charts.innerHTML=[
+      dashboardChartCardV141({title:'Busiest days',subtitle:'See which days receive the most visits.',canvas:'c1',route:'#/sales',unavailable:busiestHasData?'':'No valid visits recorded in this period.'}),
+      dashboardChartCardV141({title:'Revenue over time',subtitle:'See how revenue changes over the selected period.',canvas:'c2',route:'#/sales',unavailable:revenueHasTrend?'':revenueHasData?'More activity is needed to show a trend.':'No revenue recorded in this period.'}),
+      customerMetricsAvailable&&dashboardChartCardV141({title:'Age groups',subtitle:'Understand the age profile of recorded customers.',canvas:'c4',route:'#/clients',unavailable:ageHasData?'':'No customer age data recorded yet.'}),
+      customerMetricsAvailable&&dashboardChartCardV141({title:'Recorded gender',subtitle:'Understand the recorded gender mix of customers.',canvas:'c5',route:'#/clients',unavailable:genderHasData?'':'No customer gender data recorded yet.'})
+    ].filter(Boolean).join('');
+    status.querySelector('#dashboardInactiveRetry')?.addEventListener('click',load);
+    kpis.setAttribute('aria-busy','false');charts.setAttribute('aria-busy','false');
+    localizeWorkspaceSubtreeV97(dashboardRoot);
     try{await loadChartLibrary()}catch{if(isCurrent())status.innerHTML='<div class="err" role="status">Charts could not load. The totals above are still current. <button type="button" class="btn ghost sm" id="dashboardChartRetry">Retry charts</button></div>';status.querySelector('#dashboardChartRetry')?.addEventListener('click',load);return}
     if(!isCurrent())return;
     const C=(id,cfg)=>{if(isCurrent()){const canvas=dashboardRoot.querySelector('#'+id);if(canvas)S.charts.push(new Chart(canvas,cfg))}};
@@ -7704,7 +8006,7 @@ async function dashboard(){
     if(customerMetricsAvailable)C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     if(customerMetricsAvailable)C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
   }
-  refreshBranchFilter(load,isDashboardCurrent,'dashboardBranchWrap');
+  refreshBranchFilter(load,isDashboardCurrent,['dashboardBranchWrap','dashboardMobileBranchWrap']);
 }
 
 /* ---------- customers ---------- */
@@ -17901,7 +18203,9 @@ async function settingsPage(){
     <section class="settings-panel" id="setpanel-team" role="tabpanel" aria-labelledby="settab-team" tabindex="-1" hidden>
     <div class="card settings-team-card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff','Add staff without app access','settingsPage')}</div><p class="muted small" style="margin:6px 0 10px">Add a roster-only staff member for appointments or reporting, or create an invite when they need to sign in. Owners inherit every enabled module. Other teammates can receive Off / Read / Edit access per enabled module.</p>
       <div id="team"><p class="muted small">Loading…</p></div>
-      <div class="row" style="margin-top:14px"><label class="sr-only" for="ir">Invite role</label><select id="ir" style="max-width:150px">
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
+      <b>Create company invite</b><p class="muted small" style="margin:5px 0 10px">Send the link or code to the staff member. They can choose “Join an existing business” during sign-up. The server assigns exactly this role when the invite is accepted.</p>
+      <div class="row" style="margin-top:10px"><label class="sr-only" for="ir">Invite role</label><select id="ir" style="max-width:150px">
         ${['manager','staff','frontdesk','bookkeeper'].map(r=>`<option value="${r}">${ROLE_LABELS[r]}</option>`).join('')}</select>
       <label class="sr-only" for="ie">Invite email (optional)</label><input id="ie" type="email" placeholder="email (optional, for your records)">
       <button class="btn sm" id="igo">Create invite</button></div>
@@ -18174,9 +18478,9 @@ async function settingsPage(){
       const explicitCount=s.module_perms&&typeof s.module_perms==='object'?Object.keys(s.module_perms).length:0;
       const modPill=s.role==='owner'?'':(s.module_perms===null?'<span class="pill on">Inherits enabled modules</span>':`<span class="pill off">${explicitCount} explicit module${explicitCount===1?'':'s'}</span>`);
       const accessPill=s.user_id?'<span class="pill ok">App access active</span>':'<span class="pill off">No app access</span>';
-      return `<div style="padding:6px 0;border-bottom:1px solid var(--line)">
+      return `<div class="team-member-card">
         <div class="row">
-          <b data-merchant-content>${esc(s.full_name||'Member')}</b><span class="pill ${s.role==='owner'?'ok':'off'}">${esc(ROLE_LABELS[s.role]||s.role)}</span>
+          <span class="team-member-main"><b data-merchant-content>${esc(s.full_name||'Member')}</b></span><span class="pill ${s.role==='owner'?'ok':'off'}">${esc(ROLE_LABELS[s.role]||s.role)}</span>
           ${accessPill}${modPill}<span class="spacer"></span>
           ${s.role!=='owner'?`<button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
           <select onchange="chRole('${s.id}',this.value)" style="max-width:140px;padding:6px 10px">
@@ -18186,10 +18490,19 @@ async function settingsPage(){
         ${(s.role!=='owner'&&openModId===s.id)?modPanelHtml(s):''}
       </div>`;
     }).join(''):'<p class="muted small">No teammates yet — invite one below.</p>';
-    $('invites').innerHTML=(inv&&inv.length)?inv.map(i=>`<div class="row small" style="padding:5px 0">
-      <span><span class="pill new">Invite pending</span> 🎟️ <b style="letter-spacing:.1em">${esc(i.code)}</b> · ${esc(ROLE_LABELS[i.role]||i.role)} ${i.email?'· '+esc(i.email):''}</span><span class="spacer"></span>
-      <button class="btn ghost sm" onclick="cpInv('${i.code}')">Copy</button>
-      <button class="btn ghost sm" onclick="rvInv('${i.id}')">Revoke</button></div>`).join('')
+    $('invites').innerHTML=(inv&&inv.length)?inv.map(i=>{
+      const code=normalizeCompanyInviteCodeV151(i.code)||i.code;
+      const link=staffInviteLinkV151(code);
+      return `<article class="staff-invite-card">
+        <div class="row"><div class="staff-invite-main"><span class="pill new">Invite pending</span> <span class="staff-invite-code">${esc(code)}</span></div><span class="spacer"></span><span class="pill off">${esc(ROLE_LABELS[i.role]||i.role)}</span></div>
+        <div class="staff-invite-meta"><span>Role offered: ${esc(ROLE_LABELS[i.role]||i.role)}</span>${i.email?`<span>Restricted email: ${esc(i.email)}</span>`:'<span>Restricted email: any authenticated user with this invite</span>'}<span>Invite link opens the staff join flow directly.</span></div>
+        <div class="staff-invite-actions">
+          <button class="btn ghost sm" onclick="cpInv('${esc(code)}')">Copy code</button>
+          <button class="btn ghost sm" onclick="cpInvLink('${esc(code)}')">Copy invite link</button>
+          <button class="btn ghost sm" onclick="rvInv('${i.id}')">Revoke</button>
+        </div>
+      </article>`;
+    }).join('')
       :'<p class="muted small">No pending invites.</p>';
     $('tplList').innerHTML=templates.length?templates.map(t=>`<div class="row small" style="padding:4px 0">
       <span>📋 <b>${esc(t.name)}</b></span><span class="spacer"></span><span class="muted small">${(t.modules||[]).length} module${(t.modules||[]).length===1?'':'s'}</span></div>`).join('')
@@ -18208,6 +18521,7 @@ async function settingsPage(){
   };
   window.rmStaff=async(id)=>{const removedUserId=teamRowsById.get(id)?.user_id||'';const {error}=await sb.from('staff').delete().eq('id',id);if(error)return fail(error);invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:removedUserId});toast('Removed');await loadTeam();};
   window.cpInv=async(c)=>copyTextToClipboard(c,{success:'Code copied — send it to your teammate'});
+  window.cpInvLink=async(c)=>copyTextToClipboard(staffInviteLinkV151(c),{success:'Invite link copied — send it to your teammate'});
   window.rvInv=async(id)=>{await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);toast('Invite revoked');loadTeam();};
   window.toggleModPanel=(staffId)=>{openModId=(openModId===staffId)?null:staffId;loadTeam();};
   window.setModulePermissionV74=(staffId,module,value)=>{
@@ -18279,8 +18593,8 @@ async function settingsPage(){
   $('igo').onclick=async()=>{
     const {data,error}=await sb.rpc('create_invite',{p_business:S.biz.id,p_role:$('ir').value,p_email:$('ie').value||null});
     if(error) return fail(error);
-    await copyTextToClipboard(data.code,{success:workspaceTemplateTextV97('inviteCreated',{code:data.code}),
-      failure:'Invite created, but copy was blocked. Copy the code from Pending invites.'});loadTeam();
+    await copyTextToClipboard(staffInviteLinkV151(data.code),{success:`Invite created — link copied for ${esc(ROLE_LABELS[$('ir').value]||$('ir').value)}`,
+      failure:'Invite created, but copy was blocked. Copy the link or code from Pending invites.'});loadTeam();
   };
   await loadTemplates();
   loadTeam();
