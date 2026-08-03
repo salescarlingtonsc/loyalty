@@ -148,6 +148,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .ux154-section-toggle:hover{background:#FBFAF8}.ux154-section-toggle:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}
 .ux154-collapsible-body[hidden]{display:none!important}
 .understand-business-panel{margin-top:18px}.understand-business-panel .v150-section-title{margin-bottom:0}
+.reporting-scope-control{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.reporting-scope-control select{min-height:42px}
+.reporting-scope-branches{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.reporting-scope-branches label{display:inline-flex;align-items:center;gap:5px;min-height:36px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;font-size:12px;font-weight:700}
+.reporting-scope-branches input{width:auto;min-height:auto}
+.scope-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#F7F1EA;border:1px solid var(--line);padding:5px 9px;font-size:11px;font-weight:750;color:var(--muted)}
 .dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(4,minmax(150px,1fr))}
 .dashboard-charts.v150-understand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:18px 22px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:flex-start}
@@ -207,6 +213,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .retention-audience-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:15px;display:grid;gap:8px;min-width:0}
 .retention-audience-card b{font-size:1.45rem}.retention-audience-card h3{font-size:.98rem;margin:0}.retention-audience-card p{margin:0;line-height:1.45}.retention-audience-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .campaign-prep-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}.campaign-prep-panel{border:1px solid var(--line);border-radius:16px;background:#FBFAF8;padding:13px}.campaign-prep-panel h3{font-size:.98rem;margin:0 0 8px}.campaign-prep-panel p{margin:0 0 6px;line-height:1.45}.campaign-prep-warning{border-left:4px solid var(--coral);background:#FFF7F4;border-radius:14px;padding:12px;margin-top:12px}
+.promotion-scope-box{border:1px solid var(--line);border-radius:16px;background:#FBFAF8;padding:12px;margin-top:12px}
+.promotion-scope-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.promotion-scope-options label{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.35}
+.promotion-scope-options input{width:auto;min-height:auto;margin-top:2px}.promotion-scope-options b{display:block;font-size:13px}.promotion-branch-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.promotion-branch-list label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:7px 10px;font-size:12px;font-weight:700}
 .sortable-th{background:transparent;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0}
 .till-found-card{background:linear-gradient(135deg,#F0FFF7,#FFFDFC);border:1px solid #CDEADA!important}
 .choice-button{border:1px solid var(--control-border);background:#fff;border-radius:18px;padding:14px;text-align:left;min-height:58px;box-shadow:var(--shadow);transition:background .16s var(--ease),border-color .16s var(--ease),transform .18s var(--spring)}
@@ -4813,7 +4824,7 @@ async function renderCustomerWallet(businessSlug=null){
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_effective_tier_v143',{p_business:businessId}):unavailableBusinessId(),
-    businessId?sb.rpc('customer_get_promotions_v104',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
+    businessId?sb.rpc('customer_get_promotions_v155',{p_business:businessId,p_branch:selectedBranchId||null,p_locale:'en'}):unavailableBusinessId(),
     promotionPromptRequest
   ]);
   if(!isWalletCurrent())return;
@@ -7954,6 +7965,91 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   });
   onChange(branches.find(branch=>branch.id===selectedBranchId)||null);
 }
+let reportingScopeV155={mode:'current',branchIds:[]};
+function reportingOperationalBranchIdV155(branches=[]){
+  if(selectedBranchId&&branches.some(branch=>branch.id===selectedBranchId))return selectedBranchId;
+  return branches[0]?.id||null;
+}
+function normaliseReportingScopeV155({branches=[]}={}){
+  const authorisedIds=new Set((branches||[]).map(branch=>branch.id));
+  reportingScopeV155={
+    mode:['current','selected','all'].includes(reportingScopeV155?.mode)?reportingScopeV155.mode:'current',
+    branchIds:[...new Set(reportingScopeV155?.branchIds||[])].filter(id=>authorisedIds.has(id))
+  };
+  if(reportingScopeV155.mode==='selected'&&!reportingScopeV155.branchIds.length){
+    const fallback=reportingOperationalBranchIdV155(branches);
+    reportingScopeV155={mode:'current',branchIds:fallback?[fallback]:[]};
+  }
+  return reportingScopeV155;
+}
+function currentReportingScopePayloadV155(branches=[]){
+  const scope=normaliseReportingScopeV155({branches});
+  return {
+    p_scope_mode:scope.mode,
+    p_branch_ids:scope.mode==='selected'?scope.branchIds:[],
+    p_operational_branch:reportingOperationalBranchIdV155(branches)
+  };
+}
+function reportingScopeLabelV155(branches=[]){
+  const scope=normaliseReportingScopeV155({branches});
+  const byId=new Map((branches||[]).map(branch=>[branch.id,branch.name||'Branch']));
+  if(scope.mode==='all')return branches.length>1?'All accessible branches':(branches[0]?.name||'All accessible branches');
+  if(scope.mode==='selected'){
+    const names=scope.branchIds.map(id=>byId.get(id)).filter(Boolean);
+    if(names.length>2)return `${names.slice(0,2).join(' + ')} + ${names.length-2} more`;
+    return names.join(' + ')||'Selected branches';
+  }
+  return byId.get(reportingOperationalBranchIdV155(branches))||'Current branch';
+}
+function campaignScopeLabelV155(branches=[]){
+  return reportingScopeLabelV155(branches);
+}
+async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targetId='reportingScopeWrap'){
+  const wrap=$(targetId);
+  if(!wrap){onChange?.();return}
+  let branches=[];
+  try{({branches}=await visibleBranchesForCurrentUser())}
+  catch(error){
+    console.error(error);
+    if(isCurrent())wrap.innerHTML=`<span class="err small">Reporting scope unavailable.</span> <button type="button" class="btn ghost sm" id="${targetId}Retry">Retry</button>`;
+    const retry=$(`${targetId}Retry`);if(retry)retry.onclick=()=>renderReportingScopeSelectorV155(onChange,isCurrent,targetId);
+    return;
+  }
+  if(!isCurrent())return;
+  normaliseReportingScopeV155({branches});
+  const scope=reportingScopeV155;
+  const modeOptions=`<option value="current">Current branch</option>${branches.length>1?'<option value="selected">Selected branches</option><option value="all">All branches</option>':'<option value="all">All accessible branches</option>'}`;
+  wrap.innerHTML=`<div class="reporting-scope-control" data-reporting-scope-v155>
+    <label class="sr-only" for="${targetId}Mode">Reporting scope</label>
+    <select id="${targetId}Mode" class="qbtn" aria-label="Reporting scope">${modeOptions}</select>
+    <div class="reporting-scope-branches" id="${targetId}Branches" aria-label="Selected reporting branches"></div>
+    <span class="scope-pill">${esc(reportingScopeLabelV155(branches))}</span>
+  </div>`;
+  const mode=$(`${targetId}Mode`),branchHost=$(`${targetId}Branches`);
+  mode.value=scope.mode;
+  const renderBranches=()=>{
+    if(!branchHost)return;
+    branchHost.innerHTML=reportingScopeV155.mode==='selected'
+      ?branches.map(branch=>`<label><input type="checkbox" value="${esc(branch.id)}" ${reportingScopeV155.branchIds.includes(branch.id)?'checked':''}> ${esc(branch.name||'Branch')}</label>`).join('')
+      :'';
+    branchHost.querySelectorAll('input[type="checkbox"]').forEach(input=>input.onchange=()=>{
+      reportingScopeV155.branchIds=[...branchHost.querySelectorAll('input[type="checkbox"]:checked')].map(el=>el.value);
+      normaliseReportingScopeV155({branches});
+      renderReportingScopeSelectorV155(onChange,isCurrent,targetId);
+      onChange?.();
+    });
+  };
+  renderBranches();
+  mode.onchange=()=>{
+    reportingScopeV155.mode=mode.value;
+    if(reportingScopeV155.mode==='selected'&&!reportingScopeV155.branchIds.length){
+      const op=reportingOperationalBranchIdV155(branches);reportingScopeV155.branchIds=op?[op]:[];
+    }
+    normaliseReportingScopeV155({branches});
+    renderReportingScopeSelectorV155(onChange,isCurrent,targetId);
+    onChange?.();
+  };
+}
 
 /* ---------- dashboard ---------- */
 function wireLocalCollapseV154(buttonId,bodyId,storageKey,{openText='Minimise',closedText='Expand'}={}){
@@ -7978,7 +8074,7 @@ async function dashboard(){
     <header class="v150-titlebar">
       <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
       <div class="v150-title-actions dashboard-range">
-        <span class="dashboard-mobile-branch" id="dashboardMobileBranchWrap" aria-label="Dashboard mobile branch"><span class="muted small">Loading branches…</span></span>
+        <span id="dashboardReportingScopeWrap" aria-label="Dashboard reporting scope"><span class="muted small">Loading reporting scope…</span></span>
         <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
         <span class="dashboard-date-pair"><label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}"><button class="btn sm" id="apply">Apply</button></span>
       </div>
@@ -8045,7 +8141,7 @@ async function dashboard(){
   async function load(){
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
-    const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value,branchId=selectedBranchId||null;
+    const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value;
     const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights');
     const showLoadError=(message,retryId)=>{
       if(!status)return;
@@ -8062,12 +8158,17 @@ async function dashboard(){
     if(charts)charts.innerHTML=['Busiest days','Revenue over time','Age groups','Recorded gender'].map(title=>CUI.chartSkeleton({title})).join('');
     kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');insights?.setAttribute('aria-busy','true');
     const previousRange=previousEquivalentRangeV153(from,to);
+    let scopeBranches=[];
+    try{({branches:scopeBranches}=await visibleBranchesForCurrentUser())}
+    catch(error){if(isCurrent())showLoadError('Reporting scope could not be loaded.','dashboardReportRetry');return}
+    const scopePayload=currentReportingScopePayloadV155(scopeBranches);
+    const scopeLabel=reportingScopeLabelV155(scopeBranches);
     let response,previousResponse={data:null,error:null},inactiveResponse={data:null,error:null},inactive60Response={data:null,error:null};
     try{[response,previousResponse,inactiveResponse,inactive60Response]=await Promise.all([
-      sb.rpc('get_dashboard_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:branchId}),
-      sb.rpc('get_dashboard_summary',{p_business:S.biz.id,p_from:previousRange.previousFrom,p_to:previousRange.previousTo,p_branch:branchId}),
-      canReadModule('clients')?sb.rpc('staff_list_customers_v129',{p_business:S.biz.id,p_search:null,p_inactive_days:30,p_limit:1,p_offset:0}):Promise.resolve({data:null,error:null}),
-      canReadModule('clients')?sb.rpc('staff_list_customers_v129',{p_business:S.biz.id,p_search:null,p_inactive_days:60,p_limit:1,p_offset:0}):Promise.resolve({data:null,error:null})
+      sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:from,p_to:to,...scopePayload}),
+      sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:previousRange.previousFrom,p_to:previousRange.previousTo,...scopePayload}),
+      canReadModule('clients')?sb.rpc('staff_list_customers_v155',{p_business:S.biz.id,p_search:null,p_inactive_bucket:'30_59',p_limit:1,p_offset:0,...scopePayload}):Promise.resolve({data:null,error:null}),
+      canReadModule('clients')?sb.rpc('preview_campaign_audience_v155',{p_business:S.biz.id,p_audience_key:'inactive_60_plus',...scopePayload}):Promise.resolve({data:null,error:null})
     ])}
     catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
     if(!isCurrent())return;
@@ -8082,26 +8183,28 @@ async function dashboard(){
       return;
     }
     const customerMetricsAvailable=d.availability?.clients!==false;
-    const branchSelect=$('dashboardBranchWrap')?.querySelector('select')||$('dashboardMobileBranchWrap')?.querySelector('select');
-    appliedDashboardScopeV141={from,to,branchId,branchName:branchId?(branchSelect?.selectedOptions?.[0]?.textContent||'Selected branch'):'All permitted branches'};
+    appliedDashboardScopeV141={from,to,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:scopeLabel};
     if(!kpis||!charts)return;
     status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const metrics=[
-      {key:'visits',value:String(d.visits||0),hint:'Valid original visits; reversed visits excluded'},
-      {key:'revenue',value:money(d.revenue_cents||0),hint:'Net sales in this period'},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'Joined during the selected period.'}
+      {key:'visits',value:String(d.visits||0),hint:`Valid original visits · ${scopeLabel}`},
+      {key:'revenue',value:money(d.revenue_cents||0),hint:`Net sales · ${scopeLabel}`},
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:d.metric_labels?.new_customers||'Joined during the selected period.'}
     ].filter(Boolean);
-    if(customerMetricsAvailable&&canReadModule('clients'))metrics.push({key:'inactive',value:inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0),hint:'Business-wide · 30+ days or never visited'});
+    if(customerMetricsAvailable&&canReadModule('clients')){
+      const inactiveTotal=inactiveResponse.error||inactive60Response.error?'Unavailable':String((Number(inactiveResponse.data?.total)||0)+(Number(inactive60Response.data?.matching_customers)||0));
+      metrics.push({key:'inactive',value:inactiveTotal,hint:`Inactive in this branch scope · ${scopeLabel}`});
+    }
     kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="v">${esc(metric.value)}</span><span class="metric-hint">${esc(metric.hint)}</span></button>`}).join('');
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
     });
     if(insights){
-      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?0:Number(inactive60Response.data?.total)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId,branchName:appliedDashboardScopeV141.branchName});
+      insights.innerHTML=buildMerchantInsightsV153({current:d,previous:previousResponse.data||{},inactive60Total:inactive60Response.error?0:Number(inactive60Response.data?.matching_customers)||0,from,to,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo,branchId:scopePayload.p_scope_mode==='current'?scopePayload.p_operational_branch:null,branchName:appliedDashboardScopeV141.branchName});
       insights.setAttribute('aria-busy','false');
       insights.querySelectorAll('[data-insight-inactive]').forEach(link=>link.addEventListener('click',()=>{pendingCustomerInactivity=Number(link.dataset.insightInactive)||60}));
-      insights.querySelectorAll('[data-campaign-prep-v153]').forEach(button=>button.addEventListener('click',()=>openCampaignPrepV153({audienceKey:button.dataset.audienceKey,audienceLabel:button.dataset.audienceLabel,definition:'Customers with no valid visit for at least 60 complete Singapore days.',count:Number(button.dataset.audienceCount)||0,branchLabel:'Business-wide customer inactivity'})));
+      insights.querySelectorAll('[data-campaign-prep-v153]').forEach(button=>button.addEventListener('click',()=>openCampaignPrepV153({audienceKey:button.dataset.audienceKey,audienceLabel:button.dataset.audienceLabel,definition:'Customers with no valid visit for at least 60 complete Singapore days in the selected reporting scope.',count:Number(button.dataset.audienceCount)||0,branchLabel:scopeLabel})));
     }
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const revenueDays=d.revenue_by_day||[],dk=revenueDays.map(x=>x.day);
@@ -8133,7 +8236,7 @@ async function dashboard(){
     if(customerMetricsAvailable)C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     if(customerMetricsAvailable)C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
   }
-  refreshBranchFilter(load,isDashboardCurrent,['dashboardBranchWrap','dashboardMobileBranchWrap']);
+  renderReportingScopeSelectorV155(load,isDashboardCurrent,'dashboardReportingScopeWrap');
 }
 
 /* ---------- customers ---------- */
@@ -8292,7 +8395,7 @@ async function clientsPage(){
       </div>
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days / never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Never-visited customers appear in 90+ because they have no valid visit on record.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="min-width:min(100%,280px)"><label>Reporting scope</label><div id="clientReportingScopeWrap"><span class="muted small">Loading reporting scope…</span></div></div><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -8312,17 +8415,24 @@ async function clientsPage(){
   pendingCustomerSearch='';
   if(clientSearch&&$('clientSearch'))$('clientSearch').value=clientSearch;
   if(clientInactiveBucket&&$('clientInactivity'))$('clientInactivity').value=String(clientInactiveBucket);
-  const customerDirectoryPage=(search,inactiveDays,offset)=>sb.rpc('staff_list_customers_v129',{
-    p_business:S.biz.id,p_search:search||null,p_inactive_days:inactiveDays,
-    p_limit:CLIENT_PAGE_SIZE,p_offset:offset
-  });
+  let currentCustomerScopeBranches=[];
+  const customerDirectoryPage=async(search,inactiveBucket,offset)=>{
+    const {branches}=await visibleBranchesForCurrentUser();
+    currentCustomerScopeBranches=branches||[];
+    return sb.rpc('staff_list_customers_v155',{
+      p_business:S.biz.id,p_search:search||null,p_inactive_bucket:inactiveBucket||null,
+      p_limit:CLIENT_PAGE_SIZE,p_offset:offset,
+      ...currentReportingScopePayloadV155(branches)
+    });
+  };
   const customerBucketMatch=(c,bucket)=>{
     if(!bucket)return true;
     const never=!c.last_visit_at;
     const days=Number(c.days_since_last_visit);
     if(bucket==='30_59')return !never&&days>=30&&days<=59;
     if(bucket==='60_89')return !never&&days>=60&&days<=89;
-    if(bucket==='90_plus')return never||days>=90;
+    if(bucket==='90_plus')return !never&&days>=90;
+    if(bucket==='never')return never;
     return true;
   };
   const sortCustomersV150=(rows,sortKey)=>{
@@ -8365,7 +8475,7 @@ async function clientsPage(){
     if(customers.length<Number(total||0))throw new Error('Customer export is larger than the supported directory range.');
     return {customers,loyaltyAvailable:loyaltyAvailable===true};
   };
-  const exportRetentionBucketV154=(key,bucket,loyaltyAvailable)=>{
+  const exportRetentionBucketV155=(key,bucket,loyaltyAvailable)=>{
     if(!bucket)return;
     const rows=[['name','phone','last_visit','member_since','points','credit','consent'],
       ...bucket.customers.map(customer=>[customer.full_name,customer.phone||'',customer.last_visit_at||'Never visited',customer.created_at||'',loyaltyAvailable?Number(customer.points||0):'unavailable',loyaltyAvailable?(Number(customer.balance_cents||0)/100).toFixed(2):'unavailable',customer.marketing_consent?'yes':'no'])];
@@ -8380,8 +8490,8 @@ async function clientsPage(){
     const count=bucket.customers.length,consentEligible=bucket.customers.filter(customer=>customer.marketing_consent).length;
     host.hidden=false;
     host.innerHTML=`<div><b>${esc(bucket.label)} · ${count} ${count===1?'customer':'customers'}</b><p class="muted small">${esc(bucket.definition)}</p></div><div class="row"><button type="button" class="btn ghost sm" id="clientAudienceExport">Export this audience</button><button type="button" class="btn ghost sm" id="clientAudienceCampaign">Prepare campaign</button><button type="button" class="btn ghost sm" id="clientAudienceClear">Clear filter</button></div>`;
-    $('clientAudienceExport').onclick=()=>exportRetentionBucketV154(clientInactiveBucket,bucket,loyaltyAvailable);
-    $('clientAudienceCampaign').onclick=()=>openCampaignPrepV153({audienceKey:clientInactiveBucket,audienceLabel:bucket.label,definition:bucket.definition,count,consentEligible,branchLabel:'Business-wide customer inactivity'});
+    $('clientAudienceExport').onclick=()=>exportRetentionBucketV155(clientInactiveBucket,bucket,loyaltyAvailable);
+    $('clientAudienceCampaign').onclick=()=>openCampaignPrepV153({audienceKey:clientInactiveBucket,audienceLabel:bucket.label,definition:bucket.definition,count,consentEligible,branchLabel:reportingScopeLabelV155(currentCustomerScopeBranches)});
     $('clientAudienceClear').onclick=()=>{clientInactiveBucket=null;$('clientInactivity').value='';clientPage=0;load();refreshInactiveCards()};
   };
   const runClientSearch=()=>{clientSearch=$('clientSearch').value.trim();clientPage=0;load()};
@@ -8457,7 +8567,7 @@ async function clientsPage(){
     if(!isCurrent())return;
     if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
-    if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveBucket?'No customers in this inactive group':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveBucket?'Choose another inactive group or All customers. Never-visited customers are included only in 90+.':'Customers will appear here after joining your loyalty programme or making a purchase. You can also add a customer manually from the button above.'});return}
+    if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveBucket?'No customers in this inactive group':'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveBucket?'Choose another inactivity group, Never visited, or All customers.':'Customers will appear here after joining your loyalty programme or making a purchase. You can also add a customer manually from the button above.'});return}
     const loyaltyAvailable=result?.loyalty_available===true;
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     const sortGlyph='↕';
@@ -8551,6 +8661,7 @@ async function clientsPage(){
   }
   renderFeedbackChips();
   loadFeedbackQueue();
+  renderReportingScopeSelectorV155(()=>{clientPage=0;refreshInactiveCards();load()},isCustomersCurrent,'clientReportingScopeWrap');
   refreshInactiveCards();
   load();
 }
@@ -11961,7 +12072,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     ?sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})
     :Promise.resolve({data:null,error:null});
   const promotionsRequest=S.myRole==='owner'&&canRewards
-    ?sb.rpc('business_get_promotion_editor_v104',{p_business:S.biz.id})
+    ?sb.rpc('business_get_promotion_editor_v155',{p_business:S.biz.id})
     :Promise.resolve({data:{items:[],entitlement:null},error:null});
   const [{data:business,error:businessError},{data:loyalty,error:loyaltyError},
     {data:rewards,error:rewardsError},{data:products,error:productsError},
@@ -12136,7 +12247,8 @@ function promotionEditorItemV104(raw={}){
     mediaVersion:Number(raw.media_version||media.version||0),
     imageCustomerVisible:raw.image_customer_visible===true||
       media.customer_visible===true,
-    mediaVersionsByScope:raw.media_versions_by_scope||{}
+    mediaVersionsByScope:raw.media_versions_by_scope||{},
+    branchScope:raw.branch_scope||metadata.branch_scope||{mode:'all',branch_ids:[],branch_names:[],label:'All branches'}
   };
 }
 function promotionScopeMediaV104(item={},branchId=null,{allowGlobalFallback=true}={}){
@@ -12169,7 +12281,7 @@ async function promotionsPage(selectedPromotionId=null){
   const businessId=S.biz.id,businessName=S.biz.name,businessSlug=S.biz.slug,
     businessSnapshot=Object.freeze({id:businessId,name:businessName,slug:businessSlug});
   host.innerHTML=CUI.loadingState({title:'Promotions',iconName:'loyalty'});
-  const {data,error}=await sb.rpc('business_get_promotion_editor_v104',{p_business:businessId});
+  const {data,error}=await sb.rpc('business_get_promotion_editor_v155',{p_business:businessId});
   if(!host.isConnected||S.biz?.id!==businessId)return;
   if(error){
     host.innerHTML=CUI.errorState({title:'Promotions unavailable',
@@ -12179,12 +12291,20 @@ async function promotionsPage(selectedPromotionId=null){
     return;
   }
   const items=(Array.isArray(data?.items)?data.items:[]).map(promotionEditorItemV104);
+  let promotionBranches=[];
+  try{({branches:promotionBranches}=await visibleBranchesForCurrentUser())}
+  catch(error){promotionBranches=[]}
   const entitlement=data?.entitlement||{},max=Math.max(0,Number(entitlement.max_published_offers??10)),
     published=Math.max(0,Number(entitlement.published_count||0)),
     quotaUsed=Math.max(0,Number(entitlement.quota_used??published)),
     canPublishNew=entitlement.can_publish_new!==false;
   const selected=items.find(item=>item.id===selectedPromotionId)||null;
   const today=promotionDateInputV104(new Date());
+  const selectedScope=selected?.branchScope||{mode:'all',branch_ids:[],branch_names:[],label:'All branches'};
+  const operationalPromotionBranch=reportingOperationalBranchIdV155(promotionBranches);
+  const selectedScopeBranchIds=(selectedScope.branch_ids||selectedScope.branchIds||[]).filter(id=>promotionBranches.some(branch=>branch.id===id));
+  const initialScopeMode=selectedScope.mode==='selected'&&selectedScopeBranchIds.length===1&&selectedScopeBranchIds[0]===operationalPromotionBranch?'current':(selectedScope.mode==='selected'?'selected':'all');
+  const promotionScopeModeV155=initialScopeMode;
   const initial={
     id:selected?.id||'',branch_id:null,name:selected?.name||'',
     tagline:selected?.tagline||'',description:selected?.description||'',
@@ -12198,7 +12318,9 @@ async function promotionsPage(selectedPromotionId=null){
     active:selected?.active===true,contentVersion:selected?.contentVersion||0,
     copyVersion:selected?.copyVersion||0,mediaVersion:selected?.mediaVersion||0,
     imageCustomerVisible:selected?.imageCustomerVisible===true,
-    mediaVersionsByScope:selected?.mediaVersionsByScope||{}
+    mediaVersionsByScope:selected?.mediaVersionsByScope||{},
+    scopeMode:promotionScopeModeV155,
+    scopeBranchIds:selectedScope.mode==='selected'?selectedScopeBranchIds:[]
   };
   const canPublishThis=initial.active||Boolean(initial.metadata?.published_once_at)||canPublishNew,
     quotaProgress=max?Math.min(100,Math.round((quotaUsed/max)*100)):100;
@@ -12220,7 +12342,16 @@ async function promotionsPage(selectedPromotionId=null){
       <label for="promotionOccasion">Occasion or reason (optional)</label><input id="promotionOccasion" maxlength="80" value="${esc(initial.occasion)}" placeholder="e.g. National Day">
       <div class="split"><div><label for="promotionStart">Starts</label><input id="promotionStart" type="date" value="${esc(promotionDateInputV104(initial.starts_at)||today)}"></div>
         <div><label for="promotionEnd">Ends</label><input id="promotionEnd" type="date" value="${esc(promotionDateInputV104(initial.ends_at))}"></div></div>
-      <p class="muted small" style="margin-top:12px">This offer applies across the company, so every linked customer sees the same published promotion.</p>
+      <div class="promotion-scope-box">
+        <label>Promotion availability</label>
+        <div class="promotion-scope-options" role="radiogroup" aria-label="Promotion availability">
+          <label><input type="radio" name="promotionScopeMode" value="all" ${initial.scopeMode==='all'?'checked':''}> <span><b>All branches</b>Available at all current and future branches in this business.</span></label>
+          <label><input type="radio" name="promotionScopeMode" value="current" ${initial.scopeMode==='current'?'checked':''} ${operationalPromotionBranch?'':'disabled'}> <span><b>Current branch</b>Available only at ${esc(promotionBranches.find(branch=>branch.id===operationalPromotionBranch)?.name||'the current branch')}.</span></label>
+          <label><input type="radio" name="promotionScopeMode" value="selected" ${initial.scopeMode==='selected'?'checked':''} ${promotionBranches.length?'':'disabled'}> <span><b>Selected branches</b>Choose one or more branches.</span></label>
+        </div>
+        <div class="promotion-branch-list" id="promotionBranchList" aria-label="Selected promotion branches"></div>
+        <p class="muted small" id="promotionScopeHelp" role="status" style="margin-top:8px"></p>
+      </div>
       <div class="row" style="margin-top:14px"><button type="button" class="btn ghost" id="promotionPolish">${CUI.icon('loyalty',{size:17})}<span>Polish wording — free</span></button><p class="muted small">Uses verified templates; no API credits.</p></div>
       <label for="promotionName">Headline</label><input id="promotionName" maxlength="70" value="${esc(initial.name)}">
       <label for="promotionMessage">Customer message</label><textarea id="promotionMessage" maxlength="600" rows="4">${esc(initial.description||initial.tagline)}</textarea>
@@ -12240,15 +12371,39 @@ async function promotionsPage(selectedPromotionId=null){
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
-      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${item.active?'Published':'Draft'}${item.ends_at?` · ends ${esc(promotionDateTextV104(item.ends_at))}`:''}</p></div><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${item.active?'Published':'Draft'}${item.ends_at?` · ends ${esc(promotionDateTextV104(item.ends_at))}`:''}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
   </div>`;
   localizeWorkspaceSubtreeV97(host);
   const pageRoot=host.querySelector('.promotion-studio'),
     isPromotionCurrent=()=>S.biz?.id===businessId&&promotionPageCurrentV104(pageRoot,host);
   const field=id=>$(id);
+  function selectedPromotionScopeV155(){
+    const mode=pageRoot.querySelector('input[name="promotionScopeMode"]:checked')?.value||'all';
+    if(mode==='current')return {mode:'selected',branchIds:operationalPromotionBranch?[operationalPromotionBranch]:[]};
+    if(mode==='selected'){
+      return {mode:'selected',branchIds:[...pageRoot.querySelectorAll('#promotionBranchList input[type="checkbox"]:checked')].map(input=>input.value)};
+    }
+    return {mode:'all',branchIds:[]};
+  }
+  function renderPromotionBranchScopeV155(){
+    const checkedMode=pageRoot.querySelector('input[name="promotionScopeMode"]:checked')?.value||'all';
+    const list=field('promotionBranchList'),help=field('promotionScopeHelp');
+    if(!list||!help)return;
+    list.innerHTML=checkedMode==='selected'
+      ?promotionBranches.map(branch=>`<label><input type="checkbox" value="${esc(branch.id)}" ${initial.scopeBranchIds.includes(branch.id)?'checked':''}> ${esc(branch.name||'Branch')}</label>`).join('')
+      :'';
+    help.textContent=checkedMode==='all'
+      ?'Available at all current and future branches in this business.'
+      :checkedMode==='current'
+        ?`Available only at ${promotionBranches.find(branch=>branch.id===operationalPromotionBranch)?.name||'the current branch'}.`
+        :'Select at least one branch. The backend rejects empty or unauthorised branch selections.';
+  }
+  pageRoot.querySelectorAll('input[name="promotionScopeMode"]').forEach(input=>input.addEventListener('change',()=>{renderPromotionBranchScopeV155();updatePreview()}));
+  renderPromotionBranchScopeV155();
   let previewObjectUrl='';
   const currentDraft=()=>{
     const scopedMedia=promotionScopeMediaV104(initial,null);
+    const scope=selectedPromotionScopeV155();
     return {
       ...initial,
       name:field('promotionName').value.trim(),description:field('promotionMessage').value.trim(),
@@ -12260,7 +12415,9 @@ async function promotionsPage(selectedPromotionId=null){
         scopedMedia?.image_alt||initial.imageAlt,
       starts_at:promotionBoundaryV104(field('promotionStart').value),
       ends_at:promotionBoundaryV104(field('promotionEnd').value,{end:true}),
-      branch_id:null
+      branch_id:null,
+      scopeMode:scope.mode,
+      scopeBranchIds:scope.branchIds
     };
   };
   const updatePreview=()=>{
@@ -12345,10 +12502,10 @@ async function promotionsPage(selectedPromotionId=null){
     return promotionsPage(interruptedPromotionId);
   }
   const promotionReceiptRpcV104=Object.freeze({
-    business_create_promotion_draft_v104:args=>
-      sb.rpc('business_create_promotion_draft_v104',args),
-    business_finalize_promotion_v104:args=>
-      sb.rpc('business_finalize_promotion_v104',args)
+    business_create_promotion_draft_v155:args=>
+      sb.rpc('business_create_promotion_draft_v155',args),
+    business_finalize_promotion_v155:args=>
+      sb.rpc('business_finalize_promotion_v155',args)
   });
   const safeRpc=async(name,args)=>{
     try{
@@ -12365,7 +12522,9 @@ async function promotionsPage(selectedPromotionId=null){
   };
   const createDraftArgs=draft=>({
     p_business:businessId,p_promotion_id:workingPromotionId,
-    p_attempt_key:createAttemptKey,p_branch:draft.branch_id,
+    p_attempt_key:createAttemptKey,
+    p_scope_mode:draft.scopeMode,p_branch_ids:draft.scopeBranchIds,
+    p_operational_branch:operationalPromotionBranch,
     p_name:draft.name,p_tagline:null,p_description:draft.description,
     p_terms:draft.terms||null,p_starts_at:draft.starts_at,p_ends_at:draft.ends_at,
     p_display_order:Number(initial.display_order??100),p_cta_kind:draft.ctaKind,
@@ -12387,7 +12546,7 @@ async function promotionsPage(selectedPromotionId=null){
     };
     writeSessionValue(createPendingStorageKey,pendingCreate);
     history.replaceState(null,'',`${location.pathname}${location.search}#/promotions/${encodeURIComponent(workingPromotionId)}`);
-    const result=await rpcWithReceiptReplay('business_create_promotion_draft_v104',args);
+    const result=await rpcWithReceiptReplay('business_create_promotion_draft_v155',args);
     if(result.error){
       createOutcomeUnconfirmed=promotionRpcErrorIsAmbiguousV104(result.error);
       if(!createOutcomeUnconfirmed){
@@ -12406,7 +12565,9 @@ async function promotionsPage(selectedPromotionId=null){
     return Number(exact?.version||exact?.media_version||exact?.target_media_version||0);
   };
   const finalizeArgs=({draft,publish,promotion,fileInfo,attemptKey})=>({
-    p_business:businessId,p_promotion_id:promotion.id,p_branch:draft.branch_id,
+    p_business:businessId,p_promotion_id:promotion.id,
+    p_scope_mode:draft.scopeMode,p_branch_ids:draft.scopeBranchIds,
+    p_operational_branch:operationalPromotionBranch,
     p_name:draft.name,p_tagline:null,p_description:draft.description,
     p_terms:draft.terms||null,p_starts_at:draft.starts_at,p_ends_at:draft.ends_at,
     p_display_order:Number(initial.display_order??100),p_cta_kind:draft.ctaKind,
@@ -12438,7 +12599,7 @@ async function promotionsPage(selectedPromotionId=null){
     });
   };
   const runPendingFinalize=async pending=>{
-    const result=await rpcWithReceiptReplay('business_finalize_promotion_v104',pending.args);
+    const result=await rpcWithReceiptReplay('business_finalize_promotion_v155',pending.args);
     if(!result.error){
       await clearFinalizedObjects(result.data,pending);
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);

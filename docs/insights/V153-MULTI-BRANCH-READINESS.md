@@ -2,6 +2,15 @@
 
 Date: 2026-08-03
 
+> Superseded for the implemented foundation by
+> `docs/insights/V155-MULTI-BRANCH-FOUNDATION.md`. V153 recorded the
+> pre-foundation readiness score of 58 / 100. V155 adds the canonical
+> reporting-scope resolver, selected/all branch reporting foundations,
+> selected-branch promotion availability, the server-side promotion branch guard,
+> and branch-scoped preparation-only campaign audiences, raising the documented
+> readiness to 74 / 100. Branch comparison UI, branch groups/regions, package
+> portability, and live push delivery remain future work.
+
 ## Overall readiness score
 
 **58 / 100**
