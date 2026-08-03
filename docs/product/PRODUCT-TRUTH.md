@@ -290,6 +290,42 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 
 ## Billing and consultant commission
 
+- Peekaa company finance is a Super Admin-only, cash-basis view. Provider-
+  confirmed paid subscription invoices are money in; open or failed invoices
+  remain outstanding and are never counted as cash. Signed billing adjustments
+  preserve every accounting event, but only refunds, chargebacks, confirmed
+  external payments, and reversals of those events affect cash. Credits, debits,
+  write-offs, and their reversals remain visible with zero cash effect.
+- Peekaa operating expenses are separate from every merchant's sales and
+  expense ledger. They are append-only SGD entries with immutable actor and
+  request identity. Corrections create a dated reversal instead of editing or
+  deleting the original expense.
+- Stripe is the authority for firm invoice documents. Only HTTPS documents on
+  Stripe-owned hosts are exposed. A paid hosted invoice is the receipt when
+  Stripe does not supply a separate charge-receipt URL; an unpaid invoice is
+  never labelled as a receipt.
+- Platform accounting uses append-only double-entry journals. Authoritative
+  billing, payment, adjustment and operating-expense sources may post once;
+  corrections reverse and, where needed, replace the original entry. Posted
+  entries and issued financial documents are not edited or deleted.
+- A void provider invoice reverses its unpaid accrual. Marking an invoice
+  uncollectible clears its unpaid receivable to bad-debt expense and does not
+  itself claim GST bad-debt relief. Partial provider payments post as cumulative
+  deltas; a later recovery reverses the applicable bad-debt or void treatment
+  before posting cash, and a later void reclassifies any prior uncollectible
+  treatment before reversing the accrual, so receivables cannot become a false
+  credit. Migration backfill replays retained processed provider events in
+  provider-object/time/rank/id order, preserving partial-payment and terminal
+  transition dates; the latest invoice projection is used only when no retained
+  processed invoice event exists. Generated invoices are restricted to
+  approved non-subscription transactions with a unique source reference that
+  cannot match a Stripe invoice or another generated invoice.
+- Accounting policy, legal identity, GST status, numbering and period locks are
+  effective-dated/governed inputs. Missing tax identity fails closed. Reports
+  and exports do not claim statutory filing, audit, XBRL, tax submission or
+  InvoiceNow transmission without separate verified integrations and required
+  officer approval.
+
 - The contracting operator is **NESTLY TECHNOLOGIES PTE. LTD.** (Singapore UEN
   **202634502E**). The monitored commercial/privacy mailbox currently supplied
   by the owner is **admin.peekaa@gmail.com**. Formal DPO designation and counsel

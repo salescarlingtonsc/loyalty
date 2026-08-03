@@ -318,6 +318,7 @@
   text-decoration-thickness:1px;text-underline-offset:3px
 }
 .platform-table-link:hover b,.platform-table-link:focus-visible b{text-decoration-thickness:2px}
+.platform-main .cui-table-wrap{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain}
 .platform-enterprise-drawer{width:min(1040px,100%)}
 .platform-enterprise-drawer .table-wrap{max-height:390px;overflow:auto}
 .platform-report-host{margin-top:18px;scroll-margin-top:86px}

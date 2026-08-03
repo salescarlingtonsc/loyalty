@@ -1047,6 +1047,18 @@
       "path": "db/migrations/20260802_nestly_v138_auth_grow_closure.sql",
       "semanticVersion": "v138",
       "proposedDeployVersion": "20260802120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v146_platform_finance.sql",
+      "semanticVersion": "v146",
+      "proposedDeployVersion": "20260803111500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v147_platform_accounting.sql",
+      "semanticVersion": "v147",
+      "proposedDeployVersion": "20260803130000"
     }
   ]
 }

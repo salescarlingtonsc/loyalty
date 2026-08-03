@@ -197,6 +197,57 @@ All automated credentials must come from a non-committed test-secret mechanism.
 | `PLAT-REFUND` | Annual invoice refunded after payment; GST and refund excluded from commission. |
 | `PLAT-STAFF-LEFT` | Consultant departed before eligibility anniversary; commission returns to company. |
 
+### `PLAT-PROSPECT-GLOW` — assisted-sales prospect persistence
+
+- Prospect: Glow Advisory Pte. Ltd., synthetic UEN `202688888G`.
+- Primary contact: Priya Nair with synthetic `@peekaa.invalid` email and a
+  synthetic Singapore mobile ending 7788.
+- Assigned consultant: Sarah; starting stage **New Lead**; tags
+  `spa, warm-referral` normalized once each.
+- Submit once, simulate a lost response after persistence, and retry with the
+  same request identity. The board and database must still contain one prospect
+  and one creation audit. Reusing the key with another company/UEN must fail
+  without mutation.
+- An unassigned Sales user cannot read or change the row; Sarah can read the
+  assigned row but receives only her configured onboarding actions.
+
+### `PLAT-FINANCE-AUG26` — Peekaa platform P&L, invoice and receipt
+
+- Reporting period: 1–31 August 2026, Singapore time, SGD.
+- Radiant Skin Studio pays one annual SGD 1,188.00 invoice with SGD 0.00 GST;
+  Harbour Kopi has one pending monthly SGD 149.00 invoice excluded from cash.
+- Northstar Fitness has one paid SGD 169.00 invoice followed by a provider-
+  confirmed SGD 20.00 partial refund; a duplicate event has zero second effect.
+- Platform expenses: SGD 280.00 software, SGD 120.00 marketing and one voided
+  SGD 45.00 duplicate software expense. The void keeps its immutable source and
+  actor evidence but contributes SGD 0.00 to the active expense total.
+- The P&L must reconcile paid cash SGD 1,357.00 less refunds SGD 20.00 less
+  active expenses SGD 400.00 to net cash SGD 937.00. Pending SGD 149.00 is
+  labelled receivable/pending and excluded from cash and net cash.
+- Paid rows expose the exact provider invoice and receipt/document action;
+  pending rows never display a receipt. Unsafe or missing provider document
+  URLs fail closed with a recoverable status, not a fabricated document.
+
+### `PLAT-BOOKS-FY26` — Peekaa automated books and controlled documents
+
+- Entity: Peekaa synthetic Singapore private company, SGD functional currency,
+  31 December FYE, explicitly **not GST-configured** until registration evidence
+  is supplied. No tax invoice or InvoiceNow transmission may be claimed while
+  that configuration is absent.
+- The `PLAT-FINANCE-AUG26` invoices, payment, refund and active SGD 400.00
+  expenses post once into balanced journals. Credit/debit/write-off accounting
+  adjustments remain non-cash while their accrual accounts still reconcile.
+- One synthetic SGD 250.00 non-subscription invoice to Meridian Wellness Pte.
+  Ltd. is issued, partially paid SGD 100.00, then corrected by an immutable SGD
+  50.00 credit note. The remaining receivable is SGD 100.00. Each issued
+  document has a unique sequential number and exact journal link.
+- Repeating an operation with the same identity returns the original document
+  and journal. Reusing that identity with changed values fails without mutation.
+  Correction creates linked reversal/replacement records; no posted row is
+  updated or deleted.
+- A locked August period rejects new/backdated posting. Super Admin may read;
+  delegated Admin, Sales, anonymous and tenant users are denied.
+
 ### `SPA-GLOW-BILLING` — launch pricing and capacity
 
 - Monthly, 1,000 profiles: SGD 149.00 per month.

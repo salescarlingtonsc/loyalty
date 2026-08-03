@@ -57,7 +57,8 @@
       'Create Checkout':'创建结账','Create Portal':'创建账单门户','Change Cadence':'更改周期','Cancel At Period End':'期末取消',
       'Mismatch':'不匹配',
       'Overview':'概览','Onboarding':'客户入驻','Onboard':'入驻','Firms':'企业','Reports':'报告',
-      'Billing':'账单','Commission payable':'应付佣金','Commission':'佣金','Sector modules':'行业模块',
+      'Billing':'账单','Cash P&L':'现金损益','P&L':'损益','Commission payable':'应付佣金','Commission':'佣金','Sector modules':'行业模块',
+      'Cash P&L unavailable':'现金损益不可用',
       'Sectors':'行业','Automation':'自动化','Automate':'自动化','Platform access':'平台权限','Platform controls':'平台控制','Access':'权限',
       'Platform':'平台','Platform console':'平台控制台','Skip to platform content':'跳至平台内容',
       'Current platform access':'当前平台权限','Back to workspace':'返回工作区','Workspace':'工作区',
@@ -105,6 +106,44 @@
       'Prospect unavailable':'潜在客户不可用','Try again.':'请重试。',
       'Sector modules':'行业模块','Loading versioned sector entitlements…':'正在加载版本化行业权限…',
       'Billing':'账单','Loading platform billing truth…':'正在加载平台账单真实数据…',
+      'Loading provider cash and operating expenses…':'正在加载支付服务商现金与营运支出…',
+      'Add expense':'新增支出','From':'开始日期','To':'结束日期','Apply':'应用',
+      'Cash P&L summary':'现金损益摘要','Money in':'现金流入','Refunds & adjustments':'退款与调整',
+      'Net expenses':'净支出','Net cash':'净现金','Outstanding invoices':'未付发票',
+      'Invoices and receipts':'发票与收据','Operating expense ledger':'营运支出台账',
+      'Invoice PDF':'发票 PDF','Invoice':'发票','Receipt':'收据','Reverse':'冲销','Reversed':'已冲销','Posted':'已入账',
+      'Reversal':'冲销记录','Awaiting Stripe document':'等待 Stripe 文件',
+      'Prospect {name} was saved. Refresh the onboarding list to display it.':'潜在客户{name}已保存。请刷新入驻列表以显示该记录。',
+      'Cash-basis platform view. Stripe-paid invoices and cash-affecting adjustments are automatic; Super Admin operating expenses are append-only and reversed, never edited.':'平台现金制视图。Stripe 已付发票及影响现金的调整会自动计入；超级管理员的营运支出只能追加及冲销，不能编辑。',
+      'Stripe supplies the invoice documents. A paid hosted invoice is the customer receipt when Stripe does not provide a separate charge receipt URL.':'发票文件由 Stripe 提供。若 Stripe 没有单独的付款收据链接，已付款的托管发票即为客户收据。',
+      'Platform invoices':'平台发票','No invoices in this period':'本期间没有发票',
+      'Paid and outstanding Stripe invoices will appear here after webhook processing.':'Stripe 已付及未付发票会在 Webhook 处理后显示于此。',
+      'Entries are immutable. Use Reverse to correct a mistake and preserve the audit trail.':'记录不可修改。请使用冲销纠正错误并保留审计轨迹。',
+      'Platform expenses':'平台支出','No operating expenses in this period':'本期间没有营运支出',
+      'Record a real platform expense to include it in net cash.':'记录实际平台支出后才会计入净现金。',
+      'Add operating expense':'新增营运支出','Record expense':'记录支出','Expense date':'支出日期',
+      'Category':'类别','Amount (SGD)':'金额（SGD）','Description':'说明',
+      'Reverse operating expense':'冲销营运支出','Record reversal':'记录冲销',
+      'Export CSV':'导出 CSV','Refunds and adjustments':'退款与调整',
+      'Every provider and reviewed adjustment remains visible. Credits, debits and write-offs are labelled non-cash and do not change net cash.':'每项服务商及经审核的调整都会保持可见。贷项、借项和坏账核销标记为非现金，不会改变净现金。','Non-cash':'非现金',
+      'Platform billing adjustments':'平台账单调整','No billing adjustments in this period':'本期间没有账单调整',
+      'Refunds, chargebacks and reviewed adjustments will appear here.':'退款、拒付及经审核的调整会显示于此。',
+      'Finance export incomplete':'财务导出不完整','More than 5,000 records exist in at least one ledger. Narrow the date range before exporting.':'至少一个台账超过 5,000 条记录。请缩小日期范围后再导出。',
+      'Debit':'借方','Credit':'贷方','Print / save PDF':'打印／另存为 PDF','Record receipt':'记录收据','Credit note':'贷项通知单','Reverse document':'冲销文件',
+      'Allow pop-ups to print this document.':'请允许弹出窗口以打印此文件。','Quantity':'数量','Amount':'金额','Subtotal':'小计','Tax':'税额','Total':'总计','Immutable record hash':'不可变记录哈希',
+      'Tax Invoice':'税务发票','Price payable includes GST':'应付价格已包含 GST','Original document':'原始文件','Transaction reference':'交易参考','GST rate':'GST 税率',
+      'Configure accounting identity':'配置会计主体资料','Save new policy version':'保存新政策版本','Effective from':'生效日期','Legal company name':'公司法定名称','Document prefix':'文件编号前缀','Registered address':'注册地址',
+      'GST status':'GST 状态','Pending review':'待审核','Not registered':'未注册','Registered':'已注册','GST registration number':'GST 注册号','GST rate (%)':'GST 税率（%）','FYE month':'财政年度结束月份','FYE day':'财政年度结束日期',
+      'Evidence reference':'证据参考','Board decision, registration record or controlled case reference':'董事会决定、注册记录或受控案例参考','Accounting policy version saved.':'会计政策版本已保存。',
+      'Supplier / payee':'供应商／收款人','Supplier UEN':'供应商 UEN','Receipt, invoice or controlled document reference':'收据、发票或受控文件参考',
+      'Create financial invoice':'创建财务发票','Issue invoice':'开具发票','Issue date':'开具日期','Due date':'到期日期','Approved transaction reference':'已批准交易参考','Unique non-subscription reference; do not enter a Stripe invoice ID.':'唯一的非订阅交易参考；请勿输入 Stripe 发票 ID。','Customer legal name':'客户法定名称','Customer UEN':'客户 UEN','Customer address':'客户地址','Line description':'项目说明','Unit amount (SGD)':'单价（SGD）',
+      'Configured GST will be applied.':'将应用已配置的 GST。','GST is not applied under the current reviewed policy.':'根据当前已审核政策，不计 GST。','Enter a valid SGD amount.':'请输入有效的 SGD 金额。','Invoice issued and posted.':'发票已开具并入账。',
+      'Record invoice receipt':'记录发票收款','Outstanding':'未结金额','Payment date':'付款日期','Payment reference':'付款参考','Receipt recorded and posted.':'收据已记录并入账。','Issue credit note':'开具贷项通知单','Credit amount before tax (SGD)':'税前贷项金额（SGD）','Reason':'原因','Credit note issued and posted.':'贷项通知单已开具并入账。',
+      'Debit note':'借项通知单','Issue debit note':'开具借项通知单','Debit amount before tax (SGD)':'税前借项金额（SGD）','Debit note issued and posted.':'借项通知单已开具并入账。',
+      'Reverse financial document':'冲销财务文件','Post reversal voucher':'过账冲销凭证','Reversal date':'冲销日期','Reversal voucher posted.':'冲销凭证已过账。','Unlock accounting period':'解锁会计期间','Lock accounting period':'锁定会计期间','Unlock period':'解锁期间','Lock period':'锁定期间','Accounting period unlocked.':'会计期间已解锁。','Accounting period locked.':'会计期间已锁定。',
+      'New policy version':'新政策版本','Export accounting books':'导出会计账簿','Accounting identity required':'需要会计主体资料','Configure the legal entity, tax status, financial year and document prefix before issuing financial documents.':'开具财务文件前，请配置法定主体、税务状态、财政年度及文件前缀。','Accounting summary':'会计摘要','Revenue':'收入','Expenses':'支出','Profit':'利润','Assets':'资产','Liabilities':'负债','Equity & current profit':'权益及本期利润','Balance sheet':'资产负债表','Policy version {version}':'政策版本 {version}',
+      'Accounting books':'会计账簿','Double-entry books post automatically from authoritative billing and expense events. Corrections create linked reversals; posted history is never edited.':'权威账单及支出事件会自动过账至复式账簿。更正会建立关联冲销，已过账历史绝不编辑。','Trial balance':'试算表','General ledger':'总账','Journal':'日记账','Source':'来源','Memo':'备注','Code':'代码','Account':'账户','Type':'类型','Period debits':'期间借方','Period credits':'期间贷方','Closing balance':'期末余额','Side':'方向','No journal entries in this period':'本期间没有日记账分录','Authoritative billing and expense events will post here automatically.':'权威账单及支出事件会自动过账至此。',
+      'Generated financial documents':'已生成财务文件','Issued documents are immutable snapshots. Use credit notes or reversal vouchers to correct them, then print or save the reviewed record as PDF.':'已开具文件是不可变快照。请使用贷项通知单或冲销凭证更正，再将审核后的记录打印或保存为 PDF。','Financial documents':'财务文件','Document':'文件','Counterparty':'交易对手','Issued':'已开具','Outstanding / status':'未结／状态','Actions':'操作','No generated documents in this period':'本期间没有已生成文件','Create an invoice after the accounting identity is reviewed.':'会计主体资料审核后即可创建发票。',
       'Billing detail':'账单详情','Provider-backed subscription record':'支付服务商支持的订阅记录',
       'Loading invoices and payment attempts…':'正在加载发票和付款尝试…','Billing detail unavailable':'账单详情不可用',
       'Commission payable':'应付佣金','Loading consultant commission truth…':'正在加载顾问佣金真实数据…',
@@ -121,7 +160,8 @@
     }),
     ms:Object.freeze({
       'Overview':'Ringkasan','Onboarding':'Penerimaan','Onboard':'Terima','Firms':'Firma','Reports':'Laporan',
-      'Billing':'Pengebilan','Commission payable':'Komisen perlu dibayar','Commission':'Komisen',
+      'Billing':'Pengebilan','Cash P&L':'Untung rugi tunai','P&L':'U/R','Commission payable':'Komisen perlu dibayar','Commission':'Komisen',
+      'Cash P&L unavailable':'Untung rugi tunai tidak tersedia',
       'Sector modules':'Modul sektor','Sectors':'Sektor','Automation':'Automasi','Automate':'Automasi',
       'Platform access':'Akses platform','Platform controls':'Kawalan platform','Access':'Akses','Platform':'Platform','Platform console':'Konsol platform',
       'Skip to platform content':'Langkau ke kandungan platform','Current platform access':'Akses platform semasa',
@@ -174,6 +214,44 @@
       'Prospect unavailable':'Prospek tidak tersedia','Try again.':'Cuba lagi.',
       'Loading versioned sector entitlements…':'Memuatkan kelayakan sektor berversi…',
       'Loading platform billing truth…':'Memuatkan data sebenar pengebilan platform…',
+      'Loading provider cash and operating expenses…':'Memuatkan tunai penyedia dan perbelanjaan operasi…',
+      'Add expense':'Tambah perbelanjaan','From':'Dari','To':'Hingga','Apply':'Gunakan',
+      'Cash P&L summary':'Ringkasan untung rugi tunai','Money in':'Wang masuk','Refunds & adjustments':'Bayaran balik & pelarasan',
+      'Net expenses':'Perbelanjaan bersih','Net cash':'Tunai bersih','Outstanding invoices':'Invois belum dibayar',
+      'Invoices and receipts':'Invois dan resit','Operating expense ledger':'Lejar perbelanjaan operasi',
+      'Invoice PDF':'PDF invois','Invoice':'Invois','Receipt':'Resit','Reverse':'Balikkan','Reversed':'Dibalikkan','Posted':'Direkodkan',
+      'Reversal':'Catatan pembalikan','Awaiting Stripe document':'Menunggu dokumen Stripe',
+      'Prospect {name} was saved. Refresh the onboarding list to display it.':'Prospek {name} telah disimpan. Muat semula senarai penerimaan untuk memaparkannya.',
+      'Cash-basis platform view. Stripe-paid invoices and cash-affecting adjustments are automatic; Super Admin operating expenses are append-only and reversed, never edited.':'Paparan platform berasaskan tunai. Invois berbayar Stripe dan pelarasan yang menjejaskan tunai adalah automatik; perbelanjaan operasi Pentadbir Super hanya ditambah dan dibalikkan, tidak pernah disunting.',
+      'Stripe supplies the invoice documents. A paid hosted invoice is the customer receipt when Stripe does not provide a separate charge receipt URL.':'Stripe membekalkan dokumen invois. Invois hos yang dibayar menjadi resit pelanggan apabila Stripe tidak menyediakan URL resit caj berasingan.',
+      'Platform invoices':'Invois platform','No invoices in this period':'Tiada invois dalam tempoh ini',
+      'Paid and outstanding Stripe invoices will appear here after webhook processing.':'Invois Stripe berbayar dan belum dibayar akan dipaparkan selepas pemprosesan webhook.',
+      'Entries are immutable. Use Reverse to correct a mistake and preserve the audit trail.':'Catatan tidak boleh diubah. Gunakan Balikkan untuk membetulkan kesilapan dan mengekalkan jejak audit.',
+      'Platform expenses':'Perbelanjaan platform','No operating expenses in this period':'Tiada perbelanjaan operasi dalam tempoh ini',
+      'Record a real platform expense to include it in net cash.':'Rekod perbelanjaan platform sebenar untuk memasukkannya dalam tunai bersih.',
+      'Add operating expense':'Tambah perbelanjaan operasi','Record expense':'Rekod perbelanjaan','Expense date':'Tarikh perbelanjaan',
+      'Category':'Kategori','Amount (SGD)':'Amaun (SGD)','Description':'Penerangan',
+      'Reverse operating expense':'Balikkan perbelanjaan operasi','Record reversal':'Rekod pembalikan',
+      'Export CSV':'Eksport CSV','Refunds and adjustments':'Bayaran balik dan pelarasan',
+      'Every provider and reviewed adjustment remains visible. Credits, debits and write-offs are labelled non-cash and do not change net cash.':'Setiap pelarasan penyedia dan yang disemak kekal kelihatan. Kredit, debit dan hapus kira dilabel bukan tunai dan tidak mengubah tunai bersih.','Non-cash':'Bukan tunai',
+      'Platform billing adjustments':'Pelarasan bil platform','No billing adjustments in this period':'Tiada pelarasan bil dalam tempoh ini',
+      'Refunds, chargebacks and reviewed adjustments will appear here.':'Bayaran balik, caj balik dan pelarasan yang disemak akan dipaparkan di sini.',
+      'Finance export incomplete':'Eksport kewangan tidak lengkap','More than 5,000 records exist in at least one ledger. Narrow the date range before exporting.':'Sekurang-kurangnya satu lejar mempunyai lebih 5,000 rekod. Kecilkan julat tarikh sebelum mengeksport.',
+      'Debit':'Debit akaun','Credit':'Kredit akaun','Print / save PDF':'Cetak / simpan PDF','Record receipt':'Rekod resit','Credit note':'Nota kredit','Reverse document':'Balikkan dokumen',
+      'Allow pop-ups to print this document.':'Benarkan tetingkap timbul untuk mencetak dokumen ini.','Quantity':'Kuantiti','Amount':'Amaun','Subtotal':'Subjumlah','Tax':'Cukai','Total':'Jumlah','Immutable record hash':'Cincang rekod kekal',
+      'Tax Invoice':'Invois Cukai','Price payable includes GST':'Harga perlu dibayar termasuk GST','Original document':'Dokumen asal','Transaction reference':'Rujukan transaksi','GST rate':'Kadar GST',
+      'Configure accounting identity':'Konfigurasi identiti perakaunan','Save new policy version':'Simpan versi dasar baharu','Effective from':'Berkuat kuasa dari','Legal company name':'Nama sah syarikat','Document prefix':'Awalan dokumen','Registered address':'Alamat berdaftar',
+      'GST status':'Status GST','Pending review':'Menunggu semakan','Not registered':'Tidak berdaftar','Registered':'Berdaftar','GST registration number':'Nombor pendaftaran GST','GST rate (%)':'Kadar GST (%)','FYE month':'Bulan akhir tahun kewangan','FYE day':'Hari akhir tahun kewangan',
+      'Evidence reference':'Rujukan bukti','Board decision, registration record or controlled case reference':'Keputusan lembaga, rekod pendaftaran atau rujukan kes terkawal','Accounting policy version saved.':'Versi dasar perakaunan disimpan.',
+      'Supplier / payee':'Pembekal / penerima','Supplier UEN':'UEN pembekal','Receipt, invoice or controlled document reference':'Rujukan resit, invois atau dokumen terkawal',
+      'Create financial invoice':'Cipta invois kewangan','Issue invoice':'Keluarkan invois','Issue date':'Tarikh dikeluarkan','Due date':'Tarikh akhir','Approved transaction reference':'Rujukan transaksi diluluskan','Unique non-subscription reference; do not enter a Stripe invoice ID.':'Rujukan bukan langganan yang unik; jangan masukkan ID invois Stripe.','Customer legal name':'Nama sah pelanggan','Customer UEN':'UEN pelanggan','Customer address':'Alamat pelanggan','Line description':'Penerangan baris','Unit amount (SGD)':'Amaun unit (SGD)',
+      'Configured GST will be applied.':'GST yang dikonfigurasi akan digunakan.','GST is not applied under the current reviewed policy.':'GST tidak digunakan di bawah dasar semasa yang disemak.','Enter a valid SGD amount.':'Masukkan amaun SGD yang sah.','Invoice issued and posted.':'Invois dikeluarkan dan dipos.',
+      'Record invoice receipt':'Rekod penerimaan invois','Outstanding':'Belum selesai','Payment date':'Tarikh pembayaran','Payment reference':'Rujukan pembayaran','Receipt recorded and posted.':'Resit direkodkan dan dipos.','Issue credit note':'Keluarkan nota kredit','Credit amount before tax (SGD)':'Amaun kredit sebelum cukai (SGD)','Reason':'Sebab','Credit note issued and posted.':'Nota kredit dikeluarkan dan dipos.',
+      'Debit note':'Nota debit','Issue debit note':'Keluarkan nota debit','Debit amount before tax (SGD)':'Amaun debit sebelum cukai (SGD)','Debit note issued and posted.':'Nota debit dikeluarkan dan dipos.',
+      'Reverse financial document':'Balikkan dokumen kewangan','Post reversal voucher':'Pos baucar pembalikan','Reversal date':'Tarikh pembalikan','Reversal voucher posted.':'Baucar pembalikan dipos.','Unlock accounting period':'Buka kunci tempoh perakaunan','Lock accounting period':'Kunci tempoh perakaunan','Unlock period':'Buka kunci tempoh','Lock period':'Kunci tempoh','Accounting period unlocked.':'Tempoh perakaunan dibuka kunci.','Accounting period locked.':'Tempoh perakaunan dikunci.',
+      'New policy version':'Versi dasar baharu','Export accounting books':'Eksport buku perakaunan','Accounting identity required':'Identiti perakaunan diperlukan','Configure the legal entity, tax status, financial year and document prefix before issuing financial documents.':'Konfigurasi entiti sah, status cukai, tahun kewangan dan awalan dokumen sebelum mengeluarkan dokumen kewangan.','Accounting summary':'Ringkasan perakaunan','Revenue':'Hasil','Expenses':'Perbelanjaan','Profit':'Untung','Assets':'Aset','Liabilities':'Liabiliti','Equity & current profit':'Ekuiti & untung semasa','Balance sheet':'Kunci kira-kira','Policy version {version}':'Versi dasar {version}',
+      'Accounting books':'Buku perakaunan','Double-entry books post automatically from authoritative billing and expense events. Corrections create linked reversals; posted history is never edited.':'Buku catatan bergu dipos secara automatik daripada acara bil dan perbelanjaan berwibawa. Pembetulan mencipta pembalikan terpaut; sejarah yang dipos tidak pernah disunting.','Trial balance':'Imbangan duga','General ledger':'Lejar am','Journal':'Jurnal','Source':'Sumber','Memo':'Memo','Code':'Kod','Account':'Akaun','Type':'Jenis','Period debits':'Debit tempoh','Period credits':'Kredit tempoh','Closing balance':'Baki penutup','Side':'Sisi','No journal entries in this period':'Tiada catatan jurnal dalam tempoh ini','Authoritative billing and expense events will post here automatically.':'Acara bil dan perbelanjaan berwibawa akan dipos di sini secara automatik.',
+      'Generated financial documents':'Dokumen kewangan dijana','Issued documents are immutable snapshots. Use credit notes or reversal vouchers to correct them, then print or save the reviewed record as PDF.':'Dokumen dikeluarkan ialah petikan kekal. Gunakan nota kredit atau baucar pembalikan untuk membetulkannya, kemudian cetak atau simpan rekod yang disemak sebagai PDF.','Financial documents':'Dokumen kewangan','Document':'Dokumen','Counterparty':'Pihak lawan','Issued':'Dikeluarkan','Outstanding / status':'Belum selesai / status','Actions':'Tindakan','No generated documents in this period':'Tiada dokumen dijana dalam tempoh ini','Create an invoice after the accounting identity is reviewed.':'Cipta invois selepas identiti perakaunan disemak.',
       'Billing detail':'Butiran pengebilan','Provider-backed subscription record':'Rekod langganan disokong penyedia',
       'Loading invoices and payment attempts…':'Memuatkan invois dan percubaan bayaran…',
       'Billing detail unavailable':'Butiran pengebilan tidak tersedia',
@@ -2093,6 +2171,7 @@
     {key:'firms',label:'Firms',shortLabel:'Firms',hash:'#/platform/firms',icon:'branch'},
     {key:'reports',label:'Reports',shortLabel:'Reports',hash:'#/platform/reports',icon:'reports'},
     {key:'billing',label:'Billing',shortLabel:'Billing',hash:'#/platform/billing',icon:'reports'},
+    {key:'pnl',label:'Cash P&L',shortLabel:'P&L',hash:'#/platform/pnl',icon:'reports',superAdminOnly:true},
     {key:'commissions',label:'Commission payable',shortLabel:'Commission',hash:'#/platform/commissions',icon:'staff'},
     {key:'sectors',label:'Sector modules',shortLabel:'Sectors',hash:'#/platform/sectors',icon:'packages'},
     {key:'automation',label:'System health',shortLabel:'Health',hash:'#/platform/automation',icon:'retention'},
@@ -2282,7 +2361,7 @@
     &&Object.keys(access.modulePerms).length===1
     &&access.modulePerms['*']==='rw';
   function visibleRoutes(access) {
-    return routes.filter(route=>route.key==='access'
+    return routes.filter(route=>route.superAdminOnly
       ?access?.role==='super_admin'
       :canAccessModule(access,route.key));
   }
@@ -2290,7 +2369,7 @@
     Object.freeze({key:'overview',label:'Today',icon:'home',routeKeys:Object.freeze(['overview'])}),
     Object.freeze({key:'firms',label:'Firms',icon:'branch',routeKeys:Object.freeze(['firms','onboarding'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports'])}),
-    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['billing','commissions'])}),
+    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['billing','pnl','commissions'])}),
     Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
     Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','access'])})
   ]);
@@ -2462,7 +2541,7 @@
   }
 
   function isRoute(hash) {
-    return /^#\/platform(?:\/(?:onboarding|firms|reports|billing|commissions|sectors|automation|access))?\/?$/.test(String(hash || '').split('?')[0]);
+    return /^#\/platform(?:\/(?:onboarding|firms|reports|billing|pnl|commissions|sectors|automation|access))?\/?$/.test(String(hash || '').split('?')[0]);
   }
 
   function routeKey(hash) {
@@ -4504,7 +4583,10 @@
           prospectCloseHash:onboardingHash(filters)
         });
       }
-    }catch(error){showError(main,error,CUI,'Onboarding')}
+    }catch(error){
+      showError(main,error,CUI,'Onboarding');
+      if(context.onboardingPropagateError)throw error;
+    }
   }
   function businessApplicationQueueHtml(payload,CUI){
     const applications=asArray(payload,['applications']);
@@ -4635,6 +4717,9 @@
   async function newProspectModal(context) {
     const {CUI,sb}=context;
     const consultants=await fetchScopedConsultants(sb).catch(()=>[]);
+    // Keep one operation identity for the life of this modal. A lost response can
+    // then be retried without inserting a second prospect.
+    const createAttemptKey=idempotencyKey();
     modal({title:'New prospect',submitLabel:'Create prospect',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'newCompanyName',label:'Company name',required:true,attributes:'name="company_name"'})}
       ${CUI.field({id:'newUen',label:'UEN',attributes:'name="uen"'})}
@@ -4653,10 +4738,14 @@
         p_primary_contact:{full_name:form.get('contact_name'),email:form.get('contact_email')||null,phone:form.get('contact_phone')||null},
         p_stage_key:form.get('stage'),p_consultant:form.get('consultant')||null,p_source:{source_system:'platform_console',source_type:'manual'},
         p_tags:String(form.get('tags')||'').split(',').map(value=>value.trim()).filter(Boolean),
-        p_idempotency_key:idempotencyKey()
+        p_idempotency_key:createAttemptKey
       });
-      controls.close();await renderOnboarding(context);
-      CUI.announce(pt('Prospect {name} created.',{name:data?.prospect?.company_name||form.get('company_name')}));
+      const createdName=data?.prospect?.company_name||form.get('company_name');
+      controls.close();
+      CUI.announce(pt('Prospect {name} created.',{name:createdName}));
+      try{await renderOnboarding({...context,onboardingPropagateError:true})}catch{
+        CUI.announce(pt('Prospect {name} was saved. Refresh the onboarding list to display it.',{name:createdName}),{assertive:true});
+      }
     }});
   }
   function prospectImportModal(context) {
@@ -6264,6 +6353,266 @@
       }});
   }
 
+  function safeStripeDocumentUrl(value) {
+    try{
+      const url=new URL(String(value||''));
+      return url.protocol==='https:'&&/(^|\.)stripe\.com$/i.test(url.hostname)&&!url.username&&!url.password
+        ?url.href:null;
+    }catch{return null}
+  }
+  function billingDocumentLinks(invoice,{receiptOnly=false}={}) {
+    const hosted=safeStripeDocumentUrl(invoice?.hosted_invoice_url);
+    const pdf=safeStripeDocumentUrl(invoice?.invoice_pdf_url);
+    const receipt=safeStripeDocumentUrl(invoice?.provider_receipt_url)||hosted;
+    const links=[];
+    if(!receiptOnly&&pdf)links.push(`<a class="btn ghost sm" href="${escapeHtml(pdf)}" target="_blank" rel="noopener noreferrer">${escapeHtml(pt('Invoice PDF'))}</a>`);
+    if(!receiptOnly&&!pdf&&hosted)links.push(`<a class="btn ghost sm" href="${escapeHtml(hosted)}" target="_blank" rel="noopener noreferrer">${escapeHtml(pt('Invoice'))}</a>`);
+    if(invoice?.paid_normalized&&receipt)links.push(`<a class="btn ghost sm" href="${escapeHtml(receipt)}" target="_blank" rel="noopener noreferrer">${escapeHtml(pt('Receipt'))}</a>`);
+    return links.join('');
+  }
+
+  function financeMonthRange(now=new Date()) {
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now).filter(part=>part.type!=='literal').map(part=>[part.type,part.value]));
+    const to=`${parts.year}-${parts.month}-${parts.day}`;
+    const from=`${to.slice(0,8)}01`;
+    return{from,to};
+  }
+  function financeExpenseRows(expenses,CUI) {
+    return asArray(expenses).map(entry=>[
+      escapeHtml(String(entry.expense_date||'—')),
+      escapeHtml(platformStatus(entry.category)),
+      `<div><b>${escapeHtml(entry.description)}</b>${entry.entry_type==='reversal'?`<p class="muted small">${escapeHtml(pt('Reversal'))}</p>`:''}</div>`,
+      escapeHtml(`${entry.entry_type==='reversal'?'+':'−'}${currency(entry.amount_cents,entry.currency)}`),
+      entry.entry_type==='expense'&&!entry.reversed
+        ?`<button type="button" class="btn ghost sm" data-reverse-expense="${escapeHtml(entry.id)}">${escapeHtml(pt('Reverse'))}</button>`
+        :CUI.status(entry.reversed?'Reversed':'Posted',entry.reversed?'off':'ok')
+    ]);
+  }
+  function financeInvoiceRows(invoices,CUI) {
+    return asArray(invoices).map(invoice=>[
+      `<div><b>${escapeHtml(invoice.business_name)}</b><p class="muted small">${escapeHtml(invoice.number||invoice.provider_invoice_id)}</p></div>`,
+      CUI.status(platformStatus(invoice.status),invoice.paid_normalized?'ok':invoice.status==='open'?'no':'off'),
+      escapeHtml(currency(invoice.total_cents,invoice.currency)),
+      escapeHtml(invoice.paid_at?dateTime(invoice.paid_at):dateTime(invoice.created_at)),
+      billingDocumentLinks(invoice)||`<span class="muted small">${escapeHtml(pt('Awaiting Stripe document'))}</span>`
+    ]);
+  }
+  function financeAdjustmentRows(adjustments,CUI) {
+    return asArray(adjustments).map(adjustment=>[
+      `<div><b>${escapeHtml(adjustment.business_name)}</b><p class="muted small">${escapeHtml(adjustment.provider_invoice_id||adjustment.provider_object_id||'—')}</p></div>`,
+      `<div>${CUI.status(platformStatus(adjustment.adjustment_type),Number(adjustment.cash_effect_cents)<0?'no':adjustment.cash_affecting?'ok':'off')}${adjustment.cash_affecting?'':`<p class="muted small">${escapeHtml(pt('Non-cash'))}</p>`}</div>`,
+      escapeHtml(currency(adjustment.cash_effect_cents,adjustment.currency)),
+      escapeHtml(adjustment.reason),escapeHtml(dateTime(adjustment.occurred_at))
+    ]);
+  }
+  function platformFinanceCsvRows(payload) {
+    const summary=asObject(payload.summary),rows=[
+      ['record_type','date','firm','reference','category_or_status','description','cash_effect_cents','currency'],
+      ['summary',payload.from,'','','income','Provider-confirmed paid invoices',summary.income_cents,'SGD'],
+      ['summary',payload.from,'','','adjustments','Cash-affecting billing adjustments',summary.billing_adjustments_cents,'SGD'],
+      ['summary',payload.from,'','','expenses','Net operating expenses',-Number(summary.net_expenses_cents||0),'SGD'],
+      ['summary',payload.from,'','','net_cash','Net cash',summary.net_cash_cents,'SGD']
+    ];
+    asArray(payload.invoices).forEach(row=>rows.push(['invoice',row.paid_at||row.created_at,row.business_name,row.number||row.provider_invoice_id,row.status,'',row.paid_normalized?row.amount_paid_cents:0,row.currency]));
+    asArray(payload.adjustments).forEach(row=>rows.push(['adjustment',row.occurred_at,row.business_name,row.provider_invoice_id||row.provider_object_id,row.adjustment_type,row.reason,row.cash_effect_cents,row.currency]));
+    asArray(payload.expenses).forEach(row=>rows.push(['expense',row.expense_date,'',row.id,row.entry_type,row.description,row.entry_type==='reversal'?row.amount_cents:-Number(row.amount_cents),row.currency]));
+    return rows;
+  }
+  function accountingTrialRows(rows) {
+    return asArray(rows).map(row=>[
+      escapeHtml(row.code),escapeHtml(row.name),escapeHtml(platformStatus(row.account_type)),
+      escapeHtml(currency(row.period_debits_cents,'SGD')),escapeHtml(currency(row.period_credits_cents,'SGD')),
+      escapeHtml(currency(Math.abs(Number(row.closing_debit_net_cents||0)),'SGD')),
+      escapeHtml(Number(row.closing_debit_net_cents||0)>=0?pt('Debit'):pt('Credit'))
+    ]);
+  }
+  function accountingJournalRows(journals) {
+    return asArray(journals).flatMap(journal=>asArray(journal.lines).map((line,index)=>[
+      index===0?escapeHtml(String(journal.journal_date||'—')):'',
+      index===0?escapeHtml(String(journal.journal_number||'—')):'',
+      index===0?`<div><b>${escapeHtml(platformStatus(journal.source_type))}</b><p class="muted small">${escapeHtml(journal.source_id||'—')}</p></div>`:'',
+      `<div><b>${escapeHtml(line.account_code||'—')} · ${escapeHtml(line.account_name||'—')}</b><p class="muted small">${escapeHtml(index===0?journal.description:line.memo||'')}</p></div>`,
+      escapeHtml(currency(line.debit_cents,'SGD')),escapeHtml(currency(line.credit_cents,'SGD'))
+    ]));
+  }
+  function accountingDocumentRows(documents,CUI) {
+    return asArray(documents).map(document=>{
+      const actions=[`<button type="button" class="btn ghost sm" data-print-document="${escapeHtml(document.id)}">${escapeHtml(pt('Print / save PDF'))}</button>`];
+      if(document.document_type==='invoice'&&!document.reversed&&Number(document.outstanding_cents)>0){
+        actions.push(`<button type="button" class="btn ghost sm" data-record-receipt="${escapeHtml(document.id)}">${escapeHtml(pt('Record receipt'))}</button>`);
+        actions.push(`<button type="button" class="btn ghost sm" data-credit-note="${escapeHtml(document.id)}">${escapeHtml(pt('Credit note'))}</button>`);
+        if(Number(document.tax_cents||0)===0)actions.push(`<button type="button" class="btn ghost sm" data-debit-note="${escapeHtml(document.id)}">${escapeHtml(pt('Debit note'))}</button>`);
+      }
+      if(document.document_type!=='journal_voucher'&&!document.reversed)actions.push(`<button type="button" class="btn ghost sm" data-reverse-document="${escapeHtml(document.id)}">${escapeHtml(pt('Reverse document'))}</button>`);
+      return[
+        `<div><b>${escapeHtml(document.document_number)}</b><p class="muted small">${escapeHtml(platformStatus(document.document_type))}</p></div>`,
+        escapeHtml(document.counterparty?.legal_name||'—'),escapeHtml(String(document.issue_date||'—')),
+        escapeHtml(currency(document.total_cents,document.currency)),
+        document.document_type==='invoice'?escapeHtml(currency(document.outstanding_cents,document.currency)):CUI.status(document.reversed?'Reversed':'Posted',document.reversed?'off':'ok'),
+        `<div class="platform-actions">${actions.join('')}</div>`
+      ];
+    });
+  }
+  function platformBooksCsvRows(books) {
+    const rows=[['record_type','date_or_code','reference_or_account','description_or_type','debit_cents','credit_cents','closing_debit_net_cents','source_or_status']];
+    asArray(books.trial_balance).forEach(row=>rows.push(['trial_balance',row.code,row.name,row.account_type,row.period_debits_cents,row.period_credits_cents,row.closing_debit_net_cents,row.normal_balance]));
+    asArray(books.journals).forEach(journal=>asArray(journal.lines).forEach(line=>rows.push(['journal_line',journal.journal_date,journal.journal_number,`${line.account_code} ${line.account_name}: ${line.memo||journal.description||''}`,line.debit_cents,line.credit_cents,'',`${journal.source_type}:${journal.source_id}`])));
+    asArray(books.documents).forEach(document=>rows.push(['financial_document',document.issue_date,document.document_number,document.counterparty?.legal_name||'',document.subtotal_cents,document.tax_cents,document.total_cents,document.reversed?'reversed':document.document_type]));
+    return rows;
+  }
+  function printFinancialDocument(document,CUI) {
+    const popup=globalObject.open?.('','_blank');
+    if(!popup){CUI.announce(pt('Allow pop-ups to print this document.'),{assertive:true});return}
+    try{popup.opener=null}catch{}
+    const lines=asArray(document.line_items).map(line=>`<tr><td>${escapeHtml(line.description||'—')}</td><td>${escapeHtml(line.quantity||1)}</td><td>${escapeHtml(currency(line.unit_amount_cents||document.subtotal_cents,document.currency))}</td></tr>`).join('');
+    const issuer=asObject(document.snapshot?.issuer);
+    const documentTitle=document.document_type==='invoice'&&issuer.gst_status==='registered'?pt('Tax Invoice'):platformStatus(document.document_type);
+    const gstIdentity=issuer.gst_status==='registered'?`<p>${escapeHtml(pt('GST registration number'))}: ${escapeHtml(issuer.gst_registration_number)}</p><p>${escapeHtml(pt('GST rate'))}: ${escapeHtml((Number(issuer.gst_rate_bps||0)/100).toFixed(2).replace(/\.00$/,''))}%</p>`:'';
+    const gstReceipt=document.document_type==='receipt'&&issuer.gst_status==='registered'?`<p><b>${escapeHtml(pt('Price payable includes GST'))}</b></p>`:'';
+    const originalNumber=document.snapshot?.invoice_number||document.snapshot?.original_number;
+    const originalReference=originalNumber?`<p><b>${escapeHtml(pt('Original document'))}:</b> ${escapeHtml(originalNumber)}</p>`:'';
+    const transactionReference=document.snapshot?.transaction_reference?`<p><b>${escapeHtml(pt('Transaction reference'))}:</b> ${escapeHtml(document.snapshot.transaction_reference)}</p>`:'';
+    popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(document.document_number)}</title><style>body{font:14px system-ui;margin:40px;color:#17161a}header{display:flex;justify-content:space-between}table{width:100%;border-collapse:collapse;margin:28px 0}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}.totals{margin-left:auto;width:320px}.muted{color:#666}@media print{button{display:none}}</style></head><body><header><div><h1>${escapeHtml(issuer.legal_name||'Peekaa')}</h1><p>${escapeHtml(issuer.registration_number||'')}</p><p>${escapeHtml(issuer.registered_address||'')}</p>${gstIdentity}<p class="muted">${escapeHtml(documentTitle)}</p></div><div><b>${escapeHtml(document.document_number)}</b><p>${escapeHtml(document.issue_date)}</p>${originalReference}${transactionReference}</div></header><h2>${escapeHtml(document.counterparty?.legal_name||'—')}</h2><p>${escapeHtml(document.counterparty?.registration_number||'')}</p><p>${escapeHtml(document.counterparty?.address||'')}</p><table><thead><tr><th>${escapeHtml(pt('Description'))}</th><th>${escapeHtml(pt('Quantity'))}</th><th>${escapeHtml(pt('Amount'))}</th></tr></thead><tbody>${lines||`<tr><td>${escapeHtml(documentTitle)}</td><td>1</td><td>${escapeHtml(currency(document.total_cents,document.currency))}</td></tr>`}</tbody></table><table class="totals"><tr><th>${escapeHtml(pt('Subtotal'))}</th><td>${escapeHtml(currency(document.subtotal_cents,document.currency))}</td></tr><tr><th>${escapeHtml(pt('Tax'))}</th><td>${escapeHtml(currency(document.tax_cents,document.currency))}</td></tr><tr><th>${escapeHtml(pt('Total'))}</th><td>${escapeHtml(currency(document.total_cents,document.currency))}</td></tr></table>${gstReceipt}<p class="muted">${escapeHtml(pt('Immutable record hash'))}: ${escapeHtml(document.snapshot_sha256)}</p><button onclick="print()">${escapeHtml(pt('Print / save PDF'))}</button></body></html>`);
+    popup.document.close();
+  }
+  function accountingPolicyModal(context,range) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:'Configure accounting identity',submitLabel:'Save new policy version',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'accountingEffective',label:'Effective from',type:'date',required:true,value:range.from,attributes:'name="effective_from"'})}
+      ${CUI.field({id:'accountingLegalName',label:'Legal company name',required:true,attributes:'name="legal_name" minlength="2" maxlength="200"'})}
+      ${CUI.field({id:'accountingUen',label:'UEN',required:true,attributes:'name="registration_number" minlength="4" maxlength="40"'})}
+      ${CUI.field({id:'accountingPrefix',label:'Document prefix',required:true,value:'PKA',attributes:'name="prefix" pattern="[A-Z0-9]{2,10}"'})}
+      <div class="wide">${CUI.field({id:'accountingAddress',label:'Registered address',control:'textarea',required:true,attributes:'name="address" rows="3" minlength="5" maxlength="500"'})}</div>
+      ${CUI.field({id:'accountingGstStatus',label:'GST status',control:'select',options:[{value:'pending_review',label:'Pending review'},{value:'not_registered',label:'Not registered'},{value:'registered',label:'Registered'}],attributes:'name="gst_status"'})}
+      ${CUI.field({id:'accountingGstNumber',label:'GST registration number',attributes:'name="gst_number"'})}
+      ${CUI.field({id:'accountingGstRate',label:'GST rate (%)',type:'number',value:'0',attributes:'name="gst_rate" min="0" max="20" step="0.01"'})}
+      ${CUI.field({id:'accountingFyeMonth',label:'FYE month',type:'number',value:'12',required:true,attributes:'name="fye_month" min="1" max="12"'})}
+      ${CUI.field({id:'accountingFyeDay',label:'FYE day',type:'number',value:'31',required:true,attributes:'name="fye_day" min="1" max="31"'})}
+      <div class="wide">${CUI.field({id:'accountingEvidence',label:'Evidence reference',hint:'Board decision, registration record or controlled case reference',required:true,attributes:'name="evidence" minlength="8" maxlength="300"'})}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      await rpc(sb,'platform_set_accounting_policy_v147',{p_effective_from:form.get('effective_from'),p_legal_name:form.get('legal_name'),p_registration_number:form.get('registration_number'),p_registered_address:form.get('address'),p_gst_status:form.get('gst_status'),p_gst_registration_number:form.get('gst_number')||null,p_gst_rate_bps:Math.round(Number(form.get('gst_rate')||0)*100),p_fye_month:Number(form.get('fye_month')),p_fye_day:Number(form.get('fye_day')),p_document_prefix:String(form.get('prefix')).toUpperCase(),p_evidence_reference:form.get('evidence'),p_idempotency_key:attemptKey});
+      controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Accounting policy version saved.'));
+    }});
+  }
+  function accountingInvoiceModal(context,range,policy) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:'Create financial invoice',submitLabel:'Issue invoice',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'booksInvoiceDate',label:'Issue date',type:'date',required:true,value:range.to,attributes:'name="issue_date"'})}
+      ${CUI.field({id:'booksInvoiceDue',label:'Due date',type:'date',required:true,value:range.to,attributes:'name="due_date"'})}
+      <div class="wide">${CUI.field({id:'booksTransactionReference',label:'Approved transaction reference',hint:'Unique non-subscription reference; do not enter a Stripe invoice ID.',required:true,attributes:'name="transaction_reference" minlength="18" maxlength="100" pattern="NON-SUBSCRIPTION-[A-Za-z0-9][A-Za-z0-9._:/-]{0,82}"'})}</div>
+      ${CUI.field({id:'booksCustomerName',label:'Customer legal name',required:true,attributes:'name="legal_name"'})}
+      ${CUI.field({id:'booksCustomerUen',label:'Customer UEN',attributes:'name="registration_number"'})}
+      <div class="wide">${CUI.field({id:'booksCustomerAddress',label:'Customer address',control:'textarea',attributes:'name="address" rows="2"'})}</div>
+      <div class="wide">${CUI.field({id:'booksLineDescription',label:'Line description',required:true,attributes:'name="description"'})}</div>
+      ${CUI.field({id:'booksLineQuantity',label:'Quantity',type:'number',value:'1',required:true,attributes:'name="quantity" min="1" step="1"'})}
+      ${CUI.field({id:'booksLineAmount',label:'Unit amount (SGD)',type:'number',required:true,attributes:'name="unit_amount" min="0.01" step="0.01"'})}
+    </div><div class="platform-route-note">${CUI.icon('info',{size:18})}<div>${escapeHtml(policy.gst_status==='registered'?pt('Configured GST will be applied.'):pt('GST is not applied under the current reviewed policy.'))}</div></div>`,onSubmit:async(form,controls)=>{
+      const unitAmount=Math.round(Number(form.get('unit_amount'))*100);if(!Number.isSafeInteger(unitAmount)||unitAmount<=0)throw new Error(pt('Enter a valid SGD amount.'));
+      await rpc(sb,'platform_create_invoice_v147',{p_issue_date:form.get('issue_date'),p_due_date:form.get('due_date'),p_transaction_reference:form.get('transaction_reference'),p_counterparty:{legal_name:form.get('legal_name'),registration_number:form.get('registration_number')||null,address:form.get('address')||null},p_line_items:[{description:form.get('description'),quantity:Number(form.get('quantity')),unit_amount_cents:unitAmount}],p_tax_rate_bps:Number(policy.gst_rate_bps||0),p_idempotency_key:attemptKey});
+      controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Invoice issued and posted.'));
+    }});
+  }
+  function accountingReceiptModal(document,context,range) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:'Record invoice receipt',submitLabel:'Record receipt',CUI,body:`<p class="platform-route-note">${escapeHtml(document.document_number)} · ${escapeHtml(pt('Outstanding'))}: ${escapeHtml(currency(document.outstanding_cents,document.currency))}</p><div class="platform-form-grid">
+      ${CUI.field({id:'booksReceiptDate',label:'Payment date',type:'date',required:true,value:range.to,attributes:'name="date"'})}
+      ${CUI.field({id:'booksReceiptAmount',label:'Amount (SGD)',type:'number',required:true,attributes:`name="amount" min="0.01" max="${(Number(document.outstanding_cents)/100).toFixed(2)}" step="0.01"`})}
+      <div class="wide">${CUI.field({id:'booksReceiptReference',label:'Payment reference',required:true,attributes:'name="reference" minlength="3"'})}</div>
+    </div>`,onSubmit:async(form,controls)=>{await rpc(sb,'platform_record_invoice_receipt_v147',{p_invoice:document.id,p_payment_date:form.get('date'),p_amount_cents:Math.round(Number(form.get('amount'))*100),p_reference:form.get('reference'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Receipt recorded and posted.'))}});
+  }
+  function accountingCreditModal(document,context,range) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:'Issue credit note',submitLabel:'Issue credit note',CUI,body:`<div class="platform-form-grid">${CUI.field({id:'booksCreditDate',label:'Issue date',type:'date',required:true,value:range.to,attributes:'name="date"'})}${CUI.field({id:'booksCreditAmount',label:'Credit amount before tax (SGD)',type:'number',required:true,attributes:`name="amount" min="0.01" max="${(Number(document.outstanding_cents)/100).toFixed(2)}" step="0.01"`})}<div class="wide">${CUI.field({id:'booksCreditReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="8" rows="3"'})}</div></div>`,onSubmit:async(form,controls)=>{const subtotal=Math.round(Number(form.get('amount'))*100),tax=Math.round(subtotal*Number(document.tax_cents||0)/Math.max(1,Number(document.subtotal_cents||0)));await rpc(sb,'platform_issue_credit_note_v147',{p_invoice:document.id,p_issue_date:form.get('date'),p_subtotal_cents:subtotal,p_tax_cents:tax,p_reason:form.get('reason'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Credit note issued and posted.'))}});
+  }
+  function accountingDebitModal(document,context,range) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:'Issue debit note',submitLabel:'Issue debit note',CUI,body:`<div class="platform-form-grid">${CUI.field({id:'booksDebitDate',label:'Issue date',type:'date',required:true,value:range.to,attributes:'name="date"'})}${CUI.field({id:'booksDebitAmount',label:'Debit amount before tax (SGD)',type:'number',required:true,attributes:'name="amount" min="0.01" step="0.01"'})}<div class="wide">${CUI.field({id:'booksDebitReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="8" rows="3"'})}</div></div>`,onSubmit:async(form,controls)=>{const subtotal=Math.round(Number(form.get('amount'))*100),tax=Math.round(subtotal*Number(document.tax_cents||0)/Math.max(1,Number(document.subtotal_cents||0)));await rpc(sb,'platform_issue_debit_note_v147',{p_invoice:document.id,p_issue_date:form.get('date'),p_subtotal_cents:subtotal,p_tax_cents:tax,p_reason:form.get('reason'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Debit note issued and posted.'))}});
+  }
+  function accountingDocumentReversalModal(document,context,range) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:'Reverse financial document',submitLabel:'Post reversal voucher',CUI,body:`<p class="platform-route-note">${escapeHtml(document.document_number)} · ${escapeHtml(currency(document.total_cents,document.currency))}</p><div class="platform-form-grid">${CUI.field({id:'booksReversalDate',label:'Reversal date',type:'date',required:true,value:range.to,attributes:'name="date"'})}<div class="wide">${CUI.field({id:'booksReversalReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="8" rows="3"'})}</div></div>`,onSubmit:async(form,controls)=>{await rpc(sb,'platform_reverse_financial_document_v147',{p_document:document.id,p_reversal_date:form.get('date'),p_reason:form.get('reason'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Reversal voucher posted.'))}});
+  }
+  function accountingPeriodModal(locked,context,range) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:locked?'Unlock accounting period':'Lock accounting period',submitLabel:locked?'Unlock period':'Lock period',CUI,body:`<p class="platform-route-note">${escapeHtml(range.from)} – ${escapeHtml(range.to)}</p><div class="platform-form-grid"><div class="wide">${CUI.field({id:'booksPeriodReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="8" rows="3"'})}</div></div>`,onSubmit:async(form,controls)=>{await rpc(sb,'platform_set_accounting_period_lock_v147',{p_from:range.from,p_to:range.to,p_locked:!locked,p_reason:form.get('reason'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt(locked?'Accounting period unlocked.':'Accounting period locked.'))}});
+  }
+  async function renderPlatformFinance(context,range=financeMonthRange()) {
+    const {main,CUI,sb}=context;
+    main.innerHTML=loading(CUI,'Cash P&L','Loading provider cash and operating expenses…','reports');
+    try{
+      const [payload,books]=await Promise.all([
+        rpc(sb,'platform_get_finance_v146',{p_from:range.from,p_to:range.to,p_limit:5000}),
+        rpc(sb,'platform_get_accounting_books_v147',{p_from:range.from,p_to:range.to,p_limit:5000})
+      ]).then(results=>results.map(asObject));
+      const summary=asObject(payload.summary),invoices=asArray(payload.invoices),adjustments=asArray(payload.adjustments),expenses=asArray(payload.expenses),complete=asObject(payload.complete),booksComplete=asObject(books.complete),completeAll=![...Object.values(complete),...Object.values(booksComplete)].some(value=>value===false);
+      const booksSummary=asObject(books.summary),policy=asObject(books.policy),trialBalance=asArray(books.trial_balance),journals=asArray(books.journals),documents=asArray(books.documents);
+      main.innerHTML=`${CUI.pageHeader({title:'Cash P&L',subtitle:'Cash-basis platform view. Stripe-paid invoices and cash-affecting adjustments are automatic; Super Admin operating expenses are append-only and reversed, never edited.',iconName:'reports',actions:`<button type="button" class="btn ghost" id="platformFinanceExport"${completeAll?'':' disabled'}>${CUI.icon('download',{size:17})}<span>${escapeHtml(pt('Export CSV'))}</span></button><button type="button" class="btn" id="platformAddExpense">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('Add expense'))}</span></button>`})}
+        <section class="card"><form id="platformFinanceRange" class="platform-filter-grid"><label>${escapeHtml(pt('From'))}<input type="date" name="from" value="${escapeHtml(range.from)}" required></label><label>${escapeHtml(pt('To'))}<input type="date" name="to" value="${escapeHtml(range.to)}" required></label><button class="btn" type="submit">${escapeHtml(pt('Apply'))}</button></form></section>
+        <section class="platform-kpis" aria-label="${escapeHtml(pt('Cash P&L summary'))}">${[
+          ['Money in',currency(summary.income_cents),'check'],
+          ['Refunds & adjustments',currency(summary.billing_adjustments_cents),'retention'],
+          ['Net expenses',currency(summary.net_expenses_cents),'reports'],
+          ['Net cash',currency(summary.net_cash_cents),'home'],
+          ['Outstanding invoices',currency(summary.pending_invoice_cents),'info']
+        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
+        ${completeAll?'':localizedRouteNoteHtml(CUI,'Finance export incomplete','More than 5,000 records exist in at least one ledger. Narrow the date range before exporting.')}
+        ${CUI.card({title:'Invoices and receipts',description:'Stripe supplies the invoice documents. A paid hosted invoice is the customer receipt when Stripe does not provide a separate charge receipt URL.',body:invoices.length?CUI.table({caption:'Platform invoices',headers:['Firm & invoice','Status','Amount','Recorded','Documents'],rows:financeInvoiceRows(invoices,CUI)}):CUI.emptyState({iconName:'reports',title:'No invoices in this period',body:'Paid and outstanding Stripe invoices will appear here after webhook processing.'})})}
+        ${CUI.card({title:'Refunds and adjustments',description:'Every provider and reviewed adjustment remains visible. Credits, debits and write-offs are labelled non-cash and do not change net cash.',body:adjustments.length?CUI.table({caption:'Platform billing adjustments',headers:['Firm & invoice','Type','Cash effect','Reason','Recorded'],rows:financeAdjustmentRows(adjustments,CUI)}):CUI.emptyState({iconName:'reports',title:'No billing adjustments in this period',body:'Refunds, chargebacks and reviewed adjustments will appear here.'})})}
+        ${CUI.card({title:'Operating expense ledger',description:'Entries are immutable. Use Reverse to correct a mistake and preserve the audit trail.',body:expenses.length?CUI.table({caption:'Platform expenses',headers:['Date','Category','Description','Cash effect','Action'],rows:financeExpenseRows(expenses,CUI)}):CUI.emptyState({iconName:'reports',title:'No operating expenses in this period',body:'Record a real platform expense to include it in net cash.'})})}
+        ${CUI.card({title:'Accounting books',description:'Double-entry books post automatically from authoritative billing and expense events. Corrections create linked reversals; posted history is never edited.',body:`
+          <div class="platform-actions" style="margin-bottom:14px"><button type="button" class="btn ghost" id="platformAccountingPolicy">${escapeHtml(pt(policy.id?'New policy version':'Configure accounting identity'))}</button>${policy.id?`<button type="button" class="btn" id="platformCreateInvoice">${escapeHtml(pt('Create financial invoice'))}</button>`:''}<button type="button" class="btn ghost" id="platformBooksExport"${completeAll?'':' disabled'}>${escapeHtml(pt('Export accounting books'))}</button><button type="button" class="btn ghost" id="platformPeriodLock">${escapeHtml(pt(books.period_locked?'Unlock period':'Lock period'))}</button></div>
+          ${policy.id?`<div class="platform-route-note">${CUI.icon('check',{size:18})}<div><b>${escapeHtml(policy.legal_name)}</b><p class="small">${escapeHtml(policy.registration_number)} · ${escapeHtml(platformStatus(policy.gst_status))} · ${escapeHtml(pt('Policy version {version}',{version:policy.version}))}</p></div></div>`:localizedRouteNoteHtml(CUI,'Accounting identity required','Configure the legal entity, tax status, financial year and document prefix before issuing financial documents.')}
+          <section class="platform-kpis" aria-label="${escapeHtml(pt('Accounting summary'))}" style="margin-top:14px">${[['Revenue',booksSummary.revenue_cents],['Expenses',booksSummary.expense_cents],['Profit',booksSummary.profit_cents]].map(([label,value])=>`<article class="card platform-kpi"><div class="platform-kpi-label"><span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(currency(value,'SGD'))}</div></article>`).join('')}</section>
+          <h3 style="margin-top:18px">${escapeHtml(pt('Balance sheet'))}</h3><section class="platform-kpis" aria-label="${escapeHtml(pt('Balance sheet'))}" style="margin-top:10px">${[['Assets',booksSummary.assets_cents],['Liabilities',booksSummary.liabilities_cents],['Equity & current profit',booksSummary.equity_and_current_profit_cents]].map(([label,value])=>`<article class="card platform-kpi"><div class="platform-kpi-label"><span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(currency(value,'SGD'))}</div></article>`).join('')}</section>
+          ${trialBalance.length?CUI.table({caption:'Trial balance',headers:['Code','Account','Type','Period debits','Period credits','Closing balance','Side'],rows:accountingTrialRows(trialBalance)}):''}
+          <h3 style="margin-top:18px">${escapeHtml(pt('General ledger'))}</h3>${journals.length?CUI.table({caption:'General ledger',headers:['Date','Journal','Source','Account','Debit','Credit'],rows:accountingJournalRows(journals)}):CUI.emptyState({iconName:'reports',title:'No journal entries in this period',body:'Authoritative billing and expense events will post here automatically.'})}`})}
+        ${CUI.card({title:'Generated financial documents',description:'Issued documents are immutable snapshots. Use credit notes or reversal vouchers to correct them, then print or save the reviewed record as PDF.',body:documents.length?CUI.table({caption:'Financial documents',headers:['Document','Counterparty','Issued','Total','Outstanding / status','Actions'],rows:accountingDocumentRows(documents,CUI)}):CUI.emptyState({iconName:'reports',title:'No generated documents in this period',body:'Create an invoice after the accounting identity is reviewed.'})})}`;
+      main.querySelector('#platformFinanceRange').onsubmit=event=>{event.preventDefault();const form=new FormData(event.currentTarget);renderPlatformFinance(context,{from:String(form.get('from')),to:String(form.get('to'))})};
+      main.querySelector('#platformAddExpense').onclick=()=>platformExpenseModal(context,range);
+      main.querySelector('#platformAccountingPolicy').onclick=()=>accountingPolicyModal(context,range);
+      if(policy.id)main.querySelector('#platformCreateInvoice').onclick=()=>accountingInvoiceModal(context,range,policy);
+      main.querySelector('#platformPeriodLock').onclick=()=>accountingPeriodModal(Boolean(books.period_locked),context,range);
+      if(completeAll){main.querySelector('#platformFinanceExport').onclick=()=>downloadCsv(`peekaa-platform-finance-${range.from}-${range.to}.csv`,platformFinanceCsvRows(payload));main.querySelector('#platformBooksExport').onclick=()=>downloadCsv(`peekaa-accounting-books-${range.from}-${range.to}.csv`,platformBooksCsvRows(books))}
+      main.querySelectorAll('[data-reverse-expense]').forEach(button=>button.onclick=()=>platformExpenseReversalModal(button.dataset.reverseExpense,context,range));
+      main.querySelectorAll('[data-print-document]').forEach(button=>button.onclick=()=>printFinancialDocument(documents.find(document=>String(document.id)===button.dataset.printDocument),CUI));
+      main.querySelectorAll('[data-record-receipt]').forEach(button=>button.onclick=()=>accountingReceiptModal(documents.find(document=>String(document.id)===button.dataset.recordReceipt),context,range));
+      main.querySelectorAll('[data-credit-note]').forEach(button=>button.onclick=()=>accountingCreditModal(documents.find(document=>String(document.id)===button.dataset.creditNote),context,range));
+      main.querySelectorAll('[data-debit-note]').forEach(button=>button.onclick=()=>accountingDebitModal(documents.find(document=>String(document.id)===button.dataset.debitNote),context,range));
+      main.querySelectorAll('[data-reverse-document]').forEach(button=>button.onclick=()=>accountingDocumentReversalModal(documents.find(document=>String(document.id)===button.dataset.reverseDocument),context,range));
+      CUI.focusRoute(main);
+    }catch(error){
+      main.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'Cash P&L')
+        :CUI.errorState({title:'Cash P&L unavailable',message:platformErrorMessage(error,'Please try again.'),retryId:'platformFinanceRetry'});
+      const retry=main.querySelector('#platformFinanceRetry');
+      if(retry)retry.onclick=()=>renderPlatformFinance(context,range);
+      CUI.focusRoute(main);
+    }
+  }
+  function platformExpenseModal(context,range) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:'Add operating expense',submitLabel:'Record expense',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'platformExpenseDate',label:'Expense date',type:'date',required:true,value:range.to,attributes:'name="expense_date"'})}
+      ${CUI.field({id:'platformExpenseCategory',label:'Category',control:'select',required:true,options:['software','marketing','professional_services','banking','operations','other'].map(value=>({value,label:platformStatus(value)})),attributes:'name="category"'})}
+      ${CUI.field({id:'platformExpenseAmount',label:'Amount (SGD)',required:true,attributes:'name="amount" inputmode="decimal"'})}
+      ${CUI.field({id:'platformExpenseCounterparty',label:'Supplier / payee',required:true,attributes:'name="counterparty_name" minlength="2" maxlength="200"'})}
+      ${CUI.field({id:'platformExpenseSupplierUen',label:'Supplier UEN',attributes:'name="counterparty_registration_number" maxlength="40"'})}
+      ${CUI.field({id:'platformExpensePaymentReference',label:'Payment reference',required:true,attributes:'name="payment_reference" minlength="3" maxlength="200"'})}
+      ${CUI.field({id:'platformExpenseEvidence',label:'Evidence reference',hint:'Receipt, invoice or controlled document reference',required:true,attributes:'name="evidence_reference" minlength="8" maxlength="300"'})}
+      <div class="wide">${CUI.field({id:'platformExpenseDescription',label:'Description',control:'textarea',required:true,attributes:'name="description" minlength="3" maxlength="240" rows="3"'})}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      await rpc(sb,'platform_record_operating_expense_v147',{p_expense_date:form.get('expense_date'),p_category:form.get('category'),p_description:form.get('description'),p_amount_cents:moneyInputToCents(form.get('amount')),p_counterparty_name:form.get('counterparty_name'),p_counterparty_registration_number:form.get('counterparty_registration_number')||null,p_payment_reference:form.get('payment_reference'),p_evidence_reference:form.get('evidence_reference'),p_idempotency_key:attemptKey});
+      controls.close();await renderPlatformFinance(context,range);CUI.announce('Operating expense recorded.');
+    }});
+  }
+  function platformExpenseReversalModal(expenseId,context,range) {
+    const {CUI,sb}=context;const attemptKey=idempotencyKey();
+    modal({title:'Reverse operating expense',submitLabel:'Record reversal',CUI,body:CUI.field({id:'platformExpenseReversalReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="3" maxlength="240" rows="3"'}),onSubmit:async(form,controls)=>{
+      await rpc(sb,'platform_reverse_operating_expense_v146',{p_expense:expenseId,p_reason:form.get('reason'),p_idempotency_key:attemptKey});
+      controls.close();await renderPlatformFinance(context,range);CUI.announce('Operating expense reversed.');
+    }});
+  }
+
   async function renderBilling(context) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Billing','Loading platform billing truth…','reports');
@@ -6336,11 +6685,11 @@
     document.body.appendChild(overlay);let deactivate;const close=()=>closeOverlay(overlay,deactivate);
     overlay.querySelector('.platform-drawer-close').onclick=close;deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
     try{
-      const detail=asObject(await rpc(sb,'get_business_billing_v125',{p_business:businessId}));
+      const detail=asObject(await rpc(sb,'get_business_billing_v146',{p_business:businessId}));
       const commands=billingCommands(detail);
       overlay.querySelector('[data-detail]').innerHTML=`<div class="platform-actions" style="margin-bottom:14px">${commands.map(command=>`<button type="button" class="btn ${command.danger?'danger':'ghost'} sm" data-billing-command="${command.type}" data-cadence="${command.cadence||''}">${escapeHtml(pt(command.label))}</button>`).join('')}</div>
         <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,'Current customers':detail.current_customer_count,'Customer capacity':detail.terms?.customer_capacity,last_paid_at:detail.last_paid_at,'Money-back request until':detail.money_back_window?.money_back_request_until,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({'Subscription amount':currency(detail.period_subtotal_cents,detail.currency),'GST not charged':currency(detail.period_tax_cents,detail.currency),'Amount due':currency(detail.period_total_cents,detail.currency)})})}</div>
-        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Invoices"))}</h2>${asArray(detail.invoices).map(invoice=>`<div class="platform-action-item"><div><b>${escapeHtml(invoice.number||invoice.provider_invoice_id)}</b><p class="muted small">${escapeHtml(platformStatus(invoice.status))} · ${escapeHtml(pt('Amount due: {amount}',{amount:currency(invoice.total_cents,invoice.currency)}))} · ${escapeHtml(pt('GST not charged'))}</p></div><span>${invoice.paid_normalized?CUI.status('Paid','ok'):CUI.status('Outstanding','no')}</span></div>`).join('')||localizedEmptyHtml('No invoices.')}</section>
+        <section class="card platform-detail-section"><h2>${escapeHtml(pt("Invoices"))}</h2>${asArray(detail.invoices).map(invoice=>`<div class="platform-action-item"><div><b>${escapeHtml(invoice.number||invoice.provider_invoice_id)}</b><p class="muted small">${escapeHtml(platformStatus(invoice.status))} · ${escapeHtml(pt('Amount due: {amount}',{amount:currency(invoice.total_cents,invoice.currency)}))} · ${escapeHtml(pt('GST not charged'))}</p><div class="platform-actions">${billingDocumentLinks(invoice)||`<span class="muted small">${escapeHtml(pt('Awaiting Stripe document'))}</span>`}</div></div><span>${invoice.paid_normalized?CUI.status('Paid','ok'):CUI.status('Outstanding','no')}</span></div>`).join('')||localizedEmptyHtml('No invoices.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Payment attempts"))}</h2>${asArray(detail.payment_attempts).map(attempt=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(attempt.attempt_state))}</b><p class="muted small">${currency(attempt.amount_cents,detail.currency)} · ${escapeHtml(attempt.failure_code||pt('No failure'))}</p></div><span class="muted small">${escapeHtml(dateTime(attempt.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No payment attempts.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Adjustments"))}</h2>${asArray(detail.adjustments).map(adjustment=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(adjustment.adjustment_type))}</b><p class="muted small">${escapeHtml(pt('Amount: {amount}',{amount:currency(adjustment.total_cents,adjustment.currency||detail.currency)}))} · ${escapeHtml(adjustment.reason||pt('No reason recorded'))}</p></div><span class="muted small">${escapeHtml(dateTime(adjustment.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No adjustments.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Commands"))}</h2>${asArray(detail.commands).map(command=>detailObjectHtml(command)).join('')||localizedEmptyHtml('No billing commands.')}</section>`;
@@ -7759,6 +8108,7 @@
       context,onboardingStateFromHash(hash).filters
     );
     if(!task&&activeKey==='billing')task=renderBilling(context);
+    if(!task&&activeKey==='pnl')task=renderPlatformFinance(context);
     if(!task&&activeKey==='commissions')task=renderCommission(context);
     if(!task&&activeKey==='sectors')task=renderSectors(context);
     if(!task&&activeKey==='automation')task=renderAutomation(context);
@@ -7776,6 +8126,7 @@
     enterpriseReportHash,enterpriseFirmHash,enterpriseReportFiltersFromHash,fetchEnterpriseFirmPage,fetchFirmDirectoryPageV88,fetchAllFirmAttentionV88,fetchScopedFirms,fetchAllScopedFirms,
     buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
     moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
+    safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
     accountDeletionQueueHtml,privacyOperationAttempt,
     onboardingHash,onboardingStateFromHash,
     platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
@@ -7795,6 +8146,7 @@
       enterpriseReportHash,enterpriseFirmHash,enterpriseReportFiltersFromHash,fetchEnterpriseFirmPage,fetchFirmDirectoryPageV88,fetchAllFirmAttentionV88,fetchScopedFirms,fetchAllScopedFirms,
       buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
       moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
+      safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
       onboardingHash,onboardingStateFromHash,
       platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
       setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,

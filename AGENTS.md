@@ -20,6 +20,12 @@ instruction takes precedence and must be added to the relevant document in the
 same change. `CLAUDE.md` remains applicable where it does not conflict with
 these instructions.
 
+The owner's principal implementation workflow is stored at
+`AI_CONTEXT/PRINCIPAL-IMPLEMENTATION-WORKFLOW.md`. Apply its FAST/STANDARD/DEEP
+classification and minimum-context execution discipline after reading the
+seven mandatory product/QA authorities above. Repository safety, evidence, and
+release-governance requirements in this file still take precedence.
+
 ## Required workflow before code
 
 1. Capture every new complaint, requirement, screenshot, or acceptance note in
