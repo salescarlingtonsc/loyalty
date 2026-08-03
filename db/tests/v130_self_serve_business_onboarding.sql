@@ -392,7 +392,8 @@ begin
         and programme.recommendation_source='self_service_onboarding_preset'
         and version.status='draft' and version.created_by=v_owner
      )
-     or not exists(select 1 from public.billing_money_back_windows_v124 where business_id=v_business and first_paid_invoice_id='in_v130_paid' and money_back_request_until=v_paid_at+interval '30 days') then
+     or not exists(select 1 from public.billing_first_paid_evidence_v144 where business_id=v_business and first_paid_invoice_id='in_v130_paid' and first_paid_at=v_paid_at)
+     or exists(select 1 from public.billing_money_back_windows_v124 where business_id=v_business) then
     raise exception 'V130 matching provider-paid evidence did not atomically open the workspace';
   end if;
   if not exists(

@@ -1047,6 +1047,18 @@
       "path": "db/migrations/20260802_nestly_v138_auth_grow_closure.sql",
       "semanticVersion": "v138",
       "proposedDeployVersion": "20260802120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v144_self_serve_subscription_consent.sql",
+      "semanticVersion": "v144",
+      "proposedDeployVersion": "20260803120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql",
+      "semanticVersion": "v145",
+      "proposedDeployVersion": "20260803160000"
     }
   ]
 }

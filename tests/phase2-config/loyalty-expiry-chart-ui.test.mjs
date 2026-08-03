@@ -100,12 +100,14 @@ test('every responsive Chart.js canvas is isolated in a bounded frame', () => {
   assert.match(dashboard, /const renderEpoch=\+\+dashboardRenderEpoch/);
   assert.match(dashboard, /const isDashboardCurrent=\(\)=>dashboardRenderEpoch===renderEpoch&&dashboardRoot\.isConnected&&\$\('dashboardView'\)===dashboardRoot/);
   assert.match(dashboard, /async function load\(\)\{\s*const isCurrent=requestGate\.begin\(\);\s*if\(!isCurrent\(\)\)return;[\s\S]*if\(!from\|\|!to\|\|from>to\)[\s\S]*killCharts\(\)/);
-  assert.match(dashboard, /try\{\[response,inactiveResponse,saleMixRows\]=await Promise\.all\(\[[\s\S]*sb\.rpc\('get_dashboard_summary'[\s\S]*catch\(error\)\{if\(isCurrent\(\)\)showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'\);return\}[\s\S]*if\(!isCurrent\(\)\)return;[\s\S]*if\(error\)\{showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'\);return\}/);
+  assert.match(dashboard, /try\{\[response,inactiveResponse\]=await Promise\.all\(\[[\s\S]*sb\.rpc\('get_dashboard_summary'[\s\S]*catch\(error\)\{if\(isCurrent\(\)\)showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'\);return\}[\s\S]*if\(!isCurrent\(\)\)return;[\s\S]*if\(error\)\{showLoadError\('Performance data could not be loaded\.','dashboardReportRetry'\);return\}/);
+  assert.doesNotMatch(dashboard, /saleMixRows|Services and goods sold/,
+    'the unreconciled gross line-item mix must remain hidden from the launch dashboard');
   assert.match(dashboard, /id="dashboardStatus" aria-live="polite"/);
   assert.match(dashboard, /dashboardInactiveRetry/);
-  assert.match(dashboard, /dashboardSaleMixRetry/);
+  assert.doesNotMatch(dashboard, /dashboardSaleMixRetry/);
   assert.match(dashboard, /const C=\(id,cfg\)=>\{if\(isCurrent\(\)\)/);
-  assert.equal((dashboard.match(/dashboardChartCardV141\(\{/g) || []).length, 5);
+  assert.equal((dashboard.match(/dashboardChartCardV141\(\{/g) || []).length, 4);
   assert.match(dashboard, /refreshBranchFilter\(load,isDashboardCurrent,'dashboardBranchWrap'\)/);
   assert.match(app, /async function route\(\)\{\s*const isRouteCurrent=beginRouteInvocation\(\);\s*dashboardRenderEpoch\+=1/);
   assert.match(app, /if\(!isCurrent\(\)\|\|!wrap\.isConnected\|\|\$\(targetId\)!==wrap\)return/);

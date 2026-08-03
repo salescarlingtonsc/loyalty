@@ -115,13 +115,20 @@ test('histories, reports, daily report and CSV carry reversal relationships and 
   for(const token of ['Session correction history','reversal_sale_id','relationship_net','signed_amount','Reversal reconciliation','Net revenue from immutable rows']){
     assert.match(app,new RegExp(token,'i'));
   }
-  assert.match(app,/rows\.filter\(r=>r\.counts_as_visit\)\.reduce\(\(n,r\)=>n\+\(r\.reversal_of\?-1:1\),0\)/);
-  assert.match(app,/const netVisits=\(allSl\|\|\[\]\)\.filter\(s=>s\.counts_as_visit\)\.reduce\(\(n,s\)=>n\+\(s\.reversal_of\?-1:1\),0\)/);
+  assert.match(app,/function validVisitSales\(rows\)/);
+  assert.match(app,/const validVisits=validVisitSales\(allSl\|\|\[\]\)/);
+  assert.match(app,/const netVisits=validVisits\.length/);
   assert.match(app,/relationship_net_original_only/);
   assert.doesNotMatch(app,/Net visits on record[\s\S]{0,120}\?\s*'\+'/);
   assert.match(app,/const from=sgDateBoundary\(day\),toExclusive=sgDateBoundary\(day,1\)/);
   assert.match(app,/\.gte\('occurred_at',from\)\.lt\('occurred_at',toExclusive\)/);
-  assert.match(app,/sl=await fetchAllRows\(\(\)=>\{[\s\S]*count:'exact'[\s\S]*order\('occurred_at'\)\.order\('id'\)/);
+  assert.match(app,/\[scopeResult,clientsScopeResult,summaryResult\]=await Promise\.all\(\[[\s\S]*require_module_scope_v145[\s\S]*get_dashboard_summary/,
+    'daily reporting must confirm complete module scope before reading the ledger');
+  assert.match(app,/sl=await fetchAllRows\(\(\)=>\{[\s\S]*select\(columns,\{count:'exact'\}\)[\s\S]*order\('occurred_at'\)\.order\('id'\)/,
+    'daily reporting must page the complete signed ledger after the scope check');
+  assert.match(app,/sb\.rpc\('get_dashboard_summary',\{p_business:S\.biz\.id,p_from:day,p_to:day,p_branch:scope\.branchId\}\)/);
+  assert.match(app,/const visits=Number\(summary\.visits\|\|0\)/);
+  assert.match(app,/const uniqueCustomerRecords=Number\(summary\.unique_customers\|\|0\)/);
   assert.match(app,/loadReversalWorkflows\(null,100,'package'\)/);
   assert.match(app,/Showing the newest[\s\S]*server limit[\s\S]*older rows are not shown/);
 });

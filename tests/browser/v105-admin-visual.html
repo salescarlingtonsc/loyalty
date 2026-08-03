@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="2dfb8eea08e299ae4171a40753ac3436cea09769488aaa20637740d1045c65b3">
+<meta name="v105-production-component-sha256" content="a486ef3ec9ac07998412ac6113744900ea9ec1538faabdf3cbecaca5465bfd52">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -941,6 +941,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .scanner-fallback{margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
 .checkrow{display:flex;align-items:flex-start;gap:12px;min-height:48px;margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;color:var(--ink);cursor:pointer}
 .checkrow input[type="checkbox"]{width:22px;min-width:22px;min-height:22px;margin-top:1px;accent-color:var(--coral)}
+.consent-document-link{color:var(--red);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;font-weight:700}
+.consent-document-link:hover{color:var(--red2);text-decoration-thickness:3px}
 .wallet-reward img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:5px;margin-bottom:10px;background:var(--bg)}
 .wallet-line{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--hair)}
 .wallet-line:last-child{border-bottom:0}
@@ -953,7 +955,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-inbox-badge{position:absolute;top:-5px;right:-4px;min-width:20px;height:20px;padding:0 5px;display:grid;place-items:center;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800}
 .customer-inbox-item{padding:13px 0;border-bottom:1px solid var(--hair)}.customer-inbox-item:last-child{border-bottom:0}.customer-inbox-item.unread{border-left:3px solid var(--coral);padding-left:10px}.customer-inbox-item.resolved{opacity:.7}.customer-inbox-item.source_unavailable{border-left:3px solid var(--line);padding-left:10px;opacity:.82}.customer-inbox-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
 .customer-inbox-filter[aria-pressed="true"]{border-color:var(--coral);color:var(--coral)}
-.customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}.customer-inbox-quiet{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 0}.customer-inbox-quiet input{min-height:44px}
+.customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}
 .wallet-skeleton{height:58px;border-radius:6px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite}
 @keyframes wallet-loading{to{background-position:-200% 0}}
 .wallet-appt{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--hair)}
@@ -1612,7 +1614,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 2dfb8eea08e2</span>
+<span class="v105-provenance">v105 production-component harness · a486ef3ec9ac</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -1737,7 +1739,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'2dfb8eea08e299ae4171a40753ac3436cea09769488aaa20637740d1045c65b3',
+  sourceHash:'a486ef3ec9ac07998412ac6113744900ea9ec1538faabdf3cbecaca5465bfd52',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

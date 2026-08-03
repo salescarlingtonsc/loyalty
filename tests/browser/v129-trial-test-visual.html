@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="0a2d2db2027d68e8786923251577cefb145dbc2c6b0fcc369d9fd184a6cc99b0"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="474f8fe040f3b8a388642ee05ea705616342529908057e8f4cef0f04e00753ad"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -935,6 +935,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .scanner-fallback{margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
 .checkrow{display:flex;align-items:flex-start;gap:12px;min-height:48px;margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;color:var(--ink);cursor:pointer}
 .checkrow input[type="checkbox"]{width:22px;min-width:22px;min-height:22px;margin-top:1px;accent-color:var(--coral)}
+.consent-document-link{color:var(--red);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;font-weight:700}
+.consent-document-link:hover{color:var(--red2);text-decoration-thickness:3px}
 .wallet-reward img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:5px;margin-bottom:10px;background:var(--bg)}
 .wallet-line{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--hair)}
 .wallet-line:last-child{border-bottom:0}
@@ -947,7 +949,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-inbox-badge{position:absolute;top:-5px;right:-4px;min-width:20px;height:20px;padding:0 5px;display:grid;place-items:center;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800}
 .customer-inbox-item{padding:13px 0;border-bottom:1px solid var(--hair)}.customer-inbox-item:last-child{border-bottom:0}.customer-inbox-item.unread{border-left:3px solid var(--coral);padding-left:10px}.customer-inbox-item.resolved{opacity:.7}.customer-inbox-item.source_unavailable{border-left:3px solid var(--line);padding-left:10px;opacity:.82}.customer-inbox-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
 .customer-inbox-filter[aria-pressed="true"]{border-color:var(--coral);color:var(--coral)}
-.customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}.customer-inbox-quiet{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 0}.customer-inbox-quiet input{min-height:44px}
+.customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}
 .wallet-skeleton{height:58px;border-radius:6px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite}
 @keyframes wallet-loading{to{background-position:-200% 0}}
 .wallet-appt{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--hair)}
@@ -1002,7 +1004,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 0a2d2db2027d68e8786923251577cefb145dbc2c6b0fcc369d9fd184a6cc99b0</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 474f8fe040f3b8a388642ee05ea705616342529908057e8f4cef0f04e00753ad</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -1336,6 +1338,25 @@ async function clientsPage(){
   pendingCustomerSearch='';
   if(clientSearch&&$('clientSearch'))$('clientSearch').value=clientSearch;
   if(clientInactiveDays&&$('clientInactivity'))$('clientInactivity').value=String(clientInactiveDays);
+  const customerDirectoryPage=(search,inactiveDays,offset)=>sb.rpc('staff_list_customers_v129',{
+    p_business:S.biz.id,p_search:search||null,p_inactive_days:inactiveDays,
+    p_limit:CLIENT_PAGE_SIZE,p_offset:offset
+  });
+  const allCustomerDirectoryRows=async()=>{
+    const customers=[];let offset=0,total=null,loyaltyAvailable=null;
+    while(total===null||offset<total){
+      const {data,error}=await customerDirectoryPage(null,null,offset);
+      if(error)throw error;
+      const page=Array.isArray(data?.customers)?data.customers:[];
+      if(loyaltyAvailable===null)loyaltyAvailable=data?.loyalty_available===true;
+      else if(loyaltyAvailable!==(data?.loyalty_available===true))throw new Error('Customer balance authority changed during export. Try again.');
+      total=Math.max(0,Number(data?.total)||0);customers.push(...page);
+      if(!page.length)break;
+      offset+=page.length;
+    }
+    if(customers.length<Number(total||0))throw new Error('Customer export is larger than the supported directory range.');
+    return {customers,loyaltyAvailable:loyaltyAvailable===true};
+  };
   const runClientSearch=()=>{clientSearch=$('clientSearch').value.trim();clientPage=0;load()};
   $('clientSearchGo').onclick=runClientSearch;
   $('clientSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runClientSearch()}};
@@ -1343,20 +1364,16 @@ async function clientsPage(){
   $('clientInactivity').onchange=()=>{clientInactiveDays=$('clientInactivity').value?Number($('clientInactivity').value):null;clientPage=0;load()};
   $('exp').onclick=async()=>{
     const exportButton=$('exp');exportButton.disabled=true;
-    let cl,pb,cb;
+    let directory;
     try{
-      [cl,pb,cb]=await Promise.all([
-        fetchAllRows(()=>sb.from('clients').select('*',{count:'exact'}).eq('business_id',S.biz.id)
-          .order('created_at',{ascending:false}).order('id')),
-        fetchAllRows(()=>sb.from('client_points_balance').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('client_id')),
-        fetchAllRows(()=>sb.from('client_credit_balance').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('client_id'))]);
+      directory=await allCustomerDirectoryRows();
     }catch(error){if(isCustomersCurrent()){exportButton.disabled=false;fail(error)}return}
     if(!isCustomersCurrent())return;
-    const P=Object.fromEntries((pb||[]).map(x=>[x.client_id,x.points])),
-          C=Object.fromEntries((cb||[]).map(x=>[x.client_id,x.balance_cents]));
     const rows=[['name','phone','email','birth_date','date_joined','consent','points','credit'],
-      ...(cl||[]).map(c=>[c.full_name,c.phone||'',c.email||'',c.birth_date||'',
-        c.created_at||'',c.marketing_consent?'yes':'no',P[c.id]||0,((C[c.id]||0)/100).toFixed(2)])];
+      ...directory.customers.map(c=>[c.full_name,c.phone||'',c.email||'',c.birth_date||'',
+        c.created_at||'',c.marketing_consent?'yes':'no',
+        directory.loyaltyAvailable?Number(c.points||0):'unavailable',
+        directory.loyaltyAvailable?(Number(c.balance_cents||0)/100).toFixed(2):'unavailable'])];
     const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-customers.csv`;a.click();
     exportButton.disabled=false;
@@ -1386,7 +1403,7 @@ async function clientsPage(){
       if(!isCustomersCurrent())return;
       if(error){saveButton.disabled=false;return fail(error)}
       toast(created.referral_id
-        ?'Customer added + referral linked — reward fires on their first qualifying sale'
+        ?'Customer added + referral linked — reward eligibility is checked at the first qualifying sale and requires an enabled referral programme.'
         :'Customer added');
       $('form').style.display='none';load();
     };
@@ -1394,33 +1411,25 @@ async function clientsPage(){
   async function load(){
     const isCurrent=customerLoadGate.begin();
     const customerRpcSearch=normalizeCustomerSearchPhoneDigits(clientSearch)||clientSearch;
-    const {data:result,error}=await sb.rpc('staff_list_customers_v129',{
-      p_business:S.biz.id,p_search:customerRpcSearch||null,p_inactive_days:clientInactiveDays,
-      p_limit:CLIENT_PAGE_SIZE,p_offset:clientPage*CLIENT_PAGE_SIZE
-    });
+    const {data:result,error}=await customerDirectoryPage(
+      customerRpcSearch,clientInactiveDays,clientPage*CLIENT_PAGE_SIZE
+    );
     if(!isCurrent())return;
     if(error){$('list').innerHTML=`<div class="err" role="alert">${esc(error.message||'Customers could not be loaded.')}</div><button class="btn ghost sm" id="customersRetry" style="margin-top:12px">Try again</button>`;$('customersRetry').onclick=load;return}
     const cl=Array.isArray(result?.customers)?result.customers:[];
     if(!cl.length){$('list').innerHTML=CUI.emptyState({iconName:clientSearch?'search':'customers',title:clientSearch?'No matching customers':clientInactiveDays?`No customers inactive for ${clientInactiveDays}+ days`:'No customers yet',body:clientSearch?'Try a different name or phone number, or clear the search.':clientInactiveDays?'Choose a shorter period or All customers.':canWrite?'Add your first customer to start recording sales.':'Customers will appear here when an authorized teammate adds them.'});return}
-    let joinedById={},joinedError='';
-    try{
-      const joined=await sb.from('clients').select('id,created_at').eq('business_id',S.biz.id).in('id',cl.map(customer=>customer.id));
-      if(joined.error)throw joined.error;
-      joinedById=Object.fromEntries((joined.data||[]).map(customer=>[customer.id,customer.created_at]));
-    }catch(joinError){joinedError=joinError.message||'Date joined could not be loaded.'}
-    if(!isCurrent())return;
+    const loyaltyAvailable=result?.loyalty_available===true;
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
-    $('list').innerHTML=`${joinedError?`<div class="err" role="status" style="margin-bottom:12px">Customer results loaded, but Date joined is temporarily unavailable. <button type="button" class="btn ghost sm" id="customerJoinedRetry">Retry</button></div>`:''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th>Name</th><th>Phone</th><th>Last visit</th><th>Date joined</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
+    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points and spendable credit are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th>Name</th><th>Phone</th><th>Last visit</th><th>Date joined</th><th>Points</th><th>Credit</th><th>Consent</th></tr>
       ${cl.map(c=>`<tr>
-        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`Last visit ${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(joinedById[c.id]))}</td>
-        <td>${Number(c.points)||0} pts</td><td>${money(Number(c.balance_cents)||0)}</td>
+        <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`Last visit ${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
+        <td>${loyaltyAvailable?`${Number(c.points)||0} pts`:'Unavailable'}</td><td>${loyaltyAvailable?money(Number(c.balance_cents)||0):'Unavailable'}</td>
         <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
         <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
         <button class="btn ghost sm" id="clNext" ${clientPage+1>=pages?'disabled':''}>Next</button></div>`;
     $('clPrev').onclick=()=>{if(clientPage>0){clientPage--;load()}};
     $('clNext').onclick=()=>{if(clientPage+1<pages){clientPage++;load()}};
-    if($('customerJoinedRetry'))$('customerJoinedRetry').onclick=load;
   }
   /* v53 service-recovery queue — rides the clients module (staff_list_visit_feedback gates on
      can_module_read('clients'), so no new MODULES key). Owner/manager hold refund_sales (the same
@@ -1429,21 +1438,30 @@ async function clientsPage(){
   const canResolveFeedback=S.myRole==='owner'||S.myRole==='manager';
   const feedbackResolveKeys=new Map();
   const FB_FILTERS=[['open','Open'],['acknowledged','Acknowledged'],['resolved','Resolved'],['closed','Closed'],['','All']];
+  const FEEDBACK_PAGE_SIZE=100;
   let feedbackFilter='open';
+  let feedbackPage=0;
+  const feedbackLoadGate=createLatestRequestGate(isCustomersCurrent);
   const fbStars=n=>'★'.repeat(Number(n)||0)+'☆'.repeat(Math.max(0,5-(Number(n)||0)));
   const fbStatusLabel={open:'Open case',acknowledged:'Acknowledged',resolved:'Resolved',closed:'Positive'};
   const fbStatusTone={open:'no',acknowledged:'new',resolved:'on',closed:'ok'};
   function renderFeedbackChips(){
     const chips=$('fbChips');if(!chips)return;
     chips.innerHTML=FB_FILTERS.map(([value,label])=>`<button type="button" class="fb-chip" data-fb-filter="${value}" aria-pressed="${feedbackFilter===value}">${label}</button>`).join('');
-    chips.querySelectorAll('[data-fb-filter]').forEach(btn=>btn.onclick=()=>{feedbackFilter=btn.dataset.fbFilter;renderFeedbackChips();loadFeedbackQueue()});
+    chips.querySelectorAll('[data-fb-filter]').forEach(btn=>btn.onclick=()=>{feedbackFilter=btn.dataset.fbFilter;feedbackPage=0;renderFeedbackChips();loadFeedbackQueue()});
   }
   async function loadFeedbackQueue(){
     const host=$('fbQueue');if(!host||!isCustomersCurrent())return;
-    const {data,error}=await sb.rpc('staff_list_visit_feedback',{p_business:S.biz.id,p_status:feedbackFilter||null,p_limit:100});
-    if(!isCustomersCurrent()||$('fbQueue')!==host)return;
+    const isLatest=feedbackLoadGate.begin();
+    host.innerHTML='<div class="empty">Loading feedback…</div>';
+    const {data,error}=await sb.rpc('staff_list_visit_feedback_v145',{p_business:S.biz.id,p_status:feedbackFilter||null,
+      p_limit:FEEDBACK_PAGE_SIZE,p_offset:feedbackPage*FEEDBACK_PAGE_SIZE});
+    if(!isLatest()||!isCustomersCurrent()||$('fbQueue')!==host)return;
     if(error){host.innerHTML=`<div class="err" role="alert">${esc(error.message||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
     const rows=Array.isArray(data?.feedback)?data.feedback:[];
+    const total=Math.max(0,Number(data?.total||0));
+    const pages=Math.max(1,Math.ceil(total/FEEDBACK_PAGE_SIZE));
+    if(feedbackPage>=pages&&feedbackPage>0){feedbackPage=pages-1;loadFeedbackQueue();return}
     if(!rows.length){host.innerHTML=CUI.emptyState({iconName:'check',title:feedbackFilter==='open'?'No open cases':'Nothing here',body:feedbackFilter==='open'?'Every service-recovery case has been handled.':'No feedback matches this filter yet.'});return}
     host.innerHTML=rows.map(f=>{
       const openCase=f.recovery_status==='open'||f.recovery_status==='acknowledged';
@@ -1453,9 +1471,13 @@ async function clientsPage(){
         <p class="muted small" style="margin-top:5px"><b>${esc(f.customer_name||'Customer')}</b> · ${esc(sgt(f.created_at)||'')} · ${esc(timeAgo(f.created_at))}</p>
         ${f.comment?`<p style="margin-top:6px">${esc(f.comment)}</p>`:'<p class="muted small" style="margin-top:6px">No written comment.</p>'}
         ${prov}${actions}</div>`;
-    }).join('');
+    }).join('')+`<div class="row" style="margin-top:14px"><span class="muted small">${total} feedback record${total===1?'':'s'} · page ${feedbackPage+1} of ${pages}</span><span class="spacer"></span>
+      <button class="btn ghost sm" id="fbPrev" ${feedbackPage===0?'disabled':''}>Previous</button>
+      <button class="btn ghost sm" id="fbNext" ${feedbackPage+1>=pages?'disabled':''}>Next</button></div>`;
     host.querySelectorAll('.fbAck').forEach(btn=>btn.onclick=()=>submitFeedbackResolution(btn.dataset.id,'acknowledged',null));
     host.querySelectorAll('.fbResolve').forEach(btn=>btn.onclick=()=>openFeedbackResolveDialog(btn.dataset.id));
+    $('fbPrev').onclick=()=>{if(feedbackPage>0){feedbackPage--;loadFeedbackQueue()}};
+    $('fbNext').onclick=()=>{if(feedbackPage+1<pages){feedbackPage++;loadFeedbackQueue()}};
   }
   async function submitFeedbackResolution(fbId,newStatus,note){
     if(!feedbackResolveKeys.has(fbId))feedbackResolveKeys.set(fbId,crypto.randomUUID());
@@ -1494,60 +1516,126 @@ async function clientsPage(){
   const isClientDetailCurrent=()=>routeMain.isConnected&&M()===routeMain;
   routeMain.innerHTML=CUI.loadingState({title:'Customer profile',iconName:'customers'});
   const canWriteClients=canWriteModule('clients');
-  const canWriteLoyalty=canWriteModule('loyalty')&&hasRoleCapability('create_sales');
+  const canWriteLoyaltyConfigured=canWriteModule('loyalty')&&hasRoleCapability('create_sales');
+  /* A customer record may be readable while its sales, loyalty, appointment or programme
+     modules are not. Never turn an RLS-filtered response from one of those modules into a
+     plausible-looking zero on the profile. Query and render each facet only when the signed-in
+     role can read its owning module. */
+  const requestedProfileFacets={
+    sales:canReadModule('sales'),loyalty:canReadModule('loyalty'),retention:canReadModule('retention'),
+    appointments:canReadModule('appointments'),memberships:canReadModule('memberships'),
+    packages:canReadModule('packages'),referrals:canReadModule('referrals')
+  };
+  /* Owners and managers may prove a complete business-wide projection with a null
+     branch. Employees are intentionally denied that scope by the server, even when
+     assigned to every branch. For staff, prove every branch assigned to this account
+     and then render only the rows that normal RLS exposes for those branches. */
+  const isProfileAdmin=S.myRole==='owner'||S.myRole==='manager';
+  let profileScopeBranchIds=isProfileAdmin?[null]:[],profileScopeLoadError=false;
+  if(!isProfileAdmin){
+    try{
+      const {branches}=await visibleBranchesForCurrentUser();
+      profileScopeBranchIds=(branches||[]).map(branch=>branch.id);
+    }catch(error){profileScopeLoadError=true}
+  }
+  if(!isClientDetailCurrent())return;
+  const confirmCompleteFacet=async module=>{
+    if(!requestedProfileFacets[module]||!profileScopeBranchIds.length)return false;
+    try{
+      const results=await Promise.all(profileScopeBranchIds.map(branchId=>
+        sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:branchId,p_module:module})
+      ));
+      return results.every(result=>!result?.error);
+    }catch(error){return false}
+  };
+  const [canReadSales,canReadLoyalty,canReadRetention,canReadAppointments,canReadMemberships,canReadPackages,canReadReferrals]=await Promise.all([
+    confirmCompleteFacet('sales'),confirmCompleteFacet('loyalty'),confirmCompleteFacet('retention'),
+    confirmCompleteFacet('appointments'),confirmCompleteFacet('memberships'),confirmCompleteFacet('packages'),confirmCompleteFacet('referrals')
+  ]);
+  if(!isClientDetailCurrent())return;
+  const confirmedProfileFacets={sales:canReadSales,loyalty:canReadLoyalty,retention:canReadRetention,
+    appointments:canReadAppointments,memberships:canReadMemberships,packages:canReadPackages,referrals:canReadReferrals};
+  const unavailableProfileFacets=Object.keys(requestedProfileFacets)
+    .filter(module=>requestedProfileFacets[module]&&!confirmedProfileFacets[module]);
   const customerFeatures=await loadCustomerFeatureCapabilities();
   if(!isClientDetailCurrent())return;
   // Birthday data is capability-gated before any staff reader is called. This
   // prevents the customer detail view from probing or rendering the feature
   // while C45 remains disabled, rather than relying on an RPC error alone.
-  const birthdayBenefitsEnabled=customerFeatures.customer_birthday_benefits===true;
+  const birthdayBenefitsEnabled=canReadLoyalty&&customerFeatures.customer_birthday_benefits===true;
   const canRedeemBirthday=birthdayBenefitsEnabled&&canWriteModule('loyalty');
   const canReverseBirthday=birthdayBenefitsEnabled&&S.myRole==='owner'&&canWriteModule('loyalty');
+  const loyaltyProjectionBranch=isProfileAdmin?null:(profileScopeBranchIds[0]||null);
   let birthdayRedemptionIdem=null;
   let birthdayReversalIdem=null;
-  const [{data:c,error},{data:pb},{data:cb},{data:rg},{data:lp},{data:xb,error:xbError},{data:rwList},{data:allSl},{data:allAp},{data:stAll},{data:cfDefs},{data:cfVals},{data:cfOpts},{data:birthdayBenefit},{data:msRows},{data:cpRows}]=await Promise.all([
+  const [{data:c,error},{data:loyaltyProjection,error:loyaltyProjectionError},{data:rg,error:rgError},{data:allSl,error:salesError},{data:redemptionRows,error:redemptionHistoryError},{data:allAp,error:appointmentsError},{data:stAll,error:staffError},{data:cfDefs,error:cfDefsError},{data:cfVals,error:cfValsError},{data:cfOpts,error:cfOptsError},{data:birthdayBenefit,error:birthdayError},{data:feedbackResult,error:feedbackError},{data:msRows,error:membershipsError},{data:cpRows,error:packagesError}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
     sb.from('clients').select('id,business_id,full_name,phone,email,referral_code,marketing_consent').eq('id',id).single(),
-    sb.from('client_points_balance').select('points').eq('client_id',id),
-    sb.from('client_credit_balance').select('balance_cents').eq('client_id',id),
-    sb.rpc('staff_get_reward_entitlements_v99',{p_business:S.biz.id,p_client:id}),
-    sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
-    sb.from('points_batches').select('remaining,expires_at').eq('client_id',id).gt('remaining',0).not('expires_at','is',null).order('expires_at').limit(1),
-    sb.from('loyalty_rewards').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort').order('created_at'),
+    canReadLoyalty?sb.rpc('staff_get_customer_actionable_loyalty_v145',{
+      p_business:S.biz.id,p_client:id,p_branch:loyaltyProjectionBranch
+    }):Promise.resolve({data:null}),
+    canReadRetention?sb.rpc('staff_get_reward_entitlements_v99',{p_business:S.biz.id,p_client:id}):Promise.resolve({data:[]}),
     /* Full history — one unlimited paged fetch drives both the Customer 360 timeline and the
        net-visit/lifetime-spend totals below (the old duplicate 10-row summary query was unused). */
-    fetchAllRows(()=>sb.from('sales').select('*',{count:'exact'}).eq('client_id',id)
-      .order('occurred_at',{ascending:false}).order('id')).then(data=>({data})),
-    sb.from('appointments').select('*, services!appointments_service_id_fkey(name)').eq('client_id',id).order('starts_at',{ascending:false}),
-    sb.from('staff').select('id,full_name').eq('business_id',S.biz.id),
-    S.myRole==='owner'?sb.from('client_field_definitions').select('*').eq('business_id',S.biz.id).eq('active',true).order('created_at'):Promise.resolve({data:[]}),
-    S.myRole==='owner'?sb.from('client_field_values').select('*').eq('business_id',S.biz.id).eq('client_id',id):Promise.resolve({data:[]}),
-    S.myRole==='owner'?sb.from('client_field_options').select('*').eq('business_id',S.biz.id).eq('active',true).order('sort_order'):Promise.resolve({data:[]}),
+    canReadSales?fetchAllRows(()=>sb.from('sales').select('*',{count:'exact'}).eq('client_id',id)
+      .order('occurred_at',{ascending:false}).order('id')).then(data=>({data})):Promise.resolve({data:[]}),
+    canReadLoyalty?fetchAllRowsResult(()=>sb.rpc('list_customer_redemption_history_v145',{
+      p_business:S.biz.id,p_client:id
+    }).order('redeemed_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
+    canReadAppointments?fetchAllRowsResult(()=>sb.from('appointments').select('*, services!appointments_service_id_fkey(name)',{count:'exact'}).eq('client_id',id).order('starts_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
+    (canReadSales||canReadAppointments)?fetchAllRowsResult(()=>sb.from('staff').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('id')):Promise.resolve({data:[]}),
+    S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_definitions').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('created_at').order('id')):Promise.resolve({data:[]}),
+    S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_values').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('id')):Promise.resolve({data:[]}),
+    S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_options').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('sort_order').order('id')):Promise.resolve({data:[]}),
     birthdayBenefitsEnabled
       ?sb.rpc('staff_get_customer_birthday_benefit',{p_business_id:S.biz.id,p_client_id:id})
       :Promise.resolve({data:null}),
+    sb.rpc('staff_list_visit_feedback_v145',{p_business:S.biz.id,p_status:null,p_limit:6,p_offset:0,p_client:id}),
     /* Membership + package events for the unified timeline and the status badges. These reuse
        the same tables the Memberships / Packages pages already query, now scoped to one client. */
-    sb.from('memberships').select('*, membership_plans(name,price_cents,cadence)').eq('business_id',S.biz.id).eq('client_id',id).order('created_at',{ascending:false}),
-    sb.from('client_packages').select('id,business_id,client_id,purchased_at,remaining,status,plan_name_snapshot,sessions_snapshot,plan_version_snapshot,price_cents_snapshot,service_name_snapshot,service_variant_snapshot,service_duration_min_snapshot,list_unit_cents_snapshot,list_value_cents_snapshot').eq('business_id',S.biz.id).eq('client_id',id).order('purchased_at',{ascending:false})]);
+    canReadMemberships?fetchAllRowsResult(()=>sb.from('memberships').select('*, membership_plans(name,price_cents,cadence)',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('created_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
+    canReadPackages?fetchAllRowsResult(()=>sb.from('client_packages').select('id,business_id,client_id,purchased_at,remaining,status,plan_name_snapshot,sessions_snapshot,plan_version_snapshot,price_cents_snapshot,service_name_snapshot,service_variant_snapshot,service_duration_min_snapshot,list_unit_cents_snapshot,list_value_cents_snapshot',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('purchased_at',{ascending:false}).order('id')):Promise.resolve({data:[]})]);
   if(!isClientDetailCurrent())return;
   if(error) throw error;
-  let reversalData=null;
-  try{reversalData=await loadReversalWorkflows(id,100)}catch(e){fail(e)}
+  /* Loyalty, birthday and visit-feedback projections are independent profile facets.
+     A transient failure in one must stay local to its card so verified sales and the
+     remaining profile facts stay usable; no failed projection is converted to zero. */
+  const facetQueryError=rgError||salesError||redemptionHistoryError||appointmentsError||staffError||cfDefsError||cfValsError||cfOptsError||membershipsError||packagesError;
+  if(facetQueryError){
+    routeMain.innerHTML=CUI.errorState({title:'Customer profile unavailable',message:'The complete customer profile could not be confirmed. No partial totals are shown.',retryId:'clientDetailRetry'});
+    const retry=$('clientDetailRetry');if(retry)retry.onclick=()=>clientDetail(id);
+    return;
+  }
+  const loyaltyFactsAvailable=canReadLoyalty&&!loyaltyProjectionError
+    &&loyaltyProjection&&typeof loyaltyProjection==='object';
+  const canWriteLoyalty=canWriteLoyaltyConfigured&&loyaltyFactsAvailable;
+  let reversalData=null,reversalActionsUnavailable=false;
+  if(canReadSales||canReadLoyalty){
+    try{reversalData=await loadReversalWorkflows(id,0)}
+    catch(error){
+      if(!isClientDetailCurrent())return;
+      /* The immutable sales/redemption readers above remain authoritative for history
+         and totals. If the separate correction-action projection is interrupted, keep
+         those facts visible and withhold only Reverse controls. */
+      reversalActionsUnavailable=true;
+    }
+  }
   if(!isClientDetailCurrent())return;
   const saleWorkflow=Object.fromEntries((reversalData?.sales||[]).map(x=>[x.id,x]));
+  const redemptionWorkflow=Object.fromEntries((reversalData?.redemptions||[]).map(x=>[x.id,x]));
+  const saleById=Object.fromEntries((allSl||[]).map(sale=>[sale.id,sale]));
+  const reversalByOriginal=Object.fromEntries((allSl||[])
+    .filter(sale=>sale.reversal_of)
+    .sort((a,b)=>(a.occurred_at||'').localeCompare(b.occurred_at||'')||String(a.id).localeCompare(String(b.id)))
+    .map(reversal=>[reversal.reversal_of,reversal]));
   const staffName=Object.fromEntries((stAll||[]).map(s=>[s.id,s.full_name||'Team member']));
-  /* v53 feedback strip — ONE bounded staff_list_visit_feedback call (the same queue RPC),
-     filtered client-side by client_id; no per-client RPC is added (task constraint). Best-effort:
-     a failure never blocks the profile. Resolver name reuses the staffName map built above. */
-  let clientFeedback=[];
-  try{
-    const {data:fbData}=await sb.rpc('staff_list_visit_feedback',{p_business:S.biz.id,p_limit:200});
-    clientFeedback=(fbData?.feedback||[]).filter(f=>f.client_id===id);
-  }catch(e){/* non-fatal: feedback strip is supplementary */}
-  if(!isClientDetailCurrent())return;
-  const feedbackStripMarkup=clientFeedback.length?`<div class="card" id="c360-feedback"><b>Visit feedback</b><p class="muted small" style="margin:5px 0 8px">Recent ratings and any service-recovery cases for this customer.</p>${clientFeedback.slice(0,6).map(f=>{
+  /* The server filters by this customer before applying the six-row recent limit, so
+     a busy business cannot push this customer's own feedback out of the profile. */
+  const clientFeedback=feedbackError?[]:(feedbackResult?.feedback||[]);
+  const feedbackStripMarkup=feedbackError
+    ?`<div class="card" id="c360-feedback"><b>Visit feedback</b><div class="err small" style="margin-top:8px">Feedback is temporarily unavailable. The rest of this customer profile remains current.</div><button class="btn ghost sm" id="c360FeedbackRetry" style="margin-top:10px">Reload profile</button></div>`
+    :clientFeedback.length?`<div class="card" id="c360-feedback"><b>Visit feedback</b><p class="muted small" style="margin:5px 0 8px">Recent ratings and any service-recovery cases for this customer.</p>${clientFeedback.slice(0,6).map(f=>{
     const stars='★'.repeat(Number(f.rating)||0)+'☆'.repeat(Math.max(0,5-(Number(f.rating)||0)));
     const label={open:'Open case',acknowledged:'Acknowledged',resolved:'Resolved',closed:'Positive'}[f.recovery_status]||f.recovery_status;
     const tone={open:'no',acknowledged:'new',resolved:'on',closed:'ok'}[f.recovery_status]||'';
@@ -1560,11 +1648,26 @@ async function clientsPage(){
      and is rendered from its own shape (they are separate tables, not a union query): sales carry
      reversal provenance from staff_get_reversal_workflows; appointments split past vs upcoming;
      retention grants, membership enrolments and package purchases add their lifecycle facets. */
-  const histSales=(allSl||[]).map(s=>({...(saleWorkflow[s.id]||{}),t:s.occurred_at,kind:'sale',id:s.id,saleKind:s.kind,
-    amount:s.amount_cents,note:s.note,staff:staffName[s.staff_id]||null}));
+  const histSales=(allSl||[]).map(s=>{
+    const reversal=s.reversal_of?null:reversalByOriginal[s.id];
+    const original=s.reversal_of?saleById[s.reversal_of]:null;
+    const immutableRelation=s.reversal_of?{
+      is_reversal:true,original_sale_id:s.reversal_of,reversal_sale_id:s.id,
+      net_amount_cents:Number(original?.amount_cents||0)+Number(s.amount_cents||0),
+      reversal_reason:s.reversal_reason||null,reversed_at:s.occurred_at
+    }:reversal?{
+      is_reversal:false,reversal_sale_id:reversal.id,
+      net_amount_cents:Number(s.amount_cents||0)+Number(reversal.amount_cents||0),
+      reversal_reason:reversal.reversal_reason||null,reversed_at:reversal.occurred_at
+    }:{is_reversal:false,net_amount_cents:Number(s.amount_cents||0)};
+    return {...immutableRelation,...(saleWorkflow[s.id]||{}),t:s.occurred_at,kind:'sale',id:s.id,saleKind:s.kind,
+      amount:s.amount_cents,note:s.note,staff:staffName[s.staff_id]||null};
+  });
   const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:a.services?.name,status:a.status,
     upcoming:(a.starts_at||'')>nowIso&&a.status!=='cancelled'&&a.status!=='completed'}));
-  const histRedemptions=(reversalData?.redemptions||[]).map(r=>({t:r.redeemed_at,kind:'redemption',...r}));
+  const histRedemptions=(redemptionRows||[]).map(redemption=>({
+    ...redemption,...(redemptionWorkflow[redemption.id]||{}),t:redemption.redeemed_at,kind:'redemption'
+  }));
   const histGrants=(rg||[]).map(g=>({...g,t:g.granted_at,kind:'grant',program:g.program_name}));
   const histMemberships=(msRows||[]).map(m=>({t:m.created_at,kind:'membership',plan:m.membership_plans?.name,
     status:m.status,cadence:m.membership_plans?.cadence,renews:m.current_period_end}));
@@ -1576,8 +1679,16 @@ async function clientsPage(){
   const history=[...histSales,...histAppts,...histRedemptions,...histGrants,...histMemberships,...histPackages]
     .sort((a,b)=>(b.t||'').localeCompare(a.t||''));
   let histShown=50;
-  const pts=pb?.[0]?.points||0,cred=cb?.[0]?.balance_cents||0,prog=lp?.[0];
-  const nextExp=xb?.[0];
+  const loyaltyFacts=loyaltyFactsAvailable?loyaltyProjection:null;
+  const pts=Number(loyaltyFacts?.points_balance)||0;
+  const cred=Number(loyaltyFacts?.credit_balance_cents)||0;
+  const prog=loyaltyFacts?.program||null;
+  const nextExp=loyaltyFacts?.expiry
+    ?{remaining:Number(loyaltyFacts.expiry.units)||0,expires_at:loyaltyFacts.expiry.expires_at}
+    :null;
+  const projectedRewards=Array.isArray(loyaltyFacts?.rewards)?loyaltyFacts.rewards:[];
+  const projectedNextReward=loyaltyFacts?.next_reward||null;
+  const redemptionEnabled=loyaltyFacts?.redemption_enabled===true;
   const customValueByField=Object.fromEntries((cfVals||[]).map(v=>[v.field_definition_id,v]));
   const customFieldInput=(f)=>{
     const v=customValueByField[f.id]||{},inputId=`cfv-${f.id}`;
@@ -1589,31 +1700,24 @@ async function clientsPage(){
     const key={text:'text_value',number:'number_value',date:'date_value'}[f.value_type];
     return `<input id="${inputId}" type="${f.value_type==='number'?'number':f.value_type==='date'?'date':'text'}" value="${esc(v[key]??'')}">`;
   };
-  /* Net visits use the complete paged sale history, not the 10-row summary query. Each
-     immutable visit snapshot contributes +1 and its compensating reversal contributes -1. */
-  const netVisits=(allSl||[]).filter(s=>s.counts_as_visit).reduce((n,s)=>n+(s.reversal_of?-1:1),0);
+  /* The complete paged history supplies the current set of valid original visits. */
+  const validVisits=validVisitSales(allSl||[]);
+  const netVisits=validVisits.length;
   /* Lifetime spend uses the app's canonical net-revenue methodology (see Reports): reversal rows
      carry a signed-negative amount_cents, so a plain additive sum over counts_as_revenue rows is
      already net of every correction. */
   const lifetimeSpendCents=(allSl||[]).filter(s=>s.counts_as_revenue).reduce((a,s)=>a+(s.amount_cents||0),0);
-  const dayMs=86400000;
-  const lastVisitIso=(allSl||[]).filter(s=>s.counts_as_visit&&!s.reversal_of)
+  const lastVisitIso=validVisits
     .reduce((mx,s)=>(s.occurred_at||'')>mx?s.occurred_at:mx,'');
-  const lastVisitDays=lastVisitIso?Math.floor((Date.now()-new Date(lastVisitIso).getTime())/dayMs):null;
-  /* Which reward (if any) the customer can redeem right now, honouring the active model: a catalog
-     model reads loyalty_rewards, classic uses the program threshold. Deterministic — no guessing. */
-  let rewardReady=false,rewardReadyLabel='',pointsToUnlock=null;
-  if(prog&&prog.active){
-    if(prog.loyalty_model&&prog.loyalty_model!=='classic'){
-      const sorted=[...(rwList||[])].sort((a,b)=>a.cost_points-b.cost_points);
-      const afford=sorted.filter(r=>pts>=r.cost_points);
-      if(afford.length){rewardReady=true;const best=afford[afford.length-1];rewardReadyLabel=best.customer_name||best.name||'a reward';}
-      else if(sorted.length){pointsToUnlock=sorted[0].cost_points-pts;rewardReadyLabel=sorted[0].customer_name||sorted[0].name||'a reward';}
-    }else if(prog.redeem_points){
-      if(pts>=prog.redeem_points){rewardReady=true;rewardReadyLabel=`${money(prog.reward_credit_cents)} credit`;}
-      else{pointsToUnlock=prog.redeem_points-pts;rewardReadyLabel=`${money(prog.reward_credit_cents)} credit`;}
-    }
-  }
+  const lastVisitDays=lastVisitIso?completeSgCalendarDaysSince(lastVisitIso):null;
+  /* Reward readiness comes only from the staff-safe server projection. It has already
+     applied expiry allocation, published claim windows, usage limits, restrictions and
+     the merchant redemption switch; the browser never reconstructs those rules. */
+  const readyReward=projectedRewards.find(reward=>reward.available_now===true)||null;
+  const rewardReady=redemptionEnabled&&readyReward!==null;
+  const rewardReadyLabel=(readyReward||projectedNextReward)?.name||'a reward';
+  const pointsToUnlock=redemptionEnabled&&projectedNextReward
+    ?Math.max(0,Number(projectedNextReward.remaining_units)||0):null;
   const activeMembership=(msRows||[]).find(m=>m.status==='active');
   const activePackage=(cpRows||[]).find(k=>k.status==='active'&&k.remaining>0);
   /* Deep-link plumbing to EXISTING write surfaces only. Record sale needs a usable SG mobile on file
@@ -1633,60 +1737,67 @@ async function clientsPage(){
   };
   /* Status badges — every one is derived from data already fetched above (no persona table read). */
   const badges=[];
-  if(netVisits>=10)badges.push({cls:'vip',icon:'loyalty',label:`VIP · ${netVisits} visits`});
-  else if(netVisits>=3)badges.push({cls:'regular',icon:'check',label:`Regular · ${netVisits} visits`});
-  else if(netVisits<=0)badges.push({cls:'newc',icon:'add',label:'New customer'});
-  else badges.push({cls:'',icon:'customers',label:`${netVisits} visit${netVisits===1?'':'s'}`});
-  if(activeMembership)badges.push({cls:'member',icon:'memberships',label:`Member${activeMembership.membership_plans?.name?' · '+activeMembership.membership_plans.name:''}`});
-  if(activePackage)badges.push({cls:'package',icon:'packages',label:`Package · ${activePackage.remaining} left`});
-  if(cred>0)badges.push({cls:'',icon:'giftcard',label:`${money(cred)} credit`});
-  if(birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available')badges.push({cls:'newc',icon:'loyalty',label:'Birthday reward'});
+  if(canReadSales){
+    if(netVisits>=10)badges.push({cls:'vip',icon:'loyalty',label:`VIP · ${netVisits} visits`});
+    else if(netVisits>=3)badges.push({cls:'regular',icon:'check',label:`Regular · ${netVisits} visits`});
+    else if(netVisits<=0)badges.push({cls:'newc',icon:'add',label:'New customer'});
+    else badges.push({cls:'',icon:'customers',label:`${netVisits} visit${netVisits===1?'':'s'}`});
+  }
+  if(canReadMemberships&&activeMembership)badges.push({cls:'member',icon:'memberships',label:`Member${activeMembership.membership_plans?.name?' · '+activeMembership.membership_plans.name:''}`});
+  if(canReadPackages&&activePackage)badges.push({cls:'package',icon:'packages',label:`Package · ${activePackage.remaining} left`});
+  if(loyaltyFactsAvailable&&cred>0)badges.push({cls:'',icon:'giftcard',label:`${money(cred)} credit`});
+  if(canReadLoyalty&&birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available')badges.push({cls:'newc',icon:'loyalty',label:'Birthday reward'});
   badges.push(c.marketing_consent?{cls:'regular',icon:'check',label:'PDPA consent'}:{cls:'consent-no',icon:'info',label:'No marketing consent'});
   const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:14})}${esc(b.label)}</span>`).join('')}</div>`;
   /* Next-best-action: a deterministic priority cascade over the signals above. First matching rule
      whose deep-link the current role can actually use becomes the ONE primary action; the remaining
      actionable rules collapse into a "More options" menu. Every action lands on an existing surface. */
-  const expDays=nextExp?Math.max(0,Math.round((new Date(nextExp.expires_at).getTime()-Date.now())/dayMs)):null;
+  const expiryDate=nextExp?sgDateInputValue(new Date(nextExp.expires_at)):null;
+  const expDays=nextExp?completeSgCalendarDaysUntil(nextExp.expires_at):null;
   const candidates=[];
-  if(birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available'){
+  if(canReadLoyalty&&birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available'){
     candidates.push({actionKey:'birthday',iconName:'loyalty',title:'Birthday reward is ready',
       reason:'Their birthday window is open now. Redeem the treat before it lapses — the team never sees the date.',
       ctaLabel:'Go to birthday reward',run:canRedeemBirthday?()=>focusCard('c360-birthday'):null});
   }
-  if(nextExp&&pts>0&&expDays!=null&&expDays<=30){
+  if(loyaltyFactsAvailable&&nextExp&&pts>0&&expDays!=null&&expDays<=30){
     if(rewardReady){
       candidates.push({actionKey:'loyalty',iconName:'redeem',title:'Points expire soon — redeem now',
-        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${nextExp.expires_at.slice(0,10)} (in ${expDays} day${expDays===1?'':'s'}). They already have enough for ${rewardReadyLabel} — redeem so nothing is lost.`,
+        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${expiryDate} (in ${expDays} day${expDays===1?'':'s'}). They already have enough for ${rewardReadyLabel} — redeem so nothing is lost.`,
         ctaLabel:'Redeem reward',run:canWriteLoyalty?()=>focusCard('c360-loyalty'):null});
     }else{
       candidates.push({actionKey:'quickearn',iconName:'till',title:'Points expire soon',
-        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${nextExp.expires_at.slice(0,10)} (in ${expDays} day${expDays===1?'':'s'})${pointsToUnlock?`, ${pointsToUnlock} short of ${rewardReadyLabel}`:''}. Invite a visit so they build toward a reward before then.`,
+        reason:`${nextExp.remaining} point${nextExp.remaining===1?'':'s'} expire ${expiryDate} (in ${expDays} day${expDays===1?'':'s'})${pointsToUnlock?`, ${pointsToUnlock} short of ${rewardReadyLabel}`:''}. Invite a visit so they build toward a reward before then.`,
         ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
     }
   }
-  if(rewardReady){
+  if(loyaltyFactsAvailable&&rewardReady){
     candidates.push({actionKey:'loyalty',iconName:'redeem',title:'A reward is ready to redeem',
       reason:`They have ${pts} point${pts===1?'':'s'} — enough for ${rewardReadyLabel}. Redeeming it is a reason to come back.`,
       ctaLabel:'Redeem reward',run:canWriteLoyalty?()=>focusCard('c360-loyalty'):null});
   }
-  if(netVisits>=3&&lastVisitDays!=null&&lastVisitDays>45){
+  if(canReadSales&&netVisits>=3&&lastVisitDays!=null&&lastVisitDays>45){
     candidates.push({actionKey:canBookAppt?'appt':'quickearn',iconName:'appointments',title:'Regular customer is overdue',
       reason:`${netVisits} visits on record, but none in ${lastVisitDays} days. Book them back in before you lose them.`,
       ctaLabel:canBookAppt?'New appointment':'Record sale',run:canBookAppt?goNewAppt:(canQuickEarn?goQuickEarn:null)});
   }
-  if(cred>0){
+  if(loyaltyFactsAvailable&&cred>0){
     candidates.push({actionKey:'quickearn',iconName:'giftcard',title:'Store credit is waiting',
       reason:`${money(cred)} in spendable credit is sitting unused. Remind them to spend it on the next visit.`,
       ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:null});
   }
-  if(netVisits<=0){
+  if(canReadSales&&netVisits<=0){
     candidates.push({actionKey:'quickearn',iconName:'till',title:'New customer — no visits yet',
-      reason:'Record their first purchase to start earning points and unlock loyalty automatically.',
+      reason:'Record an eligible first purchase; points are earned only when an active published loyalty programme applies.',
       ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:(canBookAppt?goNewAppt:null)});
   }
-  candidates.push({actionKey:'quickearn',iconName:'check',title:'Everything looks healthy',
-    reason:`${lastVisitDays!=null?`Last visit ${lastVisitDays} day${lastVisitDays===1?'':'s'} ago.`:'No recent activity to flag.'} Record the next visit when they come in.`,
-    ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:null});
+  candidates.push(canReadSales
+    ?{actionKey:'quickearn',iconName:'check',title:'Everything looks healthy',
+      reason:`${lastVisitDays!=null?`Last visit ${lastVisitDays} day${lastVisitDays===1?'':'s'} ago.`:'No recent activity to flag.'} Record the next visit when they come in.`,
+      ctaLabel:'Record sale',run:canQuickEarn?goQuickEarn:null}
+    :{actionKey:'customer',iconName:'customers',title:'Customer details are available',
+      reason:'Sales and reward figures are hidden because this role does not have access to those modules.',
+      ctaLabel:'No additional action',run:null});
   const primaryNba=candidates.find(x=>x.run)||candidates[0];
   const nbaSeen=new Set([primaryNba.actionKey]);
   const secondaryNba=candidates.filter(x=>x!==primaryNba&&x.run&&!nbaSeen.has(x.actionKey)&&nbaSeen.add(x.actionKey)).slice(0,4);
@@ -1711,7 +1822,9 @@ async function clientsPage(){
     allCustomersAction
   ].filter(Boolean).join('');
   let birthdayCardMarkup='';
-  if(birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status!=='unavailable'){
+  if(birthdayBenefitsEnabled&&birthdayError){
+    birthdayCardMarkup=`<div class="card" id="c360-birthday"><b>Birthday benefit temporarily unavailable</b><p class="muted small" style="margin-top:7px">The rest of this customer profile remains current. No birthday status is inferred.</p><button class="btn ghost sm" id="c360BirthdayRetry" style="margin-top:10px">Reload profile</button></div>`;
+  }else if(birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status!=='unavailable'){
     const birthdayStatusLabel=birthdayBenefit.status==='redeemed'
       ?'Redeemed'
       :canRedeemBirthday?'Not currently redeemable':'Read only';
@@ -1727,78 +1840,97 @@ async function clientsPage(){
       ${birthdayRedeemMarkup}${birthdayReverseMarkup}</div>`;
   }
   let rewardsMarkup='';
-  if(prog&&prog.active){
-    const stamps=prog.loyalty_model==='stamps';
-    const unit=stamps?'stamps':'points';
+  if(!loyaltyFactsAvailable){
+    rewardsMarkup='<p class="err small" style="margin-top:7px">Loyalty balances and reward availability are temporarily unavailable. Peekaa has not replaced them with zero.</p><button class="btn ghost sm" id="c360LoyaltyRetry" style="margin-top:10px">Reload profile</button>';
+  }else if(prog&&prog.active){
+    const unit=prog.unit==='stamps'?'stamps':'points';
+    const stamps=unit==='stamps';
     const earnCopy=stamps
       ?`1 stamp for every ${money(prog.stamp_per_cents||500)} spent`
       :`${Number(prog.earn_points_per_dollar)||0} points for every SGD 1 spent`;
-    const availableRewards=(rwList||[]).filter(reward=>reward.active!==false).sort((a,b)=>Number(a.cost_points)-Number(b.cost_points));
-    const nextReward=availableRewards.find(reward=>Number(reward.cost_points)>pts)||availableRewards.at(-1)||null;
     let nextCopy='No reward milestone has been added yet.';
-    if(nextReward){
-      const cost=Number(nextReward.cost_points)||0,name=nextReward.customer_name||nextReward.name||'reward';
-      nextCopy=pts>=cost?`${name} is ready now`:`${cost-pts} more ${unit} for ${name}`;
-    }else if(prog.redeem_points){
-      const remaining=Math.max(0,Number(prog.redeem_points)-pts);
-      nextCopy=remaining?`${remaining} more points for ${money(prog.reward_credit_cents)} credit`:`${money(prog.reward_credit_cents)} credit is ready now`;
-    }
+    if(!redemptionEnabled)nextCopy='Redemption is currently unavailable.';
+    else if(projectedNextReward)nextCopy=projectedNextReward.available_now
+      ?`${projectedNextReward.name||'Reward'} is ready now`
+      :`${Math.max(0,Number(projectedNextReward.remaining_units)||0)} more ${unit} for ${projectedNextReward.name||'a reward'}`;
     rewardsMarkup=`<p class="eyebrow" style="margin-top:8px">How rewards work</p>
       <p class="small" style="margin-top:6px"><b>Balance:</b> ${pts} ${unit}</p>
       <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
       <p class="small" style="margin-top:5px"><b>Next reward:</b> ${esc(nextCopy)}</p>
-      ${availableRewards.length?`<div style="margin-top:10px">${availableRewards.map(reward=>{const cost=Number(reward.cost_points)||0;return `<div class="row" style="margin-top:7px;flex-wrap:wrap"><span>${esc(reward.customer_name||reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${pts>=cost?'ok':'off'}">${pts>=cost?'Ready now':`${Math.max(0,cost-pts)} more ${unit}`}</span></div>`}).join('')}</div>`:''}
-      ${canWriteLoyalty?`<p class="muted small" style="margin-top:12px">To complete a customer reward, scan their pending QR in Record sale. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:'<span class="pill off" style="margin-top:10px">Rewards are read only for this role</span>'}
+      ${projectedRewards.length?`<div style="margin-top:10px">${projectedRewards.map(reward=>`<div class="row" style="margin-top:7px;flex-wrap:wrap"><span>${esc(reward.name||'Reward')}</span><span class="spacer"></span><span class="pill ${reward.available_now?'ok':'off'}">${!redemptionEnabled?'Unavailable':reward.available_now?'Ready now':`${Math.max(0,Number(reward.remaining_units)||0)} more ${unit}`}</span></div>`).join('')}</div>`:''}
+      ${canWriteLoyalty&&redemptionEnabled?`<p class="muted small" style="margin-top:12px">To complete a customer reward, scan their pending QR in Record sale. Points change only after confirmation.</p><a class="btn sm" href="#/till">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:!redemptionEnabled?'<span class="pill off" style="margin-top:10px">Redemption unavailable</span>':'<span class="pill off" style="margin-top:10px">Rewards are read only for this role</span>'}
       ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else{
     rewardsMarkup='<p class="muted small" style="margin-top:7px">Rewards are not set up yet. The owner can create them from Grow.</p>';
   }
-  const pointsUnit=prog?.loyalty_model==='stamps'?'stamps':'points';
+  const pointsUnit=prog?.unit==='stamps'?'stamps':'points';
   const nextExpiryLabel=nextExp
     ?`${nextExp.remaining} ${pointsUnit} expire ${new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(nextExp.expires_at))}`
-    :xbError?'Expiry schedule is temporarily unavailable.':'No points are currently scheduled to expire.';
-  const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:14})}<span>${esc(nextExpiryLabel)}</span>${xbError?'<button type="button" class="btn ghost sm" id="c360ExpiryRetry">Retry</button>':''}</div>`;
+    :'No actionable points are currently scheduled to expire.';
+  const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:14})}<span>${esc(nextExpiryLabel)}</span></div>`;
+  const wholeBusinessLabels=S.myRole==='owner'||S.myRole==='manager';
+  const profileKpis=[
+    canReadSales?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Visits':'Visible visits'}</div><div class="v">${netVisits}</div></div>`:'',
+    canReadSales?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Lifetime spend':'Visible sales total'}</div><div class="v">${money(lifetimeSpendCents)}</div></div>`:'',
+    loyaltyFactsAvailable?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Points':'Business-wide points'}</div><div class="v">${pts}</div>${pointsExpiryMarkup}</div>`:'',
+    loyaltyFactsAvailable?`<div class="card kpi"><div class="l">${wholeBusinessLabels?'Spendable credit':'Business-wide spendable credit'}</div><div class="v">${money(cred)}</div></div>`:''
+  ].filter(Boolean).join('');
+  const referralMarkup=canReadReferrals?`<p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
+    <div class="row"><b style="font-size:1.3rem;letter-spacing:.15em">${esc(c.referral_code||'—')}</b><button class="btn ghost sm" id="copyRef">Copy</button></div>`:'';
+  const retentionMarkup=canReadRetention?`<div class="card"><b>Retention reward history</b>
+    ${(rg&&rg.length)?rg.map(g=>{const campaign=campaignEntitlementDisplayV99(g);return `<div class="row" style="margin-top:10px;align-items:flex-start"><span class="inline-status">${CUI.icon('loyalty',{size:17})}<span>${esc(g.program_name||'Program')}</span></span><span class="spacer"></span>
+      ${campaign.pending
+        ?`<span class="muted small" style="text-align:right"><b data-workspace-i18n>${esc(campaign.title)}</b> · <span data-workspace-i18n>Merchant fulfilment pending</span><br><span data-workspace-i18n>No wallet value was posted.</span> · ${esc(g.granted_at.slice(0,10))}</span>`
+        :`<span class="muted small">${esc(g.display_label||'Reward')} · ${g.display_amount_cents!=null?money(g.display_amount_cents):g.display_discount_percent!=null?g.display_discount_percent+'% off':esc(g.display_item||'free item')} · ${g.granted_at.slice(0,10)}</span>`}</div>`}).join('')
+      :'<p class="muted small" style="margin-top:6px">No retention reward history yet.</p>'}
+    </div>`:'';
+  const activitySources=[canReadSales&&'sales and visits',canReadAppointments&&'appointments',canReadLoyalty&&'reward redemptions',canReadRetention&&'retention rewards',canReadMemberships&&'memberships',canReadPackages&&'packages'].filter(Boolean);
+  const activityScopeCopy=wholeBusinessLabels
+    ?`${activitySources.join(', ')} available to this role — newest first.`
+    :'Sales and appointments cover assigned branches; loyalty and reward records are business-wide when available — newest first.';
+  const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b><p class="muted small" style="margin:4px 0 8px">${esc(activityScopeCopy)}</p>
+    <div id="histBody">${renderHistPage(history,histShown)}</div>
+    ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
+    </div>`:'';
+  const profileScopeLabel=isProfileAdmin
+    ?'complete business-wide access'
+    :'access across every branch assigned to this staff account';
+  const profileScopeNotice=unavailableProfileFacets.length?`<div class="card" role="status" style="margin-top:14px"><b>Some profile figures are unavailable</b><p class="muted small" style="margin-top:6px">${esc(unavailableProfileFacets.map(module=>MODULES[module]?.[1]||module).join(', '))} cannot be shown because ${esc(profileScopeLoadError?'the assigned-branch list could not be loaded':profileScopeLabel+' could not be confirmed')}. Peekaa does not replace missing data with zero.</p><button class="btn ghost sm" id="c360ScopeRetry" style="margin-top:10px">Reload profile</button></div>`:'';
+  const staffProfileScopeNote=!isProfileAdmin&&profileScopeBranchIds.length?`<div class="card" role="note" style="margin-top:14px"><b>Staff view scope</b><p class="muted small" style="margin-top:6px">Sales, visits and appointments cover every branch assigned to this staff account. Points, rewards and spendable credit are business-wide customer balances. Peekaa does not mix hidden branch sales into the visible totals.</p></div>`:'';
+  const correctionScopeNotice=reversalActionsUnavailable?`<div class="card" role="status" style="margin-top:14px"><b>Correction actions are temporarily unavailable</b><p class="muted small" style="margin-top:6px">Verified customer history and totals remain visible. Reverse controls are withheld until their separate safety check can be reloaded.</p><button class="btn ghost sm" id="c360CorrectionsRetry" style="margin-top:10px">Reload profile</button></div>`:'';
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:headerActions,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
     ${badgesHtml}
+    ${staffProfileScopeNote}
+    ${profileScopeNotice}
+    ${correctionScopeNotice}
     ${nbaHtml}
-    <div class="kpis">
-      <div class="card kpi"><div class="l">Visits</div><div class="v">${netVisits}</div></div>
-      <div class="card kpi"><div class="l">Lifetime spend</div><div class="v">${money(lifetimeSpendCents)}</div></div>
-      <div class="card kpi"><div class="l">Points</div><div class="v">${pts}</div>${pointsExpiryMarkup}</div>
-      <div class="card kpi"><div class="l">Spendable credit</div><div class="v">${money(cred)}</div></div>
-    </div>
+    ${profileKpis?`<div class="kpis">${profileKpis}</div>`:''}
     <div class="split" style="margin-top:16px">
-      <section class="card c360-rewards-card" id="c360-loyalty">
-        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards</b><span>Balance, earning and next unlock</span></div></header>
+      ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Rewards</b><span>${wholeBusinessLabels?'Balance, earning and next unlock':'Business-wide balance, earning and next unlock'}</span></div></header>
         <div class="c360-rewards-body">${rewardsMarkup}</div>
-      </section>
-      <div class="card"><b>Referral & consent</b>
-        <p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
-        <div class="row"><b style="font-size:1.3rem;letter-spacing:.15em">${esc(c.referral_code||'—')}</b>
-        <button class="btn ghost sm" id="copyRef">Copy</button></div>
+      </section>`:''}
+      <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
+        ${referralMarkup}
         <p class="muted small" style="margin:14px 0 6px">Marketing consent (PDPA) — every change is recorded:</p>
         ${canWriteClients?`<button class="btn ghost sm" id="consentBtn">${c.marketing_consent?CUI.icon('check',{size:17})+' Consented — withdraw':'Record consent'}</button>`:'<span class="pill off">Read only</span>'}
       </div>
-      <div class="card"><b>Retention reward history</b>
-        ${(rg&&rg.length)?rg.map(g=>{const campaign=campaignEntitlementDisplayV99(g);return `<div class="row" style="margin-top:10px;align-items:flex-start"><span class="inline-status">${CUI.icon('loyalty',{size:17})}<span>${esc(g.program_name||'Program')}</span></span><span class="spacer"></span>
-          ${campaign.pending
-            ?`<span class="muted small" style="text-align:right"><b data-workspace-i18n>${esc(campaign.title)}</b> · <span data-workspace-i18n>Merchant fulfilment pending</span><br><span data-workspace-i18n>No wallet value was posted.</span> · ${esc(g.granted_at.slice(0,10))}</span>`
-            :`<span class="muted small">${esc(g.display_label||'Reward')} · ${g.display_amount_cents!=null?money(g.display_amount_cents):g.display_discount_percent!=null?g.display_discount_percent+'% off':esc(g.display_item||'free item')} · ${g.granted_at.slice(0,10)}</span>`}</div>`}).join('')
-          :'<p class="muted small" style="margin-top:6px">No retention reward history yet.</p>'}
-      </div>
+      ${retentionMarkup}
       ${birthdayCardMarkup}${feedbackStripMarkup}</div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
-    <div class="card" style="margin-top:16px"><b>Sales history</b><p class="muted small" style="margin:4px 0 8px">Sales, visits, appointments, rewards, memberships and packages — newest first.</p>
-      <div id="histBody">${renderHistPage(history,histShown)}</div>
-      ${history.length>histShown?`<div style="text-align:center;margin-top:10px"><button class="btn ghost sm" id="histMore">Show earlier</button></div>`:''}
-    </div>`;
+    ${activityMarkup}`;
   routeMain.querySelector('.cui-page-title h1')?.setAttribute('data-merchant-content','');
   /* Next-best-action + header quick actions. Every handler routes to an existing surface — no new
      write path is introduced here. */
   if($('c360Primary')&&primaryNba.run)$('c360Primary').onclick=primaryNba.run;
   if($('c360QuickEarn'))$('c360QuickEarn').onclick=goQuickEarn;
+  if($('c360FeedbackRetry'))$('c360FeedbackRetry').onclick=()=>clientDetail(id);
+  if($('c360BirthdayRetry'))$('c360BirthdayRetry').onclick=()=>clientDetail(id);
+  if($('c360LoyaltyRetry'))$('c360LoyaltyRetry').onclick=()=>clientDetail(id);
+  if($('c360ScopeRetry'))$('c360ScopeRetry').onclick=()=>clientDetail(id);
+  if($('c360CorrectionsRetry'))$('c360CorrectionsRetry').onclick=()=>clientDetail(id);
   if($('c360NewAppt'))$('c360NewAppt').onclick=goNewAppt;
   const moreBtn=$('c360MoreBtn'),moreMenu=$('c360MoreMenu');
   if(moreBtn&&moreMenu){
@@ -1867,7 +1999,8 @@ async function clientsPage(){
     if(error) return fail(error);
     toast(workspaceTemplateTextV97('adjustedBalance',{balance:data}));clientDetail(id);
   };
-  $('copyRef').onclick=async()=>copyTextToClipboard(c.referral_code||'',{button:$('copyRef'),success:'Code copied'});
+  const copyRefButton=$('copyRef');
+  if(copyRefButton)copyRefButton.onclick=async()=>copyTextToClipboard(c.referral_code||'',{button:copyRefButton,success:'Code copied'});
   const consentIdempotencyKey=crypto.randomUUID();
   if($('consentBtn'))$('consentBtn').onclick=async()=>{
     const consentButton=$('consentBtn');
@@ -1896,7 +2029,7 @@ async function clientsPage(){
    buttons' data-reverse-kind/data-reverse-id hooks so bindReversalButtons keeps working. */
 function renderHistPage(history,n){
   const rows=history.slice(0,n);
-  if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity yet. When this customer buys, books, or earns a reward, it appears here.</div>';
+  if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
   const when=t=>`<div class="c360-tl-when">${esc(sgt(t)||'')}</div>`;
   const item=(tone,iconName,titleHtml,detailHtml,sideHtml)=>`<li class="c360-tl-item">
     <span class="c360-tl-ic ${tone}" aria-hidden="true">${CUI.icon(iconName,{size:17})}</span>
@@ -1919,8 +2052,8 @@ function renderHistPage(history,n){
     if(h.kind==='redemption'){
       const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
-        :`<span class="muted small">${esc(h.refusal_reason||'Not reversible')}</span>`;
-      const detail=`${esc(h.reward_name||'Loyalty reward')} · ${Number(h.points_spent||0)} points${h.credit_cents?` → ${money(Number(h.credit_cents))} credit`:''}<br>${action}`;
+        :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
+      const detail=`${esc(h.reward_name||'Loyalty reward')} · ${Number(h.points_spent||0)} points${h.credit_cents?` → ${money(Number(h.credit_cents))} credit`:''}${action?`<br>${action}`:''}`;
       return item('reward','redeem',`Reward redeemed ${relation}`,detail,when(h.t));
     }
     if(h.kind==='grant'){
@@ -1959,6 +2092,19 @@ function renderHistPage(history,n){
    (no localStorage in this stack) and resets itself on "Next customer". */
 function canScanCustomerRedemption({createSales,clientsReadable,loyaltyWritable}={}){
   return createSales===true&&clientsReadable===true&&loyaltyWritable===true;
+}
+function legacySaleReceiptV145(doneInfo={}){
+  const duplicate=doneInfo.duplicate===true;
+  const pointsEarned=Number.isFinite(Number(doneInfo.pointsEarned))?Number(doneInfo.pointsEarned):0;
+  const pointsTotal=Number.isFinite(Number(doneInfo.pointsTotal))?Number(doneInfo.pointsTotal):null;
+  return {
+    heading:duplicate?'Already recorded':'Done',
+    message:duplicate?'This sale was already recorded — no extra points added.'
+      :pointsEarned>0?`+${pointsEarned} points`:'No points earned for this purchase.',
+    pointsEarned,
+    pointsTotal:pointsEarned>0?pointsTotal:null,
+    duplicate
+  };
 }
 function giftCardAbilitiesV102({
   createSales,giftcardsReadable,giftcardsWritable,businessEnabled
@@ -2286,7 +2432,7 @@ async function tillPage(){
     };
   }
   function drawCustomerCard(){
-    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} saves the purchase and points together.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} records the purchase and applies points only when an active published loyalty programme makes it eligible.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card">
         <div style="text-align:center">
           <div data-merchant-content style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em">${esc(cust.full_name)}</div>
@@ -2305,7 +2451,7 @@ async function tillPage(){
           </div>
         </fieldset>
         <div id="tErr3"></div>
-        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Save & add points</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
+        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
     $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;draw()};
@@ -2331,7 +2477,7 @@ async function tillPage(){
         p_branch:tillBranchId,p_method:tender});
       if(!isTillCurrent())return;
       busy=false;
-      if(error){$('tConfirm').disabled=false;$('tConfirm').textContent='Save & add points';return fail(error)}
+      if(error){$('tConfirm').disabled=false;$('tConfirm').textContent='Record sale';return fail(error)}
       doneInfo=(data.status==='duplicate_ignored')
         ?{name:data.full_name,pointsEarned:0,pointsTotal:data.points,method:data.payment_method,duplicate:true,saleId:data.sale_id||null}
         :{name:data.full_name,pointsEarned:data.points_earned||0,pointsTotal:data.points,method:data.payment_method,duplicate:false,saleId:data.sale_id||null};
@@ -2666,9 +2812,9 @@ async function tillPage(){
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
-            ?'Package purchases earn points once at purchase.'
+            ?'Package purchases are eligible for points once at purchase when an active published loyalty programme applies.'
             :catalog.packageEarnsPoints===false
-              ?'Package purchases do not earn points for this business.'
+              ?'Package purchases are not eligible for points for this business.'
               :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'} Using a session never earns points.</p>`:''}`;
       }
     }
@@ -2699,7 +2845,13 @@ async function tillPage(){
       ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
-      <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted?`Sale recorded${saleResult?.duplicate?' (already recorded earlier)':''} · +${saleResult?.pointsEarned||0} points`:'No points-earning sale in this cart'}</span></div>
+      <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted
+        ?saleResult?.duplicate
+          ?'Sale already recorded earlier · no extra points added'
+          :Number(saleResult?.pointsEarned)>0
+            ?`Sale recorded · +${Number(saleResult.pointsEarned)} points`
+            :'Sale recorded · no points earned'
+        :'No points-earning sale in this cart'}</span></div>
       <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:18})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
     const actionHtml=checkoutError?'':checkoutActionHtml();
@@ -2932,13 +3084,15 @@ async function tillPage(){
   }
   function drawStep3(){
     if(doneInfo&&doneInfo.receipt)return drawCartReceipt();
-    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Points added. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
+    const outcome=legacySaleReceiptV145(doneInfo);
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Sale recorded. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:56})}
-        <h2 style="margin:8px 0 4px">${doneInfo.duplicate?'Already recorded':'Done'}</h2>
-        ${doneInfo.duplicate?`<p class="muted">This sale was already recorded — no extra points added.</p>`
-          :`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">+${doneInfo.pointsEarned} points</p>`}
-        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received · now ${doneInfo.pointsTotal} points total</p>
+        <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
+        ${outcome.pointsEarned>0
+          ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
+          :`<p class="muted">${outcome.message}</p>`}
+        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?` · now ${outcome.pointsTotal} points total`:''}</p>
         ${canScanRedemption()&&doneInfo.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
         <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
@@ -3015,9 +3169,9 @@ async function salesPage(){
     {data:branchRows,error:branchError},
     {data:saleStaff,error:staffError}
   ]=await Promise.all([
-    sb.from('clients').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
-    sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).eq('active',true).order('name'),
-    sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name')]);
+    fetchAllRowsResult(()=>sb.from('clients').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
+    fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default,active',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
+    fetchAllRowsResult(()=>sb.from('staff').select('id,full_name,user_id',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('full_name').order('id'))]);
   if(clientError||branchError||staffError)return fail(clientError||branchError||staffError);
   const saleBranches=branchRows||[];
   const saleTeam=saleStaff||[];
@@ -3025,7 +3179,7 @@ async function salesPage(){
   const initialSaleBranch=saleBranches.some(b=>b.id===selectedBranchId)
     ?selectedBranchId:(saleBranches.find(b=>b.is_default)?.id||saleBranches[0]?.id||'');
   let quickSaleAttempt=null;
-  M().innerHTML=`<div class="topbar"><div><h1>Sales</h1><p class="muted small">Record a sale — loyalty points and retention rewards fire automatically</p></div></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Sales</h1><p class="muted small">Record a sale — eligible customer-linked sales apply active published loyalty and retention rules</p></div></div>
     <div class="split">
     <div class="card"><b>Quick sale</b>
       <label>Customer</label><select id="qc"><option value="">Walk-in (no loyalty)</option>
@@ -3039,7 +3193,7 @@ async function salesPage(){
       <div><label>Payment method</label><select id="qm"><option data-method="cash">Cash</option><option data-method="card">Card</option><option data-method="paynow">PayNow</option><option data-method="bank_transfer">Bank transfer</option><option data-method="other">Other</option></select></div></div>
       <label>Note</label><input id="qn" placeholder="optional">
       <div style="margin-top:16px"><button class="btn" id="rec">Record sale</button></div></div>
-    <div class="card"><b>Recent sales</b><div id="recent" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+    <div class="card"><b>Latest 50 sales</b><p class="muted small" style="margin-top:4px">Use Reports for a complete date-range ledger and export.</p><div id="recent" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
   $('rec').onclick=async()=>{
     const amt=Math.round(parseFloat($('qa').value||'0')*100);
     if(!(amt>0)) return toast('Enter an amount');
@@ -3912,13 +4066,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         ${draftVersionId?'<button class="btn ghost" id="loyaltyReviewPublish" type="button">Review &amp; publish</button>':''}</div>`:''}</div>
     <div class="card" id="loyaltyRewardEditor">
       ${model==='classic'
-        ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">Every sale earns points automatically. At ${p?.redeem_points??800} points, one tap converts them into ${money(p?.reward_credit_cents??2000)} of real in-store credit. Switch models above any time — balances carry over.</p>
+        ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">${workspaceTemplateHtmlV97('classicEligibleEarning',{points:p?.redeem_points??800,credit:money(p?.reward_credit_cents??2000)})}</p>
           ${canManageLoyalty?`<div class="rec-panel"><b>Not sure what numbers to use?</b>
             <p class="muted small" style="margin-top:6px">${esc(BRAND.productName)} can suggest a starting point from your own service and product prices. Nothing is saved until you say so.</p>
             <div style="margin-top:12px">${CUI.action({id:'growRecOpen',label:'Recommend my numbers',iconName:'info',variant:'secondary'})}</div>
             <div id="growRecBody"></div></div>`:''}`
         :model==='stamps'
-        ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.</p>${rewardRows('Your milestones')}`
+        ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('stampsEligibleEarning')}</p>${rewardRows('Your milestones')}`
         :`<b>Reward catalog & tiers</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define, and climb tiers that multiply their earning.</p>${rewardRows('Your rewards')}${tierRows()}`}
     </div></div>${birthdayEditor}`;
   applyGrowLoyaltyEditorIsolationV139(routeMain,editorIntent);
@@ -4202,12 +4356,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       refreshLoyaltyPanel(model,draftVersionId,recommendation,'Grow draft saved. Nothing was published.',true,editorIntent);
       return;
     }
-    const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
-    if(!isLoyaltyCurrent())return;
-    if(publishError){$('lsave').disabled=false;return fail(publishError)}
-    toast(p?.configuration_status==='draft'?'Loyalty program published':'Loyalty program saved');
-    if(editorIntent){nav('#/grow');return}
-    loyaltyPage();
+    toast('Grow draft saved — review it before anything changes for customers');
+    openProtectedGrowPublishReview(versionId);
   };
   const loyaltyReviewPublish=$('loyaltyReviewPublish');
   if(loyaltyReviewPublish)loyaltyReviewPublish.onclick=()=>openProtectedGrowPublishReview(draftVersionId);
@@ -4236,7 +4386,6 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       </div>
       <details><summary>More options</summary>
         <div class="field-grid" style="margin-top:4px"><div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
-          <div class="full"><label>Image reference</label><input id="rwImage" value="${esc(r.image_ref||'')}" placeholder="Storage path or image URL"><p class="muted small help">Use a stable storage path or URL. Upload handling belongs to the v27 storage contract.</p></div>
         </div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwActive" type="checkbox" style="width:auto" ${r.active!==false?'checked':''}> Available for customers</label>
         <p class="muted small help">Archived rewards stay in history and cannot be newly redeemed.</p>
@@ -4274,7 +4423,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       credit_cents:kind==='credit'?creditCents:0,
       estimated_cost_cents:Math.round(parseFloat($('rwEstimate').value||'0')*100),
       entitlement_expiry_days:expiry>0?expiry:null,usage_limit:usage>0?usage:null,
-      image_ref:$('rwImage')?.value.trim()||null,fulfillment_kind:kind,
+      image_ref:editorReward?.image_ref??null,fulfillment_kind:kind,
       active:archive?false:$('rwActive').checked};
     const btn=archive?$('rwArchive'):$('rwSave');btn.disabled=true;btn.textContent=archive?'Archiving…':'Saving…';
     let versionId=draftVersionId;
@@ -4292,11 +4441,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!isLoyaltyCurrent())return;
     if(saveError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(saveError)}
     if(!draftVersionId){
-      const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
-      if(!isLoyaltyCurrent())return;
-      if(publishError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(publishError)}
+      toast('Reward draft saved — review it before anything changes for customers');
+      openProtectedGrowPublishReview(versionId);return;
     }
-    toast(draftVersionId?'Draft reward saved':archive?'Reward archived':editorReward?'Reward saved':'Reward created');
+    toast('Draft reward saved');
     finishGrowEditorV139();
   }
   const ra=$('rwAdd');
@@ -4319,7 +4467,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {error}=await sb.rpc('save_loyalty_config_draft',saveArgs);
     if(!isLoyaltyCurrent())return;
     if(error)return fail(error);
-    if(!draftVersionId){const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});if(publishError)return fail(publishError)}
+    if(!draftVersionId){
+      toast('Tier draft saved — review it before anything changes for customers');
+      openProtectedGrowPublishReview(versionId);return;
+    }
     refreshLoyaltyPanel(model,draftVersionId,recommendation,'Tier draft saved.',true,editorIntent);
   }
   const ta=$('trAdd');
@@ -4385,8 +4536,10 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
         .eq('status','draft').eq('based_on_version_id',currentVersion).order('version_no',{ascending:false}).limit(1)
       :Promise.resolve({data:[],error:null});
     const [{data,error},{data:drafts,error:draftError}]=await Promise.all([
-      sb.from('firm_config_versions').select('id,version_no,status,published_at,snapshot_hash')
-        .eq('business_id',S.biz.id).in('status',['published','superseded']).order('version_no',{ascending:false}).limit(20),
+      fetchAllRowsResult(()=>sb.from('firm_config_versions')
+        .select('id,version_no,status,published_at,snapshot_hash',{count:'exact'})
+        .eq('business_id',S.biz.id).in('status',['published','superseded'])
+        .order('version_no',{ascending:false}).order('id')),
       draftRequest]);
     if(!isRetentionCurrent())return;
     if(error||draftError)throw error||draftError;history=data||[];resumableDraft=drafts?.[0]||null;
@@ -4422,7 +4575,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       ${draftVersionId&&isOwner&&!exactProgramMissing?`<label>Name</label><input id="rn" value="${esc(editing?.name||'')}" placeholder="e.g. Weekly regular">
       <div class="split"><div><label>Goal — visits</label><input id="rg" type="number" min="1" value="${editing?.goal_visits||2}"></div>
       <div><label>Within — days</label><input id="rp" type="number" min="1" value="${editing?.period_days||7}"></div></div>
-      <label>Starts on</label><input id="rs" type="date" value="${editing?.starts_on||new Date().toISOString().slice(0,10)}">
+      <label>Starts on</label><input id="rs" type="date" value="${editing?.starts_on||sgDateInputValue()}">
       <label>Reward</label><select id="rt" ${rewardTypes.length?'':'disabled'}>${rewardTypes.map(t=>`<option value="${t.id}" data-kind="${t.fulfillment_kind}" ${editing?.reward_taxonomy_id===t.id?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
       ${rewardTypes.length?'':'<p class="err">Add or reactivate a reward type before adding a program.</p>'}
       <div><label id="rvl">Reward value</label><input id="rv"></div>
@@ -5295,12 +5448,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="grow-optional">${optionalTools.map(tool=>`<article class="grow-optional-card"><div>
         <b>${CUI.icon(tool.icon,{size:17})} ${esc(tool.title)}</b><p>${esc(tool.copy)}</p></div>
         <a class="btn ghost sm" href="#/${tool.key}">Open</a></article>`).join('')}</div></section>`:''}
-    ${isOwner?`<details class="grow-advanced" id="growAdvanced" ${['studio','storedvalue'].includes(routedSurface)?'open':''}>
+    ${isOwner?`<details class="grow-advanced" id="growAdvanced" ${routedSurface==='studio'?'open':''}>
       <summary>Advanced tools</summary>
-      <p class="muted small">Technical programme authoring, taxonomy, versions and rollback, and stored-value controls stay separate from everyday Grow setup.</p>
+      <p class="muted small">Published advanced-rule controls, taxonomy, versions and rollback stay separate from everyday Grow setup.</p>
       <div class="grow-advanced-actions">
-        <button type="button" class="btn ghost" data-grow-open="studio">Program Studio</button>
-        <button type="button" class="btn ghost" data-grow-open="storedvalue">Stored value</button>
+        <button type="button" class="btn ghost" data-grow-open="studio">Advanced rule controls</button>
         ${canRewards?'<button type="button" class="btn ghost" data-grow-open="rewards">Rewards and versions</button>':''}
         ${canWinback?'<button type="button" class="btn ghost" data-grow-open="winback">Bring-back rules and taxonomy</button>':''}
       </div></details>`:''}
@@ -5335,8 +5487,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const surfaceDefinition={
     rewards:{hash:'#/loyalty',label:'Rewards and earning'},
     winback:{hash:'#/retention',label:'Bring-back rules'},
-    studio:{hash:'#/studio',label:'Program Studio'},
-    storedvalue:{hash:'#/storedvalue',label:'Stored value'}
+    studio:{hash:'#/studio',label:'Advanced rule controls'}
   };
   const focusGrowTarget=(target,{activate=false}={})=>{
     const element=target?$(target):null;
@@ -5352,7 +5503,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     const editorIntent=surface==='rewards'?growLoyaltyEditorIntentV139({focusTarget,rewardId}):null;
     $('growOverview')?.classList.add('grow-editor-active');
     const definition=surfaceDefinition[surface];
-    const suffix=draft&&['rewards','winback','studio'].includes(surface)?`/${draft}`:'';
+    const protectedStudioReview=surface==='studio'&&draft&&sessionStorage.getItem(`nestly:grow-publish-review:${draft}`)==='1';
+    const suffix=draft&&(['rewards','winback'].includes(surface)||protectedStudioReview)?`/${draft}`:'';
     const exactPath=growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId});
     const targetHash=`${definition.hash}${suffix}${exactPath?`/${exactPath}`:''}`;
     const preserveExactRoute=()=>{
@@ -5437,7 +5589,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       return;
     }
     if((surface==='rewards'&&!canRewards)||(surface==='winback'&&!canWinback))return;
-    if(['studio','storedvalue'].includes(surface)&&!isOwner)return;
+    if(surface==='studio'&&!isOwner)return;
     activeSurface=surface;
     preserveExactRoute();
     const oldPanel=panelHost.firstElementChild;
@@ -5457,8 +5609,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       if(editProgramId&&!await materializeExactProgramme('retention',editProgramId))return;
       await retentionPage(draft,editProgramId);
     }
-    else if(surface==='storedvalue')await storedValuePage(hashParam||null);
-    else await studioPage(draft||hashParam||null);
+    else await studioPage(draft);
     const exactRewardOpened=await openExactReward();
     if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
@@ -5604,7 +5755,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   });
   /* A deep link is a deliberate request to open an engine. The normal #/loyalty and
      #/retention destinations stop at this overview, so ordinary Grow use stays coherent. */
-  if((routedAction&&isOwner)||(hashParam&&isOwner)||['studio','storedvalue'].includes(routedSurface)){
+  if((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio'){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
@@ -5622,7 +5773,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
    Every async write back into the page is guarded so a late resolve from an abandoned route or a
    removed modal is dropped. Idempotency: activation reuses a deterministic key per campaign;
    offer issuance a deterministic key per (campaign,client) — so retries never double-fire. */
-const pbAudienceCache=new Map();   // business_id -> {clients, byClient} (session cache for the preview maths)
 const pbIssuing=new Set();         // campaign_ids with an issuance loop in flight (double-fire guard)
 const PB_STEPS=['Who','Reward','Safety','Review'];
 const pbCur=()=>S.biz?.currency||'SGD';
@@ -5641,33 +5791,32 @@ function pbWaNumber(phone){
   if(!d)return '(no phone on file)';
   return '+'+(d.length===8?('65'+d):d);
 }
-/* Lazy, cached read of every client + qualifying-visit sale for the business. netVisits and
-   lastVisit reproduce Customer 360 byte-for-byte: each counts_as_visit row is +1, its reversal
-   -1; last visit is the max occurred_at over non-reversal visit rows. Owner-only paths call this. */
+/* Fresh read of every client + qualifying-visit sale for the business. Audience eligibility
+   changes after each sale or reversal, so a session cache would make the wizard stale.
+   netVisits and lastVisit reuse the Customer 360 valid-original definition. */
 async function pbLoadAudience(){
-  const hit=pbAudienceCache.get(S.biz.id);
-  if(hit)return hit;
+  const {error:scopeError}=await sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:null,p_module:'retention'});
+  if(scopeError)throw scopeError;
   const [clients,sales]=await Promise.all([
     fetchAllRows(()=>sb.from('clients').select('id,full_name,phone').eq('business_id',S.biz.id)),
-    fetchAllRows(()=>sb.from('sales').select('client_id,occurred_at,counts_as_visit,reversal_of').eq('business_id',S.biz.id).eq('counts_as_visit',true))
+    fetchAllRows(()=>sb.from('sales').select('id,client_id,occurred_at,counts_as_visit,reversal_of').eq('business_id',S.biz.id).eq('counts_as_visit',true))
   ]);
   const byClient=new Map();
-  for(const s of sales){
+  const validVisits=validVisitSales(sales);
+  for(const s of validVisits){
     const e=byClient.get(s.client_id)||{net:0,lastIso:''};
-    e.net+=s.reversal_of?-1:1;
-    if(!s.reversal_of&&(s.occurred_at||'')>e.lastIso)e.lastIso=s.occurred_at;
+    e.net+=1;
+    if((s.occurred_at||'')>e.lastIso)e.lastIso=s.occurred_at;
     byClient.set(s.client_id,e);
   }
-  const out={clients,byClient};
-  pbAudienceCache.set(S.biz.id,out);
-  return out;
+  return {clients,byClient};
 }
-function pbComputeCandidates(audience,lapsedDays,minVisits){
-  const now=Date.now(),dayMs=86400000,out=[];
+function pbComputeCandidates(audience,lapsedDays,minVisits,asOf=new Date()){
+  const out=[];
   for(const c of audience.clients){
     const e=audience.byClient.get(c.id)||{net:0,lastIso:''};
-    const lastDays=e.lastIso?Math.floor((now-new Date(e.lastIso).getTime())/dayMs):null;
-    if(e.net>=minVisits&&lastDays!=null&&lastDays>lapsedDays)
+    const lastDays=e.lastIso?completeSgCalendarDaysSince(e.lastIso,asOf):null;
+    if(e.net>=minVisits&&lastDays!=null&&lastDays>=lapsedDays)
       out.push({id:c.id,full_name:c.full_name,phone:c.phone,netVisits:e.net,lastVisitDays:lastDays});
   }
   out.sort((a,b)=>b.lastVisitDays-a.lastVisitDays); // most overdue first
@@ -6094,7 +6243,7 @@ function openPlaybookWizard(ctx){
     state.audience=audience;state.versions=versions;
     state.candidates=pbComputeCandidates(audience,state.lapsedDays,state.minVisits);
     if(versions.length)state.version=versions[0];
-    state.name=`Bring back lapsed regulars · ${new Date().toISOString().slice(0,10)}`;
+    state.name=`Bring back lapsed regulars · ${sgDateInputValue()}`;
     renderStep();
   })();
 
@@ -6221,7 +6370,7 @@ function openPlaybookWizard(ctx){
     state.busy=true;
     const b=$('pbLaunch');if(b){b.disabled=true;b.querySelector('span').textContent='Starting…'}
     const out=$('pbLaunchOutcome');
-    const name=(state.name||'').trim()||`Bring back lapsed regulars · ${new Date().toISOString().slice(0,10)}`;
+    const name=(state.name||'').trim()||`Bring back lapsed regulars · ${sgDateInputValue()}`;
     const clientIds=state.candidates.map(c=>c.id);
     const criteria={segment:'lapsed',lapsed_days:state.lapsedDays,min_visits:state.minVisits,computed_at:new Date().toISOString()};
     const capCents=Math.round((parseFloat(state.capDollars)||0)*100);
@@ -6310,7 +6459,6 @@ const STUDIO_CONDITION_CATALOG={branch_id:'branch',staff_id:'staff',reward_id:'r
 const DOW_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const studioCatalogCache=new Map();  // business_id -> {byKind,byId}
-const studioSalesAggCache=new Map();  // business_id -> {count30,avgBill,ok}
 
 const shortId=id=>String(id||'').slice(0,8);
 
@@ -6441,6 +6589,11 @@ function studioActiveEmergencyPause(item){
   }
   return null;
 }
+const STUDIO_LAUNCH_SAFETY_ACTOR='00000000-0000-0000-0000-000000000000';
+function studioEmergencyPauseActorLabel(actor){
+  if(!actor)return null;
+  return String(actor)===STUDIO_LAUNCH_SAFETY_ACTOR?'Peekaa launch safety':String(actor);
+}
 
 /* ----- PS-1C.2 published-rule controls: normal pause/resume + emergency pause/lift -----
    Every control is a VERSIONED, audited server change. Normal pause/resume publishes a new config
@@ -6538,10 +6691,13 @@ function studioErrText(code){
 async function loadStudioCatalog(guard){
   const hit=studioCatalogCache.get(S.biz.id);if(hit)return hit;
   const kinds=Object.keys(STUDIO_CATALOG_SRC);
-  const results=await Promise.all(kinds.map(k=>{
+  const results=await Promise.all(kinds.map(async k=>{
     const src=STUDIO_CATALOG_SRC[k];
-    return sb.from(src.table).select(`id,${src.name}`).eq('business_id',S.biz.id)
-      .then(r=>({k,rows:r.error?[]:(r.data||[]).map(x=>({id:x.id,name:x[src.name]||'(unnamed)'}))}));
+    try{
+      const rows=await fetchAllRows(()=>sb.from(src.table).select(`id,${src.name}`,{count:'exact'})
+        .eq('business_id',S.biz.id).order('id'));
+      return {k,rows:rows.map(x=>({id:x.id,name:x[src.name]||'(unnamed)'}))};
+    }catch{return {k,rows:[]}}
   }));
   if(guard&&!guard())return null;
   const cat={byKind:{},byId:{}};
@@ -6549,15 +6705,9 @@ async function loadStudioCatalog(guard){
   studioCatalogCache.set(S.biz.id,cat);return cat;
 }
 async function loadStudioSalesAgg(guard){
-  const hit=studioSalesAggCache.get(S.biz.id);if(hit)return hit;
-  const since=new Date(Date.now()-30*86400000).toISOString();
-  const {data,count,error}=await sb.from('sales').select('amount_cents',{count:'exact'})
-    .eq('business_id',S.biz.id).is('reversal_of',null).gte('occurred_at',since).limit(1000);
+  const {data,error}=await sb.rpc('get_studio_sales_baseline_v145',{p_business:S.biz.id});
   if(guard&&!guard())return null;
-  let sum=0;const rows=(!error&&data)?data:[];
-  for(const s of rows)sum+=Number(s.amount_cents||0);
-  const agg={count30:error?null:(count||0),avgBill:rows.length?Math.round(sum/rows.length):0,ok:!error};
-  studioSalesAggCache.set(S.biz.id,agg);return agg;
+  return {count30:error?null:Number(data?.count30||0),avgBill:Number(data?.avg_bill_cents||0),ok:!error};
 }
 
 /* ----- HONEST economics: exact face value per trigger; a monthly figure ONLY when the data the
@@ -6596,6 +6746,52 @@ function studioEstimate(rule,agg){
 }
 
 /* ============================ Program Studio page ============================ */
+async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
+  routeMain.innerHTML=CUI.loadingState({title:'Publish Grow draft',iconName:'loyalty'});
+  const {data:draft,error:draftError}=await sb.rpc('get_program_rules_draft',{p_config_version:draftVersionId});
+  if(!isCurrent())return;
+  if(draftError){
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Publish Grow draft',iconName:'loyalty',canWrite:false,moduleLabel:'Grow publishing'})}
+      <div class="card"><div class="err" role="alert">${esc(draftError.message||'This draft could not be loaded.')}</div><div class="row" style="margin-top:12px"><button class="btn" id="growPublishRetry">Try again</button><a class="btn ghost" id="growPublishBack" href="#/grow">Back to Grow</a></div></div>`;
+    $('growPublishRetry').onclick=()=>studioPublishReviewPage(routeMain,isCurrent,draftVersionId);
+    $('growPublishBack').onclick=()=>sessionStorage.removeItem(`nestly:grow-publish-review:${draftVersionId}`);return;
+  }
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Publish Grow draft',subtitle:'Confirm the selected draft after reviewing each changed programme in its editor.',iconName:'loyalty',canWrite:true,moduleLabel:'Grow publishing'})}
+    <section class="card"><h2>Draft v${Number(draft?.version_no||0)}</h2><p class="muted small" style="margin-top:6px">This page is the final publication gate. It checks advanced-action safety but does not summarise ordinary reward, earning, birthday or bring-back field values. Review those values in their programme editors first.</p><div id="growPublishStatus" role="status" aria-live="polite" style="margin-top:12px"></div><div class="row" style="margin-top:16px"><button class="btn" id="growPublishReview">Confirm &amp; publish</button><a class="btn ghost" id="growPublishBack" href="#/grow">Back to Grow</a></div></section>`;
+  const reviewKey=`nestly:grow-publish-review:${draftVersionId}`;
+  const back=$('growPublishBack');if(back)back.onclick=()=>sessionStorage.removeItem(reviewKey);
+  const effectLabel=effect=>(STUDIO_EFFECT_LABEL[effect.effect_type]&&STUDIO_EFFECT_LABEL[effect.effect_type].label)||effect.effect_type||'Action';
+  const openPublishFlow=async()=>{
+    const button=$('growPublishReview'),status=$('growPublishStatus');
+    button.disabled=true;button.setAttribute('aria-busy','true');status.innerHTML='<span class="muted">Checking advanced-action safety…</span>';
+    const {data:impact,error}=await sb.rpc('preview_publish_impact',{p_config_version_id:draftVersionId});
+    if(!isCurrent())return;
+    button.disabled=false;button.removeAttribute('aria-busy');status.innerHTML='';
+    if(error){status.innerHTML=`<span class="err">${esc(error.code==='42501'?'Only the owner can publish.':(error.message||'Could not check what publishing would do.'))}</span>`;return}
+    const rules=Array.isArray(impact?.rules)?impact.rules:[];
+    let live=0,shadow=0,unbuilt=0;
+    rules.forEach(rule=>(rule.effects||[]).forEach(effect=>{if(effect.state_after_publish==='live')live++;else if(effect.state_after_publish==='shadow')shadow++;else unbuilt++}));
+    const needConfirm=impact?.requires_confirmation===true;
+    const ruleBlocks=rules.length?rules.map(rule=>`<div class="studio-impact-rule"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>${rule.name?`<span data-merchant-content>${esc(rule.name)}</span>`:'(unnamed)'}</b>${studioStateChip(rule.aggregate_state_after_publish)}${rule.active===false?'<span class="pill off">Off</span>':''}</div>${(rule.effects||[]).map(effect=>`<div class="studio-impact-eff"><span>${esc(effectLabel(effect))}</span><span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">${studioEffectStateChip(effect.state_after_publish)}${effect.financial?'<span class="studio-tag fin">changes money</span>':''}${effect.customer_facing?'<span class="studio-tag cust">customer sees it</span>':''}</span></div>`).join('')||'<div class="muted small" style="padding:5px 0">No advanced actions in this draft.</div>'}</div>`).join(''):'<p class="muted small">This Grow draft has no advanced-rule changes.</p>';
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div><div class="imp-note"><b>Server-confirmed advanced-action safety</b><p class="muted small" style="margin-top:4px">${live} running action${live===1?'':'s'} · ${shadow} shadow-only · ${unbuilt} unavailable. This check does not display ordinary reward, earning, birthday or bring-back field changes.</p></div><div style="margin-top:10px">${ruleBlocks}</div><div class="${needConfirm?'studio-emg-banner':'imp-note'}" role="note" style="margin-top:14px">Safety check complete. Type PUBLISH below only if you already reviewed the ordinary programme values in their editors.</div><label for="growPubType" class="sr-only">Type PUBLISH to confirm</label><input id="growPubType" autocomplete="off" placeholder="PUBLISH" style="margin-top:8px"><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
+    let deactivate;const close=()=>{if(deactivate)deactivate();else $('growPubModal')?.remove()};
+    deactivate=CUI.activateDialog($('growPubModal'),{onClose:close,initialFocus:'#growPubType'});
+    $('growPubClose').onclick=$('growPubCancel').onclick=close;
+    $('growPubType').oninput=event=>{$('growPubConfirm').disabled=(event.target.value||'')!=='PUBLISH'};
+    $('growPubConfirm').onclick=async()=>{
+      if(($('growPubType').value||'')!=='PUBLISH')return;
+      const confirmButton=$('growPubConfirm');confirmButton.disabled=true;confirmButton.setAttribute('aria-busy','true');
+      const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:draftVersionId});
+      if(!isCurrent())return;
+      confirmButton.removeAttribute('aria-busy');
+      if(publishError){confirmButton.disabled=false;$('growPubErr').innerHTML=`<div class="err">${esc(publishError.code==='42501'?'Only the owner can publish.':(publishError.message||'Could not publish.'))}</div>`;return}
+      sessionStorage.removeItem(reviewKey);close();toast('Grow changes published');nav('#/grow');
+    };
+  };
+  $('growPublishReview').onclick=openPublishFlow;
+  queueMicrotask(()=>{if(isCurrent())openPublishFlow()});
+}
+
 async function studioPage(draftVersionId=null){
   const routeMain=M();
   const isStudioCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -6608,7 +6804,11 @@ async function studioPage(draftVersionId=null){
       ${CUI.emptyState({iconName:'loyalty',title:'Owner access only',body:'Program Studio is where the owner authors advanced programme rules. Ask an owner for access.'})}`;
     return;
   }
-  if(draftVersionId)return studioDraftEditor(routeMain,isStudioCurrent,draftVersionId);
+  if(draftVersionId){
+    const reviewKey=`nestly:grow-publish-review:${draftVersionId}`;
+    if(sessionStorage.getItem(reviewKey)!=='1')return nav('#/grow');
+    return studioPublishReviewPage(routeMain,isStudioCurrent,draftVersionId);
+  }
   return studioOverview(routeMain,isStudioCurrent);
 }
 
@@ -6628,18 +6828,8 @@ async function studioOverview(routeMain,isCurrent){
     return;
   }
   const legacy=(overview&&overview.legacy_programs)||[];
-  const studio=(overview&&overview.studio_rules)||[];
+  const studio=((overview&&overview.studio_rules)||[]).filter(item=>item.config_status==='published');
   const registry=(overview&&overview.registry)||[];
-  const currentVersion=overview&&overview.active_config_version_id||null;
-  // resumable draft (same detection as retentionPage): a draft based on the active version.
-  let resumableDraft=null;
-  if(currentVersion){
-    const {data:drafts}=await sb.from('firm_config_versions').select('id,version_no')
-      .eq('business_id',S.biz.id).eq('status','draft').eq('based_on_version_id',currentVersion)
-      .order('version_no',{ascending:false}).limit(1);
-    if(!isCurrent())return;
-    resumableDraft=drafts&&drafts[0]||null;
-  }
   const authorityByEngine={};for(const r of registry)authorityByEngine[r.source_engine]=r;
   // Uniform rows: legacy engines first, then studio rules — each programme exactly once.
   const rowFor=(item,kind)=>{
@@ -6662,21 +6852,26 @@ async function studioOverview(routeMain,isCurrent){
     if(kind==='studio'){
       const ep=studioActiveEmergencyPause(item);
       const st=item.execution_state;
+      const effectStates=Array.isArray(item.effect_states)?item.effect_states:[];
+      const allEffectsLive=effectStates.length>0&&effectStates.every(effect=>effect?.state==='live');
+      const incomplete=!allEffectsLive;
       const controllable=!!item.rule_id&&['live','partially_live','shadow_testing','ready_for_activation','paused'].includes(st);
       const breakdown=studioShouldBreakdown(item)?studioEffectBreakdownHtml(item.effect_states):'';
-      const banner=ep?`<div class="studio-emg-banner" role="alert"><b>Emergency paused.</b> ${ep.reason?`Reason: ${esc(String(ep.reason))}. `:''}${ep.actor?`By ${esc(String(ep.actor))}. `:''}${ep.paused_at?`At ${esc(String(ep.paused_at).slice(0,16).replace('T',' '))} (server time). `:''}New effects are stopped; every past record is kept.</div>`:'';
+      const freezeBanner=incomplete?`<div class="studio-emg-banner" role="status"><b>Unavailable for launch.</b> This historical rule contains an action that is not fully live. It remains visible for traceability, but cannot run or be resumed.</div>`:'';
+      const pauseActor=studioEmergencyPauseActorLabel(ep?.actor);
+      const banner=ep?`<div class="studio-emg-banner" role="alert"><b>Emergency paused.</b> ${ep.reason?`Reason: ${esc(String(ep.reason))}. `:''}${pauseActor?`By ${esc(pauseActor)}. `:''}${ep.paused_at?`At ${esc(String(ep.paused_at).slice(0,16).replace('T',' '))} (server time). `:''}New effects are stopped; every past record is kept.</div>`:'';
       let controls='';
       if(controllable){
         if(ep){
-          controls=`<button class="btn ghost sm" type="button" data-studio-lift="${esc(item.rule_id)}">Lift emergency pause</button>`;
+          controls=allEffectsLive?`<button class="btn ghost sm" type="button" data-studio-lift="${esc(item.rule_id)}">Lift emergency pause</button>`:'';
         }else if(item.active===false){
-          controls=`<button class="btn ghost sm" type="button" data-studio-active="${esc(item.rule_id)}" data-active="true">Resume rule</button>`;
+          controls=allEffectsLive?`<button class="btn ghost sm" type="button" data-studio-active="${esc(item.rule_id)}" data-active="true">Resume rule</button>`:'';
         }else{
           controls=`<button class="btn ghost sm" type="button" data-studio-active="${esc(item.rule_id)}" data-active="false">Pause rule</button>
             <button class="btn ghost sm danger" type="button" data-studio-emg="${esc(item.rule_id)}">Emergency pause</button>`;
         }
       }
-      studioExtra=`${breakdown}${banner}${controls?`<div class="studio-rule-controls">${controls}</div>`:''}`;
+      studioExtra=`${breakdown}${freezeBanner}${banner}${controls?`<div class="studio-rule-controls">${controls}</div>`:''}`;
     }
     return `<div class="studio-row">
       <div class="studio-row-main">
@@ -6691,26 +6886,13 @@ async function studioOverview(routeMain,isCurrent){
   const rerender=()=>studioPage();
   const legacyRows=legacy.map(x=>rowFor(x,'legacy')).join('');
   const studioRows=studio.map(x=>rowFor(x,'studio')).join('');
-  const versionTools=`<div class="card" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:10px">
-    <div><b>Authoring drafts</b><div class="muted small">Studio rules are authored inside a configuration draft. Publishing a draft can turn rules on immediately — the publish preview shows exactly what will run before you confirm.</div></div>
-    <span class="spacer"></span>
-    ${resumableDraft?`<a class="btn" href="#/studio/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`
-      :`<button class="btn" id="studioNewDraft">Create authoring draft</button>`}</div></div>`;
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio',subtitle:'One view of every programme — live engines and the rules you author here.',iconName:'loyalty',canWrite:true,moduleLabel:'Program Studio'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Advanced rule controls',subtitle:'Review and pause published advanced rules without changing everyday reward setup.',iconName:'loyalty',canWrite:true,moduleLabel:'Advanced rule controls'})}
     <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
-      <b>Real execution state</b><p>Program Studio lets you write programme rules, check them, and turn them on. Published checkout and recurring rules genuinely run — each rule below shows its state straight from the server (Live, Partially live, Shadow testing, Paused and so on). Your loyalty, retention, referral, birthday and membership engines keep running as before.</p></div></aside>
-    ${versionTools}
+      <b>Real execution state</b><p>Each published rule below shows its server-confirmed state. Pause a rule when any action is not operating as expected; ordinary loyalty, retention, referral, birthday and membership programmes remain managed from Grow.</p></div></aside>
     <section class="card"><div class="cui-card-head"><h2>Live engines</h2><p>These are running now. State comes straight from each engine.</p></div>
       ${legacy.length?legacyRows:CUI.emptyState({iconName:'loyalty',title:'No live programmes yet',body:'Set up loyalty, retention or other programmes to see them here.'})}</section>
-    <section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Studio rules</h2><p>Each rule shows its real execution state from the server. When a rule only partly executes, the actions below it show what is running now, what is shadow-testing, and what is not built yet.</p></div>
-      ${studio.length?studioRows:CUI.emptyState({iconName:'loyalty',title:'No studio rules yet',body:'Create an authoring draft to write your first rule.'})}</section>`;
-  if($('studioNewDraft'))$('studioNewDraft').onclick=async()=>{
-    const btn=$('studioNewDraft');btn.disabled=true;
-    const {data,error:draftError}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_program_studio'});
-    if(!isCurrent())return;
-    if(draftError){btn.disabled=false;return fail(draftError);}
-    nav(`#/studio/${data.version_id}`);
-  };
+    <section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Published advanced rules</h2><p>Every row is already published. Per-action state is shown when a rule is only partly operating.</p></div>
+      ${studio.length?studioRows:CUI.emptyState({iconName:'loyalty',title:'No published advanced rules',body:'There are no advanced rules to manage for this business.'})}</section>`;
   // PS-1C.2 published-rule controls (studio rows only) — each re-renders to the fresh server state.
   document.querySelectorAll('[data-studio-active]').forEach(b=>b.onclick=()=>{
     const item=studio.find(x=>x.rule_id===b.dataset.studioActive);
@@ -7779,7 +7961,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
 }
   function renderHistPage(history,n){
   const rows=history.slice(0,n);
-  if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity yet. When this customer buys, books, or earns a reward, it appears here.</div>';
+  if(!rows.length) return '<div class="empty small" style="margin-top:6px">No activity is recorded in the sources available to this role yet.</div>';
   const when=t=>`<div class="c360-tl-when">${esc(sgt(t)||'')}</div>`;
   const item=(tone,iconName,titleHtml,detailHtml,sideHtml)=>`<li class="c360-tl-item">
     <span class="c360-tl-ic ${tone}" aria-hidden="true">${CUI.icon(iconName,{size:17})}</span>
@@ -7802,8 +7984,8 @@ async function svRunTopupFlow({branches,state,testOnly}){
     if(h.kind==='redemption'){
       const relation=h.reversal_id?'<span class="pill off">reversed</span>':'';
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="redemption" data-reverse-id="${h.id}">Reverse</button>`
-        :`<span class="muted small">${esc(h.refusal_reason||'Not reversible')}</span>`;
-      const detail=`${esc(h.reward_name||'Loyalty reward')} · ${Number(h.points_spent||0)} points${h.credit_cents?` → ${money(Number(h.credit_cents))} credit`:''}<br>${action}`;
+        :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
+      const detail=`${esc(h.reward_name||'Loyalty reward')} · ${Number(h.points_spent||0)} points${h.credit_cents?` → ${money(Number(h.credit_cents))} credit`:''}${action?`<br>${action}`:''}`;
       return item('reward','redeem',`Reward redeemed ${relation}`,detail,when(h.t));
     }
     if(h.kind==='grant'){
@@ -8067,7 +8249,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     };
   }
   function drawCustomerCard(){
-    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} saves the purchase and points together.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} records the purchase and applies points only when an active published loyalty programme makes it eligible.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card">
         <div style="text-align:center">
           <div data-merchant-content style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em">${esc(cust.full_name)}</div>
@@ -8086,7 +8268,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
           </div>
         </fieldset>
         <div id="tErr3"></div>
-        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Save & add points</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
+        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
       </div>`;
     $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;draw()};
@@ -8112,7 +8294,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
         p_branch:tillBranchId,p_method:tender});
       if(!isTillCurrent())return;
       busy=false;
-      if(error){$('tConfirm').disabled=false;$('tConfirm').textContent='Save & add points';return fail(error)}
+      if(error){$('tConfirm').disabled=false;$('tConfirm').textContent='Record sale';return fail(error)}
       doneInfo=(data.status==='duplicate_ignored')
         ?{name:data.full_name,pointsEarned:0,pointsTotal:data.points,method:data.payment_method,duplicate:true,saleId:data.sale_id||null}
         :{name:data.full_name,pointsEarned:data.points_earned||0,pointsTotal:data.points,method:data.payment_method,duplicate:false,saleId:data.sale_id||null};
@@ -8447,9 +8629,9 @@ async function svRunTopupFlow({branches,state,testOnly}){
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
-            ?'Package purchases earn points once at purchase.'
+            ?'Package purchases are eligible for points once at purchase when an active published loyalty programme applies.'
             :catalog.packageEarnsPoints===false
-              ?'Package purchases do not earn points for this business.'
+              ?'Package purchases are not eligible for points for this business.'
               :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'} Using a session never earns points.</p>`:''}`;
       }
     }
@@ -8480,7 +8662,13 @@ async function svRunTopupFlow({branches,state,testOnly}){
       ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
-      <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted?`Sale recorded${saleResult?.duplicate?' (already recorded earlier)':''} · +${saleResult?.pointsEarned||0} points`:'No points-earning sale in this cart'}</span></div>
+      <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted
+        ?saleResult?.duplicate
+          ?'Sale already recorded earlier · no extra points added'
+          :Number(saleResult?.pointsEarned)>0
+            ?`Sale recorded · +${Number(saleResult.pointsEarned)} points`
+            :'Sale recorded · no points earned'
+        :'No points-earning sale in this cart'}</span></div>
       <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:18})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
     const actionHtml=checkoutError?'':checkoutActionHtml();
@@ -8713,13 +8901,15 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   function drawStep3(){
     if(doneInfo&&doneInfo.receipt)return drawCartReceipt();
-    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Points added. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
+    const outcome=legacySaleReceiptV145(doneInfo);
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Sale recorded. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:56})}
-        <h2 style="margin:8px 0 4px">${doneInfo.duplicate?'Already recorded':'Done'}</h2>
-        ${doneInfo.duplicate?`<p class="muted">This sale was already recorded — no extra points added.</p>`
-          :`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">+${doneInfo.pointsEarned} points</p>`}
-        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received · now ${doneInfo.pointsTotal} points total</p>
+        <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
+        ${outcome.pointsEarned>0
+          ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
+          :`<p class="muted">${outcome.message}</p>`}
+        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?` · now ${outcome.pointsTotal} points total`:''}</p>
         ${canScanRedemption()&&doneInfo.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
         <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
@@ -8902,6 +9092,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'0a2d2db2027d68e8786923251577cefb145dbc2c6b0fcc369d9fd184a6cc99b0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'474f8fe040f3b8a388642ee05ea705616342529908057e8f4cef0f04e00753ad',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

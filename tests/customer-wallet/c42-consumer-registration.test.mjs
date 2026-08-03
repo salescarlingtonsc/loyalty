@@ -122,7 +122,10 @@ test('customer authentication defaults to password while signup and recovery alo
   assert.match(customerRoute, /signInWithOtp\(\{phone,options:\{\.\.\.options,shouldCreateUser:false\}\}\)/);
   assert.match(customerRoute, /auth\.resend\(\{type:'sms',phone,options\}\)/);
   assert.match(customerRoute, /verifyOtp\(\{phone,token,type:'sms'\}\)/);
-  assert.match(customerRoute, /WhatsApp \$\{whatsappAvailable\?'':'— coming soon'\}/);
+  assert.match(customerRoute, /\$\{whatsappAvailable\?`<label[^`]*customerOtpWhatsapp[^`]*<span>WhatsApp<\/span><\/label>`:''\}/,
+    'WhatsApp OTP is shown only after both runtime and server capability are live');
+  assert.doesNotMatch(customerRoute, /coming soon/i,
+    'an unavailable OTP provider must be hidden instead of advertised as a placeholder');
   assert.match(customerRoute, /Mobile verification is not available right now\./);
   assert.match(customerRoute, /id="customerOtpSend" type="button" disabled/,
     'the primary OTP action must start disabled in both available and unavailable states');

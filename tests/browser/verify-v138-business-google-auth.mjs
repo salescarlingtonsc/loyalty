@@ -19,7 +19,7 @@ try{
   await page.waitForSelector('#applicationConsent');
   assert.equal(await page.locator('#applicationConsent').count(),1,'signup shows one legal checkbox');
   await page.locator('#businessApplicationGoogle').click();
-  assert.match(await page.locator('#businessApplicationError').textContent(),/accept the Terms and Privacy Policy/i);
+  assert.match(await page.locator('#businessApplicationError').textContent(),/agree to the Terms of Service and acknowledge the Privacy Policy/i);
   let metrics=await page.evaluate(()=>window.v130Metrics());
   assert.equal(metrics.oauthStarts.length,0,'unchecked signup never leaves for Google');
   assert.equal(metrics.rpcCalls.filter(call=>call.name==='begin_business_google_oauth_signup_v138').length,0);
@@ -28,9 +28,9 @@ try{
   metrics=await page.evaluate(()=>window.v130Metrics());
   const consentCalls=metrics.rpcCalls.filter(call=>call.name==='begin_business_google_oauth_signup_v138');
   assert.equal(consentCalls.length,1,'checked signup records one server consent attempt before Google');
-  assert.equal(consentCalls[0].args.p_terms_version,'2026-08-02');
-  assert.equal(consentCalls[0].args.p_terms_sha256,'2e31dbece128befd9b504034505ba93e93069dc9cd7782a66974431740d330c8');
-  assert.equal(consentCalls[0].args.p_privacy_sha256,'67e51a7c59a214a4df43fd533835d528034f0d20884f72244e25e0e0bf928c5c');
+  assert.equal(consentCalls[0].args.p_terms_version,'2026-08-03');
+  assert.equal(consentCalls[0].args.p_terms_sha256,'1c7437280e9ba8386b5ef3998a919fefcdeca8e06cc497b31621633ae23dab04');
+  assert.equal(consentCalls[0].args.p_privacy_sha256,'8e152d208b271da5a1f71630b17c5c82e8b7bd930c5508da8b4d95597c0a1568');
   assert.equal(metrics.oauthStarts.length,1);
   assert.equal(metrics.width,metrics.scrollWidth,'390px signup must not overflow');
   await page.screenshot({path:new URL('signup-consent-mobile-390.png',evidenceDir).pathname,fullPage:true});

@@ -78,7 +78,7 @@ test('v84 derives current payment truth and refuses states the replacement write
 });
 
 test('sales UX tags by team-member name and uses stable double-confirm correction attempts',()=>{
-  assert.match(app,/select\('id,full_name,user_id'\)[\s\S]*\.from\('staff'\)|from\('staff'\)\.select\('id,full_name,user_id'\)/);
+  assert.match(app,/from\('staff'\)\.select\('id,full_name,user_id',\{count:'exact'\}\)/);
   assert.match(app,/id="qstaff"[\s\S]*person\.full_name/);
   assert.match(app,/p_staff:\$\('qstaff'\)\.value\|\|null/);
   assert.match(app,/data-correct-sale/);

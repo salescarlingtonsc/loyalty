@@ -232,7 +232,7 @@ test('Terra C46: rollback fixture and self-contained sync/state concurrency harn
   assert.match(harness, /exactly one evidence row/i);
 });
 
-test('Terra C46: customer wallet UI has an accessible stale-guarded bell and inbox controls', async () => {
+test('Terra C46: customer wallet UI has an accessible stale-guarded bell and launch-safe inbox preferences', async () => {
   const app = await read('app/index.html');
   const inbox = app.slice(app.indexOf('async function renderCustomerInAppInbox'), app.indexOf('function renderWorkspaceAccessUnavailable'));
   assert.match(app, /customer_in_app_inbox:false/i);
@@ -252,12 +252,11 @@ test('Terra C46: customer wallet UI has an accessible stale-guarded bell and inb
   assert.match(inbox, /A list is never loaded after a failed C46 sync/i);
   assert.match(inbox, /globalThis\.navigator\?\.onLine===false/i);
   assert.match(inbox, /Programme actions are hidden until refresh succeeds/i);
-  assert.match(inbox, /customerInboxQuietTimezone/i);
-  assert.match(inbox, /preference\.quiet_hours_timezone\|\|'Asia\/Singapore'/i);
-  assert.match(inbox, /timezoneInput\.value\.trim\(\)/i);
-  assert.match(inbox, /p_quiet_hours_timezone:start\?timezone:null/i);
-  assert.match(inbox, /future interruptive channel/i);
-  assert.match(inbox, /customerInboxQuietStart[\s\S]*customerInboxQuietEnd[\s\S]*customerInboxQuietTimezone[\s\S]*Save reminder/i);
+  assert.match(inbox, /Keep this reminder in my inbox/i);
+  assert.match(inbox, /Nothing changes until you select Save/i);
+  assert.match(inbox, /p_quiet_hours_timezone:null[\s\S]*p_quiet_hours_start:null[\s\S]*p_quiet_hours_end:null/i);
+  assert.doesNotMatch(inbox, /customerInboxQuiet|Quiet hours are active|future interruptive channel|IANA timezone/i,
+    'launch UI must not expose controls or promises for a future interruptive channel');
   assert.match(inbox, /item\?\.action_available===true&&!isResolved&&item\?\.route_key/i,
     'a resolved or source-unavailable item must not render a client action');
   assert.match(inbox, /source_unavailable[\s\S]*Programme temporarily unavailable/i);

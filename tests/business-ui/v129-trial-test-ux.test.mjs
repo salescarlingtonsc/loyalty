@@ -48,7 +48,7 @@ test('customer-facing staff profile removes empty gender noise and explains rewa
   assert.match(profile,/Earn:/);
   assert.match(profile,/Next reward:/);
   assert.match(profile,/<details[^>]+class="c360-reward-adjust"/);
-  assert.match(profile,/<b>Sales history<\/b>/);
+  assert.match(profile,/<b>Activity history<\/b>/);
   assert.doesNotMatch(profile,/<b>Timeline<\/b>/);
 });
 
@@ -72,7 +72,8 @@ test('Customers exposes exact all, 30, 60 and 90 day inactivity filters backed b
   assert.match(customers,/<option value="">All customers<\/option>/);
   for(const days of [30,60,90])assert.match(customers,new RegExp(`<option value="${days}">Inactive ${days}\\+ days<\\/option>`));
   assert.match(customers,/sb\.rpc\('staff_list_customers_v129'/);
-  assert.match(customers,/p_inactive_days:clientInactiveDays/);
+  assert.match(customers,/const customerDirectoryPage=\(search,inactiveDays,offset\)=>sb\.rpc\('staff_list_customers_v129',[\s\S]*p_inactive_days:inactiveDays/);
+  assert.match(customers,/customerDirectoryPage\([\s\S]*customerRpcSearch,clientInactiveDays,clientPage\*CLIENT_PAGE_SIZE/);
   assert.match(customers,/Never visited/);
   assert.match(customers,/Last visit/);
   assert.match(migration,/create or replace function public\.staff_list_customers_v129/);

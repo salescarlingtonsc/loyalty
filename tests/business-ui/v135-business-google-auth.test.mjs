@@ -109,9 +109,9 @@ test('pending OAuth attempt distinguishes sign-in from server-recorded consented
   });
   assert.equal(rpcCalls.length,1);
   assert.equal(rpcCalls[0].name,'begin_business_google_oauth_signup_v138');
-  assert.equal(rpcCalls[0].args.p_terms_version,'2026-08-02');
-  assert.equal(rpcCalls[0].args.p_terms_sha256,'2e31dbece128befd9b504034505ba93e93069dc9cd7782a66974431740d330c8');
-  assert.equal(rpcCalls[0].args.p_privacy_sha256,'67e51a7c59a214a4df43fd533835d528034f0d20884f72244e25e0e0bf928c5c');
+  assert.equal(rpcCalls[0].args.p_terms_version,'2026-08-03');
+  assert.equal(rpcCalls[0].args.p_terms_sha256,'1c7437280e9ba8386b5ef3998a919fefcdeca8e06cc497b31621633ae23dab04');
+  assert.equal(rpcCalls[0].args.p_privacy_sha256,'8e152d208b271da5a1f71630b17c5c82e8b7bd930c5508da8b4d95597c0a1568');
 
   sessionStorage.setItem('nestly-business-google-oauth', '{bad json');
   assert.equal(context.takeBusinessGoogleOAuthAttempt(), false);

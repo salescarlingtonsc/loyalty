@@ -37,7 +37,7 @@ test('service variations flow into services, packages, appointments and Quick Ea
   assert.match(app,/function serviceDisplayName\(service=\{\}\)/);
   assert.match(app,/Variation \(optional\)/);
   assert.match(app,/variant_label:variant/);
-  assert.match(app,/select\('id,name,variant_label,duration_min,price_cents,active'\)/);
+  assert.match(app,/select\('id,name,variant_label,duration_min,price_cents,active'(?:,\{count:'exact'\})?\)/);
 });
 
 test('Quick Earn shows owned packages and pending vouchers, and consumes sessions without payment',()=>{
@@ -55,8 +55,9 @@ test('package earning is owner-configurable and checkout points come from writer
   assert.match(migration,/set_package_points_policy_v102/);
   assert.match(migration,/app\.is_salon_owner\(p_business\)/);
   const packages=section('async function packagesPage(){','async function branchesPage(){');
-  assert.match(packages,/Award loyalty points when a package is purchased/);
-  assert.match(packages,/Using sessions never awards points again/);
+  assert.match(packages,/Make package purchases eligible for loyalty points/);
+  assert.match(packages,/points are earned only when an active published loyalty programme applies/);
+  assert.match(packages,/Using sessions never earns points again/);
   const till=section('async function tillPage(){','async function salesPage(){');
   assert.match(till,/checkoutPointsReceiptV102/);
   assert.match(till,/packageResults/);

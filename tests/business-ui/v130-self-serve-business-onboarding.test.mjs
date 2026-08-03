@@ -34,7 +34,7 @@ test('public business signup creates an owner account instead of requesting admi
   assert.match(signup,/Create your Peekaa owner account/);
   assert.match(signup,/sb\.auth\.signUp/);
   assert.match(signup,/validNewPassword/);
-  assert.match(signup,/I have read and agree to the Terms and Privacy Policy/);
+  assert.match(signup,/I agree to the Terms of Service and acknowledge the Privacy Policy/);
   assert.doesNotMatch(signup,/Submit for approval|super admin must approve|public-business-application/);
 });
 

@@ -52,11 +52,13 @@ test('calendar load, retry, refresh projection, empty team and read-only states 
 
 test('day availability and reporting consume the same persisted blocks',()=>{
   const appointments=between(app,'async function appointmentsPage(){','/* ---------- waitlist');
+  const blockedReports=between(app,'async function blockedTimeRows','async function scheduledCapacityHours');
   const reports=between(app,'async function scheduledCapacityHours','async function runBusy');
   assert.match(appointments,/const hitsBlockedTime=column\.blocks\.some/);
   assert.match(appointments,/intervalsOverlap\(occupiedStart,occupiedEnd,blockStart,blockEnd\)/);
   assert.match(appointments,/day-blocked-window/);
-  assert.match(reports,/list_staff_blocked_times_v120/);
+  assert.match(blockedReports,/list_staff_blocked_times_v120/);
+  assert.match(reports,/blockedTimeRows\(scope\)/);
   assert.match(reports,/\[\.\.\.dayBreaks,\.\.\.staffBlocks\]/);
   assert.match(reports,/mergedIntervalMinutes\(clipped\)/);
 

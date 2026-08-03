@@ -244,7 +244,8 @@ test('customer list has search, keyboard links, pagination, export/import, and l
   assert.match(clients,/Search customers by name or phone/);
   assert.match(clients,/sb\.rpc\('staff_list_customers_v129'/);
   assert.match(clients,/const customerRpcSearch=normalizeCustomerSearchPhoneDigits\(clientSearch\)\|\|clientSearch/);
-  assert.match(clients,/p_search:customerRpcSearch\|\|null/);
+  assert.match(clients,/const customerDirectoryPage=\(search,inactiveDays,offset\)=>sb\.rpc\('staff_list_customers_v129',[\s\S]*p_search:search\|\|null/);
+  assert.match(clients,/customerDirectoryPage\([\s\S]*customerRpcSearch,clientInactiveDays,clientPage\*CLIENT_PAGE_SIZE/);
   const normalizerLine = app.split('\n')
     .find((line) => line.startsWith('const normalizeCustomerSearchPhoneDigits='));
   assert.ok(normalizerLine, 'customer phone-search normalizer must be defined');
@@ -279,7 +280,8 @@ test('read-only referral, membership, and gift-card views omit editable transact
 test('financial UI actions require module rights plus server-mirrored create-sales capability',()=>{
   assert.match(app,/owner:new Set\(\['create_sales','view_finance'\]\),manager:new Set\(\['create_sales','view_finance'\]\),staff:new Set\(\['create_sales'\]\)/);
   assert.match(app,/frontdesk:new Set\(\['create_sales'\]\),bookkeeper:new Set\(\['view_finance'\]\)/);
-  assert.match(detail,/const canWriteLoyalty=canWriteModule\('loyalty'\)&&hasRoleCapability\('create_sales'\)/);
+  assert.match(detail,/const canWriteLoyaltyConfigured=canWriteModule\('loyalty'\)&&hasRoleCapability\('create_sales'\)/);
+  assert.match(detail,/const canWriteLoyalty=canWriteLoyaltyConfigured&&loyaltyFactsAvailable/);
   assert.match(memberships,/const canEnroll=canWrite&&hasRoleCapability\('create_sales'\)/);
   assert.match(giftcards,/const abilities=giftCardAbilitiesV102\(\{[\s\S]*createSales:hasRoleCapability\('create_sales'\),[\s\S]*giftcardsReadable:branchCanRead\(giftBranchId,'giftcards'\),[\s\S]*giftcardsWritable:branchCanWrite\(giftBranchId,'giftcards'\),[\s\S]*businessEnabled:giftCardsEnabled/);
   assert.match(giftcards,/const canIssue=abilities\.canIssue/);
@@ -289,7 +291,7 @@ test('financial UI actions require module rights plus server-mirrored create-sal
   assert.match(till,/const accessibleTillBranches=assignedTillBranches\.filter\(branch=>\s*branchCanWrite\(branch\.id,'till'\)&&branchCanRead\(branch\.id,'clients'\)\s*\)/);
   assert.match(till,/const canRecordSales=hasRoleCapability\('create_sales'\)&&Boolean\(tillBranchId\)/);
   assert.match(till,/if\(!tillStaffId\|\|!tillBranchId\)[\s\S]*Record sale is not available/);
-  assert.match(detail,/const canWriteLoyalty=canWriteModule\('loyalty'\)/);
+  assert.match(detail,/confirmCompleteFacet\('loyalty'\)/);
 });
 
 test('customer route async renders cannot overwrite a newer route',()=>{

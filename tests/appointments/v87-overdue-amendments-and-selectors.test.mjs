@@ -44,7 +44,7 @@ test('booked appointments expose direct, prefilled amendments including overdue 
 });
 
 test('customer and staff selectors are duplicate-safe without exposing unique staff contacts',()=>{
-  assert.match(calendar,/clients'\)\.select\('id,full_name,phone,phone_norm,email'\)/);
+  assert.match(calendar,/clients'\)\.select\('id,full_name,phone,phone_norm,email',\{count:'exact'\}\)/);
   assert.match(calendar,/placeholder="Search name or phone"/);
   assert.match(calendar,/customerLabel\(client\)/);
   assert.match(calendar,/customerMatches\(client,query\)/);

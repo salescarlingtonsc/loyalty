@@ -7,6 +7,7 @@ const require=createRequire(import.meta.url);
 const root=new URL('../../',import.meta.url);
 const app=await readFile(new URL('app/index.html',root),'utf8');
 const migration=await readFile(new URL('db/migrations/20260721_frenly_v41_customer_module_hardening.sql',root),'utf8');
+const v145Migration=await readFile(new URL('db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql',root),'utf8');
 const buildHandler=require('../../app/api/build.js');
 
 function functionBlock(name){
@@ -38,7 +39,9 @@ test('Gift Cards read path preserves the reviewed definer boundary and never mas
   assert.match(list,/from public\.gift_cards g[\s\S]*g\.business_id = p_business/i);
   assert.match(migration,/revoke all privileges on table public\.gift_cards from public, anon, authenticated/i);
   assert.match(migration,/revoke all privileges on function public\.staff_list_gift_cards\(uuid,integer\)[\s\S]*grant execute on function public\.staff_list_gift_cards\(uuid,integer\)\s+to authenticated/i);
-  assert.match(page,/sb\.rpc\('staff_list_gift_cards',\{p_business:S\.biz\.id,p_limit:100\}\)/);
+  assert.match(v145Migration,/create or replace function public\.staff_list_gift_cards_v145\([\s\S]*stable[\s\S]*security definer[\s\S]*app\.can_module_read\(p_business,\s*'giftcards'\)/i);
+  assert.match(v145Migration,/revoke all on function public\.staff_list_gift_cards_v145\(uuid, integer, integer\)[\s\S]*grant execute on function public\.staff_list_gift_cards_v145\(uuid, integer, integer\)\s+to authenticated/i);
+  assert.match(page,/sb\.rpc\('staff_list_gift_cards_v145',\{p_business:S\.biz\.id,p_limit:GIFT_CARD_PAGE_SIZE,p_offset:giftCardPage\*GIFT_CARD_PAGE_SIZE\}\)/);
   assert.doesNotMatch(page,/sb\.from\('gift_cards'\)/);
   assert.match(page,/if\(error\)\{[\s\S]*esc\(error\.message\|\|'Gift cards could not be loaded\.'\)[\s\S]*giftCardsRetry/,
     'the route must expose and retry the database failure rather than turn it into an empty state');

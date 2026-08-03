@@ -26,7 +26,8 @@ test('clients-only customer search uses the tenant-scoped V129 reader without Ti
   assert.ok(start>=0&&end>start);
   assert.match(clients,/sb\.rpc\('staff_list_customers_v129'/);
   assert.match(clients,/const customerRpcSearch=normalizeCustomerSearchPhoneDigits\(clientSearch\)\|\|clientSearch/);
-  assert.match(clients,/p_business:S\.biz\.id,p_search:customerRpcSearch\|\|null/);
+  assert.match(clients,/const customerDirectoryPage=\(search,inactiveDays,offset\)=>sb\.rpc\('staff_list_customers_v129',\{\s*p_business:S\.biz\.id,p_search:search\|\|null/);
+  assert.match(clients,/customerDirectoryPage\([\s\S]*customerRpcSearch,clientInactiveDays,clientPage\*CLIENT_PAGE_SIZE/);
   assert.doesNotMatch(clients,/lookup_client_by_phone/);
   assert.doesNotMatch(clients,/canWriteModule\('till'\)/);
 });

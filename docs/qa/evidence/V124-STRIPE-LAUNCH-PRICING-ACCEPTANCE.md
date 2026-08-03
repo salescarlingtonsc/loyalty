@@ -10,7 +10,7 @@ State: `VERIFIED_LOCAL` — not production or live-Stripe evidence
 - Monthly is SGD 149/month. SGD 168/month is comparison metadata only.
 - 1,000 customer profiles are included; every selected extra block of 1,000 is SGD 10/month or SGD 120/year.
 - Staff access is included and never changes the price. V124 exposes customer-capacity increases only.
-- The owner sees the exact recurring total, included modules, exclusions, AI-assisted promotion-copy wording, Stripe Checkout/portal actions, and the legal operator before provider redirect.
+- The owner sees the exact recurring total, included modules, exclusions, template-assisted promotion wording, Stripe Checkout/portal actions, and the legal operator before provider redirect. V145 clarifies that the shipped helper is deterministic and is not generative AI.
 - The earliest successful paid Stripe invoice for the matching V124 provider subscription fixes one exact 30-day money-back request deadline. A matching historical invoice is backfilled; an unrelated legacy renewal cannot create a new window. Later invoices, cadence/capacity changes, cancellation, or reactivation cannot move it forward.
 - A prorated plan change with a Stripe `pending_update` remains `uncertain`, never `completed`; exact-command recovery can complete only after provider items match and the pending update clears.
 - A complete processed Stripe subscription snapshot removes local provider items omitted by Stripe, so a deleted capacity add-on cannot remain projected.

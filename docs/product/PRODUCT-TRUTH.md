@@ -1,6 +1,6 @@
 # Peekaa product truth
 
-Last consolidated: 2026-08-01
+Last consolidated: 2026-08-03
 
 This is the durable statement of confirmed owner decisions. It describes the
 intended product, not the current implementation. Implementation and evidence
@@ -23,6 +23,33 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   at `/business`. The platform administration entry is not promoted publicly.
 - The experience must be understandable to a busy, non-technical SME operator
   on first use and usable as a mobile web app before native-store distribution.
+
+## Launch feature freeze and truthfulness
+
+- Owner decision 2026-08-03: the product is feature-frozen for launch. No new
+  module, dashboard, destination, workflow, or customer promise may be added
+  during launch-readiness work. Work is limited to correctness, stability,
+  performance, clarity, and completion of behavior already present in the
+  confirmed product scope.
+- Every visible dashboard value must come from an identified persistent source
+  and use one documented formula, branch scope, time range, Singapore-calendar
+  boundary, and inclusion/exclusion policy. A failed, partial, stale, capped, or
+  unavailable read must never be displayed as an exact zero or exact complete
+  total. Projections appear only with sufficient source data and are labelled as
+  projections rather than historical fact.
+- A visible action must perform its labelled existing operation exactly once or
+  present a truthful disabled/unavailable state. Placeholder, demo, sample,
+  coming-soon, fabricated, hard-coded production data, and no-op controls do not
+  belong in a launch build.
+- If an already-scoped feature lacks the required production-quality behavior,
+  complete it without expanding its workflow. If completion depends on an
+  unavailable provider, credential, legal decision, or other external input,
+  hide the action from ordinary users or expose only an honest unavailable state
+  that makes no claim of completion. Historical records and existing customer
+  value remain intact.
+- Launch-readiness changes must preserve current role, tenant, module, branch,
+  ledger, audit, and idempotency boundaries. Reliability or presentation work
+  must not broaden authority or introduce a second source of truth.
 
 ## Customer identity and programme joining
 
@@ -200,23 +227,25 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   analytical surface below the app bar.
 - Every dashboard KPI is a semantic 44px-or-larger control. Activating it opens
   a concise definition, the selected scope/value, and one relevant drill-down.
-  **Visit entries** reports rows marked as visits and discloses that recorded
-  reversal rows remain separate entries; it must not be presented as a net
-  visit count. Branch-scoped values name the applied branch, while values from
+  **Valid visits** counts only original rows marked as visits that have no
+  compensating reversal. Reversal rows and the originals they fully reverse
+  remain visible in signed ledger history, but neither is a valid visit.
+  Branch-scoped values name the applied branch, while values from
   business-wide readers are labelled business-wide. Edited dates do not relabel
   existing figures until a fresh read succeeds.
-  **Unique customers** means distinct identified customers attached to a sale
-  in the selected range. **Inactive customers** means no unreversed valid visit
+  **Customer records with valid visits** means distinct identified customers
+  attached to at least one unreversed valid visit in the selected range; gift
+  card issuance, other non-visit sales, reversal rows, and fully reversed
+  originals do not count. **Inactive customers** means no unreversed valid visit
   for at least 30 complete Singapore-calendar days, including never-visited
   customers. Charts label SGD values as currency; weekday intensity uses green
-  for quieter, amber for medium and red for busiest; demographic and
-  service-versus-goods summaries disclose unknown/other data instead of
-  inventing detail. The services/goods chart is an owner-only gross positive
-  item-line mix: signed discounts, non-positive reversal lines and receipt-level
-  adjustments are excluded rather than misclassified as a product category.
-  Other roles receive an explicit unavailable state without issuing the raw
-  item-detail read. Report, inactivity and permitted item-detail failures stay
-  in context with a Retry action.
+  for quieter, amber for medium and red for busiest; demographics disclose
+  unknown data instead of inventing detail. The earlier services-versus-goods
+  request is launch-hidden because current sale-item detail cannot reconcile
+  every recorded sale to a trustworthy whole. Dashboard charts may remain
+  visible only when their persistent source and complete formula reconcile to
+  the displayed total. Report and inactivity failures stay in context with a
+  Retry action.
 - The Customers directory keeps name/phone duplicate safety, makes the
   30/60/90-day last-visit filter obvious, and displays **Date joined**. Customer
   profiles label the deterministic recommendation **Peekaa's suggestion**,
@@ -268,7 +297,7 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   Loyalty-read contract; its private version table remains browser-closed.
 - Product/service cost and selling price feed an understandable profitability
   view showing gross profit, margin, estimated reward cost, and the remaining
-  contribution after reward. AI-assisted programme setup must explain its
+  contribution after reward. Deterministic template-assisted programme setup must explain its
   assumptions in plain language, use the firm's real catalogue costs/prices,
   and require explicit owner review before saving or publishing.
 - Everyday rewards, bring-backs, referrals, memberships, gift cards, and
@@ -354,7 +383,8 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   staff accounts and least-privilege roles rather than create a pricing reason
   to share credentials. A later pricing change requires a new owner decision
   and migration; legacy seat fields are historical data, not the launch offer.
-- Every eligible V124 provider subscription has one 30-day money-back-request
+- Historical subscriptions accepted under the V124 launch terms retain one
+  30-day money-back-request
   window. The deadline is the exact timestamp 30 days after that provider
   subscription's earliest successful invoice payment, including an earlier
   matching invoice found by backfill; an unrelated legacy renewal cannot start
@@ -362,6 +392,14 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   capacity, cancellation or reactivation changes. It is a refund-request
   eligibility policy, not a free trial or an automatic refund; approved refunds
   still follow fraud, chargeback, tax and provider controls.
+- Owner decision 2026-08-03 supersedes that launch promise for new business
+  subscription purchases accepted under the 2026-08-03 Terms. Those fees are
+  non-refundable once payment completes, except where applicable law requires
+  a refund or Peekaa expressly agrees otherwise in writing. The change is
+  prospective: it must not erase or shorten a request window already earned
+  under earlier accepted terms. A paid-invoice webhook still opens the exact
+  payment-pending workspace without a management approval step; returning from
+  Checkout alone never grants access.
 - Complete Stripe subscription snapshots are authoritative for item membership:
   a local capacity item absent from a newer complete snapshot is removed. The
   owner browser reuses one durable request key and command ID for the same
@@ -375,7 +413,7 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   modules: CRM and QR signup; loyalty points/stamps, reward paths, birthdays and
   referrals; appointments, team scheduling and waitlist; sales/Quick Earn;
   packages, memberships and dedicated gift-card management; customer portal
-  wallet/history/redemption; promotions and owner-reviewed AI copy assistance;
+  wallet/history/redemption; promotions and owner-reviewed template wording assistance;
   feedback and score-independent Google-review handoff; notifications where
   configured; profitability and operational reports; branches, roles and
   permissions; and English, Simplified Chinese and Malay business UI. Payment

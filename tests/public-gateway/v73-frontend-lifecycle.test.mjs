@@ -54,9 +54,10 @@ test('owners cannot see or mutate a disabled module while owner-only special pag
   assert.equal(JSON.stringify(evaluate([])),JSON.stringify([false,false]));
   assert.equal(JSON.stringify(evaluate(['appointments'])),JSON.stringify([true,true]));
   const route=section('async function route(){','/* ---------- customer wallet ---------- */');
-  for(const page of ['settings','branches','setup','studio','storedvalue']){
+  for(const page of ['settings','branches','setup','studio']){
     assert.match(route,new RegExp(`pageKey==='${page}'&&S\\.myRole!=='owner'`));
   }
+  assert.match(route,/if\(pageKey==='storedvalue'\)[\s\S]*Stored value is not available for launch/);
   const global=section('function globalActionsHtml(){','function wireGlobalActions(){');
   assert.match(global,/canViewAppts\?`<button[\s\S]*canNewAppt\?'New appointment':'View calendar'/);
 });

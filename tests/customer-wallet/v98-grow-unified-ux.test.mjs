@@ -76,7 +76,7 @@ test('one-sheet automatic popup is the guided start while detailed edits remain 
   assert.match(grow,/id="growSecondarySettings"/);
   assert.doesNotMatch(grow,/data-grow-guide=/);
   assert.match(grow,/if\(activate\)\{element\.click\(\);return true\}/);
-  assert.match(grow,/else await studioPage\(draft\|\|hashParam\|\|null\)/);
+  assert.match(grow,/studio:\{hash:'#\/studio',label:'Advanced rule controls'\}/);
   const publishFlow=html.slice(html.indexOf('async function openPublishFlow()'),html.indexOf('function studioEffLabel'));
   assert.match(publishFlow,/preview_publish_impact/);
   assert.doesNotMatch(publishFlow,/publish_loyalty_config/,
@@ -85,16 +85,20 @@ test('one-sheet automatic popup is the guided start while detailed edits remain 
 
 test('draft saves never publish and publication is a separate protected review',()=>{
   const loyaltySave=html.slice(html.indexOf("const loyaltySave=$('lsave')"),html.indexOf("const loyaltyReviewPublish="));
-  const draftReturn=loyaltySave.slice(loyaltySave.indexOf('if(draftVersionId){'),loyaltySave.indexOf("const {error:publishError}"));
+  const draftReturn=loyaltySave.slice(loyaltySave.indexOf('if(draftVersionId){'));
   assert.match(draftReturn,/refreshLoyaltyPanel/);
   assert.match(draftReturn,/Nothing was published/);
   assert.match(draftReturn,/return;/);
-  assert.ok(loyaltySave.indexOf('if(draftVersionId){')<loyaltySave.indexOf("sb.rpc('publish_loyalty_config'"));
+  assert.match(loyaltySave,/openProtectedGrowPublishReview\(versionId\)/);
+  assert.doesNotMatch(loyaltySave,/publish_loyalty_config/);
 
   const rewardSave=html.slice(html.indexOf('async function saveReward'),html.indexOf('const ra='));
   const tierSave=html.slice(html.indexOf('async function saveTier'),html.indexOf('const ta='));
-  assert.match(rewardSave,/if\(!draftVersionId\)\{[\s\S]*publish_loyalty_config/);
-  assert.match(tierSave,/if\(!draftVersionId\)\{[\s\S]*publish_loyalty_config/);
+  for(const editorSave of [rewardSave,tierSave]){
+    assert.match(editorSave,/save_loyalty_config_draft/);
+    assert.match(editorSave,/if\(!draftVersionId\)\{[\s\S]*openProtectedGrowPublishReview\(versionId\);return/);
+    assert.doesNotMatch(editorSave,/publish_loyalty_config/);
+  }
 
   const retentionDraftStart=html.indexOf('if(isOwner&&draftVersionId&&exactProgramMissing){');
   const retentionDraftActions=html.slice(retentionDraftStart,html.indexOf('if(isOwner){',retentionDraftStart));
@@ -119,14 +123,14 @@ test('staff receive published summaries while authoring and Advanced remain owne
   assert.match(grow,/const canSetupGrow=isOwner&&canRewards&&canWriteModule\('loyalty'\)/);
   assert.match(grow,/if\(!isOwner\|\|!available\|\|!growDraftVersionId\)return ''/);
   assert.match(grow,/\$\{isOwner\?`<details class="grow-advanced"/);
-  assert.match(grow,/if\(\(routedAction&&isOwner\)\|\|\(hashParam&&isOwner\)\|\|\['studio','storedvalue'\]\.includes\(routedSurface\)\)/);
+  assert.match(grow,/if\(\(routedAction&&isOwner\)\|\|\(hashParam&&isOwner\)\|\|routedSurface==='studio'\)/);
   assert.match(grow,/if\(canSetupGrow\|\|\(S\.myRole==='owner'&&canWinback&&canWriteModule\('retention'\)\)\)[\s\S]*firm_config_versions/);
 });
 
 test('advanced authoring is collapsed and optional growth tools are acknowledged',()=>{
   assert.match(grow,/<details class="grow-advanced"/);
-  assert.match(grow,/Program Studio/);
-  assert.match(grow,/Stored value/);
+  assert.match(grow,/Advanced rule controls/);
+  assert.doesNotMatch(grow,/Program Studio|Stored value/);
   assert.match(grow,/taxonomy, versions and rollback/);
   for(const module of ['referrals','memberships','giftcards']){
     assert.match(grow,new RegExp(`modules\\.includes\\('${module}'\\)`));

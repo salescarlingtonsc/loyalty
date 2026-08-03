@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
 const migration=readFileSync(new URL('../../supabase/migrations/20260802120000_nestly_v138_auth_grow_closure.sql',import.meta.url),'utf8');
+const launchFreezeMigration=readFileSync(new URL('../../supabase/migrations/20260803160000_nestly_v145_launch_freeze_metrics.sql',import.meta.url),'utf8');
 const sqlAcceptance=readFileSync(new URL('../../db/tests/v138_auth_grow_closure.sql',import.meta.url),'utf8');
 
 function section(start,end){
@@ -31,8 +32,8 @@ test('Google sign-in cannot become implicit signup and consented signup records 
   assert.match(app,/storageKey:'nestly-business-oauth-admission-v138',persistSession:false/);
   assert.match(app,/autoRefreshToken:false,detectSessionInUrl:false/);
   assert.ok(callback.indexOf("admissionClient.rpc('complete_business_google_oauth_v138'")<callback.indexOf('await sb.auth.setSession('));
-  assert.match(app,/terms:Object\.freeze\(\{version:'2026-08-02',sha256:'2e31dbece128befd9b504034505ba93e93069dc9cd7782a66974431740d330c8'/);
-  assert.match(app,/privacy:Object\.freeze\(\{version:'2026-08-02',sha256:'67e51a7c59a214a4df43fd533835d528034f0d20884f72244e25e0e0bf928c5c'/);
+  assert.match(app,/terms:Object\.freeze\(\{version:'2026-08-03',sha256:'1c7437280e9ba8386b5ef3998a919fefcdeca8e06cc497b31621633ae23dab04'/);
+  assert.match(app,/privacy:Object\.freeze\(\{version:'2026-08-03',sha256:'8e152d208b271da5a1f71630b17c5c82e8b7bd930c5508da8b4d95597c0a1568'/);
   assert.match(migration,/create table app\.business_google_oauth_attempts_v138/);
   assert.match(migration,/create table app\.business_account_legal_acceptances_v138/);
   assert.match(migration,/where staff_row\.user_id=v_actor and staff_row\.active/);
@@ -73,7 +74,7 @@ test('reward completion returns to the Grow overview instead of leaving the owne
   assert.match(app,/id="rwClose" type="button">Done<\/button>/);
   assert.match(app,/const finishGrowEditorV139=\(\)=>editorIntent\?nav\('#\/grow'\):nav\('#\/loyalty'\)/);
   assert.match(app,/\$\('rwClose'\)\.onclick=finishGrowEditorV139/);
-  assert.match(app,/toast\(draftVersionId\?'Draft reward saved'[\s\S]{0,260}?finishGrowEditorV139\(\)/);
+  assert.match(app,/toast\('Draft reward saved'\);\s*finishGrowEditorV139\(\)/);
 });
 
 test('the install surface contains no customer-visible Nestly brand',()=>{
@@ -130,5 +131,6 @@ test('programme editors expose explicit visibility controls and customer rewards
   assert.match(app,/id="fe"><option value="true"[\s\S]{0,100}?<option value="false"/);
   assert.match(app,/onclick="togglePlan\('[^']+',\$\{!p\.active\}\)"/);
   assert.match(app,/id="giftCardEnabled" type="checkbox"/);
-  assert.match(app,/sb\.from\('loyalty_rewards'\)\.select\('\*'\)\.eq\('business_id',S\.biz\.id\)\.eq\('active',true\)/);
+  assert.match(app,/staff_get_customer_actionable_loyalty_v145/);
+  assert.match(launchFreezeMigration,/reward_version\.active[\s\S]*join public\.loyalty_rewards reward[\s\S]*reward\.active/);
 });

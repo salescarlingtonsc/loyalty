@@ -15,14 +15,15 @@ test('every mapped module and literal control passes the V123 readiness inventor
   const report=JSON.parse(run.stdout);
   assert.equal(report.business.expected,25);
   assert.equal(report.platform.expected,9);
-  assert.equal(report.controls.buttons,275);
+  assert.equal(report.controls.buttons,289);
   assert.deepEqual(report.controls.hiddenRouteTargets,[]);
   assert.deepEqual(report.controls.nonSemanticClickTargets,[]);
 });
 
-test('Get started never advertises the intentionally unavailable Inventory surface',()=>{
+test('Get started uses active catalogue records without advertising the unavailable Inventory surface',()=>{
   const setup=between('async function setupPage(){','/* ---------- staff performance');
-  assert.doesNotMatch(setup,/S\.biz\.enabled_modules|from\('products'\)|from\('service_products'\)|#\/inventory|usesInventory/);
+  assert.doesNotMatch(setup,/S\.biz\.enabled_modules|from\('service_products'\)|#\/inventory|usesInventory/);
+  assert.match(setup,/from\('products'\)[\s\S]*eq\('active',true\)/);
   assert.match(setup,/Add your services or products/);
 });
 
@@ -33,9 +34,9 @@ test('all application clipboard actions use one honest recoverable helper',()=>{
   assert.match(helper,/catch/);
   assert.match(helper,/button\.disabled=true/);
   assert.equal((app.match(/navigator\.clipboard\.writeText/g)||[]).length,1);
-  assert.ok((app.match(/copyTextToClipboard\(/g)||[]).length>=9,'every copy surface must use the shared helper');
-  for(const id of ['copyRef','cp','sp_copy','cpJoin','copyManage'])assert.match(app,new RegExp(`id="${id}"`));
-  assert.match(app,/copyBtn\.onclick=async\(\)=>copyTextToClipboard/);
+  assert.equal((app.match(/copyTextToClipboard\(/g)||[]).length,8,'every remaining copy surface must use the shared helper');
+  for(const id of ['copyRef','cp','cpJoin','copyManage'])assert.match(app,new RegExp(`id="${id}"`));
+  assert.match(app,/\$\('cp'\)\.onclick=async\(\)=>copyTextToClipboard/);
 });
 
 test('staff performance drill-down is a semantic keyboard link',()=>{
@@ -127,14 +128,14 @@ test('report request rejection renders a current-route retry and every P&L expor
   const daily=between('async function dailyReportPage','async function pnlPage');
   const pnl=between('async function pnlPage','/* ---------- settings');
   assert.match(daily,/Daily report could not be generated\.[\s\S]*drRetry/);
-  for(const message of ['P&L summary could not be loaded.','P&L expenses could not be loaded.','P&L monthly sales could not be loaded.']){
-    assert.match(pnl,new RegExp(message.replace(/[&.]/g,'\\$&')));
-  }
+  assert.match(pnl,/P&L summary could not be loaded\./);
   assert.match(pnl,/try\{\s*summaryResult=await sb\.rpc/);
-  assert.match(pnl,/try\{expensesResult=await exQ\}/);
-  assert.match(pnl,/try\{monthlyResult=await slQ\}/);
-  assert.match(pnl,/const \{data:sl,error:e3\}=monthlyResult\|\|\{\}/);
-  for(const row of ['revenue_cash','revenue_accrual','expenses','net_cash_less_expenses'])assert.match(pnl,new RegExp(`'summary','${row}'`));
+  assert.doesNotMatch(pnl,/sb\.from\('expenses'\)|sb\.from\('sales'\)/);
+  assert.match(pnl,/sum\.expenses_by_category/);
+  assert.match(pnl,/sum\.monthly/);
+  for(const row of ['cash_basis_revenue_earned_and_settled','revenue_accrual'])assert.match(pnl,new RegExp(`'summary','${row}'`));
+  assert.match(pnl,/'summary',lastSummary\.branchSpecific\?'selected_branch_expenses_business_overhead_excluded':'all_business_expenses'/);
+  assert.match(pnl,/'summary',lastSummary\.branchSpecific\?'cash_basis_revenue_less_selected_branch_expenses':'cash_basis_revenue_less_all_business_expenses'/);
   assert.match(pnl,/\['scope','from'/);
   assert.match(pnl,/csvRows\(rows\)/);
 });
