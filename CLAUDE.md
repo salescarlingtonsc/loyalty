@@ -1,11 +1,13 @@
 # Avocado — project instructions (loyalty platform)
 
-> **Current Nestly authority:** Read the root `AGENTS.md` and the product/QA
-> documents it lists before changing code. Those versioned documents contain the
-> owner's cumulative Nestly requirements, screenshot issue ledger, traceability
-> matrix, realistic fixtures, role journeys, and release evidence rules. Where
-> legacy Avocado/Frenly wording in this file conflicts with them, the current
-> Nestly product truth and a newer explicit owner instruction take precedence.
+> **Current Peekaa authority (owner directive, 2026-08-03):** The root
+> `AGENTS.md` controls agent workflow. Normal work follows the shipping-velocity
+> path: implement, run targeted checks, fix, commit, push, and deploy when the
+> task is intended for production. Legacy blanket Sol-review and release-phrase
+> gates in this file are superseded. Use the risk exceptions in `AGENTS.md` only
+> for payments or billing, authentication or authorisation, irreversible
+> production migrations, security-critical infrastructure, destructive
+> production operations, or an explicitly requested review-only task.
 
 > If this repo and the marketing-content repo ever conflict, note: **this folder is the
 > Avocado loyalty PRODUCT**; `marketing-content` is a separate "Super Marketing Brain"
@@ -228,18 +230,18 @@ MODULE_RELATIONSHIP_MAP, DATA_ENTITY_MAP, EFFICIENCY_AUTOMATION_AUDIT,
 ROLE_PERMISSION_MATRIX, AVOCADO_GAP_ANALYSIS, AVOCADO_REUSE_MATRIX,
 SINGAPORE_PRODUCT_STRATEGY, IMPLEMENTATION_ROADMAP, OPEN_QUESTIONS.
 
-## Working method (standing instruction from owner)
-**GPT-5.6 Sol is the reviewer and orchestrator.** Delegate bounded implementation and
-verification work to **GPT-5.6 Terra** and **GPT-5.6 Luna** with disjoint scopes. Sol pins the
-API and migration contracts before parallel delegation, reviews both outputs, closes gaps,
-runs the rolled-back SQL verification chain, and owns the final integration report (exact files
-touched, what changed, why, and verification evidence).
+## Working method (owner directive, 2026-08-03)
 
-**Hard release gate (owner, 2026-07-20):** do not push `main`, deploy Vercel or Edge Functions,
-or apply production migrations until the owner writes the exact phrase `RELEASE APPROVED`.
-Design work and rolled-back verification are permitted. The corrected Part C customer design
-must receive a reviewer `PASS` before v25-v34 implementation begins. Production is only
-`gadpooereceldfpfxsod`; never use the retired project `kyzovonwnscrzmkvocid`.
+Follow the default shipping workflow in the root `AGENTS.md`. Normal feature
+work does not require delegation, an independent Sol review, an `ACCEPTED`
+status, a `RELEASE APPROVED` phrase, or repeated review cycles. Implement the
+smallest correct change, run targeted verification, commit, push, and deploy
+when requested.
+
+The earlier 2026-07-20 blanket release gate is superseded. Apply deeper review
+and approval only to the risk exceptions listed in `AGENTS.md`, scoped to the
+specific risky action. Production remains `gadpooereceldfpfxsod`; never use the
+retired project `kyzovonwnscrzmkvocid`.
 
 ## Design direction (owner-confirmed; updated 2026-07-18 post-launch)
 - **Grouped navigation (Cubbly reference, owner screenshot 2026-07-18):** a handful of
