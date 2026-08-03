@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="a486ef3ec9ac07998412ac6113744900ea9ec1538faabdf3cbecaca5465bfd52">
+<meta name="v105-production-component-sha256" content="68e274d84fb9016bc01227a9f9d1531bff158c28b0b3fc6050fef3da67f17099">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -116,6 +116,12 @@ tr.click:hover td{background:#FBFAF8}
   padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right))
     max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}
 .auth-card{width:420px;max-width:100%;border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:30px}
+.business-session-context{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin:18px 0;padding:12px 14px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;text-align:left}
+.business-session-context>div{min-width:0}.business-session-context span{display:block;color:var(--muted);font-size:11.5px}
+.business-session-context strong{display:block;margin-top:2px;overflow-wrap:anywhere;font-size:13px}
+.business-session-context .btn{flex:0 0 auto;min-height:44px}
+@media(max-width:480px){.business-session-context{align-items:stretch;flex-direction:column}.business-session-context .btn{width:100%}}
 .legal-links{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:0 6px;margin-top:18px;
   color:var(--muted);font-size:11.5px;min-width:0;max-width:100%}
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
@@ -1066,8 +1072,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   background:rgba(244,242,238,.82);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)
 }
-.platform-topbar-title{font-weight:750;letter-spacing:-.015em}
-.platform-topbar-actions{display:flex;align-items:center;gap:8px}
+.platform-topbar-title{min-width:0;font-weight:750;letter-spacing:-.015em}
+.platform-topbar-actions{display:flex;min-width:0;align-items:center;gap:8px}
 .platform-locale-switcher{
   display:flex;align-items:center;gap:3px;padding:3px;border:1px solid var(--hair);
   border-radius:12px;background:#fff
@@ -1157,6 +1163,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .platform-contact-actions .btn{min-width:44px;min-height:44px;padding-inline:10px}
 .platform-lane-empty{padding:10px 5px}
 .platform-prospect-list{display:none}
+.platform-prospect-list-view:not([hidden]){display:grid;gap:10px}
+.platform-kanban[hidden],.platform-prospect-list[hidden]{display:none!important}
 .platform-drawer{
   position:fixed;inset:0;z-index:120;display:flex;justify-content:flex-end;
   background:rgba(23,22,26,.32);padding-left:min(8vw,90px)
@@ -1306,9 +1314,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   gap:0 14px;align-items:start
 }
 .platform-enterprise-filter-grid .cui-field label{margin-top:0}
-.platform-enterprise-search{grid-column:span 2}
+.platform-enterprise-search{grid-column:span 2;display:grid;gap:8px}
 .platform-enterprise-search .cui-field label{margin-top:0}
-.platform-enterprise-search>p{margin-top:-7px;line-height:1.4}
+.platform-enterprise-search>p{margin-top:8px;line-height:1.4}
 .platform-enterprise-firms{grid-row:span 2}
 .platform-enterprise-firms select{min-height:148px}
 .platform-enterprise-table .platform-link-button{
@@ -1520,12 +1528,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .platform-topbar{min-height:60px;padding:max(8px,env(safe-area-inset-top))
     max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left));
     align-items:center}
-  .platform-topbar-title{font-size:13px}
+  .platform-topbar-title{
+    flex:0 1 auto;overflow:hidden;font-size:13px;text-overflow:ellipsis;white-space:nowrap
+  }
+  .platform-topbar-actions{flex:1 1 auto;justify-content:flex-end}
   .platform-topbar-actions .btn{
     width:44px;min-width:44px;height:44px;min-height:44px;padding:9px;justify-content:center
   }
   .platform-topbar-actions .btn span{display:none}
-  .platform-locale-switcher{max-width:188px;overflow-x:auto;scrollbar-width:none}
+  .platform-locale-switcher{
+    flex:1 1 188px;min-width:0;max-width:188px;overflow-x:auto;scrollbar-width:none
+  }
   .platform-locale-switcher::-webkit-scrollbar{display:none}
   .platform-locale-switcher button{min-width:44px;padding-inline:8px;font-size:10px;white-space:nowrap}
   .platform-main{padding:20px max(14px,env(safe-area-inset-right))
@@ -1558,8 +1571,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
     border-radius:9px;color:var(--ink2);font-size:12px;font-weight:700;text-align:left
   }
   .platform-mobile-more-menu a[aria-current="page"]{background:var(--tint);color:var(--coral)}
-  .platform-kanban{display:none}
-  .platform-prospect-list{display:grid;gap:10px}
+  .platform-kanban:not([hidden]){display:grid;grid-template-columns:1fr}
+  .platform-kanban-responsive{display:none!important}
+  .platform-prospect-list:not([hidden]){display:grid;gap:10px}
   .platform-prospect-list .platform-prospect-card{display:block}
   .platform-detail-grid,.platform-form-grid,.platform-health-grid{grid-template-columns:1fr}
   .platform-form-grid .wide{grid-column:auto}
@@ -1614,7 +1628,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · a486ef3ec9ac</span>
+<span class="v105-provenance">v105 production-component harness · 68e274d84fb9</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -1739,7 +1753,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'a486ef3ec9ac07998412ac6113744900ea9ec1538faabdf3cbecaca5465bfd52',
+  sourceHash:'68e274d84fb9016bc01227a9f9d1531bff158c28b0b3fc6050fef3da67f17099',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

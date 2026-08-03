@@ -28,15 +28,17 @@ test('shared reward snapshot trigger safely handles each table row type', async 
 test('reward editor exposes simple customer-facing fields and progressive disclosure', async () => {
   const app = await read('app/index.html');
   for (const field of [
-    'Customer-facing name',
+    'Reward name customers see',
     'What the customer gets',
     'cost_points',
-    'Estimated business cost',
+    'Company cost budget',
     'Reward expires after (days)',
     'Uses per customer',
     'Image reference',
     'Internal name'
   ]) assert.match(app, new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+  assert.match(app,/id="rwCatalogueSource"/);
+  assert.match(app,/Choose an existing product or service to fill the reward/);
   assert.match(app, /<details><summary>More options<\/summary>/i);
   assert.match(app, /data-reward-elig="\$\{key\}"/i);
   for (const key of ['branch', 'service', 'product']) assert.match(app, new RegExp(`'${key}'`));

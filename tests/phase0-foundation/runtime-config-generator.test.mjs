@@ -65,6 +65,20 @@ test('generator emits a frozen public config and an exact-origin CSP in an isola
   assert.match(csp, /worker-src 'self';/);
   assert.doesNotMatch(csp, /connect-src[^;]*\*/);
   assert.doesNotMatch(csp, /\{\{SUPABASE_/);
+  assert.deepEqual(vercel.redirects, [
+    {
+      source:'/',
+      has:[{type:'host',value:'peekaa.asia'}],
+      destination:'https://www.peekaa.asia/',
+      permanent:true,
+    },
+    {
+      source:'/(.*)',
+      has:[{type:'host',value:'peekaa.asia'}],
+      destination:'https://www.peekaa.asia/$1',
+      permanent:true,
+    },
+  ]);
   assert.deepEqual(
     vercel.headers.find(({ source }) => source === '/sw.js')?.headers,
     [

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="474f8fe040f3b8a388642ee05ea705616342529908057e8f4cef0f04e00753ad"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="07a760aa7bca8eff5c39f0088bb51389ec54a310b400f1987e9c383551548c81"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -110,6 +110,12 @@ tr.click:hover td{background:#FBFAF8}
   padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right))
     max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}
 .auth-card{width:420px;max-width:100%;border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:30px}
+.business-session-context{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin:18px 0;padding:12px 14px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;text-align:left}
+.business-session-context>div{min-width:0}.business-session-context span{display:block;color:var(--muted);font-size:11.5px}
+.business-session-context strong{display:block;margin-top:2px;overflow-wrap:anywhere;font-size:13px}
+.business-session-context .btn{flex:0 0 auto;min-height:44px}
+@media(max-width:480px){.business-session-context{align-items:stretch;flex-direction:column}.business-session-context .btn{width:100%}}
 .legal-links{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:0 6px;margin-top:18px;
   color:var(--muted);font-size:11.5px;min-width:0;max-width:100%}
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
@@ -1004,7 +1010,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 474f8fe040f3b8a388642ee05ea705616342529908057e8f4cef0f04e00753ad</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 07a760aa7bca8eff5c39f0088bb51389ec54a310b400f1987e9c383551548c81</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -3880,10 +3886,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const canManageLoyalty=S.myRole==='owner'&&canWriteLoyalty;
   const loyaltyControlDisabled=canManageLoyalty?'':' disabled';
   let lp=[],rw=[],tr=[],rb=[],rs=[],rp=[],bo=[],birthdayPrograms=[],publishedBirthdayPrograms=[],draftSnapshotHash=null;
-  const [{data:br,error:brError},{data:sv,error:svError},{data:pr,error:prError}]=await Promise.all([
+  const [{data:br,error:brError},{data:sv,error:svError},productResult]=await Promise.all([
     sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name'),
-    sb.from('services').select('id,name,active').eq('business_id',S.biz.id).order('name'),
-    sb.from('products').select('id,name,active').eq('business_id',S.biz.id).order('name')]);
+    sb.from('services').select('id,name,active,price_cents').eq('business_id',S.biz.id).order('name'),
+    canManageLoyalty
+      ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
+      :sb.from('products').select('id,name,active,price_cents').eq('business_id',S.biz.id).order('name')]);
+  const prError=productResult.error;
+  const pr=canManageLoyalty?(Array.isArray(productResult.data?.items)?productResult.data.items:[]):(productResult.data||[]);
   if(!isLoyaltyCurrent())return;
   if(brError||svError||prError)throw brError||svError||prError;
   if(draftVersionId){
@@ -3920,7 +3930,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const [{data:liveProgram,error:programError},{data:liveRewards,error:rewardsError},{data:liveTiers,error:tierError},{data:liveBranches,error:rbError},{data:liveServices,error:rsError},{data:liveProducts,error:rpError}]=await Promise.all([
       sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
       sb.from('loyalty_rewards').select('*').eq('business_id',S.biz.id).order('sort').order('created_at'),
-      sb.from('loyalty_tiers').select('*').eq('business_id',S.biz.id).order('threshold'),
+      canManageLoyalty?sb.rpc('business_get_loyalty_tiers_v143',{p_business:S.biz.id}):sb.from('loyalty_tiers').select('*').eq('business_id',S.biz.id).order('threshold'),
       sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_products').select('reward_id,product_id').eq('business_id',S.biz.id)]);
@@ -3938,7 +3948,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const p=lp?.[0]?{...lp[0],configuration_status:draftVersionId?'draft':lp[0].configuration_status}:null;
   const birthdayProgram=birthdayPrograms[0]||null;
   const publishedBirthdayProgram=publishedBirthdayPrograms[0]||null;
-  const rewards=rw||[],tiers=(tr||[]).filter(t=>t.active!==false);
+  const rewards=rw||[],tiers=tr||[];
   const model=modelOverride||p?.loyalty_model||'classic';
   const unit=model==='stamps'?'stamps':'points';
   const groupEligibility=(rows,key)=>rows.reduce((a,x)=>{
@@ -3954,6 +3964,40 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const rewardId=(reward)=>reward?(reward.reward_id||reward.id||''):'';
   const rewardLabel=(r)=>r.customer_name||r.name||'Unnamed reward';
   const rewardKind=(r)=>r.fulfillment_kind||((r.credit_cents||0)>0?'credit':'manual_item');
+  const rewardCatalogueSources=[
+    ...activeItems(pr||[]).map(item=>({type:'product',id:item.id,name:item.name,
+      sellingCents:Number(item.retail_price_cents??item.price_cents??0),costCents:item.cost_cents==null?null:Number(item.cost_cents)})),
+    ...activeItems(sv||[]).map(item=>({type:'service',id:item.id,name:item.name,
+      sellingCents:Number(item.price_cents||0),costCents:null}))
+  ];
+  const rewardCatalogueByKey=new Map(rewardCatalogueSources.map(item=>[`${item.type}|${item.id}`,item]));
+  const pointCostSamples=(rw||[]).filter(reward=>Number(reward.cost_points)>0&&Number(reward.estimated_cost_cents)>0);
+  const estimatedPointCostCents=pointCostSamples.length
+    ?pointCostSamples.reduce((sum,reward)=>sum+Number(reward.estimated_cost_cents),0)
+      /pointCostSamples.reduce((sum,reward)=>sum+Number(reward.cost_points),0)
+    :Number(p?.redeem_points)>0&&Number(p?.reward_credit_cents)>0
+      ?Number(p.reward_credit_cents)/Number(p.redeem_points):1;
+  const tierBenefitLines=tier=>String(tier?.perk_note||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
+  const boundaryInputValue=(value)=>{
+    if(!value)return '';
+    const parts=new Intl.DateTimeFormat('sv-SE',{
+      timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',hourCycle:'h23'
+    }).formatToParts(new Date(value)).reduce((out,part)=>({...out,[part.type]:part.value}),{});
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+  };
+  const boundaryInstant=(value)=>value?`${value}:00+08:00`:null;
+  const boundaryState=(item,startKey,endKey,now=Date.now())=>{
+    if(item?.active===false)return {label:'Paused',tone:'off'};
+    const starts=item?.[startKey]?Date.parse(item[startKey]):NaN;
+    const ends=item?.[endKey]?Date.parse(item[endKey]):NaN;
+    if(Number.isFinite(starts)&&starts>now)return {label:'Scheduled',tone:'new'};
+    if(Number.isFinite(ends)&&ends<=now)return {label:'Ended',tone:'off'};
+    return {label:'Live',tone:'on'};
+  };
+  const rewardBoundary=(reward)=>boundaryState(reward,'claim_available_from','claim_available_until');
+  const tierBoundary=(tier)=>boundaryState(tier,'effective_from','expires_at');
+  const validBoundaryWindow=(start,end)=>!start||!end||Date.parse(boundaryInstant(end))>Date.parse(boundaryInstant(start));
   const eligibilitySummary=(r)=>['branch','service','product'].map((k)=>{
     const n=(eligibility[k][rewardId(r)]||[]).length;
     return n?`${n} ${k}${n===1?'':'s'}`:`all ${k}s`;
@@ -3995,12 +4039,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const rewardRows=(label)=>`
     <b style="display:block;margin-top:18px">${label}</b>
     <div class="reward-list" id="rwList">
-    ${rewards.length?rewards.map(r=>`<div class="reward-item">
+    ${rewards.length?rewards.map(r=>{const state=rewardBoundary(r);return `<div class="reward-item">
       <div class="meta"><div><b class="inline-status">${r.active?'':CUI.icon('retention',{size:15})}${esc(rewardLabel(r))}</b>
         <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
+        ${r.claim_available_from||r.claim_available_until?`<div class="muted small" style="margin-top:4px">${r.claim_available_from?`Starts ${esc(walletDate(r.claim_available_from,true))}`:'Available now'}${r.claim_available_until?` · Ends ${esc(walletDate(r.claim_available_until,true))}`:''}</div>`:''}
         ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}</div>
-        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'live':'archived'}</span>
-        ${canManageLoyalty?`<button class="btn ghost sm rwEdit" data-reward-id="${esc(rewardId(r))}">Edit</button>`:''}</div></div>`).join('')
+        <span class="spacer"></span><span class="pill ${state.tone}">${state.label}</span>
+        ${canManageLoyalty?`<button class="btn ghost sm rwEdit" data-reward-id="${esc(rewardId(r))}">Edit</button>`:''}</div></div>`}).join('')
       :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}</div>
     <div id="rwEditor" aria-live="polite"></div>
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
@@ -4010,18 +4055,23 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <option value="visits" ${(p?.tier_basis??'visits')==='visits'?'selected':''}>Number of visits (recommended)</option>
       <option value="spend" ${p?.tier_basis==='spend'?'selected':''}>Lifetime spend ($)</option>
       <option value="points_earned" ${p?.tier_basis==='points_earned'?'selected':''}>Lifetime points earned</option></select>
-    ${tiers.length?tiers.map(t=>`<div class="row" style="margin-top:8px">
-      <span>${esc(t.name)}</span><span class="spacer"></span>
-      <span class="muted small">from ${t.threshold} · ${t.points_multiplier}× ${unit}${t.perk_note?' · '+esc(t.perk_note):''}</span>
+    ${tiers.length?tiers.map(t=>{const state=tierBoundary(t);return `<div class="reward-item" style="margin-top:8px"><div class="meta"><div>
+      <b>${esc(t.name)}</b><p class="muted small" style="margin-top:4px">from ${t.threshold} · ${t.points_multiplier}× ${unit}</p>
+      ${tierBenefitLines(t).length?`<ul class="rec-why" style="margin-top:8px">${tierBenefitLines(t).map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:'<p class="muted small" style="margin-top:6px">No benefits added yet.</p>'}
+      ${t.effective_from||t.expires_at?`<p class="muted small" style="margin-top:6px">${t.effective_from?`Starts ${esc(walletDate(t.effective_from,true))}`:'Starts now'}${t.expires_at?` · Ends ${esc(walletDate(t.expires_at,true))}`:''}</p>`:''}</div><span class="spacer"></span><span class="pill ${state.tone}">${state.label}</span>
       ${canManageLoyalty?`<button class="btn ghost sm trEdit" data-id="${t.tier_id||t.id}">Edit</button>
-      <button class="btn ghost sm trDel" data-id="${t.tier_id||t.id}">✕</button>`:''}</div>`).join('')
+      <button class="btn ghost sm trDel" aria-label="Pause tier" data-id="${t.tier_id||t.id}">✕</button>`:''}</div></div>`}).join('')
       :`<p class="muted small" style="margin-top:6px">No tiers yet — customers all earn at 1×.</p>`}
-    ${canManageLoyalty?`<div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+    ${canManageLoyalty&&!tiers.length?'<button class="btn ghost sm" id="trDefaults" type="button" style="margin-top:10px">Add recommended tiers · Gold, Platinum &amp; Diamond</button><p class="muted small" id="trDefaultsStatus" role="status" aria-live="polite" style="margin-top:6px">Creates three editable tier drafts. Nothing is published.</p>':''}
+    ${canManageLoyalty?`<div class="field-grid" style="margin-top:12px">
       <label class="sr-only" for="trName">Tier name</label><input id="trName" placeholder="e.g. Gold" style="flex:1;min-width:100px">
       <label class="sr-only" for="trTh">Tier threshold</label><input id="trTh" type="number" min="0" placeholder="from" style="max-width:80px">
       <label class="sr-only" for="trMul">Points earning multiplier</label><input id="trMul" type="number" min="1" step="0.5" placeholder="× earn" style="max-width:90px">
-      <label class="sr-only" for="trPerk">Tier perk note</label><input id="trPerk" placeholder="perk note (optional)" style="flex:1;min-width:120px">
-      <button class="btn sm" id="trAdd">Add</button></div>`:''}`;
+      <div class="full"><label class="sr-only" for="trPerk">Tier perk note</label><p id="trBenefitsLabel" style="margin-bottom:6px"><b>Tier benefits</b></p><textarea id="trPerk" aria-describedby="trBenefitsLabel" rows="3" placeholder="One customer benefit per line"></textarea>
+        ${rewards.length?`<div class="row" style="margin-top:8px;flex-wrap:wrap"><span class="muted small">Add an existing reward:</span>${rewards.filter(reward=>reward.active!==false).map(reward=>`<button type="button" class="btn ghost sm trBenefitReward" data-benefit="${esc(`${rewardLabel(reward)} (${reward.cost_points} ${unit})`)}">${esc(rewardLabel(reward))} · ${reward.cost_points}</button>`).join('')}</div>`:'<p class="muted small" style="margin-top:6px">Create a reward first, or type a custom benefit above.</p>'}</div>
+      <div><label for="trFrom">Effective from (Singapore time)</label><input id="trFrom" type="datetime-local"></div>
+      <div><label for="trUntil">Ends at (Singapore time)</label><input id="trUntil" type="datetime-local"></div>
+      <div class="full"><button class="btn sm" id="trAdd">Add tier</button></div></div>`:''}`;
   const firmExpiryMode=p?.expiry_mode??'none';
   const firmExpiryDays=positiveExpiryDays(p?.expiry_days)||365;
   const firmExpiryNeedsDays=expiryModeRequiresDays(firmExpiryMode);
@@ -4375,14 +4425,18 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     $('rwEditor').innerHTML=`<div class="reward-editor">
       <div class="row" style="justify-content:space-between;gap:12px"><b>${reward?'Edit reward':'New reward'}</b><button class="btn ghost sm" id="rwClose" type="button">Done</button></div>
       <div class="field-grid">
-        <div class="full"><label>Customer-facing name *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"></div>
+        <div class="full"><label for="rwCatalogueSource">Start from a product or service</label><select id="rwCatalogueSource"><option value="">Custom reward</option>${rewardCatalogueSources.map(item=>`<option value="${esc(item.type+'|'+item.id)}">${esc(item.type==='product'?'Product':'Service')} · ${esc(item.name)}</option>`).join('')}</select><div id="rwCatalogueEconomics" class="muted small" style="margin-top:6px">Choose an existing product or service to fill the reward, or keep Custom reward.</div></div>
+        <div class="full"><label>Reward name customers see *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"><p class="muted small help">This is the title in the customer reward catalogue.</p></div>
         <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
         <div><label>${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4"></div>
-        <div><label>Estimated business cost (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 1.50"></div>
+        <div><label>Company cost budget (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">The real cost to your business when this reward is used.</p></div>
+        ${model==='stamps'?'':`<div><label>Estimated company cost per point (${S.biz.currency||'SGD'})</label><input id="rwPointCost" type="number" min="0.001" step="0.001" value="${(estimatedPointCostCents/100).toFixed(3)}"></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
         <div><label>Fulfilment</label><select id="rwKind"><option value="manual_item" ${rewardKind(r)==='manual_item'?'selected':''}>Manual item or benefit</option><option value="credit" ${rewardKind(r)==='credit'?'selected':''}>Store credit</option></select></div>
         <div id="rwCreditWrap"><label>Store credit value (${S.biz.currency||'SGD'})</label><input id="rwCredit" type="number" min="0" step="0.01" value="${((r.credit_cents||0)/100).toFixed(2)}" placeholder="e.g. 3.00"></div>
         <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
         <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
+        <div><label>Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
+        <div><label>Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
       </div>
       <details><summary>More options</summary>
         <div class="field-grid" style="margin-top:4px"><div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
@@ -4403,6 +4457,22 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const kind=$('rwKind'),creditWrap=$('rwCreditWrap');
     const syncKind=()=>{creditWrap.style.display=kind.value==='credit'?'block':'none';if(kind.value!=='credit')$('rwCredit').value='0'};
     kind.onchange=syncKind;syncKind();
+    const syncPointsFromBudget=()=>{
+      if(model==='stamps')return;
+      const budget=parseFloat($('rwEstimate').value),pointCost=parseFloat($('rwPointCost').value);
+      if(!(budget>0)||!(pointCost>0)){$('rwPointsMath').textContent='Enter the company cost and cost per point to calculate the required whole points.';return}
+      const points=Math.max(1,Math.ceil(budget/pointCost));$('rwCost').value=String(points);
+      $('rwPointsMath').innerHTML=`<b>${points} points</b><br><span class="small">${esc(money(Math.round(budget*100)))} ÷ ${esc(money(Math.round(pointCost*100)))} per point, rounded up.</span>`;
+    };
+    const syncCatalogueSource=()=>{
+      const item=rewardCatalogueByKey.get($('rwCatalogueSource').value);
+      if(!item){$('rwCatalogueEconomics').textContent='Custom reward — enter the customer name and company cost yourself.';return}
+      $('rwCatalogueEconomics').innerHTML=`<b>${esc(item.name)}</b> · selling price ${esc(money(item.sellingCents))} · company cost ${item.costCents==null?'not set — enter it below':esc(money(item.costCents))}. Every field remains editable.`;
+      $('rwCustomerName').value=item.name;$('rwDescription').value=`Free ${item.name}`;$('rwInternalName').value=item.name;
+      if(item.costCents!=null)$('rwEstimate').value=(item.costCents/100).toFixed(2);syncPointsFromBudget();
+    };
+    $('rwCatalogueSource').onchange=syncCatalogueSource;
+    if(model!=='stamps'){$('rwEstimate').addEventListener('input',syncPointsFromBudget);$('rwPointCost').addEventListener('input',syncPointsFromBudget);syncPointsFromBudget()}
     $('rwSave').onclick=()=>saveReward(false);
     const archive=$('rwArchive');if(archive)archive.onclick=()=>saveReward(true);
   }
@@ -4414,6 +4484,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!(cost>0)) return toast(workspaceTemplateTextV97(model==='stamps'?'positiveStampCost':'positivePointsCost'));
     const expiry=parseInt($('rwExpiry').value||'0',10),usage=parseInt($('rwUsage').value||'0',10);
     if(expiry<0||usage<0) return toast('Expiry and usage limit cannot be negative');
+    if(!validBoundaryWindow($('rwFrom').value,$('rwUntil').value)) return toast('Reward end time must be after its effective time');
     const creditCents=Math.round(parseFloat($('rwCredit').value||'0')*100);
     if(kind==='credit'&&!(creditCents>0)) return toast('Enter a store credit value, or choose manual fulfilment');
     const selected=(key)=>[...document.querySelectorAll(`[data-reward-elig="${key}"]:checked`)].map(x=>x.value);
@@ -4423,6 +4494,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       credit_cents:kind==='credit'?creditCents:0,
       estimated_cost_cents:Math.round(parseFloat($('rwEstimate').value||'0')*100),
       entitlement_expiry_days:expiry>0?expiry:null,usage_limit:usage>0?usage:null,
+      claim_available_from:boundaryInstant($('rwFrom').value),
+      claim_available_until:boundaryInstant($('rwUntil').value),
       image_ref:editorReward?.image_ref??null,fulfillment_kind:kind,
       active:archive?false:$('rwActive').checked};
     const btn=archive?$('rwArchive'):$('rwSave');btn.disabled=true;btn.textContent=archive?'Archiving…':'Saving…';
@@ -4454,7 +4527,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   let editingTier=null;
   const fillTier=(tier)=>{editingTier=tier;$('trName').value=tier?.name||'';
     $('trTh').value=tier?.threshold??'';$('trMul').value=tier?.points_multiplier??'';
-    $('trPerk').value=tier?.perk_note||'';$('trAdd').textContent=tier?'Save':'Add'};
+    $('trPerk').value=tierBenefitLines(tier).join('\n');
+    $('trFrom').value=boundaryInputValue(tier?.effective_from);$('trUntil').value=boundaryInputValue(tier?.expires_at);
+    $('trAdd').textContent=tier?'Save tier':'Add tier'};
   async function saveTier(tier){
     let versionId=draftVersionId;
     if(!versionId){
@@ -4463,31 +4538,71 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       if(!isLoyaltyCurrent())return;
       if(error)return fail(error);versionId=draft.version_id;
     }
-    const saveArgs={p_version:versionId,p_config:{tier},p_expected_snapshot_hash:draftSnapshotHash||null};
-    const {error}=await sb.rpc('save_loyalty_config_draft',saveArgs);
+    const saveArgs={p_version:versionId,p_tier:tier,p_expected_snapshot_hash:draftSnapshotHash||null};
+    const {data,error}=await sb.rpc('save_loyalty_tier_draft_v143',saveArgs);
     if(!isLoyaltyCurrent())return;
     if(error)return fail(error);
+    draftSnapshotHash=data?.snapshot_hash||draftSnapshotHash;
     if(!draftVersionId){
-      toast('Tier draft saved — review it before anything changes for customers');
-      openProtectedGrowPublishReview(versionId);return;
+      toast('Tier draft saved — continue editing before you review and publish');
+      nav(`#/loyalty/${versionId}`);return data;
     }
     refreshLoyaltyPanel(model,draftVersionId,recommendation,'Tier draft saved.',true,editorIntent);
+    return data;
   }
+  document.querySelectorAll('.trBenefitReward').forEach(button=>button.onclick=()=>{
+    const textarea=$('trPerk'),benefit=button.dataset.benefit||'';
+    const existing=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
+    if(benefit&&!existing.includes(benefit))textarea.value=[...existing,benefit].join('\n');
+    textarea.focus();
+  });
+  const defaults=$('trDefaults');
+  if(defaults)defaults.onclick=async()=>{
+    const basis=$('ltb')?.value||p?.tier_basis||'visits';
+    const status=$('trDefaultsStatus');
+    const slot=`peekaa.loyalty.recommended-tiers.v148.${S.biz.id}`;
+    const fingerprint=JSON.stringify({business:S.biz.id,version:draftVersionId||null,basis,hash:draftSnapshotHash||null});
+    const idempotencyKey=writeAttemptKey(slot,fingerprint);
+    defaults.disabled=true;defaults.textContent='Creating tier drafts…';
+    status.textContent='Preparing Gold, Platinum and Diamond in the editable draft…';
+    const {data,error}=await addRecommendedLoyaltyTiersV143({
+      businessId:S.biz.id,versionId:draftVersionId,basis,
+      expectedSnapshotHash:draftSnapshotHash,idempotencyKey
+    });
+    if(!isLoyaltyCurrent())return;
+    if(error){
+      defaults.disabled=false;defaults.textContent='Retry recommended tiers';
+      status.textContent='The tier drafts were not confirmed. Retry uses the same request identity.';
+      return fail(error);
+    }
+    clearWriteAttempt(slot);
+    const versionId=data?.version_id||draftVersionId;
+    draftSnapshotHash=data?.snapshot_hash||draftSnapshotHash;
+    toast(data?.status==='existing_tiers'?'Existing tier drafts opened':'Gold, Platinum and Diamond drafts created');
+    if(versionId&&!draftVersionId){nav(`#/loyalty/${versionId}`);return}
+    refreshLoyaltyPanel(model,versionId,recommendation,'Recommended tier drafts are ready. Nothing was published.',false,editorIntent);
+  };
   const ta=$('trAdd');
   if(ta) ta.onclick=async()=>{
     const name=$('trName').value.trim(),th=parseInt($('trTh').value||'0'),mul=parseFloat($('trMul').value||'1');
     if(!name) return toast('Give the tier a name');
+    if(!validBoundaryWindow($('trFrom').value,$('trUntil').value)) return toast('Tier end time must be after its effective time');
     ta.disabled=true;
-    await saveTier({id:editingTier?.tier_id||editingTier?.id||null,name,threshold:Math.max(0,th),
+    const tierId=editingTier?.tier_id||editingTier?.id||ta.dataset.pendingTierId||(ta.dataset.pendingTierId=crypto.randomUUID());
+    const saved=await saveTier({id:tierId,name,threshold:Math.max(0,th),
       points_multiplier:Math.max(1,mul),perk_note:$('trPerk').value.trim()||null,
-      sort:editingTier?.sort||0,active:true});
+      sort:editingTier?.sort||0,active:true,effective_from:boundaryInstant($('trFrom').value),
+      expires_at:boundaryInstant($('trUntil').value)});
+    if(saved)delete ta.dataset.pendingTierId;
+    else{ta.disabled=false;ta.textContent=editingTier?'Save tier':'Add tier'}
   };
   document.querySelectorAll('.trEdit').forEach(b=>b.onclick=()=>fillTier(
     tiers.find(t=>(t.tier_id||t.id)===b.dataset.id)));
   document.querySelectorAll('.trDel').forEach(b=>b.onclick=async()=>{
     const tier=tiers.find(t=>(t.tier_id||t.id)===b.dataset.id);
     if(tier)await saveTier({id:tier.tier_id||tier.id,name:tier.name,threshold:tier.threshold,
-      points_multiplier:tier.points_multiplier,perk_note:tier.perk_note,sort:tier.sort||0,active:false});
+      points_multiplier:tier.points_multiplier,perk_note:tier.perk_note,sort:tier.sort||0,active:false,
+      effective_from:tier.effective_from||null,expires_at:tier.expires_at||null});
   });
 }
 
@@ -4659,12 +4774,15 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
   const giftcardsRequest=modules.includes('giftcards')
     ?sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})
     :Promise.resolve({data:null,error:null});
+  const promotionsRequest=S.myRole==='owner'&&canRewards
+    ?sb.rpc('business_get_promotion_editor_v104',{p_business:S.biz.id})
+    :Promise.resolve({data:{items:[],entitlement:null},error:null});
   const [{data:business,error:businessError},{data:loyalty,error:loyaltyError},
     {data:rewards,error:rewardsError},{data:products,error:productsError},
     {data:referrals,error:referralsError},{data:memberships,error:membershipsError},
-    {data:giftcardPreferences,error:giftcardsError}]
+    {data:giftcardPreferences,error:giftcardsError},{data:promotions,error:promotionsError}]
     =await Promise.all([businessRequest,loyaltyRequest,rewardsRequest,productsRequest,
-      referralsRequest,membershipsRequest,giftcardsRequest]);
+      referralsRequest,membershipsRequest,giftcardsRequest,promotionsRequest]);
   if(!isCurrent())return null;
   if(businessError)throw businessError;
   const currentVersion=business?.active_config_version_id||null;
@@ -4698,12 +4816,14 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     retention:retentionError?[]:retention||[],
     referral:referralsError?null:(referrals||[])[0]||null,
     memberships:membershipsError?[]:memberships||[],
+    promotions:promotionsError?[]:(Array.isArray(promotions?.items)?promotions.items:[]),
     giftcards:giftcardsError?null:{available:giftcardPreferences?.status==='available'
       &&typeof giftcardPreferences?.gift_card_sales_enabled==='boolean',
       enabled:giftcardPreferences?.gift_card_sales_enabled===true},
     draft:draftError?null:(drafts||[])[0]||null,
     overviewErrors:{loyalty:Boolean(loyaltyError),rewards:Boolean(rewardsError),birthday:Boolean(birthdayError),
       retention:Boolean(retentionError),referrals:Boolean(referralsError),memberships:Boolean(membershipsError),
+      promotions:Boolean(promotionsError),
       giftcards:Boolean(giftcardsError)||Boolean(modules.includes('giftcards')&&giftcardPreferences?.status!=='available')}
   };
 }
@@ -5331,13 +5451,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const bringBackLive=bringBackCount>0;
   const referralLive=snapshot.referral?.enabled===true;
   const giftCardsLive=snapshot.giftcards?.enabled===true;
+  const publishedPromotions=(snapshot.promotions||[]).filter(item=>item?.active===true).length;
+  const promotionDrafts=Math.max(0,(snapshot.promotions||[]).length-publishedPromotions);
   let draftSnapshotHash=snapshot.draft?.snapshot_hash||null;
   const draftLabel=growDraftVersionId?'Draft ready':null;
   const nodeStatus=live=>draftLabel|| (live?'Live':'Needs setup');
   const nodeTone=live=>draftLabel?'new':live?'on':'off';
-  const optionalTools=[
-    isOwner&&canRewards?{key:'promotions',icon:'loyalty',title:'Promotions',copy:'Publish a timely offer when it supports the core reward programme.'}:null
-  ].filter(Boolean);
+  const optionalTools=[];
   const editorAction=(surface,label,target)=>{
     const available=surface==='rewards'?canRewards:canWinback;
     if(!isOwner||!available||!growDraftVersionId)return '';
@@ -5409,6 +5529,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
+        ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see at most two current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
         ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
@@ -9092,6 +9213,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'474f8fe040f3b8a388642ee05ea705616342529908057e8f4cef0f04e00753ad',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'07a760aa7bca8eff5c39f0088bb51389ec54a310b400f1987e9c383551548c81',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

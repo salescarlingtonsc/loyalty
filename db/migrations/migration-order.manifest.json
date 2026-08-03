@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 174,
-  "executableCount": 160,
+  "itemCount": 177,
+  "executableCount": 163,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -258,10 +258,13 @@
     },
     {
       "sourceDeployVersion": "20260803",
-      "count": 2,
+      "count": 5,
       "paths": [
         "db/migrations/20260803_nestly_v144_self_serve_subscription_consent.sql",
-        "db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql"
+        "db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql",
+        "db/migrations/20260803_nestly_v146_platform_finance.sql",
+        "db/migrations/20260803_nestly_v147_platform_accounting.sql",
+        "db/migrations/20260803_nestly_v148_owner_launch_closure.sql"
       ]
     }
   ],
@@ -1657,6 +1660,30 @@
       "semanticVersion": "v145",
       "proposedDeployVersion": "20260803160000",
       "sha256": "87bcfb0a0aad0c323b3063c7e6bdc546533869ccaa5920950b1d23e46cac7b4a"
+    },
+    {
+      "order": 175,
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v146_platform_finance.sql",
+      "semanticVersion": "v146",
+      "proposedDeployVersion": "20260803170000",
+      "sha256": "9061eec3d4e945e882de94e4fbcc43c67934f641ccf1d853f9fa8bd52e9f4068"
+    },
+    {
+      "order": 176,
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v147_platform_accounting.sql",
+      "semanticVersion": "v147",
+      "proposedDeployVersion": "20260803180000",
+      "sha256": "8a78d7ab18ddb4f61012786d4b712451f5d568d1837d35c96cd052a6242498e2"
+    },
+    {
+      "order": 177,
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v148_owner_launch_closure.sql",
+      "semanticVersion": "v148",
+      "proposedDeployVersion": "20260803190000",
+      "sha256": "ec7d32612699f455085eb35614d78b733d9acf235b3e98cc70fa8986dcba8de1"
     }
   ]
 }

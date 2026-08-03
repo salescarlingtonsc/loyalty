@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="22675de850d3ee6441e266ba22efc9241cde34e62e086b705e9f6d55243c0ac6"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="e7fde47cb54d397149b630ea2e2f9316af5209f06d737ff6705ed2d6100ed658"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -109,6 +109,12 @@ tr.click:hover td{background:#FBFAF8}
   padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right))
     max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}
 .auth-card{width:420px;max-width:100%;border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:30px}
+.business-session-context{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin:18px 0;padding:12px 14px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;text-align:left}
+.business-session-context>div{min-width:0}.business-session-context span{display:block;color:var(--muted);font-size:11.5px}
+.business-session-context strong{display:block;margin-top:2px;overflow-wrap:anywhere;font-size:13px}
+.business-session-context .btn{flex:0 0 auto;min-height:44px}
+@media(max-width:480px){.business-session-context{align-items:stretch;flex-direction:column}.business-session-context .btn{width:100%}}
 .legal-links{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:0 6px;margin-top:18px;
   color:var(--muted);font-size:11.5px;min-width:0;max-width:100%}
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;

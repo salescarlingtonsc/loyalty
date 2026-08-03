@@ -15,6 +15,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pwa.css">
 <script src="/native-bridge.js"></script>
@@ -89,6 +90,13 @@ const RUNTIME_CONFIG=(()=>{try{return window.FrenlyRuntimeConfig.require(window)
 const BRAND=window.NestlyBrand;
 const SB_URL=RUNTIME_CONFIG.supabaseUrl;
 const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
+function warmRuntimeOrigin(origin){
+  const url=new URL(origin);
+  const preconnect=document.createElement('link');preconnect.rel='preconnect';preconnect.href=url.origin;preconnect.crossOrigin='anonymous';
+  const dns=document.createElement('link');dns.rel='dns-prefetch';dns.href=`//${url.host}`;
+  document.head.append(preconnect,dns);
+}
+warmRuntimeOrigin(SB_URL);
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 const brandWordmark=()=>{
   const productName=String(BRAND?.productName||'Peekaa');

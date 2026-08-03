@@ -121,8 +121,9 @@ test('responsive pipeline keeps a mobile list and accessible dialogs', async () 
   assert.match(source, /aria-modal/);
   assert.doesNotMatch(source, /aria-grabbed/);
   assert.match(source, /Five clear operating lanes/);
-  assert.match(styles, /\.platform-kanban\{display:none\}/);
-  assert.match(styles, /\.platform-prospect-list\{display:grid/);
+  assert.match(styles, /\.platform-kanban:not\(\[hidden\]\)\{display:grid;grid-template-columns:1fr\}/);
+  assert.match(styles, /\.platform-prospect-list:not\(\[hidden\]\)\{display:grid/);
+  assert.match(styles, /\.platform-kanban\[hidden\],\.platform-prospect-list\[hidden\]\{display:none!important\}/);
   assert.match(styles, /min-height:44px/);
   assert.match(index, /<select id="bi" disabled aria-describedby="biSectorHint">/);
   assert.doesNotMatch(index, /You can change them anytime in Settings/);

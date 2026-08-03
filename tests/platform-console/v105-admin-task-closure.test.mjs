@@ -105,7 +105,7 @@ test('Today is the first task destination while all authorised deep links remain
   assert.equal(groups.filter(group=>!group.secondary).length,5);
   assert.deepEqual(
     Array.from(allowed,route=>route.key),
-    ['overview','onboarding','firms','reports','billing','commissions','sectors','automation','access'],
+    ['overview','onboarding','firms','reports','billing','pnl','commissions','sectors','automation','access'],
     'task-first navigation must not delete an authorised route or its deep link'
   );
 });
@@ -472,7 +472,8 @@ test('onboarding filters, sort and the open firm survive refresh through one can
     qualification:'qualified',
     nextAction:'next_7_days',
     health:'at_risk',
-    sort:'priority'
+    sort:'priority',
+    view:'kanban'
   };
   const hash=Console.onboardingHash(filters,{prospect:'prospect-spa-001'});
   const restored=Console.onboardingStateFromHash(hash);
