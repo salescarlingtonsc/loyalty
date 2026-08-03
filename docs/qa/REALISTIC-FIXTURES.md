@@ -84,6 +84,26 @@ Configuration cases:
   stable-ID editor routing rather than name matching. A read-only manager sees
   the same published overview with no edit controls; a draft change must not
   appear to customers until explicit publication and owner/customer refresh.
+- Launch-freeze reward image: one existing reward has a synthetic published
+  image reference. The Grow editor must not expose a storage path/URL field or
+  internal storage-contract wording; editing that reward preserves the exact
+  reference, and the already-published image remains visible customer-side.
+- Launch-freeze expenses: add one SGD 3.33 Orchard expense on 1 October 2031
+  with a null category. P&L must succeed, include SGD 3.33 in totals/monthly
+  reconciliation and group it as **Uncategorised** without mutating the row.
+- Launch-freeze staff commission: retain one existing flat-commission sale and
+  one percentage sale. The V145 projection preserves the established ten view
+  columns and flat-over-percentage arithmetic, then appends the immutable
+  revenue-classification flag without renaming or dropping `flat_cents`.
+- Launch-freeze credit authority: Aisha has SGD 5.00 current credit and Devi,
+  whose only visit is Tampines, has SGD 9.00. Olivia can see the exact SGD 14.00
+  business liability when all-business source authority is complete. Orchard-
+  only Farah/report reader receives an unavailable flag and null, never SGD 0
+  or Devi's balance, on Dashboard and Reports.
+- Launch-freeze Studio provenance: legacy incomplete rules are migration-paused
+  even when no owner exists. Both pause and audit use the documented nil-UUID
+  system sentinel, rendered as **Peekaa launch safety**; a real owner-initiated
+  emergency pause continues to show that owner's actor.
 - Simplified automatic setup: Olivia opens Grow with Loyalty `rw`, the same
   published Signature rewards and Birthday Glow, and no draft. The complete
   overview is visible before secondary controls. **Create recommended rewards
@@ -268,6 +288,13 @@ All automated credentials must come from a non-committed test-secret mechanism.
 - Re-run with an unconfirmed email, another user's business ID, a reused key
   with changed business/plan data, duplicate slug, inactive Stripe catalogue,
   forged amount, and a paid invoice for another subscription.
+- V144 prospective-policy run: Sofia accepts the 2026-08-03 Terms using the
+  single account-creation checkbox, optionally opens each legal link and
+  returns to signup, then buys annual/1,000. The matching paid invoice activates
+  once but creates no money-back window. A comparison business that earned a
+  V124 window under earlier Terms keeps the exact immutable deadline. Empty or
+  half-published Stripe catalogue rows show an actionable unavailable state and
+  create neither a workspace nor a charge.
 
 ## `NESTLY-MOBILE-RELEASE-01` — store publication candidate
 

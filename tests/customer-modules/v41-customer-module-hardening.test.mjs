@@ -112,7 +112,7 @@ test('the SPA has no raw customer-module writes and carries stable retry keys', 
   assert.doesNotMatch(app, /sb\.from\('(clients|consents|referrals|referral_programs|gift_cards|membership_plans|memberships)'\)\.(insert|update|delete|upsert)/i);
   for (const rpc of [
     'staff_create_client', 'staff_set_marketing_consent', 'issue_gift_card_at_branch_v117',
-    'staff_list_gift_cards', 'save_referral_program', 'save_membership_plan',
+    'staff_list_gift_cards_v145', 'save_referral_program', 'save_membership_plan',
     'set_membership_status', 'enroll_membership_v41', 'redeem_gift_card_at_branch_v117'
   ]) assert.match(app, new RegExp(`sb\\.rpc\\('${rpc}'`, 'i'), `app must call ${rpc}`);
   assert.match(app, /const createClientIdempotencyKey=crypto\.randomUUID\(\)/i);

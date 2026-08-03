@@ -37,7 +37,7 @@ test('V141 every KPI is a semantic drilldown with plain definitions',()=>{
     assert.match(dashboard,new RegExp(`key:'${key}'`));
   }
   assert.match(dashboard,/data-dashboard-metric="\$\{metric\.key\}"/);
-  assert.match(dashboard,/Distinct identified customers attached to a sale entry in this selected period/);
+  assert.match(dashboard,/Distinct identified customers attached to at least one valid visit in this selected period/);
   assert.match(dashboard,/Business-wide customers with no valid visit for at least 30 complete Singapore days/);
   assert.match(dashboard,/openDashboardMetricDetailV141/);
   assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
@@ -45,18 +45,12 @@ test('V141 every KPI is a semantic drilldown with plain definitions',()=>{
   assert.match(dashboard,/business-current/);
 });
 
-test('V141 charts communicate intensity, SGD, demographics and sale mix',()=>{
+test('V141 charts communicate reconciled intensity, SGD and demographics while unsafe gross sale mix stays hidden',()=>{
   assert.match(dashboard,/dashboardWeekdayColoursV141/);
   assert.match(dashboard,/quiet.*medium.*busiest/s);
   assert.match(dashboard,/Recorded gender/);
   assert.match(dashboard,/gender_counts/);
-  assert.match(dashboard,/Services and goods/);
-  assert.match(dashboard,/sale_items/);
-  assert.match(dashboard,/canReadSaleItems=S\.myRole==='owner'\|\|S\.isSA===true/);
-  assert.match(dashboard,/row\.item_type==='studio_discount'\|\|cents<=0/);
-  assert.match(dashboard,/Visit-marked entries; reversals are separate/);
-  assert.match(dashboard,/available to owners/);
-  assert.match(dashboard,/dashboardSaleMixRetry/);
+  assert.doesNotMatch(dashboard,/Services and goods sold|dashboardSaleMixV141|sale_items/);
   assert.match(dashboard,/ticks:\{callback:[^}]*SGD/);
   assert.match(dashboard,/CUI\.icon\('reports'/);
 });
@@ -67,7 +61,7 @@ test('V141 dashboard load failures stay in context and can be retried',()=>{
   assert.match(dashboard,/dashboardReportRetry/);
   assert.match(dashboard,/Inactive customer count could not be loaded\./);
   assert.match(dashboard,/dashboardInactiveRetry/);
-  assert.match(dashboard,/Services and goods detail could not be loaded\./);
+  assert.doesNotMatch(dashboard,/Services and goods detail could not be loaded\./);
 });
 
 test('V141 core dashboard copy is localized in Chinese and Malay',()=>{
@@ -82,7 +76,8 @@ test('V141 core dashboard copy is localized in Chinese and Malay',()=>{
 
 test('V141 customer directory exposes last-visit choice and date joined',()=>{
   assert.match(customers,/Show customers by last visit/);
-  assert.match(customers,/select\('id,created_at'\)/);
+  assert.match(customers,/sb\.rpc\('staff_list_customers_v129'/);
+  assert.match(customers,/formatCustomerJoinedDateV141\(c\.created_at\)/);
   assert.match(customers,/<th>Date joined<\/th>/);
   assert.match(customers,/formatCustomerJoinedDateV141/);
   assert.match(customers,/Never visited/);
@@ -92,9 +87,10 @@ test("V141 customer profile presents Peekaa's suggestion, expiry and an icon-led
   assert.match(profile,/Peekaa(?:&apos;|')s suggestion/);
   assert.match(profile,/c360-points-expiry/);
   assert.match(profile,/nextExp\.remaining/);
-  assert.match(profile,/error:xbError/);
-  assert.match(profile,/Expiry schedule is temporarily unavailable/);
-  assert.match(profile,/c360ExpiryRetry/);
+  assert.match(profile,/staff_get_customer_actionable_loyalty_v145/);
+  assert.match(profile,/const nextExp=loyaltyFacts\?\.expiry/);
+  assert.match(profile,/Loyalty balances and reward availability are temporarily unavailable/);
+  assert.match(profile,/c360LoyaltyRetry/);
   assert.match(profile,/class="c360-rewards-head"/);
   assert.match(profile,/CUI\.icon\('loyalty'/);
   assert.match(profile,/id="c360-loyalty"/);

@@ -332,8 +332,9 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
     'the client RPC payload must omit referrer codes without referrals write access');
 
   const clientDetail = app.match(/async function clientDetail\(id\)\{[\s\S]*?\n\}/)?.[0] || '';
-  assert.match(clientDetail, /const canWriteLoyalty=canWriteModule\('loyalty'\)/i);
-  assert.match(clientDetail, /canWriteLoyalty\?`<p class="muted small"[\s\S]*?Open Record sale scanner/i,
+  assert.match(clientDetail, /const canWriteLoyaltyConfigured=canWriteModule\('loyalty'\)&&hasRoleCapability\('create_sales'\)/i);
+  assert.match(clientDetail, /const canWriteLoyalty=canWriteLoyaltyConfigured&&loyaltyFactsAvailable/i);
+  assert.match(clientDetail, /canWriteLoyalty&&redemptionEnabled\?`<p class="muted small"[\s\S]*?Open Record sale scanner/i,
     'loyalty writers may only be directed to the branch-scoped scanner');
   assert.doesNotMatch(clientDetail, /id="redeem"|rewardGo|sb\.rpc\('redeem_(?:points|reward)/i,
     'customer detail must not expose direct classic or catalog redemption');
@@ -372,16 +373,23 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
   for (const rpc of [
     'generate_retention_recommendation', 'save_loyalty_branch_override_draft',
     'remove_loyalty_branch_override_draft', 'create_loyalty_config_draft',
-    'save_loyalty_config_draft', 'publish_loyalty_config'
+    'save_loyalty_config_draft'
   ]) {
     assert.ok(loyaltyPage.indexOf(`sb.rpc('${rpc}'`, readOnlyReturnAt) > readOnlyReturnAt,
       `${rpc} mutation wiring must remain behind the owner loyalty:rw return guard`);
   }
+  assert.doesNotMatch(loyaltyPage, /sb\.rpc\('publish_loyalty_config'/i,
+    'saving in the Loyalty editor must never publish directly');
+  assert.match(loyaltyPage, /openProtectedGrowPublishReview\(versionId\)/i,
+    'new drafts must move to the separate protected publication review');
+  const studioPage = appSection(app, 'async function studioPage(', 'async function studioOverview(');
+  assert.match(studioPage, /if\(S\.myRole!=='owner'\)[\s\S]*return;[\s\S]*if\(draftVersionId\)/i,
+    'the protected publication route must reject non-owners before opening a draft review');
 
   const giftPage = app.match(/async function giftcardsPage\(\)\{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(giftPage, /crypto\.randomUUID\s*\(\s*\)/i);
   assert.match(giftPage, /sb\.rpc\('issue_gift_card_at_branch_v117'[\s\S]*p_idempotency_key\s*:/i);
-  assert.match(giftPage, /sb\.rpc\('staff_list_gift_cards'/i);
+  assert.match(giftPage, /sb\.rpc\('staff_list_gift_cards_v145'/i);
   assert.doesNotMatch(giftPage, /sb\.from\('gift_cards'\)\.select/i);
   assert.doesNotMatch(giftPage, /\.code\b[\s\S]*Cards on the books/i,
     'list rendering must not rely on the full bearer code');

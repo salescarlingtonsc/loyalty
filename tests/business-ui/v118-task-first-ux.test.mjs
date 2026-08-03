@@ -59,10 +59,10 @@ test('day view uses named staff timelines, visible booking facts and contextual 
 
 test('day view derives availability only from persisted staff and branch schedules', () => {
   const appointments = section('async function appointmentsPage(){', '/* ---------- waitlist');
-  assert.match(appointments, /from\('staff_hours'\)\.select\('staff_id,weekday,starts_at,ends_at'\)/);
-  assert.match(appointments, /from\('staff_off_days'\)\.select\('staff_id,starts_on,ends_on,reason'\)/);
-  assert.match(appointments, /from\('branch_hours'\)\.select\('branch_id,weekday,opens_at,closes_at'\)/);
-  assert.match(appointments, /from\('branch_breaks'\)\.select\('branch_id,weekday,starts_at,ends_at'\)/);
+  assert.match(appointments, /from\('staff_hours'\)\.select\('staff_id,weekday,starts_at,ends_at',\{count:'exact'\}\)/);
+  assert.match(appointments, /from\('staff_off_days'\)\.select\('staff_id,starts_on,ends_on,reason',\{count:'exact'\}\)/);
+  assert.match(appointments, /from\('branch_hours'\)\.select\('branch_id,weekday,opens_at,closes_at',\{count:'exact'\}\)/);
+  assert.match(appointments, /from\('branch_breaks'\)\.select\('branch_id,weekday,starts_at,ends_at',\{count:'exact'\}\)/);
   assert.match(appointments, /function recordedSchedule\(personId,day\)/);
   assert.match(appointments, /state:'unknown',label:'Working hours not set'/);
   assert.match(appointments, /state:'off',label:'Off',reason:leave\.reason\|\|'Time off'/);
@@ -101,7 +101,8 @@ test('reports answer money, capacity and returning-customer questions from recor
   assert.match(reports, /branch_hours/);
   assert.match(reports, /branch_breaks/);
   assert.match(reports, /mergedIntervalMinutes/);
-  assert.match(reports, /calculated from recorded visits, not inferred/i);
+  assert.match(reports, /eligible completed purchases that retain positive value after reversals or refunds/i);
+  assert.match(reports, /not inferred from visits/i);
   assert.match(reports, /Scheduled capacity needs both branch opening hours and team working hours/);
   assert.match(reports, /branch-open active-team hours after merged breaks, staff blocks/i);
   assert.match(reports, /Overbooked by/);

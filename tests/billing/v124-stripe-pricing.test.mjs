@@ -95,7 +95,7 @@ test('money-back windows are scoped to the matching V124 provider subscription a
   assert.match(sql, /order by invoice\.paid_at,invoice\.provider_event_created_at/i);
 });
 
-test('owner checkout defaults annual and explains price, capacity, modules, staff and guarantee', async () => {
+test('owner checkout defaults annual and explains price, capacity, modules, staff and the current refund policy', async () => {
   const app = await read('app/index.html');
   assert.match(app, /get_business_billing_v125/);
   assert.match(app, /value="annual"[^>]+checked/);
@@ -103,8 +103,10 @@ test('owner checkout defaults annual and explains price, capacity, modules, staf
   assert.match(app, /SGD 149/);
   assert.match(app, /1,000 customer profiles/);
   assert.match(app, /Staff access included/);
-  assert.match(app, /AI-assisted promotion copy/);
-  assert.match(app, /30-day money-back request/);
+  assert.match(app, /Template-assisted promotion wording/);
+  assert.match(app, /does not use generative AI/);
+  assert.doesNotMatch(app, /AI-assisted promotion copy/);
+  assert.match(app, /Subscription fees are non-refundable after payment, except where required by law/);
   assert.match(app, /request_billing_command_v124/);
   assert.match(app, /billingAttemptSlot/);
   assert.match(app, /sessionStorage\.setItem\(billingAttemptSlot/);
@@ -124,9 +126,9 @@ test('public legal surfaces use the supplied company identity and business mailb
   }
 });
 
-test('V134 publishes the exact live Peekaa Terms and Privacy digests without rewriting acceptance history', async () => {
+test('V144 publishes the exact current Peekaa Terms and Privacy digests without rewriting acceptance history', async () => {
   const [sql, terms, privacy] = await Promise.all([
-    read('supabase/migrations/20260802010000_nestly_v134_peekaa_brand_legal.sql'),
+    read('supabase/migrations/20260803120000_nestly_v144_self_serve_subscription_consent.sql'),
     read('app/terms.html'),
     read('app/privacy.html'),
   ]);
@@ -134,7 +136,7 @@ test('V134 publishes the exact live Peekaa Terms and Privacy digests without rew
     const digest = createHash('sha256').update(page).digest('hex');
     assert.match(sql, new RegExp(digest));
   }
-  assert.match(sql, /document_version='2026-08-02'/);
+  assert.match(sql, /2026-08-03/);
   assert.doesNotMatch(sql, /(?:delete from|truncate)\s+(?:app\.)?customer_legal_documents/i);
   assert.doesNotMatch(sql, /(?:insert into|update|delete from|truncate)\s+public\.customer_legal_acceptances/i);
 });

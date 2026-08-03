@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="d4d100f9de200cff7fe71f71365b5312c93ad723acb17bc1ae52d942ba40d69b"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="794663765e1f5a4dc049d8341f8a15abd57c8d6baa81d0cfe595d0c89fe1723f"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -936,6 +936,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .scanner-fallback{margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
 .checkrow{display:flex;align-items:flex-start;gap:12px;min-height:48px;margin-top:12px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;color:var(--ink);cursor:pointer}
 .checkrow input[type="checkbox"]{width:22px;min-width:22px;min-height:22px;margin-top:1px;accent-color:var(--coral)}
+.consent-document-link{color:var(--red);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;font-weight:700}
+.consent-document-link:hover{color:var(--red2);text-decoration-thickness:3px}
 .wallet-reward img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:5px;margin-bottom:10px;background:var(--bg)}
 .wallet-line{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--hair)}
 .wallet-line:last-child{border-bottom:0}
@@ -948,7 +950,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-inbox-badge{position:absolute;top:-5px;right:-4px;min-width:20px;height:20px;padding:0 5px;display:grid;place-items:center;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800}
 .customer-inbox-item{padding:13px 0;border-bottom:1px solid var(--hair)}.customer-inbox-item:last-child{border-bottom:0}.customer-inbox-item.unread{border-left:3px solid var(--coral);padding-left:10px}.customer-inbox-item.resolved{opacity:.7}.customer-inbox-item.source_unavailable{border-left:3px solid var(--line);padding-left:10px;opacity:.82}.customer-inbox-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
 .customer-inbox-filter[aria-pressed="true"]{border-color:var(--coral);color:var(--coral)}
-.customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}.customer-inbox-quiet{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 0}.customer-inbox-quiet input{min-height:44px}
+.customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}
 .wallet-skeleton{height:58px;border-radius:6px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite}
 @keyframes wallet-loading{to{background-position:-200% 0}}
 .wallet-appt{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--hair)}
@@ -1304,13 +1306,21 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   if(!wrap){ onChange(); return; }
   let isAdmin=S.myRole==='owner'||S.myRole==='manager',branches=[];
   try{({isAdmin,branches}=await visibleBranchesForCurrentUser())}
-  catch(e){if(isCurrent()&&wrap.isConnected&&$(targetId)===wrap)console.error(e)}
+  catch(e){
+    if(!isCurrent()||!wrap.isConnected||$(targetId)!==wrap)return;
+    console.error(e);
+    wrap.innerHTML=`<span class="err small">Branch list unavailable.</span> <button type="button" class="btn ghost sm" id="branchFilterRetry">Retry</button>`;
+    const retry=wrap.querySelector('#branchFilterRetry');
+    if(retry)retry.onclick=()=>refreshBranchFilter(onChange,isCurrent,targetId);
+    return;
+  }
   if(!isCurrent()||!wrap.isConnected||$(targetId)!==wrap)return;
-  if(!isAdmin&&(!selectedBranchId||!branches.some(b=>b.id===selectedBranchId))){
+  if(!branches.some(branch=>branch.id===selectedBranchId)){
     /* Employees can't request consolidated (the server raises branch_visibility on
        p_branch=null for them) — default to their first assigned branch so the page loads
-       clean instead of surfacing that error on first paint. */
-    selectedBranchId=branches.length?branches[0].id:null;
+       clean instead of surfacing that error on first paint. Owners and managers instead
+       fall back to the truthful consolidated choice when a remembered branch disappeared. */
+    selectedBranchId=isAdmin?null:(branches[0]?.id||null);
   }
   wrap.innerHTML=(branches.length||isAdmin)
     ? `<select id="branchSel" class="qbtn" aria-label="Business branch" style="padding-right:22px">
@@ -1321,9 +1331,9 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   const sel=wrap.querySelector('#branchSel');
   if(sel){
     sel.value=selectedBranchId||'';
-    sel.onchange=()=>{selectedBranchId=sel.value||null;onChange()};
+    sel.onchange=()=>{selectedBranchId=sel.value||null;onChange(branches.find(branch=>branch.id===selectedBranchId)||null)};
   }
-  onChange();
+  onChange(branches.find(branch=>branch.id===selectedBranchId)||null);
 }
   async function dashboard(){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
@@ -1345,28 +1355,21 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     const numbers=values.map(Number),busiest=Math.max(0,...numbers),medium=Math.max(2,busiest*.5),quiet='#76B89B';
     return numbers.map(value=>value>0&&value===busiest?'#C24135':value>=medium?'#F0A35B':quiet);
   };
-  const dashboardSaleMixV141=rows=>(rows||[]).reduce((totals,row)=>{
-    const cents=Number(row.line_cents)||0;
-    /* This is a gross positive item mix, not receipt reconciliation. Checkout
-       discount lines are signed adjustments and must never be presented as a
-       product category or make a doughnut segment negative. */
-    if(row.item_type==='studio_discount'||cents<=0)return totals;
-    const key=row.item_type==='service'?'services':['retail','product'].includes(row.item_type)?'goods':'other';
-    totals[key]+=cents;return totals;
-  },{services:0,goods:0,other:0});
   const dashboardChartCardV141=({title,subtitle,canvas,route,unavailable='',retryId=''})=>`<section class="card dashboard-chart-card"><header class="dashboard-chart-head">${CUI.icon('reports',{size:20})}<div><b>${esc(title)}</b><p class="muted small">${esc(subtitle)}</p></div><a class="dashboard-chart-link" href="${route}">View details →</a></header>${unavailable?`<div class="empty" role="status"><p>${esc(unavailable)}</p>${retryId?`<button type="button" class="btn ghost sm" id="${retryId}" style="margin-top:12px">Retry</button>`:''}</div>`:`<div class="chart-frame"><canvas id="${canvas}"></canvas></div>`}</section>`;
   const dashboardMetricDefinitionsV141={
-    visits:{label:'Visit entries',definition:'Sale rows marked as visits in this selected period. Recorded reversal rows are separate entries, so use Sales when reviewing the net customer history.',route:'#/sales',action:'View sales',scope:'branch'},
+    visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',scope:'branch'},
     revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',scope:'branch'},
-    unique:{label:'Unique customers',definition:'Distinct identified customers attached to a sale entry in this selected period. A customer is counted once even after several entries.',route:'#/clients',action:'View customers',scope:'branch'},
-    new:{label:'New customers',definition:'Customer profiles first joined to this business during the selected period. This figure is business-wide.',route:'#/clients',action:'View customers',scope:'business'},
-    points:{label:'Points issued',definition:'Loyalty points earned across this business in the selected period. This figure is business-wide.',route:'#/grow',action:'View rewards',scope:'business'},
+    unique:{label:'Customers with valid visits',definition:'Distinct identified customers attached to at least one valid visit in this selected period. Each customer is counted once.',route:'#/clients',action:'View customers',scope:'branch'},
+    new:{label:'Customer records added',definition:'Customer profiles added to this business during the selected period. This figure is business-wide and is not a count of first purchases.',route:'#/clients',action:'View customers',scope:'business'},
+    points:{label:'Gross points earned',definition:'Qualifying loyalty points earned in this selected period. When a branch is selected, only sale-linked earning at that branch is included; consolidated view is business-wide.',route:'#/grow',action:'View rewards',scope:'branch'},
     credit:{label:'Credit liability',definition:'Current positive customer credit that this business still owes. This is a business-wide current balance, not a period or branch value.',route:'#/clients',action:'View customers',scope:'business-current'},
     inactive:{label:'Inactive customers',definition:'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.',route:'#/clients',action:'View inactive customers',scope:'business-current'}
   };
   let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
-  function openDashboardMetricDetailV141(key,value){
+  function openDashboardMetricDetailV141(key,value,drillOverride={}){
     const metric=dashboardMetricDefinitionsV141[key];if(!metric)return;
+    const route=Object.hasOwn(drillOverride,'route')?drillOverride.route:metric.route;
+    const action=Object.hasOwn(drillOverride,'action')?drillOverride.action:metric.action;
     const allBusiness=workspaceTranslationV97('All business customers');
     const branchName=appliedDashboardScopeV141.branchId?appliedDashboardScopeV141.branchName:workspaceTranslationV97('All permitted branches');
     const scope=metric.scope==='branch'
@@ -1374,20 +1377,30 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
       :metric.scope==='business'
         ?`${allBusiness} · ${appliedDashboardScopeV141.from} – ${appliedDashboardScopeV141.to}`
         :`${allBusiness} · ${workspaceTranslationV97('Current balance/status')}`;
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="dashboardMetricModal" role="dialog" aria-modal="true" aria-labelledby="dashboardMetricTitle" tabindex="-1" data-workspace-i18n><div class="modal-card" style="max-width:520px"><p class="eyebrow">Performance detail</p><h2 id="dashboardMetricTitle" style="margin-top:4px">${esc(metric.label)}</h2><p style="font-size:2rem;font-weight:750;margin-top:13px">${esc(value)}</p><p class="muted" style="margin-top:10px;line-height:1.55">${esc(metric.definition)}</p><p class="dashboard-read-note">${esc(scope)}</p><div class="row" style="margin-top:18px;flex-wrap:wrap"><button class="btn" id="dashboardMetricGo">${esc(metric.action)}</button><button class="btn ghost sm" id="dashboardMetricClose">Close</button></div></div></div>`);
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="dashboardMetricModal" role="dialog" aria-modal="true" aria-labelledby="dashboardMetricTitle" tabindex="-1" data-workspace-i18n><div class="modal-card" style="max-width:520px"><p class="eyebrow">Performance detail</p><h2 id="dashboardMetricTitle" style="margin-top:4px">${esc(metric.label)}</h2><p style="font-size:2rem;font-weight:750;margin-top:13px">${esc(value)}</p><p class="muted" style="margin-top:10px;line-height:1.55">${esc(metric.definition)}</p><p class="dashboard-read-note">${esc(scope)}</p><div class="row" style="margin-top:18px;flex-wrap:wrap">${route&&action?`<button class="btn" id="dashboardMetricGo">${esc(action)}</button>`:''}<button class="btn ghost sm" id="dashboardMetricClose">Close</button></div></div></div>`);
     const dialog=$('dashboardMetricModal');
     localizeWorkspaceSubtreeV97(dialog);
     let deactivate;
     const close=()=>deactivate?.();
-    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#dashboardMetricGo'});
+    deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:route&&action?'#dashboardMetricGo':'#dashboardMetricClose'});
     $('dashboardMetricClose').onclick=close;
-    $('dashboardMetricGo').onclick=()=>{if(key==='inactive')pendingCustomerInactivity=30;close();nav(metric.route)};
+    if($('dashboardMetricGo'))$('dashboardMetricGo').onclick=()=>{if(key==='inactive')pendingCustomerInactivity=30;close();nav(route)};
   }
+  const invalidatePerformance=()=>{
+    requestGate.invalidate();killCharts();
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts');
+    if(status)status.innerHTML='';
+    if(kpis)kpis.innerHTML='<div class="card" style="grid-column:1/-1"><div class="empty">Date range changed. Apply to load current figures.</div></div>';
+    if(charts)charts.innerHTML='';
+  };
   dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(b=>b.onclick=()=>{
     dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(x=>x.classList.remove('act'));b.classList.add('act');
     dashboardRoot.querySelector('#df').value=shiftSgDateInput(sgDateInputValue(),-(Number(b.dataset.d)-1));dashboardRoot.querySelector('#dt').value=sgDateInputValue();load();
   });
-  dashboardRoot.querySelectorAll('input[type="date"]').forEach(input=>input.oninput=()=>dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>button.classList.remove('act')));
+  dashboardRoot.querySelectorAll('input[type="date"]').forEach(input=>input.oninput=()=>{
+    dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>button.classList.remove('act'));
+    invalidatePerformance();
+  });
   dashboardRoot.querySelector('#apply').onclick=()=>load();
   async function load(){
     const isCurrent=requestGate.begin();
@@ -1406,43 +1419,54 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     status.innerHTML='<p class="muted small" style="margin-top:12px">Loading performance…</p>';
     if(kpis)kpis.innerHTML='';if(charts)charts.innerHTML='';
     kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');
-    const canReadSaleItems=S.myRole==='owner'||S.isSA===true;
-    let response,inactiveResponse={data:null,error:null},saleMixRows=[],saleMixUnavailable='',saleMixRetryable=false;
-    try{[response,inactiveResponse,saleMixRows]=await Promise.all([
+    let response,inactiveResponse={data:null,error:null};
+    try{[response,inactiveResponse]=await Promise.all([
       sb.rpc('get_dashboard_summary',{p_business:S.biz.id,p_from:from,p_to:to,p_branch:branchId}),
-      canReadModule('clients')?sb.rpc('staff_list_customers_v129',{p_business:S.biz.id,p_search:null,p_inactive_days:30,p_limit:1,p_offset:0}):Promise.resolve({data:null,error:null}),
-      canReadSaleItems?(async()=>{try{return await fetchAllRows(()=>{let query=sb.from('sale_items').select('id,item_type,line_cents,sales!inner(occurred_at,branch_id,counts_as_revenue)',{count:'exact'}).eq('business_id',S.biz.id).eq('sales.counts_as_revenue',true).gte('sales.occurred_at',sgDateBoundary(from)).lt('sales.occurred_at',sgDateBoundary(to,1)).order('id');if(branchId)query=query.eq('sales.branch_id',branchId);return query})}catch(error){saleMixUnavailable='Services and goods detail could not be loaded.';saleMixRetryable=true;return []}})():Promise.resolve([])
+      canReadModule('clients')?sb.rpc('staff_list_customers_v129',{p_business:S.biz.id,p_search:null,p_inactive_days:30,p_limit:1,p_offset:0}):Promise.resolve({data:null,error:null})
     ])}
     catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
     if(!isCurrent())return;
     const {data,error}=response;
     if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry');return}
     const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
-    if(!canReadSaleItems)saleMixUnavailable='Services and goods detail is available to owners. Other performance figures remain current.';
+    if(d.availability?.sales===false){
+      status.innerHTML='';
+      if(kpis)kpis.innerHTML='<div class="card" style="grid-column:1/-1"><div class="empty"><div class="big">🔒</div>Performance is unavailable because Sales access is not complete for this branch scope. Choose an authorized branch.</div></div>';
+      if(charts)charts.innerHTML='';
+      return;
+    }
+    const customerMetricsAvailable=d.availability?.clients!==false;
+    const loyaltyMetricsAvailable=d.availability?.loyalty===true;
+    const creditLiabilityAvailable=d.availability?.credit_liability===true;
     const branchSelect=$('dashboardBranchWrap')?.querySelector('select');
     appliedDashboardScopeV141={from,to,branchId,branchName:branchId?(branchSelect?.selectedOptions?.[0]?.textContent||'Selected branch'):'All permitted branches'};
     if(!kpis||!charts)return;
-    status.innerHTML=inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
+    status.innerHTML=customerMetricsAvailable&&inactiveResponse.error?`<div class="err" role="status">Inactive customer count could not be loaded. <button type="button" class="btn ghost sm" id="dashboardInactiveRetry" style="margin-left:8px">Retry</button></div>`:'';
     const metrics=[
-      {key:'visits',value:String(d.visits||0),hint:'Visit-marked entries; reversals are separate'},
+      {key:'visits',value:String(d.visits||0),hint:'Valid original visits; reversed visits excluded'},
       {key:'revenue',value:money(d.revenue_cents||0),hint:'Net sales in this period'},
-      {key:'unique',value:String(d.unique_customers||0),hint:'Each identified customer counted once'},
-      {key:'new',value:String(d.new_customers||0),hint:'Business-wide · profiles joined in this period'},
-      {key:'points',value:String(d.points_issued||0),hint:'Business-wide · qualifying points earned'},
-      {key:'credit',value:money(d.credit_liability_cents||0),hint:'Business-wide · current credit still owed'}
-    ];
-    if(canReadModule('clients'))metrics.push({key:'inactive',value:inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0),hint:'Business-wide · 30+ days or never visited'});
+      {key:'unique',value:String(d.unique_customers||0),hint:'Customer records with a valid visit; counted once'},
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'Business-wide · records added in selected period'},
+      loyaltyMetricsAvailable&&{key:'points',value:String(d.points_issued??0),hint:branchId?'Selected branch · sale-linked gross points earned':'Business-wide · gross points earned'},
+      creditLiabilityAvailable&&{key:'credit',value:money(d.credit_liability_cents??0),hint:'Business-wide · current credit still owed'}
+    ].filter(Boolean);
+    if(customerMetricsAvailable&&canReadModule('clients'))metrics.push({key:'inactive',value:inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0),hint:'Business-wide · 30+ days or never visited'});
     kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="v">${esc(metric.value)}</span><span class="metric-hint">${esc(metric.hint)}</span></button>`}).join('');
-    kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>openDashboardMetricDetailV141(button.dataset.dashboardMetric,button.querySelector('.v')?.textContent||'—'));
+    kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
+      const key=button.dataset.dashboardMetric;
+      const drill=!customerMetricsAvailable&&key==='unique'
+        ?{route:'#/sales',action:'View sales'}
+        :key==='credit'&&(!customerMetricsAvailable||!loyaltyMetricsAvailable||!creditLiabilityAvailable)
+          ?{route:null,action:null}:{};
+      openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',drill);
+    });
     charts.innerHTML=[
-      dashboardChartCardV141({title:'Busiest days',subtitle:'Visit-entry activity; reversals are separate. Green is quieter, amber medium, red busiest.',canvas:'c1',route:'#/sales'}),
+      dashboardChartCardV141({title:'Busiest days',subtitle:'Valid visits only. Green is quieter, amber medium, red busiest.',canvas:'c1',route:'#/sales'}),
       dashboardChartCardV141({title:'Revenue over time',subtitle:'Daily net revenue in SGD.',canvas:'c2',route:'#/sales'}),
-      dashboardChartCardV141({title:'Age groups',subtitle:'Business-wide from birth dates on file; unknown stays visible.',canvas:'c4',route:'#/clients'}),
-      dashboardChartCardV141({title:'Recorded gender',subtitle:'Business-wide historical aggregate; unknown stays visible.',canvas:'c5',route:'#/clients'}),
-      dashboardChartCardV141({title:'Services and goods sold',subtitle:'Gross positive itemised line value by type; discounts, reversals and receipt-level adjustments are excluded.',canvas:'c6',route:'#/sales',unavailable:saleMixUnavailable,retryId:saleMixRetryable?'dashboardSaleMixRetry':''})
-    ].join('');
+      customerMetricsAvailable&&dashboardChartCardV141({title:'Age groups',subtitle:'Business-wide from birth dates on file; unknown stays visible.',canvas:'c4',route:'#/clients'}),
+      customerMetricsAvailable&&dashboardChartCardV141({title:'Recorded gender',subtitle:'Business-wide historical aggregate; unknown stays visible.',canvas:'c5',route:'#/clients'})
+    ].filter(Boolean).join('');
     status.querySelector('#dashboardInactiveRetry')?.addEventListener('click',load);
-    charts.querySelector('#dashboardSaleMixRetry')?.addEventListener('click',load);
     kpis.setAttribute('aria-busy','false');charts.setAttribute('aria-busy','false');
     localizeWorkspaceSubtreeV97(dashboardRoot);
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -1451,18 +1475,16 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     const ages={'<25':ac.under_25||0,'25–34':ac.age_25_34||0,'35–44':ac.age_35_44||0,
       '45–54':ac.age_45_54||0,'55+':ac.age_55_plus||0,'—':ac.unknown||0};
     const gc=d.gender_counts||{},genders={Female:gc.female||0,Male:gc.male||0,Other:gc.other||0,Unknown:gc.unknown||0};
-    const saleMix=dashboardSaleMixV141(saleMixRows);
     const C=(id,cfg)=>{if(isCurrent()){const canvas=dashboardRoot.querySelector('#'+id);if(canvas)S.charts.push(new Chart(canvas,cfg))}};
     const coral='#C24135',amber='#F0A35B',green='#76B89B',muted='#C9C1B7';
     C('c1',{type:'bar',data:{labels:days,datasets:[{data:wd,backgroundColor:dashboardWeekdayColoursV141(wd),borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     C('c2',{type:'line',data:{labels:dk,datasets:[{data:revenueDays.map(x=>x.amount_cents/100),borderColor:coral,backgroundColor:'rgba(194,65,53,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>money(Math.round(Number(context.parsed.y||0)*100))}}},scales:{y:{ticks:{callback:value=>`SGD ${Number(value).toLocaleString('en-SG')}`}}}}});
-    C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
-    C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
-    if(!saleMixUnavailable)C('c6',{type:'doughnut',data:{labels:['Services','Goods','Other'],datasets:[{data:[saleMix.services/100,saleMix.goods/100,saleMix.other/100],backgroundColor:[coral,amber,green],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:context=>`${context.label}: ${money(Math.round(Number(context.raw||0)*100))}`}}}}});
+    if(customerMetricsAvailable)C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
+    if(customerMetricsAvailable)C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
   }
   refreshBranchFilter(load,isDashboardCurrent,'dashboardBranchWrap');
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'d4d100f9de200cff7fe71f71365b5312c93ad723acb17bc1ae52d942ba40d69b',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'794663765e1f5a4dc049d8341f8a15abd57c8d6baa81d0cfe595d0c89fe1723f',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

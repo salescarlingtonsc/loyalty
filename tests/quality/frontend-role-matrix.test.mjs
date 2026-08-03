@@ -84,7 +84,8 @@ test('packages and expenses retain reads while their write actions follow the ex
   assert.match(packages,/id="packagesRetry"/);
 
   assert.match(expenses,/const canWrite=canWriteModule\('expenses'\)/);
-  assert.match(expenses,/get_revenue_summary/);
+  assert.match(expenses,/require_module_scope_v145/);
+  assert.doesNotMatch(expenses,/get_revenue_summary/);
   assert.match(expenses,/Read-only expenses access/);
   assert.match(expenses,/if\(canWrite\)\$\('exAdd'\)\.onclick/);
   assert.match(expenses,/canWrite\?`<button class="btn ghost sm" onclick="voidExp/);

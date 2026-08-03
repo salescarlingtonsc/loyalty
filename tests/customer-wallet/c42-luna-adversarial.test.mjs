@@ -76,7 +76,7 @@ test('Luna C42: future DOB is rejected at both request and persistence boundarie
   assert.match(registration, /p_birth_date > current_date/i);
   assert.match(canonical, /if new\.birth_date > current_date/i);
   assert.match(canonical, /raise exception 'birth date cannot be in the future' using errcode = '22023'/i);
-  assert.match(app, /id="customerDob" type="date"[\s\S]{0,300}max="\$\{new Date\(\)\.toISOString\(\)\.slice\(0,10\)\}"/i);
+  assert.match(app, /id="customerDob" type="date"[\s\S]{0,300}max="\$\{sgDateInputValue\(\)\}"/i);
 });
 
 test('Luna C42: registration replay is exact, changed payload conflicts, and every dependent write is after the idempotency reservation', () => {

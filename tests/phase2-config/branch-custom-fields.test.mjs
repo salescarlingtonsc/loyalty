@@ -147,6 +147,6 @@ test('owner UI creates fields atomically and edits typed customer values', async
   assert.doesNotMatch(app, /from\('client_field_definitions'\)\.insert/i);
   assert.doesNotMatch(app, /from\('client_field_options'\)\.insert/i);
   assert.match(app, /from\('client_field_values'\)\.upsert\(payload/i);
-  assert.match(app, /S\.myRole==='owner'\?sb\.from\('client_field_definitions'\)/i);
+  assert.match(app, /S\.myRole==='owner'\?fetchAllRowsResult\(\(\)=>sb\.from\('client_field_definitions'\)/i);
   assert.match(app, /Sensitive[^<]*owner only/i);
 });

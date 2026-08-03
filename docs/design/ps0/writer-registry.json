@@ -2131,16 +2131,32 @@
       "reason": "browser RPC 'staff_get_customer_birthday_benefit' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
+      "id": "browser.rpc:app/index.html:get_studio_sales_baseline_v145",
+      "reason": "browser RPC 'get_studio_sales_baseline_v145' is a read-only, permission-scoped sales aggregate for conservative programme-cost guidance; it performs no value write"
+    },
+    {
+      "id": "browser.rpc:app/index.html:list_customer_redemption_history_v145",
+      "reason": "browser RPC 'list_customer_redemption_history_v145' is a read-only, customer-scoped immutable redemption-history projection and performs no value write"
+    },
+    {
+      "id": "browser.rpc:app/index.html:require_module_scope_v145",
+      "reason": "browser RPC 'require_module_scope_v145' is a read-only fail-closed module and branch-scope authorization check and performs no value write"
+    },
+    {
+      "id": "browser.rpc:app/index.html:staff_get_customer_actionable_loyalty_v145",
+      "reason": "browser RPC 'staff_get_customer_actionable_loyalty_v145' is a read-only staff-safe loyalty, balance, expiry, and reward projection and performs no value write"
+    },
+    {
       "id": "browser.rpc:app/index.html:staff_get_reversal_workflows",
       "reason": "browser RPC 'staff_get_reversal_workflows' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
-      "id": "browser.rpc:app/index.html:staff_list_gift_cards",
-      "reason": "browser RPC 'staff_list_gift_cards' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+      "id": "browser.rpc:app/index.html:staff_list_gift_cards_v145",
+      "reason": "browser RPC 'staff_list_gift_cards_v145' is a read-only, bounded and suffix-only gift-card ledger projection with explicit paging and performs no value write"
     },
     {
-      "id": "browser.rpc:app/index.html:staff_list_visit_feedback",
-      "reason": "browser RPC 'staff_list_visit_feedback' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
+      "id": "browser.rpc:app/index.html:staff_list_visit_feedback_v145",
+      "reason": "browser RPC 'staff_list_visit_feedback_v145' is a read-only, customer-filtered visit-feedback projection and performs no value write"
     },
     {
       "id": "browser.rpc:app/index.html:staff_resolve_feedback",
