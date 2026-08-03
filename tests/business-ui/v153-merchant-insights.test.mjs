@@ -39,8 +39,8 @@ test('V153 deterministic insight rules guard zero-base percentages and minimum t
   assert.match(rules, /at least two valid visits/);
 });
 
-test('V153 retention readiness uses mutually exclusive groups and preparation-only campaign UX', () => {
-  assert.match(customers, /retentionReadiness/);
+test('V153/V154 retention audiences use mutually exclusive groups and preparation-only campaign UX', () => {
+  assert.match(customers, /clientAudienceActions/);
   assert.match(customers, /classifyInactiveCustomersV153/);
   assert.match(helpers, /'30_59'/);
   assert.match(helpers, /days>=30&&days<=59/);
@@ -58,8 +58,9 @@ test('V153 campaign audience preview avoids fabricated notification reachability
   assert.match(rules, /No live notification delivery or WhatsApp sending is added/);
 });
 
-test('V153 documents business health as separate indicators rather than a subjective score', () => {
-  assert.match(app, /Separate indicators, not a fake score/);
+test('V153/V154 presents business health as separate indicators rather than a subjective score', () => {
+  assert.match(app, /Business health/);
+  assert.match(app, /More data needed/);
   assert.match(rules, /V153 does not create a numeric Business Health Score/);
   assert.match(rules, /Revenue trend: improving, stable, needs attention, or not enough data/);
   assert.match(rules, /Visit activity: improving, stable, needs attention, or not enough data/);

@@ -139,16 +139,29 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .v150-kpi-head{background:var(--tint);border-radius:14px;padding:10px 12px;margin:-8px -8px 12px;color:var(--coral)}
 .nav-label{min-width:0;overflow-wrap:anywhere}.nav-badge{margin-left:auto;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
 .dashboard-range{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dashboard-greeting{display:block;color:var(--muted);font-size:13px;font-weight:650;margin-bottom:3px}
+.dashboard-date-pair{display:inline-flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.dashboard-date-pair input[type="date"]{width:148px;flex:0 0 148px}
+.dashboard-date-pair .btn{flex:0 0 auto}
+.ux154-collapsible-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.ux154-section-toggle{min-height:40px;border:1px solid var(--control-border);border-radius:999px;background:#fff;color:var(--ink);font-weight:750;padding:8px 14px}
+.ux154-section-toggle:hover{background:#FBFAF8}.ux154-section-toggle:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}
+.ux154-collapsible-body[hidden]{display:none!important}
+.understand-business-panel{margin-top:18px}.understand-business-panel .v150-section-title{margin-bottom:0}
 .dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(4,minmax(150px,1fr))}
 .dashboard-charts.v150-understand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:14px 18px;display:flex;gap:10px;align-items:flex-start}
-.dashboard-chart-head .dashboard-chart-link{margin-left:auto;color:var(--coral);font-weight:700;font-size:12px;white-space:nowrap}
+.dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:18px 22px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:flex-start}
+.dashboard-chart-head>svg{margin-top:2px}.dashboard-chart-head b{display:block;line-height:1.25;overflow-wrap:anywhere}.dashboard-chart-head p{line-height:1.35}
+.dashboard-chart-head .dashboard-chart-link{color:var(--coral);font-weight:750;font-size:12px;white-space:nowrap;min-height:32px;display:inline-flex;align-items:center}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
 .client-summary-card[aria-pressed="true"]{border-color:var(--coral);background:var(--tint);color:var(--coral)}
-.client-summary-card b{display:block;font-size:1.2rem}.client-summary-card span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.client-summary-card b{display:block;font-size:1.2rem;color:var(--coral)}.client-summary-card span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.client-audience-actions{border:1px solid var(--line);border-radius:16px;background:#FFFDFC;padding:12px 14px;margin:12px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.client-audience-actions[hidden]{display:none!important}.client-audience-actions b{display:block}.client-audience-actions .row{gap:8px;flex-wrap:wrap}
 .merchant-insights{margin-top:18px}.merchant-insights-head,.retention-readiness-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
 .merchant-insights-head h2,.retention-readiness-head h2{margin:0;font-size:1.22rem}.merchant-insights-head p,.retention-readiness-head p{margin:3px 0 0}
+.merchant-insights-context{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -156,6 +169,40 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .insight-card h3{margin:0;font-size:1.04rem}.insight-card p{margin:0;line-height:1.45}.insight-meta{display:flex;flex-wrap:wrap;gap:6px}.insight-meta .pill{font-size:11px}
 .insight-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}.insight-actions .btn{min-height:38px}
 .business-health-list{display:grid;gap:8px}.health-row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:8px}.health-row:first-child{border-top:0;padding-top:0}.health-row b{font-size:13px}.health-row span{font-size:12px;color:var(--muted);text-align:right}
+.appointment-list-filters{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:end}
+.appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
+.appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:end}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
+.sales-date-v154{display:grid;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums}.sales-date-v154 span:last-child{color:var(--muted);font-size:12px}
+.record-status{font-weight:750;color:var(--ink)}.sales-audit-details{margin-top:4px}.sales-audit-details summary{color:var(--muted);font-size:12px;cursor:pointer}
+.staff-performance-filterbar{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;align-items:end;margin:14px 0}.staff-rank-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}.staff-rank-basis{font-size:12px;color:var(--muted);margin:6px 0 0}
+.programme-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}.programme-tabs a{min-height:40px;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 14px;font-weight:750;color:var(--ink)}.programme-tabs a.act{background:var(--ink);color:#fff;border-color:var(--ink)}
+.programme-category{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;margin-top:12px}.programme-category-title{background:#FFF7F4;padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:850}
+.staff-members-page .settings-tabs{display:none}.staff-members-page .settings-panel{margin-top:0}
+@media(min-width:761px) and (max-width:1180px){
+  .appbar{gap:8px;padding:10px 14px;overflow:visible}
+  .global-actions{gap:6px;min-width:0}
+  .global-search{flex:0 0 48px;width:48px;min-width:48px;padding-left:0;justify-content:center}
+  .global-search input{display:none}
+  .global-search-ic{display:none}
+  .global-search-go{width:44px;height:44px;background:#fff;color:var(--coral);box-shadow:var(--shadow)}
+  .global-quick{gap:6px}
+  .global-act{min-height:44px;padding-inline:12px}
+  .dashboard-appbar-branch{flex:0 1 170px;min-width:132px}
+  .dashboard-appbar-branch select{font-size:12.5px;padding-left:12px;padding-right:28px;text-overflow:ellipsis}
+  .workspace-language-picker{display:none}
+  .business-workspace-switch .who,.profile .who{max-width:156px}
+  .business-workspace-switch .who span:not(.avatar),.profile .who div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(min-width:761px) and (max-width:940px){
+  .global-act#globalNewAppt span:not(.ic){display:none}
+  .business-workspace-switch .who{max-width:112px}
+}
+@media(max-width:760px){
+  .dashboard-date-pair{display:grid;grid-template-columns:minmax(0,1fr);width:100%}
+  .dashboard-date-pair input[type="date"]{width:100%;flex:auto}
+  .appointment-list-filters,.sales-filter-row,.sales-filter-row.secondary,.staff-performance-filterbar,.staff-rank-summary{grid-template-columns:1fr}
+}
 .retention-readiness{margin-bottom:16px}.retention-readiness-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .retention-audience-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:15px;display:grid;gap:8px;min-width:0}
 .retention-audience-card b{font-size:1.45rem}.retention-audience-card h3{font-size:.98rem;margin:0}.retention-audience-card p{margin:0;line-height:1.45}.retention-audience-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
@@ -1469,7 +1516,7 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Reports'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
-  settings:['settings','Settings'],setup:['setup','Get started']};
+  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started']};
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
    frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
@@ -1484,7 +1531,7 @@ const hasRoleCapability=capability=>ROLE_CAPABILITIES[S.myRole]?.has(capability)
    re-exposing an upsell/internal surface. */
 const HIDDEN_BUSINESS_SURFACES=new Set(['customerintel','inventory']);
 const FINANCE_MODULES=new Set(['expenses','pnl','staffperf']);
-const OWNER_ONLY_MODULES=new Set(['branches','settings','setup']);
+const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup']);
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
@@ -1503,9 +1550,9 @@ const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
   {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
-  {key:'grow',icon:'retention',label:'Grow',items:['loyalty','retention','referrals','memberships','giftcards']},
+  {key:'grow',icon:'retention',label:'Programmes',items:['loyalty','retention','referrals','memberships','giftcards']},
   {key:'money',icon:'reports',label:'Money',items:['sales','reports','customerintel','pnl','expenses','staffperf']},
-  {key:'setup',icon:'services',label:'Operations setup',items:['services','inventory','packages','branches']}
+  {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages']}
 ];
 let navOpen={};
 /* Global top-bar action state (no localStorage in this stack — plain in-session vars). A global
@@ -6561,7 +6608,17 @@ function growBackActionHtmlV138(){
 function growNavItemHtml(items,activeKey){
   if(!items.length)return '';
   const onGrowSurface=['grow','loyalty','retention','studio','storedvalue','promotions','referrals','memberships','giftcards'].includes(activeKey);
-  return `<a href="#/grow" class="${onGrowSurface?'act':''}"${onGrowSurface?' aria-current="page"':''}><span class="ic">${CUI.icon('loyalty',{size:18})}</span>Grow</a>`;
+  const currentHash=(location.hash||'#/dashboard').split('?')[0];
+  const links=[
+    ['#/grow','Overview'],
+    ['#/grow/ongoing','Ongoing programmes'],
+    ['#/grow/available','Available programmes'],
+    ['#/grow/settings','More settings']
+  ];
+  return links.map(([href,label],index)=>{
+    const isAct=onGrowSurface&&(currentHash===href||(href==='#/grow'&&!currentHash.startsWith('#/grow/')));
+    return `<a href="${href}" class="${isAct?'act':''}"${isAct?' aria-current="page"':''}><span class="ic">${CUI.icon(index===3?'settings':'loyalty',{size:18})}</span>${label}</a>`;
+  }).join('');
 }
 function waitlistBadgeHtml(){
   const count=Number(waitlistActiveCount)||0;
@@ -6586,7 +6643,10 @@ function navHtml(page,idPrefix='nav'){
     .filter(module=>!HIDDEN_BUSINESS_SURFACES.has(module));
   const activeKey=page[0]==='client'?'clients':page[0];
   const activeGrp=activeGroupKey(page[0]);
-  const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(m=>m==='dashboard'||(enabled.includes(m)&&(m!=='branches'||S.myRole==='owner')))})).filter(g=>g.items.length);
+  const navModuleVisible=m=>m==='dashboard'
+    ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
+    ||(enabled.includes(m)&&(m!=='branches'||S.myRole==='owner'));
+  const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(navModuleVisible)})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.flat){
       const target=g.items[0],isAct=activeKey===target;
@@ -7641,7 +7701,7 @@ function renderShell(page){
     bookings:bookingsPage,loyalty:(hashParam,routedFocus)=>growPage('rewards',hashParam,routedFocus),retention:(hashParam,routedFocus)=>growPage('winback',hashParam,routedFocus),promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam),storedvalue:hashParam=>growPage('storedvalue',hashParam),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
     waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,
-    staffperf:staffPerfPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
+    staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage};
   const pageFn=P[page[0]]||dashboard;
   const pageResult=pageFn(...page.slice(1));
@@ -7896,24 +7956,40 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
 }
 
 /* ---------- dashboard ---------- */
+function wireLocalCollapseV154(buttonId,bodyId,storageKey,{openText='Minimise',closedText='Expand'}={}){
+  const button=$(buttonId),body=$(bodyId);
+  if(!button||!body)return;
+  const saved=localStorage.getItem(storageKey);
+  const setOpen=open=>{
+    body.hidden=!open;
+    button.setAttribute('aria-expanded',String(open));
+    button.textContent=open?openText:closedText;
+  };
+  setOpen(saved===null?true:saved==='true');
+  button.onclick=()=>{const next=button.getAttribute('aria-expanded')!=='true';localStorage.setItem(storageKey,String(next));setOpen(next)};
+}
 async function dashboard(){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const renderEpoch=++dashboardRenderEpoch;
+  const rawName=String(S.user?.user_metadata?.full_name||S.user?.user_metadata?.name||S.user?.user_metadata?.given_name||'').trim();
+  const firstName=rawName.split(/\s+/).filter(Boolean)[0]||'';
+  const greeting=firstName?`Hello, ${firstName}`:'Hello';
   M().innerHTML=`<section id="dashboardView" class="dashboard-page" data-render-epoch="${renderEpoch}" data-workspace-i18n>
     <header class="v150-titlebar">
-      <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><h1>Dashboard</h1></div></div>
+      <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
       <div class="v150-title-actions dashboard-range">
         <span class="dashboard-mobile-branch" id="dashboardMobileBranchWrap" aria-label="Dashboard mobile branch"><span class="muted small">Loading branches…</span></span>
         <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
-        <label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}">
-        <button class="btn sm" id="apply">Apply</button>
+        <span class="dashboard-date-pair"><label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}"><button class="btn sm" id="apply">Apply</button></span>
       </div>
     </header>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
-      <header class="performance-heading">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div></header>
-      <div class="performance-body"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardInsights" aria-live="polite"></div>
-      <section class="v150-section" aria-labelledby="understandBusinessTitle"><div class="v150-section-title">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div></div><div class="charts dashboard-charts v150-understand" id="charts"></div></section></div>
-    </section></section>`;
+      <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
+      <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardInsights" aria-live="polite"></div></div>
+    </section>
+    <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section></section>`;
+  wireLocalCollapseV154('dashboardPerformanceToggle','dashboardPerformanceBody','peekaa.v154.dashboard.performance.open');
+  wireLocalCollapseV154('dashboardUnderstandToggle','dashboardUnderstandBody','peekaa.v154.dashboard.understand.open');
   const dashboardRoot=$('dashboardView');
   const isDashboardCurrent=()=>dashboardRenderEpoch===renderEpoch&&dashboardRoot.isConnected&&$('dashboardView')===dashboardRoot;
   const requestGate=createLatestRequestGate(isDashboardCurrent);
@@ -8154,7 +8230,11 @@ function insightCardV153(insight){
   const actions=(insight.actions||[]).map(action=>action.href
     ?`<a class="btn ${action.variant||'ghost'} sm" href="${action.href}" ${action.dataset||''}>${esc(action.label)}</a>`
     :`<button type="button" class="btn ${action.variant||'ghost'} sm" ${action.dataset||''}>${esc(action.label)}</button>`).join('');
-  return `<article class="insight-card" data-tone="${esc(tone)}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon(insight.icon||'reports',{size:18})}</span><div><p class="eyebrow">${esc(insight.category||'Insight')}</p><h3>${esc(insight.title)}</h3></div></div><p>${esc(insight.explanation)}</p>${insight.why?`<p class="muted small">${esc(insight.why)}</p>`:''}<div class="insight-meta">${(insight.meta||[]).map(m=>`<span class="pill">${esc(m)}</span>`).join('')}</div>${actions?`<div class="insight-actions">${actions}</div>`:''}</article>`;
+  return `<article class="insight-card" data-tone="${esc(tone)}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon(insight.icon||'reports',{size:18})}</span><div><p class="eyebrow">${esc(insight.category||'Insight')}</p><h3>${esc(insight.title)}</h3></div></div><p>${esc(insight.explanation)}</p>${insight.why?`<p class="muted small">${esc(insight.why)}</p>`:''}${actions?`<div class="insight-actions">${actions}</div>`:''}</article>`;
+}
+function customerCountTextV154(count){
+  const n=Number(count)||0;
+  return `${n} ${n===1?'customer has':'customers have'}`;
 }
 function businessHealthSummaryV153({current,previous,inactive60Total,from,to}){
   const revenueChange=percentageChangeV153(current?.revenue_cents,previous?.revenue_cents);
@@ -8163,7 +8243,7 @@ function businessHealthSummaryV153({current,previous,inactive60Total,from,to}){
   const revenueStatus=revenueChange===null?'Not enough data':revenueChange>MIN_INSIGHT_REVENUE_CHANGE_PCT_V153?'Improving':revenueChange<-MIN_INSIGHT_REVENUE_CHANGE_PCT_V153?'Needs attention':'Stable';
   const visitsStatus=visitsChange===null?'Not enough data':visitsChange>10?'Improving':visitsChange<-10?'Needs attention':'Stable';
   const retentionStatus=Number(inactive60Total)>0?'Needs attention':'Stable';
-  return `<article class="insight-card business-health" data-tone="${revenueStatus==='Needs attention'||retentionStatus==='Needs attention'?'attention':'neutral'}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon('info',{size:18})}</span><div><p class="eyebrow">Business health summary</p><h3>Separate indicators, not a fake score</h3></div></div><div class="business-health-list">${status('Revenue trend',revenueStatus,revenueChange===null?'previous period has no comparable revenue':`${revenueChange>0?'+':''}${revenueChange}% vs previous period`)}${status('Visit activity',visitsStatus,visitsChange===null?'previous period has no comparable visits':`${visitsChange>0?'+':''}${visitsChange}% vs previous period`)}${status('Retention',retentionStatus,`${Number(inactive60Total)||0} customers inactive 60+ days`)}</div><div class="insight-meta"><span class="pill">${esc(insightPeriodLabelV153(from,to))}</span></div></article>`;
+  return `<article class="insight-card business-health" data-tone="${revenueStatus==='Needs attention'||retentionStatus==='Needs attention'?'attention':'neutral'}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon('info',{size:18})}</span><div><p class="eyebrow">Business health summary</p><h3>Business health</h3></div></div><div class="business-health-list">${status('Revenue',revenueStatus,revenueChange===null?'More data needed':`${revenueChange>0?'+':''}${revenueChange}% vs previous period`)}${status('Visits',visitsStatus,visitsChange===null?'More data needed':`${visitsChange>0?'+':''}${visitsChange}% vs previous period`)}${status('Retention',retentionStatus,`${Number(inactive60Total)||0} inactive 60+ days`)}</div></article>`;
 }
 function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,previousFrom,previousTo,branchId,branchName}){
   const scope=insightScopeLabelV153(branchId,branchName);
@@ -8175,27 +8255,26 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
       tone:revenueChange>0?'positive':'attention',icon:'reports',category:'Revenue trend',
       title:revenueChange>0?'Revenue is increasing':'Revenue is lower',
       explanation:`Revenue ${revenueChange>0?'increased':'decreased'} by ${Math.abs(revenueChange)}% compared with the previous equivalent period.`,
-      why:revenueChange>0?'Review which services and days contributed most to the increase.':'Review inactive customers and recent visit trends before planning promotions.',
-      meta:[scope,period,`Compared with ${previousFrom} – ${previousTo}`],
+      why:revenueChange>0?'Review which services and days contributed most.':'Review inactive customers and recent visit trends.',
       actions:[{label:'View sales report',href:'#/reports',variant:'ghost'},{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'}]
     });
   }else if((Number(previous?.revenue_cents)||0)===0&&(Number(current?.revenue_cents)||0)>0){
-    insights.push({tone:'positive',icon:'reports',category:'Revenue trend',title:'Revenue has started',explanation:'Revenue was recorded in this period, but the previous period had no comparable revenue.',why:'Keep recording sales so Peekaa can show a reliable trend next time.',meta:[scope,period],actions:[{label:'View sales report',href:'#/reports',variant:'ghost'}]});
+    insights.push({tone:'positive',icon:'reports',category:'Revenue trend',title:'Revenue has started',explanation:'Sales were recorded this period. Keep recording activity to unlock a reliable trend.',why:'',actions:[{label:'View sales report',href:'#/reports',variant:'ghost'}]});
   }
   if(Number(inactive60Total)>0){
-    insights.push({tone:'attention',icon:'customers',category:'Retention',title:'Customers may be drifting away',explanation:`${Number(inactive60Total)} customers have not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience before they forget the business.',meta:['Business-wide customer inactivity',period],actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
+    insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:`${customerCountTextV154(inactive60Total)} not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
   }
   const weekdayValues=(current?.visits_by_weekday||[]).map(Number);
   const busiest=Math.max(0,...weekdayValues);
   const totalVisits=weekdayValues.reduce((sum,value)=>sum+value,0);
   if(totalVisits>=MIN_INSIGHT_BUSIEST_VISITS_V153&&busiest>0){
     const day=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][weekdayValues.indexOf(busiest)]||'One day';
-    insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:`${day} is your busiest day`,explanation:`${day} recorded the highest number of valid visits in the selected period.`,why:`Review staffing and appointment availability for ${day}s.`,meta:[scope,period],actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
+    insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:`${day} is your busiest day`,explanation:`${day} recorded the highest number of valid visits.`,why:`Review staffing and availability for ${day}s.`,actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
   }
   if(!insights.length){
-    insights.push({tone:'neutral',icon:'info',category:'Readiness',title:'More business activity is needed',explanation:'Peekaa will show stronger recommendations after enough sales, visits, or appointments are recorded.',why:'Continue recording sales and customer visits.',meta:[scope,period],actions:[{label:'Record sale',href:'#/sell',variant:'ghost'},{label:'Add customers',href:'#/clients',variant:'ghost'}]});
+    insights.push({tone:'neutral',icon:'info',category:'Readiness',title:'More activity is needed',explanation:'Peekaa will show recommendations after more sales, visits or appointments are recorded.',why:'Continue recording sales and customer visits.',actions:[{label:'Record sale',href:'#/till',variant:'ghost'},{label:'Add customers',href:'#/clients',variant:'ghost'}]});
   }
-  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Deterministic recommendations from verified business activity.</p></div><span class="pill">${esc(scope)}</span></div><div class="merchant-insights-grid">${insights.slice(0,4).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
+  return `<section class="merchant-insights" aria-labelledby="merchantInsightsTitle"><div class="merchant-insights-head"><div><h2 id="merchantInsightsTitle">Merchant insights</h2><p class="muted small">Recommended next actions from verified activity.</p></div><div class="merchant-insights-context"><span class="pill">${esc(scope)}</span><span class="pill">${esc(period)}</span></div></div><div class="merchant-insights-grid">${insights.slice(0,3).map(insightCardV153).join('')}${businessHealthSummaryV153({current,previous,inactive60Total,from,to})}</div></section>`;
 }
 async function clientsPage(){
   const routeMain=M();
@@ -8214,7 +8293,7 @@ async function clientsPage(){
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
     <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days / never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Never-visited customers appear in 90+ because they have no valid visit on record.</p></div>
-    <section class="retention-readiness card" id="retentionReadiness" aria-labelledby="retentionReadinessTitle">${CUI.skeletonCard({lines:4})}</section>
+    <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list">${CUI.tableSkeleton({rows:5,columns:7})}</div>
     <div class="card" id="fbQueueCard" style="margin-top:16px"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
@@ -8268,7 +8347,7 @@ async function clientsPage(){
         btn.querySelector('b').textContent=String(counts[btn.dataset.inactiveBucket]||0);
         btn.setAttribute('aria-pressed',String(clientInactiveBucket===btn.dataset.inactiveBucket));
       });
-      renderRetentionReadinessV153(directory.customers,directory.loyaltyAvailable);
+      renderSelectedAudienceActionsV154(directory.customers,directory.loyaltyAvailable);
     }catch(error){if(isCustomersCurrent())host.querySelectorAll('[data-inactive-bucket] b').forEach(b=>b.textContent='—')}
   }
   const allCustomerDirectoryRows=async()=>{
@@ -8286,27 +8365,24 @@ async function clientsPage(){
     if(customers.length<Number(total||0))throw new Error('Customer export is larger than the supported directory range.');
     return {customers,loyaltyAvailable:loyaltyAvailable===true};
   };
-  const renderRetentionReadinessV153=(customers,loyaltyAvailable)=>{
-    const host=$('retentionReadiness');if(!host)return;
+  const exportRetentionBucketV154=(key,bucket,loyaltyAvailable)=>{
+    if(!bucket)return;
+    const rows=[['name','phone','last_visit','member_since','points','credit','consent'],
+      ...bucket.customers.map(customer=>[customer.full_name,customer.phone||'',customer.last_visit_at||'Never visited',customer.created_at||'',loyaltyAvailable?Number(customer.points||0):'unavailable',loyaltyAvailable?(Number(customer.balance_cents||0)/100).toFixed(2):'unavailable',customer.marketing_consent?'yes':'no'])];
+    const blob=new Blob([rows.map(row=>row.map(value=>String(value).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-${key}-customers.csv`;a.click();toast('Retention CSV downloaded');
+  };
+  const renderSelectedAudienceActionsV154=(customers,loyaltyAvailable)=>{
+    const host=$('clientAudienceActions');if(!host)return;
+    if(!clientInactiveBucket){host.hidden=true;host.innerHTML='';return}
     const buckets=classifyInactiveCustomersV153(customers);
-    const cards=Object.entries(buckets).map(([key,bucket])=>{
-      const count=bucket.customers.length;
-      const consentEligible=bucket.customers.filter(customer=>customer.marketing_consent).length;
-      return `<article class="retention-audience-card" data-retention-group="${key}"><h3>${esc(bucket.label)}</h3><b>${count}</b><p class="muted small">${esc(bucket.definition)}</p><p class="muted small">${esc(loyaltyAvailable?'Points and credit shown from the customer balance authority.':'Points and credit are hidden because complete Loyalty access could not be confirmed.')}</p><div class="retention-audience-actions"><button type="button" class="btn ghost sm" data-retention-view="${key}">View customers</button><button type="button" class="btn ghost sm" data-retention-export="${key}">Export CSV</button><button type="button" class="btn ghost sm" data-retention-campaign="${key}" data-retention-count="${count}" data-retention-consent="${consentEligible}">Prepare campaign</button></div></article>`;
-    }).join('');
-    host.innerHTML=`<div class="retention-readiness-head"><div><h2 id="retentionReadinessTitle">Retention readiness</h2><p class="muted small">Prepare follow-up audiences using the same business-wide inactivity definition as the customer list.</p></div><span class="pill">Business-wide customer inactivity</span></div><div class="retention-readiness-grid">${cards}</div>`;
-    host.querySelectorAll('[data-retention-view]').forEach(button=>button.onclick=()=>{clientInactiveBucket=button.dataset.retentionView;$('clientInactivity').value=clientInactiveBucket;clientPage=0;load();refreshInactiveCards();$('clientInactivity').focus()});
-    host.querySelectorAll('[data-retention-export]').forEach(button=>button.onclick=()=>{
-      const bucket=buckets[button.dataset.retentionExport];if(!bucket)return;
-      const rows=[['name','phone','last_visit','member_since','points','credit','consent'],
-        ...bucket.customers.map(customer=>[customer.full_name,customer.phone||'',customer.last_visit_at||'Never visited',customer.created_at||'',loyaltyAvailable?Number(customer.points||0):'unavailable',loyaltyAvailable?(Number(customer.balance_cents||0)/100).toFixed(2):'unavailable',customer.marketing_consent?'yes':'no'])];
-      const blob=new Blob([rows.map(row=>row.map(value=>String(value).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
-      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-${button.dataset.retentionExport}-customers.csv`;a.click();toast('Retention CSV downloaded');
-    });
-    host.querySelectorAll('[data-retention-campaign]').forEach(button=>button.onclick=()=>{
-      const bucket=buckets[button.dataset.retentionCampaign];if(!bucket)return;
-      openCampaignPrepV153({audienceKey:button.dataset.retentionCampaign,audienceLabel:bucket.label,definition:bucket.definition,count:Number(button.dataset.retentionCount)||0,consentEligible:Number(button.dataset.retentionConsent)||0,branchLabel:'Business-wide customer inactivity'});
-    });
+    const bucket=buckets[clientInactiveBucket];if(!bucket){host.hidden=true;host.innerHTML='';return}
+    const count=bucket.customers.length,consentEligible=bucket.customers.filter(customer=>customer.marketing_consent).length;
+    host.hidden=false;
+    host.innerHTML=`<div><b>${esc(bucket.label)} · ${count} ${count===1?'customer':'customers'}</b><p class="muted small">${esc(bucket.definition)}</p></div><div class="row"><button type="button" class="btn ghost sm" id="clientAudienceExport">Export this audience</button><button type="button" class="btn ghost sm" id="clientAudienceCampaign">Prepare campaign</button><button type="button" class="btn ghost sm" id="clientAudienceClear">Clear filter</button></div>`;
+    $('clientAudienceExport').onclick=()=>exportRetentionBucketV154(clientInactiveBucket,bucket,loyaltyAvailable);
+    $('clientAudienceCampaign').onclick=()=>openCampaignPrepV153({audienceKey:clientInactiveBucket,audienceLabel:bucket.label,definition:bucket.definition,count,consentEligible,branchLabel:'Business-wide customer inactivity'});
+    $('clientAudienceClear').onclick=()=>{clientInactiveBucket=null;$('clientInactivity').value='';clientPage=0;load();refreshInactiveCards()};
   };
   const runClientSearch=()=>{clientSearch=$('clientSearch').value.trim();clientPage=0;load()};
   $('clientSearchGo').onclick=runClientSearch;
@@ -10273,6 +10349,22 @@ async function tillPage(){
 }
 
 /* ---------- sales ---------- */
+function sgLedgerDateV154(iso){
+  const fallback={date:'—',time:''};
+  if(!iso)return fallback;
+  const d=new Date(iso);
+  if(Number.isNaN(d.getTime()))return fallback;
+  return {
+    date:new Intl.DateTimeFormat('en-SG',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'Asia/Singapore'}).format(d),
+    time:new Intl.DateTimeFormat('en-SG',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(d)
+  };
+}
+function saleRecordStatusV154(s,w={}){
+  if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row linked to ${s.reversal_of}.`};
+  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row reversed by ${w.reversal_sale_id}.`};
+  if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by)return {label:'Corrected',tone:'new',details:`Corrected by ${w.correction_sale_id||w.corrected_sale_id||s.corrected_by}.`};
+  return {label:'Sale',tone:'ok',details:'Original sale row.'};
+}
 async function salesPage(){
   const [
     {data:cl,error:clientError},
@@ -10290,15 +10382,20 @@ async function salesPage(){
     ?selectedBranchId:(saleBranches.find(b=>b.is_default)?.id||saleBranches[0]?.id||'');
   M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Historical sales ledger, corrections and reversals. Use Record sale to create a new sale.</p></div></div><div class="v150-title-actions"><a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
-      <div class="v150-filterbar">
-        <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${shiftSgDateInput(sgDateInputValue(),-29)}"></div>
-        <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${sgDateInputValue()}"></div>
-        <div><label for="salesBranch">Branch</label><select id="salesBranch"><option value="">All branches</option>${saleBranches.map(b=>`<option value="${b.id}" ${b.id===initialSaleBranch?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div>
-        <div><label for="salesCustomer">Customer search</label><input id="salesCustomer" type="search" placeholder="Name"></div>
-        <div><label for="salesStaff">Team member</label><select id="salesStaff"><option value="">All staff</option>${saleTeam.map(person=>`<option value="${person.id}">${esc(person.full_name||'Team member')}</option>`).join('')}</select></div>
-        <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="membership">Membership</option></select></div>
-        <div><label for="salesPayment">Payment state</label><select id="salesPayment"><option value="">All states</option><option value="true">Paid</option><option value="false">Unpaid</option></select></div>
-        <button class="btn sm" id="salesApply">Apply filters</button><button class="btn ghost sm" id="salesClear">Clear filters</button>
+      <div class="sales-filter-panel" aria-label="Sales filters">
+        <div class="sales-filter-row">
+          <div><label for="salesFrom">From</label><input type="date" id="salesFrom" value="${shiftSgDateInput(sgDateInputValue(),-29)}"></div>
+          <div><label for="salesTo">To</label><input type="date" id="salesTo" value="${sgDateInputValue()}"></div>
+          <div><label for="salesBranch">Branch</label><select id="salesBranch"><option value="">All branches</option>${saleBranches.map(b=>`<option value="${b.id}" ${b.id===initialSaleBranch?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div>
+          <div><label for="salesCustomer">Customer search</label><input id="salesCustomer" type="search" placeholder="Name"></div>
+        </div>
+        <div class="sales-filter-row secondary">
+          <div><label for="salesStaff">Team member</label><select id="salesStaff"><option value="">All staff</option>${saleTeam.map(person=>`<option value="${person.id}">${esc(person.full_name||'Team member')}</option>`).join('')}</select></div>
+          <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="membership">Membership</option></select></div>
+          <div><label for="salesPayment">Payment state</label><select id="salesPayment"><option value="">All states</option><option value="true">Paid</option><option value="false">Unpaid</option></select></div>
+          <button class="btn sm" id="salesApply">Apply filters</button>
+        </div>
+        <div><button class="btn ghost sm" id="salesClear">Clear filters</button></div>
       </div>
       <div id="recent" style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
   async function loadRecent(){
@@ -10316,10 +10413,10 @@ async function salesPage(){
     const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
     const customerSearch=String($('salesCustomer')?.value||'').trim().toLowerCase();
     const rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
-    $('recent').innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Relationship</th><th>Gross</th><th>Net</th><th></th></tr>
-      ${rows.map(s=>{const w=W[s.id]||{};return `<tr><td>${sgt(s.occurred_at)}</td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
+    $('recent').innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Gross</th><th>Net</th><th></th></tr>
+      ${rows.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
-        <td>${s.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of</span> <span data-merchant-content>${esc(s.reversal_of)}</span></span>`:w.reversal_sale_id?`<span class="pill off"><span data-workspace-i18n>reversed →</span> <span data-merchant-content>${esc(w.reversal_sale_id)}</span></span>`:'<span class="pill ok">original</span>'}${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}</td>
+        <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
         <td>${money(s.amount_cents)}</td><td><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
         <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Correct amount</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>`
       :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
@@ -12495,7 +12592,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
-  outerMain.innerHTML=CUI.loadingState({title:'Grow',iconName:'loyalty'});
+  outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
   const snapshot=await growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules,isCurrent:isGrowCurrent});
   if(!snapshot||!isGrowCurrent())return;
   let growDraftVersionId=hashParam&&['rewards','winback'].includes(routedSurface)?hashParam:(snapshot.draft?.id||null);
@@ -12586,19 +12683,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     if(focus==='bringback'||focus==='new')return {surface:'winback',focusTarget:'rn',editProgramId:null};
     return null;
   })();
-  outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-workspace-i18n>
-    <section class="grow-hero" aria-labelledby="growTitle">
-      <div class="grow-hero-copy"><h1 id="growTitle">Grow</h1>
-        <p class="muted">Create, check or change every reward programme from one clear overview.</p>
-        ${isOwner?`<p class="muted small" id="growSetupSafety">Start automatically or choose the exact programme below. Nothing goes live until you review and publish.</p>`:
-          '<p class="muted small">This is the programme customers are using now.</p>'}</div>
-      ${canSetupGrow?`<button type="button" class="btn grow-primary" id="growAutoSetup"
-        aria-describedby="growSetupSafety">${growDraftVersionId?'Continue rewards setup':'Create recommended rewards draft'}</button>`:''}
-    </section>
+  const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'overview';
+  const programmeTab=(key,label)=>`<a class="${programmeView===key?'act':''}" href="#/grow${key==='overview'?'':'/'+key}">${esc(label)}</a>`;
+  outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
+    <header class="v150-titlebar" aria-labelledby="growTitle">
+      <div class="cui-page-title"><h1 id="growTitle">Programmes</h1>
+        <p class="muted">Create and manage rewards, promotions and customer programmes.</p></div>
+      <div class="v150-title-actions">${canSetupGrow&&growDraftVersionId?`<button type="button" class="btn grow-primary" id="growAutoSetup">Continue setup</button>`:''}</div>
+    </header>
+    <nav class="programme-tabs" aria-label="Programme views">${programmeTab('overview','Overview')}${programmeTab('ongoing','Ongoing programmes')}${programmeTab('available','Available programmes')}${programmeTab('settings','More settings')}</nav>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Your programmes</p><h2 id="rewardJourneyTitle">All reward programmes</h2><p class="muted small">See what is live, what is paused and what is still available to set up. Choose one row to go straight to that setting.</p></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Available programmes':'Programme overview'}</h2><p class="muted small">Choose one row to view or edit that programme.</p></div></div>
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
-      <div class="grow-programme-list">
+      <div class="programme-category"><div class="programme-category-title">Loyalty & rewards</div><div class="grow-programme-list">
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Earning',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
           <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
@@ -12618,11 +12715,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
+      </div></div>
+      <div class="programme-category"><div class="programme-category-title">Promotions & growth</div><div class="grow-programme-list">
         ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see at most two current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
+      </div></div>
+      <div class="programme-category"><div class="programme-category-title">Recurring value</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
         ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
-      </div>
+      </div></div>
     </section>
     <details class="grow-secondary" id="growSecondarySettings">
       <summary>More reward settings</summary><div class="grow-secondary-body">
@@ -12671,6 +12772,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
+  if(['ongoing','available'].includes(programmeView)){
+    outerMain.querySelectorAll('.programme-category').forEach(category=>{
+      let visible=0;
+      category.querySelectorAll('.grow-programme-row').forEach(row=>{
+        const status=String(row.querySelector('.pill')?.textContent||'').toLowerCase();
+        const isOngoing=status.includes('live')||status.includes('active');
+        const show=programmeView==='ongoing'?isOngoing:!isOngoing;
+        row.hidden=!show;
+        if(show)visible++;
+      });
+      category.hidden=visible===0;
+    });
+  }else if(programmeView==='settings'){
+    const overviewSection=outerMain.querySelector('.reward-journey-v122');
+    if(overviewSection)overviewSection.hidden=true;
+    const settingsDetails=$('growSecondarySettings');
+    if(settingsDetails)settingsDetails.open=true;
+  }
   document.querySelectorAll('[data-product-cost-save]').forEach(button=>button.onclick=async()=>{
     const productId=button.dataset.productCostSave;
     const input=document.querySelector(`[data-product-cost="${CSS.escape(productId)}"]`);
@@ -15701,12 +15820,21 @@ async function appointmentsPage(){
           <button class="btn" id="ago">${CUI.icon('check',{size:18})} Book appointment</button></div>
       </section>`:''}
       <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><div class="v150-segment" role="tablist" aria-label="Appointment view"><button type="button" id="appointmentCalendarSeg" aria-pressed="true">Calendar</button><button type="button" id="appointmentListSeg" aria-pressed="false">List</button></div><span class="spacer"></span>
-        <label class="sr-only" for="calendarBranch">Calendar branch</label><select id="calendarBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select>
+        <label class="sr-only" for="calendarBranch">Appointment branch</label><span class="appointment-filter-with-icon">${CUI.icon('branch',{size:17,className:'appointment-filter-icon'})}<select id="calendarBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select></span>
         <label class="small" for="calendarService">Book</label><select id="calendarService"><option value="" ${!calendarServiceId?'selected':''}>General visit · 60 min</option>${branchServices(branchId).map(service=>`<option value="${service.id}" ${calendarServiceId===service.id?'selected':''}>${esc(serviceDisplayName(service))} · ${Number(service.duration_min)||60} min</option>`).join('')}</select>
-        <label class="sr-only" for="stfFilter">Calendar staff</label><select id="stfFilter">${staffOpts(staffFilter,branchId)}</select>
-        <button class="qbtn act" id="vDay">Day</button><button class="qbtn" id="vWeek">Week</button>
-        <button class="qbtn" id="wkToday">Today</button><button class="qbtn" id="wkPrev" aria-label="Previous period">${CUI.icon('back',{size:17})}</button><button class="qbtn" id="wkNext" aria-label="Next period">${CUI.icon('forward',{size:17})}</button>
+        <label class="sr-only" for="stfFilter">Appointment staff</label><span class="appointment-filter-with-icon">${CUI.icon('staff',{size:17,className:'appointment-filter-icon'})}<select id="stfFilter">${staffOpts(staffFilter,branchId)}</select></span>
+        <span id="calendarOnlyControls" class="appointment-toolbar" style="gap:6px;padding:0;border:0;background:transparent">
+          <button class="qbtn act" id="vDay">Day</button><button class="qbtn" id="vWeek">Week</button>
+          <button class="qbtn" id="wkToday">Today</button><button class="qbtn" id="wkPrev" aria-label="Previous period">${CUI.icon('back',{size:17})}</button><button class="qbtn" id="wkNext" aria-label="Next period">${CUI.icon('forward',{size:17})}</button>
+        </span>
         <details class="appointment-more"><summary class="qbtn">More</summary><div class="appointment-more-menu"><button class="qbtn" id="apPrint">Print</button><button class="qbtn" id="apCsv">Download CSV</button></div></details></div>
+        <div class="appointment-list-filters" id="appointmentListFilters" hidden>
+          <div><label for="appointmentListFrom">From</label><input type="date" id="appointmentListFrom" value="${todaySg}"></div>
+          <div><label for="appointmentListTo">To</label><input type="date" id="appointmentListTo" value="${shiftSgDateInput(todaySg,7)}"></div>
+          <div><label for="appointmentListStatus">Appointment status</label><select id="appointmentListStatus"><option value="">All statuses</option><option value="booked">Booked</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="no_show">No-show</option></select></div>
+          <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="appointmentListApply">Apply filters</button><button type="button" class="btn ghost sm" id="appointmentListClear">Clear filters</button></div>
+          <div class="row" style="grid-column:1/-1;gap:8px;flex-wrap:wrap"><button type="button" class="qbtn" data-appt-preset="today">Today</button><button type="button" class="qbtn" data-appt-preset="next7">Next 7 days</button><button type="button" class="qbtn" data-appt-preset="past7">Past 7 days</button><button type="button" class="qbtn" data-appt-preset="month">This month</button></div>
+        </div>
         <div id="calendarSelection"></div><div id="alist" style="margin-top:12px"><p class="muted small">Loading calendar…</p></div>
       </section>
     </div>`}`;
@@ -15907,6 +16035,8 @@ async function appointmentsPage(){
     ['Day','Week'].forEach(name=>$(`v${name}`)?.classList.toggle('act',next===name.toLowerCase()));
     $('appointmentCalendarSeg')?.setAttribute('aria-pressed',String(next!=='list'));
     $('appointmentListSeg')?.setAttribute('aria-pressed',String(next==='list'));
+    if($('calendarOnlyControls'))$('calendarOnlyControls').hidden=next==='list';
+    if($('appointmentListFilters'))$('appointmentListFilters').hidden=next!=='list';
     loadCalendar();
   }
   $('vDay').onclick=()=>setCalendarView('day');
@@ -15923,6 +16053,19 @@ async function appointmentsPage(){
     const blob=new Blob([csvRows(rows)],{type:'text/csv;charset=utf-8'});
     const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`${BRAND.downloadPrefix}-appointments.csv`;link.click();URL.revokeObjectURL(url);toast('Calendar CSV downloaded');
   };
+  if($('appointmentListApply'))$('appointmentListApply').onclick=()=>{listPage=0;loadList().catch(fail)};
+  if($('appointmentListClear'))$('appointmentListClear').onclick=()=>{
+    $('appointmentListFrom').value=todaySg;$('appointmentListTo').value=shiftSgDateInput(todaySg,7);$('appointmentListStatus').value='';
+    listPage=0;loadList().catch(fail);
+  };
+  document.querySelectorAll('[data-appt-preset]').forEach(button=>button.onclick=()=>{
+    const preset=button.dataset.apptPreset,now=sgDateInputValue();
+    if(preset==='today'){$('appointmentListFrom').value=now;$('appointmentListTo').value=now}
+    if(preset==='next7'){$('appointmentListFrom').value=now;$('appointmentListTo').value=shiftSgDateInput(now,7)}
+    if(preset==='past7'){$('appointmentListFrom').value=shiftSgDateInput(now,-7);$('appointmentListTo').value=now}
+    if(preset==='month'){$('appointmentListFrom').value=now.slice(0,8)+'01';$('appointmentListTo').value=now}
+    listPage=0;loadList().catch(fail);
+  });
   function updateCurrentTimeLine(){
     if(view!=='day'||addDays(todaySg,dayOffset)!==todaySg)return;
     const timeline=routeMain.querySelector('.day-timeline'),line=routeMain.querySelector('.day-now-line');
@@ -16126,14 +16269,20 @@ async function appointmentsPage(){
   async function loadList(){
     const stillCurrent=calendarGate.begin();
     const APPOINTMENT_LIST_PAGE_SIZE=100;
-    const query=staffQ(sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)',{count:'exact'})
-      .eq('business_id',S.biz.id).eq('branch_id',branchId)).order('starts_at',{ascending:false}).order('id');
+    let query=staffQ(sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)',{count:'exact'})
+      .eq('business_id',S.biz.id).eq('branch_id',branchId));
+    const from=$('appointmentListFrom')?.value,to=$('appointmentListTo')?.value,status=$('appointmentListStatus')?.value;
+    if(from)query=query.gte('starts_at',sgDateBoundary(from));
+    if(to)query=query.lt('starts_at',sgDateBoundary(to,1));
+    if(calendarServiceId)query=query.eq('service_id',calendarServiceId);
+    if(status)query=query.eq('status',status);
+    query=query.order('starts_at',{ascending:false}).order('id');
     const {data,error,count}=await query.range(listPage*APPOINTMENT_LIST_PAGE_SIZE,(listPage+1)*APPOINTMENT_LIST_PAGE_SIZE-1);
     if(!stillCurrent())return;if(error)throw error;calendarItems=data||[];
     const total=Math.max(0,Number(count||0)),pages=Math.max(1,Math.ceil(total/APPOINTMENT_LIST_PAGE_SIZE));
     if(listPage>=pages&&listPage>0){listPage=pages-1;loadList();return}
-    $('alist').innerHTML=calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Action</th></tr></thead><tbody>
-      ${calendarItems.map(a=>`<tr><td data-label="When">${esc(sgt(a.starts_at)?.slice(0,10))}<br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff">${esc(staffName[a.staff_id]||'—')}</td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Action"><button type="button" class="btn ghost sm" data-appointment="${a.id}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
+    $('alist').innerHTML=calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>Date & time</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+      ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
       :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`;
     wireAppointmentActions();
     if($('appointmentPrev'))$('appointmentPrev').onclick=()=>{if(listPage>0){listPage--;loadList()}};
@@ -17192,12 +17341,11 @@ async function reportsPage(){
   ].filter(Boolean);
   M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Reports</h1><p class="muted small">Choose a report category and run it for the selected period.</p></div></div>
     <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span></a>`:`<button type="button" class="report-decision-card" id="${item.id}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span></button>`).join('')}</div>
-    <div class="card report-scope-card"><div class="v150-soft-head"><b>Shared report filters</b><p>Use one period and branch for every report category.</p></div><div class="range" style="margin-top:10px">
+    <div class="card report-scope-card"><div class="range">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
       <span id="branchWrap"></span><button class="btn sm" id="rgo">Run report</button>
-      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div>
-      <p class="muted small" style="margin-top:8px">Operational flows use the selected Singapore period and branch. Business-wide current balances are labelled separately.</p></div>
+      <button class="btn ghost sm" id="rcsv" hidden disabled>Export sales CSV</button></div></div>
     <details class="card" id="moneyDetails"><summary style="cursor:pointer;font-weight:750">Money answer</summary>
       <div class="grid reports-grid" id="rbody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Choose a report category',body:'Select Sales & revenue, then run the report for this period.'})}</div></div></details>
     ${canReadModule('appointments')?`<details class="card" id="busyDetails"><summary style="cursor:pointer;font-weight:750">Busy-time answer</summary>
@@ -17581,13 +17729,23 @@ async function staffPerfPage(drillId){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const requestGate=createLatestRequestGate(isCurrent);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
+  let staffPerfSearch='',staffPerfSort='revenue',staffPerfDir='desc';
   M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Business-wide signed ledger records, revenue-qualified attributed amount and frozen commission — select a staff name to inspect the ledger records</p></div>
     <div class="range">
-      <button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
+      <button class="qbtn" data-d="1">Today</button><button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
       <input type="date" id="pf" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" value="${today}">
       <button class="btn sm" id="papply">Apply</button>
     </div></div>
     <p class="muted small" style="margin:-8px 0 14px">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
+    <div class="card staff-performance-filterbar" aria-label="Staff performance filters">
+      <label class="small">Staff search <input type="search" id="staffPerfSearch" placeholder="Name or email"></label>
+      <label class="small">Sort by <select id="staffPerfSort"><option value="revenue">Attributed revenue</option><option value="commission">Signed commission</option><option value="revenueRecords">Revenue-qualified records</option><option value="ledgerRecords">Ledger-record count</option></select></label>
+      <label class="small">Direction <select id="staffPerfDir"><option value="desc">High to low</option><option value="asc">Low to high</option></select></label>
+      <button class="btn sm" id="staffPerfFilterApply">Apply filters</button>
+      <button class="btn ghost sm" id="staffPerfFilterClear">Clear filters</button>
+    </div>
+    <div class="staff-rank-summary" id="staffRankSummary" aria-live="polite"></div>
+    <div class="staff-rank-basis" id="staffRankBasis"></div>
     <div class="card" id="pbody">${CUI.tableSkeleton({rows:5,columns:5})}</div>`;
   document.querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('.qbtn').forEach(x=>x.classList.remove('act'));b.classList.add('act');
@@ -17599,6 +17757,18 @@ async function staffPerfPage(drillId){
   };
   $('pf').onchange=$('pt').onchange=invalidate;
   $('papply').onclick=()=>load();
+  $('staffPerfFilterApply').onclick=()=>{
+    staffPerfSearch=String($('staffPerfSearch').value||'').trim().toLowerCase();
+    staffPerfSort=$('staffPerfSort').value||'revenue';
+    staffPerfDir=$('staffPerfDir').value||'desc';
+    load();
+  };
+  $('staffPerfSearch').onkeydown=e=>{if(e.key==='Enter')$('staffPerfFilterApply').click()};
+  $('staffPerfFilterClear').onclick=()=>{
+    staffPerfSearch='';staffPerfSort='revenue';staffPerfDir='desc';
+    $('staffPerfSearch').value='';$('staffPerfSort').value='revenue';$('staffPerfDir').value='desc';
+    load();
+  };
   async function load(){
     const isLatest=requestGate.begin(),fromDate=$('pf').value,toDate=$('pt').value;
     const range=reportRangeValidation(fromDate,toDate);
@@ -17627,10 +17797,40 @@ async function staffPerfPage(drillId){
     if(staffResult.error)return fail(staffResult.error);
     const {names,byStaff:agg,keys,totals}=staffPerformanceAggregation(sc,staffResult.data||[]);
     if(!keys.length){$('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No staff sales in this range',body:'Staff performance appears after sales are recorded with an assigned team member.'});return}
-    $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th>Signed revenue attributed</th><th>Signed commission</th></tr>
-      ${keys.map(k=>`<tr><td><a href="#/staffperf/${k==='__unattributed'?'unattributed':encodeURIComponent(k)}"><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></a></td>
+    const sortMap={
+      revenue:{key:'revenue',label:'attributed revenue'},
+      commission:{key:'commission',label:'signed commission'},
+      revenueRecords:{key:'revenueRecords',label:'revenue-qualified records'},
+      ledgerRecords:{key:'ledgerRecords',label:'ledger-record count'}
+    };
+    const selectedSort=sortMap[staffPerfSort]||sortMap.revenue;
+    const matchesSearch=k=>{
+      if(!staffPerfSearch)return true;
+      if(k==='__unattributed')return 'unattributed'.includes(staffPerfSearch);
+      return String(names[k]||'Team member').toLowerCase().includes(staffPerfSearch);
+    };
+    const staffKeys=keys.filter(k=>k!=='__unattributed'&&matchesSearch(k));
+    staffKeys.sort((a,b)=>{
+      const delta=Number(agg[a][selectedSort.key]||0)-Number(agg[b][selectedSort.key]||0);
+      if(delta!==0)return staffPerfDir==='asc'?delta:-delta;
+      return String(names[a]||'').localeCompare(String(names[b]||''));
+    });
+    const displayKeys=[...staffKeys,...(keys.includes('__unattributed')&&matchesSearch('__unattributed')?['__unattributed']:[])];
+    const winnerCard=(metric,title,formatter=money)=>{
+      const eligible=keys.filter(k=>k!=='__unattributed'&&Number(agg[k][metric]||0)>0);
+      if(!eligible.length)return `<article class="card"><span class="muted small">${esc(title)}</span><b>Not enough attributed data</b></article>`;
+      const top=Math.max(...eligible.map(k=>Number(agg[k][metric]||0)));
+      const winners=eligible.filter(k=>Number(agg[k][metric]||0)===top);
+      const label=winners.length>1?`Tie: ${winners.map(k=>names[k]||'Team member').join(', ')}`:(names[winners[0]]||'Team member');
+      return `<article class="card"><span class="muted small">${esc(title)}</span><b data-merchant-content>${esc(label)}</b><p class="muted small">${esc(formatter(top))}</p></article>`;
+    };
+    $('staffRankSummary').innerHTML=`${winnerCard('revenue','Highest attributed revenue')}${winnerCard('commission','Highest signed commission')}${winnerCard('revenueRecords','Most revenue-qualified records',value=>`${value} record${value===1?'':'s'}`)}`;
+    $('staffRankBasis').textContent=`Ranked by ${selectedSort.label}`;
+    if(!displayKeys.length){$('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No matching staff records',body:'Clear the staff search or adjust the selected range.'});return}
+    $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Rank</th><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th>Signed revenue attributed</th><th>Signed commission</th></tr>
+      ${displayKeys.map((k,index)=>`<tr><td>${k==='__unattributed'?'—':index+1}</td><td><a href="#/staffperf/${k==='__unattributed'?'unattributed':encodeURIComponent(k)}"><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></a></td>
         <td>${agg[k].ledgerRecords}</td><td>${agg[k].revenueRecords}</td><td>${money(agg[k].revenue)}</td><td>${money(agg[k].commission)}</td></tr>`).join('')}
-      <tr><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td><b>${money(totals.revenue)}</b></td><td><b>${money(totals.commission)}</b></td></tr></table></div>
+      <tr><td></td><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td><b>${money(totals.revenue)}</b></td><td><b>${money(totals.commission)}</b></td></tr></table></div>
       <p class="muted small" style="margin-top:10px">Revenue excludes rows whose immutable sale policy marks them non-revenue, such as gift-card issuance. Ledger records and frozen commission remain visible for traceability.</p>`;
   }
   load();
@@ -17727,6 +17927,24 @@ async function staffPerfDrill(idParam){
       }).join('')}</table></div>`;
   }
   load();
+}
+
+async function staffMembersPage(){
+  settingsActiveTab='team';
+  await settingsPage();
+  const page=M().querySelector('.settings-page');
+  if(page){
+    page.classList.add('staff-members-page');
+    page.setAttribute('data-staff-members-page','true');
+  }
+  const topbar=M().querySelector('.topbar');
+  if(topbar){
+    topbar.innerHTML=`<div><h1>Staff Members</h1><p class="muted small">Manage staff access, invitations, roles and module permissions.</p></div>`;
+  }
+  const teamTab=$('settab-team');
+  if(teamTab)teamTab.textContent='Staff Members';
+  const teamPanel=$('setpanel-team');
+  if(teamPanel)teamPanel.hidden=false;
 }
 
 /* ---------- daily report ---------- */
