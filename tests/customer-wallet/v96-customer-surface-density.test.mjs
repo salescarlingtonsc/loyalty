@@ -68,18 +68,20 @@ test('merchant feature groups and birthday participation render only from actual
   assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,2\)/);
   assert.match(merchant,/offers\.length\?`<section class="customer-promotions-section"/);
   assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
-  assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?[\s\S]*?:''\}/);
+  assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?[\s\S]*customerFeatureCardMarkupV156[\s\S]*Featured services and products will appear here after this business publishes them\./);
   assert.match(wallet,/customerFeatures\.customer_birthday_benefits&&actionableCard\?\.birthday_benefit&&actionableCard\.birthday_benefit\.status!=='unavailable'/);
 });
 
-test('successful empty feature feeds remove their section instead of inventing placeholder content',()=>{
+test('successful empty optional feature feeds remove sections, while featured products show an explicit empty state',()=>{
   const empty=section('async function walletSectionEmpty','function renderWalletAppointments');
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
+  const merchant=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
   assert.match(empty,/await sb\.rpc\('customer_portal_capabilities',\{p_business_slug:businessSlug\}\)/);
   assert.ok((empty.match(/walletSectionStillCurrent\(host,isCurrent\)/g)||[]).length>=2);
   assert.match(empty,/if\(!data\?\.\[capability\]\)\{host\.remove\(\);ensureWalletEmptyState\(businessSlug\);return\}/);
   assert.match(empty,/host\.remove\(\);ensureWalletEmptyState\(businessSlug\)/);
   assert.doesNotMatch(empty,/No rewards|No packages|No membership|No appointments/);
+  assert.match(merchant,/Featured services and products will appear here after this business publishes them\./);
 });
 
 test('enabled transaction history preserves a calm explicit zero-history state',()=>{

@@ -1049,6 +1049,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-home-nba{border-color:rgba(194,65,53,.22);background:linear-gradient(145deg,#fff 35%,var(--tint))}
 .customer-home-nba .customer-home-eyebrow{display:flex;align-items:center;gap:7px;color:var(--coral);font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.07em}
 .customer-next-action{margin-bottom:14px}
+.customer-home-summary{margin:0 0 16px;padding:0;overflow:hidden}
+.customer-home-summary>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:13px 16px;cursor:pointer;list-style:none;font-weight:750}
+.customer-home-summary>summary::-webkit-details-marker{display:none}
+.customer-home-summary>summary::after{content:'▾';color:var(--muted);transition:transform .16s var(--ease)}
+.customer-home-summary[open]>summary::after{transform:rotate(180deg)}
+.customer-home-summary-body{display:grid;gap:10px;max-height:min(30dvh,240px);overflow:auto;padding:0 16px 16px}
+.customer-home-summary-note{padding:12px;border:1px solid rgba(194,65,53,.18);border-radius:13px;background:linear-gradient(145deg,#fff 40%,var(--tint))}
+.customer-home-summary-note .customer-home-eyebrow{font-size:11px}
+.customer-home-summary .customer-home-quick{grid-template-columns:repeat(2,minmax(0,1fr))}
+.customer-my-rewards-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 12px}
+.customer-my-rewards-title h2{font-size:clamp(1.85rem,7vw,2.35rem);letter-spacing:-.045em}
 .customer-next-action-copy{min-width:0;flex:1 1 260px}
 .customer-next-action .btn{flex:0 0 auto}
 .customer-home-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -1084,6 +1095,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .wallet-history-disclosure{margin-top:14px;padding:0;overflow:hidden}.wallet-history-disclosure>summary{display:flex;align-items:center;gap:10px;min-height:56px;padding:16px 18px;cursor:pointer;font-weight:750;list-style-position:inside}.wallet-history-disclosure>summary .muted{font-weight:500}.wallet-history-disclosure[open]>summary{border-bottom:1px solid var(--hair)}.wallet-history-disclosure-body{display:grid;gap:14px;padding:14px}.wallet-history-disclosure .wallet-section{margin:0;box-shadow:none}
 .customer-perks-grid,.customer-offers-grid,.customer-rewards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin-top:12px}
 .customer-perk-card,.customer-offer-card,.customer-reward-card{overflow:hidden;min-height:120px;padding:16px;border:1px solid var(--hair);border-radius:15px;background:#fff}
+.customer-feature-card{min-height:0}
+.customer-feature-card b{display:block}
+.customer-feature-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px}
+.customer-feature-meta .pill{font-size:11px}
 .customer-perk-card img,.customer-offer-card img,.customer-reward-card img{width:calc(100% + 32px);height:132px;margin:-16px -16px 14px;object-fit:cover;background:var(--bg)}
 .customer-section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}.customer-section-title h2{font-size:1.35rem}
 .customer-programme-compact-head{display:flex;align-items:center;gap:12px;min-width:0;padding:14px 16px;border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:var(--shadow);margin-bottom:16px}
@@ -1164,6 +1179,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .customer-primary-nav a{flex-direction:column;gap:3px;min-height:58px;padding:6px 3px;font-size:10.5px;line-height:1.1}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
   .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
+  .customer-home-summary .customer-home-quick{grid-template-columns:1fr}.customer-home-summary-body{max-height:30dvh}
   .customer-programme-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(min-width:721px) and (max-width:1100px){.customer-programme-category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -3430,15 +3446,15 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
 const CUSTOMER_LOCALES=Object.freeze(['en']);
 const CUSTOMER_COPY=Object.freeze({
   en:Object.freeze({
-    home:'Home',programmes:'Programmes',bookings:'Bookings',scanQr:'Scan QR',
+    home:'Home',programmes:'My Rewards',bookings:'Bookings',scanQr:'Scan QR',
     notifications:'Notifications',accountMenu:'Open account menu',profilePasskeys:'Profile & passkeys',signOut:'Sign out',
-    language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to programmes',
-    chooseProgramme:'Choose a programme',yourProgrammes:'Your programmes',
+    language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
+    chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
     programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
-    addProgramme:'Add programme',openProgramme:'Open {business} programme',localBusiness:'Local business',
-    rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your programme home to see what is next.',
-    firstQuest:'Your first programme',scanLoyaltyQr:'Scan a loyalty QR',
-    firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified programme becomes your first programme.',
+    addProgramme:'Add rewards',openProgramme:'Open {business} rewards',localBusiness:'Local business',
+    rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your rewards home to see what is next.',
+    firstQuest:'Your first rewards',scanLoyaltyQr:'Scan a loyalty QR',
+    firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified business becomes your first reward account.',
     scanBusinessQr:'Scan business QR',qrOnlyHelp:'Businesses can only be added with a business-issued QR.',
     balance:'Balance',nextReward:'Next reward',tierProgress:'Tier progress',benefits:'Benefits & perks',
     offers:'Birthday & seasonal offers',rewards:'Rewards',activityHistory:'Activity & history',
@@ -3447,10 +3463,10 @@ const CUSTOMER_COPY=Object.freeze({
     retry:'Try again',bookNow:'Book now',requestVisit:'Request your next visit with {business}.',
     points:'points',stamps:'stamps',currentTier:'Current tier',nextTier:'Next: {tier}',
     terms:'Terms',availableNow:'Available now',
-    loadingProgramme:'Loading programme…',loadingProgrammes:'Loading your programmes…',
+    loadingProgramme:'Loading rewards…',loadingProgrammes:'Loading My Rewards…',
     successSounds:'Success sounds',soundOff:'Off by default',soundOn:'On',
     soundHelp:'Optional. Sounds stay off when reduced motion is requested.',
-    merchantProgramme:'{business} programme',featured:'Featured products & services',
+    merchantProgramme:'{business} rewards',featured:'Featured products & services',
     noFeatured:'This business has not published featured items yet.'
   })
 });
@@ -3506,7 +3522,7 @@ function openCustomerJoinScanner(){
   overlay.className='modal appointment-detail-modal customer-scan-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add a programme</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add rewards</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
     <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
     <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
     <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*" capture="environment">
@@ -3784,11 +3800,11 @@ async function renderCustomerProgrammes(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
   renderCustomerShell({active:'programmes',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:`<div class="card"><p class="muted">${esc(ct('loadingProgrammes'))}</p></div>`});
-  const scanGuide=`<div class="customer-programme-guide" role="note">${CUI.icon('scan',{size:22})}<div><b>Joining a new programme</b><p class="muted small" style="margin-top:4px">Visit the business and scan its Peekaa QR. After you sign in, the verified programme appears here automatically.</p></div></div>`;
+  const scanGuide=`<div class="customer-programme-guide" role="note">${CUI.icon('scan',{size:22})}<div><b>Joining a new rewards account</b><p class="muted small" style="margin-top:4px">Visit the business and scan its Peekaa QR. After you sign in, the verified rewards account appears here automatically.</p></div></div>`;
   if(context.features.customer_actionable_wallet===true){
     const {data,error}=await sb.rpc('customer_get_actionable_wallet');
     if(!isCurrent())return;
-    if(error)return renderCustomerWalletRetry('Your programmes are temporarily unavailable.',null,()=>renderCustomerProgrammes());
+    if(error)return renderCustomerWalletRetry('Your rewards are temporarily unavailable.',null,()=>renderCustomerProgrammes());
     const cards=Array.isArray(data?.cards)?data.cards:[];
     if(!cards.length){renderCustomerFirstProgrammeQuest();return}
     renderActionableWalletHome(data);
@@ -3800,12 +3816,12 @@ async function renderCustomerProgrammes(){
   ]);
   if(!isCurrent())return;
   const {data,error}=walletResult;
-  if(error)return renderCustomerWalletRetry('Your programmes are temporarily unavailable.',null,()=>renderCustomerProgrammes());
+  if(error)return renderCustomerWalletRetry('Your rewards are temporarily unavailable.',null,()=>renderCustomerProgrammes());
   const cards=mergeCustomerProgrammeSelectorMediaV96(
     Array.isArray(data)?data:[],selectorMediaResult.error?null:selectorMediaResult.data
   );
   if(!cards.length){renderCustomerFirstProgrammeQuest();return}
-  $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Programmes</h1><p class="muted">Every verified business keeps its rewards and balances separate.</p></div></header>${scanGuide}
+  $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>${esc(ct('yourProgrammes'))}</h1><p class="muted">Every verified business keeps its rewards and balances separate.</p></div></header>${scanGuide}
     ${customerProgrammeGridMarkupV96(cards)}`;
   focusCustomerRoute();
 }
@@ -4514,6 +4530,34 @@ function openCustomerPromotionDetailsV104(card){
   });
   $('customerPromotionDetailsClose').onclick=$('customerPromotionDetailsDone').onclick=close;
 }
+function customerFeaturePriceLabelV156(item={}){
+  const cents=Number(item.price_cents??item.unit_price_cents??item.default_price_cents??item.amount_cents??0);
+  const currency=String(item.currency||item.currency_code||'SGD').toUpperCase();
+  return Number.isFinite(cents)&&cents>0?`${currency} ${(cents/100).toFixed(2)}`:'';
+}
+function customerFeatureDurationLabelV156(item={}){
+  const minutes=Number(item.duration_minutes??item.minutes??0);
+  return Number.isFinite(minutes)&&minutes>0?`${minutes} min`:'';
+}
+function customerFeatureTypeLabelV156(item={}){
+  const type=String(item.entity_type||item.kind||item.type||'').toLowerCase();
+  if(type.includes('product'))return 'Product';
+  if(type.includes('service'))return 'Service';
+  return 'Available';
+}
+function customerFeatureCardMarkupV156(item={}){
+  const image=customerMediaUrlV95(item?.image_url);
+  const price=customerFeaturePriceLabelV156(item);
+  const duration=customerFeatureDurationLabelV156(item);
+  const label=customerFeatureTypeLabelV156(item);
+  const description=String(item.description||item.tagline||'').trim();
+  return `<article class="customer-reward-card customer-feature-card">
+    ${image?`<img src="${esc(image)}" alt="" loading="lazy">`:''}
+    <b>${esc(item.name||ct('featured'))}</b>
+    <div class="customer-feature-meta"><span class="pill">${esc(label)}</span>${price?`<span class="pill">${esc(price)}</span>`:''}${duration?`<span class="pill">${esc(duration)}</span>`:''}</div>
+    ${description?`<p class="muted small" style="margin-top:7px">${esc(description)}</p>`:''}
+  </article>`;
+}
 function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=null}={}){
   if(!prompt?.event_id||!prompt?.promotion_id||!businessSlug||!Array.isArray(items))return false;
   const promotionId=String(prompt.promotion_id);
@@ -4578,7 +4622,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${currentTierBenefits.length?`<section class="card" style="margin-top:14px"><h2>${esc(currentTierLabel||'Current tier')} benefits</h2><ul class="rec-why" style="margin-top:10px">${currentTierBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul></section>`:''}
     ${offers.length?`<section class="customer-promotions-section" aria-labelledby="latestOffersTitle"><div class="customer-promotions-head"><div><p class="customer-quest-kicker">From ${esc(business.name||ct('localBusiness'))}</p><h2 id="latestOffersTitle">Latest offers</h2></div></div><div class="customer-promotions-grid">${offers.map(item=>customerPromotionCardV104(item,business,bookingEnabled)).join('')}</div></section>`:''}
     ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><a class="btn" href="#/b/${encodeURIComponent(business.slug)}">${esc(ct('bookNow'))}</a></div></section>`:''}
-    ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products,...presentation.services].map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('featured'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}</article>`).join('')}</div>`:''}
+    ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
 function actionableWalletCardMarkup(card,{detail=false}={}){
@@ -4684,18 +4728,25 @@ function customerProgrammeGridMarkupV96(cards=[]){
       <div class="customer-programme-category-grid">${grouped.get(category).map(customerProgrammeTileMarkupV96).join('')}</div>
     </section>`).join('')}</div>`;
 }
+function customerLinkedRewardsLabelV156(count=0){
+  const safeCount=Math.max(0,Number(count)||0);
+  return `${safeCount} linked reward account${safeCount===1?'':'s'}`;
+}
+function customerMyRewardsHeadingV156(count=0){
+  return `<div class="customer-my-rewards-title"><div><h2>${esc(ct('yourProgrammes'))}</h2><p class="muted small">${esc(customerLinkedRewardsLabelV156(count))}</p></div></div>`;
+}
 function customerHomeNextActionMarkup(card){
   const business=card?.business||{},reason=String(card?.action?.reason||'');
   const guidance={
     reward_available:['Use your ready reward','View reward'],
-    expiring_within_7_days:['Use your points before they expire','View programme'],
-    expiring_within_30_days:['Plan to use your points soon','View programme'],
+    expiring_within_7_days:['Use your points before they expire','View rewards'],
+    expiring_within_30_days:['Plan to use your points soon','View rewards'],
     one_qualifying_visit_remaining:['One more visit moves you forward','View progress'],
     reward_progress:['Keep going toward your next reward','View progress'],
     birthday_benefit_expiring_within_7_days:['Use your birthday benefit soon','View benefit'],
     birthday_benefit_available:['Your birthday benefit is ready','View benefit']
   };
-  const [title,cta]=guidance[reason]||['You’re all caught up','View programme'];
+  const [title,cta]=guidance[reason]||['You’re all caught up','View rewards'];
   const detail=reason?actionableWalletActionText(card):'No urgent action is available right now.';
   const slug=encodeURIComponent(business.slug||'');
   return `<section class="card customer-home-nba customer-next-action" aria-labelledby="customerNextActionTitle">
@@ -4711,9 +4762,15 @@ function renderActionableWalletHome(payload){
   const cards=Array.isArray(payload?.cards)?payload.cards:[];
   if(!cards.length){renderCustomerFirstProgrammeQuest();return}
   $('walletBody').innerHTML=`<header class="customer-page-head"><div><p class="customer-quest-kicker">${esc(ct('chooseProgramme'))}</p><h1>${esc(ct('yourProgrammes'))}</h1><p class="muted">${esc(ct('programmesIntro'))}</p></div><button class="btn sm" id="customerHomeScan" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button></header>
-    ${customerHomeNextActionMarkup(cards[0])}
-    ${payload?.truncated?`<div class="card" role="status"><p class="muted small">Showing the 100 highest-priority linked programmes.</p></div>`:''}
-    ${customerProgrammeGridMarkupV96(cards)}`;
+    ${customerMyRewardsHeadingV156(cards.length)}
+    ${customerProgrammeGridMarkupV96(cards)}
+    <details class="card customer-home-summary">
+      <summary><span>${CUI.icon('forward',{size:17})} Guidance &amp; bookings</span><span class="muted small">Show</span></summary>
+      <div class="customer-home-summary-body">
+        ${customerHomeNextActionMarkup(cards[0])}
+        ${payload?.truncated?`<div class="customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}
+      </div>
+    </details>`;
   $('customerHomeScan').onclick=openCustomerJoinScanner;
 }
 async function renderCustomerWallet(businessSlug=null){
@@ -4792,9 +4849,15 @@ async function renderCustomerWallet(businessSlug=null){
       ?bookingCount?`${bookingCount}${bookingsTruncated?'+':''} active or upcoming`:'No active or upcoming bookings'
       :'Booking summary is temporarily unavailable.';
     $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>${esc(BRAND.customerLabel)}</h1><p class="muted">Each business keeps its own rewards and balances.</p></div></header>
-      <section class="card customer-home-nba"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>Next best action</span></p><h2 style="margin-top:12px">Programme guidance is unavailable</h2><p class="muted small" style="margin-top:6px">Your balances remain visible below, but ${esc(BRAND.productName)} cannot safely rank an action right now.</p></section>
-      <div class="customer-home-quick" style="margin:14px 0"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>Rewards &amp; value</b><p class="muted small">${cards.length} linked programme${cards.length===1?'':'s'}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${bookingSummary}</p></div></a></div>
-      <h2 style="margin:20px 0 10px">Programmes</h2>${customerProgrammeGridMarkupV96(cards)}
+      ${customerMyRewardsHeadingV156(cards.length)}
+      ${customerProgrammeGridMarkupV96(cards)}
+      <details class="card customer-home-summary">
+        <summary><span>${CUI.icon('forward',{size:17})} Guidance &amp; bookings</span><span class="muted small">Show</span></summary>
+        <div class="customer-home-summary-body">
+          <section class="customer-home-summary-note"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>Next best action</span></p><h2 style="margin-top:10px">Rewards guidance is unavailable</h2><p class="muted small" style="margin-top:6px">Your balances remain visible, but ${esc(BRAND.productName)} cannot safely rank an action right now.</p></section>
+          <div class="customer-home-quick"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>Rewards &amp; value</b><p class="muted small">${esc(customerLinkedRewardsLabelV156(cards.length))}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${bookingSummary}</p></div></a></div>
+        </div>
+      </details>
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}`;
     focusCustomerRoute();
     return;
