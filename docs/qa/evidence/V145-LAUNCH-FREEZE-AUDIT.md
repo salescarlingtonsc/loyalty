@@ -3,17 +3,20 @@
 - Date: 2026-08-03
 - Branch: `codex/v145-launch-freeze-reconciled`
 - Worktree: `/Users/cs/Downloads/loyalty-main-v145-reconciled`
-- Worktree HEAD: V141 production record `c7a6e926b039dae4c5d4600a212b35433f84cb8d`
+- Released commit: `addb6f0069107214354f2fbff1db62bc04cb95c5`
 - Merge base: `origin/main` `dcb01c13035897d3d439ad1b551981a0e881a3c6`
-- Candidate scope: reconciled uncommitted V144 plus V145 changes and evidence
+- Release branch: `origin/codex/v145-launch-freeze-reconciled`
+- Candidate scope: reconciled V144 plus V145 changes and evidence
 
 Current evidence state: `VERIFIED_DATABASE`. The reconciled migration chain,
 disposable database suites, current desktop/390px browser acceptance, complete
-validation/build and strict control inventory pass on this exact uncommitted
+validation/build and strict control inventory pass on the exact released
 candidate. Sol independently accepted the frozen candidate on 2026-08-03 with
 no P0/P1/P2 release-blocking findings after repeating the source, database and
-browser gates. This state is still not `CLOSED`, authenticated-target proof or
-production proof.
+browser gates. The exact web artifact and V145 database migration are now in
+production, but this row remains below `CLOSED`: authenticated owner/staff/
+customer target proof is incomplete, and owner self-service checkout is still
+blocked by the empty live Stripe plan catalogue documented below.
 
 Scope is deliberately frozen. This candidate adds no product feature, module,
 dashboard, route or workflow. It corrects existing reporting and retention
@@ -210,14 +213,63 @@ instead of treating a drawn canvas as numeric proof.
   non-semantic-click findings.
 - `git diff --check` passes.
 
+## Production release and post-deployment verification
+
+The owner supplied scoped V145 release approval after Sol accepted the exact
+candidate.
+
+- Commit `addb6f0069107214354f2fbff1db62bc04cb95c5` was pushed to
+  `origin/codex/v145-launch-freeze-reconciled`.
+- Production already contained the exact V144 migration as
+  `20260802180222_nestly_v144_self_serve_subscription_consent`; its legal
+  hashes, prospective policy default, first-paid evidence table, RLS/grants,
+  guards and activation bindings matched the reviewed migration, so it was not
+  replayed.
+- The exact reviewed V145 migration was applied once as
+  `20260803050954_nestly_v145_launch_freeze_metrics`. Post-apply inspection
+  found all seven required functions, the eleven-column `sale_commission` view
+  ending in `counts_as_revenue`, `security_invoker=on`, one system-attributed
+  launch-safety audit and zero active incomplete rules without an unlifted
+  safety pause.
+- Git-created preview `dpl_CXgLCS4YehWw4BCqgNQqgQzPhUZG` was promoted as
+  production deployment `dpl_BX8Ahv9Hk3WHhJmyNUY79UnHLqiw`. It reached
+  `READY` with no alias error and serves `www.peekaa.asia`, `peekaa.asia` and
+  the legacy domains.
+- `peekaa.asia`, `nestly.asia` and `www.nestly.asia` return `308` to canonical
+  `https://www.peekaa.asia/`. Home, `/business`, `/admin`, Privacy, Terms, Data
+  request, runtime config, manifest, service worker and `/api/build` return
+  `200`.
+- `/api/build` reports commit
+  `addb6f0069107214354f2fbff1db62bc04cb95c5`, short SHA `addb6f006910` and
+  environment `production`. The live `index.html` SHA-256 is the independently
+  accepted `84cfe45808dd4529da43ae816e4649f5ab847974618c87a7e810ce1c7878609f`.
+  Cloudflare changes only the public legal pages' email link into its email
+  protection markup; a direct diff found no other legal-content change.
+- The production CSP, HSTS, frame denial, content-type, referrer and permissions
+  headers are present. The service worker remains `no-cache, no-store` and has
+  root scope. The manifest names and icons are Peekaa.
+- Live browser checks at desktop and 390px found meaningful content, the exact
+  production build label, no framework overlay, no horizontal overflow and no
+  browser console warning/error.
+- Vercel reported no runtime errors in the post-release hour. The exact
+  deployment's observed runtime requests were all HTTP `200`; its build
+  completed without an error.
+- Supabase advisors reported no `ERROR` or `FATAL` finding. Existing warning/
+  information inventory remains broad; V145's authenticated `SECURITY DEFINER`
+  RPC warnings correspond to the reviewed tenant/permission-gated RPC design
+  and were not changed during the frozen release.
+
 ## Remaining boundary
 
-This is local browser and disposable-database evidence, not authenticated target
-or production proof. It does not close unrelated owner-ledger rows. The live
-Stripe catalogue and signed webhook remain external production configuration
-evidence for self-service payment; V145 neither fabricates nor bypasses them.
-Sol independently accepted the exact frozen candidate on 2026-08-03 with no
-P0/P1/P2 release-blocking findings. A subsequent owner approval scoped
-specifically to V145 remains required before any commit, push, merge, migration
-or production deployment. No release action or production write is authorized
-by this audit alone.
+Production browser verification renders **Subscription setup needs
+configuration** at `/business`. Read-only target inspection confirms seven
+published active sectors but **zero** complete active Stripe plans: annual = 0,
+monthly = 0. The billing command, reconciliation and webhook Edge Functions are
+active, but no real owner can select a sellable plan or reach Checkout until the
+live catalogue is configured and its signed webhook/payment path is verified.
+The fail-closed state creates no workspace or charge.
+
+This production release therefore verifies the exact V145 artifact and database
+state, but does not close `SELF-SERVE-CONSENT-002`, does not prove authenticated
+owner/staff/customer target journeys, and does not make the whole product launch
+ready. Unrelated owner-ledger rows remain independently governed.
