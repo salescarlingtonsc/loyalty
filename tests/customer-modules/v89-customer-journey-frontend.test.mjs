@@ -232,7 +232,9 @@ test('redemption is pending until merchant scan and scanner supports iPhone came
   assert.match(app,/p_branch:branchId/);
   assert.match(app,/Scan customer QR/);
   assert.match(app,/jsqr@1\.4\.0\/dist\/jsQR\.js/);
-  assert.match(app,/integrity="sha384-b5Ya4Bq3qCyz39m2ISh\+4DxjAIljdeFwK\/BsXLuj9gugaNwAcj\/ia15fxNZL9Nlx"/);
+  assert.match(app,/loadScannerLibrary=\(\)=>loadOptionalLibrary\(\{[\s\S]*?integrity:'sha384-b5Ya4Bq3qCyz39m2ISh\+4DxjAIljdeFwK\/BsXLuj9gugaNwAcj\/ia15fxNZL9Nlx'/);
+  assert.match(app,/script\.crossOrigin='anonymous'/);
+  assert.match(app,/script\.integrity=integrity/);
   assert.match(app,/getUserMedia\(\{video:\{facingMode:\{ideal:'environment'\}\}/);
   assert.match(app,/Camera access was not available\. Choose a QR image/);
   assert.match(app,/id="merchantScannerImage" type="file" accept="image\/\*"/);

@@ -2649,6 +2649,22 @@
     {
       "id": "browser.rpc:app/index.html:request_account_deletion_v131",
       "reason": "V131 idempotent privacy-operations intake. It appends one non-economic pending deletion request after explicit confirmation and does not immediately delete or mutate identities, tenant records, sales, payments, points, rewards, packages, gift cards, stored value, or any customer-value ledger."
+    },
+    {
+      "id": "browser.rpc:app/index.html:business_get_loyalty_tiers_v143",
+      "reason": "V143 owner-only read projection of the active loyalty tier-version inventory, including live, scheduled, ended, and paused configuration rows. It performs no DML and exposes no customer-value ledger."
+    },
+    {
+      "id": "browser.rpc:app/index.html:customer_get_effective_tier_v143",
+      "reason": "V143 verified-customer read projection. It calculates current and next tier progress from only currently effective published tiers, performs no DML, and exposes no merchant configuration inventory or customer-value ledger entries."
+    },
+    {
+      "id": "browser.rpc:app/index.html:add_recommended_loyalty_tiers_v143",
+      "reason": "V143 owner-only atomic configuration writer. One stable operation key creates or resumes one unpublished draft and adds the three recommended tiers in a single transaction; exact replay returns immutable evidence and a stale fresh key cannot duplicate an already-populated tier draft. It cannot publish or mutate customer-value ledgers."
+    },
+    {
+      "id": "browser.rpc:app/index.html:save_loyalty_tier_draft_v143",
+      "reason": "V143 owner-only optimistic configuration writer. It changes only an unpublished loyalty tier draft and its configuration snapshot hash; it cannot publish, redeem, award points, create an entitlement, or mutate any customer-value ledger."
     }
   ]
 }

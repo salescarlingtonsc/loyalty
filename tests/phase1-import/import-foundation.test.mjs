@@ -73,7 +73,7 @@ test('staff, branch and reservation upload controls use the shared importer', as
   const app = await read('app/index.html');
   for (const entity of ['staff', 'branches', 'reservations']) {
     assert.match(app, new RegExp(`${entity}:\\{title:`));
-    assert.match(app, new RegExp(`importBtn\\('${entity}'\\)`));
+    assert.match(app, new RegExp(`importBtn\\('${entity}'(?:,[^)]*)?\\)`));
   }
   assert.match(app, /Imported people are roster records; invite them separately/i);
 });

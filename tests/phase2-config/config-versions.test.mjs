@@ -88,5 +88,6 @@ test('tier multipliers are immutable configuration, not direct browser writes', 
   assert.match(sql, /revoke insert,update,delete,truncate on table public\.loyalty_tiers[\s\S]*from public,anon,authenticated/i);
   assert.match(sql, /insert into public\.loyalty_tier_versions[\s\S]*where config_version_id=v_base/i);
   assert.doesNotMatch(app, /from\('loyalty_tiers'\)\.(?:insert|update|delete)/i);
-  assert.match(app, /save_loyalty_config_draft',[\s\S]*p_config:\{tier\}/i);
+  assert.match(app, /const saveArgs=\{p_version:versionId,p_tier:tier,p_expected_snapshot_hash:/i);
+  assert.match(app, /sb\.rpc\('save_loyalty_tier_draft_v143',saveArgs\)/i);
 });

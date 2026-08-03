@@ -14,12 +14,13 @@ const route=section('async function route','function actionableWalletExpiryText'
 test('Promotions is an owner-only submodule reached from the consolidated Grow overview',()=>{
   assert.match(route,/pageKey==='promotions'&&S\.myRole!=='owner'/);
   assert.match(route,/Only the owner can publish promotions/);
-  assert.match(app,/title:'Promotions',copy:'Publish a timely offer when it supports the core reward programme\.'/);
-  assert.match(app,/optionalTools\.map\(tool=>[\s\S]*href="#\/\$\{tool\.key\}"/);
+  assert.match(app,/programmeRow\(\{kind:'promotions'/);
+  assert.match(app,/Customers see at most two current offers/);
+  assert.match(app,/href:'#\/promotions'/);
   assert.match(app,/>Grow<\/a>/);
   assert.match(app,/promotions:promotionsPage/);
   assert.doesNotMatch(app,/const ALLMODS=\[[^\]]*'promotions'/);
-  assert.match(app,/key:'promotions'[\s\S]*title:'Promotions'/);
+  assert.match(app,/programmeRow\(\{kind:'promotions'[\s\S]*title:'Promotions'/);
 });
 
 test('owner follows one factual offer, wording, photo, preview, and explicit publish flow',()=>{

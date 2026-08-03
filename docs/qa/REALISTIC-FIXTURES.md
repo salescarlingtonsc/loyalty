@@ -67,6 +67,13 @@ Configuration cases:
   eligible column. Both staff/date/time values must be prefilled from the
   selected calendar cell, conflicts and Supplier training must stay
   non-selectable, and the saved appointments must survive refresh.
+- Team and access setup: Olivia can add roster-only therapist **Nora Lee** with
+  no login, or add **Aisha Rahman** with an email invitation and explicit
+  Appointments `rw`, Customers `r`, Loyalty `r`, and Finance `off`. The same
+  Team & permissions surface distinguishes employment/roster records from app
+  access, exposes invite state, and reflects permission changes after Aisha
+  refreshes. Maya may view the team but cannot grant access; Farah cannot open
+  the owner-only writer.
 - Profitability setup: Glow serum sells for SGD 68 with SGD 24 product cost.
   The owner must see SGD 44 gross profit and about 64.7% gross margin before
   choosing a reward. A reward proposal must state its cost assumption and show
@@ -84,6 +91,12 @@ Configuration cases:
   stable-ID editor routing rather than name matching. A read-only manager sees
   the same published overview with no edit controls; a draft change must not
   appear to customers until explicit publication and owner/customer refresh.
+- Reward source and starter tiers: an editable reward can remain custom or
+  start from **Glow serum (retail)** / **Spa ritual 60**. Selection fills an
+  editable customer reward name, description, selling price and company cost
+  without publishing. With no tiers in the current draft, one owner action
+  creates unpublished **Gold**, **Platinum** and **Diamond** tiers exactly once;
+  thresholds and multiple benefit lines remain editable before publish.
 - Launch-freeze reward image: one existing reward has a synthetic published
   image reference. The Grow editor must not expose a storage path/URL field or
   internal storage-contract wording; editing that reward preserves the exact
@@ -133,6 +146,21 @@ Configuration cases:
   joined dates. Run owner, manager and front desk at 1440px, 1180px iPad-class
   and 390px; include report, inactivity, item-detail, join-date and expiry
   error/retry states plus no-expiry/no-programme comparisons.
+- Same-device QR and owner preview: Olivia, Farah and `CUS-MEI` each use a
+  separate persistent browser profile. A customer join QR uses the current
+  canonical/same-origin handoff without losing an existing session. Reload,
+  tab reopen and PWA relaunch preserve the persona until explicit local
+  sign-out. **Preview customer view** opens a clearly labelled, non-mutating
+  preview from Olivia's owner session and never asks her to authenticate as a
+  customer or exposes customer writers/personal balances.
+- Promotions discovery: the Grow/settings hub provides one clear route to the
+  existing company promotion editor. Olivia sees draft, published, unavailable
+  and retry states; the customer projection still shows no more than the two
+  current image-backed offers governed by v104.
+- Public-route performance: compare bare and canonical root, customer join,
+  public booking and business workspace at cold/warm cache. Each route leaves
+  its skeleton for a truthful ready/empty/error state, preserves hash/query,
+  and unrelated heavy dependencies do not block the initial route.
 
 Promotion cases:
 
@@ -230,6 +258,58 @@ All automated credentials must come from a non-committed test-secret mechanism.
 | `PLAT-OVERDUE-14` | Half-yearly firm on day 14 overdue; owner access pause expected. |
 | `PLAT-REFUND` | Annual invoice refunded after payment; GST and refund excluded from commission. |
 | `PLAT-STAFF-LEFT` | Consultant departed before eligibility anniversary; commission returns to company. |
+
+### `PLAT-PROSPECT-GLOW` — assisted-sales prospect persistence
+
+- Prospect: Glow Advisory Pte. Ltd., synthetic UEN `202688888G`.
+- Primary contact: Priya Nair with synthetic `@peekaa.invalid` email and a
+  synthetic Singapore mobile ending 7788.
+- Assigned consultant: Sarah; starting stage **New Lead**; tags
+  `spa, warm-referral` normalized once each.
+- Submit once, simulate a lost response after persistence, and retry with the
+  same request identity. The board and database must still contain one prospect
+  and one creation audit. Reusing the key with another company/UEN must fail
+  without mutation.
+- The operator may choose **Kanban** or **List** without changing the filtered
+  records. The selected view survives refresh/back navigation. An unassigned
+  Sales user cannot read or change the row; Sarah can read the assigned row but
+  receives only her configured onboarding actions.
+
+### `PLAT-FINANCE-AUG26` — Peekaa platform P&L, invoice and receipt
+
+- Reporting period: 1–31 August 2026, Singapore time, SGD.
+- Radiant Skin Studio pays one annual SGD 1,188.00 invoice with SGD 0.00 GST;
+  Harbour Kopi has one pending monthly SGD 149.00 invoice excluded from cash.
+- Northstar Fitness has one paid SGD 169.00 invoice followed by a provider-
+  confirmed SGD 20.00 partial refund; a duplicate event has zero second effect.
+- Platform expenses: SGD 280.00 software, SGD 120.00 marketing and one reversed
+  SGD 45.00 duplicate software expense. The reversal keeps immutable source and
+  actor evidence but contributes SGD 0.00 to the active expense total.
+- The P&L must reconcile paid cash SGD 1,357.00 less refunds SGD 20.00 less
+  active expenses SGD 400.00 to net cash SGD 937.00. Pending SGD 149.00 is
+  labelled outstanding and excluded from cash and net cash.
+- Paid rows expose exact provider invoice/document actions; pending rows never
+  display a receipt. Unsafe or missing provider document URLs fail closed.
+
+### `PLAT-BOOKS-FY26` — Peekaa automated books and controlled documents
+
+- Entity: synthetic Peekaa Singapore private company, SGD functional currency,
+  31 December FYE, explicitly **not GST-configured** until registration evidence
+  is supplied. No tax invoice or InvoiceNow transmission may be claimed while
+  that configuration is absent.
+- The `PLAT-FINANCE-AUG26` invoices, payment, refund and active SGD 400.00
+  expenses post once into balanced journals. Credit/debit/write-off accounting
+  adjustments remain non-cash while their accrual accounts still reconcile.
+- One synthetic SGD 250.00 non-subscription invoice to Meridian Wellness Pte.
+  Ltd. is issued, partially paid SGD 100.00, then corrected by an immutable SGD
+  50.00 credit note. The remaining receivable is SGD 100.00. Each issued
+  document has a unique sequential number and exact journal link.
+- Repeating an operation with the same identity returns the original document
+  and journal. Reusing that identity with changed values fails without mutation.
+  Corrections create linked reversal/replacement records; posted rows are not
+  updated or deleted.
+- A locked August period rejects new/backdated posting. Super Admin may read;
+  delegated Admin, Sales, anonymous and tenant users are denied.
 
 ### `SPA-GLOW-BILLING` — launch pricing and capacity
 

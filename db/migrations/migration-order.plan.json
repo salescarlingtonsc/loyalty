@@ -1059,6 +1059,24 @@
       "path": "db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql",
       "semanticVersion": "v145",
       "proposedDeployVersion": "20260803160000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v146_platform_finance.sql",
+      "semanticVersion": "v146",
+      "proposedDeployVersion": "20260803170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v147_platform_accounting.sql",
+      "semanticVersion": "v147",
+      "proposedDeployVersion": "20260803180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v148_owner_launch_closure.sql",
+      "semanticVersion": "v148",
+      "proposedDeployVersion": "20260803190000"
     }
   ]
 }

@@ -37,7 +37,9 @@ test('programme balance is compact, formatted once, and tier progress is truthfu
   assert.equal(helpers.customerTierHasProgressV103({progress_percent:0}),false);
   assert.equal(helpers.customerTierHasProgressV103({current:'Gold'}),true);
   assert.equal(helpers.customerTierHasProgressV103({progress_percent:25}),true);
-  assert.match(merchant,/hasTier&&String\(tier\.current\|\|tier\.label\|\|''\)\.trim\(\)/);
+  assert.match(merchant,/const currentTierLabel=String\(tier\.current\?\.label\|\|tier\.current\|\|tier\.label\|\|''\)\.trim\(\)/);
+  assert.match(merchant,/currentTierBenefits=Array\.isArray\(tier\.current\?\.benefits\)/);
+  assert.match(merchant,/hasTier&&currentTierLabel/);
   assert.doesNotMatch(merchant,/role="progressbar"/);
   assert.doesNotMatch(merchant,/customer-balance-panel/);
   assert.doesNotMatch(merchant,/Every visit still counts|ct\('noTier'\)/);

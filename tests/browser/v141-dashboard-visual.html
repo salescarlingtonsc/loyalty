@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="794663765e1f5a4dc049d8341f8a15abd57c8d6baa81d0cfe595d0c89fe1723f"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="fca96e74e4a751b593142d38491ee316108c69e4bae06ba152cfdbea471094f0"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -111,6 +111,12 @@ tr.click:hover td{background:#FBFAF8}
   padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right))
     max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}
 .auth-card{width:420px;max-width:100%;border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:30px}
+.business-session-context{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin:18px 0;padding:12px 14px;border:1px solid var(--hair);border-radius:12px;background:#FBFAF8;text-align:left}
+.business-session-context>div{min-width:0}.business-session-context span{display:block;color:var(--muted);font-size:11.5px}
+.business-session-context strong{display:block;margin-top:2px;overflow-wrap:anywhere;font-size:13px}
+.business-session-context .btn{flex:0 0 auto;min-height:44px}
+@media(max-width:480px){.business-session-context{align-items:stretch;flex-direction:column}.business-session-context .btn{width:100%}}
 .legal-links{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:0 6px;margin-top:18px;
   color:var(--muted);font-size:11.5px;min-width:0;max-width:100%}
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
@@ -1475,6 +1481,8 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     const ages={'<25':ac.under_25||0,'25–34':ac.age_25_34||0,'35–44':ac.age_35_44||0,
       '45–54':ac.age_45_54||0,'55+':ac.age_55_plus||0,'—':ac.unknown||0};
     const gc=d.gender_counts||{},genders={Female:gc.female||0,Male:gc.male||0,Other:gc.other||0,Unknown:gc.unknown||0};
+    try{await loadChartLibrary()}catch{if(isCurrent())status.innerHTML='<div class="err" role="status">Charts could not load. The totals above are still current. <button type="button" class="btn ghost sm" id="dashboardChartRetry">Retry charts</button></div>';status.querySelector('#dashboardChartRetry')?.addEventListener('click',load);return}
+    if(!isCurrent())return;
     const C=(id,cfg)=>{if(isCurrent()){const canvas=dashboardRoot.querySelector('#'+id);if(canvas)S.charts.push(new Chart(canvas,cfg))}};
     const coral='#C24135',amber='#F0A35B',green='#76B89B',muted='#C9C1B7';
     C('c1',{type:'bar',data:{labels:days,datasets:[{data:wd,backgroundColor:dashboardWeekdayColoursV141(wd),borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
@@ -1485,6 +1493,6 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
   refreshBranchFilter(load,isDashboardCurrent,'dashboardBranchWrap');
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'794663765e1f5a4dc049d8341f8a15abd57c8d6baa81d0cfe595d0c89fe1723f',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'fca96e74e4a751b593142d38491ee316108c69e4bae06ba152cfdbea471094f0',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -94,11 +94,11 @@ test('draft saves never publish and publication is a separate protected review',
 
   const rewardSave=html.slice(html.indexOf('async function saveReward'),html.indexOf('const ra='));
   const tierSave=html.slice(html.indexOf('async function saveTier'),html.indexOf('const ta='));
-  for(const editorSave of [rewardSave,tierSave]){
-    assert.match(editorSave,/save_loyalty_config_draft/);
-    assert.match(editorSave,/if\(!draftVersionId\)\{[\s\S]*openProtectedGrowPublishReview\(versionId\);return/);
-    assert.doesNotMatch(editorSave,/publish_loyalty_config/);
-  }
+  assert.match(rewardSave,/save_loyalty_config_draft/);
+  assert.match(rewardSave,/if\(!draftVersionId\)\{[\s\S]*openProtectedGrowPublishReview\(versionId\);return/);
+  assert.match(tierSave,/save_loyalty_tier_draft_v143/);
+  assert.match(tierSave,/if\(!draftVersionId\)\{[\s\S]*nav\(`#\/loyalty\/\$\{versionId\}`\);return data/);
+  for(const editorSave of [rewardSave,tierSave])assert.doesNotMatch(editorSave,/publish_loyalty_config/);
 
   const retentionDraftStart=html.indexOf('if(isOwner&&draftVersionId&&exactProgramMissing){');
   const retentionDraftActions=html.slice(retentionDraftStart,html.indexOf('if(isOwner){',retentionDraftStart));
