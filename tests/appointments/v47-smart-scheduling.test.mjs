@@ -58,7 +58,8 @@ test('frontline Record sale minimizes choices and keeps hardened sale attributio
   assert.ok(tillStart >= 0,'Quick earn page must exist');
   assert.match(app,/>Record sale</);
   assert.match(till,/Phone number[\s\S]*id="tfind"[\s\S]*Next/i);
-  assert.match(till,/id="tAmt"[\s\S]*Payment received[\s\S]*Cash[\s\S]*Card[\s\S]*PayNow[\s\S]*Record sale/i);
+  assert.match(till,/legacyTenderOptions=\[\['cash','Cash'\],\['card','Card'\],\['paynow','External PayNow'\],\['other','Other'\]\]/i);
+  assert.match(till,/id="tAmt"[\s\S]*Payment received[\s\S]*legacyTenderOptions\.map[\s\S]*Save & add points/i);
   assert.match(till,/record_sale_by_phone/);
   assert.match(till,/p_staff:tillStaffId/);
   assert.match(till,/p_branch:tillBranchId/);

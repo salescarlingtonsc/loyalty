@@ -1032,6 +1032,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .shell{display:block}
   .main{padding:0;max-width:100%}
   body{background:#fff}
+  body.pos-receipt-print .appbar,body.pos-receipt-print .main>*:not(.pos-receipt){display:none !important}
+  body.pos-receipt-print .pos-receipt{display:block !important;border:0;box-shadow:none;max-width:80mm;margin:0 auto;padding:8mm}
 }
 </style>
 </head>
@@ -8564,11 +8566,13 @@ async function tillPage(){
   routeMain.innerHTML=CUI.loadingState({title:'Record sale',iconName:'till'});
   const [
     {data:tillStaff,error:tillStaffError},{data:tillBranches,error:tillBranchError},
-    {data:tillStaffBranches,error:tillStaffBranchError}
+    {data:tillStaffBranches,error:tillStaffBranchError},
+    {data:merchantPaymentStatus,error:merchantPaymentStatusError}
   ]=await Promise.all([
     sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).eq('active',true).limit(1),
     sb.from('branches').select('id,name,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
-    sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)
+    sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id),
+    sb.rpc('get_merchant_payment_status_v142',{p_business:S.biz.id})
   ]);
   if(!isTillCurrent())return;
   if(tillStaffError||tillBranchError||tillStaffBranchError)throw tillStaffError||tillBranchError||tillStaffBranchError;
@@ -8602,6 +8606,10 @@ async function tillPage(){
   let tillBranchId=accessibleTillBranches.some(branch=>branch.id===selectedBranchId)?selectedBranchId:
     (accessibleTillBranches.find(branch=>branch.is_default)?.id||accessibleTillBranches[0]?.id||'');
   const canRecordSales=hasRoleCapability('create_sales')&&Boolean(tillBranchId);
+  const verifiedPaynowReady=!merchantPaymentStatusError&&merchantPaymentStatus?.paynow_ready===true;
+  const legacyTenderOptions=[['cash','Cash'],['card','Card'],['paynow','External PayNow'],['other','Other']];
+  const cartTenderOptions=[['cash','Cash'],['card','Card'],
+    ...(verifiedPaynowReady?[['paynow_qr','PayNow QR']]:[]),['paynow','External PayNow'],['other','Other']];
   const canScanRedemption=()=>canScanCustomerRedemption({
     createSales:hasRoleCapability('create_sales'),
     clientsReadable:branchCanRead(tillBranchId,'clients'),
@@ -8655,6 +8663,9 @@ async function tillPage(){
   let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
   let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
   let payError=null;       // {kind:'retry'|'conflict'} — finalise failure (LOCKS the cart so the same idempotency key is reused)
+  let paynowAttempt=null;  // V142 provider-backed attempt; while present the cart and amount stay locked
+  let paynowPollTimer=null;
+  const PAYNOW_SLOT=`peekaa:v142:paynow:${S.biz.id}`;
   // v67 stored-value tender: reserve_checkout_sv_tender result bound to the CURRENT evaluation token.
   // Structurally never offered in prod (the server reports stored_value.spendable=false). All figures
   // (available/reserved/remaining) are server-authoritative; the client computes nothing. A new
@@ -8664,7 +8675,7 @@ async function tillPage(){
   const FINALISE_SLOT='frenly.till.cartFinalise'; // sessionStorage slot for the STABLE finalise idempotency key (writeAttemptKey pattern, F2)
   // The cart is LOCKED (no picker, qty or remove) whenever a finalise is mid-recovery or extras are pending,
   // so a retry reuses the same idempotency key instead of minting a fresh one and double-charging.
-  const cartLocked=()=>!!(checkoutError||staleConfirm||payError);
+  const cartLocked=()=>!!(checkoutError||staleConfirm||payError||paynowAttempt);
   // A cart-sale line (service/product/custom) is priced by evaluate_checkout and finalised by ONE record_cart_sale;
   // everything else (package/membership) is an "extra" line with its own idempotency key + RPC.
   const isCartSaleLine=l=>l.type==='service'||l.type==='product'||l.type==='custom';
@@ -8678,7 +8689,8 @@ async function tillPage(){
   function clearCheckoutState(){
     if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
     if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
-    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;payError=null;svTender=null;svBusy=false;
+    if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
+    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
     clearWriteAttempt(FINALISE_SLOT);
   }
   function resetToStart(){
@@ -8802,7 +8814,7 @@ async function tillPage(){
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
         <fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
           <div class="frontline-tenders" id="tTenders">
-            ${[['cash','Cash'],['card','Card'],['paynow','PayNow'],['other','Other']].map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}
+            ${legacyTenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}
           </div>
         </fieldset>
         <div id="tErr3"></div>
@@ -9196,9 +9208,11 @@ async function tillPage(){
     const panelHtml=checkoutPanelHtml();
     // tender — needed to finalise a kernel sale; frozen while the cart is locked (retry keeps method)
     const tenderHtml=(cart.length&&!locked)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
-      <div class="frontline-tenders" id="tTenders">${[['cash','Cash'],['card','Card'],['paynow','PayNow'],['other','Other']].map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
+      <div class="frontline-tenders" id="tTenders">${cartTenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
+      ${!verifiedPaynowReady?'<p class="muted small" style="margin-top:6px">Verified PayNow QR is available after the owner completes Settings → Customer payments. External PayNow records a transfer staff already received.</p>':''}
       ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
+    const paynowHtml=paynowAttempt?`<div class="imp-note" role="status" style="margin-top:12px"><b>PayNow QR · ${money(evalResult?.total_cents||0)}</b><p class="small" style="margin-top:5px">${esc(paynowAttempt.status==='processing'?'Payment is being confirmed.':'Waiting for the customer to pay the locked amount.')}</p><button type="button" class="btn ghost sm" id="tPaynowReopen" style="margin-top:8px">Show QR</button></div>`:'';
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
       <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted
         ?saleResult?.duplicate
@@ -9209,7 +9223,7 @@ async function tillPage(){
         :'No points-earning sale in this cart'}</span></div>
       <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:18})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
-    const actionHtml=checkoutError?'':checkoutActionHtml();
+    const actionHtml=(checkoutError||paynowAttempt)?'':checkoutActionHtml();
 
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Choose products or services, review the checked total, then select how the customer paid.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card">
@@ -9226,6 +9240,7 @@ async function tillPage(){
         ${emptyHtml}
         <div id="tcErr"></div>
         ${tenderHtml}
+        ${paynowHtml}
         ${partialHtml}
         ${actionHtml}
         <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
@@ -9268,6 +9283,7 @@ async function tillPage(){
     if($('tNewCheckout'))$('tNewCheckout').onclick=startNewCheckout;
     if($('tRefreshEval'))$('tRefreshEval').onclick=refreshEval;
     if($('tRetryGifts'))$('tRetryGifts').onclick=doCartCheckout;
+    if($('tPaynowReopen'))$('tPaynowReopen').onclick=()=>renderPaynowDialogV142(paynowAttempt);
     if($('tFinishPartial'))$('tFinishPartial').onclick=()=>finishCartReceipt();
     if($('tSvUse'))$('tSvUse').onclick=applySvTender;
     if($('tSvRemove'))$('tSvRemove').onclick=removeSvTender;
@@ -9332,6 +9348,125 @@ async function tillPage(){
      cancel/cart-change; each extra carries its own stable uuid `key`. If the kernel finalise fails we
      STOP (no extra attempted) and recover per §2 (stale re-confirm / retry / conflict). If it
      succeeds it is LOCKED (saleCommitted) and never re-run; a retry re-invokes only the failed extras. */
+  function readPaynowRequestV142(){try{return JSON.parse(sessionStorage.getItem(PAYNOW_SLOT)||'null')}catch{return null}}
+  function writePaynowRequestV142(value){try{sessionStorage.setItem(PAYNOW_SLOT,JSON.stringify(value))}catch{}}
+  function clearPaynowRequestV142(){try{sessionStorage.removeItem(PAYNOW_SLOT)}catch{}}
+  function closePaynowDialogV142(){
+    const modal=$('tPaynowModalV142');if(!modal)return;
+    if(typeof modal._deactivate==='function')modal._deactivate();else modal.remove();
+  }
+  function renderPaynowDialogV142(attempt){
+    if(!attempt)return;
+    closePaynowDialogV142();
+    const branchName=accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'Selected branch';
+    const qr=attempt.qr||{};
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tPaynowModalV142" role="dialog" aria-modal="true" aria-labelledby="tPaynowTitleV142" tabindex="-1"><div class="modal-card" style="max-width:500px;text-align:center">
+      <div class="row"><div style="text-align:left"><h2 id="tPaynowTitleV142">PayNow · ${money(attempt.amount_cents)}</h2><p class="muted small" data-merchant-content>${esc(S.biz.name)} · ${esc(branchName)}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tPaynowCloseV142">Close</button></div>
+      ${qr.data?`<div id="tPaynowQrV142" role="img" data-merchant-content aria-label="PayNow QR for ${esc(money(attempt.amount_cents))}" style="display:grid;place-items:center;width:min(300px,100%);aspect-ratio:1;margin:18px auto;padding:14px;background:#fff;border:1px solid var(--line);border-radius:14px"></div>`:CUI.loadingState({title:'Waiting for payment confirmation',iconName:'till'})}
+      <div class="imp-note" style="text-align:left"><b>Amount locked: ${money(attempt.amount_cents)}</b><p class="small" style="margin-top:5px">The customer cannot change this amount. Keep this screen open until Stripe confirms payment.</p></div>
+      <p class="muted small" style="margin-top:10px">Stripe PayNow QRs stay valid for up to 1 hour. This exact total is held for the full QR payment window.</p>
+      ${qr.hosted_instructions_url?`<a class="btn ghost" href="${esc(qr.hosted_instructions_url)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">Open Stripe payment page</a>`:''}
+      <p class="muted small" id="tPaynowStatusV142" role="status" aria-live="polite" style="margin-top:14px">${attempt.status==='processing'?'Confirming payment…':'Awaiting payment…'}</p>
+    </div></div>`);
+    const modal=$('tPaynowModalV142');
+    modal._deactivate=CUI.activateDialog(modal,{onClose:()=>modal.remove(),initialFocus:'#tPaynowCloseV142'});
+    $('tPaynowCloseV142').onclick=()=>modal._deactivate();
+    const qrHost=$('tPaynowQrV142');
+    if(qrHost&&qr.data)new QRCode(qrHost,{text:String(qr.data),width:260,height:260,correctLevel:QRCode.CorrectLevel.M});
+  }
+  function completePaynowReceiptV142(status){
+    const lines=(status.server_lines||[]).map(line=>({label:line.name||'Item',qty:Number(line.qty||1),
+      amount:Number(line.unit_price_cents||0)*Number(line.qty||1)}));
+    doneInfo={receipt:true,name:status.customer_name||'Customer',tender:'PayNow (Stripe verified)',
+      saleId:status.sale_id||null,lines,effects:status.applied_effects||[],
+      subtotal:Number(status.subtotal_cents||0),discount:Number(status.discount_total_cents||0),
+      gst:Number(status.gst_cents||0),total:Number(status.amount_cents||0),extras:[],hasSale:true,extrasTotal:0,
+      pointsEarned:Number(status.points_earned||0),pointsTotal:Number(status.points_total||0),
+      pointsBalanceConsistent:true,duplicate:false,paymentReference:status.payment_reference||null,
+      businessName:status.business_name||S.biz.name,branchName:status.branch_name||'',paidAt:status.paid_at||new Date().toISOString()};
+    saleCommitted=true;paynowAttempt=null;clearPaynowRequestV142();
+    if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
+    closePaynowDialogV142();checkoutError=null;step=3;draw();
+  }
+  async function pollPaynowAttemptV142(attemptId){
+    if(!attemptId)return;
+    const {data,error}=await sb.rpc('get_pos_paynow_attempt_v142',{p_attempt:attemptId});
+    if(!isTillCurrent())return;
+    if(error){paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),2500);return;}
+    if(data.status==='succeeded'){completePaynowReceiptV142(data);return;}
+    if(['refund_required','refund_pending'].includes(data.status)){
+      if(paynowAttempt)paynowAttempt.status=data.status;
+      const statusNode=$('tPaynowStatusV142');if(statusNode)statusNode.textContent=data.status==='refund_pending'
+        ?'Stripe accepted the refund request and is still processing it—do not charge this customer again.'
+        :'Payment was received, but the sale could not complete. The refund request is being sent—do not charge this customer again.';
+      paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),3000);return;
+    }
+    if(data.status==='refund_failed'){
+      if(paynowAttempt)paynowAttempt.status=data.status;
+      const statusNode=$('tPaynowStatusV142');if(statusNode)statusNode.textContent='Stripe could not complete the automatic refund. Issue a manual refund in Stripe and contact the customer. Do not charge again.';
+      paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),10000);return;
+    }
+    if(['failed','canceled','expired','fulfilment_failed','refunded'].includes(data.status)){
+      clearPaynowRequestV142();paynowAttempt=null;closePaynowDialogV142();
+      payError=null;
+      if(step===2&&cust&&cartSaleLines().length)onSaleLinesChanged();else draw();
+      const message=data.status==='refunded'
+        ?'Stripe confirms the payment was refunded. Start a new checkout only if the customer still wants to pay.'
+        :data.status==='expired'?'This QR expired without a confirmed payment. Check the total and create a new QR.'
+        :'Payment did not complete. Check the total and create a new QR.';
+      cartErr(message);return;
+    }
+    if(paynowAttempt)paynowAttempt.status=data.status;
+    const statusNode=$('tPaynowStatusV142');if(statusNode)statusNode.textContent=data.status==='processing'?'Confirming payment…':'Awaiting payment…';
+    paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),2000);
+  }
+  async function beginPaynowPaymentV142(){
+    if(extraLines().length)return cartErr('PayNow QR supports the checked sale total only. Complete package or membership purchases separately.');
+    let request=readPaynowRequestV142();
+    const fingerprint=[S.biz.id,tillBranchId,cust.client_id,tillStaffId,evalResult.evaluation_id].join(':');
+    if(!request||request.fingerprint!==fingerprint)request={fingerprint,idempotency_key:crypto.randomUUID(),
+      business_id:S.biz.id,branch_id:tillBranchId,client_id:cust.client_id,staff_id:tillStaffId,evaluation_id:evalResult.evaluation_id};
+    writePaynowRequestV142(request);
+    busy=true;const btn=$('tCartConfirm')||$('tPayRetry');if(btn){btn.disabled=true;btn.textContent='Creating QR…'}
+    const executed=await sb.functions.invoke('stripe-connect-command',{body:{action:'create_paynow',...request}});
+    if(!isTillCurrent())return;
+    busy=false;
+    if(executed.error||!executed.data?.attempt_id){payError={kind:'retry'};draw();cartErr(executed.data?.message||'PayNow QR could not be created. Retry uses the same payment attempt.');return;}
+    request={...request,attempt_id:executed.data.attempt_id};writePaynowRequestV142(request);
+    payError=null;paynowAttempt=executed.data;draw();renderPaynowDialogV142(paynowAttempt);
+    if(paynowPollTimer)clearTimeout(paynowPollTimer);
+    paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(paynowAttempt.attempt_id),800);
+  }
+  async function resumePaynowPaymentV142(){
+    const request=readPaynowRequestV142();
+    if(!request||request.business_id!==S.biz.id)return;
+    const required=['idempotency_key','branch_id','client_id','staff_id','evaluation_id'];
+    if(required.some(key=>!/^[0-9a-f-]{36}$/i.test(String(request[key]||'')))){
+      clearPaynowRequestV142();return;
+    }
+    if(accessibleTillBranches.some(branch=>branch.id===request.branch_id)){
+      tillBranchId=request.branch_id;selectedBranchId=request.branch_id;
+    }
+    busy=true;
+    const executed=await sb.functions.invoke('stripe-connect-command',{body:{action:'create_paynow',...request}});
+    if(!isTillCurrent())return;
+    busy=false;
+    if(executed.error||!executed.data?.attempt_id){
+      if(/^[0-9a-f-]{36}$/i.test(String(request.attempt_id||''))){
+        paynowAttempt={attempt_id:request.attempt_id,status:'checking',expires_at:null,amount_cents:0};
+        toast('Payment outcome is still being checked. Do not create another QR yet.');
+        paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(request.attempt_id),500);
+        return;
+      }
+      toast('The previous PayNow request is still reserved. Retry when the connection returns; do not create another QR.');
+      return;
+    }
+    writePaynowRequestV142({...request,attempt_id:executed.data.attempt_id});
+    paynowAttempt=executed.data;
+    renderPaynowDialogV142(paynowAttempt);
+    if(paynowPollTimer)clearTimeout(paynowPollTimer);
+    paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(paynowAttempt.attempt_id),500);
+  }
   async function doCartCheckout(){
     if(busy)return;
     const saleLines=cartSaleLines(), extras=extraLines(), hasSale=saleLines.length>0;
@@ -9341,6 +9476,7 @@ async function tillPage(){
       if(evalState==='error')return cartErr('Fix the highlighted item before taking payment');
       if(!tender)return cartErr('Choose how the customer paid');
     }
+    if(tender==='paynow_qr')return beginPaynowPaymentV142();
     busy=true;checkoutError=null;
     const confirmBtn=$('tCartConfirm')||$('tStaleConfirm')||$('tPayRetry')||$('tRetryGifts');
     if(confirmBtn){confirmBtn.disabled=true;confirmBtn.textContent='Working…'}
@@ -9422,7 +9558,7 @@ async function tillPage(){
     const pointsReceipt=checkoutPointsReceiptV102({
       saleResult:r,packageResults,refreshedPoints
     });
-    doneInfo={receipt:true,name:cust.full_name,tender,saleId:r?r.saleId:null,
+    doneInfo={receipt:true,name:cust.full_name,tender:tender==='paynow'?'External PayNow':tender,saleId:r?r.saleId:null,
       lines:r?r.lines.map(l=>({label:l.label,qty:l.qty,amount:l.amount})):[],
       effects:r?(r.effects||[]):[],subtotal:r?r.subtotal:0,discount:r?r.discount:0,gst:r?r.gst:0,total:r?r.total:0,
       extras:extras.map(l=>({type:l.type,label:l.label,amount:l.unit_cents*l.qty,
@@ -9434,7 +9570,9 @@ async function tillPage(){
       pointsEarned:pointsReceipt.pointsEarned,
       pointsTotal:pointsReceipt.pointsTotal,
       pointsBalanceConsistent:pointsReceipt.balanceConsistent,
-      duplicate:r?r.duplicate:false};
+      duplicate:r?r.duplicate:false,businessName:S.biz.name,
+      branchName:accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'',
+      paidAt:new Date().toISOString(),paymentReference:null};
     checkoutError=null;clearCheckoutState();step=3;draw();
   }
   function drawStep3(){
@@ -9480,8 +9618,10 @@ async function tillPage(){
     const extrasBlock=d.extras.length?`<div style="margin-top:12px;text-align:left"><b class="small">Also charged (separate records)</b>
       <ul class="till-receipt-lines">${extraRows}</ul></div>`:'';
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
-      <div class="card frontline-card till-cart-card" style="text-align:center">
+      <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
+        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
+        <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.pointsEarned>0
           ?`<p style="font-size:1.5rem;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`
@@ -9492,14 +9632,17 @@ async function tillPage(){
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received${d.pointsTotal!=null?` · now ${d.pointsTotal} points total`:''}</p>
+        ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         ${canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
-        <button class="btn" id="tNext" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
+        <button class="btn ghost no-print" id="tPrintReceiptV142" style="width:100%;margin-top:16px;padding:14px">Print receipt</button>
+        <button class="btn no-print" id="tNext" style="width:100%;margin-top:10px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
     if($('tRedeemOffer'))$('tRedeemOffer').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       saleId:d.saleId,customerName:d.name,isCurrent:isTillCurrent
     });
+    $('tPrintReceiptV142').onclick=()=>{document.body.classList.add('pos-receipt-print');window.addEventListener('afterprint',()=>document.body.classList.remove('pos-receipt-print'),{once:true});window.print()};
     $('tNext').onclick=resetToStart;
   }
 
@@ -9508,6 +9651,7 @@ async function tillPage(){
      call, just a jump straight to the customer's card. */
   if(pendingTillPhone){phone=String(pendingTillPhone).replace(/\D/g,'').slice(0,8);pendingTillPhone='';}
   draw();
+  if(readPaynowRequestV142())requestAnimationFrame(()=>resumePaynowPaymentV142());
   if(pendingTillRedemptionScan){
     pendingTillRedemptionScan=false;
     if(canScanRedemption())requestAnimationFrame(()=>{
@@ -17590,6 +17734,7 @@ async function settingsPage(){
       ${S.myRole==='owner'?'<button type="button" class="settings-tab" role="tab" id="settab-programme" aria-controls="setpanel-programme" aria-selected="false" tabindex="-1" data-settab="programme">Customer programme</button>':''}
       <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
+      ${S.myRole==='owner'?'<button type="button" class="settings-tab" role="tab" id="settab-payments" aria-controls="setpanel-payments" aria-selected="false" tabindex="-1" data-settab="payments">Customer payments</button>':''}
       <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
       <button type="button" class="settings-tab" role="tab" id="settab-data" aria-controls="setpanel-data" aria-selected="false" tabindex="-1" data-settab="data">Import &amp; sign-up</button>
       <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer fields &amp; privacy</button>
@@ -17615,6 +17760,9 @@ async function settingsPage(){
     <section class="settings-panel" id="setpanel-catalogue" role="tabpanel" aria-labelledby="settab-catalogue" tabindex="-1" hidden>
       <div class="card" id="checkoutCatalogueWrap">${CUI.loadingState({title:'Loading checkout catalogue',iconName:'till'})}</div>
     </section>
+    ${S.myRole==='owner'?`<section class="settings-panel" id="setpanel-payments" role="tabpanel" aria-labelledby="settab-payments" tabindex="-1" hidden>
+      <div class="card" id="merchantPaymentsWrapV142">${CUI.loadingState({title:'Loading customer payments',iconName:'till'})}</div>
+    </section>`:''}
     <section class="settings-panel" id="setpanel-team" role="tabpanel" aria-labelledby="settab-team" tabindex="-1" hidden>
     <div class="card settings-team-card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff','Add staff without app access','settingsPage')}</div><p class="muted small" style="margin:6px 0 10px">Add a roster-only staff member for appointments or reporting, or create an invite when they need to sign in. Owners inherit every enabled module. Other teammates can receive Off / Read / Edit access per enabled module.</p>
       <div id="team"><p class="muted small">Loading…</p></div>
@@ -17772,6 +17920,7 @@ async function settingsPage(){
     });
   }
   loadCheckoutCatalogue();
+  if(S.myRole==='owner')loadMerchantPaymentsV142();
   $('bsave').onclick=async()=>{
     /* Client-side mirror of the DB CHECK (review_url is null or length<=500 and ~ '^https://').
        review_url rides this existing businesses UPDATE — no new call site is introduced. */
@@ -18045,6 +18194,50 @@ async function settingsPage(){
   /* V124 adds guarded checkout commands; billing truth remains provider-backed. */
   loadBillingConfig();
   loadSignupConfig();
+}
+/* ---------- V142 merchant-owned customer payments ---------- */
+async function loadMerchantPaymentsV142(){
+  const wrap=$('merchantPaymentsWrapV142');if(!wrap||!S.biz?.id)return;
+  wrap.setAttribute('aria-busy','true');
+  const {data,error}=await sb.rpc('get_merchant_payment_status_v142',{p_business:S.biz.id});
+  if(!wrap.isConnected)return;
+  wrap.setAttribute('aria-busy','false');
+  if(error||!data){
+    wrap.innerHTML=CUI.errorState({title:'Customer payments unavailable',message:'Payment setup could not be loaded. No customer payment was affected.',retryId:'merchantPaymentsRetryV142'});
+    $('merchantPaymentsRetryV142').onclick=loadMerchantPaymentsV142;return;
+  }
+  const state=data.status||'not_set_up';
+  const ready=data.paynow_ready===true;
+  const stateCopy=ready
+    ?{label:'Ready',pill:'ok',title:'Ready to accept PayNow',body:'Staff can create a fixed-amount PayNow QR from Record sale. Customer money goes to this business’s connected Stripe account.'}
+    :state==='restricted'
+      ?{label:'Restricted',pill:'off',title:'Stripe needs attention',body:'Customer PayNow QR is unavailable until Stripe clears the account restriction.'}
+      :state==='more_information_needed'
+        ?{label:'More information needed',pill:'new',title:'Finish Stripe setup',body:'Continue the secure Stripe form to complete business, representative or payout-bank requirements.'}
+        :{label:'Not set up',pill:'off',title:'Accept customer payments',body:'Connect this legal business to Stripe. Branches share the same payout account unless they are separate legal merchants.'};
+  wrap.innerHTML=`<div class="row"><div><h2 style="margin:0">Customer payments</h2><p class="muted small" style="margin-top:5px">Separate from your Peekaa subscription.</p></div><span class="spacer"></span><span class="pill ${stateCopy.pill}">${stateCopy.label}</span></div>
+    <div class="imp-note" style="margin-top:16px"><b>${stateCopy.title}</b><p class="small" style="margin-top:6px">${stateCopy.body}</p></div>
+    <ol class="small" style="line-height:1.75;margin:16px 0 0;padding-left:20px"><li>Owner completes Stripe-hosted identity and bank setup.</li><li>Staff enters a sale and taps <b>PayNow QR</b>.</li><li>Customer scans the locked amount; only Stripe confirmation completes the sale and receipt.</li></ol>
+    ${ready?'<p class="muted small" style="margin-top:16px">No API keys or bank details are stored in Peekaa. Manage legal or payout changes through Stripe.</p>'
+      :`<button type="button" class="btn" id="merchantPaymentsSetupV142" style="margin-top:18px">${state==='not_set_up'?'Set up Stripe':'Continue Stripe setup'}</button>`}
+    <div id="merchantPaymentsStatusV142" role="status" aria-live="polite"></div>`;
+  const setup=$('merchantPaymentsSetupV142');if(!setup)return;
+  setup.onclick=async()=>{
+    setup.disabled=true;setup.textContent='Opening Stripe…';
+    const slot=`peekaa:v142:connect:${S.biz.id}`;
+    let key='';try{key=sessionStorage.getItem(slot)||''}catch{}
+    if(!/^[0-9a-f-]{36}$/i.test(key)){key=crypto.randomUUID();try{sessionStorage.setItem(slot,key)}catch{}}
+    const executed=await sb.functions.invoke('stripe-connect-command',{body:{
+      action:'create_onboarding_link',business_id:S.biz.id,idempotency_key:key
+    }});
+    if(!wrap.isConnected)return;
+    if(executed.error||!executed.data?.redirect_url){
+      setup.disabled=false;setup.textContent=state==='not_set_up'?'Set up Stripe':'Continue Stripe setup';
+      $('merchantPaymentsStatusV142').innerHTML='<div class="err" role="alert">Stripe setup could not open. Try again; no account will be duplicated.</div>';return;
+    }
+    try{sessionStorage.removeItem(slot)}catch{}
+    location.assign(executed.data.redirect_url);
+  };
 }
 /* ---------- provider-backed subscription billing ---------- */
 async function loadBillingConfig(){

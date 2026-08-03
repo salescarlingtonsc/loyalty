@@ -1,0 +1,414 @@
+{
+  "desktop": {
+    "before": {
+      "sourceHash": "c75324fefa90810010c252625264b5c09249d1729557189abc5f963e5056ad4c",
+      "viewport": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440
+      },
+      "amountLocked": "Amount locked: SGD 10.00",
+      "qrExpiry": "Stripe PayNow QRs stay valid for up to 1 hour. This exact total is held for the full QR payment window.",
+      "qrVisible": true,
+      "qrRawData": "00020101021226580009SG.PAYNOW010120210202818638330303SGD520400005303702540510.005802SG5912HARBOUR CAFE6009SINGAPORE6304A1B2",
+      "remoteQrImage": false,
+      "receiptVisible": false,
+      "printVisible": false,
+      "printRequested": false,
+      "servicePhoneVisible": false,
+      "touchTargets": [
+        44,
+        44,
+        41.3599853515625
+      ],
+      "rpcCalls": [
+        {
+          "name": "get_merchant_payment_status_v142",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "get_my_modules_at_v115",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "lookup_client_by_phone",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_phone": "81863833"
+          }
+        },
+        {
+          "name": "business_get_checkout_catalogue_v94",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142",
+            "p_include_inactive": false
+          }
+        },
+        {
+          "name": "business_get_checkout_preferences_v102",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "staff_get_customer_entitlements_v102",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_client": "50000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "evaluate_checkout",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142",
+            "p_client": "50000000-0000-4000-8000-000000000142",
+            "p_lines": [
+              {
+                "catalog_kind": "service",
+                "catalog_id": "60000000-0000-4000-8000-000000000142",
+                "qty": 1
+              }
+            ],
+            "p_idempotency_key": "990dba8b-0ae1-47b1-b62a-1f959bcedbc1"
+          }
+        }
+      ],
+      "functionCalls": [
+        {
+          "name": "stripe-connect-command",
+          "body": {
+            "action": "create_paynow",
+            "fingerprint": "10000000-0000-4000-8000-000000000142:40000000-0000-4000-8000-000000000142:50000000-0000-4000-8000-000000000142:30000000-0000-4000-8000-000000000142:70000000-0000-4000-8000-000000000142",
+            "idempotency_key": "d8fa6ac1-f1f9-42a4-82f4-efe5f8db6fd1",
+            "business_id": "10000000-0000-4000-8000-000000000142",
+            "branch_id": "40000000-0000-4000-8000-000000000142",
+            "client_id": "50000000-0000-4000-8000-000000000142",
+            "staff_id": "30000000-0000-4000-8000-000000000142",
+            "evaluation_id": "70000000-0000-4000-8000-000000000142"
+          }
+        }
+      ],
+      "errors": []
+    },
+    "after": {
+      "sourceHash": "c75324fefa90810010c252625264b5c09249d1729557189abc5f963e5056ad4c",
+      "viewport": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440
+      },
+      "amountLocked": "",
+      "qrExpiry": "",
+      "qrVisible": false,
+      "qrRawData": "00020101021226580009SG.PAYNOW010120210202818638330303SGD520400005303702540510.005802SG5912HARBOUR CAFE6009SINGAPORE6304A1B2",
+      "remoteQrImage": false,
+      "receiptVisible": true,
+      "printVisible": true,
+      "printRequested": true,
+      "servicePhoneVisible": false,
+      "touchTargets": [
+        48,
+        47,
+        50
+      ],
+      "rpcCalls": [
+        {
+          "name": "get_merchant_payment_status_v142",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "get_my_modules_at_v115",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "lookup_client_by_phone",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_phone": "81863833"
+          }
+        },
+        {
+          "name": "business_get_checkout_catalogue_v94",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142",
+            "p_include_inactive": false
+          }
+        },
+        {
+          "name": "business_get_checkout_preferences_v102",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "staff_get_customer_entitlements_v102",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_client": "50000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "evaluate_checkout",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142",
+            "p_client": "50000000-0000-4000-8000-000000000142",
+            "p_lines": [
+              {
+                "catalog_kind": "service",
+                "catalog_id": "60000000-0000-4000-8000-000000000142",
+                "qty": 1
+              }
+            ],
+            "p_idempotency_key": "990dba8b-0ae1-47b1-b62a-1f959bcedbc1"
+          }
+        },
+        {
+          "name": "get_pos_paynow_attempt_v142",
+          "args": {
+            "p_attempt": "80000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "get_pos_paynow_attempt_v142",
+          "args": {
+            "p_attempt": "80000000-0000-4000-8000-000000000142"
+          }
+        }
+      ],
+      "functionCalls": [
+        {
+          "name": "stripe-connect-command",
+          "body": {
+            "action": "create_paynow",
+            "fingerprint": "10000000-0000-4000-8000-000000000142:40000000-0000-4000-8000-000000000142:50000000-0000-4000-8000-000000000142:30000000-0000-4000-8000-000000000142:70000000-0000-4000-8000-000000000142",
+            "idempotency_key": "d8fa6ac1-f1f9-42a4-82f4-efe5f8db6fd1",
+            "business_id": "10000000-0000-4000-8000-000000000142",
+            "branch_id": "40000000-0000-4000-8000-000000000142",
+            "client_id": "50000000-0000-4000-8000-000000000142",
+            "staff_id": "30000000-0000-4000-8000-000000000142",
+            "evaluation_id": "70000000-0000-4000-8000-000000000142"
+          }
+        }
+      ],
+      "errors": []
+    }
+  },
+  "mobile390": {
+    "before": {
+      "sourceHash": "c75324fefa90810010c252625264b5c09249d1729557189abc5f963e5056ad4c",
+      "viewport": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "amountLocked": "Amount locked: SGD 10.00",
+      "qrExpiry": "Stripe PayNow QRs stay valid for up to 1 hour. This exact total is held for the full QR payment window.",
+      "qrVisible": true,
+      "qrRawData": "00020101021226580009SG.PAYNOW010120210202818638330303SGD520400005303702540510.005802SG5912HARBOUR CAFE6009SINGAPORE6304A1B2",
+      "remoteQrImage": false,
+      "receiptVisible": false,
+      "printVisible": false,
+      "printRequested": false,
+      "servicePhoneVisible": false,
+      "touchTargets": [
+        44,
+        44,
+        41.36000061035156
+      ],
+      "rpcCalls": [
+        {
+          "name": "get_merchant_payment_status_v142",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "get_my_modules_at_v115",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "lookup_client_by_phone",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_phone": "81863833"
+          }
+        },
+        {
+          "name": "business_get_checkout_catalogue_v94",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142",
+            "p_include_inactive": false
+          }
+        },
+        {
+          "name": "business_get_checkout_preferences_v102",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "staff_get_customer_entitlements_v102",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_client": "50000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "evaluate_checkout",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142",
+            "p_client": "50000000-0000-4000-8000-000000000142",
+            "p_lines": [
+              {
+                "catalog_kind": "service",
+                "catalog_id": "60000000-0000-4000-8000-000000000142",
+                "qty": 1
+              }
+            ],
+            "p_idempotency_key": "9fe97db2-de36-4878-b01a-2dccdd80ad61"
+          }
+        }
+      ],
+      "functionCalls": [
+        {
+          "name": "stripe-connect-command",
+          "body": {
+            "action": "create_paynow",
+            "fingerprint": "10000000-0000-4000-8000-000000000142:40000000-0000-4000-8000-000000000142:50000000-0000-4000-8000-000000000142:30000000-0000-4000-8000-000000000142:70000000-0000-4000-8000-000000000142",
+            "idempotency_key": "073e19bc-eac4-4a17-9559-dab35f80c76a",
+            "business_id": "10000000-0000-4000-8000-000000000142",
+            "branch_id": "40000000-0000-4000-8000-000000000142",
+            "client_id": "50000000-0000-4000-8000-000000000142",
+            "staff_id": "30000000-0000-4000-8000-000000000142",
+            "evaluation_id": "70000000-0000-4000-8000-000000000142"
+          }
+        }
+      ],
+      "errors": []
+    },
+    "after": {
+      "sourceHash": "c75324fefa90810010c252625264b5c09249d1729557189abc5f963e5056ad4c",
+      "viewport": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "amountLocked": "",
+      "qrExpiry": "",
+      "qrVisible": false,
+      "qrRawData": "00020101021226580009SG.PAYNOW010120210202818638330303SGD520400005303702540510.005802SG5912HARBOUR CAFE6009SINGAPORE6304A1B2",
+      "remoteQrImage": false,
+      "receiptVisible": true,
+      "printVisible": true,
+      "printRequested": true,
+      "servicePhoneVisible": false,
+      "touchTargets": [
+        48,
+        47,
+        50
+      ],
+      "rpcCalls": [
+        {
+          "name": "get_merchant_payment_status_v142",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "get_my_modules_at_v115",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "lookup_client_by_phone",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_phone": "81863833"
+          }
+        },
+        {
+          "name": "business_get_checkout_catalogue_v94",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142",
+            "p_include_inactive": false
+          }
+        },
+        {
+          "name": "business_get_checkout_preferences_v102",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "staff_get_customer_entitlements_v102",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_client": "50000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "evaluate_checkout",
+          "args": {
+            "p_business": "10000000-0000-4000-8000-000000000142",
+            "p_branch": "40000000-0000-4000-8000-000000000142",
+            "p_client": "50000000-0000-4000-8000-000000000142",
+            "p_lines": [
+              {
+                "catalog_kind": "service",
+                "catalog_id": "60000000-0000-4000-8000-000000000142",
+                "qty": 1
+              }
+            ],
+            "p_idempotency_key": "9fe97db2-de36-4878-b01a-2dccdd80ad61"
+          }
+        },
+        {
+          "name": "get_pos_paynow_attempt_v142",
+          "args": {
+            "p_attempt": "80000000-0000-4000-8000-000000000142"
+          }
+        },
+        {
+          "name": "get_pos_paynow_attempt_v142",
+          "args": {
+            "p_attempt": "80000000-0000-4000-8000-000000000142"
+          }
+        }
+      ],
+      "functionCalls": [
+        {
+          "name": "stripe-connect-command",
+          "body": {
+            "action": "create_paynow",
+            "fingerprint": "10000000-0000-4000-8000-000000000142:40000000-0000-4000-8000-000000000142:50000000-0000-4000-8000-000000000142:30000000-0000-4000-8000-000000000142:70000000-0000-4000-8000-000000000142",
+            "idempotency_key": "073e19bc-eac4-4a17-9559-dab35f80c76a",
+            "business_id": "10000000-0000-4000-8000-000000000142",
+            "branch_id": "40000000-0000-4000-8000-000000000142",
+            "client_id": "50000000-0000-4000-8000-000000000142",
+            "staff_id": "30000000-0000-4000-8000-000000000142",
+            "evaluation_id": "70000000-0000-4000-8000-000000000142"
+          }
+        }
+      ],
+      "errors": []
+    }
+  }
+}

@@ -2651,6 +2651,14 @@
       "reason": "V131 idempotent privacy-operations intake. It appends one non-economic pending deletion request after explicit confirmation and does not immediately delete or mutate identities, tenant records, sales, payments, points, rewards, packages, gift cards, stored value, or any customer-value ledger."
     },
     {
+      "id": "browser.rpc:app/index.html:get_merchant_payment_status_v142",
+      "reason": "V142 authenticated staff read-only projection of one business's finite Stripe Connect readiness state. It exposes no provider account ID, bank information, API key, event payload or customer-value data and performs no DML."
+    },
+    {
+      "id": "browser.rpc:app/index.html:get_pos_paynow_attempt_v142",
+      "reason": "V142 authenticated same-business staff read-only receipt projection for one POS attempt. It exposes status, exact amount, sale receipt facts and canonical checkout lines without provider credentials or mutable authority, and performs no DML."
+    },
+    {
       "id": "browser.rpc:app/index.html:business_get_loyalty_tiers_v143",
       "reason": "V143 owner-only read projection of the active loyalty tier-version inventory, including live, scheduled, ended, and paused configuration rows. It performs no DML and exposes no customer-value ledger."
     },

@@ -262,4 +262,3 @@ end
 $v148_owner_launch_closure$;
 
 rollback;
-

@@ -421,6 +421,40 @@ All automated credentials must come from a non-committed test-secret mechanism.
   Stripe login, OTP, identity, representative, bank and final contractual
   confirmation. Credentials and identity evidence are never stored in git.
 
+## `CAFE-HARBOUR-PAYMENTS` — connected F&B merchant POS
+
+- Legal merchant Harbour Kopi has Tanjong Pagar and Toa Payoh branches. Both
+  settle to the same synthetic connected account; a second merchant can never
+  read or charge it.
+- Tanjong Pagar catalogue includes **Harbour Lunch Set — SGD 10.00**. Staff
+  Farah records it for `CUS-MEI`; the evaluated total is exactly 1,000 cents.
+- Owner onboarding states are Not set up, More information needed, Ready and
+  Restricted. Stripe-hosted links are single-use; no representative, bank, OTP,
+  secret or identity-document value is stored in the fixture.
+- A Ready attempt returns a realistic raw PayNow payload rendered locally and
+  reserves the same immutable exact-price evaluation for 61 minutes, covering
+  the provider's one-hour QR lifetime without a CSP-dependent remote image or a
+  second checkout that another staff tab could consume.
+  Signed `payment_intent.succeeded` from Harbour's connected account and exact
+  SGD 10.00 finalises one sale, one payment, normal stock/points effects and one
+  printable receipt. Wrong merchant, SGD 10.01, non-SGD, expired, failed,
+  duplicate and out-of-order events finalise nothing.
+- Automatic-refund comparisons exercise `pending`, signed `refund.updated`
+  success, signed `refund.failed`, duplicate and out-of-order refund events,
+  including a delayed `refunds.create` response that must not downgrade a
+  signed failure.
+
+## `SPA-GLOW-PAYMENTS` — second connected merchant isolation comparison
+
+- Glow Atelier uses a different synthetic connected account and payout bank.
+  Orchard and Tampines share it because they are branches of the same legal
+  merchant.
+- The checkout comparison is **Spa Ritual 60 — SGD 88.00**. A Harbour event or
+  account identifier cannot create, inspect or complete this payment attempt.
+- Owner, manager, front desk, read-only staff and outsider states prove that
+  only the owner controls onboarding while permitted till staff may create and
+  monitor an exact payment at an assigned Ready branch.
+
 ## Required state variations
 
 Every relevant journey chooses from this list and records which variants were
