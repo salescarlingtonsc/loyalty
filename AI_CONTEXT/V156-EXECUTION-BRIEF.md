@@ -120,3 +120,14 @@ migration/security/V156 selection, the 207/207 affected application regression
 selection, and passing quality, runtime, manifest, canonical, build and diff
 gates. Remaining P2 items are operational inputs or post-deployment proof, not
 unreviewed code findings.
+
+Release evidence on 2026-08-04: production migration
+`20260804063238_nestly_v156a_v151_invite_search_path_hardening` applied and
+verified both invite RPCs at `search_path=pg_catalog, public` with their prior
+role ACLs unchanged. Vercel deployment `dpl_9n5oj9vUMtodbcbsvyfQgGs49pSc`
+reached Ready on the canonical `loyalty` project; `/api/build` returned the exact
+integration commit `0ba87f8b3be70fdf00283f183efc884c6047a9c0`, `/admin` returned 200 with
+the configured security headers, and the production `platform-console.js` hash
+matched the committed source. Authenticated role/viewports and real provider
+payment/email proof remain unavailable without the external credentials and
+settings listed below.
