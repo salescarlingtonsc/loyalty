@@ -311,6 +311,27 @@ All automated credentials must come from a non-committed test-secret mechanism.
 - A locked August period rejects new/backdated posting. Super Admin may read;
   delegated Admin, Sales, anonymous and tenant users are denied.
 
+### `PLAT-SUBOPS-156` — internal prospect-to-renewal operations
+
+- Seller starts with Peekaa / NESTLY TECHNOLOGIES PTE. LTD., SGD, the
+  owner-supplied Standard Chartered Singapore account ending 6357 and Lee Chuan
+  Seng billing contact. UEN, registered address, billing email, GST decision and
+  default terms are deliberately unset, so finalisation is visibly blocked.
+- Assisted prospect **Meridian Wellness Pte. Ltd.** has Priya Nair as primary
+  billing contact and `accounts@peekaa.invalid` as CC. One annual proposal becomes
+  one quotation before checkout; the same quote is linked after verified payment.
+- Self-service **Radiant Skin Studio** has no quotation. A finalized Stripe
+  invoice followed by one signed paid event creates one branded invoice view,
+  one receipt, one subscription summary, one Won/payment activity and one
+  document-pack delivery. Duplicate/older events create no second effect.
+- **Harbour Kopi** exercises payment failed → action required → recovered; one
+  high-priority task is updated/resolved rather than duplicated.
+- Annual and monthly subscription-item periods prove paid-through and next
+  renewal. Indefinite recurring shows no scheduled end; cancel-at-period-end
+  shows the exact scheduled date.
+- Merchant owner/staff, another tenant and anonymous identities can read none of
+  the internal CRM, billing contacts, documents, PDF objects or delivery rows.
+
 ### `SPA-GLOW-BILLING` — launch pricing and capacity
 
 - Monthly, 1,000 profiles: SGD 149.00 per month.
