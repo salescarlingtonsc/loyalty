@@ -19,6 +19,9 @@ verify_jwt = true
 [functions.stripe-billing-reconcile]
 verify_jwt = false
 
+[functions.subscription-document-dispatch]
+verify_jwt = false
+
 [functions.stripe-connect-command]
 verify_jwt = true
 

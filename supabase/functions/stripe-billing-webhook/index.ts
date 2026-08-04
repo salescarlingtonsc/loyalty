@@ -7,6 +7,7 @@ import {
 } from '../_shared/billing-service.ts';
 
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') {
@@ -69,6 +70,16 @@ Deno.serve(async (req) => {
         event_id: event.id,
         error: 'event_processing_failed',
       });
+    }
+    const dispatchSecret = Deno.env.get('SUBSCRIPTION_OPERATIONS_DISPATCH_SECRET') || '';
+    if (dispatchSecret) {
+      const dispatch = fetch(`${requiredEnv('SUPABASE_URL')}/functions/v1/subscription-document-dispatch`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-v156-dispatch-secret': dispatchSecret },
+        body: JSON.stringify({ source_event_id: event.id }),
+      }).catch(() => undefined);
+      if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(dispatch);
+      else await dispatch;
     }
     return billingJson(200, {
       received: true,
