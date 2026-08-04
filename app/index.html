@@ -731,8 +731,14 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .frontline-tenders .btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .till-cart-card{max-width:560px}
 .till-cart-catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin-top:6px}
-.till-cart-catalog .btn{min-height:64px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;padding:10px 12px;font-size:14px;font-weight:600;line-height:1.25}
-.till-cart-catalog .btn .till-cart-price{font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
+.till-cart-catalog .btn,.till-cart-catalog .choice-button{min-height:64px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;padding:10px 12px;font-size:14px;font-weight:600;line-height:1.25}
+.till-cart-catalog .btn .till-cart-price,.till-cart-catalog .choice-button .till-cart-price{font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
+.till-cart-catalog .choice-button{position:relative}
+.till-cart-catalog .choice-button.is-selected{border-color:var(--coral);background:#FFF3EE;box-shadow:0 0 0 1px rgba(196,61,50,.12)}
+.till-choice-qty{position:absolute;top:8px;right:8px;min-width:24px;height:24px;border-radius:999px;background:var(--coral);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.till-sale-package-options{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8;padding:0 12px}
+.till-sale-package-options>summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:750}
+.till-sale-package-options[open]{padding-bottom:12px}
 .till-cart-lines{list-style:none;padding:0;margin:12px 0 0}
 .till-cart-line{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .till-cart-line .till-cart-line-label{flex:1;min-width:0;font-weight:600}
@@ -749,6 +755,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .till-receipt-lines{list-style:none;padding:0;margin:10px 0}
 .till-receipt-lines li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
 .till-receipt-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;letter-spacing:.03em}
+.package-tabs-v157{margin-bottom:14px}
+.package-panel-v157[hidden]{display:none!important}
+.package-customer-tools-v157{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:10px 0 12px}
+.package-customer-tools-v157>div{flex:1 1 220px}
 /* PS-1C.1 unified checkout panel — server-priced breakdown (all figures authoritative from evaluate_checkout) */
 .ck-panel{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
 .ck-panel[data-checking]{opacity:.55}
@@ -10012,25 +10022,26 @@ async function tillPage(){
         picker=`<p class="muted small" role="status">Loading products and services for this branch…</p>`;
       }else{
         const noCheckoutItems=!catalog.services.length&&!(catalog.products&&catalog.products.length);
+        const selectedCatalogQty=(type,id)=>saleLines.reduce((sum,line)=>sum+(line.type===type&&String(line.ref_id)===String(id)?Number(line.qty||0):0),0);
         const svcBtns=catalog.services.length
-          ?`<div class="till-cart-catalog">${catalog.services.map(s=>`<button type="button" class="choice-button" data-add="service" data-id="${s.id}"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></button>`).join('')}</div>`
+          ?`<div class="till-cart-catalog">${catalog.services.map(s=>{
+            const qty=selectedCatalogQty('service',s.id);
+            return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}<b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></button>`;
+          }).join('')}</div>`
           :'';
         const prodBtns=(catalog.products&&catalog.products.length)
-          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>`<button type="button" class="choice-button" data-add="product" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
+          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>{
+            const qty=selectedCatalogQty('product',p.id);
+            return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}<b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`;
+          }).join('')}</div>`
           :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
-          ?`<b class="small" style="display:block;margin-top:14px">Packages</b><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
+          ?`<details class="till-sale-package-options"><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div></details>`
           :'';
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
-        const ownedPackages=(catalog.customerPackages||[]).length
-          ?`<div class="permission-banner" style="margin-bottom:14px"><b>Use an existing customer package</b>
-            <p class="muted small" style="margin:4px 0 8px">No payment is taken. One session is deducted and recorded as a visit.</p>
-            <div class="till-cart-catalog">${catalog.customerPackages.map(item=>`<button type="button" class="btn ghost" data-use-package="${item.client_package_id}">
-              ${esc(item.plan_name)}<span class="till-cart-price">${item.remaining}/${item.sessions} left${item.service_name?` · ${esc(serviceDisplayName(item))}`:''}</span>
-            </button>`).join('')}</div></div>`
-          :'';
+        const ownedPackages='';
         const pendingVouchers=(catalog.customerVouchers||[]).length
           ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
@@ -10070,7 +10081,6 @@ async function tillPage(){
     // tender — needed to finalise a kernel sale; frozen while the cart is locked (retry keeps method)
     const tenderHtml=(cart.length&&!locked)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
       <div class="frontline-tenders" id="tTenders">${cartTenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
-      ${!verifiedPaynowReady?'<p class="muted small" style="margin-top:6px">Verified PayNow QR is available after the owner completes Settings → Customer payments. External PayNow records a transfer staff already received.</p>':''}
       ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const paynowHtml=paynowAttempt?`<div class="imp-note" role="status" style="margin-top:12px"><b>PayNow QR · ${money(evalResult?.total_cents||0)}</b><p class="small" style="margin-top:5px">${esc(paynowAttempt.status==='processing'?'Payment is being confirmed.':'Waiting for the customer to pay the locked amount.')}</p><button type="button" class="btn ghost sm" id="tPaynowReopen" style="margin-top:8px">Show QR</button></div>`:'';
@@ -10726,52 +10736,55 @@ async function servicesPage(){
   $('servicesSeg').onclick=()=>{$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false')};
   $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true')};
   loadBR();
-  /* products used per service */
-  M().insertAdjacentHTML('beforeend',`<div class="card" style="margin-top:16px"><b>Products used per service</b>
-    <p class="muted small" style="margin:6px 0 10px">Completing an appointment with this service auto-deducts these products (FEFO).</p>
-    ${canWrite?`<div class="row"><select id="lsvc"></select><select id="lprod"></select>
-    <input id="lqty" type="number" min="1" value="1" style="max-width:90px"><button class="btn sm" id="ladd">Add</button></div>`:''}
-    <div id="llist" style="margin-top:12px"></div></div>`);
-  async function loadSP(){
-    const [serviceResult,productResult]=await Promise.all([
-      sb.from('services').select('id,name').eq('business_id',S.biz.id).order('name'),
-      sb.from('products').select('id,name').eq('business_id',S.biz.id).order('name')]);
-    if(!isCurrent())return;
-    if(serviceResult.error||productResult.error){
-      $('llist').innerHTML=`<div class="err">Service product links could not be loaded. <button class="btn ghost sm" id="serviceProductsRetry">Retry</button></div>`;
-      $('serviceProductsRetry').onclick=loadSP;return;
-    }
-    const sv3=serviceResult.data,pr3=productResult.data;
-    if(canWrite){
-      $('lsvc').innerHTML=(sv3&&sv3.length)?sv3.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(''):'<option value="">— add a service first —</option>';
-      $('lprod').innerHTML=(pr3&&pr3.length)?pr3.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''):'<option value="">— add a product first —</option>';
-    }
-    const ids=(sv3||[]).map(s=>s.id);
-    let links=[];
-    if(ids.length){
-      const {data:sp,error}=await sb.from('service_products').select('service_id, product_id, qty, services(name), products(name)').in('service_id',ids);
+  const showServiceProductDeductionV157=false;
+  if(showServiceProductDeductionV157){
+    /* products used per service */
+    M().insertAdjacentHTML('beforeend',`<div class="card" style="margin-top:16px"><b>Products used per service</b>
+      <p class="muted small" style="margin:6px 0 10px">Completing an appointment with this service auto-deducts these products (FEFO).</p>
+      ${canWrite?`<div class="row"><select id="lsvc"></select><select id="lprod"></select>
+      <input id="lqty" type="number" min="1" value="1" style="max-width:90px"><button class="btn sm" id="ladd">Add</button></div>`:''}
+      <div id="llist" style="margin-top:12px"></div></div>`);
+    async function loadSP(){
+      const [serviceResult,productResult]=await Promise.all([
+        sb.from('services').select('id,name').eq('business_id',S.biz.id).order('name'),
+        sb.from('products').select('id,name').eq('business_id',S.biz.id).order('name')]);
       if(!isCurrent())return;
-      if(error){$('llist').innerHTML=`<div class="err">Service product links could not be loaded. <button class="btn ghost sm" id="serviceProductsRetry">Retry</button></div>`;$('serviceProductsRetry').onclick=loadSP;return}
-      links=sp||[];
+      if(serviceResult.error||productResult.error){
+        $('llist').innerHTML=`<div class="err">Service product links could not be loaded. <button class="btn ghost sm" id="serviceProductsRetry">Retry</button></div>`;
+        $('serviceProductsRetry').onclick=loadSP;return;
+      }
+      const sv3=serviceResult.data,pr3=productResult.data;
+      if(canWrite){
+        $('lsvc').innerHTML=(sv3&&sv3.length)?sv3.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(''):'<option value="">— add a service first —</option>';
+        $('lprod').innerHTML=(pr3&&pr3.length)?pr3.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''):'<option value="">— add a product first —</option>';
+      }
+      const ids=(sv3||[]).map(s=>s.id);
+      let links=[];
+      if(ids.length){
+        const {data:sp,error}=await sb.from('service_products').select('service_id, product_id, qty, services(name), products(name)').in('service_id',ids);
+        if(!isCurrent())return;
+        if(error){$('llist').innerHTML=`<div class="err">Service product links could not be loaded. <button class="btn ghost sm" id="serviceProductsRetry">Retry</button></div>`;$('serviceProductsRetry').onclick=loadSP;return}
+        links=sp||[];
+      }
+      $('llist').innerHTML=links.length?links.map(l=>`<div class="row small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+        <span><b>${esc(l.services?.name||'—')}</b> ← ${l.qty} × ${esc(l.products?.name||'—')}</span>
+        <span class="spacer"></span>${canWrite?`<button class="btn ghost sm" onclick="rmSP('${l.service_id}','${l.product_id}')">Remove</button>`:'<span class="muted small">View only</span>'}</div>`).join('')
+        :'<p class="muted small">No product links yet.</p>';
     }
-    $('llist').innerHTML=links.length?links.map(l=>`<div class="row small" style="padding:6px 0;border-bottom:1px solid var(--line)">
-      <span><b>${esc(l.services?.name||'—')}</b> ← ${l.qty} × ${esc(l.products?.name||'—')}</span>
-      <span class="spacer"></span>${canWrite?`<button class="btn ghost sm" onclick="rmSP('${l.service_id}','${l.product_id}')">Remove</button>`:'<span class="muted small">View only</span>'}</div>`).join('')
-      :'<p class="muted small">No product links yet.</p>';
+    if(canWrite)$('ladd').onclick=async()=>{
+      if(!$('lsvc').value||!$('lprod').value) return toast('Pick a service and a product');
+      const {error}=await sb.from('service_products').upsert({service_id:$('lsvc').value,product_id:$('lprod').value,qty:parseInt($('lqty').value||'1')});
+      if(error) return fail(error);
+      toast('Linked');loadSP();
+    };
+    window.rmSP=async(sid,pid)=>{
+      if(!canWrite)return;
+      const {error}=await sb.from('service_products').delete().eq('service_id',sid).eq('product_id',pid);
+      if(error) return fail(error);
+      toast('Removed');loadSP();
+    };
+    loadSP();
   }
-  if(canWrite)$('ladd').onclick=async()=>{
-    if(!$('lsvc').value||!$('lprod').value) return toast('Pick a service and a product');
-    const {error}=await sb.from('service_products').upsert({service_id:$('lsvc').value,product_id:$('lprod').value,qty:parseInt($('lqty').value||'1')});
-    if(error) return fail(error);
-    toast('Linked');loadSP();
-  };
-  window.rmSP=async(sid,pid)=>{
-    if(!canWrite)return;
-    const {error}=await sb.from('service_products').delete().eq('service_id',sid).eq('product_id',pid);
-    if(error) return fail(error);
-    toast('Removed');loadSP();
-  };
-  loadSP();
 }
 
 /* ---------- bookings ---------- */
@@ -16982,18 +16995,17 @@ async function packagesPage(){
   const canWrite=canWriteModule('packages');
   const canSell=canWrite&&hasRoleCapability('create_sales');
   routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
-  const [plansResult,clientsResult,servicesResult,branchesResult,preferencesResult]=await Promise.all([
+  const [plansResult,servicesResult,branchesResult,preferencesResult]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('package_plans').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('created_at',{ascending:false}).order('id')),
-    fetchAllRowsResult(()=>sb.from('clients').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,duration_min,price_cents,active',{count:'exact'}).eq('business_id',S.biz.id).order('name').order('id')),
     fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})]);
   if(!isCurrent())return;
-  if(plansResult.error||clientsResult.error||servicesResult.error||branchesResult.error){
+  if(plansResult.error||servicesResult.error||branchesResult.error){
     routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1></div></div><div class="card"><div class="err">Packages could not be loaded.</div><button class="btn ghost sm" id="packagesRetry" style="margin-top:12px">Retry</button></div>`;
     $('packagesRetry').onclick=packagesPage;return;
   }
-  const plans=plansResult.data,cl=clientsResult.data,sv=servicesResult.data,packageBranches=branchesResult.data||[];
+  const plans=plansResult.data,sv=servicesResult.data,packageBranches=branchesResult.data||[];
   const preferenceState=checkoutPreferencesStateV102(preferencesResult);
   const preferencesAvailable=preferenceState.available;
   const packageEarnsPoints=preferenceState.packageEarnsPoints;
@@ -17008,9 +17020,13 @@ async function packagesPage(){
       ?`${money(list)} list value · save ${money(difference)} (${pct}% off)`
       :`${money(list)} list value · ${money(-difference)} above list (${pct}%)`;
   };
-  M().innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Manage prepaid sessions. Sell packages from Record sale.</p></div></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only packages access</b><p class="muted small" style="margin-top:5px">You can review package plans and customer balances. Ask for Packages edit access to create or use sessions.</p></div>`}
-    <div class="split">
+    <div class="settings-tabs package-tabs-v157" role="tablist" aria-label="Package sections">
+      <button type="button" class="settings-tab" id="pkgTabPlans" role="tab" aria-selected="true" aria-controls="pkgPanelPlans" data-package-tab="plans">My packages</button>
+      <button type="button" class="settings-tab" id="pkgTabCustomers" role="tab" aria-selected="false" tabindex="-1" aria-controls="pkgPanelCustomers" data-package-tab="customers">Customer packages</button>
+    </div>
+    <section class="package-panel-v157" id="pkgPanelPlans" role="tabpanel" aria-labelledby="pkgTabPlans">
     <div class="card">${canWrite?`<b id="kFormTitle">Create a package</b>
       <input id="kid" type="hidden">
       <label>Name</label><input id="kn" placeholder="e.g. 5x Facial">
@@ -17028,17 +17044,38 @@ async function packagesPage(){
         <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">v${Number(p.version_no||1)} · ${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''}</span>
           <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">This version is frozen. Existing customer purchases keep their original price, sessions and service snapshot.</div></div>
         <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'archived'}</span>
-        ${canWrite&&p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}</div>`).join('')||''}</div>
-      ${canSell?`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
-      <b>Sell a package</b>
-      <label>Customer</label><select id="kc">${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.full_name)}</option>`).join('')||'<option value="">—</option>'}</select>
-      <label>Package</label><select id="kk">${(plans||[]).filter(p=>p.active).map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.price_cents)}</option>`).join('')||'<option value="">—</option>'}</select>
-      <label>Sale branch</label><select id="kSaleBranch">${packageBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')||'<option value="">No active branch</option>'}</select>
-      <div style="margin-top:14px"><button class="btn" id="ksell">Sell — charge now</button></div>`:canWrite?'<p class="muted small" style="margin-top:14px">Your role cannot record package sales.</p>':''}</div>
-    <div class="card"><b>Customer packages</b>
-      ${canWrite?`<label for="kUseBranch" style="margin-top:10px">Branch recording the used session</label><select id="kUseBranch">${packageBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')||'<option value="">No active branch</option>'}</select>`:''}
-      <div id="klist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div></div>`;
+        ${canWrite&&p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}</div>`).join('')||CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
+    <section class="package-panel-v157" id="pkgPanelCustomers" role="tabpanel" aria-labelledby="pkgTabCustomers" hidden>
+      <div class="card"><div class="row"><div><b>Customer packages</b><p class="muted small" style="margin-top:5px">Search by customer name or phone, then use sessions from the matching customer record.</p></div></div>
+      <div class="package-customer-tools-v157">
+        ${canWrite?`<div><label for="kUseBranch">Branch recording used session</label><select id="kUseBranch">${packageBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')||'<option value="">No active branch</option>'}</select></div>`:''}
+        <div><label for="kCustomerSearch">Search customer</label><input id="kCustomerSearch" type="search" placeholder="Name or phone"></div>
+        <button class="btn ghost sm" id="kCustomerSearchClear" type="button">Clear</button>
+      </div>
+      <div id="klist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div>
+    </section>`;
   if($('packagePreferencesRetry'))$('packagePreferencesRetry').onclick=packagesPage;
+  const packageTabs=[...routeMain.querySelectorAll('[data-package-tab]')];
+  const packagePanels={plans:$('pkgPanelPlans'),customers:$('pkgPanelCustomers')};
+  function selectPackageTab(key,focus=false){
+    packageTabs.forEach(tab=>{
+      const on=tab.dataset.packageTab===key;
+      tab.setAttribute('aria-selected',String(on));tab.tabIndex=on?0:-1;
+      const panel=packagePanels[tab.dataset.packageTab];if(panel)panel.hidden=!on;
+      if(on&&focus)tab.focus();
+    });
+  }
+  packageTabs.forEach((tab,i)=>{
+    tab.onclick=()=>selectPackageTab(tab.dataset.packageTab);
+    tab.onkeydown=e=>{
+      let next=null;
+      if(e.key==='ArrowRight'||e.key==='ArrowDown')next=(i+1)%packageTabs.length;
+      else if(e.key==='ArrowLeft'||e.key==='ArrowUp')next=(i-1+packageTabs.length)%packageTabs.length;
+      else if(e.key==='Home')next=0;else if(e.key==='End')next=packageTabs.length-1;
+      if(next===null)return;
+      e.preventDefault();selectPackageTab(packageTabs[next].dataset.packageTab,true);
+    };
+  });
   if(canWrite){
     const resetPackageForm=()=>{
       $('kid').value='';$('kn').value='';$('kp').value='';$('ks').value='5';$('kv').value='';
@@ -17096,7 +17133,7 @@ async function packagesPage(){
     };
     renderPackageDiscount();
   }
-  if(canSell)$('ksell').onclick=async()=>{
+  if(canSell&&$('ksell'))$('ksell').onclick=async()=>{
     if(!$('kc').value||!$('kk').value||!$('kSaleBranch').value) return toast('Pick customer, package and branch');
     const sellSlot=`frenly:package-sell:${S.biz.id}`;
     const sellKey=writeAttemptKey(sellSlot,`${$('kc').value}|${$('kk').value}|${$('kSaleBranch').value}`);
@@ -17123,11 +17160,13 @@ async function packagesPage(){
   if(cpError)return fail(cpError);
   const packageHistory=(workflow?.sales||[]).filter(x=>x.is_package_session||x.original_sale_id&&x.amount_cents===0);
   const PACKAGE_PAGE_SIZE=100,packageRows=cps||[];
-  let packagePage=0;
-  const renderPackages=()=>{
-    if(!isCurrent())return;
-    const total=packageRows.length,totalPages=Math.max(1,Math.ceil(total/PACKAGE_PAGE_SIZE));
-    const visible=packageRows.slice(packagePage*PACKAGE_PAGE_SIZE,(packagePage+1)*PACKAGE_PAGE_SIZE);
+	  let packagePage=0;
+	  const renderPackages=()=>{
+	    if(!isCurrent())return;
+	    const query=($('kCustomerSearch')?.value||'').trim().toLowerCase();
+	    const filtered=packageRows.filter(k=>!query||[k.client_name,k.client_phone,k.plan_name].some(value=>String(value||'').toLowerCase().includes(query)));
+	    const total=filtered.length,totalPages=Math.max(1,Math.ceil(total/PACKAGE_PAGE_SIZE));
+	    const visible=filtered.slice(packagePage*PACKAGE_PAGE_SIZE,(packagePage+1)*PACKAGE_PAGE_SIZE);
     $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Left</th><th>Status</th><th></th></tr>
       ${visible.map(k=>`<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">v${Number(k.plan_version||1)} · ${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}</td>
       <td>${k.remaining}/${k.sessions||'?'}</td>
@@ -17144,8 +17183,12 @@ async function packagesPage(){
     if(prev)prev.onclick=()=>{packagePage=Math.max(0,packagePage-1);renderPackages()};
     if(next)next.onclick=()=>{packagePage+=1;renderPackages()};
     if(canWrite)bindReversalButtons(packagesPage);
-  };
-  renderPackages();
+	  };
+	  renderPackages();
+	  const packageSearch=$('kCustomerSearch');
+	  if(packageSearch)packageSearch.oninput=()=>{packagePage=0;renderPackages()};
+	  const packageSearchClear=$('kCustomerSearchClear');
+	  if(packageSearchClear)packageSearchClear.onclick=()=>{if(packageSearch)packageSearch.value='';packagePage=0;renderPackages();packageSearch?.focus()};
   const packageSessionIdem=new Map();
   window.usePkg=async(id)=>{
     if(!canWrite)return;
@@ -18814,7 +18857,6 @@ async function settingsPage(){
       ${S.myRole==='owner'?'<button type="button" class="settings-tab" role="tab" id="settab-programme" aria-controls="setpanel-programme" aria-selected="false" tabindex="-1" data-settab="programme">Customer programme</button>':''}
       <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="false" tabindex="-1" data-settab="modules">Modules &amp; plan</button>
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue">Checkout catalogue</button>
-      ${S.myRole==='owner'?'<button type="button" class="settings-tab" role="tab" id="settab-payments" aria-controls="setpanel-payments" aria-selected="false" tabindex="-1" data-settab="payments">Customer payments</button>':''}
       <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team">Team &amp; permissions</button>
       <button type="button" class="settings-tab" role="tab" id="settab-data" aria-controls="setpanel-data" aria-selected="false" tabindex="-1" data-settab="data">Import &amp; sign-up</button>
       <button type="button" class="settings-tab" role="tab" id="settab-fields" aria-controls="setpanel-fields" aria-selected="false" tabindex="-1" data-settab="fields">Customer fields &amp; privacy</button>
@@ -18840,9 +18882,6 @@ async function settingsPage(){
     <section class="settings-panel" id="setpanel-catalogue" role="tabpanel" aria-labelledby="settab-catalogue" tabindex="-1" hidden>
       <div class="card" id="checkoutCatalogueWrap">${CUI.loadingState({title:'Loading checkout catalogue',iconName:'till'})}</div>
     </section>
-    ${S.myRole==='owner'?`<section class="settings-panel" id="setpanel-payments" role="tabpanel" aria-labelledby="settab-payments" tabindex="-1" hidden>
-      <div class="card" id="merchantPaymentsWrapV142">${CUI.loadingState({title:'Loading customer payments',iconName:'till'})}</div>
-    </section>`:''}
     <section class="settings-panel" id="setpanel-team" role="tabpanel" aria-labelledby="settab-team" tabindex="-1" hidden>
     <div class="card settings-team-card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff','Add staff without app access','settingsPage')}</div><p class="muted small" style="margin:6px 0 10px">Add a roster-only staff member for appointments or reporting, or create an invite when they need to sign in. Owners inherit every enabled module. Other teammates can receive Off / Read / Edit access per enabled module.</p>
       <div id="team">${CUI.skeletonGrid({cards:2,lines:3})}</div>
@@ -19002,7 +19041,6 @@ async function settingsPage(){
     });
   }
   loadCheckoutCatalogue();
-  if(S.myRole==='owner')loadMerchantPaymentsV142();
   $('bsave').onclick=async()=>{
     /* Client-side mirror of the DB CHECK (review_url is null or length<=500 and ~ '^https://').
        review_url rides this existing businesses UPDATE — no new call site is introduced. */
