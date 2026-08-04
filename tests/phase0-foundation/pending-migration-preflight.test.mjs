@@ -150,7 +150,8 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v156_subscription_operations_crm', 'db/tests/v156_subscription_operations_crm.sql'],
   ['nestly_v158_catalogue_media', 'db/tests/v158_catalogue_media.sql'],
   ['nestly_v156a_v151_invite_search_path_hardening', 'db/tests/v156a_v151_invite_search_path_hardening.sql'],
-  ['nestly_v159_selfserve_manual_application_fallback', 'db/tests/v159_selfserve_manual_application_fallback.sql']
+  ['nestly_v159_selfserve_manual_application_fallback', 'db/tests/v159_selfserve_manual_application_fallback.sql'],
+  ['nestly_v160_auth_signup_visibility', 'db/tests/v160_auth_signup_visibility.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -649,7 +650,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 141);
+  assert.equal(pending.length, 142);
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

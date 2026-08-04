@@ -120,6 +120,11 @@
       'Onboarding view':'入驻视图','Kanban':'看板','List':'列表',
       'Assisted applications':'人工协助申请','Applications sent to Peekaa for manual help':'发送给 Peekaa 人工处理的申请',
       'Website signups and paid workspaces':'网站注册与已付款工作区',
+      'Account signups needing business details':'需要补充企业资料的账户注册',
+      'These people created a Peekaa account but have not yet saved a business setup, paid workspace, or assisted application. Contact them or ask them to continue setup/manual help.':'这些用户已创建 Peekaa 账户，但尚未保存企业设置、已付款工作区或人工协助申请。请联系他们，或请他们继续设置／人工协助流程。',
+      'Account created':'账户创建时间','Last sign-in':'上次登录','Contact unavailable':'无可用联系方式','Email owner':'电邮联系负责人','Call owner':'致电负责人',
+      'recent':'近期','Needs business details':'需要企业资料','Email unconfirmed':'电邮未确认',
+      'No account-only signups match the current filters.':'当前筛选条件下没有匹配的仅账户注册。',
       'Self-service signups are payment-managed. Their names, payment state and workspace state appear here; approve/reject is intentionally unavailable for this Stripe-controlled path.':'自助注册由付款流程管理。企业名称、付款状态和工作区状态会显示在此；此 Stripe 管控路径刻意不提供批准／拒绝。',
       'Website signups activate after Stripe confirms payment. This queue is only for applications that require assisted review.':'网站注册会在 Stripe 确认付款后自动激活。此队列仅显示需要人工审核的申请。',
       'Billing contact not recorded':'未记录账单联系人',
@@ -256,6 +261,11 @@
       'Generate analysis using only firms inside your platform scope.':'Jana analisis hanya menggunakan firma dalam skop platform anda.',
       'Generating consultant brief':'Menjana ringkasan perunding',
       'Website signups and paid workspaces':'Pendaftaran laman web dan ruang kerja berbayar',
+      'Account signups needing business details':'Pendaftaran akaun yang memerlukan butiran perniagaan',
+      'These people created a Peekaa account but have not yet saved a business setup, paid workspace, or assisted application. Contact them or ask them to continue setup/manual help.':'Pengguna ini telah mencipta akaun Peekaa tetapi belum menyimpan tetapan perniagaan, ruang kerja berbayar atau permohonan dibantu. Hubungi mereka atau minta mereka meneruskan tetapan/bantuan manual.',
+      'Account created':'Akaun dicipta','Last sign-in':'Log masuk terakhir','Contact unavailable':'Tiada maklumat hubungan','Email owner':'E-mel pemilik','Call owner':'Hubungi pemilik',
+      'recent':'terkini','Needs business details':'Memerlukan butiran perniagaan','Email unconfirmed':'E-mel belum disahkan',
+      'No account-only signups match the current filters.':'Tiada pendaftaran akaun sahaja yang sepadan dengan penapis semasa.',
       'Self-service signups are payment-managed. Their names, payment state and workspace state appear here; approve/reject is intentionally unavailable for this Stripe-controlled path.':'Pendaftaran layan diri diurus oleh pembayaran. Nama, status bayaran dan status ruang kerja dipaparkan di sini; lulus/tolak sengaja tidak tersedia untuk laluan yang dikawal Stripe ini.',
       'Reconciling customer, product and service evidence…':'Menyelaraskan bukti pelanggan, produk dan perkhidmatan…',
       'Billing contact not recorded':'Kenalan pengebilan tidak direkodkan',
@@ -4593,7 +4603,7 @@
     const previousScroll=prior?Number(globalObject.scrollY||0):null;
     main.innerHTML=loading(CUI,'Onboarding',prior?'Loading the next 50 firms…':'Loading the SME pipeline…','setup');
     try{
-      const [directory,list,applicationQueue]=await Promise.all([
+      const [directory,list,applicationQueue,accountSignupQueue]=await Promise.all([
         fetchFirmDirectoryPageV88(sb,filters,{
           required:true,limit:50,
           snapshot:prior?.snapshot_at||null,
@@ -4605,7 +4615,10 @@
         }),
         prior?.applicationQueue?Promise.resolve(prior.applicationQueue):context.access?.role==='super_admin'
           ?rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:filters.search||null,p_limit:100})
-          :Promise.resolve({applications:[]})
+          :Promise.resolve({applications:[]}),
+        prior?.accountSignupQueue?Promise.resolve(prior.accountSignupQueue):context.access?.role==='super_admin'
+          ?rpc(sb,'platform_list_account_signups_v160',{p_search:filters.search||null,p_limit:100})
+          :Promise.resolve({items:[]})
       ]);
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       const directoryItems=asArray(prior?.directoryItems).concat(directory.items);
@@ -4616,7 +4629,7 @@
         snapshot_at:prior?.snapshot_at||directory.snapshot_at,
         next_cursor:directory.next_cursor,
         next_before:list?.next_before||null,
-        directoryItems,prospectItems,total,applicationQueue
+        directoryItems,prospectItems,total,applicationQueue,accountSignupQueue
       };
       const pagination={shown:directoryItems.length,total,hasMore:directoryItems.length<total};
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
@@ -4628,7 +4641,9 @@
       pageState.attentionSummary=prior?.attentionSummary||directory.attention_summary;
       if(context.access?.role==='super_admin'){
         main.insertAdjacentHTML('afterbegin',
-          paymentManagedSignupQueueHtml(items,CUI)+businessApplicationQueueHtml(applicationQueue,CUI,items)
+          accountSignupQueueHtml(accountSignupQueue,CUI)
+          +paymentManagedSignupQueueHtml(items,CUI)
+          +businessApplicationQueueHtml(applicationQueue,CUI,items)
         );
         wireBusinessApplicationQueue({...context,applicationQueue,filters});
       }
@@ -4664,6 +4679,29 @@
       ||['website','self_service','existing_business'].includes(String(item.source_type||'').toLowerCase())
       ||['incomplete','trialing','active','past_due','unpaid','paused','canceled'].includes(String(item.subscription_status||'').toLowerCase())
     )).slice(0,8);
+  }
+  function accountSignupQueueHtml(payload,CUI){
+    const rows=asArray(payload,['items']);
+    return `<section class="platform-route-note platform-status-note" style="margin-top:14px">
+      ${CUI.icon('staff',{size:19})}<div style="width:100%">
+        <div class="row"><div><b>${escapeHtml(pt('Account signups needing business details'))}</b>
+          <p class="small">${escapeHtml(pt('These people created a Peekaa account but have not yet saved a business setup, paid workspace, or assisted application. Contact them or ask them to continue setup/manual help.'))}</p></div>
+          <span class="spacer"></span><span class="pill">${rows.length} ${escapeHtml(pt('recent'))}</span></div>
+        <div class="platform-card-list" style="margin-top:12px">${rows.map(item=>{
+          const phone=normalizePlatformPhone(item.phone);
+          const action=item.email
+            ?`<a class="btn ghost sm" href="mailto:${encodeURIComponent(item.email)}?subject=Continue%20your%20Peekaa%20business%20setup">${escapeHtml(pt('Email owner'))}</a>`
+            :phone?`<a class="btn ghost sm" href="tel:${escapeHtml(phone.tel)}">${escapeHtml(pt('Call owner'))}</a>`:'';
+          return `<div class="platform-action-item">
+          <div><b>${escapeHtml(item.email||item.phone||pt('Contact unavailable'))}</b>
+            <p class="muted small">${escapeHtml(pt('Account created'))}: ${escapeHtml(dateTime(item.created_at))}${item.last_sign_in_at?` · ${escapeHtml(pt('Last sign-in'))}: ${escapeHtml(dateTime(item.last_sign_in_at))}`:''}</p>
+            ${item.email&&item.phone?`<p class="muted small">${escapeHtml(item.phone)}</p>`:''}
+            <p class="muted small">${escapeHtml(pt('Current status'))}: ${escapeHtml(platformStatus(item.status||'needs_business_details'))}</p></div>
+          <div class="platform-actions">${action}</div>
+        </div>`;
+        }).join('')||`<p class="muted small">${escapeHtml(pt('No account-only signups match the current filters.'))}</p>`}</div>
+      </div>
+    </section>`;
   }
   function paymentManagedSignupQueueHtml(items,CUI){
     const rows=paymentManagedSignupItems(items);
@@ -8428,7 +8466,7 @@
     buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
     moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
     safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
-    accountDeletionQueueHtml,privacyOperationAttempt,
+    accountDeletionQueueHtml,privacyOperationAttempt,accountSignupQueueHtml,
     onboardingHash,onboardingStateFromHash,
     platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
     setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
@@ -8449,7 +8487,7 @@
       buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
       moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
       safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
-      onboardingHash,onboardingStateFromHash,
+      onboardingHash,onboardingStateFromHash,accountSignupQueueHtml,
       platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
       setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
       localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,

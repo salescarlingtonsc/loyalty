@@ -1120,6 +1120,12 @@
       "version": "20260804140000",
       "name": "nestly_v159_selfserve_manual_application_fallback",
       "sourcePath": "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804150000",
+      "name": "nestly_v160_auth_signup_visibility",
+      "sourcePath": "db/migrations/20260804_nestly_v160_auth_signup_visibility.sql"
     }
   ]
 }

@@ -21,7 +21,10 @@ test('platform separates assisted applications from paid website self-service',a
   const render=source.match(/async function renderOnboarding[\s\S]+?\n  function paymentManagedSignupItems/)?.[0]||'';
   assert.match(queue,/Assisted applications/);
   assert.match(queue,/Website signups activate after Stripe confirms payment/);
-  assert.match(render,/paymentManagedSignupQueueHtml\(items,CUI\)\+businessApplicationQueueHtml\(applicationQueue,CUI,items\)/);
+  assert.match(render,/platform_list_account_signups_v160/);
+  assert.match(render,/accountSignupQueueHtml\(accountSignupQueue,CUI\)[\s\S]+paymentManagedSignupQueueHtml\(items,CUI\)[\s\S]+businessApplicationQueueHtml\(applicationQueue,CUI,items\)/);
+  assert.match(source,/Account signups needing business details/);
+  assert.match(source,/created a Peekaa account but have not yet saved a business setup/);
   assert.match(source,/Website signups and paid workspaces/);
   assert.match(source,/Self-service signups are payment-managed/);
   assert.match(source,/Open firm directory/);
@@ -41,6 +44,23 @@ test('self-service signups are surfaced by name without manual approval controls
   assert.match(queue,/approve\/reject is intentionally unavailable/);
   assert.doesNotMatch(queue,/data-business-approval/);
   assert.ok(queue.indexOf('function paymentManagedSignupQueueHtml')<queue.indexOf('function businessApplicationQueueHtml'));
+});
+
+test('account-only signup queue gives phone-only owners a contact action',async()=>{
+  const consoleModule=await import('../../app/platform-console.js');
+  const CUI={icon:()=>''};
+  const html=consoleModule.accountSignupQueueHtml({
+    items:[{
+      phone:'+65 8160 0999',
+      created_at:'2026-08-04T04:00:00.000Z',
+      status:'needs_business_details'
+    }]
+  },CUI);
+  assert.match(html,/Account signups needing business details/);
+  assert.match(html,/href="tel:\+6581600999"/);
+  assert.match(html,/Call owner/);
+  assert.doesNotMatch(html,/mailto:/);
+  assert.doesNotMatch(html,/data-business-approval/);
 });
 
 test('enterprise filter helper occupies its own readable grid space',async()=>{

@@ -1119,6 +1119,12 @@
       "path": "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql",
       "semanticVersion": "v159",
       "proposedDeployVersion": "20260804140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v160_auth_signup_visibility.sql",
+      "semanticVersion": "v160",
+      "proposedDeployVersion": "20260804150000"
     }
   ]
 }
