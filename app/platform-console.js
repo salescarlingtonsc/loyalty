@@ -4576,7 +4576,7 @@
       });
       pageState.attentionSummary=prior?.attentionSummary||directory.attention_summary;
       if(context.access?.role==='super_admin'){
-        main.insertAdjacentHTML('afterbegin',businessApplicationQueueHtml(applicationQueue,CUI));
+        main.insertAdjacentHTML('afterbegin',businessApplicationQueueHtml(applicationQueue,CUI,items));
         wireBusinessApplicationQueue({...context,applicationQueue,filters});
       }
       wireOnboarding({...context,items,filters,onboardingPage:pageState,onboardingLoadMore:false});
@@ -4605,7 +4605,31 @@
       }
     }catch(error){showError(main,error,CUI,'Onboarding')}
   }
-  function businessApplicationQueueHtml(payload,CUI){
+  function paymentManagedSignupItems(items){
+    return asArray(items).filter(item=>item?.business_id&&(
+      item._has_prospect_detail===false
+      ||['website','self_service','existing_business'].includes(String(item.source_type||'').toLowerCase())
+      ||['incomplete','trialing','active','past_due','unpaid','paused','canceled'].includes(String(item.subscription_status||'').toLowerCase())
+    )).slice(0,8);
+  }
+  function paymentManagedSignupQueueHtml(items,CUI){
+    const rows=paymentManagedSignupItems(items);
+    return `<section class="platform-route-note platform-status-note" style="margin-top:14px">
+      ${CUI.icon('branch',{size:19})}<div style="width:100%">
+        <div class="row"><div><b>${escapeHtml(pt('Website signups and paid workspaces'))}</b>
+          <p class="small">${escapeHtml(pt('Self-service signups are payment-managed. Their names, payment state and workspace state appear here; approve/reject is intentionally unavailable for this Stripe-controlled path.'))}</p></div>
+          <span class="spacer"></span><span class="pill">${rows.length} ${escapeHtml(pt('shown'))}</span></div>
+        <div class="platform-card-list" style="margin-top:12px">${rows.map(item=>`<div class="platform-action-item">
+          <div><b>${escapeHtml(prospectCompany(item))}</b>
+            <p class="muted small">${escapeHtml([prospectContact(item),item.primary_contact_email,item.primary_contact_phone].filter(Boolean).join(' · ')||pt('Billing contact not recorded'))}</p>
+            <p class="muted small">${escapeHtml(pt('Subscription'))}: ${escapeHtml(platformStatus(item.subscription_status||'not_recorded'))} · ${escapeHtml(pt('Onboarding'))}: ${escapeHtml(platformStatus(item.onboarding_status||'not_started'))}</p></div>
+          <div class="platform-actions"><a class="btn ghost sm" href="#/platform/firms">${escapeHtml(pt('Open firm directory'))}</a>
+            <a class="btn ghost sm" href="#/platform/billing?business=${encodeURIComponent(String(item.business_id||''))}">${escapeHtml(pt('Open billing'))}</a></div>
+        </div>`).join('')||`<p class="muted small">${escapeHtml(pt('No payment-managed website signups are visible in the current filters. Clear filters or search by business name.'))}</p>`}</div>
+      </div>
+    </section>`;
+  }
+  function businessApplicationQueueHtml(payload,CUI,firmItems=[]){
     const applications=asArray(payload,['applications']);
     return `<section class="card" id="platformBusinessApplicationQueue" style="margin-bottom:18px">
       <div class="row"><div><p class="eyebrow">${escapeHtml(pt('Assisted applications'))}</p><h2 style="margin-top:4px">${escapeHtml(pt('Applications sent to Peekaa for manual help'))}</h2>
@@ -4619,6 +4643,7 @@
           <button class="btn danger sm" type="button" data-application-decision="reject">${escapeHtml(pt('Reject application'))}</button></div></div>
       </article>`).join('')||CUI.emptyState({iconName:'setup',title:'No assisted applications awaiting review',body:'Paid website signups do not wait here; Stripe confirmation activates their workspace automatically.'})}</div>
         ${payload?.truncated?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("Showing the newest 100 applications. Narrow the search to find another application."))}</p>`:''}
+        ${paymentManagedSignupQueueHtml(firmItems,CUI)}
     </section>`;
   }
   function wireBusinessApplicationQueue(context){

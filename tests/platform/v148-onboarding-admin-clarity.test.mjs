@@ -20,8 +20,26 @@ test('platform separates assisted applications from paid website self-service',a
   const queue=source.match(/function businessApplicationQueueHtml[\s\S]+?\n  function wireBusinessApplicationQueue/)?.[0]||'';
   assert.match(queue,/Assisted applications/);
   assert.match(queue,/Website signups activate after Stripe confirms payment/);
+  assert.match(queue,/paymentManagedSignupQueueHtml\(firmItems,CUI\)/);
+  assert.match(source,/Website signups and paid workspaces/);
+  assert.match(source,/Self-service signups are payment-managed/);
+  assert.match(source,/Open firm directory/);
+  assert.match(source,/Open billing/);
   assert.doesNotMatch(queue,/No owner account or workspace can be created until a super admin approves/);
   assert.doesNotMatch(queue,/New public business applications will appear here before any owner account can be created/);
+});
+
+test('self-service signups are surfaced by name without manual approval controls',async()=>{
+  const source=await read('app/platform-console.js');
+  const queue=source.match(/function paymentManagedSignupItems[\s\S]+?\n  function wireBusinessApplicationQueue/)?.[0]||'';
+  assert.match(queue,/paymentManagedSignupItems/);
+  assert.match(queue,/business_id/);
+  assert.match(queue,/prospectCompany\(item\)/);
+  assert.match(queue,/subscription_status/);
+  assert.match(queue,/onboarding_status/);
+  assert.match(queue,/approve\/reject is intentionally unavailable/);
+  assert.doesNotMatch(queue,/data-business-approval/);
+  assert.ok(queue.indexOf('function paymentManagedSignupQueueHtml')<queue.indexOf('function businessApplicationQueueHtml'));
 });
 
 test('enterprise filter helper occupies its own readable grid space',async()=>{
