@@ -20,6 +20,7 @@ declare
   v_prospect uuid:=gen_random_uuid();
   v_snapshot_at timestamptz:=date_trunc('second',clock_timestamp());
   v_raw_attention boolean;
+  v_writer_definition text;
   v_result jsonb;
   v_item jsonb;
 begin
@@ -61,8 +62,18 @@ begin
   select firm.attention_due into v_raw_attention
   from app.platform_firm_rows_v88(v_snapshot_at) firm
   where firm.prospect_id=v_prospect;
-  if v_raw_attention is not null then
-    raise exception 'v94 fixture no longer reproduces the v88 nullable predicate';
+  if v_raw_attention is true then
+    raise exception 'fresh unattended prospect was incorrectly marked due';
+  end if;
+  select pg_get_functiondef(
+    'app.ensure_platform_firm_snapshot_v88(uuid,timestamp with time zone,boolean)'::regprocedure
+  ) into v_writer_definition;
+  if length(v_writer_definition)
+       - length(replace(v_writer_definition,
+           'coalesce(firm.attention_due,false)','')) <>
+       2 * length('coalesce(firm.attention_due,false)') then
+    raise exception
+      'v94 snapshot writer lost an indexed/payload nullable attention guard';
   end if;
 
   perform pg_temp.as_v94_user(v_sa);

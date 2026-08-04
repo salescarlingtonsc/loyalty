@@ -45,11 +45,19 @@ test('v94 migration self-verifies the exact repaired definition and private gran
   assert.match(source,/v94 final snapshot guard or grants are not exact/);
 });
 
-test('v94 rollback acceptance reproduces NULL and proves indexed and payload parity',async()=>{
+test('v94 rollback acceptance proves fail-closed attention and both writer guards',async()=>{
   const suite=await read('db/tests/v94_platform_firm_snapshot_null_guard.sql');
 
   assert.match(suite,/^begin;/m);
-  assert.match(suite,/v_raw_attention is not null/);
+  assert.match(suite,/if v_raw_attention is true then/);
+  assert.match(
+    suite,
+    /pg_get_functiondef\([\s\S]*\) into v_writer_definition/
+  );
+  assert.match(
+    suite,
+    /length\(v_writer_definition\)[\s\S]*length\(replace\(v_writer_definition,\s*'coalesce\(firm\.attention_due,false\)',''\)\)[\s\S]*<>\s*2 \* length\('coalesce\(firm\.attention_due,false\)'\)/
+  );
   assert.match(suite,/public\.platform_list_firm_onboarding_v88/);
   assert.match(suite,/snapshot\.attention_due=false/);
   assert.match(suite,/snapshot\.payload->>'attention_due'='false'/);

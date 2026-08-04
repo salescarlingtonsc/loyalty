@@ -2,6 +2,16 @@
 -- Run after the canonical chain through v111 in a disposable PostgreSQL database.
 begin;
 
+create or replace function pg_temp.approve_workspace_v94(p_business uuid)
+returns void language sql as $$
+  update public.business_workspace_controls_v94
+     set approval_status='approved',version=version+1,
+         decided_at=statement_timestamp(),
+         decision_reason='approved synthetic rollback fixture',
+         updated_at=statement_timestamp()
+   where business_id=p_business and approval_status='pending'
+$$;
+
 do $contract$
 declare
   v_table text;
@@ -199,11 +209,13 @@ begin
   ) values
   (
     v_business,'V111 Identity Evidence','v111-'||v_business,'SGD','facial',
-    array['dashboard','clients','sales','loyalty'],true
+    array['dashboard','clients','till','sales','loyalty'],true
   ),(
     v_other_business,'V111 Other Firm','v111-other-'||v_other_business,
-    'SGD','retail',array['dashboard','clients','sales','loyalty'],true
+    'SGD','retail',array['dashboard','clients','till','sales','loyalty'],true
   );
+  perform pg_temp.approve_workspace_v94(v_business);
+  perform pg_temp.approve_workspace_v94(v_other_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values
     (v_branch,v_business,'V111 Assigned Branch','Asia/Singapore',true),

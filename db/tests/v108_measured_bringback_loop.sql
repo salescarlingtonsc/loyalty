@@ -2,6 +2,16 @@
 -- Run after the canonical chain through v108 in a disposable database.
 begin;
 
+create or replace function pg_temp.approve_workspace_v94(p_business uuid)
+returns void language sql as $$
+  update public.business_workspace_controls_v94
+     set approval_status='approved',version=version+1,
+         decided_at=statement_timestamp(),
+         decision_reason='approved synthetic rollback fixture',
+         updated_at=statement_timestamp()
+   where business_id=p_business and approval_status='pending'
+$$;
+
 do $contract$
 declare
   v_table text;
@@ -91,6 +101,7 @@ begin
   values(v_sa,'v108-sa-'||v_sa||'@example.test','v108 rollback fixture');
   insert into public.businesses(id,name,slug,currency,is_synthetic)
   values(v_business,'V108 Measured Bring-back','v108-'||v_business,'SGD',true);
+  perform pg_temp.approve_workspace_v94(v_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values(v_branch,v_business,'V108 Singapore','Asia/Singapore',true);
   update app.platform_feature_flags
@@ -212,6 +223,7 @@ begin
     array['dashboard','till','clients','sales','loyalty','retention'],
     true
   );
+  perform pg_temp.approve_workspace_v94(v_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values(v_branch,v_business,'V108 E2E Singapore','Asia/Singapore',true);
 
@@ -379,14 +391,20 @@ begin
     json_build_object('role','service_role')::text,true
   );
   v_claims:=public.service_claim_growth_deliveries_v110(
-    20,'v108-e2e-provider',gen_random_uuid()
+    100,'v108-e2e-provider',gen_random_uuid()
   );
-  if (v_claims->>'claimed_count')::integer<>20 then
+  if (
+    select count(*)
+    from jsonb_array_elements(v_claims->'claims') claim
+    where claim->>'execution_id'=v_execution::text
+  )<>20 then
     raise exception 'v108/v110 delivery claim did not return all treatment members: %',
       v_claims;
   end if;
   for v_dispatch in
-    select value from jsonb_array_elements(v_claims->'claims')
+    select value
+    from jsonb_array_elements(v_claims->'claims')
+    where value->>'execution_id'=v_execution::text
   loop
     v_result:=public.service_complete_growth_delivery_v110(
       (v_dispatch->>'dispatch_id')::uuid,
@@ -404,7 +422,20 @@ begin
     select count(*) from public.growth_entitlement_events_v108
     where business_id=v_business and event_type='issued'
   )<>20 then
-    raise exception 'v108 delivered offers did not create one issued entitlement/event';
+    raise exception
+      'v108 delivered offers did not create one issued entitlement/event (entitlements %, events %, statuses %)',
+      (select count(*) from public.growth_entitlements_v108
+       where execution_id=v_execution and status='issued'),
+      (select count(*) from public.growth_entitlement_events_v108
+       where business_id=v_business and event_type='issued'),
+      (select jsonb_agg(jsonb_build_object(
+         'status',status,'count',count
+       ) order by status)
+       from (
+         select status,count(*) count
+         from public.growth_entitlements_v108
+         where execution_id=v_execution group by status
+       ) entitlement_counts);
   end if;
 
   execute 'reset role';

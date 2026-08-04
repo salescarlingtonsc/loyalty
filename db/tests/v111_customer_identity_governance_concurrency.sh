@@ -99,15 +99,36 @@ insert into auth.users(
   '00000000-0000-0000-0000-000000000000',:'owner','authenticated',
   'authenticated',:'owner_email','',now(),now(),now()
 );
-select set_config(
-  'request.jwt.claims',
-  jsonb_build_object('sub',:'owner','role','authenticated','email',:'owner_email')::text,
-  false
+insert into public.businesses(
+  id,name,slug,currency,industry,enabled_modules,is_synthetic
+) values
+(
+  gen_random_uuid(),'V111 approval-first race',:'slug_a','SGD','facial',
+  array['dashboard','clients','till','sales','loyalty'],true
+),(
+  gen_random_uuid(),'V111 link-first race',:'slug_b','SGD','facial',
+  array['dashboard','clients','till','sales','loyalty'],true
 );
-set role authenticated;
-select public.create_business('V111 approval-first race',:'slug_a','facial',null);
-select public.create_business('V111 link-first race',:'slug_b','facial',null);
-reset role;
+update public.business_workspace_controls_v94 c
+   set approval_status='approved',
+       version=c.version+1,
+       decided_at=statement_timestamp(),
+       decision_reason='approved synthetic concurrency fixture',
+       updated_at=statement_timestamp()
+  from public.businesses b
+ where c.business_id=b.id
+   and b.slug in (:'slug_a',:'slug_b')
+   and c.approval_status='pending';
+insert into public.branches(id,business_id,name,timezone,is_default)
+select gen_random_uuid(),b.id,'V111 concurrency branch','Asia/Singapore',true
+  from public.businesses b
+ where b.slug in (:'slug_a',:'slug_b');
+insert into public.staff(
+  id,business_id,user_id,role,full_name,email,active
+)
+select gen_random_uuid(),b.id,:'owner','owner','V111 Owner',:'owner_email',true
+  from public.businesses b
+ where b.slug in (:'slug_a',:'slug_b');
 SQL
 
 setup_values="$(

@@ -2,6 +2,16 @@
 -- Run after the canonical chain through v107 in a disposable database.
 begin;
 
+create or replace function pg_temp.approve_workspace_v94(p_business uuid)
+returns void language sql as $$
+  update public.business_workspace_controls_v94
+     set approval_status='approved',version=version+1,
+         decided_at=statement_timestamp(),
+         decision_reason='approved synthetic rollback fixture',
+         updated_at=statement_timestamp()
+   where business_id=p_business and approval_status='pending'
+$$;
+
 do $contract$
 begin
   if to_regprocedure(
@@ -76,6 +86,7 @@ begin
   values(v_sa,'v107-sa-'||v_sa||'@example.test','v107 rollback fixture');
   insert into public.businesses(id,name,slug,currency,is_synthetic)
   values(v_business,'V107 Lifecycle','v107-'||v_business,'SGD',true);
+  perform pg_temp.approve_workspace_v94(v_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values
     (v_branch,v_business,'V107 Singapore','Asia/Singapore',true),
@@ -92,6 +103,7 @@ begin
   );
   insert into public.businesses(id,name,slug,currency,is_synthetic)
   values(v_empty_business,'V107 Empty','v107-empty-'||v_empty_business,'SGD',true);
+  perform pg_temp.approve_workspace_v94(v_empty_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values(v_empty_branch,v_empty_business,'V107 Empty Singapore','Asia/Singapore',true);
 

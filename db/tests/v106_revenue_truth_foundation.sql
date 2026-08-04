@@ -2,6 +2,16 @@
 -- Run after the canonical chain through v106 in a disposable database.
 begin;
 
+create or replace function pg_temp.approve_workspace_v94(p_business uuid)
+returns void language sql as $$
+  update public.business_workspace_controls_v94
+     set approval_status='approved',version=version+1,
+         decided_at=statement_timestamp(),
+         decision_reason='approved synthetic rollback fixture',
+         updated_at=statement_timestamp()
+   where business_id=p_business and approval_status='pending'
+$$;
+
 do $contract$
 declare
   v_table text;
@@ -96,6 +106,7 @@ begin
   values(v_sa,'v106-sa-'||v_sa||'@example.test','v106 rollback fixture');
   insert into public.businesses(id,name,slug,currency,is_synthetic)
   values(v_business,'V106 Revenue Truth','v106-'||v_business,'SGD',true);
+  perform pg_temp.approve_workspace_v94(v_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values(v_branch,v_business,'V106 Singapore','Asia/Singapore',true);
   insert into public.staff(

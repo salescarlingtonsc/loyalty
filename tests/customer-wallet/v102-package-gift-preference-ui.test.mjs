@@ -30,7 +30,9 @@ test('gift-card sale flag gates issuance only while existing-card redemption fol
     canIssue:false,canRedeem:false
   });
   const page=section('async function giftcardsPage','async function inventoryPage');
-  assert.match(page,/const canIssue=abilities\.canIssue,canRedeem=abilities\.canRedeem/);
+  assert.match(page,/const canIssue=abilities\.canIssue;/);
+  assert.match(page,/const canRedeem=hasRoleCapability\('create_sales'\)[\s\S]*?branchCanWrite\(giftBranchId,'till'\)[\s\S]*?branchCanRead\(giftBranchId,'clients'\)/);
+  assert.doesNotMatch(page,/const canRedeem=abilities\.canRedeem/);
   assert.match(page,/canIssue&&\$\('gsell'\)/);
   assert.match(page,/canRedeem&&\$\('gredeem'\)/);
   assert.match(page,/Existing cards can still be redeemed/);

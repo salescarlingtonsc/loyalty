@@ -2,6 +2,16 @@
 -- Run after the canonical chain through v112 in a disposable database.
 begin;
 
+create or replace function pg_temp.approve_workspace_v94(p_business uuid)
+returns void language sql as $$
+  update public.business_workspace_controls_v94
+     set approval_status='approved',version=version+1,
+         decided_at=statement_timestamp(),
+         decision_reason='approved synthetic rollback fixture',
+         updated_at=statement_timestamp()
+   where business_id=p_business and approval_status='pending'
+$$;
+
 do $contract$
 declare
   v_constraint_valid boolean;
@@ -394,6 +404,15 @@ begin
   select id into strict v_dispatch
   from public.growth_delivery_dispatches_v110
   where delivery_id = v_delivery;
+  -- The dispatcher is platform-global. Give this rollback-only fixture an
+  -- earlier due boundary so exact limit-one replay assertions remain isolated
+  -- from unrelated synthetic queue residue in the disposable database.
+  perform set_config('app.growth_delivery_v110_transition', 'on', true);
+  update public.growth_delivery_dispatches_v110
+  set scheduled_for = timestamptz '2000-01-01 00:00:00+00',
+      next_attempt_at = timestamptz '2000-01-01 00:00:00+00',
+      updated_at = statement_timestamp()
+  where id = v_dispatch;
   return v_dispatch;
 end
 $$;
@@ -454,6 +473,7 @@ begin
     array['dashboard', 'clients', 'sales', 'reports', 'pnl', 'retention'],
     true
   );
+  perform pg_temp.approve_workspace_v94(v_business);
   insert into public.branches(
     id, business_id, name, timezone, is_default
   ) values
@@ -807,9 +827,19 @@ begin
     true
   );
   v_result := public.service_claim_growth_deliveries_v110(
-    1, 'v112-too-early', extensions.gen_random_uuid()
+    100, 'v112-too-early', extensions.gen_random_uuid()
   );
-  if (v_result ->> 'claimed_count')::integer <> 0 then
+  if exists (
+    select 1
+    from jsonb_array_elements(coalesce(v_result -> 'claims', '[]'::jsonb)) claim
+    where (claim ->> 'dispatch_id')::uuid = v_dispatch
+  ) or not exists (
+    select 1
+    from public.growth_delivery_dispatches_v110
+    where id = v_dispatch
+      and lifecycle_status = 'queued'
+      and next_attempt_at > statement_timestamp()
+  ) then
     raise exception 'v112 claimed retry before next_attempt_at: %', v_result;
   end if;
   execute 'reset role';
@@ -832,7 +862,7 @@ begin
   );
   if (v_result ->> 'claimed_count')::integer <> 1
      or (v_result #>> '{claims,0,dispatch_id}')::uuid <> v_dispatch
-     or (v_result #>> '{claims,0,attempt_count}')::integer <> 2 then
+     or (v_result #>> '{claims,0,attempt}')::integer <> 2 then
     raise exception 'v112 due retry was not claimed: %', v_result;
   end if;
   perform public.service_complete_growth_delivery_v110(

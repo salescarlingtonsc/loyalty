@@ -43,9 +43,11 @@ declare
   v_logo uuid;
   v_service_media uuid;
   v_cleanup uuid;
+  v_missing_cleanup uuid;
   v_logo_path text;
   v_replacement_logo_path text;
   v_service_path text;
+  v_missing_path text;
   v_sector text;
   v_result jsonb;
   v_count integer;
@@ -336,6 +338,8 @@ begin
     '/logo/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png';
   v_service_path:=v_business||
     '/service/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp';
+  v_missing_path:=v_business||
+    '/logo/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee.png';
   reset role;
   insert into storage.objects(bucket_id,name,metadata)
   values
@@ -446,20 +450,28 @@ begin
     raise exception 'cleanup completed while Storage object still existed';
   exception when sqlstate '22023' then null;
   end;
-  reset role;
-  delete from storage.objects
-  where bucket_id='business-public' and name=v_logo_path;
-  perform pg_temp.as_v95_user(v_owner);
+  -- Direct storage-table deletion is intentionally protected in the current
+  -- chain. Exercise a truthful successful result with a separately owned path
+  -- that the Storage API has already removed (represented by no object row).
+  v_result:=public.business_queue_media_cleanup_v95(
+    v_business,v_missing_path,'Storage API already removed this object'
+  );
+  v_missing_cleanup:=(v_result->>'id')::uuid;
+  if v_result->>'status'<>'completed' then
+    raise exception 'absent Storage object was not truthfully completed: %',
+      v_result;
+  end if;
   v_result:=public.business_mark_media_cleanup_result_v95(
-    v_business,v_cleanup,true,null
+    v_business,v_missing_cleanup,true,null
   );
   if v_result->>'status'<>'completed'
-     or (v_result->>'attempts')::integer<>2 then
-    raise exception 'successful retry did not complete cleanup: %',v_result;
+     or (v_result->>'attempts')::integer<>1 then
+    raise exception 'successful absent-object confirmation drifted: %',v_result;
   end if;
   v_result:=public.business_list_media_cleanup_queue_v95(v_business,20);
-  if jsonb_array_length(v_result->'pending')<>0 then
-    raise exception 'completed cleanup remained pending: %',v_result;
+  if jsonb_array_length(v_result->'pending')<>1
+     or v_result#>>'{pending,0,id}'<>v_cleanup::text then
+    raise exception 'failed present-object cleanup was not retained: %',v_result;
   end if;
   v_result:=public.business_get_presentation_editor_v95(v_business);
   if (v_result#>>'{brand,version}')::integer<>3

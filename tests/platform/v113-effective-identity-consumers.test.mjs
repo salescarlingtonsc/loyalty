@@ -161,7 +161,19 @@ test("v113 recommendation refresh partitions every live exclusion by effective i
   );
   assert.match(
     refresh,
-    /create temporary table if not exists pg_temp\.growth_candidates_v113\([\s\S]*client_id uuid primary key/,
+    /v_candidates jsonb:='\[\]'::jsonb/,
+  );
+  assert.doesNotMatch(refresh, /pg_temp\.growth_candidates_v113/);
+  assert.match(
+    refresh,
+    /jsonb_agg\(jsonb_build_object\([\s\S]*order by judged\.client_id\)[\s\S]*into v_candidates/,
+  );
+  const typedCandidateProjection =
+    /jsonb_to_recordset\(v_candidates\) as candidate\(\s*client_id uuid,\s*prior_visits integer,\s*last_visit_at timestamptz,\s*cadence_days numeric,\s*lapse_days integer,\s*average_transaction_cents bigint,\s*historical_revenue_cents bigint,\s*eligible boolean,\s*exclusion_reason text\s*\)/g;
+  assert.equal(
+    (refresh.match(typedCandidateProjection) ?? []).length,
+    3,
+    "candidate counts, fingerprint and member insert must share one typed projection",
   );
   for (const consumer of [
     "customer_links link",

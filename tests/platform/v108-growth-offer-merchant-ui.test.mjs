@@ -9,7 +9,7 @@ test('merchant scanner preserves classic reward redemption and distinguishes gro
   assert.match(source,/nestly:redemption:/);
   assert.match(source,/nestly:growth:/);
   assert.match(source,/growth-redeem/);
-  assert.match(source,/merchant_scan_redemption_qr_v93/);
+  assert.match(source,/merchant_scan_redemption_qr_v117/);
   assert.doesNotMatch(source,/sb\.rpc\('merchant_scan_redemption_qr_v89'/);
 });
 
@@ -27,11 +27,11 @@ test('growth-offer redemption is refused before a sale and bound to the complete
 });
 
 test('completed-sale receipts expose one secondary offer action while next customer remains primary',()=>{
-  assert.match(source,/canScanRedemption&&doneInfo\.saleId[\s\S]*id="tRedeemOffer"/);
-  assert.match(source,/canScanRedemption&&d\.saleId[\s\S]*id="tRedeemOffer"/);
+  assert.match(source,/canScanRedemption\(\)&&doneInfo\.saleId[\s\S]*id="tRedeemOffer"/);
+  assert.match(source,/canScanRedemption\(\)&&d\.saleId[\s\S]*id="tRedeemOffer"/);
   assert.match(
     source,
-    /openMerchantRedemptionScanner\(\{[\s\S]*businessId:S\.biz\.id,saleId:doneInfo\.saleId/
+    /openMerchantRedemptionScanner\(\{[\s\S]*businessId:S\.biz\.id,branchId:tillBranchId,[\s\S]*saleId:doneInfo\.saleId/
   );
   assert.match(source,/<button class="btn" id="tNext"/);
   assert.match(source,/<button class="btn ghost" id="tRedeemOffer"/);

@@ -79,6 +79,8 @@ harness_lock_dir="${TMPDIR:-/tmp}/nestly-v112-concurrency.lock"
 held_dispatch_restore="$work_dir/restore-held-dispatches.sql"
 business=""
 dispatch=""
+growth_flag_before=""
+economics_flag_before=""
 
 lock_wait=0
 while ! mkdir "$harness_lock_dir" 2>/dev/null; do
@@ -113,6 +115,21 @@ cleanup() {
   fi
   if [ -s "$held_dispatch_restore" ]; then
     q -f "$held_dispatch_restore" >/dev/null 2>&1 || true
+  fi
+  if [ -n "$growth_flag_before" ] && [ -n "$economics_flag_before" ]; then
+    q -v growth_flag_before="$growth_flag_before" \
+      -v economics_flag_before="$economics_flag_before" <<'SQL' \
+      >/dev/null 2>&1 || true
+update app.platform_feature_flags
+   set enabled=case feature_key
+     when 'growth_closed_loop_v108' then :'growth_flag_before'::boolean
+     when 'economics_driver_policy_v109' then :'economics_flag_before'::boolean
+     else enabled
+   end
+ where feature_key in (
+   'growth_closed_loop_v108','economics_driver_policy_v109'
+ );
+SQL
   fi
   if [ "$status" -ne 0 ]; then
     echo "V112 harness failed; recent session evidence follows." >&2
@@ -157,6 +174,15 @@ q -c "
     and scheduled_for <= statement_timestamp()
     and next_attempt_at <= statement_timestamp();
 " >/dev/null
+
+growth_flag_before="$(q -c "
+  select enabled::text from app.platform_feature_flags
+  where feature_key='growth_closed_loop_v108'
+")"
+economics_flag_before="$(q -c "
+  select enabled::text from app.platform_feature_flags
+  where feature_key='economics_driver_policy_v109'
+")"
 
 ids="$(q -F '|' -c "
   select gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),
@@ -225,6 +251,14 @@ insert into public.businesses(
   'v112-concurrency-'||:'business','SGD','facial',
   array['dashboard','clients','sales','reports','pnl','retention'],true
 );
+update public.business_workspace_controls_v94
+   set approval_status='approved',
+       version=version+1,
+       decided_at=statement_timestamp(),
+       decision_reason='approved synthetic concurrency fixture',
+       updated_at=statement_timestamp()
+ where business_id=:'business'
+   and approval_status='pending';
 insert into public.branches(id,business_id,name,timezone,is_default)
 values(:'branch',:'business','V112 Singapore','Asia/Singapore',true);
 insert into public.staff(

@@ -1185,6 +1185,7 @@ declare
   v_member_fingerprint text;
   v_currency text;
   v_effective_policy jsonb;
+  v_candidates jsonb:='[]'::jsonb;
 begin
   if v_actor is null or (
     not app.is_super_admin()
@@ -1240,20 +1241,6 @@ begin
     then least(10000,(v_identified_revenue*10000/v_total_revenue)::integer)
     else 0 end;
 
-  create temporary table if not exists pg_temp.growth_candidates_v113(
-    client_id uuid primary key,
-    prior_visits integer,
-    last_visit_at timestamptz,
-    cadence_days numeric,
-    lapse_days integer,
-    average_transaction_cents bigint,
-    historical_revenue_cents bigint,
-    eligible boolean,
-    exclusion_reason text
-  ) on commit drop;
-  truncate pg_temp.growth_candidates_v113;
-
-  insert into pg_temp.growth_candidates_v113
   with canonical_sales as (
     select
       app.v113_effective_client_id(sale.business_id,sale.client_id) as client_id,
@@ -1365,10 +1352,18 @@ begin
       end as exclusion_reason
     from metrics metric
   )
-  select judged.client_id,judged.prior_visits,judged.last_visit_at,
-    judged.cadence_days,judged.lapse_days,judged.average_transaction_cents,
-    judged.historical_revenue_cents,judged.exclusion_reason is null,
-    judged.exclusion_reason
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'client_id',judged.client_id,
+    'prior_visits',judged.prior_visits,
+    'last_visit_at',judged.last_visit_at,
+    'cadence_days',judged.cadence_days,
+    'lapse_days',judged.lapse_days,
+    'average_transaction_cents',judged.average_transaction_cents,
+    'historical_revenue_cents',judged.historical_revenue_cents,
+    'eligible',judged.exclusion_reason is null,
+    'exclusion_reason',judged.exclusion_reason
+  ) order by judged.client_id),'[]'::jsonb)
+  into v_candidates
   from judged;
 
   select count(*) filter(where eligible),
@@ -1376,7 +1371,17 @@ begin
          coalesce(round(avg(average_transaction_cents)
            filter(where eligible)),0)::bigint
     into v_eligible,v_excluded,v_avg_value
-    from pg_temp.growth_candidates_v113;
+    from jsonb_to_recordset(v_candidates) as candidate(
+      client_id uuid,
+      prior_visits integer,
+      last_visit_at timestamptz,
+      cadence_days numeric,
+      lapse_days integer,
+      average_transaction_cents bigint,
+      historical_revenue_cents bigint,
+      eligible boolean,
+      exclusion_reason text
+    );
   v_confidence_bps:=least(9500,
     greatest(0,v_coverage_bps*7/10)+least(2500,v_eligible*100)
   );
@@ -1415,7 +1420,17 @@ begin
     ) order by candidate.client_id)::text,'[]'),'UTF8'
   ),'sha256'),'hex')
   into v_member_fingerprint
-  from pg_temp.growth_candidates_v113 candidate;
+  from jsonb_to_recordset(v_candidates) as candidate(
+    client_id uuid,
+    prior_visits integer,
+    last_visit_at timestamptz,
+    cadence_days numeric,
+    lapse_days integer,
+    average_transaction_cents bigint,
+    historical_revenue_cents bigint,
+    eligible boolean,
+    exclusion_reason text
+  );
 
   v_dedupe:=encode(extensions.digest(convert_to(concat_ws(':',
     'v113',p_business,coalesce(p_branch::text,'all'),v_policy.policy_version,
@@ -1558,7 +1573,17 @@ begin
         candidate.average_transaction_cents,
       'identity_attribution','v111_current_effective_identity'
     )
-  from pg_temp.growth_candidates_v113 candidate;
+  from jsonb_to_recordset(v_candidates) as candidate(
+    client_id uuid,
+    prior_visits integer,
+    last_visit_at timestamptz,
+    cadence_days numeric,
+    lapse_days integer,
+    average_transaction_cents bigint,
+    historical_revenue_cents bigint,
+    eligible boolean,
+    exclusion_reason text
+  );
 
   insert into public.audit_log(
     business_id,actor,action,entity,entity_id,detail

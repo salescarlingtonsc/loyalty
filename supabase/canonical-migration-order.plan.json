@@ -940,6 +940,24 @@
       "version": "20260729211122",
       "name": "nestly_v114_traceable_growth_costs",
       "sourcePath": "db/migrations/20260730_nestly_v114_traceable_growth_costs.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260730120000",
+      "name": "nestly_v115_effective_module_projection",
+      "sourcePath": "db/migrations/20260730_nestly_v115_effective_module_projection.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260730130000",
+      "name": "nestly_v116_classic_reward_projection",
+      "sourcePath": "db/migrations/20260730_nestly_v116_classic_reward_projection.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260730140000",
+      "name": "nestly_v117_effective_loyalty_boundaries",
+      "sourcePath": "db/migrations/20260730_nestly_v117_effective_loyalty_boundaries.sql"
     }
   ]
 }

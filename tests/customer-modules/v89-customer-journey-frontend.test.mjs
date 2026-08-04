@@ -59,24 +59,50 @@ test('customer can scan a business-issued QR from first use and from persistent 
 
 test('customer can switch linked programmes without returning to the programme index',async()=>{
   const app=await read('app/index.html');
-  const wallet=section(app,'async function renderCustomerWallet','async function renderCustomerInAppInbox');
-  assert.match(wallet,/const programmeSwitcher=programmeCards\.length>1/);
-  assert.match(wallet,/class="customer-programme-switcher"/);
-  assert.match(wallet,/aria-label="Switch loyalty programme"/);
-  assert.match(wallet,/aria-current="true"/);
-  assert.match(wallet,/#\/wallet\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}/);
+  const helperSource=app.match(/function customerProgrammeSwitcherMarkup\(cards=\[\],activeSlug=''\)\{[\s\S]*?\n\}/)?.[0];
+  assert.ok(helperSource,'missing programme switcher helper');
+  const switcher=vm.runInNewContext(`(()=>{
+    const ct=key=>key==='chooseProgramme'?'Choose a programme':key;
+    const esc=value=>String(value);
+    ${helperSource};
+    return customerProgrammeSwitcherMarkup;
+  })()`);
+  const glow={business:{slug:'glow-atelier',name:'Glow Atelier'}};
+  const harbour={business:{slug:'harbour-kopi',name:'Harbour Kopi'}};
+  assert.equal(switcher([glow],'glow-atelier'),'',
+    'one linked programme must not create a redundant switcher');
+  const markup=switcher([glow,harbour],'glow-atelier');
+  assert.match(markup,/class="customer-programme-switcher"/);
+  assert.match(markup,/role="navigation" aria-label="Choose a programme"/);
+  assert.match(markup,/href="#\/wallet\/glow-atelier" aria-current="true"/);
+  assert.match(markup,/href="#\/wallet\/harbour-kopi" aria-current="false"/);
+  const experience=section(app,'function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
+  assert.match(experience,/customerProgrammeSwitcherMarkup\(programmeCards,business\.slug\)/,
+    'programme detail must render the switcher without returning to the index');
 });
 
-test('customer Home surfaces rewards, bookings and messages before programme drill-down',async()=>{
+test('customer Home keeps programme guidance primary and exposes one header notification action',async()=>{
   const app=await read('app/index.html');
   const home=section(app,'function renderActionableWalletHome','async function renderCustomerWallet');
-  assert.match(home,/customerHomeOverview\.walletCards/);
-  assert.match(home,/customerHomeOverview\.activeRequestCount/);
-  assert.match(home,/customerHomeOverview\.messageCount/);
-  assert.match(home,/aria-label="Customer overview"/);
-  assert.match(home,/Rewards &amp; value/);
-  assert.match(home,/#\/customer\/bookings/);
-  assert.match(home,/#\/customer\/messages/);
+  assert.match(home,/customerHomeNextActionMarkup\(cards\[0\]\)/);
+  assert.match(home,/customerProgrammeGridMarkupV96\(cards\)/);
+  assert.doesNotMatch(home,/#\/customer\/messages|Messages/,
+    'Home must not duplicate the notification destination as a dashboard module');
+
+  const primaryNav=section(app,'const CUSTOMER_PRIMARY_NAV','function customerJoinTokenFromQr');
+  assert.match(primaryNav,/\{key:'bookings',href:'#\/customer\/bookings'/,
+    'Bookings remains a primary customer destination');
+
+  const shell=section(app,'function renderCustomerShell','function focusCustomerRoute');
+  assert.equal((shell.match(/href="#\/customer\/messages"/g)||[]).length,1,
+    'the customer shell must contain exactly one notification link');
+  assert.match(shell,/id="customerInboxBellSlot"/);
+
+  const wallet=section(app,'async function renderCustomerWallet','async function renderCustomerInAppInbox');
+  assert.match(wallet,/customer_sync_in_app_inbox_global/);
+  assert.match(wallet,/customer_get_in_app_inbox_global_count/);
+  assert.match(wallet,/customerInboxBellSlot/);
+  assert.match(wallet,/Open messages, \$\{unread\} unread/);
 });
 
 test('scanned QR waits for a completed profile, then outranks wallet destinations and is consumed',async()=>{
@@ -202,7 +228,7 @@ test('redemption is pending until merchant scan and scanner supports iPhone came
   assert.match(app,/customer_create_redemption_intent_v89/);
   assert.match(app,/Pending merchant scan/);
   assert.match(app,/points are not redeemed until the business scans and confirms/i);
-  assert.match(app,/merchant_scan_redemption_qr_v93/);
+  assert.match(app,/merchant_scan_redemption_qr_v117/);
   assert.match(app,/p_branch:branchId/);
   assert.match(app,/Scan customer QR/);
   assert.match(app,/jsqr@1\.4\.0\/dist\/jsQR\.js/);
@@ -241,8 +267,8 @@ test('Quick Earn scanner follows front-desk and manager loyalty-write assignment
   assert.equal(canScan(frontDeskReadOnly),false);
   assert.equal(canScan(managerLoyaltyOff),false);
   assert.equal(canScan({...frontDeskRw,clientsReadable:false}),false);
-  assert.match(app,/actions:canScanRedemption\?CUI\.action\(\{id:'tScanRedemption'/);
-  assert.match(app,/if\(canScanRedemption\)\$\(\'tScanRedemption\'\)\.onclick/);
+  assert.match(app,/actions:canScanRedemption\(\)\?CUI\.action\(\{id:'tScanRedemption'/);
+  assert.match(app,/if\(canScanRedemption\(\)\)\$\(\'tScanRedemption\'\)\.onclick/);
   assert.match(app,/Redemption scanning requires Loyalty write access/);
 });
 

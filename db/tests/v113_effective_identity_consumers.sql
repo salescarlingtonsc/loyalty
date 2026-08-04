@@ -2,6 +2,16 @@
 -- Run after the canonical chain through v113 in a disposable PostgreSQL database.
 begin;
 
+create or replace function pg_temp.approve_workspace_v94(p_business uuid)
+returns void language sql as $$
+  update public.business_workspace_controls_v94
+     set approval_status='approved',version=version+1,
+         decided_at=statement_timestamp(),
+         decision_reason='approved synthetic rollback fixture',
+         updated_at=statement_timestamp()
+   where business_id=p_business and approval_status='pending'
+$$;
+
 do $contract$
 begin
   if to_regprocedure('app.v113_effective_client_id(uuid,uuid)') is null
@@ -256,12 +266,14 @@ begin
   (
     v_business,'V113 Effective Identity',
     'v113-'||v_business,'SGD','facial',
-    array['dashboard','clients','sales','loyalty','retention'],true
+    array['dashboard','clients','till','sales','loyalty','retention'],true
   ),(
     v_other_business,'V113 Tenant Boundary',
     'v113-other-'||v_other_business,'SGD','facial',
-    array['dashboard','clients','sales','loyalty','retention'],true
+    array['dashboard','clients','till','sales','loyalty','retention'],true
   );
+  perform pg_temp.approve_workspace_v94(v_business);
+  perform pg_temp.approve_workspace_v94(v_other_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values
     (v_branch,v_business,'V113 Main','Asia/Singapore',true),
@@ -522,6 +534,9 @@ begin
 
   -- Purchases remain on their source client ids.  The current target purchase is
   -- nevertheless attributed to the source experiment member.
+  -- Checkout is a staff operation; restore the approved workspace owner actor
+  -- after the customer-only offer/QR assertions above.
+  perform pg_temp.v113_actor(v_owner);
   insert into public.sales(
     id,business_id,client_id,kind,amount_cents,occurred_at,created_at,
     counts_as_revenue,counts_as_visit,earns_points,policy_resolved_at,
@@ -696,8 +711,9 @@ begin
   ) values (
     v_business,'V113 Collapsed Outcome',
     'v113-collapse-'||v_business,'SGD','facial',
-    array['dashboard','clients','sales','loyalty','retention'],true
+    array['dashboard','clients','till','sales','loyalty','retention'],true
   );
+  perform pg_temp.approve_workspace_v94(v_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values(v_branch,v_business,'V113 Collapse Main','Asia/Singapore',true);
   insert into public.staff(

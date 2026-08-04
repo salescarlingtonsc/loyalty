@@ -50,7 +50,7 @@ test('staff mobile shell keeps permitted daily jobs in a persistent bottom dock'
   assert.match(app,/\.staff-mobile-dock\{position:fixed;left:0;right:0;bottom:0/);
   assert.match(app,/@media\(max-width:960px\)[\s\S]*\.global-quick\{display:none\}/);
   assert.match(app,/pendingTillRedemptionScan=true/);
-  assert.match(app,/if\(canScanRedemption\)requestAnimationFrame/);
+  assert.match(app,/if\(canScanRedemption\(\)\)requestAnimationFrame/);
   assert.match(app,/\$\('tScanRedemption'\)\?\.click\(\)/);
 });
 

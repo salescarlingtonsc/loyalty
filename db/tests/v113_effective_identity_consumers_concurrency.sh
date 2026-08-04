@@ -65,9 +65,22 @@ if [ "$(q -c "
 fi
 
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/nestly-v113-cross-flow.XXXXXX")"
+growth_flag_before="$(q -c "
+  select enabled::text from app.platform_feature_flags
+  where feature_key='growth_closed_loop_v108'
+")"
 cleanup() {
   status="$1"
+  set +e
   trap - EXIT HUP INT TERM
+  if [ -n "$growth_flag_before" ]; then
+    q -v growth_flag_before="$growth_flag_before" <<'SQL' \
+      >/dev/null 2>&1 || true
+update app.platform_feature_flags
+   set enabled=:'growth_flag_before'::boolean
+ where feature_key='growth_closed_loop_v108';
+SQL
+  fi
   rm -f "$work_dir"/*
   rmdir "$work_dir" 2>/dev/null || true
   exit "$status"
@@ -162,11 +175,19 @@ insert into public.businesses(
 ) values
 (
   :'business_a','V113 correction-first',:'slug_a','SGD','facial',
-  array['dashboard','clients','sales','loyalty','retention'],true
+  array['dashboard','clients','till','sales','loyalty','retention'],true
 ),(
   :'business_b','V113 growth-first',:'slug_b','SGD','facial',
-  array['dashboard','clients','sales','loyalty','retention'],true
+  array['dashboard','clients','till','sales','loyalty','retention'],true
 );
+update public.business_workspace_controls_v94
+   set approval_status='approved',
+       version=version+1,
+       decided_at=statement_timestamp(),
+       decision_reason='approved synthetic concurrency fixture',
+       updated_at=statement_timestamp()
+ where business_id in (:'business_a',:'business_b')
+   and approval_status='pending';
 insert into public.branches(id,business_id,name,timezone,is_default)
 values
   (:'branch_a',:'business_a','Main','Asia/Singapore',true),

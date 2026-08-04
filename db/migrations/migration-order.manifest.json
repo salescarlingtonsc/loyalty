@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 154,
-  "executableCount": 140,
+  "itemCount": 157,
+  "executableCount": 143,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -213,11 +213,14 @@
     },
     {
       "sourceDeployVersion": "20260730",
-      "count": 3,
+      "count": 6,
       "paths": [
         "db/migrations/20260730_nestly_v112_concurrent_replay_delivery_backoff.sql",
         "db/migrations/20260730_nestly_v113_effective_identity_consumers.sql",
-        "db/migrations/20260730_nestly_v114_traceable_growth_costs.sql"
+        "db/migrations/20260730_nestly_v114_traceable_growth_costs.sql",
+        "db/migrations/20260730_nestly_v115_effective_module_projection.sql",
+        "db/migrations/20260730_nestly_v116_classic_reward_projection.sql",
+        "db/migrations/20260730_nestly_v117_effective_loyalty_boundaries.sql"
       ]
     }
   ],
@@ -1444,7 +1447,7 @@
       "path": "db/migrations/20260730_nestly_v113_effective_identity_consumers.sql",
       "semanticVersion": "v113",
       "proposedDeployVersion": "20260729210000",
-      "sha256": "aaf8cd4c0bf52adbdd587a05c7ec5e73d9744d861a9dd2d3109d8a547810bb45"
+      "sha256": "ac073fb2c19a7176f96e4bcea3460fe74339994741c08437bc3a545afe365091"
     },
     {
       "order": 154,
@@ -1453,6 +1456,30 @@
       "semanticVersion": "v114",
       "proposedDeployVersion": "20260729211122",
       "sha256": "7cf424465d2052fbebbb6dc32f1c438686a7ce7c2d85045d7d8078dfaa474f55"
+    },
+    {
+      "order": 155,
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v115_effective_module_projection.sql",
+      "semanticVersion": "v115",
+      "proposedDeployVersion": "20260730120000",
+      "sha256": "59b769172f664adff16acf90ab620efd2329ddccc988d96439e7ab525ac38611"
+    },
+    {
+      "order": 156,
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v116_classic_reward_projection.sql",
+      "semanticVersion": "v116",
+      "proposedDeployVersion": "20260730130000",
+      "sha256": "dff10b11d6d3663a442b6589b0c0145f6fe62727dd69abbba09ff0714aa02fb0"
+    },
+    {
+      "order": 157,
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v117_effective_loyalty_boundaries.sql",
+      "semanticVersion": "v117",
+      "proposedDeployVersion": "20260730140000",
+      "sha256": "737bbf97c7dcd83684d938480ce92c6b2b29a051d2a269cdd48fa441f1f65f20"
     }
   ]
 }

@@ -2,6 +2,16 @@
 -- Run after the canonical chain through v114 in a disposable database.
 begin;
 
+create or replace function pg_temp.approve_workspace_v94(p_business uuid)
+returns void language sql as $$
+  update public.business_workspace_controls_v94
+     set approval_status='approved',version=version+1,
+         decided_at=statement_timestamp(),
+         decision_reason='approved synthetic rollback fixture',
+         updated_at=statement_timestamp()
+   where business_id=p_business and approval_status='pending'
+$$;
+
 do $contract$
 begin
   if to_regclass('public.growth_cost_rules_v114') is null
@@ -90,11 +100,22 @@ begin
   ) values (
     v_business,'V114 Traceable Growth Costs','v114-'||v_business,
     'SGD','facial',
-    array['dashboard','clients','sales','reports','pnl','loyalty','retention'],
+    array[
+      'dashboard','clients','till','sales','reports','pnl',
+      'loyalty','retention'
+    ],
     true
   );
+  perform pg_temp.approve_workspace_v94(v_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values(v_branch,v_business,'V114 Singapore','Asia/Singapore',true);
+  insert into public.reporting_contract_versions_v106(
+    business_id,branch_id,version_no,effective_from,timezone,currency,
+    legacy_assumption,created_by
+  ) values (
+    v_business,v_branch,2,'-infinity'::timestamptz,
+    'Asia/Singapore','SGD',true,null
+  );
   insert into public.staff(
     id,business_id,user_id,role,full_name,email,active
   ) values (
@@ -464,17 +485,29 @@ begin
     v_business,'V114 Mixed Line Economics','v114-lines-'||v_business,
     'SGD','facial',
     array[
-      'dashboard','clients','sales','reports','pnl','services',
+      'dashboard','clients','till','sales','reports','pnl','services',
       'packages','inventory'
     ],
     true
   );
+  perform pg_temp.approve_workspace_v94(v_business);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values(v_branch,v_business,'V114 Lines Singapore','Asia/Singapore',true);
   insert into public.branches(id,business_id,name,timezone,is_default)
   values(
     v_discount_branch,v_business,'V114 Discount Singapore',
     'Asia/Singapore',false
+  );
+  insert into public.reporting_contract_versions_v106(
+    business_id,branch_id,version_no,effective_from,timezone,currency,
+    legacy_assumption,created_by
+  ) values
+  (
+    v_business,v_branch,2,'-infinity'::timestamptz,
+    'Asia/Singapore','SGD',true,null
+  ),(
+    v_business,v_discount_branch,2,'-infinity'::timestamptz,
+    'Asia/Singapore','SGD',true,null
   );
   insert into public.staff(
     id,business_id,user_id,role,full_name,email,active
@@ -509,6 +542,12 @@ begin
     v_package,v_business,'V114 Traceable Package',3000,1,v_service
   );
 
+  execute 'set local role authenticated';
+  perform set_config('request.jwt.claim.sub',v_owner_user::text,true);
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object('sub',v_owner_user,'role','authenticated')::text,true
+  );
   insert into public.sales(
     id,business_id,client_id,kind,amount_cents,occurred_at,created_at,
     counts_as_revenue,counts_as_visit,earns_points,policy_resolved_at,
@@ -532,6 +571,7 @@ begin
       true,true,false,'2026-07-30 02:30+00',
       v_branch,0,'2026-07-30 02:30+00',1
     );
+  execute 'reset role';
   insert into public.sale_items(
     sale_id,business_id,item_type,ref_id,description,qty,
     unit_cents,line_cents,product_id

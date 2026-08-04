@@ -91,7 +91,7 @@ test('Quick Earn removes unauthorized gift-card lines and never calls issue_gift
   assert.match(till,/\$\{canGift\?`<div class="split"[\s\S]*?id="tGiftAdd"/);
   assert.match(till,/if\(cartLocked\(\)\|\|!canIssueGiftCards\(\)\)return/);
   const finalGate=till.indexOf("if(!canIssueGiftCards()){");
-  const issueCall=till.indexOf("sb.rpc('issue_gift_card'",finalGate);
+  const issueCall=till.indexOf("sb.rpc('issue_gift_card_at_branch_v117'",finalGate);
   assert.ok(finalGate>=0&&issueCall>finalGate,
     'the final authority gate must execute before the gift-card issuance RPC');
 });

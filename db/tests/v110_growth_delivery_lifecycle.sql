@@ -2,6 +2,16 @@
 -- Run after the canonical chain through v110 in a disposable database.
 begin;
 
+create or replace function pg_temp.approve_workspace_v94(p_business uuid)
+returns void language sql as $$
+  update public.business_workspace_controls_v94
+     set approval_status='approved',version=version+1,
+         decided_at=statement_timestamp(),
+         decision_reason='approved synthetic rollback fixture',
+         updated_at=statement_timestamp()
+   where business_id=p_business and approval_status='pending'
+$$;
+
 do $contract$
 declare
   v_table text;
@@ -314,6 +324,17 @@ begin
   select id into strict v_dispatch
   from public.growth_delivery_dispatches_v110
   where delivery_id = v_delivery;
+  -- The claimant is intentionally platform-global. Make this rollback-only
+  -- fixture deterministically older than unrelated synthetic queue residue so
+  -- the test never depends on the disposable database being pristine.
+  if not p_quiet then
+    perform set_config('app.growth_delivery_v110_transition', 'on', true);
+    update public.growth_delivery_dispatches_v110
+    set scheduled_for = timestamptz '2000-01-01 00:00:00+00',
+        next_attempt_at = timestamptz '2000-01-01 00:00:00+00',
+        updated_at = statement_timestamp()
+    where id = v_dispatch;
+  end if;
   return v_dispatch;
 end
 $$;
@@ -368,6 +389,7 @@ begin
     array['dashboard', 'clients', 'sales', 'loyalty', 'retention'],
     true
   );
+  perform pg_temp.approve_workspace_v94(v_business);
   insert into public.branches(
     id, business_id, name, timezone, is_default
   ) values
@@ -429,11 +451,26 @@ begin
     json_build_object('role', 'service_role')::text, true
   );
   v_result := public.service_claim_growth_deliveries_v110(
-    1, 'v110-sql-fixture', v_claim_key
+    100, 'v110-sql-fixture', v_claim_key
   );
-  if (v_result ->> 'claimed_count')::integer <> 1
-     or (v_result #>> '{claims,0,dispatch_id}')::uuid <> v_dispatch then
-    raise exception 'v110 service did not claim the queued dispatch: %', v_result;
+  if not exists (
+    select 1
+    from jsonb_array_elements(coalesce(v_result -> 'claims', '[]'::jsonb)) claim
+    where (claim ->> 'dispatch_id')::uuid = v_dispatch
+  ) or not exists (
+    select 1
+    from public.growth_delivery_dispatches_v110
+    where id = v_dispatch and lifecycle_status = 'delivering'
+  ) then
+    raise exception
+      'v110 service did not claim the queued dispatch (status %, failure %, scheduled %): %',
+      (select lifecycle_status from public.growth_delivery_dispatches_v110
+       where id = v_dispatch),
+      (select failure_code from public.growth_delivery_dispatches_v110
+       where id = v_dispatch),
+      (select scheduled_for from public.growth_delivery_dispatches_v110
+       where id = v_dispatch),
+      v_result;
   end if;
   v_callback_key := extensions.gen_random_uuid();
   v_result := public.service_complete_growth_delivery_v110(
@@ -511,9 +548,19 @@ begin
     json_build_object('role', 'service_role')::text, true
   );
   v_result := public.service_claim_growth_deliveries_v110(
-    10, 'v110-quiet-check', extensions.gen_random_uuid()
+    100, 'v110-quiet-check', extensions.gen_random_uuid()
   );
-  if (v_result ->> 'claimed_count')::integer <> 0 then
+  if exists (
+    select 1
+    from jsonb_array_elements(coalesce(v_result -> 'claims', '[]'::jsonb)) claim
+    where (claim ->> 'dispatch_id')::uuid = v_dispatch
+  ) or not exists (
+    select 1
+    from public.growth_delivery_dispatches_v110
+    where id = v_dispatch
+      and lifecycle_status = 'scheduled'
+      and next_attempt_at > statement_timestamp()
+  ) then
     raise exception 'v110 claimed a quiet-hour delivery before due: %', v_result;
   end if;
   execute 'reset role';
@@ -532,10 +579,13 @@ begin
       json_build_object('role', 'service_role')::text, true
     );
     v_result := public.service_claim_growth_deliveries_v110(
-      1, 'v110-retry-' || v_attempt, extensions.gen_random_uuid()
+      100, 'v110-retry-' || v_attempt, extensions.gen_random_uuid()
     );
-    if (v_result ->> 'claimed_count')::integer <> 1
-       or (v_result #>> '{claims,0,dispatch_id}')::uuid <> v_dispatch then
+    if not exists (
+      select 1
+      from jsonb_array_elements(coalesce(v_result -> 'claims', '[]'::jsonb)) claim
+      where (claim ->> 'dispatch_id')::uuid = v_dispatch
+    ) then
       raise exception 'v110 retry attempt % was not claimed: %',
         v_attempt, v_result;
     end if;
@@ -569,11 +619,21 @@ begin
         json_build_object('role', 'service_role')::text, true
       );
       v_result := public.service_claim_growth_deliveries_v110(
-        1, 'v112-backoff-not-due-' || v_attempt,
+        100, 'v110-backoff-not-due-' || v_attempt,
         extensions.gen_random_uuid()
       );
-      if (v_result ->> 'claimed_count')::integer <> 0 then
-        raise exception 'v112 retry backoff was claimable before due: %',
+      if exists (
+        select 1
+        from jsonb_array_elements(coalesce(v_result -> 'claims', '[]'::jsonb)) claim
+        where (claim ->> 'dispatch_id')::uuid = v_dispatch
+      ) or not exists (
+        select 1
+        from public.growth_delivery_dispatches_v110
+        where id = v_dispatch
+          and lifecycle_status = 'queued'
+          and next_attempt_at > statement_timestamp()
+      ) then
+        raise exception 'v110 retry backoff was claimable before due: %',
           v_result;
       end if;
       execute 'reset role';
@@ -695,7 +755,7 @@ begin
     json_build_object('role', 'service_role')::text, true
   );
   perform public.service_claim_growth_deliveries_v110(
-    1, 'v110-feature-off', extensions.gen_random_uuid()
+    100, 'v110-feature-off', extensions.gen_random_uuid()
   );
   execute 'reset role';
   if not exists (
@@ -723,7 +783,7 @@ begin
     json_build_object('role', 'service_role')::text, true
   );
   perform public.service_claim_growth_deliveries_v110(
-    1, 'v110-module-off', extensions.gen_random_uuid()
+    100, 'v110-module-off', extensions.gen_random_uuid()
   );
   execute 'reset role';
   if not exists (
@@ -755,7 +815,7 @@ begin
     json_build_object('role', 'service_role')::text, true
   );
   perform public.service_claim_growth_deliveries_v110(
-    1, 'v110-consent-off', extensions.gen_random_uuid()
+    100, 'v110-consent-off', extensions.gen_random_uuid()
   );
   execute 'reset role';
   if not exists (
@@ -788,7 +848,7 @@ begin
     json_build_object('role', 'service_role')::text, true
   );
   perform public.service_claim_growth_deliveries_v110(
-    1, 'v110-link-off', extensions.gen_random_uuid()
+    100, 'v110-link-off', extensions.gen_random_uuid()
   );
   execute 'reset role';
   if not exists (
@@ -815,14 +875,26 @@ begin
     json_build_object('role', 'service_role')::text, true
   );
   v_result := public.service_claim_growth_deliveries_v110(
-    2, 'v110-budget', extensions.gen_random_uuid()
+    100, 'v110-budget', extensions.gen_random_uuid()
   );
-  if (v_result ->> 'claimed_count')::integer <> 1 then
+  if (
+    select count(*)
+    from public.growth_delivery_dispatches_v110
+    where id in (v_dispatch, v_second_dispatch)
+      and lifecycle_status = 'delivering'
+  ) <> 1 then
     raise exception 'v110 budget cap did not limit claims: %', v_result;
   end if;
-  if (v_result #>> '{claims,0,dispatch_id}')::uuid = v_second_dispatch then
+  if (
+    select lifecycle_status
+    from public.growth_delivery_dispatches_v110
+    where id = v_second_dispatch
+  ) = 'delivering' then
     v_second_dispatch := v_dispatch;
-    v_dispatch := (v_result #>> '{claims,0,dispatch_id}')::uuid;
+    select id into strict v_dispatch
+    from public.growth_delivery_dispatches_v110
+    where execution_id = v_execution
+      and lifecycle_status = 'delivering';
   end if;
   perform public.service_complete_growth_delivery_v110(
     v_dispatch, 'provider-v110-budget', true, null,
@@ -849,7 +921,7 @@ begin
     json_build_object('role', 'service_role')::text, true
   );
   perform public.service_claim_growth_deliveries_v110(
-    1, 'v110-frequency', extensions.gen_random_uuid()
+    100, 'v110-frequency', extensions.gen_random_uuid()
   );
   execute 'reset role';
   if not exists (

@@ -104,7 +104,7 @@ test('customer reward labels remain visible while merchant completion is QR-only
   assert.match(app, /r\.customer_name\|\|r\.name/);
   assert.doesNotMatch(app, /sb\.rpc\('redeem_reward_at_context'/i);
   assert.match(app, /Open Quick Earn scanner/);
-  assert.match(app, /merchant_scan_redemption_qr_v93/);
+  assert.match(app, /merchant_scan_redemption_qr_v117/);
 });
 
 test('legacy zero-credit claims retain manual fulfillment meaning', async () => {
