@@ -31,7 +31,10 @@ test('V157 hides inventory deduction setup while preserving services catalogue m
 
 test('V157 keeps Record sale focused by collapsing package sales and showing item quantities', () => {
   assert.match(recordSale, /const selectedCatalogQty=\(type,id\)=>saleLines\.reduce/);
-  assert.match(recordSale, /class="choice-button \$\{qty\?'is-selected':''\}"/);
+  assert.match(recordSale, /String\(line\.ref\)===String\(id\)/);
+  assert.doesNotMatch(recordSale, /line\.ref_id/);
+  assert.match(recordSale, /class="choice-button \$\{image\?'has-image':''\} \$\{qty\?'is-selected':''\}"/);
+  assert.match(recordSale, /class="till-choice-image"/);
   assert.match(recordSale, /class="till-choice-qty"/);
   assert.match(recordSale, /aria-label="\$\{qty\} selected"/);
   assert.match(recordSale, /<details class="till-sale-package-options"><summary>Sell package<\/summary>/);
@@ -49,7 +52,8 @@ test('V157 reorganises Packages into My packages and Customer packages without a
 });
 
 test('V157 preserves package-session audit correction wording', () => {
-  assert.match(packages, /A correction restores one session and never refunds a payment/);
-  assert.match(packages, />Restore session<\/button>/);
-  assert.match(packages, /1 session restored · no refund/);
+  assert.match(packages, /Use Undo session use only when a package session was deducted by mistake/);
+  assert.match(packages, />Undo session use<\/button>/);
+  assert.match(packages, /Session added back · no refund/);
+  assert.doesNotMatch(packages, />Restore session<\/button>/);
 });

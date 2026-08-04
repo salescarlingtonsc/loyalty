@@ -1093,6 +1093,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260804054949",
+      "name": "nestly_v158_catalogue_media",
+      "sourcePath": "db/migrations/20260804_nestly_v158_catalogue_media.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260804090000",
       "name": "nestly_v155_multibranch_foundation",
       "sourcePath": "db/migrations/20260804_nestly_v155_multibranch_foundation.sql"

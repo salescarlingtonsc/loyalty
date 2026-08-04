@@ -1092,6 +1092,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v158_catalogue_media.sql",
+      "semanticVersion": "v158",
+      "proposedDeployVersion": "20260804054949"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260804_nestly_v155_multibranch_foundation.sql",
       "semanticVersion": "v155",
       "proposedDeployVersion": "20260804090000"
