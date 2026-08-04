@@ -401,7 +401,7 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   **202634502E**). The monitored commercial/privacy mailbox currently supplied
   by the owner is **admin.peekaa@gmail.com**. Formal DPO designation and counsel
   approval remain separate launch gates.
-- One launch plan is offered in SGD: **SGD 149 billed monthly** or **SGD 1,188
+- One launch plan is offered in SGD: **SGD 148 billed monthly** or **SGD 1,188
   billed annually** (SGD 99/month equivalent), with annual selected by default.
   **SGD 168/month** is display-only comparison pricing and must never be sent to
   Stripe as the amount due unless a later explicit owner decision introduces an

@@ -40,7 +40,7 @@ const api = async (method, path, fields) => {
 const definitions = [
   {
     role: 'base', cadence: 'monthly', lookupKey: 'nestly_v124_monthly_base_sgd',
-    unitAmount: 14900, interval: 'month', tax_behavior: 'exclusive', nickname: 'Peekaa monthly base — 1,000 customers',
+    unitAmount: 14800, interval: 'month', tax_behavior: 'exclusive', nickname: 'Peekaa monthly base — 1,000 customers',
   },
   {
     role: 'capacity', cadence: 'monthly', lookupKey: 'nestly_v124_monthly_capacity_1000_sgd',

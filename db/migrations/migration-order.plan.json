@@ -1125,6 +1125,12 @@
       "path": "db/migrations/20260804_nestly_v160_auth_signup_visibility.sql",
       "semanticVersion": "v160",
       "proposedDeployVersion": "20260804150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql",
+      "semanticVersion": "v162",
+      "proposedDeployVersion": "20260804170000"
     }
   ]
 }

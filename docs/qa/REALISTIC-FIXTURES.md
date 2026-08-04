@@ -279,14 +279,14 @@ All automated credentials must come from a non-committed test-secret mechanism.
 
 - Reporting period: 1–31 August 2026, Singapore time, SGD.
 - Radiant Skin Studio pays one annual SGD 1,188.00 invoice with SGD 0.00 GST;
-  Harbour Kopi has one pending monthly SGD 149.00 invoice excluded from cash.
+  Harbour Kopi has one pending monthly SGD 148.00 invoice excluded from cash.
 - Northstar Fitness has one paid SGD 169.00 invoice followed by a provider-
   confirmed SGD 20.00 partial refund; a duplicate event has zero second effect.
 - Platform expenses: SGD 280.00 software, SGD 120.00 marketing and one reversed
   SGD 45.00 duplicate software expense. The reversal keeps immutable source and
   actor evidence but contributes SGD 0.00 to the active expense total.
 - The P&L must reconcile paid cash SGD 1,357.00 less refunds SGD 20.00 less
-  active expenses SGD 400.00 to net cash SGD 937.00. Pending SGD 149.00 is
+  active expenses SGD 400.00 to net cash SGD 937.00. Pending SGD 148.00 is
   labelled outstanding and excluded from cash and net cash.
 - Paid rows expose exact provider invoice/document actions; pending rows never
   display a receipt. Unsafe or missing provider document URLs fail closed.
@@ -334,7 +334,7 @@ All automated credentials must come from a non-committed test-secret mechanism.
 
 ### `SPA-GLOW-BILLING` — launch pricing and capacity
 
-- Monthly, 1,000 profiles: SGD 149.00 per month.
+- Monthly, 1,000 profiles: SGD 148.00 per month.
 - Monthly, 3,000 profiles: SGD 169.00 per month (base plus two SGD 10 blocks).
 - Annual, 1,000 profiles: SGD 1,188.00 paid up front (SGD 99/month equivalent).
 - Annual, 3,000 profiles: SGD 1,428.00 paid up front (base plus two SGD 120 blocks).

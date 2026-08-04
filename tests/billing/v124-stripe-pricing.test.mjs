@@ -19,6 +19,20 @@ test('v124 defines the exact launch prices and customer-capacity model', async (
   assert.match(sql, /staff access is included/i);
 });
 
+test('v162 updates the live launch monthly base price to SGD 148 without changing capacity economics', async () => {
+  const sql = await read('supabase/migrations/20260804170000_nestly_v162_stripe_launch_price_148.sql');
+  assert.match(sql, /retire the active SGD 149 monthly Stripe catalogue row before applying V162/i);
+  assert.match(sql, /drop constraint if exists billing_plan_catalog_v124_cadence_pair/i);
+  assert.match(sql, /base_amount_cents\s*=\s*14800/i);
+  assert.match(sql, /base_amount_cents\s*=\s*14900[\s\S]+active\s*=\s*false[\s\S]+effective_to is not null/i);
+  assert.match(sql, /base_amount_cents\s*=\s*118800/i);
+  assert.match(sql, /capacity_block_amount_cents\s*=\s*1000/i);
+  assert.match(sql, /capacity_block_amount_cents\s*=\s*12000/i);
+  assert.match(sql, /v_base:=case p_cadence when 'monthly' then 14800 else 118800 end/i);
+  assert.match(sql, /case p_cadence when 'monthly' then 14800 else 118800 end/i);
+  assert.match(sql, /billing\.v162_catalog_confirmed/i);
+});
+
 test('v124 checkout commands bind cadence and capacity to one idempotent fingerprint', async () => {
   const sql = await read('supabase/migrations/20260731164709_nestly_v124_stripe_launch_pricing.sql');
   assert.match(sql, /request_billing_command_v124\s*\([\s\S]+p_customer_capacity integer/i);
@@ -100,7 +114,7 @@ test('owner checkout defaults annual and explains price, capacity, modules, staf
   assert.match(app, /get_business_billing_v125/);
   assert.match(app, /value="annual"[^>]+checked/);
   assert.match(app, /SGD 1,188/);
-  assert.match(app, /SGD 149/);
+  assert.match(app, /SGD 148/);
   assert.match(app, /1,000 customer profiles/);
   assert.match(app, /Staff access included/);
   assert.match(app, /Template-assisted promotion wording/);
@@ -126,19 +140,23 @@ test('public legal surfaces use the supplied company identity and business mailb
   }
 });
 
-test('V144 publishes the exact current Peekaa Terms and Privacy digests without rewriting acceptance history', async () => {
-  const [sql, terms, privacy] = await Promise.all([
+test('V144/V162 publish the exact current Peekaa legal digests without rewriting acceptance history', async () => {
+  const [v144, v162, terms, privacy] = await Promise.all([
     read('supabase/migrations/20260803120000_nestly_v144_self_serve_subscription_consent.sql'),
+    read('supabase/migrations/20260804170000_nestly_v162_stripe_launch_price_148.sql'),
     read('app/terms.html'),
     read('app/privacy.html'),
   ]);
-  for (const page of [terms, privacy]) {
-    const digest = createHash('sha256').update(page).digest('hex');
-    assert.match(sql, new RegExp(digest));
+  const termsDigest = createHash('sha256').update(terms).digest('hex');
+  const privacyDigest = createHash('sha256').update(privacy).digest('hex');
+  assert.match(v162, new RegExp(termsDigest));
+  assert.match(v144, new RegExp(privacyDigest));
+  assert.match(v162, /2026-08-04/);
+  assert.match(v162, /alter column legal_document_version set default '2026-08-04'/);
+  for (const sql of [v144, v162]) {
+    assert.doesNotMatch(sql, /(?:delete from|truncate)\s+(?:app\.)?customer_legal_documents/i);
+    assert.doesNotMatch(sql, /(?:insert into|update|delete from|truncate)\s+public\.customer_legal_acceptances/i);
   }
-  assert.match(sql, /2026-08-03/);
-  assert.doesNotMatch(sql, /(?:delete from|truncate)\s+(?:app\.)?customer_legal_documents/i);
-  assert.doesNotMatch(sql, /(?:insert into|update|delete from|truncate)\s+public\.customer_legal_acceptances/i);
 });
 
 test('Stripe catalogue bootstrap is idempotent, exact and live guarded', async () => {
@@ -148,7 +166,7 @@ test('Stripe catalogue bootstrap is idempotent, exact and live guarded', async (
   assert.match(setup, /sk_live_/);
   assert.match(setup, /nestly_v124_monthly_base_sgd/);
   assert.match(setup, /nestly_v124_annual_capacity_1000_sgd/);
-  for (const cents of ['14900', '118800', '1000', '12000']) {
+  for (const cents of ['14800', '118800', '1000', '12000']) {
     assert.match(setup, new RegExp(`unitAmount: ${cents}`));
   }
   assert.doesNotMatch(setup, /console\.log\(secret|process\.stdout\.write\([^\n]*secret/);

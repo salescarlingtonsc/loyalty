@@ -438,7 +438,7 @@ test('normal Finance workflows show SGD, percentages, names and firms instead of
   const billing=sourceSection(source,'function billingPriceModal','async function openBillingDetail');
   const commission=sourceSection(source,'async function renderCommission','function forfeitCommissionModal');
 
-  assert.match(billing,/Monthly is fixed at SGD 149/);
+  assert.match(billing,/Monthly is fixed at SGD 148/);
   assert.match(billing,/Annual is fixed at SGD 1,188/);
   assert.match(billing,/Stripe \+1,000-customer price ID/);
   assert.match(billing,/Advanced provider mapping/);

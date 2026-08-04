@@ -814,7 +814,7 @@
       'Per +1,000 customers':'每增加 1,000 位顾客','Customers included':'包含顾客数',
       'Create matching monthly and annual Stripe Price versions before opening checkout.':'开放结账前，请创建相匹配的月付和年付 Stripe 价格版本。',
       'Stripe +1,000-customer price ID':'Stripe 每增加 1,000 位顾客的价格 ID',
-      'Monthly is fixed at SGD 149 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'月付固定为 149 新币，每额外 1,000 位顾客加收 10 新币。年付固定为 1,188 新币，每额外 1,000 位顾客加收 120 新币。168 新币仅为比较价格。',
+      'Monthly is fixed at SGD 148 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'月付固定为 148 新币，每额外 1,000 位顾客加收 10 新币。年付固定为 1,188 新币，每额外 1,000 位顾客加收 120 新币。168 新币仅为比较价格。',
       'Current customers':'当前顾客数','Customer capacity':'顾客容量','Money-back request until':'退款申请截止时间','Create annual checkout':'创建年付结账',
       'Consultant attribution recorded.':'顾问归属已记录。','Commission policy created.':'佣金政策已创建。','Accrual approved.':'应计佣金已批准。',
       'Payout batch created.':'付款批次已创建。','Payout line added.':'付款明细已添加。','Payout batch approved.':'付款批次已批准。',
@@ -947,7 +947,7 @@
       'Per +1,000 customers':'Bagi setiap tambahan 1,000 pelanggan','Customers included':'Pelanggan disertakan',
       'Create matching monthly and annual Stripe Price versions before opening checkout.':'Cipta versi Harga Stripe bulanan dan tahunan yang sepadan sebelum membuka pembayaran.',
       'Stripe +1,000-customer price ID':'ID harga Stripe bagi tambahan 1,000 pelanggan',
-      'Monthly is fixed at SGD 149 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'Bulanan ditetapkan pada SGD 149 + SGD 10 bagi setiap tambahan 1,000 pelanggan. Tahunan ditetapkan pada SGD 1,188 + SGD 120 bagi setiap tambahan 1,000 pelanggan. SGD 168 hanyalah metadata perbandingan.',
+      'Monthly is fixed at SGD 148 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'Bulanan ditetapkan pada SGD 148 + SGD 10 bagi setiap tambahan 1,000 pelanggan. Tahunan ditetapkan pada SGD 1,188 + SGD 120 bagi setiap tambahan 1,000 pelanggan. SGD 168 hanyalah metadata perbandingan.',
       'Current customers':'Pelanggan semasa','Customer capacity':'Kapasiti pelanggan','Money-back request until':'Tarikh akhir permohonan pulangan wang','Create annual checkout':'Cipta pembayaran tahunan',
       'Consultant attribution recorded.':'Atribusi perunding direkodkan.','Commission policy created.':'Polisi komisen dicipta.','Accrual approved.':'Akruan diluluskan.',
       'Payout batch created.':'Kumpulan bayaran dicipta.','Payout line added.':'Baris bayaran ditambah.','Payout batch approved.':'Kumpulan bayaran diluluskan.',
@@ -6987,7 +6987,7 @@
           ${CUI.field({id:'billingCapacityPriceId',label:'Stripe +1,000-customer price ID',required:true,attributes:'name="capacity_price_id" placeholder="price_..."'})}
         </div>
       </details>
-    </div><p class="muted small">${escapeHtml(pt('Monthly is fixed at SGD 149 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.'))}</p>`,onSubmit:async(form,controls)=>{
+    </div><p class="muted small">${escapeHtml(pt('Monthly is fixed at SGD 148 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.'))}</p>`,onSubmit:async(form,controls)=>{
       const proposal={
         p_cadence:form.get('cadence'),
         p_provider_base_price_id:form.get('base_price_id'),
