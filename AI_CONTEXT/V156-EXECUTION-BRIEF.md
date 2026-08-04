@@ -83,10 +83,13 @@ historical events/documents, tenant roles and merchant navigation.
 Targeted Node/server tests, transaction-scoped database assertions, two-session idempotency where needed,
 seven requested responsive viewports, quality/runtime/build/manifest/canonical
 checks, database rehearsal, independent high-risk review, then commit/push.
-Production migration/function/web deployment and `/api/build` verification occur
-only after the reviewed gates pass. Local Docker was unavailable during
-implementation, so database verification must be completed through a reviewed
-remote migration rehearsal before production. No uncontrolled live charge is permitted.
+Production migration `20260804051519_nestly_v156_subscription_operations_crm`
+and the reviewed Edge Functions were applied after Sol acceptance. Production
+web promotion was intentionally stopped because a concurrent session deployed
+V157 commit `65887b0f49c1a457f0ea9d5580b6b949ec3fbd53` after this branch was based;
+promoting V156 would overwrite that later lineage. A reviewed integration commit
+based on the current production build is required before web promotion. No
+uncontrolled live charge is permitted.
 
 ## Migration and rollback
 
