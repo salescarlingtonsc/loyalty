@@ -22,14 +22,15 @@ const grow = section('async function growPage(', 'function pbStatusChip');
 const nav = section('const MODULES={', 'function navHtml');
 
 test('V154 dashboard has greeting, compact dates and collapsible business sections', () => {
+  assert.match(app, /\.ux154-section-toggle\{min-height:44px/);
   assert.match(dashboard, /dashboard-greeting/);
   assert.match(dashboard, /rawName\.split\(/);
   assert.match(dashboard, /dashboard-date-pair/);
   assert.match(dashboard, /dashboardPerformanceToggle/);
   assert.match(dashboard, /dashboardUnderstandToggle/);
   assert.match(app, /wireLocalCollapseV154/);
-  assert.match(app, /peekaa\.v154\.dashboard\.performance\.open/);
-  assert.match(app, /peekaa\.v154\.dashboard\.understand\.open/);
+  assert.match(app, /peekaa\.v164\.dashboard\.performance\.open/);
+  assert.match(app, /peekaa\.v164\.dashboard\.understand\.open/);
 });
 
 test('V154 merchant insights are concise and use customer-facing business health wording', () => {

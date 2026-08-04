@@ -130,7 +130,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .v150-soft-head{background:linear-gradient(180deg,#FFF7F4,#FFFDFC);border-bottom:1px solid var(--line);border-radius:var(--r) var(--r) 0 0;margin:-22px -22px 16px;padding:16px 22px}
 .v150-soft-head b{display:block;font-size:15px}.v150-soft-head p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
 .v150-segment{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:var(--shadow)}
-.v150-segment button{min-height:38px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px}
+.v150-segment button{min-height:44px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px}
 .v150-segment button[aria-pressed="true"]{background:var(--ink);color:#fff}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
@@ -144,7 +144,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-date-pair input[type="date"]{width:148px;flex:0 0 148px}
 .dashboard-date-pair .btn{flex:0 0 auto}
 .ux154-collapsible-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
-.ux154-section-toggle{min-height:40px;border:1px solid var(--control-border);border-radius:999px;background:#fff;color:var(--ink);font-weight:750;padding:8px 14px}
+.ux154-section-toggle{min-height:44px;border:1px solid var(--control-border);border-radius:999px;background:#fff;color:var(--ink);font-weight:750;padding:8px 14px}
 .ux154-section-toggle:hover{background:#FBFAF8}.ux154-section-toggle:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}
 .ux154-collapsible-body[hidden]{display:none!important}
 .understand-business-panel{margin-top:18px}.understand-business-panel .v150-section-title{margin-bottom:0}
@@ -8518,7 +8518,8 @@ async function dashboard(){
     if(customerMetricsAvailable)C('c4',{type:'bar',data:{labels:Object.keys(ages),datasets:[{data:Object.values(ages),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     if(customerMetricsAvailable)C('c5',{type:'doughnut',data:{labels:Object.keys(genders),datasets:[{data:Object.values(genders),backgroundColor:[coral,amber,green,muted],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}}}});
   }
-  renderReportingScopeSelectorV155(load,isDashboardCurrent,'dashboardReportingScopeWrap');
+  await renderReportingScopeSelectorV155(load,isDashboardCurrent,'dashboardReportingScopeWrap');
+  if(isDashboardCurrent())await load();
 }
 
 /* ---------- customers ---------- */

@@ -45,6 +45,8 @@ export async function buildV142Visual(){
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const money=cents=>'SGD '+(Number(cents||0)/100).toFixed(2);
   const sgt=iso=>{if(!iso)return null;return new Intl.DateTimeFormat('en-SG',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Singapore'}).format(new Date(iso))};
+  const formatCustomerJoinedDateV141=value=>value?new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(value)):'Unavailable';
+  const catalogueImageUrlV158=()=>'';
   const workspaceTemplateAttributeV97=(attribute,key,values)=>attribute+'="'+esc(key==='removeItem'?'Remove '+values.item:key)+'"';
   const workspaceTemplateTextV97=(key,values={})=>key==='itemAdded'?values.item+' added':key==='itemSelected'?values.item+' selected':key;
   const recordProductInteractionV100=()=>{};

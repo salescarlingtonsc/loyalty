@@ -45,7 +45,7 @@ test('Grow overview exposes the existing promotions workflow and customer projec
   const grow=source.match(/async function growPage[\s\S]+?\nasync function retentionPage/)?.[0]||source.match(/async function growPage[\s\S]+?\/\* ----------/)?.[0]||'';
   assert.match(grow,/programmeRow\(\{kind:'promotions'/);
   assert.match(grow,/href:'#\/promotions'/);
-  assert.match(source,/customer_get_promotions_v104/);
+  assert.match(source,/customer_get_promotions_v155/);
   assert.match(source,/offers\.slice\(0,2\)|slice\(0,\s*2\)/);
 });
 

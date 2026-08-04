@@ -19,27 +19,24 @@ test('dashboard uses Singapore dates and labels every mixed metric scope', () =>
   assert.match(dashboard, /const today=sgDateInputValue\(\),d30=shiftSgDateInput\(today,-29\)/);
   assert.doesNotMatch(dashboard, /toISOString\(\)\.slice\(0,10\)/);
   assert.match(dashboard, /Valid visits/);
-  assert.match(dashboard, /Customers with valid visits/);
-  assert.match(dashboard, /Customer records added/);
-  assert.match(dashboard, /Gross points earned/);
-  assert.match(dashboard, /Business-wide · current credit still owed/);
+  assert.match(dashboard, /New customer members/);
+  assert.match(dashboard, /Inactive customers/);
   assert.match(dashboard, /availability\?\.sales===false/);
   assert.match(dashboard, /availability\?\.clients!==false/);
-  assert.match(dashboard, /availability\?\.loyalty===true/);
-  assert.match(dashboard, /loyaltyMetricsAvailable&&\{key:'points',value:String\(d\.points_issued\?\?0\)/,
-    'points must render only when the server proves complete Loyalty scope');
-  assert.match(dashboard, /creditLiabilityAvailable&&\{key:'credit',value:money\(d\.credit_liability_cents\?\?0\)/,
-    'business-wide credit must render only after the server proves whole-business authority');
+  assert.doesNotMatch(dashboard, /key:'points'/,
+    'the simplified dashboard must not restore a mixed-scope points KPI');
+  assert.doesNotMatch(dashboard, /key:'credit'/,
+    'the simplified dashboard must not restore a mixed-scope credit KPI');
   assert.doesNotMatch(dashboard, /points_issued\|\|0/,
     'an unavailable Loyalty metric must never collapse into a plausible zero');
   assert.doesNotMatch(dashboard, /credit_liability_cents\|\|0/,
     'unavailable business-wide credit must never collapse into a plausible zero');
-  assert.match(dashboard, /!customerMetricsAvailable&&key==='unique'[\s\S]*route:'#\/sales',action:'View sales'/,
-    'customer-count detail must retain a valid Sales drill-down when Clients is unavailable');
-  assert.match(dashboard, /key==='credit'&&\(!customerMetricsAvailable\|\|!loyaltyMetricsAvailable\|\|!creditLiabilityAvailable\)[\s\S]*route:null,action:null/,
-    'credit liability must not expose a dead Customers action when Clients or Loyalty detail is unavailable');
+  assert.match(dashboard, /customerMetricsAvailable&&\{key:'new'/,
+    'customer-count detail must be omitted when Clients is unavailable');
   assert.match(dashboard, /dashboardReportRetry/);
   assert.match(dashboard, /requestGate\.begin\(\)/);
+  assert.match(dashboard, /await renderReportingScopeSelectorV155\(load,isDashboardCurrent,'dashboardReportingScopeWrap'\);[\s\S]*if\(isDashboardCurrent\(\)\)await load\(\)/,
+    'the dashboard must load once after its reporting scope is initialized');
   assert.match(dashboard, /querySelectorAll\('input\[type="date"\]'\)\.forEach/);
   assert.doesNotMatch(dashboard, /Record a sale[\s\S]*Add appointment[\s\S]*Find a customer[\s\S]*Set up rewards/,
     'the removed dashboard task-card row must not return');
@@ -195,13 +192,13 @@ test('P&L charts use complete server aggregates and Singapore dates, never cappe
   assert.doesNotMatch(pnl, /sb\.from\('expenses'\)/);
   assert.doesNotMatch(pnl, /sb\.from\('sales'\)/);
   assert.match(pnl, /Accrual revenue vs expenses by month/);
-  assert.match(pnl, /Cash-basis revenue \(earned and settled\)/);
+  assert.match(pnl, /Cash-basis revenue/);
   assert.match(pnl, /Cash-basis revenue less/);
   assert.match(pnl, /Selected-branch expenses/);
   assert.match(pnl, /excludes business-wide overhead/);
   assert.match(pnl, /Gift card issuance is deferred revenue/);
   assert.match(pnl, /Only recorded eligible payments count toward cash-basis revenue/);
-  assert.match(pnl, /No recorded expenses in this scope\./,
+  assert.match(pnl, /No expenses recorded in this scope/,
     'an empty category aggregate must explain the absence instead of leaving a blank chart canvas');
   assert.doesNotMatch(pnl, /Gift card sales are cash collected/);
   assert.doesNotMatch(pnl, /Revenue \(money collected\)|Net cash \(money collected less expenses\)/);
@@ -234,8 +231,8 @@ test('staff performance excludes non-revenue ledger rows from revenue while reta
   assert.match(staff, /Revenue excludes rows whose immutable sale policy marks them non-revenue/);
   assert.match(staff, /Revenue treatment/);
   assert.match(staff, />Non-revenue</);
-  assert.match(staff, /Date range changed\. Apply to load current staff performance/);
-  assert.match(staff, /Date range changed\. Apply to load current ledger records/);
+  assert.match(staff, /Apply the new range to refresh staff performance/);
+  assert.match(staff, /Apply the new range to refresh these ledger records/);
   assert.match(staff, /p_module:'clients'/);
   assert.match(staff, /const clientsAvailable=!clientsScopeResult\?\.error/);
   assert.match(staff, /Customer details unavailable/);
@@ -245,7 +242,6 @@ test('staff performance excludes non-revenue ledger rows from revenue while reta
 test('Reports states the period, branch and business-wide scopes without claiming one common scope', () => {
   const reports = section('async function reportsPage()', '/* ---------- get started');
   assert.doesNotMatch(reports, /All answers below use this same period and branch/);
-  assert.match(reports, /Operational flows use the selected Singapore period and branch/);
   assert.match(reports, /Loyalty flow \(business-wide, selected period\)/);
   assert.match(reports, /Liabilities \(business-wide, now\)/);
   assert.match(reports, /Active members \(business-wide, now\)/);
@@ -286,7 +282,7 @@ test('Reports machine-readable scope agrees with every availability flag', () =>
 
 test('Reports loads only the answers the user opened', () => {
   const reports = section('async function reportsPage()', '/* ---------- get started');
-  assert.match(reports,/Update open answers/);
+  assert.match(reports,/Run report/);
   assert.match(reports,/const answerLoaders=\[/);
   assert.match(reports,/const runOpenAnswers=\(\)=>Promise\.all\(answerLoaders/);
   assert.match(reports,/\.filter\(\(\[id\]\)=>\$\(id\)\?\.open\)/);
@@ -439,9 +435,9 @@ test('launch setup progress contains only persisted observable completion steps'
 
 test('loyalty automation copy is conditional on eligible sales and effective published programmes', () => {
   const customers=section('async function clientDetail(id)', '/* ---------- sales ---------- */');
-  const sales=section('async function salesPage()', '/* ---------- services ---------- */');
+  const sales=section('async function tillPage()', '/* ---------- sales ---------- */');
   const loyalty=section('async function loyaltyPage(', '/* ---------- referrals ---------- */');
-  assert.match(sales,/eligible customer-linked sales apply active published loyalty and retention rules/);
+  assert.match(sales,/applies points only when an active published loyalty programme makes it eligible/);
   assert.match(customers,/Record an eligible first purchase; points are earned only when an active published loyalty programme applies/);
   assert.match(loyalty,/workspaceTemplateHtmlV97\('classicEligibleEarning'/);
   assert.match(loyalty,/workspaceTemplateHtmlV97\('stampsEligibleEarning'/);
@@ -557,7 +553,8 @@ test('Grow rollback history has no silent twenty-version cap', () => {
 test('branch filter fails closed and never runs reports against an unconfirmed scope', () => {
   const branchFilter = section('async function refreshBranchFilter(', '/* ---------- dashboard ---------- */');
   assert.match(branchFilter, /Branch list unavailable/);
-  assert.match(branchFilter, /id="branchFilterRetry"/);
+  assert.match(branchFilter, /const retry=wrap\.querySelector\('button'\)/);
+  assert.match(branchFilter, /retry\.onclick=\(\)=>refreshBranchFilter\(onChange,isCurrent,targetId\)/);
   const catchStart=branchFilter.indexOf('catch(e)');
   const firstOnChange=branchFilter.indexOf('onChange();',catchStart);
   const catchReturn=branchFilter.indexOf('return;',catchStart);

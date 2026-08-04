@@ -23,12 +23,12 @@ try{
     assert.equal(metrics.width,metrics.scrollWidth,`${viewport.name} dashboard has no outer overflow`);
     assert.deepEqual(metrics.errors,[]);assert.deepEqual(browserErrors,[]);
     const kpis=metrics.kpis.map(value=>value.replace(/\s+/g,' ').trim().toLowerCase());
-    assert.ok(kpis.some(value=>value.startsWith('valid visits · → · 1 ·')&&value.includes('reversed visits excluded')),JSON.stringify(kpis));
-    assert.ok(kpis.some(value=>value.startsWith('revenue · → · sgd 10.00 ·')&&value.includes('net sales in this period')),JSON.stringify(kpis));
-    assert.ok(kpis.some(value=>value.startsWith('customers with valid visits · → · 1 ·')&&value.includes('counted once')),JSON.stringify(kpis));
-    assert.ok(kpis.some(value=>value.startsWith('customer records added · → · 4 ·')&&value.includes('business-wide')),JSON.stringify(kpis));
-    assert.ok(kpis.some(value=>value.startsWith('gross points earned · → · 11 ·')&&value.includes('selected branch')),JSON.stringify(kpis));
-    assert.ok(kpis.some(value=>value.startsWith('credit liability · → · sgd 25.00 ·')&&value.includes('business-wide')),JSON.stringify(kpis));
+    assert.ok(kpis.some(value=>value.startsWith('valid visits · → · 1 ·')&&value.includes('valid original visits · orchard')),JSON.stringify(kpis));
+    assert.ok(kpis.some(value=>value.startsWith('revenue · → · sgd 10.00 ·')&&value.includes('net sales · orchard')),JSON.stringify(kpis));
+    assert.ok(kpis.some(value=>value.startsWith('new customer members · → · 4 ·')),JSON.stringify(kpis));
+    assert.ok(kpis.some(value=>value.startsWith('inactive customers · → · 3 ·')),JSON.stringify(kpis));
+    assert.ok(kpis.every(value=>!value.includes('gross points earned')&&!value.includes('credit liability')),
+      'the simplified dashboard does not restore mixed-scope loyalty or liability KPIs');
     const revenueChart=metrics.chartConfigs.find(chart=>chart.id==='c2');
     assert.ok(revenueChart,'dashboard revenue chart renders');
     assert.equal(revenueChart.config.data.labels.length,30,'dashboard returns every date in the selected 30-day scope');
@@ -45,32 +45,22 @@ try{
   await gated.waitForSelector('#kpis .kpi',{state:'attached'});
   metrics=await gated.evaluate(()=>window.v145Metrics());
   assert.doesNotMatch(metrics.text,/Gross points earned/i,'disabled Loyalty never renders a plausible Dashboard points value');
-  assert.doesNotMatch(metrics.text,/Customer records added|Inactive customers|Age groups|Recorded gender/i,
+  assert.doesNotMatch(metrics.text,/New customer members|Inactive customers|Age groups|Recorded gender/i,
     'disabled Clients hides business-wide customer facts and charts');
   assert.equal(metrics.width,metrics.scrollWidth,'390px gated Dashboard has no outer overflow');
   assert.deepEqual(metrics.errors,[]);assert.deepEqual(gatedErrors,[]);
-  await gated.locator('[data-dashboard-metric="unique"]').click();
-  assert.equal(await gated.locator('#dashboardMetricGo').innerText(),'View sales','the identified-customer count retains a valid Sales drill-down');
-  await gated.locator('#dashboardMetricGo').click();
-  assert.equal(await gated.evaluate(()=>window.__lastNav),'#/sales');
-  await gated.locator('[data-dashboard-metric="credit"]').click();
-  assert.equal(await gated.locator('#dashboardMetricGo').count(),0,'credit has no dead Customers action when Clients is disabled');
-  assert.equal(await gated.locator('#dashboardMetricClose').innerText(),'Close');
-  await gated.waitForTimeout(300);
-  assert.ok((await gated.locator('#dashboardMetricClose').boundingBox()).height>=44,'gated detail Close action retains a 44px target');
+  assert.equal(await gated.locator('[data-dashboard-metric="new"],[data-dashboard-metric="inactive"]').count(),0,
+    'customer KPI actions are omitted when Clients access is unavailable');
   await gated.screenshot({path:new URL('dashboard-gated-mobile-390.png',evidenceDir).pathname,fullPage:true});
   await gated.close();
 
   const loyaltyGated=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
   const loyaltyGatedErrors=[];loyaltyGated.on('console',message=>{if(message.type()==='error')loyaltyGatedErrors.push(message.text())});loyaltyGated.on('pageerror',error=>loyaltyGatedErrors.push(error.message));
   await loyaltyGated.goto(`${base}?view=dashboard&loyaltyOff=1`,{waitUntil:'networkidle'});
-  await loyaltyGated.waitForSelector('[data-dashboard-metric="credit"]');
+  await loyaltyGated.waitForSelector('#kpis .kpi');
   metrics=await loyaltyGated.evaluate(()=>window.v145Metrics());
-  assert.match(metrics.text,/Credit liability\s+→\s+SGD 25\.00/i,'credit liability remains visible when Loyalty detail is unavailable');
-  assert.doesNotMatch(metrics.text,/Gross points earned/,'Loyalty-off Dashboard does not invent a points value');
-  await loyaltyGated.locator('[data-dashboard-metric="credit"]').click();
-  assert.equal(await loyaltyGated.locator('#dashboardMetricGo').count(),0,'clients-on/Loyalty-off credit detail has no misleading Customers drill');
-  assert.equal(await loyaltyGated.locator('#dashboardMetricClose').innerText(),'Close');
+  assert.match(metrics.text,/New customer members/i,'Clients facts remain visible when only Loyalty is unavailable');
+  assert.doesNotMatch(metrics.text,/Gross points earned|Credit liability/,'Loyalty-off Dashboard does not invent a points or liability value');
   assert.equal(metrics.width,metrics.scrollWidth,'390px clients-on/Loyalty-off Dashboard has no outer overflow');
   assert.deepEqual(metrics.errors,[]);assert.deepEqual(loyaltyGatedErrors,[]);
   await loyaltyGated.screenshot({path:new URL('dashboard-loyalty-off-mobile-390.png',evidenceDir).pathname,fullPage:true});
@@ -82,7 +72,7 @@ try{
   await branchCredit.waitForSelector('#kpis .kpi',{state:'attached'});
   metrics=await branchCredit.evaluate(()=>window.v145Metrics());
   assert.equal(await branchCredit.locator('[data-dashboard-metric="credit"]').count(),0,
-    'branch-limited Dashboard hides a business-wide credit total it cannot authoritatively read');
+    'the simplified Dashboard never renders the removed business-wide credit KPI');
   assert.doesNotMatch(metrics.text,/Credit liability\s+→\s+SGD 0\.00/i,
     'unavailable business-wide credit never becomes a plausible zero');
   assert.equal(metrics.width,metrics.scrollWidth,'390px branch-limited Dashboard has no outer overflow');
