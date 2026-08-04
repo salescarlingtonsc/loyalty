@@ -4,10 +4,11 @@ import test from 'node:test';
 
 const root = new URL('../..', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
-const [canonical, source, app] = await Promise.all([
+const [canonical, source, app, v163] = await Promise.all([
   read('supabase/migrations/20260721135556_frenly_c42_consumer_registration_contracts.sql'),
   read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
-  read('app/index.html')
+  read('app/index.html'),
+  read('supabase/migrations/20260804180000_nestly_v163_signup_lead_management_consent.sql')
 ]);
 
 function block(sourceText, expression) {
@@ -132,13 +133,19 @@ test('customer authentication defaults to password while signup and recovery alo
   assert.doesNotMatch(customerRoute, /id="customerOtpSend"[^>]*\$\{smsAvailable\?'disabled':''\}/,
     'an unavailable SMS provider must not render an enabled button without a handler');
   assert.match(customerRoute, /id="customerDob" type="date"/);
-  assert.match(customerRoute, /id="customerSignupLegal" type="checkbox"/);
-  assert.match(customerRoute, /id="customerLegal" type="checkbox"/);
-  assert.doesNotMatch(customerRoute, /id="customerSignupLegal"[^>]*checked=["']checked["']/i);
-  assert.match(customerRoute, /selected partners as described in the Privacy Notice/i);
-  assert.match(customerRoute, /I can withdraw this consent at any time/i);
-  assert.match(customerRoute, /if\(!\$\('customerSignupLegal'\)\.checked\)/);
-  assert.match(customerRoute, /if\(!legalInput\.checked\)/);
+  assert.match(customerRoute, /id="customerSignupConsent" type="checkbox"/);
+  assert.doesNotMatch(customerRoute, /id="customerSignupMarketing" type="checkbox"/);
+  assert.doesNotMatch(customerRoute, /id="customerProfileConsent" type="checkbox"/);
+  assert.doesNotMatch(customerRoute, /id="customerMarketing" type="checkbox"/);
+  assert.doesNotMatch(customerRoute, /id="customerSignupConsent"[^>]*checked=["']checked["']/i);
+  assert.match(customerRoute, /agree to receive marketing from \$\{esc\(BRAND\.productName\)\} and selected partners/i);
+  assert.match(customerRoute, /withdraw marketing consent at any time/i);
+  assert.match(customerRoute, /if\(!\$\('customerSignupConsent'\)\.checked\)/);
+  assert.match(customerRoute, /if\(!customerSignupConsentRecorded\(\)\)/);
+  assert.match(customerRoute, /id="customerGender"/);
+  assert.match(customerRoute, /<option value="female">Female<\/option><option value="male">Male<\/option>/);
+  assert.match(customerRoute, /p_gender:gender/);
+  assert.match(customerRoute, /p_platform_marketing_opted_in:true/);
   assert.match(customerRoute, /Resend available in 30 seconds/);
   assert.match(customerRoute, /customer_register_verified_phone/);
   assert.match(app, /customer_join_business_from_qr_v89/);
@@ -147,6 +154,19 @@ test('customer authentication defaults to password while signup and recovery alo
   assert.match(customerRoute, /nav\(takePendingCustomerDestination\('#\/wallet'\)\)/);
   assert.match(customerRoute, /if\(S\.user\)[\s\S]*customer_get_profile[\s\S]*profile\?\.profile!==null[\s\S]*nav\(takePendingCustomerDestination\('#\/wallet'\)\);return;/i);
   assert.doesNotMatch(customerRoute, /[🎉🎁📱]/u);
+});
+
+test('V163 customer signup persists owner-requested male/female gender through the private registration RPC', () => {
+  assert.match(v163, /alter table public\.customer_profiles[\s\S]*add column if not exists gender text[\s\S]*check \(gender in \('female','male'\)\)/i);
+  assert.match(v163, /drop function if exists public\.customer_register_verified_phone\(\s*text, date, text, boolean, boolean, boolean, text\s*\)/i);
+  assert.match(v163, /create or replace function public\.customer_register_verified_phone\(\s*p_full_name text,\s*p_birth_date date,\s*p_gender text,/i);
+  assert.match(v163, /v_gender text := lower\(nullif\(btrim\(p_gender\), ''\)\)/i);
+  assert.match(v163, /v_gender not in \('female','male'\)/i);
+  assert.match(v163, /identity_id, auth_user_id, full_name, birth_date, gender, preferred_language/i);
+  assert.match(v163, /full_name = excluded\.full_name, gender = excluded\.gender, preferred_language = excluded\.preferred_language/i);
+  assert.match(v163, /'full_name', p\.full_name, 'birth_date', p\.birth_date, 'gender', p\.gender, 'preferred_language'/i);
+  assert.match(v163, /revoke all on function public\.customer_register_verified_phone\(\s*text, date, text, text, boolean, boolean, boolean, text\s*\)/i);
+  assert.match(v163, /grant execute on function public\.customer_register_verified_phone\(\s*text, date, text, text, boolean, boolean, boolean, text\s*\) to authenticated/i);
 });
 
 test('production phone OTP has no fixed-number bypass and requires the explicit runtime provider seam', () => {

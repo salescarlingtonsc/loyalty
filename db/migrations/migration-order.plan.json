@@ -1089,6 +1089,60 @@
       "path": "db/migrations/20260803_nestly_v151_mobile_staff_invites.sql",
       "semanticVersion": "v151",
       "proposedDeployVersion": "20260803210000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v158_catalogue_media.sql",
+      "semanticVersion": "v158",
+      "proposedDeployVersion": "20260804054949"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v155_multibranch_foundation.sql",
+      "semanticVersion": "v155",
+      "proposedDeployVersion": "20260804090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v156_subscription_operations_crm.sql",
+      "semanticVersion": "v156",
+      "proposedDeployVersion": "20260804120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v156a_v151_invite_search_path_hardening.sql",
+      "semanticVersion": "v156a",
+      "proposedDeployVersion": "20260804130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql",
+      "semanticVersion": "v159",
+      "proposedDeployVersion": "20260804140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v160_auth_signup_visibility.sql",
+      "semanticVersion": "v160",
+      "proposedDeployVersion": "20260804150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql",
+      "semanticVersion": "v162",
+      "proposedDeployVersion": "20260804170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v163_signup_lead_management_consent.sql",
+      "semanticVersion": "v163",
+      "proposedDeployVersion": "20260804180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v164_account_signup_triage.sql",
+      "semanticVersion": "v164",
+      "proposedDeployVersion": "20260804190000"
     }
   ]
 }

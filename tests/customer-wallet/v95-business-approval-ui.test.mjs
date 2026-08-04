@@ -12,7 +12,7 @@ test('public owner signup creates Auth first while assisted approval remains sep
   assert.match(app,/account_type:'business_owner'/);
   assert.match(app,/start_self_serve_business_v130/);
   assert.match(app,/request_self_serve_checkout_v130/);
-  assert.match(app,/mode==='up'\)return renderBusinessApplication\(\)/);
+  assert.match(app,/new URLSearchParams\(location\.search\)\.get\('signup'\)==='1'\)return renderBusinessSignupChoice\(\)/);
   assert.doesNotMatch(app,/function renderOnboard\(\)[\s\S]*?sb\.rpc\('create_business'/);
 });
 

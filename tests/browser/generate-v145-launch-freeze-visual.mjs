@@ -46,6 +46,13 @@ export function buildV145LaunchFreezeVisual(app){
     errorState:({title,message,retryId})=>'<div class="card"><div class="err"><b>'+esc(title)+'</b><p>'+esc(message)+'</p><button class="btn ghost sm" id="'+esc(retryId)+'">Retry</button></div></div>',
     pageHeader:({title,subtitle,actions=''})=>'<div class="topbar cui-page-title"><div><h1>'+esc(title)+'</h1><p class="muted small">'+esc(subtitle||'')+'</p></div><div class="row">'+actions+'</div></div>',
     action:({id,label,variant='',className='',iconName=''})=>'<button type="button" class="btn '+(variant==='secondary'?'ghost ':'')+esc(className)+'" id="'+esc(id)+'">'+(iconName?'<span aria-hidden="true">•</span>':'')+'<span>'+esc(label)+'</span></button>',
+    skeletonCard:({className=''})=>'<div class="card '+esc(className)+'"><div class="skeleton-line"></div></div>',
+    skeletonGrid:({cards=1})=>Array.from({length:cards},()=>'<div class="card"><div class="skeleton-line"></div></div>').join(''),
+    tableSkeleton:()=>'<div class="card"><div class="skeleton-line"></div></div>',
+    formSkeleton:()=>'<div class="card"><div class="skeleton-line"></div></div>',
+    chartSkeleton:({title})=>'<div class="card"><b>'+esc(title)+'</b><div class="skeleton-line"></div></div>',
+    emptyState:({title,body})=>'<div class="empty"><b>'+esc(title)+'</b><p>'+esc(body||'')+'</p></div>',
+    setButtonBusy:(button,busy,{busyLabel}={})=>{if(button){button.disabled=Boolean(busy);if(busy&&busyLabel)button.textContent=busyLabel;}},
     activateDialog:(dialog,{onClose,initialFocus}={})=>{const deactivate=()=>dialog?.remove();requestAnimationFrame(()=>dialog?.querySelector(initialFocus||'button')?.focus());dialog?.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();(onClose||deactivate)();}});return deactivate}
   };
   const workspaceTemplateHtmlV97=()=> 'How Glow Atelier is doing';
@@ -70,9 +77,14 @@ export function buildV145LaunchFreezeVisual(app){
   const nav=hash=>{window.__lastNav=hash};
   const walletDate=value=>value?new Intl.DateTimeFormat('en-SG',{timeZone:'Asia/Singapore',dateStyle:'medium'}).format(new Date(value)):'';
   const walletSectionStillCurrent=(host,isCurrent)=>!!host&&host.isConnected&&isCurrent();
+  const previousEquivalentRangeV153=(from,to)=>({previousFrom:from,previousTo:to});
+  const buildMerchantInsightsV153=()=>'<section class="merchant-insights"><h2>Merchant insights</h2></section>';
+  const openCampaignPrepV153=()=>{};
+  const wireLocalCollapseV154=()=>{};
   function killCharts(){S.charts.forEach(chart=>chart.destroy());S.charts=[]}
   window.__chartConfigs=[];window.__rpcCalls=[];window.__dataCalls=[];window.__consoleErrors=[];window.__handledErrors=[];
   class Chart{constructor(canvas,config){this.canvas=canvas;this.config=config;window.__chartConfigs.push({id:canvas.id,config});}destroy(){}}
+  const loadChartLibrary=async()=>Chart;
   function dataRows(table){
     if(currentView==='client'){
       const facetError=new URLSearchParams(location.search).get('facetError')==='1';
@@ -129,7 +141,7 @@ export function buildV145LaunchFreezeVisual(app){
       window.__rpcCalls.push({name,args});
       const empty=new URLSearchParams(location.search).get('empty')==='1';
       if(name==='list_customer_redemption_history_v145')return queryRows('redemption_history',[]);
-      if(name==='get_dashboard_summary'){
+      if(name==='get_dashboard_summary'||name==='get_dashboard_summary_v155'){
         if(currentView==='daily')return rpcValue({visits:0,revenue_cents:-500,unique_customers:0,availability:{sales:true}});
         const params=new URLSearchParams(location.search),clientsOff=params.get('clientsOff')==='1',loyaltyOff=params.get('loyaltyOff')==='1',creditOff=params.get('creditOff')==='1';
         const days=[];for(let day=args.p_from;day<=args.p_to;day=shiftSgDateInput(day,1))days.push(day);
@@ -140,6 +152,11 @@ export function buildV145LaunchFreezeVisual(app){
           gender_counts:clientsOff?null:(empty?{}:{female:2,male:1,other:0,unknown:1}),
           availability:{sales:true,clients:!clientsOff,loyalty:!loyaltyOff,credit_liability:!creditOff}});
       }
+      if(name==='staff_list_customers_v155'){
+        const clientsOff=new URLSearchParams(location.search).get('clientsOff')==='1';
+        return clientsOff?rpcValue(null,{code:'42501',message:'Synthetic Clients module denial'}):rpcValue({rows:[],total:2,limit:1,offset:0,has_more:true});
+      }
+      if(name==='preview_campaign_audience_v155')return rpcValue({matching_customers:1});
       if(name==='staff_list_customers_v129'){
         const clientsOff=new URLSearchParams(location.search).get('clientsOff')==='1';
         return clientsOff?rpcValue(null,{code:'42501',message:'Synthetic Clients module denial'}):rpcValue({rows:[],total:2,limit:1,offset:0,has_more:true});

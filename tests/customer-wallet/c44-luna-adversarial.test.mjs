@@ -81,7 +81,7 @@ test('Luna C44: 101/100 truncation is value-first, home firms stay separate, and
   assert.match(app, /yourProgrammes[\s\S]*scanLoyaltyQr/i);
   assert.match(app, /href="#\/wallet\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}"/i);
   assert.match(app, /customerWalletRenderEpoch[\s\S]*if\(!isWalletCurrent\(\)\)return;/i);
-  assert.match(app, /Showing the 100 highest-priority linked programmes/i);
+  assert.match(app, /Showing the 100 highest-priority linked reward accounts/i);
 });
 
 test('Luna C44: every awaited v39 detail loader and capability refresh rejects a stale A route before it can paint B', async () => {

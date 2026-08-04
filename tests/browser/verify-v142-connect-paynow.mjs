@@ -11,7 +11,11 @@ try{
   for(const [name,viewport] of Object.entries({desktop:{width:1440,height:1000},mobile390:{width:390,height:844}})){
     const page=await browser.newPage({viewport,deviceScaleFactor:1});
     await page.goto(base,{waitUntil:'networkidle'});
-    await page.getByLabel('Customer phone number').fill('81863833');
+    /* tillPage renders the phone step before its permission/catalogue reads settle, then
+       redraws it once. Wait for that production initialization so automation does not
+       type into the short-lived first input. */
+    await page.waitForTimeout(500);
+    for(const digit of '81863833')await page.locator(`[data-k="${digit}"]`).click();
     await page.getByRole('button',{name:'Next'}).click();
     await page.getByRole('button',{name:/Harbour Lunch Set/}).waitFor();
     await page.getByRole('button',{name:/Harbour Lunch Set/}).click();

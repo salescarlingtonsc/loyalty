@@ -167,7 +167,7 @@ test('C44 SPA renders separate responsive cards and a slug drill-down without va
   assert.match(app, /No verified business links yet/i);
   assert.match(app, /customerWalletRenderEpoch/i);
   assert.match(app, /if\(!isWalletCurrent\(\)\)return;/i);
-  assert.match(app, /Showing the 100 highest-priority linked programmes/i);
+  assert.match(app, /Showing the 100 highest-priority linked reward accounts/i);
   assert.match(app, /let actionableCard=null(?:,programmeCards=\[\])?;/i);
   assert.match(app, /customer_get_business_summary/i);
   assert.match(app, /customer_portal_capabilities/i);

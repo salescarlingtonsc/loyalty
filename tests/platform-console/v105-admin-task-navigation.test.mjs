@@ -14,7 +14,7 @@ async function loadConsole(){
   return context.NestlyPlatformConsole;
 }
 
-test('desktop administration has five primary task areas plus secondary platform controls without removing routes',async()=>{
+test('desktop administration has six primary task areas plus secondary platform controls without removing routes',async()=>{
   const Console=await loadConsole();
   const access=Console.normalizePlatformAccess({
     role:'super_admin',scope:'all',module_perms:{}
@@ -28,18 +28,19 @@ test('desktop administration has five primary task areas plus secondary platform
     })),
     [
       {key:'overview',routes:['overview']},
-      {key:'firms',routes:['firms','onboarding']},
+      {key:'sales',routes:['onboarding']},
+      {key:'customers',routes:['customer-lifecycle','firms']},
       {key:'reports',routes:['reports']},
-      {key:'finance',routes:['billing','pnl','commissions']},
+      {key:'finance',routes:['subscription-operations','billing','pnl','commissions']},
       {key:'automation',routes:['automation']},
       {key:'platform-controls',routes:['sectors','access']}
     ]
   );
-  assert.equal(groups.filter(group=>!group.secondary).length,5);
+  assert.equal(groups.filter(group=>!group.secondary).length,6);
   assert.equal(groups.find(group=>group.key==='platform-controls')?.secondary,true);
   assert.deepEqual(
     Array.from(allowed,route=>route.key),
-    ['overview','onboarding','firms','reports','billing','pnl','commissions','sectors','automation','access'],
+    ['overview','onboarding','customer-lifecycle','firms','reports','billing','subscription-operations','pnl','commissions','sectors','automation','access'],
     'streamlining must not delete a capability or deep link'
   );
 });
@@ -53,7 +54,7 @@ test('restricted platform roles only see task groups containing authorised route
   const groups=Console.platformNavigationGroups(Console.visibleRoutes(access));
   assert.deepEqual(
     Array.from(groups,group=>Array.from(group.routes,route=>route.key)),
-    [['overview'],['firms','onboarding'],['reports']]
+    [['overview'],['onboarding'],['firms'],['reports']]
   );
 });
 

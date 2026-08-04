@@ -39,6 +39,7 @@
 // pin read as a violation. The capture is now terminated at the first non-list keyword.
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -50,6 +51,7 @@ import { stripSqlComments } from '../../scripts/ps0/discover-writers.mjs';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 const planPath = path.join(repoRoot, 'supabase/canonical-migration-order.plan.json');
+const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
 // v21 §"Every SECURITY DEFINER function gets a deterministic search path with pg_temp last".
 export const CANONICAL_SEARCH_PATH = ['pg_catalog', 'public', 'app', 'pg_temp'];
@@ -63,6 +65,14 @@ const ALLOWED_EXTRA_SCHEMAS = new Set(['extensions']);
 // new one is a deliberate act that must be reviewed, so it has to be recorded here.
 const KNOWN_SEARCH_PATH_SUPERSETS = [
   'frenly_v48_calendar_details_reschedule :: public.reschedule_appointment_v48 :: extensions',
+  'nestly_v156_subscription_operations_crm :: app.v156_prepare_billing_event :: extensions',
+  'nestly_v156_subscription_operations_crm :: public.platform_create_manual_invoice_v156 :: extensions',
+  'nestly_v156_subscription_operations_crm :: public.platform_finalize_quotation_v156 :: extensions',
+  'nestly_v156_subscription_operations_crm :: public.platform_record_manual_payment_v156 :: extensions',
+  'nestly_v156_subscription_operations_crm :: public.platform_send_quotation_v156 :: extensions',
+  'nestly_v156_subscription_operations_crm :: public.platform_set_billing_profile_v156 :: extensions',
+  'nestly_v156_subscription_operations_crm :: public.platform_upsert_billing_contact_v156 :: extensions',
+  'nestly_v156_subscription_operations_crm :: public.platform_verify_manual_payment_v156 :: extensions',
   'nestly_v89_customer_qr_redemption_platform_access :: app.v89_redemption_token :: extensions',
   'nestly_v89_customer_qr_redemption_platform_access :: public.business_create_customer_join_qr_v89 :: extensions',
   'nestly_v89_customer_qr_redemption_platform_access :: public.customer_create_redemption_intent_v89 :: extensions',
@@ -79,6 +89,28 @@ const KNOWN_SEARCH_PATH_SUBSETS = [
   'frenly_v46_customer_in_app_inbox :: app.c46_iana_timezone_allowed :: pg_catalog, pg_temp',
   'frenly_v46_customer_in_app_inbox :: app.c46_in_quiet_hours :: pg_catalog, pg_temp',
 ];
+
+// V151 was already applied before this guard existed. Production inspection on
+// 2026-08-04 confirmed these two exact definitions still used search_path=public.
+// V156a is the forward-only repair. Every byte of the predecessor, remediation,
+// and rollback-only database proof is pinned so this cannot become a general
+// exception for a new or modified public-only SECURITY DEFINER function.
+const DEPLOYED_DEFINER_REMEDIATIONS = new Map([
+  ['nestly_v151_mobile_staff_invites :: public.preview_staff_invite', {
+    predecessorSha256: '15f23dcd93f46873a8f856a1af4e0b34bbc69e37172b8af070d2d5c4a1ea0a7e',
+    remediationMigration: 'nestly_v156a_v151_invite_search_path_hardening',
+    remediationSha256: 'fedf07741796e33032cdfadfafc9b852cb91f950db37020c860b0f52ab1928c1',
+    testPath: 'db/tests/v156a_v151_invite_search_path_hardening.sql',
+    testSha256: 'bd7956e2c2a67b5a62bf17d319a954c3bf5a0b23d41e75ae6c0475e608d7db8e'
+  }],
+  ['nestly_v151_mobile_staff_invites :: public.accept_invite', {
+    predecessorSha256: '15f23dcd93f46873a8f856a1af4e0b34bbc69e37172b8af070d2d5c4a1ea0a7e',
+    remediationMigration: 'nestly_v156a_v151_invite_search_path_hardening',
+    remediationSha256: 'fedf07741796e33032cdfadfafc9b852cb91f950db37020c860b0f52ab1928c1',
+    testPath: 'db/tests/v156a_v151_invite_search_path_hardening.sql',
+    testSha256: 'bd7956e2c2a67b5a62bf17d319a954c3bf5a0b23d41e75ae6c0475e608d7db8e'
+  }]
+]);
 
 // A pinned search_path list ends at the first token that cannot be part of it. Without this the
 // `[^\n;]+` capture swallows a trailing `as $$` / `language sql` written on the same line.
@@ -305,12 +337,15 @@ async function orderedMigrations() {
 }
 
 test('pending SECURITY DEFINER public/app functions pin the CANONICAL v21 search_path', async () => {
+  const migrations = (await orderedMigrations()).filter(({ kind }) => kind === 'pending');
+  const migrationByName = new Map(migrations.map((migration) => [migration.name, migration]));
   const failures = [];
+  const remediated = [];
   const supersets = [];
   const subsets = [];
   let definerCount = 0;
   let appDefinerCount = 0;
-  for (const migration of (await orderedMigrations()).filter(({ kind }) => kind === 'pending')) {
+  for (const [migrationIndex, migration] of migrations.entries()) {
     for (const violation of definerSearchPathViolations(migration.sql)) {
       const pin = `${migration.name} :: ${violation.name} :: ${violation.searchPath}`;
       // A NARROWER-than-canonical path is more hardened, not less; it is allowed only when it is a
@@ -321,6 +356,25 @@ test('pending SECURITY DEFINER public/app functions pin the CANONICAL v21 search
         KNOWN_SEARCH_PATH_SUBSETS.includes(pin)
       ) {
         subsets.push(pin);
+        continue;
+      }
+      const remediationKey = `${migration.name} :: ${violation.name}`;
+      const remediation = DEPLOYED_DEFINER_REMEDIATIONS.get(remediationKey);
+      if (remediation) {
+        const forward = migrationByName.get(remediation.remediationMigration);
+        assert.ok(forward, `${remediationKey} forward remediation is missing`);
+        assert.ok(
+          migrations.indexOf(forward) > migrationIndex,
+          `${remediationKey} remediation must follow the deployed predecessor`
+        );
+        assert.equal(sha256(migration.sql), remediation.predecessorSha256,
+          `${remediationKey} predecessor bytes drifted`);
+        assert.equal(sha256(forward.sql), remediation.remediationSha256,
+          `${remediationKey} forward remediation bytes drifted`);
+        const testSql = await readFile(path.join(repoRoot, remediation.testPath), 'utf8');
+        assert.equal(sha256(testSql), remediation.testSha256,
+          `${remediationKey} database proof bytes drifted`);
+        remediated.push(remediationKey);
         continue;
       }
       failures.push(`${migration.name}: ${violation.name} has search_path [${violation.searchPath}] — ${violation.problem}`);
@@ -343,6 +397,11 @@ test('pending SECURITY DEFINER public/app functions pin the CANONICAL v21 search
     'A pending migration re-created a definer function without the v21 hardened search_path ' +
       `(canonical: ${CANONICAL_SEARCH_PATH.join(', ')}). Rebuilding a body from a pre-v21 source ` +
       `silently downgrades the applied catalog:\n  - ${failures.join('\n  - ')}`
+  );
+  assert.deepEqual(
+    remediated.sort(),
+    [...DEPLOYED_DEFINER_REMEDIATIONS.keys()].sort(),
+    'every deployed-definer exception must correspond to one observed violation and its exact forward repair'
   );
   assert.deepEqual(
     supersets.sort(),

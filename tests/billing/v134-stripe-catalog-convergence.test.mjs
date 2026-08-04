@@ -4,7 +4,7 @@ import test from 'node:test';
 import {setupStripeCatalog} from '../../scripts/stripe/setup-v124-catalog.mjs';
 
 const definitions=[
-  ['nestly_v124_monthly_base_sgd','price_monthly_base',14900,'month','Peekaa monthly base — 1,000 customers','base','monthly'],
+  ['nestly_v124_monthly_base_sgd','price_monthly_base',14800,'month','Peekaa monthly base — 1,000 customers','base','monthly'],
   ['nestly_v124_monthly_capacity_1000_sgd','price_monthly_capacity',1000,'month','Peekaa monthly — additional 1,000 customers','capacity','monthly'],
   ['nestly_v124_annual_base_sgd','price_annual_base',118800,'year','Peekaa annual base — 1,000 customers','base','annual'],
   ['nestly_v124_annual_capacity_1000_sgd','price_annual_capacity',12000,'year','Peekaa annual — additional 1,000 customers','capacity','annual'],

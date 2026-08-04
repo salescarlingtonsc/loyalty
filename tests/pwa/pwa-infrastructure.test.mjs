@@ -24,11 +24,14 @@ async function pngDimensions(relativePath) {
   };
 }
 
-function serviceWorkerHarness(source, { fetchImpl } = {}) {
+function serviceWorkerHarness(source, { fetchImpl, cacheKeys = [] } = {}) {
   const listeners = new Map();
   const openedCaches = [];
   const matchedPaths = [];
   const addedShells = [];
+  const deletedCaches = [];
+  const clientMessages = [];
+  const clientNavigations = [];
   let skipWaitingCount = 0;
   const offlineResponse = Object.freeze({ kind: 'offline-document' });
   const cache = {
@@ -47,9 +50,10 @@ function serviceWorkerHarness(source, { fetchImpl } = {}) {
       return cache;
     },
     async keys() {
-      return [];
+      return cacheKeys;
     },
-    async delete() {
+    async delete(key) {
+      deletedCaches.push(key);
       return true;
     },
     async match(request) {
@@ -58,7 +62,22 @@ function serviceWorkerHarness(source, { fetchImpl } = {}) {
   };
   const self = {
     location: { origin: 'https://www.peekaa.asia' },
-    clients: { async claim() {} },
+    clients: {
+      async claim() {},
+      async matchAll() {
+        return [
+          {
+            url: 'https://www.peekaa.asia/business#/',
+            async navigate(url) {
+              clientNavigations.push(url);
+            },
+            postMessage(message) {
+              clientMessages.push(message);
+            }
+          }
+        ];
+      }
+    },
     addEventListener(type, listener) {
       listeners.set(type, listener);
     },
@@ -77,6 +96,9 @@ function serviceWorkerHarness(source, { fetchImpl } = {}) {
   vm.runInContext(source, context, { filename: 'app/sw.js' });
   return {
     addedShells,
+    clientNavigations,
+    clientMessages,
+    deletedCaches,
     listeners,
     matchedPaths,
     offlineResponse,
@@ -192,6 +214,38 @@ test('service worker installs only the versioned public fallback shell', async (
   assert.equal(harness.skipWaitingCount, 1, 'critical Peekaa shell updates activate without waiting on an old Nestly cache');
 });
 
+test('service worker reloads open pages after replacing a stale auth/legal shell cache', async () => {
+  const source = await text('sw.js');
+  const harness = serviceWorkerHarness(source, {
+    cacheKeys: [
+      'nestly-shell-v5-20260802-v138-peekaa-convergence',
+      'nestly-shell-v6-20260804-v164-auth-cache-convergence',
+      'unrelated-cache'
+    ]
+  });
+  let activatePromise;
+
+  harness.listeners.get('activate')({
+    waitUntil(value) {
+      activatePromise = Promise.resolve(value);
+    }
+  });
+  await activatePromise;
+
+  assert.deepEqual(harness.deletedCaches, [
+    'nestly-shell-v5-20260802-v138-peekaa-convergence'
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(harness.clientMessages)), [
+    {
+      type: 'PEEKAA_SW_ACTIVATED',
+      cacheVersion: 'v6-20260804-v164-auth-cache-convergence'
+    }
+  ]);
+  assert.deepEqual(harness.clientNavigations, [
+    'https://www.peekaa.asia/business#/'
+  ]);
+});
+
 test('brand and lifecycle assets prefer the network so an old Nestly shell cannot remain visible', async () => {
   const networkResponse = Object.freeze({ kind: 'fresh-peekaa-asset' });
   const harness = serviceWorkerHarness(await text('sw.js'), {
@@ -274,6 +328,8 @@ test('install, update and native-wrapper lifecycle contracts remain wired', asyn
   assert.match(source, /worker\.postMessage\(\{type:'SKIP_WAITING'\}\)/);
   assert.match(source, /controllerchange/);
   assert.match(source, /location\.reload\(\)/);
+  assert.match(source, /PEEKAA_SW_ACTIVATED/);
+  assert.match(source, /peekaa-sw-reloaded:/);
   assert.match(source, /register\(SW_URL,\{scope:'\/',updateViaCache:'none'\}\)/);
   assert.match(source, /Capacitor\?\.isNativePlatform/);
   assert.match(source, /navigator\?\.platform==='MacIntel'/);

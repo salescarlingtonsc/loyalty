@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 136,
-  "itemCount": 181,
+  "pendingCount": 145,
+  "itemCount": 190,
   "items": [
     {
       "order": 1,
@@ -1817,6 +1817,96 @@
       "path": "supabase/migrations/20260803210000_nestly_v151_mobile_staff_invites.sql",
       "octetLength": 4866,
       "sha256": "15f23dcd93f46873a8f856a1af4e0b34bbc69e37172b8af070d2d5c4a1ea0a7e",
+      "provenance": "local-source"
+    },
+    {
+      "order": 182,
+      "kind": "pending",
+      "version": "20260804054949",
+      "name": "nestly_v158_catalogue_media",
+      "path": "supabase/migrations/20260804054949_nestly_v158_catalogue_media.sql",
+      "octetLength": 6620,
+      "sha256": "a158209a43048b50a43f2f7dccdd2e9f69c98373caed4be27965ba22e182342a",
+      "provenance": "local-source"
+    },
+    {
+      "order": 183,
+      "kind": "pending",
+      "version": "20260804090000",
+      "name": "nestly_v155_multibranch_foundation",
+      "path": "supabase/migrations/20260804090000_nestly_v155_multibranch_foundation.sql",
+      "octetLength": 44490,
+      "sha256": "95cb1433c145c7c5b78a3ca3691d660e92a84871e70ae1e39e47dbe52abe5bc3",
+      "provenance": "local-source"
+    },
+    {
+      "order": 184,
+      "kind": "pending",
+      "version": "20260804120000",
+      "name": "nestly_v156_subscription_operations_crm",
+      "path": "supabase/migrations/20260804120000_nestly_v156_subscription_operations_crm.sql",
+      "octetLength": 129169,
+      "sha256": "e24cbbdf1eb7bb6c10a5011fa7680cdd2e7225f8924cc6aaae1510704d03137f",
+      "provenance": "local-source"
+    },
+    {
+      "order": 185,
+      "kind": "pending",
+      "version": "20260804130000",
+      "name": "nestly_v156a_v151_invite_search_path_hardening",
+      "path": "supabase/migrations/20260804130000_nestly_v156a_v151_invite_search_path_hardening.sql",
+      "octetLength": 359,
+      "sha256": "fedf07741796e33032cdfadfafc9b852cb91f950db37020c860b0f52ab1928c1",
+      "provenance": "local-source"
+    },
+    {
+      "order": 186,
+      "kind": "pending",
+      "version": "20260804140000",
+      "name": "nestly_v159_selfserve_manual_application_fallback",
+      "path": "supabase/migrations/20260804140000_nestly_v159_selfserve_manual_application_fallback.sql",
+      "octetLength": 2474,
+      "sha256": "8ee97eb7a8302729286aa1ec0b5678f2dec469c14d29349e8e9541da8770604b",
+      "provenance": "local-source"
+    },
+    {
+      "order": 187,
+      "kind": "pending",
+      "version": "20260804150000",
+      "name": "nestly_v160_auth_signup_visibility",
+      "path": "supabase/migrations/20260804150000_nestly_v160_auth_signup_visibility.sql",
+      "octetLength": 4131,
+      "sha256": "1e90a662a365b90ea6445640c89a034f50e8df6ffa5909d4838e32cdd2f48077",
+      "provenance": "local-source"
+    },
+    {
+      "order": 188,
+      "kind": "pending",
+      "version": "20260804170000",
+      "name": "nestly_v162_stripe_launch_price_148",
+      "path": "supabase/migrations/20260804170000_nestly_v162_stripe_launch_price_148.sql",
+      "octetLength": 7653,
+      "sha256": "9d140deebd7d7ed6303fffb47928caa1548c3123aff9267d86d97294120f4efd",
+      "provenance": "local-source"
+    },
+    {
+      "order": 189,
+      "kind": "pending",
+      "version": "20260804180000",
+      "name": "nestly_v163_signup_lead_management_consent",
+      "path": "supabase/migrations/20260804180000_nestly_v163_signup_lead_management_consent.sql",
+      "octetLength": 9861,
+      "sha256": "00adadbf92ff34c3a1930a793e6d9a9f0af683bf615e604c1583f2a9a9d28abd",
+      "provenance": "local-source"
+    },
+    {
+      "order": 190,
+      "kind": "pending",
+      "version": "20260804190000",
+      "name": "nestly_v164_account_signup_triage",
+      "path": "supabase/migrations/20260804190000_nestly_v164_account_signup_triage.sql",
+      "octetLength": 9739,
+      "sha256": "9d8bd1b36341bbcab85d26972a9b95c194ddc5303cc164fa69de52e73a772b9b",
       "provenance": "local-source"
     }
   ]

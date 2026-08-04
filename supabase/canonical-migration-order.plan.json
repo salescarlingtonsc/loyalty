@@ -1090,6 +1090,60 @@
       "version": "20260803210000",
       "name": "nestly_v151_mobile_staff_invites",
       "sourcePath": "db/migrations/20260803_nestly_v151_mobile_staff_invites.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804054949",
+      "name": "nestly_v158_catalogue_media",
+      "sourcePath": "db/migrations/20260804_nestly_v158_catalogue_media.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804090000",
+      "name": "nestly_v155_multibranch_foundation",
+      "sourcePath": "db/migrations/20260804_nestly_v155_multibranch_foundation.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804120000",
+      "name": "nestly_v156_subscription_operations_crm",
+      "sourcePath": "db/migrations/20260804_nestly_v156_subscription_operations_crm.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804130000",
+      "name": "nestly_v156a_v151_invite_search_path_hardening",
+      "sourcePath": "db/migrations/20260804_nestly_v156a_v151_invite_search_path_hardening.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804140000",
+      "name": "nestly_v159_selfserve_manual_application_fallback",
+      "sourcePath": "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804150000",
+      "name": "nestly_v160_auth_signup_visibility",
+      "sourcePath": "db/migrations/20260804_nestly_v160_auth_signup_visibility.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804170000",
+      "name": "nestly_v162_stripe_launch_price_148",
+      "sourcePath": "db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804180000",
+      "name": "nestly_v163_signup_lead_management_consent",
+      "sourcePath": "db/migrations/20260804_nestly_v163_signup_lead_management_consent.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804190000",
+      "name": "nestly_v164_account_signup_triage",
+      "sourcePath": "db/migrations/20260804_nestly_v164_account_signup_triage.sql"
     }
   ]
 }

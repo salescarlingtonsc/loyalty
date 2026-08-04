@@ -65,6 +65,7 @@ test('a missing platform module renders a recoverable error instead of falling t
       customerRecoveryDisposition:()=>'',customerRecoveryVerified:()=>false,
       rememberCustomerRecoveryVerified(){},
       normalizeCustomerDestination:()=>'',normalizeCustomerBusinessIntent:value=>value,
+      businessStaffInviteCodeV151:()=>'',
       renderCustomerRegistration(){},renderAuth(){},
       esc:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'),
       $:id=>id==='routeReload'?{onclick:null}:null

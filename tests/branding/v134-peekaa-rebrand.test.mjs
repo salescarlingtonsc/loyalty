@@ -77,7 +77,7 @@ test('Stripe bootstrap preserves reviewed pricing while presenting Peekaa brandi
   assert.match(source,/description:\s*'Peekaa business workspace/);
   assert.match(source,/nickname:\s*'Peekaa monthly base — 1,000 customers'/);
   assert.match(source,/nickname:\s*'Peekaa annual base — 1,000 customers'/);
-  assert.match(source,/unitAmount:\s*14900/);
+  assert.match(source,/unitAmount:\s*14800/);
   assert.match(source,/unitAmount:\s*118800/);
   assert.match(source,/unitAmount:\s*1000/);
   assert.match(source,/unitAmount:\s*12000/);

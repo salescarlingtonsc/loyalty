@@ -128,7 +128,7 @@ order. A hidden navigation item without server-side denial is a failure.
     included modules/exclusions, selects 1,000 or 3,000 customer capacity, and
     sees the exact recurring total before Stripe Checkout. No staff quantity is
     requested or billed.
-11. Monthly 1,000/3,000 totals are SGD 149/169; annual 1,000/3,000 totals are
+11. Monthly 1,000/3,000 totals are SGD 148/168; annual 1,000/3,000 totals are
     SGD 1,188/1,428. An increase requests immediate provider proration but stays
     pending when payment confirmation or SCA is outstanding. Neither cadence
     nor capacity commands can decrease capacity.

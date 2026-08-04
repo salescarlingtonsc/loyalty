@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 179,
-  "executableCount": 165,
+  "itemCount": 188,
+  "executableCount": 174,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -267,6 +267,21 @@
         "db/migrations/20260803_nestly_v147_platform_accounting.sql",
         "db/migrations/20260803_nestly_v148_owner_launch_closure.sql",
         "db/migrations/20260803_nestly_v151_mobile_staff_invites.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260804",
+      "count": 9,
+      "paths": [
+        "db/migrations/20260804_nestly_v155_multibranch_foundation.sql",
+        "db/migrations/20260804_nestly_v156_subscription_operations_crm.sql",
+        "db/migrations/20260804_nestly_v156a_v151_invite_search_path_hardening.sql",
+        "db/migrations/20260804_nestly_v158_catalogue_media.sql",
+        "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql",
+        "db/migrations/20260804_nestly_v160_auth_signup_visibility.sql",
+        "db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql",
+        "db/migrations/20260804_nestly_v163_signup_lead_management_consent.sql",
+        "db/migrations/20260804_nestly_v164_account_signup_triage.sql"
       ]
     }
   ],
@@ -1702,6 +1717,78 @@
       "semanticVersion": "v151",
       "proposedDeployVersion": "20260803210000",
       "sha256": "15f23dcd93f46873a8f856a1af4e0b34bbc69e37172b8af070d2d5c4a1ea0a7e"
+    },
+    {
+      "order": 180,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v158_catalogue_media.sql",
+      "semanticVersion": "v158",
+      "proposedDeployVersion": "20260804054949",
+      "sha256": "a158209a43048b50a43f2f7dccdd2e9f69c98373caed4be27965ba22e182342a"
+    },
+    {
+      "order": 181,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v155_multibranch_foundation.sql",
+      "semanticVersion": "v155",
+      "proposedDeployVersion": "20260804090000",
+      "sha256": "95cb1433c145c7c5b78a3ca3691d660e92a84871e70ae1e39e47dbe52abe5bc3"
+    },
+    {
+      "order": 182,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v156_subscription_operations_crm.sql",
+      "semanticVersion": "v156",
+      "proposedDeployVersion": "20260804120000",
+      "sha256": "e24cbbdf1eb7bb6c10a5011fa7680cdd2e7225f8924cc6aaae1510704d03137f"
+    },
+    {
+      "order": 183,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v156a_v151_invite_search_path_hardening.sql",
+      "semanticVersion": "v156a",
+      "proposedDeployVersion": "20260804130000",
+      "sha256": "fedf07741796e33032cdfadfafc9b852cb91f950db37020c860b0f52ab1928c1"
+    },
+    {
+      "order": 184,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql",
+      "semanticVersion": "v159",
+      "proposedDeployVersion": "20260804140000",
+      "sha256": "8ee97eb7a8302729286aa1ec0b5678f2dec469c14d29349e8e9541da8770604b"
+    },
+    {
+      "order": 185,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v160_auth_signup_visibility.sql",
+      "semanticVersion": "v160",
+      "proposedDeployVersion": "20260804150000",
+      "sha256": "1e90a662a365b90ea6445640c89a034f50e8df6ffa5909d4838e32cdd2f48077"
+    },
+    {
+      "order": 186,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql",
+      "semanticVersion": "v162",
+      "proposedDeployVersion": "20260804170000",
+      "sha256": "9d140deebd7d7ed6303fffb47928caa1548c3123aff9267d86d97294120f4efd"
+    },
+    {
+      "order": 187,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v163_signup_lead_management_consent.sql",
+      "semanticVersion": "v163",
+      "proposedDeployVersion": "20260804180000",
+      "sha256": "00adadbf92ff34c3a1930a793e6d9a9f0af683bf615e604c1583f2a9a9d28abd"
+    },
+    {
+      "order": 188,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v164_account_signup_triage.sql",
+      "semanticVersion": "v164",
+      "proposedDeployVersion": "20260804190000",
+      "sha256": "9d8bd1b36341bbcab85d26972a9b95c194ddc5303cc164fa69de52e73a772b9b"
     }
   ]
 }

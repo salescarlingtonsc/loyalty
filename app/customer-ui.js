@@ -10,6 +10,7 @@
     referrals:'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 8h6M20 5v6',
     memberships:'M12 3 4 7l8 14 8-14zM4 7h16M8 7l4 14 4-14',
     giftcard:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
+    star:'m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.77 6.4 20.91l1.07-6.24-4.53-4.42 6.26-.91L12 3Z',
     appointments:'M7 3v4M17 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v13H3V7a2 2 0 0 1 2-2Z',
     sales:'M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h3',
     services:'M14.7 6.3a4 4 0 0 0-5-5L7 4 4 7 1.3 4.3a4 4 0 0 0 5 5L15 18a2.1 2.1 0 1 0 3-3z',
@@ -60,9 +61,10 @@
     }[char]));
   }
 
-  function action({id='',label,iconName='',variant='primary',className='',attributes=''}={}){
-    const classes=['btn',variant==='secondary'?'ghost':'',variant==='danger'?'danger':'',className].filter(Boolean).join(' ');
-    return `<button class="${classes}"${id?` id="${escapeHtml(id)}"`:''} type="button" ${attributes}>${iconName?icon(iconName,{size:17}):''}<span>${escapeHtml(label)}</span></button>`;
+  function action({id='',label,iconName='',variant='primary',className='',attributes='',busy=false}={}){
+    const classes=['btn',variant==='secondary'?'ghost':'',variant==='danger'?'danger':'',variant==='ghost'?'ghost':'',busy?'is-loading':'',className].filter(Boolean).join(' ');
+    const busyAttrs=busy?' aria-busy="true" disabled':'';
+    return `<button class="${classes}"${id?` id="${escapeHtml(id)}"`:''} type="button"${busyAttrs} ${attributes}>${busy?'<span class="cui-button-spinner" aria-hidden="true"></span>':(iconName?icon(iconName,{size:17}):'')}<span>${escapeHtml(label)}</span></button>`;
   }
 
   function status(text,tone='neutral'){
@@ -91,13 +93,37 @@
     return `<div class="cui-field">${labelHtml}${input}${hint?`<p class="cui-field-hint" id="${escapeHtml(id)}-hint">${escapeHtml(hint)}</p>`:''}</div>`;
   }
 
-  function emptyState({iconName='empty',title='Nothing here yet',body='',actionHtml=''}={}){
-    return `<div class="empty cui-empty">${icon(iconName,{size:32})}<h2>${escapeHtml(title)}</h2>${body?`<p>${escapeHtml(body)}</p>`:''}${actionHtml?`<div class="cui-empty-action">${actionHtml}</div>`:''}</div>`;
+  function emptyState({iconName='empty',title='Nothing here yet',body='',actionHtml='',tone='neutral'}={}){
+    return `<div class="empty cui-empty tone-${escapeHtml(tone)}">${icon(iconName,{size:32})}<h2>${escapeHtml(title)}</h2>${body?`<p>${escapeHtml(body)}</p>`:''}${actionHtml?`<div class="cui-empty-action">${actionHtml}</div>`:''}</div>`;
   }
 
-  function loadingState({title='Loading',iconName='info',body='Loading the latest information…'}={}){
-    const productName=global.NestlyBrand?.productName||'Peekaa';
-    return `<section class="cui-route-state" aria-busy="true" aria-labelledby="route-loading-title">${pageHeader({title,subtitle:body,iconName})}<div class="card empty" role="status"><h2 id="route-loading-title">Loading…</h2><p class="muted small">Please wait while ${escapeHtml(productName)} prepares this page.</p></div></section>`;
+  function skeletonLine(width='100%',className=''){
+    return `<span class="cui-skeleton-line ${className}" style="--skel-w:${escapeHtml(width)}" aria-hidden="true"></span>`;
+  }
+
+  function skeletonCard({lines=3,className=''}={}){
+    return `<div class="card cui-skeleton-card ${className}" aria-hidden="true">${Array.from({length:lines}).map((_,index)=>skeletonLine(index===0?'58%':index===lines-1?'74%':'100%')).join('')}</div>`;
+  }
+
+  function skeletonGrid({cards=4,lines=3,className=''}={}){
+    return `<div class="cui-skeleton-grid ${className}" aria-hidden="true">${Array.from({length:cards}).map(()=>skeletonCard({lines})).join('')}</div>`;
+  }
+
+  function tableSkeleton({rows=5,columns=5}={}){
+    return `<div class="cui-table-wrap cui-table-skeleton" role="status" aria-busy="true" aria-label="Loading rows"><table class="cui-table" data-responsive="false"><tbody>${Array.from({length:rows}).map(()=>`<tr>${Array.from({length:columns}).map((_,index)=>`<td>${skeletonLine(index===0?'72%':index===columns-1?'48%':'88%')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+
+  function chartSkeleton({title='Loading chart'}={}){
+    return `<div class="card cui-chart-skeleton" role="status" aria-busy="true" aria-label="${escapeHtml(title)}"><div class="cui-chart-skeleton-head">${skeletonLine('42%')}${skeletonLine('68%','short')}</div><div class="cui-chart-placeholder"><span></span><span></span><span></span><span></span><span></span></div></div>`;
+  }
+
+  function formSkeleton({fields=4}={}){
+    return `<div class="card cui-form-skeleton" role="status" aria-busy="true" aria-label="Loading form">${Array.from({length:fields}).map((_,index)=>`<div class="cui-form-skeleton-field">${skeletonLine(index%2?'34%':'28%','label')}${skeletonLine('100%','control')}</div>`).join('')}${skeletonLine('38%','button')}</div>`;
+  }
+
+  function loadingState({title='Loading',iconName='info',body='Loading the latest information…',variant='route'}={}){
+    const skeleton=variant==='table'?tableSkeleton():variant==='chart'?chartSkeleton({title}):variant==='form'?formSkeleton():skeletonGrid({cards:variant==='compact'?2:4,lines:3});
+    return `<section class="cui-route-state cui-fade-in" aria-busy="true" aria-labelledby="route-loading-title">${pageHeader({title,subtitle:body,iconName})}<div role="status" class="sr-only" id="route-loading-title">Loading ${escapeHtml(title)}</div>${skeleton}</section>`;
   }
 
   function errorState({title='Unable to load this page',message='Try again.',retryId='routeRetry'}={}){
@@ -216,8 +242,26 @@
     return ({restoreFocus=true}={})=>{dialog.removeEventListener('keydown',keydown);dialog.remove();if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus()};
   }
 
+  function setButtonBusy(button,{busy=true,label='Working…'}={}){
+    if(!button)return ()=>{};
+    if(!button.dataset.cuiOriginalHtml)button.dataset.cuiOriginalHtml=button.innerHTML;
+    if(!button.dataset.cuiOriginalLabel)button.dataset.cuiOriginalLabel=button.textContent||'';
+    button.disabled=!!busy;
+    button.setAttribute('aria-busy',busy?'true':'false');
+    button.classList.toggle('is-loading',!!busy);
+    if(busy)button.innerHTML=`<span class="cui-button-spinner" aria-hidden="true"></span><span>${escapeHtml(label)}</span>`;
+    else {
+      button.innerHTML=button.dataset.cuiOriginalHtml||escapeHtml(button.dataset.cuiOriginalLabel||'');
+      button.removeAttribute('aria-busy');
+      delete button.dataset.cuiOriginalHtml;
+      delete button.dataset.cuiOriginalLabel;
+    }
+    return ()=>setButtonBusy(button,{busy:false});
+  }
+
   global.FrenlyCustomerUI=Object.freeze({
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
+    skeletonLine,skeletonCard,skeletonGrid,tableSkeleton,chartSkeleton,formSkeleton,setButtonBusy,
     associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog
   });
 })(typeof window !== 'undefined' ? window : globalThis);

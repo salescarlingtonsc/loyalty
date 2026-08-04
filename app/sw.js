@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX='nestly-shell-';
-const CACHE_VERSION='v5-20260802-v138-peekaa-convergence';
+const CACHE_VERSION='v6-20260804-v164-auth-cache-convergence';
 const CACHE_NAME=`${CACHE_PREFIX}${CACHE_VERSION}`;
 const APP_SHELL=Object.freeze([
   '/offline.html',
@@ -37,10 +37,23 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil((async()=>{
     const keys=await caches.keys();
-    await Promise.all(keys
-      .filter(key=>key.startsWith(CACHE_PREFIX)&&key!==CACHE_NAME)
-      .map(key=>caches.delete(key)));
+    const oldShells=keys.filter(key=>key.startsWith(CACHE_PREFIX)&&key!==CACHE_NAME);
+    await Promise.all(oldShells.map(key=>caches.delete(key)));
     await self.clients.claim();
+    if(oldShells.length&&self.clients?.matchAll){
+      const clients=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+      await Promise.all(clients.map(async client=>{
+        client.postMessage?.({
+          type:'PEEKAA_SW_ACTIVATED',
+          cacheVersion:CACHE_VERSION
+        });
+        if(typeof client.navigate!=='function')return;
+        try{
+          const target=new URL(client.url);
+          if(target.origin===self.location.origin)await client.navigate(client.url);
+        }catch{}
+      }));
+    }
   })());
 });
 

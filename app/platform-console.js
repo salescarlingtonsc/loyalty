@@ -56,7 +56,7 @@
       'Demo':'演示','Proposal Sent':'已发送方案','Contract Sent':'已发送合同','Onboarding Session':'入驻辅导',
       'Create Checkout':'创建结账','Create Portal':'创建账单门户','Change Cadence':'更改周期','Cancel At Period End':'期末取消',
       'Mismatch':'不匹配',
-      'Overview':'概览','Onboarding':'客户入驻','Onboard':'入驻','Firms':'企业','Reports':'报告',
+      'Overview':'概览','Onboarding':'客户入驻','Onboard':'入驻','Firms':'企业','Reports':'报告','shown':'已显示',
       'Billing':'账单','Commission payable':'应付佣金','Commission':'佣金','Sector modules':'行业模块',
       'Sectors':'行业','Automation':'自动化','Automate':'自动化','Platform access':'平台权限','Platform controls':'平台控制','Access':'权限',
       'Platform':'平台','Platform console':'平台控制台','Skip to platform content':'跳至平台内容',
@@ -119,7 +119,16 @@
       'Loading your permitted firm summary…':'正在加载您获准查看的企业摘要…',
       'Onboarding view':'入驻视图','Kanban':'看板','List':'列表',
       'Assisted applications':'人工协助申请','Applications sent to Peekaa for manual help':'发送给 Peekaa 人工处理的申请',
+      'Website signups and paid workspaces':'网站注册与已付款工作区',
+      'Account signups needing business details':'需要补充企业资料的账户注册',
+      'These people created a Peekaa account but have not yet saved a business setup, paid workspace, or assisted application. Contact them or ask them to continue setup/manual help.':'这些用户已创建 Peekaa 账户，但尚未保存企业设置、已付款工作区或人工协助申请。请联系他们，或请他们继续设置／人工协助流程。',
+      'Account created':'账户创建时间','Last sign-in':'上次登录','Contact unavailable':'无可用联系方式','Email owner':'电邮联系负责人','Call owner':'致电负责人',
+      'recent':'近期','Needs business details':'需要企业资料','Email unconfirmed':'电邮未确认',
+      'No account-only signups match the current filters.':'当前筛选条件下没有匹配的仅账户注册。',
+      'Self-service signups are payment-managed. Their names, payment state and workspace state appear here; approve/reject is intentionally unavailable for this Stripe-controlled path.':'自助注册由付款流程管理。企业名称、付款状态和工作区状态会显示在此；此 Stripe 管控路径刻意不提供批准／拒绝。',
       'Website signups activate after Stripe confirms payment. This queue is only for applications that require assisted review.':'网站注册会在 Stripe 确认付款后自动激活。此队列仅显示需要人工审核的申请。',
+      'Billing contact not recorded':'未记录账单联系人',
+      'No payment-managed website signups are visible in the current filters. Clear filters or search by business name.':'当前筛选条件下没有可见的付款管理网站注册。请清除筛选或按企业名称搜索。',
       'Prospect {name} was saved. Refresh the onboarding list to display it.':'潜在客户 {name} 已保存。刷新入驻列表即可显示。',
       'Invoice PDF':'发票 PDF','Invoice':'发票','Receipt':'收据','Reversal':'冲销','Reverse':'冲销',
       'Awaiting Stripe document':'等待 Stripe 文件','Non-cash':'非现金','Debit':'借方','Credit':'贷方',
@@ -162,10 +171,30 @@
       'Cash P&L unavailable':'现金制损益不可用','Add operating expense':'添加营运费用','Record expense':'记录费用','Expense date':'费用日期','Category':'类别',
       'Supplier / payee':'供应商／收款方','Supplier UEN':'供应商统一企业编号','Receipt, invoice or controlled document reference':'收据、发票或受控文件参考',
       'Reverse operating expense':'冲销营运费用','Record reversal':'记录冲销',
+      'Add billing recipient':'添加账单收件人','Generate quotation':'生成报价单','Create Stripe checkout':'创建 Stripe 结账','Authorised billing recipients':'授权账单收件人',
+      'Add a primary billing contact before finalising a quotation.':'请在最终确认报价单前添加主要账单联系人。','Subscription documents':'订阅文件','Generating':'生成中','No subscription documents yet.':'尚无订阅文件。',
+      'Finalisation creates an immutable numbered snapshot. It is blocked until seller legal settings and a primary billing contact are complete.':'最终确认会创建带编号的不可变快照。在卖方法律设置及主要账单联系人完整前无法执行。','Email the quotation to authorised billing recipients after finalisation':'最终确认后将报价单电邮给授权账单收件人',
+      'Trial ends on {date}':'试用期于 {date} 结束','Payment incomplete':'付款未完成','Payment overdue':'付款逾期','Scheduled to end on {date}':'计划于 {date} 结束','Current paid period':'当前已付期间','Next renewal':'下次续订','No scheduled end date':'没有计划结束日期',
+      'Missing':'缺失','No invoice':'无发票','{count} open':'{count} 项待处理','Manual invoice':'手工发票','Paid through':'已付至','Billing contact missing':'缺少账单联系人','Open operations':'打开运营记录','No customers':'无客户',
+      'Billing settings':'账单设置','Subscription summary':'订阅摘要','Subscriptions':'订阅','Paid-through dates and renewal dates come from canonical provider invoice and subscription periods.':'已付至日期和续订日期来自权威支付服务商的发票及订阅期间。','Bank account ending {last4}':'银行账户尾号 {last4}',
+      'Search business':'搜索企业','All':'全部','CRM owner':'CRM 负责人','Clear filters':'清除筛选','Evidence':'证据','Verify':'验证','Resend':'重新发送','Saving creates a new profile version. Historical documents retain their original seller snapshot.':'保存会创建新的资料版本。历史文件会保留原始卖方快照。',
+      'Customer lifecycle':'客户生命周期','Subscription operations':'订阅运营','Authorised billing contact':'授权账单联系人','Save billing contact':'保存账单联系人','Business display name':'企业显示名称','Legal entity name':'法人实体名称','UEN / registration number':'UEN／注册编号',
+      'Billing contact name':'账单联系人姓名','Billing email':'账单电邮','Billing telephone':'账单电话','Billing address':'账单地址','Country':'国家','Recipient type':'收件人类型','Primary recipient':'主要收件人','CC recipient':'抄送收件人','Accounts payable':'应付账款',
+      'Purchase-order number':'采购订单编号','Customer reference':'客户参考编号','Generate subscription quotation':'生成订阅报价单','Finalise quotation':'最终确认报价单','Subscription plan':'订阅方案','Billing interval':'账单周期','Service description':'服务说明','Discount (SGD)':'折扣（新元）',
+      'Intended subscription duration':'预定订阅期限','Expiry date':'到期日期','Quotation notes':'报价备注','System-derived subscription and onboarding truth. These lanes cannot be changed by dragging.':'由系统得出的订阅与入驻真实状态。这些分栏不能通过拖动更改。','Customer lifecycle view':'客户生命周期视图','System-derived customer lifecycle':'系统生成的客户生命周期',
+      'Create and queue invoice':'创建发票并加入队列','Service start':'服务开始','Service end':'服务结束','Submit for independent verification':'提交独立验证','Bank transfer reference':'银行转账参考','Value date':'起息日','Receiving account last 4 digits':'收款账户尾四位','Amount received (SGD)':'已收金额（新元）',
+      'Internal Peekaa subscription, renewal, billing-document and delivery control. Stripe paid invoices remain payment truth.':'Peekaa 内部订阅、续订、账单文件及交付管理。Stripe 已付发票仍是付款的权威记录。','Seller billing profile incomplete':'卖方账单资料不完整','Final document issuance is blocked until UEN, registered address, billing email, GST decision and payment terms are configured.':'在配置 UEN、注册地址、账单电邮、GST 决定及付款条款前，无法签发最终文件。',
+      'Billing documents':'账单文件','Stripe mirrors are created only from verified paid invoices. Manual invoices require private evidence and independent verification.':'仅从经验证的已付发票建立 Stripe 镜像。手工发票需要私人证据及独立验证。','Manual payment verification':'手工付款验证','The recorder and verifier must be different authorised administrators.':'记录人与验证人必须是不同的授权管理员。',
+      'Payment and renewal follow-up':'付款与续订跟进','Tasks are deduplicated by subscription, event and reminder window, then resolved after verified recovery.':'任务会按订阅、事件和提醒窗口去重，并在付款恢复获验证后解决。','Document delivery':'文件交付','Final PDFs are immutable private objects. Failed delivery remains visible and can be resent without creating new document numbers.':'最终 PDF 是不可变的私人对象。交付失败会保持可见，并可在不创建新文件编号的情况下重发。',
+      'Legal and billing profile':'法律与账单资料','Save new immutable version':'保存新的不可变版本','Select GST status':'选择 GST 状态','Not GST registered':'未注册 GST','GST registered':'已注册 GST','GST rate (basis points)':'GST 税率（基点）','Default payment terms':'默认付款条款','Internal copy email':'内部抄送电邮',
+      'Bank account number (currently ending {last4})':'银行账号（目前尾号 {last4}）','Leave blank to retain':'留空以保留现有值',
+      'Manual invoice · {name}':'手工发票 · {name}','Record payment · {number}':'记录付款 · {number}','Manual payment {status}.':'手工付款{status}。',
+      'Document link unavailable':'文件链接不可用','Payment evidence is required.':'必须提供付款证据。','Evidence upload could not be authorised.':'无法授权证据上传。','Evidence link unavailable.':'证据链接不可用。',
+      'A different super admin must verify this evidence before a receipt is issued. Recording payment does not mark a Stripe invoice paid.':'必须由另一名超级管理员验证此证据后才能签发收据。记录付款不会将 Stripe 发票标记为已付。','Private payment evidence (PDF, JPEG or PNG)':'私人付款证据（PDF、JPEG 或 PNG）',
       'Language':'语言','Language preference could not be saved. Please try again.':'无法保存语言偏好，请重试。'
     }),
     ms:Object.freeze({
-      'Overview':'Ringkasan','Onboarding':'Penerimaan','Onboard':'Terima','Firms':'Firma','Reports':'Laporan',
+      'Overview':'Ringkasan','Onboarding':'Penerimaan','Onboard':'Terima','Firms':'Firma','Reports':'Laporan','shown':'dipaparkan',
       'Billing':'Pengebilan','Commission payable':'Komisen perlu dibayar','Commission':'Komisen',
       'Sector modules':'Modul sektor','Sectors':'Sektor','Automation':'Automasi','Automate':'Automasi',
       'Platform access':'Akses platform','Platform controls':'Kawalan platform','Access':'Akses','Platform':'Platform','Platform console':'Konsol platform',
@@ -231,7 +260,16 @@
       'Loading your report scope…':'Memuatkan skop laporan anda…',
       'Generate analysis using only firms inside your platform scope.':'Jana analisis hanya menggunakan firma dalam skop platform anda.',
       'Generating consultant brief':'Menjana ringkasan perunding',
+      'Website signups and paid workspaces':'Pendaftaran laman web dan ruang kerja berbayar',
+      'Account signups needing business details':'Pendaftaran akaun yang memerlukan butiran perniagaan',
+      'These people created a Peekaa account but have not yet saved a business setup, paid workspace, or assisted application. Contact them or ask them to continue setup/manual help.':'Pengguna ini telah mencipta akaun Peekaa tetapi belum menyimpan tetapan perniagaan, ruang kerja berbayar atau permohonan dibantu. Hubungi mereka atau minta mereka meneruskan tetapan/bantuan manual.',
+      'Account created':'Akaun dicipta','Last sign-in':'Log masuk terakhir','Contact unavailable':'Tiada maklumat hubungan','Email owner':'E-mel pemilik','Call owner':'Hubungi pemilik',
+      'recent':'terkini','Needs business details':'Memerlukan butiran perniagaan','Email unconfirmed':'E-mel belum disahkan',
+      'No account-only signups match the current filters.':'Tiada pendaftaran akaun sahaja yang sepadan dengan penapis semasa.',
+      'Self-service signups are payment-managed. Their names, payment state and workspace state appear here; approve/reject is intentionally unavailable for this Stripe-controlled path.':'Pendaftaran layan diri diurus oleh pembayaran. Nama, status bayaran dan status ruang kerja dipaparkan di sini; lulus/tolak sengaja tidak tersedia untuk laluan yang dikawal Stripe ini.',
       'Reconciling customer, product and service evidence…':'Menyelaraskan bukti pelanggan, produk dan perkhidmatan…',
+      'Billing contact not recorded':'Kenalan pengebilan tidak direkodkan',
+      'No payment-managed website signups are visible in the current filters. Clear filters or search by business name.':'Tiada pendaftaran laman web yang diurus bayaran kelihatan dalam penapis semasa. Kosongkan penapis atau cari mengikut nama firma.',
       'Loading your permitted firm summary…':'Memuatkan ringkasan firma yang dibenarkan…',
       'Onboarding view':'Paparan penerimaan','Kanban':'Papan Kanban','List':'Senarai',
       'Assisted applications':'Permohonan dibantu','Applications sent to Peekaa for manual help':'Permohonan dihantar kepada Peekaa untuk bantuan manual',
@@ -278,6 +316,26 @@
       'Cash P&L unavailable':'Untung rugi tunai tidak tersedia','Add operating expense':'Tambah perbelanjaan operasi','Record expense':'Rekod perbelanjaan','Expense date':'Tarikh perbelanjaan','Category':'Kategori',
       'Supplier / payee':'Pembekal / penerima bayaran','Supplier UEN':'UEN pembekal','Receipt, invoice or controlled document reference':'Rujukan resit, invois atau dokumen terkawal',
       'Reverse operating expense':'Balikkan perbelanjaan operasi','Record reversal':'Rekod pembalikan',
+      'Add billing recipient':'Tambah penerima bil','Generate quotation':'Jana sebut harga','Create Stripe checkout':'Cipta pembayaran Stripe','Authorised billing recipients':'Penerima bil yang dibenarkan',
+      'Add a primary billing contact before finalising a quotation.':'Tambah kenalan bil utama sebelum memuktamadkan sebut harga.','Subscription documents':'Dokumen langganan','Generating':'Sedang dijana','No subscription documents yet.':'Belum ada dokumen langganan.',
+      'Finalisation creates an immutable numbered snapshot. It is blocked until seller legal settings and a primary billing contact are complete.':'Pemuktamadan menghasilkan snapshot bernombor yang tidak boleh diubah. Ia disekat sehingga tetapan undang-undang penjual dan kenalan bil utama lengkap.','Email the quotation to authorised billing recipients after finalisation':'E-mel sebut harga kepada penerima bil yang dibenarkan selepas dimuktamadkan',
+      'Trial ends on {date}':'Percubaan tamat pada {date}','Payment incomplete':'Bayaran belum lengkap','Payment overdue':'Bayaran lewat','Scheduled to end on {date}':'Dijadualkan tamat pada {date}','Current paid period':'Tempoh berbayar semasa','Next renewal':'Pembaharuan seterusnya','No scheduled end date':'Tiada tarikh tamat dijadualkan',
+      'Missing':'Tiada','No invoice':'Tiada invois','{count} open':'{count} terbuka','Manual invoice':'Invois manual','Paid through':'Dibayar sehingga','Billing contact missing':'Kenalan bil tiada','Open operations':'Buka operasi','No customers':'Tiada pelanggan',
+      'Billing settings':'Tetapan bil','Subscription summary':'Ringkasan langganan','Subscriptions':'Langganan','Paid-through dates and renewal dates come from canonical provider invoice and subscription periods.':'Tarikh dibayar sehingga dan tarikh pembaharuan datang daripada tempoh invois serta langganan penyedia yang berkanun.','Bank account ending {last4}':'Akaun bank berakhir {last4}',
+      'Search business':'Cari perniagaan','All':'Semua','CRM owner':'Pemilik CRM','Clear filters':'Kosongkan penapis','Evidence':'Bukti','Verify':'Sahkan','Resend':'Hantar semula','Saving creates a new profile version. Historical documents retain their original seller snapshot.':'Penyimpanan menghasilkan versi profil baharu. Dokumen sejarah mengekalkan snapshot asal penjual.',
+      'Customer lifecycle':'Kitar hayat pelanggan','Subscription operations':'Operasi langganan','Authorised billing contact':'Kenalan bil yang dibenarkan','Save billing contact':'Simpan kenalan bil','Business display name':'Nama paparan perniagaan','Legal entity name':'Nama entiti undang-undang','UEN / registration number':'UEN / nombor pendaftaran',
+      'Billing contact name':'Nama kenalan bil','Billing email':'E-mel bil','Billing telephone':'Telefon bil','Billing address':'Alamat bil','Country':'Negara','Recipient type':'Jenis penerima','Primary recipient':'Penerima utama','CC recipient':'Penerima CC','Accounts payable':'Akaun belum bayar',
+      'Purchase-order number':'Nombor pesanan belian','Customer reference':'Rujukan pelanggan','Generate subscription quotation':'Jana sebut harga langganan','Finalise quotation':'Muktamadkan sebut harga','Subscription plan':'Pelan langganan','Billing interval':'Selang bil','Service description':'Perihalan perkhidmatan','Discount (SGD)':'Diskaun (SGD)',
+      'Intended subscription duration':'Tempoh langganan yang dicadangkan','Expiry date':'Tarikh luput','Quotation notes':'Nota sebut harga','System-derived subscription and onboarding truth. These lanes cannot be changed by dragging.':'Status langganan dan penerimaan ini dijana oleh sistem. Lorong ini tidak boleh diubah dengan menyeret.','Customer lifecycle view':'Paparan kitar hayat pelanggan','System-derived customer lifecycle':'Kitar hayat pelanggan dijana sistem',
+      'Create and queue invoice':'Cipta dan bariskan invois','Service start':'Mula perkhidmatan','Service end':'Tamat perkhidmatan','Submit for independent verification':'Hantar untuk pengesahan bebas','Bank transfer reference':'Rujukan pindahan bank','Value date':'Tarikh nilai','Receiving account last 4 digits':'Empat digit terakhir akaun penerima','Amount received (SGD)':'Amaun diterima (SGD)',
+      'Internal Peekaa subscription, renewal, billing-document and delivery control. Stripe paid invoices remain payment truth.':'Kawalan dalaman Peekaa untuk langganan, pembaharuan, dokumen bil dan penghantaran. Invois Stripe berbayar kekal sebagai rekod bayaran berkanun.','Seller billing profile incomplete':'Profil bil penjual tidak lengkap','Final document issuance is blocked until UEN, registered address, billing email, GST decision and payment terms are configured.':'Pengeluaran dokumen akhir disekat sehingga UEN, alamat berdaftar, e-mel bil, keputusan GST dan terma bayaran dikonfigurasi.',
+      'Billing documents':'Dokumen bil','Stripe mirrors are created only from verified paid invoices. Manual invoices require private evidence and independent verification.':'Cerminan Stripe hanya dicipta daripada invois berbayar yang disahkan. Invois manual memerlukan bukti peribadi dan pengesahan bebas.','Manual payment verification':'Pengesahan bayaran manual','The recorder and verifier must be different authorised administrators.':'Pencatat dan pengesah mestilah pentadbir dibenarkan yang berbeza.',
+      'Payment and renewal follow-up':'Susulan bayaran dan pembaharuan','Tasks are deduplicated by subscription, event and reminder window, then resolved after verified recovery.':'Tugasan dinyahgandakan mengikut langganan, peristiwa dan tetingkap peringatan, kemudian diselesaikan selepas pemulihan disahkan.','Document delivery':'Penghantaran dokumen','Final PDFs are immutable private objects. Failed delivery remains visible and can be resent without creating new document numbers.':'PDF akhir ialah objek peribadi yang tidak boleh diubah. Penghantaran gagal kekal kelihatan dan boleh dihantar semula tanpa nombor dokumen baharu.',
+      'Legal and billing profile':'Profil undang-undang dan bil','Save new immutable version':'Simpan versi baharu yang tidak boleh diubah','Select GST status':'Pilih status GST','Not GST registered':'Tidak berdaftar GST','GST registered':'Berdaftar GST','GST rate (basis points)':'Kadar GST (mata asas)','Default payment terms':'Terma bayaran lalai','Internal copy email':'E-mel salinan dalaman',
+      'Bank account number (currently ending {last4})':'Nombor akaun bank (kini berakhir {last4})','Leave blank to retain':'Biarkan kosong untuk kekalkan',
+      'Manual invoice · {name}':'Invois manual · {name}','Record payment · {number}':'Rekod bayaran · {number}','Manual payment {status}.':'Bayaran manual {status}.',
+      'Document link unavailable':'Pautan dokumen tidak tersedia','Payment evidence is required.':'Bukti bayaran diperlukan.','Evidence upload could not be authorised.':'Muat naik bukti tidak dapat dibenarkan.','Evidence link unavailable.':'Pautan bukti tidak tersedia.',
+      'A different super admin must verify this evidence before a receipt is issued. Recording payment does not mark a Stripe invoice paid.':'Pentadbir super yang lain mesti mengesahkan bukti ini sebelum resit dikeluarkan. Merekod bayaran tidak menandakan invois Stripe sebagai berbayar.','Private payment evidence (PDF, JPEG or PNG)':'Bukti bayaran peribadi (PDF, JPEG atau PNG)',
       'Language':'Bahasa','Language preference could not be saved. Please try again.':'Keutamaan bahasa tidak dapat disimpan. Sila cuba lagi.'
     })
   });
@@ -756,7 +814,7 @@
       'Per +1,000 customers':'每增加 1,000 位顾客','Customers included':'包含顾客数',
       'Create matching monthly and annual Stripe Price versions before opening checkout.':'开放结账前，请创建相匹配的月付和年付 Stripe 价格版本。',
       'Stripe +1,000-customer price ID':'Stripe 每增加 1,000 位顾客的价格 ID',
-      'Monthly is fixed at SGD 149 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'月付固定为 149 新币，每额外 1,000 位顾客加收 10 新币。年付固定为 1,188 新币，每额外 1,000 位顾客加收 120 新币。168 新币仅为比较价格。',
+      'Monthly is fixed at SGD 148 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'月付固定为 148 新币，每额外 1,000 位顾客加收 10 新币。年付固定为 1,188 新币，每额外 1,000 位顾客加收 120 新币。168 新币仅为比较价格。',
       'Current customers':'当前顾客数','Customer capacity':'顾客容量','Money-back request until':'退款申请截止时间','Create annual checkout':'创建年付结账',
       'Consultant attribution recorded.':'顾问归属已记录。','Commission policy created.':'佣金政策已创建。','Accrual approved.':'应计佣金已批准。',
       'Payout batch created.':'付款批次已创建。','Payout line added.':'付款明细已添加。','Payout batch approved.':'付款批次已批准。',
@@ -889,7 +947,7 @@
       'Per +1,000 customers':'Bagi setiap tambahan 1,000 pelanggan','Customers included':'Pelanggan disertakan',
       'Create matching monthly and annual Stripe Price versions before opening checkout.':'Cipta versi Harga Stripe bulanan dan tahunan yang sepadan sebelum membuka pembayaran.',
       'Stripe +1,000-customer price ID':'ID harga Stripe bagi tambahan 1,000 pelanggan',
-      'Monthly is fixed at SGD 149 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'Bulanan ditetapkan pada SGD 149 + SGD 10 bagi setiap tambahan 1,000 pelanggan. Tahunan ditetapkan pada SGD 1,188 + SGD 120 bagi setiap tambahan 1,000 pelanggan. SGD 168 hanyalah metadata perbandingan.',
+      'Monthly is fixed at SGD 148 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.':'Bulanan ditetapkan pada SGD 148 + SGD 10 bagi setiap tambahan 1,000 pelanggan. Tahunan ditetapkan pada SGD 1,188 + SGD 120 bagi setiap tambahan 1,000 pelanggan. SGD 168 hanyalah metadata perbandingan.',
       'Current customers':'Pelanggan semasa','Customer capacity':'Kapasiti pelanggan','Money-back request until':'Tarikh akhir permohonan pulangan wang','Create annual checkout':'Cipta pembayaran tahunan',
       'Consultant attribution recorded.':'Atribusi perunding direkodkan.','Commission policy created.':'Polisi komisen dicipta.','Accrual approved.':'Akruan diluluskan.',
       'Payout batch created.':'Kumpulan bayaran dicipta.','Payout line added.':'Baris bayaran ditambah.','Payout batch approved.':'Kumpulan bayaran diluluskan.',
@@ -2180,9 +2238,11 @@
   const routes = Object.freeze([
     {key:'overview',label:'Today',shortLabel:'Today',hash:'#/platform',icon:'home'},
     {key:'onboarding',label:'Onboarding',shortLabel:'Onboard',hash:'#/platform/onboarding',icon:'setup'},
+    {key:'customer-lifecycle',moduleKey:'billing',label:'Customer lifecycle',shortLabel:'Customers',hash:'#/platform/customer-lifecycle',icon:'branch'},
     {key:'firms',label:'Firms',shortLabel:'Firms',hash:'#/platform/firms',icon:'branch'},
     {key:'reports',label:'Reports',shortLabel:'Reports',hash:'#/platform/reports',icon:'reports'},
     {key:'billing',label:'Billing',shortLabel:'Billing',hash:'#/platform/billing',icon:'reports'},
+    {key:'subscription-operations',moduleKey:'billing',label:'Subscription operations',shortLabel:'Subscriptions',hash:'#/platform/subscription-operations',icon:'reports'},
     {key:'pnl',label:'Cash P&L',shortLabel:'P&L',hash:'#/platform/pnl',icon:'reports',superAdminOnly:true},
     {key:'commissions',label:'Commission payable',shortLabel:'Commission',hash:'#/platform/commissions',icon:'staff'},
     {key:'sectors',label:'Sector modules',shortLabel:'Sectors',hash:'#/platform/sectors',icon:'packages'},
@@ -2375,13 +2435,14 @@
   function visibleRoutes(access) {
     return routes.filter(route=>route.superAdminOnly
       ?access?.role==='super_admin'
-      :canAccessModule(access,route.key));
+      :canAccessModule(access,route.moduleKey||route.key));
   }
   const platformNavigationBlueprint=Object.freeze([
     Object.freeze({key:'overview',label:'Today',icon:'home',routeKeys:Object.freeze(['overview'])}),
-    Object.freeze({key:'firms',label:'Firms',icon:'branch',routeKeys:Object.freeze(['firms','onboarding'])}),
+    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding'])}),
+    Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports'])}),
-    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['billing','pnl','commissions'])}),
+    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
     Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
     Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','access'])})
   ]);
@@ -2553,7 +2614,7 @@
   }
 
   function isRoute(hash) {
-    return /^#\/platform(?:\/(?:onboarding|firms|reports|billing|pnl|commissions|sectors|automation|access))?\/?$/.test(String(hash || '').split('?')[0]);
+    return /^#\/platform(?:\/(?:onboarding|customer-lifecycle|firms|reports|billing|subscription-operations|pnl|commissions|sectors|automation|access))?\/?$/.test(String(hash || '').split('?')[0]);
   }
 
   function routeKey(hash) {
@@ -4542,7 +4603,7 @@
     const previousScroll=prior?Number(globalObject.scrollY||0):null;
     main.innerHTML=loading(CUI,'Onboarding',prior?'Loading the next 50 firms…':'Loading the SME pipeline…','setup');
     try{
-      const [directory,list,applicationQueue]=await Promise.all([
+      const [directory,list,applicationQueue,accountSignupQueue]=await Promise.all([
         fetchFirmDirectoryPageV88(sb,filters,{
           required:true,limit:50,
           snapshot:prior?.snapshot_at||null,
@@ -4554,7 +4615,10 @@
         }),
         prior?.applicationQueue?Promise.resolve(prior.applicationQueue):context.access?.role==='super_admin'
           ?rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:filters.search||null,p_limit:100})
-          :Promise.resolve({applications:[]})
+          :Promise.resolve({applications:[]}),
+        prior?.accountSignupQueue?Promise.resolve(prior.accountSignupQueue):context.access?.role==='super_admin'
+          ?rpc(sb,'platform_list_account_signups_v160',{p_search:filters.search||null,p_limit:100})
+          :Promise.resolve({items:[]})
       ]);
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       const directoryItems=asArray(prior?.directoryItems).concat(directory.items);
@@ -4565,7 +4629,7 @@
         snapshot_at:prior?.snapshot_at||directory.snapshot_at,
         next_cursor:directory.next_cursor,
         next_before:list?.next_before||null,
-        directoryItems,prospectItems,total,applicationQueue
+        directoryItems,prospectItems,total,applicationQueue,accountSignupQueue
       };
       const pagination={shown:directoryItems.length,total,hasMore:directoryItems.length<total};
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
@@ -4576,7 +4640,12 @@
       });
       pageState.attentionSummary=prior?.attentionSummary||directory.attention_summary;
       if(context.access?.role==='super_admin'){
-        main.insertAdjacentHTML('afterbegin',businessApplicationQueueHtml(applicationQueue,CUI));
+        main.insertAdjacentHTML('afterbegin',
+          accountSignupQueueHtml(accountSignupQueue,CUI)
+          +paymentManagedSignupQueueHtml(items,CUI)
+          +businessApplicationQueueHtml(applicationQueue,CUI,items)
+        );
+        wireAccountSignupQueue({...context,filters});
         wireBusinessApplicationQueue({...context,applicationQueue,filters});
       }
       wireOnboarding({...context,items,filters,onboardingPage:pageState,onboardingLoadMore:false});
@@ -4605,7 +4674,82 @@
       }
     }catch(error){showError(main,error,CUI,'Onboarding')}
   }
-  function businessApplicationQueueHtml(payload,CUI){
+  function paymentManagedSignupItems(items){
+    return asArray(items).filter(item=>item?.business_id&&(
+      item._has_prospect_detail===false
+      ||['website','self_service','existing_business'].includes(String(item.source_type||'').toLowerCase())
+      ||['incomplete','trialing','active','past_due','unpaid','paused','canceled'].includes(String(item.subscription_status||'').toLowerCase())
+    )).slice(0,8);
+  }
+  function accountSignupQueueHtml(payload,CUI){
+    const rows=asArray(payload,['items']);
+    return `<section class="platform-route-note platform-status-note" style="margin-top:14px">
+      ${CUI.icon('staff',{size:19})}<div style="width:100%">
+        <div class="row"><div><b>${escapeHtml(pt('Incomplete business account signups'))}</b>
+          <p class="small">${escapeHtml(pt('Manage these as inbound CRM leads: contact, mark follow-up, or archive. Approve/reject appears only after a company/demo/manual-payment application exists; Stripe access still requires verified payment.'))}</p></div>
+          <span class="spacer"></span><span class="pill">${rows.length} ${escapeHtml(pt('recent'))}</span></div>
+        <div class="platform-card-list" style="margin-top:12px">${rows.map(item=>{
+          const phone=normalizePlatformPhone(item.phone);
+          const action=item.email
+            ?`<a class="btn ghost sm" href="mailto:${encodeURIComponent(item.email)}?subject=Continue%20your%20Peekaa%20business%20setup&body=Hi%2C%20please%20continue%20your%20Peekaa%20business%20setup%20at%20https%3A%2F%2Fpeekaa.asia%2Fbusiness.%20You%20can%20choose%20monthly%2C%20yearly%2C%20or%20request%20a%20demo%20%2F%20manual%20payment%20help.">${escapeHtml(pt('Email setup/demo link'))}</a>`
+            :phone?`<a class="btn ghost sm" href="tel:${escapeHtml(phone.tel)}">${escapeHtml(pt('Call owner'))}</a>`:'';
+          return `<div class="platform-action-item">
+          <div><b>${escapeHtml(item.email||item.phone||pt('Contact unavailable'))}</b>
+            <p class="muted small">${escapeHtml(pt('Account created'))}: ${escapeHtml(dateTime(item.created_at))}${item.last_sign_in_at?` · ${escapeHtml(pt('Last sign-in'))}: ${escapeHtml(dateTime(item.last_sign_in_at))}`:''}</p>
+            ${item.email&&item.phone?`<p class="muted small">${escapeHtml(item.phone)}</p>`:''}
+            <p class="muted small">${escapeHtml(pt('Current status'))}: ${escapeHtml(platformStatus(item.status||'needs_business_details'))} · ${escapeHtml(pt('Triage'))}: ${escapeHtml(platformStatus(item.triage_status||'new'))}</p>
+            ${item.triage_note?`<p class="muted small">${escapeHtml(item.triage_note)}</p>`:''}
+            ${item.last_contacted_at?`<p class="muted small">${escapeHtml(pt('Last contacted'))}: ${escapeHtml(dateTime(item.last_contacted_at))}</p>`:''}
+            <p class="muted small">${escapeHtml(pt('Admin action'))}: ${escapeHtml(pt('Follow up here. Approve/reject becomes available after a company/demo/manual-payment application is submitted.'))}</p></div>
+          <div class="platform-actions" data-account-signup-actions="${escapeHtml(item.user_id||'')}">${action}<button type="button" class="btn ghost sm" data-account-signup-triage="contacted" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Mark contacted'))}</button><button type="button" class="btn ghost sm" data-account-signup-triage="follow_up" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Follow up'))}</button><button type="button" class="btn danger sm" data-account-signup-triage="archived" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Archive'))}</button></div>
+        </div>`;
+        }).join('')||`<p class="muted small">${escapeHtml(pt('No account-only signups match the current filters.'))}</p>`}</div>
+      </div>
+    </section>`;
+  }
+  function wireAccountSignupQueue(context){
+    const {main,sb,CUI,filters}=context;
+    main.querySelectorAll('[data-account-signup-triage]').forEach(button=>{
+      button.onclick=async()=>{
+        const status=button.dataset.accountSignupTriage,user=button.dataset.user;
+        if(!user||!status)return;
+        const note=status==='contacted'
+          ?pt('Owner contacted and asked to choose monthly, yearly, or request demo/manual payment help.')
+          :status==='follow_up'
+            ?pt('Follow-up required: owner has not submitted company details yet.')
+            :pt('Archived by platform admin; no company/application was submitted.');
+        button.disabled=true;
+        try{
+          await rpc(sb,'platform_record_account_signup_triage_v164',{
+            p_user:user,p_status:status,p_note:note,p_idempotency_key:idempotencyKey()
+          });
+          CUI.announce(pt('Inbound lead triage saved.'));
+          await renderOnboarding({...context,filters});
+        }catch(error){
+          button.disabled=false;
+          CUI.announce(platformErrorMessage(error,'Account signup triage could not be saved.'),{assertive:true});
+        }
+      };
+    });
+  }
+  function paymentManagedSignupQueueHtml(items,CUI){
+    const rows=paymentManagedSignupItems(items);
+    return `<section class="platform-route-note platform-status-note" style="margin-top:14px">
+      ${CUI.icon('branch',{size:19})}<div style="width:100%">
+        <div class="row"><div><b>${escapeHtml(pt('Website signups and paid workspaces'))}</b>
+          <p class="small">${escapeHtml(pt('Self-service signups are payment-managed. Their names, payment state and workspace state appear here; approve/reject is intentionally unavailable for this Stripe-controlled path.'))}</p></div>
+          <span class="spacer"></span><span class="pill">${rows.length} ${escapeHtml(pt('shown'))}</span></div>
+        <div class="platform-card-list" style="margin-top:12px">${rows.map(item=>`<div class="platform-action-item">
+          <div><b>${escapeHtml(prospectCompany(item))}</b>
+            <p class="muted small">${escapeHtml([prospectContact(item),item.primary_contact_email,item.primary_contact_phone].filter(Boolean).join(' · ')||pt('Billing contact not recorded'))}</p>
+            <p class="muted small">${escapeHtml(pt('Subscription'))}: ${escapeHtml(platformStatus(item.subscription_status||'not_recorded'))} · ${escapeHtml(pt('Onboarding'))}: ${escapeHtml(platformStatus(item.onboarding_status||'not_started'))}</p></div>
+          <div class="platform-actions"><a class="btn ghost sm" href="#/platform/firms">${escapeHtml(pt('Open firm directory'))}</a>
+            <a class="btn ghost sm" href="#/platform/billing?business=${encodeURIComponent(String(item.business_id||''))}">${escapeHtml(pt('Open billing'))}</a></div>
+        </div>`).join('')||`<p class="muted small">${escapeHtml(pt('No payment-managed website signups are visible in the current filters. Clear filters or search by business name.'))}</p>`}</div>
+      </div>
+    </section>`;
+  }
+  function businessApplicationQueueHtml(payload,CUI,firmItems=[]){
     const applications=asArray(payload,['applications']);
     return `<section class="card" id="platformBusinessApplicationQueue" style="margin-bottom:18px">
       <div class="row"><div><p class="eyebrow">${escapeHtml(pt('Assisted applications'))}</p><h2 style="margin-top:4px">${escapeHtml(pt('Applications sent to Peekaa for manual help'))}</h2>
@@ -5015,6 +5159,11 @@
       audit:asArray(audit,['items'])
     };
     const prospect=asObject(detail.prospect);
+    try{
+      detail.subscription_ops=asObject(await rpc(sb,'platform_get_prospect_subscription_ops_v156',{p_prospect:id}));
+    }catch(error){
+      if(!error.platformUpdateRequired)detail.subscription_ops_error=error;
+    }
     if(prospect.converted_business_id){
       try{
         detail.onboarding=asObject(await rpc(sb,'get_business_onboarding_v79',{
@@ -5161,6 +5310,7 @@
     const companyProfile=asObject(detail.company_profile),qualification=asObject(detail.qualification);
     const terms=commercialBase(detail.commercial_terms),commercialDetail=commercialExtended(detail.commercial_terms);
     const conversion=asObject(detail.conversion_configuration),documents=asArray(detail.documents);
+    const subscriptionOps=asObject(detail.subscription_ops),billingContacts=asArray(subscriptionOps.billing_contacts),billingDocuments=asArray(subscriptionOps.documents);
     const audit=asArray(detail.audit),quality=asObject(detail.data_quality),stageEvidence=asArray(detail.stage_evidence);
     const termsAccepted=['accepted','signed'].includes(terms.contract_status);
     const primaryRow=contacts.find(row=>contactBase(row).is_primary)||contacts[0]||{},primary=contactBase(primaryRow);
@@ -5267,7 +5417,7 @@
     </section>
     <section class="card platform-detail-section" id="detail-tasks">${sectionHeader('Tasks and next actions')}${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title||pt('Task'))}</b><p class="muted small">${escapeHtml(pt('due {date}',{date:dateTime(task.due_at)}))} · ${escapeHtml(platformStatus(task.status||'open'))}</p></div>${task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt("Complete"))}</button>`:''}</div>`).join(''):detailObjectHtml(null)}</section>
     <section class="card platform-detail-section" id="detail-commercial">
-      ${sectionHeader(pt('Commercial terms'),terms.id?`<button type="button" class="btn ghost sm" data-edit-commercial-detail>${escapeHtml(pt("Record commercial detail"))}</button>`:'')}
+      ${sectionHeader(pt('Commercial terms'),`<div class="platform-actions">${terms.id?`<button type="button" class="btn ghost sm" data-edit-commercial-detail>${escapeHtml(pt("Record commercial detail"))}</button>`:''}<button type="button" class="btn ghost sm" data-v156-add-billing-contact>${escapeHtml(pt('Add billing recipient'))}</button><button type="button" class="btn sm" data-v156-quotation>${escapeHtml(pt('Generate quotation'))}</button>${prospect.converted_business_id?`<button type="button" class="btn ghost sm" data-v156-checkout>${escapeHtml(pt('Create Stripe checkout'))}</button>`:''}</div>`)}
       <div class="platform-detail-grid">
         ${typedDetailHtml(terms,[
           ['product_code','Product'],['plan_code','Plan'],['billing_cycle','Billing cycle',platformStatus],
@@ -5283,6 +5433,7 @@
           ['payment_status','Payment status',platformStatus],['amount_collected_cents','Amount collected',value=>value===undefined?'—':currency(value,terms.currency)]
         ])}
       </div>
+      <div class="platform-detail-grid" style="margin-top:14px"><div><h3>${escapeHtml(pt('Authorised billing recipients'))}</h3>${billingContacts.length?billingContacts.map(contact=>`<div class="platform-action-item"><div><b>${escapeHtml(contact.contact_name)}</b><p class="muted small platform-break">${escapeHtml(contact.email)}</p></div><div class="platform-actions">${CUI.status(platformStatus(contact.recipient_role),contact.recipient_role==='primary'?'ok':'new')}<button type="button" class="btn ghost sm" data-v156-edit-billing-contact="${escapeHtml(contact.id)}">${escapeHtml(pt('Edit'))}</button></div></div>`).join(''):`<p class="muted small">${escapeHtml(pt('Add a primary billing contact before finalising a quotation.'))}</p>`}</div><div><h3>${escapeHtml(pt('Subscription documents'))}</h3>${billingDocuments.length?billingDocuments.map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.number)}</b><p class="muted small">${escapeHtml(platformStatus(document.type))} · ${escapeHtml(platformStatus(document.status))}</p></div>${document.pdf_ready?`<button type="button" class="btn ghost sm" data-v156-document="${escapeHtml(document.id)}">${escapeHtml(pt('Open'))}</button>`:CUI.status(pt('Generating'),'new')}</div>`).join(''):`<p class="muted small">${escapeHtml(pt('No subscription documents yet.'))}</p>`}</div></div>
     </section>
     <section class="card platform-detail-section" id="detail-documents">
       ${sectionHeader(pt('Documents'),`<button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload"))}</span></button>`)}
@@ -5327,6 +5478,11 @@
     on('[data-edit-company-profile]',()=>companyProfileModal(detail,context));
     on('[data-edit-qualification]',()=>qualificationModal(detail,context));
     on('[data-edit-commercial-detail]',()=>commercialDetailModal(detail,context));
+    on('[data-v156-add-billing-contact]',()=>subscriptionBillingContactModal(detail,context,null));
+    overlay.querySelectorAll('[data-v156-edit-billing-contact]').forEach(button=>button.onclick=()=>subscriptionBillingContactModal(detail,context,button.dataset.v156EditBillingContact));
+    on('[data-v156-quotation]',()=>subscriptionQuotationModal(detail,context));
+    on('[data-v156-checkout]',()=>requestBillingCommand(prospect.converted_business_id,'create_checkout',asObject(detail.subscription_ops?.commercial).billing_interval||'annual',1000,{...context,suppressRedirect:true,onCompleted:async result=>{await rpc(context.sb,'platform_link_checkout_command_v156',{p_prospect:prospect.id,p_command:result.command_id,p_idempotency_key:idempotencyKey()});if(result.redirect_url&&globalObject.navigator?.clipboard)await globalObject.navigator.clipboard.writeText(result.redirect_url).catch(()=>undefined);CUI.announce('Stripe checkout linked to CRM. Copy it from the commercial record.')}}));
+    overlay.querySelectorAll('[data-v156-document]').forEach(button=>button.onclick=()=>openSubscriptionDocument(button.dataset.v156Document,button,context));
     on('[data-edit-conversion-config]',()=>conversionConfigurationModal(detail,context));
     on('[data-refresh-quality]',()=>refreshProspectQuality(prospect,context));
     overlay.querySelectorAll('[data-upload-document]').forEach(button=>button.onclick=()=>documentUploadModal(detail,context));
@@ -5341,6 +5497,56 @@
   const commaValues=value=>Array.isArray(value)?value.join(', '):String(value||'');
   const formList=value=>String(value||'').split(',').map(item=>item.trim()).filter(Boolean);
   const nullableNumber=value=>String(value||'').trim()===''?null:Number(value);
+
+  function subscriptionBillingContactModal(detail,context,contactId=null) {
+    const {CUI,sb}=context,prospect=asObject(detail.prospect),company=asObject(detail.company);
+    const existing=asArray(detail.subscription_ops?.billing_contacts).find(contact=>contact.id===contactId)||{};
+    const primary=asArray(detail.contacts).map(contactBase).find(contact=>contact.is_primary)||{};
+    modal({title:'Authorised billing contact',submitLabel:'Save billing contact',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'v156BusinessName',label:'Business display name',value:existing.business_display_name||company.trading_name||company.legal_name||'',required:true,attributes:'name="business_display_name"'})}
+      ${CUI.field({id:'v156LegalName',label:'Legal entity name',value:existing.legal_entity_name||company.legal_name||company.trading_name||'',required:true,attributes:'name="legal_entity_name"'})}
+      ${CUI.field({id:'v156Registration',label:'UEN / registration number',value:existing.registration_number||company.registration_number||'',attributes:'name="registration_number"'})}
+      ${CUI.field({id:'v156ContactName',label:'Billing contact name',value:existing.contact_name||primary.full_name||'',required:true,attributes:'name="contact_name"'})}
+      ${CUI.field({id:'v156ContactEmail',label:'Billing email',type:'email',value:existing.email||primary.email||'',required:true,attributes:'name="email"'})}
+      ${CUI.field({id:'v156ContactPhone',label:'Billing telephone',value:existing.telephone||primary.phone||'',attributes:'name="telephone"'})}
+      <div class="wide">${CUI.field({id:'v156BillingAddress',label:'Billing address',control:'textarea',value:typeof existing.billing_address==='string'?existing.billing_address:Object.values(asObject(existing.billing_address)).filter(Boolean).join(', '),required:true,attributes:'name="billing_address" rows="3"'})}</div>
+      ${CUI.field({id:'v156Country',label:'Country',value:existing.country||'Singapore',required:true,attributes:'name="country"'})}
+      ${CUI.field({id:'v156RecipientRole',label:'Recipient type',control:'select',options:[{value:'primary',label:'Primary recipient'},{value:'cc',label:'CC recipient'},{value:'accounts_payable',label:'Accounts payable'}],value:existing.recipient_role||(asArray(detail.subscription_ops?.billing_contacts).some(contact=>contact.recipient_role==='primary')?'cc':'primary'),attributes:'name="recipient_role"'})}
+      ${CUI.field({id:'v156Po',label:'Purchase-order number',value:existing.purchase_order_number||'',attributes:'name="purchase_order_number"'})}
+      ${CUI.field({id:'v156CustomerRef',label:'Customer reference',value:existing.customer_reference||'',attributes:'name="customer_reference"'})}
+    </div>`,onSubmit:async(form,controls)=>{
+      const contact={id:existing.id||null,prospect_id:prospect.id,business_display_name:form.get('business_display_name'),legal_entity_name:form.get('legal_entity_name'),registration_number:form.get('registration_number')||null,billing_address:{formatted:form.get('billing_address')},country:form.get('country'),contact_name:form.get('contact_name'),email:form.get('email'),telephone:form.get('telephone')||null,recipient_role:form.get('recipient_role'),purchase_order_number:form.get('purchase_order_number')||null,customer_reference:form.get('customer_reference')||null,active:true};
+      await rpc(sb,'platform_upsert_billing_contact_v156',{p_contact:contact,p_idempotency_key:idempotencyKey()});await refreshAfterProspectMutation(prospect.id,controls,context,'Billing contact saved.');
+    }});
+  }
+
+  function subscriptionQuotationModal(detail,context) {
+    const {CUI,sb}=context,prospect=asObject(detail.prospect),current=asObject(detail.subscription_ops?.commercial),terms=commercialBase(detail.commercial_terms);
+    const today=new Date().toISOString().slice(0,10),expiry=new Date(Date.now()+14*86400000).toISOString().slice(0,10);
+    modal({title:'Generate subscription quotation',submitLabel:'Finalise quotation',CUI,body:`<p class="muted small">${escapeHtml(pt('Finalisation creates an immutable numbered snapshot. It is blocked until seller legal settings and a primary billing contact are complete.'))}</p><div class="platform-form-grid">
+      ${CUI.field({id:'v156QuotePlan',label:'Subscription plan',value:current.expected_plan||terms.plan_code||'',required:true,attributes:'name="plan"'})}
+      ${CUI.field({id:'v156QuoteInterval',label:'Billing interval',control:'select',options:['monthly','quarterly','half_yearly','annual','fixed'].map(value=>({value,label:platformStatus(value),selected:value===(current.billing_interval||terms.billing_cycle||'annual')})),attributes:'name="billing_interval"'})}
+      <div class="wide">${CUI.field({id:'v156QuoteDescription',label:'Service description',value:'Peekaa subscription services',required:true,attributes:'name="description"'})}</div>
+      ${CUI.field({id:'v156QuoteQuantity',label:'Quantity',type:'number',value:'1',required:true,attributes:'name="quantity" min="1" step="1"'})}
+      ${CUI.field({id:'v156QuotePrice',label:'Unit price (SGD)',type:'number',value:terms.accepted_value_cents?centsToMoneyInput(terms.accepted_value_cents):'',required:true,attributes:'name="unit_price" min="0.01" step="0.01" inputmode="decimal"'})}
+      ${CUI.field({id:'v156QuoteDiscount',label:'Discount (SGD)',type:'number',value:current.proposed_discount_cents?centsToMoneyInput(current.proposed_discount_cents):'0',attributes:'name="discount" min="0" step="0.01"'})}
+      ${CUI.field({id:'v156QuoteDuration',label:'Intended subscription duration',value:current.intended_duration||'12 months',required:true,attributes:'name="duration"'})}
+      ${CUI.field({id:'v156QuoteIssue',label:'Issue date',type:'date',value:today,required:true,attributes:'name="issue_date"'})}
+      ${CUI.field({id:'v156QuoteExpiry',label:'Expiry date',type:'date',value:expiry,required:true,attributes:'name="expiry_date"'})}
+      <div class="wide">${CUI.field({id:'v156QuoteNotes',label:'Quotation notes',control:'textarea',attributes:'name="notes" rows="3"'})}</div>
+      <label class="row platform-confirm-row wide"><input type="checkbox" name="send_now" value="yes"><span>${escapeHtml(pt('Email the quotation to authorised billing recipients after finalisation'))}</span></label>
+    </div>`,onSubmit:async(form,controls)=>{
+      const commercialKey=idempotencyKey();await rpc(sb,'platform_save_crm_commercial_v156',{p_prospect:prospect.id,p_data:{expected_plan:form.get('plan'),billing_interval:form.get('billing_interval'),expected_value_cents:moneyInputToCents(form.get('unit_price'))*Number(form.get('quantity')),proposed_discount_cents:moneyInputToCents(form.get('discount')||0),intended_duration:form.get('duration')},p_idempotency_key:commercialKey});
+      const document=asObject(await rpc(sb,'platform_finalize_quotation_v156',{p_prospect:prospect.id,p_issue_date:form.get('issue_date'),p_expiry_date:form.get('expiry_date'),p_line_items:[{description:form.get('description'),quantity:Number(form.get('quantity')),unit_amount_cents:moneyInputToCents(form.get('unit_price'))}],p_notes:form.get('notes')||null,p_idempotency_key:idempotencyKey()}));
+      if(form.get('send_now')==='yes')await rpc(sb,'platform_send_quotation_v156',{p_document:document.document?.id,p_idempotency_key:idempotencyKey()});
+      await refreshAfterProspectMutation(prospect.id,controls,context,form.get('send_now')==='yes'?'Quotation finalised and queued for delivery.':'Quotation finalised.');
+    }});
+  }
+
+  async function openSubscriptionDocument(documentId,button,context) {
+    if(!context.sb.functions?.invoke){context.CUI.announce('Document signer is unavailable.',{assertive:true});return}
+    button.disabled=true;try{const result=await context.sb.functions.invoke('subscription-document-dispatch',{body:{action:'read',document_id:documentId}});if(result?.error||!result?.data?.signed_url)throw result?.error||new Error(pt('Document link unavailable'));globalObject.open(result.data.signed_url,'_blank','noopener')}catch(error){context.CUI.announce(platformErrorMessage(error,'Document link unavailable.'),{assertive:true})}finally{button.disabled=false}
+  }
   const nullableDateTime=value=>String(value||'').trim()===''?null:new Date(value).toISOString();
   function isoInput(value,{date=false}={}) {
     if(!value)return'';
@@ -6666,6 +6872,135 @@
       if(requestedBusiness)await openBillingDetail(requestedBusiness,context);
     }catch(error){showError(main,error,CUI,'Billing')}
   }
+
+  function subscriptionDurationHtml(row) {
+    const status=String(row.canonical_status||'');
+    if(status==='trialing')return `<b>${escapeHtml(pt('Trial'))}</b><br><span class="muted small">${escapeHtml(pt('Trial ends on {date}',{date:dateTime(row.trial_end)}))}</span>`;
+    if(status==='incomplete')return `<b>${escapeHtml(pt('Payment incomplete'))}</b>`;
+    if(status==='past_due')return `<b>${escapeHtml(pt('Payment overdue'))}</b><br><span class="muted small">${escapeHtml(dateTime(row.current_period_end))}</span>`;
+    if(row.cancel_at_period_end)return `<b>${escapeHtml(pt('Scheduled to end on {date}',{date:dateTime(row.scheduled_end)}))}</b>`;
+    const interval=String(row.billing_interval||'').replaceAll('_',' ');
+    return `<b>${escapeHtml(platformStatus(interval||'Recurring'))}</b><br><span class="muted small">${escapeHtml(pt('Current paid period'))}: ${escapeHtml(dateTime(row.current_period_start))} – ${escapeHtml(dateTime(row.paid_through))}<br>${row.next_renewal?`${escapeHtml(pt('Next renewal'))}: ${escapeHtml(dateTime(row.next_renewal))}`:escapeHtml(pt('No scheduled end date'))}</span>`;
+  }
+
+  function subscriptionOperationsTable(rows,CUI,canWrite=false) {
+    if(!rows.length)return localizedEmptyHtml('No subscriptions match these filters.');
+    return CUI.table({caption:'Subscription operations',headers:['Business','Billing contact','Plan / status','Subscription duration','Latest payment','Documents','Follow-up','Actions'],rows:rows.map(row=>[
+      `<b>${escapeHtml(row.business_name)}</b><br><span class="muted small">${escapeHtml(row.provider_subscription_id)}</span>`,
+      row.billing_contact_name?`${escapeHtml(row.billing_contact_name)}<br><span class="muted small platform-break">${escapeHtml(row.billing_email)}</span>`:CUI.status(pt('Missing'),'no'),
+      `${escapeHtml(platformStatus(row.billing_interval||'Subscription'))}<br>${CUI.status(platformStatus(row.canonical_status),['active','trialing'].includes(row.canonical_status)?'ok':['past_due','unpaid','incomplete'].includes(row.canonical_status)?'no':'new')}`,
+      subscriptionDurationHtml(row),
+      row.latest_payment_at?`${escapeHtml(dateTime(row.latest_payment_at))}<br><span class="muted small">${escapeHtml(currency(row.latest_amount_paid_cents))}</span>`:escapeHtml(pt('Not recorded')),
+      `${escapeHtml(row.latest_invoice_number||row.latest_invoice_id||pt('No invoice'))}<br>${CUI.status(platformStatus(row.document_delivery_status||'pending'),row.document_delivery_status==='delivered'?'ok':'new')}`,
+      Number(row.open_tasks||0)?CUI.status(pt('{count} open',{count:row.open_tasks}),'no'):CUI.status(pt('Clear'),'ok'),
+      `<div class="platform-actions"><a class="btn ghost sm" href="#/platform/billing?business=${encodeURIComponent(row.business_id)}">${escapeHtml(pt('Open'))}</a>${canWrite?`<button type="button" class="btn ghost sm" data-v156-manual-invoice="${escapeHtml(row.business_id)}">${escapeHtml(pt('Manual invoice'))}</button>`:''}</div>`
+    ])});
+  }
+
+  function lifecycleLane(row) {
+    if(['canceled','cancelled'].includes(row.canonical_status)||row.actual_end)return'cancelled';
+    if(row.cancel_at_period_end)return'cancel_at_period_end';
+    if(row.canonical_status==='past_due')return'past_due';
+    if(['incomplete','incomplete_expired','unpaid'].includes(row.canonical_status))return'payment_action_required';
+    if(row.next_renewal&&new Date(row.next_renewal).getTime()-Date.now()<=30*86400000)return'renewal_approaching';
+    if(row.lifecycle_status==='payment_received')return'payment_received';
+    if(row.lifecycle_status==='onboarding')return'onboarding';
+    return'active';
+  }
+
+  async function renderCustomerLifecycle(context,view=platformRouteParam(context.hash,'view')||'kanban') {
+    const {main,CUI,sb}=context;main.innerHTML=loading(CUI,'Customer lifecycle','Loading system-derived customer status…','branch');
+    try{const payload=asObject(await rpc(sb,'platform_get_subscription_operations_v156',{p_search:null,p_status:null,p_limit:500})),rows=asArray(payload.subscriptions),lanes=[['payment_received','Payment received'],['onboarding','Onboarding'],['active','Active'],['renewal_approaching','Renewal approaching'],['payment_action_required','Payment action required'],['past_due','Past due'],['cancel_at_period_end','Cancel at period end'],['cancelled','Cancelled']];
+      const cards=items=>items.map(row=>`<article class="card platform-prospect-card"><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(platformStatus(row.canonical_status))} · ${escapeHtml(platformStatus(row.billing_interval||'subscription'))}</p><p class="small">${escapeHtml(pt('Paid through'))}: ${escapeHtml(dateTime(row.paid_through))}<br>${escapeHtml(pt('Next renewal'))}: ${escapeHtml(dateTime(row.next_renewal))}</p><p class="muted small platform-break">${escapeHtml(row.billing_email||pt('Billing contact missing'))}</p><a class="btn ghost sm" href="#/platform/subscription-operations?search=${encodeURIComponent(row.business_name)}">${escapeHtml(pt('Open operations'))}</a></article>`).join('');
+      main.innerHTML=`${CUI.pageHeader({title:'Customer lifecycle',subtitle:'System-derived subscription and onboarding truth. These lanes cannot be changed by dragging.',iconName:'branch',actions:`<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Customer lifecycle view'))}"><button class="btn ghost" data-lifecycle-view="kanban" aria-pressed="${view==='kanban'}">${escapeHtml(pt('Kanban'))}</button><button class="btn ghost" data-lifecycle-view="list" aria-pressed="${view==='list'}">${escapeHtml(pt('List'))}</button></div>`})}
+        <div class="platform-kanban platform-kanban-responsive" ${view==='kanban'?'':'hidden'} aria-label="${escapeHtml(pt('System-derived customer lifecycle'))}">${lanes.map(([key,label])=>{const items=rows.filter(row=>lifecycleLane(row)===key);return`<section class="platform-kanban-column"><div class="platform-kanban-head"><h2>${escapeHtml(pt(label))}</h2><span>${escapeHtml(items.length)}</span></div>${cards(items)||`<p class="muted small">${escapeHtml(pt('No customers'))}</p>`}</section>`}).join('')}</div>
+        <section class="platform-prospect-list" ${view==='list'?'':'hidden'}><div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,false)}</div></section>`;
+      main.querySelectorAll('[data-lifecycle-view]').forEach(button=>button.onclick=()=>renderCustomerLifecycle(context,button.dataset.lifecycleView));CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Customer lifecycle')}
+  }
+
+  function manualInvoiceModal(row,context) {
+    const {CUI,sb}=context,today=new Date().toISOString().slice(0,10);
+    modal({title:pt('Manual invoice · {name}',{name:row.business_name}),submitLabel:'Create and queue invoice',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'v156ManualIssue',label:'Issue date',type:'date',value:today,required:true,attributes:'name="issue_date"'})}
+      ${CUI.field({id:'v156ManualDue',label:'Due date',type:'date',value:today,required:true,attributes:'name="due_date"'})}
+      ${CUI.field({id:'v156ManualStart',label:'Service start',type:'date',value:today,required:true,attributes:'name="service_start"'})}
+      ${CUI.field({id:'v156ManualEnd',label:'Service end',type:'date',value:today,required:true,attributes:'name="service_end"'})}
+      <div class="wide">${CUI.field({id:'v156ManualDescription',label:'Service description',value:'Peekaa subscription',required:true,attributes:'name="description"'})}</div>
+      ${CUI.field({id:'v156ManualAmount',label:'Amount (SGD)',type:'number',required:true,attributes:'name="amount" min="0.01" step="0.01"'})}
+      ${CUI.field({id:'v156ManualDiscount',label:'Discount (SGD)',type:'number',value:'0',attributes:'name="discount" min="0" step="0.01"'})}
+    </div>`,onSubmit:async(form,controls)=>{const data=new FormData(form);await rpc(sb,'platform_create_manual_invoice_v156',{p_business:row.business_id,p_issue_date:data.get('issue_date'),p_due_date:data.get('due_date'),p_service_start:data.get('service_start'),p_service_end:data.get('service_end'),p_line_items:[{description:data.get('description'),quantity:1,unit_amount_cents:nullableMoneyInputToCents(data.get('amount'))}],p_discount_cents:nullableMoneyInputToCents(data.get('discount'))||0,p_idempotency_key:idempotencyKey()});controls.close();CUI.announce('Manual invoice created and queued.');await renderSubscriptionOperations(context)}});
+  }
+
+  function manualPaymentModal(document,context) {
+    const {CUI,sb}=context,today=new Date().toISOString().slice(0,10);
+    modal({title:pt('Record payment · {number}',{number:document.document_number}),submitLabel:'Submit for independent verification',CUI,body:`<p class="muted small">${escapeHtml(pt('A different super admin must verify this evidence before a receipt is issued. Recording payment does not mark a Stripe invoice paid.'))}</p><div class="platform-form-grid">
+      ${CUI.field({id:'v156PaymentReference',label:'Bank transfer reference',required:true,attributes:'name="payment_reference"'})}
+      ${CUI.field({id:'v156PaymentDate',label:'Value date',type:'date',value:today,required:true,attributes:'name="value_date"'})}
+      ${CUI.field({id:'v156PaymentLast4',label:'Receiving account last 4 digits',value:'6357',required:true,attributes:'name="bank_last4" pattern="[0-9]{4}" inputmode="numeric"'})}
+      ${CUI.field({id:'v156PaymentAmount',label:'Amount received (SGD)',type:'number',value:(Number(document.balance_due_cents||0)/100).toFixed(2),required:true,attributes:'name="amount" min="0.01" step="0.01"'})}
+      <label class="cui-field wide"><span class="field-label">${escapeHtml(pt('Private payment evidence (PDF, JPEG or PNG)'))}</span><input name="evidence" type="file" accept="application/pdf,image/jpeg,image/png" required></label>
+    </div>`,onSubmit:async(form,controls)=>{const data=new FormData(form),file=data.get('evidence');if(!(file instanceof File)||!file.size)throw new Error(pt('Payment evidence is required.'));const operation=idempotencyKey();const request=await sb.functions.invoke('subscription-document-dispatch',{body:{action:'manual_evidence_upload',invoice_id:document.id,filename:file.name,content_type:file.type,operation_key:operation}});if(request.error||!request.data?.token)throw request.error||new Error(pt('Evidence upload could not be authorised.'));const uploaded=await sb.storage.from(request.data.bucket_id).uploadToSignedUrl(request.data.object_path,request.data.token,file,{contentType:file.type,upsert:false});if(uploaded.error)throw uploaded.error;await rpc(sb,'platform_record_manual_payment_v156',{p_invoice:document.id,p_amount_cents:nullableMoneyInputToCents(data.get('amount')),p_payment_reference:data.get('payment_reference'),p_value_date:data.get('value_date'),p_bank_account_last4:data.get('bank_last4'),p_evidence_object_path:request.data.object_path,p_idempotency_key:operation});controls.close();CUI.announce('Payment evidence submitted for independent verification.');await renderSubscriptionOperations(context)}});
+  }
+
+  async function openManualEvidence(payment,context) {const result=await context.sb.functions.invoke('subscription-document-dispatch',{body:{action:'manual_evidence_read',payment_id:payment.id}});if(result.error||!result.data?.signed_url)throw result.error||new Error(pt('Evidence link unavailable.'));globalObject.open(result.data.signed_url,'_blank','noopener')}
+
+  async function renderSubscriptionOperations(context,filters={}) {
+    const {main,CUI,sb}=context;
+    const search=(filters.search??platformRouteParam(context.hash,'search'))||null;
+    const status=(filters.status??platformRouteParam(context.hash,'status'))||null;
+    main.innerHTML=loading(CUI,'Subscription operations','Loading subscriptions, documents and payment follow-up…','reports');
+    try{
+      const payload=asObject(await rpc(sb,'platform_get_subscription_operations_v156',{p_search:search,p_status:status,p_limit:500}));
+      const summary=asObject(payload.summary),profile=asObject(payload.profile),rawRows=asArray(payload.subscriptions),local={interval:filters.interval||'',renewal:filters.renewal||'',payment:filters.payment||'',owner:filters.owner||'',document:filters.document||'',lifecycle:filters.lifecycle||'',sort:filters.sort||'next_renewal'};
+      const renewalDays=value=>value?Math.ceil((new Date(value).getTime()-Date.now())/86400000):null;
+      const rows=rawRows.filter(row=>(!local.interval||row.billing_interval===local.interval)&&(!local.payment||row.latest_invoice_status===local.payment)&&(!local.owner||row.crm_owner===local.owner)&&(!local.document||row.document_delivery_status===local.document)&&(!local.lifecycle||lifecycleLane(row)===local.lifecycle)&&(!local.renewal||(renewalDays(row.next_renewal)!==null&&renewalDays(row.next_renewal)>=0&&renewalDays(row.next_renewal)<=Number(local.renewal)))).sort((a,b)=>local.sort==='business_name'?String(a.business_name).localeCompare(String(b.business_name)):local.sort==='latest_payment'?new Date(b.latest_payment_at||0)-new Date(a.latest_payment_at||0):local.sort==='start_date'?new Date(b.subscription_created_at||0)-new Date(a.subscription_created_at||0):local.sort==='subscription_value'?Number(b.latest_amount_paid_cents||0)-Number(a.latest_amount_paid_cents||0):local.sort==='days_overdue'?renewalDays(a.next_renewal)-renewalDays(b.next_renewal):new Date(a.next_renewal||8640000000000000)-new Date(b.next_renewal||8640000000000000));
+      const cards=[['Active subscriptions',summary.active,'active'],['New subscriptions this month',summary.new_this_month,'active'],['Renewing in 30 days',summary.renewing_30,'renewing_30'],['Renewing in 14 days',summary.renewing_14,'renewing_14'],['Renewing in 7 days',summary.renewing_7,'renewing_7'],['Payment failed',summary.payment_failed,'payment_failed'],['Past due',summary.past_due,'past_due'],['Cancel at period end',summary.cancel_at_period_end,'cancel_at_period_end'],['Cancelled this month',summary.cancelled_this_month,'canceled']];
+      main.innerHTML=`${CUI.pageHeader({title:'Subscription operations',subtitle:'Internal Peekaa subscription, renewal, billing-document and delivery control. Stripe paid invoices remain payment truth.',iconName:'reports',actions:context.canWrite?`<button type="button" class="btn" id="v156BillingSettings">${CUI.icon('setup',{size:17})}<span>${escapeHtml(pt('Billing settings'))}</span></button>`:''})}
+        ${!payload.profile_ready?CUI.errorState({title:'Seller billing profile incomplete',message:'Final document issuance is blocked until UEN, registered address, billing email, GST decision and payment terms are configured.'}):''}
+        <section class="platform-kpis" aria-label="${escapeHtml(pt('Subscription summary'))}">${cards.map(([label,value,cardStatus])=>`<a class="card platform-kpi platform-kpi-link" href="#/platform/subscription-operations?status=${encodeURIComponent(cardStatus)}"><div class="platform-kpi-label">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value||0)}</div></a>`).join('')}</section>
+        <section class="card platform-detail-section"><div class="platform-list-row"><div><h2>${escapeHtml(pt('Subscriptions'))}</h2><p class="muted small">${escapeHtml(pt('Paid-through dates and renewal dates come from canonical provider invoice and subscription periods.'))}</p></div><div><b>${escapeHtml(profile.brand_name||'Peekaa')}</b><p class="muted small">${escapeHtml(profile.legal_name||'')} · ${escapeHtml(pt('Bank account ending {last4}',{last4:payload.bank_account_last4||'—'}))}</p></div></div>
+          <form id="v156SubscriptionFilters" class="platform-filter-grid"><label class="cui-field"><span class="field-label">${escapeHtml(pt('Search business'))}</span><input name="search" value="${escapeHtml(search||'')}" autocomplete="off"></label><label class="cui-field"><span class="field-label">${escapeHtml(pt('Subscription status'))}</span><select name="status"><option value="">${escapeHtml(pt('All'))}</option>${['trialing','active','incomplete','past_due','unpaid','paused','canceled'].map(value=>`<option value="${value}"${status===value?' selected':''}>${escapeHtml(platformStatus(value))}</option>`).join('')}</select></label>
+          ${[['interval','Billing interval',['','monthly','quarterly','half_yearly','annual']],['renewal','Renewal window',['','7','14','30']],['payment','Payment status',['','open','paid','void','uncollectible']],['document','Document delivery',['','queued','processing','provider_accepted','delivered','retryable_failed','permanent_failed']],['lifecycle','Lifecycle',['','payment_received','onboarding','active','renewal_approaching','payment_action_required','past_due','cancel_at_period_end','cancelled']],['sort','Sort',['next_renewal','days_overdue','business_name','start_date','latest_payment','subscription_value']]].map(([name,label,values])=>`<label class="cui-field"><span class="field-label">${escapeHtml(pt(label))}</span><select name="${name}">${values.map(value=>`<option value="${value}"${local[name]===value?' selected':''}>${escapeHtml(value?platformStatus(value):pt('All'))}</option>`).join('')}</select></label>`).join('')}
+          <label class="cui-field"><span class="field-label">${escapeHtml(pt('CRM owner'))}</span><select name="owner"><option value="">${escapeHtml(pt('All'))}</option>${[...new Set(rawRows.map(row=>row.crm_owner).filter(Boolean))].map(value=>`<option value="${escapeHtml(value)}"${local.owner===value?' selected':''}>${escapeHtml(value)}</option>`).join('')}</select></label><div class="platform-actions"><button class="btn" type="submit">${escapeHtml(pt('Apply filters'))}</button><button class="btn ghost" type="button" id="v156ClearFilters">${escapeHtml(pt('Clear filters'))}</button></div></form>
+          <div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,context.canWrite)}</div></section>
+        ${CUI.card({title:'Billing documents',description:'Stripe mirrors are created only from verified paid invoices. Manual invoices require private evidence and independent verification.',body:asArray(payload.documents).length?asArray(payload.documents).map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.document_number)}</b><p class="muted small">${escapeHtml(platformStatus(document.document_type))} · ${escapeHtml(platformStatus(document.status))} · ${escapeHtml(currency(document.total_cents))}</p></div><div class="platform-actions">${document.pdf_ready?`<button type="button" class="btn ghost sm" data-open-v156-document="${escapeHtml(document.id)}">${escapeHtml(pt('Open'))}</button>`:''}${context.canWrite&&document.document_type==='invoice'&&!document.provider_invoice_id&&document.status==='open'?`<button type="button" class="btn ghost sm" data-v156-record-payment="${escapeHtml(document.id)}">${escapeHtml(pt('Record payment'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No subscription documents have been issued.')})}
+        ${CUI.card({title:'Manual payment verification',description:'The recorder and verifier must be different authorised administrators.',body:asArray(payload.manual_payments).length?asArray(payload.manual_payments).map(payment=>`<div class="platform-action-item"><div><b>${escapeHtml(payment.document_number)}</b><p class="muted small">${escapeHtml(payment.payment_reference)} · ${escapeHtml(currency(payment.amount_cents))} · ${escapeHtml(platformStatus(payment.status))}</p></div><div class="platform-actions"><button type="button" class="btn ghost sm" data-v156-evidence="${escapeHtml(payment.id)}">${escapeHtml(pt('Evidence'))}</button>${context.access?.role==='super_admin'&&payment.status==='pending_verification'?`<button type="button" class="btn sm" data-v156-verify="${escapeHtml(payment.id)}">${escapeHtml(pt('Verify'))}</button><button type="button" class="btn danger sm" data-v156-reject="${escapeHtml(payment.id)}">${escapeHtml(pt('Reject'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No manual payments await verification.')})}
+        ${CUI.card({title:'Payment and renewal follow-up',description:'Tasks are deduplicated by subscription, event and reminder window, then resolved after verified recovery.',body:asArray(payload.tasks).length?asArray(payload.tasks).map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title)}</b><p class="muted small">${escapeHtml(platformStatus(task.task_type))} · ${escapeHtml(dateTime(task.due_at))}</p></div><div class="platform-actions">${CUI.status(platformStatus(task.priority),task.priority==='urgent'?'no':'new')}${context.canWrite?`<button type="button" class="btn ghost sm" data-v156-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt('Complete'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No subscription follow-up tasks are open.')})}
+        ${CUI.card({title:'Document delivery',description:'Final PDFs are immutable private objects. Failed delivery remains visible and can be resent without creating new document numbers.',body:asArray(payload.deliveries).length?asArray(payload.deliveries).map(delivery=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(delivery.delivery_type))}</b><p class="muted small">${escapeHtml(platformStatus(delivery.status))}${delivery.failure_reason?` · ${escapeHtml(delivery.failure_reason)}`:''}</p></div>${context.canWrite&&delivery.status!=='delivered'?`<button type="button" class="btn ghost sm" data-v156-resend="${escapeHtml(delivery.id)}">${escapeHtml(pt('Resend'))}</button>`:''}</div>`).join(''):localizedEmptyHtml('No billing-document deliveries have been queued.')})}
+        <div class="sr-only" aria-live="polite" id="v156LiveStatus"></div>`;
+      const form=main.querySelector('#v156SubscriptionFilters');if(form)form.onsubmit=async event=>{event.preventDefault();const data=new FormData(form);await renderSubscriptionOperations(context,Object.fromEntries(data.entries()))};
+      const clear=main.querySelector('#v156ClearFilters');if(clear)clear.onclick=()=>renderSubscriptionOperations(context,{search:null,status:null});
+      const settings=main.querySelector('#v156BillingSettings');if(settings)settings.onclick=()=>subscriptionBillingSettingsModal(payload,context);
+      main.querySelectorAll('[data-v156-manual-invoice]').forEach(button=>{const row=rows.find(item=>item.business_id===button.dataset.v156ManualInvoice);button.onclick=()=>manualInvoiceModal(row,context)});
+      const documents=asArray(payload.documents),payments=asArray(payload.manual_payments);
+      main.querySelectorAll('[data-v156-record-payment]').forEach(button=>{const document=documents.find(item=>item.id===button.dataset.v156RecordPayment);button.onclick=()=>manualPaymentModal(document,context)});
+      main.querySelectorAll('[data-open-v156-document]').forEach(button=>button.onclick=()=>openSubscriptionDocument(button.dataset.openV156Document,button,context));
+      main.querySelectorAll('[data-v156-evidence]').forEach(button=>{const payment=payments.find(item=>item.id===button.dataset.v156Evidence);button.onclick=async()=>{button.disabled=true;try{await openManualEvidence(payment,context)}catch(error){CUI.announce(platformErrorMessage(error,'Evidence link unavailable.'),{assertive:true})}finally{button.disabled=false}}});
+      main.querySelectorAll('[data-v156-complete-task]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{await rpc(sb,'platform_complete_subscription_task_v156',{p_task:button.dataset.v156CompleteTask,p_resolution:'Completed by platform operator',p_idempotency_key:idempotencyKey()});CUI.announce('Follow-up task completed.');await renderSubscriptionOperations(context)}catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Task completion failed.'),{assertive:true})}});
+      main.querySelectorAll('[data-v156-verify],[data-v156-reject]').forEach(button=>button.onclick=async()=>{button.disabled=true;const decision=button.hasAttribute('data-v156-verify')?'verified':'rejected',paymentId=button.dataset.v156Verify||button.dataset.v156Reject;try{await rpc(sb,'platform_verify_manual_payment_v156',{p_payment:paymentId,p_decision:decision,p_reason:decision==='rejected'?'Rejected by verifier after evidence review':null,p_idempotency_key:idempotencyKey()});CUI.announce(pt('Manual payment {status}.',{status:platformStatus(decision)}));await renderSubscriptionOperations(context)}catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Payment verification failed.'),{assertive:true})}});
+      main.querySelectorAll('[data-v156-resend]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{await rpc(sb,'platform_queue_document_resend_v156',{p_delivery:button.dataset.v156Resend,p_idempotency_key:idempotencyKey()});CUI.announce('Document delivery queued.');await renderSubscriptionOperations(context)}catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Document resend failed.'),{assertive:true})}});
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Subscription operations')}
+  }
+
+  function subscriptionBillingSettingsModal(payload,context) {
+    const {CUI,sb}=context,profile=asObject(payload.profile);
+    modal({title:'Legal and billing profile',submitLabel:'Save new immutable version',CUI,body:`<p class="muted small">${escapeHtml(pt('Saving creates a new profile version. Historical documents retain their original seller snapshot.'))}</p><div class="platform-form-grid">
+      ${CUI.field({id:'v156Uen',label:'UEN',value:profile.uen||'',required:true,attributes:'name="uen"'})}
+      ${CUI.field({id:'v156BillingEmail',label:'Billing email',type:'email',value:profile.billing_email||'',required:true,attributes:'name="billing_email"'})}
+      <div class="wide">${CUI.field({id:'v156Address',label:'Registered address',control:'textarea',value:profile.registered_address||'',required:true,attributes:'name="registered_address" rows="3"'})}</div>
+      ${CUI.field({id:'v156GstStatus',label:'GST status',control:'select',value:profile.gst_status||'unconfigured',options:[{value:'unconfigured',label:'Select GST status'},{value:'not_registered',label:'Not GST registered'},{value:'registered',label:'GST registered'}],attributes:'name="gst_status"'})}
+      ${CUI.field({id:'v156GstNumber',label:'GST registration number',value:profile.gst_registration_number||'',attributes:'name="gst_registration_number"'})}
+      ${CUI.field({id:'v156GstRate',label:'GST rate (basis points)',type:'number',value:profile.gst_rate_bps||0,attributes:'name="gst_rate_bps" min="0" max="2000"'})}
+      ${CUI.field({id:'v156Terms',label:'Default payment terms',value:profile.default_payment_terms||'',required:true,attributes:'name="default_payment_terms"'})}
+      ${CUI.field({id:'v156InternalCopy',label:'Internal copy email',type:'email',value:profile.internal_copy_email||'',attributes:'name="internal_copy_email"'})}
+      <div class="wide">${CUI.field({id:'v156BankAccount',label:pt('Bank account number (currently ending {last4})',{last4:payload.bank_account_last4||'—'}),value:'',attributes:`name="bank_account_number" inputmode="numeric" placeholder="${escapeHtml(pt('Leave blank to retain'))}"`})}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      const data=Object.fromEntries(form.entries());data.gst_rate_bps=Number(data.gst_rate_bps||0);data.customer_reminders_enabled=false;
+      await rpc(sb,'platform_set_billing_profile_v156',{p_profile:data,p_idempotency_key:idempotencyKey()});controls.close();await renderSubscriptionOperations(context);CUI.announce('Billing profile version saved.');
+    }});
+  }
   function billingPriceModal(context) {
     const {CUI,sb}=context;
     const defaultEffective=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
@@ -6681,7 +7016,7 @@
           ${CUI.field({id:'billingCapacityPriceId',label:'Stripe +1,000-customer price ID',required:true,attributes:'name="capacity_price_id" placeholder="price_..."'})}
         </div>
       </details>
-    </div><p class="muted small">${escapeHtml(pt('Monthly is fixed at SGD 149 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.'))}</p>`,onSubmit:async(form,controls)=>{
+    </div><p class="muted small">${escapeHtml(pt('Monthly is fixed at SGD 148 + SGD 10 per extra 1,000 customers. Annual is fixed at SGD 1,188 + SGD 120 per extra 1,000. SGD 168 is comparison metadata only.'))}</p>`,onSubmit:async(form,controls)=>{
       const proposal={
         p_cadence:form.get('cadence'),
         p_provider_base_price_id:form.get('base_price_id'),
@@ -6754,7 +7089,9 @@
         }
       }
       controls.close();context.close?.();
+      if(context.onCompleted)await context.onCompleted(result);
       if(result?.redirect_url&&['create_checkout','create_portal'].includes(type)){
+        if(context.suppressRedirect)return;
         if(globalObject.location?.assign)globalObject.location.assign(result.redirect_url);
         else globalObject.open(result.redirect_url,'_blank','noopener');
         return;
@@ -8113,7 +8450,7 @@
     const context={
       root,main,sb,CUI,brand:brand||globalObject.NestlyBrand||{},hash,isCurrent,
       onSignOut,workspaceHash,generation,access,activeKey,
-      canWrite:activeKey==='access'||canWriteModule(access,activeKey)
+      canWrite:activeKey==='access'||canWriteModule(access,activeRoute.moduleKey||activeKey)
     };
     activeContext=context;
     let task;
@@ -8137,6 +8474,8 @@
       context,onboardingStateFromHash(hash).filters
     );
     if(!task&&activeKey==='billing')task=renderBilling(context);
+    if(!task&&activeKey==='subscription-operations')task=renderSubscriptionOperations(context);
+    if(!task&&activeKey==='customer-lifecycle')task=renderCustomerLifecycle(context);
     if(!task&&activeKey==='pnl')task=renderPlatformFinance(context);
     if(!task&&activeKey==='commissions')task=renderCommission(context);
     if(!task&&activeKey==='sectors')task=renderSectors(context);
@@ -8156,7 +8495,7 @@
     buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
     moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
     safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
-    accountDeletionQueueHtml,privacyOperationAttempt,
+    accountDeletionQueueHtml,privacyOperationAttempt,accountSignupQueueHtml,
     onboardingHash,onboardingStateFromHash,
     platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
     setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
@@ -8164,7 +8503,8 @@
     firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,modulePickerHtml,
     reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
     importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
-    commissionRosterRows,commissionAccrualRows,automationRunRows
+    commissionRosterRows,commissionAccrualRows,automationRunRows,
+    subscriptionDurationHtml,subscriptionOperationsTable
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -8176,14 +8516,15 @@
       buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
       moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
       safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
-      onboardingHash,onboardingStateFromHash,
+      onboardingHash,onboardingStateFromHash,accountSignupQueueHtml,
       platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
       setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
       localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
       firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,modulePickerHtml,
       reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
       importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
-      commissionRosterRows,commissionAccrualRows,automationRunRows
+      commissionRosterRows,commissionAccrualRows,automationRunRows,
+      subscriptionDurationHtml,subscriptionOperationsTable
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

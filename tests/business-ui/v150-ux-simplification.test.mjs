@@ -59,6 +59,7 @@ test('V150 record sale highlights found customer context and interactive selecta
 });
 
 test('V150 appointments separates Calendar/List and removes List from the day-week control', () => {
+  assert.match(html, /\.v150-segment button\{min-height:44px/);
   assert.match(appointmentsBlock, /appointmentCalendarSeg/);
   assert.match(appointmentsBlock, /appointmentListSeg/);
   assert.match(appointmentsBlock, /day-now-line/);
@@ -80,7 +81,7 @@ test('V150 sales is ledger-first and no longer includes the duplicate quick-sale
 });
 
 test('V150 reports uses plain-language report categories and run-report wording', () => {
-  assert.match(reportsBlock, /<h1>Reports<\/h1>/);
+  assert.match(reportsBlock, /<h1>Business Insights<\/h1>/);
   assert.match(reportsBlock, /Sales & revenue/);
   assert.match(reportsBlock, /Appointments & busy times/);
   assert.match(reportsBlock, /Customer retention/);
