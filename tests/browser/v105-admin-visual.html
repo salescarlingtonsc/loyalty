@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="186b094d909b387edf2b66573c1da1510ba76a342a470bbdcc709c2b64ec531b">
+<meta name="v105-production-component-sha256" content="7985f217948d5898e074392424a35eb87b13f73be365c16846a2857425f3d95a">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -333,6 +333,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .profile .menu a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
   color:var(--ink2);font-size:13.5px;font-weight:500;white-space:nowrap}
 .profile .menu a:hover{background:#F2EFEA;color:var(--ink)}
+.profile-menu-section{padding:8px 12px;border-top:1px solid var(--hair);margin-top:4px}
+.profile-menu-section:first-child{border-top:0;margin-top:0}
+.profile-menu-section label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800;margin:0 0 6px;display:block}
+.profile-menu-section input,.profile-menu-section select{min-height:40px;font-size:14px;border-radius:12px}
+.profile-menu-section .row{gap:6px;align-items:center}
+.profile-menu-saved{font-size:12px;color:var(--ok);min-height:16px;margin-top:4px}
 .business-workspace-switch,.customer-workspace-switch{position:relative}
 .business-workspace-switch>summary,.customer-workspace-switch>summary{list-style:none}
 .business-workspace-switch>summary::-webkit-details-marker,.customer-workspace-switch>summary::-webkit-details-marker{display:none}
@@ -714,11 +720,18 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .till-cart-catalog .btn,.till-cart-catalog .choice-button{min-height:64px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;padding:10px 12px;font-size:14px;font-weight:600;line-height:1.25}
 .till-cart-catalog .btn .till-cart-price,.till-cart-catalog .choice-button .till-cart-price{font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
 .till-cart-catalog .choice-button{position:relative}
+.till-cart-catalog .choice-button.has-image{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:10px;padding-right:40px}
+	.till-choice-image,.catalogue-thumb{width:42px;height:42px;border-radius:12px;object-fit:cover;background:var(--wash);border:1px solid var(--line);box-shadow:0 4px 12px rgba(32,24,18,.08)}
+	.catalogue-thumb:not(img){display:inline-flex;align-items:center;justify-content:center;color:var(--muted)}
+.till-choice-text{min-width:0;display:flex;flex-direction:column;gap:2px}
 .till-cart-catalog .choice-button.is-selected{border-color:var(--coral);background:#FFF3EE;box-shadow:0 0 0 1px rgba(196,61,50,.12)}
 .till-choice-qty{position:absolute;top:8px;right:8px;min-width:24px;height:24px;border-radius:999px;background:var(--coral);color:white;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
 .till-sale-package-options{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8;padding:0 12px}
 .till-sale-package-options>summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:750}
 .till-sale-package-options[open]{padding-bottom:12px}
+.service-media-cell{display:flex;align-items:center;gap:10px;min-width:0}
+.service-photo-uploader-v158{position:relative;overflow:hidden}
+.service-photo-uploader-v158 input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .till-cart-lines{list-style:none;padding:0;margin:12px 0 0}
 .till-cart-line{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .till-cart-line .till-cart-line-label{flex:1;min-width:0;font-weight:600}
@@ -1087,6 +1100,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-perk-card,.customer-offer-card,.customer-reward-card{overflow:hidden;min-height:120px;padding:16px;border:1px solid var(--hair);border-radius:15px;background:#fff}
 .customer-feature-card{min-height:0}
 .customer-feature-card b{display:block}
+.customer-feature-image{width:100%;height:120px;object-fit:cover;border-radius:16px;margin-bottom:12px;background:var(--wash);border:1px solid var(--line)}
 .customer-feature-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px}
 .customer-feature-meta .pill{font-size:11px}
 .customer-perk-card img,.customer-offer-card img,.customer-reward-card img{width:calc(100% + 32px);height:132px;margin:-16px -16px 14px;object-fit:cover;background:var(--bg)}
@@ -1835,7 +1849,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 186b094d909b</span>
+<span class="v105-provenance">v105 production-component harness · 7985f217948d</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -1960,7 +1974,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'186b094d909b387edf2b66573c1da1510ba76a342a470bbdcc709c2b64ec531b',
+  sourceHash:'7985f217948d5898e074392424a35eb87b13f73be365c16846a2857425f3d95a',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

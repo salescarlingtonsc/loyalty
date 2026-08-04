@@ -1,1863 +1,1749 @@
 {
   "schemaVersion": 1,
-  "status": "canonical_deployable_locally_not_applied",
-  "projectRef": "gadpooereceldfpfxsod",
-  "sourcePlan": "supabase/canonical-migration-order.plan.json",
-  "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
+  "status": "planning_only_not_deployable",
+  "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "catalogAppliedCount": 45,
-  "pendingCount": 140,
-  "itemCount": 185,
+  "itemCount": 183,
+  "executableCount": 169,
+  "reservationCount": 14,
+  "sourceCollisionsResolved": false,
+  "sourceDeployVersionCollisions": [
+    {
+      "sourceDeployVersion": "20260717",
+      "count": 7,
+      "paths": [
+        "db/migrations/20260717_frenly_v10_1_policy_snapshot.sql",
+        "db/migrations/20260717_frenly_v10_sale_policy.sql",
+        "db/migrations/20260717_frenly_v11a_branches_staff_services.sql",
+        "db/migrations/20260717_frenly_v11b_money.sql",
+        "db/migrations/20260717_frenly_v12_commission_snapshot.sql",
+        "db/migrations/20260717_frenly_v12a_completion_staff.sql",
+        "db/migrations/20260717_frenly_v9_giftcard_revenue.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260718",
+      "count": 3,
+      "paths": [
+        "db/migrations/20260718_frenly_v13_flat_commission.sql",
+        "db/migrations/20260718_frenly_v14_platform.sql",
+        "db/migrations/20260718_frenly_v17_branch_visibility.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260719",
+      "count": 5,
+      "paths": [
+        "db/migrations/20260719_frenly_v20_financial_engine.sql",
+        "db/migrations/20260719_frenly_v21_security_hardening.sql",
+        "db/migrations/20260719_frenly_v22_flat_commission_reconciliation.sql",
+        "db/migrations/20260719_frenly_v22a_app_default_privileges.sql",
+        "db/migrations/20260719_frenly_v22b_global_function_default_privileges.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260720",
+      "count": 28,
+      "paths": [
+        "db/migrations/20260720_frenly_v23_loyalty_points_tiers.sql",
+        "db/migrations/20260720_frenly_v23a_redeem_reward_anon_revoke.sql",
+        "db/migrations/20260720_frenly_v23b_redeem_reward_perm_fix.sql",
+        "db/migrations/20260720_frenly_v23c_redeem_reward_column_fix.sql",
+        "db/migrations/20260720_frenly_v23d_restore_loyalty_programs.sql",
+        "db/migrations/20260720_frenly_v23e_redeem_reward_ledger_routes.sql",
+        "db/migrations/20260720_frenly_v23f_restore_expiry_columns.sql",
+        "db/migrations/20260720_frenly_v23g_loyalty_model_consolidation.sql",
+        "db/migrations/20260720_frenly_v24_stamps_model.sql",
+        "db/migrations/20260720_frenly_v24a_redemption_idempotency.sql",
+        "db/migrations/20260720_frenly_v24b_module_dependency_registry.sql",
+        "db/migrations/20260720_frenly_v24c_import_job_foundation.sql",
+        "db/migrations/20260720_frenly_v25_draft_onboarding_loyalty.sql",
+        "db/migrations/20260720_frenly_v26_immutable_config_versions.sql",
+        "db/migrations/20260720_frenly_v27_rich_rewards.sql",
+        "db/migrations/20260720_frenly_v28_firm_reward_taxonomy.sql",
+        "db/migrations/20260720_frenly_v29_branch_overrides_custom_fields.sql",
+        "db/migrations/20260720_frenly_v30_customer_identity.sql",
+        "db/migrations/20260720_frenly_v31_customer_links_claims.sql",
+        "db/migrations/20260720_frenly_v32_customer_wallet.sql",
+        "db/migrations/20260720_frenly_v33_customer_actions_notifications.sql",
+        "db/migrations/20260720_frenly_v34_reversal_provenance.sql",
+        "db/migrations/20260720_frenly_v35_retention_recommendation_drafts.sql",
+        "db/migrations/20260720_frenly_v36_safe_draft_reward_editor.sql",
+        "db/migrations/20260720_frenly_v37_branch_override_editor_rpc.sql",
+        "db/migrations/20260720_frenly_v37b_versioned_retention_taxonomy.sql",
+        "db/migrations/20260720_frenly_v38_customer_personas_and_gates.sql",
+        "db/migrations/20260720_frenly_v39_detailed_customer_wallet.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260721",
+      "count": 5,
+      "paths": [
+        "db/migrations/20260721_frenly_v40_staff_reversal_workflows.sql",
+        "db/migrations/20260721_frenly_v41_customer_module_hardening.sql",
+        "db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql",
+        "db/migrations/20260721_frenly_v44_actionable_customer_wallet.sql",
+        "db/migrations/20260721_frenly_v45_birthday_benefits.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260722",
+      "count": 9,
+      "paths": [
+        "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql",
+        "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql",
+        "db/migrations/20260722_frenly_v47a_record_sale_overload_cleanup.sql",
+        "db/migrations/20260722_frenly_v47b_record_sale_dispatch_fix.sql",
+        "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql",
+        "db/migrations/20260722_frenly_v49_billing_projection_rpc.sql",
+        "db/migrations/20260722_frenly_v49a_lint_and_rehearsal_repairs.sql",
+        "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql",
+        "db/migrations/20260722_frenly_v50_retention_measurement.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260723",
+      "count": 9,
+      "paths": [
+        "db/migrations/20260723_frenly_v50a_sgt_birthdate_guard.sql",
+        "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql",
+        "db/migrations/20260723_frenly_v51_sale_line_items.sql",
+        "db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql",
+        "db/migrations/20260723_frenly_v51b_client_credit_history.sql",
+        "db/migrations/20260723_frenly_v52_sgt_date_normalization.sql",
+        "db/migrations/20260723_frenly_v53_visit_feedback.sql",
+        "db/migrations/20260723_frenly_v53a_wallet_review_url.sql",
+        "db/migrations/20260723_frenly_v54_f2_write_hardening.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260724",
+      "count": 22,
+      "paths": [
+        "db/migrations/20260724_frenly_v55_ps1a_authoring.sql",
+        "db/migrations/20260724_frenly_v56_ps1b_events_execution.sql",
+        "db/migrations/20260724_frenly_v57_ps1b1_price_fail_closed.sql",
+        "db/migrations/20260724_frenly_v58_ps1c_checkout_kernel.sql",
+        "db/migrations/20260724_frenly_v59_ps1c1_cart_hardening.sql",
+        "db/migrations/20260724_frenly_v60_ps1c2_execution_state.sql",
+        "db/migrations/20260724_frenly_v61_ps2a_stored_value_foundation.sql",
+        "db/migrations/20260724_frenly_v62_ps2b_shadow_reconciliation.sql",
+        "db/migrations/20260724_frenly_v63_ps2c_redemption_mechanics.sql",
+        "db/migrations/20260724_frenly_v64_ps2d_pause_controls.sql",
+        "db/migrations/20260724_frenly_v65_ps2live_plan_config.sql",
+        "db/migrations/20260724_frenly_v65a_ps2live_plan_config_hardening.sql",
+        "db/migrations/20260724_frenly_v65b_ps2live_numeric_range_guard.sql",
+        "db/migrations/20260724_frenly_v66_ps2live_topup_sale.sql",
+        "db/migrations/20260724_frenly_v66a_ps2live_billing_view_secinvoker.sql",
+        "db/migrations/20260724_frenly_v66b_program_rules_secinvoker.sql",
+        "db/migrations/20260724_frenly_v67_ps2live_checkout_tender.sql",
+        "db/migrations/20260724_frenly_v68a_chargeback_correction.sql",
+        "db/migrations/20260724_frenly_v68b_sv_reversal_netting.sql",
+        "db/migrations/20260724_frenly_v68c_customer_gift_cards.sql",
+        "db/migrations/20260724_frenly_v69_controlled_cutover.sql",
+        "db/migrations/20260724_frenly_v70_legacy_non_overlap.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260726",
+      "count": 18,
+      "paths": [
+        "db/migrations/20260726_frenly_v71_customer_legal_manifest.sql",
+        "db/migrations/20260726_frenly_v72_booking_identity_sync.sql",
+        "db/migrations/20260726_frenly_v73_booking_lifecycle.sql",
+        "db/migrations/20260726_frenly_v74_staff_module_permissions.sql",
+        "db/migrations/20260726_nestly_v75_sector_entitlements.sql",
+        "db/migrations/20260726_nestly_v76_sme_crm.sql",
+        "db/migrations/20260726_nestly_v77_stripe_billing.sql",
+        "db/migrations/20260726_nestly_v78_consultant_commissions.sql",
+        "db/migrations/20260726_nestly_v79_conversion_onboarding.sql",
+        "db/migrations/20260726_nestly_v80_customer_legal_manifest.sql",
+        "db/migrations/20260726_nestly_v81_customer_relationship_sync.sql",
+        "db/migrations/20260726_nestly_v82_enterprise_intelligence.sql",
+        "db/migrations/20260726_nestly_v83_customer_intelligence.sql",
+        "db/migrations/20260726_nestly_v84_fast_sale_corrections.sql",
+        "db/migrations/20260726_nestly_v85_conversion_guard_repair.sql",
+        "db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql",
+        "db/migrations/20260726_nestly_v87_overdue_appointment_amendments.sql",
+        "db/migrations/20260726_nestly_v88_platform_firm_onboarding.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260727",
+      "count": 3,
+      "paths": [
+        "db/migrations/20260727_nestly_v89_customer_qr_redemption_platform_access.sql",
+        "db/migrations/20260727_nestly_v90_production_readiness.sql",
+        "db/migrations/20260727_nestly_v91_customer_game_notifications.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260728",
+      "count": 8,
+      "paths": [
+        "db/migrations/20260728_nestly_v92_customer_privacy_marketing_manifest.sql",
+        "db/migrations/20260728_nestly_v92_synthetic_reporting_isolation.sql",
+        "db/migrations/20260728_nestly_v93_branch_scoped_merchant_redemption.sql",
+        "db/migrations/20260728_nestly_v93_customer_notification_constraints.sql",
+        "db/migrations/20260728_nestly_v94_platform_control_intelligence.sql",
+        "db/migrations/20260728_nestly_v94_platform_firm_snapshot_null_guard.sql",
+        "db/migrations/20260728_nestly_v95_bilingual_programmes.sql",
+        "db/migrations/20260728_nestly_v95_customer_web_push.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260729",
+      "count": 14,
+      "paths": [
+        "db/migrations/20260729_nestly_v100_product_adoption_events.sql",
+        "db/migrations/20260729_nestly_v102_package_checkout_entitlements.sql",
+        "db/migrations/20260729_nestly_v103_customer_summary_business_identity.sql",
+        "db/migrations/20260729_nestly_v104_marketing_offers.sql",
+        "db/migrations/20260729_nestly_v105_admin_task_closure.sql",
+        "db/migrations/20260729_nestly_v106_revenue_truth_foundation.sql",
+        "db/migrations/20260729_nestly_v107_customer_lifecycle_contract.sql",
+        "db/migrations/20260729_nestly_v108_measured_bringback_loop.sql",
+        "db/migrations/20260729_nestly_v109_economics_driver_sector_policy.sql",
+        "db/migrations/20260729_nestly_v110_growth_delivery_lifecycle.sql",
+        "db/migrations/20260729_nestly_v111_customer_identity_governance.sql",
+        "db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql",
+        "db/migrations/20260729_nestly_v97_workspace_interface_localization.sql",
+        "db/migrations/20260729_nestly_v99_campaign_truth.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260730",
+      "count": 6,
+      "paths": [
+        "db/migrations/20260730_nestly_v112_concurrent_replay_delivery_backoff.sql",
+        "db/migrations/20260730_nestly_v113_effective_identity_consumers.sql",
+        "db/migrations/20260730_nestly_v114_traceable_growth_costs.sql",
+        "db/migrations/20260730_nestly_v115_effective_module_projection.sql",
+        "db/migrations/20260730_nestly_v116_classic_reward_projection.sql",
+        "db/migrations/20260730_nestly_v117_effective_loyalty_boundaries.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260731",
+      "count": 4,
+      "paths": [
+        "db/migrations/20260731_nestly_v120_staff_blocked_times.sql",
+        "db/migrations/20260731_nestly_v121_effective_loyalty_sale_earn_boundary.sql",
+        "db/migrations/20260731_nestly_v122_owner_seven_workflows.sql",
+        "db/migrations/20260731_nestly_v123_module_button_readiness.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260801",
+      "count": 9,
+      "paths": [
+        "db/migrations/20260801_nestly_v124_stripe_launch_pricing.sql",
+        "db/migrations/20260801_nestly_v125_no_gst_and_native_store_readiness.sql",
+        "db/migrations/20260801_nestly_v127_rewards_overview_birthday_reader.sql",
+        "db/migrations/20260801_nestly_v128_simple_rewards_recommender.sql",
+        "db/migrations/20260801_nestly_v129_trial_test_ux.sql",
+        "db/migrations/20260801_nestly_v130_self_serve_business_onboarding.sql",
+        "db/migrations/20260801_nestly_v131_store_publication_readiness.sql",
+        "db/migrations/20260801_nestly_v132_release_gap_closure.sql",
+        "db/migrations/20260801_nestly_v133_operational_closure.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260802",
+      "count": 3,
+      "paths": [
+        "db/migrations/20260802_nestly_v134_peekaa_brand_legal.sql",
+        "db/migrations/20260802_nestly_v138_auth_grow_closure.sql",
+        "db/migrations/20260802_nestly_v142_connect_paynow_pos.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260803",
+      "count": 6,
+      "paths": [
+        "db/migrations/20260803_nestly_v144_self_serve_subscription_consent.sql",
+        "db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql",
+        "db/migrations/20260803_nestly_v146_platform_finance.sql",
+        "db/migrations/20260803_nestly_v147_platform_accounting.sql",
+        "db/migrations/20260803_nestly_v148_owner_launch_closure.sql",
+        "db/migrations/20260803_nestly_v151_mobile_staff_invites.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260804",
+      "count": 4,
+      "paths": [
+        "db/migrations/20260804_nestly_v155_multibranch_foundation.sql",
+        "db/migrations/20260804_nestly_v156_subscription_operations_crm.sql",
+        "db/migrations/20260804_nestly_v156a_v151_invite_search_path_hardening.sql",
+        "db/migrations/20260804_nestly_v158_catalogue_media.sql"
+      ]
+    }
+  ],
   "items": [
     {
       "order": 1,
-      "kind": "catalog-applied",
-      "version": "20260718152809",
-      "name": "remote_schema",
-      "path": "supabase/migrations/20260718152809_remote_schema.sql",
-      "octetLength": 3580,
-      "sha256": "98e3221fb64ff06e972f8ca19127e3d091a7baf43f0a5d8526f93715a5779150",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260716075908_frenly_init.sql",
+      "semanticVersion": "v1",
+      "proposedDeployVersion": "20260722000001",
+      "sha256": "548917d5de138daf56eccbd87e9c8a493baceffe0a51b4e15cff1704a4ebecf7"
     },
     {
       "order": 2,
-      "kind": "catalog-applied",
-      "version": "20260718175010",
-      "name": "enable_pg_cron",
-      "path": "supabase/migrations/20260718175010_enable_pg_cron.sql",
-      "octetLength": 39,
-      "sha256": "71d8601d9b4f41b1b728d0dd5931f3ff1929f98438732cba4b0b34c24d257a0a",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260716084652_frenly_v2_saas.sql",
+      "semanticVersion": "v2",
+      "proposedDeployVersion": "20260722000002",
+      "sha256": "eafd8da21817ca4a0a2c6ec55d67782e662ad89ea45907fcdaf6b08591d5ad56"
     },
     {
       "order": 3,
-      "kind": "catalog-applied",
-      "version": "20260718175336",
-      "name": "frenly_init",
-      "path": "supabase/migrations/20260718175336_frenly_init.sql",
-      "octetLength": 10721,
-      "sha256": "3e29faced6d9846400ac703eeb0a4c4df100c71576ef1d5ed29727a6aa61e053",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v3_engine",
+      "semanticVersion": "v3",
+      "proposedDeployVersion": "20260722000003",
+      "exactEvidence": "missing"
     },
     {
       "order": 4,
-      "kind": "catalog-applied",
-      "version": "20260718175347",
-      "name": "lock_down_rls_auto_enable",
-      "path": "supabase/migrations/20260718175347_lock_down_rls_auto_enable.sql",
-      "octetLength": 85,
-      "sha256": "96adf125e85b96b854481d085b23d4a383e4dacddebc31cf50ff6def72410f9f",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v4_onboarding_rpc",
+      "semanticVersion": "v4",
+      "proposedDeployVersion": "20260722000004",
+      "exactEvidence": "missing"
     },
     {
       "order": 5,
-      "kind": "catalog-applied",
-      "version": "20260718175426",
-      "name": "frenly_v2_saas",
-      "path": "supabase/migrations/20260718175426_frenly_v2_saas.sql",
-      "octetLength": 13330,
-      "sha256": "c4ce616428e0ccf46039c1558140d3e7bc170232c2f39ef33816e350a49bc252",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v5_memberships_giftcards",
+      "semanticVersion": "v5",
+      "proposedDeployVersion": "20260722000005",
+      "exactEvidence": "missing"
     },
     {
       "order": 6,
-      "kind": "catalog-applied",
-      "version": "20260718175514",
-      "name": "frenly_v3_engine",
-      "path": "supabase/migrations/20260718175514_frenly_v3_engine.sql",
-      "octetLength": 17116,
-      "sha256": "af1d1f1a7bbc6644a7e06c8cae88c3874db7fa421c8aabef78e7907f99daacd3",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v6_ops_modules",
+      "semanticVersion": "v6",
+      "proposedDeployVersion": "20260722000006",
+      "exactEvidence": "missing"
     },
     {
       "order": 7,
-      "kind": "catalog-applied",
-      "version": "20260718175527",
-      "name": "frenly_v4_onboarding_rpc",
-      "path": "supabase/migrations/20260718175527_frenly_v4_onboarding_rpc.sql",
-      "octetLength": 1625,
-      "sha256": "4d1ab575bf74418339b43731c55aac95e8b4f461b5279b2447c0a8283efab239",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v7_team_brand",
+      "semanticVersion": "v7",
+      "proposedDeployVersion": "20260722000007",
+      "exactEvidence": "missing"
     },
     {
       "order": 8,
-      "kind": "catalog-applied",
-      "version": "20260718175707",
-      "name": "frenly_v5_memberships_giftcards",
-      "path": "supabase/migrations/20260718175707_frenly_v5_memberships_giftcards.sql",
-      "octetLength": 12458,
-      "sha256": "9264e6c9a2a28ed91d9446dd1541a82fb12bb4afb7f19f488aaf15a8b1c1cbd6",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260716_frenly_v8_requests_consumption.sql",
+      "semanticVersion": "v8",
+      "proposedDeployVersion": "20260722000008",
+      "sha256": "f7c5b6f6339600d5b5163b4622443e6ef8ffddf2ade6deea63dc3d7aacb8dcdf"
     },
     {
       "order": 9,
-      "kind": "catalog-applied",
-      "version": "20260718175749",
-      "name": "frenly_v6_ops_modules",
-      "path": "supabase/migrations/20260718175749_frenly_v6_ops_modules.sql",
-      "octetLength": 11370,
-      "sha256": "299a499cdee2e57d8d8305ee87b4dfd17c56ce51ca761fa263dc63a70b70613a",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v9_giftcard_revenue.sql",
+      "semanticVersion": "v9",
+      "proposedDeployVersion": "20260722000009",
+      "sha256": "fa98ff7aad23a073e17a237feba7f4dc487007e11798dc1fc3708cbec32f74e0"
     },
     {
       "order": 10,
-      "kind": "catalog-applied",
-      "version": "20260718175847",
-      "name": "frenly_v7_team_brand",
-      "path": "supabase/migrations/20260718175847_frenly_v7_team_brand.sql",
-      "octetLength": 4179,
-      "sha256": "842e7cf1103d26d08aae7b35739f66484d63c806e1783cfb9c4f1cafbb3c2fa9",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v10_sale_policy.sql",
+      "semanticVersion": "v10",
+      "proposedDeployVersion": "20260722000010",
+      "sha256": "3e2f8a73d7d270e488cb60e4cacf2fc45412f8553a1683d5b250a4c347ebc4cb"
     },
     {
       "order": 11,
-      "kind": "catalog-applied",
-      "version": "20260718175913",
-      "name": "frenly_v8_requests_consumption",
-      "path": "supabase/migrations/20260718175913_frenly_v8_requests_consumption.sql",
-      "octetLength": 8042,
-      "sha256": "900f3bd703316053f054ef437fb5ee488c2c5ccf60d9888ded46a8d4e7067c0f",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v10_1_policy_snapshot.sql",
+      "semanticVersion": "v10.1",
+      "proposedDeployVersion": "20260722000011",
+      "sha256": "446239c5a2ff06d274ada97404473bb77386a793df9936e45f737138be5ee7b4"
     },
     {
       "order": 12,
-      "kind": "catalog-applied",
-      "version": "20260718175936",
-      "name": "frenly_v9_giftcard_revenue",
-      "path": "supabase/migrations/20260718175936_frenly_v9_giftcard_revenue.sql",
-      "octetLength": 5370,
-      "sha256": "8a8d872f57bb291396a2bd65dc0e2bfabd1e7f6d74ba608f752ef8cbd864f50d",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v11a_branches_staff_services.sql",
+      "semanticVersion": "v11a",
+      "proposedDeployVersion": "20260722000012",
+      "sha256": "3f390660077006838432aa6661e9cce3d617390f63d4abc515e1e9303710bac6"
     },
     {
       "order": 13,
-      "kind": "catalog-applied",
-      "version": "20260718180019",
-      "name": "frenly_v10_sale_policy",
-      "path": "supabase/migrations/20260718180019_frenly_v10_sale_policy.sql",
-      "octetLength": 10974,
-      "sha256": "5b425ef2e13541247b09f553b491090da2691e210630cd2404fa84e2f7e64910",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v11b_money.sql",
+      "semanticVersion": "v11b",
+      "proposedDeployVersion": "20260722000013",
+      "sha256": "6f1eece963334c9defdfcbb61757eb40fe6b36973f2afdeecc5a492739323237"
     },
     {
       "order": 14,
-      "kind": "catalog-applied",
-      "version": "20260718180110",
-      "name": "frenly_v10_1_policy_snapshot",
-      "path": "supabase/migrations/20260718180110_frenly_v10_1_policy_snapshot.sql",
-      "octetLength": 16621,
-      "sha256": "a586005d35d4767adee1e879443acc37685f124502f734079e9f214cd6b9171f",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v11c_revoke_truncate",
+      "semanticVersion": "v11c",
+      "proposedDeployVersion": "20260722000014",
+      "exactEvidence": "missing"
     },
     {
       "order": 15,
-      "kind": "catalog-applied",
-      "version": "20260718180155",
-      "name": "frenly_v11a_branches_staff_services",
-      "path": "supabase/migrations/20260718180155_frenly_v11a_branches_staff_services.sql",
-      "octetLength": 16257,
-      "sha256": "e8d6b62f861a5573b5f18595d3ebcb159235ea2388a6edb87cb55040582cfcae",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v12a_completion_staff.sql",
+      "semanticVersion": "v12a",
+      "proposedDeployVersion": "20260722000015",
+      "sha256": "9200bbfb20afa23d712a746a2b1f5f5200ea01d43c0c3e28d0d348e29d33c3f4"
     },
     {
       "order": 16,
-      "kind": "catalog-applied",
-      "version": "20260718180329",
-      "name": "frenly_v11b_money",
-      "path": "supabase/migrations/20260718180329_frenly_v11b_money.sql",
-      "octetLength": 32581,
-      "sha256": "2d784d4c4fcc1f4ba7fae7ddf26cdeca966578b7be5b68e39ec4e977a8109318",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260717_frenly_v12_commission_snapshot.sql",
+      "semanticVersion": "v12",
+      "proposedDeployVersion": "20260722000016",
+      "sha256": "431b54737d3e034f70dadab4a07545210c2ea000818410ed7045a57d64caf967"
     },
     {
       "order": 17,
-      "kind": "catalog-applied",
-      "version": "20260718180339",
-      "name": "frenly_v11c_revoke_truncate",
-      "path": "supabase/migrations/20260718180339_frenly_v11c_revoke_truncate.sql",
-      "octetLength": 215,
-      "sha256": "d22b87f4625e7a193241eafcc74d44086df38b19619b680ec42d1d5c02b16cc9",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260718_frenly_v13_flat_commission.sql",
+      "semanticVersion": "v13",
+      "proposedDeployVersion": "20260722000017",
+      "sha256": "340dff923674498bf81843b1c631ef54fe5d521aa97b6c496e1c8f5014a81d46"
     },
     {
       "order": 18,
-      "kind": "catalog-applied",
-      "version": "20260718180403",
-      "name": "frenly_v12a_completion_staff",
-      "path": "supabase/migrations/20260718180403_frenly_v12a_completion_staff.sql",
-      "octetLength": 2573,
-      "sha256": "97d805504f877a1ebef84aa64e8a56adf88cf7cf9cfdf5d689bc9ca8f08696ab",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v14a_superadmin_roles_phone",
+      "semanticVersion": "v14a",
+      "proposedDeployVersion": "20260722000018",
+      "exactEvidence": "missing"
     },
     {
       "order": 19,
-      "kind": "catalog-applied",
-      "version": "20260718180431",
-      "name": "frenly_v12_commission_snapshot",
-      "path": "supabase/migrations/20260718180431_frenly_v12_commission_snapshot.sql",
-      "octetLength": 7801,
-      "sha256": "3bdfcb91c968c7092831e1ff629d52f9be64bc4861de80c50f1c58bcf84a1b48",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v14b_billing_module_perms",
+      "semanticVersion": "v14b",
+      "proposedDeployVersion": "20260722000019",
+      "exactEvidence": "missing"
     },
     {
       "order": 20,
-      "kind": "catalog-applied",
-      "version": "20260718180512",
-      "name": "frenly_v14a_superadmin_roles_phone",
-      "path": "supabase/migrations/20260718180512_frenly_v14a_superadmin_roles_phone.sql",
-      "octetLength": 7474,
-      "sha256": "f2ea10c5410fa5e26f647a0034994e19a1f94ca0596da9a58cb322fea788a77e",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v14c_customer_signup_phone_till",
+      "semanticVersion": "v14c",
+      "proposedDeployVersion": "20260722000020",
+      "exactEvidence": "missing"
     },
     {
       "order": 21,
-      "kind": "catalog-applied",
-      "version": "20260718180548",
-      "name": "frenly_v14b_billing_module_perms",
-      "path": "supabase/migrations/20260718180548_frenly_v14b_billing_module_perms.sql",
-      "octetLength": 11823,
-      "sha256": "c9958b49f5bc83b066829abb400294f56fd0d4e0ed6d7a2da9fe518783362cea",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v14d_harden_search_path",
+      "semanticVersion": "v14d",
+      "proposedDeployVersion": "20260722000021",
+      "exactEvidence": "missing"
     },
     {
       "order": 22,
-      "kind": "catalog-applied",
-      "version": "20260718180644",
-      "name": "frenly_v14c_customer_signup_phone_till",
-      "path": "supabase/migrations/20260718180644_frenly_v14c_customer_signup_phone_till.sql",
-      "octetLength": 12649,
-      "sha256": "f3d67588f8414fd5f2f64fb2182887721b5e04888057cd9c2e4a1fe271041342",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v15a_booking_capacity_schema",
+      "semanticVersion": "v15a",
+      "proposedDeployVersion": "20260722000022",
+      "exactEvidence": "missing"
     },
     {
       "order": 23,
-      "kind": "catalog-applied",
-      "version": "20260718180659",
-      "name": "frenly_v14d_harden_search_path",
-      "path": "supabase/migrations/20260718180659_frenly_v14d_harden_search_path.sql",
-      "octetLength": 1738,
-      "sha256": "ba67940b2640c1a601595d3580e53b6ddddc0bdaa2c6f69ae9e2eb7a15850b16",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v15b_booking_flows_notify_cron",
+      "semanticVersion": "v15b",
+      "proposedDeployVersion": "20260722000023",
+      "exactEvidence": "missing"
     },
     {
       "order": 24,
-      "kind": "catalog-applied",
-      "version": "20260718180738",
-      "name": "frenly_v15a_booking_capacity_schema",
-      "path": "supabase/migrations/20260718180738_frenly_v15a_booking_capacity_schema.sql",
-      "octetLength": 8617,
-      "sha256": "d7fe834fb69cc70cd5747e2511a6259b7136086f5989a42aafb72a126a2823af",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v15c_convert_idempotency_guard",
+      "semanticVersion": "v15c",
+      "proposedDeployVersion": "20260722000024",
+      "exactEvidence": "missing"
     },
     {
       "order": 25,
-      "kind": "catalog-applied",
-      "version": "20260718180853",
-      "name": "frenly_v15b_booking_flows_notify_cron",
-      "path": "supabase/migrations/20260718180853_frenly_v15b_booking_flows_notify_cron.sql",
-      "octetLength": 23517,
-      "sha256": "1a6b3e6a54fdf492732b775c79ec749824f1ef25b91a8d0b3272f3e9dd721aa2",
-      "provenance": "catalog-statements"
+      "kind": "missing-history-reservation",
+      "recoveryId": "frenly_v15d_booking_consent",
+      "semanticVersion": "v15d",
+      "proposedDeployVersion": "20260722000025",
+      "exactEvidence": "missing"
     },
     {
       "order": 26,
-      "kind": "catalog-applied",
-      "version": "20260718180906",
-      "name": "frenly_v15c_convert_idempotency_guard",
-      "path": "supabase/migrations/20260718180906_frenly_v15c_convert_idempotency_guard.sql",
-      "octetLength": 1612,
-      "sha256": "abac0fa523d9b6706446fd532fe17290c159e438246e8b93b91ab59464536a2d",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260718_frenly_v14_platform.sql",
+      "semanticVersion": "v14",
+      "proposedDeployVersion": "20260722000026",
+      "sha256": "31c96b8a5de24d5877d2783b4f8c24678e5b123678238ac289f1812e234b8952"
     },
     {
       "order": 27,
-      "kind": "catalog-applied",
-      "version": "20260718180946",
-      "name": "frenly_v15d_booking_consent",
-      "path": "supabase/migrations/20260718180946_frenly_v15d_booking_consent.sql",
-      "octetLength": 9442,
-      "sha256": "6db1a72fd54e3edbc504f17e0e8bd4cf172585bb77c7ba8eb1706eccfaa3d8c0",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260718_frenly_v17_branch_visibility.sql",
+      "semanticVersion": "v17",
+      "proposedDeployVersion": "20260722000027",
+      "sha256": "b69be47aa6f1642d6916e4d56a5f5fccaffab83b365cc6d6fa6509e06423b963"
     },
     {
       "order": 28,
-      "kind": "catalog-applied",
-      "version": "20260718181016",
-      "name": "frenly_v17_branch_visibility",
-      "path": "supabase/migrations/20260718181016_frenly_v17_branch_visibility.sql",
-      "octetLength": 7838,
-      "sha256": "57c783981f9d3b416bfde3399c231924fada1fe371d2b81b18a22a30c73fb4d9",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260718135940_frenly_v18_scalable_reporting.sql",
+      "semanticVersion": "v18",
+      "proposedDeployVersion": "20260722000028",
+      "sha256": "d1f92b123110bcf7e67a25416c21c51f84464daf1300b2f0e59a981f711e46bb"
     },
     {
       "order": 29,
-      "kind": "catalog-applied",
-      "version": "20260719032517",
-      "name": "frenly_v18_scalable_reporting",
-      "path": "supabase/migrations/20260719032517_frenly_v18_scalable_reporting.sql",
-      "octetLength": 10375,
-      "sha256": "488fbee3a572d98d92718362fb9988265d0d962451a8bc39f42d38890af8133d",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260718180602_frenly_v19_public_gateway_security.sql",
+      "semanticVersion": "v19",
+      "proposedDeployVersion": "20260722000029",
+      "sha256": "0089b9cf2e37b59af7eefd66d24bc1e175d5f906ba0e21801f9b939109acca54"
     },
     {
       "order": 30,
-      "kind": "catalog-applied",
-      "version": "20260719032658",
-      "name": "frenly_v19_public_gateway_security",
-      "path": "supabase/migrations/20260719032658_frenly_v19_public_gateway_security.sql",
-      "octetLength": 23348,
-      "sha256": "acdf993c0607523017454672f8167162161cafd930194aad8a868d406e32c082",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v20_financial_engine.sql",
+      "semanticVersion": "v20",
+      "proposedDeployVersion": "20260722000030",
+      "sha256": "dd9bf245b4439c9a42989360df12aa9ad63f5a5197d3eebf58479c816e402f2e"
     },
     {
       "order": 31,
-      "kind": "catalog-applied",
-      "version": "20260719034201",
-      "name": "frenly_v20_financial_engine",
-      "path": "supabase/migrations/20260719034201_frenly_v20_financial_engine.sql",
-      "octetLength": 156936,
-      "sha256": "8d9c982c81d9d3d3206020a26c71716e4fea17550f24c8d6088e9236f3d3ac68",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v21_security_hardening.sql",
+      "semanticVersion": "v21",
+      "proposedDeployVersion": "20260722000031",
+      "sha256": "ee95bfc3383470535a1979769e487475aff3db71d824a10b1a4dce59784732e2"
     },
     {
       "order": 32,
-      "kind": "catalog-applied",
-      "version": "20260719034347",
-      "name": "frenly_v21_security_hardening",
-      "path": "supabase/migrations/20260719034347_frenly_v21_security_hardening.sql",
-      "octetLength": 7876,
-      "sha256": "b7a5cbd74e45da153ab068a4eb884cca31847a73c584b3ade63265fff4f644b6",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v22_flat_commission_reconciliation.sql",
+      "semanticVersion": "v22",
+      "proposedDeployVersion": "20260722000032",
+      "sha256": "b112bc14094ec9b70bbe86b7a929d31c17fc41c1d664101bfac6f40b42a3d2d8"
     },
     {
       "order": 33,
-      "kind": "catalog-applied",
-      "version": "20260719100654",
-      "name": "frenly_v13_flat_commission",
-      "path": "supabase/migrations/20260719100654_frenly_v13_flat_commission.sql",
-      "octetLength": 7601,
-      "sha256": "61167df9e79e06c958e6e3d6bbf984888cc7672903ecdbc7c940a009cc0b59f1",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v22a_app_default_privileges.sql",
+      "semanticVersion": "v22a",
+      "proposedDeployVersion": "20260722000033",
+      "sha256": "2b0787753e4c3c6b10aff11eb28471e32b77b481dc664c16dd06ec2dd2ac27e6"
     },
     {
       "order": 34,
-      "kind": "catalog-applied",
-      "version": "20260719154139",
-      "name": "frenly_v22_flat_commission_reconciliation",
-      "path": "supabase/migrations/20260719154139_frenly_v22_flat_commission_reconciliation.sql",
-      "octetLength": 1263,
-      "sha256": "1b445d820bd9a2cd3f2d35397b50c60857d5f3e22c140c467fb40c9a0f94d97d",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260719_frenly_v22b_global_function_default_privileges.sql",
+      "semanticVersion": "v22b",
+      "proposedDeployVersion": "20260722000034",
+      "sha256": "daf0f658e4f998b5bd2fdb516c9fd6f949a512eb8f1b2cb79223af58dedf1b35"
     },
     {
       "order": 35,
-      "kind": "catalog-applied",
-      "version": "20260719155403",
-      "name": "frenly_v22a_app_default_privileges",
-      "path": "supabase/migrations/20260719155403_frenly_v22a_app_default_privileges.sql",
-      "octetLength": 99,
-      "sha256": "6f1f7af9e68f0a957141fb2c0b0b9a34c0f35a347518d27e9d35b5ead35f1621",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23_loyalty_points_tiers.sql",
+      "semanticVersion": "v23",
+      "proposedDeployVersion": "20260722000035",
+      "sha256": "84c976cb134ed191d68269d5e39adb00d836d917655c273c047ef78f0c33e7db"
     },
     {
       "order": 36,
-      "kind": "catalog-applied",
-      "version": "20260719155614",
-      "name": "frenly_v22b_global_function_default_privileges",
-      "path": "supabase/migrations/20260719155614_frenly_v22b_global_function_default_privileges.sql",
-      "octetLength": 85,
-      "sha256": "346a6b536aa535fe3ba34d576d413136d059141466ebe514c12d23a9089f9dd2",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23a_redeem_reward_anon_revoke.sql",
+      "semanticVersion": "v23a",
+      "proposedDeployVersion": "20260722000036",
+      "sha256": "5bef66094730f9a84522ecd63496f8e7b5d0d979f65766deac4be423ae6d4044"
     },
     {
       "order": 37,
-      "kind": "catalog-applied",
-      "version": "20260719174110",
-      "name": "frenly_v23_loyalty_points_tiers",
-      "path": "supabase/migrations/20260719174110_frenly_v23_loyalty_points_tiers.sql",
-      "octetLength": 7002,
-      "sha256": "bc105ebe4fb083d7c32bd0abedb1578289c708fc2af80d73016fbe4a5e86301f",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23b_redeem_reward_perm_fix.sql",
+      "semanticVersion": "v23b",
+      "proposedDeployVersion": "20260722000037",
+      "sha256": "0b338f90492660bac35b0d5327a61bbd3fdf9c928c42a636d7dafcd6390ab079"
     },
     {
       "order": 38,
-      "kind": "catalog-applied",
-      "version": "20260719174309",
-      "name": "frenly_v23a_redeem_reward_anon_revoke",
-      "path": "supabase/migrations/20260719174309_frenly_v23a_redeem_reward_anon_revoke.sql",
-      "octetLength": 90,
-      "sha256": "ec69d08b4f2dd4bfd3356005b6e1578ea2bff4fafbc2790fb36a2042844e37f2",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23c_redeem_reward_column_fix.sql",
+      "semanticVersion": "v23c",
+      "proposedDeployVersion": "20260722000038",
+      "sha256": "596f57ba6d3e1de568f533e94070ca5e2682dabc1952917e03f815feef9233f7"
     },
     {
       "order": 39,
-      "kind": "catalog-applied",
-      "version": "20260719174612",
-      "name": "frenly_v23b_redeem_reward_perm_fix",
-      "path": "supabase/migrations/20260719174612_frenly_v23b_redeem_reward_perm_fix.sql",
-      "octetLength": 2189,
-      "sha256": "579c990e9efa0a50aeeaa51ee9d625c9d66d3e5b60b1abd7023b2e9aa4af4654",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23d_restore_loyalty_programs.sql",
+      "semanticVersion": "v23d",
+      "proposedDeployVersion": "20260722000039",
+      "sha256": "90d12dc38e6d08d7242147ecdf576798cab3b925b97a285fc98a9bd889529dcc"
     },
     {
       "order": 40,
-      "kind": "catalog-applied",
-      "version": "20260719174754",
-      "name": "frenly_v23c_redeem_reward_column_fix",
-      "path": "supabase/migrations/20260719174754_frenly_v23c_redeem_reward_column_fix.sql",
-      "octetLength": 2208,
-      "sha256": "9d74b8c71d3ea3c6801c692ced8e839a356b078ec418747f9f4a0fc05165273b",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23e_redeem_reward_ledger_routes.sql",
+      "semanticVersion": "v23e",
+      "proposedDeployVersion": "20260722000040",
+      "sha256": "6b041a00ab6eb80bb259acac4fd98dc14386f4e61ca7d93dcea78ffa110b37d7"
     },
     {
       "order": 41,
-      "kind": "catalog-applied",
-      "version": "20260719175305",
-      "name": "frenly_v23d_restore_loyalty_programs",
-      "path": "supabase/migrations/20260719175305_frenly_v23d_restore_loyalty_programs.sql",
-      "octetLength": 1633,
-      "sha256": "0ff30a76d8e4dc95a374bc5ca833e16d4e716f46603666d10cebc6ef54f1ff7d",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23f_restore_expiry_columns.sql",
+      "semanticVersion": "v23f",
+      "proposedDeployVersion": "20260722000041",
+      "sha256": "0219c7a949f0d900548d406c3dc9e092b416e971dc91e32cc4cd3bd31cf36b78"
     },
     {
       "order": 42,
-      "kind": "catalog-applied",
-      "version": "20260719175525",
-      "name": "frenly_v23e_redeem_reward_ledger_routes",
-      "path": "supabase/migrations/20260719175525_frenly_v23e_redeem_reward_ledger_routes.sql",
-      "octetLength": 2744,
-      "sha256": "a2464fc10d9e4c64c619f85039b05ccb7db7a3d3e566076b11b1b76fbf1c8868",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v23g_loyalty_model_consolidation.sql",
+      "semanticVersion": "v23g",
+      "proposedDeployVersion": "20260722000042",
+      "sha256": "7a1bfeafc77fae4937d8b4ea6407c1a8b3798bd2bb4a645bc4472db4a5561d0d"
     },
     {
       "order": 43,
-      "kind": "catalog-applied",
-      "version": "20260719175826",
-      "name": "frenly_v23f_restore_expiry_columns",
-      "path": "supabase/migrations/20260719175826_frenly_v23f_restore_expiry_columns.sql",
-      "octetLength": 209,
-      "sha256": "9738811d9af5d93b1dd0d9f194f6762d26b0a6dfe96db5fce2620c041db7902f",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v24_stamps_model.sql",
+      "semanticVersion": "v24",
+      "proposedDeployVersion": "20260722000043",
+      "sha256": "0c92ca4ffaa7aa76e7889f47f52c9584cf488659cc9ab4a06b61065ebdb652e9"
     },
     {
       "order": 44,
-      "kind": "catalog-applied",
-      "version": "20260719185223",
-      "name": "frenly_v23g_loyalty_model_consolidation",
-      "path": "supabase/migrations/20260719185223_frenly_v23g_loyalty_model_consolidation.sql",
-      "octetLength": 17675,
-      "sha256": "c409f20f1bee94b1708da6fb08314785658a43934a0db5859aa464afc8428194",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v24a_redemption_idempotency.sql",
+      "semanticVersion": "v24a",
+      "proposedDeployVersion": "20260722000044",
+      "sha256": "33c4a98e74be33705e40552557b6727a24d6142789e9b2d8bd272b9c4ea9c4bb"
     },
     {
       "order": 45,
-      "kind": "catalog-applied",
-      "version": "20260719190540",
-      "name": "frenly_v24_stamps_model",
-      "path": "supabase/migrations/20260719190540_frenly_v24_stamps_model.sql",
-      "octetLength": 12748,
-      "sha256": "00674aa8d7b249229fefd7aaede1c471aba74d6b35dbe8be749bbaf17da8a909",
-      "provenance": "catalog-statements"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v24b_module_dependency_registry.sql",
+      "semanticVersion": "v24b",
+      "proposedDeployVersion": "20260722000045",
+      "sha256": "c6764dfabad6ef3bf9cc8220dfbb85a1ab33c9d1ec798ae772b1c9dc3a52aa33"
     },
     {
       "order": 46,
-      "kind": "pending",
-      "version": "20260721000001",
-      "name": "frenly_v24a_redemption_idempotency",
-      "path": "supabase/migrations/20260721000001_frenly_v24a_redemption_idempotency.sql",
-      "octetLength": 18470,
-      "sha256": "33c4a98e74be33705e40552557b6727a24d6142789e9b2d8bd272b9c4ea9c4bb",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v24c_import_job_foundation.sql",
+      "semanticVersion": "v24c",
+      "proposedDeployVersion": "20260722000046",
+      "sha256": "4b32a1cdbe51b7c968557bc892a499fc0148f187b23eab26bc9032f73afb5763"
     },
     {
       "order": 47,
-      "kind": "pending",
-      "version": "20260721000002",
-      "name": "frenly_v24b_module_dependency_registry",
-      "path": "supabase/migrations/20260721000002_frenly_v24b_module_dependency_registry.sql",
-      "octetLength": 6905,
-      "sha256": "c6764dfabad6ef3bf9cc8220dfbb85a1ab33c9d1ec798ae772b1c9dc3a52aa33",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v25_draft_onboarding_loyalty.sql",
+      "semanticVersion": "v25",
+      "proposedDeployVersion": "20260722000047",
+      "sha256": "5afc5e8739387404554bc860ecd681c6769ac94b292ed1068ae9e4804b191dd0"
     },
     {
       "order": 48,
-      "kind": "pending",
-      "version": "20260721000003",
-      "name": "frenly_v24c_import_job_foundation",
-      "path": "supabase/migrations/20260721000003_frenly_v24c_import_job_foundation.sql",
-      "octetLength": 26138,
-      "sha256": "4b32a1cdbe51b7c968557bc892a499fc0148f187b23eab26bc9032f73afb5763",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v26_immutable_config_versions.sql",
+      "semanticVersion": "v26",
+      "proposedDeployVersion": "20260722000048",
+      "sha256": "790d71c780807e5c8beba548eaa8945bfa1e8a033e46d1fce6dbac9c91a0d958"
     },
     {
       "order": 49,
-      "kind": "pending",
-      "version": "20260721000004",
-      "name": "frenly_v25_draft_onboarding_loyalty",
-      "path": "supabase/migrations/20260721000004_frenly_v25_draft_onboarding_loyalty.sql",
-      "octetLength": 3889,
-      "sha256": "5afc5e8739387404554bc860ecd681c6769ac94b292ed1068ae9e4804b191dd0",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v27_rich_rewards.sql",
+      "semanticVersion": "v27",
+      "proposedDeployVersion": "20260722000049",
+      "sha256": "d9d541d147d1c3622006e55394f0992776a29b4dc9cc1adf4cd0c5c8eead1909"
     },
     {
       "order": 50,
-      "kind": "pending",
-      "version": "20260721000005",
-      "name": "frenly_v26_immutable_config_versions",
-      "path": "supabase/migrations/20260721000005_frenly_v26_immutable_config_versions.sql",
-      "octetLength": 25703,
-      "sha256": "790d71c780807e5c8beba548eaa8945bfa1e8a033e46d1fce6dbac9c91a0d958",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v28_firm_reward_taxonomy.sql",
+      "semanticVersion": "v28",
+      "proposedDeployVersion": "20260722000050",
+      "sha256": "9a3e87092c305b084079a113023847ca88256f181b8ac4d18acd0abf17c621b1"
     },
     {
       "order": 51,
-      "kind": "pending",
-      "version": "20260721000006",
-      "name": "frenly_v27_rich_rewards",
-      "path": "supabase/migrations/20260721000006_frenly_v27_rich_rewards.sql",
-      "octetLength": 57356,
-      "sha256": "d9d541d147d1c3622006e55394f0992776a29b4dc9cc1adf4cd0c5c8eead1909",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v29_branch_overrides_custom_fields.sql",
+      "semanticVersion": "v29",
+      "proposedDeployVersion": "20260722000051",
+      "sha256": "215b45303ad6e5b98f88db013642268fcf7ed6e7309909f850df3271ca7ac871"
     },
     {
       "order": 52,
-      "kind": "pending",
-      "version": "20260721000007",
-      "name": "frenly_v28_firm_reward_taxonomy",
-      "path": "supabase/migrations/20260721000007_frenly_v28_firm_reward_taxonomy.sql",
-      "octetLength": 8648,
-      "sha256": "9a3e87092c305b084079a113023847ca88256f181b8ac4d18acd0abf17c621b1",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v30_customer_identity.sql",
+      "semanticVersion": "v30",
+      "proposedDeployVersion": "20260722000052",
+      "sha256": "680eeae5f7c73d24c02f7551ca011d0f9c98442fed3c2adff121c45b2ee4ec42"
     },
     {
       "order": 53,
-      "kind": "pending",
-      "version": "20260721000008",
-      "name": "frenly_v29_branch_overrides_custom_fields",
-      "path": "supabase/migrations/20260721000008_frenly_v29_branch_overrides_custom_fields.sql",
-      "octetLength": 35777,
-      "sha256": "215b45303ad6e5b98f88db013642268fcf7ed6e7309909f850df3271ca7ac871",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v31_customer_links_claims.sql",
+      "semanticVersion": "v31",
+      "proposedDeployVersion": "20260722000053",
+      "sha256": "da6768b18d135ed86ac793f187d9f236bfafab6ee44f17ce873e3f03e30772e9"
     },
     {
       "order": 54,
-      "kind": "pending",
-      "version": "20260721000009",
-      "name": "frenly_v30_customer_identity",
-      "path": "supabase/migrations/20260721000009_frenly_v30_customer_identity.sql",
-      "octetLength": 13718,
-      "sha256": "680eeae5f7c73d24c02f7551ca011d0f9c98442fed3c2adff121c45b2ee4ec42",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v32_customer_wallet.sql",
+      "semanticVersion": "v32",
+      "proposedDeployVersion": "20260722000054",
+      "sha256": "2c1d3c76fbed7f606e58ce7cdeea249e9b1582fa52b416213ebfc9d10baab87a"
     },
     {
       "order": 55,
-      "kind": "pending",
-      "version": "20260721000010",
-      "name": "frenly_v31_customer_links_claims",
-      "path": "supabase/migrations/20260721000010_frenly_v31_customer_links_claims.sql",
-      "octetLength": 37439,
-      "sha256": "da6768b18d135ed86ac793f187d9f236bfafab6ee44f17ce873e3f03e30772e9",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v33_customer_actions_notifications.sql",
+      "semanticVersion": "v33",
+      "proposedDeployVersion": "20260722000055",
+      "sha256": "869c6b9f193b58052a45119078d438db9ba080fcfaca05024e26aa3d805feb42"
     },
     {
       "order": 56,
-      "kind": "pending",
-      "version": "20260721000011",
-      "name": "frenly_v32_customer_wallet",
-      "path": "supabase/migrations/20260721000011_frenly_v32_customer_wallet.sql",
-      "octetLength": 20710,
-      "sha256": "2c1d3c76fbed7f606e58ce7cdeea249e9b1582fa52b416213ebfc9d10baab87a",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v34_reversal_provenance.sql",
+      "semanticVersion": "v34",
+      "proposedDeployVersion": "20260722000056",
+      "sha256": "a62f7538a15413227ed7125372311ae5a837ac84ed6f1105813374e6774f56fe"
     },
     {
       "order": 57,
-      "kind": "pending",
-      "version": "20260721000012",
-      "name": "frenly_v33_customer_actions_notifications",
-      "path": "supabase/migrations/20260721000012_frenly_v33_customer_actions_notifications.sql",
-      "octetLength": 20613,
-      "sha256": "869c6b9f193b58052a45119078d438db9ba080fcfaca05024e26aa3d805feb42",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v35_retention_recommendation_drafts.sql",
+      "semanticVersion": "v35",
+      "proposedDeployVersion": "20260722000057",
+      "sha256": "507b1aab13b7a66ff77d34a1be4ca001ba677e4e1996f7f7984ec3ea1710d3c2"
     },
     {
       "order": 58,
-      "kind": "pending",
-      "version": "20260721000013",
-      "name": "frenly_v34_reversal_provenance",
-      "path": "supabase/migrations/20260721000013_frenly_v34_reversal_provenance.sql",
-      "octetLength": 48404,
-      "sha256": "a62f7538a15413227ed7125372311ae5a837ac84ed6f1105813374e6774f56fe",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v36_safe_draft_reward_editor.sql",
+      "semanticVersion": "v36",
+      "proposedDeployVersion": "20260722000058",
+      "sha256": "035315f6608dfbe28b9c2edef964edb145a7a4cc559f66132ec3319cf9a374b5"
     },
     {
       "order": 59,
-      "kind": "pending",
-      "version": "20260721000014",
-      "name": "frenly_v35_retention_recommendation_drafts",
-      "path": "supabase/migrations/20260721000014_frenly_v35_retention_recommendation_drafts.sql",
-      "octetLength": 9470,
-      "sha256": "507b1aab13b7a66ff77d34a1be4ca001ba677e4e1996f7f7984ec3ea1710d3c2",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v37_branch_override_editor_rpc.sql",
+      "semanticVersion": "v37",
+      "proposedDeployVersion": "20260722000059",
+      "sha256": "4bb61be603e4924cd13c5f025ba4c212046588f176e64a32286f8f9d8832e497"
     },
     {
       "order": 60,
-      "kind": "pending",
-      "version": "20260721000015",
-      "name": "frenly_v36_safe_draft_reward_editor",
-      "path": "supabase/migrations/20260721000015_frenly_v36_safe_draft_reward_editor.sql",
-      "octetLength": 11591,
-      "sha256": "035315f6608dfbe28b9c2edef964edb145a7a4cc559f66132ec3319cf9a374b5",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v37b_versioned_retention_taxonomy.sql",
+      "semanticVersion": "v37b",
+      "proposedDeployVersion": "20260722000100",
+      "sha256": "291e55215a857b3528553e7ce7258e26c5b2a4bfa76f8e185108760084ca69e2"
     },
     {
       "order": 61,
-      "kind": "pending",
-      "version": "20260721000016",
-      "name": "frenly_v37_branch_override_editor_rpc",
-      "path": "supabase/migrations/20260721000016_frenly_v37_branch_override_editor_rpc.sql",
-      "octetLength": 6708,
-      "sha256": "4bb61be603e4924cd13c5f025ba4c212046588f176e64a32286f8f9d8832e497",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v38_customer_personas_and_gates.sql",
+      "semanticVersion": "v38",
+      "proposedDeployVersion": "20260722000101",
+      "sha256": "31dbbe6e65308097a53e46aa32eb6f3a21a320dd9384e3c7ca6bfb5f997db378"
     },
     {
       "order": 62,
-      "kind": "pending",
-      "version": "20260721000017",
-      "name": "frenly_v37b_versioned_retention_taxonomy",
-      "path": "supabase/migrations/20260721000017_frenly_v37b_versioned_retention_taxonomy.sql",
-      "octetLength": 44813,
-      "sha256": "291e55215a857b3528553e7ce7258e26c5b2a4bfa76f8e185108760084ca69e2",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260720_frenly_v39_detailed_customer_wallet.sql",
+      "semanticVersion": "v39",
+      "proposedDeployVersion": "20260722000102",
+      "sha256": "5f3c2cb2d38ec0124ff80f0c46ec5021f2a71a850e369b5ce983166497931f7a"
     },
     {
       "order": 63,
-      "kind": "pending",
-      "version": "20260721000018",
-      "name": "frenly_v38_customer_personas_and_gates",
-      "path": "supabase/migrations/20260721000018_frenly_v38_customer_personas_and_gates.sql",
-      "octetLength": 4102,
-      "sha256": "31dbbe6e65308097a53e46aa32eb6f3a21a320dd9384e3c7ca6bfb5f997db378",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260721_frenly_v40_staff_reversal_workflows.sql",
+      "semanticVersion": "v40",
+      "proposedDeployVersion": "20260722000103",
+      "sha256": "5979cbc1f483dd300624996eb1ad349dab9394561db4fc93b387fd1fa92c5b37"
     },
     {
       "order": 64,
-      "kind": "pending",
-      "version": "20260721000019",
-      "name": "frenly_v39_detailed_customer_wallet",
-      "path": "supabase/migrations/20260721000019_frenly_v39_detailed_customer_wallet.sql",
-      "octetLength": 24539,
-      "sha256": "5f3c2cb2d38ec0124ff80f0c46ec5021f2a71a850e369b5ce983166497931f7a",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260721_frenly_v41_customer_module_hardening.sql",
+      "semanticVersion": "v41",
+      "proposedDeployVersion": "20260722000104",
+      "sha256": "e37bd6e163a572e304fc693cbbf94715e34f20e0cc67cd685e2d7319d2d4715d"
     },
     {
       "order": 65,
-      "kind": "pending",
-      "version": "20260721000020",
-      "name": "frenly_v40_staff_reversal_workflows",
-      "path": "supabase/migrations/20260721000020_frenly_v40_staff_reversal_workflows.sql",
-      "octetLength": 22354,
-      "sha256": "5979cbc1f483dd300624996eb1ad349dab9394561db4fc93b387fd1fa92c5b37",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql",
+      "semanticVersion": "v42",
+      "proposedDeployVersion": "20260722000105",
+      "sha256": "dc191bf14f5c7143affe63f53a6f8428748aaa60b6107fe81f97bccf77bb1a59"
     },
     {
       "order": 66,
-      "kind": "pending",
-      "version": "20260721074441",
-      "name": "frenly_v41_customer_module_hardening",
-      "path": "supabase/migrations/20260721074441_frenly_v41_customer_module_hardening.sql",
-      "octetLength": 46813,
-      "sha256": "e37bd6e163a572e304fc693cbbf94715e34f20e0cc67cd685e2d7319d2d4715d",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260721_frenly_v44_actionable_customer_wallet.sql",
+      "semanticVersion": "v44",
+      "proposedDeployVersion": "20260722000106",
+      "sha256": "6cfabfdc929746a651b4b73e7451f4652e0146a9fb7a29d7439f8d50034ce67d"
     },
     {
       "order": 67,
-      "kind": "pending",
-      "version": "20260721135556",
-      "name": "frenly_c42_consumer_registration_contracts",
-      "path": "supabase/migrations/20260721135556_frenly_c42_consumer_registration_contracts.sql",
-      "octetLength": 30786,
-      "sha256": "dc191bf14f5c7143affe63f53a6f8428748aaa60b6107fe81f97bccf77bb1a59",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260721_frenly_v45_birthday_benefits.sql",
+      "semanticVersion": "v45",
+      "proposedDeployVersion": "20260722000107",
+      "sha256": "2326d2dac76d3f8b3e99a543fb16e0e39146aa13b4911328491279367213ca76"
     },
     {
       "order": 68,
-      "kind": "pending",
-      "version": "20260721150000",
-      "name": "frenly_c44_actionable_customer_wallet",
-      "path": "supabase/migrations/20260721150000_frenly_c44_actionable_customer_wallet.sql",
-      "octetLength": 18325,
-      "sha256": "6cfabfdc929746a651b4b73e7451f4652e0146a9fb7a29d7439f8d50034ce67d",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v46_customer_in_app_inbox.sql",
+      "semanticVersion": "v46",
+      "proposedDeployVersion": "20260722000108",
+      "sha256": "6cd668ff3535593b3ae6efba577129322aa6c91d53176ca2cc9b304d64e2a80d"
     },
     {
       "order": 69,
-      "kind": "pending",
-      "version": "20260721163000",
-      "name": "frenly_c45_birthday_benefits",
-      "path": "supabase/migrations/20260721163000_frenly_c45_birthday_benefits.sql",
-      "octetLength": 82809,
-      "sha256": "2326d2dac76d3f8b3e99a543fb16e0e39146aa13b4911328491279367213ca76",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v46a_birthday_draft_runtime_fix.sql",
+      "semanticVersion": "v46a",
+      "proposedDeployVersion": "20260722000109",
+      "sha256": "b7a82268626234af24cba95fce8a9a5041d649b84c898e420e63c797724815d4"
     },
     {
       "order": 70,
-      "kind": "pending",
-      "version": "20260721170000",
-      "name": "frenly_v46_customer_in_app_inbox",
-      "path": "supabase/migrations/20260721170000_frenly_v46_customer_in_app_inbox.sql",
-      "octetLength": 64573,
-      "sha256": "6cd668ff3535593b3ae6efba577129322aa6c91d53176ca2cc9b304d64e2a80d",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722050339_frenly_v47_smart_staff_scheduling.sql",
+      "semanticVersion": "v47",
+      "proposedDeployVersion": "20260722000110",
+      "sha256": "bd483583608a065888a0469243b79067d626209709146d1f18eff73548432fac"
     },
     {
       "order": 71,
-      "kind": "pending",
-      "version": "20260722120000",
-      "name": "frenly_v46a_birthday_draft_runtime_fix",
-      "path": "supabase/migrations/20260722120000_frenly_v46a_birthday_draft_runtime_fix.sql",
-      "octetLength": 674,
-      "sha256": "b7a82268626234af24cba95fce8a9a5041d649b84c898e420e63c797724815d4",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v47a_record_sale_overload_cleanup.sql",
+      "semanticVersion": "v47a",
+      "proposedDeployVersion": "20260722000111",
+      "sha256": "a9b5f815dea66582a88f98665354b8472d7af01ef771a987b70f732668974bbe"
     },
     {
       "order": 72,
-      "kind": "pending",
-      "version": "20260722130000",
-      "name": "frenly_v47_smart_staff_scheduling",
-      "path": "supabase/migrations/20260722130000_frenly_v47_smart_staff_scheduling.sql",
-      "octetLength": 35627,
-      "sha256": "bd483583608a065888a0469243b79067d626209709146d1f18eff73548432fac",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v47b_record_sale_dispatch_fix.sql",
+      "semanticVersion": "v47b",
+      "proposedDeployVersion": "20260722000112",
+      "sha256": "905c3d28b821498f4eb5984574bd2d2bcbf286e85682be09efc365076ce5d25e"
     },
     {
       "order": 73,
-      "kind": "pending",
-      "version": "20260722131000",
-      "name": "frenly_v47a_record_sale_overload_cleanup",
-      "path": "supabase/migrations/20260722131000_frenly_v47a_record_sale_overload_cleanup.sql",
-      "octetLength": 412,
-      "sha256": "a9b5f815dea66582a88f98665354b8472d7af01ef771a987b70f732668974bbe",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql",
+      "semanticVersion": "v48",
+      "proposedDeployVersion": "20260722000113",
+      "sha256": "6335ecf015e117eff0458daea2889a46f2dc38e680fcfc0e572d0a5bb68b3940"
     },
     {
       "order": 74,
-      "kind": "pending",
-      "version": "20260722132000",
-      "name": "frenly_v47b_record_sale_dispatch_fix",
-      "path": "supabase/migrations/20260722132000_frenly_v47b_record_sale_dispatch_fix.sql",
-      "octetLength": 5228,
-      "sha256": "905c3d28b821498f4eb5984574bd2d2bcbf286e85682be09efc365076ce5d25e",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v49_billing_projection_rpc.sql",
+      "semanticVersion": "v49",
+      "proposedDeployVersion": "20260722000114",
+      "sha256": "e72e59554d7821ae1c46273d2276a7a63b41326227428fe7a96a6046fb1beed7"
     },
     {
       "order": 75,
-      "kind": "pending",
-      "version": "20260722133000",
-      "name": "frenly_v48_calendar_details_reschedule",
-      "path": "supabase/migrations/20260722133000_frenly_v48_calendar_details_reschedule.sql",
-      "octetLength": 18137,
-      "sha256": "6335ecf015e117eff0458daea2889a46f2dc38e680fcfc0e572d0a5bb68b3940",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v49a_lint_and_rehearsal_repairs.sql",
+      "semanticVersion": "v49a",
+      "proposedDeployVersion": "20260722000115",
+      "sha256": "784089f0153bcea7e5d8e2111650070de1bd7b0d3c5f9e73486ae0d80d40b873"
     },
     {
       "order": 76,
-      "kind": "pending",
-      "version": "20260722134000",
-      "name": "frenly_v49_billing_projection_rpc",
-      "path": "supabase/migrations/20260722134000_frenly_v49_billing_projection_rpc.sql",
-      "octetLength": 3025,
-      "sha256": "e72e59554d7821ae1c46273d2276a7a63b41326227428fe7a96a6046fb1beed7",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v49b_reports_read_authorization.sql",
+      "semanticVersion": "v49b",
+      "proposedDeployVersion": "20260722000116",
+      "sha256": "f5b29ad9e68f31f3bace6beeac6d9e996ab1c0c4905fd61b6efd29d8318ad3ea"
     },
     {
       "order": 77,
-      "kind": "pending",
-      "version": "20260722140000",
-      "name": "frenly_v49a_lint_and_rehearsal_repairs",
-      "path": "supabase/migrations/20260722140000_frenly_v49a_lint_and_rehearsal_repairs.sql",
-      "octetLength": 7333,
-      "sha256": "784089f0153bcea7e5d8e2111650070de1bd7b0d3c5f9e73486ae0d80d40b873",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260722_frenly_v50_retention_measurement.sql",
+      "semanticVersion": "v50",
+      "proposedDeployVersion": "20260722000117",
+      "sha256": "6a500f84246ac708835f61f0093dec78cf07eeda235d8aabb0dfb24c4c894917"
     },
     {
       "order": 78,
-      "kind": "pending",
-      "version": "20260722141000",
-      "name": "frenly_v49b_reports_read_authorization",
-      "path": "supabase/migrations/20260722141000_frenly_v49b_reports_read_authorization.sql",
-      "octetLength": 3910,
-      "sha256": "f5b29ad9e68f31f3bace6beeac6d9e996ab1c0c4905fd61b6efd29d8318ad3ea",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v50a_sgt_birthdate_guard.sql",
+      "semanticVersion": "v50a",
+      "proposedDeployVersion": "20260722000118",
+      "sha256": "a836185a091b0d55ceb246c69f43fe0d46a4ad6c3da7ce4e77e2c0f19da5ca23"
     },
     {
       "order": 79,
-      "kind": "pending",
-      "version": "20260722150000",
-      "name": "frenly_v50_retention_measurement",
-      "path": "supabase/migrations/20260722150000_frenly_v50_retention_measurement.sql",
-      "octetLength": 42774,
-      "sha256": "6a500f84246ac708835f61f0093dec78cf07eeda235d8aabb0dfb24c4c894917",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v50b_contact_proof_constraint_repair.sql",
+      "semanticVersion": "v50b",
+      "proposedDeployVersion": "20260722000119",
+      "sha256": "123d401a855abe9f86c2ad329500ce3063a86f7e089ca02a90ca3ba03348a5ab"
     },
     {
       "order": 80,
-      "kind": "pending",
-      "version": "20260723090000",
-      "name": "frenly_v50a_sgt_birthdate_guard",
-      "path": "supabase/migrations/20260723090000_frenly_v50a_sgt_birthdate_guard.sql",
-      "octetLength": 4372,
-      "sha256": "a836185a091b0d55ceb246c69f43fe0d46a4ad6c3da7ce4e77e2c0f19da5ca23",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v51_sale_line_items.sql",
+      "semanticVersion": "v51",
+      "proposedDeployVersion": "20260722000120",
+      "sha256": "90c085828ee7165167ff603754dadc62ec53bdf7573c2f00f40688a038a8000d"
     },
     {
       "order": 81,
-      "kind": "pending",
-      "version": "20260723100000",
-      "name": "frenly_v50b_contact_proof_constraint_repair",
-      "path": "supabase/migrations/20260723100000_frenly_v50b_contact_proof_constraint_repair.sql",
-      "octetLength": 4747,
-      "sha256": "123d401a855abe9f86c2ad329500ce3063a86f7e089ca02a90ca3ba03348a5ab",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v51a_idempotent_sell_overloads.sql",
+      "semanticVersion": "v51a",
+      "proposedDeployVersion": "20260722000121",
+      "sha256": "76a45c923ba1cf7b98636e5c3c1cba356a92ab86b295218c01ed085dd5d1d894"
     },
     {
       "order": 82,
-      "kind": "pending",
-      "version": "20260723120000",
-      "name": "frenly_v51_sale_line_items",
-      "path": "supabase/migrations/20260723120000_frenly_v51_sale_line_items.sql",
-      "octetLength": 15553,
-      "sha256": "90c085828ee7165167ff603754dadc62ec53bdf7573c2f00f40688a038a8000d",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v51b_client_credit_history.sql",
+      "semanticVersion": "v51b",
+      "proposedDeployVersion": "20260722000122",
+      "sha256": "637ac4130c395021fc5590d5ca5ee5ae01642f90457a29ec0b4599cfc7391e6d"
     },
     {
       "order": 83,
-      "kind": "pending",
-      "version": "20260723121000",
-      "name": "frenly_v51a_idempotent_sell_overloads",
-      "path": "supabase/migrations/20260723121000_frenly_v51a_idempotent_sell_overloads.sql",
-      "octetLength": 9116,
-      "sha256": "76a45c923ba1cf7b98636e5c3c1cba356a92ab86b295218c01ed085dd5d1d894",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v52_sgt_date_normalization.sql",
+      "semanticVersion": "v52",
+      "proposedDeployVersion": "20260722000123",
+      "sha256": "41ab3a110844b2ca535dafa640e37d6dfda602c06598e6d672a3f0bce0cb663d"
     },
     {
       "order": 84,
-      "kind": "pending",
-      "version": "20260723122000",
-      "name": "frenly_v51b_client_credit_history",
-      "path": "supabase/migrations/20260723122000_frenly_v51b_client_credit_history.sql",
-      "octetLength": 4889,
-      "sha256": "637ac4130c395021fc5590d5ca5ee5ae01642f90457a29ec0b4599cfc7391e6d",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v53_visit_feedback.sql",
+      "semanticVersion": "v53",
+      "proposedDeployVersion": "20260722000124",
+      "sha256": "2cf1297c7783aef2312c68c88dacbbb928e1a2ec3169f0d14b1c9800fad2155c"
     },
     {
       "order": 85,
-      "kind": "pending",
-      "version": "20260723140000",
-      "name": "frenly_v52_sgt_date_normalization",
-      "path": "supabase/migrations/20260723140000_frenly_v52_sgt_date_normalization.sql",
-      "octetLength": 8058,
-      "sha256": "41ab3a110844b2ca535dafa640e37d6dfda602c06598e6d672a3f0bce0cb663d",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v53a_wallet_review_url.sql",
+      "semanticVersion": "v53a",
+      "proposedDeployVersion": "20260722000125",
+      "sha256": "90a025a580e6b75dd841e0374957e71f422a47f9ab6a23314f78bc48e747b8c5"
     },
     {
       "order": 86,
-      "kind": "pending",
-      "version": "20260723160000",
-      "name": "frenly_v53_visit_feedback",
-      "path": "supabase/migrations/20260723160000_frenly_v53_visit_feedback.sql",
-      "octetLength": 25214,
-      "sha256": "2cf1297c7783aef2312c68c88dacbbb928e1a2ec3169f0d14b1c9800fad2155c",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260723_frenly_v54_f2_write_hardening.sql",
+      "semanticVersion": "v54",
+      "proposedDeployVersion": "20260722000126",
+      "sha256": "e6c4b91b8b568fa33e6495e706bdd1bbdc73bfd119528009bed07ab89e118f36"
     },
     {
       "order": 87,
-      "kind": "pending",
-      "version": "20260723170000",
-      "name": "frenly_v53a_wallet_review_url",
-      "path": "supabase/migrations/20260723170000_frenly_v53a_wallet_review_url.sql",
-      "octetLength": 3874,
-      "sha256": "90a025a580e6b75dd841e0374957e71f422a47f9ab6a23314f78bc48e747b8c5",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v55_ps1a_authoring.sql",
+      "semanticVersion": "v55",
+      "proposedDeployVersion": "20260722000127",
+      "sha256": "6343da50e5aa421be63608a1def1052bf21c7508d607384591624dbb1d2c1d01"
     },
     {
       "order": 88,
-      "kind": "pending",
-      "version": "20260723180000",
-      "name": "frenly_v54_f2_write_hardening",
-      "path": "supabase/migrations/20260723180000_frenly_v54_f2_write_hardening.sql",
-      "octetLength": 20090,
-      "sha256": "e6c4b91b8b568fa33e6495e706bdd1bbdc73bfd119528009bed07ab89e118f36",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v56_ps1b_events_execution.sql",
+      "semanticVersion": "v56",
+      "proposedDeployVersion": "20260722000128",
+      "sha256": "1b878654dd07aca9d317d856044148a3740c72457985191b708e309aaa54b24c"
     },
     {
       "order": 89,
-      "kind": "pending",
-      "version": "20260724100000",
-      "name": "frenly_v55_ps1a_authoring",
-      "path": "supabase/migrations/20260724100000_frenly_v55_ps1a_authoring.sql",
-      "octetLength": 72986,
-      "sha256": "6343da50e5aa421be63608a1def1052bf21c7508d607384591624dbb1d2c1d01",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v57_ps1b1_price_fail_closed.sql",
+      "semanticVersion": "v57",
+      "proposedDeployVersion": "20260722000129",
+      "sha256": "e0afb92fc7fb4be0f420c17b40a0a6835386df58f9d885d446480e80057a15f6"
     },
     {
       "order": 90,
-      "kind": "pending",
-      "version": "20260724150000",
-      "name": "frenly_v56_ps1b_events_execution",
-      "path": "supabase/migrations/20260724150000_frenly_v56_ps1b_events_execution.sql",
-      "octetLength": 70036,
-      "sha256": "1b878654dd07aca9d317d856044148a3740c72457985191b708e309aaa54b24c",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v58_ps1c_checkout_kernel.sql",
+      "semanticVersion": "v58",
+      "proposedDeployVersion": "20260722000130",
+      "sha256": "55b042ed04948d5e61ae92b3eea81b7df573535a5b18801e6f6ec07d69fb0fb7"
     },
     {
       "order": 91,
-      "kind": "pending",
-      "version": "20260724160000",
-      "name": "frenly_v57_ps1b1_price_fail_closed",
-      "path": "supabase/migrations/20260724160000_frenly_v57_ps1b1_price_fail_closed.sql",
-      "octetLength": 16634,
-      "sha256": "e0afb92fc7fb4be0f420c17b40a0a6835386df58f9d885d446480e80057a15f6",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v59_ps1c1_cart_hardening.sql",
+      "semanticVersion": "v59",
+      "proposedDeployVersion": "20260722000131",
+      "sha256": "299a6f9a1c7b4e04c01e52d9f02ae8c23d71fa6cf559e3d2659470fa12d090fc"
     },
     {
       "order": 92,
-      "kind": "pending",
-      "version": "20260724170000",
-      "name": "frenly_v58_ps1c_checkout_kernel",
-      "path": "supabase/migrations/20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
-      "octetLength": 69281,
-      "sha256": "55b042ed04948d5e61ae92b3eea81b7df573535a5b18801e6f6ec07d69fb0fb7",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v60_ps1c2_execution_state.sql",
+      "semanticVersion": "v60",
+      "proposedDeployVersion": "20260722000132",
+      "sha256": "dcc3c185ca76feab172f8a76312da08ceb604d7ecace02edbe617854e0fd99fa"
     },
     {
       "order": 93,
-      "kind": "pending",
-      "version": "20260724180000",
-      "name": "frenly_v59_ps1c1_cart_hardening",
-      "path": "supabase/migrations/20260724180000_frenly_v59_ps1c1_cart_hardening.sql",
-      "octetLength": 47563,
-      "sha256": "299a6f9a1c7b4e04c01e52d9f02ae8c23d71fa6cf559e3d2659470fa12d090fc",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v61_ps2a_stored_value_foundation.sql",
+      "semanticVersion": "v61",
+      "proposedDeployVersion": "20260722000133",
+      "sha256": "7f9bcae579e0c69221b031ac1fd1f253d2894ff1d73442fb2d597b33f9f3f99f"
     },
     {
       "order": 94,
-      "kind": "pending",
-      "version": "20260724190000",
-      "name": "frenly_v60_ps1c2_execution_state",
-      "path": "supabase/migrations/20260724190000_frenly_v60_ps1c2_execution_state.sql",
-      "octetLength": 59489,
-      "sha256": "dcc3c185ca76feab172f8a76312da08ceb604d7ecace02edbe617854e0fd99fa",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v62_ps2b_shadow_reconciliation.sql",
+      "semanticVersion": "v62",
+      "proposedDeployVersion": "20260722000134",
+      "sha256": "4b460b9851ff7155ac91a99b1b94c7acaa1e6e9a827bae41194cda5059349ad6"
     },
     {
       "order": 95,
-      "kind": "pending",
-      "version": "20260724200000",
-      "name": "frenly_v61_ps2a_stored_value_foundation",
-      "path": "supabase/migrations/20260724200000_frenly_v61_ps2a_stored_value_foundation.sql",
-      "octetLength": 36644,
-      "sha256": "7f9bcae579e0c69221b031ac1fd1f253d2894ff1d73442fb2d597b33f9f3f99f",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v63_ps2c_redemption_mechanics.sql",
+      "semanticVersion": "v63",
+      "proposedDeployVersion": "20260722000135",
+      "sha256": "3c5a8f7956082a3f054655820ba23e4651caaa1138ca22e14f26171a3cc18519"
     },
     {
       "order": 96,
-      "kind": "pending",
-      "version": "20260724210000",
-      "name": "frenly_v62_ps2b_shadow_reconciliation",
-      "path": "supabase/migrations/20260724210000_frenly_v62_ps2b_shadow_reconciliation.sql",
-      "octetLength": 30787,
-      "sha256": "4b460b9851ff7155ac91a99b1b94c7acaa1e6e9a827bae41194cda5059349ad6",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v64_ps2d_pause_controls.sql",
+      "semanticVersion": "v64",
+      "proposedDeployVersion": "20260722000136",
+      "sha256": "e933602caa7f74a65d6882721c478f22b54b432ef2f5a786cdb16796f6da43c5"
     },
     {
       "order": 97,
-      "kind": "pending",
-      "version": "20260724220000",
-      "name": "frenly_v63_ps2c_redemption_mechanics",
-      "path": "supabase/migrations/20260724220000_frenly_v63_ps2c_redemption_mechanics.sql",
-      "octetLength": 50228,
-      "sha256": "3c5a8f7956082a3f054655820ba23e4651caaa1138ca22e14f26171a3cc18519",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v65_ps2live_plan_config.sql",
+      "semanticVersion": "v65",
+      "proposedDeployVersion": "20260722000137",
+      "sha256": "3052b4feb62baca5b48d10fced8942efaac57f43f3eb98246fb8de2c92d32a51"
     },
     {
       "order": 98,
-      "kind": "pending",
-      "version": "20260724230000",
-      "name": "frenly_v64_ps2d_pause_controls",
-      "path": "supabase/migrations/20260724230000_frenly_v64_ps2d_pause_controls.sql",
-      "octetLength": 56951,
-      "sha256": "e933602caa7f74a65d6882721c478f22b54b432ef2f5a786cdb16796f6da43c5",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v65a_ps2live_plan_config_hardening.sql",
+      "semanticVersion": "v65a",
+      "proposedDeployVersion": "20260722000138",
+      "sha256": "b13e9a2c9c3c4ba8c94bcae1f46b20deb52233e3746f247a743bd58995e0b245"
     },
     {
       "order": 99,
-      "kind": "pending",
-      "version": "20260725000000",
-      "name": "frenly_v65_ps2live_plan_config",
-      "path": "supabase/migrations/20260725000000_frenly_v65_ps2live_plan_config.sql",
-      "octetLength": 65654,
-      "sha256": "3052b4feb62baca5b48d10fced8942efaac57f43f3eb98246fb8de2c92d32a51",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v65b_ps2live_numeric_range_guard.sql",
+      "semanticVersion": "v65b",
+      "proposedDeployVersion": "20260722000139",
+      "sha256": "8192c611e41730b43d0cddb13c4eb7e9233bb81e48400c3f6c9ec0d5dedee276"
     },
     {
       "order": 100,
-      "kind": "pending",
-      "version": "20260725010000",
-      "name": "frenly_v65a_ps2live_plan_config_hardening",
-      "path": "supabase/migrations/20260725010000_frenly_v65a_ps2live_plan_config_hardening.sql",
-      "octetLength": 22493,
-      "sha256": "b13e9a2c9c3c4ba8c94bcae1f46b20deb52233e3746f247a743bd58995e0b245",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v66_ps2live_topup_sale.sql",
+      "semanticVersion": "v66",
+      "proposedDeployVersion": "20260722000140",
+      "sha256": "b42388eafbc5d5a51b0ac5470bf1ae36b46910254760e24f57612481bd20204c"
     },
     {
       "order": 101,
-      "kind": "pending",
-      "version": "20260725020000",
-      "name": "frenly_v65b_ps2live_numeric_range_guard",
-      "path": "supabase/migrations/20260725020000_frenly_v65b_ps2live_numeric_range_guard.sql",
-      "octetLength": 7374,
-      "sha256": "8192c611e41730b43d0cddb13c4eb7e9233bb81e48400c3f6c9ec0d5dedee276",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v66a_ps2live_billing_view_secinvoker.sql",
+      "semanticVersion": "v66a",
+      "proposedDeployVersion": "20260722000141",
+      "sha256": "4233e5463552c268046629c1333977a21a0326c0eaafc2ead2998086589bdfa2"
     },
     {
       "order": 102,
-      "kind": "pending",
-      "version": "20260725030000",
-      "name": "frenly_v66_ps2live_topup_sale",
-      "path": "supabase/migrations/20260725030000_frenly_v66_ps2live_topup_sale.sql",
-      "octetLength": 37113,
-      "sha256": "b42388eafbc5d5a51b0ac5470bf1ae36b46910254760e24f57612481bd20204c",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v66b_program_rules_secinvoker.sql",
+      "semanticVersion": "v66b",
+      "proposedDeployVersion": "20260722000142",
+      "sha256": "34488c8e37b52b2164544341abb774801d7fa601c4ef11881f25e27413a0ba74"
     },
     {
       "order": 103,
-      "kind": "pending",
-      "version": "20260725040000",
-      "name": "frenly_v66a_ps2live_billing_view_secinvoker",
-      "path": "supabase/migrations/20260725040000_frenly_v66a_ps2live_billing_view_secinvoker.sql",
-      "octetLength": 2095,
-      "sha256": "4233e5463552c268046629c1333977a21a0326c0eaafc2ead2998086589bdfa2",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v67_ps2live_checkout_tender.sql",
+      "semanticVersion": "v67",
+      "proposedDeployVersion": "20260722000143",
+      "sha256": "71423f959b3dd1892b32c5f637a25de9cbab5e3b5f67a033df1268efec2eb959"
     },
     {
       "order": 104,
-      "kind": "pending",
-      "version": "20260725050000",
-      "name": "frenly_v66b_program_rules_secinvoker",
-      "path": "supabase/migrations/20260725050000_frenly_v66b_program_rules_secinvoker.sql",
-      "octetLength": 2418,
-      "sha256": "34488c8e37b52b2164544341abb774801d7fa601c4ef11881f25e27413a0ba74",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v68a_chargeback_correction.sql",
+      "semanticVersion": "v68a",
+      "proposedDeployVersion": "20260722000144",
+      "sha256": "4f83bd5b21e72cc538b6602e43be1002c7f1e054c07ee92e35272490f62680bc"
     },
     {
       "order": 105,
-      "kind": "pending",
-      "version": "20260725060000",
-      "name": "frenly_v67_ps2live_checkout_tender",
-      "path": "supabase/migrations/20260725060000_frenly_v67_ps2live_checkout_tender.sql",
-      "octetLength": 96991,
-      "sha256": "71423f959b3dd1892b32c5f637a25de9cbab5e3b5f67a033df1268efec2eb959",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v68b_sv_reversal_netting.sql",
+      "semanticVersion": "v68b",
+      "proposedDeployVersion": "20260722000145",
+      "sha256": "55a95c0598278d89b0dac04257843f97570344ddd3eb539b6fb7f236ee42a124"
     },
     {
       "order": 106,
-      "kind": "pending",
-      "version": "20260725070000",
-      "name": "frenly_v68a_chargeback_correction",
-      "path": "supabase/migrations/20260725070000_frenly_v68a_chargeback_correction.sql",
-      "octetLength": 63237,
-      "sha256": "4f83bd5b21e72cc538b6602e43be1002c7f1e054c07ee92e35272490f62680bc",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v68c_customer_gift_cards.sql",
+      "semanticVersion": "v68c",
+      "proposedDeployVersion": "20260722000146",
+      "sha256": "23f88d2fa995d26e45cd84001972efdc9663336713457951175ba1aa08689539"
     },
     {
       "order": 107,
-      "kind": "pending",
-      "version": "20260725080000",
-      "name": "frenly_v68b_sv_reversal_netting",
-      "path": "supabase/migrations/20260725080000_frenly_v68b_sv_reversal_netting.sql",
-      "octetLength": 45722,
-      "sha256": "55a95c0598278d89b0dac04257843f97570344ddd3eb539b6fb7f236ee42a124",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v69_controlled_cutover.sql",
+      "semanticVersion": "v69",
+      "proposedDeployVersion": "20260722000147",
+      "sha256": "96814350032d720e18ba08d232c412ff60649cff4d78c21941a77cfae3753601"
     },
     {
       "order": 108,
-      "kind": "pending",
-      "version": "20260725090000",
-      "name": "frenly_v68c_customer_gift_cards",
-      "path": "supabase/migrations/20260725090000_frenly_v68c_customer_gift_cards.sql",
-      "octetLength": 10853,
-      "sha256": "23f88d2fa995d26e45cd84001972efdc9663336713457951175ba1aa08689539",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260724_frenly_v70_legacy_non_overlap.sql",
+      "semanticVersion": "v70",
+      "proposedDeployVersion": "20260722000148",
+      "sha256": "8ea9790aafd1c03ed84c643cc179e3200a662664f1dec8e92da1327d994052d9"
     },
     {
       "order": 109,
-      "kind": "pending",
-      "version": "20260725100000",
-      "name": "frenly_v69_controlled_cutover",
-      "path": "supabase/migrations/20260725100000_frenly_v69_controlled_cutover.sql",
-      "octetLength": 91603,
-      "sha256": "96814350032d720e18ba08d232c412ff60649cff4d78c21941a77cfae3753601",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_frenly_v71_customer_legal_manifest.sql",
+      "semanticVersion": "v71",
+      "proposedDeployVersion": "20260722000149",
+      "sha256": "1cc263b4e0bff38bb567908cfc6fe1dcd0bb53eb3bd13b9d6473c71b49b36062"
     },
     {
       "order": 110,
-      "kind": "pending",
-      "version": "20260725110000",
-      "name": "frenly_v70_legacy_non_overlap",
-      "path": "supabase/migrations/20260725110000_frenly_v70_legacy_non_overlap.sql",
-      "octetLength": 55546,
-      "sha256": "8ea9790aafd1c03ed84c643cc179e3200a662664f1dec8e92da1327d994052d9",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_frenly_v72_booking_identity_sync.sql",
+      "semanticVersion": "v72",
+      "proposedDeployVersion": "20260722000150",
+      "sha256": "6bcb87758d27c99f773585e6fb7143f9f5790b1e50d25e4d0fde517b98c1495d"
     },
     {
       "order": 111,
-      "kind": "pending",
-      "version": "20260725120000",
-      "name": "frenly_v71_customer_legal_manifest",
-      "path": "supabase/migrations/20260725120000_frenly_v71_customer_legal_manifest.sql",
-      "octetLength": 3043,
-      "sha256": "1cc263b4e0bff38bb567908cfc6fe1dcd0bb53eb3bd13b9d6473c71b49b36062",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_frenly_v73_booking_lifecycle.sql",
+      "semanticVersion": "v73",
+      "proposedDeployVersion": "20260722000151",
+      "sha256": "db33680ef5bc4dbdc3f5d45a6b93cedaa677b0215cb6edf8ea1d385f2202987a"
     },
     {
       "order": 112,
-      "kind": "pending",
-      "version": "20260725130000",
-      "name": "frenly_v72_booking_identity_sync",
-      "path": "supabase/migrations/20260725130000_frenly_v72_booking_identity_sync.sql",
-      "octetLength": 27627,
-      "sha256": "6bcb87758d27c99f773585e6fb7143f9f5790b1e50d25e4d0fde517b98c1495d",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_frenly_v74_staff_module_permissions.sql",
+      "semanticVersion": "v74",
+      "proposedDeployVersion": "20260722000152",
+      "sha256": "6ec8dd7315a05a20411a9b3bd00e73a900b6d3d44baa620f739c5364a4dbd348"
     },
     {
       "order": 113,
-      "kind": "pending",
-      "version": "20260725140000",
-      "name": "frenly_v73_booking_lifecycle",
-      "path": "supabase/migrations/20260725140000_frenly_v73_booking_lifecycle.sql",
-      "octetLength": 17714,
-      "sha256": "db33680ef5bc4dbdc3f5d45a6b93cedaa677b0215cb6edf8ea1d385f2202987a",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v75_sector_entitlements.sql",
+      "semanticVersion": "v75",
+      "proposedDeployVersion": "20260722000153",
+      "sha256": "d9167c1360be7df3eb74868d44c26786f15d523efb7c6db67ee3692292fa8014"
     },
     {
       "order": 114,
-      "kind": "pending",
-      "version": "20260725150000",
-      "name": "frenly_v74_staff_module_permissions",
-      "path": "supabase/migrations/20260725150000_frenly_v74_staff_module_permissions.sql",
-      "octetLength": 14303,
-      "sha256": "6ec8dd7315a05a20411a9b3bd00e73a900b6d3d44baa620f739c5364a4dbd348",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v76_sme_crm.sql",
+      "semanticVersion": "v76",
+      "proposedDeployVersion": "20260722000154",
+      "sha256": "4e790ca453bc0180ceaa6bd517daa35c9adc0e46a0c278860f21c6f32c553f6c"
     },
     {
       "order": 115,
-      "kind": "pending",
-      "version": "20260726100000",
-      "name": "nestly_v75_sector_entitlements",
-      "path": "supabase/migrations/20260726100000_nestly_v75_sector_entitlements.sql",
-      "octetLength": 34655,
-      "sha256": "d9167c1360be7df3eb74868d44c26786f15d523efb7c6db67ee3692292fa8014",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v77_stripe_billing.sql",
+      "semanticVersion": "v77",
+      "proposedDeployVersion": "20260722000155",
+      "sha256": "54301ed63dd38b5c41c057eb71209e3be7cab37c407366afea87c4441ad7076d"
     },
     {
       "order": 116,
-      "kind": "pending",
-      "version": "20260726110000",
-      "name": "nestly_v76_sme_crm",
-      "path": "supabase/migrations/20260726110000_nestly_v76_sme_crm.sql",
-      "octetLength": 65742,
-      "sha256": "4e790ca453bc0180ceaa6bd517daa35c9adc0e46a0c278860f21c6f32c553f6c",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v78_consultant_commissions.sql",
+      "semanticVersion": "v78",
+      "proposedDeployVersion": "20260722000156",
+      "sha256": "3f1c9f92bf2444c831ba2826cab357552ad76d814a680bb70a6fd01aab1ea1f9"
     },
     {
       "order": 117,
-      "kind": "pending",
-      "version": "20260726120000",
-      "name": "nestly_v77_stripe_billing",
-      "path": "supabase/migrations/20260726120000_nestly_v77_stripe_billing.sql",
-      "octetLength": 86983,
-      "sha256": "54301ed63dd38b5c41c057eb71209e3be7cab37c407366afea87c4441ad7076d",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v79_conversion_onboarding.sql",
+      "semanticVersion": "v79",
+      "proposedDeployVersion": "20260722000157",
+      "sha256": "603cd148467e1f99bdd855836a0efd78cfdf846924b7f36cd29c4af6a49802f8"
     },
     {
       "order": 118,
-      "kind": "pending",
-      "version": "20260726130000",
-      "name": "nestly_v78_consultant_commissions",
-      "path": "supabase/migrations/20260726130000_nestly_v78_consultant_commissions.sql",
-      "octetLength": 59979,
-      "sha256": "3f1c9f92bf2444c831ba2826cab357552ad76d814a680bb70a6fd01aab1ea1f9",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v80_customer_legal_manifest.sql",
+      "semanticVersion": "v80",
+      "proposedDeployVersion": "20260722000158",
+      "sha256": "12470012285974ae699ec53abfae6146b01f44180945192bb4c6ab36e6694d1d"
     },
     {
       "order": 119,
-      "kind": "pending",
-      "version": "20260726140000",
-      "name": "nestly_v79_conversion_onboarding",
-      "path": "supabase/migrations/20260726140000_nestly_v79_conversion_onboarding.sql",
-      "octetLength": 63894,
-      "sha256": "603cd148467e1f99bdd855836a0efd78cfdf846924b7f36cd29c4af6a49802f8",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v81_customer_relationship_sync.sql",
+      "semanticVersion": "v81",
+      "proposedDeployVersion": "20260722000159",
+      "sha256": "786a8335708e5a4a97e69f53b3468dab2714f636a8fba177f95d740e2ec005e7"
     },
     {
       "order": 120,
-      "kind": "pending",
-      "version": "20260726150000",
-      "name": "nestly_v80_customer_legal_manifest",
-      "path": "supabase/migrations/20260726150000_nestly_v80_customer_legal_manifest.sql",
-      "octetLength": 4234,
-      "sha256": "12470012285974ae699ec53abfae6146b01f44180945192bb4c6ab36e6694d1d",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v82_enterprise_intelligence.sql",
+      "semanticVersion": "v82",
+      "proposedDeployVersion": "20260722000200",
+      "sha256": "aae9bc99022a1c629359125d60c551ffbd80c0122b5d813c2d6c5c143d9c2463"
     },
     {
       "order": 121,
-      "kind": "pending",
-      "version": "20260726160000",
-      "name": "nestly_v81_customer_relationship_sync",
-      "path": "supabase/migrations/20260726160000_nestly_v81_customer_relationship_sync.sql",
-      "octetLength": 18798,
-      "sha256": "786a8335708e5a4a97e69f53b3468dab2714f636a8fba177f95d740e2ec005e7",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v83_customer_intelligence.sql",
+      "semanticVersion": "v83",
+      "proposedDeployVersion": "20260722000201",
+      "sha256": "6c3803ee79b526d5409bb9bc6b971922ecc05c7abf2d4ecb356758ff68d34063"
     },
     {
       "order": 122,
-      "kind": "pending",
-      "version": "20260726170000",
-      "name": "nestly_v82_enterprise_intelligence",
-      "path": "supabase/migrations/20260726170000_nestly_v82_enterprise_intelligence.sql",
-      "octetLength": 55561,
-      "sha256": "aae9bc99022a1c629359125d60c551ffbd80c0122b5d813c2d6c5c143d9c2463",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v84_fast_sale_corrections.sql",
+      "semanticVersion": "v84",
+      "proposedDeployVersion": "20260722000202",
+      "sha256": "a2693a287f80f8975f3fd6eae6d7985bba48f953c089f22514201a3c2abfe603"
     },
     {
       "order": 123,
-      "kind": "pending",
-      "version": "20260726180000",
-      "name": "nestly_v83_customer_intelligence",
-      "path": "supabase/migrations/20260726180000_nestly_v83_customer_intelligence.sql",
-      "octetLength": 27550,
-      "sha256": "6c3803ee79b526d5409bb9bc6b971922ecc05c7abf2d4ecb356758ff68d34063",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v85_conversion_guard_repair.sql",
+      "semanticVersion": "v85",
+      "proposedDeployVersion": "20260722000203",
+      "sha256": "75c1d837823ced40a7492f33fd489c5ebe8f146522282316a05f903cf726e1d1"
     },
     {
       "order": 124,
-      "kind": "pending",
-      "version": "20260726190000",
-      "name": "nestly_v84_fast_sale_corrections",
-      "path": "supabase/migrations/20260726190000_nestly_v84_fast_sale_corrections.sql",
-      "octetLength": 28033,
-      "sha256": "a2693a287f80f8975f3fd6eae6d7985bba48f953c089f22514201a3c2abfe603",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v86_enterprise_sme_crm.sql",
+      "semanticVersion": "v86",
+      "proposedDeployVersion": "20260722000204",
+      "sha256": "72bc0c929cf8129b2cfcf569031d5608c1464f537ac84a7f52e8258fb5392851"
     },
     {
       "order": 125,
-      "kind": "pending",
-      "version": "20260726200000",
-      "name": "nestly_v85_conversion_guard_repair",
-      "path": "supabase/migrations/20260726200000_nestly_v85_conversion_guard_repair.sql",
-      "octetLength": 2037,
-      "sha256": "75c1d837823ced40a7492f33fd489c5ebe8f146522282316a05f903cf726e1d1",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v87_overdue_appointment_amendments.sql",
+      "semanticVersion": "v87",
+      "proposedDeployVersion": "20260722000205",
+      "sha256": "ddb69ca82e5a3adc6fc00fbbb64906bef00cba34a018bb2e24f1a996c3f4adaf"
     },
     {
       "order": 126,
-      "kind": "pending",
-      "version": "20260726210000",
-      "name": "nestly_v86_enterprise_sme_crm",
-      "path": "supabase/migrations/20260726210000_nestly_v86_enterprise_sme_crm.sql",
-      "octetLength": 151609,
-      "sha256": "72bc0c929cf8129b2cfcf569031d5608c1464f537ac84a7f52e8258fb5392851",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260726_nestly_v88_platform_firm_onboarding.sql",
+      "semanticVersion": "v88",
+      "proposedDeployVersion": "20260722000206",
+      "sha256": "5a0c55bee25b6676dcde50e0d9cda1bea9b1487c9fe0e04e81ecce3a94bcb1e7"
     },
     {
       "order": 127,
-      "kind": "pending",
-      "version": "20260726220000",
-      "name": "nestly_v87_overdue_appointment_amendments",
-      "path": "supabase/migrations/20260726220000_nestly_v87_overdue_appointment_amendments.sql",
-      "octetLength": 1592,
-      "sha256": "ddb69ca82e5a3adc6fc00fbbb64906bef00cba34a018bb2e24f1a996c3f4adaf",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260727_nestly_v89_customer_qr_redemption_platform_access.sql",
+      "semanticVersion": "v89",
+      "proposedDeployVersion": "20260722000207",
+      "sha256": "8791af959a722f10a240812e8bb064e4b15b7c2097fa94b9abcd80d0fb09ce56"
     },
     {
       "order": 128,
-      "kind": "pending",
-      "version": "20260726230000",
-      "name": "nestly_v88_platform_firm_onboarding",
-      "path": "supabase/migrations/20260726230000_nestly_v88_platform_firm_onboarding.sql",
-      "octetLength": 25902,
-      "sha256": "5a0c55bee25b6676dcde50e0d9cda1bea9b1487c9fe0e04e81ecce3a94bcb1e7",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260727_nestly_v90_production_readiness.sql",
+      "semanticVersion": "v90",
+      "proposedDeployVersion": "20260722000208",
+      "sha256": "18a100e463ee028555263d52999afc9c9ccad77d26073a6f9f68a7ad03d8eadc"
     },
     {
       "order": 129,
-      "kind": "pending",
-      "version": "20260727010000",
-      "name": "nestly_v89_customer_qr_redemption_platform_access",
-      "path": "supabase/migrations/20260727010000_nestly_v89_customer_qr_redemption_platform_access.sql",
-      "octetLength": 108942,
-      "sha256": "8791af959a722f10a240812e8bb064e4b15b7c2097fa94b9abcd80d0fb09ce56",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260727_nestly_v91_customer_game_notifications.sql",
+      "semanticVersion": "v91",
+      "proposedDeployVersion": "20260722000209",
+      "sha256": "3a8fbc4d1dd8a6f29a856335f500d875d2e4c16d2cd9d69fbff9d21bd77fc1b1"
     },
     {
       "order": 130,
-      "kind": "pending",
-      "version": "20260727020000",
-      "name": "nestly_v90_production_readiness",
-      "path": "supabase/migrations/20260727020000_nestly_v90_production_readiness.sql",
-      "octetLength": 8199,
-      "sha256": "18a100e463ee028555263d52999afc9c9ccad77d26073a6f9f68a7ad03d8eadc",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v92_synthetic_reporting_isolation.sql",
+      "semanticVersion": "v92",
+      "proposedDeployVersion": "20260722000210",
+      "sha256": "09b391d4c5be348c6345e4a264cc76c143791cb556dc82f236b9e4d563de5177"
     },
     {
       "order": 131,
-      "kind": "pending",
-      "version": "20260727163752",
-      "name": "nestly_v91_customer_game_notifications",
-      "path": "supabase/migrations/20260727163752_nestly_v91_customer_game_notifications.sql",
-      "octetLength": 6254,
-      "sha256": "3a8fbc4d1dd8a6f29a856335f500d875d2e4c16d2cd9d69fbff9d21bd77fc1b1",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v93_branch_scoped_merchant_redemption.sql",
+      "semanticVersion": "v93",
+      "proposedDeployVersion": "20260722000211",
+      "sha256": "a2fcb6eba94bd0a0ff2c9b955cfe0d53a1fd66eb3ff9b54d086846e2da3fcf96"
     },
     {
       "order": 132,
-      "kind": "pending",
-      "version": "20260728090000",
-      "name": "nestly_v92_synthetic_reporting_isolation",
-      "path": "supabase/migrations/20260728090000_nestly_v92_synthetic_reporting_isolation.sql",
-      "octetLength": 5263,
-      "sha256": "09b391d4c5be348c6345e4a264cc76c143791cb556dc82f236b9e4d563de5177",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v94_platform_control_intelligence.sql",
+      "semanticVersion": "v94",
+      "proposedDeployVersion": "20260722000212",
+      "sha256": "1155cb63c5c577da776ca4d3b5fdfbc63c90ffa5385ca2f9b198faa4dc502f64"
     },
     {
       "order": 133,
-      "kind": "pending",
-      "version": "20260728100000",
-      "name": "nestly_v93_branch_scoped_merchant_redemption",
-      "path": "supabase/migrations/20260728100000_nestly_v93_branch_scoped_merchant_redemption.sql",
-      "octetLength": 11357,
-      "sha256": "a2fcb6eba94bd0a0ff2c9b955cfe0d53a1fd66eb3ff9b54d086846e2da3fcf96",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v95_bilingual_programmes.sql",
+      "semanticVersion": "v95",
+      "proposedDeployVersion": "20260722000213",
+      "sha256": "f0a10921eb831ac9d65024a6606cae746a6c8942ec25f8a1b4e24b59589950fa"
     },
     {
       "order": 134,
-      "kind": "pending",
-      "version": "20260728110000",
-      "name": "nestly_v92_customer_privacy_marketing_manifest",
-      "path": "supabase/migrations/20260728110000_nestly_v92_customer_privacy_marketing_manifest.sql",
-      "octetLength": 12434,
-      "sha256": "24714b039de12b4fb6ce34bb6ebeb41124703417734f0d223069e94b52ecf7e3",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v92_customer_privacy_marketing_manifest.sql",
+      "semanticVersion": "v92",
+      "proposedDeployVersion": "20260728110000",
+      "sha256": "24714b039de12b4fb6ce34bb6ebeb41124703417734f0d223069e94b52ecf7e3"
     },
     {
       "order": 135,
-      "kind": "pending",
-      "version": "20260728120000",
-      "name": "nestly_v93_customer_notification_constraints",
-      "path": "supabase/migrations/20260728120000_nestly_v93_customer_notification_constraints.sql",
-      "octetLength": 5695,
-      "sha256": "1e01c041d8b451101ba3e6af28be998a5465360e1c37c5a841e4224a0cd9aefe",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v93_customer_notification_constraints.sql",
+      "semanticVersion": "v93",
+      "proposedDeployVersion": "20260728120000",
+      "sha256": "1e01c041d8b451101ba3e6af28be998a5465360e1c37c5a841e4224a0cd9aefe"
     },
     {
       "order": 136,
-      "kind": "pending",
-      "version": "20260728123441",
-      "name": "nestly_v94_platform_control_intelligence",
-      "path": "supabase/migrations/20260728123441_nestly_v94_platform_control_intelligence.sql",
-      "octetLength": 113033,
-      "sha256": "1155cb63c5c577da776ca4d3b5fdfbc63c90ffa5385ca2f9b198faa4dc502f64",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v94_platform_firm_snapshot_null_guard.sql",
+      "semanticVersion": "v94",
+      "proposedDeployVersion": "20260728130000",
+      "sha256": "b119674e51b13c0b5154233ddb0e71ef061e11e882d99de583dbe977fa469067"
     },
     {
       "order": 137,
-      "kind": "pending",
-      "version": "20260728130000",
-      "name": "nestly_v94_platform_firm_snapshot_null_guard",
-      "path": "supabase/migrations/20260728130000_nestly_v94_platform_firm_snapshot_null_guard.sql",
-      "octetLength": 5253,
-      "sha256": "b119674e51b13c0b5154233ddb0e71ef061e11e882d99de583dbe977fa469067",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260728_nestly_v95_customer_web_push.sql",
+      "semanticVersion": "v95",
+      "proposedDeployVersion": "20260728140000",
+      "sha256": "7738ad0b932e9d4782202e28892b09f2aa76c7ee559f5073f0617936c34953c0"
     },
     {
       "order": 138,
-      "kind": "pending",
-      "version": "20260728140000",
-      "name": "nestly_v95_customer_web_push",
-      "path": "supabase/migrations/20260728140000_nestly_v95_customer_web_push.sql",
-      "octetLength": 24903,
-      "sha256": "7738ad0b932e9d4782202e28892b09f2aa76c7ee559f5073f0617936c34953c0",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v96_customer_programme_selector_media.sql",
+      "semanticVersion": "v96",
+      "proposedDeployVersion": "20260729110000",
+      "sha256": "6ed9fbc05aea95632654554fb4f0f0518f27ce044cad40544ec2221c2a35b112"
     },
     {
       "order": 139,
-      "kind": "pending",
-      "version": "20260728145332",
-      "name": "nestly_v95_bilingual_programmes",
-      "path": "supabase/migrations/20260728145332_nestly_v95_bilingual_programmes.sql",
-      "octetLength": 86664,
-      "sha256": "f0a10921eb831ac9d65024a6606cae746a6c8942ec25f8a1b4e24b59589950fa",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v97_workspace_interface_localization.sql",
+      "semanticVersion": "v97",
+      "proposedDeployVersion": "20260729120000",
+      "sha256": "197f60ba3ec9e07a80bbf247c112eb96f398fc2869f3f42b1aa642dbddb4f6d0"
     },
     {
       "order": 140,
-      "kind": "pending",
-      "version": "20260729110000",
-      "name": "nestly_v96_customer_programme_selector_media",
-      "path": "supabase/migrations/20260729110000_nestly_v96_customer_programme_selector_media.sql",
-      "octetLength": 5470,
-      "sha256": "6ed9fbc05aea95632654554fb4f0f0518f27ce044cad40544ec2221c2a35b112",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v99_campaign_truth.sql",
+      "semanticVersion": "v99",
+      "proposedDeployVersion": "20260729130000",
+      "sha256": "eec51904f327fa22d8bcd815d01f67ecece6280be3f7672f4d3562771b10450f"
     },
     {
       "order": 141,
-      "kind": "pending",
-      "version": "20260729120000",
-      "name": "nestly_v97_workspace_interface_localization",
-      "path": "supabase/migrations/20260729120000_nestly_v97_workspace_interface_localization.sql",
-      "octetLength": 6625,
-      "sha256": "197f60ba3ec9e07a80bbf247c112eb96f398fc2869f3f42b1aa642dbddb4f6d0",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v100_product_adoption_events.sql",
+      "semanticVersion": "v100",
+      "proposedDeployVersion": "20260729140000",
+      "sha256": "af1336f6c43259d749bc2a082c2016834aa57c84592d28a034d175097aaff25f"
     },
     {
       "order": 142,
-      "kind": "pending",
-      "version": "20260729130000",
-      "name": "nestly_v99_campaign_truth",
-      "path": "supabase/migrations/20260729130000_nestly_v99_campaign_truth.sql",
-      "octetLength": 75784,
-      "sha256": "eec51904f327fa22d8bcd815d01f67ecece6280be3f7672f4d3562771b10450f",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v102_package_checkout_entitlements.sql",
+      "semanticVersion": "v102",
+      "proposedDeployVersion": "20260729150000",
+      "sha256": "aa7e4218efcf8a9f79a200f6af8ab82bb272fd557e6ec98e958505d63de1c704"
     },
     {
       "order": 143,
-      "kind": "pending",
-      "version": "20260729140000",
-      "name": "nestly_v100_product_adoption_events",
-      "path": "supabase/migrations/20260729140000_nestly_v100_product_adoption_events.sql",
-      "octetLength": 27966,
-      "sha256": "af1336f6c43259d749bc2a082c2016834aa57c84592d28a034d175097aaff25f",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v103_customer_summary_business_identity.sql",
+      "semanticVersion": "v103",
+      "proposedDeployVersion": "20260729160000",
+      "sha256": "5aabd6195d5125b06f44d1eba21dc801a155e1ef6c0dcecd0eb624f3040b14b0"
     },
     {
       "order": 144,
-      "kind": "pending",
-      "version": "20260729150000",
-      "name": "nestly_v102_package_checkout_entitlements",
-      "path": "supabase/migrations/20260729150000_nestly_v102_package_checkout_entitlements.sql",
-      "octetLength": 38244,
-      "sha256": "aa7e4218efcf8a9f79a200f6af8ab82bb272fd557e6ec98e958505d63de1c704",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v104_marketing_offers.sql",
+      "semanticVersion": "v104",
+      "proposedDeployVersion": "20260729170000",
+      "sha256": "f04c1ac1ddda44091686163842bf075d20e754c39caa3d2e036659a6bbb152d9"
     },
     {
       "order": 145,
-      "kind": "pending",
-      "version": "20260729160000",
-      "name": "nestly_v103_customer_summary_business_identity",
-      "path": "supabase/migrations/20260729160000_nestly_v103_customer_summary_business_identity.sql",
-      "octetLength": 3700,
-      "sha256": "5aabd6195d5125b06f44d1eba21dc801a155e1ef6c0dcecd0eb624f3040b14b0",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v106_revenue_truth_foundation.sql",
+      "semanticVersion": "v106",
+      "proposedDeployVersion": "20260729171008",
+      "sha256": "e75b7eef09f5041219485bfe5d859c0184c54327516a2f980ec0b116885c73ab"
     },
     {
       "order": 146,
-      "kind": "pending",
-      "version": "20260729170000",
-      "name": "nestly_v104_marketing_offers",
-      "path": "supabase/migrations/20260729170000_nestly_v104_marketing_offers.sql",
-      "octetLength": 49714,
-      "sha256": "f04c1ac1ddda44091686163842bf075d20e754c39caa3d2e036659a6bbb152d9",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v107_customer_lifecycle_contract.sql",
+      "semanticVersion": "v107",
+      "proposedDeployVersion": "20260729171010",
+      "sha256": "6532bac95c4552b05507a5cfaf067f07bbcf6c414bcdf6ce3c9700f2b72df823"
     },
     {
       "order": 147,
-      "kind": "pending",
-      "version": "20260729171008",
-      "name": "nestly_v106_revenue_truth_foundation",
-      "path": "supabase/migrations/20260729171008_nestly_v106_revenue_truth_foundation.sql",
-      "octetLength": 47271,
-      "sha256": "e75b7eef09f5041219485bfe5d859c0184c54327516a2f980ec0b116885c73ab",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v108_measured_bringback_loop.sql",
+      "semanticVersion": "v108",
+      "proposedDeployVersion": "20260729171045",
+      "sha256": "61c42c4539eee2fb7b8080d433fa833417e929dd07b7b8617ff6c4454501e25b"
     },
     {
       "order": 148,
-      "kind": "pending",
-      "version": "20260729171010",
-      "name": "nestly_v107_customer_lifecycle_contract",
-      "path": "supabase/migrations/20260729171010_nestly_v107_customer_lifecycle_contract.sql",
-      "octetLength": 20282,
-      "sha256": "6532bac95c4552b05507a5cfaf067f07bbcf6c414bcdf6ce3c9700f2b72df823",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v109_economics_driver_sector_policy.sql",
+      "semanticVersion": "v109",
+      "proposedDeployVersion": "20260729171100",
+      "sha256": "febe88098b6cd04b0a8950738aa8bb2fcd50d9e247ff489a15271891b4f61cf2"
     },
     {
       "order": 149,
-      "kind": "pending",
-      "version": "20260729171045",
-      "name": "nestly_v108_measured_bringback_loop",
-      "path": "supabase/migrations/20260729171045_nestly_v108_measured_bringback_loop.sql",
-      "octetLength": 104889,
-      "sha256": "61c42c4539eee2fb7b8080d433fa833417e929dd07b7b8617ff6c4454501e25b",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v110_growth_delivery_lifecycle.sql",
+      "semanticVersion": "v110",
+      "proposedDeployVersion": "20260729171130",
+      "sha256": "20ef128c8564f74f0d5f579499382e0de5633388c37a9b84a4e6f1061fd24ee8"
     },
     {
       "order": 150,
-      "kind": "pending",
-      "version": "20260729171100",
-      "name": "nestly_v109_economics_driver_sector_policy",
-      "path": "supabase/migrations/20260729171100_nestly_v109_economics_driver_sector_policy.sql",
-      "octetLength": 52142,
-      "sha256": "febe88098b6cd04b0a8950738aa8bb2fcd50d9e247ff489a15271891b4f61cf2",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v105_admin_task_closure.sql",
+      "semanticVersion": "v105",
+      "proposedDeployVersion": "20260729180000",
+      "sha256": "a7a4454c190ee123d5bb8d9a2501455acd87def7d01a8ddb2f2c54aee160402f"
     },
     {
       "order": 151,
-      "kind": "pending",
-      "version": "20260729171130",
-      "name": "nestly_v110_growth_delivery_lifecycle",
-      "path": "supabase/migrations/20260729171130_nestly_v110_growth_delivery_lifecycle.sql",
-      "octetLength": 39927,
-      "sha256": "20ef128c8564f74f0d5f579499382e0de5633388c37a9b84a4e6f1061fd24ee8",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260729_nestly_v111_customer_identity_governance.sql",
+      "semanticVersion": "v111",
+      "proposedDeployVersion": "20260729194101",
+      "sha256": "21b662137a8fae4a42f0abe4c6a3f8064335a7a180c7cac892e6d12dcbde0d14"
     },
     {
       "order": 152,
-      "kind": "pending",
-      "version": "20260729180000",
-      "name": "nestly_v105_admin_task_closure",
-      "path": "supabase/migrations/20260729180000_nestly_v105_admin_task_closure.sql",
-      "octetLength": 21137,
-      "sha256": "a7a4454c190ee123d5bb8d9a2501455acd87def7d01a8ddb2f2c54aee160402f",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v112_concurrent_replay_delivery_backoff.sql",
+      "semanticVersion": "v112",
+      "proposedDeployVersion": "20260729200000",
+      "sha256": "0224b6f8e1e92c38373596066adb0435c1fc6f955a4ff529984e484e8dea4c5c"
     },
     {
       "order": 153,
-      "kind": "pending",
-      "version": "20260729194101",
-      "name": "nestly_v111_customer_identity_governance",
-      "path": "supabase/migrations/20260729194101_nestly_v111_customer_identity_governance.sql",
-      "octetLength": 54216,
-      "sha256": "21b662137a8fae4a42f0abe4c6a3f8064335a7a180c7cac892e6d12dcbde0d14",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v113_effective_identity_consumers.sql",
+      "semanticVersion": "v113",
+      "proposedDeployVersion": "20260729210000",
+      "sha256": "ac073fb2c19a7176f96e4bcea3460fe74339994741c08437bc3a545afe365091"
     },
     {
       "order": 154,
-      "kind": "pending",
-      "version": "20260729200000",
-      "name": "nestly_v112_concurrent_replay_delivery_backoff",
-      "path": "supabase/migrations/20260729200000_nestly_v112_concurrent_replay_delivery_backoff.sql",
-      "octetLength": 58405,
-      "sha256": "0224b6f8e1e92c38373596066adb0435c1fc6f955a4ff529984e484e8dea4c5c",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v114_traceable_growth_costs.sql",
+      "semanticVersion": "v114",
+      "proposedDeployVersion": "20260729211122",
+      "sha256": "7cf424465d2052fbebbb6dc32f1c438686a7ce7c2d85045d7d8078dfaa474f55"
     },
     {
       "order": 155,
-      "kind": "pending",
-      "version": "20260729210000",
-      "name": "nestly_v113_effective_identity_consumers",
-      "path": "supabase/migrations/20260729210000_nestly_v113_effective_identity_consumers.sql",
-      "octetLength": 62834,
-      "sha256": "ac073fb2c19a7176f96e4bcea3460fe74339994741c08437bc3a545afe365091",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v115_effective_module_projection.sql",
+      "semanticVersion": "v115",
+      "proposedDeployVersion": "20260730120000",
+      "sha256": "59b769172f664adff16acf90ab620efd2329ddccc988d96439e7ab525ac38611"
     },
     {
       "order": 156,
-      "kind": "pending",
-      "version": "20260729211122",
-      "name": "nestly_v114_traceable_growth_costs",
-      "path": "supabase/migrations/20260729211122_nestly_v114_traceable_growth_costs.sql",
-      "octetLength": 41611,
-      "sha256": "7cf424465d2052fbebbb6dc32f1c438686a7ce7c2d85045d7d8078dfaa474f55",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v116_classic_reward_projection.sql",
+      "semanticVersion": "v116",
+      "proposedDeployVersion": "20260730130000",
+      "sha256": "dff10b11d6d3663a442b6589b0c0145f6fe62727dd69abbba09ff0714aa02fb0"
     },
     {
       "order": 157,
-      "kind": "pending",
-      "version": "20260730120000",
-      "name": "nestly_v115_effective_module_projection",
-      "path": "supabase/migrations/20260730120000_nestly_v115_effective_module_projection.sql",
-      "octetLength": 3798,
-      "sha256": "59b769172f664adff16acf90ab620efd2329ddccc988d96439e7ab525ac38611",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260730_nestly_v117_effective_loyalty_boundaries.sql",
+      "semanticVersion": "v117",
+      "proposedDeployVersion": "20260730140000",
+      "sha256": "737bbf97c7dcd83684d938480ce92c6b2b29a051d2a269cdd48fa441f1f65f20"
     },
     {
       "order": 158,
-      "kind": "pending",
-      "version": "20260730130000",
-      "name": "nestly_v116_classic_reward_projection",
-      "path": "supabase/migrations/20260730130000_nestly_v116_classic_reward_projection.sql",
-      "octetLength": 4568,
-      "sha256": "dff10b11d6d3663a442b6589b0c0145f6fe62727dd69abbba09ff0714aa02fb0",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260731_nestly_v120_staff_blocked_times.sql",
+      "semanticVersion": "v120",
+      "proposedDeployVersion": "20260731120000",
+      "sha256": "c51a23e5554b52a1209885ccbc2d5702ebb62514079961a79ebc8a708fec6340"
     },
     {
       "order": 159,
-      "kind": "pending",
-      "version": "20260730140000",
-      "name": "nestly_v117_effective_loyalty_boundaries",
-      "path": "supabase/migrations/20260730140000_nestly_v117_effective_loyalty_boundaries.sql",
-      "octetLength": 33188,
-      "sha256": "737bbf97c7dcd83684d938480ce92c6b2b29a051d2a269cdd48fa441f1f65f20",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260731_nestly_v121_effective_loyalty_sale_earn_boundary.sql",
+      "semanticVersion": "v121",
+      "proposedDeployVersion": "20260731130000",
+      "sha256": "571cd4e6e367d1b8d540d739df9cc6f74db9ffeda1f9f379e82ae3aa057629c0"
     },
     {
       "order": 160,
-      "kind": "pending",
-      "version": "20260731120000",
-      "name": "nestly_v120_staff_blocked_times",
-      "path": "supabase/migrations/20260731120000_nestly_v120_staff_blocked_times.sql",
-      "octetLength": 17928,
-      "sha256": "c51a23e5554b52a1209885ccbc2d5702ebb62514079961a79ebc8a708fec6340",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260731_nestly_v122_owner_seven_workflows.sql",
+      "semanticVersion": "v122",
+      "proposedDeployVersion": "20260731140000",
+      "sha256": "f14cbd1850afbdf41124ea1b695f79470e5d4816f559704f0b02c96e452ad0c9"
     },
     {
       "order": 161,
-      "kind": "pending",
-      "version": "20260731130000",
-      "name": "nestly_v121_effective_loyalty_sale_earn_boundary",
-      "path": "supabase/migrations/20260731130000_nestly_v121_effective_loyalty_sale_earn_boundary.sql",
-      "octetLength": 2837,
-      "sha256": "571cd4e6e367d1b8d540d739df9cc6f74db9ffeda1f9f379e82ae3aa057629c0",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260731_nestly_v123_module_button_readiness.sql",
+      "semanticVersion": "v123",
+      "proposedDeployVersion": "20260731150000",
+      "sha256": "d58fdf21f15ee55be202318584c7ccfeca7a83e4928c1868853396d0c7610640"
     },
     {
       "order": 162,
-      "kind": "pending",
-      "version": "20260731140000",
-      "name": "nestly_v122_owner_seven_workflows",
-      "path": "supabase/migrations/20260731140000_nestly_v122_owner_seven_workflows.sql",
-      "octetLength": 25598,
-      "sha256": "f14cbd1850afbdf41124ea1b695f79470e5d4816f559704f0b02c96e452ad0c9",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v124_stripe_launch_pricing.sql",
+      "semanticVersion": "v124",
+      "proposedDeployVersion": "20260731164709",
+      "sha256": "62c8aec24bdebe1d707f191cb8e762a575ea3f8b465d0dd9cd9b5eb105e48164"
     },
     {
       "order": 163,
-      "kind": "pending",
-      "version": "20260731150000",
-      "name": "nestly_v123_module_button_readiness",
-      "path": "supabase/migrations/20260731150000_nestly_v123_module_button_readiness.sql",
-      "octetLength": 5922,
-      "sha256": "d58fdf21f15ee55be202318584c7ccfeca7a83e4928c1868853396d0c7610640",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v125_no_gst_and_native_store_readiness.sql",
+      "semanticVersion": "v125",
+      "proposedDeployVersion": "20260731182246",
+      "sha256": "d431296c548d22517f92afa4c67603dc517e2050286b906b656b50cf7c40a915"
     },
     {
       "order": 164,
-      "kind": "pending",
-      "version": "20260731164709",
-      "name": "nestly_v124_stripe_launch_pricing",
-      "path": "supabase/migrations/20260731164709_nestly_v124_stripe_launch_pricing.sql",
-      "octetLength": 46578,
-      "sha256": "62c8aec24bdebe1d707f191cb8e762a575ea3f8b465d0dd9cd9b5eb105e48164",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v127_rewards_overview_birthday_reader.sql",
+      "semanticVersion": "v127",
+      "proposedDeployVersion": "20260801063103",
+      "sha256": "dbb95b3a67b81abf0a0274a060947659cbdb28be36ab03ecabae419eabe4e0c2"
     },
     {
       "order": 165,
-      "kind": "pending",
-      "version": "20260731182246",
-      "name": "nestly_v125_no_gst_and_native_store_readiness",
-      "path": "supabase/migrations/20260731182246_nestly_v125_no_gst_and_native_store_readiness.sql",
-      "octetLength": 12138,
-      "sha256": "d431296c548d22517f92afa4c67603dc517e2050286b906b656b50cf7c40a915",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v128_simple_rewards_recommender.sql",
+      "semanticVersion": "v128",
+      "proposedDeployVersion": "20260801153000",
+      "sha256": "38e6cbd1c338feb6a8a64849a0bd42cdc9b04f886202703dc472b4b6f0baaa48"
     },
     {
       "order": 166,
-      "kind": "pending",
-      "version": "20260801063103",
-      "name": "nestly_v127_rewards_overview_birthday_reader",
-      "path": "supabase/migrations/20260801063103_nestly_v127_rewards_overview_birthday_reader.sql",
-      "octetLength": 2518,
-      "sha256": "dbb95b3a67b81abf0a0274a060947659cbdb28be36ab03ecabae419eabe4e0c2",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v129_trial_test_ux.sql",
+      "semanticVersion": "v129",
+      "proposedDeployVersion": "20260801170000",
+      "sha256": "cf979f415fa2839074bafa99200ce5e8efe85d60a9a64c8f3b04717615223074"
     },
     {
       "order": 167,
-      "kind": "pending",
-      "version": "20260801153000",
-      "name": "nestly_v128_simple_rewards_recommender",
-      "path": "supabase/migrations/20260801153000_nestly_v128_simple_rewards_recommender.sql",
-      "octetLength": 8346,
-      "sha256": "38e6cbd1c338feb6a8a64849a0bd42cdc9b04f886202703dc472b4b6f0baaa48",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v130_self_serve_business_onboarding.sql",
+      "semanticVersion": "v130",
+      "proposedDeployVersion": "20260801193000",
+      "sha256": "41ec9911db38662fe13877e94526439becc3f401a8c108925d1a69430fe56198"
     },
     {
       "order": 168,
-      "kind": "pending",
-      "version": "20260801170000",
-      "name": "nestly_v129_trial_test_ux",
-      "path": "supabase/migrations/20260801170000_nestly_v129_trial_test_ux.sql",
-      "octetLength": 5712,
-      "sha256": "cf979f415fa2839074bafa99200ce5e8efe85d60a9a64c8f3b04717615223074",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v131_store_publication_readiness.sql",
+      "semanticVersion": "v131",
+      "proposedDeployVersion": "20260801210000",
+      "sha256": "b03cbcff77f6a713791c757966a80baaa67706f091455f8d1a06dfa80f2b3cc2"
     },
     {
       "order": 169,
-      "kind": "pending",
-      "version": "20260801193000",
-      "name": "nestly_v130_self_serve_business_onboarding",
-      "path": "supabase/migrations/20260801193000_nestly_v130_self_serve_business_onboarding.sql",
-      "octetLength": 27024,
-      "sha256": "41ec9911db38662fe13877e94526439becc3f401a8c108925d1a69430fe56198",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v132_release_gap_closure.sql",
+      "semanticVersion": "v132",
+      "proposedDeployVersion": "20260801223000",
+      "sha256": "f4a23cfcb45f256398364056f061cd5095af584d09b4f4e7b96b89fba9698bae"
     },
     {
       "order": 170,
-      "kind": "pending",
-      "version": "20260801210000",
-      "name": "nestly_v131_store_publication_readiness",
-      "path": "supabase/migrations/20260801210000_nestly_v131_store_publication_readiness.sql",
-      "octetLength": 6486,
-      "sha256": "b03cbcff77f6a713791c757966a80baaa67706f091455f8d1a06dfa80f2b3cc2",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260801_nestly_v133_operational_closure.sql",
+      "semanticVersion": "v133",
+      "proposedDeployVersion": "20260801235900",
+      "sha256": "da07fad51044ed75dc10b9baaf0819eb16414c17170605020d63d0bde926d33f"
     },
     {
       "order": 171,
-      "kind": "pending",
-      "version": "20260801223000",
-      "name": "nestly_v132_release_gap_closure",
-      "path": "supabase/migrations/20260801223000_nestly_v132_release_gap_closure.sql",
-      "octetLength": 12328,
-      "sha256": "f4a23cfcb45f256398364056f061cd5095af584d09b4f4e7b96b89fba9698bae",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260802_nestly_v134_peekaa_brand_legal.sql",
+      "semanticVersion": "v134",
+      "proposedDeployVersion": "20260802010000",
+      "sha256": "b221d06a6e0f1685ff8e5f5cc78f95e395755c926f201e87f43e9eebcbc3701b"
     },
     {
       "order": 172,
-      "kind": "pending",
-      "version": "20260801235900",
-      "name": "nestly_v133_operational_closure",
-      "path": "supabase/migrations/20260801235900_nestly_v133_operational_closure.sql",
-      "octetLength": 14518,
-      "sha256": "da07fad51044ed75dc10b9baaf0819eb16414c17170605020d63d0bde926d33f",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260802_nestly_v138_auth_grow_closure.sql",
+      "semanticVersion": "v138",
+      "proposedDeployVersion": "20260802120000",
+      "sha256": "2bad0d853541bf126aca8c104f671ae73c863efd57c109fdc6685f3bcd9ee7f3"
     },
     {
       "order": 173,
-      "kind": "pending",
-      "version": "20260802010000",
-      "name": "nestly_v134_peekaa_brand_legal",
-      "path": "supabase/migrations/20260802010000_nestly_v134_peekaa_brand_legal.sql",
-      "octetLength": 14898,
-      "sha256": "b221d06a6e0f1685ff8e5f5cc78f95e395755c926f201e87f43e9eebcbc3701b",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260802_nestly_v142_connect_paynow_pos.sql",
+      "semanticVersion": "v142",
+      "proposedDeployVersion": "20260802134128",
+      "sha256": "84c04827a2a2b93ccaed6468f85467612b28c4322543db5f4eaada3907bceceb"
     },
     {
       "order": 174,
-      "kind": "pending",
-      "version": "20260802120000",
-      "name": "nestly_v138_auth_grow_closure",
-      "path": "supabase/migrations/20260802120000_nestly_v138_auth_grow_closure.sql",
-      "octetLength": 31202,
-      "sha256": "2bad0d853541bf126aca8c104f671ae73c863efd57c109fdc6685f3bcd9ee7f3",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v144_self_serve_subscription_consent.sql",
+      "semanticVersion": "v144",
+      "proposedDeployVersion": "20260803120000",
+      "sha256": "8249c55968e0ffa1eb5576947609c395cd2fc52b4989cdf392eafe27f49e8f77"
     },
     {
       "order": 175,
-      "kind": "pending",
-      "version": "20260802134128",
-      "name": "nestly_v142_connect_paynow_pos",
-      "path": "supabase/migrations/20260802134128_nestly_v142_connect_paynow_pos.sql",
-      "octetLength": 54950,
-      "sha256": "84c04827a2a2b93ccaed6468f85467612b28c4322543db5f4eaada3907bceceb",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql",
+      "semanticVersion": "v145",
+      "proposedDeployVersion": "20260803160000",
+      "sha256": "87bcfb0a0aad0c323b3063c7e6bdc546533869ccaa5920950b1d23e46cac7b4a"
     },
     {
       "order": 176,
-      "kind": "pending",
-      "version": "20260803120000",
-      "name": "nestly_v144_self_serve_subscription_consent",
-      "path": "supabase/migrations/20260803120000_nestly_v144_self_serve_subscription_consent.sql",
-      "octetLength": 11850,
-      "sha256": "8249c55968e0ffa1eb5576947609c395cd2fc52b4989cdf392eafe27f49e8f77",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v146_platform_finance.sql",
+      "semanticVersion": "v146",
+      "proposedDeployVersion": "20260803170000",
+      "sha256": "9061eec3d4e945e882de94e4fbcc43c67934f641ccf1d853f9fa8bd52e9f4068"
     },
     {
       "order": 177,
-      "kind": "pending",
-      "version": "20260803160000",
-      "name": "nestly_v145_launch_freeze_metrics",
-      "path": "supabase/migrations/20260803160000_nestly_v145_launch_freeze_metrics.sql",
-      "octetLength": 80996,
-      "sha256": "87bcfb0a0aad0c323b3063c7e6bdc546533869ccaa5920950b1d23e46cac7b4a",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v147_platform_accounting.sql",
+      "semanticVersion": "v147",
+      "proposedDeployVersion": "20260803180000",
+      "sha256": "8a78d7ab18ddb4f61012786d4b712451f5d568d1837d35c96cd052a6242498e2"
     },
     {
       "order": 178,
-      "kind": "pending",
-      "version": "20260803170000",
-      "name": "nestly_v146_platform_finance",
-      "path": "supabase/migrations/20260803170000_nestly_v146_platform_finance.sql",
-      "octetLength": 18561,
-      "sha256": "9061eec3d4e945e882de94e4fbcc43c67934f641ccf1d853f9fa8bd52e9f4068",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v148_owner_launch_closure.sql",
+      "semanticVersion": "v148",
+      "proposedDeployVersion": "20260803190000",
+      "sha256": "fd23bfd06122ea44c399e4736d0305a472a0573ea511446e25ea23184ce4cf73"
     },
     {
       "order": 179,
-      "kind": "pending",
-      "version": "20260803180000",
-      "name": "nestly_v147_platform_accounting",
-      "path": "supabase/migrations/20260803180000_nestly_v147_platform_accounting.sql",
-      "octetLength": 88868,
-      "sha256": "8a78d7ab18ddb4f61012786d4b712451f5d568d1837d35c96cd052a6242498e2",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260803_nestly_v151_mobile_staff_invites.sql",
+      "semanticVersion": "v151",
+      "proposedDeployVersion": "20260803210000",
+      "sha256": "15f23dcd93f46873a8f856a1af4e0b34bbc69e37172b8af070d2d5c4a1ea0a7e"
     },
     {
       "order": 180,
-      "kind": "pending",
-      "version": "20260803190000",
-      "name": "nestly_v148_owner_launch_closure",
-      "path": "supabase/migrations/20260803190000_nestly_v148_owner_launch_closure.sql",
-      "octetLength": 21796,
-      "sha256": "fd23bfd06122ea44c399e4736d0305a472a0573ea511446e25ea23184ce4cf73",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v158_catalogue_media.sql",
+      "semanticVersion": "v158",
+      "proposedDeployVersion": "20260804054949",
+      "sha256": "a158209a43048b50a43f2f7dccdd2e9f69c98373caed4be27965ba22e182342a"
     },
     {
       "order": 181,
-      "kind": "pending",
-      "version": "20260803210000",
-      "name": "nestly_v151_mobile_staff_invites",
-      "path": "supabase/migrations/20260803210000_nestly_v151_mobile_staff_invites.sql",
-      "octetLength": 4866,
-      "sha256": "15f23dcd93f46873a8f856a1af4e0b34bbc69e37172b8af070d2d5c4a1ea0a7e",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v155_multibranch_foundation.sql",
+      "semanticVersion": "v155",
+      "proposedDeployVersion": "20260804090000",
+      "sha256": "95cb1433c145c7c5b78a3ca3691d660e92a84871e70ae1e39e47dbe52abe5bc3"
     },
     {
       "order": 182,
-      "kind": "pending",
-      "version": "20260804054949",
-      "name": "nestly_v158_catalogue_media",
-      "path": "supabase/migrations/20260804054949_nestly_v158_catalogue_media.sql",
-      "octetLength": 6620,
-      "sha256": "a158209a43048b50a43f2f7dccdd2e9f69c98373caed4be27965ba22e182342a",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v156_subscription_operations_crm.sql",
+      "semanticVersion": "v156",
+      "proposedDeployVersion": "20260804120000",
+      "sha256": "e24cbbdf1eb7bb6c10a5011fa7680cdd2e7225f8924cc6aaae1510704d03137f"
     },
     {
       "order": 183,
-      "kind": "pending",
-      "version": "20260804090000",
-      "name": "nestly_v155_multibranch_foundation",
-      "path": "supabase/migrations/20260804090000_nestly_v155_multibranch_foundation.sql",
-      "octetLength": 44490,
-      "sha256": "95cb1433c145c7c5b78a3ca3691d660e92a84871e70ae1e39e47dbe52abe5bc3",
-      "provenance": "local-source"
-    },
-    {
-      "order": 184,
-      "kind": "pending",
-      "version": "20260804120000",
-      "name": "nestly_v156_subscription_operations_crm",
-      "path": "supabase/migrations/20260804120000_nestly_v156_subscription_operations_crm.sql",
-      "octetLength": 129169,
-      "sha256": "e24cbbdf1eb7bb6c10a5011fa7680cdd2e7225f8924cc6aaae1510704d03137f",
-      "provenance": "local-source"
-    },
-    {
-      "order": 185,
-      "kind": "pending",
-      "version": "20260804130000",
-      "name": "nestly_v156a_v151_invite_search_path_hardening",
-      "path": "supabase/migrations/20260804130000_nestly_v156a_v151_invite_search_path_hardening.sql",
-      "octetLength": 359,
-      "sha256": "fedf07741796e33032cdfadfafc9b852cb91f950db37020c860b0f52ab1928c1",
-      "provenance": "local-source"
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v156a_v151_invite_search_path_hardening.sql",
+      "semanticVersion": "v156a",
+      "proposedDeployVersion": "20260804130000",
+      "sha256": "fedf07741796e33032cdfadfafc9b852cb91f950db37020c860b0f52ab1928c1"
     }
   ]
 }

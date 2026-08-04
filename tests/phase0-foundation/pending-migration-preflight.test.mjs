@@ -148,6 +148,7 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v95_bilingual_programmes', 'db/tests/v95_bilingual_programmes.sql'],
   ['nestly_v95_customer_web_push', 'db/tests/v95_customer_web_push.sql'],
   ['nestly_v156_subscription_operations_crm', 'db/tests/v156_subscription_operations_crm.sql'],
+  ['nestly_v158_catalogue_media', 'db/tests/v158_catalogue_media.sql'],
   ['nestly_v156a_v151_invite_search_path_hardening', 'db/tests/v156a_v151_invite_search_path_hardening.sql']
 ]);
 
@@ -164,6 +165,11 @@ const appliedPreflightExceptions = new Map([
     sha256: '95cb1433c145c7c5b78a3ca3691d660e92a84871e70ae1e39e47dbe52abe5bc3',
     rollbackSuite: false,
     outerTransaction: true
+  }],
+  ['20260804054949_nestly_v158_catalogue_media', {
+    sha256: 'a158209a43048b50a43f2f7dccdd2e9f69c98373caed4be27965ba22e182342a',
+    rollbackSuite: true,
+    outerTransaction: false
   }]
 ]);
 
