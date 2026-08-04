@@ -173,6 +173,15 @@
   globalObject.navigator?.serviceWorker?.addEventListener('controllerchange',()=>{
     if(updateRequested)globalObject.location.reload();
   });
+  globalObject.navigator?.serviceWorker?.addEventListener('message',event=>{
+    if(event.data?.type!=='PEEKAA_SW_ACTIVATED'||!event.data?.cacheVersion)return;
+    const key=`peekaa-sw-reloaded:${event.data.cacheVersion}`;
+    try{
+      if(globalObject.sessionStorage.getItem(key)==='1')return;
+      globalObject.sessionStorage.setItem(key,'1');
+    }catch{}
+    globalObject.location.reload();
+  });
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible')registration?.update?.();
   });
