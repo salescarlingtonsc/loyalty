@@ -159,6 +159,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:18px 22px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:flex-start}
 .dashboard-chart-head>svg{margin-top:2px}.dashboard-chart-head b{display:block;line-height:1.25;overflow-wrap:anywhere}.dashboard-chart-head p{line-height:1.35}
 .dashboard-chart-head .dashboard-chart-link{color:var(--coral);font-weight:750;font-size:12px;white-space:nowrap;min-height:32px;display:inline-flex;align-items:center}
+.metric-action-label{display:inline-flex;margin-top:10px;min-height:32px;align-items:center;color:var(--coral);font-weight:800;font-size:12.5px}
+.branch-loading-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:999px;background:#FBFAF8;color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
+.dashboard-schedule-glance{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 18px;background:linear-gradient(135deg,#fff,#fff8f4);border-color:#E8D8D0}
+.dashboard-schedule-copy{display:flex;gap:12px;align-items:flex-start}.dashboard-schedule-copy>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-schedule-copy h2{font-size:1.05rem}.dashboard-schedule-copy p:not(.eyebrow){margin-top:3px;color:var(--muted)}
+.dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
 .client-summary-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:140px;text-align:left;box-shadow:var(--shadow)}
 .client-summary-card[aria-pressed="true"]{border-color:var(--coral);background:var(--tint);color:var(--coral)}
@@ -181,10 +186,17 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:end}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
 .sales-date-v154{display:grid;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums}.sales-date-v154 span:last-child{color:var(--muted);font-size:12px}
 .record-status{font-weight:750;color:var(--ink)}.sales-audit-details{margin-top:4px}.sales-audit-details summary{color:var(--muted);font-size:12px;cursor:pointer}
-.staff-performance-filterbar{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;align-items:end;margin:14px 0}.staff-rank-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}.staff-rank-basis{font-size:12px;color:var(--muted);margin:6px 0 0}
+.staff-performance-filterbar{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;align-items:end;margin:14px 0;padding:14px;border:1px solid #E7DAD2;background:#FFF8F4;border-radius:var(--r);box-shadow:var(--shadow)}
+.staff-rank-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+.staff-rank-card{position:relative;overflow:hidden;min-height:112px;padding:16px 18px;border-color:#E9D8D2;background:linear-gradient(145deg,#fff,#fff8f5)}
+.staff-rank-card::after{content:'';position:absolute;right:-22px;top:-22px;width:74px;height:74px;border-radius:50%;background:rgba(202,62,50,.08)}
+.staff-rank-card .rank-visual{display:flex;gap:4px;margin-bottom:10px;align-items:flex-end}.staff-rank-card .rank-visual i{display:block;width:9px;border-radius:999px;background:#E9B6AA}.staff-rank-card .rank-visual i:nth-child(1){height:12px}.staff-rank-card .rank-visual i:nth-child(2){height:22px;background:var(--coral)}.staff-rank-card .rank-visual i:nth-child(3){height:16px}
+.staff-rank-card b{display:block;font-size:15px;overflow-wrap:anywhere}.staff-rank-card p{margin-top:5px;color:var(--muted)}
+.staff-rank-basis{font-size:12px;color:var(--muted);margin:6px 0 0}
 .programme-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}.programme-tabs a{min-height:40px;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 14px;font-weight:750;color:var(--ink)}.programme-tabs a.act{background:var(--ink);color:#fff;border-color:var(--ink)}
 .programme-category{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;margin-top:12px}.programme-category-title{background:#FFF7F4;padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:850}
 .staff-members-page .settings-tabs{display:none}.staff-members-page .settings-panel{margin-top:0}
+.staff-members-page .settings-team-card{display:grid;gap:16px}.staff-members-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.staff-members-tabs{display:inline-flex;gap:6px;padding:5px;border:1px solid var(--line);border-radius:999px;background:#fff}.staff-members-tab{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-weight:750;cursor:pointer}.staff-members-tab.active{background:var(--ink);color:#fff}.staff-members-tab:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}.staff-members-tab-panel[hidden]{display:none!important}.staff-members-add-top{margin-left:auto;min-height:40px}.staff-members-section-card{display:grid;gap:12px}
 @media(min-width:761px) and (max-width:1180px){
   .appbar{gap:8px;padding:10px 14px;overflow:visible}
   .global-actions{gap:6px;min-width:0}
@@ -200,6 +212,8 @@ tr[aria-selected="true"] td{background:var(--tint)}
   .business-workspace-switch .who,.profile .who{max-width:156px}
   .business-workspace-switch .who span:not(.avatar),.profile .who div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+@media(max-width:900px){.dashboard-schedule-glance{align-items:flex-start;flex-direction:column}.dashboard-schedule-actions{width:100%}.dashboard-schedule-actions .btn{flex:1}}
+@media(max-width:700px){.staff-members-toolbar{align-items:stretch}.staff-members-tabs{width:100%;justify-content:space-between}.staff-members-tab{flex:1}.staff-members-add-top{width:100%;margin-left:0}}
 @media(min-width:761px) and (max-width:940px){
   .global-act#globalNewAppt span:not(.ic){display:none}
   .business-workspace-switch .who{max-width:112px}
@@ -836,7 +850,14 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .day-track-state{position:absolute;inset:16px;display:grid;place-content:center;gap:4px;text-align:center;color:var(--muted)}.day-track-state span{font-size:12px}
 .day-now-line{position:absolute;left:0;right:0;height:2px;background:#D72F43;z-index:5;pointer-events:none}.day-now-line::before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#D72F43}.day-now-line span{position:absolute;left:8px;top:-13px;background:#D72F43;color:#fff;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:800;box-shadow:0 4px 12px rgba(215,47,67,.18)}
 .day-timeline-event{position:absolute;z-index:6;min-height:44px;overflow:hidden;padding:5px 8px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 14%,#fff);color:var(--ink);text-align:left;line-height:1.15}.day-timeline-event:hover,.day-timeline-event:focus-visible{z-index:9;box-shadow:var(--shadow)}.day-timeline-event span,.day-timeline-event b,.day-timeline-event small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.day-timeline-event span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums}.day-timeline-event small{margin-top:1px;color:var(--muted)}
-.report-decision-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.report-decision-card{display:flex;flex-direction:column;align-items:flex-start;min-height:150px;padding:18px;border:1px solid var(--hair);border-radius:var(--r);background:#fff;color:var(--ink);text-decoration:none;box-shadow:var(--shadow)}.report-decision-card:hover,.report-decision-card:focus-visible{border-color:var(--coral)}.report-decision-card .task-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--tint);color:var(--coral)}.report-decision-card b{margin-top:13px;font-size:16px}.report-decision-card span{margin-top:5px;color:var(--muted);font-size:12.5px;line-height:1.4}
+.report-decision-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.report-decision-card{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;min-height:142px;padding:18px;border:1px solid #E9D8D2;border-radius:var(--r);background:linear-gradient(145deg,#fff,#fff8f4);color:var(--ink);text-decoration:none;box-shadow:var(--shadow);transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.report-decision-card::after{content:'';position:absolute;right:-28px;top:-28px;width:92px;height:92px;border-radius:50%;background:rgba(202,62,50,.08)}
+.report-decision-card[data-tone="appointments"]::after{background:rgba(30,85,148,.08)}.report-decision-card[data-tone="retention"]::after{background:rgba(31,107,72,.08)}.report-decision-card[data-tone="team"]::after{background:rgba(142,88,18,.1)}
+.report-decision-card:hover,.report-decision-card:focus-visible{border-color:var(--coral);transform:translateY(-1px);box-shadow:0 18px 42px rgba(48,36,28,.11)}
+.report-decision-card .task-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--tint);color:var(--coral);position:relative;z-index:1}
+.report-decision-card b{margin-top:13px;font-size:16px;position:relative;z-index:1}.report-decision-card>span:not(.task-icon):not(.report-card-visual){margin-top:5px;color:var(--muted);font-size:12.5px;line-height:1.4;position:relative;z-index:1}
+.report-card-visual{display:flex;gap:5px;margin-top:auto;padding-top:14px;position:relative;z-index:1}.report-card-visual i{display:block;width:24px;height:8px;border-radius:999px;background:rgba(202,62,50,.22)}.report-card-visual i:nth-child(2){width:34px;background:rgba(202,62,50,.38)}.report-card-visual i:nth-child(3){width:18px;background:rgba(202,62,50,.16)}
 .schedule-suggestion{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8}
 .schedule-suggestion h3{font-size:14px}.schedule-suggestion-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 .calendar-week-scroll{overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;max-height:70vh}
@@ -1565,7 +1586,7 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   sales:['sales','Sales'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
   inventory:['inventory','Inventory'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
-  giftcards:['giftcard','Gift cards'],reports:['reports','Reports'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
+  giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
   staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started']};
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
@@ -1601,8 +1622,8 @@ const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
   {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
-  {key:'grow',icon:'retention',label:'Programmes',items:['loyalty','retention','referrals','memberships','giftcards']},
-  {key:'money',icon:'reports',label:'Money',items:['sales','reports','customerintel','pnl','expenses','staffperf']},
+  {key:'grow',icon:'star',label:'Programmes',items:['loyalty','retention','referrals','memberships','giftcards']},
+  {key:'money',icon:'reports',label:'Reports',items:['sales','reports','customerintel','pnl','expenses','staffperf']},
   {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages']}
 ];
 let navOpen={};
@@ -6993,7 +7014,7 @@ function profileBranchScopeLabelV158(){
 async function hydrateProfileBranchSelectorV158(page){
   const mount=$('profileBranchScopeV158');
   if(!mount)return;
-  mount.innerHTML='<span class="muted small">Loading branches…</span>';
+  mount.innerHTML='<span class="branch-loading-pill" aria-live="polite">Branch scope</span>';
   try{
     const {isAdmin,branches}=await visibleBranchesForCurrentUser();
     if(!$('profileBranchScopeV158'))return;
@@ -7920,7 +7941,7 @@ function renderShell(page){
         ${mobileWorkspaceTitleHtml(page)}
         ${globalActionsHtml()}
         ${mobileSearchShellHtml()}
-        ${page[0]==='dashboard'?'<span class="dashboard-appbar-branch" id="dashboardBranchWrap" aria-label="Dashboard branch"><span class="muted small">Loading branches…</span></span>':''}
+        ${page[0]==='dashboard'?'<span class="dashboard-appbar-branch" id="dashboardBranchWrap" aria-label="Dashboard branch"><span class="branch-loading-pill" aria-live="polite">Branch scope</span></span>':''}
         ${workspaceLanguagePickerV97()}
         ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
         ${bellHtml()}
@@ -8325,18 +8346,28 @@ async function dashboard(){
     <header class="v150-titlebar">
       <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
       <div class="v150-title-actions dashboard-range">
-        <span id="dashboardReportingScopeWrap" aria-label="Dashboard reporting scope"><span class="muted small">Loading reporting scope…</span></span>
+        <span id="dashboardReportingScopeWrap" aria-label="Dashboard reporting scope"><span class="branch-loading-pill" aria-live="polite">Reporting scope</span></span>
         <button class="qbtn" data-d="1" aria-label="Show today">Today</button><button class="qbtn" data-d="7" aria-label="Show the last 7 days">7d</button><button class="qbtn act" data-d="30" aria-label="Show the last 30 days">30d</button><button class="qbtn" data-d="90" aria-label="Show the last 90 days">90d</button>
         <span class="dashboard-date-pair"><label class="sr-only" for="df">Dashboard start date</label><input type="date" id="df" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <label class="sr-only" for="dt">Dashboard end date</label><input type="date" id="dt" value="${today}"><button class="btn sm" id="apply">Apply</button></span>
       </div>
     </header>
+    <section class="card dashboard-schedule-glance" aria-label="Today schedule glance">
+      <div class="dashboard-schedule-copy">
+        ${CUI.icon('appointments',{size:24})}
+        <div><p class="eyebrow">Today schedule</p><h2>Bookings and appointments</h2><p>See today’s bookings and appointments from the Dashboard.</p></div>
+      </div>
+      <div class="dashboard-schedule-actions">
+        <a class="btn secondary" href="#/appointments?view=list&preset=today">View bookings</a>
+        <a class="btn secondary" href="#/appointments">Open calendar</a>
+      </div>
+    </section>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
       <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardInsights" aria-live="polite"></div></div>
     </section>
     <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section></section>`;
-  wireLocalCollapseV154('dashboardPerformanceToggle','dashboardPerformanceBody','peekaa.v154.dashboard.performance.open');
-  wireLocalCollapseV154('dashboardUnderstandToggle','dashboardUnderstandBody','peekaa.v154.dashboard.understand.open');
+  wireLocalCollapseV154('dashboardPerformanceToggle','dashboardPerformanceBody','peekaa.v164.dashboard.performance.open');
+  wireLocalCollapseV154('dashboardUnderstandToggle','dashboardUnderstandBody','peekaa.v164.dashboard.understand.open');
   const dashboardRoot=$('dashboardView');
   const isDashboardCurrent=()=>dashboardRenderEpoch===renderEpoch&&dashboardRoot.isConnected&&$('dashboardView')===dashboardRoot;
   const requestGate=createLatestRequestGate(isDashboardCurrent);
@@ -8346,10 +8377,10 @@ async function dashboard(){
   };
   const dashboardChartCardV141=({title,subtitle,canvas,route,unavailable='',retryId=''})=>`<section class="card dashboard-chart-card"><header class="dashboard-chart-head">${CUI.icon('reports',{size:20})}<div><b>${esc(title)}</b><p class="muted small">${esc(subtitle)}</p></div>${route?`<a class="dashboard-chart-link" href="${route}">View details →</a>`:''}</header>${unavailable?`<div class="dashboard-chart-empty" role="status"><div><b>Not enough data yet</b><p>${esc(unavailable)}</p>${retryId?`<button type="button" class="btn ghost sm" id="${retryId}" style="margin-top:12px">Retry</button>`:''}</div></div>`:`<div class="chart-frame"><canvas id="${canvas}"></canvas></div>`}</section>`;
   const dashboardMetricDefinitionsV141={
-    visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',scope:'branch'},
-    revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',scope:'branch'},
-    new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',scope:'business'},
-    inactive:{label:'Inactive customers',definition:'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.',route:'#/clients',action:'View inactive customers',scope:'business-current'}
+    visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',buttonLabel:'View visits',scope:'branch'},
+    revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
+    new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',buttonLabel:'See new customers',scope:'business'},
+    inactive:{label:'Inactive customers',definition:'Business-wide customers with no valid visit for at least 30 complete Singapore days. Customers who have never visited are included.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
   };
   let appliedDashboardScopeV141={from:d30,to:today,branchId:null,branchName:'All permitted branches'};
   function openDashboardMetricDetailV141(key,value,drillOverride={}){
@@ -8446,7 +8477,7 @@ async function dashboard(){
       const inactiveTotal=inactiveResponse.error||inactive60Response.error?'Unavailable':String((Number(inactiveResponse.data?.total)||0)+(Number(inactive60Response.data?.matching_customers)||0));
       metrics.push({key:'inactive',value:inactiveTotal,hint:`Inactive in this branch scope · ${scopeLabel}`});
     }
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="v">${esc(metric.value)}</span><span class="metric-hint">${esc(metric.hint)}</span></button>`}).join('');
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="v">${esc(metric.value)}</span><span class="metric-hint">${esc(metric.hint)}</span><span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
@@ -8613,7 +8644,7 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
       actions:[{label:'View sales report',href:'#/reports',variant:'ghost'},{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'}]
     });
   }else if((Number(previous?.revenue_cents)||0)===0&&(Number(current?.revenue_cents)||0)>0){
-    insights.push({tone:'positive',icon:'reports',category:'Revenue trend',title:'Revenue has started',explanation:'Sales were recorded this period. Keep recording activity to unlock a reliable trend.',why:'',actions:[{label:'View sales report',href:'#/reports',variant:'ghost'}]});
+    insights.push({tone:'positive',icon:'reports',category:'Revenue trend',title:'Revenue has started',explanation:'Sales were recorded this period. Keep recording activity to unlock a reliable trend.',why:'',actions:[]});
   }
   if(Number(inactive60Total)>0){
     insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:`${customerCountTextV154(inactive60Total)} not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_89"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
@@ -8646,7 +8677,7 @@ async function clientsPage(){
       </div>
     </header>
     <div class="v150-title-actions" style="margin-bottom:12px">${customerActions}</div>
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="min-width:min(100%,280px)"><label>Reporting scope</label><div id="clientReportingScopeWrap"><span class="muted small">Loading reporting scope…</span></div></div><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="min-width:min(100%,280px)"><label>Reporting scope</label><div id="clientReportingScopeWrap"><span class="branch-loading-pill" aria-live="polite">Reporting scope</span></div></div><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">Inactive groups are mutually exclusive. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -13120,7 +13151,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     <header class="v150-titlebar" aria-labelledby="growTitle">
       <div class="cui-page-title"><h1 id="growTitle">Programmes</h1>
         <p class="muted">Create and manage rewards, promotions and customer programmes.</p></div>
-      <div class="v150-title-actions">${canSetupGrow&&growDraftVersionId?`<button type="button" class="btn grow-primary" id="growAutoSetup">Continue setup</button>`:''}</div>
+      <div class="v150-title-actions"></div>
     </header>
     <nav class="programme-tabs" aria-label="Programme views">${programmeTab('overview','Overview')}${programmeTab('ongoing','Ongoing programmes')}${programmeTab('available','Available programmes')}${programmeTab('settings','More settings')}</nav>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
@@ -17798,13 +17829,13 @@ async function reportsPage(){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const canSeeReturningAnswer=canReadModule('clients')&&hasRoleCapability('view_finance');
   const decisions=[
-    {id:'moneyAnswer',icon:'reports',title:'Sales & revenue',body:'Revenue, reversals, liabilities and exports.'},
-    canReadModule('appointments')&&{id:'busyAnswer',icon:'appointments',title:'Appointments & busy times',body:'Booked hours, outcomes and scheduled capacity.'},
-    canSeeReturningAnswer&&{id:'returningAnswer',icon:'customers',title:'Customer retention',body:'New, returning and reactivated customers.'},
-    canReadModule('staffperf')&&{href:'#/staffperf',icon:'staff',title:'Team performance',body:'Staff activity and performance.'}
+    {id:'moneyAnswer',tone:'sales',icon:'reports',title:'Sales & revenue',body:'Revenue, reversals, liabilities and exports.'},
+    canReadModule('appointments')&&{id:'busyAnswer',tone:'appointments',icon:'appointments',title:'Appointments & busy times',body:'Booked hours, outcomes and scheduled capacity.'},
+    canSeeReturningAnswer&&{id:'returningAnswer',tone:'retention',icon:'customers',title:'Customer retention',body:'New, returning and reactivated customers.'},
+    canReadModule('staffperf')&&{href:'#/staffperf',tone:'team',icon:'staff',title:'Team performance',body:'Staff activity and performance.'}
   ].filter(Boolean);
-  M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Reports</h1><p class="muted small">Choose a report category and run it for the selected period.</p></div></div>
-    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span></a>`:`<button type="button" class="report-decision-card" id="${item.id}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span></button>`).join('')}</div>
+  M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div>
+    <div class="report-decision-grid">${decisions.map(item=>item.href?`<a class="report-decision-card" data-tone="${esc(item.tone||'sales')}" href="${item.href}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></a>`:`<button type="button" class="report-decision-card" data-tone="${esc(item.tone||'sales')}" id="${item.id}"><span class="task-icon">${CUI.icon(item.icon,{size:22})}</span><b>${esc(item.title)}</b><span>${esc(item.body)}</span><span class="report-card-visual" aria-hidden="true"><i></i><i></i><i></i></span></button>`).join('')}</div>
     <div class="card report-scope-card"><div class="range">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
@@ -18194,7 +18225,7 @@ async function staffPerfPage(drillId){
   const requestGate=createLatestRequestGate(isCurrent);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   let staffPerfSearch='',staffPerfSort='revenue',staffPerfDir='desc';
-  M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Business-wide signed ledger records, revenue-qualified attributed amount and frozen commission — select a staff name to inspect the ledger records</p></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Rank staff by revenue, signed commission and sales records for the selected period.</p></div>
     <div class="range">
       <button class="qbtn" data-d="1">Today</button><button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
       <input type="date" id="pf" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" value="${today}">
@@ -18281,12 +18312,13 @@ async function staffPerfPage(drillId){
     });
     const displayKeys=[...staffKeys,...(keys.includes('__unattributed')&&matchesSearch('__unattributed')?['__unattributed']:[])];
     const winnerCard=(metric,title,formatter=money)=>{
+      const winnerVisual='<span class="rank-visual" aria-hidden="true"><i></i><i></i><i></i></span>';
       const eligible=keys.filter(k=>k!=='__unattributed'&&Number(agg[k][metric]||0)>0);
-      if(!eligible.length)return `<article class="card"><span class="muted small">${esc(title)}</span><b>Not enough attributed data</b></article>`;
+      if(!eligible.length)return `<article class="card staff-rank-card">${winnerVisual}<span class="muted small">${esc(title)}</span><b>Not enough attributed data</b></article>`;
       const top=Math.max(...eligible.map(k=>Number(agg[k][metric]||0)));
       const winners=eligible.filter(k=>Number(agg[k][metric]||0)===top);
       const label=winners.length>1?`Tie: ${winners.map(k=>names[k]||'Team member').join(', ')}`:(names[winners[0]]||'Team member');
-      return `<article class="card"><span class="muted small">${esc(title)}</span><b data-merchant-content>${esc(label)}</b><p class="muted small">${esc(formatter(top))}</p></article>`;
+      return `<article class="card staff-rank-card">${winnerVisual}<span class="muted small">${esc(title)}</span><b data-merchant-content>${esc(label)}</b><p class="muted small">${esc(formatter(top))}</p></article>`;
     };
     $('staffRankSummary').innerHTML=`${winnerCard('revenue','Highest attributed revenue')}${winnerCard('commission','Highest signed commission')}${winnerCard('revenueRecords','Most revenue-qualified records',value=>`${value} record${value===1?'':'s'}`)}`;
     $('staffRankBasis').textContent=`Ranked by ${selectedSort.label}`;
@@ -18393,6 +18425,70 @@ async function staffPerfDrill(idParam){
   load();
 }
 
+function enhanceStaffMembersTabsV164(teamPanel){
+  if(!teamPanel||teamPanel.dataset.staffTabsV164==='1')return;
+  teamPanel.dataset.staffTabsV164='1';
+  const card=teamPanel.querySelector('.settings-team-card');
+  if(!card)return;
+  const introRow=card.querySelector(':scope > .row');
+  const introCopy=introRow?.nextElementSibling;
+  const originalAdd=introRow?.querySelector('button,a');
+  if(introRow)introRow.hidden=true;
+  if(introCopy&&introCopy.tagName==='P')introCopy.hidden=true;
+  const teamNode=card.querySelector('#team');
+  if(!teamNode)return;
+  const toolbar=document.createElement('div');
+  toolbar.className='staff-members-toolbar';
+  toolbar.innerHTML=`<div class="staff-members-tabs" role="tablist" aria-label="Staff members sections">
+    <button type="button" class="staff-members-tab active" id="staffMembersTabList" role="tab" aria-selected="true" aria-controls="staffMembersListPanel" data-staff-tab="list">Staff list</button>
+    <button type="button" class="staff-members-tab" id="staffMembersTabInvite" role="tab" aria-selected="false" aria-controls="staffMembersInvitePanel" tabindex="-1" data-staff-tab="invite">Invites &amp; access</button>
+  </div>`;
+  if(originalAdd){
+    originalAdd.classList.add('staff-members-add-top');
+    originalAdd.textContent='Add staff';
+    originalAdd.removeAttribute('style');
+    toolbar.appendChild(originalAdd);
+  }else{
+    toolbar.insertAdjacentHTML('beforeend',`<button type="button" class="btn sm staff-members-add-top" id="staffMembersAddTop">Add staff</button>`);
+  }
+  card.before(toolbar);
+  const listPanel=document.createElement('section');
+  listPanel.className='staff-members-tab-panel staff-members-section-card';
+  listPanel.id='staffMembersListPanel';
+  listPanel.setAttribute('role','tabpanel');
+  listPanel.setAttribute('aria-labelledby','staffMembersTabList');
+  listPanel.innerHTML='<div><h2>Staff list</h2><p class="muted small">Active staff and roster-only teammates appear here first.</p></div>';
+  card.prepend(listPanel);
+  listPanel.appendChild(teamNode);
+  const invitePanel=document.createElement('section');
+  invitePanel.className='staff-members-tab-panel staff-members-section-card';
+  invitePanel.id='staffMembersInvitePanel';
+  invitePanel.setAttribute('role','tabpanel');
+  invitePanel.setAttribute('aria-labelledby','staffMembersTabInvite');
+  let collect=false;
+  Array.from(card.children).forEach(child=>{
+    if(child===listPanel)return;
+    if(child.tagName==='HR'&&!collect)collect=true;
+    if(collect)invitePanel.appendChild(child);
+  });
+  card.appendChild(invitePanel);
+  const setTab=name=>{
+    const showList=name==='list';
+    listPanel.hidden=!showList;
+    invitePanel.hidden=showList;
+    toolbar.querySelectorAll('[data-staff-tab]').forEach(btn=>{
+      const active=btn.dataset.staffTab===name;
+      btn.classList.toggle('active',active);
+      btn.setAttribute('aria-selected',String(active));
+      btn.tabIndex=active?0:-1;
+    });
+  };
+  toolbar.querySelectorAll('[data-staff-tab]').forEach(btn=>btn.addEventListener('click',()=>setTab(btn.dataset.staffTab)));
+  const addTop=toolbar.querySelector('.staff-members-add-top');
+  if(addTop)addTop.addEventListener('click',()=>setTab('invite'));
+  setTab('list');
+}
+
 async function staffMembersPage(){
   settingsActiveTab='team';
   await settingsPage();
@@ -18408,7 +18504,10 @@ async function staffMembersPage(){
   const teamTab=$('settab-team');
   if(teamTab)teamTab.textContent='Staff Members';
   const teamPanel=$('setpanel-team');
-  if(teamPanel)teamPanel.hidden=false;
+  if(teamPanel){
+    teamPanel.hidden=false;
+    enhanceStaffMembersTabsV164(teamPanel);
+  }
 }
 
 /* ---------- daily report ---------- */
