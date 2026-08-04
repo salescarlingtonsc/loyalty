@@ -56,6 +56,32 @@ test('signed-in owner chooses business, sector, cadence and capacity before Stri
   assert.doesNotMatch(onboard,/An approved invitation is required|Apply for a business account/);
 });
 
+test('Stripe-catalog outage offers authenticated manual application fallback without activating access',()=>{
+  const onboard=section('function renderOnboard(){','/* ============================================================================');
+  const fallback=section('function manualBusinessApplicationFallbackHtml','function renderOnboard(){');
+  const v159=readFileSync(new URL('../../supabase/migrations/20260804140000_nestly_v159_selfserve_manual_application_fallback.sql',import.meta.url),'utf8');
+  assert.match(fallback,/Need bank transfer, cash, or manual help\?/);
+  assert.match(fallback,/Super Admin will see the lead in Onboarding/);
+  assert.match(fallback,/Approval does not mark a Stripe invoice paid or unlock access by itself/);
+  assert.match(fallback,/manualOwnerFullName/);
+  assert.match(fallback,/manualContactPhone/);
+  assert.match(fallback,/manualBusinessName/);
+  assert.match(fallback,/manualBusinessSector/);
+  assert.match(fallback,/request_self_serve_manual_application_v159/);
+  assert.match(fallback,/sessionStorage\.removeItem\('nestly-self-serve-manual-application'\)/);
+  assert.match(onboard,/manualBusinessApplicationFallbackHtml\(sectors\)/);
+  assert.match(onboard,/wireManualBusinessApplicationFallback\(\)/);
+  assert.match(v159,/create or replace function public\.request_self_serve_manual_application_v159/);
+  assert.match(v159,/coalesce\(email_confirmed_at,confirmed_at\) is not null/);
+  assert.match(v159,/exists\(select 1 from public\.staff where user_id=v_actor\)/);
+  assert.match(v159,/internal_submit_business_application_v95/);
+  assert.match(v159,/if coalesce\(\(v_application->>'replayed'\)::boolean,false\) is false then[\s\S]+SELF_SERVICE_MANUAL_APPLICATION_REQUESTED_V159/);
+  assert.match(v159,/SELF_SERVICE_MANUAL_APPLICATION_REQUESTED_V159/);
+  assert.match(v159,/revoke all on function public\.request_self_serve_manual_application_v159/);
+  assert.match(v159,/grant execute on function public\.request_self_serve_manual_application_v159[\s\S]+to authenticated/);
+  assert.doesNotMatch(v159,/insert into public\.businesses|update public\.business_workspace_controls_v94|status='approved'/);
+});
+
 test('payment-pending workspace is explicit and only provider-paid evidence activates it',()=>{
   const control=section('function renderBusinessWorkspaceControl(','/* ---------- auth ---------- */');
   assert.match(control,/Complete secure payment/);

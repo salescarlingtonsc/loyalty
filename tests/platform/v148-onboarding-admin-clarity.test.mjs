@@ -18,9 +18,10 @@ test('authenticated business setup identifies the current email and signs out on
 test('platform separates assisted applications from paid website self-service',async()=>{
   const source=await read('app/platform-console.js');
   const queue=source.match(/function businessApplicationQueueHtml[\s\S]+?\n  function wireBusinessApplicationQueue/)?.[0]||'';
+  const render=source.match(/async function renderOnboarding[\s\S]+?\n  function paymentManagedSignupItems/)?.[0]||'';
   assert.match(queue,/Assisted applications/);
   assert.match(queue,/Website signups activate after Stripe confirms payment/);
-  assert.match(queue,/paymentManagedSignupQueueHtml\(firmItems,CUI\)/);
+  assert.match(render,/paymentManagedSignupQueueHtml\(items,CUI\)\+businessApplicationQueueHtml\(applicationQueue,CUI,items\)/);
   assert.match(source,/Website signups and paid workspaces/);
   assert.match(source,/Self-service signups are payment-managed/);
   assert.match(source,/Open firm directory/);

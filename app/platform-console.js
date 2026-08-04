@@ -4627,7 +4627,9 @@
       });
       pageState.attentionSummary=prior?.attentionSummary||directory.attention_summary;
       if(context.access?.role==='super_admin'){
-        main.insertAdjacentHTML('afterbegin',businessApplicationQueueHtml(applicationQueue,CUI,items));
+        main.insertAdjacentHTML('afterbegin',
+          paymentManagedSignupQueueHtml(items,CUI)+businessApplicationQueueHtml(applicationQueue,CUI,items)
+        );
         wireBusinessApplicationQueue({...context,applicationQueue,filters});
       }
       wireOnboarding({...context,items,filters,onboardingPage:pageState,onboardingLoadMore:false});
@@ -4694,7 +4696,6 @@
           <button class="btn danger sm" type="button" data-application-decision="reject">${escapeHtml(pt('Reject application'))}</button></div></div>
       </article>`).join('')||CUI.emptyState({iconName:'setup',title:'No assisted applications awaiting review',body:'Paid website signups do not wait here; Stripe confirmation activates their workspace automatically.'})}</div>
         ${payload?.truncated?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("Showing the newest 100 applications. Narrow the search to find another application."))}</p>`:''}
-        ${paymentManagedSignupQueueHtml(firmItems,CUI)}
     </section>`;
   }
   function wireBusinessApplicationQueue(context){

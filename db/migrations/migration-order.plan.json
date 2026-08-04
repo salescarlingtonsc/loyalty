@@ -1113,6 +1113,12 @@
       "path": "db/migrations/20260804_nestly_v156a_v151_invite_search_path_hardening.sql",
       "semanticVersion": "v156a",
       "proposedDeployVersion": "20260804130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql",
+      "semanticVersion": "v159",
+      "proposedDeployVersion": "20260804140000"
     }
   ]
 }
