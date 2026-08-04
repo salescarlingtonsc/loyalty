@@ -74,9 +74,9 @@ historical events/documents, tenant roles and merchant navigation.
   are denied by RLS and RPC authorization.
 - Renewal/payment tasks deduplicate by subscription, invoice and reminder key and
   resolve on recovery.
-- Relevant V154/V155, billing, entitlement, storage and permission tests remain
-  green. The baseline V151 `dashboardMobileBranchWrap` assertion is already red
-  and remains explicitly outside V156.
+- Relevant V89/V151/V154/V155/V157, billing, entitlement, storage and permission
+  tests remain green. The V151 dashboard-scope and V138 Grow assertions were
+  updated to the already-deployed V157 behavior on the integration branch.
 
 ## Verification and release
 
@@ -91,9 +91,32 @@ promoting V156 would overwrite that later lineage. A reviewed integration commit
 based on the current production build is required before web promotion. No
 uncontrolled live charge is permitted.
 
+The V156/V157 integration worktree is based exactly on production build
+`65887b0f49c1a457f0ea9d5580b6b949ec3fbd53`. The affected-module regression set
+passes 168/168, the migration-order suite passes 13/13, and quality, runtime
+configuration, migration manifest/canonical checks, build and diff checks pass.
+V156 admin copy added by the integration now satisfies the full Chinese/Malay
+runtime and accessibility localization contract. The repository-wide suite was
+also sampled once and remains red in unrelated historical component-fixture and
+legacy contract assertions that were already incompatible with deployed V157;
+those failures are not release evidence for V156 and are not being hidden.
+
 ## Migration and rollback
 
-Forward additive migration only. No historical row rewrite or destructive
-rollback. Before deployment, rehearse from the V155 production chain. If the web
+Forward additive migrations only. No historical migration or row is rewritten.
+Production inspection on 2026-08-04 confirmed the already-deployed V151 invite
+RPCs retained `search_path=public`; V156a pins those exact functions to
+`pg_catalog, public` without changing their bodies or role grants. Its
+rollback-only SQL suite checks both configuration and existing execute ACLs.
+The two pre-preflight V151/V155 test exceptions are bound to their exact deployed
+identity and SHA-256, corroborated by the production migration ledger. Before
+deployment, rehearse from the V155 production chain. If the web
 or dispatcher fails, disable V156 navigation/dispatcher while retaining immutable
 documents/outbox for forward repair.
+
+Sol independently accepted the exact V156/V157 integration candidate on
+2026-08-04 with P0 none and P1 none. The accepted evidence includes the 37/37
+migration/security/V156 selection, the 207/207 affected application regression
+selection, and passing quality, runtime, manifest, canonical, build and diff
+gates. Remaining P2 items are operational inputs or post-deployment proof, not
+unreviewed code findings.

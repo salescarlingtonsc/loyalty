@@ -1108,6 +1108,12 @@
       "version": "20260804120000",
       "name": "nestly_v156_subscription_operations_crm",
       "sourcePath": "db/migrations/20260804_nestly_v156_subscription_operations_crm.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804130000",
+      "name": "nestly_v156a_v151_invite_search_path_hardening",
+      "sourcePath": "db/migrations/20260804_nestly_v156a_v151_invite_search_path_hardening.sql"
     }
   ]
 }

@@ -103,8 +103,8 @@ test('V151 Stripe return polls provider-confirmed self-service status and never 
 
 test('V151 dashboard charts show empty states instead of misleading axes', () => {
   assert.match(dashboard, /dashboard-chart-empty/);
-  assert.match(dashboard, /dashboardMobileBranchWrap/);
-  assert.match(dashboard, /\['dashboardBranchWrap','dashboardMobileBranchWrap'\]/);
+  assert.match(dashboard, /dashboardReportingScopeWrap/);
+  assert.match(dashboard, /renderReportingScopeSelectorV155\(load,isDashboardCurrent,'dashboardReportingScopeWrap'\)/);
   assert.match(dashboard, /No revenue recorded in this period/);
   assert.match(dashboard, /More activity is needed to show a trend/);
   assert.match(dashboard, /No valid visits recorded in this period/);

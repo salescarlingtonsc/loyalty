@@ -102,10 +102,10 @@ test('Today is the first task destination while all authorised deep links remain
   assert.equal(groups[0].key,'overview');
   assert.equal(groups[0].label,'Today');
   assert.deepEqual(Array.from(groups[0].routes,route=>route.key),['overview']);
-  assert.equal(groups.filter(group=>!group.secondary).length,5);
+  assert.equal(groups.filter(group=>!group.secondary).length,6);
   assert.deepEqual(
     Array.from(allowed,route=>route.key),
-    ['overview','onboarding','firms','reports','billing','pnl','commissions','sectors','automation','access'],
+    ['overview','onboarding','customer-lifecycle','firms','reports','billing','subscription-operations','pnl','commissions','sectors','automation','access'],
     'task-first navigation must not delete an authorised route or its deep link'
   );
 });
@@ -283,7 +283,8 @@ test('task-first desktop groups remain permission-filtered for sales staff',asyn
     })),
     [
       {key:'overview',label:'Today',routes:['overview']},
-      {key:'firms',label:'Firms',routes:['firms','onboarding']},
+      {key:'sales',label:'Sales',routes:['onboarding']},
+      {key:'customers',label:'Customers',routes:['firms']},
       {key:'reports',label:'Reports',routes:['reports']}
     ]
   );

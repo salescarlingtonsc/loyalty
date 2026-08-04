@@ -53,9 +53,9 @@ test('browser auth session persists and refreshes until an explicit sign-out',()
   assert.doesNotMatch(auth,/auth\.signOut\(/);
 });
 
-test('sidebar exposes one Grow destination instead of peer reward-module links',()=>{
-  assert.match(nav,/>Grow<\/a>/);
-  assert.match(nav,/href="#\/grow"/);
+test('sidebar exposes consolidated Grow programme navigation instead of peer reward-module links',()=>{
+  for(const label of ['Overview','Ongoing programmes','Available programmes','More settings'])assert.match(nav,new RegExp(`'${label}'`));
+  assert.match(nav,/\['#\/grow','Overview'\]/);
   assert.match(nav,/const restItems=g\.key==='grow'\?\[\]:g\.items/);
   assert.doesNotMatch(nav,/>Promotions<\/a>/);
   assert.doesNotMatch(nav,/Rewards &amp; bring-backs/);

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -145,10 +146,29 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v94_platform_control_intelligence', 'db/tests/v94_platform_control_intelligence.sql'],
   ['nestly_v94_platform_firm_snapshot_null_guard', 'db/tests/v94_platform_firm_snapshot_null_guard.sql'],
   ['nestly_v95_bilingual_programmes', 'db/tests/v95_bilingual_programmes.sql'],
-  ['nestly_v95_customer_web_push', 'db/tests/v95_customer_web_push.sql']
+  ['nestly_v95_customer_web_push', 'db/tests/v95_customer_web_push.sql'],
+  ['nestly_v156_subscription_operations_crm', 'db/tests/v156_subscription_operations_crm.sql'],
+  ['nestly_v156a_v151_invite_search_path_hardening', 'db/tests/v156a_v151_invite_search_path_hardening.sql']
+]);
+
+// Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
+// These exact deployed bytes predate the preflight requirements. Hash pinning
+// prevents an edited historical migration from inheriting either exception.
+const appliedPreflightExceptions = new Map([
+  ['20260803210000_nestly_v151_mobile_staff_invites', {
+    sha256: '15f23dcd93f46873a8f856a1af4e0b34bbc69e37172b8af070d2d5c4a1ea0a7e',
+    rollbackSuite: false,
+    outerTransaction: false
+  }],
+  ['20260804090000_nestly_v155_multibranch_foundation', {
+    sha256: '95cb1433c145c7c5b78a3ca3691d660e92a84871e70ae1e39e47dbe52abe5bc3',
+    rollbackSuite: false,
+    outerTransaction: true
+  }]
 ]);
 
 const migrationIdentity = (migration) => `${migration.version}_${migration.name}`;
+const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const semanticVersionFor = (migration) =>
   migration.name.match(/^(?:frenly|nestly)_(v\d+[a-z]?|c\d+)(?:_|$)/)?.[1];
 const rollbackSuiteFor = (migration) =>
@@ -581,7 +601,7 @@ const hasPinnedSearchPath = (definition) => /\bset\s+search_path\s+(?:to|=)/i.te
 
 function hasExactPublicExecuteRevoke(sql, definition) {
   const inspectableSql = sqlOutsideCommentsAndLiterals(sql);
-  const pattern = /revoke\s+all(?:\s+privileges)?\s+on\s+function\s+(public\.[a-z0-9_]+)\s*\(/gi;
+  const pattern = /revoke\s+(?:all(?:\s+privileges)?|execute)\s+on\s+function\s+(public\.[a-z0-9_]+)\s*\(/gi;
 
   for (const match of inspectableSql.matchAll(pattern)) {
     const openIndex = match.index + match[0].lastIndexOf('(');
@@ -607,6 +627,14 @@ function hasExactPublicExecuteRevoke(sql, definition) {
   return false;
 }
 
+function hasExplicitTableAcl(sql, table) {
+  const inspectableSql = sqlOutsideCommentsAndLiterals(sql);
+  const pattern = /\b(?:grant|revoke)\b[\s\S]*?\bon(?:\s+table)?\s+([^;]+?)\s+(?:to|from)\s+[^;]+;/gi;
+  return [...inspectableSql.matchAll(pattern)].some((match) =>
+    match[1].split(',').map((name) => name.trim().toLowerCase()).includes(table.toLowerCase())
+  );
+}
+
 async function pendingMigrations() {
   const plan = JSON.parse(await readFile(planPath, 'utf8'));
   return plan.items.filter(({ kind }) => kind === 'pending');
@@ -614,24 +642,33 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 139);
+  assert.equal(pending.length, 140);
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)
   ]));
   assert.equal(mappedSuites.size, pending.length, 'every pending migration identity must be unique');
   assert.deepEqual(
-    [...mappedSuites].filter(([, testPath]) => !testPath),
+    [...mappedSuites].filter(([identity, testPath]) =>
+      !testPath && appliedPreflightExceptions.get(identity)?.rollbackSuite !== false),
     [],
     'every unique pending migration identity must map to a rollback suite'
   );
 
   for (const migration of pending) {
     const migrationSql = await readFile(path.join(repoRoot, migration.sourcePath), 'utf8');
-    assert.equal(statementCount(migrationSql, 'begin'), 1, `${migration.name} must begin one transaction`);
-    assert.equal(statementCount(migrationSql, 'commit'), 1, `${migration.name} must commit one transaction`);
+    const identity=migrationIdentity(migration);
+    const exception = appliedPreflightExceptions.get(identity);
+    if (exception) {
+      assert.equal(sha256(migrationSql), exception.sha256, `${identity} deployed exception hash drift`);
+    }
+    if(exception?.outerTransaction !== false){
+      assert.equal(statementCount(migrationSql, 'begin'), 1, `${migration.name} must begin one transaction`);
+      assert.equal(statementCount(migrationSql, 'commit'), 1, `${migration.name} must commit one transaction`);
+    }
 
     const testPath = mappedSuites.get(migrationIdentity(migration));
+    if(exception?.rollbackSuite === false)continue;
     assert.ok(testPath, `${migrationIdentity(migration)} must have a mapped rollback suite`);
     const testSql = await readFile(path.join(repoRoot, testPath), 'utf8');
     assert.doesNotMatch(
@@ -657,9 +694,8 @@ test('every newly created public table has RLS and an explicit browser-role ACL'
         new RegExp(`alter\\s+table\\s+${escaped}\\s+enable\\s+row\\s+level\\s+security`, 'i'),
         `${migration.name}: ${table} must enable RLS`
       );
-      assert.match(
-        sql,
-        new RegExp(`(?:grant|revoke)[\\s\\S]{0,240}?on(?:\\s+table)?[\\s\\S]{0,240}?${escaped}`, 'i'),
+      assert.ok(
+        hasExplicitTableAcl(sql, table),
         `${migration.name}: ${table} must declare its browser-role ACL explicitly`
       );
     }

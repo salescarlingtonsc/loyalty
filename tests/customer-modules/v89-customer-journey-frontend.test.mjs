@@ -51,7 +51,7 @@ test('customer can scan a business-issued QR from first use and from persistent 
   assert.match(scanner,/id="customerJoinScannerImage" type="file" accept="image\/\*"/);
   assert.match(scanner,/rememberPendingCustomerJoinToken\(token\);close\(\{restoreFocus:false\}\);nav\('#\/join'\)/);
   assert.match(app,/function renderCustomerFirstProgrammeQuest/);
-  assert.match(app,/firstQuest:'Your first programme'/);
+  assert.match(app,/firstQuest:'Your first rewards'/);
   assert.match(app,/id="customerFirstScan"/);
   assert.match(app,/id="customerFirstScan"/);
   assert.match(app,/id="customerNavScan"/);
