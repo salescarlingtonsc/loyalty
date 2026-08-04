@@ -74,9 +74,11 @@ test('platform console exposes the required namespaced routes', async () => {
   const consoleApi = context.NestlyPlatformConsole;
   assert.equal(consoleApi.isRoute('#/platform'),true);
   assert.equal(consoleApi.isRoute('#/platform/onboarding'),true);
+  assert.equal(consoleApi.isRoute('#/platform/customer-lifecycle'),true);
   assert.equal(consoleApi.isRoute('#/platform/firms'),true);
   assert.equal(consoleApi.isRoute('#/platform/reports'),true);
   assert.equal(consoleApi.isRoute('#/platform/billing'),true);
+  assert.equal(consoleApi.isRoute('#/platform/subscription-operations'),true);
   assert.equal(consoleApi.isRoute('#/platform/pnl'),true);
   assert.equal(consoleApi.isRoute('#/platform/commissions'),true);
   assert.equal(consoleApi.isRoute('#/platform/sectors'),true);
@@ -87,7 +89,7 @@ test('platform console exposes the required namespaced routes', async () => {
   assert.equal(consoleApi.routeKey('#/platform/commissions'),'commissions');
   assert.deepEqual(
     Array.from(consoleApi.routes,route=>route.label),
-    ['Today','Onboarding','Firms','Reports','Billing','Cash P&L','Commission payable','Sector modules','System health','Platform access']
+    ['Today','Onboarding','Customer lifecycle','Firms','Reports','Billing','Subscription operations','Cash P&L','Commission payable','Sector modules','System health','Platform access']
   );
 });
 
