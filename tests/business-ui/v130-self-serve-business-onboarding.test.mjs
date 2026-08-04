@@ -32,9 +32,12 @@ function platformSection(start,end){
 test('public business signup creates an owner account instead of requesting admin approval',()=>{
   const signup=section('function renderBusinessApplication(){','async function renderApprovedBusinessInviteSignup(');
   assert.match(signup,/Create your Peekaa owner account/);
+  assert.match(signup,/Stripe Checkout when plans are configured/);
+  assert.match(signup,/manual payment help/);
   assert.match(signup,/sb\.auth\.signUp/);
   assert.match(signup,/validNewPassword/);
   assert.match(signup,/I agree to the Terms of Service and acknowledge the Privacy Policy/);
+  assert.doesNotMatch(signup,/then pay through Stripe/);
   assert.doesNotMatch(signup,/Submit for approval|super admin must approve|public-business-application/);
 });
 
@@ -60,13 +63,22 @@ test('Stripe-catalog outage offers authenticated manual application fallback wit
   const onboard=section('function renderOnboard(){','/* ============================================================================');
   const fallback=section('function manualBusinessApplicationFallbackHtml','function renderOnboard(){');
   const v159=readFileSync(new URL('../../supabase/migrations/20260804140000_nestly_v159_selfserve_manual_application_fallback.sql',import.meta.url),'utf8');
-  assert.match(fallback,/Need bank transfer, cash, or manual help\?/);
-  assert.match(fallback,/Super Admin will see the lead in Onboarding/);
+  assert.match(fallback,/Continue without Stripe checkout/);
+  assert.match(fallback,/Stripe checkout is not available right now because Peekaa has no active monthly and annual Stripe plans configured/);
+  assert.match(fallback,/bank transfer, cash handling, or manual help/);
+  assert.match(fallback,/Super Admin will see this in Onboarding/);
   assert.match(fallback,/Approval does not mark a Stripe invoice paid or unlock access by itself/);
   assert.match(fallback,/manualOwnerFullName/);
   assert.match(fallback,/manualContactPhone/);
   assert.match(fallback,/manualBusinessName/);
   assert.match(fallback,/manualBusinessSector/);
+  assert.match(fallback,/Send business details to Peekaa/);
+  assert.match(fallback,/does not activate a workspace or record payment/);
+  assert.match(onboard,/Payment setup needs help/);
+  assert.match(onboard,/Why Stripe did not open/);
+  assert.match(onboard,/No workspace, invoice, receipt, or charge was created/);
+  assert.match(onboard,/Monthly and annual Stripe plans are not active/);
+  assert.match(onboard,/Check Stripe setup again/);
   assert.match(fallback,/request_self_serve_manual_application_v159/);
   assert.match(fallback,/sessionStorage\.removeItem\('nestly-self-serve-manual-application'\)/);
   assert.match(onboard,/manualBusinessApplicationFallbackHtml\(sectors\)/);
