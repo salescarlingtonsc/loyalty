@@ -163,9 +163,10 @@ test('dashboard and customer loyalty detail preserve accessible names and one pa
   assert.match(dashboard,/<label class="sr-only" for="df">Dashboard start date<\/label>/);
   assert.match(dashboard,/<label class="sr-only" for="dt">Dashboard end date<\/label>/);
   assert.match(app,/id="branchSel"[^>]*aria-label="Business branch"/);
-  for(const [id,label] of [['trName','Tier name'],['trTh','Tier threshold'],['trMul','Points earning multiplier'],['trPerk','Tier perk note']]){
+  for(const [id,label] of [['trName','Tier name'],['trTh','Tier threshold'],['trMul','Points earning multiplier']]){
     assert.match(loyalty,new RegExp(`<label class="sr-only" for="${id}">${label}<\\/label>`));
   }
+  assert.match(loyalty,/<label for="trBenefits">Tier benefits<\/label><textarea id="trBenefits"/);
   assert.doesNotMatch(walletCard,/h\$\{detail\?'1':'2'\}/);
   assert.match(walletCard,/<h2>\$\{esc\(business\.name\|\|'Business'\)\} rewards<\/h2>/);
   assert.match(app,/id="walletBack" aria-label="\$\{esc\(ct\('backProgrammes'\)\)\}"[^>]*min-width:44px/);

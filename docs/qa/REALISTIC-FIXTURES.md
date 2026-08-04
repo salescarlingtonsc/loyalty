@@ -116,6 +116,18 @@ Promotion cases:
 - wording-assistant inputs containing a percentage, date, and named service to
   prove those facts remain exact after polishing.
 
+Loyalty effective-boundary cases:
+
+- current **Glow Facial** reward and **Glow** tier;
+- future **Radiance Facial** reward and **Radiance** tier starting
+  `2026-08-03T00:00:00+08:00`;
+- ended **July Glow** reward and **Silver July** tier ending at that same
+  exclusive instant;
+- paused reward and tier rows, plus an invalid reversed window;
+- browser date-time inputs serialize Kuala Lumpur midnight to the explicit
+  `+08:00` instant rather than JavaScript's UTC interpretation of a date-only
+  string.
+
 ## `CAFE-HARBOUR` — Harbour Kopi
 
 Sector: F&B / Café
@@ -299,6 +311,22 @@ All automated credentials must come from a non-committed test-secret mechanism.
   synthetic provider customer. The browser may pause for the owner to complete
   Stripe login, OTP, identity, representative, bank and final contractual
   confirmation. Credentials and identity evidence are never stored in git.
+
+## `SPA-GLOW-LOYALTY-AUTHORING` — reward and tier setup
+
+- Product-backed reward source: `Radiance Serum`, SGD 88.00 selling price and
+  SGD 26.00 company cost. The owner may overwrite every prefilled reward field.
+- Custom reward source: `Signature Facial`, with no catalogue dependency.
+- Duplicate reward labels: two `Glow Facial` rewards retain distinct stable IDs.
+- Empty tier inventory is seeded only on owner action with Member/Plus/VIP
+  defaults for visits, spend, or points-earned; publication remains separate.
+- Induce a response loss after the atomic default-tier transaction commits,
+  then retry from the same browser session. Exactly one draft and exactly three
+  stable default tiers remain after refresh. Repeat with a fresh key from a
+  stale tab and two concurrent keys; neither path may append duplicate defaults.
+- Publish tiers with explicit Kuala Lumpur effective/expiry boundaries, create
+  a later draft from that publication, and verify the two boundary instants are
+  copied byte-for-byte rather than reset to unbounded.
 
 ## Required state variations
 

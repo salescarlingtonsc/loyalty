@@ -28,10 +28,11 @@ test('shared reward snapshot trigger safely handles each table row type', async 
 test('reward editor exposes simple customer-facing fields and progressive disclosure', async () => {
   const app = await read('app/index.html');
   for (const field of [
-    'Customer-facing name',
+    'Reward name customers see',
+    'Start from a product',
     'What the customer gets',
     'cost_points',
-    'Estimated business cost',
+    'Company cost budget',
     'Reward expires after (days)',
     'Uses per customer',
     'Image reference',

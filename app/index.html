@@ -2000,6 +2000,17 @@ const writeAttemptKey=(slot,fingerprint)=>{
   return a.key;
 };
 const clearWriteAttempt=slot=>{try{sessionStorage.removeItem(slot)}catch{}};
+async function addRecommendedLoyaltyTiersV143({
+  client=sb,businessId,versionId,basis,expectedSnapshotHash,idempotencyKey
+}){
+  return client.rpc('add_recommended_loyalty_tiers_v143',{
+    p_business:businessId,
+    p_version:versionId||null,
+    p_basis:basis,
+    p_expected_snapshot_hash:expectedSnapshotHash||null,
+    p_idempotency_key:idempotencyKey
+  });
+}
 /* Server replay signal, collision-safe: never keys off a bare `status` (a membership's result
    status is 'active', a package's has no such field) — only explicit idempotency sentinels. */
 const isReplayResult=r=>!!(r&&(r.replayed===true||r.already_recorded===true||r.status==='duplicate_ignored'||r.status==='replayed'));
@@ -4020,7 +4031,8 @@ function customerPointTotalV103(value){
     .format(Math.max(0,Number(value)||0));
 }
 function customerTierHasProgressV103(tier={}){
-  const named=[tier.current,tier.label,tier.next].some(value=>String(value||'').trim().length>0);
+  const named=[tier.current?.label,tier.current,tier.label,tier.next?.label,tier.next]
+    .some(value=>typeof value==='string'&&value.trim().length>0);
   const progress=Number(tier.progress_percent);
   return named||(Number.isFinite(progress)&&progress>0);
 }
@@ -4149,6 +4161,9 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
   const hasTier=customerTierHasProgressV103(tier);
+  const currentTierLabel=String(tier.current?.label||tier.current||tier.label||'').trim();
+  const currentTierBenefits=Array.isArray(tier.current?.benefits)
+    ?tier.current.benefits.filter(value=>String(value||'').trim()).map(value=>String(value).trim()):[];
   const unitLabel=ct(presentation.unit);
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
   const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,2);
@@ -4156,9 +4171,10 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     <header class="customer-programme-compact-head" style="--merchant-accent:${esc(presentation.heroColor)}">
       <div class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</div>
       <div class="customer-programme-compact-copy"><h1>${esc(business.name||presentation.name)}</h1>
-        <p class="muted small">${esc(presentation.name)}${hasTier&&String(tier.current||tier.label||'').trim()?` · ${esc(tier.current||tier.label)}`:''}</p></div>
+        <p class="muted small">${esc(presentation.name)}${hasTier&&currentTierLabel?` · ${esc(currentTierLabel)}`:''}</p></div>
       <div class="customer-programme-compact-balance"><b>${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}</b><span>${esc(unitLabel)}</span></div>
     </header>
+    ${currentTierBenefits.length?`<section class="card" style="margin-top:14px"><h2>${esc(currentTierLabel||'Current tier')} benefits</h2><ul class="rec-why" style="margin-top:10px">${currentTierBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul></section>`:''}
     ${offers.length?`<section class="customer-promotions-section" aria-labelledby="latestOffersTitle"><div class="customer-promotions-head"><div><p class="customer-quest-kicker">From ${esc(business.name||ct('localBusiness'))}</p><h2 id="latestOffersTitle">Latest offers</h2></div></div><div class="customer-promotions-grid">${offers.map(item=>customerPromotionCardV104(item,business,bookingEnabled)).join('')}</div></section>`:''}
     ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><a class="btn" href="#/b/${encodeURIComponent(business.slug)}">${esc(ct('bookNow'))}</a></div></section>`:''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products,...presentation.services].map(item=>`<article class="customer-reward-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('featured'))}</b>${item.description?`<p class="muted small" style="margin-top:5px">${esc(item.description)}</p>`:''}</article>`).join('')}</div>`:''}
@@ -4403,15 +4419,17 @@ async function renderCustomerWallet(businessSlug=null){
   const promotionPromptRequest=customerFeatures.customer_in_app_inbox===true
     ?sb.rpc('customer_get_pending_promotion_prompt_v122',{p_business_slug:businessSlug})
     :Promise.resolve({data:null,error:null});
-  const [businessActionsResult,presentationResult,promotionsResult,promotionPromptResult]=await Promise.all([
+  const [businessActionsResult,presentationResult,effectiveTierResult,promotionsResult,promotionPromptResult]=await Promise.all([
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
+    businessId?sb.rpc('customer_get_effective_tier_v143',{p_business:businessId}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_promotions_v104',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
     promotionPromptRequest
   ]);
   if(!isWalletCurrent())return;
   const businessActions=businessActionsResult.error?null:businessActionsResult.data;
   const presentation=customerProgrammePresentationV95(presentationResult.error?{}:presentationResult.data,{business:b,loyalty:actionableCard?.loyalty||loyalty});
+  presentation.tier=effectiveTierResult.error?{}:(effectiveTierResult.data?.tier||{});
   presentation.offers=promotionsResult.error
     ?presentation.offers.slice(0,2)
     :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]);
@@ -9565,10 +9583,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const canManageLoyalty=S.myRole==='owner'&&canWriteLoyalty;
   const loyaltyControlDisabled=canManageLoyalty?'':' disabled';
   let lp=[],rw=[],tr=[],rb=[],rs=[],rp=[],bo=[],birthdayPrograms=[],publishedBirthdayPrograms=[],draftSnapshotHash=null;
-  const [{data:br,error:brError},{data:sv,error:svError},{data:pr,error:prError}]=await Promise.all([
+  const [{data:br,error:brError},{data:sv,error:svError},productResult]=await Promise.all([
     sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name'),
     sb.from('services').select('id,name,active').eq('business_id',S.biz.id).order('name'),
-    sb.from('products').select('id,name,active').eq('business_id',S.biz.id).order('name')]);
+    canManageLoyalty
+      ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
+      :sb.from('products').select('id,name,active').eq('business_id',S.biz.id).order('name')]);
+  const prError=productResult.error;
+  const pr=canManageLoyalty?(Array.isArray(productResult.data?.items)?productResult.data.items:[]):(productResult.data||[]);
   if(!isLoyaltyCurrent())return;
   if(brError||svError||prError)throw brError||svError||prError;
   if(draftVersionId){
@@ -9605,7 +9627,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const [{data:liveProgram,error:programError},{data:liveRewards,error:rewardsError},{data:liveTiers,error:tierError},{data:liveBranches,error:rbError},{data:liveServices,error:rsError},{data:liveProducts,error:rpError}]=await Promise.all([
       sb.from('loyalty_programs').select('*').eq('business_id',S.biz.id).limit(1),
       sb.from('loyalty_rewards').select('*').eq('business_id',S.biz.id).order('sort').order('created_at'),
-      sb.from('loyalty_tiers').select('*').eq('business_id',S.biz.id).order('threshold'),
+      canManageLoyalty?sb.rpc('business_get_loyalty_tiers_v143',{p_business:S.biz.id}):sb.from('loyalty_tiers').select('*').eq('business_id',S.biz.id).order('threshold'),
       sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_products').select('reward_id,product_id').eq('business_id',S.biz.id)]);
@@ -9623,7 +9645,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const p=lp?.[0]?{...lp[0],configuration_status:draftVersionId?'draft':lp[0].configuration_status}:null;
   const birthdayProgram=birthdayPrograms[0]||null;
   const publishedBirthdayProgram=publishedBirthdayPrograms[0]||null;
-  const rewards=rw||[],tiers=(tr||[]).filter(t=>t.active!==false);
+  const rewards=rw||[],tiers=tr||[];
   const model=modelOverride||p?.loyalty_model||'classic';
   const unit=model==='stamps'?'stamps':'points';
   const groupEligibility=(rows,key)=>rows.reduce((a,x)=>{
@@ -9639,6 +9661,35 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const rewardId=(reward)=>reward?(reward.reward_id||reward.id||''):'';
   const rewardLabel=(r)=>r.customer_name||r.name||'Unnamed reward';
   const rewardKind=(r)=>r.fulfillment_kind||((r.credit_cents||0)>0?'credit':'manual_item');
+  const productById=new Map(activeItems(pr||[]).map(product=>[product.id,product]));
+  const pointCostSamples=(rw||[]).filter(reward=>Number(reward.cost_points)>0&&Number(reward.estimated_cost_cents)>0);
+  const estimatedPointCostCents=pointCostSamples.length
+    ?pointCostSamples.reduce((sum,reward)=>sum+Number(reward.estimated_cost_cents),0)
+      /pointCostSamples.reduce((sum,reward)=>sum+Number(reward.cost_points),0)
+    :Number(p?.redeem_points)>0&&Number(p?.reward_credit_cents)>0
+      ?Number(p.reward_credit_cents)/Number(p.redeem_points):1;
+  const tierBenefitLines=(tier)=>String(tier?.perk_note||'').split(/\r?\n/)
+    .map(value=>value.trim()).filter(Boolean);
+  const boundaryInputValue=(value)=>{
+    if(!value)return '';
+    const parts=new Intl.DateTimeFormat('sv-SE',{
+      timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',hourCycle:'h23'
+    }).formatToParts(new Date(value)).reduce((out,part)=>({...out,[part.type]:part.value}),{});
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+  };
+  const boundaryInstant=(value)=>value?`${value}:00+08:00`:null;
+  const boundaryState=(item,startKey,endKey,now=Date.now())=>{
+    if(item?.active===false)return {key:'paused',label:'Paused',tone:'off'};
+    const starts=item?.[startKey]?Date.parse(item[startKey]):NaN;
+    const ends=item?.[endKey]?Date.parse(item[endKey]):NaN;
+    if(Number.isFinite(starts)&&starts>now)return {key:'scheduled',label:'Scheduled',tone:'new'};
+    if(Number.isFinite(ends)&&ends<=now)return {key:'ended',label:'Ended',tone:'off'};
+    return {key:'live',label:'Live',tone:'on'};
+  };
+  const rewardBoundary=(reward)=>boundaryState(reward,'claim_available_from','claim_available_until');
+  const tierBoundary=(tier)=>boundaryState(tier,'effective_from','expires_at');
+  const validBoundaryWindow=(start,end)=>!start||!end||Date.parse(boundaryInstant(end))>Date.parse(boundaryInstant(start));
   const eligibilitySummary=(r)=>['branch','service','product'].map((k)=>{
     const n=(eligibility[k][rewardId(r)]||[]).length;
     return n?`${n} ${k}${n===1?'':'s'}`:`all ${k}s`;
@@ -9680,12 +9731,13 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const rewardRows=(label)=>`
     <b style="display:block;margin-top:18px">${label}</b>
     <div class="reward-list" id="rwList">
-    ${rewards.length?rewards.map(r=>`<div class="reward-item">
+    ${rewards.length?rewards.map(r=>{const state=rewardBoundary(r);return `<div class="reward-item">
       <div class="meta"><div><b class="inline-status">${r.active?'':CUI.icon('retention',{size:15})}${esc(rewardLabel(r))}</b>
         <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
+        ${r.claim_available_from||r.claim_available_until?`<div class="muted small" style="margin-top:4px">${r.claim_available_from?`Starts ${esc(walletDate(r.claim_available_from,true))}`:'Available now'}${r.claim_available_until?` · Ends ${esc(walletDate(r.claim_available_until,true))}`:''}</div>`:''}
         ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}</div>
-        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'live':'archived'}</span>
-        ${canManageLoyalty?`<button class="btn ghost sm rwEdit" data-reward-id="${esc(rewardId(r))}">Edit</button>`:''}</div></div>`).join('')
+        <span class="spacer"></span><span class="pill ${state.tone}">${state.label}</span>
+        ${canManageLoyalty?`<button class="btn ghost sm rwEdit" data-reward-id="${esc(rewardId(r))}">Edit</button>`:''}</div></div>`}).join('')
       :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}</div>
     <div id="rwEditor" aria-live="polite"></div>
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
@@ -9695,18 +9747,23 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <option value="visits" ${(p?.tier_basis??'visits')==='visits'?'selected':''}>Number of visits (recommended)</option>
       <option value="spend" ${p?.tier_basis==='spend'?'selected':''}>Lifetime spend ($)</option>
       <option value="points_earned" ${p?.tier_basis==='points_earned'?'selected':''}>Lifetime points earned</option></select>
-    ${tiers.length?tiers.map(t=>`<div class="row" style="margin-top:8px">
-      <span>${esc(t.name)}</span><span class="spacer"></span>
-      <span class="muted small">from ${t.threshold} · ${t.points_multiplier}× ${unit}${t.perk_note?' · '+esc(t.perk_note):''}</span>
+    ${tiers.length?tiers.map(t=>{const state=tierBoundary(t),benefits=tierBenefitLines(t);return `<div class="reward-item" style="margin-top:8px">
+      <div class="meta"><div><b>${esc(t.name)}</b><p class="muted small" style="margin-top:4px">from ${t.threshold} · ${t.points_multiplier}× ${unit}</p>
+      ${benefits.length?`<ul class="rec-why" style="margin-top:8px">${benefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:'<p class="muted small" style="margin-top:6px">No benefits added yet.</p>'}</div><span class="spacer"></span>
+      <span class="pill ${state.tone}">${state.label}</span>
       ${canManageLoyalty?`<button class="btn ghost sm trEdit" data-id="${t.tier_id||t.id}">Edit</button>
-      <button class="btn ghost sm trDel" data-id="${t.tier_id||t.id}">✕</button>`:''}</div>`).join('')
+      <button class="btn ghost sm trDel" data-merchant-content aria-label="Pause ${esc(t.name)} tier" data-id="${t.tier_id||t.id}">✕</button>`:''}</div></div>`}).join('')
       :`<p class="muted small" style="margin-top:6px">No tiers yet — customers all earn at 1×.</p>`}
-    ${canManageLoyalty?`<div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+    ${canManageLoyalty&&!tiers.length?'<button class="btn ghost sm" id="trDefaults" type="button" style="margin-top:10px">Add recommended tiers</button><p class="muted small" id="trDefaultsStatus" role="status" aria-live="polite" style="margin-top:6px">Adds Member, Plus and VIP to the editable draft. Nothing is published.</p>':''}
+    ${canManageLoyalty?`<div class="field-grid" style="margin-top:12px">
       <label class="sr-only" for="trName">Tier name</label><input id="trName" placeholder="e.g. Gold" style="flex:1;min-width:100px">
       <label class="sr-only" for="trTh">Tier threshold</label><input id="trTh" type="number" min="0" placeholder="from" style="max-width:80px">
       <label class="sr-only" for="trMul">Points earning multiplier</label><input id="trMul" type="number" min="1" step="0.5" placeholder="× earn" style="max-width:90px">
-      <label class="sr-only" for="trPerk">Tier perk note</label><input id="trPerk" placeholder="perk note (optional)" style="flex:1;min-width:120px">
-      <button class="btn sm" id="trAdd">Add</button></div>`:''}`;
+      <div class="full"><label for="trBenefits">Tier benefits</label><textarea id="trBenefits" rows="3" placeholder="One customer benefit per line"></textarea>
+        ${rewards.length?`<div class="row" style="margin-top:8px;flex-wrap:wrap"><span class="muted small">Add an existing reward:</span>${rewards.filter(reward=>reward.active!==false).map(reward=>`<button type="button" class="btn ghost sm trBenefitReward" data-reward-id="${esc(rewardId(reward))}" data-benefit="${esc(`${rewardLabel(reward)} (${reward.cost_points} ${unit})`)}">${esc(rewardLabel(reward))} · ${reward.cost_points}</button>`).join('')}</div>`:'<p class="muted small" style="margin-top:6px">Create a reward first, or type a custom benefit above.</p>'}</div>
+      <label class="sr-only" for="trFrom">Tier effective from</label><input id="trFrom" type="datetime-local" aria-label="Tier effective from (Kuala Lumpur time)" title="Effective from (Kuala Lumpur time)">
+      <label class="sr-only" for="trUntil">Tier expires at</label><input id="trUntil" type="datetime-local" aria-label="Tier expires at (Kuala Lumpur time)" title="Expires at (Kuala Lumpur time)">
+      <div class="full"><button class="btn sm" id="trAdd">Add tier</button></div></div>`:''}`;
   const firmExpiryMode=p?.expiry_mode??'none';
   const firmExpiryDays=positiveExpiryDays(p?.expiry_days)||365;
   const firmExpiryNeedsDays=expiryModeRequiresDays(firmExpiryMode);
@@ -10053,14 +10110,18 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     $('rwEditor').innerHTML=`<div class="reward-editor">
       <div class="row" style="justify-content:space-between;gap:12px"><b>${reward?'Edit reward':'New reward'}</b><button class="btn ghost sm" id="rwClose" type="button">Done</button></div>
       <div class="field-grid">
-        <div class="full"><label>Customer-facing name *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"></div>
+        <div class="full"><label for="rwProductSource">Start from a product</label><select id="rwProductSource"><option value="">Custom reward</option>${activeItems(pr||[]).map(product=>`<option value="${esc(product.id)}">${esc(product.name)}</option>`).join('')}</select><div id="rwProductEconomics" class="muted small" style="margin-top:6px">Choose a product to reference its selling price and company cost, or keep Custom reward.</div></div>
+        <div class="full"><label>Reward name customers see *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"><p class="muted small help">This is the title shown in the customer reward catalogue.</p></div>
         <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
         <div><label>${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4"></div>
-        <div><label>Estimated business cost (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 1.50"></div>
+        <div><label>Company cost budget (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">How much the business is prepared to give up when this reward is used.</p></div>
+        ${model==='stamps'?'':`<div><label>Estimated company cost per point (${S.biz.currency||'SGD'})</label><input id="rwPointCost" type="number" min="0.001" step="0.001" value="${(estimatedPointCostCents/100).toFixed(3)}"><p class="muted small help">Worked out from existing reward costs, with the programme value as a fallback.</p></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
         <div><label>Fulfilment</label><select id="rwKind"><option value="manual_item" ${rewardKind(r)==='manual_item'?'selected':''}>Manual item or benefit</option><option value="credit" ${rewardKind(r)==='credit'?'selected':''}>Store credit</option></select></div>
         <div id="rwCreditWrap"><label>Store credit value (${S.biz.currency||'SGD'})</label><input id="rwCredit" type="number" min="0" step="0.01" value="${((r.credit_cents||0)/100).toFixed(2)}" placeholder="e.g. 3.00"></div>
         <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
         <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
+        <div><label>Effective from (Kuala Lumpur time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
+        <div><label>Expires at (Kuala Lumpur time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
       </div>
       <details><summary>More options</summary>
         <div class="field-grid" style="margin-top:4px"><div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
@@ -10081,6 +10142,35 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const kind=$('rwKind'),creditWrap=$('rwCreditWrap');
     const syncKind=()=>{creditWrap.style.display=kind.value==='credit'?'block':'none';if(kind.value!=='credit')$('rwCredit').value='0'};
     kind.onchange=syncKind;syncKind();
+    const syncPointsFromBudget=()=>{
+      if(model==='stamps')return;
+      const budget=parseFloat($('rwEstimate').value),pointCost=parseFloat($('rwPointCost').value);
+      if(!(budget>0)||!(pointCost>0)){
+        $('rwPointsMath').textContent='Enter a positive company-cost budget and cost per point to calculate the points cost.';
+        return;
+      }
+      const points=Math.max(1,Math.ceil(budget/pointCost));
+      $('rwCost').value=String(points);
+      $('rwPointsMath').innerHTML=`<b>${points} points</b><br><span class="small">${esc(money(Math.round(budget*100)))} ÷ ${esc(money(Math.round(pointCost*100)))} per point, rounded up.</span>`;
+    };
+    const syncProductSource=()=>{
+      const product=productById.get($('rwProductSource').value);
+      if(!product){$('rwProductEconomics').textContent='Custom reward — enter the customer name and company cost yourself.';return}
+      const selling=Number(product.retail_price_cents);
+      const companyCost=product.cost_cents==null?null:Number(product.cost_cents);
+      $('rwProductEconomics').innerHTML=`<b>${esc(product.name)}</b> · sells for ${esc(money(selling))} · company cost ${companyCost==null?'not set':esc(money(companyCost))}. All reward fields remain editable.`;
+      $('rwCustomerName').value=product.name;
+      $('rwDescription').value=`Free ${product.name}`;
+      $('rwInternalName').value=product.name;
+      $('rwEstimate').value=companyCost==null?'':(companyCost/100).toFixed(2);
+      syncPointsFromBudget();
+    };
+    $('rwProductSource').onchange=syncProductSource;
+    if(model!=='stamps'){
+      $('rwEstimate').addEventListener('input',syncPointsFromBudget);
+      $('rwPointCost').addEventListener('input',syncPointsFromBudget);
+      syncPointsFromBudget();
+    }
     $('rwSave').onclick=()=>saveReward(false);
     const archive=$('rwArchive');if(archive)archive.onclick=()=>saveReward(true);
   }
@@ -10092,6 +10182,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!(cost>0)) return toast(workspaceTemplateTextV97(model==='stamps'?'positiveStampCost':'positivePointsCost'));
     const expiry=parseInt($('rwExpiry').value||'0',10),usage=parseInt($('rwUsage').value||'0',10);
     if(expiry<0||usage<0) return toast('Expiry and usage limit cannot be negative');
+    if(!validBoundaryWindow($('rwFrom').value,$('rwUntil').value)) return toast('Reward expiration must be after its effective time');
     const creditCents=Math.round(parseFloat($('rwCredit').value||'0')*100);
     if(kind==='credit'&&!(creditCents>0)) return toast('Enter a store credit value, or choose manual fulfilment');
     const selected=(key)=>[...document.querySelectorAll(`[data-reward-elig="${key}"]:checked`)].map(x=>x.value);
@@ -10101,6 +10192,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       credit_cents:kind==='credit'?creditCents:0,
       estimated_cost_cents:Math.round(parseFloat($('rwEstimate').value||'0')*100),
       entitlement_expiry_days:expiry>0?expiry:null,usage_limit:usage>0?usage:null,
+      claim_available_from:boundaryInstant($('rwFrom').value),
+      claim_available_until:boundaryInstant($('rwUntil').value),
       image_ref:$('rwImage')?.value.trim()||null,fulfillment_kind:kind,
       active:archive?false:$('rwActive').checked};
     const btn=archive?$('rwArchive'):$('rwSave');btn.disabled=true;btn.textContent=archive?'Archiving…':'Saving…';
@@ -10133,37 +10226,80 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   let editingTier=null;
   const fillTier=(tier)=>{editingTier=tier;$('trName').value=tier?.name||'';
     $('trTh').value=tier?.threshold??'';$('trMul').value=tier?.points_multiplier??'';
-    $('trPerk').value=tier?.perk_note||'';$('trAdd').textContent=tier?'Save':'Add'};
-  async function saveTier(tier){
-    let versionId=draftVersionId;
+    $('trBenefits').value=tierBenefitLines(tier).join('\n');$('trFrom').value=boundaryInputValue(tier?.effective_from);
+    $('trUntil').value=boundaryInputValue(tier?.expires_at);$('trAdd').textContent=tier?'Save':'Add'};
+  async function saveTier(tier,{versionId:providedVersionId=null,expectedHash=draftSnapshotHash,publish=!draftVersionId,refresh=true}={}){
+    let versionId=providedVersionId||draftVersionId;
     if(!versionId){
-      const {data:draft,error}=await sb.rpc('create_loyalty_config_draft',{
-        p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_tier_editor'});
-      if(!isLoyaltyCurrent())return;
-      if(error)return fail(error);versionId=draft.version_id;
+      if(!draftVersionId){
+        const {data:draft,error}=await sb.rpc('create_loyalty_config_draft',{
+          p_business:S.biz.id,p_based_on:p?.current_config_version_id||null,p_source:'owner_tier_editor'});
+        if(!isLoyaltyCurrent())return;
+        if(error){fail(error);return null}versionId=draft.version_id;expectedHash=draft.snapshot_hash||null;
+      }
     }
-    const saveArgs={p_version:versionId,p_config:{tier},p_expected_snapshot_hash:draftSnapshotHash||null};
-    const {error}=await sb.rpc('save_loyalty_config_draft',saveArgs);
+    const saveArgs={p_version:versionId,p_tier:tier,p_expected_snapshot_hash:draftSnapshotHash||null};
+    saveArgs.p_expected_snapshot_hash=expectedHash||null;
+    const {data,error}=await sb.rpc('save_loyalty_tier_draft_v143',saveArgs);
     if(!isLoyaltyCurrent())return;
-    if(error)return fail(error);
-    if(!draftVersionId){const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});if(publishError)return fail(publishError)}
-    refreshLoyaltyPanel(model,draftVersionId,recommendation,'Tier draft saved.');
+    if(error){fail(error);return null}
+    draftSnapshotHash=data?.snapshot_hash||draftSnapshotHash;
+    if(publish){const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});if(publishError){fail(publishError);return null}}
+    if(refresh)refreshLoyaltyPanel(model,publish?draftVersionId:versionId,recommendation,'Tier draft saved.');
+    return {versionId,snapshotHash:data?.snapshot_hash||expectedHash};
   }
+  document.querySelectorAll('.trBenefitReward').forEach(button=>button.onclick=()=>{
+    const benefit=button.dataset.benefit||'';
+    const lines=String($('trBenefits').value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
+    if(!lines.includes(benefit))lines.push(benefit);
+    $('trBenefits').value=lines.join('\n');$('trBenefits').focus();
+  });
+  const defaults=$('trDefaults');
+  const recommendedTierDefaultsSlot=`peekaa.loyalty.recommended-tiers.v143.${S.biz.id}`;
+  if(defaults)defaults.onclick=async()=>{
+    defaults.disabled=true;defaults.textContent='Adding tiers…';
+    const status=$('trDefaultsStatus');
+    if(status)status.textContent='Saving all three tiers together…';
+    const basis=$('ltb').value;
+    const fingerprint=JSON.stringify([
+      S.biz.id,draftVersionId||null,draftSnapshotHash||null,basis
+    ]);
+    const idempotencyKey=writeAttemptKey(recommendedTierDefaultsSlot,fingerprint);
+    const {data,error}=await addRecommendedLoyaltyTiersV143({
+      businessId:S.biz.id,versionId:draftVersionId,basis,
+      expectedSnapshotHash:draftSnapshotHash,idempotencyKey
+    });
+    if(!isLoyaltyCurrent())return;
+    if(error){
+      defaults.disabled=false;defaults.textContent='Retry adding tiers';
+      if(status)status.textContent='The result could not be confirmed. Retry reuses the same safe request.';
+      return fail(error);
+    }
+    clearWriteAttempt(recommendedTierDefaultsSlot);
+    toast('Recommended tiers added to the draft — review benefits before publishing');
+    refreshLoyaltyPanel(model,data.version_id,recommendation,
+      data.status==='existing_tiers'
+        ?'The draft already has tiers. Nothing was duplicated or published.'
+        :'Recommended tiers added. Nothing was published.',false);
+  };
   const ta=$('trAdd');
   if(ta) ta.onclick=async()=>{
     const name=$('trName').value.trim(),th=parseInt($('trTh').value||'0'),mul=parseFloat($('trMul').value||'1');
     if(!name) return toast('Give the tier a name');
+    if(!validBoundaryWindow($('trFrom').value,$('trUntil').value)) return toast('Tier expiration must be after its effective time');
     ta.disabled=true;
-    await saveTier({id:editingTier?.tier_id||editingTier?.id||null,name,threshold:Math.max(0,th),
-      points_multiplier:Math.max(1,mul),perk_note:$('trPerk').value.trim()||null,
-      sort:editingTier?.sort||0,active:true});
+    await saveTier({id:editingTier?.tier_id||editingTier?.id||crypto.randomUUID(),name,threshold:Math.max(0,th),
+      points_multiplier:Math.max(1,mul),perk_note:String($('trBenefits').value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean).join('\n')||null,
+      sort:editingTier?.sort||0,active:true,effective_from:boundaryInstant($('trFrom').value),
+      expires_at:boundaryInstant($('trUntil').value)});
   };
   document.querySelectorAll('.trEdit').forEach(b=>b.onclick=()=>fillTier(
     tiers.find(t=>(t.tier_id||t.id)===b.dataset.id)));
   document.querySelectorAll('.trDel').forEach(b=>b.onclick=async()=>{
     const tier=tiers.find(t=>(t.tier_id||t.id)===b.dataset.id);
     if(tier)await saveTier({id:tier.tier_id||tier.id,name:tier.name,threshold:tier.threshold,
-      points_multiplier:tier.points_multiplier,perk_note:tier.perk_note,sort:tier.sort||0,active:false});
+      points_multiplier:tier.points_multiplier,perk_note:tier.perk_note,sort:tier.sort||0,active:false,
+      effective_from:tier.effective_from||null,expires_at:tier.expires_at||null});
   });
 }
 
