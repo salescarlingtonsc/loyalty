@@ -1131,6 +1131,18 @@
       "path": "db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql",
       "semanticVersion": "v162",
       "proposedDeployVersion": "20260804170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v163_signup_lead_management_consent.sql",
+      "semanticVersion": "v163",
+      "proposedDeployVersion": "20260804180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v164_account_signup_triage.sql",
+      "semanticVersion": "v164",
+      "proposedDeployVersion": "20260804190000"
     }
   ]
 }

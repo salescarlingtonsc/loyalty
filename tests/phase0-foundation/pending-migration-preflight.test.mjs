@@ -151,7 +151,10 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v158_catalogue_media', 'db/tests/v158_catalogue_media.sql'],
   ['nestly_v156a_v151_invite_search_path_hardening', 'db/tests/v156a_v151_invite_search_path_hardening.sql'],
   ['nestly_v159_selfserve_manual_application_fallback', 'db/tests/v159_selfserve_manual_application_fallback.sql'],
-  ['nestly_v160_auth_signup_visibility', 'db/tests/v160_auth_signup_visibility.sql']
+  ['nestly_v160_auth_signup_visibility', 'db/tests/v160_auth_signup_visibility.sql'],
+  ['nestly_v162_stripe_launch_price_148', 'db/tests/v124_stripe_launch_pricing.sql'],
+  ['nestly_v163_signup_lead_management_consent', 'db/tests/v163_signup_lead_management_consent.sql'],
+  ['nestly_v164_account_signup_triage', 'db/tests/v164_account_signup_triage.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -170,6 +173,11 @@ const appliedPreflightExceptions = new Map([
   }],
   ['20260804054949_nestly_v158_catalogue_media', {
     sha256: 'a158209a43048b50a43f2f7dccdd2e9f69c98373caed4be27965ba22e182342a',
+    rollbackSuite: true,
+    outerTransaction: false
+  }],
+  ['20260804170000_nestly_v162_stripe_launch_price_148', {
+    sha256: '9d140deebd7d7ed6303fffb47928caa1548c3123aff9267d86d97294120f4efd',
     rollbackSuite: true,
     outerTransaction: false
   }]
@@ -650,7 +658,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 142);
+  assert.equal(pending.length, 145);
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

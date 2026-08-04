@@ -1132,6 +1132,18 @@
       "version": "20260804170000",
       "name": "nestly_v162_stripe_launch_price_148",
       "sourcePath": "db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804180000",
+      "name": "nestly_v163_signup_lead_management_consent",
+      "sourcePath": "db/migrations/20260804_nestly_v163_signup_lead_management_consent.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260804190000",
+      "name": "nestly_v164_account_signup_triage",
+      "sourcePath": "db/migrations/20260804_nestly_v164_account_signup_triage.sql"
     }
   ]
 }

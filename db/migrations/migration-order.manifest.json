@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 186,
-  "executableCount": 172,
+  "itemCount": 188,
+  "executableCount": 174,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -271,7 +271,7 @@
     },
     {
       "sourceDeployVersion": "20260804",
-      "count": 7,
+      "count": 9,
       "paths": [
         "db/migrations/20260804_nestly_v155_multibranch_foundation.sql",
         "db/migrations/20260804_nestly_v156_subscription_operations_crm.sql",
@@ -279,7 +279,9 @@
         "db/migrations/20260804_nestly_v158_catalogue_media.sql",
         "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql",
         "db/migrations/20260804_nestly_v160_auth_signup_visibility.sql",
-        "db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql"
+        "db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql",
+        "db/migrations/20260804_nestly_v163_signup_lead_management_consent.sql",
+        "db/migrations/20260804_nestly_v164_account_signup_triage.sql"
       ]
     }
   ],
@@ -1771,6 +1773,22 @@
       "semanticVersion": "v162",
       "proposedDeployVersion": "20260804170000",
       "sha256": "9d140deebd7d7ed6303fffb47928caa1548c3123aff9267d86d97294120f4efd"
+    },
+    {
+      "order": 187,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v163_signup_lead_management_consent.sql",
+      "semanticVersion": "v163",
+      "proposedDeployVersion": "20260804180000",
+      "sha256": "00adadbf92ff34c3a1930a793e6d9a9f0af683bf615e604c1583f2a9a9d28abd"
+    },
+    {
+      "order": 188,
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v164_account_signup_triage.sql",
+      "semanticVersion": "v164",
+      "proposedDeployVersion": "20260804190000",
+      "sha256": "9d8bd1b36341bbcab85d26972a9b95c194ddc5303cc164fa69de52e73a772b9b"
     }
   ]
 }
