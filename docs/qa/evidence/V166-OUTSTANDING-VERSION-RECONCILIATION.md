@@ -77,13 +77,23 @@ V166 release acceptance is therefore based on the named focused regression,
 browser, quality, build, mobile and native gates above, plus independent Sol
 review and production verification.
 
-### Release gates still pending
+### Production release record
 
-- Commit, push, reviewed main promotion and deployment identity.
-- Read-only production migration-ledger confirmation; no migration is added or
-  applied by V166.
-- Production `/api/build`, canonical-route desktop/390px browser smoke and
-  post-deploy error scan.
+| Gate | Result |
+| --- | --- |
+| Reviewed feature commit | `e5520e768c8a5d1a3dde5949b552541c9d491613` on `codex/v166-outstanding-version-integration` |
+| Main promotion | PR #18 merged as `6db41b0ce0540fc6c2a562df11bf750fd4355446` |
+| Production deployment | GitHub deployment `5750972745`; Vercel deployment `pFyWVVq8svfc7fzp9b3bKXBMtaC6` |
+| Production build identity | `/api/build` returned `6db41b0ce0540fc6c2a562df11bf750fd4355446` exactly |
+| Canonical HTTP smoke | `/api/build`, `/`, `/business` and `/admin` returned HTTP 200 |
+| Production browser smoke | Customer, business and admin entry routes rendered meaningful signed-out states at 1440x1000 and 390x844, exposed the exact build identity, had no horizontal overflow or obstructing overlay, and produced no browser error/console failure; visible primary controls met the 44px floor on mobile |
+| Production migration ledger | Read-only `supabase migration list --linked` connected to `gadpooereceldfpfxsod` and confirmed the recent V155-V164 production ledger entries; V166 added and applied no migration |
+
+The GitHub historical full-suite check remains red for the same disclosed
+expectation drift measured before promotion. The candidate introduced zero new
+full-suite failures and resolved 11 baseline failures, but the remaining 65
+historical failures are still repository debt. They do not invalidate the
+focused V166 release evidence and are not represented as complete.
 
 ### Independent review
 
