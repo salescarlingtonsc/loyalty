@@ -30,7 +30,7 @@ test('super admin sees every module plus grant management with write access',asy
   assert.equal(api.canWriteModule(access,'automation'),true);
   assert.deepEqual(
     Array.from(api.visibleRoutes(access),route=>route.key),
-    ['overview','onboarding','firms','reports','billing','pnl','commissions','sectors','automation','access']
+    ['overview','onboarding','customer-lifecycle','firms','reports','billing','subscription-operations','pnl','commissions','sectors','automation','access']
   );
 });
 
@@ -127,7 +127,7 @@ test('partially customized admins use server-scoped onboarding, firms and report
   assert.match(routing,/useScopedV89&&activeKey==='firms'\)task=renderScopedFirms\(context\)/);
   assert.match(routing,/useScopedV89&&activeKey==='reports'\)task=renderScopedReports\(context\)/);
   assert.match(routing,/useScopedV89&&activeKey==='onboarding'\)task=renderScopedOnboarding\(context\)/);
-  assert.match(source,/canWrite:activeKey==='access'\|\|canWriteModule\(access,activeKey\)/);
+  assert.match(source,/canWrite:activeKey==='access'\|\|canWriteModule\(access,activeRoute\.moduleKey\|\|activeKey\)/);
   assert.match(source,/if\(context\.canWrite\)return;[\s\S]*stripPlatformWriteControls\(context\.root\)/);
 });
 

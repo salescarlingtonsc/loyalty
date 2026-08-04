@@ -1095,6 +1095,12 @@
       "path": "db/migrations/20260804_nestly_v155_multibranch_foundation.sql",
       "semanticVersion": "v155",
       "proposedDeployVersion": "20260804090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v156_subscription_operations_crm.sql",
+      "semanticVersion": "v156",
+      "proposedDeployVersion": "20260804120000"
     }
   ]
 }

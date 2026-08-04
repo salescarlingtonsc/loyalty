@@ -2180,9 +2180,11 @@
   const routes = Object.freeze([
     {key:'overview',label:'Today',shortLabel:'Today',hash:'#/platform',icon:'home'},
     {key:'onboarding',label:'Onboarding',shortLabel:'Onboard',hash:'#/platform/onboarding',icon:'setup'},
+    {key:'customer-lifecycle',moduleKey:'billing',label:'Customer lifecycle',shortLabel:'Customers',hash:'#/platform/customer-lifecycle',icon:'branch'},
     {key:'firms',label:'Firms',shortLabel:'Firms',hash:'#/platform/firms',icon:'branch'},
     {key:'reports',label:'Reports',shortLabel:'Reports',hash:'#/platform/reports',icon:'reports'},
     {key:'billing',label:'Billing',shortLabel:'Billing',hash:'#/platform/billing',icon:'reports'},
+    {key:'subscription-operations',moduleKey:'billing',label:'Subscription operations',shortLabel:'Subscriptions',hash:'#/platform/subscription-operations',icon:'reports'},
     {key:'pnl',label:'Cash P&L',shortLabel:'P&L',hash:'#/platform/pnl',icon:'reports',superAdminOnly:true},
     {key:'commissions',label:'Commission payable',shortLabel:'Commission',hash:'#/platform/commissions',icon:'staff'},
     {key:'sectors',label:'Sector modules',shortLabel:'Sectors',hash:'#/platform/sectors',icon:'packages'},
@@ -2375,13 +2377,14 @@
   function visibleRoutes(access) {
     return routes.filter(route=>route.superAdminOnly
       ?access?.role==='super_admin'
-      :canAccessModule(access,route.key));
+      :canAccessModule(access,route.moduleKey||route.key));
   }
   const platformNavigationBlueprint=Object.freeze([
     Object.freeze({key:'overview',label:'Today',icon:'home',routeKeys:Object.freeze(['overview'])}),
-    Object.freeze({key:'firms',label:'Firms',icon:'branch',routeKeys:Object.freeze(['firms','onboarding'])}),
+    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding'])}),
+    Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports'])}),
-    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['billing','pnl','commissions'])}),
+    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
     Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
     Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','access'])})
   ]);
@@ -2553,7 +2556,7 @@
   }
 
   function isRoute(hash) {
-    return /^#\/platform(?:\/(?:onboarding|firms|reports|billing|pnl|commissions|sectors|automation|access))?\/?$/.test(String(hash || '').split('?')[0]);
+    return /^#\/platform(?:\/(?:onboarding|customer-lifecycle|firms|reports|billing|subscription-operations|pnl|commissions|sectors|automation|access))?\/?$/.test(String(hash || '').split('?')[0]);
   }
 
   function routeKey(hash) {
@@ -5015,6 +5018,11 @@
       audit:asArray(audit,['items'])
     };
     const prospect=asObject(detail.prospect);
+    try{
+      detail.subscription_ops=asObject(await rpc(sb,'platform_get_prospect_subscription_ops_v156',{p_prospect:id}));
+    }catch(error){
+      if(!error.platformUpdateRequired)detail.subscription_ops_error=error;
+    }
     if(prospect.converted_business_id){
       try{
         detail.onboarding=asObject(await rpc(sb,'get_business_onboarding_v79',{
@@ -5161,6 +5169,7 @@
     const companyProfile=asObject(detail.company_profile),qualification=asObject(detail.qualification);
     const terms=commercialBase(detail.commercial_terms),commercialDetail=commercialExtended(detail.commercial_terms);
     const conversion=asObject(detail.conversion_configuration),documents=asArray(detail.documents);
+    const subscriptionOps=asObject(detail.subscription_ops),billingContacts=asArray(subscriptionOps.billing_contacts),billingDocuments=asArray(subscriptionOps.documents);
     const audit=asArray(detail.audit),quality=asObject(detail.data_quality),stageEvidence=asArray(detail.stage_evidence);
     const termsAccepted=['accepted','signed'].includes(terms.contract_status);
     const primaryRow=contacts.find(row=>contactBase(row).is_primary)||contacts[0]||{},primary=contactBase(primaryRow);
@@ -5267,7 +5276,7 @@
     </section>
     <section class="card platform-detail-section" id="detail-tasks">${sectionHeader('Tasks and next actions')}${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title||pt('Task'))}</b><p class="muted small">${escapeHtml(pt('due {date}',{date:dateTime(task.due_at)}))} · ${escapeHtml(platformStatus(task.status||'open'))}</p></div>${task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt("Complete"))}</button>`:''}</div>`).join(''):detailObjectHtml(null)}</section>
     <section class="card platform-detail-section" id="detail-commercial">
-      ${sectionHeader(pt('Commercial terms'),terms.id?`<button type="button" class="btn ghost sm" data-edit-commercial-detail>${escapeHtml(pt("Record commercial detail"))}</button>`:'')}
+      ${sectionHeader(pt('Commercial terms'),`<div class="platform-actions">${terms.id?`<button type="button" class="btn ghost sm" data-edit-commercial-detail>${escapeHtml(pt("Record commercial detail"))}</button>`:''}<button type="button" class="btn ghost sm" data-v156-add-billing-contact>${escapeHtml(pt('Add billing recipient'))}</button><button type="button" class="btn sm" data-v156-quotation>${escapeHtml(pt('Generate quotation'))}</button>${prospect.converted_business_id?`<button type="button" class="btn ghost sm" data-v156-checkout>${escapeHtml(pt('Create Stripe checkout'))}</button>`:''}</div>`)}
       <div class="platform-detail-grid">
         ${typedDetailHtml(terms,[
           ['product_code','Product'],['plan_code','Plan'],['billing_cycle','Billing cycle',platformStatus],
@@ -5283,6 +5292,7 @@
           ['payment_status','Payment status',platformStatus],['amount_collected_cents','Amount collected',value=>value===undefined?'—':currency(value,terms.currency)]
         ])}
       </div>
+      <div class="platform-detail-grid" style="margin-top:14px"><div><h3>${escapeHtml(pt('Authorised billing recipients'))}</h3>${billingContacts.length?billingContacts.map(contact=>`<div class="platform-action-item"><div><b>${escapeHtml(contact.contact_name)}</b><p class="muted small platform-break">${escapeHtml(contact.email)}</p></div><div class="platform-actions">${CUI.status(platformStatus(contact.recipient_role),contact.recipient_role==='primary'?'ok':'new')}<button type="button" class="btn ghost sm" data-v156-edit-billing-contact="${escapeHtml(contact.id)}">${escapeHtml(pt('Edit'))}</button></div></div>`).join(''):`<p class="muted small">${escapeHtml(pt('Add a primary billing contact before finalising a quotation.'))}</p>`}</div><div><h3>${escapeHtml(pt('Subscription documents'))}</h3>${billingDocuments.length?billingDocuments.map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.number)}</b><p class="muted small">${escapeHtml(platformStatus(document.type))} · ${escapeHtml(platformStatus(document.status))}</p></div>${document.pdf_ready?`<button type="button" class="btn ghost sm" data-v156-document="${escapeHtml(document.id)}">${escapeHtml(pt('Open'))}</button>`:CUI.status(pt('Generating'),'new')}</div>`).join(''):`<p class="muted small">${escapeHtml(pt('No subscription documents yet.'))}</p>`}</div></div>
     </section>
     <section class="card platform-detail-section" id="detail-documents">
       ${sectionHeader(pt('Documents'),`<button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload"))}</span></button>`)}
@@ -5327,6 +5337,11 @@
     on('[data-edit-company-profile]',()=>companyProfileModal(detail,context));
     on('[data-edit-qualification]',()=>qualificationModal(detail,context));
     on('[data-edit-commercial-detail]',()=>commercialDetailModal(detail,context));
+    on('[data-v156-add-billing-contact]',()=>subscriptionBillingContactModal(detail,context,null));
+    overlay.querySelectorAll('[data-v156-edit-billing-contact]').forEach(button=>button.onclick=()=>subscriptionBillingContactModal(detail,context,button.dataset.v156EditBillingContact));
+    on('[data-v156-quotation]',()=>subscriptionQuotationModal(detail,context));
+    on('[data-v156-checkout]',()=>requestBillingCommand(prospect.converted_business_id,'create_checkout',asObject(detail.subscription_ops?.commercial).billing_interval||'annual',1000,{...context,suppressRedirect:true,onCompleted:async result=>{await rpc(context.sb,'platform_link_checkout_command_v156',{p_prospect:prospect.id,p_command:result.command_id,p_idempotency_key:idempotencyKey()});if(result.redirect_url&&globalObject.navigator?.clipboard)await globalObject.navigator.clipboard.writeText(result.redirect_url).catch(()=>undefined);CUI.announce('Stripe checkout linked to CRM. Copy it from the commercial record.')}}));
+    overlay.querySelectorAll('[data-v156-document]').forEach(button=>button.onclick=()=>openSubscriptionDocument(button.dataset.v156Document,button,context));
     on('[data-edit-conversion-config]',()=>conversionConfigurationModal(detail,context));
     on('[data-refresh-quality]',()=>refreshProspectQuality(prospect,context));
     overlay.querySelectorAll('[data-upload-document]').forEach(button=>button.onclick=()=>documentUploadModal(detail,context));
@@ -5341,6 +5356,56 @@
   const commaValues=value=>Array.isArray(value)?value.join(', '):String(value||'');
   const formList=value=>String(value||'').split(',').map(item=>item.trim()).filter(Boolean);
   const nullableNumber=value=>String(value||'').trim()===''?null:Number(value);
+
+  function subscriptionBillingContactModal(detail,context,contactId=null) {
+    const {CUI,sb}=context,prospect=asObject(detail.prospect),company=asObject(detail.company);
+    const existing=asArray(detail.subscription_ops?.billing_contacts).find(contact=>contact.id===contactId)||{};
+    const primary=asArray(detail.contacts).map(contactBase).find(contact=>contact.is_primary)||{};
+    modal({title:'Authorised billing contact',submitLabel:'Save billing contact',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'v156BusinessName',label:'Business display name',value:existing.business_display_name||company.trading_name||company.legal_name||'',required:true,attributes:'name="business_display_name"'})}
+      ${CUI.field({id:'v156LegalName',label:'Legal entity name',value:existing.legal_entity_name||company.legal_name||company.trading_name||'',required:true,attributes:'name="legal_entity_name"'})}
+      ${CUI.field({id:'v156Registration',label:'UEN / registration number',value:existing.registration_number||company.registration_number||'',attributes:'name="registration_number"'})}
+      ${CUI.field({id:'v156ContactName',label:'Billing contact name',value:existing.contact_name||primary.full_name||'',required:true,attributes:'name="contact_name"'})}
+      ${CUI.field({id:'v156ContactEmail',label:'Billing email',type:'email',value:existing.email||primary.email||'',required:true,attributes:'name="email"'})}
+      ${CUI.field({id:'v156ContactPhone',label:'Billing telephone',value:existing.telephone||primary.phone||'',attributes:'name="telephone"'})}
+      <div class="wide">${CUI.field({id:'v156BillingAddress',label:'Billing address',control:'textarea',value:typeof existing.billing_address==='string'?existing.billing_address:Object.values(asObject(existing.billing_address)).filter(Boolean).join(', '),required:true,attributes:'name="billing_address" rows="3"'})}</div>
+      ${CUI.field({id:'v156Country',label:'Country',value:existing.country||'Singapore',required:true,attributes:'name="country"'})}
+      ${CUI.field({id:'v156RecipientRole',label:'Recipient type',control:'select',options:[{value:'primary',label:'Primary recipient'},{value:'cc',label:'CC recipient'},{value:'accounts_payable',label:'Accounts payable'}],value:existing.recipient_role||(asArray(detail.subscription_ops?.billing_contacts).some(contact=>contact.recipient_role==='primary')?'cc':'primary'),attributes:'name="recipient_role"'})}
+      ${CUI.field({id:'v156Po',label:'Purchase-order number',value:existing.purchase_order_number||'',attributes:'name="purchase_order_number"'})}
+      ${CUI.field({id:'v156CustomerRef',label:'Customer reference',value:existing.customer_reference||'',attributes:'name="customer_reference"'})}
+    </div>`,onSubmit:async(form,controls)=>{
+      const contact={id:existing.id||null,prospect_id:prospect.id,business_display_name:form.get('business_display_name'),legal_entity_name:form.get('legal_entity_name'),registration_number:form.get('registration_number')||null,billing_address:{formatted:form.get('billing_address')},country:form.get('country'),contact_name:form.get('contact_name'),email:form.get('email'),telephone:form.get('telephone')||null,recipient_role:form.get('recipient_role'),purchase_order_number:form.get('purchase_order_number')||null,customer_reference:form.get('customer_reference')||null,active:true};
+      await rpc(sb,'platform_upsert_billing_contact_v156',{p_contact:contact,p_idempotency_key:idempotencyKey()});await refreshAfterProspectMutation(prospect.id,controls,context,'Billing contact saved.');
+    }});
+  }
+
+  function subscriptionQuotationModal(detail,context) {
+    const {CUI,sb}=context,prospect=asObject(detail.prospect),current=asObject(detail.subscription_ops?.commercial),terms=commercialBase(detail.commercial_terms);
+    const today=new Date().toISOString().slice(0,10),expiry=new Date(Date.now()+14*86400000).toISOString().slice(0,10);
+    modal({title:'Generate subscription quotation',submitLabel:'Finalise quotation',CUI,body:`<p class="muted small">${escapeHtml(pt('Finalisation creates an immutable numbered snapshot. It is blocked until seller legal settings and a primary billing contact are complete.'))}</p><div class="platform-form-grid">
+      ${CUI.field({id:'v156QuotePlan',label:'Subscription plan',value:current.expected_plan||terms.plan_code||'',required:true,attributes:'name="plan"'})}
+      ${CUI.field({id:'v156QuoteInterval',label:'Billing interval',control:'select',options:['monthly','quarterly','half_yearly','annual','fixed'].map(value=>({value,label:platformStatus(value),selected:value===(current.billing_interval||terms.billing_cycle||'annual')})),attributes:'name="billing_interval"'})}
+      <div class="wide">${CUI.field({id:'v156QuoteDescription',label:'Service description',value:'Peekaa subscription services',required:true,attributes:'name="description"'})}</div>
+      ${CUI.field({id:'v156QuoteQuantity',label:'Quantity',type:'number',value:'1',required:true,attributes:'name="quantity" min="1" step="1"'})}
+      ${CUI.field({id:'v156QuotePrice',label:'Unit price (SGD)',type:'number',value:terms.accepted_value_cents?centsToMoneyInput(terms.accepted_value_cents):'',required:true,attributes:'name="unit_price" min="0.01" step="0.01" inputmode="decimal"'})}
+      ${CUI.field({id:'v156QuoteDiscount',label:'Discount (SGD)',type:'number',value:current.proposed_discount_cents?centsToMoneyInput(current.proposed_discount_cents):'0',attributes:'name="discount" min="0" step="0.01"'})}
+      ${CUI.field({id:'v156QuoteDuration',label:'Intended subscription duration',value:current.intended_duration||'12 months',required:true,attributes:'name="duration"'})}
+      ${CUI.field({id:'v156QuoteIssue',label:'Issue date',type:'date',value:today,required:true,attributes:'name="issue_date"'})}
+      ${CUI.field({id:'v156QuoteExpiry',label:'Expiry date',type:'date',value:expiry,required:true,attributes:'name="expiry_date"'})}
+      <div class="wide">${CUI.field({id:'v156QuoteNotes',label:'Quotation notes',control:'textarea',attributes:'name="notes" rows="3"'})}</div>
+      <label class="row platform-confirm-row wide"><input type="checkbox" name="send_now" value="yes"><span>${escapeHtml(pt('Email the quotation to authorised billing recipients after finalisation'))}</span></label>
+    </div>`,onSubmit:async(form,controls)=>{
+      const commercialKey=idempotencyKey();await rpc(sb,'platform_save_crm_commercial_v156',{p_prospect:prospect.id,p_data:{expected_plan:form.get('plan'),billing_interval:form.get('billing_interval'),expected_value_cents:moneyInputToCents(form.get('unit_price'))*Number(form.get('quantity')),proposed_discount_cents:moneyInputToCents(form.get('discount')||0),intended_duration:form.get('duration')},p_idempotency_key:commercialKey});
+      const document=asObject(await rpc(sb,'platform_finalize_quotation_v156',{p_prospect:prospect.id,p_issue_date:form.get('issue_date'),p_expiry_date:form.get('expiry_date'),p_line_items:[{description:form.get('description'),quantity:Number(form.get('quantity')),unit_amount_cents:moneyInputToCents(form.get('unit_price'))}],p_notes:form.get('notes')||null,p_idempotency_key:idempotencyKey()}));
+      if(form.get('send_now')==='yes')await rpc(sb,'platform_send_quotation_v156',{p_document:document.document?.id,p_idempotency_key:idempotencyKey()});
+      await refreshAfterProspectMutation(prospect.id,controls,context,form.get('send_now')==='yes'?'Quotation finalised and queued for delivery.':'Quotation finalised.');
+    }});
+  }
+
+  async function openSubscriptionDocument(documentId,button,context) {
+    if(!context.sb.functions?.invoke){context.CUI.announce('Document signer is unavailable.',{assertive:true});return}
+    button.disabled=true;try{const result=await context.sb.functions.invoke('subscription-document-dispatch',{body:{action:'read',document_id:documentId}});if(result?.error||!result?.data?.signed_url)throw result?.error||new Error('Document link unavailable');globalObject.open(result.data.signed_url,'_blank','noopener')}catch(error){context.CUI.announce(platformErrorMessage(error,'Document link unavailable.'),{assertive:true})}finally{button.disabled=false}
+  }
   const nullableDateTime=value=>String(value||'').trim()===''?null:new Date(value).toISOString();
   function isoInput(value,{date=false}={}) {
     if(!value)return'';
@@ -6666,6 +6731,135 @@
       if(requestedBusiness)await openBillingDetail(requestedBusiness,context);
     }catch(error){showError(main,error,CUI,'Billing')}
   }
+
+  function subscriptionDurationHtml(row) {
+    const status=String(row.canonical_status||'');
+    if(status==='trialing')return `<b>${escapeHtml(pt('Trial'))}</b><br><span class="muted small">${escapeHtml(pt('Trial ends on {date}',{date:dateTime(row.trial_end)}))}</span>`;
+    if(status==='incomplete')return `<b>${escapeHtml(pt('Payment incomplete'))}</b>`;
+    if(status==='past_due')return `<b>${escapeHtml(pt('Payment overdue'))}</b><br><span class="muted small">${escapeHtml(dateTime(row.current_period_end))}</span>`;
+    if(row.cancel_at_period_end)return `<b>${escapeHtml(pt('Scheduled to end on {date}',{date:dateTime(row.scheduled_end)}))}</b>`;
+    const interval=String(row.billing_interval||'').replaceAll('_',' ');
+    return `<b>${escapeHtml(platformStatus(interval||'Recurring'))}</b><br><span class="muted small">${escapeHtml(pt('Current paid period'))}: ${escapeHtml(dateTime(row.current_period_start))} – ${escapeHtml(dateTime(row.paid_through))}<br>${row.next_renewal?`${escapeHtml(pt('Next renewal'))}: ${escapeHtml(dateTime(row.next_renewal))}`:escapeHtml(pt('No scheduled end date'))}</span>`;
+  }
+
+  function subscriptionOperationsTable(rows,CUI,canWrite=false) {
+    if(!rows.length)return localizedEmptyHtml('No subscriptions match these filters.');
+    return CUI.table({caption:'Subscription operations',headers:['Business','Billing contact','Plan / status','Subscription duration','Latest payment','Documents','Follow-up','Actions'],rows:rows.map(row=>[
+      `<b>${escapeHtml(row.business_name)}</b><br><span class="muted small">${escapeHtml(row.provider_subscription_id)}</span>`,
+      row.billing_contact_name?`${escapeHtml(row.billing_contact_name)}<br><span class="muted small platform-break">${escapeHtml(row.billing_email)}</span>`:CUI.status(pt('Missing'),'no'),
+      `${escapeHtml(platformStatus(row.billing_interval||'Subscription'))}<br>${CUI.status(platformStatus(row.canonical_status),['active','trialing'].includes(row.canonical_status)?'ok':['past_due','unpaid','incomplete'].includes(row.canonical_status)?'no':'new')}`,
+      subscriptionDurationHtml(row),
+      row.latest_payment_at?`${escapeHtml(dateTime(row.latest_payment_at))}<br><span class="muted small">${escapeHtml(currency(row.latest_amount_paid_cents))}</span>`:escapeHtml(pt('Not recorded')),
+      `${escapeHtml(row.latest_invoice_number||row.latest_invoice_id||pt('No invoice'))}<br>${CUI.status(platformStatus(row.document_delivery_status||'pending'),row.document_delivery_status==='delivered'?'ok':'new')}`,
+      Number(row.open_tasks||0)?CUI.status(pt('{count} open',{count:row.open_tasks}),'no'):CUI.status(pt('Clear'),'ok'),
+      `<div class="platform-actions"><a class="btn ghost sm" href="#/platform/billing?business=${encodeURIComponent(row.business_id)}">${escapeHtml(pt('Open'))}</a>${canWrite?`<button type="button" class="btn ghost sm" data-v156-manual-invoice="${escapeHtml(row.business_id)}">${escapeHtml(pt('Manual invoice'))}</button>`:''}</div>`
+    ])});
+  }
+
+  function lifecycleLane(row) {
+    if(['canceled','cancelled'].includes(row.canonical_status)||row.actual_end)return'cancelled';
+    if(row.cancel_at_period_end)return'cancel_at_period_end';
+    if(row.canonical_status==='past_due')return'past_due';
+    if(['incomplete','incomplete_expired','unpaid'].includes(row.canonical_status))return'payment_action_required';
+    if(row.next_renewal&&new Date(row.next_renewal).getTime()-Date.now()<=30*86400000)return'renewal_approaching';
+    if(row.lifecycle_status==='payment_received')return'payment_received';
+    if(row.lifecycle_status==='onboarding')return'onboarding';
+    return'active';
+  }
+
+  async function renderCustomerLifecycle(context,view=platformRouteParam(context.hash,'view')||'kanban') {
+    const {main,CUI,sb}=context;main.innerHTML=loading(CUI,'Customer lifecycle','Loading system-derived customer status…','branch');
+    try{const payload=asObject(await rpc(sb,'platform_get_subscription_operations_v156',{p_search:null,p_status:null,p_limit:500})),rows=asArray(payload.subscriptions),lanes=[['payment_received','Payment received'],['onboarding','Onboarding'],['active','Active'],['renewal_approaching','Renewal approaching'],['payment_action_required','Payment action required'],['past_due','Past due'],['cancel_at_period_end','Cancel at period end'],['cancelled','Cancelled']];
+      const cards=items=>items.map(row=>`<article class="card platform-prospect-card"><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(platformStatus(row.canonical_status))} · ${escapeHtml(platformStatus(row.billing_interval||'subscription'))}</p><p class="small">${escapeHtml(pt('Paid through'))}: ${escapeHtml(dateTime(row.paid_through))}<br>${escapeHtml(pt('Next renewal'))}: ${escapeHtml(dateTime(row.next_renewal))}</p><p class="muted small platform-break">${escapeHtml(row.billing_email||pt('Billing contact missing'))}</p><a class="btn ghost sm" href="#/platform/subscription-operations?search=${encodeURIComponent(row.business_name)}">${escapeHtml(pt('Open operations'))}</a></article>`).join('');
+      main.innerHTML=`${CUI.pageHeader({title:'Customer lifecycle',subtitle:'System-derived subscription and onboarding truth. These lanes cannot be changed by dragging.',iconName:'branch',actions:`<div class="platform-actions" role="group" aria-label="Customer lifecycle view"><button class="btn ghost" data-lifecycle-view="kanban" aria-pressed="${view==='kanban'}">${escapeHtml(pt('Kanban'))}</button><button class="btn ghost" data-lifecycle-view="list" aria-pressed="${view==='list'}">${escapeHtml(pt('List'))}</button></div>`})}
+        <div class="platform-kanban platform-kanban-responsive" ${view==='kanban'?'':'hidden'} aria-label="System-derived customer lifecycle">${lanes.map(([key,label])=>{const items=rows.filter(row=>lifecycleLane(row)===key);return`<section class="platform-kanban-column"><div class="platform-kanban-head"><h2>${escapeHtml(pt(label))}</h2><span>${escapeHtml(items.length)}</span></div>${cards(items)||`<p class="muted small">${escapeHtml(pt('No customers'))}</p>`}</section>`}).join('')}</div>
+        <section class="platform-prospect-list" ${view==='list'?'':'hidden'}><div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,false)}</div></section>`;
+      main.querySelectorAll('[data-lifecycle-view]').forEach(button=>button.onclick=()=>renderCustomerLifecycle(context,button.dataset.lifecycleView));CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Customer lifecycle')}
+  }
+
+  function manualInvoiceModal(row,context) {
+    const {CUI,sb}=context,today=new Date().toISOString().slice(0,10);
+    modal({title:`Manual invoice · ${row.business_name}`,submitLabel:'Create and queue invoice',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'v156ManualIssue',label:'Issue date',type:'date',value:today,required:true,attributes:'name="issue_date"'})}
+      ${CUI.field({id:'v156ManualDue',label:'Due date',type:'date',value:today,required:true,attributes:'name="due_date"'})}
+      ${CUI.field({id:'v156ManualStart',label:'Service start',type:'date',value:today,required:true,attributes:'name="service_start"'})}
+      ${CUI.field({id:'v156ManualEnd',label:'Service end',type:'date',value:today,required:true,attributes:'name="service_end"'})}
+      <div class="wide">${CUI.field({id:'v156ManualDescription',label:'Service description',value:'Peekaa subscription',required:true,attributes:'name="description"'})}</div>
+      ${CUI.field({id:'v156ManualAmount',label:'Amount (SGD)',type:'number',required:true,attributes:'name="amount" min="0.01" step="0.01"'})}
+      ${CUI.field({id:'v156ManualDiscount',label:'Discount (SGD)',type:'number',value:'0',attributes:'name="discount" min="0" step="0.01"'})}
+    </div>`,onSubmit:async(form,controls)=>{const data=new FormData(form);await rpc(sb,'platform_create_manual_invoice_v156',{p_business:row.business_id,p_issue_date:data.get('issue_date'),p_due_date:data.get('due_date'),p_service_start:data.get('service_start'),p_service_end:data.get('service_end'),p_line_items:[{description:data.get('description'),quantity:1,unit_amount_cents:nullableMoneyInputToCents(data.get('amount'))}],p_discount_cents:nullableMoneyInputToCents(data.get('discount'))||0,p_idempotency_key:idempotencyKey()});controls.close();CUI.announce('Manual invoice created and queued.');await renderSubscriptionOperations(context)}});
+  }
+
+  function manualPaymentModal(document,context) {
+    const {CUI,sb}=context,today=new Date().toISOString().slice(0,10);
+    modal({title:`Record payment · ${document.document_number}`,submitLabel:'Submit for independent verification',CUI,body:`<p class="muted small">A different super admin must verify this evidence before a receipt is issued. Recording payment does not mark a Stripe invoice paid.</p><div class="platform-form-grid">
+      ${CUI.field({id:'v156PaymentReference',label:'Bank transfer reference',required:true,attributes:'name="payment_reference"'})}
+      ${CUI.field({id:'v156PaymentDate',label:'Value date',type:'date',value:today,required:true,attributes:'name="value_date"'})}
+      ${CUI.field({id:'v156PaymentLast4',label:'Receiving account last 4 digits',value:'6357',required:true,attributes:'name="bank_last4" pattern="[0-9]{4}" inputmode="numeric"'})}
+      ${CUI.field({id:'v156PaymentAmount',label:'Amount received (SGD)',type:'number',value:(Number(document.balance_due_cents||0)/100).toFixed(2),required:true,attributes:'name="amount" min="0.01" step="0.01"'})}
+      <label class="cui-field wide"><span class="field-label">Private payment evidence (PDF, JPEG or PNG)</span><input name="evidence" type="file" accept="application/pdf,image/jpeg,image/png" required></label>
+    </div>`,onSubmit:async(form,controls)=>{const data=new FormData(form),file=data.get('evidence');if(!(file instanceof File)||!file.size)throw new Error('Payment evidence is required.');const operation=idempotencyKey();const request=await sb.functions.invoke('subscription-document-dispatch',{body:{action:'manual_evidence_upload',invoice_id:document.id,filename:file.name,content_type:file.type,operation_key:operation}});if(request.error||!request.data?.token)throw request.error||new Error('Evidence upload could not be authorised.');const uploaded=await sb.storage.from(request.data.bucket_id).uploadToSignedUrl(request.data.object_path,request.data.token,file,{contentType:file.type,upsert:false});if(uploaded.error)throw uploaded.error;await rpc(sb,'platform_record_manual_payment_v156',{p_invoice:document.id,p_amount_cents:nullableMoneyInputToCents(data.get('amount')),p_payment_reference:data.get('payment_reference'),p_value_date:data.get('value_date'),p_bank_account_last4:data.get('bank_last4'),p_evidence_object_path:request.data.object_path,p_idempotency_key:operation});controls.close();CUI.announce('Payment evidence submitted for independent verification.');await renderSubscriptionOperations(context)}});
+  }
+
+  async function openManualEvidence(payment,context) {const result=await context.sb.functions.invoke('subscription-document-dispatch',{body:{action:'manual_evidence_read',payment_id:payment.id}});if(result.error||!result.data?.signed_url)throw result.error||new Error('Evidence link unavailable.');globalObject.open(result.data.signed_url,'_blank','noopener')}
+
+  async function renderSubscriptionOperations(context,filters={}) {
+    const {main,CUI,sb}=context;
+    const search=(filters.search??platformRouteParam(context.hash,'search'))||null;
+    const status=(filters.status??platformRouteParam(context.hash,'status'))||null;
+    main.innerHTML=loading(CUI,'Subscription operations','Loading subscriptions, documents and payment follow-up…','reports');
+    try{
+      const payload=asObject(await rpc(sb,'platform_get_subscription_operations_v156',{p_search:search,p_status:status,p_limit:500}));
+      const summary=asObject(payload.summary),profile=asObject(payload.profile),rawRows=asArray(payload.subscriptions),local={interval:filters.interval||'',renewal:filters.renewal||'',payment:filters.payment||'',owner:filters.owner||'',document:filters.document||'',lifecycle:filters.lifecycle||'',sort:filters.sort||'next_renewal'};
+      const renewalDays=value=>value?Math.ceil((new Date(value).getTime()-Date.now())/86400000):null;
+      const rows=rawRows.filter(row=>(!local.interval||row.billing_interval===local.interval)&&(!local.payment||row.latest_invoice_status===local.payment)&&(!local.owner||row.crm_owner===local.owner)&&(!local.document||row.document_delivery_status===local.document)&&(!local.lifecycle||lifecycleLane(row)===local.lifecycle)&&(!local.renewal||(renewalDays(row.next_renewal)!==null&&renewalDays(row.next_renewal)>=0&&renewalDays(row.next_renewal)<=Number(local.renewal)))).sort((a,b)=>local.sort==='business_name'?String(a.business_name).localeCompare(String(b.business_name)):local.sort==='latest_payment'?new Date(b.latest_payment_at||0)-new Date(a.latest_payment_at||0):local.sort==='start_date'?new Date(b.subscription_created_at||0)-new Date(a.subscription_created_at||0):local.sort==='subscription_value'?Number(b.latest_amount_paid_cents||0)-Number(a.latest_amount_paid_cents||0):local.sort==='days_overdue'?renewalDays(a.next_renewal)-renewalDays(b.next_renewal):new Date(a.next_renewal||8640000000000000)-new Date(b.next_renewal||8640000000000000));
+      const cards=[['Active subscriptions',summary.active,'active'],['New subscriptions this month',summary.new_this_month,'active'],['Renewing in 30 days',summary.renewing_30,'renewing_30'],['Renewing in 14 days',summary.renewing_14,'renewing_14'],['Renewing in 7 days',summary.renewing_7,'renewing_7'],['Payment failed',summary.payment_failed,'payment_failed'],['Past due',summary.past_due,'past_due'],['Cancel at period end',summary.cancel_at_period_end,'cancel_at_period_end'],['Cancelled this month',summary.cancelled_this_month,'canceled']];
+      main.innerHTML=`${CUI.pageHeader({title:'Subscription operations',subtitle:'Internal Peekaa subscription, renewal, billing-document and delivery control. Stripe paid invoices remain payment truth.',iconName:'reports',actions:context.canWrite?`<button type="button" class="btn" id="v156BillingSettings">${CUI.icon('setup',{size:17})}<span>${escapeHtml(pt('Billing settings'))}</span></button>`:''})}
+        ${!payload.profile_ready?CUI.errorState({title:'Seller billing profile incomplete',message:'Final document issuance is blocked until UEN, registered address, billing email, GST decision and payment terms are configured.'}):''}
+        <section class="platform-kpis" aria-label="${escapeHtml(pt('Subscription summary'))}">${cards.map(([label,value,cardStatus])=>`<a class="card platform-kpi platform-kpi-link" href="#/platform/subscription-operations?status=${encodeURIComponent(cardStatus)}"><div class="platform-kpi-label">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value||0)}</div></a>`).join('')}</section>
+        <section class="card platform-detail-section"><div class="platform-list-row"><div><h2>${escapeHtml(pt('Subscriptions'))}</h2><p class="muted small">${escapeHtml(pt('Paid-through dates and renewal dates come from canonical provider invoice and subscription periods.'))}</p></div><div><b>${escapeHtml(profile.brand_name||'Peekaa')}</b><p class="muted small">${escapeHtml(profile.legal_name||'')} · ${escapeHtml(pt('Bank account ending {last4}',{last4:payload.bank_account_last4||'—'}))}</p></div></div>
+          <form id="v156SubscriptionFilters" class="platform-filter-grid"><label class="cui-field"><span class="field-label">${escapeHtml(pt('Search business'))}</span><input name="search" value="${escapeHtml(search||'')}" autocomplete="off"></label><label class="cui-field"><span class="field-label">${escapeHtml(pt('Subscription status'))}</span><select name="status"><option value="">${escapeHtml(pt('All'))}</option>${['trialing','active','incomplete','past_due','unpaid','paused','canceled'].map(value=>`<option value="${value}"${status===value?' selected':''}>${escapeHtml(platformStatus(value))}</option>`).join('')}</select></label>
+          ${[['interval','Billing interval',['','monthly','quarterly','half_yearly','annual']],['renewal','Renewal window',['','7','14','30']],['payment','Payment status',['','open','paid','void','uncollectible']],['document','Document delivery',['','queued','processing','provider_accepted','delivered','retryable_failed','permanent_failed']],['lifecycle','Lifecycle',['','payment_received','onboarding','active','renewal_approaching','payment_action_required','past_due','cancel_at_period_end','cancelled']],['sort','Sort',['next_renewal','days_overdue','business_name','start_date','latest_payment','subscription_value']]].map(([name,label,values])=>`<label class="cui-field"><span class="field-label">${escapeHtml(pt(label))}</span><select name="${name}">${values.map(value=>`<option value="${value}"${local[name]===value?' selected':''}>${escapeHtml(value?platformStatus(value):pt('All'))}</option>`).join('')}</select></label>`).join('')}
+          <label class="cui-field"><span class="field-label">${escapeHtml(pt('CRM owner'))}</span><select name="owner"><option value="">${escapeHtml(pt('All'))}</option>${[...new Set(rawRows.map(row=>row.crm_owner).filter(Boolean))].map(value=>`<option value="${escapeHtml(value)}"${local.owner===value?' selected':''}>${escapeHtml(value)}</option>`).join('')}</select></label><div class="platform-actions"><button class="btn" type="submit">${escapeHtml(pt('Apply filters'))}</button><button class="btn ghost" type="button" id="v156ClearFilters">${escapeHtml(pt('Clear filters'))}</button></div></form>
+          <div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,context.canWrite)}</div></section>
+        ${CUI.card({title:'Billing documents',description:'Stripe mirrors are created only from verified paid invoices. Manual invoices require private evidence and independent verification.',body:asArray(payload.documents).length?asArray(payload.documents).map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.document_number)}</b><p class="muted small">${escapeHtml(platformStatus(document.document_type))} · ${escapeHtml(platformStatus(document.status))} · ${escapeHtml(currency(document.total_cents))}</p></div><div class="platform-actions">${document.pdf_ready?`<button type="button" class="btn ghost sm" data-open-v156-document="${escapeHtml(document.id)}">${escapeHtml(pt('Open'))}</button>`:''}${context.canWrite&&document.document_type==='invoice'&&!document.provider_invoice_id&&document.status==='open'?`<button type="button" class="btn ghost sm" data-v156-record-payment="${escapeHtml(document.id)}">${escapeHtml(pt('Record payment'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No subscription documents have been issued.')})}
+        ${CUI.card({title:'Manual payment verification',description:'The recorder and verifier must be different authorised administrators.',body:asArray(payload.manual_payments).length?asArray(payload.manual_payments).map(payment=>`<div class="platform-action-item"><div><b>${escapeHtml(payment.document_number)}</b><p class="muted small">${escapeHtml(payment.payment_reference)} · ${escapeHtml(currency(payment.amount_cents))} · ${escapeHtml(platformStatus(payment.status))}</p></div><div class="platform-actions"><button type="button" class="btn ghost sm" data-v156-evidence="${escapeHtml(payment.id)}">${escapeHtml(pt('Evidence'))}</button>${context.access?.role==='super_admin'&&payment.status==='pending_verification'?`<button type="button" class="btn sm" data-v156-verify="${escapeHtml(payment.id)}">${escapeHtml(pt('Verify'))}</button><button type="button" class="btn danger sm" data-v156-reject="${escapeHtml(payment.id)}">${escapeHtml(pt('Reject'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No manual payments await verification.')})}
+        ${CUI.card({title:'Payment and renewal follow-up',description:'Tasks are deduplicated by subscription, event and reminder window, then resolved after verified recovery.',body:asArray(payload.tasks).length?asArray(payload.tasks).map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title)}</b><p class="muted small">${escapeHtml(platformStatus(task.task_type))} · ${escapeHtml(dateTime(task.due_at))}</p></div><div class="platform-actions">${CUI.status(platformStatus(task.priority),task.priority==='urgent'?'no':'new')}${context.canWrite?`<button type="button" class="btn ghost sm" data-v156-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt('Complete'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No subscription follow-up tasks are open.')})}
+        ${CUI.card({title:'Document delivery',description:'Final PDFs are immutable private objects. Failed delivery remains visible and can be resent without creating new document numbers.',body:asArray(payload.deliveries).length?asArray(payload.deliveries).map(delivery=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(delivery.delivery_type))}</b><p class="muted small">${escapeHtml(platformStatus(delivery.status))}${delivery.failure_reason?` · ${escapeHtml(delivery.failure_reason)}`:''}</p></div>${context.canWrite&&delivery.status!=='delivered'?`<button type="button" class="btn ghost sm" data-v156-resend="${escapeHtml(delivery.id)}">${escapeHtml(pt('Resend'))}</button>`:''}</div>`).join(''):localizedEmptyHtml('No billing-document deliveries have been queued.')})}
+        <div class="sr-only" aria-live="polite" id="v156LiveStatus"></div>`;
+      const form=main.querySelector('#v156SubscriptionFilters');if(form)form.onsubmit=async event=>{event.preventDefault();const data=new FormData(form);await renderSubscriptionOperations(context,Object.fromEntries(data.entries()))};
+      const clear=main.querySelector('#v156ClearFilters');if(clear)clear.onclick=()=>renderSubscriptionOperations(context,{search:null,status:null});
+      const settings=main.querySelector('#v156BillingSettings');if(settings)settings.onclick=()=>subscriptionBillingSettingsModal(payload,context);
+      main.querySelectorAll('[data-v156-manual-invoice]').forEach(button=>{const row=rows.find(item=>item.business_id===button.dataset.v156ManualInvoice);button.onclick=()=>manualInvoiceModal(row,context)});
+      const documents=asArray(payload.documents),payments=asArray(payload.manual_payments);
+      main.querySelectorAll('[data-v156-record-payment]').forEach(button=>{const document=documents.find(item=>item.id===button.dataset.v156RecordPayment);button.onclick=()=>manualPaymentModal(document,context)});
+      main.querySelectorAll('[data-open-v156-document]').forEach(button=>button.onclick=()=>openSubscriptionDocument(button.dataset.openV156Document,button,context));
+      main.querySelectorAll('[data-v156-evidence]').forEach(button=>{const payment=payments.find(item=>item.id===button.dataset.v156Evidence);button.onclick=async()=>{button.disabled=true;try{await openManualEvidence(payment,context)}catch(error){CUI.announce(platformErrorMessage(error,'Evidence link unavailable.'),{assertive:true})}finally{button.disabled=false}}});
+      main.querySelectorAll('[data-v156-complete-task]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{await rpc(sb,'platform_complete_subscription_task_v156',{p_task:button.dataset.v156CompleteTask,p_resolution:'Completed by platform operator',p_idempotency_key:idempotencyKey()});CUI.announce('Follow-up task completed.');await renderSubscriptionOperations(context)}catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Task completion failed.'),{assertive:true})}});
+      main.querySelectorAll('[data-v156-verify],[data-v156-reject]').forEach(button=>button.onclick=async()=>{button.disabled=true;const decision=button.hasAttribute('data-v156-verify')?'verified':'rejected',paymentId=button.dataset.v156Verify||button.dataset.v156Reject;try{await rpc(sb,'platform_verify_manual_payment_v156',{p_payment:paymentId,p_decision:decision,p_reason:decision==='rejected'?'Rejected by verifier after evidence review':null,p_idempotency_key:idempotencyKey()});CUI.announce(`Manual payment ${decision}.`);await renderSubscriptionOperations(context)}catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Payment verification failed.'),{assertive:true})}});
+      main.querySelectorAll('[data-v156-resend]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{await rpc(sb,'platform_queue_document_resend_v156',{p_delivery:button.dataset.v156Resend,p_idempotency_key:idempotencyKey()});CUI.announce('Document delivery queued.');await renderSubscriptionOperations(context)}catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Document resend failed.'),{assertive:true})}});
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Subscription operations')}
+  }
+
+  function subscriptionBillingSettingsModal(payload,context) {
+    const {CUI,sb}=context,profile=asObject(payload.profile);
+    modal({title:'Legal and billing profile',submitLabel:'Save new immutable version',CUI,body:`<p class="muted small">${escapeHtml(pt('Saving creates a new profile version. Historical documents retain their original seller snapshot.'))}</p><div class="platform-form-grid">
+      ${CUI.field({id:'v156Uen',label:'UEN',value:profile.uen||'',required:true,attributes:'name="uen"'})}
+      ${CUI.field({id:'v156BillingEmail',label:'Billing email',type:'email',value:profile.billing_email||'',required:true,attributes:'name="billing_email"'})}
+      <div class="wide">${CUI.field({id:'v156Address',label:'Registered address',control:'textarea',value:profile.registered_address||'',required:true,attributes:'name="registered_address" rows="3"'})}</div>
+      ${CUI.field({id:'v156GstStatus',label:'GST status',control:'select',value:profile.gst_status||'unconfigured',options:[{value:'unconfigured',label:'Select GST status'},{value:'not_registered',label:'Not GST registered'},{value:'registered',label:'GST registered'}],attributes:'name="gst_status"'})}
+      ${CUI.field({id:'v156GstNumber',label:'GST registration number',value:profile.gst_registration_number||'',attributes:'name="gst_registration_number"'})}
+      ${CUI.field({id:'v156GstRate',label:'GST rate (basis points)',type:'number',value:profile.gst_rate_bps||0,attributes:'name="gst_rate_bps" min="0" max="2000"'})}
+      ${CUI.field({id:'v156Terms',label:'Default payment terms',value:profile.default_payment_terms||'',required:true,attributes:'name="default_payment_terms"'})}
+      ${CUI.field({id:'v156InternalCopy',label:'Internal copy email',type:'email',value:profile.internal_copy_email||'',attributes:'name="internal_copy_email"'})}
+      <div class="wide">${CUI.field({id:'v156BankAccount',label:`Bank account number (currently ending ${payload.bank_account_last4||'—'})`,value:'',attributes:'name="bank_account_number" inputmode="numeric" placeholder="Leave blank to retain"'})}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      const data=Object.fromEntries(form.entries());data.gst_rate_bps=Number(data.gst_rate_bps||0);data.customer_reminders_enabled=false;
+      await rpc(sb,'platform_set_billing_profile_v156',{p_profile:data,p_idempotency_key:idempotencyKey()});controls.close();await renderSubscriptionOperations(context);CUI.announce('Billing profile version saved.');
+    }});
+  }
   function billingPriceModal(context) {
     const {CUI,sb}=context;
     const defaultEffective=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
@@ -6754,7 +6948,9 @@
         }
       }
       controls.close();context.close?.();
+      if(context.onCompleted)await context.onCompleted(result);
       if(result?.redirect_url&&['create_checkout','create_portal'].includes(type)){
+        if(context.suppressRedirect)return;
         if(globalObject.location?.assign)globalObject.location.assign(result.redirect_url);
         else globalObject.open(result.redirect_url,'_blank','noopener');
         return;
@@ -8113,7 +8309,7 @@
     const context={
       root,main,sb,CUI,brand:brand||globalObject.NestlyBrand||{},hash,isCurrent,
       onSignOut,workspaceHash,generation,access,activeKey,
-      canWrite:activeKey==='access'||canWriteModule(access,activeKey)
+      canWrite:activeKey==='access'||canWriteModule(access,activeRoute.moduleKey||activeKey)
     };
     activeContext=context;
     let task;
@@ -8137,6 +8333,8 @@
       context,onboardingStateFromHash(hash).filters
     );
     if(!task&&activeKey==='billing')task=renderBilling(context);
+    if(!task&&activeKey==='subscription-operations')task=renderSubscriptionOperations(context);
+    if(!task&&activeKey==='customer-lifecycle')task=renderCustomerLifecycle(context);
     if(!task&&activeKey==='pnl')task=renderPlatformFinance(context);
     if(!task&&activeKey==='commissions')task=renderCommission(context);
     if(!task&&activeKey==='sectors')task=renderSectors(context);
@@ -8164,7 +8362,8 @@
     firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,modulePickerHtml,
     reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
     importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
-    commissionRosterRows,commissionAccrualRows,automationRunRows
+    commissionRosterRows,commissionAccrualRows,automationRunRows,
+    subscriptionDurationHtml,subscriptionOperationsTable
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -8183,7 +8382,8 @@
       firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,modulePickerHtml,
       reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
       importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
-      commissionRosterRows,commissionAccrualRows,automationRunRows
+      commissionRosterRows,commissionAccrualRows,automationRunRows,
+      subscriptionDurationHtml,subscriptionOperationsTable
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);
