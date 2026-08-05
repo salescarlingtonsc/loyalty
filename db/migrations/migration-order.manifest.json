@@ -1804,24 +1804,24 @@
       "kind": "executable",
       "path": "db/migrations/20260805_nestly_v167_customer_retention_offers.sql",
       "semanticVersion": "v167",
-      "proposedDeployVersion": "20260805100000",
+      "proposedDeployVersion": "20260805040828",
       "sha256": "a0a2ad86e3fe31c10447863a0ac174a2c9da8ff98ee221508d307f0ebf0af556"
     },
     {
       "order": 190,
       "kind": "executable",
-      "path": "db/migrations/20260805_nestly_v167_direct_admin_approval_activation.sql",
+      "path": "db/migrations/20260805_nestly_v167_customer_repeat_booking_history.sql",
       "semanticVersion": "v167",
-      "proposedDeployVersion": "20260805200000",
-      "sha256": "6aa88d8536ffd1392475d284b4c63178f31b0e950e8aa19bd007c6343949f785"
+      "proposedDeployVersion": "20260805043956",
+      "sha256": "314bae225f50a8b026aab418b5705905cb65408b5c600f41aa48a5066ebcb9b7"
     },
     {
       "order": 191,
       "kind": "executable",
-      "path": "db/migrations/20260805_nestly_v167_customer_repeat_booking_history.sql",
+      "path": "db/migrations/20260805_nestly_v167_direct_admin_approval_activation.sql",
       "semanticVersion": "v167",
-      "proposedDeployVersion": "20260805210000",
-      "sha256": "314bae225f50a8b026aab418b5705905cb65408b5c600f41aa48a5066ebcb9b7"
+      "proposedDeployVersion": "20260805200000",
+      "sha256": "6aa88d8536ffd1392475d284b4c63178f31b0e950e8aa19bd007c6343949f785"
     }
   ]
 }

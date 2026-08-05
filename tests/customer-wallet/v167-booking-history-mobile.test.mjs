@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
-const sql=await readFile(new URL('../../supabase/migrations/20260805210000_nestly_v167_customer_repeat_booking_history.sql',import.meta.url),'utf8');
+const sql=await readFile(new URL('../../supabase/migrations/20260805043956_nestly_v167_customer_repeat_booking_history.sql',import.meta.url),'utf8');
 
 test('repeat booking derives a prior service only from the authenticated tenant appointment',()=>{
   assert.match(sql,/create or replace function public\.customer_get_repeat_booking_preference_v167/);

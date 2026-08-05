@@ -1,8 +1,16 @@
 # V167 customer retention and trust evidence matrix
 
 Date: 2026-08-05
-Baseline/live build at audit start: `b6d5d4879db319ed04072c07d7c4d82b5d99c266`
-Branch: `codex/customer-retention-trust-hardening`
+Original V167 audit baseline: `b6d5d4879db319ed04072c07d7c4d82b5d99c266`
+Current live reintegration baseline: `c92040b7fb18fc4bb36f79b8a3d0440e50b1438d`
+Original V167 branch: `codex/customer-retention-trust-hardening`
+Current reintegration branch: `codex/v167-live-integration`
+
+## 2026-08-05 live reintegration status
+
+V167 was previously built and production-verified in phases, but current live build `c92040b7fb18fc4bb36f79b8a3d0440e50b1438d` no longer contains the V167 customer-retention commits. This integration replays the accepted V167 application changes onto that live build and treats the resulting candidate as `IMPLEMENTED_UNVERIFIED` until this exact integrated commit is deployed and `/api/build` matches it.
+
+The production migration ledger already contains V167 database versions `20260805040828` (`nestly_v167_customer_retention_offers`) and `20260805043956` (`nestly_v167_customer_repeat_booking_history`). The reintegration branch therefore uses those canonical IDs in the Supabase mirrors and manifests. It must not introduce duplicate invented migration IDs for the same database work.
 
 This matrix treats the owner's suggested root causes, RPC names and storage keys as hypotheses. `Initial status` records the targeted pre-change audit; it is not completion evidence.
 
@@ -62,7 +70,7 @@ The initial file set established that customer behavior is concentrated in `app/
 ## Phase 2 local verification — review candidate
 
 - Implemented findings: 11–16. Home has a permanent populated/empty/error Offers shelf; programme offers remain present; the device-local `New` contract is explicit; the owner warning uses canonical visibility; healthy server guidance remains primary with a finite safe fallback; points and reward progress use one `en-SG` formatter and accessible bounded progress.
-- Database: `20260805100000_nestly_v167_customer_retention_offers.sql` adds bounded authenticated customer Home offers, the customer's current unexpired pending redemption, and an owner-only visible-offer count. Authority derives from `auth.uid()` and the canonical identity/link chain; branch visibility derives from `promotion_branch_scopes_v155` plus active branch records, not client input or duplicated metadata. A rollback fixture passes against a cloned local database and proves pending-redemption ownership, verified-link projection, draft/expired/future/inactive-selected-branch/other-tenant exclusion, deterministic order, a twelve-item cap with truthful truncation, outsider denial and owner-count separation. No production database was written at this evidence stage.
+- Database: `20260805040828_nestly_v167_customer_retention_offers.sql` adds bounded authenticated customer Home offers, the customer's current unexpired pending redemption, and an owner-only visible-offer count. Authority derives from `auth.uid()` and the canonical identity/link chain; branch visibility derives from `promotion_branch_scopes_v155` plus active branch records, not client input or duplicated metadata. A rollback fixture passes against a cloned local database and proves pending-redemption ownership, verified-link projection, draft/expired/future/inactive-selected-branch/other-tenant exclusion, deterministic order, a twelve-item cap with truthful truncation, outsider denial and owner-count separation. No production database was written at this evidence stage.
 - Focused automated gate: 45/45 passing across V103, V104, V98 and V167 customer/offer tests. Static quality, runtime configuration, migration manifest, canonical migration and production build gates pass; `git diff --check` passes.
 - Real-browser production-component gate: `tests/browser/verify-v167-customer-offers.mjs` loads the actual `app/index.html` renderer at 390x844, 430x932 and 1440x1000. It verifies populated/empty/error and zero-programme states, Ends soon, device-local New clearing, internal navigation and no page overflow. Visual inspection exposed and then closed the image-less-card 72px-column defect. Evidence screenshots are temporary `/tmp/v167-phase2-offers-{390,430,1440}.png` files and are not committed.
 - Independent review history: Sol rejected the first candidate for six P1 gaps (zero-card shelf, actionable failure fallback, pending-redemption priority, incomplete points formatting, non-canonical branch scope and insufficient SQL negative fixtures) plus duplicate-offer guidance. A second pass found the actionable-error control flow still reached the business-detail RPC with a null slug. The final candidate encloses that path in `if(businessSlug)`, lets Home fall through to the legacy payload, and is `ACCEPTED` with P0/P1/P2 all zero. Sol reran 27/27 focused checks plus manifest, canonical plan/check, runtime, build, quality, diff and source/mirror equality without editing the candidate.

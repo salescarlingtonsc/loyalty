@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
-const sql=await readFile(new URL('../../supabase/migrations/20260805100000_nestly_v167_customer_retention_offers.sql',import.meta.url),'utf8');
+const sql=await readFile(new URL('../../supabase/migrations/20260805040828_nestly_v167_customer_retention_offers.sql',import.meta.url),'utf8');
 
 test('Home offers use one bounded verified-link RPC without caller ownership ids',()=>{
   const customerReader=sql.slice(

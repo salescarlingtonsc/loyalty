@@ -1148,19 +1148,19 @@
       "kind": "executable",
       "path": "db/migrations/20260805_nestly_v167_customer_retention_offers.sql",
       "semanticVersion": "v167",
-      "proposedDeployVersion": "20260805100000"
+      "proposedDeployVersion": "20260805040828"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260805_nestly_v167_customer_repeat_booking_history.sql",
+      "semanticVersion": "v167",
+      "proposedDeployVersion": "20260805043956"
     },
     {
       "kind": "executable",
       "path": "db/migrations/20260805_nestly_v167_direct_admin_approval_activation.sql",
       "semanticVersion": "v167",
       "proposedDeployVersion": "20260805200000"
-    },
-    {
-      "kind": "executable",
-      "path": "db/migrations/20260805_nestly_v167_customer_repeat_booking_history.sql",
-      "semanticVersion": "v167",
-      "proposedDeployVersion": "20260805210000"
     }
   ]
 }
