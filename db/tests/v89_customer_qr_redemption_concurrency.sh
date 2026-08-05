@@ -45,6 +45,22 @@ values(
   'V89 QR concurrency '||:'prefix','v89-qr-race-'||:'prefix','test',true,
   array['dashboard','clients','sales','loyalty','bookings','appointments']
 ) returning id as business \gset
+insert into public.branches(business_id,name,is_default,active)
+values(:'business','V89 Race Main',true,true)
+returning id as branch \gset
+insert into public.businesses(name,slug,industry,join_enabled,enabled_modules)
+values(
+  'V89 QR foreign tenant '||:'prefix','v89-qr-foreign-'||:'prefix','test',true,
+  array['dashboard','clients','sales','loyalty']
+) returning id as foreign_business \gset
+insert into public.branches(business_id,name,is_default,active)
+values(:'foreign_business','V89 Race Foreign',true,true)
+returning id as foreign_branch \gset
+update public.business_workspace_controls_v94
+set approval_status='approved',version=version+1,decided_by=:'owner',
+    decided_at=now(),decision_reason='disposable redemption concurrency fixture',
+    updated_at=now()
+where business_id in(:'business',:'foreign_business');
 insert into public.staff(
   business_id,user_id,role,full_name,active,modules,module_perms
 ) values(
@@ -72,10 +88,10 @@ insert into public.business_customer_join_qr_v89(
 ) values(
   :'business',app.v89_sha256(:'join_token'),now()+interval '1 day',:'owner'
 );
-select :'business',:'identity',:'join_token';
+select :'business',:'branch',:'foreign_branch',:'identity',:'join_token';
 SQL
 )"
-IFS='|' read -r business identity join_token <<EOF
+IFS='|' read -r business branch foreign_branch identity join_token <<EOF
 $fixture
 EOF
 
@@ -214,10 +230,45 @@ IFS='|' read -r client reward qr_token <<EOF
 $redemption_fixture
 EOF
 
+if psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 \
+  -v owner="$owner" -v business="$business" -v branch="$foreign_branch" \
+  -v token="$qr_token" >"$work_dir/cross-tenant-branch" 2>&1 <<'SQL'
+set role authenticated;
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub',:'owner','role','authenticated')::text,
+  false
+);
+select public.merchant_scan_redemption_qr_v117(
+  :'business',:'branch',:'token',gen_random_uuid()
+)::text;
+SQL
+then
+  echo "cross-tenant branch was allowed to scan a redemption" >&2
+  exit 1
+fi
+
+cross_tenant_proof="$(psql "$DATABASE_URL" -X -qAt -F '|' -v ON_ERROR_STOP=1 \
+  -v business="$business" -v client="$client" -v token="$qr_token" <<'SQL'
+select
+  (select status from public.customer_redemption_intents_v89
+    where business_id=:'business' and token_hash=app.v89_sha256(:'token')),
+  (select count(*) from public.loyalty_redemptions
+    where business_id=:'business' and client_id=:'client'),
+  (select coalesce(sum(points),0) from public.points_ledger
+    where business_id=:'business' and client_id=:'client');
+SQL
+)"
+[ "$cross_tenant_proof" = "pending|0|100" ] || {
+  echo "cross-tenant branch denial changed redemption state or balance ($cross_tenant_proof)" >&2
+  exit 1
+}
+
 scan_once() {
   output="$1"
   psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 \
-    -v owner="$owner" -v business="$business" -v token="$qr_token" \
+    -v owner="$owner" -v business="$business" -v branch="$branch" \
+    -v token="$qr_token" \
     >"$output" 2>&1 <<'SQL'
 set role authenticated;
 select set_config(
@@ -225,8 +276,8 @@ select set_config(
   json_build_object('sub',:'owner','role','authenticated')::text,
   false
 );
-select public.merchant_scan_redemption_qr_v89(
-  :'business',:'token',gen_random_uuid()
+select public.merchant_scan_redemption_qr_v117(
+  :'business',:'branch',:'token',gen_random_uuid()
 )::text;
 SQL
 }
@@ -270,4 +321,89 @@ SQL
   exit 1
 }
 
-echo "v89 QR claims (25) and redemption scans (100): PASS; reset disposable DB."
+cancel_race_fixture="$(psql "$DATABASE_URL" -X -qAt -F '|' \
+  -v ON_ERROR_STOP=1 -v business="$business" -v customer="$customer" \
+  -v reward="$reward" <<'SQL'
+set role authenticated;
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub',:'customer','role','authenticated')::text,
+  false
+) \gset
+select result->>'intent_id',result->>'qr_token'
+from (
+  select public.customer_create_redemption_intent_v89(
+    :'business',:'reward',gen_random_uuid()
+  ) result
+) created;
+SQL
+)"
+IFS='|' read -r cancel_race_intent cancel_race_token <<EOF
+$cancel_race_fixture
+EOF
+
+cancel_race_once() {
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 \
+    -v customer="$customer" -v intent="$cancel_race_intent" \
+    >"$work_dir/cancel-race" 2>&1 <<'SQL'
+set role authenticated;
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub',:'customer','role','authenticated')::text,
+  false
+);
+select public.customer_cancel_redemption_intent_v89(
+  :'intent',gen_random_uuid()
+)::text;
+SQL
+}
+
+scan_race_once() {
+  psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 \
+    -v owner="$owner" -v business="$business" -v branch="$branch" \
+    -v token="$cancel_race_token" \
+    >"$work_dir/scan-race" 2>&1 <<'SQL'
+set role authenticated;
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub',:'owner','role','authenticated')::text,
+  false
+);
+select public.merchant_scan_redemption_qr_v117(
+  :'business',:'branch',:'token',gen_random_uuid()
+)::text;
+SQL
+}
+
+cancel_race_once & cancel_pid=$!
+scan_race_once & scan_pid=$!
+race_successes=0
+if wait "$cancel_pid"; then race_successes=$((race_successes+1)); fi
+if wait "$scan_pid"; then race_successes=$((race_successes+1)); fi
+[ "$race_successes" -eq 1 ] || {
+  echo "cancel-vs-scan race expected exactly one successful writer, got $race_successes" >&2
+  cat "$work_dir/cancel-race" "$work_dir/scan-race" >&2
+  exit 1
+}
+
+race_proof="$(psql "$DATABASE_URL" -X -qAt -F '|' -v ON_ERROR_STOP=1 \
+  -v intent="$cancel_race_intent" -v business="$business" -v client="$client" <<'SQL'
+select
+  (select status from public.customer_redemption_intents_v89 where id=:'intent'),
+  (select count(*) from public.loyalty_redemptions
+    where business_id=:'business' and client_id=:'client'),
+  (select coalesce(sum(points),0) from public.points_ledger
+    where business_id=:'business' and client_id=:'client'),
+  (select count(*) from public.customer_redemption_events_v89
+    where intent_id=:'intent' and event_type in('intent_cancelled','scan_completed'));
+SQL
+)"
+case "$race_proof" in
+  cancelled\|1\|60\|1|completed\|2\|20\|1) ;;
+  *)
+    echo "cancel-vs-scan invariant failed (status|redemptions|points|terminal-events=$race_proof)" >&2
+    exit 1
+    ;;
+esac
+
+echo "v89 QR claims (25), redemption scans (100), and cancel-vs-scan race: PASS; reset disposable DB."

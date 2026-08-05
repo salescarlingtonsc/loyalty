@@ -43,6 +43,10 @@
     return {state:'disabled',label:'Off',detail:'Get booking, points, reward, quest, and birthday updates on this device.'};
   }
 
+  function visible(value){
+    return !['unsupported','unconfigured'].includes(String(value?.state||''));
+  }
+
   function publish(){
     const value=status();
     subscribers.forEach(listener=>listener(value));
@@ -247,6 +251,9 @@
   function bindButton(button,{statusHost=null}={}){
     if(!button)return ()=>{};
     const paint=value=>{
+      button.hidden=!visible(value);
+      const setting=button.closest?.('.customer-push-setting');
+      if(setting)setting.hidden=!visible(value);
       button.dataset.pushState=value.state;
       button.setAttribute('aria-pressed',value.state==='enabled'?'true':'false');
       button.querySelector('[data-push-label]')?.replaceChildren(buttonLabel(value));

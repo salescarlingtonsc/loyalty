@@ -14,6 +14,26 @@ end
 $$;
 grant execute on function pg_temp.as_v89_user(uuid,text) to public;
 
+create or replace function pg_temp.scan_redemption_current(
+  p_business uuid,p_branch uuid,p_token text,p_key uuid
+) returns jsonb language plpgsql as $$
+declare v_result jsonb;
+begin
+  if to_regprocedure(
+    'public.merchant_scan_redemption_qr_v117(uuid,uuid,text,uuid)'
+  ) is not null then
+    execute 'select public.merchant_scan_redemption_qr_v117($1,$2,$3,$4)'
+      into v_result using p_business,p_branch,p_token,p_key;
+  else
+    execute 'select public.merchant_scan_redemption_qr_v89($1,$2,$3)'
+      into v_result using p_business,p_token,p_key;
+  end if;
+  return v_result;
+end
+$$;
+grant execute on function pg_temp.scan_redemption_current(uuid,uuid,text,uuid)
+  to public;
+
 -- These call-stack probes exercise the real PG_CONTEXT dispatcher used by
 -- legacy platform RPCs. Their names deliberately contain the same trusted
 -- module/read-or-write words as the production callers.
@@ -62,6 +82,8 @@ declare
   v_consultant_b uuid:=gen_random_uuid();
   v_business uuid:=gen_random_uuid();
   v_other_business uuid:=gen_random_uuid();
+  v_branch uuid:=gen_random_uuid();
+  v_other_branch uuid:=gen_random_uuid();
   v_customer_a uuid:=gen_random_uuid();
   v_customer_b uuid:=gen_random_uuid();
   v_identity_a uuid:=gen_random_uuid();
@@ -93,6 +115,7 @@ declare
   v_write_allowed boolean;
   v_result jsonb;
   v_catalog_receipt jsonb;
+  v_cancel_receipt jsonb;
   v_classic_receipt jsonb;
   v_prospect_a uuid;
   v_prospect_b uuid;
@@ -181,6 +204,27 @@ begin
   values
     (v_business,v_owner,'owner','V89 Owner'),
     (v_other_business,v_owner,'owner','V89 Owner');
+  insert into public.branches(id,business_id,name,is_default,active)
+  values
+    (v_branch,v_business,'V89 Main Branch',true,true),
+    (v_other_branch,v_other_business,'V89 Other Branch',true,true);
+
+  -- Later canonical chains default newly-created firms closed at the platform
+  -- boundary. Open only these rollback fixtures through the reviewed Super
+  -- Admin RPC so the v89 customer contracts are exercised under current
+  -- production authority as well as the original v89 chain.
+  if to_regprocedure(
+    'public.platform_decide_business_approval_v94(uuid,text,text,bigint)'
+  ) is not null then
+    perform pg_temp.as_v89_user(v_sa);
+    execute 'select public.platform_decide_business_approval_v94($1,$2,$3,$4)'
+      into v_result
+      using v_business,'approved','v89 rollback fixture approval',1::bigint;
+    execute 'select public.platform_decide_business_approval_v94($1,$2,$3,$4)'
+      into v_result
+      using v_other_business,'approved','v89 rollback fixture approval',1::bigint;
+    reset role;
+  end if;
 
   perform pg_temp.as_v89_user(v_owner);
   v_result:=public.business_get_customer_capabilities_v89(v_business);
@@ -562,8 +606,8 @@ begin
   end;
   begin
     perform pg_temp.as_v89_user(v_owner);
-    perform public.merchant_scan_redemption_qr_v89(
-      v_other_business,v_qr_token,gen_random_uuid()
+    perform pg_temp.scan_redemption_current(
+      v_other_business,v_other_branch,v_qr_token,gen_random_uuid()
     );
     reset role;
     raise exception 'wrong business completed a redemption QR';
@@ -571,8 +615,8 @@ begin
     reset role;
   end;
   perform pg_temp.as_v89_user(v_owner);
-  v_result:=public.merchant_scan_redemption_qr_v89(
-    v_business,v_qr_token,gen_random_uuid()
+  v_result:=pg_temp.scan_redemption_current(
+    v_business,v_branch,v_qr_token,gen_random_uuid()
   );
   reset role;
   v_catalog_receipt:=v_result;
@@ -592,8 +636,8 @@ begin
       v_result;
   end if;
   perform pg_temp.as_v89_user(v_owner);
-  v_result:=public.merchant_scan_redemption_qr_v89(
-    v_business,v_qr_token,gen_random_uuid()
+  v_result:=pg_temp.scan_redemption_current(
+    v_business,v_branch,v_qr_token,gen_random_uuid()
   );
   reset role;
   if not (v_result->>'replayed')::boolean
@@ -602,6 +646,16 @@ begin
        where business_id=v_business and client_id=v_client_a)<>v_redemption_count+1 then
     raise exception 'merchant replay created a second redemption: %',v_result;
   end if;
+  begin
+    perform pg_temp.as_v89_user(v_customer_a);
+    perform public.customer_cancel_redemption_intent_v89(
+      v_intent_id,gen_random_uuid()
+    );
+    reset role;
+    raise exception 'completed redemption was cancelled';
+  exception when check_violation then
+    reset role;
+  end;
 
   -- A merchant disabling redemption after presentation must leave the intent
   -- pending and all canonical value rows untouched.
@@ -619,8 +673,8 @@ begin
   reset role;
   begin
     perform pg_temp.as_v89_user(v_owner);
-    perform public.merchant_scan_redemption_qr_v89(
-      v_business,v_qr_token,gen_random_uuid()
+    perform pg_temp.scan_redemption_current(
+      v_business,v_branch,v_qr_token,gen_random_uuid()
     );
     reset role;
     raise exception 'disabled-after-intent redemption completed';
@@ -657,8 +711,8 @@ begin
   update public.loyalty_programs set active=false where business_id=v_business;
   begin
     perform pg_temp.as_v89_user(v_owner);
-    perform public.merchant_scan_redemption_qr_v89(
-      v_business,v_qr_token,gen_random_uuid()
+    perform pg_temp.scan_redemption_current(
+      v_business,v_branch,v_qr_token,gen_random_uuid()
     );
     reset role;
     raise exception 'catalog configuration changed after intent but scan completed';
@@ -682,14 +736,37 @@ begin
   );
   v_cancelled_intent:=(v_result->>'intent_id')::uuid;
   v_qr_token:=v_result->>'qr_token';
-  perform public.customer_cancel_redemption_intent_v89(
+  v_cancel_receipt:=public.customer_cancel_redemption_intent_v89(
+    v_cancelled_intent,gen_random_uuid()
+  );
+  v_result:=public.customer_cancel_redemption_intent_v89(
     v_cancelled_intent,gen_random_uuid()
   );
   reset role;
+  if v_cancel_receipt->>'status'<>'cancelled'
+     or v_result->>'status'<>'cancelled'
+     or (select count(*) from public.customer_redemption_events_v89
+       where intent_id=v_cancelled_intent and event_type='intent_cancelled')<>1
+     or (select count(*) from public.loyalty_redemptions
+       where business_id=v_business and client_id=v_client_a)<>v_redemption_count+1
+     or (select coalesce(sum(points),0)::integer from public.points_ledger
+       where business_id=v_business and client_id=v_client_a)<>60 then
+    raise exception 'double cancellation was not idempotent and non-economic';
+  end if;
+  begin
+    perform pg_temp.as_v89_user(v_customer_b);
+    perform public.customer_cancel_redemption_intent_v89(
+      v_cancelled_intent,gen_random_uuid()
+    );
+    reset role;
+    raise exception 'another customer cancelled a redemption intent';
+  exception when insufficient_privilege then
+    reset role;
+  end;
   begin
     perform pg_temp.as_v89_user(v_owner);
-    perform public.merchant_scan_redemption_qr_v89(
-      v_business,v_qr_token,gen_random_uuid()
+    perform pg_temp.scan_redemption_current(
+      v_business,v_branch,v_qr_token,gen_random_uuid()
     );
     reset role;
     raise exception 'cancelled redemption was completed';
@@ -719,8 +796,8 @@ begin
     v_expired_redemption_key
   );
   perform pg_temp.as_v89_user(v_owner);
-  v_result:=public.merchant_scan_redemption_qr_v89(
-    v_business,v_qr_token,gen_random_uuid()
+  v_result:=pg_temp.scan_redemption_current(
+    v_business,v_branch,v_qr_token,gen_random_uuid()
   );
   reset role;
   if v_result->>'status'<>'expired'
@@ -746,8 +823,8 @@ begin
   reset role;
   begin
     perform pg_temp.as_v89_user(v_owner);
-    perform public.merchant_scan_redemption_qr_v89(
-      v_business,v_qr_token,gen_random_uuid()
+    perform pg_temp.scan_redemption_current(
+      v_business,v_branch,v_qr_token,gen_random_uuid()
     );
     reset role;
     raise exception 'balance-changed redemption was completed';
@@ -788,8 +865,8 @@ begin
   perform set_config('app.v79_system_transition','',true);
   begin
     perform pg_temp.as_v89_user(v_owner);
-    perform public.merchant_scan_redemption_qr_v89(
-      v_business,v_qr_token,gen_random_uuid()
+    perform pg_temp.scan_redemption_current(
+      v_business,v_branch,v_qr_token,gen_random_uuid()
     );
     reset role;
     raise exception 'classic terms changed after intent but scan completed';
@@ -800,8 +877,8 @@ begin
   update public.loyalty_programs set redeem_points=20 where business_id=v_business;
   perform set_config('app.v79_system_transition','',true);
   perform pg_temp.as_v89_user(v_owner);
-  v_classic_receipt:=public.merchant_scan_redemption_qr_v89(
-    v_business,v_qr_token,gen_random_uuid()
+  v_classic_receipt:=pg_temp.scan_redemption_current(
+    v_business,v_branch,v_qr_token,gen_random_uuid()
   );
   reset role;
   if v_classic_receipt->>'redemption_kind'<>'classic_points'
@@ -819,8 +896,8 @@ begin
       v_classic_receipt;
   end if;
   perform pg_temp.as_v89_user(v_owner);
-  v_result:=public.merchant_scan_redemption_qr_v89(
-    v_business,v_qr_token,gen_random_uuid()
+  v_result:=pg_temp.scan_redemption_current(
+    v_business,v_branch,v_qr_token,gen_random_uuid()
   );
   reset role;
   if not (v_result->>'replayed')::boolean

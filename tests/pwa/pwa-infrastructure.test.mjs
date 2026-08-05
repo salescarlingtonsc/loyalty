@@ -220,6 +220,7 @@ test('service worker reloads open pages after replacing a stale auth/legal shell
     cacheKeys: [
       'nestly-shell-v5-20260802-v138-peekaa-convergence',
       'nestly-shell-v6-20260804-v164-auth-cache-convergence',
+      'nestly-shell-v7-20260805-v167-customer-trust',
       'unrelated-cache'
     ]
   });
@@ -233,12 +234,13 @@ test('service worker reloads open pages after replacing a stale auth/legal shell
   await activatePromise;
 
   assert.deepEqual(harness.deletedCaches, [
-    'nestly-shell-v5-20260802-v138-peekaa-convergence'
+    'nestly-shell-v5-20260802-v138-peekaa-convergence',
+    'nestly-shell-v6-20260804-v164-auth-cache-convergence'
   ]);
   assert.deepEqual(JSON.parse(JSON.stringify(harness.clientMessages)), [
     {
       type: 'PEEKAA_SW_ACTIVATED',
-      cacheVersion: 'v6-20260804-v164-auth-cache-convergence'
+      cacheVersion: 'v7-20260805-v167-customer-trust'
     }
   ]);
   assert.deepEqual(harness.clientNavigations, [

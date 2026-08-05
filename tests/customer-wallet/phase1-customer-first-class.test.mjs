@@ -153,8 +153,8 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
   assert.doesNotMatch(surfaces,/href="#\/claim"/);
   assert.match(surfaces,/Active requests, confirmed appointments, and recent request outcomes stay separate/);
-  assert.match(surfaces,/if\(context\.features\.customer_in_app_inbox!==true\)\{nav\('#\/wallet'\);return\}/,
-    'the Messages destination must stay hidden and non-routable when the existing inbox scope is disabled');
+  assert.match(surfaces,/if\(context\.features\.customer_in_app_inbox!==true\)\{[\s\S]*Messages are not available[\s\S]*This feature is not available for your account right now/,
+    'a manually entered disabled Messages destination must remain visible with an honest unavailable state');
   assert.match(surfaces,/await renderCustomerInAppInbox\(null,isCurrent\)/,
     'an enabled Messages destination must render the existing customer inbox rather than placeholder copy');
   assert.match(surfaces,/Profile editing is not available/);

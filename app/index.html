@@ -1059,7 +1059,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-primary-nav a[aria-current="page"]{background:var(--tint);color:var(--coral)}
 .customer-primary-nav a span,.customer-primary-nav button span{min-width:0;overflow-wrap:anywhere}
 .customer-account-menu{position:relative}.customer-account-menu summary{list-style:none}.customer-account-menu summary::-webkit-details-marker{display:none}
-.customer-account-menu .menu{right:0;left:auto;min-width:210px;padding:7px}.customer-account-menu .menu a,.customer-account-menu .menu button{display:flex;width:100%;align-items:center;gap:9px;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-weight:600;text-align:left;cursor:pointer}
+.customer-account-menu .menu{position:absolute;top:calc(100% + 8px);right:0;z-index:48;left:auto;min-width:210px;max-width:min(310px,calc(100vw - 24px));padding:7px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow-lg)}.customer-account-menu .menu a,.customer-account-menu .menu button{display:flex;width:100%;align-items:center;gap:9px;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-weight:600;text-align:left;cursor:pointer}
 .customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover{background:var(--bg)}
 .workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:100px;background:#fff;font-size:13px;font-weight:650}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
@@ -1070,6 +1070,11 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-push-setting [data-push-status]{max-width:62ch;line-height:1.55}
 @media(max-width:560px){.customer-push-setting{grid-template-columns:1fr}.customer-push-setting .btn{width:100%}}
 .customer-avatar{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--coral);cursor:pointer}
+.customer-redemption-modal .modal-card{width:min(460px,calc(100vw - 24px));text-align:center}
+.customer-redemption-modal .redemption-qr{display:grid;place-items:center;width:244px;min-height:244px;margin:18px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;color:#111}
+.customer-confirmation-modal .modal-card{width:min(420px,calc(100vw - 24px))}
+.customer-confirmation-modal .decision-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+@media(max-width:420px){.customer-confirmation-modal .decision-actions{flex-direction:column-reverse}.customer-confirmation-modal .decision-actions .btn{width:100%}}
 .customer-first-quest{overflow:hidden;padding:0;background:linear-gradient(145deg,#fff 30%,#fff1e9);border-color:rgba(194,65,53,.2)}
 .customer-first-quest-copy{padding:clamp(24px,6vw,48px);text-align:center}.customer-first-quest-icon{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(145deg,var(--coral),#f58c55);color:#fff;box-shadow:0 16px 34px rgba(194,65,53,.25)}
 .customer-first-quest h1{font-size:clamp(1.9rem,7vw,3rem)}.customer-first-quest p{max-width:520px;margin:10px auto 0;line-height:1.6}
@@ -1475,7 +1480,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
       if(destroyed||!document.getElementById(container)) return;
       removeWidget();
       if(destroyed)return;
-      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,
+      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
         callback:(token)=>{if(destroyed)return;onToken(token);message(security('complete'));retryEl.hidden=true},
         'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
         'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
@@ -1735,6 +1740,7 @@ let customerPhoneOtpCapabilities=null;
 let customerRelationshipSyncState={userId:null,attempted:false,result:null};
 let pendingCustomerInvitationToken='';
 let pendingCustomerBusinessSlug='';
+const CUSTOMER_DESTINATION_SESSION_KEY='peekaa.customer.pendingDestination.v1';
 let pendingCustomerDestination='';
 const CUSTOMER_JOIN_SESSION_KEY='nestly.customer.pendingJoinToken';
 const CUSTOMER_RECOVERY_SESSION_KEY='nestly.customer.passwordRecoveryVerified';
@@ -1803,10 +1809,22 @@ function normalizeCustomerDestination(value){
   const slug=normalizeCustomerBusinessIntent(route.slice(9));
   return slug?`#/wallet/${encodeURIComponent(slug)}`:'';
 }
+try{pendingCustomerDestination=normalizeCustomerDestination(sessionStorage.getItem(CUSTOMER_DESTINATION_SESSION_KEY)||'')}catch{}
+function rememberPendingCustomerDestination(value){
+  pendingCustomerDestination=normalizeCustomerDestination(value);
+  try{
+    if(pendingCustomerDestination)sessionStorage.setItem(CUSTOMER_DESTINATION_SESSION_KEY,pendingCustomerDestination);
+    else sessionStorage.removeItem(CUSTOMER_DESTINATION_SESSION_KEY);
+  }catch{}
+  return pendingCustomerDestination;
+}
 function takePendingCustomerDestination(fallback=''){
   const destination=normalizeCustomerDestination(pendingCustomerDestination);
-  pendingCustomerDestination='';
   return destination||fallback;
+}
+function completePendingCustomerDestination(route){
+  const destination=normalizeCustomerDestination(pendingCustomerDestination);
+  if(destination&&normalizeCustomerDestination(route)===destination)rememberPendingCustomerDestination('');
 }
 function customerRegistrationDestinationPriority(joinToken,businessSlug){
   if(String(joinToken||''))return 'join';
@@ -1818,10 +1836,11 @@ function resetClientSessionState({preserveInvitation=false}={}){
   invalidateBranchModuleProjectionCache();
   const invitation=preserveInvitation?pendingCustomerInvitationToken:'';
   const joinToken=preserveInvitation?pendingCustomerJoinToken:'';
+  const destination=preserveInvitation?pendingCustomerDestination:'';
   if(!preserveInvitation)rememberPendingCustomerJoinToken('');
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
-  customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';pendingCustomerDestination='';selectedBranchId=null;profileOpen=false;
+  customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';settingsActiveTab='workspace';
   resetProductInteractionSessionV100();
   customerLocale='en';
@@ -2140,25 +2159,59 @@ function openMerchantRedemptionScanner({
   overlay.querySelector('#merchantScannerToken').addEventListener('keydown',event=>{if(event.key==='Enter')submit(event.currentTarget.value)});
   overlay.querySelector('#merchantScannerClose').focus();
 }
+function redemptionCountdownText(expiresAt,now=Date.now()){
+  const expiry=new Date(expiresAt).getTime();
+  if(!Number.isFinite(expiry))return '';
+  const seconds=Math.max(0,Math.ceil((expiry-now)/1000));
+  const minutes=Math.floor(seconds/60),remainder=seconds%60;
+  return seconds>0?`Expires in ${minutes}:${String(remainder).padStart(2,'0')}`:'Expired';
+}
+function showCustomerDecisionDialog({title,body,keepLabel='Keep',confirmLabel='Confirm',danger=false}={}){
+  return new Promise(resolve=>{
+    const dialog=document.createElement('div');
+    dialog.className='modal customer-confirmation-modal';dialog.setAttribute('role','dialog');
+    dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','customerDecisionTitle');
+    dialog.innerHTML=`<section class="modal-card"><h2 id="customerDecisionTitle">${esc(title)}</h2><p class="muted" style="margin-top:8px">${esc(body)}</p><div class="decision-actions"><button class="btn ghost" id="customerDecisionKeep" type="button">${esc(keepLabel)}</button><button class="btn ${danger?'danger':''}" id="customerDecisionConfirm" type="button">${esc(confirmLabel)}</button></div></section>`;
+    document.body.appendChild(dialog);
+    let settled=false,deactivate=null;
+    const finish=value=>{
+      if(settled)return;settled=true;
+      if(deactivate){const cleanup=deactivate;deactivate=null;cleanup()}
+      else dialog.remove();
+      resolve(value);
+    };
+    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(false),initialFocus:'#customerDecisionKeep'});
+    dialog.querySelector('#customerDecisionKeep').onclick=()=>finish(false);
+    dialog.querySelector('#customerDecisionConfirm').onclick=()=>finish(true);
+    dialog.addEventListener('click',event=>{if(event.target===dialog)finish(false)});
+  });
+}
 function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}={}){
   const token=String(intent?.qr_token||'');
   if(!token)return;
   activeCustomerRedemptionCleanup({restoreFocus:false});
   const overlay=document.createElement('div');
-  overlay.className='modal appointment-detail-modal';overlay.setAttribute('role','dialog');
+  overlay.className='modal customer-redemption-modal';overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerRedemptionQrTitle');
-  overlay.innerHTML=`<section class="modal-card" style="width:460px;text-align:center"><div class="row"><div style="text-align:left"><h2 id="customerRedemptionQrTitle">${esc(rewardName||'Redeem reward')}</h2><p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code to complete the redemption.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerRedemptionQrClose" type="button" aria-label="Close redemption QR">${CUI.icon('close',{size:18})}</button></div>
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerRedemptionQrTitle">${esc(rewardName||'Redeem reward')}</h2><p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code to complete the redemption.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerRedemptionQrClose" type="button" aria-label="Close redemption QR">${CUI.icon('close',{size:18})}</button></div>
     <div class="redemption-qr" id="customerRedemptionQr" aria-label="Pending redemption QR code"></div>
     <span class="pill new" id="customerRedemptionQrState">Pending merchant scan</span>
-    <p class="muted small" id="customerRedemptionQrStatus" role="status" aria-live="polite" style="margin-top:10px">Your points are not redeemed until the business scans and confirms this QR.${intent?.expires_at?` This code expires ${esc(walletDate(intent.expires_at,true))}.`:''}</p>
+    <p class="muted small" id="customerRedemptionQrStatus" role="status" aria-live="polite" style="margin-top:10px">Your points are not redeemed until the business scans and confirms this QR.${intent?.expires_at?` <span id="customerRedemptionCountdown">${esc(redemptionCountdownText(intent.expires_at))}</span>.`:''}</p>
     <div class="row" style="margin-top:16px"><button class="btn danger" id="customerRedemptionQrCancel" type="button">Cancel redemption</button><button class="btn ghost" id="customerRedemptionQrDone" type="button">Close — keep pending</button></div></section>`;
   document.body.appendChild(overlay);
   const qrValue=publicAppUrl(`redeem?token=${encodeURIComponent(token)}`);
   void loadQrLibrary().then(()=>new QRCode(overlay.querySelector('#customerRedemptionQr'),{text:qrValue,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}))
     .catch(()=>{const status=overlay.querySelector('#customerRedemptionQrStatus');if(status)status.textContent='The QR image could not load. Close and retry; no points were redeemed.'});
-  let closed=false,pollTimer=0,polling=false,deactivateDialog=null,terminal=false;
+  let closed=false,pollTimer=0,pollInFlight=null,deactivateDialog=null,terminal=false,countdownTimer=0;
+  const updateCountdown=()=>{
+    const countdown=overlay.querySelector('#customerRedemptionCountdown');
+    if(!countdown||closed||terminal)return;
+    countdown.textContent=redemptionCountdownText(intent?.expires_at);
+    if(countdown.textContent==='Expired')void reconcileRedemptionState();
+  };
+  const onVisibilityChange=()=>{if(document.visibilityState==='visible')updateCountdown()};
   const close=({restoreFocus=true}={})=>{
-    if(closed)return;closed=true;clearTimeout(pollTimer);
+    if(closed)return;closed=true;clearTimeout(pollTimer);clearInterval(countdownTimer);document.removeEventListener('visibilitychange',onVisibilityChange);
     if(deactivateDialog){const cleanup=deactivateDialog;deactivateDialog=null;cleanup({restoreFocus})}
     else overlay.remove();
     if(activeCustomerRedemptionCleanup===close)activeCustomerRedemptionCleanup=()=>{};
@@ -2167,7 +2220,7 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
   activeCustomerRedemptionCleanup=close;
   deactivateDialog=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerRedemptionQrCancel'});
   const finish=(state,data={})=>{
-    if(closed||terminal)return;terminal=true;clearTimeout(pollTimer);
+    if(closed||terminal)return;terminal=true;clearTimeout(pollTimer);clearInterval(countdownTimer);document.removeEventListener('visibilitychange',onVisibilityChange);
     const panel=overlay.querySelector('.modal-card');
     const qr=overlay.querySelector('#customerRedemptionQr');
     const pill=overlay.querySelector('#customerRedemptionQrState');
@@ -2192,25 +2245,51 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     }
     cancelButton?.remove();doneButton.textContent='Close';doneButton.focus();
   };
-  const schedulePoll=(delay=1500)=>{if(!closed&&!terminal)pollTimer=setTimeout(poll,delay)};
-  const poll=async()=>{
-    if(closed||terminal||polling||!intent?.intent_id)return;
-    polling=true;
-    const {data,error}=await sb.rpc('customer_get_redemption_intent_v89',{p_intent:intent.intent_id});
-    polling=false;
-    if(closed||terminal)return;
-    if(error){schedulePoll(3000);return}
-    const state=String(data?.status||'pending');
-    if(state==='completed')finish('completed',data);
-    else if(state==='cancelled'||state==='expired')finish(state,data);
-    else schedulePoll();
+  const reconcileRedemptionState=async({afterCancellationFailure=false}={})=>{
+    if(closed||terminal||!intent?.intent_id)return;
+    if(pollInFlight){
+      await pollInFlight;
+      if(afterCancellationFailure&&!closed&&!terminal){
+        return reconcileRedemptionState({afterCancellationFailure:true});
+      }
+      return;
+    }
+    pollInFlight=(async()=>{
+      const {data,error}=await sb.rpc('customer_get_redemption_intent_v89',{p_intent:intent.intent_id});
+      if(closed||terminal)return;
+      if(error){
+        if(afterCancellationFailure){
+          const status=overlay.querySelector('#customerRedemptionQrStatus');
+          status.textContent='Cancellation was not confirmed. The QR remains visible. If it is still pending, try again.';
+          overlay.querySelector('#customerRedemptionQrCancel').disabled=false;
+        }
+        schedulePoll(3000);return;
+      }
+      const state=String(data?.status||'pending');
+      if(state==='completed')finish('completed',data);
+      else if(state==='cancelled'||state==='expired')finish(state,data);
+      else {
+        if(afterCancellationFailure){
+          const status=overlay.querySelector('#customerRedemptionQrStatus');
+          status.textContent='This redemption is still pending. No points have been used. If it is still pending, try again.';
+          overlay.querySelector('#customerRedemptionQrCancel').disabled=false;
+        }else updateCountdown();
+        schedulePoll();
+      }
+    })();
+    try{await pollInFlight}finally{pollInFlight=null}
   };
+  const schedulePoll=(delay=1500)=>{if(!closed&&!terminal)pollTimer=setTimeout(reconcileRedemptionState,delay)};
+  document.addEventListener('visibilitychange',onVisibilityChange);
+  countdownTimer=setInterval(updateCountdown,1000);
   schedulePoll(800);
   overlay.querySelector('#customerRedemptionQrClose').onclick=close;
   overlay.querySelector('#customerRedemptionQrDone').onclick=close;
   const cancel=overlay.querySelector('#customerRedemptionQrCancel');
   cancel.onclick=async()=>{
-    if(!intent?.intent_id||!confirm('Cancel this pending redemption QR? No points will be redeemed.'))return;
+    if(!intent?.intent_id)return;
+    const confirmed=await showCustomerDecisionDialog({title:'Cancel this redemption?',body:'No points will be used.',keepLabel:'Keep QR',confirmLabel:'Cancel redemption',danger:true});
+    if(!confirmed||!overlay.isConnected)return;
     cancel.disabled=true;
     const status=overlay.querySelector('#customerRedemptionQrStatus');
     status.textContent='Cancelling this redemption…';
@@ -2221,18 +2300,13 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     });
     if(!overlay.isConnected)return;
     if(error){
-      cancel.disabled=false;
-      status.textContent='This redemption could not be cancelled. It may already be completed or expired. Refresh your programme before trying again.';
+      await reconcileRedemptionState({afterCancellationFailure:true});
       return;
     }
     const state=String(data?.status||'');
-    if(state!=='cancelled'){
-      cancel.disabled=false;
-      status.textContent=`This redemption is ${state.replaceAll('_',' ')||'no longer pending'}.`;
-      return;
-    }
-    clearWriteAttempt(slot);
-    finish('cancelled',data);
+    if(state==='cancelled')clearWriteAttempt(slot);
+    if(state==='cancelled'||state==='expired'||state==='completed')finish(state,data);
+    else await reconcileRedemptionState({afterCancellationFailure:true});
   };
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   overlay.querySelector('#customerRedemptionQrClose').focus();
@@ -2616,6 +2690,7 @@ async function route(){
   destroyMountedTurnstiles();
   globalThis.document?.documentElement?.setAttribute('lang','en');
   disposeCurrentRoute();
+  if(typeof customerAccountMenuCleanup==='function')customerAccountMenuCleanup();
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
      hiccup used to throw straight out of this async function with nothing rendered, which
      read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
@@ -2655,7 +2730,7 @@ async function route(){
       const customerRouteParams=new URLSearchParams(h.split('?')[1]||'');
       if(customerRouteParams.has('business')){
         pendingCustomerBusinessSlug=normalizeCustomerBusinessIntent(customerRouteParams.get('business'));
-        pendingCustomerDestination='';
+        rememberPendingCustomerDestination('');
       }
     }
     if(h.startsWith('#/join?')){
@@ -2678,7 +2753,7 @@ async function route(){
     if(h==='#/'||h==='#/customer'||h==='#/customer/register'||h.startsWith('#/customer?')) return renderCustomerRegistration(isRouteCurrent);
     const directCustomerDestination=normalizeCustomerDestination(h);
     if(!S.user&&directCustomerDestination){
-      pendingCustomerDestination=directCustomerDestination;
+      rememberPendingCustomerDestination(directCustomerDestination);
       pendingCustomerBusinessSlug=directCustomerDestination.startsWith('#/wallet/')
         ?normalizeCustomerBusinessIntent(directCustomerDestination.slice(9))
         :'';
@@ -3184,7 +3259,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice=''}={}){
     ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn'})}
     <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px;color:var(--green)">${esc(notice)}</p>`:''}</div>
     <div style="margin-top:14px">${authChallengeHtml()}</div>
-    <button class="btn" id="customerPasswordSignIn" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Sign in</span></button>
+    <button class="btn" id="customerPasswordSignIn" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
     <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
   </section>`);
@@ -3206,6 +3281,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice=''}={}){
     onToken:(token)=>{
       if(!isRouteCurrent()||!signIn.isConnected)return;
       captchaToken=token;signIn.disabled=!token;passkeyButton.disabled=!passkeySupported||!token;
+      signIn.querySelector('span').textContent=token?'Sign in':'Checking…';
       if(installedApp&&passkeySupported&&!customerAutomaticPasskeyAttempted){
         customerAutomaticPasskeyAttempted=true;
         runPasskeySignIn({automatic:true});
@@ -3219,14 +3295,20 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice=''}={}){
     if(!phone||!password){
       errorHost.innerHTML='<div class="err">Enter your Singapore mobile number and password.</div>';return;
     }
-    if(!captchaToken)return;
+    if(!captchaToken){
+      errorHost.innerHTML='<div class="err">Security check is still running. Please wait, or retry the security check if an error appears.</div>';return;
+    }
     signIn.disabled=true;
+    signIn.querySelector('span').textContent='Signing in…';
     const challenge=captchaToken;captchaToken='';
+    passkeyButton.disabled=true;
     const {data,error}=await sb.auth.signInWithPassword({phone,password,options:{captchaToken:challenge}});
     if(!isRouteCurrent()||!signIn.isConnected)return;
     captchaControl?.reset();
     if(error||!data?.user){
-      signIn.disabled=false;
+      signIn.disabled=true;
+      passkeyButton.disabled=true;
+      signIn.querySelector('span').textContent='Checking…';
       errorHost.innerHTML='<div class="err">The mobile number or password is incorrect.</div>';return;
     }
     resetCustomerRegistrationState({phone});
@@ -3683,6 +3765,28 @@ function renderNoCustomerDestination(staffWorkspaces=[]){
 function customerSurfaceQualifies(profile,customerPersonas=[]){
   return (profile!==null&&profile!==undefined)||(Array.isArray(customerPersonas)&&customerPersonas.length>0);
 }
+let customerAccountMenuCleanup=()=>{};
+function wireCustomerAccountMenu(){
+  customerAccountMenuCleanup();
+  const customerAccountMenuDetails=document.querySelector('.customer-account-menu');
+  if(!customerAccountMenuDetails)return;
+  const summary=customerAccountMenuDetails.querySelector('summary');
+  const onPointerDown=event=>{
+    if(customerAccountMenuDetails.open&&!customerAccountMenuDetails.contains(event.target))customerAccountMenuDetails.open=false;
+  };
+  const onKeyDown=event=>{
+    if(event.key==='Escape'&&customerAccountMenuDetails.open){
+      event.preventDefault();customerAccountMenuDetails.open=false;summary?.focus();
+    }
+  };
+  document.addEventListener('pointerdown',onPointerDown);
+  document.addEventListener('keydown',onKeyDown);
+  customerAccountMenuCleanup=()=>{
+    document.removeEventListener('pointerdown',onPointerDown);
+    document.removeEventListener('keydown',onKeyDown);
+    customerAccountMenuCleanup=()=>{};
+  };
+}
 function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=false}={}){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   root.innerHTML=`<div class="wallet-shell customer-shell"><div class="wallet-inner"><header class="wallet-head">
@@ -3704,11 +3808,13 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
     customerPush.bindButton($('customerPushMenuControl'));
     customerPush.reconcile().catch(()=>{});
   }
+  wireCustomerAccountMenu();
   if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
   if($('walletBack'))$('walletBack').onclick=()=>nav('#/customer/programmes');
 }
 function focusCustomerRoute(){
   const main=$('main');if(main)CUI.focusRoute(main,{enhanceContent:true});
+  if(S.user&&typeof completePendingCustomerDestination==='function')completePendingCustomerDestination(location.hash);
 }
 function customerPasskeySupported({management=false}={}){
   return isSecureContext&&'PublicKeyCredential' in globalThis
@@ -4006,7 +4112,11 @@ async function renderCustomerBookings(){
 async function renderCustomerMessages(){
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
-  if(context.features.customer_in_app_inbox!==true){nav('#/wallet');return}
+  if(context.features.customer_in_app_inbox!==true){
+    renderCustomerShell({active:'messages',staffWorkspaces:context.staffWorkspaces,messagesAvailable:false,body:`<header class="customer-page-head"><div><h1>Messages are not available</h1><p class="muted">This feature is not available for your account right now.</p></div></header>
+      <section class="card"><p class="muted small">Your rewards, offers and bookings are still available from the main customer navigation.</p><a class="btn ghost sm" href="#/wallet" style="margin-top:14px">Open Home</a></section>`});
+    focusCustomerRoute();return;
+  }
   renderCustomerShell({active:'messages',staffWorkspaces:context.staffWorkspaces,messagesAvailable:true,body:`<header class="customer-page-head"><div><h1>Messages</h1><p class="muted">Customer-safe updates grouped by your separate business programmes.</p></div></header>
     <section class="card wallet-section" id="customerInAppInbox" aria-busy="true" tabindex="-1"><div class="wallet-skeleton"></div></section>`});
   focusCustomerRoute();
@@ -4157,7 +4267,8 @@ async function renderCustomerProfile(){
       passkeyStatus.textContent='Passkey renamed.';loadPasskeys();
     });
     passkeyList.querySelectorAll('[data-passkey-delete]').forEach(button=>button.onclick=async()=>{
-      if(!confirm('Remove this passkey? You will need another passkey or your password to sign in.'))return;
+      const confirmed=await showCustomerDecisionDialog({title:'Remove this passkey?',body:'You will need another passkey or your password to sign in.',keepLabel:'Keep passkey',confirmLabel:'Remove passkey',danger:true});
+      if(!confirmed||!button.isConnected)return;
       button.disabled=true;passkeyStatus.textContent='Removing passkey…';
       const {error:deleteError}=await sb.auth.passkey.delete({passkeyId:button.dataset.passkeyDelete});
       if(!isCurrent()||!passkeyHost.isConnected)return;
@@ -4306,7 +4417,7 @@ async function renderCustomerClaim(){
     const outcome=data?.outcome||'no_link_created';
     if(!invitationToken&&outcome==='linked'){
       pendingCustomerBusinessSlug='';
-      pendingCustomerDestination='';
+      rememberPendingCustomerDestination('');
       nav('#/wallet/'+encodeURIComponent(slug));return;
     }
     $('claimResult').innerHTML=`<div class="card" style="margin-top:16px"><b>${outcome==='linked'?'Linked':'Request received'}</b>
@@ -4913,7 +5024,7 @@ async function renderCustomerWallet(businessSlug=null){
       <details class="card customer-home-summary">
         <summary><span>${CUI.icon('forward',{size:17})} Guidance &amp; bookings</span><span class="muted small">Show</span></summary>
         <div class="customer-home-summary-body">
-          <section class="customer-home-summary-note"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>Next best action</span></p><h2 style="margin-top:10px">Rewards guidance is unavailable</h2><p class="muted small" style="margin-top:6px">Your balances remain visible, but ${esc(BRAND.productName)} cannot safely rank an action right now.</p></section>
+          <section class="customer-home-summary-note"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>What’s next</span></p><h2 style="margin-top:10px">Choose what you’d like to do</h2><p class="muted small" style="margin-top:6px">Open your rewards or bookings below.</p></section>
           <div class="customer-home-quick"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>Rewards &amp; value</b><p class="muted small">${esc(customerLinkedRewardsLabelV156(cards.length))}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${bookingSummary}</p></div></a></div>
         </div>
       </details>
