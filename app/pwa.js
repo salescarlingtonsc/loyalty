@@ -14,6 +14,7 @@
   let registration=null;
   let updateRequested=false;
   let installTimer=0;
+  let autoUpdateTimer=0;
 
   function statusHost(){
     let host=document.getElementById('pwaStatus');
@@ -121,15 +122,33 @@
     }
   }
 
+  function isUnsafeToAutoUpdate(){
+    const active=document.activeElement;
+    if(active&&['INPUT','TEXTAREA','SELECT'].includes(active.tagName))return true;
+    if(active?.isContentEditable)return true;
+    return Boolean(document.querySelector('dialog[open],[role="dialog"],.modal,[data-prevent-auto-update="true"],[data-dirty="true"]'));
+  }
+
+  function applyUpdate(worker){
+    if(!worker)return;
+    updateRequested=true;
+    worker.postMessage({type:'SKIP_WAITING'});
+  }
+
   function offerUpdate(worker){
+    globalObject.clearTimeout(autoUpdateTimer);
+    if(!isUnsafeToAutoUpdate()){
+      autoUpdateTimer=globalObject.setTimeout(()=>{
+        if(!isUnsafeToAutoUpdate())applyUpdate(worker);
+        else offerUpdate(worker);
+      },1200);
+      return;
+    }
     showPrompt({
       title:'A Peekaa update is ready',
       body:'Refresh once to use the latest app shell. Your saved business data is not stored in this cache.',
       actionLabel:'Update now',
-      onAction:()=>{
-        updateRequested=true;
-        worker.postMessage({type:'SKIP_WAITING'});
-      }
+      onAction:()=>applyUpdate(worker)
     });
   }
 

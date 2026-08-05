@@ -325,6 +325,10 @@ test('install, update and native-wrapper lifecycle contracts remain wired', asyn
   assert.match(source, /registration\.waiting/);
   assert.match(source, /updatefound/);
   assert.match(source, /worker\.state==='installed'/);
+  assert.match(source, /function isUnsafeToAutoUpdate/);
+  assert.match(source, /setTimeout\(\(\)=>\{/);
+  assert.match(source, /if\(!isUnsafeToAutoUpdate\(\)\)applyUpdate\(worker\)/);
+  assert.match(source, /dialog\[open\],\[role="dialog"\],\.modal,\[data-prevent-auto-update="true"\],\[data-dirty="true"\]/);
   assert.match(source, /worker\.postMessage\(\{type:'SKIP_WAITING'\}\)/);
   assert.match(source, /controllerchange/);
   assert.match(source, /location\.reload\(\)/);

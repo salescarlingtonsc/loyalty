@@ -24,14 +24,20 @@ test('platform separates assisted applications from paid website self-service',a
   assert.match(render,/platform_list_account_signups_v160/);
   assert.match(render,/accountSignupQueueHtml\(accountSignupQueue,CUI\)[\s\S]+paymentManagedSignupQueueHtml\(items,CUI\)[\s\S]+businessApplicationQueueHtml\(applicationQueue,CUI,items\)/);
   assert.match(render,/wireAccountSignupQueue\(\{\.\.\.context,filters\}\)/);
-  assert.match(source,/Incomplete business account signups/);
-  assert.match(source,/Manage these as inbound CRM leads/);
-  assert.match(source,/Email setup\/demo link/);
-  assert.match(source,/Approve\/reject becomes available after a company\/demo\/manual-payment application is submitted/);
+  assert.match(source,/Business owner signups/);
+  assert.match(source,/Use Approve, Reject or Pending for each signup/);
+  assert.match(source,/Choose Approve, Reject or Pending/);
+  assert.match(source,/Admin decision saved/);
+  assert.doesNotMatch(source,/Email setup\/demo link/);
+  assert.doesNotMatch(source,/Approve\/reject becomes available after a company\/demo\/manual-payment application is submitted/);
+  assert.doesNotMatch(source,/Manage these as inbound CRM leads/);
   assert.match(source,/platform_record_account_signup_triage_v164/);
   assert.match(source,/data-account-signup-triage="contacted"/);
   assert.match(source,/data-account-signup-triage="follow_up"/);
   assert.match(source,/data-account-signup-triage="archived"/);
+  assert.match(source,/Approve/);
+  assert.match(source,/Reject/);
+  assert.match(source,/Pending/);
   assert.match(source,/Website signups and paid workspaces/);
   assert.match(source,/Self-service signups are payment-managed/);
   assert.match(source,/Open firm directory/);
@@ -53,7 +59,7 @@ test('self-service signups are surfaced by name without manual approval controls
   assert.ok(queue.indexOf('function paymentManagedSignupQueueHtml')<queue.indexOf('function businessApplicationQueueHtml'));
 });
 
-test('account-only signup queue gives phone-only owners a contact action',async()=>{
+test('account-only signup queue gives simple approve reject pending actions',async()=>{
   const consoleModule=await import('../../app/platform-console.js');
   const CUI={icon:()=>''};
   const html=consoleModule.accountSignupQueueHtml({
@@ -66,15 +72,21 @@ test('account-only signup queue gives phone-only owners a contact action',async(
       triage_note:'Owner asked for a demo callback.'
     }]
   },CUI);
-  assert.match(html,/Incomplete business account signups/);
-  assert.match(html,/href="tel:\+6581600999"/);
-  assert.match(html,/Call owner/);
-  assert.match(html,/Triage/);
-  assert.match(html,/follow up/i);
+  assert.match(html,/Business owner signups/);
+  assert.match(html,/Admin decision/);
+  assert.match(html,/Pending/);
   assert.match(html,/Owner asked for a demo callback/);
-  assert.match(html,/Mark contacted/);
-  assert.match(html,/Archive/);
+  assert.match(html,/Approve/);
+  assert.match(html,/Reject/);
+  assert.match(html,/Pending/);
   assert.match(html,/data-account-signup-triage="contacted"/);
+  assert.match(html,/data-account-signup-triage="archived"/);
+  assert.match(html,/data-account-signup-triage="follow_up"/);
+  assert.doesNotMatch(html,/Call owner/);
+  assert.doesNotMatch(html,/Mark contacted/);
+  assert.doesNotMatch(html,/Archive/);
+  assert.doesNotMatch(html,/Follow up here/);
+  assert.doesNotMatch(html,/href="tel:/);
   assert.doesNotMatch(html,/mailto:/);
   assert.doesNotMatch(html,/data-business-approval/);
 });
