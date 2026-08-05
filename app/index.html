@@ -18608,21 +18608,36 @@ async function reportsPage(){
 }
 
 /* ---------- get started (first-run setup guide) ---------- */
+/* v170: the guide keeps two owner choices for the browser session only — "don't show this
+   again" and "I run this on my own". Session-scoped on purpose: no server field exists for
+   either, and a lie that survives the session is worse than a note the owner can undo. */
+const SETUP_GUIDE_HIDDEN_V170='nestly-v170-setup-guide-hidden';
+const SETUP_SOLO_OWNER_V170='nestly-v170-solo-owner';
+const setupFlagOn=key=>{try{return sessionStorage.getItem(key)==='1'}catch{return false}};
+const setSetupFlag=(key,on)=>{try{if(on)sessionStorage.setItem(key,'1');else sessionStorage.removeItem(key)}catch{}};
 async function setupPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  if(setupFlagOn(SETUP_GUIDE_HIDDEN_V170)){
+    M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">Setup guide hidden for this session.</p></div></div>
+      <div class="card"><div class="row"><span class="muted small">Setup guide hidden for this session.</span><span class="spacer"></span>
+        <button class="btn sm" id="sp_show">Show guide</button></div></div>`;
+    $('sp_show').onclick=()=>{setSetupFlag(SETUP_GUIDE_HIDDEN_V170,false);setupPage()};
+    return;
+  }
   M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">A few things to set up before you open for business — do them in any order.</p></div></div>
     <div class="card" id="sp_progress" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     <div id="sp_steps" class="grid"></div>`;
   const bid=S.biz.id;
-  const [{data:sv,error:e1},{data:pr,error:e2},{data:lp,error:e3},{data:st,error:e4},{data:cl,error:e5}]=await Promise.all([
+  const [{data:sv,error:e1},{data:pr,error:e2},{data:lp,error:e3},{data:st,error:e4},{data:cl,error:e5},{data:rwd,error:e6}]=await Promise.all([
     sb.from('services').select('id').eq('business_id',bid).eq('active',true).limit(1),
     sb.from('products').select('id').eq('business_id',bid).eq('active',true).limit(1),
     sb.from('loyalty_programs').select('id').eq('business_id',bid).eq('active',true).eq('configuration_status','published').limit(1),
     sb.from('staff').select('id').eq('business_id',bid).eq('active',true).limit(2),
-    sb.from('clients').select('id').eq('business_id',bid).limit(1)
+    sb.from('clients').select('id').eq('business_id',bid).limit(1),
+    sb.from('loyalty_rewards').select('id').eq('business_id',bid).eq('active',true).limit(1)
   ]);
   if(!isCurrent())return;
-  const err=e1||e2||e3||e4||e5;
+  const err=e1||e2||e3||e4||e5||e6;
   if(err){
     $('sp_progress').innerHTML=CUI.errorState({title:'Setup guide unavailable',message:'Your current setup could not be checked.',retryId:'setupRetry'});
     $('sp_steps').innerHTML='';
@@ -18630,6 +18645,7 @@ async function setupPage(){
     return;
   }
   const activeStaffCount=(st||[]).length;
+  const soloOwner=setupFlagOn(SETUP_SOLO_OWNER_V170);
   const steps=[
     {id:'services',em:'🛠️',title:'Add your services or products',
       why:'This is what customers see and book — nothing else works until there\'s at least one.',
@@ -18637,19 +18653,25 @@ async function setupPage(){
     {id:'loyalty',em:'🎁',title:'Publish loyalty earning settings',
       why:'An active published earning programme is available. Add and publish reward milestones separately in Grow.',
       done:canReadModule('loyalty')&&(lp||[]).length>0,link:'#/loyalty',cta:'Review loyalty →'},
+    {id:'reward',em:'🏆',title:'Add a reward customers can claim',
+      why:'Earning points means nothing until there is something to claim — publish at least one live reward.',
+      done:canReadModule('loyalty')&&(rwd||[]).length>0,link:'#/loyalty',cta:'Add a reward →'},
     {id:'team',em:'👥',title:'Add your team',
-      why:'Staff logins let you track who\'s on shift and (if you use it) commission per person.',
-      done:activeStaffCount>1,link:'#/settings',cta:'Add a teammate →'},
+      why:soloOwner?'Marked as not needed — you run this solo.'
+        :'Staff logins let you track who\'s on shift and (if you use it) commission per person.',
+      done:soloOwner||activeStaffCount>1,soloDone:soloOwner,link:'#/settings',cta:'Add a teammate →'},
     {id:'customer',em:'🙋',title:'Add your first customer',
       why:'Customer-linked eligible sales can earn loyalty when an active published programme applies.',
       done:(cl||[]).length>0,link:'#/clients',cta:'Add a customer →'}
   ];
   const doneCount=steps.filter(s=>s.done).length;
   $('sp_progress').innerHTML=`<div class="row"><b>${doneCount} of ${steps.length} done</b><span class="spacer"></span>
-    <button class="btn ghost sm" id="sp_hide">Hide this guide</button></div>
+    <button class="btn ghost sm" id="sp_dismiss">Don't show this again</button>
+    <button class="btn ghost sm" id="sp_hide">Back to dashboard</button></div>
     <div style="background:var(--line);border-radius:100px;height:10px;margin-top:12px;overflow:hidden">
       <div style="background:var(--grad);height:100%;width:${Math.round(doneCount/steps.length*100)}%"></div></div>`;
   $('sp_hide').onclick=()=>nav('#/dashboard');
+  $('sp_dismiss').onclick=()=>{setSetupFlag(SETUP_GUIDE_HIDDEN_V170,true);nav('#/dashboard')};
   $('sp_steps').innerHTML=steps.map(s=>`<div class="card" style="display:flex;gap:14px;align-items:flex-start">
     <div style="font-size:22px">${s.done?'✅':s.em}</div>
     <div style="flex:1">
@@ -18657,9 +18679,13 @@ async function setupPage(){
       <p class="muted small" style="margin-top:4px">${esc(s.why)}</p>
       <div class="row" style="margin-top:10px">
         ${s.link&&!s.done?`<a class="btn sm" href="${s.link}">${esc(s.cta)}</a>`:''}
-        ${s.link&&s.done?`<a class="btn ghost sm" href="${s.link}">Review →</a>`:''}
+        ${s.link&&s.done&&!s.soloDone?`<a class="btn ghost sm" href="${s.link}">Review →</a>`:''}
+        ${s.soloDone?`<button class="btn ghost sm" id="sp_solo_undo">Undo</button>`:''}
+        ${s.id==='team'&&!s.done?`<button class="btn ghost sm" id="sp_solo">I run this on my own</button>`:''}
       </div>
     </div></div>`).join('');
+  const solo=$('sp_solo');if(solo)solo.onclick=()=>{setSetupFlag(SETUP_SOLO_OWNER_V170,true);setupPage()};
+  const soloUndo=$('sp_solo_undo');if(soloUndo)soloUndo.onclick=()=>{setSetupFlag(SETUP_SOLO_OWNER_V170,false);setupPage()};
 }
 
 /* ---------- staff performance ---------- */
