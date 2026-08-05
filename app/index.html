@@ -1007,7 +1007,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .cui-readonly-row{display:block}.cui-readonly-row dd{text-align:left;margin-top:4px}
 }
 @media(min-width:376px) and (max-width:768px){.main{padding:18px
-  max(18px,env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom))
+  max(18px,env(safe-area-inset-right)) calc(86px + env(safe-area-inset-bottom))
   max(18px,env(safe-area-inset-left))}.cui-page-actions{max-width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 /* portal */
@@ -11545,7 +11545,7 @@ async function bookingsPage(){
     if(error) return fail(error);
     const list=$('blist');if(!list?.isConnected)return;
     list.innerHTML=(br&&br.length)?`<table><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr>
-      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr><td>${b.created_at.slice(0,16).replace('T',' ')}</td><td><b>${esc(b.name)}</b></td>
+      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr><td>${sgt(b.created_at)||'—'}</td><td><b>${esc(b.name)}</b></td>
       <td class="small">${esc(b.phone||b.email||'—')}</td><td>${esc(b.services?.name||'—')}</td>
       <td>${sgt(b.preferred_at)||'—'}</td><td>${b.party_size||'—'}</td>
       <td><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}">${esc(b.status)}</span></td>
@@ -11561,10 +11561,10 @@ async function bookingsPage(){
     if(error) return fail(error);
     const list=$('crlist');if(!list?.isConnected)return;
     list.innerHTML=(cr&&cr.length)?`<table><tr><th>Requested</th><th>Customer</th><th>Kind</th><th>Current time</th><th>Proposed</th><th>Note</th><th></th></tr>
-      ${cr.map(c=>`<tr><td>${c.created_at.slice(0,16).replace('T',' ')}</td><td><b>${esc(c.appointments?.clients?.full_name||'—')}</b></td>
+      ${cr.map(c=>`<tr><td>${sgt(c.created_at)||'—'}</td><td><b>${esc(c.appointments?.clients?.full_name||'—')}</b></td>
       <td><span class="pill ${c.kind==='cancel'?'no':'new'}">${c.kind}</span></td>
-      <td>${c.appointments?.starts_at?c.appointments.starts_at.slice(0,16).replace('T',' '):'—'}</td>
-      <td>${c.proposed_at?c.proposed_at.slice(0,16).replace('T',' '):'—'}</td>
+      <td>${sgt(c.appointments?.starts_at)||'—'}</td>
+      <td>${sgt(c.proposed_at)||'—'}</td>
       <td class="small">${esc(c.note||'—')}</td>
       <td>${canDecideChange?`<button class="btn sm" onclick="decideCr('${c.id}',true)">Approve</button>
       <button class="btn ghost sm" onclick="decideCr('${c.id}',false)">Decline</button>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table>`
@@ -19959,7 +19959,7 @@ async function settingsPage(){
           ${s.role!=='owner'?`<button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
           <select onchange="chRole('${s.id}',this.value)" style="max-width:140px;padding:6px 10px">
             ${['manager','staff','frontdesk','bookkeeper'].map(r=>`<option value="${r}" ${s.role===r?'selected':''}>${ROLE_LABELS[r]}</option>`).join('')}</select>
-          <button class="btn ghost sm" onclick="rmStaff('${s.id}')">Remove</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
+          <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Remove</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
         </div>
         ${(s.role!=='owner'&&openModId===s.id)?modPanelHtml(s):''}
       </div>`;
@@ -19993,10 +19993,13 @@ async function settingsPage(){
     delete panelSel[id];openModId=id;toast('Role updated');await loadTeam();
     if(id===myStaffId){S.myModules=null;S.myModulePerms=null;route();}
   };
-  window.rmStaff=async(id)=>{const removedUserId=teamRowsById.get(id)?.user_id||'';const {error}=await sb.from('staff').delete().eq('id',id);if(error)return fail(error);invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:removedUserId});toast('Removed');await loadTeam();};
+  window.rmStaff=async(id,btn)=>{
+    const name=btn?.dataset?.name||'this teammate';
+    if(!confirm(`Remove ${name} from your team? They will lose access immediately. This cannot be undone.`))return;
+    const removedUserId=teamRowsById.get(id)?.user_id||'';const {error}=await sb.from('staff').delete().eq('id',id);if(error)return fail(error);invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:removedUserId});toast('Removed');await loadTeam();};
   window.cpInv=async(c)=>copyTextToClipboard(c,{success:'Code copied — send it to your teammate'});
   window.cpInvLink=async(c)=>copyTextToClipboard(staffInviteLinkV151(c),{success:'Invite link copied — send it to your teammate'});
-  window.rvInv=async(id)=>{await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);toast('Invite revoked');loadTeam();};
+  window.rvInv=async(id)=>{const {error}=await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);if(error)return fail(error);toast('Invite revoked');loadTeam();};
   window.toggleModPanel=(staffId)=>{openModId=(openModId===staffId)?null:staffId;loadTeam();};
   window.setModulePermissionV74=(staffId,module,value)=>{
     const sel=panelSel[staffId];if(!sel)return;
