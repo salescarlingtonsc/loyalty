@@ -69,3 +69,11 @@ test('suggestion rows are queried from outerMain, not document', () => {
   assert.match(block, /outerMain\.querySelectorAll\('\.grow-programme-row'\)/);
   assert.doesNotMatch(block, /document\.querySelectorAll\('\.grow-programme-row'\)/);
 });
+
+test('V174: two tabs only, Running is default, advanced settings stay reachable', () => {
+  assert.doesNotMatch(app, /programmeTab\('overview'/);
+  assert.doesNotMatch(app, /programmeTab\('settings'/);
+  assert.match(app, /\?String\(hashParam\):'ongoing';/, 'bare #\/grow must land on Running');
+  assert.match(app, /id="growSecondarySettings"/, 'advanced settings section must remain on-page');
+  assert.match(app, /Nothing is running yet\./, 'Running must explain itself when empty');
+});

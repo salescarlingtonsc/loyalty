@@ -13989,7 +13989,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     if(focus==='bringback'||focus==='new')return {surface:'winback',focusTarget:'rn',editProgramId:null};
     return null;
   })();
-  const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'overview';
+  /* V174: two owner-facing views. "Running" is the default landing (what customers can use
+     right now); "To set up" is everything else, each with a one-tap suggestion. The old
+     Overview duplicated Running+To set up in one list, and "More settings" moves from a tab
+     to a quiet advanced link — its #/grow/settings hash keeps working. */
+  const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'ongoing';
   const programmeTab=(key,label)=>`<a class="${programmeView===key?'act':''}" href="#/grow${key==='overview'?'':'/'+key}">${esc(label)}</a>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
@@ -13997,7 +14001,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         <p class="muted">Create and manage rewards, promotions and customer programmes.</p></div>
       <div class="v150-title-actions"></div>
     </header>
-    <nav class="programme-tabs" aria-label="Programme views">${programmeTab('overview','Overview')}${programmeTab('ongoing','Running')}${programmeTab('available','To set up')}${programmeTab('settings','More settings')}</nav>
+    <nav class="programme-tabs" aria-label="Programme views">${programmeTab('ongoing','Running')}${programmeTab('available','To set up')}</nav>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
       <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'Programme overview'}</h2><p class="muted small">${programmeView==='ongoing'?'Live for your customers right now.':programmeView==='available'?'Not running yet — each comes with a suggested starting point you can use in one tap.':'Choose one row to view or edit that programme.'}</p></div></div>
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
@@ -14081,6 +14085,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
   if(['ongoing','available'].includes(programmeView)){
+    let visibleCategories=0;
     outerMain.querySelectorAll('.programme-category').forEach(category=>{
       let visible=0;
       category.querySelectorAll('.grow-programme-row').forEach(row=>{
@@ -14091,7 +14096,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         if(show)visible++;
       });
       category.hidden=visible===0;
+      if(visible)visibleCategories++;
     });
+    /* V174: a brand-new business lands on Running with nothing live yet — say so and point
+       at the tab that gets them started, instead of showing a bare heading. */
+    if(programmeView==='ongoing'&&visibleCategories===0){
+      const lastCategory=[...outerMain.querySelectorAll('.programme-category')].pop();
+      lastCategory?.insertAdjacentHTML('afterend',`<div class="empty" role="status" style="margin-top:14px"><b>Nothing is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow/available">To set up</a> — every programme there comes with a suggested starting point you can use in one tap.</p></div>`);
+    }
   }else if(programmeView==='settings'){
     const overviewSection=outerMain.querySelector('.reward-journey-v122');
     if(overviewSection)overviewSection.hidden=true;
