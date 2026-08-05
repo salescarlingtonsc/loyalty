@@ -166,8 +166,10 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(home,/ct\('programmesIntro'\)/);
   assert.match(home,/id="customerHomeScan"/);
   assert.match(home,/ct\('addProgramme'\)/);
-  assert.match(home,/renderCustomerFirstProgrammeQuest/);
-  assert.match(home,/customerHomeNextActionMarkup\(cards\[0\]\)/);
+  assert.match(home,/if\(!cards\.length\)\{[\s\S]*customer-first-quest/,
+    'an empty actionable wallet must retain the first-programme QR journey inline');
+  assert.match(home,/customerHomeGuidanceV167\(\{pendingRedemption,actionableCards:cards,legacyCards,offers:offersState\.items\}\)/,
+    'Home guidance must use the canonical V167 priority and fallback renderer');
   assert.match(home,/Next best action/);
   assert.match(home,/No urgent action is available right now/);
   assert.match(home,/href="#\/wallet\/\$\{slug\}"/);

@@ -1245,6 +1245,44 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 }
 @media(max-width:420px){.customer-programme-category-grid{grid-template-columns:1fr}.customer-programme-card-v95{min-height:128px}}
 @media(max-width:560px){.customer-next-action>.row{align-items:stretch}.customer-next-action .btn{width:100%;justify-content:center}}
+/* V167 Phase 4: customer-only system dark mode. Merchant/admin surfaces retain their
+   established light palette. The redemption QR intentionally stays on a light scan surface. */
+.customer-surface{min-height:100dvh;background:var(--bg);color:var(--ink)}
+html[data-customer-surface="true"] body{background:var(--bg)}
+@media(prefers-color-scheme:dark){
+  html[data-customer-surface="true"] body{background:#0F1115}
+  .customer-surface{
+    color-scheme:dark;
+    --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;
+    --line:#343841;--control-border:#737A86;--hair:rgba(255,255,255,.11);
+    --coral:#FF8A7E;--coral-hover:#FFAA9F;--amber:#F2C078;--green:#78D5A7;--red:#FF9E95;
+    --grad:linear-gradient(135deg,#D95045,#A93631);--tint:#3A211F;
+    --shadow:0 1px 2px rgba(0,0,0,.2),0 5px 16px rgba(0,0,0,.24);
+    --shadow-lg:0 3px 8px rgba(0,0,0,.28),0 20px 52px rgba(0,0,0,.4)
+  }
+  .customer-surface.portal{--coral:#FF8A7E!important;--grad:linear-gradient(135deg,#D95045,#A93631)!important}
+  .customer-surface :where(input,select,textarea,.btn.ghost,.customer-primary-nav,.customer-home-quick a,
+    .customer-home-offer,.customer-perk-card,.customer-offer-card,.customer-reward-card,
+    .customer-programme-compact-head,.customer-programme-guide,.wallet-firm,.wallet-reward,
+    .customer-inbox-bell,.customer-programme-card,.customer-booking-business,.checkrow,.fb-chip){
+    background:var(--card);color:var(--ink);border-color:var(--line)
+  }
+  .customer-surface .btn.ghost,.customer-surface .svc{background:var(--card);color:var(--ink);border-color:var(--line)}
+  .customer-surface .svc.sel{background:var(--tint);border-color:var(--coral)}
+  .customer-surface :where(.customer-primary-nav a:hover,.customer-primary-nav button:hover,
+    .customer-account-menu .menu a:hover,.customer-account-menu .menu button:hover){background:#252930}
+  .customer-surface .customer-home-nba{background:linear-gradient(145deg,var(--card) 35%,var(--tint))}
+  .customer-surface .customer-home-summary-note{background:linear-gradient(145deg,var(--card) 40%,var(--tint))}
+  .customer-surface .customer-offer-urgent{background:#4A3816;color:#FFD98B}
+  .customer-surface .pill.on,.customer-surface .pill.ok{background:#183A2D;color:#8EE0B8}
+  .customer-surface .pill.off{background:#292C33;color:var(--muted)}
+  .customer-surface .pill.no{background:#432321;color:#FFAAA2}
+  .customer-surface .brand-logo{filter:invert(1) hue-rotate(180deg)}
+  .customer-surface .customer-merchant-hero .brand-logo{filter:none}
+  .customer-surface .redemption-qr{color-scheme:light;background:#fff;color:#17161A;border-color:#EAE6DF}
+  .customer-surface .redemption-qr :where(img,canvas){filter:none}
+  .customer-surface .wallet-skeleton{background:linear-gradient(90deg,var(--bg),#252930,var(--bg));background-size:200% 100%}
+}
 .strike{text-decoration:line-through;opacity:.55}
 /* v53 visit feedback & service recovery (shared by the customer wallet and the staff queue) */
 .fb-stars{border:0;padding:0;margin:0;min-width:0}
@@ -2690,6 +2728,7 @@ async function route(){
   portalRenderEpoch+=1;
   destroyMountedTurnstiles();
   globalThis.document?.documentElement?.setAttribute('lang','en');
+  globalThis.document?.documentElement?.removeAttribute('data-customer-surface');
   disposeCurrentRoute();
   if(typeof customerAccountMenuCleanup==='function')customerAccountMenuCleanup();
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
@@ -3089,9 +3128,11 @@ async function customerPhoneOtpAvailable(channel='sms'){
   const serverCapabilities=await loadCustomerPhoneOtpCapabilities({refresh:true});
   return channel==='whatsapp'?serverCapabilities.whatsapp===true:serverCapabilities.sms===true;
 }
+function setCustomerSurfaceDocumentV167(){globalThis.document?.documentElement?.setAttribute('data-customer-surface','true')}
 function customerRegistrationShell(body){
   destroyMountedTurnstiles();
-  root.innerHTML=`<main class="wallet-shell" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
+  setCustomerSurfaceDocumentV167();
+  root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
     </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks()}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
@@ -3791,8 +3832,9 @@ function wireCustomerAccountMenu(){
   };
 }
 function renderCustomerShell({active='home',body='',businessSlug=null,staffWorkspaces=[],messagesAvailable=false}={}){
+  setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');
-  root.innerHTML=`<div class="wallet-shell customer-shell"><div class="wallet-inner"><header class="wallet-head">
+  root.innerHTML=`<div class="wallet-shell customer-shell customer-surface"><div class="wallet-inner"><header class="wallet-head">
     ${businessSlug?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(ct('backProgrammes'))}" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
     <a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
     <span class="spacer"></span><span id="customerInboxBellSlot">${messagesAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:''}</span>
@@ -4454,8 +4496,9 @@ async function renderCustomerClaim(){
 }
 
 function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
+  setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');
-  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><div class="wallet-head">
+  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
     <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
@@ -4465,7 +4508,8 @@ function renderCustomerWalletUnavailable(message='Customer wallet access is not 
 }
 
 function renderCustomerCapabilityRetry(message){
-  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><div class="wallet-head">
+  setCustomerSurfaceDocumentV167();
+  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
     <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
@@ -4935,8 +4979,9 @@ function customerSuccessCue(){
   }catch{}
 }
 function renderCustomerFirstProgrammeQuest(){
+  setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');
-  root.innerHTML=`<div class="wallet-shell"><div class="wallet-inner"><header class="wallet-head"><a class="logo" href="#/wallet">${brandWordmark()}</a><span class="spacer"></span><details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu"><a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a><button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button></div></details></header>
+  root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><header class="wallet-head"><a class="logo" href="#/wallet">${brandWordmark()}</a><span class="spacer"></span><details class="customer-account-menu"><summary class="customer-avatar" aria-label="${esc(ct('accountMenu'))}">${CUI.icon('customers',{size:20})}</summary><div class="menu"><a href="#/customer/profile">${CUI.icon('customers',{size:17})}<span>${esc(ct('profilePasskeys'))}</span></a><button id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button></div></details></header>
     <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks()}</div></div>`;
   $('customerFirstScan').onclick=openCustomerJoinScanner;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -20365,6 +20410,7 @@ function customerBookingIdentitySummaryV167({profile=null,user=null}={}){
   return {name:name||'your Peekaa account',contact:maskedPhone||String(user?.email||'').trim()};
 }
 async function renderPortal(slug){
+  setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const portalEpoch=++portalRenderEpoch;
   const isPortalCurrent=()=>portalRenderEpoch===portalEpoch
@@ -20382,7 +20428,7 @@ async function renderPortal(slug){
      business fetch is the only thing on the critical path. The signed-in persona lookup used to
      block ahead of it; it now runs in PARALLEL and only injects an optional banner once resolved,
      so the booking journey renders the instant the business responds. */
-  root.innerHTML=`<div class="portal"><div class="head"><div class="logo">${brandWordmark()}</div><p class="muted small">powered booking</p></div>
+  root.innerHTML=`<div class="portal customer-surface"><div class="head"><div class="logo">${brandWordmark()}</div><p class="muted small">powered booking</p></div>
     <div class="card" aria-busy="true"><p class="sr-only" role="status">Loading booking…</p>
       <div class="pf-skeleton"></div><div class="pf-skeleton"></div><div class="pf-skeleton" style="width:62%"></div></div></div>`;
   const personaPromise=signedInUser?sb.rpc('get_my_personas').catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
@@ -20496,7 +20542,7 @@ async function renderPortal(slug){
       ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
     </section>`;
     const stepBody={service:serviceStep,table:tableStep,team:teamStep,time:timeStep,details:detailsStep};
-    root.innerHTML=`<div class="portal" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},${bc})">
+    root.innerHTML=`<div class="portal customer-surface" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},${bc})">
       <div class="head"><h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p></div>
       <div id="portalSignedInSlot"></div>
       <div class="card" id="bookingFormCard">
