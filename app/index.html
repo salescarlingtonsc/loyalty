@@ -6514,7 +6514,7 @@ function renderAuth(mode='in',{admin=false}={}){
       ${legalLinks()}</section></main>`;
     let authToken='',authControl=null;
     mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-      retry:'authTurnstileRetry',action:'frenly_auth',
+      retry:'authTurnstileRetry',reload:'authTurnstileReload',action:'frenly_auth',
       onToken:(token)=>{authToken=token;$('resetRequest').disabled=!token}})
       .then(control=>authControl=control);
     $('backSignIn').onclick=()=>renderAuth('in',{admin});
@@ -6557,7 +6557,7 @@ function renderAuth(mode='in',{admin=false}={}){
   }
   let authToken='',authControl=null;
   mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_auth',
+    retry:'authTurnstileRetry',reload:'authTurnstileReload',action:'frenly_auth',
     onToken:(token)=>{authToken=token;$('go').disabled=!token}})
     .then(control=>authControl=control);
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
