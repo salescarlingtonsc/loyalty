@@ -15,6 +15,12 @@ test('authenticated business setup identifies the current email and signs out on
   assert.match(onboarding,/resetClientSessionState\(\)[\s\S]+renderAuth\('in'/);
 });
 
+test('admin platform console uses the V167 cache-busting asset key',async()=>{
+  const source=await read('app/index.html');
+  assert.match(source,/\/platform-console\.js\?v=20260805-v167-admin-approval/);
+  assert.doesNotMatch(source,/\/platform-console\.js\?v=20260802-v134/);
+});
+
 test('platform separates assisted applications from paid website self-service',async()=>{
   const source=await read('app/platform-console.js');
   const queue=source.match(/function businessApplicationQueueHtml[\s\S]+?\n  function wireBusinessApplicationQueue/)?.[0]||'';
