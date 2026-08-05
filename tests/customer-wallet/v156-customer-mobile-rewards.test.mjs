@@ -15,7 +15,7 @@ test('V156 customer-facing wallet labels businesses as My Rewards instead of pro
   const copy=section('const CUSTOMER_COPY=Object.freeze','const CUSTOMER_PRIMARY_NAV');
   assert.match(copy,/programmes:'My Rewards'/);
   assert.match(copy,/yourProgrammes:'My Rewards'/);
-  assert.match(copy,/addProgramme:'Add rewards'/);
+  assert.match(copy,/addProgramme:'Scan to join'/);
   assert.match(copy,/loadingProgrammes:'Loading My Rewards…'/);
   assert.match(copy,/merchantProgramme:'\{business\} rewards'/);
   assert.doesNotMatch(copy,/yourProgrammes:'Programmes'|programmes:'Programmes'/);

@@ -1235,6 +1235,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .wallet-reward-progress{height:8px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--hair)}
 .wallet-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--coral)}
 .wallet-reward-gap{margin-top:6px;color:var(--ink)}
+.customer-offer-detail{min-width:0;text-align:left}
+.customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
+.customer-offer-detail-media{position:relative;width:100%;aspect-ratio:16/9;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
+.customer-offer-detail-media img{display:block;width:100%;height:100%;object-fit:cover}
+.customer-offer-detail-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
+.customer-offer-detail-media--fallback span{font-size:2.6rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
+.customer-offer-detail h2{margin-top:2px;font-size:clamp(1.35rem,4vw,1.7rem);letter-spacing:-.02em}
+.customer-offer-detail-facts{margin-top:6px;font-size:clamp(1.05rem,3.2vw,1.25rem);font-weight:760;letter-spacing:-.015em;color:var(--ink)}
+.customer-offer-detail-meta{display:grid;gap:5px;margin-top:12px;padding:11px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--bg)}
+.customer-offer-detail-meta a{color:inherit;text-decoration:underline}
+.customer-offer-detail h2,.customer-offer-detail p,.customer-offer-detail summary{overflow-wrap:anywhere}
 @media(max-width:520px){.wallet-reward-steps{grid-template-columns:1fr}}
 .redemption-qr{display:grid;place-items:center;min-height:220px;margin:16px auto;padding:16px;border:1px solid var(--hair);border-radius:14px;background:#fff}
 .redemption-qr img,.redemption-qr canvas{max-width:100%;height:auto}
@@ -1288,7 +1299,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 html[data-customer-surface="true"] body{background:var(--bg)}
 @media(prefers-color-scheme:dark){
   html[data-customer-surface="true"] body{background:#0F1115}
-  .customer-surface{
+  /* The offer-detail sheet is appended to body, outside .customer-surface,
+     so it must join the dark token scope explicitly. */
+  .customer-surface,.customer-offer-detail-modal .modal-card{
     color-scheme:dark;
     --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;
     --line:#343841;--control-border:#737A86;--hair:rgba(255,255,255,.11);
@@ -3702,7 +3715,7 @@ const CUSTOMER_COPY=Object.freeze({
     language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
     chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
     programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
-    addProgramme:'Add rewards',openProgramme:'Open {business} rewards',localBusiness:'Local business',
+    addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
     rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your rewards home to see what is next.',
     firstQuest:'Your first rewards',scanLoyaltyQr:'Scan a loyalty QR',
     firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified business becomes your first reward account.',
@@ -4783,8 +4796,27 @@ function customerHomeOfferMarkupV167(item,seen){
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3><p class="muted small" style="margin-top:4px">${esc(business.name||'Your business')}</p>${validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
+/* v173: with many linked businesses each posting offers, a plain ends-soonest
+   list can let one business monopolise the front of the shelf. Round-robin by
+   business (preserving each business's own ends-soonest order) so every
+   business's strongest offer surfaces before anyone's second one. */
+function interleaveCustomerOffersV173(items){
+  const rows=Array.isArray(items)?items:[],order=[],byBusiness=new Map();
+  for(const item of rows){
+    const key=String(item?.business?.slug||item?.business?.id||'');
+    if(!byBusiness.has(key)){byBusiness.set(key,[]);order.push(key)}
+    byBusiness.get(key).push(item);
+  }
+  if(order.length<2)return rows;
+  const out=[];
+  for(let round=0;out.length<rows.length;round+=1)
+    for(const key of order){const bucket=byBusiness.get(key);if(round<bucket.length)out.push(bucket[round])}
+  return out;
+}
+let customerHomeOfferIndexV173=new Map();
 function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
-  const items=Array.isArray(state.items)?state.items:[];
+  const items=interleaveCustomerOffersV173(state.items);
+  customerHomeOfferIndexV173=new Map(items.map(item=>[String(item?.id||''),item]));
   let body='<div class="card customer-home-offers-state"><p class="muted small">Loading offers…</p></div>';
   if(state.status==='ready'){
     const seen=customerSeenOfferVersionsV167();
@@ -4796,10 +4828,60 @@ function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   }
   return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><div><p class="customer-quest-kicker">Worth coming back for</p><h2 id="customerHomeOffersTitle">Offers for you</h2></div></div>${body}</section>`;
 }
+function showCustomerOfferDetailV173(item){
+  const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
+    facts=String(item?.metadata?.offer_facts||'').trim(),
+    validity=customerPromotionValidityV104(item),
+    availability=String(item?.availability_label||'').trim(),
+    terms=String(item?.terms||'').trim(),
+    cta=item?.metadata?.cta||{},slug=encodeURIComponent(business.slug||''),
+    initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase(),
+    ctaLabel=String(cta.label||'').trim();
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-offer-detail-modal';overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerOfferDetailTitle');
+  overlay.innerHTML=`<section class="modal-card customer-offer-detail" style="width:480px">
+    <div class="row"><p class="customer-quest-kicker">Limited-time offer · ${esc(business.name||'Your business')}</p><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:18})}</button></div>
+    ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
+    <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
+    ${facts?`<p class="customer-offer-detail-facts">${esc(facts)}</p>`:''}
+    ${item?.tagline?`<p class="muted" style="margin-top:6px">${esc(item.tagline)}</p>`:''}
+    ${item?.description?`<p class="muted small" style="margin-top:8px">${esc(item.description)}</p>`:''}
+    <div class="customer-offer-detail-meta">
+      ${validity?`<p class="small"><b>${esc(validity)}</b></p>`:''}
+      ${availability?`<p class="muted small">${esc(availability)}</p>`:''}
+      <div data-offer-contact></div>
+    </div>
+    ${terms?`<details style="margin-top:10px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
+    <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
+      ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`:''}
+      <a class="btn ghost" href="#/wallet/${slug}" data-offer-detail-nav>${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}</a>
+    </div></section>`;
+  document.body.appendChild(overlay);
+  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerOfferDetailClose'});
+  overlay.querySelector('#customerOfferDetailClose').onclick=()=>deactivate({restoreFocus:true});
+  overlay.querySelectorAll('[data-offer-detail-nav]').forEach(link=>link.addEventListener('click',()=>deactivate({restoreFocus:false})));
+  if(business.id){
+    Promise.resolve(sb.rpc('customer_get_offer_business_contact_v173',{p_business:business.id}))
+      .then(({data,error})=>{
+        if(error||!overlay.isConnected)return;
+        const branch=data?.branch||{},host=overlay.querySelector('[data-offer-contact]');
+        if(!host)return;
+        const lines=[
+          branch.address?`<p class="muted small">${CUI.icon('bookings',{size:14})} ${esc(branch.address)}</p>`:'',
+          branch.phone?`<p class="muted small"><a href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${esc(branch.phone)}</a></p>`:'',
+          branch.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
+        ].filter(Boolean).join('');
+        if(lines)host.innerHTML=lines;
+      }).catch(()=>{});
+  }
+}
 function wireCustomerHomeOffersV167(rerender){
-  document.querySelectorAll('[data-home-offer]').forEach(link=>link.addEventListener('click',()=>{
+  document.querySelectorAll('[data-home-offer]').forEach(link=>link.addEventListener('click',event=>{
     rememberCustomerOfferV167(link.dataset.offerVersion);
     customerOfferFocusV167=link.dataset.offerId||null;
+    const item=customerHomeOfferIndexV173.get(String(link.dataset.offerId||''));
+    if(item){event.preventDefault();showCustomerOfferDetailV173(item)}
   }));
   const retry=$('customerOffersRetry');if(retry)retry.onclick=rerender;
 }
@@ -4988,7 +5070,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ?tier.current.benefits.filter(value=>String(value||'').trim()).map(value=>String(value).trim()):[];
   const unitLabel=ct(presentation.unit);
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
-  const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,2);
+  const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,6);
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
     <header class="customer-programme-compact-head" style="--merchant-accent:${esc(presentation.heroColor)}">
       <div class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</div>
@@ -5324,7 +5406,7 @@ async function renderCustomerWallet(businessSlug=null){
   const programmeOffersStatus=promotionsResult.error?'error':'ready';
   presentation.offers=promotionsResult.error
     ?[]
-    :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,2);
+    :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,6);
   const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
@@ -13943,7 +14025,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
       <div class="programme-category"><div class="programme-category-title">Promotions & growth</div><div class="grow-programme-list">
-        ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see at most two current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
+        ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see up to six current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
       </div></div>
       <div class="programme-category"><div class="programme-category-title">Recurring value</div><div class="grow-programme-list">

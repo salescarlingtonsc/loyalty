@@ -1185,6 +1185,12 @@
       "path": "db/migrations/20260806_nestly_v172_home_offers_optional_media.sql",
       "semanticVersion": "v172",
       "proposedDeployVersion": "20260806020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v173_offer_detail_parity.sql",
+      "semanticVersion": "v173",
+      "proposedDeployVersion": "20260806040000"
     }
   ]
 }

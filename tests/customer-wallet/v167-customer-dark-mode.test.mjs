@@ -5,7 +5,7 @@ import test from 'node:test';
 const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
 
 test('system dark mode is scoped to customer and booking surfaces',()=>{
-  assert.match(app,/@media\(prefers-color-scheme:dark\)\{[\s\S]*\.customer-surface\{/);
+  assert.match(app,/@media\(prefers-color-scheme:dark\)\{[\s\S]*\.customer-surface,\.customer-offer-detail-modal \.modal-card\{/);
   assert.match(app,/wallet-shell customer-shell customer-surface/);
   assert.match(app,/portal customer-surface/);
   assert.match(app,/wallet-shell customer-surface/);
