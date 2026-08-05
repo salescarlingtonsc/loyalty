@@ -2027,7 +2027,7 @@ function openMerchantRedemptionScanner({
   overlay.innerHTML=`<section class="modal-card" style="width:520px"><div class="row"><div><h2 id="merchantScannerTitle">Scan customer redemption</h2><p class="muted small" style="margin-top:5px">The reward remains pending until this business confirms the customer’s QR.</p></div><span class="spacer"></span><button class="btn ghost sm" id="merchantScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
     <div class="scanner-frame" id="merchantScannerFrame" hidden><video class="scanner-video" id="merchantScannerVideo" playsinline muted aria-label="Camera preview for customer redemption QR"></video></div>
     <div class="row" style="margin-top:14px"><button class="btn" id="merchantScannerCamera" type="button">${CUI.icon('scan',{size:18})}<span>Use camera</span></button><span class="muted small" id="merchantScannerCapability"></span></div>
-    <div class="scanner-fallback"><label for="merchantScannerImage">Or choose a QR image</label><input id="merchantScannerImage" type="file" accept="image/*" capture="environment">
+    <div class="scanner-fallback"><label for="merchantScannerImage">Or choose a QR image</label><input id="merchantScannerImage" type="file" accept="image/*">
       <details style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="merchantScannerToken">Paste the QR content</label><input id="merchantScannerToken" type="text" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="merchantScannerConfirm" type="button" style="margin-top:10px">Confirm redemption</button></details>
     </div><p id="merchantScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
   document.body.appendChild(overlay);
@@ -3667,14 +3667,16 @@ function openCustomerJoinScanner(){
   overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker">Add rewards</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">Scan the business QR</h2><p class="muted small" style="margin-top:5px">Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="Close scanner">${CUI.icon('close',{size:18})}</button></div>
     <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="Camera preview for business join QR"></video></div>
     <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>Open camera</span></button>
-    <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*" capture="environment">
-      <details style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
+    <div class="scanner-fallback"><label for="customerJoinScannerImage">Or choose a QR image</label><input id="customerJoinScannerImage" type="file" accept="image/*">
+      <details id="customerJoinScannerPaste" style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="customerJoinScannerValue">Paste the QR link</label><input id="customerJoinScannerValue" type="url" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="customerJoinScannerConfirm" type="button" style="margin-top:10px">Continue</button></details>
     </div><p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
   document.body.appendChild(overlay);
   const video=overlay.querySelector('#customerJoinScannerVideo');
   const frame=overlay.querySelector('#customerJoinScannerFrame');
   const status=overlay.querySelector('#customerJoinScannerStatus');
   const camera=overlay.querySelector('#customerJoinScannerCamera');
+  const imageInput=overlay.querySelector('#customerJoinScannerImage');
+  const pasteFallback=overlay.querySelector('#customerJoinScannerPaste');
   const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
   let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
   const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
@@ -3696,15 +3698,15 @@ function openCustomerJoinScanner(){
     frameHandle=requestAnimationFrame(scan);
   };
   camera.onclick=async()=>{
-    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image instead.';return}
+    if(!navigator.mediaDevices?.getUserMedia){status.textContent='Camera is unavailable in this browser. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus();return}
     camera.disabled=true;status.textContent='Starting camera…';
     try{
       await loadScannerLibrary();
       stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
       video.srcObject=stream;frame.hidden=false;await video.play();status.textContent='Point the camera at the business QR.';scan();
-    }catch{camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image instead.'}
+    }catch{camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image or paste the QR link.';pasteFallback.open=true;imageInput.focus()}
   };
-  overlay.querySelector('#customerJoinScannerImage').onchange=async event=>{
+  imageInput.onchange=async event=>{
     const file=event.target.files?.[0];if(!file)return;
     status.textContent='Reading QR image…';
     try{
@@ -3994,6 +3996,27 @@ async function renderCustomerProgrammes(){
 
 const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES=new Set(['pending','waitlisted','new']);
 const isActiveCustomerBookingRequest=request=>ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES.has(String(request?.status||'').toLowerCase());
+const customerRepeatBookingPreferencesV167=new Map();
+async function openCustomerRepeatBookingV167(businessSlug,appointmentId=null,button=null){
+  if(!businessSlug)return;
+  if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
+  let serviceId='',staffName='';
+  if(appointmentId){
+    const {data,error}=await sb.rpc('customer_get_repeat_booking_preference_v167',{
+      p_business_slug:businessSlug,p_appointment:appointmentId
+    });
+    if(error){if(button){button.disabled=false;button.removeAttribute('aria-busy')}return toast('That previous service could not be checked. Open the booking page and choose a service.')}
+    serviceId=/^[0-9a-f-]{36}$/i.test(String(data?.service_id||''))?String(data.service_id):'';
+    staffName=String(data?.staff_name||'').trim();
+  }
+  if(serviceId)customerRepeatBookingPreferencesV167.set(`${businessSlug}:${serviceId}`,{staffName});
+  nav(`#/b/${encodeURIComponent(businessSlug)}${serviceId?`?repeat_service=${encodeURIComponent(serviceId)}`:''}`);
+}
+function wireCustomerRepeatBookingV167(host=document){
+  host.querySelectorAll?.('[data-repeat-booking]').forEach(button=>button.onclick=()=>openCustomerRepeatBookingV167(
+    button.dataset.businessSlug,button.dataset.appointmentId||null,button
+  ));
+}
 function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointmentResults=[]){
   const groups=new Map();
   const ensure=(slug,name='Business')=>{
@@ -4085,13 +4108,14 @@ async function renderCustomerBookings(){
     $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1><p class="muted">Active requests, confirmed appointments, and recent request outcomes stay separate and grouped by business.</p></div>${partialMessages.length?'<button class="btn ghost sm" id="customerBookingsRetry">Retry unavailable bookings</button>':''}</header>
     ${partialMessages.length?`<div class="err" role="status">${partialMessages.map(esc).join(' ')}</div>`:''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">More request history exists but a continuation is unavailable.</span>'}</div></div>`:''}
-    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head"><div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.activeRequests.length} active request${group.activeRequests.length===1?'':'s'} · ${group.appointments.length} appointment${group.appointments.length===1?'':'s'}${group.recentRequests.length?` · ${group.recentRequests.length} recent update${group.recentRequests.length===1?'':'s'}`:''}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<a class="btn sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Book now</a>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
+    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head"><div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.activeRequests.length} active request${group.activeRequests.length===1?'':'s'} · ${group.appointments.length} appointment${group.appointments.length===1?'':'s'}${group.recentRequests.length?` · ${group.recentRequests.length} recent update${group.recentRequests.length===1?'':'s'}`:''}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">Book again</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">Open programme</a>`:''}</div>
       ${group.activeRequests.length?`<h3 style="font-size:1rem;margin-top:14px">Awaiting the business</h3>${group.activeRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${item.status==='waitlisted'?'new':'off'}">${esc(item.status==='waitlisted'?'Waitlisted':'Pending')}</span></div>`).join('')}`:''}
-      ${group.appointments.length?`<h3 style="font-size:1rem;margin-top:14px">Appointments</h3>${group.appointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span><span class="pill ok">Appointment</span></div>`).join('')}`:''}
+      ${group.appointments.length?`<h3 style="font-size:1rem;margin-top:14px">Appointments</h3>${group.appointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${group.bookingEnabled&&item.status==='completed'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:'<span class="pill ok">Appointment</span>'}</div>`).join('')}`:''}
       ${group.recentRequests.length?`<h3 style="font-size:1rem;margin-top:14px">Recent request updates</h3>${group.recentRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Request update')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'updated').replaceAll('_',' '))}</p></div><span class="spacer"></span><span class="pill no">${esc(String(item.status||'updated').replaceAll('_',' '))}</span></div>`).join('')}`:''}
     </section>`).join('')}</div>`
       :`<section class="card"><h2>No active bookings</h2><p class="muted small" style="margin-top:6px">You have no pending or waitlisted requests and no appointments from linked programmes.</p></section>`}`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
+    wireCustomerRepeatBookingV167($('walletBody'));
     const more=$('customerBookingsMore');if(more)more.onclick=async()=>{
       const cursor=requestPayload?.next_cursor;
       if(!cursor||!isCurrent()||!more.isConnected)return;
@@ -4511,9 +4535,10 @@ function renderWalletAppointments(host,businessSlug,state,customerFeatures,{appo
   host.innerHTML=`<div class="wallet-section-head"><div><h2>Appointments</h2><p class="muted small">Upcoming and recent visits</p></div></div>
     <div>${state.items.map(a=>`<div class="wallet-appt"><div><b>${esc(walletDate(a.starts_at,true))}</b>
       <p class="muted small" style="margin-top:3px">${esc(a.service_name||'Appointment')}${a.branch_name?' · '+esc(a.branch_name):''} · ${esc(String(a.status||'').replaceAll('_',' '))}</p></div><span class="spacer"></span>
-      ${customerFeatures.customer_actions&&appointmentChangesEnabled&&a.status==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(a.appointment_id)}">Change</button>`:''}</div>`).join('')}</div>
+      ${customerFeatures.customer_actions&&appointmentChangesEnabled&&a.status==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(a.appointment_id)}">Change</button>`:a.status==='completed'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(businessSlug)}" data-appointment-id="${esc(a.appointment_id)}">Book again</button>`:''}</div>`).join('')}</div>
     ${state.nextCursor?'<button class="btn ghost sm" id="walletAppointmentsMore" style="margin-top:12px">Load more</button>':''}`;
   wireWalletAppointmentActions(businessSlug);
+  wireCustomerRepeatBookingV167(host);
 }
 
 function wireWalletAppointmentActions(businessSlug){
@@ -4859,7 +4884,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${customerPointsExplainerMarkupV167(business)}
     ${currentTierBenefits.length?`<section class="card" style="margin-top:14px"><h2>${esc(currentTierLabel||'Current tier')} benefits</h2><ul class="rec-why" style="margin-top:10px">${currentTierBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul></section>`:''}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
-    ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><a class="btn" href="#/b/${encodeURIComponent(business.slug)}">${esc(ct('bookNow'))}</a></div></section>`:''}
+    ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><button class="btn" type="button" data-repeat-booking data-business-slug="${esc(business.slug)}">Book again</button></div></section>`:''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
@@ -5216,6 +5241,7 @@ async function renderCustomerWallet(businessSlug=null){
       ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
+  wireCustomerRepeatBookingV167($('walletBody'));
   document.querySelectorAll('[data-promotion-counter]').forEach(button=>button.onclick=()=>{
     const card=button.closest('[data-promotion-id]'),status=card?.querySelector('[data-promotion-status]');
     if(status)status.textContent='Show this offer to the team at the counter.';
@@ -5420,7 +5446,7 @@ async function renderCustomerWallet(businessSlug=null){
     const host=$('walletTransactions');if(!host)return;
     host.setAttribute('aria-busy','true');
     const requestedCursor=cursor||{limit:20};
-    const {data,error}=await sb.rpc('customer_get_transaction_history_v81',{
+    const {data,error}=await sb.rpc('customer_get_transaction_history_v167',{
       p_business_slug:businessSlug,p_cursor:requestedCursor
     });
     if(!isWalletSectionCurrent(host))return;
@@ -5447,18 +5473,22 @@ async function renderCustomerWallet(businessSlug=null){
     }
     const historyCurrency=String(data?.business?.currency||currency);
     const historyMoney=cents=>`${historyCurrency} ${(Number(cents||0)/100).toFixed(2)}`;
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Transactions &amp; points</h2><p class="muted small">${transactionState.items.length} event${transactionState.items.length===1?'':'s'} shown · newest first</p></div></div>
-      <div class="wallet-history">${transactionState.items.map(item=>{
+    const historyItemMarkup=item=>{
         const earned=Number(item.points_earned||0),redeemed=Number(item.points_redeemed||0),removed=Number(item.points_removed||0);
         const gross=item.gross_cents===null||item.gross_cents===undefined?null:Number(item.gross_cents);
         const net=item.net_cents===null||item.net_cents===undefined?null:Number(item.net_cents);
         const lines=Array.isArray(item.line_items)?item.line_items:[];
-        return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(item.description||String(item.event_type||'Transaction').replaceAll('_',' '))}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.branch_name?' · '+esc(item.branch_name):''}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p></div><span class="spacer"></span>${net===null?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
+        const packageLabel=item.is_package_session===true?'Package session used':(item.description||String(item.event_type||'Transaction').replaceAll('_',' '));
+        const packageDetail=item.is_package_session===true?`${item.package_name||'Package'}${item.package_purchased_at?' · purchased '+walletDate(item.package_purchased_at):''}${item.package_reference?' · ref '+item.package_reference:''}`:'';
+        return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(packageLabel)}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.branch_name?' · '+esc(item.branch_name):''}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${packageDetail?`<p class="muted small" style="margin-top:3px">${esc(packageDetail)}</p>`:''}</div><span class="spacer"></span>${net===null||item.is_package_session===true?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
           ${gross!==null&&net!==gross?`<p class="muted small" style="margin-top:5px">Original ${esc(historyMoney(gross))} · net after linked corrections ${esc(historyMoney(net))}</p>`:''}
           ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} points earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} points redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} points removed</span>`:''}</p>`:''}
           ${lines.length?`<details style="margin-top:8px"><summary class="small">${lines.length} item${lines.length===1?'':'s'}</summary><div style="margin-top:5px">${lines.map(line=>`<div class="row small"><span>${Number(line.qty||0)} × ${esc(line.description||line.item_type||'Item')}</span><span class="spacer"></span><span>${esc(historyMoney(line.line_cents))}</span></div>`).join('')}</div></details>`:''}
         </div></article>`;
-      }).join('')}</div>
+      };
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Recent activity</h2><p class="muted small">Your latest ${Math.min(3,transactionState.items.length)} useful event${Math.min(3,transactionState.items.length)===1?'':'s'}.</p></div></div>
+      <div class="wallet-history">${transactionState.items.slice(0,3).map(historyItemMarkup).join('')}</div>
+      <details class="wallet-history-disclosure" style="margin-top:12px"><summary><span>Full history</span><span class="muted small">${transactionState.items.length} event${transactionState.items.length===1?'':'s'} shown · newest first</span></summary><div class="wallet-history-disclosure-body"><div class="wallet-history">${transactionState.items.map(historyItemMarkup).join('')}</div></div></details>
       ${transactionState.nextCursor?'<button class="btn ghost sm" id="walletTransactionsMore" style="margin-top:12px">Load more history</button>':''}`;
     const more=$('walletTransactionsMore');
     if(more)more.onclick=()=>{more.disabled=true;more.textContent='Loading…';loadTransactions(transactionState.nextCursor)};
@@ -20380,6 +20410,13 @@ function prefillEmptyPortalDetails({profile=null,user=null}={}){
     }else phone.value=authPhone;
   }
 }
+function customerBookingIdentitySummaryV167({profile=null,user=null}={}){
+  const metadata=user?.user_metadata||{};
+  const name=String(profile?.full_name||metadata.full_name||metadata.name||'').trim();
+  const phone=String(user?.phone||'').replace(/\s+/g,'');
+  const maskedPhone=phone.length>4?`${phone.slice(0,Math.min(3,phone.length-4))} •••• ${phone.slice(-4)}`:phone;
+  return {name:name||'your Peekaa account',contact:maskedPhone||String(user?.email||'').trim()};
+}
 async function renderPortal(slug){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const portalEpoch=++portalRenderEpoch;
@@ -20388,6 +20425,8 @@ async function renderPortal(slug){
   const signedInUser=S.user;
   const incomingParams=new URLSearchParams((location.hash.split('?')[1]||''));
   let manageToken=incomingParams.get('manage')||'';
+  const repeatServiceParam=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(incomingParams.get('repeat_service')||'')
+    ?incomingParams.get('repeat_service'):'';
   if(manageToken){
     history.replaceState(null,'',`${location.pathname}${location.search}#/b/${encodeURIComponent(slug)}`);
   }
@@ -20418,6 +20457,8 @@ async function renderPortal(slug){
   const currency=biz.currency||'SGD';
   const services=(biz.services&&biz.services.length)?biz.services:[];
   const hasServices=services.length>0;
+  const repeatService=repeatServiceParam?services.find(service=>service.id===repeatServiceParam)||null:null;
+  const repeatPreference=repeatService?customerRepeatBookingPreferencesV167.get(`${slug}:${repeatService.id}`)||null:null;
   const usesTables=!!biz.uses_tables;
   const tables=(biz.tables&&biz.tables.length)?biz.tables:[];
   /* Step 2 is a table choice (which DOES have real, anon-reachable availability) for reservation
@@ -20428,16 +20469,17 @@ async function renderPortal(slug){
   const middleStep=usesTables?'table':'team';
   const steps=['service',middleStep,'time','details'];
   const stepMeta={service:{label:'Service'},table:{label:'Table'},team:{label:'Team'},time:{label:'Time'},details:{label:'Details'}};
-  let selSvc=null;                       // null = general reservation, or a service uuid
-  let serviceChosen=!hasServices;        // reservation-only businesses need no service pick
+  let selSvc=repeatService?.id||null;     // null = general reservation, or a validated public service uuid
+  let serviceChosen=!!repeatService||!hasServices;
   let selTable=null;                     // reservation table type uuid (null = any/general)
-  let teamPref='any';                    // 'any' | 'named'
+  let teamPref=repeatPreference?.staffName?'named':'any'; // a server-validated preference, or anyone
   let stepIdx=0;
   let bookingSubmissionId=null,bookingSubmissionKey='';
   let bookingTurnstileToken='',bookingTurnstileControl=null;
   let bookingChallengeGeneration=0;
   let changeAttempt=null;
   let turnstileMounted=false;
+  let linkedCustomer=false;
   const nowSgtLocal=new Date(Date.now()+8*3600000).toISOString().slice(0,16);
   const svcObj=()=>services.find(s=>s.id===selSvc)||null;
   const staffName=()=>($('teamName')?.value||'').trim();
@@ -20520,6 +20562,7 @@ async function renderPortal(slug){
         <div id="merr"></div>
         <div id="mlist" style="margin-top:12px"></div>
       </div>${legalLinks()}</div>`;
+    if(repeatPreference?.staffName&&$('teamName'))$('teamName').value=repeatPreference.staffName;
     const buildSummary=()=>{
       const el=$('pfSummary');if(!el)return;
       const s=svcObj();
@@ -20556,7 +20599,16 @@ async function renderPortal(slug){
       CUI.announce('Step '+(stepIdx+1)+' of '+steps.length+': '+stepMeta[key].label);
     };
     const setChoice=(selector,el)=>root.querySelectorAll(selector).forEach(b=>{const on=b===el;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',String(on));});
-    root.querySelectorAll('[data-svc]').forEach(el=>el.onclick=()=>{selSvc=el.dataset.svc||null;serviceChosen=true;setChoice('[data-svc]',el);const e=$('err-service');if(e)e.textContent='';});
+    root.querySelectorAll('[data-svc]').forEach(el=>el.onclick=()=>{
+      selSvc=el.dataset.svc||null;serviceChosen=true;setChoice('[data-svc]',el);
+      if(repeatPreference?.staffName&&selSvc!==repeatService?.id){
+        teamPref='any';
+        const anyTeam=root.querySelector('[data-team="any"]');if(anyTeam)setChoice('[data-team]',anyTeam);
+        const teamInput=$('teamName');if(teamInput)teamInput.value='';
+        const teamWrap=$('teamNamedWrap');if(teamWrap)teamWrap.hidden=true;
+      }
+      const e=$('err-service');if(e)e.textContent='';
+    });
     root.querySelectorAll('[data-tbl]').forEach(el=>el.onclick=()=>{selTable=el.dataset.tbl||null;setChoice('[data-tbl]',el);});
     root.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{teamPref=el.dataset.team;setChoice('[data-team]',el);const wrap=$('teamNamedWrap');if(wrap)wrap.hidden=teamPref!=='named';if(teamPref==='named')requestAnimationFrame(()=>$('teamName')?.focus());});
     root.querySelectorAll('[data-back]').forEach(el=>el.onclick=()=>showStep(stepIdx-1));
@@ -20609,7 +20661,7 @@ async function renderPortal(slug){
         <p class="muted">${m.body}</p>
         <p class="small" style="margin-top:10px"><b>What happens next:</b> ${m.next}</p>${manageToken?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>
         <p class="small" style="margin-top:6px;word-break:break-all"><a href="${esc(manageUrl)}" style="color:#D06A2E;text-decoration:underline">${esc(manageUrl)}</a></p>
-        <button class="btn ghost sm" id="copyManage" style="margin-top:12px">Copy private link</button>`:''}</div>`;
+        <button class="btn ghost sm" id="copyManage" style="margin-top:12px">Copy private link</button>`:''}${linkedCustomer?`<p style="margin-top:14px"><a class="btn sm" href="#/customer/bookings">View in Bookings</a></p>`:''}</div>`;
       CUI.announce(m.title+' '+m.body,{assertive:true});
       requestAnimationFrame(()=>bookingFormCard.querySelector('h2')?.focus());
       if($('copyManage')) $('copyManage').onclick=async()=>copyTextToClipboard(manageUrl,{button:$('copyManage'),success:'Private link copied'});
@@ -20629,7 +20681,7 @@ async function renderPortal(slug){
         <div class="row" style="margin-top:10px"><button class="btn ghost sm" onclick="mCancel()">Request cancellation</button>
         <button class="btn sm" onclick="mReschedule()">Request reschedule</button></div>`:'<p class="muted small">Changes are not available for this booking.</p>'}`;
     };
-    showStep(0);
+    showStep(repeatService?steps.indexOf('time'):0);
     if(manageToken) setTimeout(()=>$('mfind')?.click(),0);
   };
   window.mCancel=async()=>{
@@ -20668,9 +20720,12 @@ async function renderPortal(slug){
     if(!slot?.isConnected||!signedInUser)return;
     const customer=!personaResult?.error&&(personaResult?.data?.customer||[]).find(p=>p.business_slug===slug);
     if(customer){
-      slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="row"><div><b>Linked to ${esc(BRAND.customerLabel)}</b><p class="muted small" style="margin-top:4px">After secure validation, this booking will be attached to your ${esc(customer.business_name||biz.name)} programme.</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/wallet/${encodeURIComponent(slug)}">Open programme</a></div></div>`;
+      linkedCustomer=true;
+      const identity=customerBookingIdentitySummaryV167({profile:profileResult?.error?null:profileResult?.data?.profile,user:signedInUser});
+      slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="row"><div><b>Booking as ${esc(identity.name)}${identity.contact?` · ${esc(identity.contact)}`:''}</b><p class="muted small" style="margin-top:4px">This request will be securely attached to your ${esc(customer.business_name||biz.name)} programme.</p></div><span class="spacer"></span><button class="btn ghost sm" id="portalBookingEditIdentity" type="button">Edit booking details</button></div></div>`;
       if(!isPortalCurrent()||!slot.isConnected)return;
       prefillEmptyPortalDetails({profile:profileResult?.error?null:profileResult?.data?.profile,user:signedInUser});
+      $('portalBookingEditIdentity')?.addEventListener('click',()=>showStep(steps.indexOf('details')));
     }else if(personaResult?.error){
       slot.innerHTML=`<div class="card" style="margin-bottom:16px"><b>Signed in</b><p class="muted small" style="margin-top:4px">The programme link could not be displayed here. Your verified relationship will be validated securely when you submit.</p></div>`;
     }else{
