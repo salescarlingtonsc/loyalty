@@ -4,7 +4,7 @@ const COMMIT_SHA=/^[0-9a-f]{40}$/i;
 const VERCEL_ENVIRONMENTS=new Set(['production','preview','development']);
 
 function safeBuildIdentity(environment=process.env){
-  const rawSha=String(environment.PEEKAA_BUILD_COMMIT_SHA||environment.VERCEL_GIT_COMMIT_SHA||'').trim();
+  const rawSha=String(environment.VERCEL_GIT_COMMIT_SHA||environment.PEEKAA_BUILD_COMMIT_SHA||'').trim();
   const deploymentEnvironment=String(environment.PEEKAA_BUILD_ENV||environment.VERCEL_ENV||'').trim();
   if(!COMMIT_SHA.test(rawSha)||!VERCEL_ENVIRONMENTS.has(deploymentEnvironment)){
     return Object.freeze({schemaVersion:1,service:'loyalty',available:false});

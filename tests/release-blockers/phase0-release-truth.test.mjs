@@ -109,15 +109,15 @@ test('build identity endpoint exposes only validated non-secret deployment facts
   assert.deepEqual(JSON.parse(manual.body),{
     schemaVersion:1,service:'loyalty',available:true,environment:'production',commitSha:sha,shortSha:sha.slice(0,12)
   });
-  const explicitCliDeployment=invokeBuild('GET',{
+  const gitBackedDeployment=invokeBuild('GET',{
     sha:'1111111111111111111111111111111111111111',
     env:'preview',
     manualSha:sha,
     manualEnv:'production'
   });
-  assert.equal(explicitCliDeployment.status,200);
-  assert.deepEqual(JSON.parse(explicitCliDeployment.body),{
-    schemaVersion:1,service:'loyalty',available:true,environment:'production',commitSha:sha,shortSha:sha.slice(0,12)
+  assert.equal(gitBackedDeployment.status,200);
+  assert.deepEqual(JSON.parse(gitBackedDeployment.body),{
+    schemaVersion:1,service:'loyalty',available:true,environment:'production',commitSha:'1111111111111111111111111111111111111111',shortSha:'111111111111'
   });
   const unavailable=invokeBuild('GET',{sha:'not-a-sha',env:'production'});
   assert.equal(unavailable.status,503);
