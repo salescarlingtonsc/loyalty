@@ -905,6 +905,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .c360-more{position:relative}
 .c360-more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:#fff;border:1px solid var(--hair);border-radius:var(--r-sm);box-shadow:var(--shadow-lg);padding:6px;min-width:230px;display:grid;gap:2px}
 .c360-more-menu[hidden]{display:none}
+.c360-edit-card[hidden]{display:none}
 .c360-more-menu button{display:block;text-align:left;width:100%;background:none;border:0;border-radius:8px;padding:9px 11px;font-size:13px;font-weight:650;color:var(--ink);cursor:pointer;min-height:44px}
 .c360-more-menu button:hover,.c360-more-menu button:focus-visible{background:#FBF7F3}
 .c360-more-menu .sub{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
@@ -9679,6 +9680,7 @@ async function clientDetail(id){
   const headerActions=[
     canQuickEarn?CUI.action({id:'c360QuickEarn',label:'Record sale',iconName:'till'}):'',
     canBookAppt?CUI.action({id:'c360NewAppt',label:'New appointment',iconName:'appointments',variant:'secondary'}):'',
+    canWriteClients?CUI.action({id:'c360Edit',label:'Edit customer',iconName:'edit',variant:'secondary'}):'',
     allCustomersAction
   ].filter(Boolean).join('');
   let birthdayCardMarkup='';
@@ -9759,7 +9761,17 @@ async function clientDetail(id){
   const profileScopeNotice=unavailableProfileFacets.length?`<div class="card" role="status" style="margin-top:14px"><b>Some profile figures are unavailable</b><p class="muted small" style="margin-top:6px">${esc(unavailableProfileFacets.map(module=>MODULES[module]?.[1]||module).join(', '))} cannot be shown because ${esc(profileScopeLoadError?'the assigned-branch list could not be loaded':profileScopeLabel+' could not be confirmed')}. Peekaa does not replace missing data with zero.</p><button class="btn ghost sm" id="c360ScopeRetry" style="margin-top:10px">Reload profile</button></div>`:'';
   const staffProfileScopeNote=!isProfileAdmin&&profileScopeBranchIds.length?`<div class="card" role="note" style="margin-top:14px"><b>Staff view scope</b><p class="muted small" style="margin-top:6px">Sales, visits and appointments cover every branch assigned to this staff account. Points, rewards and spendable credit are business-wide customer balances. Peekaa does not mix hidden branch sales into the visible totals.</p></div>`:'';
   const correctionScopeNotice=reversalActionsUnavailable?`<div class="card" role="status" style="margin-top:14px"><b>Correction actions are temporarily unavailable</b><p class="muted small" style="margin-top:6px">Verified customer history and totals remain visible. Reverse controls are withheld until their separate safety check can be reloaded.</p><button class="btn ghost sm" id="c360CorrectionsRetry" style="margin-top:10px">Reload profile</button></div>`:'';
+  const editCustomerMarkup=canWriteClients?`<section class="card c360-edit-card" id="c360EditCard" aria-labelledby="c360EditTitle" hidden>
+      <div class="cui-card-head"><h2 id="c360EditTitle">Edit customer</h2><p>Correct this customer's name, contact details or consent. Every change is recorded with its before and after values.</p></div>
+      <div class="split"><div><label for="ecn">Full name <span aria-hidden="true">*</span></label><input id="ecn" required autocomplete="name"></div><div><label for="ecp">Phone</label><input id="ecp" type="tel" autocomplete="tel" placeholder="+65"></div></div>
+      <div class="split"><div><label for="ece">Email</label><input id="ece" type="email" autocomplete="email"></div><div><label for="ecb">Birth date</label><input id="ecb" type="date"></div></div>
+      <div class="split"><div><label for="ecg">Gender</label><select id="ecg"><option value="">Not recorded</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></div><div><label for="ecc">Marketing consent (PDPA)</label><select id="ecc"><option value="false">No</option><option value="true">Yes — consented</option></select></div></div>
+      <p class="err small" id="ecErr" role="alert" hidden></p>
+      <div class="row" style="margin-top:16px">${CUI.action({id:'ecSave',label:'Save changes',iconName:'check'})}
+      ${CUI.action({id:'ecCancel',label:'Cancel',variant:'secondary',className:'sm'})}</div>
+    </section>`:'';
   routeMain.innerHTML=`${CUI.pageHeader({title:c.full_name,subtitle:detailSubtitle,iconName:'customers',actions:headerActions,canWrite:canWriteClients||canWriteLoyalty,moduleLabel:'Customer profile'})}
+    ${editCustomerMarkup}
     ${badgesHtml}
     ${staffProfileScopeNote}
     ${profileScopeNotice}
@@ -9792,6 +9804,46 @@ async function clientDetail(id){
   if($('c360ScopeRetry'))$('c360ScopeRetry').onclick=()=>clientDetail(id);
   if($('c360CorrectionsRetry'))$('c360CorrectionsRetry').onclick=()=>clientDetail(id);
   if($('c360NewAppt'))$('c360NewAppt').onclick=goNewAppt;
+  /* Customer correction. staff_update_client_v170 writes every editable column, so the form has
+     to be prefilled from the record — including birth date and gender, which this profile
+     deliberately never fetches or renders. They are read once, only when the form is opened, so
+     saving cannot silently erase them; if that read fails the form stays closed. */
+  const editCard=$('c360EditCard'),editButton=$('c360Edit');
+  if(editCard&&editButton){
+    const setEditError=message=>{const box=$('ecErr');box.textContent=message;box.hidden=!message};
+    editButton.onclick=async()=>{
+      editButton.disabled=true;
+      const {data:editableFields,error:editableError}=await sb.from('clients')
+        .select('birth_date,gender').eq('business_id',S.biz.id).eq('id',id).single();
+      if(!isClientDetailCurrent())return;
+      editButton.disabled=false;
+      if(editableError)return fail(editableError);
+      $('ecn').value=c.full_name||'';$('ecp').value=c.phone||'';$('ece').value=c.email||'';
+      $('ecb').value=editableFields?.birth_date||'';$('ecg').value=editableFields?.gender||'';
+      $('ecc').value=c.marketing_consent?'true':'false';
+      setEditError('');editCard.hidden=false;$('ecn').focus();
+    };
+    $('ecCancel').onclick=()=>{setEditError('');editCard.hidden=true;editButton.focus()};
+    $('ecSave').onclick=async()=>{
+      const saveButton=$('ecSave');
+      const full_name=$('ecn').value.trim();
+      if(full_name.length<2)return setEditError('Enter a full name of at least 2 characters.');
+      setEditError('');
+      CUI.setButtonBusy(saveButton,{busy:true,label:'Saving…'});
+      const {error:updateError}=await sb.rpc('staff_update_client_v170',{p_business:S.biz.id,p_client:id,
+        p_full_name:full_name,p_phone:$('ecp').value||null,p_email:$('ece').value||null,
+        p_birth_date:$('ecb').value||null,p_gender:$('ecg').value||null,
+        p_marketing_consent:$('ecc').value==='true'});
+      if(!isClientDetailCurrent())return;
+      CUI.setButtonBusy(saveButton,{busy:false});
+      if(updateError){
+        if(String(updateError.message||'').includes('phone_already_used_by_another_customer'))
+          return setEditError('That phone number belongs to another customer.');
+        return fail(updateError);
+      }
+      toast('Customer updated');editCard.hidden=true;clientDetail(id);
+    };
+  }
   const moreBtn=$('c360MoreBtn'),moreMenu=$('c360MoreMenu');
   if(moreBtn&&moreMenu){
     /* Outside-click listener is bound only while the menu is open and removed on close, so
