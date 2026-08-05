@@ -420,7 +420,13 @@ test('launch setup progress contains only persisted observable completion steps'
   assert.match(setup, /done:canReadModule\('loyalty'\)&&\(lp\|\|\[\]\)\.length>0/,
     'a paused or disabled Loyalty module must not be marked complete');
   assert.doesNotMatch(setup,/Points per dollar and a redeem threshold/);
-  assert.match(setup, /done:activeStaffCount>1/);
+  /* V170 owner decision (supersedes the V145 blanket rule for this ONE step): a solo
+     owner-operator — the declared beachhead customer — could never reach full completion
+     because "Add your team" only ticked at 2+ staff. An explicit, undoable
+     "I run this on my own" is observable user intent, session-scoped because no server
+     field exists for team size. Every other step must still be persisted and observable. */
+  assert.match(setup, /done:soloOwner\|\|activeStaffCount>1/);
+  assert.match(setup, /I run this on my own/);
   assert.doesNotMatch(setup, /setupTeamSkipped|Just me for now/);
   assert.match(setup, /done:\(cl\|\|\[\]\)\.length>0/);
   assert.match(app, /'Publish loyalty earning settings':'发布忠诚积分赚取设置'/);

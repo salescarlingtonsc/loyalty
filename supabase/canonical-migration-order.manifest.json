@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 148,
-  "itemCount": 193,
+  "pendingCount": 150,
+  "itemCount": 195,
   "items": [
     {
       "order": 1,
@@ -1937,6 +1937,26 @@
       "path": "supabase/migrations/20260805200000_nestly_v167_direct_admin_approval_activation.sql",
       "octetLength": 10149,
       "sha256": "6aa88d8536ffd1392475d284b4c63178f31b0e950e8aa19bd007c6343949f785",
+      "provenance": "local-source"
+    },
+    {
+      "order": 194,
+      "kind": "pending",
+      "version": "20260805213000",
+      "name": "nestly_v169_activate_stranded_approved_applications",
+      "path": "supabase/migrations/20260805213000_nestly_v169_activate_stranded_approved_applications.sql",
+      "octetLength": 19814,
+      "sha256": "1ee5bd7e295993ea1c27d2814243337aa5962736ea8e188a495b04994a2d6b0b",
+      "provenance": "local-source"
+    },
+    {
+      "order": 195,
+      "kind": "pending",
+      "version": "20260805214000",
+      "name": "nestly_v170_staff_update_client",
+      "path": "supabase/migrations/20260805214000_nestly_v170_staff_update_client.sql",
+      "octetLength": 4661,
+      "sha256": "d0ca2e556ae6a9b22c1d861383ccadca776dfd79686a93f117cd237df581c248",
       "provenance": "local-source"
     }
   ]

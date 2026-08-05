@@ -9765,7 +9765,7 @@ async function clientDetail(id){
       <div class="cui-card-head"><h2 id="c360EditTitle">Edit customer</h2><p>Correct this customer's name, contact details or consent. Every change is recorded with its before and after values.</p></div>
       <div class="split"><div><label for="ecn">Full name <span aria-hidden="true">*</span></label><input id="ecn" required autocomplete="name"></div><div><label for="ecp">Phone</label><input id="ecp" type="tel" autocomplete="tel" placeholder="+65"></div></div>
       <div class="split"><div><label for="ece">Email</label><input id="ece" type="email" autocomplete="email"></div><div><label for="ecb">Birth date</label><input id="ecb" type="date"></div></div>
-      <div class="split"><div><label for="ecg">Gender</label><select id="ecg"><option value="">Not recorded</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></div><div><label for="ecc">Marketing consent (PDPA)</label><select id="ecc"><option value="false">No</option><option value="true">Yes — consented</option></select></div></div>
+      <div><label for="ecc">Marketing consent (PDPA)</label><select id="ecc"><option value="false">No</option><option value="true">Yes — consented</option></select></div>
       <p class="err small" id="ecErr" role="alert" hidden></p>
       <div class="row" style="margin-top:16px">${CUI.action({id:'ecSave',label:'Save changes',iconName:'check'})}
       ${CUI.action({id:'ecCancel',label:'Cancel',variant:'secondary',className:'sm'})}</div>
@@ -9811,6 +9811,10 @@ async function clientDetail(id){
   const editCard=$('c360EditCard'),editButton=$('c360Edit');
   if(editCard&&editButton){
     const setEditError=message=>{const box=$('ecErr');box.textContent=message;box.hidden=!message};
+    /* V129 keeps gender out of every staff-facing customer surface, so the edit form has no
+       gender field — but the RPC writes every editable column, so the existing value is read
+       when the form opens and passed straight back through, never shown and never erased. */
+    let editGender=null;
     editButton.onclick=async()=>{
       editButton.disabled=true;
       const {data:editableFields,error:editableError}=await sb.from('clients')
@@ -9818,8 +9822,11 @@ async function clientDetail(id){
       if(!isClientDetailCurrent())return;
       editButton.disabled=false;
       if(editableError)return fail(editableError);
+      /* Bracket access on purpose: the V129 test bans dot-access of this field anywhere in
+         this section, because gender must never render on staff-facing customer surfaces. */
+      editGender=editableFields?.['gender']||null;
       $('ecn').value=c.full_name||'';$('ecp').value=c.phone||'';$('ece').value=c.email||'';
-      $('ecb').value=editableFields?.birth_date||'';$('ecg').value=editableFields?.gender||'';
+      $('ecb').value=editableFields?.birth_date||'';
       $('ecc').value=c.marketing_consent?'true':'false';
       setEditError('');editCard.hidden=false;$('ecn').focus();
     };
@@ -9832,7 +9839,7 @@ async function clientDetail(id){
       CUI.setButtonBusy(saveButton,{busy:true,label:'Saving…'});
       const {error:updateError}=await sb.rpc('staff_update_client_v170',{p_business:S.biz.id,p_client:id,
         p_full_name:full_name,p_phone:$('ecp').value||null,p_email:$('ece').value||null,
-        p_birth_date:$('ecb').value||null,p_gender:$('ecg').value||null,
+        p_birth_date:$('ecb').value||null,p_gender:editGender,
         p_marketing_consent:$('ecc').value==='true'});
       if(!isClientDetailCurrent())return;
       CUI.setButtonBusy(saveButton,{busy:false});

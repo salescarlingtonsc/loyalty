@@ -12,7 +12,9 @@ test('V164 sidebar terminology is merchant-facing', () => {
   assert.match(customerUi, /star:'m12 3 2\.8 5\.67/);
   assert.match(appHtml, /reports:\['reports','Business Insights'\]/);
   assert.match(appHtml, /\{key:'grow',icon:'star',label:'Programmes'/);
-  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['sales','reports','customerintel','pnl','expenses','staffperf'\]\}/);
+  /* V170 owner decision: Daily report (today's takings) was fully built and routed but
+     absent from every nav group, so owners could not reach it. It now leads the money group. */
+  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['dailyreport','sales','reports','customerintel','pnl','expenses','staffperf'\]\}/);
 });
 
 test('V164 Dashboard adds schedule glance and in-card KPI action labels', () => {
