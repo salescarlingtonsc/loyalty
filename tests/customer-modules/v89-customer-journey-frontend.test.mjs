@@ -84,7 +84,7 @@ test('customer can switch linked programmes without returning to the programme i
 test('customer Home keeps programme guidance primary and exposes one header notification action',async()=>{
   const app=await read('app/index.html');
   const home=section(app,'function renderActionableWalletHome','async function renderCustomerWallet');
-  assert.match(home,/customerHomeNextActionMarkup\(cards\[0\]\)/);
+  assert.match(home,/customerHomeGuidanceV167\(\{pendingRedemption,actionableCards:cards,legacyCards,offers:offersState\.items\}\)/);
   assert.match(home,/customerProgrammeGridMarkupV96\(cards\)/);
   assert.doesNotMatch(home,/#\/customer\/messages|Messages/,
     'Home must not duplicate the notification destination as a dashboard module');
@@ -188,7 +188,7 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
   assert.match(bookings,/customer_list_programmes_v89/);
   assert.match(bookings,/customer_get_business_actions_v89/);
   assert.match(bookings,/response\.data\?\.booking\?\.enabled===true/);
-  assert.match(bookings,/group\.bookingEnabled&&group\.business_slug[\s\S]*>Book now</);
+  assert.match(bookings,/group\.bookingEnabled&&group\.business_slug[\s\S]*>Book again</);
 });
 
 test('loyalty owner can enable customer QR redemption without a bookings module',async()=>{

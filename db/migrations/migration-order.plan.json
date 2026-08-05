@@ -1149,6 +1149,12 @@
       "path": "db/migrations/20260805_nestly_v167_customer_retention_offers.sql",
       "semanticVersion": "v167",
       "proposedDeployVersion": "20260805100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260805_nestly_v167_customer_repeat_booking_history.sql",
+      "semanticVersion": "v167",
+      "proposedDeployVersion": "20260805210000"
     }
   ]
 }

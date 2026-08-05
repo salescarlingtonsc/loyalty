@@ -1150,6 +1150,12 @@
       "version": "20260805100000",
       "name": "nestly_v167_customer_retention_offers",
       "sourcePath": "db/migrations/20260805_nestly_v167_customer_retention_offers.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260805210000",
+      "name": "nestly_v167_customer_repeat_booking_history",
+      "sourcePath": "db/migrations/20260805_nestly_v167_customer_repeat_booking_history.sql"
     }
   ]
 }
