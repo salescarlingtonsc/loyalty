@@ -1117,6 +1117,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260804135000",
+      "name": "nestly_v156b_first_contact_prospect_channel",
+      "sourcePath": "db/migrations/20260804_nestly_v156b_first_contact_prospect_channel.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260804140000",
       "name": "nestly_v159_selfserve_manual_application_fallback",
       "sourcePath": "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql"

@@ -2257,6 +2257,16 @@
     billing:'Billing',commissions:'Commission payable',sectors:'Sector modules',
     automation:'System health'
   });
+  const platformModuleDescriptions=Object.freeze({
+    overview:'Today queue and operating summary',
+    onboarding:'Internal CRM pipeline, prospects, activities and assisted onboarding',
+    firms:'Platform firm directory and customer lifecycle view',
+    reports:'Scoped analytics and report generation',
+    billing:'Subscription operations, billing documents, invoices, receipts and Stripe reconciliation',
+    commissions:'Consultant commission review and payable workflow',
+    sectors:'Sector templates and module defaults',
+    automation:'System health, reconciliation and operational incidents'
+  });
   const prospectStages = Object.freeze([
     ['new_lead','New Lead'],['appt_set','Appointment Set'],
     ['npu_1','NPU 1'],['npu_2','NPU 2'],['npu_3','NPU 3'],['npu_4','NPU 4'],['npu_5','NPU 5'],['npu_6','NPU 6'],
@@ -4545,6 +4555,7 @@
         ${onboardingFilterSummary(filters,CUI)}
       </form>
       <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt('Five clear operating lanes'))}</b><p class="small">${escapeHtml(pt('The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.'))}</p></div></div>
+      <div class="platform-route-note platform-status-note">${CUI.icon('reports',{size:19})}<div><b>${escapeHtml(pt('Where billing documents live'))}</b><p class="small">${escapeHtml(pt('Create prospects here, then use Finance → Subscription operations for quotations, invoices, receipts, payment follow-up and renewal queues. Finance → Cash P&L remains Peekaa’s internal cash accounting view.'))}</p></div></div>
       <div class="platform-kanban"${view==='kanban'?'':' hidden'} aria-label="${escapeHtml(pt('Onboarding pipeline'))}">${operationalLanes.map(lane=>`<section class="platform-kanban-column" aria-labelledby="lane-${lane.key}">
         <header class="platform-kanban-head"><div><h2 id="lane-${lane.key}">${escapeHtml(pt(lane.label))}</h2><p>${escapeHtml(pt(lane.description))}</p></div><span class="platform-count">${byLane[lane.key].length}</span></header>
         <div class="platform-card-list">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI,{canWrite})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
@@ -4888,23 +4899,28 @@
       ${CUI.field({id:'newCompanyName',label:'Company name',required:true,attributes:'name="company_name"'})}
       ${CUI.field({id:'newUen',label:'UEN',attributes:'name="uen"'})}
       ${CUI.field({id:'newContactName',label:'Primary contact',required:true,attributes:'name="contact_name"'})}
-      ${CUI.field({id:'newContactEmail',label:'Email',type:'email',attributes:'name="contact_email"'})}
-      ${CUI.field({id:'newContactPhone',label:'Phone',attributes:'name="contact_phone"'})}
+      ${CUI.field({id:'newContactEmail',label:'Email',type:'email',hint:'Optional at first contact. Add it later before sending quotations or invoices.',attributes:'name="contact_email"'})}
+      ${CUI.field({id:'newContactPhone',label:'Phone',hint:'Optional at first contact. Add it later before sending quotations or invoices.',attributes:'name="contact_phone"'})}
       ${CUI.field({id:'newConsultant',label:'Sales consultant',control:'select',options:[
         {value:'',label:'Unassigned'},...consultants
       ],attributes:'name="consultant"'})}
       ${CUI.field({id:'newStage',label:'Starting stage',control:'select',options:prospectStages.filter(stage=>!['account_created','onboarding','activated'].includes(stage.key)).map(stage=>({value:stage.key,label:stage.label,selected:stage.key==='new_lead'})),attributes:'name="stage"'})}
       ${CUI.field({id:'newTags',label:'Tags',placeholder:'Comma separated',attributes:'name="tags"'})}
     </div>`,onSubmit:async(form,controls)=>{
-      if(!form.get('contact_email')&&!form.get('contact_phone'))throw new Error(pt('Add a contact email or phone number.'));
+      const companyName=String(form.get('company_name')||'').trim();
+      const contactName=String(form.get('contact_name')||'').trim();
+      const contactEmail=String(form.get('contact_email')||'').trim();
+      const contactPhone=String(form.get('contact_phone')||'').trim();
+      if(!companyName)throw new Error(pt('Company name is required.'));
+      if(!contactName)throw new Error(pt('Primary contact is required.'));
       const data=await rpc(sb,'platform_create_prospect_v76',{
-        p_company:{legal_name:form.get('company_name'),registration_number:form.get('uen')||null},
-        p_primary_contact:{full_name:form.get('contact_name'),email:form.get('contact_email')||null,phone:form.get('contact_phone')||null},
+        p_company:{legal_name:companyName,registration_number:String(form.get('uen')||'').trim()||null},
+        p_primary_contact:{full_name:contactName,email:contactEmail||null,phone:contactPhone||null},
         p_stage_key:form.get('stage'),p_consultant:form.get('consultant')||null,p_source:{source_system:'platform_console',source_type:'manual'},
         p_tags:String(form.get('tags')||'').split(',').map(value=>value.trim()).filter(Boolean),
         p_idempotency_key:createAttemptKey
       });
-      const prospectName=data?.prospect?.company_name||form.get('company_name');
+      const prospectName=data?.prospect?.company_name||companyName;
       controls.close();
       CUI.announce(pt('Prospect {name} created.',{name:prospectName}));
       try{await renderOnboarding(context);}
@@ -7496,7 +7512,7 @@
     return platformModuleKeys.map(key=>{
       const current=perms[key]??perms['*']??(role==='admin'?'rw':'off');
       return `<label class="platform-permission-row" data-access-module="${key}">
-        <span><b>${escapeHtml(pt(platformModuleLabels[key]))}</b><small>${escapeHtml(pt(key==='onboarding'?'CRM and onboarding workflow':key==='reports'?'Scoped analytics and report generation':'Platform console module'))}</small></span>
+        <span><b>${escapeHtml(pt(platformModuleLabels[key]))}</b><small>${escapeHtml(pt(platformModuleDescriptions[key]||'Platform console module'))}</small></span>
         <select name="permission_${key}" aria-label="${escapeHtml(pt('{module} permission',{module:pt(platformModuleLabels[key])}))}">
           <option value="off"${current!=='r'&&current!=='rw'?' selected':''}>${escapeHtml(pt("Off"))}</option>
           <option value="r"${current==='r'?' selected':''}>${escapeHtml(pt("Read only"))}</option>

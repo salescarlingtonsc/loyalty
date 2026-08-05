@@ -9,9 +9,19 @@ renewal/payment queues, and linked sales/customer lifecycle views.
 
 ## Confirmed current behaviour
 
-- Production `/api/build` reports `5bb409103904823466842ea96fe78f0ccbed63e4`.
+- Production `/api/build` reports `b6d5d4879db319ed04072c07d7c4d82b5d99c266`
+  on 2026-08-05.
+- V156 is already integrated into production lineage through later V156/V158/V166
+  commits. The 2026-08-05 gap-closure starts from `origin/main`, not the stale
+  original V156 branch tip.
 - V76/V86 already own prospects, contacts, assignments, activities, tasks,
   stages, Kanban and private prospect files. V156 extends these records.
+- The V76 `platform_create_prospect_v76` backend accepts a first-contact
+  prospect with company name and primary contact before email/phone are known.
+  The original contact table required email or phone; V156B relaxes that
+  constraint only for primary contacts. The Super Admin modal also removed the
+  extra client-only email/phone gate and explains that billing recipients are
+  added before quotation/invoice delivery.
 - V77 Stripe webhooks already verify signatures, retain event IDs and payload
   hashes, order events, project subscription-item periods, and make
   `invoice.paid` the only normalized Stripe paid truth.
@@ -84,11 +94,12 @@ Targeted Node/server tests, transaction-scoped database assertions, two-session 
 seven requested responsive viewports, quality/runtime/build/manifest/canonical
 checks, database rehearsal, independent high-risk review, then commit/push.
 Production migration `20260804051519_nestly_v156_subscription_operations_crm`
-and the reviewed Edge Functions were applied after Sol acceptance. Production
-web promotion was intentionally stopped because a concurrent session deployed
-V157 commit `65887b0f49c1a457f0ea9d5580b6b949ec3fbd53` after this branch was based;
-promoting V156 would overwrite that later lineage. A reviewed integration commit
-based on the current production build is required before web promotion. No
+and the reviewed Edge Functions were applied after Sol acceptance. The
+2026-08-05 source patch adds only V156B prospect-contact constraint tolerance
+and does not change Stripe, pricing, entitlement, merchant finance or ledger
+semantics. It also clarifies the Super Admin routes: Finance → Subscription
+operations for quotations, invoices, receipts, delivery and renewal/payment
+follow-up; Finance → Cash P&L for Peekaa internal cash accounting. No
 uncontrolled live charge is permitted.
 
 The V156/V157 integration worktree is based exactly on production build

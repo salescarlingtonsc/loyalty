@@ -68,6 +68,24 @@ begin
     raise exception 'prospect create replay was not idempotent';
   end if;
 
+  v_result:=public.platform_create_prospect_v76(
+    '{"legal_name":"V76 First Contact Pte Ltd","trading_name":"V76 First Contact"}',
+    '{"full_name":"V76 First Contact Owner"}',
+    'new_lead',null,'{"source_system":"platform_console","source_type":"manual"}',
+    array[]::text[],'v76-create-first-contact-no-channel'
+  );
+  if not exists (
+    select 1
+    from public.sme_prospect_contacts contact
+    where contact.prospect_id=(v_result->'prospect'->>'id')::uuid
+      and contact.full_name='V76 First Contact Owner'
+      and contact.is_primary
+      and contact.email is null
+      and contact.phone is null
+  ) then
+    raise exception 'first-contact prospect without email/phone did not persist';
+  end if;
+
   select version into v_version from public.sme_prospects where id=v_prospect;
   perform pg_temp.as_v76_user(v_sa);
   v_result:=public.platform_update_prospect_v76(

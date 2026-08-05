@@ -4,6 +4,9 @@ import test from 'node:test';
 
 const migration = readFileSync(new URL('../../db/migrations/20260804_nestly_v156_subscription_operations_crm.sql', import.meta.url), 'utf8');
 const mirror = readFileSync(new URL('../../supabase/migrations/20260804120000_nestly_v156_subscription_operations_crm.sql', import.meta.url), 'utf8');
+const firstContactMigration = readFileSync(new URL('../../db/migrations/20260804_nestly_v156b_first_contact_prospect_channel.sql', import.meta.url), 'utf8');
+const firstContactMirror = readFileSync(new URL('../../supabase/migrations/20260804135000_nestly_v156b_first_contact_prospect_channel.sql', import.meta.url), 'utf8');
+const v76Rollback = readFileSync(new URL('../../db/tests/v76_sme_crm.sql', import.meta.url), 'utf8');
 const consoleSource = readFileSync(new URL('../../app/platform-console.js', import.meta.url), 'utf8');
 const webhook = readFileSync(new URL('../../supabase/functions/stripe-billing-webhook/index.ts', import.meta.url), 'utf8');
 const dispatcher = readFileSync(new URL('../../supabase/functions/subscription-document-dispatch/index.ts', import.meta.url), 'utf8');
@@ -14,6 +17,15 @@ test('V156 canonical source and deploy migration remain byte-identical', () => {
   assert.equal(mirror, migration);
   assert.match(migration, /^-- Peekaa V156/);
   assert.match(migration, /begin;[\s\S]*commit;\s*$/);
+});
+
+test('V156B first-contact prospects can persist before email or phone is known', () => {
+  assert.equal(firstContactMirror, firstContactMigration);
+  assert.match(firstContactMigration, /drop constraint if exists sme_prospect_contacts_channel_check/);
+  assert.match(firstContactMigration, /check \(is_primary or email is not null or phone is not null\)/);
+  assert.match(firstContactMigration, /non-primary contacts still require a channel/);
+  assert.match(v76Rollback, /v76-create-first-contact-no-channel/);
+  assert.match(v76Rollback, /contact\.email is null[\s\S]*contact\.phone is null/);
 });
 
 test('seller settings use only owner-provided facts and fail closed while legal fields are missing', () => {
@@ -118,7 +130,13 @@ test('admin UX exposes internal subscription operations and retains accessible C
   assert.match(consoleSource, /manualPaymentModal/);
   assert.match(consoleSource, /platform_create_prospect_v76/);
   assert.match(consoleSource, /p_idempotency_key:createAttemptKey/);
-  assert.match(consoleSource, /if\(!form\.get\('contact_email'\)&&!form\.get\('contact_phone'\)\)/);
+  assert.doesNotMatch(consoleSource, /if\(!form\.get\('contact_email'\)&&!form\.get\('contact_phone'\)\)/);
+  assert.match(consoleSource, /Optional at first contact\. Add it later before sending quotations or invoices\./);
+  assert.match(consoleSource, /email:contactEmail\|\|null,phone:contactPhone\|\|null/);
+  assert.match(consoleSource, /Where billing documents live/);
+  assert.match(consoleSource, /Finance → Subscription operations/);
+  assert.match(consoleSource, /Finance → Cash P&L/);
+  assert.match(consoleSource, /Subscription operations, billing documents, invoices, receipts and Stripe reconciliation/);
 });
 
 test('paid-through and out-of-order payment truth use paid invoice state', () => {

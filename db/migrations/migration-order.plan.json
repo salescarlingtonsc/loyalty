@@ -1116,6 +1116,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260804_nestly_v156b_first_contact_prospect_channel.sql",
+      "semanticVersion": "v156b",
+      "proposedDeployVersion": "20260804135000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260804_nestly_v159_selfserve_manual_application_fallback.sql",
       "semanticVersion": "v159",
       "proposedDeployVersion": "20260804140000"

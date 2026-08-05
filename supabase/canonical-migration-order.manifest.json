@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 145,
-  "itemCount": 190,
+  "pendingCount": 146,
+  "itemCount": 191,
   "items": [
     {
       "order": 1,
@@ -1862,6 +1862,16 @@
     {
       "order": 186,
       "kind": "pending",
+      "version": "20260804135000",
+      "name": "nestly_v156b_first_contact_prospect_channel",
+      "path": "supabase/migrations/20260804135000_nestly_v156b_first_contact_prospect_channel.sql",
+      "octetLength": 825,
+      "sha256": "5ccfbc1cea00799aeaae03d4c9a1dd17e163c36b0e0c73c0ff22a263a1149fbc",
+      "provenance": "local-source"
+    },
+    {
+      "order": 187,
+      "kind": "pending",
       "version": "20260804140000",
       "name": "nestly_v159_selfserve_manual_application_fallback",
       "path": "supabase/migrations/20260804140000_nestly_v159_selfserve_manual_application_fallback.sql",
@@ -1870,7 +1880,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 187,
+      "order": 188,
       "kind": "pending",
       "version": "20260804150000",
       "name": "nestly_v160_auth_signup_visibility",
@@ -1880,7 +1890,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 188,
+      "order": 189,
       "kind": "pending",
       "version": "20260804170000",
       "name": "nestly_v162_stripe_launch_price_148",
@@ -1890,7 +1900,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 189,
+      "order": 190,
       "kind": "pending",
       "version": "20260804180000",
       "name": "nestly_v163_signup_lead_management_consent",
@@ -1900,7 +1910,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 190,
+      "order": 191,
       "kind": "pending",
       "version": "20260804190000",
       "name": "nestly_v164_account_signup_triage",
