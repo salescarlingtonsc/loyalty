@@ -1157,6 +1157,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-programme-compact-balance{text-align:right;flex:0 0 auto}.customer-programme-compact-balance b{display:block;font-size:clamp(1.25rem,4vw,1.65rem);line-height:1}.customer-programme-compact-balance span{display:block;margin-top:4px;color:var(--muted);font-size:.78rem}
 .customer-promotions-section{margin-top:6px}.customer-promotions-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.customer-promotions-head h2{font-size:clamp(1.45rem,4vw,2rem)}.customer-promotions-head p{margin-top:4px}
 .customer-promotions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.customer-home-offers{margin:0 0 16px;min-width:0}.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;padding:2px 2px 10px}.customer-home-offer{position:relative;display:grid;grid-template-columns:72px minmax(0,1fr);flex:0 0 min(84vw,360px);min-height:116px;overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer--no-media{grid-template-columns:minmax(0,1fr)}.customer-home-offer img{width:72px;height:100%;min-height:116px;object-fit:cover}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
 .customer-promotion-card{position:relative;overflow:hidden;min-height:360px;border-radius:22px;background:#17161a;color:#fff;box-shadow:0 18px 42px rgba(23,22,26,.18)}
 .customer-promotion-card-media{position:absolute;inset:0}.customer-promotion-card-media img{width:100%;height:100%;object-fit:cover}.customer-promotion-card-media::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,13,18,.06) 18%,rgba(15,13,18,.86) 82%)}
 .customer-promotion-card-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;min-height:360px;padding:22px}.customer-promotion-card-copy h3{font-size:clamp(1.45rem,4vw,2.05rem);line-height:1.08;letter-spacing:-.025em;color:#fff}.customer-promotion-card-copy h3,.customer-promotion-card-copy p,.customer-promotion-card-copy summary,.customer-promotion-card-copy dd{overflow-wrap:anywhere;word-break:break-word}.customer-promotion-card-copy p{margin-top:8px;color:rgba(255,255,255,.88);line-height:1.45}
@@ -4618,6 +4619,60 @@ function customerPointTotalV103(value){
   return new Intl.NumberFormat('en-SG',{maximumFractionDigits:0})
     .format(Math.max(0,Number(value)||0));
 }
+const CUSTOMER_SEEN_OFFERS_KEY_V167='peekaa.customer.offers.seen.v1';
+let customerOfferFocusV167=null;
+function customerSeenOfferVersionsV167(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(CUSTOMER_SEEN_OFFERS_KEY_V167)||'[]');
+    return new Set(Array.isArray(parsed)?parsed.filter(value=>typeof value==='string').slice(-200):[]);
+  }catch{return new Set()}
+}
+function rememberCustomerOfferV167(versionId){
+  if(!versionId)return;
+  const seen=customerSeenOfferVersionsV167();seen.add(String(versionId));
+  try{localStorage.setItem(CUSTOMER_SEEN_OFFERS_KEY_V167,JSON.stringify([...seen].slice(-200)))}catch{}
+}
+function customerOfferUrgencyV167(item,now=Date.now()){
+  const ends=Date.parse(item?.ends_at||'');
+  return Number.isFinite(ends)&&ends>now&&ends-now<=72*60*60*1000;
+}
+function customerHomeOfferMarkupV167(item,seen){
+  const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
+    versionId=String(item?.version_id||''),isNew=versionId&&!seen.has(versionId),
+    endsSoon=customerOfferUrgencyV167(item),validity=customerPromotionValidityV104(item);
+  return `<a class="customer-home-offer${image?'':' customer-home-offer--no-media'}" href="#/wallet/${encodeURIComponent(business.slug||'')}" data-home-offer data-offer-id="${esc(item?.id||'')}" data-offer-version="${esc(versionId)}">
+    ${image?`<img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy">`:''}
+    <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3><p class="muted small" style="margin-top:4px">${esc(business.name||'Your business')}</p>${validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
+  </a>`;
+}
+function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
+  const items=Array.isArray(state.items)?state.items:[];
+  let body='<div class="card customer-home-offers-state"><p class="muted small">Loading offers…</p></div>';
+  if(state.status==='ready'){
+    const seen=customerSeenOfferVersionsV167();
+    body=items.length
+      ?`<div class="customer-home-offers-track" aria-label="Current offers">${items.map(item=>customerHomeOfferMarkupV167(item,seen)).join('')}</div>`
+      :'<div class="card customer-home-offers-state"><p class="muted small">No offers right now. New offers from your businesses appear here first.</p></div>';
+  }else if(state.status==='error'){
+    body='<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" id="customerOffersRetry" type="button" style="margin-top:10px">Try again</button></div>';
+  }
+  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><div><p class="customer-quest-kicker">Worth coming back for</p><h2 id="customerHomeOffersTitle">Offers for you</h2></div></div>${body}</section>`;
+}
+function wireCustomerHomeOffersV167(rerender){
+  document.querySelectorAll('[data-home-offer]').forEach(link=>link.addEventListener('click',()=>{
+    rememberCustomerOfferV167(link.dataset.offerVersion);
+    customerOfferFocusV167=link.dataset.offerId||null;
+  }));
+  const retry=$('customerOffersRetry');if(retry)retry.onclick=rerender;
+}
+function customerRewardProgressMarkupV167(card){
+  const reward=card?.next_eligible_reward||null,loyalty=card?.loyalty||{};
+  if(!reward)return '';
+  const balance=Math.max(0,Number(loyalty.balance)||0),cost=Math.max(0,Number(reward.cost_units)||0),
+    unit=String(loyalty.unit||'points'),available=reward.available_now===true||cost===0,
+    progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100;
+  return `<div class="customer-reward-progress-copy"><p class="muted small">${available?`${esc(reward.name||'Reward')} is ready to redeem.`:`${esc(customerPointTotalV103(reward.remaining_units||0))} ${esc(unit)} to ${esc(reward.name||'your next reward')}.`}</p><div class="customer-reward-progress" role="progressbar" aria-label="Progress to ${esc(reward.name||'next reward')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
+}
 function customerTierHasProgressV103(tier={}){
   const named=[tier.current,tier.label,tier.next].some(value=>String(value||'').trim().length>0);
   const progress=Number(tier.progress_percent);
@@ -4772,7 +4827,19 @@ function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=n
   });
   return true;
 }
-function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled}){
+function customerPointsExplainerMarkupV167(business={}){
+  const key=`peekaa.customer.points-explainer.v1.${String(business.id||business.slug||'programme')}`;
+  try{if(localStorage.getItem(key)==='dismissed')return ''}catch{}
+  return `<aside class="card customer-points-explainer" data-points-explainer data-points-explainer-key="${esc(key)}" role="note"><p><b>How rewards work at ${esc(business.name||'this business')}</b><br><span class="muted small">Collect points here and use them for available rewards.</span></p><button class="btn ghost sm" type="button" aria-label="Dismiss points explanation">Got it</button></aside>`;
+}
+function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},bookingEnabled=false}={}){
+  let body='';
+  if(status==='error')body='<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>';
+  else if(items.length)body=`<div class="customer-promotions-grid">${items.map(item=>customerPromotionCardV104(item,business,bookingEnabled)).join('')}</div>`;
+  else body='<div class="card customer-home-offers-state"><p class="muted small">No offers right now. New offers from this business appear here first.</p></div>';
+  return `<section class="customer-promotions-section" aria-labelledby="latestOffersTitle"><div class="customer-promotions-head"><div><p class="customer-quest-kicker">From ${esc(business.name||ct('localBusiness'))}</p><h2 id="latestOffersTitle">Latest offers</h2></div></div>${body}</section>`;
+}
+function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready'}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
   const hasTier=customerTierHasProgressV103(tier);
@@ -4789,8 +4856,9 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
         <p class="muted small">${esc(presentation.name)}${hasTier&&currentTierLabel?` · ${esc(currentTierLabel)}`:''}</p></div>
       <div class="customer-programme-compact-balance"><b>${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}</b><span>${esc(unitLabel)}</span></div>
     </header>
+    ${customerPointsExplainerMarkupV167(business)}
     ${currentTierBenefits.length?`<section class="card" style="margin-top:14px"><h2>${esc(currentTierLabel||'Current tier')} benefits</h2><ul class="rec-why" style="margin-top:10px">${currentTierBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul></section>`:''}
-    ${offers.length?`<section class="customer-promotions-section" aria-labelledby="latestOffersTitle"><div class="customer-promotions-head"><div><p class="customer-quest-kicker">From ${esc(business.name||ct('localBusiness'))}</p><h2 id="latestOffersTitle">Latest offers</h2></div></div><div class="customer-promotions-grid">${offers.map(item=>customerPromotionCardV104(item,business,bookingEnabled)).join('')}</div></section>`:''}
+    ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
     ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><a class="btn" href="#/b/${encodeURIComponent(business.slug)}">${esc(ct('bookNow'))}</a></div></section>`:''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
@@ -4801,12 +4869,12 @@ function actionableWalletCardMarkup(card,{detail=false}={}){
   return `<article class="card wallet-section${detail?' customer-game-card':''}"${detail?'':' style="margin:0"'}>
     <div class="row"><div><h2>${esc(business.name||'Business')} rewards</h2><p class="muted small" style="margin-top:4px">${esc(business.industry||'Local business')}</p></div><span class="spacer"></span>${detail?'':`<span class="pill">${esc(actionableWalletActionText(card))}</span>`}</div>
     <div class="wallet-metrics">
-      <div class="wallet-metric"><span class="muted small">${unit} balance</span><b>${Number(loyalty.balance||0)}</b></div>
+      <div class="wallet-metric"><span class="muted small">${unit} balance</span><b>${esc(customerPointTotalV103(loyalty.balance||0))}</b></div>
       <div class="wallet-metric"><span class="muted small">Credit balance</span><b>${currency} ${(Number(credit.balance_cents||0)/100).toFixed(2)}</b></div>
       <div class="wallet-metric"><span class="muted small">Package session balance</span><b>${Number(packages.sessions_remaining||0)}</b></div>
       <div class="wallet-metric"><span class="muted small">${unit} expiry</span><b style="font-size:14px;line-height:1.35">${esc(actionableWalletExpiryText(card?.expiry,loyalty.unit||'points'))}</b></div>
     </div>
-    <div class="wallet-line" style="margin-top:8px"><div><b>Next reward</b><p class="muted small" style="margin-top:4px">${reward?reward.available_now?`${esc(reward.name||'Reward')} is ready at the counter.`:`${Number(reward.remaining_units||0)} ${unit} to ${esc(reward.name||'your next reward')}.`:'No active reward is available right now.'}</p></div></div>
+    <div class="wallet-line" style="margin-top:8px"><div style="width:100%"><b>Next reward</b>${reward?customerRewardProgressMarkupV167(card):'<p class="muted small" style="margin-top:4px">No active reward is available right now.</p>'}</div></div>
     ${card?.visits_remaining===null||card?.visits_remaining===undefined?'':`<div class="wallet-line"><div><b>Visit progress</b><p class="muted small" style="margin-top:4px">${Number(card.visits_remaining)===0?'Current visit goal is complete.':`${Number(card.visits_remaining)} qualifying visit${Number(card.visits_remaining)===1?'':'s'} remaining.`}${visit.customer_description?` ${esc(visit.customer_description)}`:''}</p></div></div>`}
     ${birthdayBenefitMarkup(card?.birthday_benefit,{interactive:detail,compact:!detail})}
     ${detail?`<p class="muted small" style="margin-top:14px">${esc(actionableWalletActionText(card))}</p>`:''}
@@ -4875,7 +4943,7 @@ function customerProgrammeTileMarkupV96(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
   const accent=/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f';
   const unit=ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points');
-  return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${Number(loyalty.balance||0)}</b><span>${esc(unit)}</span></div></div></a>`;
+  return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${esc(customerPointTotalV103(loyalty.balance||0))}</b><span>${esc(unit)}</span></div>${reward?`<div style="grid-column:1/-1">${customerRewardProgressMarkupV167(card)}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
@@ -4928,20 +4996,56 @@ function customerHomeNextActionMarkup(card){
     </div>
   </section>`;
 }
-function renderActionableWalletHome(payload){
+function customerHomeFallbackActionV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
+  if(pendingRedemption){
+    const business=pendingRedemption.business||{};
+    return `<section class="card customer-home-nba customer-next-action"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>Next best action</span></p><div class="row" style="margin-top:10px;flex-wrap:wrap"><div><h2>Complete your pending redemption</h2><p class="muted small" style="margin-top:5px">${esc(pendingRedemption.reward_name||'Reward')} · ${esc(business.name||'Your business')}</p></div><span class="spacer"></span><a class="btn" href="#/wallet/${encodeURIComponent(business.slug||'')}">Open programme</a></div></section>`;
+  }
+  const affordable=actionableCards.find(card=>card?.next_eligible_reward?.available_now===true);
+  if(affordable)return customerHomeNextActionMarkup({...affordable,action:{...(affordable.action||{}),reason:'reward_available'}});
+  const packageCard=actionableCards.find(card=>Number(card?.packages?.sessions_remaining||0)>0);
+  if(packageCard){
+    const business=packageCard.business||{},count=Number(packageCard.packages.sessions_remaining);
+    return `<section class="card customer-home-nba customer-next-action"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>Next best action</span></p><div class="row" style="margin-top:10px;flex-wrap:wrap"><div><h2>Use an active package session</h2><p class="muted small" style="margin-top:5px">${count} session${count===1?'':'s'} remaining · ${esc(business.name||'Your business')}</p></div><span class="spacer"></span><a class="btn" href="#/wallet/${encodeURIComponent(business.slug||'')}">View package</a></div></section>`;
+  }
+  const appointmentCard=legacyCards.find(card=>Number(card?.upcoming_appointments?.count||0)>0);
+  if(appointmentCard){
+    const business=appointmentCard.business||{};
+    return `<section class="card customer-home-nba customer-next-action"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>Next best action</span></p><div class="row" style="margin-top:10px;flex-wrap:wrap"><div><h2>Check your upcoming booking</h2><p class="muted small" style="margin-top:5px">${esc(business.name||'Your business')}</p></div><span class="spacer"></span><a class="btn" href="#/customer/bookings">View booking</a></div></section>`;
+  }
+  // Current offers are already actionable in the permanent shelf immediately above.
+  // Repeating one here would create two prominent copies on the same viewport.
+  return '';
+}
+function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
+  if(pendingRedemption)return customerHomeFallbackActionV167({pendingRedemption,actionableCards,legacyCards,offers});
+  const primary=actionableCards[0];
+  return primary&&String(primary?.action?.reason||'none')!=='none'
+    ?customerHomeNextActionMarkup(primary)
+    :customerHomeFallbackActionV167({actionableCards,legacyCards,offers});
+}
+function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null}={}){
   const cards=Array.isArray(payload?.cards)?payload.cards:[];
-  if(!cards.length){renderCustomerFirstProgrammeQuest();return}
+  if(!cards.length){
+    $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
+    $('customerFirstScan').onclick=openCustomerJoinScanner;
+    wireCustomerHomeOffersV167(()=>renderCustomerWallet());
+    return;
+  }
   $('walletBody').innerHTML=`<header class="customer-page-head"><div><p class="customer-quest-kicker">${esc(ct('chooseProgramme'))}</p><h1>${esc(ct('yourProgrammes'))}</h1><p class="muted">${esc(ct('programmesIntro'))}</p></div><button class="btn sm" id="customerHomeScan" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button></header>
+    ${customerHomeOffersMarkupV167(offersState)}
+    ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}
     ${customerMyRewardsHeadingV156(cards.length)}
     ${customerProgrammeGridMarkupV96(cards)}
     <details class="card customer-home-summary">
       <summary><span>${CUI.icon('forward',{size:17})} Guidance &amp; bookings</span><span class="muted small">Show</span></summary>
       <div class="customer-home-summary-body">
-        ${customerHomeNextActionMarkup(cards[0])}
+        <div class="customer-home-quick"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>Rewards &amp; value</b><p class="muted small">${esc(customerLinkedRewardsLabelV156(cards.length))}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">Open your bookings</p></div></a></div>
         ${payload?.truncated?`<div class="customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}
       </div>
     </details>`;
   $('customerHomeScan').onclick=openCustomerJoinScanner;
+  wireCustomerHomeOffersV167(()=>renderCustomerWallet());
 }
 async function renderCustomerWallet(businessSlug=null){
   const walletRenderEpoch=++customerWalletRenderEpoch;
@@ -4955,8 +5059,8 @@ async function renderCustomerWallet(businessSlug=null){
     if(!businessSlug){
       const {data,error}=await sb.rpc('customer_get_actionable_wallet');
       if(!isWalletCurrent())return;
-      if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null);
-      const messagePromise=customerFeatures.customer_in_app_inbox===true
+      if(!error&&Array.isArray(data?.cards)&&data.cards.length){
+        const messagePromise=customerFeatures.customer_in_app_inbox===true
         ?(async()=>{
           const syncRpc='customer_sync_in_app_inbox_global';
           const syncResult=await sb.rpc(syncRpc,{p_idempotency_key:crypto.randomUUID()});
@@ -4964,10 +5068,11 @@ async function renderCustomerWallet(businessSlug=null){
           return sb.rpc('customer_get_in_app_inbox_global_count');
         })()
         :Promise.resolve({data:null,error:null});
-      const [legacyResult,messageResult,bookingRequestResult]=await Promise.all([
+      const [legacyResult,messageResult,bookingRequestResult,offersResult]=await Promise.all([
         sb.rpc('customer_get_wallet'),
         messagePromise,
-        sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null})
+        sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
+        sb.rpc('customer_get_home_offers_v167',{p_locale:'en'})
       ]);
       if(!isWalletCurrent())return;
       customerHomeOverview={
@@ -4979,7 +5084,11 @@ async function renderCustomerWallet(businessSlug=null){
         messagesAvailable:customerFeatures.customer_in_app_inbox===true,
         claimsAvailable:false
       };
-      renderActionableWalletHome(data);
+      renderActionableWalletHome(data,{
+        legacyCards:customerHomeOverview.walletCards,
+        offersState:offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]},
+        pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null
+      });
       const inboxSlot=$('customerInboxBellSlot');
       if(inboxSlot&&customerFeatures.customer_in_app_inbox===true){
         const unread=customerHomeOverview.messageCount;
@@ -4987,29 +5096,32 @@ async function renderCustomerWallet(businessSlug=null){
       }
       focusCustomerRoute();
       return;
+      }
     }
-    const [{data,error},walletResult]=await Promise.all([
-      sb.rpc('customer_get_actionable_business',{p_business_slug:businessSlug}),
-      sb.rpc('customer_get_actionable_wallet')
-    ]);
-    if(!isWalletCurrent())return;
-    if(error)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
-    actionableCard=data?.card||null;
-    programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
-    if(!actionableCard)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
+    if(businessSlug){
+      const [{data,error},walletResult]=await Promise.all([
+        sb.rpc('customer_get_actionable_business',{p_business_slug:businessSlug}),
+        sb.rpc('customer_get_actionable_wallet')
+      ]);
+      if(!isWalletCurrent())return;
+      if(error)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
+      actionableCard=data?.card||null;
+      programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
+      if(!actionableCard)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
+    }
   }
   if(!businessSlug){
-    const [{data,error},bookingRequestResult,selectorMediaResult]=await Promise.all([
+    const [{data,error},bookingRequestResult,selectorMediaResult,offersResult]=await Promise.all([
       sb.rpc('customer_get_wallet'),
       sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
-      sb.rpc('customer_get_programme_selector_media_v96')
+      sb.rpc('customer_get_programme_selector_media_v96'),
+      sb.rpc('customer_get_home_offers_v167',{p_locale:'en'})
     ]);
     if(!isWalletCurrent())return;
     if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null);
     const cards=mergeCustomerProgrammeSelectorMediaV96(
       Array.isArray(data)?data:[],selectorMediaResult.error?null:selectorMediaResult.data
     );
-    if(!cards.length){renderCustomerFirstProgrammeQuest();return}
     const appointmentCount=cards.reduce((sum,card)=>sum+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0);
     const activeRequestCount=bookingRequestResult.error?0:(Array.isArray(bookingRequestResult.data?.items)?bookingRequestResult.data.items.filter(isActiveCustomerBookingRequest).length:0);
     const bookingCount=appointmentCount+activeRequestCount;
@@ -5018,7 +5130,10 @@ async function renderCustomerWallet(businessSlug=null){
     const bookingSummary=bookingsAvailable
       ?bookingCount?`${bookingCount}${bookingsTruncated?'+':''} active or upcoming`:'No active or upcoming bookings'
       :'Booking summary is temporarily unavailable.';
+    const offersState=offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]};
     $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>${esc(BRAND.customerLabel)}</h1><p class="muted">Each business keeps its own rewards and balances.</p></div></header>
+      ${customerHomeOffersMarkupV167(offersState)}
+      ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
       ${customerMyRewardsHeadingV156(cards.length)}
       ${customerProgrammeGridMarkupV96(cards)}
       <details class="card customer-home-summary">
@@ -5029,6 +5144,7 @@ async function renderCustomerWallet(businessSlug=null){
         </div>
       </details>
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}`;
+    wireCustomerHomeOffersV167(()=>renderCustomerWallet());
     focusCustomerRoute();
     return;
   }
@@ -5064,8 +5180,9 @@ async function renderCustomerWallet(businessSlug=null){
   const businessActions=businessActionsResult.error?null:businessActionsResult.data;
   const presentation=customerProgrammePresentationV95(presentationResult.error?{}:presentationResult.data,{business:b,loyalty:actionableCard?.loyalty||loyalty});
   presentation.tier=effectiveTierResult.error?{}:(effectiveTierResult.data?.tier||{});
+  const programmeOffersStatus=promotionsResult.error?'error':'ready';
   presentation.offers=promotionsResult.error
-    ?presentation.offers.slice(0,2)
+    ?[]
     :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,2);
   const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
@@ -5075,7 +5192,7 @@ async function renderCustomerWallet(businessSlug=null){
   const showMembershipMetric=capabilities.membership===true&&membership.active===true;
   const showSecondaryMetrics=!actionableCard&&(showCreditMetric||showPackageMetric||showMembershipMetric);
   const hasWalletSection=true;
-  $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled})}
+  $('walletBody').innerHTML=`${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus})}
     ${showSecondaryMetrics?`<div class="wallet-metrics">
       ${showCreditMetric?`<div class="wallet-metric"><span class="muted small">Store credit</span><b>${esc(currency)} ${(Number(loyalty.credit_balance_cents)/100).toFixed(2)}</b></div>`:''}
       ${showPackageMetric?`<div class="wallet-metric"><span class="muted small">Package sessions</span><b>${Number(packages.sessions_remaining)}</b></div>`:''}
@@ -5107,6 +5224,20 @@ async function renderCustomerWallet(businessSlug=null){
   document.querySelectorAll('[data-promotion-details]').forEach(button=>button.onclick=()=>{
     openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
   });
+  document.querySelector('[data-programme-offers-retry]')?.addEventListener('click',()=>renderCustomerWallet(businessSlug));
+  document.querySelector('[data-points-explainer] button')?.addEventListener('click',event=>{
+    const explainer=event.currentTarget.closest('[data-points-explainer]');
+    try{localStorage.setItem(explainer.dataset.pointsExplainerKey,'dismissed')}catch{}
+    explainer.remove();CUI.announce('Points explanation dismissed.');
+  });
+  if(customerOfferFocusV167){
+    const focusId=customerOfferFocusV167;customerOfferFocusV167=null;
+    requestAnimationFrame(()=>{
+      const card=document.querySelector(`[data-promotion-id="${CSS.escape(focusId)}"]`);
+      card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+      card?.querySelector('button,a')?.focus();
+    });
+  }
   showCustomerPromotionPopupV122({
     business:b,businessSlug,items:presentation.offers,
     prompt:promotionPromptResult.error?null:promotionPromptResult.data
@@ -5229,7 +5360,7 @@ async function renderCustomerWallet(businessSlug=null){
     };
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Rewards</h2><p class="muted small">Choose an eligible reward, then let the team scan its QR at the counter.</p></div></div><div class="wallet-rewards">${rewards.map(r=>`<article class="wallet-reward">
-      ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b>${esc(r.customer_name||'Reward')}</b><span class="spacer"></span><span class="pill">${Number(r.cost_points||0)} ${esc(loyalty.unit||'points')}</span></div>
+      ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b>${esc(r.customer_name||'Reward')}</b><span class="spacer"></span><span class="pill">${esc(customerPointTotalV103(r.cost_points||0))} ${esc(loyalty.unit||'points')}</span></div>
       ${r.description?`<p class="muted small" style="margin-top:7px">${esc(r.description)}</p>`:''}<p class="small" style="margin-top:9px">${esc(availability[r.availability]||'Ask at counter')}</p>
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
@@ -5279,8 +5410,8 @@ async function renderCustomerWallet(businessSlug=null){
     if(!activityState.items.length)return walletSectionEmpty('walletActivity','Activity','No loyalty activity is available yet.',businessSlug,'activity',()=>loadActivity(null),isWalletCurrent);
     const unit=esc(data?.unit||loyalty.unit||'points'),expiry=data?.expiry||{};
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Loyalty activity</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${Number(expiry.expiring_next_30_days)} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:'<p class="muted small">Your loyalty history with this business.</p>'}</div></div>
-      <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0),campaign=campaignEntitlementDisplayV99(item);return `<div class="wallet-line"><div><b>${esc(campaign.title||'Loyalty activity')}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${campaign.status?' · '+esc(campaign.status.replaceAll('_',' ')):''}</p>${campaign.detail?`<p class="muted small" style="margin-top:3px">${esc(campaign.detail)}</p>`:''}</div><span class="spacer"></span>${campaign.pending?'<span class="pill off">Pending with business</span>':`<span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':''}${delta} ${unit}</span>`}</div>`}).join('')}</div>
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Loyalty activity</h2>${Number(expiry.expiring_next_30_days||0)>0?`<p class="muted small">${esc(customerPointTotalV103(expiry.expiring_next_30_days))} ${unit} expire within 30 days${expiry.next_expiry_at?' · next '+esc(walletDate(expiry.next_expiry_at)):''}.</p>`:'<p class="muted small">Your loyalty history with this business.</p>'}</div></div>
+      <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0),campaign=campaignEntitlementDisplayV99(item);return `<div class="wallet-line"><div><b>${esc(campaign.title||'Loyalty activity')}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${campaign.status?' · '+esc(campaign.status.replaceAll('_',' ')):''}</p>${campaign.detail?`<p class="muted small" style="margin-top:3px">${esc(campaign.detail)}</p>`:''}</div><span class="spacer"></span>${campaign.pending?'<span class="pill off">Pending with business</span>':`<span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':delta<0?'−':''}${esc(customerPointTotalV103(Math.abs(delta)))} ${unit}</span>`}</div>`}).join('')}</div>
       ${activityState.nextCursor?'<button class="btn ghost sm" id="walletActivityMore" style="margin-top:12px">Load more</button>':''}`;
     if($('walletActivityMore'))$('walletActivityMore').onclick=()=>{ $('walletActivityMore').disabled=true;loadActivity(activityState.nextCursor) };
   };
@@ -5324,7 +5455,7 @@ async function renderCustomerWallet(businessSlug=null){
         const lines=Array.isArray(item.line_items)?item.line_items:[];
         return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(item.description||String(item.event_type||'Transaction').replaceAll('_',' '))}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.branch_name?' · '+esc(item.branch_name):''}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p></div><span class="spacer"></span>${net===null?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
           ${gross!==null&&net!==gross?`<p class="muted small" style="margin-top:5px">Original ${esc(historyMoney(gross))} · net after linked corrections ${esc(historyMoney(net))}</p>`:''}
-          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${earned} points earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${redeemed} points redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${removed} points removed</span>`:''}</p>`:''}
+          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} points earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} points redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} points removed</span>`:''}</p>`:''}
           ${lines.length?`<details style="margin-top:8px"><summary class="small">${lines.length} item${lines.length===1?'':'s'}</summary><div style="margin-top:5px">${lines.map(line=>`<div class="row small"><span>${Number(line.qty||0)} × ${esc(line.description||line.item_type||'Item')}</span><span class="spacer"></span><span>${esc(historyMoney(line.line_cents))}</span></div>`).join('')}</div></details>`:''}
         </div></article>`;
       }).join('')}</div>
@@ -12694,7 +12825,10 @@ async function promotionsPage(selectedPromotionId=null){
   const businessId=S.biz.id,businessName=S.biz.name,businessSlug=S.biz.slug,
     businessSnapshot=Object.freeze({id:businessId,name:businessName,slug:businessSlug});
   host.innerHTML=CUI.loadingState({title:'Promotions',iconName:'loyalty'});
-  const {data,error}=await sb.rpc('business_get_promotion_editor_v155',{p_business:businessId});
+  const [{data,error},visiblePromotionResult]=await Promise.all([
+    sb.rpc('business_get_promotion_editor_v155',{p_business:businessId}),
+    sb.rpc('business_get_visible_promotion_count_v167',{p_business:businessId})
+  ]);
   if(!host.isConnected||S.biz?.id!==businessId)return;
   if(error){
     host.innerHTML=CUI.errorState({title:'Promotions unavailable',
@@ -12711,6 +12845,7 @@ async function promotionsPage(selectedPromotionId=null){
     published=Math.max(0,Number(entitlement.published_count||0)),
     quotaUsed=Math.max(0,Number(entitlement.quota_used??published)),
     canPublishNew=entitlement.can_publish_new!==false;
+  const customerVisibleCount=visiblePromotionResult.error?null:Math.max(0,Number(visiblePromotionResult.data?.visible_count||0));
   const selected=items.find(item=>item.id===selectedPromotionId)||null;
   const today=promotionDateInputV104(new Date());
   const selectedScope=selected?.branchScope||{mode:'all',branch_ids:[],branch_names:[],label:'All branches'};
@@ -12739,6 +12874,7 @@ async function promotionsPage(selectedPromotionId=null){
     quotaProgress=max?Math.min(100,Math.round((quotaUsed/max)*100)):100;
   host.innerHTML=`<div class="promotion-studio" data-workspace-i18n>
     ${CUI.pageHeader({title:'Promotions',subtitle:'Turn one factual offer and photo into clear customer-ready marketing.',iconName:'loyalty',actions:growBackActionHtmlV138(),canWrite:true,moduleLabel:'Customer programme'})}
+    ${customerVisibleCount===0?'<aside class="notice warn" role="status"><b>0 published — your customers currently see an empty offers shelf.</b><p class="muted small" style="margin-top:5px">Publish a current offer with a customer-visible image to fill it.</p></aside>':customerVisibleCount===null?'<aside class="notice warn" role="status"><b>Customer-visible offer status could not be confirmed.</b><p class="muted small" style="margin-top:5px">Refresh before relying on the offers shelf status.</p></aside>':''}
     <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} launch offer slots used</b>
       <p class="muted small" style="margin-top:4px">${published} currently published. Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}. Customers see no more than two current offers at once.</p></div>
       <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} launch offer slots used" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>

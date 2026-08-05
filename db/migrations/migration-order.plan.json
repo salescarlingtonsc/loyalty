@@ -1143,6 +1143,12 @@
       "path": "db/migrations/20260804_nestly_v164_account_signup_triage.sql",
       "semanticVersion": "v164",
       "proposedDeployVersion": "20260804190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260805_nestly_v167_customer_retention_offers.sql",
+      "semanticVersion": "v167",
+      "proposedDeployVersion": "20260805100000"
     }
   ]
 }

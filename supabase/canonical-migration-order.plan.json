@@ -1144,6 +1144,12 @@
       "version": "20260804190000",
       "name": "nestly_v164_account_signup_triage",
       "sourcePath": "db/migrations/20260804_nestly_v164_account_signup_triage.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260805100000",
+      "name": "nestly_v167_customer_retention_offers",
+      "sourcePath": "db/migrations/20260805_nestly_v167_customer_retention_offers.sql"
     }
   ]
 }

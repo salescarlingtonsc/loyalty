@@ -27,10 +27,11 @@ test('customer programme makes at most two promotions primary and keeps identity
 });
 
 test('customer consumes the server-limited linked-business promotion projection',()=>{
-  assert.match(wallet,/customer_get_promotions_v104/);
-  assert.match(wallet,/p_business:businessId,p_branch:null,p_locale:'en'/);
+  assert.match(wallet,/customer_get_promotions_v155/);
+  assert.match(wallet,/p_business:businessId,p_branch:selectedBranchId\|\|null,p_locale:'en'/);
   assert.match(wallet,/Array\.isArray\(promotionsResult\.data\?\.items\)\?promotionsResult\.data\.items:\[\]/);
-  assert.match(wallet,/promotionsResult\.error\s*\?presentation\.offers\.slice\(0,2\)/);
+  assert.match(wallet,/const programmeOffersStatus=promotionsResult\.error\?'error':'ready'/);
+  assert.match(wallet,/promotionsResult\.error\s*\?\[\]/);
   assert.doesNotMatch(wallet,/businessId\?sb\.from\('business_customer_content_v95'/);
 });
 
