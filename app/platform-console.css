@@ -350,6 +350,20 @@
 .platform-ai-report-body ul,.platform-ai-report-body ol{margin:0 0 10px;padding-left:20px}
 .platform-ai-report-body li{margin-bottom:6px}
 .platform-ai-report-body b{color:var(--ink)}
+/* v177 read-only workspace mirror (firm drawer -> full-screen mirror). */
+.platform-workspace-mirror-card .platform-actions{align-items:center;flex-wrap:wrap;gap:8px}
+.platform-workspace-mirror-controls{
+  display:grid;gap:12px;margin-bottom:14px;padding:14px;border:1px solid var(--hair);
+  border-radius:12px;background:#FBFAF8
+}
+.platform-workspace-mirror-controls .cui-field{margin:0;max-width:360px}
+.platform-workspace-mirror-controls select{min-height:44px;width:100%}
+.platform-workspace-mirror-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.platform-workspace-mirror-tabs button{min-height:44px;display:inline-flex;align-items:center;gap:6px}
+.platform-workspace-mirror-tabs button.on{
+  border-color:var(--ink);background:var(--ink);color:#fff
+}
+.platform-workspace-mirror>[data-mirror-body]{display:grid;gap:14px}
 .platform-insight{
   display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:14px;
   border:1px solid var(--hair);border-radius:12px;background:#FBFAF8
@@ -623,6 +637,8 @@
   .platform-scoped-search .btn{width:100%;justify-content:center}
   .platform-permission-row{align-items:flex-start;flex-direction:column}
   .platform-permission-row select{width:100%}
+  .platform-workspace-mirror-controls .cui-field{max-width:none}
+  .platform-workspace-mirror-tabs button{flex:1 1 40%;min-width:44px;justify-content:center}
 }
 @media(max-width:390px){
   .platform-kpis{grid-template-columns:1fr}

@@ -2152,6 +2152,123 @@
       'Firm / UEN':'Firma / UEN','First purchase':'Pembelian pertama','Last purchase':'Pembelian terakhir','All sectors':'Semua sektor','No primary contact':'Tiada hubungan utama'
     })
   });
+  // v177 read-only workspace mirror copy.
+  const PLATFORM_COPY_V177=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Workspace mirror':'工作区镜像',
+      'Open workspace mirror':'打开工作区镜像',
+      'Read-only mirror':'只读镜像',
+      'See what this firm sees in its own workspace. No sign-in is borrowed and nothing here can be changed.':'查看该企业在自己工作区中看到的内容。不会借用其登录身份，此处也无法更改任何数据。',
+      'Nothing on this screen can change this firm. Customer names are shortened and no phone number or email address is ever shown.':'此页面无法更改该企业的任何数据。顾客姓名已作缩写处理，且始终不显示电话号码或电邮地址。',
+      'Workspace section':'工作区栏目',
+      'Workspace branch':'工作区分店',
+      'Every branch':'所有分店',
+      'Programmes':'计划',
+      'Team':'团队',
+      'Loading the firm view…':'正在加载企业视图…',
+      'Workspace mirror unavailable':'工作区镜像不可用',
+      'Close mirror':'关闭镜像',
+      'Approval status':'审批状态',
+      'Workspace state':'工作区状态',
+      'Last 30 days':'最近 30 天',
+      'Previous 30 days':'前 30 天',
+      'New customers':'新顾客',
+      'Customers served':'服务顾客数',
+      'Account opens':'账户开通',
+      'Points outstanding':'未兑积分',
+      'Credit outstanding':'未用store credit',
+      'Points balance and credit balance are whole-firm totals.':'积分余额与store credit余额为全企业合计。',
+      'Next 7 days':'未来 7 天',
+      'Guest':'顾客',
+      'Service':'服务项目',
+      'Time':'时间',
+      'Party':'人数',
+      'No appointments in the next seven days.':'未来七天没有预约。',
+      'Total customers':'顾客总数',
+      'Joined in the last 30 days':'最近 30 天加入',
+      'Joined in the previous 30 days':'前 30 天加入',
+      'Recent joins':'最近加入',
+      'Joined':'加入日期',
+      'No customers have joined this firm yet.':'该企业尚无顾客加入。',
+      'Loyalty programme':'忠诚度计划',
+      'Not configured yet':'尚未设置',
+      'Active rewards':'启用中的奖励',
+      'Active return offers':'启用中的回访优惠',
+      'Active campaigns':'进行中的活动',
+      'Reward tiers':'奖励等级',
+      'Referral programme':'推荐计划',
+      'Team roster':'团队名册',
+      'Assigned branches':'已分配分店',
+      'Has login':'拥有登录账号',
+      'Showing the first {count} rows.':'仅显示前 {count} 行。',
+      'This firm has no team members yet.':'该企业尚未添加团队成员。',
+      'Measure':'指标','Setting':'设置项','Value':'数值',
+      'Points':'积分','Reward':'奖励','Expiry':'有效期',
+      'Workspace mirror overview':'工作区镜像概览',
+      'Workspace mirror appointments':'工作区镜像预约',
+      'Workspace mirror recent joins':'工作区镜像最近加入顾客',
+      'Workspace mirror loyalty programme':'工作区镜像忠诚度计划',
+      'Workspace mirror referral programme':'工作区镜像推荐计划',
+      'Workspace mirror team roster':'工作区镜像团队名册'
+    }),
+    ms:Object.freeze({
+      'Workspace mirror':'Cerminan ruang kerja',
+      'Open workspace mirror':'Buka cerminan ruang kerja',
+      'Read-only mirror':'Cerminan baca sahaja',
+      'See what this firm sees in its own workspace. No sign-in is borrowed and nothing here can be changed.':'Lihat apa yang firma ini lihat dalam ruang kerjanya sendiri. Tiada log masuk dipinjam dan tiada apa-apa di sini boleh diubah.',
+      'Nothing on this screen can change this firm. Customer names are shortened and no phone number or email address is ever shown.':'Tiada apa-apa pada skrin ini boleh mengubah firma ini. Nama pelanggan dipendekkan dan nombor telefon atau alamat e-mel tidak pernah dipaparkan.',
+      'Workspace section':'Bahagian ruang kerja',
+      'Workspace branch':'Cawangan ruang kerja',
+      'Every branch':'Semua cawangan',
+      'Programmes':'Program',
+      'Team':'Pasukan',
+      'Loading the firm view…':'Memuatkan paparan firma…',
+      'Workspace mirror unavailable':'Cerminan ruang kerja tidak tersedia',
+      'Close mirror':'Tutup cerminan',
+      'Approval status':'Status kelulusan',
+      'Workspace state':'Keadaan ruang kerja',
+      'Last 30 days':'30 hari lepas',
+      'Previous 30 days':'30 hari sebelumnya',
+      'New customers':'Pelanggan baharu',
+      'Customers served':'Pelanggan dilayan',
+      'Account opens':'Pembukaan akaun',
+      'Points outstanding':'Mata belum ditebus',
+      'Credit outstanding':'Kredit belum digunakan',
+      'Points balance and credit balance are whole-firm totals.':'Baki mata dan baki kredit ialah jumlah keseluruhan firma.',
+      'Next 7 days':'7 hari akan datang',
+      'Guest':'Tetamu',
+      'Service':'Perkhidmatan',
+      'Time':'Masa',
+      'Party':'Bilangan orang',
+      'No appointments in the next seven days.':'Tiada janji temu dalam tujuh hari akan datang.',
+      'Total customers':'Jumlah pelanggan',
+      'Joined in the last 30 days':'Menyertai dalam 30 hari lepas',
+      'Joined in the previous 30 days':'Menyertai dalam 30 hari sebelumnya',
+      'Recent joins':'Penyertaan terkini',
+      'Joined':'Tarikh menyertai',
+      'No customers have joined this firm yet.':'Belum ada pelanggan menyertai firma ini.',
+      'Loyalty programme':'Program kesetiaan',
+      'Not configured yet':'Belum ditetapkan',
+      'Active rewards':'Ganjaran aktif',
+      'Active return offers':'Tawaran pulang aktif',
+      'Active campaigns':'Kempen aktif',
+      'Reward tiers':'Peringkat ganjaran',
+      'Referral programme':'Program rujukan',
+      'Team roster':'Senarai pasukan',
+      'Assigned branches':'Cawangan ditugaskan',
+      'Has login':'Mempunyai log masuk',
+      'Showing the first {count} rows.':'Memaparkan {count} baris pertama sahaja.',
+      'This firm has no team members yet.':'Firma ini belum mempunyai ahli pasukan.',
+      'Measure':'Ukuran','Setting':'Tetapan','Value':'Nilai',
+      'Points':'Mata','Reward':'Ganjaran','Expiry':'Tempoh luput',
+      'Workspace mirror overview':'Ringkasan cerminan ruang kerja',
+      'Workspace mirror appointments':'Janji temu cerminan ruang kerja',
+      'Workspace mirror recent joins':'Penyertaan terkini cerminan ruang kerja',
+      'Workspace mirror loyalty programme':'Program kesetiaan cerminan ruang kerja',
+      'Workspace mirror referral programme':'Program rujukan cerminan ruang kerja',
+      'Workspace mirror team roster':'Senarai pasukan cerminan ruang kerja'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -2164,6 +2281,7 @@
       ??PLATFORM_COPY_META[platformLocale]?.[key]
       ??PLATFORM_COPY_RENDERERS[platformLocale]?.[key]
       ??PLATFORM_COPY_V105[platformLocale]?.[key]
+      ??PLATFORM_COPY_V177[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -3475,6 +3593,228 @@
       ||overlay.querySelector('[data-module-mode]');
     focusTarget?.focus();
   }
+  // --------------------------------------------------------------------------
+  // v177 read-only workspace mirror.
+  //
+  // The console never borrows the firm's session. Every panel below renders a
+  // snapshot returned by public.platform_workspace_mirror_v177, which
+  // self-authorizes (super admin or the assigned consultant) and audits every
+  // open. There is deliberately no control here that writes anything, and the
+  // customer-facing sections carry abbreviated labels only.
+  // --------------------------------------------------------------------------
+  const workspaceMirrorSections=Object.freeze([
+    Object.freeze({key:'overview',label:'Overview',iconName:'reports'}),
+    Object.freeze({key:'appointments',label:'Appointments',iconName:'appointments'}),
+    Object.freeze({key:'customers',label:'Customers',iconName:'customers'}),
+    Object.freeze({key:'programmes',label:'Programmes',iconName:'loyalty'}),
+    Object.freeze({key:'staff',label:'Team',iconName:'staff'})
+  ]);
+  function workspaceMirrorCardHtml(CUI) {
+    return `<section class="card platform-detail-section platform-workspace-mirror-card" aria-labelledby="workspaceMirrorCardTitle">
+      <div class="platform-list-row"><div><h2 id="workspaceMirrorCardTitle">${escapeHtml(pt("Workspace mirror"))}</h2>
+        <p class="muted small">${escapeHtml(pt("See what this firm sees in its own workspace. No sign-in is borrowed and nothing here can be changed."))}</p></div>
+        <div class="platform-actions no-print">${CUI.status(pt('Read-only mirror'),'off')}
+          <button type="button" class="btn ghost sm" data-workspace-mirror>${escapeHtml(pt("Open workspace mirror"))}</button></div>
+      </div>
+    </section>`;
+  }
+  function workspaceMirrorKpisHtml(cards,CUI,label) {
+    return `<section class="platform-kpis" aria-label="${escapeHtml(pt(label))}">${cards.map(([caption,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(caption))}</span></div><div class="platform-kpi-value">${escapeHtml(String(value))}</div></article>`).join('')}</section>`;
+  }
+  function workspaceMirrorOverviewHtml(data,CUI,currencyCode) {
+    const sales=asObject(data.sales),current=asObject(sales.current),prior=asObject(sales.prior);
+    const growth=asObject(sales.growth),opens=asObject(data.account_opens);
+    const outstanding=asObject(data.outstanding),counts=asObject(data.counts);
+    const openCurrent=asObject(opens.current),openPrior=asObject(opens.prior);
+    const growthLabel=growth.net_revenue_pct===null||growth.net_revenue_pct===undefined
+      ?'—':`${Number(growth.net_revenue_pct)>0?'+':''}${Number(growth.net_revenue_pct).toFixed(1)}%`;
+    return `${workspaceMirrorKpisHtml([
+      ['Net revenue',currency(current.net_revenue_cents,currencyCode),'reports'],
+      ['Visits',current.visits??0,'till'],
+      ['New customers',current.new_customers??0,'customers'],
+      ['Account opens',openCurrent.opens??0,'customers']
+    ],CUI,'Last 30 days')}
+    ${CUI.card({title:'Last 30 days',description:'Previous 30 days',body:CUI.table({
+      caption:'Workspace mirror overview',
+      headers:['Measure','Last 30 days','Previous 30 days'],
+      rows:[
+        [pt('Net revenue'),currency(current.net_revenue_cents,currencyCode),currency(prior.net_revenue_cents,currencyCode)],
+        [pt('Visits'),String(current.visits??0),String(prior.visits??0)],
+        [pt('Customers served'),String(current.customers_served??0),String(prior.customers_served??0)],
+        [pt('New customers'),String(current.new_customers??0),String(prior.new_customers??0)],
+        [pt('Account opens'),String(openCurrent.opens??0),String(openPrior.opens??0)]
+      ]
+    })})}
+    ${workspaceMirrorKpisHtml([
+      ['Points outstanding',outstanding.points??0,'loyalty'],
+      ['Credit outstanding',currency(outstanding.credit_cents,currencyCode),'reports'],
+      ['Total customers',counts.customers??0,'customers'],
+      ['Team',counts.active_staff??0,'staff']
+    ],CUI,'Workspace mirror')}
+    <p class="muted small">${escapeHtml(pt('Points balance and credit balance are whole-firm totals.'))} ${escapeHtml(pt('Net revenue'))}: ${escapeHtml(growthLabel)}</p>`;
+  }
+  function workspaceMirrorAppointmentsHtml(data,CUI) {
+    const rows=asArray(data.rows);
+    return `${CUI.card({
+      title:'Next 7 days',
+      description:'Read-only mirror',
+      body:rows.length?`${CUI.table({
+        caption:'Workspace mirror appointments',
+        headers:['Time','Guest','Service','Team','Party','Status','Branch'],
+        rows:rows.map(row=>[
+          dateTime(row.starts_at),String(row.guest_label||'—'),String(row.service_name||'—'),
+          String(row.staff_name||'—'),String(row.party_size??'—'),
+          platformStatus(row.status),String(row.branch_name||'—')
+        ])
+      })}${data.truncated?`<p class="muted small">${escapeHtml(pt('Showing the first {count} rows.',{count:data.row_cap??50}))}</p>`:''}`
+        :localizedEmptyHtml('No appointments in the next seven days.')
+    })}`;
+  }
+  function workspaceMirrorCustomersHtml(data,CUI) {
+    const recent=asArray(data.recent);
+    return `${workspaceMirrorKpisHtml([
+      ['Total customers',data.total??0,'customers'],
+      ['Joined in the last 30 days',data.joined_last_30_days??0,'customers'],
+      ['Joined in the previous 30 days',data.joined_prior_30_days??0,'customers']
+    ],CUI,'Customers')}
+    ${CUI.card({
+      title:'Recent joins',
+      description:'Nothing on this screen can change this firm. Customer names are shortened and no phone number or email address is ever shown.',
+      body:recent.length?CUI.table({
+        caption:'Workspace mirror recent joins',
+        headers:['Customer','Joined','Visits'],
+        rows:recent.map(row=>[String(row.label||'—'),String(row.joined_on||'—'),String(row.visit_count??0)])
+      }):localizedEmptyHtml('No customers have joined this firm yet.')
+    })}`;
+  }
+  function workspaceMirrorProgrammesHtml(data,CUI,currencyCode) {
+    const loyalty=asObject(data.loyalty),rewards=asObject(data.rewards);
+    const promotions=asObject(data.promotions),referral=asObject(data.referral);
+    return `${CUI.card({
+      title:'Loyalty programme',
+      body:loyalty.configured?CUI.table({
+        caption:'Workspace mirror loyalty programme',
+        headers:['Setting','Value'],
+        rows:[
+          [pt('Active'),pt(loyalty.active?'Yes':'No')],
+          [pt('Loyalty'),platformStatus(loyalty.loyalty_model)],
+          [pt('Points'),String(loyalty.earn_points_per_dollar??'—')],
+          [pt('Reward'),currency(loyalty.reward_credit_cents,currencyCode)],
+          [pt('Expiry'),platformStatus(loyalty.expiry_mode)]
+        ]
+      }):localizedEmptyHtml('Not configured yet')
+    })}
+    ${workspaceMirrorKpisHtml([
+      ['Active rewards',rewards.active??0,'loyalty'],
+      ['Reward tiers',data.tiers??0,'loyalty'],
+      ['Active return offers',promotions.active_retention_programmes??0,'retention'],
+      ['Active campaigns',promotions.active_campaigns??0,'retention']
+    ],CUI,'Programmes')}
+    ${CUI.card({
+      title:'Referral programme',
+      body:referral.configured?CUI.table({
+        caption:'Workspace mirror referral programme',
+        headers:['Setting','Value'],
+        rows:[
+          [pt('Active'),pt(referral.enabled?'Yes':'No')],
+          [pt('Reward'),currency(referral.reward_cents,currencyCode)]
+        ]
+      }):localizedEmptyHtml('Not configured yet')
+    })}`;
+  }
+  function workspaceMirrorStaffHtml(data,CUI) {
+    const rows=asArray(data.rows);
+    return `${workspaceMirrorKpisHtml([
+      ['Team',data.total??0,'staff'],
+      ['Active',data.active??0,'staff'],
+      ['Has login',data.with_login??0,'staff']
+    ],CUI,'Team')}
+    ${CUI.card({
+      title:'Team roster',
+      body:rows.length?CUI.table({
+        caption:'Workspace mirror team roster',
+        headers:['Team','Role','Active','Assigned branches'],
+        rows:rows.map(row=>[
+          String(row.full_name||'—'),platformStatus(row.role),
+          pt(row.active?'Yes':'No'),String(row.branch_count??0)
+        ])
+      }):localizedEmptyHtml('This firm has no team members yet.')
+    })}`;
+  }
+  function workspaceMirrorSectionHtml(section,payload,CUI) {
+    const data=asObject(payload.data),currencyCode=payload.currency||'SGD';
+    if(section==='appointments')return workspaceMirrorAppointmentsHtml(data,CUI);
+    if(section==='customers')return workspaceMirrorCustomersHtml(data,CUI);
+    if(section==='programmes')return workspaceMirrorProgrammesHtml(data,CUI,currencyCode);
+    if(section==='staff')return workspaceMirrorStaffHtml(data,CUI);
+    return workspaceMirrorOverviewHtml(data,CUI,currencyCode);
+  }
+  function workspaceMirrorControlsHtml(payload,section,CUI) {
+    const workspace=asObject(payload.workspace),branches=asArray(payload.branches);
+    const selected=payload.branch_id?String(payload.branch_id):'';
+    return `<div class="platform-workspace-mirror-controls">
+      <div class="platform-actions">${CUI.status(pt('Read-only mirror'),'off')}
+        ${CUI.status(platformStatus(workspace.approval_status),workspace.approval_status==='approved'?'ok':'new')}
+        ${workspace.workspace_paused?CUI.status(pt('Paused'),'no'):''}</div>
+      <label class="cui-field"><span class="field-label">${escapeHtml(pt('Workspace branch'))}</span>
+        <select data-mirror-branch aria-label="${escapeHtml(pt('Workspace branch'))}">
+          <option value=""${selected?'':' selected'}>${escapeHtml(pt('Every branch'))}</option>
+          ${branches.map(branch=>`<option value="${escapeHtml(String(branch.id))}"${selected===String(branch.id)?' selected':''}>${escapeHtml(String(branch.name||''))}</option>`).join('')}
+        </select></label>
+      <div class="platform-workspace-mirror-tabs" role="tablist" aria-label="${escapeHtml(pt('Workspace section'))}">
+        ${workspaceMirrorSections.map(item=>`<button type="button" role="tab" class="btn ghost sm${item.key===section?' on':''}" aria-selected="${item.key===section}" data-mirror-section="${item.key}">${CUI.icon(item.iconName,{size:16})}<span>${escapeHtml(pt(item.label))}</span></button>`).join('')}
+      </div>
+    </div>`;
+  }
+  function openWorkspaceMirror(firm,context) {
+    const {CUI,sb}=context,overlay=document.createElement('div');
+    let section='overview',branch=null,payload=null;
+    overlay.className='platform-drawer';overlay.tabIndex=-1;
+    overlay.innerHTML=`<section class="platform-drawer-panel platform-workspace-mirror" aria-labelledby="workspaceMirrorTitle">
+      <div class="platform-drawer-head"><div><h1 id="workspaceMirrorTitle" style="font-size:1.45rem">${escapeHtml(firm.name)}</h1>
+        <p class="muted small">${escapeHtml(pt('Workspace mirror'))} · ${escapeHtml(pt('Read-only mirror'))}</p></div>
+        <button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close mirror'))}">${CUI.icon('close',{size:18})}</button></div>
+      <div data-mirror-controls></div>
+      <div data-mirror-body>${loading(CUI,'Workspace mirror','Loading the firm view…','reports')}</div>
+      <p class="muted small">${escapeHtml(pt('Nothing on this screen can change this firm. Customer names are shortened and no phone number or email address is ever shown.'))}</p>
+    </section>`;
+    document.body.appendChild(overlay);
+    let deactivate;
+    const close=()=>closeOverlay(overlay,deactivate);
+    overlay.querySelector('.platform-drawer-close').onclick=close;
+    deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
+    const controls=overlay.querySelector('[data-mirror-controls]');
+    const body=overlay.querySelector('[data-mirror-body]');
+    const bind=()=>{
+      const branchSelect=controls.querySelector('[data-mirror-branch]');
+      if(branchSelect)branchSelect.onchange=()=>{branch=branchSelect.value||null;load()};
+      controls.querySelectorAll('[data-mirror-section]').forEach(button=>{
+        button.onclick=()=>{section=button.dataset.mirrorSection;load()};
+      });
+    };
+    const load=async()=>{
+      body.innerHTML=loading(CUI,'Workspace mirror','Loading the firm view…','reports');
+      try{
+        payload=asObject(await rpc(sb,'platform_workspace_mirror_v177',{
+          p_business:firmId(firm),p_branch:branch,p_section:section
+        }));
+        if(!body.isConnected)return;
+        controls.innerHTML=workspaceMirrorControlsHtml(payload,section,CUI);
+        body.innerHTML=workspaceMirrorSectionHtml(section,payload,CUI);
+        bind();
+      }catch(error){
+        if(!body.isConnected)return;
+        body.innerHTML=error?.platformUpdateRequired
+          ?systemUpdateRequired(CUI,pt('Workspace mirror'))
+          :CUI.errorState({
+            title:'Workspace mirror unavailable',
+            message:platformErrorMessage(error,'Please try again.')
+          });
+        bind();
+      }
+    };
+    load();
+  }
   function openEnterpriseFirm(firm,context,filters) {
     const {CUI,sb}=context,overlay=document.createElement('div');
     overlay.className='platform-drawer';overlay.tabIndex=-1;
@@ -3497,7 +3837,7 @@
       p_business:firmId(firm),p_limit:12
     }).catch(()=>null);
     const renderBody=()=>{
-      body.innerHTML=`${firmGovernanceHtml(firm,CUI,control,effective,context,{sectorProfiles,sectorAssignment})}${aiFirmReportsHtml(aiReports,CUI,context.canWrite===true)}${enterpriseDetailTable(firm,CUI,customers,page)}`;
+      body.innerHTML=`${firmGovernanceHtml(firm,CUI,control,effective,context,{sectorProfiles,sectorAssignment})}${workspaceMirrorCardHtml(CUI)}${aiFirmReportsHtml(aiReports,CUI,context.canWrite===true)}${enterpriseDetailTable(firm,CUI,customers,page)}`;
       bind();
     };
     const refreshAiReports=async()=>{
@@ -3542,6 +3882,11 @@
           more.title=platformErrorMessage(error,'Customer page unavailable');
         }
       };
+      // Available to every scoped console role: the RPC itself enforces the
+      // real rule (super admin, or the consultant assigned to this firm).
+      body.querySelector('[data-workspace-mirror]')?.addEventListener('click',()=>{
+        openWorkspaceMirror(firm,context);
+      });
       body.querySelector('[data-ai-report-generate]')?.addEventListener('click',()=>{
         aiReportGenerateModal(firm,context,refreshAiReports);
       });

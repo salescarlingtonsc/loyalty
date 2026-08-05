@@ -1209,6 +1209,12 @@
       "path": "db/migrations/20260806_nestly_v176_ai_firm_reports.sql",
       "semanticVersion": "v176",
       "proposedDeployVersion": "20260806100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v177_workspace_mirror.sql",
+      "semanticVersion": "v177",
+      "proposedDeployVersion": "20260806110000"
     }
   ]
 }
