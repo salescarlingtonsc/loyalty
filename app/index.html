@@ -14016,6 +14016,35 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     const settingsDetails=$('growSecondarySettings');
     if(settingsDetails)settingsDetails.open=true;
   }
+  /* V173: every not-set-up programme row gets a concrete "Suggested" strip with a one-tap
+     "Use suggestion" that opens the right editor prefilled. Suggestions are plain sector
+     defaults an owner can change — never auto-published. Strips are siblings, not children,
+     because the rows themselves are <button>/<a> elements (no nested interactive controls). */
+  if(canSetupGrow){
+    const suggestions={
+      birthday:{text:'<b>10% off</b> during their birthday month',
+        prefill:{kind:'birthday',label:'Birthday treat',description:'10% off any visit during your birthday month.',discount:10}},
+      bringback:{text:'<b>S$10 off</b> when they return within <b>30 days</b>',
+        prefill:{kind:'bringback',name:'We miss you — S$10 off',goalVisits:1,withinDays:30,value:10}},
+      referrals:{text:'friend spends <b>S$30+</b>, referrer gets <b>S$10</b> credit',
+        prefill:{kind:'referral',minSpend:30,reward:10}}
+    };
+    document.querySelectorAll('.grow-programme-row').forEach(row=>{
+      const kind=row.dataset.programmeKind;
+      const suggestion=suggestions[kind];
+      if(!suggestion)return;
+      const pill=String(row.querySelector('.pill')?.textContent||'').toLowerCase();
+      if(!pill.includes('not set up')||row.hidden)return;
+      if(row.nextElementSibling?.classList?.contains('programme-suggest'))return;
+      row.insertAdjacentHTML('afterend',`<div class="programme-suggest" data-suggest-kind="${esc(kind)}"><span>✨ Suggested: ${suggestion.text}</span><button type="button" class="btn sm" data-suggest-use="${esc(kind)}">Use suggestion</button></div>`);
+      row.parentElement.querySelector(`[data-suggest-use="${kind}"]`).onclick=()=>{
+        pendingProgrammeSuggestV172=suggestion.prefill;
+        if(kind==='referrals'){nav('#/referrals');return}
+        /* Reuse the row's own click path (draft creation / auto-setup / surface mount). */
+        if(row.matches('button'))row.click();else if(row.getAttribute('href'))nav(row.getAttribute('href'));
+      };
+    });
+  }
   document.querySelectorAll('[data-product-cost-save]').forEach(button=>button.onclick=async()=>{
     const productId=button.dataset.productCostSave;
     const input=document.querySelector(`[data-product-cost="${CSS.escape(productId)}"]`);
@@ -14382,35 +14411,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
       });
     };
-  }
-  /* V173: every not-set-up programme row gets a concrete "Suggested" strip with a one-tap
-     "Use suggestion" that opens the right editor prefilled. Suggestions are plain sector
-     defaults an owner can change — never auto-published. Strips are siblings, not children,
-     because the rows themselves are <button>/<a> elements (no nested interactive controls). */
-  if(canSetupGrow){
-    const suggestions={
-      birthday:{text:'<b>10% off</b> during their birthday month',
-        prefill:{kind:'birthday',label:'Birthday treat',description:'10% off any visit during your birthday month.',discount:10}},
-      bringback:{text:'<b>S$10 off</b> when they return within <b>30 days</b>',
-        prefill:{kind:'bringback',name:'We miss you — S$10 off',goalVisits:1,withinDays:30,value:10}},
-      referrals:{text:'friend spends <b>S$30+</b>, referrer gets <b>S$10</b> credit',
-        prefill:{kind:'referral',minSpend:30,reward:10}}
-    };
-    document.querySelectorAll('.grow-programme-row').forEach(row=>{
-      const kind=row.dataset.programmeKind;
-      const suggestion=suggestions[kind];
-      if(!suggestion)return;
-      const pill=String(row.querySelector('.pill')?.textContent||'').toLowerCase();
-      if(!pill.includes('not set up')||row.hidden)return;
-      if(row.nextElementSibling?.classList?.contains('programme-suggest'))return;
-      row.insertAdjacentHTML('afterend',`<div class="programme-suggest" data-suggest-kind="${esc(kind)}"><span>✨ Suggested: ${suggestion.text}</span><button type="button" class="btn sm" data-suggest-use="${esc(kind)}">Use suggestion</button></div>`);
-      row.parentElement.querySelector(`[data-suggest-use="${kind}"]`).onclick=()=>{
-        pendingProgrammeSuggestV172=suggestion.prefill;
-        if(kind==='referrals'){nav('#/referrals');return}
-        /* Reuse the row's own click path (draft creation / auto-setup / surface mount). */
-        if(row.matches('button'))row.click();else if(row.getAttribute('href'))nav(row.getAttribute('href'));
-      };
-    });
   }
   const growRewardsRetry=$('growRewardsRetry');
   if(growRewardsRetry)growRewardsRetry.onclick=()=>growPage(routedSurface,hashParam,routedFocus);

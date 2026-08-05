@@ -47,3 +47,16 @@ test('each suggestion kind has a consumer that fills the real editor fields once
   const clears = app.match(/const suggest=pendingProgrammeSuggestV172;pendingProgrammeSuggestV172=null;/g) || [];
   assert.ok(clears.length >= 3, 'all three consumers must consume exactly once');
 });
+
+test('the suggestion wiring lives in growPage render path, not a nested helper', () => {
+  // It first shipped inside openRewardsAutoSetup, so it never ran on page render and no
+  // strip ever appeared in production. Position is the behaviour here.
+  const block = app.indexOf('const suggestions={');
+  const growPage = app.indexOf('async function growPage');
+  const mountSurface = app.indexOf('async function mountGrowSurface');
+  assert.ok(block > growPage, 'must be inside growPage');
+  assert.ok(block < mountSurface,
+    'must run in growPage render path, before the nested mountGrowSurface/auto-setup helpers');
+  const filter = app.indexOf("const show=programmeView==='ongoing'?isOngoing:!isOngoing;");
+  assert.ok(block > filter, 'must run after the tab filter so hidden rows are skipped');
+});
