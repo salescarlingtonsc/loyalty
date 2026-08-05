@@ -1967,9 +1967,29 @@ async function copyTextToClipboard(value,{button=null,success='Copied',failure='
     if(button?.isConnected)button.disabled=false;
   }
 }
+const OWNER_ERROR_RULES_V170=[
+  [/permission|42501|not authorized|authorization/i,"You don't have access to do that. Ask an owner to check your permissions."],
+  [/JWT|token|session/i,'Your session expired. Sign in again.'],
+  [/Failed to fetch|NetworkError|network|timeout/i,'Connection problem. Check your internet and try again.'],
+  [/duplicate|already exists|unique/i,'This already exists — no duplicate was created.'],
+  [/stale_evaluation/i,'Prices changed while you were working. The cart was re-checked — try again.'],
+  [/total_zero_not_supported/i,"This sale totals zero and can't be recorded."],
+  [/violates|constraint|invalid input|22023|23514/i,"That change couldn't be saved. Check the details and try again."],
+];
+const OWNER_ERROR_RAW_MARKERS_V170=/violates|constraint|invalid input|permission denied|denied for|failed to fetch|networkerror|jwt|pgrst|sqlstate|schema cache|null value|syntax error|"|_[a-z]{2,}_|\b(?:42501|22023|23514|23505|23503|23502|P0001)\b/i;
+const ownerAuthoredErrorV170=raw=>
+  /^[A-Z]/.test(raw)&&/\s/.test(raw)&&raw.length<=180&&!OWNER_ERROR_RAW_MARKERS_V170.test(raw);
+const ownerErrorText=error=>{
+  const raw=String(error?.message||error||'').trim();
+  if(!raw)return 'Something went wrong. Nothing was changed.';
+  if(ownerAuthoredErrorV170(raw))return raw;
+  const probe=[raw,error?.code,error?.details].filter(Boolean).join(' ');
+  for(const rule of OWNER_ERROR_RULES_V170)if(rule[0].test(probe))return rule[1];
+  return 'Something went wrong. Nothing was changed. ('+raw.slice(0,120)+')';
+};
 const fail=e=>{
   console.error(e);
-  const source=e?.message||String(e);
+  const source=ownerErrorText(e);
   const translated=root.querySelector('.shell')?workspaceTranslationV97(source):source;
   const message=root.querySelector('.shell')&&workspaceLocale!=='en'&&translated===source
     ?workspaceTranslationV97('Something went wrong. Please try again.')
