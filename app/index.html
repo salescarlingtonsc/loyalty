@@ -1981,6 +1981,9 @@ const OWNER_ERROR_NOISE_RULES_V170=[
   [/jwt expired|invalid jwt|jwserror|auth session missing|refresh token/i,'Your session expired. Sign in again.'],
   [/failed to fetch|networkerror|load failed|fetch failed|timed? ?out/i,'Connection problem. Check your internet and try again.'],
   [/schema cache|pgrst\d+|syntax error at or near/i,'Something went wrong on our side. Try again, or contact Peekaa if it continues.'],
+  /* Browser-runtime TypeErrors (WebKit: "undefined is not an object (evaluating ...)",
+     Chromium: "Cannot read properties of undefined") are app bugs, never owner input errors. */
+  [/undefined is not an object|null is not an object|cannot read propert|is not a function|is not defined/i,'Something went wrong on our side. Try again, or contact Peekaa if it continues.'],
 ];
 const ownerErrorText=error=>{
   const raw=String(error?.message||(typeof error==='string'?error:'')||'').trim();
@@ -8478,8 +8481,10 @@ function renderShell(page){
     console.error(error);
     if(shellRenderEpoch!==renderEpoch||!main.isConnected)return;
     const title=MODULES[page[0]]?.[1]||(page[0]==='client'?'Customer':'Workspace');
-    main.innerHTML=CUI.errorState({title:`${title} unavailable`,message:error?.message||'Please try again.'});
-    CUI.announce(error?.message||'Page unavailable',{assertive:true});
+    /* V172: route through the same owner-language mapper as fail() — this card previously
+       printed raw browser TypeErrors ("undefined is not an object (evaluating ...)"). */
+    main.innerHTML=CUI.errorState({title:`${title} unavailable`,message:ownerErrorText(error)||'Please try again.'});
+    CUI.announce(ownerErrorText(error)||'Page unavailable',{assertive:true});
     const retry=$('routeRetry');if(retry)retry.onclick=()=>renderShell(page);
   }).finally(()=>{
     if(shellRenderEpoch!==renderEpoch||!main.isConnected)return;
@@ -14001,8 +14006,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   async function mountGrowSurface(surface,{focus=true,draftOverride=null,focusTarget=null,activateTarget=false,rewardId=null,birthdayId=null,editProgramId=null}={}){
     const draft=draftOverride||growDraftVersionId;
     const editorIntent=surface==='rewards'?growLoyaltyEditorIntentV139({focusTarget,rewardId}):null;
-    $('growOverview')?.classList.add('grow-editor-active');
     const definition=surfaceDefinition[surface];
+    /* V172: an unknown surface must never throw. #/grow/ongoing|available|settings carry the
+       tab name in the deep-link parameter slot, and before this guard the handler built
+       {surface:'overview'}, read .hash off an undefined dictionary entry, and took the whole
+       workspace down with "undefined is not an object" — from the page's own tabs. */
+    if(!definition){console.error('unknown grow surface',surface);return}
+    $('growOverview')?.classList.add('grow-editor-active');
     const protectedStudioReview=surface==='studio'&&draft&&sessionStorage.getItem(`nestly:grow-publish-review:${draft}`)==='1';
     const suffix=draft&&(['rewards','winback'].includes(surface)||protectedStudioReview)?`/${draft}`:'';
     const exactPath=growFocusPath({surface,focusTarget,activateTarget,rewardId,editProgramId});
@@ -14254,8 +14264,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
   });
   /* A deep link is a deliberate request to open an engine. The normal #/loyalty and
-     #/retention destinations stop at this overview, so ordinary Grow use stays coherent. */
-  if((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio'){
+     #/retention destinations stop at this overview, so ordinary Grow use stays coherent.
+     V172: #/grow/ongoing|available|settings put the TAB name in the hashParam slot — those
+     are views of this overview, not engine deep-links, and must never mount a surface
+     (mounting built {surface:'overview'} and crashed on the surface dictionary). */
+  const hashParamIsProgrammeView=['ongoing','available','settings'].includes(String(hashParam||''));
+  if(!hashParamIsProgrammeView&&((routedAction&&isOwner)||(hashParam&&isOwner)||routedSurface==='studio')){
     const initialAction=routedAction||{surface:routedSurface};
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }

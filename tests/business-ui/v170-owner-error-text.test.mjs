@@ -57,3 +57,12 @@ test('empty errors get the safe generic sentence', () => {
   assert.equal(ownerErrorText(null), 'Something went wrong. Nothing was changed.');
   assert.equal(ownerErrorText({}), 'Something went wrong. Nothing was changed.');
 });
+
+test('browser runtime TypeErrors are rewritten, never shown raw (V172 regression)', () => {
+  // The exact string from the owner's 2026-08-06 screenshot: clicking the
+  // "Ongoing programmes" tab crashed mountGrowSurface and printed this verbatim.
+  assert.match(ownerErrorText({ message: "undefined is not an object (evaluating 'definition.hash')" }),
+    /went wrong on our side/);
+  assert.match(ownerErrorText({ message: "Cannot read properties of undefined (reading 'hash')" }),
+    /went wrong on our side/);
+});
