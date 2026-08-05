@@ -53,3 +53,14 @@ test('offer detail sheet joins the dark token scope', () => {
   assert.match(app, /\.customer-surface,\.customer-offer-detail-modal \.modal-card\{/);
   assert.match(app, /\.customer-offer-detail-modal \.modal-card\{width:min\(480px/);
 });
+
+test('uploaded promotion artwork is never cropped and never painted over', () => {
+  assert.doesNotMatch(app, /customer-promotion-card-media::after/,
+    'no gradient overlay may sit on top of business-uploaded artwork');
+  assert.match(app, /\.customer-promotion-card-media img\{[^}]*object-fit:contain/);
+  assert.match(app, /\.customer-offer-detail-media img\{[^}]*object-fit:contain/);
+  assert.match(app, /\.customer-home-offer-media img\{[^}]*object-fit:contain/);
+  assert.doesNotMatch(app, /customer-(promotion-card|offer-detail|home-offer)-media img\{[^}]*object-fit:cover/);
+  assert.match(app, /\.customer-promotion-card-media--fallback\{[^}]*aspect-ratio:16\/9/);
+  assert.match(app, /\.customer-offer-detail-media--fallback\{[^}]*aspect-ratio:16\/9/);
+});
