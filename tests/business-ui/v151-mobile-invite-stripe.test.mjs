@@ -47,7 +47,10 @@ test('V151 mobile customer search uses existing till/customer routes instead of 
 test('V151 signup entry separates new business from invited staff', () => {
   assert.match(auth, /if\(!admin&&mode==='up'\)return renderBusinessSignupChoice\(\)/);
   assert.match(signup, /How would you like to use Peekaa\?/);
-  assert.match(signup, /Start a new business/);
+  assert.match(signup, /Request a demo/);
+  assert.match(signup, /No account or workspace is created/);
+  assert.match(signup, /Set up business/);
+  assert.match(signup, /Stripe Checkout or manual payment approval/);
   assert.match(signup, /Join an existing business/);
   assert.match(signup, /Company invite code/);
   assert.match(signup, /Stripe is not required for invited staff/);

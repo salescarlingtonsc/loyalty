@@ -62,10 +62,11 @@ test('V144 preserves prior refund windows but activates new policy purchases fro
   assert.doesNotMatch(migration,/delete from public\.billing_money_back_windows_v124/i);
 });
 
-test('missing catalogue state is actionable and never suggests management approval',()=>{
+test('missing catalogue state is actionable and separates Stripe from manual approval',()=>{
   const onboard=section(app,'function renderOnboard(){','/* ============================================================================');
-  assert.match(onboard,/Subscription setup needs configuration/);
+  assert.match(onboard,/Payment setup needs help/);
   assert.match(onboard,/Contact Peekaa support/);
   assert.match(onboard,/No workspace or charge was created/);
-  assert.doesNotMatch(onboard,/Submit for approval|management approval|admin approval/i);
+  assert.doesNotMatch(onboard,/Submit for approval|management approval/i);
+  assert.match(onboard,/manual-payment approval form below for Super Admin review/);
 });

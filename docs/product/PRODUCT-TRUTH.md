@@ -155,6 +155,17 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   selects annual or monthly billing plus customer capacity, reviews the exact
   recurring amount, and continues to Stripe Checkout. No super-admin approval
   request is part of this ordinary signup path.
+- Owner clarification 2026-08-05: `/business?signup=1` must first ask the user
+  what they want to do before collecting full name, business name, sector, UEN
+  or other setup details. **Request a demo** is a consultant-contact path only:
+  no Auth account, workspace, login, Stripe Checkout, manual-payment
+  application, or Super Admin approve/reject decision is created. **Set up
+  business** starts the owner-account flow, then collects business details and
+  offers Stripe Checkout or a manual-payment approval request. Stripe activates
+  access only after verified provider payment; manual payment remains an
+  authenticated Super Admin approve/reject workflow after payment evidence is
+  checked. **Join an existing business** remains the staff-invite path and does
+  not require Stripe.
 - A self-service workspace is created in a payment-pending state and exposes no
   business data or operational writer until a signed Stripe webhook proves the
   matching snapshotted Price IDs, cadence, customer capacity, exact SGD charge,
