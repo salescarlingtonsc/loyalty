@@ -178,7 +178,7 @@ test('unsolicited, expired, rejected and replayed callback tokens never retain a
   assert.equal(calls.transientSetSession,2,'rejected login exists only in the transient client');
   assert.equal(calls.persistentSetSession,1,'rejected login never reaches persistent storage');
   assert.equal(calls.signOut,1,'server-rejected new Google login is signed out');
-  assert.match(sessionStorage.getItem('nestly-business-oauth-notice'),/No business account was found/);
+  assert.match(sessionStorage.getItem('nestly-business-oauth-notice'),/No approved business setup or active workspace was found/);
 });
 
 test('OAuth startup rejection restores the button and visible fallback', async () => {
@@ -248,5 +248,5 @@ test('new Google identity is rejected from sign-in while signup is server-consen
   assert.match(oauth, /begin_business_google_oauth_signup_v138/);
   assert.match(oauth, /p_accepted:true/);
   assert.match(callback, /complete_business_google_oauth_v138/);
-  assert.match(callback, /No business account was found for that Google login/);
+  assert.match(callback, /No approved business setup or active workspace was found/);
 });

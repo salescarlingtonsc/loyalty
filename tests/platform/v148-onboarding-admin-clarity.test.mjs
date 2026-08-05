@@ -15,9 +15,9 @@ test('authenticated business setup identifies the current email and signs out on
   assert.match(onboarding,/resetClientSessionState\(\)[\s\S]+renderAuth\('in'/);
 });
 
-test('admin platform console uses the V167 cache-busting asset key',async()=>{
+test('admin platform console uses the V168 cache-busting asset key',async()=>{
   const source=await read('app/index.html');
-  assert.match(source,/\/platform-console\.js\?v=20260805-v167-admin-approval/);
+  assert.match(source,/\/platform-console\.js\?v=20260805-v168-approved-admission/);
   assert.doesNotMatch(source,/\/platform-console\.js\?v=20260802-v134/);
 });
 
@@ -32,7 +32,7 @@ test('platform separates assisted applications from paid website self-service',a
   assert.match(render,/wireAccountSignupQueue\(\{\.\.\.context,filters\}\)/);
   assert.match(source,/Business owner signups/);
   assert.match(source,/Use Approve, Reject or Pending for each signup/);
-  assert.match(source,/Choose Approve, Reject or Pending/);
+  assert.match(source,/Approve lets this signup continue business setup/);
   assert.match(source,/Admin decision saved/);
   assert.doesNotMatch(source,/Email setup\/demo link/);
   assert.doesNotMatch(source,/Approve\/reject becomes available after a company\/demo\/manual-payment application is submitted/);
@@ -81,6 +81,7 @@ test('account-only signup queue gives simple approve reject pending actions',asy
   assert.match(html,/Business owner signups/);
   assert.match(html,/Admin decision/);
   assert.match(html,/Pending/);
+  assert.match(html,/Approve lets this signup continue business setup/);
   assert.match(html,/Owner asked for a demo callback/);
   assert.match(html,/Approve/);
   assert.match(html,/Reject/);

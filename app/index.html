@@ -1284,7 +1284,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 <script src="/customer-ui.js?v=20260728-auth-controls"></script>
 <script src="/grow-recommender.js"></script>
 <script src="/platform-crm-utils.js"></script>
-<script src="/platform-console.js?v=20260805-v167-admin-approval"></script>
+<script src="/platform-console.js?v=20260805-v168-approved-admission"></script>
 <script src="/v95-media-sync.js?v=20260728-atomic-media"></script>
 <script src="/revenue-truth.js"></script>
 <script src="/growth-offers.js"></script>
@@ -6453,7 +6453,7 @@ async function consumeBusinessOAuthRedirect(){
   }catch{
     await sb.auth.signOut({scope:'local'}).catch(()=>{});
     sessionStorage.setItem('nestly-business-oauth-notice',pendingAttempt.intent==='signin'
-      ?'No business account was found for that Google login. Choose New here? Sign up and accept the Terms and Privacy Policy first.'
+      ?'No approved business setup or active workspace was found for that login. If you already requested setup, ask Peekaa admin to approve it first.'
       :'Could not verify the consented Google signup. Return to signup and try again.');
   }
 }

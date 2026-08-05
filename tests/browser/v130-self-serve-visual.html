@@ -1310,7 +1310,7 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
   }catch{
     await sb.auth.signOut({scope:'local'}).catch(()=>{});
     sessionStorage.setItem('nestly-business-oauth-notice',pendingAttempt.intent==='signin'
-      ?'No business account was found for that Google login. Choose New here? Sign up and accept the Terms and Privacy Policy first.'
+      ?'No approved business setup or active workspace was found for that login. If you already requested setup, ask Peekaa admin to approve it first.'
       :'Could not verify the consented Google signup. Return to signup and try again.');
   }
 }

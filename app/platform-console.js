@@ -4694,7 +4694,7 @@
     return `<section class="platform-route-note platform-status-note" style="margin-top:14px">
       ${CUI.icon('staff',{size:19})}<div style="width:100%">
         <div class="row"><div><b>${escapeHtml(pt('Business owner signups'))}</b>
-          <p class="small">${escapeHtml(pt('Use Approve, Reject or Pending for each signup. Approval records the admin decision; workspace access still requires business details and verified payment or manual billing.'))}</p></div>
+          <p class="small">${escapeHtml(pt('Use Approve, Reject or Pending for each signup. Approval lets the same user sign in and continue business setup; workspace access still requires business details and verified payment or manual billing.'))}</p></div>
           <span class="spacer"></span><span class="pill">${rows.length} ${escapeHtml(pt('recent'))}</span></div>
         <div class="platform-card-list" style="margin-top:12px">${rows.map(item=>{
           const triage=String(item.triage_status||'new').toLowerCase();
@@ -4710,7 +4710,7 @@
             <p class="muted small">${escapeHtml(pt('Current status'))}: ${escapeHtml(platformStatus(item.status||'needs_business_details'))} · ${escapeHtml(pt('Admin decision'))}: ${escapeHtml(decision)}</p>
             ${item.triage_note?`<p class="muted small">${escapeHtml(item.triage_note)}</p>`:''}
             ${item.last_contacted_at?`<p class="muted small">${escapeHtml(pt('Last contacted'))}: ${escapeHtml(dateTime(item.last_contacted_at))}</p>`:''}
-            <p class="muted small">${escapeHtml(pt('Admin action'))}: ${escapeHtml(pt('Choose Approve, Reject or Pending.'))}</p></div>
+            <p class="muted small">${escapeHtml(pt('Admin action'))}: ${escapeHtml(pt('Approve lets this signup continue business setup. Reject and Pending keep access closed.'))}</p></div>
           <div class="platform-actions" data-account-signup-actions="${escapeHtml(item.user_id||'')}"><button type="button" class="btn sm" data-account-signup-triage="contacted" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Approve'))}</button><button type="button" class="btn danger sm" data-account-signup-triage="archived" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Reject'))}</button><button type="button" class="btn ghost sm" data-account-signup-triage="follow_up" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Pending'))}</button></div>
         </div>`;
         }).join('')||`<p class="muted small">${escapeHtml(pt('No account-only signups match the current filters.'))}</p>`}</div>
@@ -4724,7 +4724,7 @@
         const status=button.dataset.accountSignupTriage,user=button.dataset.user;
         if(!user||!status)return;
         const note=status==='contacted'
-          ?pt('Approved by platform admin. Workspace access still requires business details and verified payment or manual billing.')
+          ?pt('Approved by platform admin. User may now sign in to continue business setup; workspace access still requires business details and verified payment or manual billing.')
           :status==='follow_up'
             ?pt('Pending admin decision. Workspace access remains closed.')
             :pt('Rejected by platform admin. Workspace access remains closed.');

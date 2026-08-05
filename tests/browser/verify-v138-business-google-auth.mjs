@@ -71,7 +71,7 @@ try{
   assert.equal(callback.persistentSetSessionCalls,0,'new identity rejected from login is never persisted');
   assert.equal(callback.persistedSession,null);
   assert.equal(callback.signOutCalls,1,'any older local session is removed after rejected admission');
-  assert.match(callback.notice,/No business account was found/);
+  assert.match(callback.notice,/No approved business setup or active workspace was found/);
 
   await page.goto(`${base}?view=login`,{waitUntil:'networkidle'});
   callback=await page.evaluate(()=>window.runBusinessOAuthCallback({intent:'signup',attemptToken:null,admitted:true}));

@@ -1149,6 +1149,12 @@
       "path": "db/migrations/20260805_nestly_v167_direct_admin_approval_activation.sql",
       "semanticVersion": "v167",
       "proposedDeployVersion": "20260805200000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260805_nestly_v168_approved_account_signup_admission.sql",
+      "semanticVersion": "v168",
+      "proposedDeployVersion": "20260805210000"
     }
   ]
 }
