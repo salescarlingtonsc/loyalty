@@ -588,7 +588,15 @@ test('launch-incomplete Stored value is unreachable and Studio remains managemen
   assert.match(studio, /return nav\('#\/grow'\)/);
   assert.match(studio, /studioPublishReviewPage/);
   const publishGate = section('async function studioPublishReviewPage(', 'async function studioPage(');
-  assert.match(publishGate, /does not summarise ordinary reward, earning, birthday or bring-back field values/);
+  /* v170 product decision: owners were confirming blind, so the gate now DOES summarise the
+     ordinary programme numbers (a BEFORE/AFTER of the loyalty_programs fields). The honesty
+     assertion moves with it — the page must still disclaim the surfaces it does not diff
+     (rewards, birthday, bring-back) instead of implying completeness. */
+  assert.match(publishGate, /does not summarise reward, birthday or bring-back field values/);
+  assert.match(publishGate, /What changes for customers/);
+  assert.match(publishGate, /Reward and birthday changes are listed in their editors/);
+  assert.match(publishGate, /No changes to earning or programme numbers in this draft/);
+  assert.match(publishGate, /Could not load the comparison/);
   assert.match(publishGate, /Server-confirmed advanced-action safety/);
   assert.doesNotMatch(publishGate, /Confirm the exact existing reward and bring-back changes/);
   assert.doesNotMatch(app,/coming soon|not implemented|under construction|demo data|sample data/i,

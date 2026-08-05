@@ -15223,6 +15223,38 @@ function studioEstimate(rule,agg){
   return lines;
 }
 
+/* ---- v170: BEFORE/AFTER of the ordinary programme numbers on the final publish gate ----
+   Owners used to confirm blind: the gate only proved advanced-action safety. This compares the
+   two reads the app already performs — the owner-gated draft RPC loyaltyPage uses for a draft
+   version (get_loyalty_reward_draft -> program) against the live loyalty_programs row the Grow
+   overview reads — and lists ONLY the fields that differ. Rewards, tiers and the birthday
+   benefit are deliberately NOT diffed here: their draft/live shapes are lists, not scalars, and
+   a half-built list diff would read as completeness. The card says where those live instead. */
+const GROW_PUBLISH_MODEL_LABEL_V170={classic:'Simple points',points_tiers:'Points, rewards and tiers',stamps:'Stamp card'};
+const GROW_PUBLISH_EXPIRY_LABEL_V170={none:'Never expire',inactivity:'Expire after inactivity',fixed:'Fixed shelf life from earn'};
+function growPublishFieldRowsV170(live,draft){
+  /* No draft programme row means publication changes none of these fields — say nothing changed
+     rather than rendering every live value as "→ not set". */
+  if(!draft)return [];
+  const num=v=>(v==null||v===''||!Number.isFinite(Number(v)))?null:Number(v);
+  const text=v=>(v==null||v==='')?null:String(v);
+  const plain=v=>v==null?'not set':String(v);
+  const fields=[
+    {label:'Programme status',read:p=>p?.active==null?null:(p.active===true?'Active':'Paused'),show:plain},
+    {label:'Loyalty model',read:p=>text(p?.loyalty_model),show:v=>v==null?'not set':(GROW_PUBLISH_MODEL_LABEL_V170[v]||v)},
+    {label:'Points earned per $1 spent',read:p=>num(p?.earn_points_per_dollar),show:plain},
+    {label:'Points needed to redeem',read:p=>num(p?.redeem_points),show:plain},
+    {label:'Credit minted on redemption',read:p=>num(p?.reward_credit_cents),show:v=>v==null?'not set':studioMoney(v)},
+    {label:'Stamps needed for a reward',read:p=>num(p?.stamp_target),show:plain},
+    {label:'Spend per stamp',read:p=>num(p?.stamp_per_cents),show:v=>v==null?'not set':studioMoney(v)},
+    {label:'Expiry',read:p=>text(p?.expiry_mode),show:v=>v==null?'not set':(GROW_PUBLISH_EXPIRY_LABEL_V170[v]||v)},
+    {label:'Expiry window (days)',read:p=>num(p?.expiry_days),show:plain}
+  ];
+  return fields.map(f=>({label:f.label,before:f.read(live),after:f.read(draft),show:f.show}))
+    .filter(row=>row.before!==row.after)
+    .map(row=>({label:row.label,before:row.show(row.before),after:row.show(row.after)}));
+}
+
 /* ============================ Program Studio page ============================ */
 async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
   routeMain.innerHTML=CUI.loadingState({title:'Publish Grow draft',iconName:'loyalty'});
@@ -15235,9 +15267,36 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
     $('growPublishBack').onclick=()=>sessionStorage.removeItem(`nestly:grow-publish-review:${draftVersionId}`);return;
   }
   routeMain.innerHTML=`${CUI.pageHeader({title:'Publish Grow draft',subtitle:'Confirm the selected draft after reviewing each changed programme in its editor.',iconName:'loyalty',canWrite:true,moduleLabel:'Grow publishing'})}
-    <section class="card"><h2>Draft v${Number(draft?.version_no||0)}</h2><p class="muted small" style="margin-top:6px">This page is the final publication gate. It checks advanced-action safety but does not summarise ordinary reward, earning, birthday or bring-back field values. Review those values in their programme editors first.</p><div id="growPublishStatus" role="status" aria-live="polite" style="margin-top:12px"></div><div class="row" style="margin-top:16px"><button class="btn" id="growPublishReview">Confirm &amp; publish</button><a class="btn ghost" id="growPublishBack" href="#/grow">Back to Grow</a></div></section>`;
+    <section class="card" id="growPublishDiffCard"><h2>What changes for customers</h2><p class="muted small" style="margin-top:6px">Draft v${Number(draft?.version_no||0)} compared with the programme customers earn on today.</p><div id="growPublishDiffBody" role="status" aria-live="polite" style="margin-top:12px"><p class="muted small">Loading what changes for customers…</p></div></section>
+    <section class="card"><h2>Draft v${Number(draft?.version_no||0)}</h2><p class="muted small" style="margin-top:6px">This page is the final publication gate. It summarises the programme numbers above and checks advanced-action safety below; it does not summarise reward, birthday or bring-back field values. Review those values in their programme editors first.</p><div id="growPublishStatus" role="status" aria-live="polite" style="margin-top:12px"></div><div class="row" style="margin-top:16px"><button class="btn" id="growPublishReview">Confirm &amp; publish</button><a class="btn ghost" id="growPublishBack" href="#/grow">Back to Grow</a></div></section>`;
   const reviewKey=`nestly:grow-publish-review:${draftVersionId}`;
   const back=$('growPublishBack');if(back)back.onclick=()=>sessionStorage.removeItem(reviewKey);
+  /* Fail-soft on purpose: a failed comparison read shows its own retry and never touches the
+     publish button, so the existing safety check and confirm flow keep working without it. */
+  const loadPublishComparison=async()=>{
+    const host=$('growPublishDiffBody');if(!host)return;
+    host.innerHTML='<p class="muted small">Loading what changes for customers…</p>';
+    let draftResult=null,liveResult=null;
+    try{
+      [draftResult,liveResult]=await Promise.all([
+        sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId}),
+        sb.from('loyalty_programs').select('active,loyalty_model,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_target,stamp_per_cents,expiry_mode,expiry_days')
+          .eq('business_id',S.biz.id).limit(1)]);
+    }catch(e){draftResult={data:null,error:e};liveResult={data:null,error:e}}
+    if(!isCurrent())return;
+    const target=$('growPublishDiffBody');if(!target)return;
+    if(draftResult?.error||liveResult?.error){
+      target.innerHTML=`<p class="err" role="alert">Could not load the comparison</p><div class="row" style="margin-top:10px"><button class="btn ghost sm" id="growPublishDiffRetry" type="button">Retry</button></div>`;
+      const retry=$('growPublishDiffRetry');if(retry)retry.onclick=loadPublishComparison;
+      return;
+    }
+    const rows=growPublishFieldRowsV170((liveResult.data||[])[0]||null,draftResult.data?.program||null);
+    target.innerHTML=`${rows.length
+      ?`<div class="studio-impact-rule">${rows.map(row=>`<div class="studio-impact-eff"><span>${esc(row.label)}</span><span><s>${esc(row.before)}</s> → <b>${esc(row.after)}</b></span></div>`).join('')}</div>`
+      :'<p class="muted small">No changes to earning or programme numbers in this draft.</p>'}
+      <p class="muted small" style="margin-top:10px">Reward and birthday changes are listed in their editors.</p>`;
+  };
+  loadPublishComparison();
   const effectLabel=effect=>(STUDIO_EFFECT_LABEL[effect.effect_type]&&STUDIO_EFFECT_LABEL[effect.effect_type].label)||effect.effect_type||'Action';
   const openPublishFlow=async()=>{
     const button=$('growPublishReview'),status=$('growPublishStatus');
