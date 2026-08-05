@@ -11571,14 +11571,14 @@ async function bookingsPage(){
     if(!isCurrent())return;
     if(error) return fail(error);
     const list=$('blist');if(!list?.isConnected)return;
-    list.innerHTML=(br&&br.length)?`<table><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr>
-      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr><td>${sgt(b.created_at)||'—'}</td><td><b>${esc(b.name)}</b></td>
-      <td class="small">${esc(b.phone||b.email||'—')}</td><td>${esc(b.services?.name||'—')}</td>
-      <td>${sgt(b.preferred_at)||'—'}</td><td>${b.party_size||'—'}</td>
-      <td><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}">${esc(b.status)}</span></td>
-      <td>${actionable?`${canConvertBooking?`<button class="btn sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','confirm')" ${pendingDecisions.has(b.id)?'disabled':''}>Confirm</button>`:''}
+    list.innerHTML=(br&&br.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Booking requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr></thead><tbody>
+      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
+      <td class="small" data-label="Contact">${esc(b.phone||b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
+      <td data-label="Preferred">${sgt(b.preferred_at)||'—'}</td><td data-label="Party">${b.party_size||'—'}</td>
+      <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}">${esc(b.status)}</span></td>
+      <td data-label="Actions">${actionable?`${canConvertBooking?`<button class="btn sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','confirm')" ${pendingDecisions.has(b.id)?'disabled':''}>Confirm</button>`:''}
       ${canDeclineBooking?`<button class="btn ghost sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','decline')" ${pendingDecisions.has(b.id)?'disabled':''}>Decline</button>`:''}`:'<span class="muted small">No action needed</span>'}
-      ${notice?`<div class="${notice.ok?'imp-note':'err'} small" role="status" style="margin-top:8px">${esc(notice.text)}</div>`:''}</td></tr>`}).join('')}</table>`
+      ${notice?`<div class="${notice.ok?'imp-note':'err'} small" role="status" style="margin-top:8px">${esc(notice.text)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div>`
       :CUI.emptyState({iconName:'appointments',title:'No booking requests yet',body:'Customer booking requests will appear here after customers use your booking link.'});
   }
   async function loadCr(){
@@ -11587,14 +11587,14 @@ async function bookingsPage(){
     if(!isCurrent())return;
     if(error) return fail(error);
     const list=$('crlist');if(!list?.isConnected)return;
-    list.innerHTML=(cr&&cr.length)?`<table><tr><th>Requested</th><th>Customer</th><th>Kind</th><th>Current time</th><th>Proposed</th><th>Note</th><th></th></tr>
-      ${cr.map(c=>`<tr><td>${sgt(c.created_at)||'—'}</td><td><b>${esc(c.appointments?.clients?.full_name||'—')}</b></td>
-      <td><span class="pill ${c.kind==='cancel'?'no':'new'}">${c.kind}</span></td>
-      <td>${sgt(c.appointments?.starts_at)||'—'}</td>
-      <td>${sgt(c.proposed_at)||'—'}</td>
-      <td class="small">${esc(c.note||'—')}</td>
-      <td>${canDecideChange?`<button class="btn sm" onclick="decideCr('${c.id}',true)">Approve</button>
-      <button class="btn ghost sm" onclick="decideCr('${c.id}',false)">Decline</button>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table>`
+    list.innerHTML=(cr&&cr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Change requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Requested</th><th>Customer</th><th>Kind</th><th>Current time</th><th>Proposed</th><th>Note</th><th></th></tr></thead><tbody>
+      ${cr.map(c=>`<tr><td data-label="Requested">${sgt(c.created_at)||'—'}</td><td data-label="Customer"><b>${esc(c.appointments?.clients?.full_name||'—')}</b></td>
+      <td data-label="Kind"><span class="pill ${c.kind==='cancel'?'no':'new'}">${c.kind}</span></td>
+      <td data-label="Current time">${sgt(c.appointments?.starts_at)||'—'}</td>
+      <td data-label="Proposed">${sgt(c.proposed_at)||'—'}</td>
+      <td class="small" data-label="Note">${esc(c.note||'—')}</td>
+      <td data-label="Actions">${canDecideChange?`<button class="btn sm" onclick="decideCr('${c.id}',true)">Approve</button>
+      <button class="btn ghost sm" onclick="decideCr('${c.id}',false)">Decline</button>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</tbody></table></div>`
       :`<div class="empty small">No pending change requests.</div>`;
   }
   window.decideBookingRequestV73=async(id,decision)=>{
@@ -16371,13 +16371,13 @@ async function membershipsPage(){
   const renderMemberships=()=>{
     const total=(ms||[]).length,pages=Math.max(1,Math.ceil(total/MEMBERSHIP_PAGE_SIZE));
     const pageRows=(ms||[]).slice(membershipPage*MEMBERSHIP_PAGE_SIZE,(membershipPage+1)*MEMBERSHIP_PAGE_SIZE);
-    $('mlist').innerHTML=pageRows.length?`<table><tr><th>Member</th><th>Plan</th><th>Status</th><th>Renews</th><th></th></tr>
-      ${pageRows.map(m=>`<tr><td><b>${esc(m.clients?.full_name||'—')}</b></td><td>${esc(m.membership_plans?.name||'—')}</td>
-      <td><span class="pill ${m.status==='active'?'on':m.status==='cancelled'?'no':'off'}">${m.status.replace(/_/g,' ')}</span></td>
-      <td>${m.current_period_end.slice(0,10)}</td>
-      <td>${canWrite&&m.status==='active'?`<button class="btn ghost sm" onclick="setMs('${m.id}','paused')">Pause</button>
+    $('mlist').innerHTML=pageRows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Members"><table class="cui-table" data-responsive="true"><thead><tr><th>Member</th><th>Plan</th><th>Status</th><th>Renews</th><th></th></tr></thead><tbody>
+      ${pageRows.map(m=>`<tr><td data-label="Member"><b>${esc(m.clients?.full_name||'—')}</b></td><td data-label="Plan">${esc(m.membership_plans?.name||'—')}</td>
+      <td data-label="Status"><span class="pill ${m.status==='active'?'on':m.status==='cancelled'?'no':'off'}">${m.status.replace(/_/g,' ')}</span></td>
+      <td data-label="Renews">${m.current_period_end.slice(0,10)}</td>
+      <td data-label="Actions">${canWrite&&m.status==='active'?`<button class="btn ghost sm" onclick="setMs('${m.id}','paused')">Pause</button>
         <button class="btn ghost sm" onclick="setMs('${m.id}','cancel_at_period_end')">Cancel@end</button>`
-        :canWrite&&m.status==='paused'?`<button class="btn ghost sm" onclick="setMs('${m.id}','active')">Resume</button>`:''}</td></tr>`).join('')}</table>
+        :canWrite&&m.status==='paused'?`<button class="btn ghost sm" onclick="setMs('${m.id}','active')">Resume</button>`:''}</td></tr>`).join('')}</tbody></table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${total} membership${total===1?'':'s'} · page ${membershipPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="membershipPrev" ${membershipPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="membershipNext" ${membershipPage+1>=pages?'disabled':''}>Next</button></div>`
       :'<p class="muted small">No members yet — enroll your first above.</p>';
     if($('membershipPrev'))$('membershipPrev').onclick=()=>{if(membershipPage>0){membershipPage--;renderMemberships()}};
@@ -16569,10 +16569,10 @@ async function giftcardsPage(){
     }
     const gcs=Array.isArray(data?.cards)?data.cards:[],total=Math.max(0,Number(data?.total||0)),pages=Math.max(1,Math.ceil(total/GIFT_CARD_PAGE_SIZE));
     if(giftCardPage>=pages&&giftCardPage>0){giftCardPage=pages-1;loadCards();return}
-    $('glist').innerHTML=gcs.length?`<table><tr><th>Code</th><th>Value</th><th>Balance</th><th>Status</th><th>Issued</th></tr>
-      ${gcs.map(g=>`<tr><td><b>•••• ${esc(g.code_suffix)}</b></td><td>${money(g.initial_cents)}</td><td>${money(g.balance_cents)}</td>
-      <td><span class="pill ${g.status==='active'?'on':g.status==='redeemed'?'ok':'no'}">${g.status}</span></td>
-      <td>${g.created_at.slice(0,10)}</td></tr>`).join('')}</table><div class="row" style="margin-top:14px"><span class="muted small">${total} card${total===1?'':'s'} · page ${giftCardPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="giftPrev" ${giftCardPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="giftNext" ${giftCardPage+1>=pages?'disabled':''}>Next</button></div>`
+    $('glist').innerHTML=gcs.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Issued gift cards"><table class="cui-table" data-responsive="true"><thead><tr><th>Code</th><th>Value</th><th>Balance</th><th>Status</th><th>Issued</th></tr></thead><tbody>
+      ${gcs.map(g=>`<tr><td data-label="Code"><b>•••• ${esc(g.code_suffix)}</b></td><td data-label="Value">${money(g.initial_cents)}</td><td data-label="Balance">${money(g.balance_cents)}</td>
+      <td data-label="Status"><span class="pill ${g.status==='active'?'on':g.status==='redeemed'?'ok':'no'}">${g.status}</span></td>
+      <td data-label="Issued">${g.created_at.slice(0,10)}</td></tr>`).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} card${total===1?'':'s'} · page ${giftCardPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="giftPrev" ${giftCardPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="giftNext" ${giftCardPage+1>=pages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'giftcard',title:'No gift cards yet',body:canIssue?'Issue the first card from the transaction panel.':'Issued cards will appear here.'});
     if($('giftPrev'))$('giftPrev').onclick=()=>{if(giftCardPage>0){giftCardPage--;loadCards()}};
     if($('giftNext'))$('giftNext').onclick=()=>{if(giftCardPage+1<pages){giftCardPage++;loadCards()}};
@@ -17616,9 +17616,9 @@ async function inventoryPage(){
     const pr=productsResult.data,st=stockResult.data;
     const SM=Object.fromEntries((st||[]).map(x=>[x.product_id,x.stock]));
     if(canWrite)$('bp2').innerHTML=(pr||[]).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">— add a product first —</option>';
-    $('ilist').innerHTML=(pr&&pr.length)?`<table><tr><th>Product</th><th>SKU</th><th>Price</th><th>Cost</th><th>Gross profit</th><th>Stock</th></tr>
-      ${pr.map(p=>{const s=SM[p.id]||0,profit=p.cost_cents==null?null:productProfitabilityV122({priceCents:p.retail_price_cents,costCents:p.cost_cents});return `<tr><td><b>${esc(p.name)}</b></td><td class="small">${esc(p.sku||'—')}</td>
-      <td>${money(p.retail_price_cents)}</td><td>${p.cost_cents==null?'Not set':money(p.cost_cents)}</td><td>${profit?`${money(profit.grossProfitCents)} · ${profit.marginPct}%`:'Add cost'}</td><td>${s} ${s<5?'<span class="pill no">low</span>':''}</td></tr>`}).join('')}</table>`
+    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Stock on hand"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Cost</th><th>Gross profit</th><th>Stock</th></tr></thead><tbody>
+      ${pr.map(p=>{const s=SM[p.id]||0,profit=p.cost_cents==null?null:productProfitabilityV122({priceCents:p.retail_price_cents,costCents:p.cost_cents});return `<tr><td data-label="Product"><b>${esc(p.name)}</b></td><td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
+      <td data-label="Price">${money(p.retail_price_cents)}</td><td data-label="Cost">${p.cost_cents==null?'Not set':money(p.cost_cents)}</td><td data-label="Gross profit">${profit?`${money(profit.grossProfitCents)} · ${profit.marginPct}%`:'Add cost'}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td></tr>`}).join('')}</tbody></table></div>`
       :`<div class="empty"><div class="big">📦</div>No products yet.</div>`;
   }
   const paintProductProfit=()=>{
