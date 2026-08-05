@@ -5065,6 +5065,34 @@ function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},
   else body='<div class="card customer-home-offers-state"><p class="muted small">No offers right now. New offers from this business appear here first.</p></div>';
   return `<section class="customer-promotions-section" aria-labelledby="latestOffersTitle"><div class="customer-promotions-head"><div><p class="customer-quest-kicker">From ${esc(business.name||ct('localBusiness'))}</p><h2 id="latestOffersTitle">Latest offers</h2></div></div>${body}</section>`;
 }
+/* V174 customer tier card. One compact card, CHAGEE-style: where I am, how close the next
+   tier is (exact remaining in the business's own basis — visits, spend or points), what the
+   next tier unlocks (two-item teaser), then my current benefits. Renders nothing when the
+   business has no tiers, and never shows raw percentages without the human sentence. */
+function customerTierCardMarkupV174(tier={}){
+  const current=tier.current,next=tier.next;
+  if(!current&&!next)return '';
+  const basis=String(tier.basis||'visits');
+  const metric=Number(tier.metric||0);
+  const progress=Math.max(0,Math.min(100,Number(tier.progress_percent||0)));
+  const remainingText=(()=>{
+    if(!next)return '';
+    const remaining=Math.max(0,Number(next.threshold||0)-metric);
+    if(basis==='spend')return `Spend SGD ${remaining.toLocaleString('en-SG',{maximumFractionDigits:0})} more to reach ${esc(next.label)}`;
+    if(basis==='points_earned')return `Earn ${Math.ceil(remaining).toLocaleString('en-SG')} more points to reach ${esc(next.label)}`;
+    const visits=Math.ceil(remaining);
+    return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${esc(next.label)}`;
+  })();
+  const nextBenefits=Array.isArray(next?.benefits)?next.benefits.filter(value=>String(value||'').trim()).slice(0,2):[];
+  const currentBenefits=Array.isArray(current?.benefits)?current.benefits.filter(value=>String(value||'').trim()):[];
+  return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier">
+    <div class="row" style="align-items:baseline;gap:10px"><h2 style="margin:0">${esc(current?.label||'Getting started')}</h2>${next?'':current?'<span class="pill ok">Top tier</span>':''}</div>
+    ${next?`<div style="background:var(--line);border-radius:100px;height:8px;margin-top:12px;overflow:hidden"><div style="background:var(--grad);height:100%;width:${progress}%"></div></div>
+    <p class="muted small" style="margin-top:8px">${remainingText}</p>
+    ${nextBenefits.length?`<p class="small" style="margin-top:6px"><b>${esc(next.label)}</b> unlocks: ${nextBenefits.map(esc).join(' · ')}</p>`:''}`:''}
+    ${currentBenefits.length?`<p class="small" style="margin-top:${next?'12':'10'}px"><b>Your benefits now</b></p><ul class="rec-why" style="margin-top:6px">${currentBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:''}
+  </section>`;
+}
 function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready'}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
@@ -5083,7 +5111,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       <div class="customer-programme-compact-balance"><b>${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}</b><span>${esc(unitLabel)}</span></div>
     </header>
     ${customerPointsExplainerMarkupV167(business)}
-    ${currentTierBenefits.length?`<section class="card" style="margin-top:14px"><h2>${esc(currentTierLabel||'Current tier')} benefits</h2><ul class="rec-why" style="margin-top:10px">${currentTierBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul></section>`:''}
+    ${customerTierCardMarkupV174(tier)}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
     ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><button class="btn" type="button" data-repeat-booking data-business-slug="${esc(business.slug)}">Book again</button></div></section>`:''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
