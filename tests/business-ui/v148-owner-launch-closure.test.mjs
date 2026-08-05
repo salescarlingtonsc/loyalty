@@ -97,8 +97,13 @@ test('published tier benefits cross from owner drafts into the verified customer
   ]);
   assert.match(source,/customer_get_effective_tier_v143/);
   assert.match(source,/presentation\.tier=effectiveTierResult\.error\?\{\}/);
-  assert.match(source,/currentTierBenefits/);
-  assert.match(source,/Current tier.*benefits|currentTierLabel\|\|'Current tier'/);
+  /* V174: the flat "Current tier benefits" section became the customerTierCardMarkupV174
+     card (progress + exact remaining + next-tier teaser + current benefits). The invariant
+     this test protects — published tier benefits reaching the verified wallet — now renders
+     under "Your benefits now" inside that card. */
+  assert.match(source,/customerTierCardMarkupV174\(tier\)/);
+  assert.match(source,/Your benefits now/);
+  assert.match(source,/currentBenefits\.map\(benefit=>`<li>\$\{esc\(benefit\)\}<\/li>`\)/);
   assert.match(migration,/create or replace function public\.customer_get_effective_tier_v143/);
   assert.match(migration,/verified customer link required/);
   assert.match(migration,/regexp_split_to_table\(coalesce\(v_current\.perk_note/);
