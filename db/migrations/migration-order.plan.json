@@ -1173,6 +1173,12 @@
       "path": "db/migrations/20260805_nestly_v170_staff_update_client.sql",
       "semanticVersion": "v170",
       "proposedDeployVersion": "20260805214000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260805_nestly_v171_customerintel_entitlement.sql",
+      "semanticVersion": "v171",
+      "proposedDeployVersion": "20260805215000"
     }
   ]
 }

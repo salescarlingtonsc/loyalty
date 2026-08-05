@@ -1174,6 +1174,12 @@
       "version": "20260805214000",
       "name": "nestly_v170_staff_update_client",
       "sourcePath": "db/migrations/20260805_nestly_v170_staff_update_client.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260805215000",
+      "name": "nestly_v171_customerintel_entitlement",
+      "sourcePath": "db/migrations/20260805_nestly_v171_customerintel_entitlement.sql"
     }
   ]
 }
