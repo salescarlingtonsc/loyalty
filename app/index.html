@@ -20905,8 +20905,11 @@ async function renderPortal(slug){
   root.innerHTML=`<div class="portal customer-surface"><div class="head"><div class="logo">${brandWordmark()}</div><p class="muted small">powered booking</p></div>
     <div class="card" aria-busy="true"><p class="sr-only" role="status">Loading booking…</p>
       <div class="pf-skeleton"></div><div class="pf-skeleton"></div><div class="pf-skeleton" style="width:62%"></div></div></div>`;
-  const personaPromise=signedInUser?sb.rpc('get_my_personas').catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
-  const profilePromise=signedInUser?sb.rpc('customer_get_profile').catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
+  /* sb.rpc() returns a thenable builder with no .catch method — calling .catch on it directly
+     throws synchronously for signed-in users and aborted the whole portal render. Wrap in a real
+     Promise so a failed optional prefill degrades to the anonymous experience instead. */
+  const personaPromise=signedInUser?Promise.resolve(sb.rpc('get_my_personas')).catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
+  const profilePromise=signedInUser?Promise.resolve(sb.rpc('customer_get_profile')).catch(error=>({data:null,error})):Promise.resolve({data:null,error:null});
   let biz;
   const portalLoadTimeout=12000,portalLoadController=new AbortController();
   const portalLoadTimer=setTimeout(()=>portalLoadController.abort(),portalLoadTimeout);
