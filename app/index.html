@@ -11186,6 +11186,13 @@ function saleRecordStatusV154(s,w={}){
   return {label:'Sale',tone:'ok',details:'Original sale row.'};
 }
 async function salesPage(){
+  /* Paint the page shell BEFORE the ledger queries: a blank white main is not a load
+     state, and a failed query must leave a retryable card in place, not an empty page. */
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  const salesHead=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Historical sales ledger, corrections and reversals. Use Record sale to create a new sale.</p></div></div><div class="v150-title-actions"><a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
+  routeMain.innerHTML=`${salesHead}
+    <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
+      <div style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
   const [
     {data:cl,error:clientError},
     {data:branchRows,error:branchError},
@@ -11194,13 +11201,21 @@ async function salesPage(){
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default,active',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     fetchAllRowsResult(()=>sb.from('staff').select('id,full_name,user_id',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('full_name').order('id'))]);
-  if(clientError||branchError||staffError)return fail(clientError||branchError||staffError);
+  if(!isCurrent())return;
+  const salesLoadError=clientError||branchError||staffError;
+  if(salesLoadError){
+    const shell=$('salesShell');
+    if(shell)shell.innerHTML=`<div class="err" role="alert"><b>Sales could not be loaded. Nothing was changed.</b><p class="muted small" style="margin-top:5px">${esc(salesLoadError.message||'Please try again.')}</p></div>
+      <div style="margin-top:16px">${CUI.action({id:'salesRetry',label:'Retry',iconName:'retention'})}</div>`;
+    const retry=$('salesRetry');if(retry)retry.onclick=()=>salesPage();
+    return;
+  }
   const saleBranches=branchRows||[];
   const saleTeam=saleStaff||[];
   const signedInStaff=saleTeam.find(person=>person.user_id===S.user?.id);
   const initialSaleBranch=saleBranches.some(b=>b.id===selectedBranchId)
     ?selectedBranchId:(saleBranches.find(b=>b.is_default)?.id||saleBranches[0]?.id||'');
-  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Historical sales ledger, corrections and reversals. Use Record sale to create a new sale.</p></div></div><div class="v150-title-actions"><a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>
+  M().innerHTML=`${salesHead}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>Immutable rows are kept for audit. Reversals appear as linked compensating rows.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
         <div class="sales-filter-row">
