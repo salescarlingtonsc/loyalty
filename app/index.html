@@ -13889,6 +13889,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">Add an optional birthday benefit and choose its eligibility window.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">${canRewards?'No birthday benefit is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):!rewardJourney.classicReward&&!rewardJourney.milestones.length?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:canRewards?'Create the first reward customers can work toward.':'Loyalty is not included in this workspace.',status:canRewards?'Not set up':'Not included',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Set up'}):programmeRow({kind:'redeemable',icon:CUI.icon('add',{size:18}),title:'Add another reward',copy:'Create another milestone in the editable draft.',status:'Available',statusTone:'new',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'add',actionLabel:'Add'})}
+        ${!snapshot.overviewErrors?.rewards&&canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="template" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Start from a template</b><p class="muted small">Ready-made rewards for your business — pick one, tweak the numbers, publish.</p></div><span class="grow-programme-meta">${programmeStatus('Templates','new')}</span></button>
+        <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
@@ -13989,6 +13991,43 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   });
   const panelHost=$('growpanelhost');
   let activeSurface=null,pendingGuideAction=null,pendingRewardEstimateCents=null,rewardAutoSetupRequestKey=null;
+  /* V172 sector reward templates: ready-made rewards the owner picks, tweaks and publishes
+     through the EXISTING editor + draft + Review & publish flow — no new writers. Budgets are
+     the company's fulfilment cost in cents, suggested from the business's own active service
+     prices where available (cheapest/average), with sector fallbacks when the catalogue is
+     empty. The editor's own budget->points maths turns the budget into a points cost. */
+  let pendingRewardTemplateV172=null;
+  const rewardTemplatesForSectorV172=(industry,prices)=>{
+    const sorted=[...(prices||[])].filter(v=>Number.isFinite(v)&&v>0).sort((a,b)=>a-b);
+    const cheapest=sorted[0]||null;
+    const average=sorted.length?Math.round(sorted.reduce((a,b)=>a+b,0)/sorted.length):null;
+    const tenPct=average?Math.max(100,Math.round(average/10)):null;
+    const sets={
+      fnb:[
+        {name:'Free drink',desc:'A free drink of your choice, on us.',budget:cheapest||300},
+        {name:'Free item on the house',desc:'Pick a free item from our menu.',budget:cheapest||500},
+        {name:'10% off your next visit',desc:'10% off the bill on your next visit.',budget:tenPct||300},
+        {name:'S$5 off your bill',desc:'S$5 off when you pay.',budget:500}],
+      salon:[
+        {name:'Free treatment add-on',desc:'A free add-on with any treatment.',budget:cheapest||1000},
+        {name:'S$10 off a treatment',desc:'S$10 off any treatment.',budget:1000},
+        {name:'Free upgrade',desc:'A free upgrade on your next appointment.',budget:800}],
+      fitness:[
+        {name:'1 free class',desc:'One class on us.',budget:cheapest||1500},
+        {name:'Free guest pass',desc:'Bring a friend for free.',budget:1000},
+        {name:'S$10 off your next package',desc:'S$10 off any package.',budget:1000}],
+      retail:[
+        {name:'S$5 voucher',desc:'S$5 off anything in store.',budget:500},
+        {name:'10% off one item',desc:'10% off any single item.',budget:tenPct||500},
+        {name:'Free small gift',desc:'A small gift with your purchase.',budget:cheapest||500}],
+      other:[
+        {name:'Free item',desc:'A free item of your choice.',budget:cheapest||500},
+        {name:'S$5 off',desc:'S$5 off your next purchase.',budget:500},
+        {name:'10% off your next visit',desc:'10% off next time.',budget:tenPct||500}]
+    };
+    sets.facial=sets.salon;sets.massage=sets.salon;
+    return sets[industry]||sets.other;
+  };
   const surfaceDefinition={
     rewards:{hash:'#/loyalty',label:'Rewards and earning'},
     winback:{hash:'#/retention',label:'Bring-back rules'},
@@ -14083,6 +14122,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       toast('Proposed fulfilment cost added to the editable reward');
       return true;
     };
+    /* V172: consume a chosen template once the reward editor is on screen — name, customer
+       description and suggested company cost; the editor's own maths derives the points. */
+    const applyPendingRewardTemplateV172=()=>{
+      if(surface!=='rewards'||!pendingRewardTemplateV172)return false;
+      const nameField=$('rwCustomerName'),estimate=$('rwEstimate');
+      if(!nameField||!estimate)return false;
+      const template=pendingRewardTemplateV172;pendingRewardTemplateV172=null;
+      nameField.value=template.name;
+      const description=$('rwDescription');if(description)description.value=template.desc;
+      const internal=$('rwInternalName');if(internal)internal.value=template.name;
+      if(Number.isFinite(template.estimateCents)&&template.estimateCents>0){
+        estimate.value=(template.estimateCents/100).toFixed(2);
+        estimate.dispatchEvent(new Event('input',{bubbles:true}));
+      }
+      toast(`Template loaded — review the numbers, then publish`);
+      return true;
+    };
     if(activeSurface===surface){
       preserveExactRoute();
       if(surface==='winback'&&focusTarget==='rn'){
@@ -14095,7 +14151,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         await loyaltyPage(undefined,draft,null,false,editorIntent);
       }
       if(!await openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
-      applyPendingRewardEstimate();
+      applyPendingRewardEstimate();applyPendingRewardTemplateV172();
       return;
     }
     if((surface==='rewards'&&!canRewards)||(surface==='winback'&&!canWinback))return;
@@ -14123,7 +14179,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     const exactRewardOpened=await openExactReward();
     if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
-    applyPendingRewardEstimate();
+    applyPendingRewardEstimate();applyPendingRewardTemplateV172();
   }
   function openRewardsAutoSetup(action={surface:'rewards',focusTarget:'lm',activateTarget:false}){
     if(!canSetupGrow)return;
@@ -14228,6 +14284,41 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     }
     mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
   });
+  /* V172 template picker: choosing a template stores the prefill and routes through the SAME
+     add-reward path as "+ Add reward" (auto-setup when no draft exists, otherwise straight to
+     the editor). The owner always lands in the editor and publishes via the existing flow. */
+  const templatesOpen=$('growTemplatesOpen'),templatesPanel=$('growTemplatesPanel');
+  if(templatesOpen&&templatesPanel){
+    let templatePricesLoaded=false;
+    templatesOpen.onclick=async()=>{
+      const nowHidden=!templatesPanel.hidden;
+      templatesPanel.hidden=nowHidden;
+      templatesOpen.setAttribute('aria-expanded',String(!nowHidden));
+      if(nowHidden||templatePricesLoaded)return;
+      templatesPanel.innerHTML='<p class="muted small" style="padding:10px 0">Loading suggestions from your services…</p>';
+      const {data:priceRows,error}=await sb.from('services').select('price_cents')
+        .eq('business_id',S.biz.id).eq('active',true).limit(200);
+      if(!isGrowCurrent()||templatesPanel.hidden)return;
+      templatePricesLoaded=!error;
+      const prices=(priceRows||[]).map(row=>Number(row.price_cents));
+      const templates=rewardTemplatesForSectorV172(S.biz.industry,prices);
+      templatesPanel.innerHTML=`<div class="grid" style="gap:10px">${templates.map((template,index)=>`
+        <button type="button" class="card" data-reward-template="${index}" style="text-align:left;cursor:pointer">
+          <b>${esc(template.name)}</b>
+          <p class="muted small" style="margin-top:4px">${esc(template.desc)}</p>
+          <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: ${esc(money(template.budget))}</span></p>
+        </button>`).join('')}</div>
+        <p class="muted small" style="margin-top:10px">Suggestions use your own service prices${prices.length?'':' (none yet, so sector defaults are shown)'}. You review and can change everything before publishing.</p>`;
+      templatesPanel.querySelectorAll('[data-reward-template]').forEach(button=>button.onclick=()=>{
+        const template=templates[Number(button.dataset.rewardTemplate)];
+        if(!template)return;
+        pendingRewardTemplateV172={name:template.name,desc:template.desc,estimateCents:template.budget};
+        const action={surface:'rewards',focusTarget:'rwAdd',activateTarget:true};
+        if(!growDraftVersionId){openRewardsAutoSetup(action);return}
+        mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
+      });
+    };
+  }
   const growRewardsRetry=$('growRewardsRetry');
   if(growRewardsRetry)growRewardsRetry.onclick=()=>growPage(routedSurface,hashParam,routedFocus);
   document.querySelectorAll('[data-reward-cost]').forEach(input=>input.addEventListener('input',()=>{
