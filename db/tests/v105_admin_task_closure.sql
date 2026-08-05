@@ -21,6 +21,7 @@ declare
   v_super uuid:=gen_random_uuid();
   v_outsider uuid:=gen_random_uuid();
   v_sales uuid:=gen_random_uuid();
+  v_owner uuid:=gen_random_uuid();
   v_business uuid;
   v_other_business uuid;
   v_company uuid:=gen_random_uuid();
@@ -40,7 +41,6 @@ declare
   v_snapshot timestamptz;
   v_cursor_updated_at timestamptz;
   v_cursor_id uuid;
-  v_first_token text;
   v_count integer;
 begin
   insert into auth.users(
@@ -52,7 +52,9 @@ begin
   ('00000000-0000-0000-0000-000000000000',v_outsider,
     'authenticated','authenticated','v105-outsider@example.test','',now(),now(),now()),
   ('00000000-0000-0000-0000-000000000000',v_sales,
-    'authenticated','authenticated','v105-sales@example.test','',now(),now(),now());
+    'authenticated','authenticated','v105-sales@example.test','',now(),now(),now()),
+  ('00000000-0000-0000-0000-000000000000',v_owner,
+    'authenticated','authenticated','v105-owner@example.test','',now(),now(),now());
   insert into public.super_admins(user_id,email,note)
   values(v_super,'v105-super@example.test','rollback-only v105 fixture');
   insert into public.platform_consultants(
@@ -299,8 +301,8 @@ begin
   reset role;
   perform pg_temp.as_v105_user(v_super);
 
-  -- Exact decision replays rotate an unobserved invitation, but do not
-  -- duplicate the application decision or its audit event.
+  -- Exact decision replays return the direct activation without duplicating
+  -- workspace, staff, branch, subscription, decision, or audit evidence.
   reset role;
   insert into public.business_applications_v95(
     id,idempotency_key,request_hash,contact_name,contact_email,contact_phone,
@@ -313,19 +315,18 @@ begin
   v_result:=public.platform_decide_business_application_v105(
     v_application,'approved','approve v105 fixture',1,v_attempt
   );
-  v_first_token:=v_result->>'invitation_token';
-  if length(v_first_token)<>64 or (v_result->>'replayed')::boolean then
-    raise exception 'first retry-safe approval failed: %',v_result;
+  if (v_result->>'workspace_created')::boolean is not true
+     or (v_result->>'replayed')::boolean
+     or v_result->>'status'<>'consumed' then
+    raise exception 'first direct approval activation failed: %',v_result;
   end if;
   v_result:=public.platform_decide_business_application_v105(
     v_application,'approved','approve v105 fixture',1,v_attempt
   );
-  if length(v_result->>'invitation_token')<>64
-     or v_result->>'invitation_token'=v_first_token
+  if (v_result->>'workspace_created')::boolean is not true
      or not (v_result->>'replayed')::boolean
-     or (v_result->>'response_version')::integer<>2 then
-    raise exception 'exact replay did not recover a fresh invitation: %',
-      v_result;
+     or (v_result->>'response_version')::integer<>1 then
+    raise exception 'exact replay did not return existing activation: %',v_result;
   end if;
   reset role;
   select count(*) into v_count
@@ -335,11 +336,17 @@ begin
     raise exception 'retry duplicated the application decision audit';
   end if;
   select count(*) into v_count
+  from public.staff
+  where user_id=v_owner and role='owner';
+  if v_count<>1 then
+    raise exception 'retry did not retain exactly one owner staff row';
+  end if;
+  select count(*) into v_count
   from public.business_application_invitations_v95
   where application_id=v_application
     and revoked_at is null and consumed_at is null;
-  if v_count<>1 then
-    raise exception 'retry did not retain exactly one active invitation';
+  if v_count<>0 then
+    raise exception 'direct approval retained an active invitation';
   end if;
   perform pg_temp.as_v105_user(v_super);
   begin

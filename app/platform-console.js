@@ -418,7 +418,8 @@
       'Owner application awaits a decision':'负责人申请等待决定','Review due {when}':'审核到期：{when}',
       'Approval review required':'需要审批审核','Review application':'查看申请','Applications':'申请',
       'Approve application':'批准申请','What approval does':'批准后的结果','What rejection does':'拒绝后的结果',
-      'Approving issues a one-time secure owner invitation. It does not activate the firm; the owner must use the invitation to create the approved account and continue onboarding.':'批准后会发出一次性安全负责人邀请，但不会激活企业；负责人必须使用邀请创建获批账户并继续入驻流程。',
+      'Approving creates the owner workspace immediately when the matching confirmed owner account exists. No invitation email or extra justification is required.':'如果匹配的负责人账户已确认，批准会立即创建负责人工作区。不需要邀请电邮或额外说明。',
+      'owner_account_not_found_for_application':'找不到与此申请电邮匹配的已确认负责人账户。请让负责人先登录或完成电邮确认，然后再批准。',
       'Rejecting keeps owner account creation and firm activation blocked. The applicant must submit a revised application before access can be approved.':'拒绝后会继续阻止负责人创建账户及激活企业；申请人必须提交修订后的申请，方可再次审批。',
       'System reconciliation incident':'系统对账事件','Reconciliation exception for {object}':'{object} 对账异常',
       'Automation run requires review':'自动化运行需要审核','Review immediately':'立即审核',
@@ -529,7 +530,8 @@
       'Owner application awaits a decision':'Permohonan pemilik menunggu keputusan','Review due {when}':'Semakan perlu {when}',
       'Approval review required':'Semakan kelulusan diperlukan','Review application':'Semak permohonan','Applications':'Permohonan',
       'Approve application':'Luluskan permohonan','What approval does':'Kesan kelulusan','What rejection does':'Kesan penolakan',
-      'Approving issues a one-time secure owner invitation. It does not activate the firm; the owner must use the invitation to create the approved account and continue onboarding.':'Kelulusan mengeluarkan jemputan pemilik selamat sekali guna. Ia tidak mengaktifkan firma; pemilik mesti menggunakan jemputan untuk mencipta akaun yang diluluskan dan meneruskan penerimaan.',
+      'Approving creates the owner workspace immediately when the matching confirmed owner account exists. No invitation email or extra justification is required.':'Kelulusan mencipta ruang kerja pemilik serta-merta apabila akaun pemilik yang sepadan telah disahkan. Tiada e-mel jemputan atau justifikasi tambahan diperlukan.',
+      'owner_account_not_found_for_application':'Akaun pemilik yang disahkan untuk e-mel permohonan ini tidak ditemui. Minta pemilik log masuk atau sahkan e-mel, kemudian luluskan semula.',
       'Rejecting keeps owner account creation and firm activation blocked. The applicant must submit a revised application before access can be approved.':'Penolakan terus menyekat penciptaan akaun pemilik dan pengaktifan firma. Pemohon mesti menghantar permohonan disemak sebelum akses boleh diluluskan.',
       'System reconciliation incident':'Insiden penyelarasan sistem','Reconciliation exception for {object}':'Pengecualian penyelarasan untuk {object}',
       'Automation run requires review':'Larian automasi perlu disemak','Review immediately':'Semak segera',
@@ -2171,6 +2173,12 @@
   const pt=platformText;
   function platformErrorMessage(error,fallback='Please try again.'){
     const known=String(error?.message||'').trim();
+    if(known==='owner_account_not_found_for_application'){
+      return pt('No confirmed owner account matches this application email. Ask the owner to sign in or confirm their email, then approve again.');
+    }
+    if(known==='owner_account_already_has_workspace'){
+      return pt('This owner account is already assigned to a workspace.');
+    }
     return known&&platformText(known)!==known?platformText(known):platformText(fallback);
   }
   const platformStatus=value=>pt(plainLabel(value));
@@ -4778,38 +4786,30 @@
   function businessApplicationDecisionModal(application,decision,context){
     const {CUI,sb}=context,isApproval=decision==='approve';
     const decisionAttemptKey=idempotencyKey();
+    const automaticApprovalReason='Approved by Super Admin';
     modal({title:isApproval?'Approve owner application':'Reject owner application',
       submitLabel:isApproval?'Approve application':'Reject application',CUI,
       body:`<div class="card"><b>${escapeHtml(application.business_name)}</b><p class="muted small" style="margin-top:5px">${escapeHtml(application.contact_name)} · ${escapeHtml(application.contact_email)}</p></div>
         <div class="platform-route-note platform-status-note" data-application-consequence><b>${escapeHtml(pt(isApproval?'What approval does':'What rejection does'))}</b>
           <p class="small">${escapeHtml(pt(isApproval
-            ?'Approving issues a one-time secure owner invitation. It does not activate the firm; the owner must use the invitation to create the approved account and continue onboarding.'
+            ?'Approving creates the owner workspace immediately when the matching confirmed owner account exists. No invitation email or extra justification is required.'
             :'Rejecting keeps owner account creation and firm activation blocked. The applicant must submit a revised application before access can be approved.'))}</p>
         </div>
-        <label for="businessApplicationDecisionReason">${escapeHtml(pt("Decision note"))}</label>
-        <textarea id="businessApplicationDecisionReason" name="reason" rows="4" required placeholder="${escapeHtml(pt(isApproval?'Approval basis and onboarding note':'Explain what must change before re-applying'))}"></textarea>
-        ${isApproval?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("If the connection is interrupted, submit this same decision again. Peekaa will revoke the unseen link and return a fresh secure invitation."))}</p>`:''}`,
+        ${isApproval
+          ?`<input type="hidden" name="reason" value="${escapeHtml(automaticApprovalReason)}">`
+          :`<label for="businessApplicationDecisionReason">${escapeHtml(pt("Decision note"))}</label>
+            <textarea id="businessApplicationDecisionReason" name="reason" rows="4" required placeholder="${escapeHtml(pt('Explain what must change before re-applying'))}"></textarea>`}
+        <p class="muted small" style="margin-top:10px">${escapeHtml(pt(isApproval
+          ?'If the connection is interrupted, press Approve application again. The same approval will return the existing workspace instead of duplicating it.'
+          :'If the connection is interrupted, submit this same decision again. The same rejection will be returned without duplicating it.'))}</p>`,
       onSubmit:async(form,controls)=>{
-        const result=await rpc(sb,'platform_decide_business_application_v105',{
+        await rpc(sb,'platform_decide_business_application_v105',{
           p_application:application.id,p_decision:isApproval?'approved':'rejected',
-          p_reason:String(form.get('reason')||'').trim(),p_expected_version:application.version,
+          p_reason:isApproval?automaticApprovalReason:String(form.get('reason')||'').trim(),p_expected_version:application.version,
           p_idempotency_key:decisionAttemptKey
         });
         if(isApproval){
-          const token=String(result?.invitation_token||'');
-          if(!/^[0-9a-f]{64}$/i.test(token))throw new Error(pt('Approval succeeded but the one-time invitation was not returned. Inspect the application before proceeding.'));
-          const url=new URL(globalObject.NestlyNativeBridge.publicUrl('/business'));url.searchParams.set('invite',token);
-          controls.overlay.querySelector('.modal-card').innerHTML=`<h2>${escapeHtml(pt("Application approved"))}</h2>
-            <p class="muted small" style="margin-top:7px">${escapeHtml(pt("Copy this secure invitation now. Peekaa stores only its hash and cannot show the token again."))}</p>
-            <label for="approvedOwnerInviteUrl">${escapeHtml(pt("Approved owner link"))}</label><textarea id="approvedOwnerInviteUrl" rows="4" readonly>${escapeHtml(url.toString())}</textarea>
-            <div class="row" style="margin-top:14px"><button type="button" class="btn" id="copyApprovedOwnerInvite">${escapeHtml(pt("Copy secure owner link"))}</button>
-            <span class="spacer"></span><button type="button" class="btn ghost" id="closeApprovedOwnerInvite">${escapeHtml(pt("Done"))}</button></div>`;
-          controls.overlay.querySelector('#copyApprovedOwnerInvite').onclick=async()=>{
-            await navigator.clipboard.writeText(url.toString());CUI.announce('Secure owner invitation copied.');
-          };
-          controls.overlay.querySelector('#closeApprovedOwnerInvite').onclick=async()=>{
-            controls.close();await renderOnboarding(context);
-          };
+          controls.close();await renderOnboarding(context);CUI.announce('Business application approved and workspace activated.');
           return;
         }
         controls.close();await renderOnboarding(context);CUI.announce('Business application rejected.');

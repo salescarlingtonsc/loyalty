@@ -212,7 +212,7 @@ test('sales staff permissions default to their own scoped Today surface',async()
   assert.match(scopedHtml,/data-platform-scope="own_created_or_assigned"/);
 });
 
-test('application gate uses exact decisions and explains consequences before mutation',async()=>{
+test('application gate uses exact decisions and direct approval copy before mutation',async()=>{
   const source=await read('app/platform-console.js');
   const queue=sourceSection(
     source,
@@ -233,12 +233,15 @@ test('application gate uses exact decisions and explains consequences before mut
     'the business gate never uses the ambiguous bare label “Reject”');
 
   assert.match(decision,/data-application-consequence/);
-  assert.match(decision,/secure owner invitation/i);
-  assert.match(decision,/does not activate the firm/i,
-    'approval copy distinguishes application approval from firm activation');
+  assert.match(decision,/creates the owner workspace immediately/i);
+  assert.match(decision,/No invitation email or extra justification is required/i);
+  assert.doesNotMatch(decision,/Copy secure owner link/);
+  assert.doesNotMatch(decision,/one-time invitation was not returned/i);
   assert.match(decision,/owner account creation/i);
   assert.match(decision,/remain blocked|keeps?[^.]*blocked|blocks?/i,
     'rejection copy states that owner creation/activation stays blocked');
+  assert.match(decision,/automaticApprovalReason='Approved by Super Admin'/);
+  assert.match(decision,/isApproval\?automaticApprovalReason:String\(form\.get\('reason'\)\|\|''\)\.trim\(\)/);
   assert.match(decision,/submitLabel:isApproval\?'Approve application':'Reject application'/);
 });
 

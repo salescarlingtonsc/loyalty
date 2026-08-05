@@ -42,14 +42,20 @@ test('self-service locale choices and assisted invitations retain English, Chine
   assert.doesNotMatch(app,/locale==='ms'\?'en'/);
 });
 
-test('only the superadmin platform queue can decide applications and exposes one-time link handling',()=>{
+test('only the superadmin platform queue can decide applications and activates without link handling',()=>{
+  const decision=platform.slice(
+    platform.indexOf('function businessApplicationDecisionModal'),
+    platform.indexOf('function wireOnboarding')
+  );
   assert.match(platform,/context\.access\?\.role==='super_admin'/);
   assert.match(platform,/platform_list_business_applications_v95/);
-  assert.match(platform,/platform_decide_business_application_v105/);
-  assert.match(platform,/p_expected_version:application\.version/);
-  assert.match(platform,/p_idempotency_key:decisionAttemptKey/);
-  assert.match(platform,/Peekaa stores only its hash and cannot show the token again/);
-  assert.match(platform,/Copy secure owner link/);
+  assert.match(decision,/platform_decide_business_application_v105/);
+  assert.match(decision,/p_expected_version:application\.version/);
+  assert.match(decision,/p_idempotency_key:decisionAttemptKey/);
+  assert.match(decision,/automaticApprovalReason='Approved by Super Admin'/);
+  assert.match(decision,/Business application approved and workspace activated/);
+  assert.doesNotMatch(decision,/Peekaa stores only its hash and cannot show the token again/);
+  assert.doesNotMatch(decision,/Copy secure owner link/);
 });
 
 test('owner programme editor publishes canonical copy and allowlisted media through guarded contracts',()=>{
