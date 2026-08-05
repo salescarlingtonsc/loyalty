@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 152,
-  "itemCount": 197,
+  "pendingCount": 156,
+  "itemCount": 201,
   "items": [
     {
       "order": 1,
@@ -1977,6 +1977,46 @@
       "path": "supabase/migrations/20260805215000_nestly_v171_customerintel_entitlement.sql",
       "octetLength": 2303,
       "sha256": "4b783cbc1316c00ac93a25a7089e55d762b45db8932450c7847bed5a76f4ef12",
+      "provenance": "local-source"
+    },
+    {
+      "order": 198,
+      "kind": "pending",
+      "version": "20260806085000",
+      "name": "nestly_v173_pause_enforcement_gaps",
+      "path": "supabase/migrations/20260806085000_nestly_v173_pause_enforcement_gaps.sql",
+      "octetLength": 17216,
+      "sha256": "ef12dbcd67e49eb188eed773a9dfd7d85361a0d8c2360d198d42e0ccdcdb4163",
+      "provenance": "local-source"
+    },
+    {
+      "order": 199,
+      "kind": "pending",
+      "version": "20260806090000",
+      "name": "nestly_v174_pipeline_stages_demo_flag",
+      "path": "supabase/migrations/20260806090000_nestly_v174_pipeline_stages_demo_flag.sql",
+      "octetLength": 34333,
+      "sha256": "88773c848a18db795c812d981d19cc71d7f67a17de2e49ff0b0131ad11564c39",
+      "provenance": "local-source"
+    },
+    {
+      "order": 200,
+      "kind": "pending",
+      "version": "20260806091000",
+      "name": "nestly_v175_customer_account_open_events",
+      "path": "supabase/migrations/20260806091000_nestly_v175_customer_account_open_events.sql",
+      "octetLength": 20628,
+      "sha256": "5e642caecb41ae6b8ec78296c8221c037ed7a2480eb6c11ef6983029c96e517d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 201,
+      "kind": "pending",
+      "version": "20260806100000",
+      "name": "nestly_v176_ai_firm_reports",
+      "path": "supabase/migrations/20260806100000_nestly_v176_ai_firm_reports.sql",
+      "octetLength": 37507,
+      "sha256": "d0c23288a76dffe7cb6bf05ac50a97e6bd19cfc7b1b61110945ef0afefb8953c",
       "provenance": "local-source"
     }
   ]

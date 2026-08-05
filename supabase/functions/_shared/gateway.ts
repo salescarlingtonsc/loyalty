@@ -158,6 +158,19 @@ export async function verifyTurnstile(req, token, expectedAction) {
   return turnstileBindingValid(result, expectedAction, expectedHostname, testMode);
 }
 
+// v175 canonical account-open evidence. Growth reporting must never be able to
+// fail a customer request, so this swallows every failure and only logs it. The
+// RPCs resolve the customer identity server-side and are idempotent per
+// business, customer, channel and Singapore calendar day.
+export async function recordAccountOpen(rpc, args) {
+  try {
+    const { error } = await adminClient().rpc(rpc, args);
+    if (error) console.error('v175 account-open not recorded', rpc, error.message);
+  } catch (cause) {
+    console.error('v175 account-open not recorded', rpc, String(cause));
+  }
+}
+
 export function publicError(req, status = 400) {
   return json(req, status, { error: 'We could not process that request.' });
 }

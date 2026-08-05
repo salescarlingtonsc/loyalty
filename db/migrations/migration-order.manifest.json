@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 195,
-  "executableCount": 181,
+  "itemCount": 199,
+  "executableCount": 185,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -294,6 +294,17 @@
         "db/migrations/20260805_nestly_v169_activate_stranded_approved_applications.sql",
         "db/migrations/20260805_nestly_v170_staff_update_client.sql",
         "db/migrations/20260805_nestly_v171_customerintel_entitlement.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260806",
+      "count": 5,
+      "paths": [
+        "db/migrations/20260806_nestly_v172_home_offers_optional_media.sql",
+        "db/migrations/20260806_nestly_v173_pause_enforcement_gaps.sql",
+        "db/migrations/20260806_nestly_v174_pipeline_stages_demo_flag.sql",
+        "db/migrations/20260806_nestly_v175_customer_account_open_events.sql",
+        "db/migrations/20260806_nestly_v176_ai_firm_reports.sql"
       ]
     }
   ],
@@ -1857,6 +1868,38 @@
       "semanticVersion": "v172",
       "proposedDeployVersion": "20260806020000",
       "sha256": "27c64955c8882a92bd3d7875b3aad92b18c7b4e5b8c34db4610556eb4645b569"
+    },
+    {
+      "order": 196,
+      "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v173_pause_enforcement_gaps.sql",
+      "semanticVersion": "v173",
+      "proposedDeployVersion": "20260806085000",
+      "sha256": "ef12dbcd67e49eb188eed773a9dfd7d85361a0d8c2360d198d42e0ccdcdb4163"
+    },
+    {
+      "order": 197,
+      "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v174_pipeline_stages_demo_flag.sql",
+      "semanticVersion": "v174",
+      "proposedDeployVersion": "20260806090000",
+      "sha256": "88773c848a18db795c812d981d19cc71d7f67a17de2e49ff0b0131ad11564c39"
+    },
+    {
+      "order": 198,
+      "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v175_customer_account_open_events.sql",
+      "semanticVersion": "v175",
+      "proposedDeployVersion": "20260806091000",
+      "sha256": "5e642caecb41ae6b8ec78296c8221c037ed7a2480eb6c11ef6983029c96e517d"
+    },
+    {
+      "order": 199,
+      "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v176_ai_firm_reports.sql",
+      "semanticVersion": "v176",
+      "proposedDeployVersion": "20260806100000",
+      "sha256": "d0c23288a76dffe7cb6bf05ac50a97e6bd19cfc7b1b61110945ef0afefb8953c"
     }
   ]
 }

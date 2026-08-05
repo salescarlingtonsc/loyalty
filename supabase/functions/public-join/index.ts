@@ -1,4 +1,4 @@
-import { enforceRateLimit, json, preflight, publicError, readJson, requireOrigin, turnstileSiteKey, verifyTurnstile, adminClient } from '../_shared/gateway.ts';
+import { enforceRateLimit, json, preflight, publicError, readJson, recordAccountOpen, requireOrigin, turnstileSiteKey, verifyTurnstile, adminClient } from '../_shared/gateway.ts';
 import { TOKEN_PATTERN, validJoinTokenPayload } from '../_shared/validation.ts';
 
 Deno.serve(async (req) => {
@@ -31,6 +31,10 @@ Deno.serve(async (req) => {
       p_consent: body.consent === true,
     });
     if (error || !data) return publicError(req);
+    await recordAccountOpen('internal_record_account_open_join_v175', {
+      p_join_token: body.join_token,
+      p_phone: String(body.phone),
+    });
     return json(req, 200, data);
   } catch {
     return publicError(req);

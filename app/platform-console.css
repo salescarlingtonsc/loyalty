@@ -304,6 +304,8 @@
   gap:0 14px;align-items:start
 }
 .platform-enterprise-filter-grid .cui-field label{margin-top:0}
+.platform-checkbox-field{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:13px}
+.platform-checkbox-field input{margin:0}
 .platform-enterprise-search{grid-column:span 2;display:grid;gap:8px}
 .platform-enterprise-search .cui-field label{margin-top:0}
 .platform-enterprise-search>p{margin-top:8px;line-height:1.4}
@@ -332,6 +334,22 @@
 .platform-report-sheet{display:grid;gap:20px}
 .platform-report-sheet h2,.platform-report-sheet h3{letter-spacing:-.025em}
 .platform-report-insights{display:grid;gap:10px}
+/* v176 AI narrative reports (firm drawer). */
+.platform-ai-reports .platform-action-item{align-items:flex-start}
+.platform-ai-reports .platform-actions{align-items:center;flex-wrap:wrap;gap:8px}
+.platform-ai-report-body{
+  display:block;margin-top:12px;padding:14px;border:1px solid var(--hair);
+  border-radius:12px;background:#FBFAF8;color:var(--ink2);line-height:1.6;
+  max-height:min(58vh,620px);overflow-y:auto;overflow-wrap:anywhere
+}
+.platform-ai-report-body h3,.platform-ai-report-body h4,.platform-ai-report-body h5{
+  margin:14px 0 6px;color:var(--ink);font-size:15px;letter-spacing:-.02em
+}
+.platform-ai-report-body h3:first-child,.platform-ai-report-body h4:first-child{margin-top:0}
+.platform-ai-report-body p{margin:0 0 10px}
+.platform-ai-report-body ul,.platform-ai-report-body ol{margin:0 0 10px;padding-left:20px}
+.platform-ai-report-body li{margin-bottom:6px}
+.platform-ai-report-body b{color:var(--ink)}
 .platform-insight{
   display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:14px;
   border:1px solid var(--hair);border-radius:12px;background:#FBFAF8

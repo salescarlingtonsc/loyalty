@@ -1186,6 +1186,30 @@
       "version": "20260805215000",
       "name": "nestly_v171_customerintel_entitlement",
       "sourcePath": "db/migrations/20260805_nestly_v171_customerintel_entitlement.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806085000",
+      "name": "nestly_v173_pause_enforcement_gaps",
+      "sourcePath": "db/migrations/20260806_nestly_v173_pause_enforcement_gaps.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806090000",
+      "name": "nestly_v174_pipeline_stages_demo_flag",
+      "sourcePath": "db/migrations/20260806_nestly_v174_pipeline_stages_demo_flag.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806091000",
+      "name": "nestly_v175_customer_account_open_events",
+      "sourcePath": "db/migrations/20260806_nestly_v175_customer_account_open_events.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806100000",
+      "name": "nestly_v176_ai_firm_reports",
+      "sourcePath": "db/migrations/20260806_nestly_v176_ai_firm_reports.sql"
     }
   ]
 }

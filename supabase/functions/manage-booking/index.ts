@@ -1,4 +1,4 @@
-import { adminClient, bookingChangeFingerprint, conflictError, enforceRateLimit, json, preflight, publicError, readJson, requireOrigin, sha256Hex } from '../_shared/gateway.ts';
+import { adminClient, bookingChangeFingerprint, conflictError, enforceRateLimit, json, preflight, publicError, readJson, recordAccountOpen, requireOrigin, sha256Hex } from '../_shared/gateway.ts';
 import { validManagePayload } from '../_shared/validation.ts';
 
 Deno.serve(async (req) => {
@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     if (body.action === 'lookup') {
       const { data, error } = await adminClient().rpc('internal_public_booking_lookup', { p_token_hash: tokenHash });
       if (error || !data) return publicError(req);
+      await recordAccountOpen('internal_record_account_open_booking_token_v175', { p_token_hash: tokenHash });
       return json(req, 200, data);
     }
 
@@ -31,6 +32,7 @@ Deno.serve(async (req) => {
     });
     if (error || !data) return publicError(req);
     if (data.conflict) return conflictError(req);
+    await recordAccountOpen('internal_record_account_open_booking_token_v175', { p_token_hash: tokenHash });
     return json(req, 200, data);
   } catch {
     return publicError(req);

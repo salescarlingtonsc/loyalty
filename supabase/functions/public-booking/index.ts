@@ -1,4 +1,4 @@
-import { adminClient, bookingRequestFingerprint, conflictError, deriveBookingManagementToken, enforceRateLimit, json, optionalAuthenticatedUserId, preflight, publicError, readJson, requireOrigin, sha256Hex, turnstileSiteKey, verifyTurnstile } from '../_shared/gateway.ts';
+import { adminClient, bookingRequestFingerprint, conflictError, deriveBookingManagementToken, enforceRateLimit, json, optionalAuthenticatedUserId, preflight, publicError, readJson, recordAccountOpen, requireOrigin, sha256Hex, turnstileSiteKey, verifyTurnstile } from '../_shared/gateway.ts';
 import { SLUG_PATTERN, validBookingPayload } from '../_shared/validation.ts';
 
 Deno.serve(async (req) => {
@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
     });
     if (error || !data) return publicError(req);
     if (data.conflict) return conflictError(req);
+    await recordAccountOpen('internal_record_account_open_booking_token_v175', { p_token_hash: tokenHash });
     return json(req, 200, { ...data, manage_token: manageToken });
   } catch {
     return publicError(req);

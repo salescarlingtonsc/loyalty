@@ -2269,6 +2269,7 @@
     ['new_lead','New Lead'],['appt_set','Appointment Set'],
     ['npu_1','NPU 1'],['npu_2','NPU 2'],['npu_3','NPU 3'],['npu_4','NPU 4'],['npu_5','NPU 5'],['npu_6','NPU 6'],
     ['call_back','Call Back'],['reschedule','Reschedule'],['meeting_sent','Meeting Link Sent / Calendar Set'],
+    ['site_visit','Site Visit'],['quotation_sent','Quotation Sent'],
     ['pending_decision','Pending Decision'],['client','Client / Deal Won'],['account_created','Account Created'],
     ['onboarding','Onboarding in Progress'],['activated','Activated'],['lost','Lost']
   ].map(([key,label])=>Object.freeze({key,label})));
@@ -2276,9 +2277,9 @@
     Object.freeze({key:'inbox',label:'New & unassigned',description:'New leads and records that need triage',
       stages:Object.freeze(['unmapped','new_lead'])}),
     Object.freeze({key:'contacting',label:'Contact & meeting',description:'Outreach, callbacks and scheduled conversations',
-      stages:Object.freeze(['appt_set','npu_1','npu_2','npu_3','npu_4','npu_5','npu_6','call_back','reschedule','meeting_sent'])}),
+      stages:Object.freeze(['appt_set','npu_1','npu_2','npu_3','npu_4','npu_5','npu_6','call_back','reschedule','meeting_sent','site_visit'])}),
     Object.freeze({key:'decision',label:'Decision',description:'Qualified firms considering the proposal',
-      stages:Object.freeze(['pending_decision'])}),
+      stages:Object.freeze(['quotation_sent','pending_decision'])}),
     Object.freeze({key:'case_won',label:'Case won',description:'Signed, website-signup and onboarded firms',
       stages:Object.freeze(['client','account_created','onboarding','activated'])}),
     Object.freeze({key:'closed',label:'Closed',description:'Opportunities closed without activation',
@@ -2340,6 +2341,8 @@
     call_back:['Callback date and assigned person','Reason or context'],
     reschedule:['Previous meeting reference','New time and reschedule reason'],
     meeting_sent:['Confirmed meeting time','Channel, location or meeting URL','Attendees'],
+    site_visit:['Visit date and responsible owner','Outcome notes'],
+    quotation_sent:['Quotation amount','Sent date','Next follow-up'],
     pending_decision:['Qualification summary','Decision maker','Decision date or follow-up','Objection, proposed value and next action'],
     client:['Accepted product, seats, billing cycle, value and currency','Owner email','Onboarding owner and target go-live'],
     account_created:['Successful server-side conversion','Linked workspace and owner invitation'],
@@ -2362,7 +2365,7 @@
     '[data-onboarding-unblock]','[data-onboarding-activate]','[data-onboarding-evidence]',
     '[data-onboarding-waive]','[data-onboarding-item-block]','[data-onboarding-item-unblock]',
     '#platformNewBundle','[data-edit-sector]','[data-assign-firm]','[data-override-firm]',
-    '[data-business-approval]','[data-module-control]','[data-catalogue-intelligence]',
+    '[data-business-approval]','[data-module-control]','[data-catalogue-intelligence]','[data-toggle-demo]',
     '#platformNewBillingPrice','[data-billing-command]',
     '#platformNewConsultant','#platformAttributeConsultant','#platformNewPolicy',
     '#platformNewPayout','[data-edit-consultant]','[data-forfeit-consultant]',
@@ -3086,6 +3089,7 @@
   function enterpriseFirmRows(firms,CUI) {
     return firms.map(firm=>[
       `<button type="button" class="platform-link-button" data-enterprise-firm="${escapeHtml(firmId(firm))}"><b>${escapeHtml(firm.name||firm.legal_name||'Unnamed firm')}</b></button>
+        ${firm.is_demo?`<span class="pill" title="${escapeHtml(pt('Excluded from billing exceptions and revenue rollups.'))}">${escapeHtml(pt('Demo'))}</span>`:''}
         ${firmRegistrationNumber(firm)?`<span class="muted small platform-firm-secondary">${escapeHtml(firmRegistrationNumber(firm))}</span>`:''}`,
       escapeHtml(sectorLabel(firm.sector_key||firm.industry)),
       `<span>${escapeHtml(firmOwnerName(firm)||'—')}</span>${firmOwnerEmail(firm)?`<span class="muted small platform-firm-secondary">${escapeHtml(firmOwnerEmail(firm))}</span>`:''}`,
@@ -3103,8 +3107,10 @@
     const firm=catalog.find(row=>firmId(row)===selected[0]);
     return asArray(firm?.branches);
   }
-  function enterpriseHtml(payload,CUI,filters,catalog,canGenerateReport=false) {
-    const firms=asArray(payload,['firms']),pagination=asObject(payload.pagination);
+  function enterpriseHtml(payload,CUI,filters,catalog,canGenerateReport=false,showDemo=false) {
+    const allFirms=asArray(payload,['firms']),pagination=asObject(payload.pagination);
+    const demoCount=allFirms.filter(firm=>firm.is_demo).length;
+    const firms=showDemo?allFirms:allFirms.filter(firm=>!firm.is_demo);
     const branches=enterpriseBranchOptions(filters,catalog);
     const canonicalReportHash=enterpriseReportHash(filters);
     return `${CUI.pageHeader({
@@ -3128,6 +3134,7 @@
           ${CUI.field({id:'enterpriseFrom',label:'From',type:'date',value:filters.from})}
           ${CUI.field({id:'enterpriseTo',label:'To',type:'date',value:filters.to})}
         </div>
+        <label class="platform-checkbox-field"><input type="checkbox" id="enterpriseShowDemo"${showDemo?' checked':''}><span>${escapeHtml(pt('Show demo firms'))}${demoCount?` (${demoCount})`:''}</span></label>
         <div class="platform-actions">
           <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt("Apply scope"))}</span></button>
           <button class="btn ghost" type="button" id="enterpriseClear">${escapeHtml(pt("Clear"))}</button>
@@ -3241,6 +3248,9 @@
         ${CUI.card({title:'Subscription access',body:`<div class="platform-control-status">${CUI.status(platformStatus(subscriptionState),workspaceControlTone(subscriptionState))}<span class="muted small">${subscription.overdue_day===null||subscription.overdue_day===undefined?escapeHtml(pt('No overdue day')):escapeHtml(pt('Day {count} overdue',{count:subscription.overdue_day}))}</span></div>
           <dl class="platform-context-list"><div><dt>${escapeHtml(pt("Due date"))}</dt><dd>${escapeHtml(subscription.due_date||'—')}</dd></div><div><dt>${escapeHtml(pt("Workspace paused"))}</dt><dd>${subscription.workspace_paused?pt('Yes'):pt('No')}</dd></div></dl>
           ${subscription.workspace_paused?`<p class="small">${escapeHtml(pt("Owner access resumes only after provider payment truth is reconciled."))}</p>${contact?`<a class="btn ghost sm" href="tel:${escapeHtml(contact.tel)}">${escapeHtml(pt("Contact"))} ${escapeHtml(representative.display_name||'assigned representative')}</a>`:''}`:`<p class="muted small">${escapeHtml(pt("Daily reminders run from the due date. Owner access pauses on day 14 if the invoice remains unpaid."))}</p>`}`})}
+        ${CUI.card({title:'Demo firm',body:`<div class="platform-control-status">${CUI.status(firm.is_demo?pt('Demo'):pt('Live'),firm.is_demo?'info':'ok')}</div>
+          <p class="muted small">${escapeHtml(pt("Demo firms stay visible in the directory but are excluded from the daily billing-lifecycle scan and platform revenue/aggregate reports."))}</p>
+          ${canWrite?`<div class="platform-actions"><button type="button" class="btn ghost sm" data-toggle-demo="${firm.is_demo?'false':'true'}">${escapeHtml(pt(firm.is_demo?'Unmark as demo':'Mark as demo'))}</button></div>`:''}`})}
       </div>
       <div class="platform-list-row platform-control-heading"><div><h3>${escapeHtml(pt("Firm module policy"))}</h3><p class="muted small">${escapeHtml(pt("Branch overrides take priority over firm and sector settings. Inventory is globally unavailable to firms."))}</p></div>
         ${canWrite?`<div class="platform-actions">${sectorProfiles.length?`<button type="button" class="btn ghost sm" data-change-sector>${escapeHtml(pt(sectorAssignment.assignment_version?'Change sector template':'Assign sector template'))}</button>`:''}<button type="button" class="btn ghost sm" data-module-control="" data-branch-id="">${escapeHtml(pt("Manage firm modules"))}</button></div>`:''}
@@ -3255,6 +3265,132 @@
       </div>
       <p>${escapeHtml(pt(catalogue.enabled?'Enabled for catalogue-first sales and item-level intelligence.':'Disabled. Quick Earn can fall back to authorised custom-amount sales; no item affinity claims are generated.'))}</p>
     </section>`;
+  }
+  function aiReportTone(status) {
+    return status==='succeeded'?'ok':status==='failed'?'no':status==='generating'?'new':'off';
+  }
+  function aiReportPeriodLabel(report) {
+    return `${platformStatus(report.period_kind)} · ${report.period_start} – ${report.period_end}`;
+  }
+  function sgCalendarToday() {
+    const parts=new Intl.DateTimeFormat('en-CA',{
+      timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'
+    }).formatToParts(new Date());
+    const part=type=>Number(parts.find(item=>item.type===type)?.value||0);
+    return {year:part('year'),month:part('month'),day:part('day')};
+  }
+  function aiReportDefaultPeriodStart(kind) {
+    const {year,month}=sgCalendarToday();
+    if(kind==='yearly')return `${year-1}-01-01`;
+    if(kind==='quarterly'){
+      const currentQuarter=Math.floor((month-1)/3),priorQuarter=currentQuarter-1;
+      const priorYear=priorQuarter<0?year-1:year;
+      const priorMonth=((priorQuarter+4)%4)*3+1;
+      return `${priorYear}-${String(priorMonth).padStart(2,'0')}-01`;
+    }
+    const priorMonth=month-1;
+    return `${priorMonth<1?year-1:year}-${String(priorMonth<1?12:priorMonth).padStart(2,'0')}-01`;
+  }
+  // Minimal markdown rendering. The narrative is model-authored text, so every
+  // fragment is HTML-escaped before any inline markup is applied.
+  function aiReportMarkdownHtml(markdown) {
+    const inline=text=>escapeHtml(String(text))
+      .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+      .replace(/(^|[\s(])\*([^*\n]+)\*/g,'$1<i>$2</i>');
+    const html=[];let listType=null;
+    const closeList=()=>{if(listType){html.push(`</${listType}>`);listType=null}};
+    for(const rawLine of String(markdown||'').replace(/\r\n?/g,'\n').split('\n')){
+      const line=rawLine.trim();
+      if(!line){closeList();continue}
+      const heading=/^(#{1,4})\s+(.*)$/.exec(line);
+      if(heading){
+        closeList();
+        const level=Math.min(heading[1].length+2,5);
+        html.push(`<h${level}>${inline(heading[2])}</h${level}>`);
+        continue;
+      }
+      const bullet=/^[-*+]\s+(.*)$/.exec(line);
+      if(bullet){
+        if(listType!=='ul'){closeList();html.push('<ul>');listType='ul'}
+        html.push(`<li>${inline(bullet[1])}</li>`);
+        continue;
+      }
+      const ordered=/^\d+[.)]\s+(.*)$/.exec(line);
+      if(ordered){
+        if(listType!=='ol'){closeList();html.push('<ol>');listType='ol'}
+        html.push(`<li>${inline(ordered[1])}</li>`);
+        continue;
+      }
+      closeList();html.push(`<p>${inline(line)}</p>`);
+    }
+    closeList();
+    return html.join('')||localizedEmptyHtml('This report has no written content.');
+  }
+  function aiFirmReportsHtml(reports,CUI,canRequest) {
+    const rows=asArray(reports);
+    return `<section class="card platform-detail-section platform-ai-reports" aria-labelledby="aiFirmReportsTitle">
+      <div class="platform-list-row"><div><h2 id="aiFirmReportsTitle">${escapeHtml(pt("AI report"))}</h2>
+        <p class="muted small">${escapeHtml(pt("Written every month, quarter and year from the same evidence as the consultant brief. New customers, sales growth and account opens are always covered, and no number is invented."))}</p></div>
+        ${canRequest?`<div class="platform-actions no-print"><button type="button" class="btn ghost sm" data-ai-report-generate>${escapeHtml(pt("Generate now"))}</button></div>`:''}
+      </div>
+      ${rows.length?`<div class="platform-action-queue">${rows.map(report=>`
+        <div class="platform-action-item"><div><b>${escapeHtml(aiReportPeriodLabel(report))}</b>
+          <p class="muted small">${escapeHtml(pt('{status} · {date}',{
+            status:platformStatus(report.status),
+            date:report.completed_at?dateTime(report.completed_at):pt('not generated yet')
+          }))}${report.model?` · ${escapeHtml(report.model)}`:''}</p>
+          ${report.status==='failed'&&report.error?`<p class="muted small">${escapeHtml(report.error)}</p>`:''}</div>
+          <div class="platform-actions">${CUI.status(platformStatus(report.status),aiReportTone(report.status))}
+            ${report.narrative_md?`<button type="button" class="btn ghost sm" data-ai-report-view="${escapeHtml(report.id)}">${escapeHtml(pt("Read report"))}</button>`:''}</div>
+        </div>`).join('')}</div>`:localizedEmptyHtml('No AI report has been written for this firm yet.')}
+    </section>`;
+  }
+  function aiReportViewModal(report,CUI) {
+    modal({
+      title:pt('AI report'),submitLabel:pt('Close'),CUI,
+      body:`<p class="muted small">${escapeHtml(aiReportPeriodLabel(report))}${report.model?` · ${escapeHtml(report.model)}`:''}</p>
+        <article class="platform-ai-report-body">${aiReportMarkdownHtml(report.narrative_md)}</article>`,
+      onSubmit:async(form,controls)=>{controls.close()}
+    });
+  }
+  function aiReportGenerateModal(firm,context,refresh) {
+    const {CUI,sb}=context;
+    const overlay=modal({
+      title:pt('Generate AI report'),submitLabel:pt('Queue report'),CUI,
+      body:`<p class="muted small">${escapeHtml(pt("Only a period that has already closed can be reported on. Demo firms are excluded."))}</p>
+        ${CUI.field({
+          id:'aiReportPeriodKind',label:'Report period',control:'select',
+          options:[
+            {value:'monthly',label:'Monthly',selected:true},
+            {value:'quarterly',label:'Quarterly'},
+            {value:'yearly',label:'Yearly'}
+          ],attributes:'name="period_kind"'
+        })}
+        ${CUI.field({
+          id:'aiReportPeriodStart',label:'Period starts on',type:'date',
+          value:aiReportDefaultPeriodStart('monthly'),required:true,
+          attributes:'name="period_start"'
+        })}`,
+      onSubmit:async(form,controls)=>{
+        const kind=String(form.get('period_kind')||'monthly');
+        await rpc(sb,'platform_request_ai_firm_report_v176',{
+          p_business:firmId(firm),p_period_kind:kind,
+          p_period_start:String(form.get('period_start')||'')
+        });
+        if(context.access?.role==='super_admin'){
+          // Immediate drain so the owner does not wait for the nightly job.
+          try{await sb.functions.invoke('ai-firm-reports',{body:{}})}catch{/* queued anyway */}
+        }
+        controls.close();
+        CUI.announce(pt('The AI report is queued. It appears here once it is written.'));
+        await refresh();
+      }
+    });
+    const kindSelect=overlay.querySelector('#aiReportPeriodKind');
+    const startInput=overlay.querySelector('#aiReportPeriodStart');
+    if(kindSelect&&startInput){
+      kindSelect.onchange=()=>{startInput.value=aiReportDefaultPeriodStart(kindSelect.value)};
+    }
   }
   function businessApprovalModal(firm,decision,control,context,refresh) {
     const {CUI,sb}=context,approval=asObject(control.approval);
@@ -3354,20 +3490,31 @@
     const scopedFilters={...filters,businesses:[firmId(firm)]};
     const body=overlay.querySelector('#enterpriseFirmBody');
     let customers=[],page={},snapshot=context.enterpriseSnapshot||null;
-    let control={},effective={},sectorProfiles=[],sectorAssignment={};
+    let control={},effective={},sectorProfiles=[],sectorAssignment={},aiReports=[];
+    // The AI-report engine is a later backend phase than the rest of this
+    // drawer: an unapplied v176 must never blank the firm controls.
+    const loadAiReports=()=>rpc(sb,'platform_list_ai_firm_reports_v176',{
+      p_business:firmId(firm),p_limit:12
+    }).catch(()=>null);
     const renderBody=()=>{
-      body.innerHTML=`${firmGovernanceHtml(firm,CUI,control,effective,context,{sectorProfiles,sectorAssignment})}${enterpriseDetailTable(firm,CUI,customers,page)}`;
+      body.innerHTML=`${firmGovernanceHtml(firm,CUI,control,effective,context,{sectorProfiles,sectorAssignment})}${aiFirmReportsHtml(aiReports,CUI,context.canWrite===true)}${enterpriseDetailTable(firm,CUI,customers,page)}`;
       bind();
     };
+    const refreshAiReports=async()=>{
+      aiReports=asArray(asObject(await loadAiReports()).reports);
+      if(body.isConnected)renderBody();
+    };
     const refreshControls=async()=>{
-      const [nextControl,nextEffective,sectorPayload,selfServePayload]=await Promise.all([
+      const [nextControl,nextEffective,sectorPayload,selfServePayload,aiPayload]=await Promise.all([
         rpc(sb,'platform_get_business_control_v94',{p_business:firmId(firm)}),
         rpc(sb,'platform_get_effective_modules_v105',{p_business:firmId(firm),p_branch:null}),
         rpc(sb,'platform_list_sector_entitlements_v75'),
         context.access?.role==='super_admin'
           ?rpc(sb,'get_self_serve_checkout_v130',{p_business:firmId(firm)})
-          :Promise.resolve(null)
+          :Promise.resolve(null),
+        loadAiReports()
       ]);
+      aiReports=asArray(asObject(aiPayload).reports);
       control={...asObject(nextControl),self_service:asObject(selfServePayload).onboarding};
       effective=asObject(nextEffective);
       const sectors=asObject(sectorPayload);
@@ -3395,6 +3542,15 @@
           more.title=platformErrorMessage(error,'Customer page unavailable');
         }
       };
+      body.querySelector('[data-ai-report-generate]')?.addEventListener('click',()=>{
+        aiReportGenerateModal(firm,context,refreshAiReports);
+      });
+      body.querySelectorAll('[data-ai-report-view]').forEach(button=>{
+        button.onclick=()=>{
+          const report=aiReports.find(row=>String(row.id)===button.dataset.aiReportView);
+          if(report)aiReportViewModal(report,CUI);
+        };
+      });
       body.querySelectorAll('[data-business-approval]').forEach(button=>{
         button.onclick=()=>businessApprovalModal(firm,button.dataset.businessApproval,control,context,refreshControls);
       });
@@ -3405,6 +3561,22 @@
       });
       body.querySelector('[data-change-sector]')?.addEventListener('click',()=>{
         assignSectorModal(sectorAssignment,sectorProfiles,context,refreshControls);
+      });
+      body.querySelector('[data-toggle-demo]')?.addEventListener('click',async event=>{
+        const button=event.currentTarget,nextIsDemo=button.dataset.toggleDemo==='true';
+        button.disabled=true;
+        try{
+          await rpc(sb,'set_business_demo_flag_v174',{
+            p_business:firmId(firm),p_is_demo:nextIsDemo,
+            p_reason:nextIsDemo?'Marked as demo from the Firms directory.':'Unmarked as demo from the Firms directory.'
+          });
+          firm.is_demo=nextIsDemo;
+          CUI.announce(pt(nextIsDemo?'{firm} is now marked as a demo firm.':'{firm} is no longer marked as a demo firm.',{firm:firm.name}));
+          renderBody();
+        }catch(error){
+          button.disabled=false;
+          CUI.announce(platformErrorMessage(error,'The demo flag could not be changed.'),{assertive:true});
+        }
       });
       body.querySelectorAll('[data-manage-branch]').forEach(button=>{
         button.onclick=async()=>{
@@ -3441,13 +3613,15 @@
       rpc(sb,'platform_get_effective_modules_v105',{p_business:firmId(firm),p_branch:null}),
       context.access?.role==='super_admin'
         ?rpc(sb,'get_self_serve_checkout_v130',{p_business:firmId(firm)})
-        :Promise.resolve(null)
-    ]).then(([payload,controlPayload,effectivePayload,selfServePayload])=>{
+        :Promise.resolve(null),
+      loadAiReports()
+    ]).then(([payload,controlPayload,effectivePayload,selfServePayload,aiPayload])=>{
       if(!body.isConnected)return;
       snapshot=snapshot||payload.snapshot_at;
       customers=asArray(payload,['customers']);page=asObject(payload.pagination);
       control={...asObject(controlPayload),self_service:asObject(selfServePayload).onboarding};
       effective=asObject(effectivePayload);
+      aiReports=asArray(asObject(aiPayload).reports);
       renderBody();
     }).catch(error=>{
       if(body.isConnected)body.innerHTML=CUI.errorState({
@@ -3655,7 +3829,12 @@
       const catalog=context.enterpriseCatalog||firms;
       context.enterpriseSnapshot=payload.snapshot_at;
       const canGenerateReport=canAccessModule(context.access,'reports');
-      main.innerHTML=enterpriseHtml(asObject(payload),CUI,filters,catalog,canGenerateReport);
+      const showDemo=Boolean(context.enterpriseShowDemo);
+      main.innerHTML=enterpriseHtml(asObject(payload),CUI,filters,catalog,canGenerateReport,showDemo);
+      main.querySelector('#enterpriseShowDemo').onchange=event=>{
+        context.enterpriseShowDemo=event.target.checked;
+        renderEnterprise(context,filters,state);
+      };
       const form=main.querySelector('#enterpriseFilters'),businessSelect=main.querySelector('#enterpriseBusinesses');
       const refreshBranches=()=>{
         const ids=selectedOptions(businessSelect),branchSelect=main.querySelector('#enterpriseBranch');
@@ -6255,6 +6434,16 @@
         {id:'attendees',label:'Attendees',hint:'Names or emails, comma separated.',wide:true},
         {id:'meeting_url',label:'Meeting URL',type:'url',required:false},
         {id:'physical_location',label:'Physical location',required:false}
+      ],
+      site_visit:[
+        {id:'visit_at',label:'Visit at',type:'datetime-local'},
+        {id:'visit_owner',label:'Visit owner'},
+        {id:'outcome_notes',label:'Outcome notes',control:'textarea',wide:true}
+      ],
+      quotation_sent:[
+        {id:'quotation_amount_cents',label:'Quotation amount (SGD)',type:'number',money:true},
+        {id:'sent_at',label:'Sent at',type:'datetime-local'},
+        {id:'next_follow_up_at',label:'Next follow-up at',type:'datetime-local'}
       ],
       pending_decision:[
         {id:'qualification_summary',label:'Qualification summary',control:'textarea',wide:true},
