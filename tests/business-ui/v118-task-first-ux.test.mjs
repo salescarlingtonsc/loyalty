@@ -17,7 +17,7 @@ test('V141 supersedes duplicate home tasks: app bar keeps primary jobs and dashb
   const shell = section('function renderShell(page){', '/* ---------- dashboard ---------- */');
   assert.doesNotMatch(dashboard, /Common tasks|Record a sale|Add appointment|Find a customer|Set up rewards/);
   assert.match(shell, /globalActionsHtml\(\)/);
-  assert.match(shell, /dashboardBranchWrap/);
+  assert.match(dashboard, /id="dashboardReportingScopeWrap"/);
   assert.match(dashboard, /<section class="card performance-panel"/);
   assert.match(dashboard, /<h2 id="performanceTitle">Performance<\/h2>/);
   assert.doesNotMatch(dashboard, /<details class="card performance-panel"/);

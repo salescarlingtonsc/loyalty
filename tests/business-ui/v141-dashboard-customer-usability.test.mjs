@@ -16,7 +16,6 @@ function section(start,end){
   return app.slice(from,to);
 }
 
-const shell=section('function renderShell(page){','/* ---------- dashboard ---------- */');
 const dashboard=section('async function dashboard(){','/* ---------- customers ---------- */');
 const customers=section('async function clientsPage(){','async function clientDetail(id){');
 const profile=section('async function clientDetail(id){','/* ---------- quick earn (');
@@ -24,8 +23,8 @@ const profile=section('async function clientDetail(id){','/* ---------- quick ea
 test('V141 dashboard removes duplicate launchers and keeps branch-scoped performance visible',()=>{
   assert.match(app,/flat:'Dashboard',items:\['dashboard'\]/);
   assert.doesNotMatch(dashboard,/taskLauncher|task-launcher-grid|<details class="card performance-panel"/);
-  assert.match(shell,/page\[0\]==='dashboard'[\s\S]*id="dashboardBranchWrap"/);
-  assert.match(dashboard,/refreshBranchFilter\([^\n]+dashboardBranchWrap/);
+  assert.match(dashboard,/id="dashboardReportingScopeWrap"/);
+  assert.match(dashboard,/renderReportingScopeSelectorV155\([^\n]+dashboardReportingScopeWrap/);
   assert.match(dashboard,/data-d="1"[^>]*>Today</);
   assert.match(dashboard,/class="performance-heading"[\s\S]*CUI\.icon\('reports'/);
   assert.doesNotMatch(dashboard,/performance-panel>summary|<summary>Performance/);

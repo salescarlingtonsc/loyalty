@@ -1669,7 +1669,7 @@ const NAVGROUPS=[
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
   {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
   {key:'grow',icon:'star',label:'Programmes',items:['loyalty','retention','referrals','memberships','giftcards']},
-  {key:'money',icon:'reports',label:'Reports',items:['sales','reports','customerintel','pnl','expenses','staffperf']},
+  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','reports','customerintel','pnl','expenses','staffperf']},
   {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages']}
 ];
 let navOpen={};
@@ -8364,7 +8364,6 @@ function renderShell(page){
         ${mobileWorkspaceTitleHtml(page)}
         ${globalActionsHtml()}
         ${mobileSearchShellHtml()}
-        ${page[0]==='dashboard'?'<span class="dashboard-appbar-branch" id="dashboardBranchWrap" aria-label="Dashboard branch"><span class="branch-loading-pill" aria-live="polite">Branch scope</span></span>':''}
         ${workspaceLanguagePickerV97()}
         ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
         ${bellHtml()}
