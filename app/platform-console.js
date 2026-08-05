@@ -4686,22 +4686,18 @@
     return `<section class="platform-route-note platform-status-note" style="margin-top:14px">
       ${CUI.icon('staff',{size:19})}<div style="width:100%">
         <div class="row"><div><b>${escapeHtml(pt('Incomplete business account signups'))}</b>
-          <p class="small">${escapeHtml(pt('Manage these as inbound CRM leads: contact, mark follow-up, or archive. Approve/reject appears only after a company/demo/manual-payment application exists; Stripe access still requires verified payment.'))}</p></div>
+          <p class="small">${escapeHtml(pt('Use the simple decision buttons. Cash/manual-payment approval is available after a business workspace exists.'))}</p></div>
           <span class="spacer"></span><span class="pill">${rows.length} ${escapeHtml(pt('recent'))}</span></div>
         <div class="platform-card-list" style="margin-top:12px">${rows.map(item=>{
           const phone=normalizePlatformPhone(item.phone);
-          const action=item.email
-            ?`<a class="btn ghost sm" href="mailto:${encodeURIComponent(item.email)}?subject=Continue%20your%20Peekaa%20business%20setup&body=Hi%2C%20please%20continue%20your%20Peekaa%20business%20setup%20at%20https%3A%2F%2Fpeekaa.asia%2Fbusiness.%20You%20can%20choose%20monthly%2C%20yearly%2C%20or%20request%20a%20demo%20%2F%20manual%20payment%20help.">${escapeHtml(pt('Email setup/demo link'))}</a>`
-            :phone?`<a class="btn ghost sm" href="tel:${escapeHtml(phone.tel)}">${escapeHtml(pt('Call owner'))}</a>`:'';
           return `<div class="platform-action-item">
           <div><b>${escapeHtml(item.email||item.phone||pt('Contact unavailable'))}</b>
             <p class="muted small">${escapeHtml(pt('Account created'))}: ${escapeHtml(dateTime(item.created_at))}${item.last_sign_in_at?` · ${escapeHtml(pt('Last sign-in'))}: ${escapeHtml(dateTime(item.last_sign_in_at))}`:''}</p>
             ${item.email&&item.phone?`<p class="muted small">${escapeHtml(item.phone)}</p>`:''}
-            <p class="muted small">${escapeHtml(pt('Current status'))}: ${escapeHtml(platformStatus(item.status||'needs_business_details'))} · ${escapeHtml(pt('Triage'))}: ${escapeHtml(platformStatus(item.triage_status||'new'))}</p>
+            <p class="muted small">${escapeHtml(pt('Current status'))}: ${escapeHtml(platformStatus(item.status||'needs_business_details'))} · ${escapeHtml(pt('Decision'))}: ${escapeHtml(platformStatus(item.triage_status||'new'))}</p>
             ${item.triage_note?`<p class="muted small">${escapeHtml(item.triage_note)}</p>`:''}
-            ${item.last_contacted_at?`<p class="muted small">${escapeHtml(pt('Last contacted'))}: ${escapeHtml(dateTime(item.last_contacted_at))}</p>`:''}
-            <p class="muted small">${escapeHtml(pt('Admin action'))}: ${escapeHtml(pt('Follow up here. Approve/reject becomes available after a company/demo/manual-payment application is submitted.'))}</p></div>
-          <div class="platform-actions" data-account-signup-actions="${escapeHtml(item.user_id||'')}">${action}<button type="button" class="btn ghost sm" data-account-signup-triage="contacted" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Mark contacted'))}</button><button type="button" class="btn ghost sm" data-account-signup-triage="follow_up" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Follow up'))}</button><button type="button" class="btn danger sm" data-account-signup-triage="archived" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Archive'))}</button></div>
+            ${item.last_contacted_at?`<p class="muted small">${escapeHtml(pt('Last updated'))}: ${escapeHtml(dateTime(item.last_contacted_at))}</p>`:''}</div>
+          <div class="platform-actions" data-account-signup-actions="${escapeHtml(item.user_id||'')}"><button type="button" class="btn sm" data-account-signup-triage="contacted" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Approve'))}</button><button type="button" class="btn danger sm" data-account-signup-triage="archived" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Reject'))}</button><button type="button" class="btn ghost sm" data-account-signup-triage="follow_up" data-user="${escapeHtml(item.user_id||'')}">${escapeHtml(pt('Pending'))}</button></div>
         </div>`;
         }).join('')||`<p class="muted small">${escapeHtml(pt('No account-only signups match the current filters.'))}</p>`}</div>
       </div>
@@ -4714,10 +4710,10 @@
         const status=button.dataset.accountSignupTriage,user=button.dataset.user;
         if(!user||!status)return;
         const note=status==='contacted'
-          ?pt('Owner contacted and asked to choose monthly, yearly, or request demo/manual payment help.')
+          ?pt('Approved by platform admin for follow-up.')
           :status==='follow_up'
-            ?pt('Follow-up required: owner has not submitted company details yet.')
-            :pt('Archived by platform admin; no company/application was submitted.');
+            ?pt('Pending platform admin decision.')
+            :pt('Rejected by platform admin.');
         button.disabled=true;
         try{
           await rpc(sb,'platform_record_account_signup_triage_v164',{
@@ -4737,14 +4733,15 @@
     return `<section class="platform-route-note platform-status-note" style="margin-top:14px">
       ${CUI.icon('branch',{size:19})}<div style="width:100%">
         <div class="row"><div><b>${escapeHtml(pt('Website signups and paid workspaces'))}</b>
-          <p class="small">${escapeHtml(pt('Self-service signups are payment-managed. Their names, payment state and workspace state appear here; approve/reject is intentionally unavailable for this Stripe-controlled path.'))}</p></div>
+          <p class="small">${escapeHtml(pt('Use Approve when cash or manual payment has been received. The ledger still records and verifies the payment before access opens.'))}</p></div>
           <span class="spacer"></span><span class="pill">${rows.length} ${escapeHtml(pt('shown'))}</span></div>
         <div class="platform-card-list" style="margin-top:12px">${rows.map(item=>`<div class="platform-action-item">
           <div><b>${escapeHtml(prospectCompany(item))}</b>
             <p class="muted small">${escapeHtml([prospectContact(item),item.primary_contact_email,item.primary_contact_phone].filter(Boolean).join(' · ')||pt('Billing contact not recorded'))}</p>
             <p class="muted small">${escapeHtml(pt('Subscription'))}: ${escapeHtml(platformStatus(item.subscription_status||'not_recorded'))} · ${escapeHtml(pt('Onboarding'))}: ${escapeHtml(platformStatus(item.onboarding_status||'not_started'))}</p></div>
-          <div class="platform-actions"><a class="btn ghost sm" href="#/platform/firms">${escapeHtml(pt('Open firm directory'))}</a>
-            <a class="btn ghost sm" href="#/platform/billing?business=${encodeURIComponent(String(item.business_id||''))}">${escapeHtml(pt('Open billing'))}</a></div>
+          <div class="platform-actions"><a class="btn sm" href="#/platform/billing?business=${encodeURIComponent(String(item.business_id||''))}">${escapeHtml(pt('Approve'))}</a>
+            <a class="btn danger sm" href="#/platform/billing?business=${encodeURIComponent(String(item.business_id||''))}">${escapeHtml(pt('Reject'))}</a>
+            <a class="btn ghost sm" href="#/platform/firms">${escapeHtml(pt('Pending'))}</a></div>
         </div>`).join('')||`<p class="muted small">${escapeHtml(pt('No payment-managed website signups are visible in the current filters. Clear filters or search by business name.'))}</p>`}</div>
       </div>
     </section>`;
