@@ -818,7 +818,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
 .dashboard-charts{grid-template-columns:repeat(2,minmax(0,1fr))}
 .dashboard-chart-card{padding:0;overflow:hidden;min-width:0}
-.dashboard-chart-head{display:flex;align-items:flex-start;gap:10px;padding:15px 17px;background:#FBF5F0;border-bottom:1px solid #EEE2DA}
+/* V171: margin:0 is load-bearing — an older v141 rule still sets margin:-22px on this class
+   (built for a padded card), but this card is padding:0 + overflow:hidden, so the negative
+   margin pulled every chart title up under the card edge and clipped it. */
+.dashboard-chart-head{display:flex;align-items:flex-start;gap:10px;margin:0;padding:15px 17px;background:#FBF5F0;border-bottom:1px solid #EEE2DA}
 .dashboard-chart-head>.cui-icon{color:var(--coral);margin-top:1px}.dashboard-chart-head>div{min-width:0;flex:1}.dashboard-chart-head b{display:block}.dashboard-chart-head p{margin-top:3px}.dashboard-chart-link{display:inline-flex;align-items:center;min-height:44px;padding:7px 9px;color:var(--coral);font-size:12px;font-weight:700;white-space:nowrap;border-radius:9px}
 .dashboard-chart-link:hover{background:var(--tint)}
 .dashboard-chart-card .chart-frame{margin:8px 14px 16px}
@@ -7579,9 +7582,13 @@ function timeAgo(iso){
    waitlist and change-request activity are all triaged from the Bookings page. Kept as an
    explicit map (not a blanket default) so a future new kind is a deliberate decision, not
    an accident. */
+/* V171: '#/home' and '#/customers' were never real routes (the router keys are 'dashboard'
+   and 'clients'), so these two notification kinds silently dumped the owner on the Dashboard.
+   Payment-due now opens Settings (billing lives in Modules & plan); feedback opens Customers,
+   where the Visit feedback queue actually renders. */
 const NOTIF_ROUTE={booking_new:'#/bookings',booking_waitlisted:'#/bookings',change_request:'#/bookings',
-  booking_expired:'#/bookings',waitlist_ready:'#/bookings',subscription_payment_due:'#/home',
-  feedback_new:'#/customers'};
+  booking_expired:'#/bookings',waitlist_ready:'#/bookings',subscription_payment_due:'#/settings',
+  feedback_new:'#/clients'};
 async function loadNotifications(){
   const {data,error}=await sb.rpc('get_notifications',{p_business:S.biz.id,p_limit:30});
   if(error){notifError=error.message||'Could not load notifications';return}
@@ -7670,7 +7677,11 @@ function renderBell(page){
    is meant to fix. Only wired for the pages where booking/waitlist activity is visible. */
 function autoRefreshIfRelevant(){
   const key=(currentPage&&currentPage[0])||'';
-  const P={bookings:bookingsPage,appointments:appointmentsPage,waitlist:waitlistPage,customers:clientsPage};
+  /* V171: the old 'customers' entry was dead — the router's key for that screen is 'clients',
+     so it never matched. It is deliberately NOT fixed to 'clients': these events are booking/
+     appointment inserts, and re-rendering the Customers page on them would wipe an open
+     Add/Edit-customer form mid-typing. Customers refreshes on navigation instead. */
+  const P={bookings:bookingsPage,appointments:appointmentsPage,waitlist:waitlistPage};
   if(P[key]) P[key](currentPage[1]);
 }
 function ensureRealtimeChannel(){
@@ -8924,10 +8935,10 @@ async function dashboard(){
     const ageHasData=Object.values(ages).map(Number).some(value=>value>0);
     const genderHasData=Object.values(genders).map(Number).some(value=>value>0);
     charts.innerHTML=[
-      dashboardChartCardV141({title:'Busiest days',subtitle:'See which days receive the most visits.',canvas:'c1',route:'#/sales',unavailable:busiestHasData?'':'No valid visits recorded in this period. No valid visits recorded yet. Record a completed sale to see your busiest days.'}),
-      dashboardChartCardV141({title:'Revenue over time',subtitle:'See how revenue changes over the selected period.',canvas:'c2',route:'#/sales',unavailable:revenueHasTrend?'':revenueHasData?'More activity is needed to show a trend.':'No revenue recorded in this period. No revenue recorded yet. Record your first sale to start tracking business performance.'}),
+      dashboardChartCardV141({title:'Busiest days',subtitle:'See which days receive the most visits.',canvas:'c1',route:'#/sales',unavailable:busiestHasData?'':'No visits recorded in this period. Record a completed sale to see your busiest days.'}),
+      dashboardChartCardV141({title:'Revenue over time',subtitle:'See how revenue changes over the selected period.',canvas:'c2',route:'#/sales',unavailable:revenueHasTrend?'':revenueHasData?'More activity is needed to show a trend.':'No revenue recorded in this period. Record your first sale to start tracking business performance.'}),
       customerMetricsAvailable&&dashboardChartCardV141({title:'Age groups',subtitle:'Understand the age profile of recorded customers.',canvas:'c4',route:'#/clients',unavailable:ageHasData?'':'No customer age data recorded yet. Add customer birth dates to understand your customer mix.'}),
-      customerMetricsAvailable&&dashboardChartCardV141({title:'Recorded gender',subtitle:'Understand the recorded gender mix of customers.',canvas:'c5',route:'#/clients',unavailable:genderHasData?'':'No customer gender data recorded yet. No recorded gender data yet. Customers with recorded gender appear here when available.'})
+      customerMetricsAvailable&&dashboardChartCardV141({title:'Recorded gender',subtitle:'Understand the recorded gender mix of customers.',canvas:'c5',route:'#/clients',unavailable:genderHasData?'':'No customer gender data recorded yet. Customers who share it when joining appear here.'})
     ].filter(Boolean).join('');
     status.querySelector('#dashboardInactiveRetry')?.addEventListener('click',load);
     kpis.setAttribute('aria-busy','false');charts.setAttribute('aria-busy','false');
