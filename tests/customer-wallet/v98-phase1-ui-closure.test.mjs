@@ -65,13 +65,14 @@ test('mobile navigation controls unique drawers and does not reset window scroll
   assert.match(render,/window\.scrollTo\(priorWindowX,Math\.min\(priorWindowY,maxY\)\)/);
 });
 
-test('customer home presents the server-ranked first card as an honest next action',()=>{
+test('customer home keeps a healthy server-ranked card primary and otherwise uses finite fallback guidance',()=>{
   const home=between('function customerHomeNextActionMarkup','async function renderCustomerWallet');
-  assert.match(home,/customerHomeNextActionMarkup\(cards\[0\]\)/);
+  assert.match(home,/const primary=actionableCards\[0\]/);
+  assert.match(home,/customerHomeNextActionMarkup\(primary\)/);
+  assert.match(home,/customerHomeFallbackActionV167/);
   assert.match(home,/Next best action/);
   assert.match(home,/actionableWalletActionText\(card\)/);
-  assert.match(home,/No urgent action is available right now/);
-  assert.match(home,/You’re all caught up/);
+  assert.match(home,/return ''/);
   assert.match(home,/href="#\/wallet\/\$\{slug\}"/);
   assert.doesNotMatch(home,/data-workspace-i18n|workspaceLocale/,
     'customer surfaces remain English-only and outside workspace localisation');

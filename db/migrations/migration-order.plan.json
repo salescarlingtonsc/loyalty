@@ -1146,6 +1146,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260805_nestly_v167_customer_retention_offers.sql",
+      "semanticVersion": "v167",
+      "proposedDeployVersion": "20260805100000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260805_nestly_v167_direct_admin_approval_activation.sql",
       "semanticVersion": "v167",
       "proposedDeployVersion": "20260805200000"

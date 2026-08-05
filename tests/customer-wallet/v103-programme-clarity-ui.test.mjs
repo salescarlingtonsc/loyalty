@@ -110,9 +110,11 @@ test('programme detail keeps the notification bell linked to the dedicated Messa
   const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
   const shell=section('function renderCustomerShell','function focusCustomerRoute');
   const inbox=section('async function renderCustomerInAppInbox','async function renderCustomerNotificationPreferences');
+  const walletBell=wallet.match(/const inboxSlot=\$\('customerInboxBellSlot'\);[\s\S]*?\n\s*}/)?.[0]||'';
   assert.match(shell,/href="#\/customer\/messages"/);
   assert.doesNotMatch(wallet,/id="customerInAppInbox"|renderCustomerInAppInbox\(businessSlug|customerNotificationPreferences|renderCustomerNotificationPreferences\(/);
-  assert.doesNotMatch(wallet,/customerInboxBell[\s\S]*scrollIntoView/);
+  assert.match(walletBell,/href="#\/customer\/messages"/);
+  assert.doesNotMatch(walletBell,/scrollIntoView/);
   assert.match(inbox,/slot\.innerHTML=`<a class="customer-inbox-bell" href="#\/customer\/messages"/);
   assert.doesNotMatch(inbox,/scrollIntoView|aria-controls="customerInAppInbox"/);
 });

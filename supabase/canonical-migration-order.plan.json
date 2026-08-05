@@ -1147,6 +1147,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260805100000",
+      "name": "nestly_v167_customer_retention_offers",
+      "sourcePath": "db/migrations/20260805_nestly_v167_customer_retention_offers.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260805200000",
       "name": "nestly_v167_direct_admin_approval_activation",
       "sourcePath": "db/migrations/20260805_nestly_v167_direct_admin_approval_activation.sql"
