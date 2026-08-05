@@ -9613,7 +9613,10 @@ async function clientDetail(id){
     canReadAppointments?fetchAllRowsResult(()=>sb.from('appointments').select('*, services!appointments_service_id_fkey(name)',{count:'exact'}).eq('client_id',id).order('starts_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
     (canReadSales||canReadAppointments)?fetchAllRowsResult(()=>sb.from('staff').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('id')):Promise.resolve({data:[]}),
     S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_definitions').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('created_at').order('id')):Promise.resolve({data:[]}),
-    S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_values').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('id')):Promise.resolve({data:[]}),
+    /* V172: this table has NO id column (key: business_id, client_id, field_definition_id).
+       .order('id') made PostgREST 400 (42703), which rejected this whole Promise.all and
+       rendered "Customer profile unavailable" for EVERY owner on EVERY customer. */
+    S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_values').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('field_definition_id')):Promise.resolve({data:[]}),
     S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_options').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('sort_order').order('id')):Promise.resolve({data:[]}),
     birthdayBenefitsEnabled
       ?sb.rpc('staff_get_customer_birthday_benefit',{p_business_id:S.biz.id,p_client_id:id})
