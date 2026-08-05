@@ -181,3 +181,14 @@ test('customer password sign-in keeps credentials behind a current captcha token
   assert.match(login,/captchaControl\?\.recoverAfterServerReject\?\.\(\);/);
 });
 
+test('Cloudflare script loading has a finite timeout and admin auth uses reload-capable recovery',()=>{
+  const turnstile=turnstileSource();
+  assert.match(turnstile,/const scriptTimer=setTimeout\(fail,AUTH_TURNSTILE_WATCHDOG_MS\)/);
+  assert.match(turnstile,/script\.onload=\(\)=>\{clearTimeout\(scriptTimer\);window\.turnstile\?resolve\(window\.turnstile\):fail\(\)\}/);
+  assert.match(turnstile,/script\.onerror=\(\)=>\{clearTimeout\(scriptTimer\);fail\(\)\}/);
+  const auth=source.slice(
+    source.indexOf('function renderAuth'),
+    source.indexOf('function validNewPassword')
+  );
+  assert.match(auth,/retry:'authTurnstileRetry',reload:'authTurnstileReload',action:'frenly_auth'/);
+});
