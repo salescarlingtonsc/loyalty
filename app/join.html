@@ -51,6 +51,9 @@ label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:16px 
 .field-label{display:flex;align-items:center;gap:8px}
 .success-actions{margin-top:22px}
 .success-actions .btn{width:100%}
+.success-actions .btn+.btn{margin-top:10px}
+.btn.secondary{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn.secondary:hover{border-color:var(--coral);box-shadow:0 6px 16px rgba(28,26,34,.08)}
 .counter-fallback{font-size:13px;line-height:1.5;margin-top:14px}
 /* ==== page-specific: public join page, no login, mobile-first, capped ~440px on desktop ==== */
 .wrap{min-height:100dvh;display:flex;align-items:flex-start;justify-content:center;
@@ -97,7 +100,12 @@ function warmRuntimeOrigin(origin){
   document.head.append(preconnect,dns);
 }
 warmRuntimeOrigin(SB_URL);
-const sb=window.supabase.createClient(SB_URL,SB_KEY);
+/* This page is a public gateway. It must never refresh, replace or remove the
+   primary app session stored by the authenticated Peekaa client. */
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{
+  storageKey:'peekaa-public-join-anon-v1',persistSession:false,
+  autoRefreshToken:false,detectSessionInUrl:false
+}});
 const brandWordmark=()=>{
   const productName=String(BRAND?.productName||'Peekaa');
   const logoPath=String(BRAND?.logoPath||'/brand/peekaa-logo.png');
@@ -198,6 +206,13 @@ function customerHandoffUrl(joinToken,currentUrl=location.href){
   return target.href;
 }
 
+function customerAppUrl(route='#/',currentUrl=location.href){
+  const target=new URL('index.html',currentUrl);
+  target.search='';
+  target.hash=route==='#/wallet'?'#/wallet':'#/';
+  return target.href;
+}
+
 function icon(name,size=20){
   const paths={
     link:'<path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15"/><path d="M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20l1.15-1.15"/>',
@@ -233,6 +248,10 @@ function renderInvalidLink(){
     <div class="state-icon" aria-hidden="true">${icon('link',26)}</div>
     <h2 style="margin-bottom:8px">${legacySlug?'This QR was replaced':'This link isn’t active'}</h2>
     <p class="muted">${legacySlug?'This is an older Peekaa QR. Please ask the business to display its current “Customer sign-up” QR.':'Please check with the business for its current Peekaa QR code.'}</p>
+    <div class="success-actions">
+      <a class="btn" href="${esc(customerAppUrl('#/'))}">${icon('wallet',20)}<span>Open ${esc(BRAND.customerLabel)}</span></a>
+      <a class="btn secondary" href="${esc(customerAppUrl('#/wallet'))}"><span>Already a member? Sign in</span></a>
+    </div>
   </div></div>`);
 }
 

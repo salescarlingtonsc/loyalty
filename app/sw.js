@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX='nestly-shell-';
-const CACHE_VERSION='v6-20260804-v164-auth-cache-convergence';
+const CACHE_VERSION='v7-20260805-v167-customer-trust';
 const CACHE_NAME=`${CACHE_PREFIX}${CACHE_VERSION}`;
 const APP_SHELL=Object.freeze([
   '/offline.html',
