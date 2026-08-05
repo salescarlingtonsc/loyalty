@@ -70,7 +70,7 @@ function createHarness(){
         expired:'Security check expired. Please try again.',
         timeout:'Security check timed out. Please try again.',
         connectShort:'Security check could not connect.',
-        load:'Security check could not load. Check your connection and try again.',
+        load:'Security check could not load. Turn off content blockers, VPN or Private Relay, or try another network.',
         continue:'Complete the security check to continue.',
         reload:'Reload page'
       }[key]||key;
@@ -186,6 +186,7 @@ test('Cloudflare script loading has a finite timeout and admin auth uses reload-
   assert.match(turnstile,/const scriptTimer=setTimeout\(fail,AUTH_TURNSTILE_WATCHDOG_MS\)/);
   assert.match(turnstile,/script\.onload=\(\)=>\{clearTimeout\(scriptTimer\);window\.turnstile\?resolve\(window\.turnstile\):fail\(\)\}/);
   assert.match(turnstile,/script\.onerror=\(\)=>\{clearTimeout\(scriptTimer\);fail\(\)\}/);
+  assert.match(turnstile,/transition\('retryable_error',\{textKey:'load',isError:true,showRetry:true,showReload:true\}\)/);
   const auth=source.slice(
     source.indexOf('function renderAuth'),
     source.indexOf('function validNewPassword')

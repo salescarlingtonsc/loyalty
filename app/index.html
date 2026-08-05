@@ -1435,7 +1435,7 @@ const authSecurityCopy=(locale,key)=>{
       expired:'Security check expired. Please try again.',timeout:'Security check timed out. Please try again.',
       connectShort:'Security check could not connect.',reload:'Reload page',
       connect:'Security check could not connect. Please retry, or check your browser and network settings.',
-      load:'Security check could not load. Check your connection and try again.',
+      load:'Security check could not load. Turn off content blockers, VPN or Private Relay, or try another network.',
       continue:'Complete the security check to continue.',
       showPassword:'Show password',hidePassword:'Hide password',
       passkey:'Sign in with Face ID, Touch ID or passkey',passkeyTitle:'Use Face ID, Touch ID or passkey'
@@ -1445,7 +1445,7 @@ const authSecurityCopy=(locale,key)=>{
       expired:'安全验证已过期，请重试。',timeout:'安全验证超时，请重试。',
       connectShort:'无法连接安全验证。',reload:'重新加载页面',
       connect:'无法连接安全验证。请重试，或检查浏览器及网络设置。',
-      load:'无法加载安全验证。请检查网络连接后重试。',
+      load:'无法加载安全验证。请关闭内容拦截器、VPN 或 Private Relay，或换一个网络。',
       continue:'请完成安全验证以继续。',
       showPassword:'显示密码',hidePassword:'隐藏密码',
       passkey:'使用面容 ID、触控 ID 或通行密钥登录',passkeyTitle:'使用面容 ID、触控 ID 或通行密钥'
@@ -1455,7 +1455,7 @@ const authSecurityCopy=(locale,key)=>{
       expired:'Semakan keselamatan telah tamat tempoh. Sila cuba lagi.',timeout:'Semakan keselamatan telah tamat masa. Sila cuba lagi.',
       connectShort:'Semakan keselamatan tidak dapat disambungkan.',reload:'Muat semula halaman',
       connect:'Semakan keselamatan tidak dapat disambungkan. Cuba lagi atau semak tetapan pelayar dan rangkaian anda.',
-      load:'Semakan keselamatan tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.',
+      load:'Semakan keselamatan tidak dapat dimuatkan. Matikan penyekat kandungan, VPN atau Private Relay, atau cuba rangkaian lain.',
       continue:'Lengkapkan semakan keselamatan untuk meneruskan.',
       showPassword:'Tunjukkan kata laluan',hidePassword:'Sembunyikan kata laluan',
       passkey:'Log masuk dengan Face ID, Touch ID atau kunci laluan',passkeyTitle:'Gunakan Face ID, Touch ID atau kunci laluan'
@@ -1524,7 +1524,7 @@ async function mountTurnstile(siteKey,{container,status,retry,reload,action,onTo
     }catch{
       if(!destroyed&&id===generation){
         clearWatchdog();failureCount+=1;
-        transition('retryable_error',{textKey:'load',isError:true,showRetry:true,showReload:failureCount>=AUTH_TURNSTILE_RELOAD_AFTER_FAILURES});
+        transition('retryable_error',{textKey:'load',isError:true,showRetry:true,showReload:true});
       }
     }
   };
