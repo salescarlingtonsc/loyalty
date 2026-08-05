@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 151,
-  "itemCount": 196,
+  "pendingCount": 152,
+  "itemCount": 197,
   "items": [
     {
       "order": 1,
@@ -1932,6 +1932,16 @@
     {
       "order": 193,
       "kind": "pending",
+      "version": "20260805181636",
+      "name": "nestly_v172_home_offers_optional_media",
+      "path": "supabase/migrations/20260805181636_nestly_v172_home_offers_optional_media.sql",
+      "octetLength": 1439,
+      "sha256": "27c64955c8882a92bd3d7875b3aad92b18c7b4e5b8c34db4610556eb4645b569",
+      "provenance": "local-source"
+    },
+    {
+      "order": 194,
+      "kind": "pending",
       "version": "20260805200000",
       "name": "nestly_v167_direct_admin_approval_activation",
       "path": "supabase/migrations/20260805200000_nestly_v167_direct_admin_approval_activation.sql",
@@ -1940,7 +1950,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 194,
+      "order": 195,
       "kind": "pending",
       "version": "20260805213000",
       "name": "nestly_v169_activate_stranded_approved_applications",
@@ -1950,7 +1960,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 195,
+      "order": 196,
       "kind": "pending",
       "version": "20260805214000",
       "name": "nestly_v170_staff_update_client",
@@ -1960,7 +1970,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 196,
+      "order": 197,
       "kind": "pending",
       "version": "20260805215000",
       "name": "nestly_v171_customerintel_entitlement",

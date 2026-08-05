@@ -99,7 +99,7 @@ test('v39 capabilities are module- and data-aware and the SPA loads only relevan
   assert.match(app,/Nothing to show yet/i);
   assert.match(app,/Load more/i);
   assert.match(app,/Choose an eligible reward and show its QR at the counter/i);
-  assert.match(app,/>Redeem now<\/span>/i);
+  assert.match(app,/>Show QR at counter<\/span>/i);
   assert.doesNotMatch(app,/sb\.rpc\(['"](?:redeem_reward|redeem_points)['"][\s\S]{0,200}wallet/i);
 });
 
