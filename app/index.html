@@ -5567,6 +5567,18 @@ async function renderCustomerWallet(businessSlug=null){
       ${data?.truncated?`<p class="muted small" style="margin-top:10px">Showing your ${cards.length} newest cards. The total above counts every card you have.</p>`:''}`;
   };
   const packageState={items:[],nextCursor:null};
+  /* v168: bulk/imported usage yields N rows sharing one timestamp and status. Collapse consecutive
+     same-label runs (>=2) into one line carrying the run's lowest remaining_after — the balance
+     after the last session in the run. The array's existing order is preserved. */
+  function collapsePackageUsageRuns(usageHistory){
+    const rows=Array.isArray(usageHistory)?usageHistory:[],out=[];
+    for(const use of rows){
+      const label=walletDate(use.used_at,true),status=use.status,remaining=Number(use.remaining_after||0),last=out[out.length-1];
+      if(last&&last.label===label&&last.status===status){last.count++;last.remaining_after=Math.min(last.remaining_after,remaining);continue}
+      out.push({used_at:use.used_at,label,status,count:1,remaining_after:remaining});
+    }
+    return out;
+  }
   const loadPackages=async(cursor=null)=>{
     const host=$('walletPackages');if(!host)return;
     const {data,error}=await sb.rpc('customer_get_packages',{...args,p_cursor:cursor||{limit:20}});
@@ -5578,7 +5590,7 @@ async function renderCustomerWallet(businessSlug=null){
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>Packages</h2><p class="muted small">Session balances and recent usage.</p></div></div>${packageState.items.map(item=>`<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${Number(item.sessions_remaining||0)} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
-      ${(item.usage_history||[]).length?`<div class="wallet-history">${item.usage_history.map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`).join('')}
+      ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`).join('')}
       ${packageState.nextCursor?'<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">Load more</button>':''}`;
     if($('walletPackagesMore'))$('walletPackagesMore').onclick=()=>{ $('walletPackagesMore').disabled=true;loadPackages(packageState.nextCursor) };
   };
@@ -5632,6 +5644,9 @@ async function renderCustomerWallet(businessSlug=null){
      general-note path: p_sale=null. The DB caps it at one standing note per (customer, business),
      so once submitted the prompt collapses to a thank-you and the list shows the recovery status. */
   const feedbackStatusWord=f=>f.recovery_status==='resolved'?'Sorted out':f.recovery_status==='closed'?'Thanks!':'The team is looking into this';
+  /* v168: the pill keeps the bare word; the sentence adds a full stop only when the word does
+     not already end in its own terminal punctuation, so 'Thanks!' never renders as 'Thanks!.'. */
+  const feedbackStatusSentence=f=>{const w=feedbackStatusWord(f);return /[.!?]$/.test(w)?w:w+'.'};
   const feedbackStatusTone=f=>f.recovery_status==='resolved'?'on':f.recovery_status==='closed'?'ok':'new';
   const loadFeedback=async(opts={})=>{
     const host=$('walletFeedback');if(!host)return;
@@ -5646,7 +5661,7 @@ async function renderCustomerWallet(businessSlug=null){
     const shareCard=(opts.highlightShare&&walletReviewUrl)?`<div class="fb-share"><b>Thank you for sharing</b><p class="muted small" style="margin:4px 0 10px">You can also leave an honest public review for ${esc(b.name||'this business')}. This option is the same for every rating.</p><a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer">Leave a public review</a></div>`:'';
     const words=['','Poor','Not great','Okay','Good','Great'];
     const promptHtml=general
-      ?`<div class="wallet-line"><div><b>Thanks for sharing your feedback</b><p class="muted small" style="margin-top:4px">You rated this <span class="fb-rating" aria-hidden="true">${stars(general.rating)}</span><span class="sr-only">${general.rating} out of 5</span>. ${esc(feedbackStatusWord(general))}.</p></div></div>`
+      ?`<div class="wallet-line"><div><b>Thanks for sharing your feedback</b><p class="muted small" style="margin-top:4px">You rated this <span class="fb-rating" aria-hidden="true">${stars(general.rating)}</span><span class="sr-only">${general.rating} out of 5</span>. ${esc(feedbackStatusSentence(general))}</p></div></div>`
       :`<fieldset class="fb-stars" id="fbStars"><legend class="fb-stars-legend">How was your visit to ${esc(b.name||'this business')}?</legend>
           <div class="fb-stars-row" role="radiogroup" aria-label="Rate from 1 to 5 stars">${[1,2,3,4,5].map(n=>`<label class="fb-star"><input type="radio" class="sr-only" name="fbRating" value="${n}"><span class="fb-star-glyph" aria-hidden="true">★</span><span class="sr-only">${n} star${n===1?'':'s'} — ${words[n]}</span></label>`).join('')}</div>
           <p class="fb-caption" id="fbCaption" aria-live="polite"></p></fieldset>
