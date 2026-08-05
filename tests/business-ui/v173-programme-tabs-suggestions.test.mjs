@@ -1,0 +1,49 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+/* V173 Programmes simplification (owner request 2026-08-06): the Overview / Ongoing /
+   Available tabs rendered IDENTICAL content in production because the row-filter set the
+   hidden attribute while .grow-programme-row declares display:grid, which overrides the UA's
+   [hidden]{display:none}. Plus: every not-set-up programme row now carries a concrete
+   "Suggested" strip with a one-tap prefill into the right editor. */
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const app = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+
+test('the hidden attribute actually hides programme rows (tab filter is real)', () => {
+  assert.match(app, /\.grow-programme-row\[hidden\]\{display:none!important\}/);
+  assert.match(app, /\.programme-category\[hidden\]\{display:none!important\}/);
+  // the filter itself must still exist
+  assert.match(app, /const show=programmeView==='ongoing'\?isOngoing:!isOngoing;/);
+});
+
+test('tabs are named for what they show', () => {
+  assert.match(app, /programmeTab\('ongoing','Running'\)/);
+  assert.match(app, /programmeTab\('available','To set up'\)/);
+  assert.match(app, /Live for your customers right now\./);
+  assert.match(app, /suggested starting point you can use in one tap/);
+});
+
+test('every not-set-up growth surface has a suggestion with a one-tap prefill', () => {
+  const start = app.indexOf('const suggestions={');
+  assert.ok(start > 0);
+  const block = app.slice(start, start + 1200);
+  for (const kind of ['birthday', 'bringback', 'referrals']) {
+    assert.match(block, new RegExp(`${kind}:\\{text:`), `${kind} suggestion must exist`);
+  }
+  assert.match(app, /data-suggest-use=/);
+  // strips are siblings of the row buttons, never nested interactive controls
+  assert.match(app, /row\.insertAdjacentHTML\('afterend',`<div class="programme-suggest"/);
+});
+
+test('each suggestion kind has a consumer that fills the real editor fields once', () => {
+  assert.match(app, /pendingProgrammeSuggestV172\?\.kind!=='birthday'\)return false;/);
+  assert.match(app, /pendingProgrammeSuggestV172\?\.kind==='bringback'&&\$\('rn'\)/);
+  assert.match(app, /pendingProgrammeSuggestV172\?\.kind==='referral'&&\$\('fm'\)/);
+  // one-shot: every consumer clears the pending value
+  const clears = app.match(/const suggest=pendingProgrammeSuggestV172;pendingProgrammeSuggestV172=null;/g) || [];
+  assert.ok(clears.length >= 3, 'all three consumers must consume exactly once');
+});

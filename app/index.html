@@ -641,6 +641,13 @@ input[type=range]:focus{box-shadow:none}
 .grow-programme-row:last-child{border-bottom:0}.grow-programme-row>div{min-width:0}.grow-programme-row b,.grow-programme-row p{overflow-wrap:anywhere}.grow-programme-row p{margin:3px 0 0;line-height:1.4}
 .grow-programme-row .rewards-overview-edit-label{min-height:24px;margin-top:3px}
 button.grow-programme-row,a.grow-programme-row{cursor:pointer;transition:background .16s ease,box-shadow .16s ease}
+/* V173: the Running / To-set-up tab filters set the hidden attribute, but an authored display
+   value defeats [hidden]'s UA display:none — these two rules are what make the tabs real. */
+.grow-programme-row[hidden]{display:none!important}
+.programme-category[hidden]{display:none!important}
+.programme-suggest{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px 12px 66px;background:#FFFDF9;border-top:1px dashed var(--line);font-size:13px;color:var(--muted)}
+.programme-suggest b{color:var(--ink);font-weight:600}
+.programme-suggest[hidden]{display:none!important}
 button.grow-programme-row:hover,a.grow-programme-row:hover{background:var(--tint)}
 button.grow-programme-row:focus-visible,a.grow-programme-row:focus-visible{position:relative;z-index:1;outline:3px solid rgba(201,67,51,.25);outline-offset:-3px}
 .grow-programme-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--tint);color:var(--coral);font-weight:750}
@@ -1712,6 +1719,10 @@ let pendingCustomerInactivity=null;
 let pendingTillPhone='';
 let pendingTillRedemptionScan=false;
 let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
+/* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
+   birthday / bring-back / referral editors. Module-level because those editors live in
+   different page functions from the Programmes overview that sets it. */
+let pendingProgrammeSuggestV172=null;
 let settingsActiveTab='workspace';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -13063,6 +13074,15 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     const setRewardInput=()=>{const kind=$('rt').selectedOptions[0]?.dataset.kind;$('rvl').textContent=kind==='discount_pct'?'Discount %':kind==='credit'?`Credit amount (${S.biz.currency||'SGD'})`:'Item or benefit';$('rv').type=kind==='free_item'?'text':'number';if(editing){$('rv').value=kind==='discount_pct'?(editing.discount_percent||''):kind==='credit'?((editing.credit_cents||0)/100).toFixed(2):(editing.manual_item||'')}else $('rv').value=kind==='free_item'?'Free drink':'10'};
     if(rewardTypes.length){$('rt').onchange=setRewardInput;setRewardInput()}
     document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const t=JSON.parse(b.dataset.t),type=rewardTypes.find(x=>x.fulfillment_kind===t.rt);if(!type)return toast('Add this reward type first');$('rn').value=t.name;$('rg').value=t.g;$('rp').value=t.p;$('rt').value=type.id;setRewardInput();$('rv').value=t.rt==='free_item'?(t.ri||'Free item'):t.rt==='credit'?(t.rv/100):t.rv});
+    /* V173: one-shot prefill from the Programmes overview "Use suggestion" strip. Mirrors the
+       quick-template fill above; the owner reviews every number before saving. */
+    if(pendingProgrammeSuggestV172?.kind==='bringback'&&$('rn')){
+      const suggest=pendingProgrammeSuggestV172;pendingProgrammeSuggestV172=null;
+      $('rn').value=suggest.name;$('rg').value=String(suggest.goalVisits);$('rp').value=String(suggest.withinDays);
+      const creditOption=[...($('rt')?.options||[])].find(option=>option.dataset?.kind==='credit');
+      if(creditOption){$('rt').value=creditOption.value;setRewardInput();$('rv').value=String(suggest.value)}
+      toast('Suggestion loaded — review the numbers, then save');
+    }
     $('saveRetentionProgram').onclick=async()=>{const kind=$('rt').selectedOptions[0]?.dataset.kind,name=$('rn').value.trim();if(name.length<1)return toast('Name your program');const payload={name,active:$('ra').checked,goal_visits:parseInt($('rg').value),period_days:parseInt($('rp').value),starts_on:$('rs').value,reward_taxonomy_id:$('rt').value,customer_description:$('rcd').value.trim()||null,staff_description:$('rsi').value.trim()||null};if(kind==='discount_pct')payload.discount_percent=parseFloat($('rv').value||'0');if(kind==='credit')payload.credit_cents=Math.round(parseFloat($('rv').value||'0')*100);if(kind==='free_item')payload.manual_item=$('rv').value.trim();const programId=editing?.program_id||sessionStorage.getItem(newProgramRetryKey)||crypto.randomUUID();if(!editing)sessionStorage.setItem(newProgramRetryKey,programId);const saveButton=$('saveRetentionProgram');saveButton.disabled=true;const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:programId,p_program:payload,p_expected_snapshot_hash:snapshotHash});if(!isRetentionCurrent())return;if(error){saveButton.disabled=false;return fail(error)}if(!editing)sessionStorage.removeItem(newProgramRetryKey);toast('Draft retention rule saved');refreshRetentionPanel(draftVersionId,null,'Bring-back rule saved.',false)};
     if($('cancelRetentionEdit'))$('cancelRetentionEdit').onclick=()=>refreshRetentionPanel(draftVersionId,null,'Editing cancelled.',false);
     document.querySelectorAll('.retentionEdit').forEach(b=>b.onclick=()=>refreshRetentionPanel(draftVersionId,b.dataset.id,'Bring-back rule opened.',false));
@@ -13368,7 +13388,7 @@ async function promotionsPage(selectedPromotionId=null){
     quotaProgress=max?Math.min(100,Math.round((quotaUsed/max)*100)):100;
   host.innerHTML=`<div class="promotion-studio" data-workspace-i18n>
     ${CUI.pageHeader({title:'Promotions',subtitle:'Turn one factual offer and photo into clear customer-ready marketing.',iconName:'loyalty',actions:growBackActionHtmlV138(),canWrite:true,moduleLabel:'Customer programme'})}
-    ${customerVisibleCount===0?'<aside class="notice warn" role="status"><b>0 published — your customers currently see an empty offers shelf.</b><p class="muted small" style="margin-top:5px">Publish a current offer with a customer-visible image to fill it.</p></aside>':customerVisibleCount===null?'<aside class="notice warn" role="status"><b>Customer-visible offer status could not be confirmed.</b><p class="muted small" style="margin-top:5px">Refresh before relying on the offers shelf status.</p></aside>':''}
+    ${customerVisibleCount===0?'<aside class="notice warn" role="status"><b>Customers currently see no offers.</b><p class="muted small" style="margin-top:5px">An offer only shows to customers while its dates are current and it has a photo. Publish one, or check the dates and photo on an existing promotion below.</p></aside>':customerVisibleCount===null?'<aside class="notice warn" role="status"><b>Customer-visible offer status could not be confirmed.</b><p class="muted small" style="margin-top:5px">Refresh before relying on the offers shelf status.</p></aside>':''}
     <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} launch offer slots used</b>
       <p class="muted small" style="margin-top:4px">${published} currently published. Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}. Customers see no more than two current offers at once.</p></div>
       <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} launch offer slots used" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
@@ -13895,9 +13915,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         <p class="muted">Create and manage rewards, promotions and customer programmes.</p></div>
       <div class="v150-title-actions"></div>
     </header>
-    <nav class="programme-tabs" aria-label="Programme views">${programmeTab('overview','Overview')}${programmeTab('ongoing','Ongoing programmes')}${programmeTab('available','Available programmes')}${programmeTab('settings','More settings')}</nav>
+    <nav class="programme-tabs" aria-label="Programme views">${programmeTab('overview','Overview')}${programmeTab('ongoing','Running')}${programmeTab('available','To set up')}${programmeTab('settings','More settings')}</nav>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Available programmes':'Programme overview'}</h2><p class="muted small">Choose one row to view or edit that programme.</p></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'Programme overview'}</h2><p class="muted small">${programmeView==='ongoing'?'Live for your customers right now.':programmeView==='available'?'Not running yet — each comes with a suggested starting point you can use in one tap.':'Choose one row to view or edit that programme.'}</p></div></div>
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       <div class="programme-category"><div class="programme-category-title">Loyalty & rewards</div><div class="grow-programme-list">
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Earning',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
@@ -14167,6 +14187,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       toast(`Template loaded — review the numbers, then publish`);
       return true;
     };
+    /* V173: birthday branch of the overview "Use suggestion" strip. */
+    const applyPendingBirthdaySuggestV173=()=>{
+      if(surface!=='rewards'||pendingProgrammeSuggestV172?.kind!=='birthday')return false;
+      const label=$('birthdayLabel');
+      if(!label)return false;
+      const suggest=pendingProgrammeSuggestV172;pendingProgrammeSuggestV172=null;
+      label.value=suggest.label;
+      const description=$('birthdayDescription');if(description)description.value=suggest.description;
+      const kindField=$('birthdayKind');
+      if(kindField&&[...kindField.options].some(option=>option.value==='discount_pct')){
+        kindField.value='discount_pct';kindField.dispatchEvent(new Event('change',{bubbles:true}));
+        const discount=$('birthdayDiscount');if(discount)discount.value=String(suggest.discount);
+      }
+      toast('Suggestion loaded — review, then publish');
+      return true;
+    };
     if(activeSurface===surface){
       preserveExactRoute();
       if(surface==='winback'&&focusTarget==='rn'){
@@ -14179,7 +14215,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         await loyaltyPage(undefined,draft,null,false,editorIntent);
       }
       if(!await openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
-      applyPendingRewardEstimate();applyPendingRewardTemplateV172();
+      applyPendingRewardEstimate();applyPendingRewardTemplateV172();applyPendingBirthdaySuggestV173();
       return;
     }
     if((surface==='rewards'&&!canRewards)||(surface==='winback'&&!canWinback))return;
@@ -14207,7 +14243,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     const exactRewardOpened=await openExactReward();
     if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
-    applyPendingRewardEstimate();applyPendingRewardTemplateV172();
+    applyPendingRewardEstimate();applyPendingRewardTemplateV172();applyPendingBirthdaySuggestV173();
   }
   function openRewardsAutoSetup(action={surface:'rewards',focusTarget:'lm',activateTarget:false}){
     if(!canSetupGrow)return;
@@ -14346,6 +14382,35 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         mountGrowSurface(action.surface,{draftOverride:growDraftVersionId,...action});
       });
     };
+  }
+  /* V173: every not-set-up programme row gets a concrete "Suggested" strip with a one-tap
+     "Use suggestion" that opens the right editor prefilled. Suggestions are plain sector
+     defaults an owner can change — never auto-published. Strips are siblings, not children,
+     because the rows themselves are <button>/<a> elements (no nested interactive controls). */
+  if(canSetupGrow){
+    const suggestions={
+      birthday:{text:'<b>10% off</b> during their birthday month',
+        prefill:{kind:'birthday',label:'Birthday treat',description:'10% off any visit during your birthday month.',discount:10}},
+      bringback:{text:'<b>S$10 off</b> when they return within <b>30 days</b>',
+        prefill:{kind:'bringback',name:'We miss you — S$10 off',goalVisits:1,withinDays:30,value:10}},
+      referrals:{text:'friend spends <b>S$30+</b>, referrer gets <b>S$10</b> credit',
+        prefill:{kind:'referral',minSpend:30,reward:10}}
+    };
+    document.querySelectorAll('.grow-programme-row').forEach(row=>{
+      const kind=row.dataset.programmeKind;
+      const suggestion=suggestions[kind];
+      if(!suggestion)return;
+      const pill=String(row.querySelector('.pill')?.textContent||'').toLowerCase();
+      if(!pill.includes('not set up')||row.hidden)return;
+      if(row.nextElementSibling?.classList?.contains('programme-suggest'))return;
+      row.insertAdjacentHTML('afterend',`<div class="programme-suggest" data-suggest-kind="${esc(kind)}"><span>✨ Suggested: ${suggestion.text}</span><button type="button" class="btn sm" data-suggest-use="${esc(kind)}">Use suggestion</button></div>`);
+      row.parentElement.querySelector(`[data-suggest-use="${kind}"]`).onclick=()=>{
+        pendingProgrammeSuggestV172=suggestion.prefill;
+        if(kind==='referrals'){nav('#/referrals');return}
+        /* Reuse the row's own click path (draft creation / auto-setup / surface mount). */
+        if(row.matches('button'))row.click();else if(row.getAttribute('href'))nav(row.getAttribute('href'));
+      };
+    });
   }
   const growRewardsRetry=$('growRewardsRetry');
   if(growRewardsRetry)growRewardsRetry.onclick=()=>growPage(routedSurface,hashParam,routedFocus);
@@ -16683,6 +16748,14 @@ async function referralsPage(){
         ?workspaceTemplateHtmlV97('referralEnabledOutcome',{amount:money(p?.reward_cents??1000)})
         :'The programme is Off. A linked referral stays pending; no reward is paid unless the programme is Enabled when a qualifying sale is recorded.'}</p></div></div>
     <div class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Referral activity</h2></div><div id="flist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div>`;
+  /* V173: one-shot prefill from the Programmes overview "Use suggestion" strip. */
+  if(pendingProgrammeSuggestV172?.kind==='referral'&&$('fm')){
+    const suggest=pendingProgrammeSuggestV172;pendingProgrammeSuggestV172=null;
+    $('fm').value=suggest.minSpend.toFixed(2);
+    if($('fr'))$('fr').value=suggest.reward.toFixed(2);
+    if($('fe'))$('fe').value='true';
+    toast('Suggestion loaded — review, then save');
+  }
   if($('fsave'))$('fsave').onclick=async()=>{
     const saveButton=$('fsave');saveButton.disabled=true;
     const {error}=await sb.rpc('save_referral_program',{p_business:S.biz.id,
