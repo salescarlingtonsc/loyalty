@@ -13,10 +13,10 @@ function section(start,end){
   return app.slice(from,to);
 }
 
-test('inventory and customer intelligence are absent from business navigation and typed routes fail closed',()=>{
+test('the business surface deny-list is empty in v170 and both consult sites remain wired',()=>{
   const nav=section("function navHtml(page,idPrefix='nav'){",'function wireNav(){');
   const route=section('async function route(){','/* ---------- customer wallet ---------- */');
-  assert.match(app,/const HIDDEN_BUSINESS_SURFACES=new Set\(\['customerintel','inventory'\]\)/);
+  assert.match(app,/const HIDDEN_BUSINESS_SURFACES=new Set\(\[\]\)/);
   assert.match(nav,/filter\(module=>!HIDDEN_BUSINESS_SURFACES\.has\(module\)\)/);
   assert.match(route,/if\(HIDDEN_BUSINESS_SURFACES\.has\(pageKey\)\)/);
   assert.match(route,/This area is not available in the business workspace/);

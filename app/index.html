@@ -1641,11 +1641,13 @@ const ROLE_CAPABILITIES={
   frontdesk:new Set(['create_sales']),bookkeeper:new Set(['view_finance'])
 };
 const hasRoleCapability=capability=>ROLE_CAPABILITIES[S.myRole]?.has(capability)===true;
-/* Platform packaging decision: these capabilities remain available to the checkout/reporting
-   internals, but are not business-workspace destinations for any employee role. Keeping one
-   deny-list for both the rail and typed hashes prevents entitlement data from accidentally
-   re-exposing an upsell/internal surface. */
-const HIDDEN_BUSINESS_SURFACES=new Set(['customerintel','inventory']);
+/* V170 re-opened both surfaces the earlier packaging decision had hidden. Inventory is the only
+   place a product can be created, so hiding it left owners unable to stock the checkout catalogue
+   at all; Customer intelligence is the only screen carrying the ranked "do this first" advice, and
+   a route-blocked recommendation surface is worse than no recommendation. The constant and both
+   consult sites (the route guard and the nav filter) stay in place so a future packaging decision
+   has one deny-list to fill instead of two hard-coded checks. */
+const HIDDEN_BUSINESS_SURFACES=new Set([]);
 const FINANCE_MODULES=new Set(['expenses','pnl','staffperf']);
 const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup']);
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
