@@ -1620,14 +1620,14 @@ function configureChartDefaults(){
   Chart.defaults.scales.category.grid={display:false};
 }
 
-const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','staffperf','dailyreport','pnl','expenses'];
+const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses'];
 const INDUSTRIES={
-  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
+  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
   salon:{em:'💇',label:'Hair Salon',mods:ALLMODS},
   facial:{em:'✨',label:'Facial / Spa',mods:ALLMODS},
   massage:{em:'💆',label:'Massage',mods:ALLMODS},
   fitness:{em:'🏋️',label:'Fitness',mods:ALLMODS},
-  retail:{em:'🛍️',label:'Retail',mods:['dashboard','till','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','staffperf','dailyreport','pnl','expenses']},
+  retail:{em:'🛍️',label:'Retail',mods:['dashboard','till','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
   other:{em:'🏪',label:'Other',mods:ALLMODS}
 };
 const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
