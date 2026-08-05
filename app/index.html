@@ -10215,6 +10215,10 @@ async function tillPage(){
   let step=1;             // 1=enter number, 2=customer card / new customer / invalid, 3=done
   let phone='';           // digits typed so far in step 1
   let cust=null;          // lookup_client_by_phone result once status==='found'
+  let walkin=false;       // v170 walk-in sale: NO customer is linked. `cust` stays null and every
+                           // customer-bound control (redemption, packages, memberships, stored value,
+                           // PayNow QR) is HIDDEN. evaluate_checkout / record_cart_sale both accept a
+                           // null p_client and return points_earned 0 (verified against prod 2026-08-06).
   let notFoundPhone=null; // normalised 8-digit phone when status==='not_found'
   let invalidMsg=null;    // message when status==='invalid'
   let saleIdem=null;      // idempotency key for the CURRENT sale attempt — one fresh
@@ -10283,13 +10287,40 @@ async function tillPage(){
   }
   function resetToStart(){
     clearCheckoutState();
-    step=1;phone='';cust=null;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
+    // A walk-in catalogue carries no customer entitlements — drop it so the next real customer's
+    // packages/vouchers are fetched fresh instead of inheriting the walk-in (empty) snapshot.
+    if(walkin){catalog=null;catalogError=null;}
+    step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;draw();
+  }
+  /* Leave the cart step and go back to the phone keypad. Same discard-the-cart behaviour the
+     "Different number" button always had; it additionally clears the walk-in flag and, when the
+     cart was a walk-in, the customer-less catalogue snapshot. */
+  function backToPhoneStep(){
+    if(checkoutError){toast('Finish or retry the unfinished items first');return}
+    clearCheckoutState();
+    if(walkin){catalog=null;catalogError=null;}
+    step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];draw();
   }
   function draw(){
     if(step===1) return drawStep1();
     if(step===2) return drawStep2();
     return drawStep3();
+  }
+  /* Walk-in is offered only where it can actually complete: the staff member may record sales,
+     the firm is on itemized (catalogue) checkout — the legacy amount-only flow charges by PHONE
+     (record_sale_by_phone) and has no customer-less path — and the till was NOT opened to run a
+     customer redemption scan, which by definition needs a customer. */
+  const canOfferWalkin=()=>canRecordSales&&catalogueSelectionEnabled&&!pendingTillRedemptionScan;
+  function startWalkinSale(){
+    if(!canOfferWalkin())return;
+    clearCheckoutState();
+    cust=null;notFoundPhone=null;invalidMsg=null;quickAddIdem=null;saleIdem=null;tender=null;
+    cart=[];saleCommitted=false;saleResult=null;checkoutError=null;
+    catalog=null;catalogError=null; // never reuse a catalogue loaded with another customer's entitlements
+    walkin=true;step=2;
+    CUI.announce('Walk-in sale started. No customer is linked.');
+    draw();
   }
 
   function drawStep1(){
@@ -10303,6 +10334,9 @@ async function tillPage(){
           ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" ${workspaceTemplateAttributeV97('aria-label',k==='⌫'?'phoneKeyDelete':k==='✕'?'phoneKeyClear':'phoneKeyDigit',k==='⌫'||k==='✕'?{}:{digit:k})}>${k}</button>`).join('')}
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
+        ${canOfferWalkin()?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:17})} Walk-in sale (no customer)</button>
+        <p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>`:''}
         ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
     const inp=$('tPhone');
@@ -10314,6 +10348,7 @@ async function tillPage(){
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>resetToStart()
     });
+    if($('tWalkin'))$('tWalkin').onclick=startWalkinSale;
     document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
       const k=b.dataset.k;
       if(k==='⌫') phone=phone.slice(0,-1);
@@ -10341,8 +10376,23 @@ async function tillPage(){
 
   function drawStep2(){
     if(invalidMsg) return drawInvalid();
+    // Walk-in comes BEFORE the !cust branch: there is deliberately no customer to add.
+    if(walkin) return catalogueSelectionEnabled?drawCartComposer():drawWalkinUnavailable();
     if(!cust) return drawNewCustomer();
     return catalogueSelectionEnabled?drawCartComposer():drawCustomerCard();
+  }
+  /* Only reachable if the backend disables itemized checkout while a walk-in cart is open
+     (loadCatalog flips catalogueSelectionEnabled). The legacy flow charges by phone, so there is
+     no walk-in path — say so and send the cashier back rather than render a customer-less card. */
+  function drawWalkinUnavailable(){
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Walk-in sales need itemized checkout.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
+      <div class="card frontline-card" style="text-align:center">
+        ${CUI.icon('info',{size:40})}
+        <h2 style="margin:8px 0 2px">Walk-in is not available</h2>
+        <p class="muted small">This firm records sales by customer phone number. Nothing was charged.</p>
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:14px">${CUI.icon('back',{size:17})} Back to phone number</button>
+      </div>`;
+    $('tBack').onclick=backToPhoneStep;
   }
   function drawInvalid(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'The phone number could not be used.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
@@ -10455,8 +10505,9 @@ async function tillPage(){
   async function loadCatalog(){
     if(catalog||catalogLoading) return;
     catalogLoading=true;catalogError=null;
-    const wantPackages=branchCanWrite(tillBranchId,'packages');
-    const wantMemberships=branchCanWrite(tillBranchId,'memberships');
+    // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
+    const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
+    const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
     const [checkout,pkg,mem,preferences,entitlements,serviceMeta]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
@@ -10469,7 +10520,7 @@ async function tillPage(){
       wantMemberships?sb.from('membership_plans').select('id,name,price_cents,cadence,active').eq('business_id',S.biz.id).eq('active',true).order('name')
         :Promise.resolve({data:null,error:null}),
       sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id}),
-      sb.rpc('staff_get_customer_entitlements_v102',{
+      walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_get_customer_entitlements_v102',{
         p_business:S.biz.id,p_client:cust.client_id
       }),
       sb.from('services').select('id,name,variant_label,duration_min')
@@ -10677,7 +10728,7 @@ async function tillPage(){
     // in prod this phase). Every amount is server-rendered; the client never sizes the SV portion.
     let svHtml='';
     const sv=r.stored_value;
-    if(sv&&sv.spendable===true&&(sv.available_cents||0)>0&&!staleConfirm&&evalState==='ready'&&!payError){
+    if(!walkin&&sv&&sv.spendable===true&&(sv.available_cents||0)>0&&!staleConfirm&&evalState==='ready'&&!payError){
       if(svTender)
         svHtml=`<div class="ck-panel" style="margin-top:10px" aria-label="Stored value applied">
           <div class="ck-row"><span>${CUI.icon('loyalty',{size:14})} Stored value</span><span>−${money(svTender.reserved_cents)}</span></div>
@@ -10719,8 +10770,10 @@ async function tillPage(){
 
   function drawCartComposer(){
     if(catalog===null&&!catalogError)loadCatalog();
-    const canPkg=branchCanWrite(tillBranchId,'packages');
-    const canMem=branchCanWrite(tillBranchId,'memberships');
+    // Packages and memberships are sold TO a customer (sell_package_v102 / enroll_membership_v41 both
+    // take p_client) — structurally impossible for a walk-in, so the entries are hidden, not disabled.
+    const canPkg=branchCanWrite(tillBranchId,'packages')&&!walkin;
+    const canMem=branchCanWrite(tillBranchId,'memberships')&&!walkin;
     // §6 custom-price ('Other item') entry is OWNER AND MANAGER ONLY (Option A). This is a role,
     // not an individually grantable permission — granting it means promoting the employee to
     // manager, which also carries the broader finance/refund permissions. The server enforces this
@@ -10762,7 +10815,7 @@ async function tillPage(){
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
         const ownedPackages='';
-        const pendingVouchers=(catalog.customerVouchers||[]).length
+        const pendingVouchers=(!walkin&&(catalog.customerVouchers||[]).length)
           ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
             ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
@@ -10799,8 +10852,12 @@ async function tillPage(){
     const emptyHtml=cart.length?'':`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Cart is empty. Tap a service or add an item to begin.</p></div>`;
     const panelHtml=checkoutPanelHtml();
     // tender — needed to finalise a kernel sale; frozen while the cart is locked (retry keeps method)
+    /* PayNow QR is customer-bound: the v142 edge command rejects the request unless client_id is a
+       uuid (create_paynow -> invalid_request), so it is HIDDEN for a walk-in rather than offered and
+       failing at the counter. Cash / card / external PayNow / other are unaffected. */
+    const tenderOptions=walkin?cartTenderOptions.filter(([value])=>value!=='paynow_qr'):cartTenderOptions;
     const tenderHtml=(cart.length&&!locked)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
-      <div class="frontline-tenders" id="tTenders">${cartTenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
+      <div class="frontline-tenders" id="tTenders">${tenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
       ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const paynowHtml=paynowAttempt?`<div class="imp-note" role="status" style="margin-top:12px"><b>PayNow QR · ${money(evalResult?.total_cents||0)}</b><p class="small" style="margin-top:5px">${esc(paynowAttempt.status==='processing'?'Payment is being confirmed.':'Waiting for the customer to pay the locked amount.')}</p><button type="button" class="btn ghost sm" id="tPaynowReopen" style="margin-top:8px">Show QR</button></div>`:'';
@@ -10819,8 +10876,11 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Choose products or services, review the checked total, then select how the customer paid.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card till-found-card">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
-          <div><div data-merchant-content style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">${esc(cust.full_name)}</div><p class="muted small" data-merchant-content style="margin:0">${esc(cust.phone||'')}</p><p class="muted small" style="margin-top:4px">Member since: ${esc(formatCustomerJoinedDateV141(cust.created_at))} · Last visit: ${cust.last_visit_at?esc(formatCustomerJoinedDateV141(cust.last_visit_at)):'Never visited'}</p></div>
-          <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>
+          ${walkin
+            ?`<div><div style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">Walk-in customer</div><p class="muted small" style="margin:4px 0 0">No customer linked — this sale earns no points and cannot use rewards, packages or stored value.</p></div>
+          <button type="button" class="btn ghost sm" id="tWalkinSwitch">${CUI.icon('customers',{size:16})} Switch to customer</button>`
+            :`<div><div data-merchant-content style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">${esc(cust.full_name)}</div><p class="muted small" data-merchant-content style="margin:0">${esc(cust.phone||'')}</p><p class="muted small" style="margin-top:4px">Member since: ${esc(formatCustomerJoinedDateV141(cust.created_at))} · Last visit: ${cust.last_visit_at?esc(formatCustomerJoinedDateV141(cust.last_visit_at)):'Never visited'}</p></div>
+          <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>`}
         </div>
         <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
         ${branchPicker}
@@ -10834,9 +10894,10 @@ async function tillPage(){
         ${paynowHtml}
         ${partialHtml}
         ${actionHtml}
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} ${walkin?'Switch to customer':'Different number'}</button>
       </div>`;
-    $('tBack').onclick=()=>{if(checkoutError){toast('Finish or retry the unfinished items first');return}clearCheckoutState();step=1;cust=null;saleIdem=null;cart=[];draw()};
+    $('tBack').onclick=backToPhoneStep;
+    if($('tWalkinSwitch'))$('tWalkinSwitch').onclick=backToPhoneStep;
     if($('tBranch'))$('tBranch').onchange=async()=>{
       tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;
       /* A branch change invalidates every item and evaluation. Clear the cart, then ask the
@@ -11067,6 +11128,9 @@ async function tillPage(){
       if(evalState==='error')return cartErr('Fix the highlighted item before taking payment');
       if(!tender)return cartErr('Choose how the customer paid');
     }
+    if(walkin&&extras.length)return cartErr('Packages and memberships need a customer. Switch to a customer to sell them.');
+    // Defensive: the PayNow QR tender is not rendered for a walk-in (the v142 command requires a client).
+    if(walkin&&tender==='paynow_qr')return cartErr('PayNow QR needs a customer. Take cash, card, external PayNow or other.');
     if(tender==='paynow_qr')return beginPaynowPaymentV142();
     busy=true;checkoutError=null;
     const confirmBtn=$('tCartConfirm')||$('tStaleConfirm')||$('tPayRetry')||$('tRetryGifts');
@@ -11074,7 +11138,8 @@ async function tillPage(){
     // (1) kernel finalise — only if there is a sale and it is not already committed
     if(hasSale&&!saleCommitted){
       const finaliseKey=writeAttemptKey(FINALISE_SLOT,evalFingerprint()); // stable across retries; new only on a cart/branch change
-      const {data,error}=await sb.rpc('record_cart_sale',{p_business:S.biz.id,p_client:cust.client_id,
+      // p_client is null for a walk-in — record_cart_sale permits it and returns points_earned 0.
+      const {data,error}=await sb.rpc('record_cart_sale',{p_business:S.biz.id,p_client:cust?cust.client_id:null,
         p_branch:tillBranchId,p_staff:tillStaffId,p_method:tender,p_idempotency_key:finaliseKey,
         p_lines:null,p_evaluation_id:evalResult.evaluation_id,p_paid:true});
       if(!isTillCurrent())return;
@@ -11084,7 +11149,8 @@ async function tillPage(){
       saleCommitted=true;staleConfirm=false;payError=null;
       const duplicate=isReplayResult(data);
       saleResult={duplicate,saleId:data&&data.sale_id||null,pointsEarned:duplicate?0:(data&&data.points_earned||0),
-        pointsTotal:Number.isFinite(Number(data?.points_total))?Number(data.points_total):null,
+        // A walk-in has no customer and therefore no points balance to report on the receipt.
+        pointsTotal:(!walkin&&Number.isFinite(Number(data?.points_total)))?Number(data.points_total):null,
         lines:saleLines.map(l=>({label:l.label,qty:l.qty,amount:l.unit_cents*l.qty,type:l.type})),
         subtotal:evalResult.subtotal_cents,discount:evalResult.discount_total_cents,
         gst:evalResult.gst_cents,total:evalResult.total_cents,effects:(evalResult.applied_effects||[]),
@@ -11138,18 +11204,19 @@ async function tillPage(){
   }
   async function finishCartReceipt(){
     const extras=extraLines(), r=saleResult;
-    const refreshed=await sb.rpc('lookup_client_by_phone',{
+    // A walk-in has no balance to re-read — skip the lookup entirely.
+    const refreshed=walkin?{data:null,error:null}:await sb.rpc('lookup_client_by_phone',{
       p_business:S.biz.id,p_phone:cust.phone||phone
     });
     if(!isTillCurrent())return;
-    const refreshedPoints=refreshed.error?null:Number(refreshed.data?.points);
+    const refreshedPoints=(walkin||refreshed.error)?null:Number(refreshed.data?.points);
     const packageResults=extras
       .filter(line=>line.type==='package'&&line._status==='done'&&line._packageResult)
       .map(line=>line._packageResult);
     const pointsReceipt=checkoutPointsReceiptV102({
       saleResult:r,packageResults,refreshedPoints
     });
-    doneInfo={receipt:true,name:cust.full_name,tender:tender==='paynow'?'External PayNow':tender,saleId:r?r.saleId:null,
+    doneInfo={receipt:true,walkin,name:walkin?'Walk-in':cust.full_name,tender:tender==='paynow'?'External PayNow':tender,saleId:r?r.saleId:null,
       lines:r?r.lines.map(l=>({label:l.label,qty:l.qty,amount:l.amount})):[],
       effects:r?(r.effects||[]):[],subtotal:r?r.subtotal:0,discount:r?r.discount:0,gst:r?r.gst:0,total:r?r.total:0,
       extras:extras.map(l=>({type:l.type,label:l.label,amount:l.unit_cents*l.qty,
@@ -11214,7 +11281,8 @@ async function tillPage(){
         <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
-        ${d.pointsEarned>0
+        ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
+          :d.pointsEarned>0
           ?`<p style="font-size:1.5rem;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`
           :d.hasSale?(d.duplicate
           ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
@@ -11225,7 +11293,7 @@ async function tillPage(){
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received${d.pointsTotal!=null?` · now ${d.pointsTotal} points total`:''}</p>
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
-        ${canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
+        ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
         <button class="btn ghost no-print" id="tPrintReceiptV142" style="width:100%;margin-top:16px;padding:14px">Print receipt</button>
         <button class="btn no-print" id="tNext" style="width:100%;margin-top:10px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
