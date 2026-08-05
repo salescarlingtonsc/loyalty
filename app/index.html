@@ -6805,22 +6805,49 @@ function wireBusinessSetupAccount(signOutId='out'){
     resetClientSessionState();location.hash='#/';renderAuth('in');
   };
 }
-function manualBusinessApplicationFallbackHtml(sectors=[]){
+/* V169: when the main setup form is on the same screen it has already collected the owner
+   name, business name, sector and UEN. Re-asking for all of it underneath the Stripe form
+   made owners fill the same details twice and left them unsure which path they were on.
+   `inline:true` therefore renders only what the main form does NOT already hold (the billing
+   mobile), and the submit handler reads the rest from the main form. `inline:false` keeps the
+   full standalone form for the plans-unavailable screen, which has no main form to read. */
+function manualBusinessApplicationFallbackHtml(sectors=[],{inline=false}={}){
   const locale=businessApplicationLanguage();
   return `<div class="card" style="margin-top:18px;text-align:left">
-    <b>Request manual payment approval</b>
+    <b>Pay manually instead</b>
     <p class="muted small" style="margin-top:6px">Use this when you will pay by bank transfer, cash, or another manual arrangement instead of Stripe. Super Admin reviews and approves or rejects this manual-payment application after payment evidence is checked. Approval does not mark a Stripe invoice paid.</p>
     <div class="grid2" style="margin-top:14px">
-      <div><label for="manualOwnerFullName">Your full name</label><input id="manualOwnerFullName" autocomplete="name"></div>
-      <div><label for="manualContactPhone">Billing mobile</label><input id="manualContactPhone" autocomplete="tel" inputmode="tel" placeholder="+65 8123 4567"></div>
-      <div><label for="manualBusinessName">Business name</label><input id="manualBusinessName" autocomplete="organization"></div>
+      ${inline?'':`<div><label for="manualOwnerFullName">Your full name</label><input id="manualOwnerFullName" autocomplete="name"></div>`}
+      <div${inline?' class="wide"':''}><label for="manualContactPhone">Billing mobile</label><input id="manualContactPhone" autocomplete="tel" inputmode="tel" placeholder="+65 8123 4567">${inline?'<p class="muted small" style="margin-top:5px">Your name, business name, sector and UEN are taken from the form above.</p>':''}</div>
+      ${inline?'':`<div><label for="manualBusinessName">Business name</label><input id="manualBusinessName" autocomplete="organization"></div>
       <div><label for="manualBusinessSector">Business sector</label><select id="manualBusinessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div>
       <div class="wide"><label for="manualAccountEmail">Email (optional)</label><input id="manualAccountEmail" type="email" autocomplete="email" value="${esc(S.user?.email||'')}" placeholder="you@business.com" disabled><p class="muted small" style="margin-top:5px">Peekaa uses your signed-in account email. If it is blank, include your preferred email when the team calls you.</p></div>
-      <div class="wide"><label for="manualBusinessRegistration">UEN / registration number (optional)</label><input id="manualBusinessRegistration" autocomplete="off"></div>
+      <div class="wide"><label for="manualBusinessRegistration">UEN / registration number (optional)</label><input id="manualBusinessRegistration" autocomplete="off"></div>`}
     </div>
     <button class="btn" id="requestManualBusinessHelp" style="width:100%;margin-top:16px">Request manual payment approval</button>
     <p class="muted small" id="manualBusinessHelpStatus" role="status" aria-live="polite" style="margin-top:8px">This creates a manual-payment application for Super Admin review. It does not activate a workspace, open Stripe Checkout, or record payment.</p>
   </div>`;
+}
+/* V169: the previous handler swallowed the server error entirely (`catch{}`) and always told
+   the owner to check their name, phone and business details. The most common real cause is
+   `open_application_already_exists` — the owner has ALREADY applied and is waiting on, or has
+   already received, a decision. Telling them to correct correct data sent them in a loop.
+   Every distinct server condition now maps to what the owner should actually do next. */
+function manualApplicationOwnerMessageV169(error){
+  const raw=String(error?.message||error?.hint||'');
+  if(/open_application_already_exists/i.test(raw))
+    return 'You already have a manual-payment application with Peekaa. Nothing further is needed — the team will contact you, or ask Peekaa admin to activate your approved workspace.';
+  if(/already assigned to a business workspace/i.test(raw))
+    return 'This account already has a Peekaa workspace. Sign out and sign back in to open it.';
+  if(/application_idempotency_conflict/i.test(raw))
+    return 'Your details changed since the last attempt. Reload this page and submit once more.';
+  if(/published_sector_required/i.test(raw))
+    return 'That business sector is not available yet. Choose another sector, or email admin.peekaa@gmail.com.';
+  if(/confirmed owner email required/i.test(raw))
+    return 'Confirm your email address first — check your inbox for the Peekaa confirmation link, then retry.';
+  if(/valid business application fields are required/i.test(raw))
+    return 'Check the billing mobile is a real Singapore number (for example 8123 4567), and that your name and business name are filled in above.';
+  return 'Could not submit this manual-payment request right now. Nothing was charged. Retry, or email admin.peekaa@gmail.com.';
 }
 function wireManualBusinessApplicationFallback(){
   const button=$('requestManualBusinessHelp');
@@ -6829,26 +6856,40 @@ function wireManualBusinessApplicationFallback(){
     const status=$('manualBusinessHelpStatus');
     const phone=String($('manualContactPhone')?.value||'').replace(/[^\d+]/g,'');
     const normalizedPhone=phone.startsWith('+')?phone:`+65${phone.replace(/\D/g,'')}`;
+    /* Inline mode reuses the main setup form the owner already filled in. */
+    const field=(manualId,mainId)=>String($(manualId)?.value??$(mainId)?.value??'').trim();
+    const contactName=field('manualOwnerFullName','ownerFullName');
+    const businessName=field('manualBusinessName','businessName');
+    const sectorKey=field('manualBusinessSector','businessSector');
+    const registration=field('manualBusinessRegistration','businessRegistration');
+    if(contactName.length<2||businessName.length<2){
+      if(status)status.textContent='Fill in your full name and business name above before requesting manual payment.';
+      return;
+    }
+    if(!/^\+[1-9][0-9]{7,14}$/.test(normalizedPhone)){
+      if(status)status.textContent='Enter a valid billing mobile, for example 8123 4567.';
+      return;
+    }
     let key=sessionStorage.getItem('nestly-self-serve-manual-application');
     if(!key){key=crypto.randomUUID();sessionStorage.setItem('nestly-self-serve-manual-application',key)}
     button.disabled=true;
     if(status)status.textContent='Sending this manual-payment application to the Peekaa admin queue…';
     try{
       const result=await sb.rpc('request_self_serve_manual_application_v159',{
-        p_contact_name:String($('manualOwnerFullName')?.value||'').trim(),
+        p_contact_name:contactName,
         p_contact_phone:normalizedPhone,
-        p_business_name:String($('manualBusinessName')?.value||'').trim(),
-        p_sector_key:String($('manualBusinessSector')?.value||''),
-        p_registration_number:String($('manualBusinessRegistration')?.value||'').trim()||null,
+        p_business_name:businessName,
+        p_sector_key:sectorKey,
+        p_registration_number:registration||null,
         p_locale:businessApplicationLanguage(),
         p_idempotency_key:key
       });
       if(result.error)throw result.error;
       sessionStorage.removeItem('nestly-self-serve-manual-application');
       if(status)status.textContent='Sent. Super Admin can now see this manual-payment application in Platform → Onboarding and approve or reject it after payment is verified.';
-    }catch{
+    }catch(error){
       button.disabled=false;
-      if(status)status.textContent='Could not submit this manual-payment request. Check the name, phone and business details, then retry.';
+      if(status)status.textContent=manualApplicationOwnerMessageV169(error);
       return;
     }
   };
@@ -6931,7 +6972,7 @@ function renderOnboard(){
       root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:left"><div class="logo" style="text-align:center">${brandWordmark()}</div><h1 style="font-size:1.6rem;margin-top:18px;text-align:center">Payment setup needs help</h1><p class="muted small" style="margin-top:8px;text-align:center">A Stripe checkout window cannot open until Peekaa has active monthly and annual Stripe plans plus at least one eligible business sector. No workspace, invoice, receipt, or charge was created.</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:16px;background:var(--sand)"><b>Why Stripe did not open</b><ul class="small" style="margin:8px 0 0;padding-left:18px"><li>${esc(planGap)}</li><li>${esc(sectorGap)}</li></ul></div>${sectors.length?manualBusinessApplicationFallbackHtml(sectors):`<div class="err" style="margin-top:16px">Business sectors are not ready, so manual application capture is temporarily unavailable. Contact Peekaa support.</div>`}<div class="row" style="justify-content:center;margin-top:16px"><button class="btn ghost" id="onboardRetry">Check Stripe setup again</button><a class="btn ghost" href="mailto:admin.peekaa@gmail.com?subject=Peekaa%20subscription%20setup">Email Peekaa support</a></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;wireBusinessSetupAccount();wireAccountDeletionButton();wireManualBusinessApplicationFallback();$('onboardRetry').onclick=renderOnboard;return;
     }
     const capacityOptions=Array.from({length:10},(_,index)=>(index+1)*1000);
-    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Enter your business details and choose the exact subscription. Stripe auto-activates only after verified payment. If you are paying manually, use the manual-payment approval form below for Super Admin review.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">peekaa.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · ${money(annual.base_amount_cents)}/year</strong><p class="muted small" style="margin-top:5px">${money(Math.round(annual.base_amount_cents/12))}/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · ${money(monthly.base_amount_cents)}/month</strong><p class="muted small" style="margin-top:5px">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity">Customer capacity</label><select id="customerCapacity">${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customers</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · Subscription fees are non-refundable after payment, except where required by law</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox" aria-label="I agree to the Terms of Service and acknowledge the Privacy Policy"><span>I agree to the <a class="consent-document-link" href="/terms.html?return=business-signup" target="_blank" rel="noopener">Terms of Service</a> and acknowledge the <a class="consent-document-link" href="/privacy.html?return=business-signup" target="_blank" rel="noopener">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Peekaa.</p>${manualBusinessApplicationFallbackHtml(sectors)}<hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Enter your business details and choose the exact subscription. Stripe auto-activates only after verified payment. If you are paying manually, use the manual-payment approval form below for Super Admin review.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">peekaa.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · ${money(annual.base_amount_cents)}/year</strong><p class="muted small" style="margin-top:5px">${money(Math.round(annual.base_amount_cents/12))}/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · ${money(monthly.base_amount_cents)}/month</strong><p class="muted small" style="margin-top:5px">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity">Customer capacity</label><select id="customerCapacity">${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customers</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · Subscription fees are non-refundable after payment, except where required by law</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox" aria-label="I agree to the Terms of Service and acknowledge the Privacy Policy"><span>I agree to the <a class="consent-document-link" href="/terms.html?return=business-signup" target="_blank" rel="noopener">Terms of Service</a> and acknowledge the <a class="consent-document-link" href="/privacy.html?return=business-signup" target="_blank" rel="noopener">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Peekaa.</p>${manualBusinessApplicationFallbackHtml(sectors,{inline:true})}<hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
     const setupIntroduction=root.querySelector('main section.card>p');
     if(setupIntroduction)setupIntroduction.insertAdjacentHTML('afterend',businessSetupAccountHtml('businessSetupSignOut'));
     wireBusinessSetupAccount('businessSetupSignOut');wireAccountDeletionButton();
