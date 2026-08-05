@@ -14029,7 +14029,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       referrals:{text:'friend spends <b>S$30+</b>, referrer gets <b>S$10</b> credit',
         prefill:{kind:'referral',minSpend:30,reward:10}}
     };
-    document.querySelectorAll('.grow-programme-row').forEach(row=>{
+    /* Scope to outerMain, exactly like the tab filter above: growPage renders into its own
+       main node, and a document-wide query can run against the previous page's DOM (this is
+       why the first attempt inserted nothing at all in production). */
+    outerMain.querySelectorAll('.grow-programme-row').forEach(row=>{
       const kind=row.dataset.programmeKind;
       const suggestion=suggestions[kind];
       if(!suggestion)return;

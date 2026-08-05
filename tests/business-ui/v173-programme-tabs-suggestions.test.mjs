@@ -60,3 +60,12 @@ test('the suggestion wiring lives in growPage render path, not a nested helper',
   const filter = app.indexOf("const show=programmeView==='ongoing'?isOngoing:!isOngoing;");
   assert.ok(block > filter, 'must run after the tab filter so hidden rows are skipped');
 });
+
+test('suggestion rows are queried from outerMain, not document', () => {
+  // A document-wide query ran against the previous page's DOM and inserted nothing at all
+  // in production. The tab filter above it already scopes to outerMain; match it.
+  const start = app.indexOf('const suggestions={');
+  const block = app.slice(start, start + 1800);
+  assert.match(block, /outerMain\.querySelectorAll\('\.grow-programme-row'\)/);
+  assert.doesNotMatch(block, /document\.querySelectorAll\('\.grow-programme-row'\)/);
+});
