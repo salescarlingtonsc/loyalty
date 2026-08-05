@@ -4621,8 +4621,17 @@
           p_stage:null,p_consultant:filters.consultant||null,p_search:filters.search||null,
           p_limit:50,p_before:prior?.next_before||null
         }),
+        /* V169: also pull status='approved'. Applications approved before V167 shipped direct
+           activation never became a workspace, and filtering to 'submitted' hid them entirely,
+           so an owner could be told "approved" while admin had no way to see or finish it. */
         prior?.applicationQueue?Promise.resolve(prior.applicationQueue):context.access?.role==='super_admin'
-          ?rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:filters.search||null,p_limit:100})
+          ?Promise.all([
+            rpc(sb,'platform_list_business_applications_v95',{p_status:'submitted',p_search:filters.search||null,p_limit:100}),
+            rpc(sb,'platform_list_business_applications_v95',{p_status:'approved',p_search:filters.search||null,p_limit:100})
+          ]).then(([submitted,approved])=>({
+            applications:asArray(submitted,['applications']).concat(asArray(approved,['applications'])),
+            truncated:Boolean(submitted?.truncated||approved?.truncated)
+          }))
           :Promise.resolve({applications:[]}),
         prior?.accountSignupQueue?Promise.resolve(prior.accountSignupQueue):context.access?.role==='super_admin'
           ?rpc(sb,'platform_list_account_signups_v160',{p_search:filters.search||null,p_limit:100})
@@ -4769,8 +4778,12 @@
         <div class="row"><div><h3>${escapeHtml(application.business_name)}</h3>
           <p class="muted small" style="margin-top:4px">${escapeHtml(application.contact_name)} · ${escapeHtml(application.contact_email)} · ${escapeHtml(application.contact_phone)}</p>
           <p class="muted small" style="margin-top:4px">${escapeHtml(sectorLabel(application.sector_key))}${application.registration_number?` · ${escapeHtml(application.registration_number)}`:''} · ${escapeHtml(dateTime(application.submitted_at))}</p></div>
-          <span class="spacer"></span><div class="platform-actions"><button class="btn sm" type="button" data-application-decision="approve">${escapeHtml(pt('Approve application'))}</button>
-          <button class="btn danger sm" type="button" data-application-decision="reject">${escapeHtml(pt('Reject application'))}</button></div></div>
+          <span class="spacer"></span><div class="platform-actions">${application.status==='approved'
+            ?`<button class="btn sm" type="button" data-application-activate="1">${escapeHtml(pt('Activate workspace'))}</button>`
+            :`<button class="btn sm" type="button" data-application-decision="approve">${escapeHtml(pt('Approve application'))}</button>
+          <button class="btn danger sm" type="button" data-application-decision="reject">${escapeHtml(pt('Reject application'))}</button>`}</div></div>
+        ${application.status==='approved'?`<div class="platform-route-note platform-status-note" style="margin-top:10px"><b>${escapeHtml(pt('Approved but not activated'))}</b>
+          <p class="small">${escapeHtml(pt('This application was approved before Peekaa activated workspaces automatically, so no workspace was created and the owner cannot sign in yet. Activate workspace finishes it.'))}</p></div>`:''}
       </article>`).join('')||CUI.emptyState({iconName:'setup',title:'No assisted applications awaiting review',body:'Paid website signups do not wait here; Stripe confirmation activates their workspace automatically.'})}</div>
         ${payload?.truncated?`<p class="muted small" style="margin-top:10px">${escapeHtml(pt("Showing the newest 100 applications. Narrow the search to find another application."))}</p>`:''}
     </section>`;
@@ -4783,7 +4796,29 @@
       card.querySelectorAll('[data-application-decision]').forEach(button=>{
         button.onclick=()=>businessApplicationDecisionModal(application,button.dataset.applicationDecision,context);
       });
+      card.querySelectorAll('[data-application-activate]').forEach(button=>{
+        button.onclick=()=>businessApplicationActivateModal(application,context);
+      });
     });
+  }
+  /* V169: finish activation for an application approved before direct activation shipped.
+     platform_decide_business_application_v105 cannot be reused - it only accepts
+     status='submitted' and raises application_is_not_pending on these rows. */
+  function businessApplicationActivateModal(application,context){
+    const {CUI,sb}=context;
+    const activateAttemptKey=idempotencyKey();
+    modal({title:'Activate approved workspace',submitLabel:'Activate workspace',CUI,
+      body:`<div class="card"><b>${escapeHtml(application.business_name)}</b><p class="muted small" style="margin-top:5px">${escapeHtml(application.contact_name)} · ${escapeHtml(application.contact_email)}</p></div>
+        <div class="platform-route-note platform-status-note"><b>${escapeHtml(pt('What activation does'))}</b>
+          <p class="small">${escapeHtml(pt('Creates the workspace, the owner staff record and the default branch for the confirmed owner account, then marks the application consumed. The owner can sign in immediately afterwards. No payment is recorded and no invoice is marked paid.'))}</p></div>
+        <p class="muted small" style="margin-top:10px">${escapeHtml(pt('If the connection is interrupted, press Activate workspace again. The same activation returns the existing workspace instead of duplicating it.'))}</p>`,
+      onSubmit:async(form,controls)=>{
+        await rpc(sb,'platform_activate_approved_application_v169',{
+          p_application:application.id,p_idempotency_key:activateAttemptKey
+        });
+        controls.close();await renderOnboarding(context);
+        CUI.announce('Workspace activated. The owner can now sign in.');
+      }});
   }
   function businessApplicationDecisionModal(application,decision,context){
     const {CUI,sb}=context,isApproval=decision==='approve';
