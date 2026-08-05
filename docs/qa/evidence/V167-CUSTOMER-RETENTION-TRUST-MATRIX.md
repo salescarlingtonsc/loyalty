@@ -8,9 +8,20 @@ Current reintegration branch: `codex/v167-live-integration`
 
 ## 2026-08-05 live reintegration status
 
-V167 was previously built and production-verified in phases, but current live build `c92040b7fb18fc4bb36f79b8a3d0440e50b1438d` no longer contains the V167 customer-retention commits. This integration replays the accepted V167 application changes onto that live build and treats the resulting candidate as `IMPLEMENTED_UNVERIFIED` until this exact integrated commit is deployed and `/api/build` matches it.
+V167 was previously built and production-verified in phases, but live build `c92040b7fb18fc4bb36f79b8a3d0440e50b1438d` no longer contained the V167 customer-retention commits. The reintegration replayed the accepted V167 application changes onto that live build, passed Sol review, and was production-verified at code commit `e1534f5ed98442fca025accde2c7521e0f0b332c` before this docs-only evidence update.
 
-The production migration ledger already contains V167 database versions `20260805040828` (`nestly_v167_customer_retention_offers`) and `20260805043956` (`nestly_v167_customer_repeat_booking_history`). The reintegration branch therefore uses those canonical IDs in the Supabase mirrors and manifests. It must not introduce duplicate invented migration IDs for the same database work.
+The production migration ledger already contains V167 database versions `20260805040828` (`nestly_v167_customer_retention_offers`) and `20260805043956` (`nestly_v167_customer_repeat_booking_history`). The reintegration branch therefore uses those canonical IDs in the Supabase mirrors and manifests. It must not introduce duplicate invented migration IDs for the same database work. No production migration apply was run for these V167 DB changes during reintegration.
+
+## 2026-08-05 live reintegration production evidence
+
+- Sol review: `PASS` with P0/P1/P2 all zero after migration IDs were reconciled to production ledger IDs and documentation was downgraded until live verification.
+- Code commit deployed first: `e1534f5ed98442fca025accde2c7521e0f0b332c` (`feat(customer): reintegrate V167 retention trust work`).
+- Git: branch `codex/v167-live-integration` pushed, and `origin/main` fast-forwarded to `e1534f5ed98442fca025accde2c7521e0f0b332c`.
+- Production deployment: Vercel `dpl_4MjAgdgR2vitnnh36dLisXksw51D`, aliased to `https://www.peekaa.asia`.
+- Build identity: `https://www.peekaa.asia/api/build` and `https://peekaa.asia/api/build` returned commit `e1534f5ed98442fca025accde2c7521e0f0b332c`.
+- HTTP smoke: `/`, `/join.html`, `/business`, `/admin` and `/api/build` returned HTTP 200.
+- Browser smoke: production V167 customer offers passed at 390, 430 and 1440; repeat booking/camera fallback passed at 390, 430, 768 and 1440; customer dark mode passed light/dark at 390, 430, 768 and 1440.
+- Database verification: local disposable Supabase full migration chain passed through `20260805040828`, `20260805043956` and `20260805200000`; rollback fixtures `db/tests/v167_customer_retention_offers.sql` and `db/tests/v167_customer_repeat_booking_history.sql` passed and rolled back. Production V167 migration ledgers were treated as already applied and were not replayed.
 
 This matrix treats the owner's suggested root causes, RPC names and storage keys as hypotheses. `Initial status` records the targeted pre-change audit; it is not completion evidence.
 
