@@ -13539,6 +13539,7 @@ async function promotionsPage(selectedPromotionId=null){
         <option value="counter" ${initial.ctaKind==='counter'?'selected':''}>Show at counter</option></select></div>
         <div><label for="promotionCtaLabel">Button wording</label><input id="promotionCtaLabel" maxlength="40" value="${esc(initial.ctaLabel)}"></div></div>
       <label for="promotionImage">Promotion photo</label><input id="promotionImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+      <p class="muted small" style="margin-top:6px">Your photo is always shown whole — never cropped or covered. Landscape 16:9 fills the card best; tall poster designs (4:5) also work.</p>
       <label for="promotionImageAlt">Photo description</label><input id="promotionImageAlt" maxlength="240" value="${esc(initial.imageAlt)}" placeholder="Describe the image for customers who cannot see it">
       <p class="muted small" id="promotionImageStatus" role="status" style="margin-top:7px">${initial.imageUrl?(initial.active&&initial.imageCustomerVisible?'Current photo is published. Choose another only to replace it.':'Draft photo saved. It is not shown in your customer programme until you publish.'):'Choose the customer-facing photo now. A saved draft is not shown in your customer programme until you publish.'}</p>
       <div class="row" style="margin-top:18px">${initial.active?'':`<button type="button" class="btn ghost" id="promotionSave">Save draft</button>`}

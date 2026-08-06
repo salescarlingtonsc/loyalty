@@ -64,3 +64,7 @@ test('uploaded promotion artwork is never cropped and never painted over', () =>
   assert.match(app, /\.customer-promotion-card-media--fallback\{[^}]*aspect-ratio:16\/9/);
   assert.match(app, /\.customer-offer-detail-media--fallback\{[^}]*aspect-ratio:16\/9/);
 });
+
+test('promotion studio nudges the recommended photo ratio and promises no cropping', () => {
+  assert.match(app, /Your photo is always shown whole — never cropped or covered\. Landscape 16:9 fills the card best; tall poster designs \(4:5\) also work\./);
+});
