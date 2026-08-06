@@ -2052,7 +2052,47 @@ async function customerPhoneOtpAvailable(channel='sms'){
   const serverCapabilities=await loadCustomerPhoneOtpCapabilities({refresh:true});
   return channel==='whatsapp'?serverCapabilities.whatsapp===true:serverCapabilities.sms===true;
 }
-function setCustomerSurfaceDocumentV167(){globalThis.document?.documentElement?.setAttribute('data-customer-surface','true')}
+/* v190 appearance. The customer surface used to go dark whenever the DEVICE was in dark mode, so
+   the same person saw a beige workspace and a black wallet on one phone. Beige — the business
+   palette — is now the default for everyone, and dark is a choice made in Profile → Appearance.
+   'device' remains available for people who genuinely want it to follow their phone. */
+const CUSTOMER_THEME_KEY_V190='peekaa.customer.theme';
+const CUSTOMER_THEMES_V190=['light','dark','device'];
+function customerThemePreferenceV190(){
+  try{
+    const stored=localStorage.getItem(CUSTOMER_THEME_KEY_V190);
+    return CUSTOMER_THEMES_V190.includes(stored)?stored:'light';
+  }catch{return 'light'}
+}
+function customerThemeIsDarkV190(preference=customerThemePreferenceV190()){
+  if(preference==='dark')return true;
+  if(preference!=='device')return false;
+  try{return globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches===true}catch{return false}
+}
+function applyCustomerThemeV190(preference=customerThemePreferenceV190()){
+  const root=globalThis.document?.documentElement;
+  if(!root)return preference;
+  const dark=customerThemeIsDarkV190(preference);
+  if(dark)root.setAttribute('data-customer-theme','dark');
+  else root.removeAttribute('data-customer-theme');
+  /* Keep the browser chrome with the surface rather than with the device. */
+  const meta=globalThis.document?.querySelector('meta[name="theme-color"]:not([media])');
+  if(meta)meta.setAttribute('content',dark?'#0F1115':'#F4F2EE');
+  return preference;
+}
+function setCustomerThemePreferenceV190(preference){
+  const next=CUSTOMER_THEMES_V190.includes(preference)?preference:'light';
+  try{localStorage.setItem(CUSTOMER_THEME_KEY_V190,next)}catch{}
+  return applyCustomerThemeV190(next);
+}
+/* A device-following customer must track a change made while the app is open. */
+try{globalThis.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change',()=>{
+  if(customerThemePreferenceV190()==='device')applyCustomerThemeV190('device');
+})}catch{}
+function setCustomerSurfaceDocumentV167(){
+  globalThis.document?.documentElement?.setAttribute('data-customer-surface','true');
+  applyCustomerThemeV190();
+}
 function customerRegistrationShell(body){
   destroyMountedTurnstiles();
   setCustomerSurfaceDocumentV167();
@@ -3249,6 +3289,9 @@ async function renderCustomerProfile(){
       <div id="customerProfileSaveStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save profile</span></button>
     </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>
+    <section class="card" id="customerAppearance" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Appearance</h2><p class="muted small">Peekaa looks the same as your businesses do by default. Switch to dark if you prefer it.</p></div></div>
+      <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
+    </section>
     <section class="card" id="customerExperiencePreferences" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('successSounds'))}</h2><p class="muted small">${esc(ct('soundHelp'))}</p></div><span class="spacer"></span><label class="customer-sound-toggle" for="customerSuccessSound"><input id="customerSuccessSound" type="checkbox" ${customerCelebrationSoundEnabled?'checked':''}><span>${esc(customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff'))}</span></label></div></section>
     <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>Marketing choices</h2><p class="muted small" style="margin-top:5px">Offers and updates from ${esc(BRAND.productName)}, participating businesses and selected partners, by app notification, in-app message, email, SMS or WhatsApp. Partners never receive your contact details. This is separate from messages sent by individual businesses.</p>
       ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Yes — send me these offers and updates, as described in the Privacy Notice. Withdrawing takes effect within 10 business days and does not affect my points, bookings or service messages.</span></label>
@@ -3266,6 +3309,13 @@ async function renderCustomerProfile(){
     ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">Only service updates such as bookings, points, rewards, quests, and birthday benefits. Businesses cannot send promotional push notifications from this control.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}
     ${accountDeletionCardHtml()}`;
   bindPasswordVisibility($('walletBody'));
+  /* v190: applied immediately on change — the person is looking at the surface they just picked,
+     so a save button would be a step with nothing behind it. */
+  $('walletBody').querySelectorAll('input[name="customerTheme"]').forEach(option=>option.onchange=()=>{
+    if(!option.checked)return;
+    setCustomerThemePreferenceV190(option.value);
+    CUI.announce(option.value==='dark'?'Dark appearance on':option.value==='device'?'Appearance follows your device':'Light appearance on');
+  });
   const successSound=$('customerSuccessSound');
   if(successSound){
     const reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;

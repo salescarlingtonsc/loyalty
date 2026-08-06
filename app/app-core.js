@@ -1129,6 +1129,38 @@ function normalizeSingaporeCustomerPhone(value){
   const local=digits.startsWith('65')&&digits.length===10?digits.slice(2):digits;
   return /^[89][0-9]{7}$/.test(local)?`+65${local}`:null;
 }
+/* v190 appearance. The customer surface used to go dark whenever the DEVICE was in dark mode, so
+   the same person saw a beige workspace and a black wallet on one phone. Beige — the business
+   palette — is now the default for everyone, and dark is a choice made in Profile → Appearance.
+   'device' remains available for people who genuinely want it to follow their phone. */
+const CUSTOMER_THEME_KEY_V190='peekaa.customer.theme';
+const CUSTOMER_THEMES_V190=['light','dark','device'];
+function customerThemePreferenceV190(){
+  try{
+    const stored=localStorage.getItem(CUSTOMER_THEME_KEY_V190);
+    return CUSTOMER_THEMES_V190.includes(stored)?stored:'light';
+  }catch{return 'light'}
+}
+function customerThemeIsDarkV190(preference=customerThemePreferenceV190()){
+  if(preference==='dark')return true;
+  if(preference!=='device')return false;
+  try{return globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches===true}catch{return false}
+}
+function applyCustomerThemeV190(preference=customerThemePreferenceV190()){
+  const root=globalThis.document?.documentElement;
+  if(!root)return preference;
+  const dark=customerThemeIsDarkV190(preference);
+  if(dark)root.setAttribute('data-customer-theme','dark');
+  else root.removeAttribute('data-customer-theme');
+  /* Keep the browser chrome with the surface rather than with the device. */
+  const meta=globalThis.document?.querySelector('meta[name="theme-color"]:not([media])');
+  if(meta)meta.setAttribute('content',dark?'#0F1115':'#F4F2EE');
+  return preference;
+}
+/* A device-following customer must track a change made while the app is open. */
+try{globalThis.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change',()=>{
+  if(customerThemePreferenceV190()==='device')applyCustomerThemeV190('device');
+})}catch{}
 const CUSTOMER_LOCALES=Object.freeze(['en']);
 let customerLocale='en';
 function customerMediaUrlV95(value){
