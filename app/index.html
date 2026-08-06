@@ -3190,11 +3190,18 @@ function resetCustomerRegistrationState({phone=''}={}){
   try{sessionStorage.removeItem('peekaa-customer-signup-consent-v163')}catch{}
   try{sessionStorage.removeItem('peekaa-customer-signup-profile-v174')}catch{}
 }
-function rememberCustomerSignupConsent(accepted){
+/* v175: legal acceptance and marketing consent are separate records. Legal
+   acceptance is required to register; marketing is a genuinely optional opt-in
+   (PDPA-valid consent must not be a condition of service). */
+function rememberCustomerSignupConsent(accepted,marketingOptedIn=false){
   try{
-    if(accepted)sessionStorage.setItem('peekaa-customer-signup-consent-v163','accepted');
+    if(accepted)sessionStorage.setItem('peekaa-customer-signup-consent-v163',marketingOptedIn?'accepted+marketing':'accepted');
     else sessionStorage.removeItem('peekaa-customer-signup-consent-v163');
   }catch{}
+}
+function customerSignupMarketingOptedIn(){
+  if(customerRegistrationState.legalAccepted)return customerRegistrationState.marketingOptedIn===true;
+  try{return sessionStorage.getItem('peekaa-customer-signup-consent-v163')==='accepted+marketing'}catch{return false}
 }
 /* v174: name, date of birth and gender are asked on the Create-account form,
    stashed for the OTP hop, and the post-OTP profile step completes itself from
@@ -3214,8 +3221,8 @@ function customerSignupProfileStash(){
   }catch{return null}
 }
 function customerSignupConsentRecorded(){
-  if(customerRegistrationState.legalAccepted&&customerRegistrationState.marketingOptedIn)return true;
-  try{return sessionStorage.getItem('peekaa-customer-signup-consent-v163')==='accepted'}catch{return false}
+  if(customerRegistrationState.legalAccepted)return true;
+  try{return String(sessionStorage.getItem('peekaa-customer-signup-consent-v163')||'').startsWith('accepted')}catch{return false}
 }
 function normalizeSingaporeCustomerPhone(value){
   const digits=String(value??'').replace(/[^0-9]/g,'');
@@ -3506,7 +3513,8 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     <label for="customerSignupGender">Gender</label>
     <select id="customerSignupGender" autocomplete="sex"><option value="">Select gender</option><option value="female" ${customerSignupProfileStash()?.gender==='female'?'selected':''}>Female</option><option value="male" ${customerSignupProfileStash()?.gender==='male'?'selected':''}>Male</option></select>
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Agreements</legend>
-      <label class="row" for="customerSignupConsent" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerSignupConsent" type="checkbox" ${customerRegistrationState.legalAccepted&&customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I have read and agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Terms of Service</a>, acknowledge the <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Privacy Notice</a>, and agree to receive marketing from ${esc(BRAND.productName)} and selected partners. I can withdraw marketing consent at any time.</span></label>
+      <label class="row" for="customerSignupConsent" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerSignupConsent" type="checkbox" ${customerRegistrationState.legalAccepted?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Terms of Service</a> and acknowledge the <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Privacy Notice</a>.</span></label>
+      <label class="row" for="customerSignupMarketing" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500"><input id="customerSignupMarketing" type="checkbox" ${customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span><b>Yes — send me offers and updates</b> from ${esc(BRAND.productName)}, participating businesses, and selected partners (retail, F&amp;B, beauty &amp; wellness, hospitality and technology brands) by app notification, in-app message, email, SMS or WhatsApp. ${esc(BRAND.productName)} sends these itself — partners never receive my contact details. I can change my mind anytime in Profile → Marketing choices. <span class="muted">(Optional)</span></span></label>
     </fieldset>`}
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Send the verification code by</legend>
       <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS</span></label>
@@ -3566,7 +3574,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
         errorHost.innerHTML='<div class="err">Select Male or Female to continue.</div>';return;
       }
       if(!$('customerSignupConsent').checked){
-        errorHost.innerHTML='<div class="err">Please agree to the Terms of Service, acknowledge the Privacy Notice, and confirm marketing consent to continue.</div>';return;
+        errorHost.innerHTML='<div class="err">Please agree to the Terms of Service and acknowledge the Privacy Notice to continue. The marketing box is optional.</div>';return;
       }
       rememberCustomerSignupProfile({fullName:signupFullName,birthDate:signupBirthDate,gender:signupGender});
     }
@@ -3590,9 +3598,10 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     customerRegistrationState={
       phone,channel,purpose,
       legalAccepted:recovering?false:$('customerSignupConsent').checked,
-      marketingOptedIn:recovering?false:$('customerSignupConsent').checked
+      marketingOptedIn:recovering?false:$('customerSignupMarketing').checked
     };
-    rememberCustomerSignupConsent(!recovering&&$('customerSignupConsent').checked);
+    rememberCustomerSignupConsent(!recovering&&$('customerSignupConsent').checked,
+      !recovering&&$('customerSignupMarketing').checked);
     renderCustomerOtpVerification(isRouteCurrent);
   };
 }
@@ -3665,7 +3674,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     <select id="customerGender" autocomplete="sex" required><option value="">Select gender</option><option value="female">Female</option><option value="male">Male</option></select>
     <label for="customerLanguage">Preferred language</label>
     <select id="customerLanguage" autocomplete="language"><option value="en">English</option><option value="zh">中文</option><option value="ms">Bahasa Melayu</option><option value="ta">தமிழ்</option></select>
-    <p class="muted small" style="margin-top:14px">${signupConsentRecorded?'Your Terms, Privacy Notice, and marketing consent were captured before phone verification.':'Consent was not recorded for this browser session. Return to Create account and tick the single agreement box before verifying your phone.'}</p>
+    <p class="muted small" style="margin-top:14px">${signupConsentRecorded?`Your Terms and Privacy Notice acceptance was captured before phone verification.${customerSignupMarketingOptedIn()?' You also opted in to offers and updates — you can change this anytime in Profile.':''}`:'Consent was not recorded for this browser session. Return to Create account and tick the Terms agreement box before verifying your phone.'}</p>
     <div id="customerProfileError" role="alert" aria-live="assertive"></div>
     <button class="btn" id="customerRegister" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:18})}<span>Create my customer account</span></button>
   </section>`);
@@ -3690,13 +3699,14 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
       profileError.innerHTML='<div class="err">Select Male or Female to continue.</div>';return;
     }
     if(!customerSignupConsentRecorded()){
-      profileError.innerHTML='<div class="err">Consent was not recorded. Return to Create account and tick the single agreement box before verifying your phone.</div>';return;
+      profileError.innerHTML='<div class="err">Consent was not recorded. Return to Create account and tick the Terms agreement box before verifying your phone.</div>';return;
     }
     register.disabled=true;register.querySelector('span').textContent='Creating your account…';
     await runCustomerRegistrationProfileSubmission({
       registerRequest:()=>sb.rpc('customer_register_verified_phone',{
         p_full_name:fullName,p_birth_date:birthDate,p_gender:gender,p_preferred_language:language,
-        p_accept_terms:true,p_accept_privacy:true,p_platform_marketing_opted_in:true,
+        p_accept_terms:true,p_accept_privacy:true,
+        p_platform_marketing_opted_in:customerSignupMarketingOptedIn(),
         p_idempotency_key:crypto.randomUUID()
       }),
       resolveDestination:()=>{
@@ -4350,8 +4360,8 @@ async function renderCustomerProfile(){
       <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save profile</span></button>
     </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>
     <section class="card" id="customerExperiencePreferences" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('successSounds'))}</h2><p class="muted small">${esc(ct('soundHelp'))}</p></div><span class="spacer"></span><label class="customer-sound-toggle" for="customerSuccessSound"><input id="customerSuccessSound" type="checkbox" ${customerCelebrationSoundEnabled?'checked':''}><span>${esc(customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff'))}</span></label></div></section>
-    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>Marketing choices</h2><p class="muted small" style="margin-top:5px">Optional Peekaa news and selected-partner offers. This is separate from messages sent by individual businesses.</p>
-      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I agree to receive optional marketing from ${esc(BRAND.productName)} and selected partners as described in the Privacy Notice. I can withdraw this consent at any time.</span></label>
+    <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>Marketing choices</h2><p class="muted small" style="margin-top:5px">Offers and updates from ${esc(BRAND.productName)}, participating businesses and selected partners, by app notification, in-app message, email, SMS or WhatsApp. Partners never receive your contact details. This is separate from messages sent by individual businesses.</p>
+      ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>Yes — send me these offers and updates, as described in the Privacy Notice. Withdrawing takes effect within 10 business days and does not affect my points, bookings or service messages.</span></label>
       <div id="customerProfileMarketingStatus" role="status" aria-live="polite"></div>
       <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Save marketing choice</span></button>`
       :'<p class="err" role="status" style="margin-top:12px">Your marketing choice could not be loaded. No change has been made.</p>'}

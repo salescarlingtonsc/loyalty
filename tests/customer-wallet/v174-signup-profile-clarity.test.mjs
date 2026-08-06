@@ -30,3 +30,17 @@ test('the retry link honours hidden and the passed challenge collapses', () => {
   assert.match(app,/\.challenge\.challenge-passed\{min-height:0/);
   assert.match(app,/classList\.toggle\('challenge-passed',passed\)/);
 });
+
+test('v175: legal acceptance and marketing consent are separate signup records', () => {
+  assert.match(app,/id="customerSignupConsent" type="checkbox" \$\{customerRegistrationState\.legalAccepted\?'checked':''\}/);
+  assert.match(app,/id="customerSignupMarketing" type="checkbox" \$\{customerRegistrationState\.marketingOptedIn\?'checked':''\}/);
+  assert.match(app,/Yes — send me offers and updates<\/b>/);
+  assert.match(app,/partners never receive my contact details/i);
+  assert.match(app,/\(Optional\)/);
+  assert.match(app,/The marketing box is optional\./);
+  assert.match(app,/p_platform_marketing_opted_in:customerSignupMarketingOptedIn\(\)/);
+  assert.doesNotMatch(app,/p_platform_marketing_opted_in:true/);
+  assert.match(app,/marketingOptedIn:recovering\?false:\$\('customerSignupMarketing'\)\.checked/);
+  assert.match(app,/function customerSignupMarketingOptedIn\(\)/);
+  assert.match(app,/startsWith\('accepted'\)/);
+});

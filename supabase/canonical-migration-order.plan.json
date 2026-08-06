@@ -1192,6 +1192,12 @@
       "version": "20260805215000",
       "name": "nestly_v171_customerintel_entitlement",
       "sourcePath": "db/migrations/20260805_nestly_v171_customerintel_entitlement.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806050000",
+      "name": "nestly_v175_marketing_consent_scope_v2",
+      "sourcePath": "db/migrations/20260806_nestly_v175_marketing_consent_scope_v2.sql"
     }
   ]
 }
