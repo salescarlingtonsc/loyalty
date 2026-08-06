@@ -28,8 +28,12 @@ test('customer surfaces expose Book again only through booking-enabled paths',()
   assert.match(app,/bookingEnabled\?`<section[\s\S]*Book again/);
   assert.match(app,/repeat_service=/);
   assert.match(app,/customerRepeatBookingPreferencesV167/);
-  assert.match(app,/repeatPreference\?\.staffName\?'named':'any'/);
-  assert.match(app,/selSvc!==repeatService\?\.id[\s\S]*teamPref='any'/);
+  /* v183: "who would you like" is no longer a free-text preference carried in the notes, so a
+     repeat booking no longer pre-fills a name. It pre-fills the SERVICE and lands on the time
+     step; the person is chosen from the business's real, validated roster. */
+  assert.doesNotMatch(app,/repeatPreference\?\.staffName\?'named':'any'/);
+  assert.match(app,/if\(staffChoice&&!staffForService\(\)\.some\(member=>member\.id===selStaff\)\)selStaff=null/);
+  assert.match(app,/showStep\(repeatService\?steps\.indexOf\('time'\):0\)/);
 });
 
 test('repeat service is allowlisted against the current public booking catalogue',()=>{
@@ -79,8 +83,14 @@ test('camera denial exposes and focuses tested image and paste fallbacks',()=>{
   assert.doesNotMatch(app,/id="merchantScannerImage"[^>]*capture=/);
 });
 
-test('feedback retains an accessible radiogroup and discoverable public review action',()=>{
-  assert.match(app,/role="radiogroup" aria-label="Rate from 1 to 5 stars"/);
-  assert.match(app,/Leave a public review for/);
-  assert.match(app,/This option is the same for every rating/);
+/* v183 (owner: "don't need in-house feedback — just Google review"): the in-app star rating is
+   gone from the customer surface. The public review link remains, ungated by any rating, which
+   satisfies the anti-review-gating invariant by construction rather than by convention. */
+test('the customer surface offers only the public review action, never an in-app rating first',()=>{
+  assert.doesNotMatch(app,/role="radiogroup" aria-label="Rate from 1 to 5 stars"/);
+  assert.doesNotMatch(app,/customer_submit_visit_feedback/,'the in-app rating write path is removed');
+  assert.match(app,/<span>Leave a public review<\/span>/);
+  assert.match(app,/function walletReviewUrlV183/);
+  assert.match(app,/const host=\$\('walletFeedback'\);if\(!host\|\|!walletReviewUrl\)return/,
+    'the review card renders only when the business supplied an https review URL');
 });

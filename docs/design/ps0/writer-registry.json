@@ -1901,10 +1901,6 @@
       "reason": "browser RPC 'customer_get_wallet' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
-      "id": "browser.rpc:app/app.js:customer_list_my_feedback",
-      "reason": "browser RPC 'customer_list_my_feedback' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
-    },
-    {
       "id": "browser.rpc:app/app.js:customer_portal_capabilities",
       "reason": "browser RPC 'customer_portal_capabilities' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
@@ -1923,10 +1919,6 @@
     {
       "id": "browser.rpc:app/app.js:customer_set_notification_preference",
       "reason": "browser RPC 'customer_set_notification_preference' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
-    },
-    {
-      "id": "browser.rpc:app/app.js:customer_submit_visit_feedback",
-      "reason": "browser RPC 'customer_submit_visit_feedback' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
       "id": "browser.rpc:app/app.js:customer_update_profile",
@@ -2195,6 +2187,14 @@
     {
       "id": "browser.write:app/app.js:booking_tables:UPDATE",
       "reason": "browser direct write to non-value catalog/config table booking_tables (UPDATE); RLS-gated setup data, not customer value"
+    },
+    {
+      "id": "browser.write:app/app.js:branch_hours:DELETE",
+      "reason": "v183 browser direct write to non-value config table branch_hours (DELETE); unchecking a day removes that weekday's opening hours. RLS-gated owner setup data — it changes which times a customer is OFFERED, never a balance, benefit or sale."
+    },
+    {
+      "id": "browser.write:app/app.js:branch_hours:UPSERT",
+      "reason": "v183 browser direct write to non-value config table branch_hours (UPSERT); the owner's weekly opening hours, keyed (branch_id, weekday). RLS-gated owner setup data, not customer value."
     },
     {
       "id": "browser.write:app/app.js:branches:INSERT",

@@ -81,6 +81,9 @@ export function validBookingPayload(body) {
     && UUID_PATTERN.test(String(body.submission_id || ''))
     && (!body.service || UUID_PATTERN.test(String(body.service)))
     && (!body.table_type || UUID_PATTERN.test(String(body.table_type)))
+    // v183: an optional requested team member. Shape only — the tenant, the customer-bookable
+    // flag and the service assignment are re-checked in the database.
+    && (!body.staff || UUID_PATTERN.test(String(body.staff)))
     && (body.consent === undefined || typeof body.consent === 'boolean')
     && String(body.notes || '').length <= 1000
     && (!!body.email || !!body.phone)

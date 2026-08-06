@@ -21,21 +21,23 @@ test('V156 customer-facing wallet labels businesses as My Rewards instead of pro
   assert.doesNotMatch(copy,/yourProgrammes:'Programmes'|programmes:'Programmes'/);
 });
 
-test('V156 customer home prioritises My Rewards above collapsed guidance and caps expanded summary height',()=>{
-  const css=app;
+/* v183 (owner annotation: the whole My Rewards block struck through on Home): the reward grid
+   belongs to the My Rewards tab. Home leads with offers and ends with a two-way jump-off. */
+test('V183 Home leads with offers and delegates the reward grid to the My Rewards tab',()=>{
   const home=section('function renderActionableWalletHome','async function renderCustomerWallet');
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   const fallback=wallet.slice(wallet.indexOf("if(!businessSlug){"),wallet.indexOf("const args={p_business_slug:businessSlug}"));
+  const homeMarkup=home.slice(home.lastIndexOf("$('walletBody').innerHTML=`${isHome?"),home.lastIndexOf('wireCustomerHomeOffersV167(repaint)'));
+  const homeBranch=homeMarkup.slice(0,homeMarkup.indexOf(':`'));
 
-  assert.match(css,/\.customer-home-summary-body\{[^}]*max-height:min\(30dvh,240px\);overflow:auto/s);
-  assert.match(css,/@media\(max-width:720px\)\{[\s\S]*\.customer-home-summary-body\{max-height:30dvh\}/);
+  assert.ok(homeBranch.indexOf('customerHomeOffersMarkupV167(offersState)')<homeBranch.indexOf('customerHomeQuickLinksV183(cards.length)'));
+  assert.doesNotMatch(homeBranch,/customerProgrammeGridMarkupV96/,'the reward grid was crossed out on Home');
+  assert.doesNotMatch(homeBranch,/customerMyRewardsHeadingV156/,'the "My Rewards" heading was crossed out on Home');
+  assert.ok(homeMarkup.indexOf('customerMyRewardsHeadingV156(cards.length')<homeMarkup.indexOf('customerProgrammeGridMarkupV96(cards)'),
+    'the My Rewards tab still puts its heading above its grid');
 
-  assert.ok(home.indexOf('customerMyRewardsHeadingV156(cards.length)')<home.indexOf('customerProgrammeGridMarkupV96(cards)'));
-  assert.ok(home.indexOf('customerProgrammeGridMarkupV96(cards)')<home.indexOf('customer-home-summary'));
-  assert.doesNotMatch(home,/<details class="card customer-home-summary"[^>]*\bopen\b/);
-
-  assert.ok(fallback.indexOf('customerMyRewardsHeadingV156(cards.length)')<fallback.indexOf('customerProgrammeGridMarkupV96(cards)'));
-  assert.ok(fallback.indexOf('customerProgrammeGridMarkupV96(cards)')<fallback.indexOf('customer-home-summary'));
+  assert.match(fallback,/customerHomeQuickLinksV183\(cards\.length,bookingSummary\)/);
+  assert.doesNotMatch(fallback,/customerProgrammeGridMarkupV96\(cards\)/,'legacy Home drops the grid too');
   assert.doesNotMatch(fallback,/Programme guidance is unavailable|<h2 style="margin:20px 0 10px">Programmes<\/h2>/);
 });
 

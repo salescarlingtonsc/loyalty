@@ -2971,14 +2971,24 @@ function customerBookingAppointmentTabV178(appointment){
   if(CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(status))return 'cancelled';
   return RESOLVED_CUSTOMER_APPOINTMENT_STATUSES_V178.has(status)?'history':'bookings';
 }
+/* v183 (owner annotation, "0 requests · 0 appointments — no booking yet, should not show
+   Cubbly"): a business with nothing booked is not a booking. Only records list here; the
+   "book with them" entry point moved into the empty state below, where it reads as an
+   invitation rather than as a phantom booking. */
 function customerBookingTabGroupsV178(groups=[],tab='bookings'){
   return groups.map(group=>({
     ...group,
     tabRequests:group.requests.filter(item=>customerBookingRequestTabV178(item)===tab),
     tabAppointments:group.appointments.filter(item=>customerBookingAppointmentTabV178(item)===tab)
-  /* A booking-enabled business with nothing outstanding still belongs on the default tab —
-     that empty card is the only "Book again" entry point for a first repeat visit. */
-  })).filter(group=>group.tabRequests.length||group.tabAppointments.length||(tab==='bookings'&&group.bookingEnabled));
+  })).filter(group=>group.tabRequests.length||group.tabAppointments.length);
+}
+function customerBookingEmptyMarkupV183(tab='bookings',emptyCopy='',groups=[]){
+  const label=(CUSTOMER_BOOKING_TABS_V178.find(([name])=>name===tab)||[])[1]||'Bookings';
+  const bookable=tab==='bookings'
+    ?groups.filter(group=>group.bookingEnabled&&group.business_slug)
+    :[];
+  return `<section class="card"><h2>${esc(label)}</h2><p class="muted small" style="margin-top:6px">${esc(emptyCopy)}</p>
+    ${bookable.length?`<div class="customer-booking-invite">${bookable.map(group=>`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${CUI.icon('bookings',{size:16})}<span>Book with ${esc(group.business_name)}</span></button>`).join('')}</div>`:''}</section>`;
 }
 function customerBookingTablistMarkupV178(currentTab='bookings',counts={}){
   return `<div class="customer-booking-tabs" role="tablist" aria-label="Booking status">${CUSTOMER_BOOKING_TABS_V178.map(([tab,label])=>{
@@ -3055,7 +3065,7 @@ async function renderCustomerBookings(){
       ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'Waitlisted':'Pending'):String(item.status||'updated').replaceAll('_',' '))}</span></div>`).join('')}`:''}
       ${group.tabAppointments.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(appointmentHeading)}</h3>${group.tabAppointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug&&customerBookingAppointmentTabV178(item)!=='bookings'?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">Book again</button>`:`<span class="pill ${customerBookingAppointmentTabV178(item)==='cancelled'?'no':'ok'}">Appointment</span>`}</div>`).join('')}`:''}
     </section>`).join('')}</div>`
-      :`<section class="card"><h2>${esc((CUSTOMER_BOOKING_TABS_V178.find(([tab])=>tab===currentBookingTab)||[])[1]||'Bookings')}</h2><p class="muted small" style="margin-top:6px">${esc(emptyCopy)}</p></section>`}
+      :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
     const tabButtons=[...$('walletBody').querySelectorAll('[data-booking-tab]')];
@@ -3646,14 +3656,33 @@ function customerOfferUrgencyV167(item,now=Date.now()){
   const ends=Date.parse(item?.ends_at||'');
   return Number.isFinite(ends)&&ends>now&&ends-now<=72*60*60*1000;
 }
+/* v183 (owner annotation "Ends in x days — use red colour font"): a calendar range asks the
+   customer to do date arithmetic. The countdown states the scarcity directly. Days are counted
+   in Singapore calendar days, not 24h blocks, so an offer ending 23:00 tonight reads "Ends
+   today" rather than "Ends in 0 days". Returns '' when the offer has no end date. */
+function customerOfferCountdownV183(item,now=Date.now()){
+  const ends=Date.parse(item?.ends_at||'');
+  if(!Number.isFinite(ends)||ends<=now)return '';
+  const sgDay=value=>Math.floor((value+8*3600000)/86400000);
+  const days=sgDay(ends)-sgDay(now);
+  if(days<=0)return 'Ends today';
+  if(days===1)return 'Ends tomorrow';
+  return `Ends in ${days} days`;
+}
 function customerHomeOfferMarkupV167(item,seen){
   const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
     versionId=String(item?.version_id||''),isNew=versionId&&!seen.has(versionId),
-    endsSoon=customerOfferUrgencyV167(item),validity=customerPromotionValidityV104(item);
+    endsSoon=customerOfferUrgencyV167(item),validity=customerPromotionValidityV104(item),
+    countdown=customerOfferCountdownV183(item),logo=customerMediaUrlV95(business.logo_url);
   const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
+  const businessInitial=(String(business.name||'B').trim()[0]||'B').toUpperCase();
   return `<a class="customer-home-offer${image?'':' customer-home-offer--no-media'}" href="#/wallet/${encodeURIComponent(business.slug||'')}" data-home-offer data-offer-id="${esc(item?.id||'')}" data-offer-version="${esc(versionId)}">
     ${image?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`:`<div class="customer-home-offer-media customer-home-offer-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
-    <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3><p class="muted small" style="margin-top:4px">${esc(business.name||'Your business')}</p>${validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
+    <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
+    <p class="customer-home-offer-business">${logo
+      ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
+      :`<span class="customer-home-offer-logo customer-home-offer-logo--fallback" aria-hidden="true">${esc(businessInitial)}</span>`}<span class="muted small">${esc(business.name||'Your business')}</span></p>
+    ${countdown?`<p class="customer-home-offer-countdown">${esc(countdown)}</p>`:validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
 /* v173: with many linked businesses each posting offers, a plain ends-soonest
@@ -3686,7 +3715,9 @@ function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   }else if(state.status==='error'){
     body='<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" id="customerOffersRetry" type="button" style="margin-top:10px">Try again</button></div>';
   }
-  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><div><p class="customer-quest-kicker">Worth coming back for</p><h2 id="customerHomeOffersTitle">Limited offers</h2></div></div>${body}</section>`;
+  /* v183 (owner annotation: kicker struck out, "put some logo, make it interesting"): the
+     stacked kicker read as filler above the real title. One icon-led title line instead. */
+  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:18})}</span><span>Limited offers</span></h2></div>${body}</section>`;
 }
 /* v178 (owner annotation): from an offer the customer must be able to click into the company
    itself — address, phone, email and every other offer that company is currently running. */
@@ -3705,23 +3736,44 @@ function customerCompanyDetailRowV178(business={}){
     <span class="spacer"></span><span class="customer-company-row-chevron" aria-hidden="true">›</span>
   </button>`;
 }
-function showCustomerBusinessDetailV178(business={}){
-  const name=String(business?.name||'').trim()||'Your business',slug=encodeURIComponent(business?.slug||'');
+/* v183 (owner: "Book now does not work… Open Cubbly rewards bounces me back to the same page"):
+   both were the same defect. The sheet holds one history entry; closing it called history.back(),
+   which is asynchronous, so the pop landed AFTER the hash navigation and cancelled it — the
+   customer was returned to the page they started on. Navigating from a sheet now REPLACES the
+   sheet's own history entry with the destination, so the trip is one-way and Back still returns
+   to the page before the sheet. */
+function wireCustomerSheetNavV183(overlay,deactivate){
+  overlay.querySelectorAll('[data-offer-detail-nav],[data-business-detail-nav]').forEach(link=>{
+    link.addEventListener('click',event=>{
+      const href=link.getAttribute('href')||'';
+      if(!href.startsWith('#/')||event.defaultPrevented||event.metaKey||event.ctrlKey||event.shiftKey)return;
+      event.preventDefault();
+      const handOff=(CUI.currentDialogHistoryId?.()||0)>0;
+      deactivate({restoreFocus:false,handOffHistory:handOff});
+      if(!handOff){nav(href);return}
+      try{history.replaceState(null,'',href)}catch{location.hash=href;return}
+      route();
+    });
+  });
+}
+function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
+  const name=String(business?.name||'').trim()||'Your business',slug=encodeURIComponent(business?.slug||''),
+    industry=String(business?.industry||'').trim();
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface customer-business-detail-modal';overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerBusinessDetailTitle');
   overlay.innerHTML=`<section class="modal-card customer-offer-detail customer-business-detail">
     <div class="row"><p class="customer-quest-kicker">Company details</p><span class="spacer"></span><button class="btn ghost sm" id="customerBusinessDetailClose" type="button" aria-label="Close company details">${CUI.icon('close',{size:18})}</button></div>
-    <div class="customer-business-detail-head">${customerCompanyIdentityMarkupV178(business)}<h2 id="customerBusinessDetailTitle">${esc(name)}</h2></div>
+    <div class="customer-business-detail-head">${customerCompanyIdentityMarkupV178(business)}<div><h2 id="customerBusinessDetailTitle">${esc(name)}</h2>${industry?`<p class="muted small" style="margin-top:2px">${esc(industry)}</p>`:''}</div></div>
     <div class="customer-offer-detail-meta" data-business-contact><p class="muted small">Loading contact details…</p></div>
     <h3 class="customer-business-detail-subhead">Current offers</h3>
     <div data-business-offers><p class="muted small">Loading offers…</p></div>
     <div class="row" style="margin-top:16px"><a class="btn" href="#/wallet/${slug}" data-business-detail-nav>${esc(ct('openProgramme',{business:name}))}</a></div>
   </section>`;
   document.body.appendChild(overlay);
-  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerBusinessDetailClose'});
+  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerBusinessDetailClose',inheritHistoryId});
   overlay.querySelector('#customerBusinessDetailClose').onclick=()=>deactivate({restoreFocus:true});
-  overlay.querySelectorAll('[data-business-detail-nav]').forEach(link=>link.addEventListener('click',()=>deactivate({restoreFocus:false})));
+  wireCustomerSheetNavV183(overlay,deactivate);
   const host=selector=>overlay.isConnected?overlay.querySelector(selector):null;
   if(!business?.id){
     const contact=host('[data-business-contact]');if(contact)contact.innerHTML='<p class="muted small">Contact details unavailable.</p>';
@@ -3756,15 +3808,16 @@ function showCustomerBusinessDetailV178(business={}){
       offersHost.querySelectorAll('[data-business-offer]').forEach(button=>button.onclick=()=>{
         const offer=items[Number(button.dataset.businessOffer)];
         if(!offer)return;
-        deactivate({restoreFocus:false});
-        showCustomerOfferDetailV173({...offer,business:{...business,...(offer.business||{})}});
+        const handOff=CUI.currentDialogHistoryId?.()||0;
+        deactivate({restoreFocus:false,handOffHistory:handOff>0});
+        showCustomerOfferDetailV173({...offer,business:{...business,...(offer.business||{})}},{inheritHistoryId:handOff});
       });
     }).catch(()=>{
       const offersHost=host('[data-business-offers]');
       if(offersHost)offersHost.innerHTML='<p class="muted small">Current offers couldn’t load.</p>';
     });
 }
-function showCustomerOfferDetailV173(item){
+function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
   const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
     facts=String(item?.metadata?.offer_facts||'').trim(),
     validity=customerPromotionValidityV104(item),
@@ -3792,14 +3845,17 @@ function showCustomerOfferDetailV173(item){
     ${business.id?customerCompanyDetailRowV178(business):''}
     <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
       ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`:''}
-      <a class="btn ghost" href="#/wallet/${slug}" data-offer-detail-nav>${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}</a>
     </div></section>`;
   document.body.appendChild(overlay);
-  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerOfferDetailClose'});
+  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerOfferDetailClose',inheritHistoryId});
   overlay.querySelector('#customerOfferDetailClose').onclick=()=>deactivate({restoreFocus:true});
-  overlay.querySelectorAll('[data-offer-detail-nav]').forEach(link=>link.addEventListener('click',()=>deactivate({restoreFocus:false})));
+  wireCustomerSheetNavV183(overlay,deactivate);
   const companyButton=overlay.querySelector('[data-company-detail]');
-  if(companyButton)companyButton.onclick=()=>{deactivate({restoreFocus:false});showCustomerBusinessDetailV178(business)};
+  if(companyButton)companyButton.onclick=()=>{
+    const handOff=CUI.currentDialogHistoryId?.()||0;
+    deactivate({restoreFocus:false,handOffHistory:handOff>0});
+    showCustomerBusinessDetailV178(business,{inheritHistoryId:handOff});
+  };
   if(business.id){
     const contactHost=overlay.querySelector('[data-offer-contact]');
     if(contactHost)contactHost.innerHTML='<p class="muted small">Loading contact details…</p>';
@@ -3830,6 +3886,27 @@ function wireCustomerHomeOffersV167(rerender){
     if(item){event.preventDefault();showCustomerOfferDetailV173(item)}
   }));
   const retry=$('customerOffersRetry');if(retry)retry.onclick=rerender;
+}
+/* https-only public review destination, read from the business summary the wallet already
+   loaded. Presence of a URL is the only gate — never the customer's rating (v53 invariant). */
+function walletReviewUrlV183(business={}){
+  const url=String(business?.review_url||'');
+  return /^https:\/\//.test(url)?url:'';
+}
+/* v183 (owner: "Suggested starting benefit. Replace this with an item or service that fits your
+   margins." — why do customers see this?): the v35/v128 recommenders seed a draft reward whose
+   description is written TO THE MERCHANT. Until the merchant edits it, that instruction was
+   rendering on the customer's reward card. Merchant-authoring guidance is suppressed customer-
+   side; a real description the merchant wrote is untouched. */
+const MERCHANT_DRAFT_COPY_PATTERNS_V183=[
+  /replace this with/i,
+  /suggested starting benefit/i,
+  /fits your margins/i
+];
+function customerRewardDescriptionV183(value){
+  const text=String(value||'').trim();
+  if(!text)return '';
+  return MERCHANT_DRAFT_COPY_PATTERNS_V183.some(pattern=>pattern.test(text))?'':text;
 }
 function customerRewardProgressMarkupV167(card){
   const reward=card?.next_eligible_reward||null,loyalty=card?.loyalty||{};
@@ -4136,11 +4213,27 @@ function mergeCustomerProgrammeSelectorMediaV96(cards=[],payload=null){
     return {...card,business:{...business,logo_url:logoBySlug.get(slug)}};
   });
 }
+/* v183 (owner annotation on the My Rewards tab: "this tab shows customer current points OR
+   bought packages OR credits in different company"): points alone under-reports what the
+   customer actually holds at a business. The wallet card already carries prepaid session and
+   store-credit balances — they are now shown beside the points instead of being buried one
+   tap deeper. Zero balances stay hidden so a points-only business does not gain empty rows. */
+function customerProgrammeHoldingsMarkupV183(card){
+  const loyalty=card?.loyalty||{},business=card?.business||{},
+    sessions=Math.max(0,Number(card?.packages?.sessions_remaining)||0),
+    creditCents=Math.max(0,Number(card?.credit?.balance_cents)||0),
+    currency=String(business.currency||'SGD');
+  const chips=[];
+  if(sessions>0)chips.push(`<span class="customer-programme-holding"><b>${sessions}</b> ${esc(sessions===1?'session left':'sessions left')}</span>`);
+  if(creditCents>0)chips.push(`<span class="customer-programme-holding"><b>${esc(currency)} ${(creditCents/100).toFixed(2)}</b> credit</span>`);
+  return chips.length?`<div class="customer-programme-holdings">${chips.join('')}</div>`:'';
+}
 function customerProgrammeTileMarkupV96(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
   const accent=contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f');
   const unit=ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points');
-  return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${esc(customerPointTotalV103(loyalty.balance||0))}</b><span>${esc(unit)}</span></div>${reward?`<div style="grid-column:1/-1">${customerRewardProgressMarkupV167(card)}</div>`:''}</div></a>`;
+  const holdings=customerProgrammeHoldingsMarkupV183(card);
+  return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${esc(customerPointTotalV103(loyalty.balance||0))}</b><span>${esc(unit)}</span></div>${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}${reward?`<div style="grid-column:1/-1">${customerRewardProgressMarkupV167(card)}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
@@ -4185,6 +4278,11 @@ function customerHomeFallbackActionV167({pendingRedemption=null,actionableCards=
 function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],legacyCards=[],offers=[]}={}){
   return customerHomeFallbackActionV167({pendingRedemption,actionableCards,legacyCards,offers});
 }
+/* v183: Home's jump-off to the two surfaces that hold everything else. It replaces the
+   collapsed "Guidance & bookings" disclosure — one fewer tap, and it names what is inside. */
+function customerHomeQuickLinksV183(linkedCount=0,bookingSummary='Open your bookings'){
+  return `<div class="customer-home-quick"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>${esc(ct('yourProgrammes'))}</b><p class="muted small">${esc(customerLinkedRewardsLabelV156(linkedCount))}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${esc(bookingSummary)}</p></div></a></div>`;
+}
 /* v178: surface='programmes' is the "My Rewards" tab, which the owner stripped back to the
    reward-account grid alone — no offers shelf, no guidance banner. Home keeps both. */
 function renderActionableWalletHome(payload,{offersState={status:'loading',items:[]},legacyCards=[],pendingRedemption=null,surface='home',note='',rerender=null}={}){
@@ -4196,18 +4294,15 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
     wireCustomerHomeOffersV167(repaint);
     return;
   }
+  /* v183 (owner annotation: the whole "My Rewards" block struck through on Home): the reward
+     grid is the My Rewards tab's job. Home is now offers first, then a two-way jump-off. */
   $('walletBody').innerHTML=`${isHome?`${customerHomeOffersMarkupV167(offersState)}
-    ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}`:''}
-    ${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
+    ${customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items})}
+    ${customerHomeQuickLinksV183(cards.length)}`
+    :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
     ${customerProgrammeGridMarkupV96(cards)}${note}
-    ${isHome?`<details class="card customer-home-summary">
-      <summary><span>${CUI.icon('forward',{size:17})} Guidance &amp; bookings</span><span class="muted small">Show</span></summary>
-      <div class="customer-home-summary-body">
-        <div class="customer-home-quick"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>Rewards &amp; value</b><p class="muted small">${esc(customerLinkedRewardsLabelV156(cards.length))}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">Open your bookings</p></div></a></div>
-        ${payload?.truncated?`<div class="customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}
-      </div>
-    </details>`:''}`;
-  $('customerHomeScan').onclick=openCustomerJoinScanner;
+    ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`;
+  if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
   wireCustomerHomeOffersV167(repaint);
 }
 async function renderCustomerWallet(businessSlug=null){
@@ -4296,15 +4391,7 @@ async function renderCustomerWallet(businessSlug=null){
     const offersState=offersResult.error?{status:'error',items:[]}:{status:'ready',items:Array.isArray(offersResult.data?.items)?offersResult.data.items:[]};
     $('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}
       ${customerHomeFallbackActionV167({pendingRedemption:offersResult.error?null:offersResult.data?.pending_redemption||null,legacyCards:cards,offers:offersState.items})}
-      ${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
-      ${customerProgrammeGridMarkupV96(cards)}
-      <details class="card customer-home-summary">
-        <summary><span>${CUI.icon('forward',{size:17})} Guidance &amp; bookings</span><span class="muted small">Show</span></summary>
-        <div class="customer-home-summary-body">
-          <section class="customer-home-summary-note"><p class="customer-home-eyebrow">${CUI.icon('forward',{size:16})}<span>What’s next</span></p><h2 style="margin-top:10px">Choose what you’d like to do</h2><p class="muted small" style="margin-top:6px">Open your rewards or bookings below.</p></section>
-          <div class="customer-home-quick"><a href="#/customer/programmes">${CUI.icon('loyalty',{size:20})}<div><b>Rewards &amp; value</b><p class="muted small">${esc(customerLinkedRewardsLabelV156(cards.length))}</p></div></a><a href="#/customer/bookings">${CUI.icon('bookings',{size:20})}<div><b>Bookings</b><p class="muted small">${bookingSummary}</p></div></a></div>
-        </div>
-      </details>
+      ${customerHomeQuickLinksV183(cards.length,bookingSummary)}
       ${cards.length?'':`<div class="card"><h2>No verified business links yet</h2><p class="muted small" style="margin-top:6px">Scan a participating business’s Peekaa QR during your visit. Peekaa does not let customers search for or self-link a business from this portal.</p></div>`}`;
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
@@ -4375,7 +4462,7 @@ async function renderCustomerWallet(businessSlug=null){
       ${capabilities.packages?walletSectionShell('walletPackages','Packages','Session balances and recent usage.'):''}
       ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
       ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
-      ${walletSectionShell('walletFeedback','Your visit feedback','Share how your visits went — private to this business.')}
+      ${walletReviewUrlV183(b)?`<section class="card wallet-section" id="walletFeedback"></section>`:''}
       ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
@@ -4413,8 +4500,7 @@ async function renderCustomerWallet(businessSlug=null){
      customer_get_business_summary business projection (no new call site) — it is https-only.
      The projection DOES surface review_url (added by v53a and verified live in prod), so this is
      wired end to end; the reachability predicate is `walletReviewUrl` presence only, never rating. */
-  const walletReviewUrl=(b.review_url&&/^https:\/\//.test(String(b.review_url)))?String(b.review_url):'';
-  let feedbackSubmitIdem=null; // consume-once: minted on first submit, reused on retry, cleared on success
+  const walletReviewUrl=walletReviewUrlV183(b);
   let birthdayActivationAttemptId=crypto.randomUUID();
   const birthdayActivate=$('birthdayBenefitActivate');
   if(birthdayActivate)birthdayActivate.onclick=async()=>{
@@ -4544,8 +4630,8 @@ async function renderCustomerWallet(businessSlug=null){
         progress=cost>0?Math.min(100,Math.max(0,Math.round((rewardBalance/cost)*100))):100,
         short=r.availability==='insufficient_balance';
       return `<article class="wallet-reward">
-      ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b>${esc(r.customer_name||'Reward')}</b><span class="spacer"></span>${ready?'<span class="pill ok">Ready</span>':''}${r.availability==='tier_locked'?'<span class="pill">🔒 Locked</span>':''}<span class="pill">${esc(customerPointTotalV103(r.cost_points||0))} ${esc(rewardUnit)}</span></div>
-      ${r.description?`<p class="muted small" style="margin-top:7px">${esc(r.description)}</p>`:''}${short?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><p class="small wallet-reward-gap"><b>${esc(customerPointTotalV103(gap))} more ${esc(rewardUnit)}</b></p><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} of ${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)} collected.</span>`:''}<p class="${short?'muted small':'small'}" style="margin-top:9px">${esc(rewardLockLineV176(r)||availability[r.availability]||'Ask at counter')}</p>
+      ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b class="wallet-reward-trade"><span class="wallet-reward-cost">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</span><span class="wallet-reward-arrow" aria-hidden="true">→</span><span>${esc(r.customer_name||'Reward')}</span></b><span class="spacer"></span>${ready?'<span class="pill ok">Ready</span>':''}${r.availability==='tier_locked'?'<span class="pill">🔒 Locked</span>':''}</div>
+      ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}${short?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><p class="small wallet-reward-gap"><b>${esc(customerPointTotalV103(gap))} more ${esc(rewardUnit)}</b></p><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} of ${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)} collected.</span>`:''}<p class="${short?'muted small':'small'}" style="margin-top:9px">${esc(rewardLockLineV176(r)||availability[r.availability]||'Ask at counter')}</p>
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
@@ -4747,66 +4833,15 @@ async function renderCustomerWallet(businessSlug=null){
       renderCustomerWallet(businessSlug);
     };
   };
-  /* Visit feedback (v53). The wallet exposes no per-visit sale_id (customer_get_appointments_page
-     returns appointment_id, customer_get_loyalty_details has no sale ref), so this uses the
-     general-note path: p_sale=null. The DB caps it at one standing note per (customer, business),
-     so once submitted the prompt collapses to a thank-you and the list shows the recovery status. */
-  const feedbackStatusWord=f=>f.recovery_status==='resolved'?'Sorted out':f.recovery_status==='closed'?'Thanks!':'The team is looking into this';
-  /* v168: the pill keeps the bare word; the sentence adds a full stop only when the word does
-     not already end in its own terminal punctuation, so 'Thanks!' never renders as 'Thanks!.'. */
-  const feedbackStatusSentence=f=>{const w=feedbackStatusWord(f);return /[.!?]$/.test(w)?w:w+'.'};
-  const feedbackStatusTone=f=>f.recovery_status==='resolved'?'on':f.recovery_status==='closed'?'ok':'new';
-  const loadFeedback=async(opts={})=>{
-    const host=$('walletFeedback');if(!host)return;
-    host.setAttribute('aria-busy','true');
-    const {data,error}=await customerRpc('customer_list_my_feedback',{p_business_slug:businessSlug,p_limit:50});
-    if(!isWalletSectionCurrent(host))return;
-    if(error)return walletSectionError('walletFeedback',walletRpcDenied(error)?'Feedback is not available for this account.':'Feedback could not be loaded.',()=>loadFeedback(),error);
-    const items=Array.isArray(data?.feedback)?data.feedback:[];
-    const general=items.find(f=>!f.sale_id)||null;
-    const stars=n=>'★'.repeat(Number(n)||0)+'☆'.repeat(Math.max(0,5-(Number(n)||0)));
-    const reviewLink=walletReviewUrl?`<p style="margin-top:16px"><a class="fb-review-link" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('loyalty',{size:16})}<span>Leave a public review for ${esc(b.name||'this business')}</span></a></p>`:'';
-    const shareCard=(opts.highlightShare&&walletReviewUrl)?`<div class="fb-share"><b>Thank you for sharing</b><p class="muted small" style="margin:4px 0 10px">You can also leave an honest public review for ${esc(b.name||'this business')}. This option is the same for every rating.</p><a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer">Leave a public review</a></div>`:'';
-    const words=['','Poor','Not great','Okay','Good','Great'];
-    const promptHtml=general
-      ?`<div class="wallet-line"><div><b>Thanks for sharing your feedback</b><p class="muted small" style="margin-top:4px">You rated this <span class="fb-rating" aria-hidden="true">${stars(general.rating)}</span><span class="sr-only">${general.rating} out of 5</span>. ${esc(feedbackStatusSentence(general))}</p></div></div>`
-      :`<fieldset class="fb-stars" id="fbStars"><legend class="fb-stars-legend">How was your visit to ${esc(b.name||'this business')}?</legend>
-          <div class="fb-stars-row" role="radiogroup" aria-label="Rate from 1 to 5 stars">${[1,2,3,4,5].map(n=>`<label class="fb-star"><input type="radio" class="sr-only" name="fbRating" value="${n}"><span class="fb-star-glyph" aria-hidden="true">★</span><span class="sr-only">${n} star${n===1?'':'s'} — ${words[n]}</span></label>`).join('')}</div>
-          <p class="fb-caption" id="fbCaption" aria-live="polite"></p></fieldset>
-        <label for="fbComment" class="small" style="display:block;margin-top:6px">Anything to add? (optional)</label>
-        <textarea id="fbComment" rows="2" maxlength="2000" placeholder="Tell the team what went well, or what to fix"></textarea>
-        <div class="row" style="margin-top:10px"><button type="button" class="btn" id="fbSubmit" disabled>Send feedback</button></div>
-        <p id="fbStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>`;
-    const listHtml=items.length?`<div style="margin-top:18px"><h3 style="font-size:15px;margin-bottom:4px">Your feedback</h3>${items.map(f=>`<div class="fb-item"><div class="row"><span class="fb-rating" aria-hidden="true">${stars(f.rating)}</span><span class="sr-only">${f.rating} out of 5</span><span class="spacer"></span><span class="pill ${feedbackStatusTone(f)}">${esc(feedbackStatusWord(f))}</span></div>${f.comment?`<p class="muted small" style="margin-top:5px">${esc(f.comment)}</p>`:''}<p class="muted small" style="margin-top:4px">${esc(walletDate(f.created_at,true))}</p></div>`).join('')}</div>`:'';
+  /* v183 (owner: "don't need in-house feedback — just Google review"): the in-app star
+     rating and its comment box are removed from the customer surface. The public-review link
+     stays, and the anti-review-gating invariant is now trivially satisfied — every customer
+     sees the same review link, and Peekaa never asks for a private rating first. */
+  const loadFeedback=async()=>{
+    const host=$('walletFeedback');if(!host||!walletReviewUrl)return;
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>Your visit feedback</h2><p class="muted small">Private to ${esc(b.name||'this business')} — it helps them serve you better.</p></div></div>
-      ${shareCard}${promptHtml}${listHtml}${reviewLink}`;
-    const caption=$('fbCaption'),submit=$('fbSubmit');
-    const paint=()=>{
-      const val=Number(host.querySelector('input[name="fbRating"]:checked')?.value||0);
-      host.querySelectorAll('.fb-star').forEach((label,i)=>label.classList.toggle('on',i<val));
-      if(caption)caption.textContent=val?words[val]:'';
-      if(submit)submit.disabled=!val;
-    };
-    host.querySelectorAll('input[name="fbRating"]').forEach(input=>input.addEventListener('change',paint));
-    if(submit)submit.onclick=async()=>{
-      const val=Number(host.querySelector('input[name="fbRating"]:checked')?.value||0);
-      if(!val)return;
-      const comment=($('fbComment')?.value||'').trim();
-      if(!feedbackSubmitIdem)feedbackSubmitIdem=crypto.randomUUID();
-      submit.disabled=true;
-      const {data:result,error:submitError}=await sb.rpc('customer_submit_visit_feedback',{p_business_slug:businessSlug,p_sale:null,p_rating:val,p_comment:comment||null,p_idempotency_key:feedbackSubmitIdem});
-      if(!isWalletSectionCurrent(host))return;
-      if(submitError){
-        submit.disabled=false;const st=$('fbStatus');
-        if(submitError.code==='23505'){feedbackSubmitIdem=null;if(st)st.textContent='You have already shared feedback here — thank you!';loadFeedback();return;}
-        if(st)st.textContent='Your feedback could not be sent right now. Please try again.';
-        return;
-      }
-      feedbackSubmitIdem=null;
-      toast('Thanks for your feedback');
-      loadFeedback({highlightShare:true});
-    };
+    host.innerHTML=`<div class="wallet-section-head"><div><h2>Rate your visit</h2><p class="muted small">Your review helps other people find ${esc(b.name||'this business')}.</p></div></div>
+      <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:17})}<span>Leave a public review</span></a>`;
   };
   await Promise.all([loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback()]);
   if(!isWalletCurrent())return;
@@ -10984,6 +11019,17 @@ async function bookingsPage(){
           <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>
         <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
         <div id="setErr"></div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+        <!-- v183 (owner: "if services allow customers to choose staff please enable it… if staff
+             is not worth, allow toggle in business"). Opening hours are what turn the customer's
+             live slot grid on; without them the portal falls back to a plain time request. -->
+        <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Customer booking availability</b>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
+        <p class="muted small" style="margin-top:2px">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</p>
+        <div id="setAvailabilityBody" aria-busy="true" style="margin-top:14px"><p class="muted small">Loading opening hours…</p></div>
+        <div style="margin-top:14px"><button class="btn sm" id="setAvailabilitySave">Save availability</button></div>
+        <div id="setAvailabilityErr" role="status"></div>
       </div>
       <div class="card"><b>Import existing bookings (CSV)</b>
         <p class="muted small" style="margin:6px 0 10px">Columns recognised: <b>name</b> (required), phone, email, party_size, preferred_at, notes, table_type. Bookings import as pending for you to review.</p>
@@ -11150,6 +11196,79 @@ async function bookingsPage(){
     $('setErr').innerHTML='';
     Object.assign(S.biz,{booking_hold_minutes:hold,booking_overflow:overflow,booking_auto_confirm:autoConfirm});
     toast('Booking rules saved');
+  };
+
+  /* ---- v183 customer booking availability: opening hours + who customers may ask for ---- */
+  const V183_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const loadBookingAvailability=async()=>{
+    const host=$('setAvailabilityBody');if(!host)return;
+    const [branchResult,hoursResult,staffResult]=await Promise.all([
+      sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).order('is_default',{ascending:false}),
+      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id),
+      sb.from('staff').select('id,full_name,title,active,customer_bookable').eq('business_id',S.biz.id).order('full_name')
+    ]);
+    if(!isCurrent()||!host.isConnected)return;
+    host.setAttribute('aria-busy','false');
+    if(branchResult.error||hoursResult.error||staffResult.error){
+      host.innerHTML='<p class="err small">Opening hours and team availability could not be loaded. Nothing has been changed.</p>';
+      const save=$('setAvailabilitySave');if(save)save.disabled=true;
+      return;
+    }
+    const branches=(branchResult.data||[]).filter(branch=>branch.active!==false);
+    const branch=branches[0]||null;
+    const hours=new Map((hoursResult.data||[]).filter(row=>!branch||row.branch_id===branch.id).map(row=>[Number(row.weekday),row]));
+    const team=(staffResult.data||[]).filter(member=>member.active!==false);
+    host.dataset.branchId=branch?.id||'';
+    host.innerHTML=`${branch?'':'<p class="muted small">Add a branch first to publish opening hours.</p>'}
+      <p class="muted small" style="margin-bottom:8px">Opening hours${branch?` for ${esc(branch.name||'your branch')}`:''}. Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
+      <div class="v183-hours">${V183_DAYS.map((label,weekday)=>{
+        const row=hours.get(weekday);
+        return `<div class="v183-hours-row"><label style="margin:0" for="v183Open-${weekday}">${esc(label)}</label>
+          <label class="v183-hours-open" for="v183Closed-${weekday}"><input type="checkbox" id="v183Closed-${weekday}" data-day-closed="${weekday}" style="width:auto" ${row?'':'checked'}> Closed</label>
+          <input type="time" id="v183Open-${weekday}" data-day-opens="${weekday}" value="${esc(String(row?.opens_at||'09:00').slice(0,5))}" ${row?'':'disabled'}>
+          <input type="time" id="v183Close-${weekday}" data-day-closes="${weekday}" value="${esc(String(row?.closes_at||'18:00').slice(0,5))}" ${row?'':'disabled'}>
+        </div>`;
+      }).join('')}</div>
+      <p class="muted small" style="margin:14px 0 6px">Who customers may ask for</p>
+      ${team.length?`<div class="v183-team">${team.map(member=>`<label class="v183-team-row" for="v183Staff-${esc(member.id)}"><input type="checkbox" id="v183Staff-${esc(member.id)}" data-staff-bookable="${esc(member.id)}" style="width:auto" ${member.customer_bookable===false?'':'checked'}> <span><b>${esc(member.full_name||'Team member')}</b>${member.title?` <span class="muted small">· ${esc(member.title)}</span>`:''}</span></label>`).join('')}</div>`
+        :'<p class="muted small">No active team members yet.</p>'}`;
+    host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
+      const weekday=box.dataset.dayClosed;
+      const opens=host.querySelector(`[data-day-opens="${weekday}"]`),closes=host.querySelector(`[data-day-closes="${weekday}"]`);
+      if(opens)opens.disabled=box.checked;
+      if(closes)closes.disabled=box.checked;
+    });
+  };
+  loadBookingAvailability();
+  $('setAvailabilitySave').onclick=async()=>{
+    const host=$('setAvailabilityBody'),save=$('setAvailabilitySave'),err=$('setAvailabilityErr');
+    const branchId=host?.dataset?.branchId||'';
+    save.disabled=true;err.innerHTML='';
+    const staffChoice=$('setStaffChoice').checked;
+    const rows=[],closedDays=[];
+    host.querySelectorAll('[data-day-closed]').forEach(box=>{
+      const weekday=Number(box.dataset.dayClosed);
+      if(box.checked){closedDays.push(weekday);return}
+      const opens=host.querySelector(`[data-day-opens="${weekday}"]`)?.value||'';
+      const closes=host.querySelector(`[data-day-closes="${weekday}"]`)?.value||'';
+      if(!opens||!closes||closes<=opens){closedDays.push(weekday);return}
+      rows.push({business_id:S.biz.id,branch_id:branchId,weekday,opens_at:opens,closes_at:closes});
+    });
+    const bookable=[...host.querySelectorAll('[data-staff-bookable]')]
+      .map(box=>({id:box.dataset.staffBookable,customer_bookable:box.checked}));
+    const results=await Promise.all([
+      sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id),
+      branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
+      branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
+      ...bookable.map(member=>sb.from('staff').update({customer_bookable:member.customer_bookable}).eq('id',member.id).eq('business_id',S.biz.id))
+    ]);
+    if(!isCurrent())return;
+    save.disabled=false;
+    const failure=results.find(result=>result?.error);
+    if(failure){err.innerHTML=`<div class="err">${esc(failure.error.message)}</div>`;return}
+    S.biz.booking_staff_choice=staffChoice;
+    toast('Customer booking availability saved');
+    loadBookingAvailability();
   };
 
   /* ---- CSV import of existing bookings (owner only) ---- */
@@ -20534,6 +20653,40 @@ function customerBookingIdentitySummaryV167({profile=null,user=null}={}){
   const maskedPhone=phone.length>4?`${phone.slice(0,Math.min(3,phone.length-4))} •••• ${phone.slice(-4)}`:phone;
   return {name:name||'your Peekaa account',contact:maskedPhone||String(user?.email||'').trim()};
 }
+/* v183 (owner: "no one will remember their booking code — just show the upcoming appointments
+   instead of keying booking code"): for a signed-in customer with a verified link to this
+   business, the booking page now lists their own upcoming appointments and pending requests,
+   with the same change/cancel request path the wallet uses. The guest management-code entry is
+   demoted to a collapsed fallback — it is still the ONLY route for someone who booked without
+   an account, so it is not removed. */
+async function loadPortalUpcomingBookingsV183(slug,isPortalCurrent=()=>true){
+  const host=$('portalUpcoming');
+  if(!host||!isPortalCurrent())return;
+  host.innerHTML='<p class="muted small">Loading your bookings…</p>';
+  const [appointmentResult,requestResult]=await Promise.all([
+    Promise.resolve(sb.rpc('customer_get_appointments_page',{p_business_slug:slug,p_cursor:{limit:20}})).catch(error=>({data:null,error})),
+    Promise.resolve(sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null})).catch(error=>({data:null,error}))
+  ]);
+  if(!isPortalCurrent()||!host.isConnected)return;
+  if(appointmentResult.error&&requestResult.error){
+    host.innerHTML='<p class="muted small">Your existing bookings could not be loaded right now. You can still make a new booking above.</p>';
+    return;
+  }
+  const now=Date.now();
+  const appointments=(Array.isArray(appointmentResult.data?.items)?appointmentResult.data.items:[])
+    .filter(item=>!CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(String(item?.status||'').toLowerCase()))
+    .filter(item=>{const at=Date.parse(item?.starts_at||'');return Number.isFinite(at)&&at>=now})
+    .sort((a,b)=>Date.parse(a.starts_at||0)-Date.parse(b.starts_at||0));
+  const requests=(Array.isArray(requestResult.data?.items)?requestResult.data.items:[])
+    .filter(item=>String(item?.business_slug||'')===slug&&isActiveCustomerBookingRequest(item));
+  if(!appointments.length&&!requests.length){
+    host.innerHTML='<p class="muted small">You have no upcoming bookings with this business yet.</p>';
+    return;
+  }
+  host.innerHTML=`${requests.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · awaiting the business</p></div><span class="spacer"></span><span class="pill ${item.status==='waitlisted'?'new':'off'}">${esc(item.status==='waitlisted'?'Waitlisted':'Pending')}</span></div>`).join('')}
+    ${appointments.map(item=>`<div class="wallet-appt"><div><b>${esc(walletDate(item.starts_at,true))}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'booked').replaceAll('_',' '))}</p></div><span class="spacer"></span>${String(item.status||'')==='booked'?`<button class="btn ghost sm walletChange" data-id="${esc(item.appointment_id)}">Change</button>`:''}</div>`).join('')}`;
+  wireWalletAppointmentActions(slug);
+}
 async function renderPortal(slug){
   setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');
@@ -20582,18 +20735,22 @@ async function renderPortal(slug){
   const repeatPreference=repeatService?customerRepeatBookingPreferencesV167.get(`${slug}:${repeatService.id}`)||null:null;
   const usesTables=!!biz.uses_tables;
   const tables=(biz.tables&&biz.tables.length)?biz.tables:[];
-  /* Step 2 is a table choice (which DOES have real, anon-reachable availability) for reservation
-     businesses, otherwise a team-member preference for service businesses. Live per-slot staff
-     availability is not exposed to the anonymous portal context today (see design note in report),
-     so the team step is an honest "anyone available / someone specific" preference that rides
-     along in the notes the gateway already accepts — no payload-contract change. */
-  const middleStep=usesTables?'table':'team';
-  const steps=['service',middleStep,'time','details'];
+  /* v183 (owner: "if services allow customers to choose staff, please enable it… business still
+     will approve/reject"): the team step is now REAL. When the business turns staff choice on,
+     the gateway sends the bookable roster and per-slot availability computed from the same
+     rota, appointments and blocked-time rows the business calendar reads. When the toggle is
+     off there is no team step at all and no roster is exposed. */
+  const bookableStaff=(biz.booking_staff_choice===true&&Array.isArray(biz.staff))?biz.staff:[];
+  const staffChoice=bookableStaff.length>0;
+  const middleStep=usesTables?'table':(staffChoice?'team':'');
+  const steps=['service',middleStep,'time','details'].filter(Boolean);
   const stepMeta={service:{label:'Service'},table:{label:'Table'},team:{label:'Team'},time:{label:'Time'},details:{label:'Details'}};
   let selSvc=repeatService?.id||null;     // null = general reservation, or a validated public service uuid
   let serviceChosen=!!repeatService||!hasServices;
   let selTable=null;                     // reservation table type uuid (null = any/general)
-  let teamPref=repeatPreference?.staffName?'named':'any'; // a server-validated preference, or anyone
+  let selStaff=null;                     // a validated staff uuid, or null for "anyone available"
+  let availabilityState={status:'idle',key:'',data:null};
+  let selectedSlot='';                   // an ISO instant chosen from the live slot grid
   let stepIdx=0;
   let bookingSubmissionId=null,bookingSubmissionKey='';
   let bookingTurnstileToken='',bookingTurnstileControl=null;
@@ -20603,7 +20760,32 @@ async function renderPortal(slug){
   let linkedCustomer=false;
   const nowSgtLocal=new Date(Date.now()+8*3600000).toISOString().slice(0,16);
   const svcObj=()=>services.find(s=>s.id===selSvc)||null;
-  const staffName=()=>($('teamName')?.value||'').trim();
+  /* A team member is offered for a service when the business made no assignments for that
+     service at all, or when this person is one of the people it assigned. Mirrors
+     app.v183_bookable_staff() exactly so the page never offers someone the server will reject. */
+  const staffForService=()=>bookableStaff.filter(member=>{
+    if(!selSvc)return true;
+    const assigned=Array.isArray(member?.service_ids)?member.service_ids:[];
+    if(!assigned.length)return true;
+    return assigned.includes(selSvc);
+  });
+  const staffMember=id=>bookableStaff.find(member=>member?.id===id)||null;
+  const staffName=()=>staffMember(selStaff)?.name||'';
+  const availabilityKey=()=>JSON.stringify({service:selSvc||'',staff:selStaff||''});
+  const slotLabel=iso=>{
+    const at=new Date(iso);
+    return Number.isNaN(at.getTime())?'':at.toLocaleTimeString('en-SG',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Singapore'});
+  };
+  const sgLocalInput=iso=>{
+    const at=new Date(iso);
+    return Number.isNaN(at.getTime())?'':new Date(at.getTime()+8*3600000).toISOString().slice(0,16);
+  };
+  const teamOptionsMarkup=()=>`<button class="svc${selStaff===null?' sel':''}" type="button" aria-pressed="${selStaff===null}" data-team=""><span><b>Anyone available</b> <span class="muted small">· usually the soonest slot</span></span></button>
+        ${staffForService().map(member=>`<button class="svc${selStaff===member.id?' sel':''}" type="button" aria-pressed="${selStaff===member.id}" data-team="${esc(member.id)}"><span><b>${esc(member.name||'Team member')}</b>${member.title?` <span class="muted small">· ${esc(member.title)}</span>`:''}</span></button>`).join('')}`;
+  const dayLabel=date=>{
+    const at=new Date(`${date}T00:00:00+08:00`);
+    return Number.isNaN(at.getTime())?date:at.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',timeZone:'Asia/Singapore'});
+  };
   const fmtPicked=v=>{if(!v)return 'Not chosen yet';const t=v.split('T')[1]||'';const dt=new Date(v);return isNaN(dt)?v:dt.toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'})+(t?' · '+t:'');};
   const draw=()=>{
     destroyMountedTurnstiles();
@@ -20634,18 +20816,17 @@ async function renderPortal(slug){
     </section>`;
     const teamStep=`<section class="pf-step" data-step="team" hidden>
       <h2 tabindex="-1">Who would you like?</h2>
-      <p class="pf-hint">Pick a team member, or let us assign the best available.</p>
+      <p class="pf-hint">Pick a team member, or let ${esc(biz.name)} assign whoever is free.</p>
       <div class="pf-choice" role="group" aria-label="Choose a team member">
-        <button class="svc${teamPref==='any'?' sel':''}" type="button" aria-pressed="${teamPref==='any'}" data-team="any"><span><b>Anyone available</b> <span class="muted small">· recommended</span></span></button>
-        <button class="svc${teamPref==='named'?' sel':''}" type="button" aria-pressed="${teamPref==='named'}" data-team="named"><span><b>Someone specific</b> <span class="muted small">· tell us who</span></span></button>
+        ${teamOptionsMarkup()}
       </div>
-      <div id="teamNamedWrap"${teamPref==='named'?'':' hidden'}><label for="teamName">Team member's name</label><input id="teamName" autocomplete="off" placeholder="e.g. Jamie"></div>
       <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="next-team" type="button">Continue</button></div>
     </section>`;
     const timeStep=`<section class="pf-step" data-step="time" hidden>
       <h2 tabindex="-1">Pick a date & time</h2>
       <p class="pf-hint">${biz.booking_auto_confirm?'We confirm instantly when a spot is free.':'Choose your preferred slot. This saves a request for manual review; the business may approve or reject it.'}</p>
-      <label for="pt">Preferred date & time</label><input id="pt" type="datetime-local" min="${nowSgtLocal}">
+      <div id="pfSlots"></div>
+      <div id="pfManualTime"><label for="pt">Preferred date & time</label><input id="pt" type="datetime-local" min="${nowSgtLocal}"></div>
       <div class="pf-inlineerr" id="err-time" role="alert"></div>
       <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="next-time" type="button">Continue</button></div>
     </section>`;
@@ -20677,11 +20858,18 @@ async function renderPortal(slug){
         ${progressHtml}
         ${steps.map(k=>stepBody[k]).join('')}
       </div>
-      <div class="card" style="margin-top:16px"><b>Manage an existing booking</b>
-        <p class="muted small" style="margin:6px 0 10px">Use the private management code issued with your booking. Your phone number is never used as a password.</p>
-        <div class="row"><input id="mtoken" autocomplete="off" placeholder="Booking management code" value="${esc(manageToken)}"><button class="btn ghost sm" id="mfind">Open booking</button></div>
-        <div id="merr"></div>
-        <div id="mlist" style="margin-top:12px"></div>
+      <div class="card" style="margin-top:16px" id="portalManageCard"><b>Manage an existing booking</b>
+        <div id="portalUpcoming" style="margin-top:10px"></div>
+        <!-- v183 (owner: "no one will remember their booking code — just show the upcoming
+             appointments instead"): a signed-in linked customer gets their real bookings above
+             and never needs this. It stays, collapsed, as the only route a GUEST has back to a
+             booking they made without an account. -->
+        <details id="portalManageToken" style="margin-top:12px"${manageToken?' open':''}><summary class="small">Booked as a guest? Open with your booking link or code</summary>
+          <p class="muted small" style="margin:8px 0 10px">Use the private management code issued with your booking. Your phone number is never used as a password.</p>
+          <div class="row"><input id="mtoken" autocomplete="off" placeholder="Booking management code" value="${esc(manageToken)}"><button class="btn ghost sm" id="mfind">Open booking</button></div>
+          <div id="merr"></div>
+          <div id="mlist" style="margin-top:12px"></div>
+        </details>
       </div>${legalLinks()}</div>`;
     if(repeatPreference?.staffName&&$('teamName'))$('teamName').value=repeatPreference.staffName;
     const buildSummary=()=>{
@@ -20690,8 +20878,8 @@ async function renderPortal(slug){
       const rows=[['Service', s?esc(s.name):'General visit']];
       if(s)rows.push(['Duration & price',`${s.duration_min} min · ${esc(currency)} ${(s.price_cents/100).toFixed(2)}`]);
       if(usesTables)rows.push(['Table', selTable?esc((tables.find(t=>t.table_type_id===selTable)||{}).name||'Selected'):'Any available']);
-      else rows.push(['Team member',(teamPref==='named'&&staffName())?esc(staffName()):'Anyone available']);
-      rows.push(['When',esc(fmtPicked($('pt')?.value))]);
+      else if(staffChoice)rows.push(['Team member',selStaff&&staffName()?esc(staffName()):'Anyone available']);
+      rows.push(['When',esc(selectedSlot?fmtPicked(sgLocalInput(selectedSlot)):fmtPicked($('pt')?.value))]);
       if(biz.booking_policy)rows.push(['Good to know',esc(biz.booking_policy)]);
       el.innerHTML=`<dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
     };
@@ -20704,6 +20892,54 @@ async function renderPortal(slug){
         onToken:(token)=>{if(challengeGeneration!==bookingChallengeGeneration)return;bookingTurnstileToken=token;if($('psend'))$('psend').disabled=!token}})
         .then(control=>{if(challengeGeneration===bookingChallengeGeneration)bookingTurnstileControl=control});
     };
+    /* v183: the live slot grid. It is advisory — a slot can be taken between the read and the
+       submit — so the copy never promises a hold, and every fallback lands the customer back on
+       the plain "preferred time" request rather than blocking the booking. */
+    let slotDay='';
+    const renderSlots=()=>{
+      const host=$('pfSlots'),manual=$('pfManualTime');
+      if(!host)return;
+      const data=availabilityState.data;
+      const days=(Array.isArray(data?.days)?data.days:[]).filter(day=>Array.isArray(day?.slots)&&day.slots.length);
+      if(availabilityState.status==='error'||!data||data.hours_configured!==true||!days.length){
+        if(manual)manual.hidden=false;
+        host.innerHTML=availabilityState.status==='error'
+          ?'<p class="muted small">Live availability could not be checked just now. Pick your preferred time and the business will confirm.</p>'
+          :(data&&data.hours_configured!==true
+            ?`<p class="muted small">${esc(biz.name)} has not published working hours yet. Pick your preferred time and they will confirm.</p>`
+            :'<p class="muted small">No free times in the next two weeks. Pick a preferred time and the business will come back to you.</p>');
+        return;
+      }
+      if(manual)manual.hidden=true;
+      if(!days.some(day=>day.date===slotDay))slotDay=days[0].date;
+      const current=days.find(day=>day.date===slotDay)||days[0];
+      host.innerHTML=`<div class="pf-day-track" role="group" aria-label="Choose a day">${days.map(day=>`<button class="pf-day${day.date===slotDay?' sel':''}" type="button" data-slot-day="${esc(day.date)}" aria-pressed="${day.date===slotDay}"><b>${esc(dayLabel(day.date))}</b><span class="muted small">${day.slots.length} free</span></button>`).join('')}</div>
+        <div class="pf-slot-grid" role="group" aria-label="Choose a time">${current.slots.map(slot=>`<button class="pf-slot${selectedSlot===slot.at?' sel':''}" type="button" data-slot="${esc(slot.at)}" aria-pressed="${selectedSlot===slot.at}">${esc(slotLabel(slot.at))}</button>`).join('')}</div>
+        <p class="muted small" style="margin-top:10px">Live from ${esc(biz.name)}'s calendar${selStaff&&staffName()?` for ${esc(staffName())}`:''}. The business still confirms your booking.</p>`;
+      host.querySelectorAll('[data-slot-day]').forEach(button=>button.onclick=()=>{slotDay=button.dataset.slotDay;renderSlots()});
+      host.querySelectorAll('[data-slot]').forEach(button=>button.onclick=()=>{
+        selectedSlot=button.dataset.slot;
+        const err=$('err-time');if(err)err.textContent='';
+        renderSlots();
+      });
+    };
+    const loadAvailability=async()=>{
+      const host=$('pfSlots'),manual=$('pfManualTime');
+      if(!host)return;
+      if(!staffChoice){host.innerHTML='';if(manual)manual.hidden=false;return}
+      const key=availabilityKey();
+      if(availabilityState.status==='ready'&&availabilityState.key===key)return renderSlots();
+      availabilityState={status:'loading',key,data:null};
+      host.innerHTML='<p class="muted small">Checking live availability…</p>';
+      if(manual)manual.hidden=true;
+      let data=null;
+      try{
+        data=await publicGateway('public-booking',{method:'GET',query:`?slug=${encodeURIComponent(slug)}&availability=1${selSvc?`&service=${encodeURIComponent(selSvc)}`:''}${selStaff?`&staff=${encodeURIComponent(selStaff)}`:''}&days=14`});
+      }catch{data=null}
+      if(!isPortalCurrent()||!host.isConnected)return;
+      availabilityState=data?{status:'ready',key,data}:{status:'error',key,data:null};
+      renderSlots();
+    };
     const showStep=(idx)=>{
       stepIdx=Math.max(0,Math.min(idx,steps.length-1));
       const key=steps[stepIdx];
@@ -20713,6 +20949,7 @@ async function renderPortal(slug){
         li.classList.toggle('done',i<stepIdx);
         if(i===stepIdx)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');
       });
+      if(key==='time')loadAvailability();
       if(key==='details'){buildSummary();mountBookingTurnstile();}
       const stepEl=root.querySelector(`.pf-step[data-step="${key}"]`);
       const heading=stepEl?.querySelector('h2');
@@ -20722,21 +20959,32 @@ async function renderPortal(slug){
     const setChoice=(selector,el)=>root.querySelectorAll(selector).forEach(b=>{const on=b===el;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',String(on));});
     root.querySelectorAll('[data-svc]').forEach(el=>el.onclick=()=>{
       selSvc=el.dataset.svc||null;serviceChosen=true;setChoice('[data-svc]',el);
-      if(repeatPreference?.staffName&&selSvc!==repeatService?.id){
-        teamPref='any';
-        const anyTeam=root.querySelector('[data-team="any"]');if(anyTeam)setChoice('[data-team]',anyTeam);
-        const teamInput=$('teamName');if(teamInput)teamInput.value='';
-        const teamWrap=$('teamNamedWrap');if(teamWrap)teamWrap.hidden=true;
-      }
+      /* A different service can mean a different team and a different slot length, so any
+         earlier person and slot pick is dropped rather than silently carried forward. */
+      if(staffChoice&&!staffForService().some(member=>member.id===selStaff))selStaff=null;
+      selectedSlot='';renderTeamOptions();
       const e=$('err-service');if(e)e.textContent='';
     });
     root.querySelectorAll('[data-tbl]').forEach(el=>el.onclick=()=>{selTable=el.dataset.tbl||null;setChoice('[data-tbl]',el);});
-    root.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{teamPref=el.dataset.team;setChoice('[data-team]',el);const wrap=$('teamNamedWrap');if(wrap)wrap.hidden=teamPref!=='named';if(teamPref==='named')requestAnimationFrame(()=>$('teamName')?.focus());});
+    const wireTeamChoice=()=>root.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{
+      selStaff=el.dataset.team||null;setChoice('[data-team]',el);selectedSlot='';
+    });
+    const renderTeamOptions=()=>{
+      if(!staffChoice)return;
+      const host=root.querySelector('.pf-step[data-step="team"] .pf-choice');
+      if(!host)return;
+      host.innerHTML=teamOptionsMarkup();
+      wireTeamChoice();
+    };
+    wireTeamChoice();
     root.querySelectorAll('[data-back]').forEach(el=>el.onclick=()=>showStep(stepIdx-1));
     if($('next-service'))$('next-service').onclick=()=>{if(hasServices&&!serviceChosen){$('err-service').textContent='Please choose a service, or “Just a reservation”.';CUI.announce('Please choose a service',{assertive:true});return;}showStep(stepIdx+1);};
     if($('next-table'))$('next-table').onclick=()=>showStep(stepIdx+1);
     if($('next-team'))$('next-team').onclick=()=>showStep(stepIdx+1);
-    if($('next-time'))$('next-time').onclick=()=>{if(!$('pt').value){$('err-time').textContent='Please pick a date and time.';CUI.announce('Please pick a date and time',{assertive:true});return;}showStep(stepIdx+1);};
+    if($('next-time'))$('next-time').onclick=()=>{
+      if(!selectedSlot&&!$('pt')?.value){$('err-time').textContent='Please pick a date and time.';CUI.announce('Please pick a date and time',{assertive:true});return;}
+      showStep(stepIdx+1);
+    };
     $('psend').onclick=async()=>{
       if(!bookingTurnstileToken) return;
       const name=($('pn').value||'').trim();
@@ -20746,13 +20994,16 @@ async function renderPortal(slug){
       if(!rawPhone&&!email){$('perr').innerHTML=`<div class="err">Add a phone or email so the business can contact you about this request.</div>`;$('pp').focus();return;}
       $('perr').innerHTML='';$('psend').disabled=true;
       let notesFinal=($('pnotes').value||'').trim();
-      if(!usesTables&&teamPref==='named'&&staffName())notesFinal=(notesFinal?notesFinal+' — ':'')+`Preferred team member: ${staffName()}`;
       notesFinal=notesFinal?notesFinal.slice(0,1000):null;
       const bookingPayload={
         slug,name,email:email||null,
         phone:rawPhone?buildPhone('ppcc','pp'):null,service:selSvc,
-        party:parseInt($('ps').value||'1'),preferred:sgIso($('pt').value),
+        party:parseInt($('ps').value||'1'),
+        /* A slot chosen from the live grid is already an exact instant; the manual picker is
+           still a Singapore wall-clock value that has to be anchored to +08:00. */
+        preferred:selectedSlot||sgIso($('pt')?.value),
         notes:notesFinal,table_type:usesTables?selTable:null,
+        staff:usesTables?null:selStaff,
         consent:$('pconsent').checked};
       const nextBookingKey=JSON.stringify(bookingPayload);
       if(!bookingSubmissionId||bookingSubmissionKey!==nextBookingKey){
@@ -20850,6 +21101,7 @@ async function renderPortal(slug){
     const customer=!personaResult?.error&&(personaResult?.data?.customer||[]).find(p=>p.business_slug===slug);
     if(customer){
       linkedCustomer=true;
+      loadPortalUpcomingBookingsV183(slug,isPortalCurrent);
       const identity=customerBookingIdentitySummaryV167({profile:profileResult?.error?null:profileResult?.data?.profile,user:signedInUser});
       slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="row"><div><b>Booking as ${esc(identity.name)}${identity.contact?` · ${esc(identity.contact)}`:''}</b><p class="muted small" style="margin-top:4px">This request will be securely attached to your ${esc(customer.business_name||biz.name)} programme.</p></div><span class="spacer"></span><button class="btn ghost sm" id="portalBookingEditIdentity" type="button">Edit booking details</button></div></div>`;
       if(!isPortalCurrent()||!slot.isConnected)return;

@@ -151,10 +151,14 @@ test('v21 retains authenticated-only execution on the exact legacy referral reso
 });
 
 test('service-only allowlist plus v89/v95 replacements exactly cover the Edge Function call graph', async () => {
-  const [migration, v89, v95, ...edgeSources] = await Promise.all([
+  const [migration, v89, v95, v183, ...edgeSources] = await Promise.all([
     read(migrationPath),
     read('db/migrations/20260727_nestly_v89_customer_qr_redemption_platform_access.sql'),
     read('db/migrations/20260728_nestly_v95_bilingual_programmes.sql'),
+    // v183 added a service-role-only availability read for the public booking gateway. Any
+    // later migration that grants a new service RPC must be declared here too, so this stays
+    // an EXACT cover of what the Edge Functions actually call.
+    read('db/migrations/20260806_nestly_v183_customer_staff_choice_and_live_availability.sql'),
     read('supabase/functions/_shared/gateway.ts'),
     read('supabase/functions/public-join/index.ts'),
     read('supabase/functions/public-booking/index.ts'),
@@ -168,6 +172,7 @@ test('service-only allowlist plus v89/v95 replacements exactly cover the Edge Fu
   );
   for (const name of serviceGrantNames(v89)) allowlist.add(name);
   for (const name of serviceGrantNames(v95)) allowlist.add(name);
+  for (const name of serviceGrantNames(v183)) allowlist.add(name);
   const required = new Set(edgeSources.flatMap((source) => [...rpcNames(source)]));
   assert.deepEqual([...allowlist].sort(), [...required].sort());
   assert.match(v89, /revoke all on function public\.internal_public_join_page\(text\)\s+from public,anon,authenticated,service_role/i);

@@ -1,5 +1,7 @@
 import { adminClient, bookingRequestFingerprint, conflictError, deriveBookingManagementToken, enforceRateLimit, json, optionalAuthenticatedUserId, preflight, publicError, readJson, recordAccountOpen, requireOrigin, sha256Hex, turnstileSiteKey, verifyTurnstile } from '../_shared/gateway.ts';
-import { SLUG_PATTERN, validBookingPayload } from '../_shared/validation.ts';
+import { SLUG_PATTERN, UUID_PATTERN, validBookingPayload } from '../_shared/validation.ts';
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 Deno.serve(async (req) => {
   const options = preflight(req);
@@ -8,10 +10,36 @@ Deno.serve(async (req) => {
 
   try {
     if (req.method === 'GET') {
+      const params = new URL(req.url).searchParams;
+      const slug = params.get('slug') || '';
+      if (!SLUG_PATTERN.test(slug)) return publicError(req, 404);
+
+      // v183: live availability for the customer-facing team + time steps. It is a read of the
+      // same rows the business calendar uses, never a hold, and it is rate limited separately
+      // because the portal refetches it whenever the customer changes service, person or day.
+      if (params.get('availability') === '1') {
+        const limit = await enforceRateLimit(req, 'booking-availability', 120, 60);
+        if (!limit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: limit.retry_after });
+        const service = params.get('service') || '';
+        const staff = params.get('staff') || '';
+        const from = params.get('from') || '';
+        const days = Number(params.get('days') || '7');
+        if ((service && !UUID_PATTERN.test(service)) || (staff && !UUID_PATTERN.test(staff))) return publicError(req);
+        if (from && !DATE_PATTERN.test(from)) return publicError(req);
+        if (!Number.isInteger(days) || days < 1 || days > 14) return publicError(req);
+        const { data, error } = await adminClient().rpc('internal_public_booking_availability', {
+          p_slug: slug,
+          p_service: service || null,
+          p_staff: staff || null,
+          p_from: from || null,
+          p_days: days,
+        });
+        if (error || !data) return publicError(req);
+        return json(req, 200, data);
+      }
+
       const limit = await enforceRateLimit(req, 'booking-page', 60, 60);
       if (!limit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: limit.retry_after });
-      const slug = new URL(req.url).searchParams.get('slug') || '';
-      if (!SLUG_PATTERN.test(slug)) return publicError(req, 404);
       const { data, error } = await adminClient().rpc('internal_public_booking_page', { p_slug: slug });
       if (error || !data) return publicError(req, 404);
       return json(req, 200, { ...data, turnstile_site_key: turnstileSiteKey() });
@@ -49,6 +77,9 @@ Deno.serve(async (req) => {
       p_idempotency_hash: idempotencyHash,
       p_request_fingerprint: requestFingerprint,
       p_authenticated_user: authenticatedUserId,
+      // v183: the requested team member. The database re-validates it against the tenant, the
+      // customer-bookable flag and the service assignment before it is recorded.
+      p_staff: body.staff || null,
     });
     if (error || !data) return publicError(req);
     if (data.conflict) return conflictError(req);

@@ -1249,6 +1249,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260806113540",
+      "name": "nestly_v183_customer_staff_choice_and_live_availability",
+      "sourcePath": "db/migrations/20260806_nestly_v183_customer_staff_choice_and_live_availability.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260806115000",
       "name": "nestly_v179_report_insight_evidence",
       "sourcePath": "db/migrations/20260806_nestly_v179_report_insight_evidence.sql"

@@ -26,7 +26,7 @@ export async function deriveManagementToken(secret: string, slug: string, submis
 }
 
 export function canonicalBookingRequest(input: Record<string, unknown>) {
-  return {
+  const request: Record<string, unknown> = {
     slug: String(input.slug || ''),
     name: String(input.name || '').trim(),
     email: input.email ? String(input.email).trim() : null,
@@ -38,6 +38,12 @@ export function canonicalBookingRequest(input: Record<string, unknown>) {
     table_type: input.table_type || null,
     consent: input.consent === true,
   };
+  // v183: a requested team member is part of what the customer asked for, so two submissions
+  // that differ only by person are different requests. The key is appended ONLY when present,
+  // so every pre-v183 payload still hashes to exactly its original fingerprint and an
+  // in-flight retry across the deploy boundary is still recognised as a replay.
+  if (input.staff) request.staff = String(input.staff);
+  return request;
 }
 
 export function canonicalBookingChange(input: Record<string, unknown>) {

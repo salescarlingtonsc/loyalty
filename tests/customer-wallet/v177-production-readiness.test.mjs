@@ -83,7 +83,7 @@ test('every hangable customer read path is routed through the timeout helper',()
   const loaders=section(app,'const loadRewards=async()=>{','const slotCurrent=');
   for(const name of ['customer_get_reward_catalog','customer_get_loyalty_details',
     'customer_get_transaction_history_v167','customer_get_gift_cards','customer_get_packages',
-    'customer_get_memberships','customer_get_appointments_page','customer_list_my_feedback']){
+    'customer_get_memberships','customer_get_appointments_page']){
     assert.match(loaders,new RegExp(`customerRpc\\('${name}'`),`${name} must carry a deadline`);
   }
 
@@ -93,7 +93,7 @@ test('every hangable customer read path is routed through the timeout helper',()
 
 test('Android Back closes a customer dialog without leaving the route',()=>{
   const activate=section(customerUi,'function activateDialog(','function setButtonBusy(');
-  assert.match(activate,/history\.pushState\(\{\.\.\.\(history\.state\|\|\{\}\),cuiDialog:historyId\},''\)/,
+  assert.match(activate,/if\(!inherited\)history\.pushState\(\{\.\.\.\(history\.state\|\|\{\}\),cuiDialog:historyId\},''\)/,
     'the pushed entry must keep the same URL so hashchange never fires');
   assert.match(activate,/window\.addEventListener\('popstate',popstate\)/);
   assert.match(activate,/window\.removeEventListener\('popstate',popstate\)/);
