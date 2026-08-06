@@ -224,3 +224,38 @@ test('v184 archive and merge are offered only to a super admin, and only pre-wor
   assert.match(source, /Nothing is deleted/);
   assert.match(source, /cannot be restored on its own/);
 });
+
+test('v196 closes the loop: an archived record can be found, restored, and PII erased', async () => {
+  const source = await read('app/platform-console.js');
+  const styles = await read('app/platform-console.css');
+
+  // An archive you cannot inspect is a delete. The panel exists and reads the
+  // one RPC that can see archived rows.
+  assert.match(source, /id="platformArchivedPanel"/);
+  assert.match(source, /platform_list_archived_prospects_v196/);
+  assert.match(source, /data-archived-host/);
+
+  // Loaded only when opened, and only once.
+  assert.match(source, /archivedPanel\.ontoggle=\(\)=>/);
+  assert.match(source, /if\(archivedPanel\.open&&host&&!host\.dataset\.loaded\)/);
+
+  // Restore is offered only where it is legal: a merged-away record cannot be
+  // restored on its own, so the row says so instead of showing a button.
+  assert.match(source, /row\.restorable\n?\s*\?`<button type="button" class="btn ghost sm" data-restore-prospect=/);
+  assert.match(source, /Cannot be restored on its own/);
+  assert.match(source, /platform_restore_prospect_v184/);
+
+  // Erasure is super-admin only, hidden once already erased, and states that
+  // it cannot be undone.
+  assert.match(source, /isSuperAdmin&&contact\.full_name!=='\[erased\]'\?`<button type="button" class="btn ghost sm" data-erase-contact=/);
+  assert.match(source, /contact\.full_name==='\[erased\]'\?CUI\.status\(pt\('Personal data erased'\)/);
+  assert.match(source, /platform_erase_prospect_contact_pii_v184/);
+  assert.match(source, /It cannot be undone/);
+  assert.match(source, /id:'eraseReason'[^}]*required:true/);
+
+  // New buttons must be registered as write controls, or a read-only operator
+  // would still see them.
+  assert.match(source, /'\[data-erase-contact\]'/);
+
+  assert.match(styles, /\.platform-archived-panel/);
+});

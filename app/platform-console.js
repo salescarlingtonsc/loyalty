@@ -792,6 +792,10 @@
       'Qualification and discovery':'资格评估与需求探索','Record commercial detail':'记录商业详情',
       'Record departure':'记录离职','Record qualification':'记录资格评估',
       '{count} not recorded':'{count} 项未填写',
+      'Archived records':'已归档记录','Erase personal data':'删除个人资料',
+      'Restore':'恢复','Restore this record':'恢复此记录','Archived':'已归档',
+      'Nothing archived':'没有已归档记录','Cannot be restored on its own':'无法单独恢复',
+      'Personal data erased':'个人资料已删除',
       'Website signup':'网站注册',
       'Refresh evidence':'刷新证据','Refresh quality':'刷新质量','Reissue owner invite':'重新发送负责人邀请',
       'Resolve every row still marked Review before committing.':'提交前请处理所有仍标为“审核”的行。',
@@ -927,6 +931,10 @@
       'Qualification and discovery':'Kelayakan dan penemuan','Record commercial detail':'Rekod butiran komersial',
       'Record departure':'Rekod pemergian','Record qualification':'Rekod kelayakan',
       '{count} not recorded':'{count} belum direkodkan',
+      'Archived records':'Rekod diarkib','Erase personal data':'Padam data peribadi',
+      'Restore':'Pulihkan','Restore this record':'Pulihkan rekod ini','Archived':'Diarkib',
+      'Nothing archived':'Tiada rekod diarkib','Cannot be restored on its own':'Tidak boleh dipulihkan sendiri',
+      'Personal data erased':'Data peribadi dipadam',
       'Website signup':'Pendaftaran laman web',
       'Refresh evidence':'Muat semula bukti','Refresh quality':'Muat semula kualiti','Reissue owner invite':'Keluarkan semula jemputan pemilik',
       'Resolve every row still marked Review before committing.':'Selesaikan setiap baris yang masih ditanda Semak sebelum melakukan.',
@@ -2481,7 +2489,7 @@
     '#platformNewProspect','#platformImportProspects','#platformScopedNewProspect',
     '[data-move]','[data-move-select]','[data-edit-prospect]','[data-assign-prospect]','[data-scoped-assign]',
     '[data-add-note]','[data-add-npu]','[data-archive-prospect]','[data-merge-prospect]','[data-add-activity]','[data-add-task]',
-    '[data-add-contact]','[data-edit-contact-profile]','[data-edit-company-profile]',
+    '[data-add-contact]','[data-edit-contact-profile]','[data-erase-contact]','[data-edit-company-profile]',
     '[data-edit-qualification]','[data-edit-commercial-detail]','[data-edit-conversion-config]',
     '[data-refresh-quality]','[data-upload-document]','[data-lost]','[data-convert]',
     '[data-create-account]','[data-complete-task]','[data-onboarding-start]',
@@ -5170,7 +5178,12 @@
           shown:Number(pagination.shown||items.length),count:Number(pagination.total||items.length)
         }))}</p>
         ${pagination.hasMore?`<button type="button" class="btn ghost" id="platformOnboardingLoadMore">${escapeHtml(pt('Load 50 more firms'))}</button>`:''}
-      </div>`;
+      </div>
+      ${canWrite?`<details class="card platform-archived-panel" id="platformArchivedPanel">
+        <summary>${escapeHtml(pt('Archived records'))}</summary>
+        <p class="muted small">${escapeHtml(pt('Archived and merged-away firms are hidden from the board and every count. Nothing here is deleted.'))}</p>
+        <div data-archived-host></div>
+      </details>`:''}`;
   }
 
   function defaultOnboardingFilters(){
@@ -5498,6 +5511,18 @@
       loadMore.disabled=true;loadMore.textContent=pt('Loading…');
       await renderOnboarding({...context,onboardingLoadMore:true},filters);
     };
+    const archivedPanel=main.querySelector('#platformArchivedPanel');
+    if(archivedPanel){
+      // Loaded only when opened: an operator rarely needs it, and it is an
+      // extra audited read every time it runs.
+      archivedPanel.ontoggle=()=>{
+        const host=archivedPanel.querySelector('[data-archived-host]');
+        if(archivedPanel.open&&host&&!host.dataset.loaded){
+          host.dataset.loaded='true';
+          loadArchivedProspects(context,host);
+        }
+      };
+    }
     const newProspect=main.querySelector('#platformNewProspect');
     if(newProspect)newProspect.onclick=()=>newProspectModal(context);
     const importProspects=main.querySelector('#platformImportProspects');
@@ -6124,7 +6149,7 @@
             ['decision_role','Decision role',platformStatus],['email','Email'],['phone','Phone'],
             ['preferred_channel','Preferred channel',platformStatus],['preferred_language','Language'],
             ['consent_basis','Contact basis'],['do_not_contact','Do not contact']
-          ])}<button type="button" class="btn ghost sm" data-edit-contact-profile="${escapeHtml(contact.id)}">${escapeHtml(pt("Edit contact profile"))}</button></article>`;
+          ])}<div class="platform-actions"><button type="button" class="btn ghost sm" data-edit-contact-profile="${escapeHtml(contact.id)}">${escapeHtml(pt("Edit contact profile"))}</button>${isSuperAdmin&&contact.full_name!=='[erased]'?`<button type="button" class="btn ghost sm" data-erase-contact="${escapeHtml(contact.id)}">${escapeHtml(pt("Erase personal data"))}</button>`:''}${contact.full_name==='[erased]'?CUI.status(pt('Personal data erased'),'off'):''}</div></article>`;
       }).join('')}</div>`:CUI.emptyState({iconName:'customers',title:'No contacts',body:'Add the first decision maker, champion, billing contact or technical administrator.'})}
     </section>
     <section class="card platform-detail-section" id="detail-qualification">
@@ -6201,6 +6226,11 @@
     overlay.querySelectorAll('[data-add-activity]').forEach(button=>button.onclick=()=>activityModal(prospect,button.dataset.addActivity,context));
     on('[data-add-task]',()=>taskModal(prospect,context));
     on('[data-add-contact]',()=>contactModal(detail,null,context));
+    overlay.querySelectorAll('[data-erase-contact]').forEach(button=>{
+      const contact=asArray(detail.contacts).map(contactBase)
+        .find(row=>String(row.id)===button.dataset.eraseContact);
+      if(contact)button.onclick=()=>eraseContactModal(detail,contact,context);
+    });
     overlay.querySelectorAll('[data-edit-contact-profile]').forEach(button=>{
       const contact=asArray(detail.contacts).find(row=>String(contactBase(row).id)===button.dataset.editContactProfile);
       button.onclick=()=>contactModal(detail,contact,context);
@@ -6521,6 +6551,87 @@
         CUI.announce(pt('Merged. {contacts} contacts and {activities} activities moved to the surviving firm.',{
           contacts:Number(moved.contacts||0),activities:Number(moved.activities||0)
         }));
+      }
+    });
+  }
+  // PDPA erasure. Deliberately heavier than the other actions: it is the only
+  // verb here that destroys information rather than hiding it, so the copy
+  // spells out precisely what goes and what stays, and the reason is required.
+  function eraseContactModal(detail,contact,context) {
+    const {CUI,sb}=context;
+    const name=contact.full_name||pt('this contact');
+    modal({
+      title:'Erase personal data',submitLabel:'Erase personal data',CUI,
+      body:`<p class="small">${escapeHtml(pt('This permanently removes {name}\u2019s name, email, phone and profile history, and marks them do-not-contact. It cannot be undone.',{name}))}</p>
+        <p class="small muted">${escapeHtml(pt('The contact row, the firm and the audit trail remain, so the record of the erasure itself survives.'))}</p>
+        ${CUI.field({id:'eraseReason',label:'Why is this being erased?',control:'textarea',required:true,attributes:'name="reason" rows="3"',hint:'Recorded in the audit log \u2014 for example, a PDPA erasure request.'})}`,
+      onSubmit:async(form,controls)=>{
+        await rpc(sb,'platform_erase_prospect_contact_pii_v184',{
+          p_contact:contact.id,p_reason:String(form.get('reason')||'')
+        });
+        controls.close();
+        context.markBoardDirty?.();
+        await refreshProspectDrawer(context,asObject(detail.prospect).id);
+        CUI.announce(pt('Personal data erased.'));
+      }
+    });
+  }
+  // Archived records are hidden from every live surface by design, so this is
+  // the one place they can be found and brought back.
+  async function loadArchivedProspects(context,host) {
+    const {CUI,sb}=context;
+    host.innerHTML=CUI.loadingState({title:'Archived records',body:'Loading archived firm records\u2026',iconName:'setup'});
+    let payload;
+    try{
+      payload=asObject(await rpc(sb,'platform_list_archived_prospects_v196',{p_search:null,p_limit:50}));
+    }catch(error){
+      host.innerHTML=error.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'Archived records')
+        :CUI.errorState({title:'Archived records unavailable',message:platformErrorMessage(error,'Archived records unavailable')});
+      return;
+    }
+    const items=asArray(payload,['items']);
+    if(!items.length){
+      host.innerHTML=CUI.emptyState({iconName:'check',title:'Nothing archived',
+        body:'Archived and merged-away firm records will appear here.'});
+      return;
+    }
+    host.innerHTML=`<div class="cui-table-wrap" role="region" aria-label="${escapeHtml(pt('Archived firm records'))}" tabindex="0">
+      <table class="cui-table platform-archived-table" data-responsive="true">
+        <caption>${escapeHtml(pt('{count} archived',{count:Number(payload.total_count||items.length)}))}</caption>
+        <thead><tr>${['Firm','Archived','By','Why','Outcome',''].map(header=>`<th scope="col">${escapeHtml(pt(header))}</th>`).join('')}</tr></thead>
+        <tbody>${items.map(row=>`<tr>
+          <td data-label="${escapeHtml(pt('Firm'))}"><b>${escapeHtml(row.company_name||pt('Unnamed firm'))}</b></td>
+          <td data-label="${escapeHtml(pt('Archived'))}">${escapeHtml(relativeActivity(row.archived_at))}</td>
+          <td data-label="${escapeHtml(pt('By'))}">${escapeHtml(row.archived_by_name||'')}</td>
+          <td data-label="${escapeHtml(pt('Why'))}"><span class="muted small">${escapeHtml(row.archive_reason||'')}</span></td>
+          <td data-label="${escapeHtml(pt('Outcome'))}">${row.merged_into_prospect_id
+            ?CUI.status(pt('Merged into {name}',{name:row.merged_into_name||pt('another firm')}),'off')
+            :CUI.status(pt('Archived'),'off')}</td>
+          <td data-label="">${row.restorable
+            ?`<button type="button" class="btn ghost sm" data-restore-prospect="${escapeHtml(row.id)}">${escapeHtml(pt('Restore'))}</button>`
+            :`<span class="muted small">${escapeHtml(pt('Cannot be restored on its own'))}</span>`}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+    host.querySelectorAll('[data-restore-prospect]').forEach(button=>{
+      button.onclick=()=>restoreProspectModal(button.dataset.restoreProspect,
+        items.find(row=>String(row.id)===button.dataset.restoreProspect)?.company_name||'',context,host);
+    });
+  }
+  function restoreProspectModal(prospectId,name,context,host) {
+    const {CUI,sb}=context;
+    modal({
+      title:'Restore this record',submitLabel:'Restore record',CUI,
+      body:`<p class="small">${escapeHtml(pt('{name} returns to the board and to every count, with its history intact.',{name:name||pt('This firm')}))}</p>
+        ${CUI.field({id:'restoreReason',label:'Why is this being restored?',control:'textarea',required:false,attributes:'name="reason" rows="2"',hint:'Optional. Recorded in the audit log.'})}`,
+      onSubmit:async(form,controls)=>{
+        await rpc(sb,'platform_restore_prospect_v184',{
+          p_prospect:prospectId,p_reason:String(form.get('reason')||'')
+        });
+        controls.close();
+        CUI.announce(pt('{name} restored.',{name:name||pt('Record')}));
+        await loadArchivedProspects(context,host);
       }
     });
   }

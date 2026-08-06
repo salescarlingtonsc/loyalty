@@ -164,6 +164,17 @@
 .platform-empty-fields[open]>summary::before{content:'−'}
 .platform-empty-fields>summary:hover{background:var(--tint);color:var(--coral)}
 .platform-empty-fields .platform-typed-list{margin-top:8px;opacity:.75}
+.platform-archived-panel{margin-top:14px;padding:14px}
+.platform-archived-panel>summary{
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;
+  cursor:pointer;list-style:none
+}
+.platform-archived-panel>summary::-webkit-details-marker{display:none}
+.platform-archived-panel>summary::before{content:'+';color:var(--muted);font-weight:750}
+.platform-archived-panel[open]>summary::before{content:'\2212'}
+.platform-archived-panel>p{margin-top:6px}
+.platform-archived-panel .cui-table-wrap{margin-top:10px}
+.platform-archived-table td .muted{display:block;max-width:42ch}
 .platform-prospect-table-wrap{margin-top:2px}
 .platform-prospect-table .platform-prospect-row{cursor:pointer}
 .platform-prospect-table .platform-prospect-row:hover{background:rgba(194,65,53,.05)}
