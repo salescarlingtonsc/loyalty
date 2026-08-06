@@ -94,12 +94,12 @@ async function addRecoveryEvidence(root, plan) {
   }, null, 2)}\n`);
 }
 
-test('checked-in canonical plan preserves 45 trusted catalog versions then 177 unique pending versions', () => {
+test('checked-in canonical plan preserves 45 trusted catalog versions then 178 unique pending versions', () => {
   const result = run(repoRoot, '--check-plan');
   assert.equal(result.status, 0, result.stderr);
 });
 
-test('materializer creates one byte-preserving 222-file chain and deterministic manifests', async (t) => {
+test('materializer creates one byte-preserving 223-file chain and deterministic manifests', async (t) => {
   const { root, plan } = await fixture(t);
   await addRecoveryEvidence(root, plan);
   const materialized = run(root, '--materialize');
@@ -109,9 +109,9 @@ test('materializer creates one byte-preserving 222-file chain and deterministic 
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.status, 'canonical_deployable_locally_not_applied');
   assert.equal(manifest.catalogAppliedCount, 45);
-  assert.equal(manifest.pendingCount, 177);
-  assert.equal(manifest.itemCount, 222);
-  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 222);
+  assert.equal(manifest.pendingCount, 178);
+  assert.equal(manifest.itemCount, 223);
+  assert.equal(new Set(manifest.items.map(({ version }) => version)).size, 223);
   assert.equal(manifest.items[44].version, '20260719190540');
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(

@@ -1332,6 +1332,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v197_recommendation_duplicate_root_cause.sql",
+      "semanticVersion": "v197",
+      "proposedDeployVersion": "20260807035000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260807_nestly_v196_list_archived_prospects.sql",
       "semanticVersion": "v196",
       "proposedDeployVersion": "20260807040000"
