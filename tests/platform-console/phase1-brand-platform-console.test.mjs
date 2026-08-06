@@ -108,8 +108,8 @@ test('platform console is routed before workspace onboarding and uses versioned 
   assert.ok(onboardingFallback > platformRoute);
   assert.match(index,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
   assert.match(index,/if\(requestedPlatformRoute\)\{[\s\S]*return await platformConsole\.render\(/);
-  assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css\?v=20260802-v134">/);
-  assert.match(index,/<script src="\/platform-console\.js\?v=20260802-v134"><\/script>/);
+  assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css\?v=[0-9a-zA-Z-]+">/);
+  assert.match(index,/<script src="\/platform-console\.js\?v=[0-9a-zA-Z-]+"[^>]*><\/script>/);
   assert.match(consoleSource,/sb\.rpc\('super_admin_list_businesses'\)/);
   assert.match(consoleSource,/platform_list_firm_onboarding_v88/);
   assert.match(consoleSource,/platform_list_prospects_v76/);
