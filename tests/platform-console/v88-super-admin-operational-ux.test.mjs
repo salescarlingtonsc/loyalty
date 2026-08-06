@@ -42,7 +42,11 @@ test('onboarding board has prominent search, status and attention filters withou
   assert.match(source,/\['info','Monitor','off'\],\['stale','Stale','off'\],\['clean','Clean','ok'\]/);
   assert.match(source,/Open firm directory/);
   assert.match(source,/operationalLanes\.map\(lane=>`<section class="platform-kanban-column"/);
-  assert.doesNotMatch(source,/data-drop-stage|ondragstart|ondrop/);
+  // v181 (owner request 2026-08-06): the board is drag-and-drop again. The
+  // earlier no-drag assertion is retired deliberately; what must stay true is
+  // that a drop resolves to a stage and still runs the evidence modal, which
+  // the v181 suite pins.
+  assert.match(source,/data-lane-drop="\$\{lane\.key\}"/);
   const kanbanRule=styles.match(/\.platform-kanban\{([\s\S]*?)\}/)?.[1]||'';
   assert.match(kanbanRule,/display:grid/);
   assert.match(kanbanRule,/auto-fit/);

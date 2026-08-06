@@ -2469,6 +2469,8 @@
     lost:['Structured loss reason','Recontact decision']
   });
   let renderGeneration = 0;
+  // Id of the card currently being dragged across the onboarding board.
+  let draggedProspect = null;
   let activeContext = null;
   let readOnlyObserver = null;
   const platformWriteSelector=[
@@ -4605,7 +4607,31 @@
       return {...item,onboarding,onboarding_status:facts.status,onboarding_summary:facts};
     });
   }
-  function prospectCardHtml(item,CUI,{mobile=false,canWrite=true}={}) {
+  // The single most important flag for a firm, so a Kanban card carries one
+  // badge instead of a wall of them. Order matters: act-now beats descriptive.
+  function prospectPrimaryBadge(item,CUI) {
+    const severity=String(item.attention_severity||'none').toLowerCase();
+    if(item.attention_due===true)return CUI.status(pt('Due now'),'no');
+    if(severity==='critical')return CUI.status(pt('Critical'),'no');
+    if(item.next_action_overdue===true||item.overdue===true||Number(item.overdue_task_count||0)>0)
+      return CUI.status(pt('Overdue'),'no');
+    if(severity==='warning')return CUI.status(pt('Warning'),'new');
+    if(prospectIsStale(item))return CUI.status(pt('Stale'),'off');
+    if(severity==='info')return CUI.status(pt('Monitor'),'off');
+    return'';
+  }
+  // Stages an operator may move a firm INTO by hand. account_created,
+  // onboarding and activated are set by conversion/onboarding evidence, and
+  // unmapped is a data state, never a destination.
+  function laneMoveStages(laneKey) {
+    const lane=operationalLanes.find(option=>option.key===laneKey);
+    if(!lane)return[];
+    return lane.stages.filter(stage=>
+      !['account_created','onboarding','activated','unmapped'].includes(stage)
+      &&prospectStages.some(option=>option.key===stage));
+  }
+  function prospectCardHtml(item,CUI,{mobile=false,canWrite=true,compact=false}={}) {
+    if(compact)return prospectCompactCardHtml(item,CUI,{canWrite});
     const stage=prospectStage(item),id=item.id||item.prospect_id||item.row_id||item.business_id;
     const stale=prospectIsStale(item);
     const overdue=item.next_action_overdue===true||item.overdue===true||Number(item.overdue_task_count||0)>0;
@@ -4668,6 +4694,56 @@
         <button type="button" class="btn ghost sm" data-move aria-label="${escapeHtml(pt('Move prospect'))}">${CUI.icon('forward',{size:16})}</button>
       </div>`}
     </article>`;
+  }
+  // Kanban card: firm, who owns it, when it is next due, one flag. Everything
+  // else lives one click away in the drawer, so a column stays scannable.
+  function prospectCompactCardHtml(item,CUI,{canWrite=true}={}) {
+    const stage=prospectStage(item),id=item.id||item.prospect_id||item.row_id||item.business_id;
+    const canOpenDetail=item._has_prospect_detail!==false;
+    const lane=operationalLaneFor(item);
+    const draggable=canWrite&&canOpenDetail;
+    const owner=item.consultant_name||item.owner_name
+      ||pt(item.assigned_consultant_id?'Assigned':'Unassigned');
+    const nextAction=prospectValue(item,'next_action_at','next_activity_at');
+    const when=canOpenDetail
+      ?pt('Next: {when}',{when:relativeActivity(nextAction,{future:true})})
+      :pt('Last: {when}',{when:relativeActivity(item.last_activity_at)});
+    const stageLabel=!canOpenDetail&&lane==='case_won'
+      ?(item.lane_label||'Website signup / live firm')
+      :pt(prospectStages.find(option=>option.key===stage)?.label||platformStatus(stage));
+    return `<article class="platform-prospect-card platform-prospect-card-compact" draggable="${draggable?'true':'false'}" data-prospect="${escapeHtml(id)}" data-version="${prospectVersion(item)}" data-stage="${escapeHtml(stage)}" data-lane="${escapeHtml(lane)}" data-has-prospect="${canOpenDetail?'true':'false'}" data-can-move="${draggable?'true':'false'}" tabindex="0" role="button" aria-label="${escapeHtml(pt(canOpenDetail?'Open':'View firm record for'))} ${escapeHtml(prospectCompany(item))}"${draggable?` aria-describedby="platformKanbanMoveHint"`:''}>
+      <div class="platform-prospect-name">${escapeHtml(prospectCompany(item))}</div>
+      <p class="platform-card-line">${escapeHtml(owner)} · ${escapeHtml(when)}</p>
+      <div class="platform-card-badges">${CUI.status(stageLabel,'off')}${prospectPrimaryBadge(item,CUI)}</div>
+    </article>`;
+  }
+  // List view: one row per firm, the same columns an operator sorts by.
+  function prospectListTableHtml(items,CUI,{canWrite=true}={}) {
+    const headers=['Firm','Stage','Operational status','Owner','Next action','Attention'];
+    return `<div class="cui-table-wrap platform-prospect-table-wrap" role="region" aria-label="${escapeHtml(pt('SME onboarding list'))}" tabindex="0">
+      <table class="cui-table platform-prospect-table" data-responsive="true">
+        <caption>${escapeHtml(pt('SME onboarding list'))}</caption>
+        <thead><tr>${headers.map(header=>`<th scope="col">${escapeHtml(pt(header))}</th>`).join('')}</tr></thead>
+        <tbody>${items.map(item=>{
+          const stage=prospectStage(item),id=item.id||item.prospect_id||item.row_id||item.business_id;
+          const canOpenDetail=item._has_prospect_detail!==false;
+          const lane=operationalLanes.find(option=>option.key===operationalLaneFor(item));
+          const nextAction=prospectValue(item,'next_action_at','next_activity_at');
+          const stageLabel=!canOpenDetail&&lane?.key==='case_won'
+            ?(item.lane_label||'Website signup / live firm')
+            :pt(prospectStages.find(option=>option.key===stage)?.label||platformStatus(stage));
+          const badge=prospectPrimaryBadge(item,CUI)||CUI.status(pt('Clean'),'ok');
+          return `<tr class="platform-prospect-row" data-prospect="${escapeHtml(id)}" data-version="${prospectVersion(item)}" data-stage="${escapeHtml(stage)}" data-lane="${escapeHtml(operationalLaneFor(item))}" data-has-prospect="${canOpenDetail?'true':'false'}" data-can-move="${canWrite&&canOpenDetail?'true':'false'}" tabindex="0" role="button" aria-label="${escapeHtml(pt(canOpenDetail?'Open':'View firm record for'))} ${escapeHtml(prospectCompany(item))}">
+            <td data-label="${escapeHtml(pt('Firm'))}"><b>${escapeHtml(prospectCompany(item))}</b><span class="muted small">${escapeHtml(prospectContact(item))}</span></td>
+            <td data-label="${escapeHtml(pt('Stage'))}">${escapeHtml(stageLabel)}</td>
+            <td data-label="${escapeHtml(pt('Operational status'))}">${escapeHtml(pt(lane?.label||'New & unassigned'))}</td>
+            <td data-label="${escapeHtml(pt('Owner'))}">${escapeHtml(item.consultant_name||item.owner_name||pt(item.assigned_consultant_id?'Assigned':'Unassigned'))}</td>
+            <td data-label="${escapeHtml(pt('Next action'))}">${escapeHtml(canOpenDetail?relativeActivity(nextAction,{future:true}):relativeActivity(item.last_activity_at))}</td>
+            <td data-label="${escapeHtml(pt('Attention'))}">${badge}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
   }
   function flattenBoard(board,listPayload) {
     const listed=asArray(listPayload,['items','prospects']);
@@ -5077,11 +5153,12 @@
         ${onboardingFilterSummary(filters,CUI)}
       </form>
       <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt('Five clear operating lanes'))}</b><p class="small">${escapeHtml(pt('The detailed CRM stages remain intact for audit and automation. These five lanes make the day-to-day workload readable without horizontal scrolling. Open a card or use its stage menu for an exact move.'))}</p></div></div>
-      <div class="platform-kanban"${view==='kanban'?'':' hidden'} aria-label="${escapeHtml(pt('Onboarding pipeline'))}">${operationalLanes.map(lane=>`<section class="platform-kanban-column" aria-labelledby="lane-${lane.key}">
+      ${canWrite?`<p class="muted small platform-kanban-hint" id="platformKanbanMoveHint"${view==='kanban'?'':' hidden'}>${escapeHtml(pt('Drag a card into another column to move it, or focus a card and press Ctrl with the left or right arrow. Every move still asks for its evidence.'))}</p>`:''}
+      <div class="platform-kanban"${view==='kanban'?'':' hidden'} aria-label="${escapeHtml(pt('Onboarding pipeline'))}">${operationalLanes.map(lane=>`<section class="platform-kanban-column" data-lane-column="${lane.key}" aria-labelledby="lane-${lane.key}">
         <header class="platform-kanban-head"><div><h2 id="lane-${lane.key}">${escapeHtml(pt(lane.label))}</h2><p>${escapeHtml(pt(lane.description))}</p></div><span class="platform-count">${byLane[lane.key].length}</span></header>
-        <div class="platform-card-list">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI,{canWrite})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
+        <div class="platform-card-list" data-lane-drop="${lane.key}">${byLane[lane.key].map(item=>prospectCardHtml(item,CUI,{canWrite,compact:true})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
       </section>`).join('')}</div>
-      <div class="platform-prospect-list platform-prospect-list-view"${view==='list'?'':' hidden'} aria-label="${escapeHtml(pt('SME onboarding list'))}">${filtered.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>
+      <div class="platform-prospect-list platform-prospect-list-view"${view==='list'?'':' hidden'} aria-label="${escapeHtml(pt('SME onboarding list'))}">${filtered.length?prospectListTableHtml(filtered,CUI,{canWrite}):CUI.emptyState({iconName:'setup',title:'No matching prospects',body:'Change the search or consultant filter.'})}</div>
       <div class="platform-paged-summary" data-onboarding-page-summary>
         <p class="muted small">${escapeHtml(pt('{shown} of {count} firms loaded. Search and the main status filters run across the complete directory.',{
           shown:Number(pagination.shown||items.length),count:Number(pagination.total||items.length)
@@ -5439,6 +5516,77 @@
       if(moveButton)moveButton.onclick=event=>{
         event.stopPropagation();requestStageMove(item,card.querySelector('[data-move-select]').value,context);
       };
+      if(card.dataset.canMove==='true'){
+        if(card.draggable){
+          card.ondragstart=event=>{
+            draggedProspect=card.dataset.prospect;
+            card.setAttribute('aria-grabbed','true');
+            if(event.dataTransfer){
+              event.dataTransfer.effectAllowed='move';
+              // Some browsers cancel a drag that carries no payload.
+              event.dataTransfer.setData('text/plain',card.dataset.prospect);
+            }
+          };
+          card.ondragend=()=>{
+            draggedProspect=null;card.removeAttribute('aria-grabbed');
+            main.querySelectorAll('[data-lane-drop]').forEach(zone=>zone.classList.remove('is-drop-target'));
+          };
+        }
+        // Keyboard equivalent of the drag, so the board is not mouse-only.
+        card.addEventListener('keydown',event=>{
+          if(!(event.ctrlKey||event.metaKey))return;
+          if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
+          const from=operationalLanes.findIndex(lane=>lane.key===card.dataset.lane);
+          const to=from+(event.key==='ArrowRight'?1:-1);
+          if(from<0||to<0||to>=operationalLanes.length)return;
+          event.preventDefault();
+          requestLaneMove(item,operationalLanes[to].key,context);
+        });
+      }
+    });
+    main.querySelectorAll('[data-lane-drop]').forEach(zone=>{
+      zone.ondragover=event=>{
+        if(!draggedProspect)return;
+        event.preventDefault();
+        if(event.dataTransfer)event.dataTransfer.dropEffect='move';
+        zone.classList.add('is-drop-target');
+      };
+      zone.ondragleave=()=>zone.classList.remove('is-drop-target');
+      zone.ondrop=event=>{
+        event.preventDefault();
+        zone.classList.remove('is-drop-target');
+        const prospectId=draggedProspect
+          ||(event.dataTransfer?event.dataTransfer.getData('text/plain'):'');
+        draggedProspect=null;
+        const item=items.find(row=>String(row.id||row.prospect_id)===String(prospectId));
+        if(item)requestLaneMove(item,zone.dataset.laneDrop,context);
+      };
+    });
+  }
+  // A lane holds several stages, so a drop resolves to a stage before the
+  // normal evidence modal runs. One writable stage moves straight through;
+  // several ask which one. No move ever skips its evidence.
+  function requestLaneMove(prospect,laneKey,context) {
+    const {CUI}=context;
+    if(operationalLaneFor(prospect)===laneKey)return;
+    const stages=laneMoveStages(laneKey);
+    const laneLabel=pt(operationalLanes.find(lane=>lane.key===laneKey)?.label||laneKey);
+    if(!stages.length){
+      CUI.announce(pt('{lane} is reached through account conversion and onboarding evidence, not by moving a card.',{lane:laneLabel}),{assertive:true});
+      return;
+    }
+    if(stages.length===1)return requestStageMove(prospect,stages[0],context);
+    return modal({
+      title:pt('Move to {lane}',{lane:laneLabel}),submitLabel:'Continue',CUI,
+      body:`<p class="muted small">${escapeHtml(pt('Choose the stage for {name}. The next step records the evidence for that stage.',{name:prospectCompany(prospect)}))}</p>
+        ${CUI.field({id:'laneMoveStage',label:'Stage',control:'select',required:true,attributes:'name="stage"',options:stages.map(stage=>({
+          value:stage,label:pt(prospectStages.find(option=>option.key===stage)?.label||platformStatus(stage))
+        }))})}`,
+      onSubmit:async(form,controls)=>{
+        const stage=String(form.get('stage')||'');
+        controls.close();
+        requestStageMove(prospect,stage,context);
+      }
     });
   }
   async function newProspectModal(context) {
@@ -9071,7 +9219,7 @@
     platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
     setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
     localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
-    firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,modulePickerHtml,
+    firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,prospectCompactCardHtml,prospectListTableHtml,prospectPrimaryBadge,laneMoveStages,modulePickerHtml,
     reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
     importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
     commissionRosterRows,commissionAccrualRows,automationRunRows,
@@ -9091,7 +9239,7 @@
       platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
       setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
       localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
-      firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,modulePickerHtml,
+      firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,prospectCompactCardHtml,prospectListTableHtml,prospectPrimaryBadge,laneMoveStages,modulePickerHtml,
       reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
       importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
       commissionRosterRows,commissionAccrualRows,automationRunRows,

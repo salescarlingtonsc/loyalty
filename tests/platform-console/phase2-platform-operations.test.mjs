@@ -119,7 +119,11 @@ test('responsive pipeline keeps a mobile list and accessible dialogs', async () 
     read('app/index.html')
   ]);
   assert.match(source, /aria-modal/);
-  assert.doesNotMatch(source, /aria-grabbed/);
+  // v181 (owner request 2026-08-06): the board drags again, so aria-grabbed is
+  // now required rather than forbidden — and it must be cleared when the drag
+  // ends, or assistive tech reports a card as permanently held.
+  assert.match(source, /card\.setAttribute\('aria-grabbed','true'\)/);
+  assert.match(source, /card\.removeAttribute\('aria-grabbed'\)/);
   assert.match(source, /Five clear operating lanes/);
   assert.match(styles, /\.platform-kanban:not\(\[hidden\]\)\{display:grid;grid-template-columns:1fr\}/);
   assert.match(styles, /\.platform-prospect-list:not\(\[hidden\]\)\{display:grid/);

@@ -15,10 +15,18 @@ test('authenticated business setup identifies the current email and signs out on
   assert.match(onboarding,/resetClientSessionState\(\)[\s\S]+renderAuth\('in'/);
 });
 
-test('admin platform console uses the V167 cache-busting asset key',async()=>{
+test('admin platform console ships a current cache-busting asset key for both files',async()=>{
   const source=await read('app/index.html');
-  assert.match(source,/\/platform-console\.js\?v=20260805-v167-admin-approval/);
-  assert.doesNotMatch(source,/\/platform-console\.js\?v=20260802-v134/);
+  // The key must move whenever platform-console.js or .css changes, or a
+  // returning super admin keeps the cached bundle. Pinning one historical
+  // value went stale the first time another release bumped it, so assert the
+  // shape and that both assets advance together instead.
+  const js=source.match(/\/platform-console\.js\?v=([0-9]{8}-[a-z0-9-]+)/)?.[1];
+  const css=source.match(/\/platform-console\.css\?v=([0-9]{8}-[a-z0-9-]+)/)?.[1];
+  assert.ok(js,'platform-console.js must carry a version key');
+  assert.equal(css,js,'both console assets must share one cache key');
+  assert.ok(js>='20260806-v181','the console asset key must not regress');
+  assert.doesNotMatch(source,/\/platform-console\.(js|css)\?v=20260802-v134/);
 });
 
 test('platform separates assisted applications from paid website self-service',async()=>{

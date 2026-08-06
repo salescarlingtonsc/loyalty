@@ -1,3 +1,6 @@
+<!doctype html><meta charset="utf-8">
+<title>Onboarding board preview</title>
+<style>
 .platform-console{
   min-height:100dvh;background:var(--bg);color:var(--ink);
   display:grid;grid-template-columns:264px minmax(0,1fr)
@@ -662,3 +665,126 @@
   .platform-kpis{grid-template-columns:1fr}
   .platform-main{padding-inline:max(12px,env(safe-area-inset-left))}
 }
+
+:root{--line:#DEDAD2;--hair:#E7E3DC;--muted:#6B6560;--ink:#1B1A18;--tint:#FBEDEB;--coral:#C24135;--shadow:0 1px 2px rgba(0,0,0,.05);--shadow-lg:0 6px 18px rgba(0,0,0,.09)}
+body{margin:0;padding:20px;background:#F4F2EE;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+h1{font-size:17px;margin:0 0 4px}h3{margin:26px 0 8px;font-size:14px}
+.pill{display:inline-block;padding:3px 7px;border-radius:999px;background:#EFEBE5;color:var(--muted);font-size:10px;font-weight:700}
+.pill.no{background:#FBE4E1;color:#A4291F}.pill.new{background:#FCEFD9;color:#8A5B12}.pill.ok{background:#E1F1E6;color:#1F6B3A}
+.cui-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.cui-table th,.cui-table td{padding:9px 11px;text-align:left;font-size:12px;border-bottom:1px solid var(--hair)}
+.cui-table th{background:#EFEBE5;font-size:11px}.cui-table caption{text-align:left;padding:0 0 6px;font-size:11px;color:var(--muted)}
+.muted{color:var(--muted)}.small{font-size:11px}
+#log{margin-top:14px;padding:10px;border:1px solid var(--hair);border-radius:10px;background:#fff;font-size:12px}
+</style>
+<h1>Onboarding board — kanban (compact cards, drag between columns)</h1>
+<p class="muted small" id="platformKanbanMoveHint">Drag a card into another column to move it, or focus a card and press Ctrl with the left or right arrow. Every move still asks for its evidence.</p>
+<div class="platform-kanban"><section class="platform-kanban-column" data-lane-column="inbox">
+  <header class="platform-kanban-head"><div><h2>New & unassigned</h2><p>New leads and records that need triage</p></div><span class="platform-count">1</span></header>
+  <div class="platform-card-list" data-lane-drop="inbox"><article class="platform-prospect-card platform-prospect-card-compact" draggable="true" data-prospect="p1" data-version="0" data-stage="new_lead" data-lane="inbox" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Kopi Corner" aria-describedby="platformKanbanMoveHint">
+      <div class="platform-prospect-name">Kopi Corner</div>
+      <p class="platform-card-line">Sara L. · Next: In 2 days</p>
+      <div class="platform-card-badges"><span class="pill off">New Lead</span><span class="pill no">Due now</span></div>
+    </article></div>
+</section><section class="platform-kanban-column" data-lane-column="contacting">
+  <header class="platform-kanban-head"><div><h2>Contact & meeting</h2><p>Outreach, callbacks and scheduled conversations</p></div><span class="platform-count">2</span></header>
+  <div class="platform-card-list" data-lane-drop="contacting"><article class="platform-prospect-card platform-prospect-card-compact" draggable="true" data-prospect="p2" data-version="0" data-stage="appt_set" data-lane="contacting" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Bloom Nails &amp; Spa" aria-describedby="platformKanbanMoveHint">
+      <div class="platform-prospect-name">Bloom Nails &amp; Spa</div>
+      <p class="platform-card-line">Sara L. · Next: In 3 days</p>
+      <div class="platform-card-badges"><span class="pill off">Appointment Set</span><span class="pill new">Warning</span></div>
+    </article><article class="platform-prospect-card platform-prospect-card-compact" draggable="true" data-prospect="p3" data-version="0" data-stage="meeting_sent" data-lane="contacting" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Ah Seng Barber" aria-describedby="platformKanbanMoveHint">
+      <div class="platform-prospect-name">Ah Seng Barber</div>
+      <p class="platform-card-line">Marcus O. · Next: In 6 days</p>
+      <div class="platform-card-badges"><span class="pill off">Meeting Link Sent / Calendar Set</span></div>
+    </article></div>
+</section><section class="platform-kanban-column" data-lane-column="decision">
+  <header class="platform-kanban-head"><div><h2>Decision</h2><p>Qualified firms considering the proposal</p></div><span class="platform-count">1</span></header>
+  <div class="platform-card-list" data-lane-drop="decision"><article class="platform-prospect-card platform-prospect-card-compact" draggable="true" data-prospect="p4" data-version="0" data-stage="quotation_sent" data-lane="decision" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Lotus Yoga Studio" aria-describedby="platformKanbanMoveHint">
+      <div class="platform-prospect-name">Lotus Yoga Studio</div>
+      <p class="platform-card-line">Marcus O. · Next: Tomorrow</p>
+      <div class="platform-card-badges"><span class="pill off">Quotation Sent</span><span class="pill no">Overdue</span></div>
+    </article></div>
+</section><section class="platform-kanban-column" data-lane-column="case_won">
+  <header class="platform-kanban-head"><div><h2>Case won</h2><p>Signed, website-signup and onboarded firms</p></div><span class="platform-count">1</span></header>
+  <div class="platform-card-list" data-lane-drop="case_won"><article class="platform-prospect-card platform-prospect-card-compact" draggable="false" data-prospect="p5" data-version="0" data-stage="activated" data-lane="case_won" data-has-prospect="false" data-can-move="false" tabindex="0" role="button" aria-label="View firm record for Cubbly Cafe">
+      <div class="platform-prospect-name">Cubbly Cafe</div>
+      <p class="platform-card-line">Sara L. · Last: Yesterday</p>
+      <div class="platform-card-badges"><span class="pill off">Website signup / live firm</span></div>
+    </article></div>
+</section><section class="platform-kanban-column" data-lane-column="closed">
+  <header class="platform-kanban-head"><div><h2>Closed</h2><p>Opportunities closed without activation</p></div><span class="platform-count">1</span></header>
+  <div class="platform-card-list" data-lane-drop="closed"><article class="platform-prospect-card platform-prospect-card-compact" draggable="true" data-prospect="p6" data-version="0" data-stage="lost" data-lane="closed" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Tiong Bahru Bakes" aria-describedby="platformKanbanMoveHint">
+      <div class="platform-prospect-name">Tiong Bahru Bakes</div>
+      <p class="platform-card-line">Marcus O. · Next: No next action</p>
+      <div class="platform-card-badges"><span class="pill off">Lost</span></div>
+    </article></div>
+</section></div>
+<h3>List view</h3>
+<div class="cui-table-wrap platform-prospect-table-wrap" role="region" aria-label="SME onboarding list" tabindex="0">
+      <table class="cui-table platform-prospect-table" data-responsive="true">
+        <caption>SME onboarding list</caption>
+        <thead><tr><th scope="col">Firm</th><th scope="col">Stage</th><th scope="col">Operational status</th><th scope="col">Owner</th><th scope="col">Next action</th><th scope="col">Attention</th></tr></thead>
+        <tbody><tr class="platform-prospect-row" data-prospect="p1" data-version="0" data-stage="new_lead" data-lane="inbox" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Kopi Corner">
+            <td data-label="Firm"><b>Kopi Corner</b><span class="muted small">Wei Tan</span></td>
+            <td data-label="Stage">New Lead</td>
+            <td data-label="Operational status">New &amp; unassigned</td>
+            <td data-label="Owner">Sara L.</td>
+            <td data-label="Next action">In 2 days</td>
+            <td data-label="Attention"><span class="pill no">Due now</span></td>
+          </tr><tr class="platform-prospect-row" data-prospect="p2" data-version="0" data-stage="appt_set" data-lane="contacting" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Bloom Nails &amp; Spa">
+            <td data-label="Firm"><b>Bloom Nails &amp; Spa</b><span class="muted small">Priya R.</span></td>
+            <td data-label="Stage">Appointment Set</td>
+            <td data-label="Operational status">Contact &amp; meeting</td>
+            <td data-label="Owner">Sara L.</td>
+            <td data-label="Next action">In 3 days</td>
+            <td data-label="Attention"><span class="pill new">Warning</span></td>
+          </tr><tr class="platform-prospect-row" data-prospect="p3" data-version="0" data-stage="meeting_sent" data-lane="contacting" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Ah Seng Barber">
+            <td data-label="Firm"><b>Ah Seng Barber</b><span class="muted small">Seng H.</span></td>
+            <td data-label="Stage">Meeting Link Sent / Calendar Set</td>
+            <td data-label="Operational status">Contact &amp; meeting</td>
+            <td data-label="Owner">Marcus O.</td>
+            <td data-label="Next action">In 6 days</td>
+            <td data-label="Attention"><span class="pill ok">Clean</span></td>
+          </tr><tr class="platform-prospect-row" data-prospect="p4" data-version="0" data-stage="quotation_sent" data-lane="decision" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Lotus Yoga Studio">
+            <td data-label="Firm"><b>Lotus Yoga Studio</b><span class="muted small">Amanda C.</span></td>
+            <td data-label="Stage">Quotation Sent</td>
+            <td data-label="Operational status">Decision</td>
+            <td data-label="Owner">Marcus O.</td>
+            <td data-label="Next action">Tomorrow</td>
+            <td data-label="Attention"><span class="pill no">Overdue</span></td>
+          </tr><tr class="platform-prospect-row" data-prospect="p5" data-version="0" data-stage="activated" data-lane="case_won" data-has-prospect="false" data-can-move="false" tabindex="0" role="button" aria-label="View firm record for Cubbly Cafe">
+            <td data-label="Firm"><b>Cubbly Cafe</b><span class="muted small">Lee C.</span></td>
+            <td data-label="Stage">Website signup / live firm</td>
+            <td data-label="Operational status">Case won</td>
+            <td data-label="Owner">Sara L.</td>
+            <td data-label="Next action">Yesterday</td>
+            <td data-label="Attention"><span class="pill ok">Clean</span></td>
+          </tr><tr class="platform-prospect-row" data-prospect="p6" data-version="0" data-stage="lost" data-lane="closed" data-has-prospect="true" data-can-move="true" tabindex="0" role="button" aria-label="Open Tiong Bahru Bakes">
+            <td data-label="Firm"><b>Tiong Bahru Bakes</b><span class="muted small">Jun W.</span></td>
+            <td data-label="Stage">Lost</td>
+            <td data-label="Operational status">Closed</td>
+            <td data-label="Owner">Marcus O.</td>
+            <td data-label="Next action">No next action</td>
+            <td data-label="Attention"><span class="pill ok">Clean</span></td>
+          </tr></tbody>
+      </table>
+    </div>
+<div id="log">Drop log: <span id="out">none yet</span></div>
+<script>
+// Mirrors the console's drag wiring so the interaction itself can be tested.
+let dragged=null;
+document.querySelectorAll('[data-prospect][draggable="true"]').forEach(card=>{
+  card.ondragstart=e=>{dragged=card.dataset.prospect;card.setAttribute('aria-grabbed','true');e.dataTransfer.setData('text/plain',dragged);e.dataTransfer.effectAllowed='move'};
+  card.ondragend=()=>{dragged=null;card.removeAttribute('aria-grabbed');document.querySelectorAll('[data-lane-drop]').forEach(z=>z.classList.remove('is-drop-target'))};
+});
+document.querySelectorAll('[data-lane-drop]').forEach(zone=>{
+  zone.ondragover=e=>{if(!dragged)return;e.preventDefault();zone.classList.add('is-drop-target')};
+  zone.ondragleave=()=>zone.classList.remove('is-drop-target');
+  zone.ondrop=e=>{e.preventDefault();zone.classList.remove('is-drop-target');
+    const id=dragged||e.dataTransfer.getData('text/plain');
+    const card=document.querySelector('[data-prospect="'+id+'"][draggable]');
+    document.getElementById('out').textContent=id+' → lane '+zone.dataset.laneDrop+' (evidence modal would open)';
+    if(card&&card.dataset.lane!==zone.dataset.laneDrop)zone.appendChild(card);
+    dragged=null};
+});
+</script>
