@@ -61,7 +61,10 @@ test('generator emits a frozen public config and an exact-origin CSP in an isola
   assert.match(runtime, /^\/\* Generated from an explicit public runtime configuration\./);
   assert.match(runtime, /window\.__FRENLY_RUNTIME_CONFIG__ = Object\.freeze\(/);
   assert.match(runtime, new RegExp(`"projectRef": "${NON_PRODUCTION_REF}"`));
-  assert.match(csp, new RegExp(`connect-src 'self' https:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co wss:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co https:\/\/challenges\\.cloudflare\\.com;`));
+  // The Supabase origins must still be exact and adjacent; the Cloudflare analytics hosts that
+  // follow them are fixed template text, not config-derived, so they are matched separately.
+  assert.match(csp, new RegExp(`connect-src 'self' https:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co wss:\/\/${NON_PRODUCTION_REF}\\.supabase\\.co https:\/\/challenges\\.cloudflare\\.com `));
+  assert.match(csp, /connect-src[^;]* https:\/\/cloudflareinsights\.com https:\/\/static\.cloudflareinsights\.com;/);
   assert.match(csp, /worker-src 'self';/);
   assert.doesNotMatch(csp, /connect-src[^;]*\*/);
   assert.doesNotMatch(csp, /\{\{SUPABASE_/);

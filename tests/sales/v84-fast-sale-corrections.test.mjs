@@ -79,8 +79,11 @@ test('v84 derives current payment truth and refuses states the replacement write
 
 test('sales UX tags by team-member name and uses stable double-confirm correction attempts',()=>{
   assert.match(app,/from\('staff'\)\.select\('id,full_name,user_id',\{count:'exact'\}\)/);
-  assert.match(app,/id="qstaff"[\s\S]*person\.full_name/);
-  assert.match(app,/p_staff:\$\('qstaff'\)\.value\|\|null/);
+  // The Record-sale staff dropdown (qstaff) was retired: a sale is now attributed to the acting
+  // staff member automatically (p_staff:staffId, resolved from the signed-in user), which is
+  // stronger than letting the operator pick. The team-member NAME still drives the Sales filter.
+  assert.match(app,/id="salesStaff"[\s\S]{0,200}person\.full_name/);
+  assert.match(app,/p_staff:staffId/);
   assert.match(app,/data-correct-sale/);
   assert.match(app,/id="saleCorrectionChecked"/);
   assert.match(app,/Final check: replace/);
@@ -105,7 +108,9 @@ test('customer UI uses QR-authorized joining and exposes paginated transaction t
   assert.match(app,/customer_join_business_from_qr_v89/);
   assert.match(app,/pendingCustomerJoinToken/);
   assert.match(app,/No verified business links yet/);
-  assert.match(app,/customer_get_transaction_history_v81/);
+  // The wallet surface moved to the v167 reader; the SQL acceptance file below still exercises
+  // v81, which is the function that migration created and which still exists in production.
+  assert.match(app,/customer_get_transaction_history_v167/);
   assert.match(app,/p_business_slug:businessSlug,p_cursor:requestedCursor/);
   assert.match(app,/walletTransactionsMore/);
   assert.match(app,/points_earned/);

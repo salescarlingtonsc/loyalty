@@ -467,7 +467,7 @@ test('v97 checkout and responsive tables localize interface parts while preservi
   assert.match(checkout,/<span data-workspace-i18n>\$\{type\}<\/span> · <span data-merchant-content>\$\{money/);
   assert.match(checkout,/<span data-workspace-i18n>\$\{esc\(status\)\}<\/span>/);
   assert.match(checkout,/workspaceTemplateTextV97\(!enabled\?'catalogueEnabled':'catalogueDisabled'\)/);
-  assert.match(appointments,/data-label="When"/);
+  assert.match(appointments,/data-label="Date & time"/);
   assert.match(appointments,/<span data-workspace-i18n>min<\/span>/);
   assert.match(appointments,/<span class="pill \$\{[^}]+\}">\$\{esc\(a\.status\.replace/);
   assert.match(appointments,/>Details<\/button>/);
@@ -512,9 +512,11 @@ test('v97 package and sales tables split interface prose from customer, package 
   assert.match(packages,/workspaceTemplateHtmlV97\('reversalOf',\{id:x\.original_sale_id\|\|''\}\)/);
   assert.match(packages,/workspaceTemplateHtmlV97\('usedSessionReversedBy',\{id:x\.reversal_sale_id\}\)/);
   assert.match(packages,/<span data-workspace-i18n>Used session<\/span>/);
-  assert.match(packages,/<span class="pill ok">1 session restored · no refund<\/span>/);
+  // Reworded to plainer English ("Session added back") in line with the low-literacy-first
+  // UX direction. The pill still exists and is still a translated string; only the wording moved.
+  assert.match(packages,/<span class="pill ok">Session added back · no refund<\/span>/);
   assert.match(packages,/<span class="pill new">session used<\/span>/);
-  assert.match(packages,/>Restore session<\/button>/);
+  assert.match(packages,/>Undo session use<\/button>/);
   assert.match(packages,/<td>\$\{esc\(x\.customer_name\|\|'Customer'\)\}<\/td>/);
   assert.match(app,/isWorkspaceTableDataNodeV97/);
 });

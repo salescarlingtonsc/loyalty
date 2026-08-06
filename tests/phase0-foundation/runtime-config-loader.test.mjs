@@ -207,7 +207,9 @@ for (const page of ['app/index.html', 'app/join.html']) {
     // the bundle. Concatenating them reproduces the original single-file order.
     const bundle = page === 'app/index.html' ? await read('app/app.js') : '';
     if (page === 'app/index.html') {
-      const appTag = markup.indexOf('<script src="/app.js" defer></script>');
+      // v183: /app.js carries a byte fingerprint in its query so a Cloudflare-cached copy cannot
+      // outlive a deploy. Locate the tag by prefix rather than pinning the exact url.
+      const appTag = markup.indexOf('<script src="/app.js?b=');
       assert.ok(appTag > markup.indexOf('<script src="/runtime-config-loader.js?v=2"></script>'),
         'app.js must load after the runtime config loader');
       assert.ok(appTag > markup.indexOf('@supabase/supabase-js'),

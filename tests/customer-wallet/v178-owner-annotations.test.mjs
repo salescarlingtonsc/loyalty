@@ -24,13 +24,19 @@ test('Home drops the crossed-out page-head title block and keeps Scan to join in
   const legacyHome=section("$('walletBody').innerHTML=`${customerHomeOffersMarkupV167(offersState)}",'wireCustomerHomeOffersV167(()=>renderCustomerWallet())');
   assert.doesNotMatch(legacyHome,/Each business keeps its own rewards and balances/,
     'the legacy Home page-head title block was crossed out too');
-  assert.match(legacyHome,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
-  assert.match(legacyHome,/if\(\$\('customerHomeScan'\)\)\$\('customerHomeScan'\)\.onclick=openCustomerJoinScanner/,
-    'the relocated Scan to join button must be wired on the legacy Home path too');
+  /* v183: the owner then struck the My Rewards block off Home entirely — heading and grid live
+     on the My Rewards tab only, so Home carries the jump-off instead. */
+  assert.doesNotMatch(legacyHome,/customerMyRewardsHeadingV156/);
+  assert.match(legacyHome,/customerHomeQuickLinksV183\(cards\.length,bookingSummary\)/);
+  const programmesTab=section('async function renderCustomerProgrammes(){','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
+  assert.match(programmesTab,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
+  assert.match(programmesTab,/\$\('customerHomeScan'\)\.onclick=openCustomerJoinScanner/,
+    'the relocated Scan to join button must stay wired on the My Rewards tab');
 });
 
 test('the offers shelf is titled Limited offers and keeps its kicker',()=>{
-  assert.match(app,/<p class="customer-quest-kicker">Worth coming back for<\/p><h2 id="customerHomeOffersTitle">Limited offers<\/h2>/);
+  assert.match(app,/<h2 id="customerHomeOffersTitle" class="customer-home-offers-title">[\s\S]{0,200}Limited offers<\/span><\/h2>/);
+  assert.doesNotMatch(app,/Worth coming back for/,'v183: the owner struck the kicker out');
   assert.doesNotMatch(app,/Offers for you/);
 });
 
@@ -92,11 +98,11 @@ test('offer details open a company sheet with contact, current offers and a per-
   assert.match(app,/data-company-detail aria-label="Company details for \$\{esc\(name\)\}"/);
   assert.match(app,/<span class="muted small">Company details<\/span>/);
   assert.match(app,/\.customer-company-row,\.customer-business-offer\{[^}]*min-height:52px/);
-  assert.match(app,/companyButton\.onclick=\(\)=>\{deactivate\(\{restoreFocus:false\}\);showCustomerBusinessDetailV178\(business\)\}/);
+  assert.match(app,/companyButton\.onclick=\(\)=>\{[\s\S]{0,260}showCustomerBusinessDetailV178\(business,\{inheritHistoryId:handOff\}\)/);
 
   const sheet=section('function showCustomerBusinessDetailV178','function showCustomerOfferDetailV173');
   assert.match(sheet,/overlay\.className='modal customer-surface customer-business-detail-modal'/);
-  assert.match(sheet,/CUI\.activateDialog\(overlay,\{onClose:\(\)=>deactivate\(\{restoreFocus:true\}\),initialFocus:'#customerBusinessDetailClose'\}\)/);
+  assert.match(sheet,/CUI\.activateDialog\(overlay,\{onClose:\(\)=>deactivate\(\{restoreFocus:true\}\),initialFocus:'#customerBusinessDetailClose',inheritHistoryId\}\)/);
   assert.match(sheet,/customerCompanyIdentityMarkupV178\(business\)/);
   assert.match(sheet,/customerRpc\('customer_get_offer_business_contact_v173',\{p_business:business\.id\}\)/);
   assert.match(sheet,/Loading contact details…/);
@@ -107,7 +113,7 @@ test('offer details open a company sheet with contact, current offers and a per-
   assert.match(sheet,/Loading offers…/);
   assert.match(sheet,/No current offers from this business\./);
   assert.match(sheet,/Current offers couldn’t load\./);
-  assert.match(sheet,/deactivate\(\{restoreFocus:false\}\);\s*showCustomerOfferDetailV173\(\{\.\.\.offer,business:\{\.\.\.business,\.\.\.\(offer\.business\|\|\{\}\)\}\}\)/);
+  assert.match(sheet,/showCustomerOfferDetailV173\(\{\.\.\.offer,business:\{\.\.\.business,\.\.\.\(offer\.business\|\|\{\}\)\}\},\{inheritHistoryId:handOff\}\)/);
   assert.match(sheet,/ct\('openProgramme',\{business:name\}\)/);
   assert.match(sheet,/href="#\/wallet\/\$\{slug\}" data-business-detail-nav/);
   assert.match(app,/function customerCompanyIdentityMarkupV178[\s\S]{0,400}customerMediaUrlV95\(business\?\.logo_url\)/);

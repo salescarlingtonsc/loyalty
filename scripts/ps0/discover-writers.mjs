@@ -39,7 +39,11 @@ const REPO = join(__dirname, '..', '..');
 const MIGRATIONS_DIR = join(REPO, 'supabase', 'migrations');
 const FUNCTIONS_DIR = join(REPO, 'supabase', 'functions');
 const BROWSER_FILES = [
-  'app/index.html','app/customer-ui.js','app/join.html','app/v95-media-sync.js'
+  // app/app.js holds the application script that was extracted out of app/index.html. Without
+  // it here, discovery sees ZERO browser RPC call sites for the whole workspace app and every
+  // curated browser identity reads as "removed" — the registry goes blind exactly where most
+  // value-impacting calls are made.
+  'app/index.html','app/app.js','app/customer-ui.js','app/join.html','app/v95-media-sync.js'
 ];
 
 // ---------------------------------------------------------------------------
@@ -647,7 +651,10 @@ function scanBrowser(reachesValueNames) {
       const isValue = VALUE_TABLE_NAMES.has(table);
       directWrites.push({ id: `browser.write:${rel}:${table}:${op}`, file: rel, table, op, value_table: isValue, category: isValue ? VALUE_TABLES[table].category : 'non_value', value_impact: isValue && VALUE_TABLES[table].value });
     }
-    for (const x of raw.matchAll(/\.rpc\(\s*['"]([a-z0-9_]+)['"]/gi)) {
+    // Matches sb.rpc('x') AND wrapper call sites such as customerRpc('x'). The customer
+    // surface routes every call through customerRpc(), so a '\\.rpc\\(' anchor made 28 call
+    // sites — the whole customer wallet — invisible to this audit.
+    for (const x of raw.matchAll(/rpc\(\s*['"]([a-z0-9_]+)['"]/gi)) {
       const rpc = x[1].toLowerCase();
       rpcCalls.push({ id: `browser.rpc:${rel}:${rpc}`, file: rel, rpc, reaches_value_writer: valueRpcSet.has(rpc) });
     }

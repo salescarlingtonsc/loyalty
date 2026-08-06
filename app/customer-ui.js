@@ -226,7 +226,16 @@
   }
 
   let dialogHistoryId=0;
-  function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]'}={}){
+  /* v183: when one sheet opens another (offer → company details), the outgoing sheet must NOT
+     unwind its history entry. history.back() is asynchronous, so the pop landed AFTER the
+     incoming sheet had pushed its own entry and closed it again on arrival — the company sheet
+     appeared to be unclickable. Closing with {handOffHistory:true} leaves the entry in place and
+     the incoming sheet adopts it via inheritHistoryId, so one Back still closes exactly one. */
+  function currentDialogHistoryId(){
+    const id=Number(history.state?.cuiDialog||0);
+    return Number.isInteger(id)&&id>0?id:0;
+  }
+  function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]',inheritHistoryId=0}={}){
     const returnFocus=document.activeElement;
     const focusable=()=>[...dialog.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
       .filter(element=>!element.hidden&&element.getClientRects().length);
@@ -243,20 +252,25 @@
        Without a history entry it exits the whole route instead. pushState keeps the SAME url, so
        hashchange — the only navigation signal the app router listens to — never fires. Back then
        pops our entry and closes the dialog through the identical path as Escape. */
-    const historyId=++dialogHistoryId;
+    const inherited=Number(inheritHistoryId)>0&&currentDialogHistoryId()===Number(inheritHistoryId);
+    const historyId=inherited?Number(inheritHistoryId):++dialogHistoryId;
     let closedByUs=false;
     const popstate=()=>{
       window.removeEventListener('popstate',popstate);
       if(closedByUs||!dialog.isConnected)return;
       onClose?.();
     };
-    try{history.pushState({...(history.state||{}),cuiDialog:historyId},'');window.addEventListener('popstate',popstate)}catch{}
+    try{
+      if(!inherited)history.pushState({...(history.state||{}),cuiDialog:historyId},'');
+      window.addEventListener('popstate',popstate);
+    }catch{}
     requestAnimationFrame(()=>{const target=dialog.querySelector(initialFocus)||focusable()[0]||dialog;target.focus()});
-    return ({restoreFocus=true}={})=>{
+    return ({restoreFocus=true,handOffHistory=false}={})=>{
       dialog.removeEventListener('keydown',keydown);
       window.removeEventListener('popstate',popstate);
       /* Only unwind our own entry, and only once — a Back-press already consumed it. */
-      if(!closedByUs&&history.state?.cuiDialog===historyId){closedByUs=true;try{history.back()}catch{}}
+      if(handOffHistory)closedByUs=true;
+      else if(!closedByUs&&history.state?.cuiDialog===historyId){closedByUs=true;try{history.back()}catch{}}
       dialog.remove();
       if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus();
     };
@@ -282,6 +296,7 @@
   global.FrenlyCustomerUI=Object.freeze({
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
     skeletonLine,skeletonCard,skeletonGrid,tableSkeleton,chartSkeleton,formSkeleton,setButtonBusy,
-    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog
+    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog,
+    currentDialogHistoryId
   });
 })(typeof window !== 'undefined' ? window : globalThis);

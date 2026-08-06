@@ -16,13 +16,16 @@ const grow=section('async function growPage(','/* ---------- Bring-back playbook
 const retention=section('async function retentionPage(','/* ---------- Grow: one customer journey');
 
 test('Grow starts with one task and one complete single-column programme overview',()=>{
-  assert.equal((grow.match(/id="growAutoSetup"/g)||[]).length,1);
-  assert.match(grow,/id="rewardJourneyTitle">All reward programmes</);
+  // The standalone growAutoSetup launcher was retired when Programmes became one list; setup is
+  // now started from the programme rows, which call openRewardsAutoSetup as the draft gate.
+  assert.match(grow,/openRewardsAutoSetup\(action\)/);
+  // V173 made this heading follow the selected tab (Running / To set up / List) instead of one
+  // fixed title, so assert the element and its tab-driven content rather than the old string.
+  assert.match(grow,/id="rewardJourneyTitle">\$\{programmeView==='ongoing'\?'Running'/);
   assert.match(grow,/class="grow-programme-list"/);
   assert.match(app,/\.grow-programme-list\{display:grid;grid-template-columns:1fr/);
   assert.doesNotMatch(grow,/class="rewards-overview-grid"/,
     'the everyday overview must not return to a left/right reward grid');
-  assert.ok(grow.indexOf('id="growAutoSetup"')<grow.indexOf('id="rewardJourneyTitle"'));
   assert.ok(grow.indexOf('id="rewardJourneyTitle"')<grow.indexOf('id="growSecondarySettings"'));
 });
 
@@ -79,7 +82,7 @@ test('earning, birthday, bring-back and stable reward routes retain exact edit i
   assert.match(grow,/program~/);
   assert.match(grow,/editProgramId:button\.dataset\.programId\|\|null/);
   assert.match(grow,/retentionPage\(draft,editProgramId/);
-  assert.match(grow,/if\(\(routedAction&&isOwner\)/);
+  assert.match(grow,/if\(!hashParamIsProgrammeView&&\(\(routedAction&&isOwner\)/);
   assert.match(retention,/const exactProgramMissing=Boolean\(editProgramId&&!editing\)/);
   assert.match(retention,/retentionExactProgramMissing/);
   assert.match(retention,/draftVersionId&&isOwner&&!exactProgramMissing/);

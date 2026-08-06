@@ -33,8 +33,8 @@ test('localized platform UI works with the real frozen helper contract',async()=
 test('admin route exposes a loading state and awaits the async platform renderer',async()=>{
   const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const route=source.slice(source.indexOf('async function route(){'),source.indexOf('\n/* ---------- customer wallet ---------- */'));
-  assert.match(source,/<link rel="stylesheet" href="\/platform-console\.css\?v=20260802-v134">/);
-  assert.match(source,/<script src="\/platform-console\.js\?v=20260802-v134"><\/script>/);
+  assert.match(source,/<link rel="stylesheet" href="\/platform-console\.css\?v=[0-9a-zA-Z-]+">/);
+  assert.match(source,/<script src="\/platform-console\.js\?v=[0-9a-zA-Z-]+"[^>]*><\/script>/);
   assert.match(route,/Opening Peekaa admin/);
   assert.match(route,/role="status"/);
   assert.match(route,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
@@ -51,7 +51,7 @@ test('a missing platform module renders a recoverable error instead of falling t
   const runMissingModuleRoute=async routeHash=>{
     const rootElement={innerHTML:''};
     const context={
-      globalThis:null,document:{documentElement:{setAttribute(){}}},
+      globalThis:null,document:{documentElement:{setAttribute(){},removeAttribute(){}}},
       root:rootElement,location:{pathname:'/admin',hash:'',search:'',reload(){}},
       history:{replaceState(){}},console:{error(){}},
       beginRouteInvocation:()=>()=>true,

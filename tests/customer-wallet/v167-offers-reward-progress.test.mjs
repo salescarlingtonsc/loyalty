@@ -76,7 +76,9 @@ test('reward progress is formatted, bounded, accessible, and safe for zero-cost 
   assert.match(app,/aria-valuemin="0" aria-valuemax="100"/);
   assert.match(app,/customerPointTotalV103\(loyalty\.balance\|\|0\)/);
   assert.match(app,/customerPointTotalV103\(reward\.remaining_units\|\|0\)/);
-  assert.match(app,/customerPointTotalV103\(r\.cost_points\|\|0\)/);
+  /* v183: the reward row now states the exchange — "150 points → Free facial add-on" — so the
+     formatted cost is rendered from the same clamped `cost` the progress bar uses. */
+  assert.match(app,/<span class="wallet-reward-cost">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}<\/span>/);
   assert.match(app,/customerPointTotalV103\(Math\.abs\(delta\)\)/);
   assert.match(app,/customerPointTotalV103\(earned\)/);
   assert.match(app,/is ready to redeem/);

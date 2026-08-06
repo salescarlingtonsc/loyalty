@@ -1,6 +1,6 @@
 {
   "desktop1440": {
-    "sourceHash": "8f710f8b99cc577beec75c957fd5f4654957aeb6039efdc2bb5d9e0fdcb64233",
+    "sourceHash": "3cf40af962d05fc33830fdde2f237ff27a16d9619487c0429f630a04f410ae2b",
     "viewport": {
       "clientWidth": 1440,
       "scrollWidth": 1440
@@ -11,13 +11,13 @@
           "x": 200,
           "y": 220,
           "width": 513,
-          "height": 360,
+          "height": 852.078125,
           "top": 220,
           "right": 713,
-          "bottom": 580,
+          "bottom": 1072.078125,
           "left": 200
         },
-        "validity": "Valid 1 August 2026 – 30 August 2026",
+        "validity": "Valid 1 August 2026 \u2013 30 August 2026",
         "ctaHeight": 44,
         "details": {
           "open": false,
@@ -46,6 +46,13 @@
             "scrollHeight": 72
           },
           {
+            "text": "30% off Spa Ritual 60",
+            "clientWidth": 469,
+            "scrollWidth": 469,
+            "clientHeight": 27,
+            "scrollHeight": 27
+          },
+          {
             "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.",
             "clientWidth": 469,
             "scrollWidth": 469,
@@ -53,7 +60,7 @@
             "scrollHeight": 42
           },
           {
-            "text": "Valid 1 August 2026 – 30 August 2026",
+            "text": "Valid 1 August 2026 \u2013 30 August 2026",
             "clientWidth": 469,
             "scrollWidth": 469,
             "clientHeight": 21,
@@ -87,13 +94,13 @@
           "x": 727,
           "y": 220,
           "width": 513,
-          "height": 360,
+          "height": 852.078125,
           "top": 220,
           "right": 1240,
-          "bottom": 580,
+          "bottom": 1072.078125,
           "left": 727
         },
-        "validity": "Valid 15 August 2026 – 15 September 2026",
+        "validity": "Valid 15 August 2026 \u2013 15 September 2026",
         "ctaHeight": 44,
         "details": {
           "open": false,
@@ -122,6 +129,13 @@
             "scrollHeight": 37
           },
           {
+            "text": "Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60",
+            "clientWidth": 469,
+            "scrollWidth": 469,
+            "clientHeight": 188,
+            "scrollHeight": 188
+          },
+          {
             "text": "Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60",
             "clientWidth": 469,
             "scrollWidth": 469,
@@ -129,7 +143,7 @@
             "scrollHeight": 105
           },
           {
-            "text": "Valid 15 August 2026 – 15 September 2026",
+            "text": "Valid 15 August 2026 \u2013 15 September 2026",
             "clientWidth": 469,
             "scrollWidth": 469,
             "clientHeight": 21,
@@ -188,7 +202,7 @@
           "scrollHeight": 102
         },
         {
-          "text": "Valid 15 August 2026 – 15 September 2026",
+          "text": "Valid 15 August 2026 \u2013 15 September 2026",
           "clientWidth": 366,
           "scrollWidth": 366,
           "clientHeight": 17,
@@ -212,7 +226,7 @@
     }
   },
   "mobile390": {
-    "sourceHash": "8f710f8b99cc577beec75c957fd5f4654957aeb6039efdc2bb5d9e0fdcb64233",
+    "sourceHash": "3cf40af962d05fc33830fdde2f237ff27a16d9619487c0429f630a04f410ae2b",
     "viewport": {
       "clientWidth": 390,
       "scrollWidth": 390
@@ -223,13 +237,13 @@
           "x": 14,
           "y": 221.5,
           "width": 362,
-          "height": 333.328125,
+          "height": 602.7734375,
           "top": 221.5,
           "right": 376,
-          "bottom": 554.828125,
+          "bottom": 824.2734375,
           "left": 14
         },
-        "validity": "Valid 1 August 2026 – 30 August 2026",
+        "validity": "Valid 1 August 2026 \u2013 30 August 2026",
         "ctaHeight": 44,
         "details": {
           "open": true,
@@ -258,6 +272,13 @@
             "scrollHeight": 51
           },
           {
+            "text": "30% off Spa Ritual 60",
+            "clientWidth": 318,
+            "scrollWidth": 318,
+            "clientHeight": 21,
+            "scrollHeight": 21
+          },
+          {
             "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.",
             "clientWidth": 318,
             "scrollWidth": 318,
@@ -265,7 +286,7 @@
             "scrollHeight": 42
           },
           {
-            "text": "Valid 1 August 2026 – 30 August 2026",
+            "text": "Valid 1 August 2026 \u2013 30 August 2026",
             "clientWidth": 318,
             "scrollWidth": 318,
             "clientHeight": 21,
@@ -297,15 +318,15 @@
       {
         "rect": {
           "x": 14,
-          "y": 568.828125,
+          "y": 838.2734375,
           "width": 362,
-          "height": 325.6171875,
-          "top": 568.828125,
+          "height": 721.765625,
+          "top": 838.2734375,
           "right": 376,
-          "bottom": 894.4453125,
+          "bottom": 1560.0390625,
           "left": 14
         },
-        "validity": "Valid 15 August 2026 – 15 September 2026",
+        "validity": "Valid 15 August 2026 \u2013 15 September 2026",
         "ctaHeight": 44,
         "details": {
           "open": false,
@@ -334,6 +355,13 @@
             "scrollHeight": 26
           },
           {
+            "text": "Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60",
+            "clientWidth": 318,
+            "scrollWidth": 318,
+            "clientHeight": 148,
+            "scrollHeight": 148
+          },
+          {
             "text": "Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60",
             "clientWidth": 318,
             "scrollWidth": 318,
@@ -341,7 +369,7 @@
             "scrollHeight": 126
           },
           {
-            "text": "Valid 15 August 2026 – 15 September 2026",
+            "text": "Valid 15 August 2026 \u2013 15 September 2026",
             "clientWidth": 318,
             "scrollWidth": 318,
             "clientHeight": 21,
@@ -375,7 +403,7 @@
     "modal": null
   },
   "mobile412": {
-    "sourceHash": "8f710f8b99cc577beec75c957fd5f4654957aeb6039efdc2bb5d9e0fdcb64233",
+    "sourceHash": "3cf40af962d05fc33830fdde2f237ff27a16d9619487c0429f630a04f410ae2b",
     "viewport": {
       "clientWidth": 412,
       "scrollWidth": 412
@@ -386,13 +414,13 @@
           "x": 14,
           "y": 221.5,
           "width": 384,
-          "height": 320,
+          "height": 550.6953125,
           "top": 221.5,
           "right": 398,
-          "bottom": 541.5,
+          "bottom": 772.1953125,
           "left": 14
         },
-        "validity": "Valid 1 August 2026 – 30 August 2026",
+        "validity": "Valid 1 August 2026 \u2013 30 August 2026",
         "ctaHeight": 44,
         "details": {
           "open": false,
@@ -421,6 +449,13 @@
             "scrollHeight": 51
           },
           {
+            "text": "30% off Spa Ritual 60",
+            "clientWidth": 340,
+            "scrollWidth": 340,
+            "clientHeight": 21,
+            "scrollHeight": 21
+          },
+          {
             "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.",
             "clientWidth": 340,
             "scrollWidth": 340,
@@ -428,7 +463,7 @@
             "scrollHeight": 42
           },
           {
-            "text": "Valid 1 August 2026 – 30 August 2026",
+            "text": "Valid 1 August 2026 \u2013 30 August 2026",
             "clientWidth": 340,
             "scrollWidth": 340,
             "clientHeight": 21,
@@ -460,15 +495,15 @@
       {
         "rect": {
           "x": 14,
-          "y": 555.5,
+          "y": 786.1953125,
           "width": 384,
-          "height": 446.7421875,
-          "top": 555.5,
+          "height": 857.5625,
+          "top": 786.1953125,
           "right": 398,
-          "bottom": 1002.2421875,
+          "bottom": 1643.7578125,
           "left": 14
         },
-        "validity": "Valid 15 August 2026 – 15 September 2026",
+        "validity": "Valid 15 August 2026 \u2013 15 September 2026",
         "ctaHeight": 44,
         "details": {
           "open": true,
@@ -497,6 +532,13 @@
             "scrollHeight": 26
           },
           {
+            "text": "Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60",
+            "clientWidth": 340,
+            "scrollWidth": 340,
+            "clientHeight": 148,
+            "scrollHeight": 148
+          },
+          {
             "text": "Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60",
             "clientWidth": 340,
             "scrollWidth": 340,
@@ -504,7 +546,7 @@
             "scrollHeight": 126
           },
           {
-            "text": "Valid 15 August 2026 – 15 September 2026",
+            "text": "Valid 15 August 2026 \u2013 15 September 2026",
             "clientWidth": 340,
             "scrollWidth": 340,
             "clientHeight": 21,

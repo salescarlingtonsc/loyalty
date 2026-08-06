@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const read=relative=>fs.readFileSync(path.join(repoRoot,relative),'utf8');
-const app=Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'));
+// read() is synchronous, so wrapping it in Promise.all left `app` as a Promise and every
+// downstream source.match() threw — the whole readiness inventory silently stopped running
+// when the application script was split out of index.html.
+const app=[read('app/index.html'),read('app/app.js')].join('\n');
 const platform=read('app/platform-console.js');
 
 const between=(source,start,end)=>{

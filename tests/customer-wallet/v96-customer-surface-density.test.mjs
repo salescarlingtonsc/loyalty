@@ -15,9 +15,13 @@ test('customer Home removes the redundant Messages summary while retaining the h
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   const fallbackHome=wallet.slice(wallet.indexOf("if(!businessSlug){"),wallet.indexOf("const args={p_business_slug:businessSlug}"));
   const shell=section('function renderCustomerShell','function focusCustomerRoute');
+  const quickLinks=section('function customerHomeQuickLinksV183','/* v178: surface=');
   assert.doesNotMatch(fallbackHome,/href="#\/customer\/messages"[\s\S]{0,100}<b>Messages<\/b>/);
-  assert.match(fallbackHome,/href="#\/customer\/programmes"/);
-  assert.match(fallbackHome,/href="#\/customer\/bookings"/);
+  /* v183: Home's two-way jump-off moved into customerHomeQuickLinksV183 — the destinations are
+     unchanged, the markup is shared by both Home paths instead of duplicated. */
+  assert.match(fallbackHome,/customerHomeQuickLinksV183\(cards\.length,bookingSummary\)/);
+  assert.match(quickLinks,/href="#\/customer\/programmes"/);
+  assert.match(quickLinks,/href="#\/customer\/bookings"/);
   assert.match(shell,/id="customerInboxBellSlot"/);
   assert.match(shell,/href="#\/customer\/messages"/);
   assert.match(shell,/CUI\.icon\('bell'/);
@@ -53,7 +57,10 @@ test('fallback Home and legacy Programmes route reuse the compact selector inste
   assert.match(programmes,/Promise\.all\(\[\s*sb\.rpc\('customer_get_wallet'\),\s*sb\.rpc\('customer_get_programme_selector_media_v96'\)/);
   assert.match(programmes,/mergeCustomerProgrammeSelectorMediaV96/);
   assert.match(programmes,/customerProgrammeGridMarkupV96\(cards\)/);
-  assert.match(fallbackHome,/customerProgrammeGridMarkupV96\(cards\)/);
+  /* v183 (owner struck the My Rewards block off Home): the compact selector is reached from
+     Home's jump-off now; only the My Rewards route renders the grid itself. */
+  assert.doesNotMatch(fallbackHome,/customerProgrammeGridMarkupV96\(cards\)/);
+  assert.match(fallbackHome,/customerHomeQuickLinksV183\(cards\.length,bookingSummary\)/);
   assert.doesNotMatch(fallbackHome,/class="wallet-firms"|class="wallet-firm"/);
   assert.doesNotMatch(fallbackHome,/data-slug=/);
 });

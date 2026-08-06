@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="34d2417dba6ac5253eb43b54d8f959326d1d414200f737dd6d3c0bcd9b0c7dda"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="5129ee0d96713ec41565a73f767a1cec73bdcd7c3d4dc29deb83ca869d198416"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -150,6 +150,8 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .tier-editor-advanced>summary:hover{color:var(--coral)}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
+.sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
+.sales-mix-row input{margin-top:3px;flex:none}
 /* V180: today's bookings at a glance. Chips wrap rather than scroll horizontally — a hidden
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
@@ -1242,6 +1244,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-programme-guide .cui-icon{flex:0 0 auto;color:var(--coral)}
 .customer-booking-business{padding:18px}
 .customer-booking-business .wallet-appt:last-child{border-bottom:0}
+/* v178: Bookings | Cancelled | History pills. Same shape language as .customer-primary-nav. */
+.customer-booking-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px;margin:0 0 14px;background:var(--card);border:1px solid var(--hair);border-radius:16px;box-shadow:var(--shadow)}
+.customer-booking-tab{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:44px;padding:8px 10px;border:0;border-radius:11px;background:transparent;color:var(--ink2);font-family:inherit;font-size:13px;font-weight:650;transition:background .14s var(--ease),color .14s var(--ease)}
+.customer-booking-tab:hover{background:var(--bg);color:var(--ink)}
+.customer-booking-tab[aria-selected="true"]{background:var(--tint);color:var(--coral)}
+.customer-booking-tab-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--bg);color:inherit;font-size:11px;font-weight:800}
+#customerBookingPanel:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
 .customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.55fr);gap:14px;align-items:start}
 .entry-choice-card{width:min(720px,100%);padding:30px}
 .entry-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
@@ -1284,6 +1293,18 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-offer-detail-meta{display:grid;gap:5px;margin-top:12px;padding:11px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--bg)}
 .customer-offer-detail-meta a{color:inherit;text-decoration:underline}
 .customer-offer-detail h2,.customer-offer-detail p,.customer-offer-detail summary{overflow-wrap:anywhere}
+/* v178: company-details affordance on the offer sheet, and the company sheet it opens. */
+.customer-company-row,.customer-business-offer{display:flex;align-items:center;gap:11px;width:100%;min-height:52px;margin-top:12px;padding:10px 12px;border:1px solid var(--hair);border-radius:13px;background:var(--bg);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.customer-company-row:hover,.customer-business-offer:hover{border-color:var(--coral)}
+.customer-company-row-copy,.customer-business-offer-copy{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}
+.customer-company-row-chevron{flex:0 0 auto;color:var(--coral);font-size:20px;line-height:1}
+.customer-company-logo{flex:0 0 auto;width:40px;height:40px;border-radius:12px;object-fit:cover;background:var(--tint)}
+.customer-company-logo--fallback{display:grid;place-items:center;color:var(--coral);font-weight:800;font-size:17px}
+.customer-business-detail-head{display:flex;align-items:center;gap:12px;margin-top:12px}
+.customer-business-detail-head h2{min-width:0;overflow-wrap:anywhere;font-size:clamp(1.3rem,4vw,1.6rem);letter-spacing:-.02em}
+.customer-business-detail-subhead{margin-top:18px;font-size:1rem}
+.customer-business-offer-list{display:grid;gap:0}
+.customer-business-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 @media(max-width:520px){.wallet-reward-steps{grid-template-columns:1fr}}
 .redemption-qr{display:grid;place-items:center;min-height:220px;margin:16px auto;padding:16px;border:1px solid var(--hair);border-radius:14px;background:#fff}
 .redemption-qr img,.redemption-qr canvas{max-width:100%;height:auto}
@@ -1342,7 +1363,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   html[data-customer-surface="true"] body{background:#0F1115}
   /* The offer-detail sheet is appended to body, outside .customer-surface,
      so it must join the dark token scope explicitly. */
-  .customer-surface,.customer-offer-detail-modal .modal-card{
+  .customer-surface,.customer-offer-detail-modal .modal-card,.customer-business-detail-modal .modal-card{
     color-scheme:dark;
     --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;
     --line:#343841;--control-border:#737A86;--hair:rgba(255,255,255,.11);
@@ -1357,7 +1378,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   .customer-surface.customer-surface :is(input,select,textarea,.btn.ghost,.customer-primary-nav,.customer-home-quick a,
     .customer-home-offer,.customer-perk-card,.customer-offer-card,.customer-reward-card,
     .customer-programme-compact-head,.customer-programme-guide,.wallet-firm,.wallet-reward,
-    .customer-inbox-bell,.customer-programme-card,.customer-booking-business,.checkrow,.fb-chip,
+    .customer-inbox-bell,.customer-programme-card,.customer-booking-business,.customer-booking-tabs,.checkrow,.fb-chip,
     .customer-avatar,.customer-programme-switcher a,.customer-workspace-switch .menu){
     background:var(--card);color:var(--ink);border-color:var(--line)
   }
@@ -2150,6 +2171,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'34d2417dba6ac5253eb43b54d8f959326d1d414200f737dd6d3c0bcd9b0c7dda',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'5129ee0d96713ec41565a73f767a1cec73bdcd7c3d4dc29deb83ca869d198416',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

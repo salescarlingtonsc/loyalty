@@ -176,6 +176,8 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .tier-editor-advanced>summary:hover{color:var(--coral)}
 .bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
 .bday-mode-row input{margin-top:2px;flex:none}
+.sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
+.sales-mix-row input{margin-top:3px;flex:none}
 /* V180: today's bookings at a glance. Chips wrap rather than scroll horizontally — a hidden
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
@@ -1124,6 +1126,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .pf-choice{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}
 .pf-inlineerr{color:var(--red);font-size:13px;font-weight:600;margin-top:12px}
 .pf-inlineerr:empty{display:none}
+.v183-hours{display:grid;gap:8px}
+.v183-hours-row{display:grid;grid-template-columns:minmax(84px,1fr) auto minmax(96px,1fr) minmax(96px,1fr);align-items:center;gap:8px}
+.v183-hours-open{display:flex;align-items:center;gap:6px;margin:0;font-size:12.5px;white-space:nowrap}
+.v183-team{display:grid;gap:8px}
+.v183-team-row{display:flex;align-items:center;gap:8px;margin:0;padding:8px 10px;border:1px solid var(--hair);border-radius:12px;color:var(--ink);font-weight:500;font-size:14px}
+.v183-team-member{border:1px solid var(--hair);border-radius:12px;padding:10px}
+.v183-team-member .v183-team-row{border:0;padding:0}
+.v183-team-rota{display:flex;align-items:flex-start;gap:8px;margin:9px 0 0;color:var(--ink);font-weight:500;font-size:13px}
+.v183-staff-hours{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair)}
+.v183-staff-hours[hidden]{display:none}
+.v183-rota-pill{margin-left:auto;flex:0 0 auto}
+@media(max-width:560px){.v183-hours-row{grid-template-columns:1fr 1fr;gap:6px}}
+.pf-day-track{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.pf-day{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:0 0 auto;min-height:56px;padding:9px 13px;border:1px solid var(--control-border);border-radius:14px;background:var(--card);color:var(--ink);scroll-snap-align:start}
+.pf-day.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+.pf-day.sel .muted{color:inherit}
+.pf-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
+.pf-slot{min-height:44px;padding:10px 8px;border:1px solid var(--control-border);border-radius:12px;background:var(--card);color:var(--ink);font-weight:650}
+.pf-slot.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
@@ -1275,6 +1296,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-booking-tab[aria-selected="true"]{background:var(--tint);color:var(--coral)}
 .customer-booking-tab-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--bg);color:inherit;font-size:11px;font-weight:800}
 #customerBookingPanel:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+.customer-booking-invite{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.customer-home-offers-title{display:flex;align-items:center;gap:9px}
+.customer-home-offers-badge{display:inline-grid;place-items:center;width:32px;height:32px;flex:0 0 auto;border-radius:11px;background:var(--tint);color:var(--coral)}
+.customer-home-offer-business{display:flex;align-items:center;gap:7px;margin-top:6px;min-width:0}
+.customer-home-offer-logo{flex:0 0 auto;width:24px;height:24px;border-radius:8px;object-fit:cover;background:var(--bg)}
+.customer-home-offer-logo--fallback{display:inline-grid;place-items:center;font-size:11px;font-weight:800;color:var(--coral);background:var(--tint)}
+.customer-home-offer-countdown{margin-top:6px;font-size:13px;font-weight:750;color:var(--coral)}
+.customer-programme-holdings{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.customer-programme-holding{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--bg);color:var(--ink2);font-size:12px;font-weight:600}
+.customer-programme-holding b{color:var(--ink);font-weight:800}
+.wallet-reward-trade{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.wallet-reward-cost{color:var(--coral)}
+.wallet-reward-arrow{color:var(--ink2);font-weight:700}
 .customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.55fr);gap:14px;align-items:start}
 .entry-choice-card{width:min(720px,100%);padding:30px}
 .entry-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
@@ -1492,6 +1526,6 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 <script src="/growth-offers.js" defer></script>
 <script src="/sector-economics.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
-<script src="/app.js" defer></script>
+<script src="/app.js?b=0f3f9d619956" defer></script>
 </body>
 </html>

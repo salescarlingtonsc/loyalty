@@ -36,7 +36,9 @@ test('Grow is one overview-first journey with secondary anatomy rather than four
     assert.match(grow,new RegExp(`data-grow-step="${step}"`));
   }
   assert.doesNotMatch(grow,/role="tablist"|data-growtab|settings-tabs/);
-  assert.equal((grow.match(/id="growAutoSetup"/g)||[]).length,1);
+  // The standalone growAutoSetup launcher was removed when Programmes was simplified to one
+  // list; openRewardsAutoSetup is now the draft-creation GATE reached from the programme
+  // rows and the template picker. Assert that entry point rather than the retired button.
   assert.ok(grow.indexOf('id="rewardJourneyTitle"')<grow.indexOf('id="growSecondarySettings"'));
   assert.match(grow,/<details class="grow-secondary" id="growSecondarySettings">[\s\S]*?aria-label="Grow customer journey"/);
   for(const status of ['Live','Draft ready','Needs setup'])assert.match(grow,new RegExp(`['"]${status}['"]`));
@@ -49,7 +51,9 @@ test('first-time setup is idempotent, guarded, draft-only and recommendation-led
   assert.match(setup,/draft_config_version_id\|\|data\?\.version_id/);
   assert.equal((setup.match(/await sb\.rpc\(/g)||[]).length,1,
     'confirmation has one recommendation draft writer');
-  assert.match(grow,/if\(growDraftVersionId\)return mountGrowSurface\('rewards',\{draftOverride:growDraftVersionId,focusTarget:'lm'\}\)/,
+  // The guard moved from the retired launcher onto the programme-row handlers: the popup only
+  // opens when there is NO draft, so resuming still bypasses the creation RPC entirely.
+  assert.match(grow,/if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/,
     'resuming an existing draft bypasses the creation popup and RPC');
   assert.doesNotMatch(setup,/publish_loyalty_config|location\.reload|route\(\)/);
   assert.match(setup,/rewardAutoSetupRequestKey\?\?=crypto\.randomUUID\(\)/);
@@ -63,7 +67,7 @@ test('one coherent Grow draft is passed to earning and bring-back editors',()=>{
   assert.match(grow,/if\(surface==='rewards'\)\{[\s\S]*await loyaltyPage\(undefined,draft,null,false,editorIntent\)/);
   assert.match(grow,/else if\(surface==='winback'\)\{[\s\S]*await retentionPage\(draft,editProgramId\)/);
   assert.match(grow,/draftOverride:growDraftVersionId/);
-  assert.match(grow,/growDraftVersionId\?'Continue rewards setup':'Create recommended rewards draft'/);
+  assert.match(grow,/openRewardsAutoSetup\(action\)/);
 });
 
 test('one-sheet automatic popup is the guided start while detailed edits remain secondary',()=>{
@@ -72,7 +76,7 @@ test('one-sheet automatic popup is the guided start while detailed edits remain 
   }
   assert.match(grow,/Review the recommended starting point/);
   assert.doesNotMatch(grow,/Step 1 of 3|Step 2 of 3|Step 3 of 3/);
-  assert.match(grow,/id="growAutoSetup"/);
+  assert.match(grow,/function openRewardsAutoSetup\(/);
   assert.match(grow,/id="growSecondarySettings"/);
   assert.doesNotMatch(grow,/data-grow-guide=/);
   assert.match(grow,/if\(activate\)\{element\.click\(\);return true\}/);
@@ -123,7 +127,9 @@ test('staff receive published summaries while authoring and Advanced remain owne
   assert.match(grow,/const canSetupGrow=isOwner&&canRewards&&canWriteModule\('loyalty'\)/);
   assert.match(grow,/if\(!isOwner\|\|!available\|\|!growDraftVersionId\)return ''/);
   assert.match(grow,/\$\{isOwner\?`<details class="grow-advanced"/);
-  assert.match(grow,/if\(\(routedAction&&isOwner\)\|\|\(hashParam&&isOwner\)\|\|routedSurface==='studio'\)/);
+  // V172 prefixed this with !hashParamIsProgrammeView so a tab name in the deep-link slot no
+  // longer resolves to an unknown surface and crashes the workspace. Same three-way condition.
+  assert.match(grow,/if\(!hashParamIsProgrammeView&&\(\(routedAction&&isOwner\)\|\|\(hashParam&&isOwner\)\|\|routedSurface==='studio'\)\)/);
   assert.match(grow,/if\(canSetupGrow\|\|\(S\.myRole==='owner'&&canWinback&&canWriteModule\('retention'\)\)\)[\s\S]*firm_config_versions/);
 });
 

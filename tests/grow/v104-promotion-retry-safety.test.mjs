@@ -37,7 +37,7 @@ test('definitive validation failures clean the uncommitted upload',()=>{
 
 test('draft edits and unpublishing use the same stable receipt path',()=>{
   assert.doesNotMatch(page,/business_save_promotion_v104/);
-  assert.match(page,/business_finalize_promotion_v104/);
+  assert.match(page,/business_finalize_promotion_v155/);
   assert.match(page,/operation:unpublish\?'unpublish':publish\?'publish':'draft'/);
   assert.match(page,/completionMessage=pending=>pending\?\.operation==='unpublish'/);
   assert.match(page,/promotionUnpublish'\)\.onclick=\(\)=>save\(false,\{unpublish:true\}\)/);
@@ -69,7 +69,7 @@ test('a delayed save response cannot repaint a route after its Promotions page i
 test('an in-flight save keeps one immutable company identity across RPC, storage, cleanup, and retry state',()=>{
   assert.match(page,/const businessId=S\.biz\.id,businessName=S\.biz\.name,businessSlug=S\.biz\.slug/);
   assert.match(page,/businessSnapshot=Object\.freeze\(\{id:businessId,name:businessName,slug:businessSlug\}\)/);
-  assert.match(page,/business_get_promotion_editor_v104',\{p_business:businessId\}/);
+  assert.match(page,/business_get_promotion_editor_v155',\{p_business:businessId\}/);
   assert.match(page,/p_business:businessId,p_promotion_id:workingPromotionId/);
   assert.match(page,/p_business:businessId,p_promotion_id:promotion\.id/);
   assert.match(page,/objectPath=`\$\{businessId\}\/offer\//);

@@ -58,17 +58,13 @@ test('the packages section renders from the collapsed runs and pluralises only r
   assert.doesNotMatch(app,/item\.usage_history\.map\(use=>/);
 });
 
-test('the feedback status sentence never doubles punctuation and the pill keeps the bare word',()=>{
-  const sentenceStart=app.indexOf('const feedbackStatusWord=');
-  const sentenceEnd=app.indexOf('const feedbackStatusTone=',sentenceStart);
-  assert.ok(sentenceStart>=0&&sentenceEnd>sentenceStart,'v168 feedback status helpers must exist');
-  const {feedbackStatusWord,feedbackStatusSentence}=new Function(
-    `${app.slice(sentenceStart,sentenceEnd)};return {feedbackStatusWord,feedbackStatusSentence};`
-  )();
-  assert.equal(feedbackStatusSentence({recovery_status:'closed'}),'Thanks!');
-  assert.equal(feedbackStatusSentence({recovery_status:'resolved'}),'Sorted out.');
-  assert.equal(feedbackStatusSentence({recovery_status:'open'}),'The team is looking into this.');
-  assert.equal(feedbackStatusWord({recovery_status:'resolved'}),'Sorted out');
-  assert.match(app,/out of 5<\/span>\. \$\{esc\(feedbackStatusSentence\(general\)\)\}<\/p>/);
-  assert.match(app,/<span class="pill \$\{feedbackStatusTone\(f\)\}">\$\{esc\(feedbackStatusWord\(f\)\)\}<\/span>/);
+/* v183 (owner: "don't need in-house feedback — just Google review"): the recovery-status
+   sentence had nowhere left to render once the in-app rating was removed, so the helpers went
+   with it. What must hold now is that no remnant of the private feedback loop is left behind. */
+test('the removed in-app feedback loop leaves no orphaned status helpers or read path',()=>{
+  assert.doesNotMatch(app,/const feedbackStatusWord=/);
+  assert.doesNotMatch(app,/const feedbackStatusSentence=/);
+  assert.doesNotMatch(app,/const feedbackStatusTone=/);
+  assert.doesNotMatch(app,/customer_list_my_feedback/);
+  assert.doesNotMatch(app,/feedbackSubmitIdem/);
 });

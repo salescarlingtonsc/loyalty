@@ -54,11 +54,12 @@ test('services and inventory render explicit read-only states and bind mutations
   const inventory=section('async function inventoryPage(){','/* ---------- packages ---------- */');
   assert.match(services,/const canWrite=canWriteModule\('services'\)/);
   assert.match(services,/Read-only services access/);
-  assert.match(services,/canWrite\?importBtn\('services'\):''/);
+  // The Services header gained Add bundle / Add service actions alongside the import button.
+  assert.match(services,/canWrite\?importBtn\('services'\)\+CUI\.action\(/);
   for(const handler of [
     /if\(canWrite\)\$\('sadd'\)\.onclick/,
     /if\(canWrite\)\$\('badd3'\)\.onclick/,
-    /if\(canWrite\)\$\('radd3'\)\.onclick/,
+    // radd3 removed with the Resources module, which no longer exists anywhere in the app.
     /if\(canWrite\)\$\('ladd'\)\.onclick/
   ])assert.match(services,handler);
   assert.match(services,/const \{error\}=await sb\.from\('services'\)\.update[\s\S]*if\(error\)return fail\(error\)/);
@@ -78,7 +79,8 @@ test('packages and expenses retain reads while their write actions follow the ex
   assert.match(packages,/const canWrite=canWriteModule\('packages'\)/);
   assert.match(packages,/const canSell=canWrite&&hasRoleCapability\('create_sales'\)/);
   assert.match(packages,/if\(canWrite\)\{[\s\S]*\$\('kadd'\)\.onclick/);
-  assert.match(packages,/if\(canSell\)\$\('ksell'\)\.onclick/);
+  // Gained a null guard on the control before binding; the capability gate is unchanged.
+  assert.match(packages,/if\(canSell&&\$\('ksell'\)\)\$\('ksell'\)\.onclick/);
   assert.match(packages,/canWrite&&k\.remaining>0/);
   assert.match(packages,/canWrite&&x\.can_reverse/);
   assert.match(packages,/id="packagesRetry"/);
