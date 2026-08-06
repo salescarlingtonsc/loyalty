@@ -5677,7 +5677,16 @@ async function renderCustomerWallet(businessSlug=null){
       insufficient_balance:'More points needed',
       not_started:'Available soon',
       ended:'Offer ended',
-      limit_reached:'Claim limit reached'
+      limit_reached:'Claim limit reached',
+      tier_locked:'Unlocks at a higher tier'
+    };
+    /* A tier-gated reward stays VISIBLE and locked rather than hidden: naming the tier is the
+       whole reason a member climbs. Uses the tier name the server resolved, so this line can
+       never disagree with what the counter will actually allow. */
+    const rewardLockLineV176=(r)=>{
+      if(r.availability!=='tier_locked')return '';
+      const label=r.tier_requirement?.tier_label;
+      return label?`Reach ${label} to unlock this reward`:'Unlocks at a higher tier';
     };
     host.setAttribute('aria-busy','false');
     const rewardUnit=loyalty.unit||'points',rewardBalance=Math.max(0,Number(loyalty.balance)||0);
@@ -5692,8 +5701,8 @@ async function renderCustomerWallet(businessSlug=null){
         progress=cost>0?Math.min(100,Math.max(0,Math.round((rewardBalance/cost)*100))):100,
         short=r.availability==='insufficient_balance';
       return `<article class="wallet-reward">
-      ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b>${esc(r.customer_name||'Reward')}</b><span class="spacer"></span>${ready?'<span class="pill ok">Ready</span>':''}<span class="pill">${esc(customerPointTotalV103(r.cost_points||0))} ${esc(rewardUnit)}</span></div>
-      ${r.description?`<p class="muted small" style="margin-top:7px">${esc(r.description)}</p>`:''}${short?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><p class="small wallet-reward-gap"><b>${esc(customerPointTotalV103(gap))} more ${esc(rewardUnit)}</b></p><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} of ${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)} collected.</span>`:''}<p class="${short?'muted small':'small'}" style="margin-top:9px">${esc(availability[r.availability]||'Ask at counter')}</p>
+      ${r.image_ref?(String(r.image_ref).startsWith('https://')?`<p class="small" style="margin-bottom:9px"><a href="${esc(r.image_ref)}" target="_blank" rel="noopener noreferrer">View reward image</a></p>`:`<img src="${esc(r.image_ref)}" alt="" loading="lazy">`):''}<div class="row"><b>${esc(r.customer_name||'Reward')}</b><span class="spacer"></span>${ready?'<span class="pill ok">Ready</span>':''}${r.availability==='tier_locked'?'<span class="pill">🔒 Locked</span>':''}<span class="pill">${esc(customerPointTotalV103(r.cost_points||0))} ${esc(rewardUnit)}</span></div>
+      ${r.description?`<p class="muted small" style="margin-top:7px">${esc(r.description)}</p>`:''}${short?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><p class="small wallet-reward-gap"><b>${esc(customerPointTotalV103(gap))} more ${esc(rewardUnit)}</b></p><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} of ${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)} collected.</span>`:''}<p class="${short?'muted small':'small'}" style="margin-top:9px">${esc(rewardLockLineV176(r)||availability[r.availability]||'Ask at counter')}</p>
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
@@ -12558,6 +12567,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         </div>`;
       }).join(''):'<p class="muted small" style="margin-top:8px">Add branches first.</p>'}
     </details>`:'';
+  /* Names the tier a reward is gated behind, for the owner's own list. Falls back to the stored
+     threshold when the tier has since been deleted, so a gate never renders as "no gate". */
+  const rewardTierGateLabelV176=(r)=>{
+    if(!r||(r.min_tier_id==null&&r.min_tier_threshold==null))return '';
+    const match=tiers.find(t=>String(t.tier_id||t.id)===String(r.min_tier_id||''));
+    if(match)return match.name;
+    return r.min_tier_threshold==null?'':`${r.min_tier_threshold}+ ${unit}`;
+  };
   const rewardRows=(label)=>`
     <b style="display:block;margin-top:18px">${label}</b>
     <div class="reward-list" id="rwList">
@@ -12565,7 +12582,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <div class="meta"><div><b class="inline-status">${r.active?'':CUI.icon('retention',{size:15})}${esc(rewardLabel(r))}</b>
         <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
         ${r.claim_available_from||r.claim_available_until?`<div class="muted small" style="margin-top:4px">${r.claim_available_from?`Starts ${esc(walletDate(r.claim_available_from,true))}`:'Available now'}${r.claim_available_until?` · Ends ${esc(walletDate(r.claim_available_until,true))}`:''}</div>`:''}
-        ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}</div>
+        ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}
+        ${rewardTierGateLabelV176(r)?`<div class="muted small" style="margin-top:4px">🔒 ${esc(rewardTierGateLabelV176(r))} and above</div>`:''}</div>
         <span class="spacer"></span><span class="pill ${state.tone}">${state.label}</span>
         ${canManageLoyalty?`<button class="btn ghost sm rwEdit" data-reward-id="${esc(rewardId(r))}">Edit</button>`:''}</div></div>`}).join('')
       :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}</div>
@@ -12960,6 +12978,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         <div id="rwCreditWrap"><label>Store credit value (${S.biz.currency||'SGD'})</label><input id="rwCredit" type="number" min="0" step="0.01" value="${((r.credit_cents||0)/100).toFixed(2)}" placeholder="e.g. 3.00"></div>
         <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
         <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
+        ${tiers.length?`<div><label for="rwMinTier">Who can redeem this</label><select id="rwMinTier">
+          <option value="">Everyone</option>
+          ${tiers.map(t=>`<option value="${esc(String(t.tier_id||t.id))}" ${String(r.min_tier_id||'')===String(t.tier_id||t.id)?'selected':''}>${esc(t.name)} and above (from ${t.threshold})</option>`).join('')}
+        </select><p class="muted small help">Members below the tier still see this reward, locked, with the tier they need. That is what makes climbing worth it.</p></div>`:''}
         <div><label>Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
         <div><label>Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
       </div>
@@ -13011,6 +13033,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(expiry<0||usage<0) return toast('Expiry and usage limit cannot be negative');
     if(!validBoundaryWindow($('rwFrom').value,$('rwUntil').value)) return toast('Reward end time must be after its effective time');
     const creditCents=Math.round(parseFloat($('rwCredit').value||'0')*100);
+    /* The gate is stored as BOTH the tier id and the threshold it stood at. The id lets the gate
+       follow a later threshold edit; the number keeps the gate meaningful if the tier is deleted,
+       instead of silently opening a premium reward to everyone. */
+    const minTierId=$('rwMinTier')?.value||null;
+    const minTier=minTierId?tiers.find(t=>String(t.tier_id||t.id)===String(minTierId)):null;
     if(kind==='credit'&&!(creditCents>0)) return toast('Enter a store credit value, or choose manual fulfilment');
     const selected=(key)=>[...document.querySelectorAll(`[data-reward-elig="${key}"]:checked`)].map(x=>x.value);
     const payload={id:editorReward?.reward_id||editorReward?.id||null,business_id:S.biz.id,
@@ -13019,6 +13046,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       credit_cents:kind==='credit'?creditCents:0,
       estimated_cost_cents:Math.round(parseFloat($('rwEstimate').value||'0')*100),
       entitlement_expiry_days:expiry>0?expiry:null,usage_limit:usage>0?usage:null,
+      min_tier_id:minTierId,min_tier_threshold:minTier?Number(minTier.threshold):null,
       claim_available_from:boundaryInstant($('rwFrom').value),
       claim_available_until:boundaryInstant($('rwUntil').value),
       image_ref:editorReward?.image_ref??null,fulfillment_kind:kind,

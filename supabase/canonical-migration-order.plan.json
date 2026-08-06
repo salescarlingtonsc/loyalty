@@ -1249,6 +1249,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260806115500",
+      "name": "nestly_v176b_reward_tier_gate_read_path",
+      "sourcePath": "db/migrations/20260806_nestly_v176b_reward_tier_gate_read_path.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260806115900",
       "name": "nestly_v180_firm_directory_null_filter",
       "sourcePath": "db/migrations/20260806_nestly_v180_firm_directory_null_filter.sql"

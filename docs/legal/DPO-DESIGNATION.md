@@ -1,6 +1,15 @@
 # Data Protection Officer designation — action required by the owner
 
-Status: **TEMPLATE — not yet executed.** The public Privacy Notice currently
+Status: **PREPARED 2026-08-06 — awaiting the owner's signature.** A completed,
+signable resolution (naming the sole director as DPO, effective 6 Aug 2026,
+contact admin.peekaa@gmail.com) was generated from the ACRA business profile
+and delivered to the owner; a copy sits in the owner's iCloud ACRA folder.
+The executed original stays in the company's statutory records — it contains
+personal identifiers and must never be committed to this repository. Once the
+owner confirms signing, update the Privacy Notice contact block to state the
+formal appointment (requires a new legal-manifest migration, v175 pattern).
+
+The public Privacy Notice currently
 says the listed contact "is not a statement that the named contact has been
 formally appointed as Peekaa's Data Protection Officer." Under PDPA s11(3),
 designating at least one individual responsible for PDPA compliance is a hard
