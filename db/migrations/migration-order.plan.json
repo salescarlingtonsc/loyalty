@@ -1200,6 +1200,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v176_reward_tier_gate.sql",
+      "semanticVersion": "v176",
+      "proposedDeployVersion": "20260806060000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260806_nestly_v173_pause_enforcement_gaps.sql",
       "semanticVersion": "v173",
       "proposedDeployVersion": "20260806085000"

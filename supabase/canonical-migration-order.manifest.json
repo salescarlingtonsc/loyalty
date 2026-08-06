@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 161,
-  "itemCount": 206,
+  "pendingCount": 162,
+  "itemCount": 207,
   "items": [
     {
       "order": 1,
@@ -2002,6 +2002,16 @@
     {
       "order": 200,
       "kind": "pending",
+      "version": "20260806060000",
+      "name": "nestly_v176_reward_tier_gate",
+      "path": "supabase/migrations/20260806060000_nestly_v176_reward_tier_gate.sql",
+      "octetLength": 3388,
+      "sha256": "946f91d89833fe8df90af6576a5466821c3033b2a3c3e18ed67dcd25bad6c258",
+      "provenance": "local-source"
+    },
+    {
+      "order": 201,
+      "kind": "pending",
       "version": "20260806085000",
       "name": "nestly_v173_pause_enforcement_gaps",
       "path": "supabase/migrations/20260806085000_nestly_v173_pause_enforcement_gaps.sql",
@@ -2010,7 +2020,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 201,
+      "order": 202,
       "kind": "pending",
       "version": "20260806090000",
       "name": "nestly_v174_pipeline_stages_demo_flag",
@@ -2020,7 +2030,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 202,
+      "order": 203,
       "kind": "pending",
       "version": "20260806091000",
       "name": "nestly_v175_customer_account_open_events",
@@ -2030,7 +2040,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 203,
+      "order": 204,
       "kind": "pending",
       "version": "20260806100000",
       "name": "nestly_v176_ai_firm_reports",
@@ -2040,7 +2050,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 204,
+      "order": 205,
       "kind": "pending",
       "version": "20260806110000",
       "name": "nestly_v177_workspace_mirror",
@@ -2050,7 +2060,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 205,
+      "order": 206,
       "kind": "pending",
       "version": "20260806113000",
       "name": "nestly_v178_dispatch_secret_db_verify",
@@ -2060,7 +2070,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 206,
+      "order": 207,
       "kind": "pending",
       "version": "20260806115000",
       "name": "nestly_v179_report_insight_evidence",

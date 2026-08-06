@@ -1201,6 +1201,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260806060000",
+      "name": "nestly_v176_reward_tier_gate",
+      "sourcePath": "db/migrations/20260806_nestly_v176_reward_tier_gate.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260806085000",
       "name": "nestly_v173_pause_enforcement_gaps",
       "sourcePath": "db/migrations/20260806_nestly_v173_pause_enforcement_gaps.sql"

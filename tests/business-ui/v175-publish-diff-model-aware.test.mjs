@@ -58,3 +58,17 @@ test('an unchanged draft still reports no rows', () => {
   assert.deepEqual(rows(same, {...same}), []);
   assert.deepEqual(rows(same, null), []);
 });
+
+test('V177: the confirm modal shows the diff, not just the safety check', () => {
+  // The diff rendered on the page behind the modal, so at the moment of typing PUBLISH the
+  // owner could not see what they were changing.
+  const modal = app.indexOf("id=\"growPubModal\"");
+  assert.ok(modal > 0);
+  const src = app.slice(modal - 900, modal + 1400);
+  assert.match(src, /publishDiffHtml/, 'modal must embed the rendered comparison');
+  assert.match(src, /What changes for customers/, 'modal needs the diff heading');
+  assert.match(app, /replace\(\/<button\[\\s\\S\]\*\?<\\\/button>\/gi,''\)/,
+    'buttons must be stripped from the embedded copy to avoid duplicate ids');
+  assert.match(app, /The programme numbers changing are listed above/,
+    'confirm copy must point at the visible diff, not at editors elsewhere');
+});
