@@ -10833,7 +10833,10 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
-        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
+        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
+        ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">Reg. no. ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
@@ -10845,7 +10848,8 @@ async function tillPage(){
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
-        <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received${d.pointsTotal!=null?` · now ${d.pointsTotal} points total`:''}</p>
+        <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
+        ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
@@ -20077,6 +20081,12 @@ async function settingsPage(){
       <p class="muted small" id="biSectorHint" style="margin-top:4px">Set by Peekaa for your sector.</p>
       <label for="bc">Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
       <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
+      <label for="blegal">Registered company name (for receipts)</label>
+      <input id="blegal" maxlength="200" placeholder="e.g. HOUGANG ABC PTE. LTD." value="${esc(S.biz.legal_name||'')}">
+      <p class="muted small" style="margin-top:4px">Printed on every receipt. Leave blank to use your workspace name.</p>
+      <label for="buen">Business registration number / UEN</label>
+      <input id="buen" maxlength="60" placeholder="e.g. 202612345A" value="${esc(S.biz.registration_number||'')}">
+      <p class="muted small" style="margin-top:4px">Shown on receipts so customers can identify who they paid.</p>
       <label for="bru">Public review link (Google, Facebook, etc.)</label><input id="bru" type="url" inputmode="url" placeholder="https://g.page/your-business/review" value="${esc(S.biz.review_url||'')}" aria-describedby="bruHint">
       <p class="muted small" id="bruHint" style="margin-top:4px">Optional. Must start with https://. Shown to customers in their wallet — it is offered to everyone, never used to hide low ratings.</p>
       <p class="field-label">Portal link (share with customers)</p>
@@ -20267,10 +20277,16 @@ async function settingsPage(){
       $('bru').focus();return toast('Public review link must start with https:// and be under 500 characters');
     }
     const reviewUrl=reviewUrlRaw||null;
+    /* V188: legal_name and registration_number already existed on businesses but nothing ever
+       asked for them, so every receipt in production printed only a workspace nickname. They
+       ride this same UPDATE — no new call site. */
+    const legalName=($('blegal')?.value||'').trim()||null;
+    const registrationNumber=($('buen')?.value||'').trim()||null;
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
-      brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl}).eq('id',S.biz.id);
+      brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,
+      legal_name:legalName,registration_number:registrationNumber}).eq('id',S.biz.id);
     if(error)return fail(error);
-    Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl});
+    Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber});
     toast('Saved');route();
   };
   $('cfAdd').onclick=async()=>{
