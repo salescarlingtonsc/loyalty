@@ -1577,15 +1577,14 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   var hash=location.hash.split('?')[0];
   if(hash.indexOf('#/platform')===0)return;
   var manifest=JSON.parse(document.getElementById('appSurfaceChunks').textContent);
-  var signedIn=Object.keys(localStorage).some(function(key){return /^sb-.+-auth-token$/.test(key)});
   var customer=['#/b/','#/customer','#/wallet','#/claim','#/join'].some(function(prefix){
     return hash===prefix.replace(/\/$/,'')||hash.indexOf(prefix)===0;
-  })||((hash===''||hash==='#/')&&!signedIn);
+  })||hash===''||hash==='#/';
   var link=document.createElement('link');
   link.rel='preload';link.as='script';link.href=manifest[customer?'customer':'business'];
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=4dab42c47536" defer></script>
+<script src="/app-core.js?b=3ca19eaf9519" defer></script>
 </body>
 </html>

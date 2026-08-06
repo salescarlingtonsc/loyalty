@@ -1542,7 +1542,14 @@ function appSurfaceForRouteV185(hash,{signedIn=false}={}){
   const route=String(hash||'').split('?')[0];
   if(route.startsWith('#/platform'))return null;
   if(CUSTOMER_ROUTE_PREFIXES_V185.some(prefix=>route===prefix.replace(/\/$/,'')||route.startsWith(prefix)))return 'customer';
-  if(route==='#/'||route==='')return signedIn?'business':'customer';
+  /* V199: "#/" is a CUSTOMER entry point in every case, signed in or not — route() sends it to
+     renderCustomerRegistration unconditionally, which then forwards a customer with a profile on
+     to #/wallet. Staff reach the workspace through #/business. The old signedIn?'business' branch
+     described a route that never existed, so every signed-in visitor to the bare root loaded the
+     workspace chunk, threw ReferenceError: renderCustomerRegistration, and fell back to
+     downloading EVERY surface — the self-heal worked, so it only ever showed up as wasted
+     bandwidth on the most-hit route. */
+  if(route==='#/'||route==='')return 'customer';
   return 'business';
 }
 /* The zh-CN / ms lookup tables are ~200KB of source and are consulted only when the active locale
