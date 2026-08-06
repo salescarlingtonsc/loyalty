@@ -559,7 +559,9 @@ test('Grow rollback history has no silent twenty-version cap', () => {
 test('branch filter fails closed and never runs reports against an unconfirmed scope', () => {
   const branchFilter = section('async function refreshBranchFilter(', '/* ---------- dashboard ---------- */');
   assert.match(branchFilter, /Branch list unavailable/);
-  assert.match(branchFilter, /const retry=wrap\.querySelector\('button'\)/);
+  // The retry control now carries data-branch-filter-retry so the readiness checker can prove
+  // it is wired; selecting it by that attribute is also less fragile than a bare tag lookup.
+  assert.match(branchFilter, /const retry=wrap\.querySelector\('\[data-branch-filter-retry\]'\)/);
   assert.match(branchFilter, /retry\.onclick=\(\)=>refreshBranchFilter\(onChange,isCurrent,targetId\)/);
   const catchStart=branchFilter.indexOf('catch(e)');
   const firstOnChange=branchFilter.indexOf('onChange();',catchStart);

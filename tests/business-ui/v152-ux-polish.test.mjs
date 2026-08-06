@@ -69,7 +69,7 @@ test('V152 key business pages use skeleton loading instead of generic spinners',
 
 test('V152 empty states explain what happened and what to do next', () => {
   for (const expected of [
-    'No revenue recorded yet',
+    'No revenue recorded in this period. Record your first sale to start tracking business performance.',
     'Record your first sale to start tracking business performance',
     'Customers will appear here after joining your loyalty programme or making a purchase',
     'No sales match these filters',

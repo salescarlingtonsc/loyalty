@@ -1595,7 +1595,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
         return clientsOff?rpcValue(null,{code:'42501',message:'Synthetic Clients module denial'}):rpcValue({rows:[],total:2,limit:1,offset:0,has_more:true});
       }
       if(name==='preview_campaign_audience_v155')return rpcValue({matching_customers:1});
-      if(name==='staff_list_customers_v129'){
+      if(name==='staff_list_customers_v155'){
         const clientsOff=new URLSearchParams(location.search).get('clientsOff')==='1';
         return clientsOff?rpcValue(null,{code:'42501',message:'Synthetic Clients module denial'}):rpcValue({rows:[],total:2,limit:1,offset:0,has_more:true});
       }

@@ -110,7 +110,8 @@ test('V151 dashboard charts show empty states instead of misleading axes', () =>
   assert.match(dashboard, /renderReportingScopeSelectorV155\(load,isDashboardCurrent,'dashboardReportingScopeWrap'\)/);
   assert.match(dashboard, /No revenue recorded in this period/);
   assert.match(dashboard, /More activity is needed to show a trend/);
-  assert.match(dashboard, /No valid visits recorded in this period/);
+  // Chart empty states were reworded to say what to do next, not just what is missing.
+  assert.match(dashboard, /No visits recorded in this period\. Record a completed sale/);
   assert.match(dashboard, /No customer age data recorded yet/);
   assert.match(dashboard, /No customer gender data recorded yet/);
   assert.match(dashboard, /revenueHasTrend/);
