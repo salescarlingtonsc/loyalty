@@ -1300,6 +1300,18 @@
       "version": "20260806170357",
       "name": "nestly_v188_no_self_service_account_deletion",
       "sourcePath": "db/migrations/20260807_nestly_v188_no_self_service_account_deletion.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806170400",
+      "name": "nestly_v188_v189_data_repairs",
+      "sourcePath": "db/migrations/20260807_nestly_v188_v189_data_repairs.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806170500",
+      "name": "nestly_v193_manage_unsold_package_plan",
+      "sourcePath": "db/migrations/20260807_nestly_v193_manage_unsold_package_plan.sql"
     }
   ]
 }

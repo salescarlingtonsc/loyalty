@@ -3366,15 +3366,6 @@ function buildPhone(ccId,phoneId){
   return cc+digits;
 }
 
-/* ---------- public customer portal ---------- */
-function contrastSafeBrandColor(value){
-  const fallback='#C24135';
-  if(!/^#[0-9A-Fa-f]{6}$/.test(value||''))return fallback;
-  const channels=[1,3,5].map(offset=>parseInt(value.slice(offset,offset+2),16)/255)
-    .map(channel=>channel<=.04045?channel/12.92:((channel+.055)/1.055)**2.4);
-  const luminance=.2126*channels[0]+.7152*channels[1]+.0722*channels[2];
-  return 1.05/(luminance+.05)>=4.5?value.toUpperCase():fallback;
-}
 function prefillEmptyPortalDetails({profile=null,user=null}={}){
   const name=$('pn'),phone=$('pp'),email=$('pe'),country=$('ppcc');
   const metadata=user?.user_metadata||{};

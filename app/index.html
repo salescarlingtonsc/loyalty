@@ -212,7 +212,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .insight-card h3{margin:0;font-size:1.04rem}.insight-card p{margin:0;line-height:1.45}.insight-meta{display:flex;flex-wrap:wrap;gap:6px}.insight-meta .pill{font-size:11px}
 .insight-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}.insight-actions .btn{min-height:38px}
 .business-health-list{display:grid;gap:8px}.health-row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:8px}.health-row:first-child{border-top:0;padding-top:0}.health-row b{font-size:13px}.health-row span{font-size:12px;color:var(--muted);text-align:right}
-.appointment-list-filters{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:end}
+/* V194 (owner: "alignment issue" on the From / To / Appointment status row). Each cell holds a
+   label above a control, and 'Appointment status' wraps to two lines at this column width while
+   'From' and 'To' do not — so the controls sat at different heights. Each cell is now a column
+   that pushes its control to the bottom, and the labels reserve one consistent line, so every
+   input and the Apply/Clear pair share one baseline. */
+.appointment-list-filters{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;display:grid;grid-template-columns:repeat(4,minmax(170px,1fr));gap:10px;align-items:end}
+.appointment-list-filters>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+.appointment-list-filters>div>label{margin:0 0 6px;min-height:1.15em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appointment-list-filters>div.row{flex-direction:row}
 .appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
 .appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
 .sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:stretch}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
@@ -1261,7 +1269,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    colour and dimmed, which reads instantly as "not mine" without hiding a single benefit. The
    state pill carries the same meaning in words, so greyscale is never the only signal. */
 .customer-tier-ladder{border-top:1px solid var(--hair);padding-top:14px}
-.customer-tier-rungs{display:grid;gap:10px;margin-top:10px;padding:0;list-style:none;counter-reset:tier}
+/* V192 (owner: tiers should read Basic -> Gold -> Diamond left to right, not stacked). Side by
+   side makes the ladder legible as a progression at a glance. auto-fit with a 200px floor so a
+   phone still stacks them rather than crushing three columns into an unreadable strip. */
+.customer-tier-rungs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px;padding:0;list-style:none;counter-reset:tier;align-items:stretch}
 .customer-tier-rung{padding:12px 14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--card);filter:grayscale(1);opacity:.62;transition:opacity var(--motion-ui) var(--ease),filter var(--motion-ui) var(--ease)}
 .customer-tier-rung.is-achieved{opacity:.78}
 .customer-tier-rung.is-current{filter:none;opacity:1;border-color:var(--merchant-accent,var(--coral));background:var(--tint);box-shadow:var(--shadow)}
@@ -1556,7 +1567,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"customer":"/app-customer.js?b=65a13234fc70","business":"/app-business.js?b=f578bb816c7a","i18n":"/app-i18n.js?b=232400221146"}
+{"customer":"/app-customer.js?b=8267eb0e27e7","business":"/app-business.js?b=9f86fe6c69b2","i18n":"/app-i18n.js?b=232400221146"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -1575,6 +1586,6 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=e676ce21d947" defer></script>
+<script src="/app-core.js?b=4dab42c47536" defer></script>
 </body>
 </html>

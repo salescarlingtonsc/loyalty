@@ -1299,6 +1299,18 @@
       "path": "db/migrations/20260807_nestly_v188_no_self_service_account_deletion.sql",
       "semanticVersion": "v188",
       "proposedDeployVersion": "20260806125930"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v188_v189_data_repairs.sql",
+      "semanticVersion": "v188",
+      "proposedDeployVersion": "20260806125940"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v193_manage_unsold_package_plan.sql",
+      "semanticVersion": "v193",
+      "proposedDeployVersion": "20260806125950"
     }
   ]
 }

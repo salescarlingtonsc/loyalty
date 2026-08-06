@@ -168,8 +168,11 @@ test('package authoring is clone/version based and sold history uses frozen snap
   assert.match(packages,/Save new version/);
   assert.match(packages,/workspaceTemplateTextV97\('packageVersionCreated'/);
   assert.match(app,/packageVersionCreated:Object\.freeze\(\{en:'New package version v\{version\} created; prior version archived'/);
-  assert.match(packages,/This version is frozen/);
-  assert.match(packages,/Existing customer purchases keep their original price, sessions and service snapshot/);
+  // V193: the freeze copy is now conditional and honest. It only claims a version is frozen once
+  // somebody has actually bought it — an unsold version protects nobody, so it stays renameable
+  // and deletable. The snapshot promise is unchanged for versions that HAVE been sold.
+  assert.match(packages,/frozen\. They keep their original price, sessions and service snapshot/);
+  assert.match(packages,/Not sold to anyone yet, so it can still be renamed or deleted/);
   assert.match(packages,/staff_list_package_entitlements_v102/);
   assert.match(packages,/plan_version/);
   assert.match(packages,/price_cents/);

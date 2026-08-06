@@ -17115,11 +17115,11 @@ async function appointmentsPage(){
       </section>`:''}
       <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><div class="v150-segment" role="tablist" aria-label="Appointment view"><button type="button" id="appointmentCalendarSeg" aria-pressed="true">Calendar</button><button type="button" id="appointmentListSeg" aria-pressed="false">List</button></div><span class="spacer"></span>
         <label class="sr-only" for="calendarBranch">Appointment branch</label><span class="appointment-filter-with-icon">${CUI.icon('branch',{size:17,className:'appointment-filter-icon'})}<select id="calendarBranch">${visibleBranches.map(b=>`<option value="${b.id}" ${b.id===branchId?'selected':''}>${esc(b.name)}</option>`).join('')}</select></span>
-        <label class="small" for="calendarService">Book</label><select id="calendarService"><option value="" ${!calendarServiceId?'selected':''}>General visit · 60 min</option>${branchServices(branchId).map(service=>`<option value="${service.id}" ${calendarServiceId===service.id?'selected':''}>${esc(serviceDisplayName(service))} · ${Number(service.duration_min)||60} min</option>`).join('')}</select>
+        
         <label class="sr-only" for="stfFilter">Appointment staff</label><span class="appointment-filter-with-icon">${CUI.icon('staff',{size:17,className:'appointment-filter-icon'})}<select id="stfFilter">${staffOpts(staffFilter,branchId)}</select></span>
         <span id="calendarOnlyControls" class="appointment-toolbar" style="gap:6px;padding:0;border:0;background:transparent">
           <button class="qbtn act" id="vDay">Day</button><button class="qbtn" id="vWeek">Week</button>
-          <button class="qbtn" id="wkToday">Today</button><button class="qbtn" id="wkPrev" aria-label="Previous period">${CUI.icon('back',{size:17})}</button><button class="qbtn" id="wkNext" aria-label="Next period">${CUI.icon('forward',{size:17})}</button>
+<button class="qbtn" id="wkPrev" aria-label="Previous period">${CUI.icon('back',{size:17})}</button><button class="qbtn" id="wkNext" aria-label="Next period">${CUI.icon('forward',{size:17})}</button>
         </span>
         <details class="appointment-more"><summary class="qbtn">More</summary><div class="appointment-more-menu"><button class="qbtn" id="apPrint">Print</button><button class="qbtn" id="apCsv">Download CSV</button></div></details></div>
         <div class="appointment-list-filters" id="appointmentListFilters" hidden>
@@ -17321,7 +17321,10 @@ async function appointmentsPage(){
     };
   }
   $('calendarBranch').onchange=()=>{selectedBranchId=$('calendarBranch').value;appointmentsPage().catch(fail)};
-  $('calendarService').onchange=()=>{calendarServiceId=$('calendarService').value;loadCalendar().catch(fail)};
+  /* V194 (owner: "remove this" on the calendar service picker). Filtering the calendar to one
+     service hid every other booking, which reads as a broken calendar far more often than it
+     helps. calendarServiceId stays declared and empty, so the filter and the slot-click
+     preselection below are simply no-ops; the service is chosen in New appointment. */
   $('stfFilter').onchange=()=>{staffFilter=$('stfFilter').value;listPage=0;loadCalendar()};
   function setCalendarView(next){
     if(next==='list'&&view!=='list')listPage=0;
@@ -17337,7 +17340,7 @@ async function appointmentsPage(){
   $('vWeek').onclick=()=>setCalendarView('week');
   $('appointmentCalendarSeg').onclick=()=>setCalendarView(view==='week'?'week':'day');
   $('appointmentListSeg').onclick=()=>setCalendarView('list');
-  $('wkToday').onclick=()=>{dayAutoScrolled=false;dayOffset=0;wkOff=0;if(view==='list')view='day';setCalendarView(view)};
+  
   $('wkPrev').onclick=()=>{dayAutoScrolled=false;if(view==='week')wkOff--;else{dayOffset--;if(view==='list')view='day'}setCalendarView(view)};
   $('wkNext').onclick=()=>{dayAutoScrolled=false;if(view==='week')wkOff++;else{dayOffset++;if(view==='list')view='day'}setCalendarView(view)};
   $('apPrint').onclick=()=>window.print();
@@ -18104,17 +18107,24 @@ async function packagesPage(){
   const canWrite=canWriteModule('packages');
   const canSell=canWrite&&hasRoleCapability('create_sales');
   routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
-  const [plansResult,servicesResult,branchesResult,preferencesResult]=await Promise.all([
+  const [plansResult,servicesResult,branchesResult,preferencesResult,purchasesResult]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('package_plans').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('created_at',{ascending:false}).order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,duration_min,price_cents,active',{count:'exact'}).eq('business_id',S.biz.id).order('name').order('id')),
     fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
-    sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id})]);
+    sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id}),
+    /* V193: a package version may only be edited or deleted while NOBODY has bought it.
+       client_packages.plan_id gives that answer exactly, rather than guessing from snapshots. */
+    fetchAllRowsResult(()=>sb.from('client_packages').select('plan_id',{count:'exact'}).eq('business_id',S.biz.id))]);
   if(!isCurrent())return;
   if(plansResult.error||servicesResult.error||branchesResult.error){
     routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1></div></div><div class="card"><div class="err">Packages could not be loaded.</div><button class="btn ghost sm" id="packagesRetry" style="margin-top:12px">Retry</button></div>`;
     $('packagesRetry').onclick=packagesPage;return;
   }
   const plans=plansResult.data,sv=servicesResult.data,packageBranches=branchesResult.data||[];
+  const packagePurchaseCount=(purchasesResult?.data||[]).reduce((tally,row)=>{
+    if(row?.plan_id)tally[row.plan_id]=(tally[row.plan_id]||0)+1;
+    return tally;
+  },{});
   const preferenceState=checkoutPreferencesStateV102(preferencesResult);
   const preferencesAvailable=preferenceState.available;
   const packageEarnsPoints=preferenceState.packageEarnsPoints;
@@ -18151,9 +18161,10 @@ async function packagesPage(){
         </label>`:S.myRole==='owner'?`<div class="permission-banner" style="margin-top:20px"><b>Package points setting unavailable</b><p class="muted small" style="margin-top:4px">Peekaa cannot confirm whether package purchases earn points. The setting control is hidden; completed sale receipts remain authoritative.</p><button class="btn ghost sm" id="packagePreferencesRetry" style="margin-top:8px">Try again</button></div>`:''}`:''}
       <div id="kplist" style="margin-top:16px">${(plans||[]).map(p=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
         <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">v${Number(p.version_no||1)} · ${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''}</span>
-          <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">This version is frozen. Existing customer purchases keep their original price, sessions and service snapshot.</div></div>
+          <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'} — frozen. They keep their original price, sessions and service snapshot, so create a new version to change anything.`:'Not sold to anyone yet, so it can still be renamed or deleted.'}</div></div>
         <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'archived'}</span>
-        ${canWrite&&p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}</div>`).join('')||CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
+        ${canWrite?(packagePurchaseCount[p.id]?`${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}`
+          :`<div class="row" style="gap:6px;flex-wrap:wrap">${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}<button type="button" class="btn ghost sm" data-package-rename="${p.id}" data-package-name="${esc(p.name)}">Rename</button><button type="button" class="btn ghost sm" data-package-delete="${p.id}" data-package-name="${esc(p.name)}">Delete</button></div>`):''}</div>`).join('')||CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
     <section class="package-panel-v157" id="pkgPanelCustomers" role="tabpanel" aria-labelledby="pkgTabCustomers" hidden>
       <div class="card"><div class="row"><div><b>Customer packages</b><p class="muted small" style="margin-top:5px">Search by customer name or phone, then use sessions from the matching customer record.</p></div></div>
       <div class="package-customer-tools-v157">
@@ -18206,6 +18217,37 @@ async function packagesPage(){
     };
     $('kv').onchange=renderPackageDiscount;$('ks').oninput=renderPackageDiscount;$('kp').oninput=renderPackageDiscount;
     $('kcancel').onclick=resetPackageForm;
+    /* V193 (owner: "i should be able to edit or delete"). A package version is frozen so that a
+       customer who bought it keeps the price, sessions and service they paid for — but that
+       protection only means anything once somebody HAS bought it. Both of this firm's versions
+       had zero purchases, so the freeze was guarding nothing while blocking a typo fix.
+       Rename and Delete are offered only for versions with no purchases; the count comes from
+       client_packages.plan_id, not a snapshot guess. */
+    document.querySelectorAll('[data-package-rename]').forEach(button=>button.onclick=async()=>{
+      const id=button.dataset.packageRename,current=button.dataset.packageName||'';
+      const next=prompt('Rename this package', current);
+      if(next===null)return;
+      const name=next.trim();
+      if(name.length<2)return toast('Give the package a name.');
+      if(name===current)return;
+      /* package_plans has SELECT-only RLS, so a direct .update() silently affects zero rows.
+         Every write goes through a SECURITY DEFINER RPC, which also re-checks that nobody has
+         bought this version — the browser's count is a UI hint, never the authority. */
+      const {error}=await sb.rpc('business_manage_package_plan_v193',
+        {p_business:S.biz.id,p_plan:id,p_action:'rename',p_name:name});
+      if(error)return toast(ownerErrorText(error));
+      toast('Package renamed');packagesPage();
+    });
+    document.querySelectorAll('[data-package-delete]').forEach(button=>button.onclick=async()=>{
+      const id=button.dataset.packageDelete,name=button.dataset.packageName||'this package';
+      if(!confirm(`Delete "${name}"? Nobody has bought it, so nothing is taken away from a customer. This cannot be undone.`))return;
+      CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
+      const {error}=await sb.rpc('business_manage_package_plan_v193',
+        {p_business:S.biz.id,p_plan:id,p_action:'delete',p_name:null});
+      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+      if(error)return toast(ownerErrorText(error));
+      toast('Package deleted');packagesPage();
+    });
     document.querySelectorAll('[data-edit-package]').forEach(button=>button.onclick=()=>{
       const plan=(plans||[]).find(item=>item.id===button.dataset.editPackage);if(!plan)return;
       $('kid').value=plan.id;$('kn').value=plan.name;$('kp').value=(plan.price_cents/100).toFixed(2);

@@ -180,7 +180,9 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v184_product_service_sectors', 'db/tests/v184_product_service_sectors.sql'],
   ['nestly_v183_customer_staff_choice_and_live_availability', 'db/tests/v183_customer_staff_choice_and_live_availability.sql'],
   ['nestly_v186_customer_tier_ladder', 'db/tests/v186_customer_tier_ladder.sql'],
-  ['nestly_v188_no_self_service_account_deletion', 'db/tests/v188_no_self_service_account_deletion.sql']
+  ['nestly_v188_no_self_service_account_deletion', 'db/tests/v188_no_self_service_account_deletion.sql'],
+  ['nestly_v188_v189_data_repairs', 'db/tests/v188_v189_data_repairs.sql'],
+  ['nestly_v193_manage_unsold_package_plan', 'db/tests/v193_manage_unsold_package_plan.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -684,7 +686,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 171);
+  assert.equal(pending.length, 173);
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)
