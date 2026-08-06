@@ -205,13 +205,13 @@ test('the SPA has a gated customer wallet route before staff onboarding and keep
   assert.doesNotMatch(shell, /S\.biz\.(?:id|slug|name|enabled_modules)/i, 'customer shell must not depend on staff S.biz');
 
   for (const name of ['customer_get_business_summary', 'customer_portal_capabilities']) {
-    assert.match(app, new RegExp(`\\.rpc\\(\\s*['"]${name}['"]`, 'i'), `${name} must be wired in the customer shell`);
+    assert.match(app, new RegExp(`(?:\\.rpc|customerRpc)\\(\\s*['"]${name}['"]`, 'i'), `${name} must be wired in the customer shell`);
   }
   assert.match(app, /\.rpc\(\s*['"]customer_get_(?:appointments|appointments_page)['"]/i,
     'the customer shell must wire an allowlisted appointments reader');
   for (const name of rpcContract.filter(({name})=>name!=='customer_get_appointments').map(({ name }) => name)) {
     const calls = [...app.matchAll(new RegExp(
-      `\\.rpc\\(\\s*['"]${escaped(name)}['"][\\s\\S]{0,260}?\\)`,
+      `(?:\\.rpc|customerRpc)\\(\\s*['"]${escaped(name)}['"][\\s\\S]{0,260}?\\)`,
       'gi'
     ))];
     assert.ok(calls.length > 0, `${name} must be called by the SPA`);

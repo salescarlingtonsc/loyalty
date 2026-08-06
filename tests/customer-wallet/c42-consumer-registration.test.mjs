@@ -226,7 +226,7 @@ test('wallet gates a phone-registration-enabled session on a completed private p
     /async function loadCustomerSurfaceContext\([\s\S]*?async function renderCustomerProgrammes\(/i);
   const wallet = block(app,/async function renderCustomerWallet\([\s\S]*?async function renderCustomerNotificationPreferences\(/i);
   assert.match(context, /customer_phone_registration===true/i);
-  assert.match(context, /sb\.rpc\('customer_get_profile'\)/i);
+  assert.match(context, /(?:sb\.rpc|customerRpc)\('customer_get_profile'\)/i);
   assert.match(context, /customerSurfaceQualifies\(profile,customer\)/i);
   assert.match(context, /renderNoCustomerDestination\(staff\)/i);
   assert.doesNotMatch(context, /renderCustomerRegistrationProfile\(\)/i);

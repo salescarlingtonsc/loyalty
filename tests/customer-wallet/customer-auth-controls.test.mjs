@@ -67,5 +67,5 @@ test('global recovery guard is user-bound and precedes every authenticated route
 
 test('auth-control cache identity changes with the versioned customer UI asset',()=>{
   assert.match(app,/<script src="\/customer-ui\.js\?v=20260728-auth-controls"><\/script>/);
-  assert.match(sw,/CACHE_VERSION='v7-20260805-v167-customer-trust'/);
+  assert.match(sw,/CACHE_VERSION='v8-20260806-v177-production-polish'/);
 });

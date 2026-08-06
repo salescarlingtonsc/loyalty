@@ -76,7 +76,7 @@ test('successful empty optional feature feeds remove sections, while featured pr
   const empty=section('async function walletSectionEmpty','function renderWalletAppointments');
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
   const merchant=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
-  assert.match(empty,/await sb\.rpc\('customer_portal_capabilities',\{p_business_slug:businessSlug\}\)/);
+  assert.match(empty,/await (?:sb\.rpc|customerRpc)\('customer_portal_capabilities',\{p_business_slug:businessSlug\}\)/);
   assert.ok((empty.match(/walletSectionStillCurrent\(host,isCurrent\)/g)||[]).length>=2);
   assert.match(empty,/if\(!data\?\.\[capability\]\)\{host\.remove\(\);ensureWalletEmptyState\(businessSlug\);return\}/);
   assert.match(empty,/host\.remove\(\);ensureWalletEmptyState\(businessSlug\)/);

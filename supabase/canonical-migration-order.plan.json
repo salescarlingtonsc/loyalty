@@ -1207,6 +1207,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260806070000",
+      "name": "nestly_v177_client_error_reports",
+      "sourcePath": "db/migrations/20260806_nestly_v177_client_error_reports.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260806085000",
       "name": "nestly_v173_pause_enforcement_gaps",
       "sourcePath": "db/migrations/20260806_nestly_v173_pause_enforcement_gaps.sql"

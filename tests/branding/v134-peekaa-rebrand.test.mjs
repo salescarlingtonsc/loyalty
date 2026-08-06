@@ -43,10 +43,12 @@ test('public pages and install metadata expose Peekaa, its domain, email and ico
   const manifest=JSON.parse(await text('app/manifest.webmanifest'));
   assert.equal(manifest.name,'Peekaa');
   assert.equal(manifest.short_name,'Peekaa');
-  assert.deepEqual(manifest.icons.map(icon=>icon.src),['/icons/peekaa-192.png','/icons/peekaa-512.png']);
+  assert.deepEqual(manifest.icons.map(icon=>icon.src),
+    ['/icons/peekaa-192.png','/icons/peekaa-512.png','/icons/peekaa-512-maskable.png']);
   assert.deepEqual(pngShape(await bytes('app/icons/peekaa-32.png')),{width:32,height:32,colourType:2});
   assert.deepEqual(pngShape(await bytes('app/icons/peekaa-192.png')),{width:192,height:192,colourType:2});
   assert.deepEqual(pngShape(await bytes('app/icons/peekaa-512.png')),{width:512,height:512,colourType:2});
+  assert.deepEqual(pngShape(await bytes('app/icons/peekaa-512-maskable.png')),{width:512,height:512,colourType:2});
   assert.deepEqual(pngShape(await bytes('app/icons/apple-touch-icon.png')),{width:180,height:180,colourType:2});
 });
 

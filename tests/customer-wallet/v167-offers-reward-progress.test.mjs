@@ -39,7 +39,7 @@ test('customer Home always renders populated, empty, and retryable offer states'
   assert.match(app,/if\(!cards\.length\)\{[\s\S]*customerHomeOffersMarkupV167\(offersState\)[\s\S]*customer-first-quest/);
   assert.doesNotMatch(walletRender,/customer_get_actionable_wallet'\);[\s\S]{0,180}if\(error\)return renderCustomerWalletRetry/);
   assert.match(app,/if\(!error&&Array\.isArray\(data\?\.cards\)&&data\.cards\.length\)/);
-  assert.match(walletRender,/if\(businessSlug\)\{\s*const \[\{data,error\},walletResult\]=await Promise\.all\(\[\s*sb\.rpc\('customer_get_actionable_business'/);
+  assert.match(walletRender,/if\(businessSlug\)\{\s*const \[\{data,error\},walletResult\]=await Promise\.all\(\[\s*(?:sb\.rpc|customerRpc)\('customer_get_actionable_business'/);
 });
 
 test('new-offer state is versioned, device-local, bounded, and malformed-storage safe',()=>{

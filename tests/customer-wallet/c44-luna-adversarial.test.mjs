@@ -89,7 +89,7 @@ test('Luna C44: every awaited v39 detail loader and capability refresh rejects a
   const route = app.slice(app.indexOf('async function renderCustomerWallet'), app.indexOf('async function renderCustomerNotificationPreferences'));
 
   assert.match(app, /function walletSectionStillCurrent\(host,isCurrent\)[\s\S]*host\.isConnected[\s\S]*\$\(host\.id\)===host/i);
-  assert.match(app, /async function walletSectionEmpty[\s\S]*await sb\.rpc\('customer_portal_capabilities'[\s\S]*if\(!walletSectionStillCurrent\(host,isCurrent\)\)return;/i);
+  assert.match(app, /async function walletSectionEmpty[\s\S]*await (?:sb\.rpc|customerRpc)\('customer_portal_capabilities'[\s\S]*if\(!walletSectionStillCurrent\(host,isCurrent\)\)return;/i);
   assert.match(route,/const loadRewards=[\s\S]*?await Promise\.all\(\[[\s\S]*?customer_get_reward_catalog[\s\S]*?customer_get_business_actions_v89[\s\S]*?if\(!isWalletSectionCurrent\(host\)\)return;/i,
     'rewards must reject stale combined catalog and v89 action-gate responses before painting');
   for (const [loader, rpc] of [
@@ -98,7 +98,7 @@ test('Luna C44: every awaited v39 detail loader and capability refresh rejects a
     ['loadMemberships', 'customer_get_memberships'],
     ['loadAppointments', 'customer_get_appointments_page']
   ]) {
-    assert.match(route, new RegExp(`const ${loader}=[\\s\\S]*?await sb\\.rpc\\('${rpc}'[\\s\\S]*?if\\(!isWalletSectionCurrent\\(host\\)\\)return;`, 'i'),
+    assert.match(route, new RegExp(`const ${loader}=[\\s\\S]*?await (?:sb\\.rpc|customerRpc)\\('${rpc}'[\\s\\S]*?if\\(!isWalletSectionCurrent\\(host\\)\\)return;`, 'i'),
       `${loader} must reject a stale response before touching a shared section ID`);
   }
   assert.match(route, /await Promise\.all\([\s\S]*?if\(!isWalletCurrent\(\)\)return;/i);

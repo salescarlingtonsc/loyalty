@@ -225,6 +225,7 @@
     });
   }
 
+  let dialogHistoryId=0;
   function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]'}={}){
     const returnFocus=document.activeElement;
     const focusable=()=>[...dialog.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
@@ -238,8 +239,27 @@
       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
     };
     dialog.addEventListener('keydown',keydown);
+    /* v177: on Android the hardware/gesture Back is what people reach for to dismiss a sheet.
+       Without a history entry it exits the whole route instead. pushState keeps the SAME url, so
+       hashchange — the only navigation signal the app router listens to — never fires. Back then
+       pops our entry and closes the dialog through the identical path as Escape. */
+    const historyId=++dialogHistoryId;
+    let closedByUs=false;
+    const popstate=()=>{
+      window.removeEventListener('popstate',popstate);
+      if(closedByUs||!dialog.isConnected)return;
+      onClose?.();
+    };
+    try{history.pushState({...(history.state||{}),cuiDialog:historyId},'');window.addEventListener('popstate',popstate)}catch{}
     requestAnimationFrame(()=>{const target=dialog.querySelector(initialFocus)||focusable()[0]||dialog;target.focus()});
-    return ({restoreFocus=true}={})=>{dialog.removeEventListener('keydown',keydown);dialog.remove();if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus()};
+    return ({restoreFocus=true}={})=>{
+      dialog.removeEventListener('keydown',keydown);
+      window.removeEventListener('popstate',popstate);
+      /* Only unwind our own entry, and only once — a Back-press already consumed it. */
+      if(!closedByUs&&history.state?.cuiDialog===historyId){closedByUs=true;try{history.back()}catch{}}
+      dialog.remove();
+      if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus();
+    };
   }
 
   function setButtonBusy(button,{busy=true,label='Working…'}={}){

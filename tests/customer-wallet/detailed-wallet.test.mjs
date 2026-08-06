@@ -85,7 +85,7 @@ test('v39 capabilities are module- and data-aware and the SPA loads only relevan
   assert.match(caps,/'activity'[\s\S]*?loyalty_programs[\s\S]*?lp\.active[\s\S]*?points_ledger/i);
   assert.doesNotMatch(block(sql,'customer_get_reward_catalog'),/used_count[\s\S]{0,500}loyalty_redemption_reversals/i,
     'catalog usage limits must count the same immutable redemption rows as the authoritative claim path');
-  for(const [name] of functions)assert.match(app,new RegExp(`sb\\.rpc\\('${name}'`,'i'));
+  for(const [name] of functions)assert.match(app,new RegExp(`(?:sb\\.rpc|customerRpc)\\('${name}'`,'i'));
   assert.match(app,/capabilities\.rewards\?walletSectionShell/i);
   assert.match(app,/capabilities\.activity\?walletSectionShell/i);
   assert.match(app,/capabilities\.packages\?walletSectionShell/i);

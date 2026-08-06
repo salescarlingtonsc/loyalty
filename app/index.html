@@ -1494,6 +1494,60 @@ const preAuthSb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{
   storageKey:'nestly-preauth-anon',persistSession:false,
   autoRefreshToken:false,detectSessionInUrl:false
 }});
+/* v177 client error reporting. Before this the app had no client-side error visibility at all:
+   a customer hitting a broken render simply saw a blank card and nobody ever knew. Sends to
+   report_client_error_v177 (anon + authenticated, capped, deduped and non-raising server-side).
+   The browser adds its own guards — 5 reports per page load and one report per distinct message
+   per session — so a looping component cannot spend the server's hourly flood budget. Every
+   failure here is swallowed: a reporter that throws would break the page it is reporting on. */
+const CLIENT_ERROR_REPORT_LIMIT=5;
+let clientErrorReportCount=0;
+const clientErrorReportSeen=new Set();
+/* Noise that is never actionable: the benign ResizeObserver notification, cross-origin script
+   errors that arrive with no stack at all, and aborts (which are our own timeouts/navigations). */
+const clientErrorIsNoise=(message,stack)=>message.includes('ResizeObserver loop')
+  ||(message.includes('Script error.')&&!stack)
+  ||message.includes('AbortError')||stack.includes('AbortError')
+  ||message.includes('signal is aborted')||message.includes('The operation was aborted');
+function clientErrorSurface(){
+  const hash=String(globalThis.location?.hash||'');
+  if(hash.startsWith('#/business')||hash.startsWith('#/platform')||hash.startsWith('#/workspace'))return 'business';
+  try{if(typeof S!=='undefined'&&S?.user)return 'customer'}catch{}
+  return 'public';
+}
+function reportClientError(event){
+  try{
+    if(clientErrorReportCount>=CLIENT_ERROR_REPORT_LIMIT)return;
+    const reason=event?.reason;
+    const message=String(event?.message||reason?.message||reason||'unknown').slice(0,500).trim();
+    const stack=String(event?.error?.stack||reason?.stack||'').slice(0,2000);
+    if(!message||clientErrorIsNoise(message,stack))return;
+    if(clientErrorReportSeen.has(message))return;
+    clientErrorReportSeen.add(message);clientErrorReportCount++;
+    let build='';try{build=String(buildIdentity?.shortSha||'')}catch{build=''}
+    Promise.resolve(sb.rpc('report_client_error_v177',{
+      p_surface:clientErrorSurface(),p_message:message,p_stack:stack,
+      p_url:String(globalThis.location?.href||'').slice(0,300),p_build:build
+    })).catch(()=>{});
+  }catch{}
+}
+window.addEventListener('error',reportClientError);
+window.addEventListener('unhandledrejection',reportClientError);
+/* v177 customer RPC timeout. A PostgREST call with no client deadline can hang until the browser
+   gives up, leaving a customer-facing skeleton spinning forever with no retry affordance. Every
+   customer read below goes through this helper, which aborts at `ms` and normalises the outcome
+   into the same {data,error} shape the call sites already destructure, so an abort surfaces
+   through the EXISTING error branches (walletSectionError / renderCustomerWalletRetry) and the
+   customer gets the normal Retry button instead of an eternal spinner. */
+const customerRpcSignal=ms=>{
+  try{if(typeof AbortSignal?.timeout==='function')return AbortSignal.timeout(ms)}catch{}
+  const controller=new AbortController();
+  setTimeout(()=>{try{controller.abort()}catch{}},ms);
+  return controller.signal;
+};
+const customerRpc=(name,args,ms=12000)=>sb.rpc(name,args).abortSignal(customerRpcSignal(ms))
+  .then(result=>result,error=>({data:null,error:{code:'timeout',
+    message:`This is taking too long. ${String(error?.message||error||'Request timed out.')}`}}));
 let buildIdentity=Object.freeze({available:false});
 const buildIdentityLabel=()=>buildIdentity.available
   ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';
@@ -2361,13 +2415,18 @@ function redemptionCountdownText(expiresAt,now=Date.now()){
   const minutes=Math.floor(seconds/60),remainder=seconds%60;
   return seconds>0?`Expires in ${minutes}:${String(remainder).padStart(2,'0')}`:'Expired';
 }
-function showCustomerDecisionDialog({title,body,keepLabel='Keep',confirmLabel='Confirm',danger=false}={}){
+/* v177: also the app's prompt() replacement. Pass `input` and the dialog gains one text field and
+   resolves with the typed string, or null when the customer backs out — native prompt() is
+   unstyled, unlocalisable, invisible to our focus trap and blocked outright in some webviews. */
+function showCustomerDecisionDialog({title,body,keepLabel='Keep',confirmLabel='Confirm',danger=false,input=null}={}){
   return new Promise(resolve=>{
     const dialog=document.createElement('div');
     dialog.className='modal customer-surface customer-confirmation-modal';dialog.setAttribute('role','dialog');
     dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','customerDecisionTitle');
-    dialog.innerHTML=`<section class="modal-card"><h2 id="customerDecisionTitle">${esc(title)}</h2><p class="muted" style="margin-top:8px">${esc(body)}</p><div class="decision-actions"><button class="btn ghost" id="customerDecisionKeep" type="button">${esc(keepLabel)}</button><button class="btn ${danger?'danger':''}" id="customerDecisionConfirm" type="button">${esc(confirmLabel)}</button></div></section>`;
+    const inputHtml=input?`<div class="cui-field" style="margin-top:12px"><label for="customerDecisionInput">${esc(input.label||'')}</label><input id="customerDecisionInput" type="text" autocomplete="off" value="${esc(input.value||'')}" placeholder="${esc(input.placeholder||'')}"${input.maxLength?` maxlength="${Number(input.maxLength)}"`:''}></div>`:'';
+    dialog.innerHTML=`<section class="modal-card"><h2 id="customerDecisionTitle">${esc(title)}</h2><p class="muted" style="margin-top:8px">${esc(body)}</p>${inputHtml}<div class="decision-actions"><button class="btn ghost" id="customerDecisionKeep" type="button">${esc(keepLabel)}</button><button class="btn ${danger?'danger':''}" id="customerDecisionConfirm" type="button">${esc(confirmLabel)}</button></div></section>`;
     document.body.appendChild(dialog);
+    const field=input?dialog.querySelector('#customerDecisionInput'):null;
     let settled=false,deactivate=null;
     const finish=value=>{
       if(settled)return;settled=true;
@@ -2375,10 +2434,13 @@ function showCustomerDecisionDialog({title,body,keepLabel='Keep',confirmLabel='C
       else dialog.remove();
       resolve(value);
     };
-    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(false),initialFocus:'#customerDecisionKeep'});
-    dialog.querySelector('#customerDecisionKeep').onclick=()=>finish(false);
-    dialog.querySelector('#customerDecisionConfirm').onclick=()=>finish(true);
-    dialog.addEventListener('click',event=>{if(event.target===dialog)finish(false)});
+    const cancelValue=()=>input?null:false;
+    const confirmValue=()=>input?String(field?.value??''):true;
+    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(cancelValue()),initialFocus:input?'#customerDecisionInput':'#customerDecisionKeep'});
+    dialog.querySelector('#customerDecisionKeep').onclick=()=>finish(cancelValue());
+    dialog.querySelector('#customerDecisionConfirm').onclick=()=>finish(confirmValue());
+    if(field)field.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();finish(confirmValue())}});
+    dialog.addEventListener('click',event=>{if(event.target===dialog)finish(cancelValue())});
   });
 }
 function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}={}){
@@ -4206,8 +4268,8 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true){
   if(features._load_error){renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
   if(!features.customer_wallet){renderCustomerWalletUnavailable();return null}
   const [profileResult,personaResult]=await Promise.all([
-    features.customer_phone_registration===true?sb.rpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
-    sb.rpc('get_my_personas')
+    features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
+    customerRpc('get_my_personas')
   ]);
   if(!isCurrent())return null;
   let {data:personas,error:personasError}=personaResult;
@@ -4551,8 +4613,14 @@ async function renderCustomerProfile(){
     passkeyList.innerHTML=passkeys.length?passkeys.map(item=>`<div class="wallet-line"><div><b>${esc(item.friendly_name||'Passkey')}</b><p class="muted small" style="margin-top:3px">Added ${esc(formatPasskeyDate(item.created_at))}${item.last_used_at?` · last used ${esc(formatPasskeyDate(item.last_used_at))}`:''}</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" data-passkey-rename="${esc(item.id)}" data-passkey-name="${esc(item.friendly_name||'Passkey')}" aria-label="Rename ${esc(item.friendly_name||'passkey')}">Rename</button><button class="btn danger sm" type="button" data-passkey-delete="${esc(item.id)}" aria-label="Remove ${esc(item.friendly_name||'passkey')}">Remove</button></div>`).join('')
       :'<p class="muted small">No passkeys registered yet. Add one on a private device you control.</p>';
     passkeyList.querySelectorAll('[data-passkey-rename]').forEach(button=>button.onclick=async()=>{
-      const friendlyName=prompt('Name this passkey (for example, Personal iPhone):',button.dataset.passkeyName||'Passkey');
-      if(friendlyName===null){passkeyStatus.textContent='Passkey rename cancelled.';return}
+      const friendlyName=await showCustomerDecisionDialog({
+        title:'Name this passkey',
+        body:'Give this device a name you will recognise later, so you know which passkey to remove.',
+        keepLabel:'Cancel',confirmLabel:'Save name',
+        input:{label:'Passkey name',value:button.dataset.passkeyName||'Passkey',placeholder:'Personal iPhone',maxLength:120}
+      });
+      if(friendlyName===null){if(passkeyHost.isConnected)passkeyStatus.textContent='Passkey rename cancelled.';return}
+      if(!isCurrent()||!button.isConnected)return;
       const name=friendlyName.trim();
       if(!name||name.length>120){passkeyStatus.textContent='Passkey name must be between 1 and 120 characters.';return}
       button.disabled=true;passkeyStatus.textContent='Renaming passkey…';
@@ -4599,7 +4667,7 @@ async function renderCustomerQrJoin(){
   renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Peekaa is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
   focusCustomerRoute();
   const attemptKey=writeAttemptKey('nestly.customer.joinQr',token);
-  const {data,error}=await sb.rpc('customer_join_business_from_qr_v89',{
+  const {data,error}=await customerRpc('customer_join_business_from_qr_v89',{
     p_join_token:token,p_idempotency_key:attemptKey
   });
   if(!isCurrent())return;
@@ -4808,7 +4876,7 @@ function ensureWalletEmptyState(businessSlug){
 
 async function walletSectionEmpty(id,_title,_message,businessSlug,capability,retry,isCurrent=()=>true){
   const host=$(id);if(!walletSectionStillCurrent(host,isCurrent))return;
-  const {data,error}=await sb.rpc('customer_portal_capabilities',{p_business_slug:businessSlug});
+  const {data,error}=await customerRpc('customer_portal_capabilities',{p_business_slug:businessSlug});
   if(!walletSectionStillCurrent(host,isCurrent))return;
   if(error)return walletSectionError(id,'This section could not be refreshed.',retry,error);
   // A disabled optional feature and an enabled feature with a successful empty
@@ -4894,8 +4962,11 @@ function birthdayBenefitMarkup(benefit,{interactive=false,compact=false}={}){
 function customerProgrammePresentationV95(payload={},fallback={}){
   const brand=payload?.brand||{},programme=payload?.programme||{},catalogue=payload?.catalogue||{};
   const business=fallback?.business||{},loyalty=fallback?.loyalty||{};
-  const heroColor=/^#[0-9a-f]{6}$/i.test(String(brand.hero_color||''))?brand.hero_color
-    :/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#28212f';
+  /* v177: the hero paints this colour behind white text, so a merchant who picks a pale brand
+     colour would otherwise ship unreadable copy. contrastSafeBrandColor keeps the merchant's own
+     colour whenever it clears 4.5:1 against white and substitutes the brand fallback when it does not. */
+  const heroColor=contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(String(brand.hero_color||''))?brand.hero_color
+    :/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#28212f');
   const unit=String(programme.unit||loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points';
   return {
     locale:normalizeCustomerLocale(payload?.locale||customerLocale),
@@ -5264,7 +5335,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
   const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,6);
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
-    <header class="customer-programme-compact-head" style="--merchant-accent:${esc(presentation.heroColor)}">
+    <header class="customer-programme-compact-head" style="--merchant-accent:${esc(contrastSafeBrandColor(presentation.heroColor))}">
       <div class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</div>
       <div class="customer-programme-compact-copy"><h1>${esc(business.name||presentation.name)}</h1>
         <p class="muted small">${esc(presentation.name)}${hasTier&&currentTierLabel?` · ${esc(currentTierLabel)}`:''}</p></div>
@@ -5356,7 +5427,7 @@ function mergeCustomerProgrammeSelectorMediaV96(cards=[],payload=null){
 }
 function customerProgrammeTileMarkupV96(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
-  const accent=/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f';
+  const accent=contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f');
   const unit=ct(String(loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points');
   return `<a class="card customer-programme-card customer-programme-card-v95" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${business.industry?`<p class="customer-quest-kicker">${esc(business.industry)}</p>`:''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${reward?.available_now===true?`<p class="muted small" style="margin-top:4px">${esc(ct('rewardReady'))}</p>`:''}</div><div class="customer-programme-card-balance"><b>${esc(customerPointTotalV103(loyalty.balance||0))}</b><span>${esc(unit)}</span></div>${reward?`<div style="grid-column:1/-1">${customerRewardProgressMarkupV167(card)}</div>`:''}</div></a>`;
 }
@@ -5472,7 +5543,7 @@ async function renderCustomerWallet(businessSlug=null){
   let actionableCard=null,programmeCards=[];
   if(customerFeatures.customer_actionable_wallet===true){
     if(!businessSlug){
-      const {data,error}=await sb.rpc('customer_get_actionable_wallet');
+      const {data,error}=await customerRpc('customer_get_actionable_wallet');
       if(!isWalletCurrent())return;
       if(!error&&Array.isArray(data?.cards)&&data.cards.length){
         const messagePromise=customerFeatures.customer_in_app_inbox===true
@@ -5484,10 +5555,10 @@ async function renderCustomerWallet(businessSlug=null){
         })()
         :Promise.resolve({data:null,error:null});
       const [legacyResult,messageResult,bookingRequestResult,offersResult]=await Promise.all([
-        sb.rpc('customer_get_wallet'),
+        customerRpc('customer_get_wallet'),
         messagePromise,
-        sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
-        sb.rpc('customer_get_home_offers_v167',{p_locale:'en'})
+        customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
+        customerRpc('customer_get_home_offers_v167',{p_locale:'en'})
       ]);
       if(!isWalletCurrent())return;
       customerHomeOverview={
@@ -5515,8 +5586,8 @@ async function renderCustomerWallet(businessSlug=null){
     }
     if(businessSlug){
       const [{data,error},walletResult]=await Promise.all([
-        sb.rpc('customer_get_actionable_business',{p_business_slug:businessSlug}),
-        sb.rpc('customer_get_actionable_wallet')
+        customerRpc('customer_get_actionable_business',{p_business_slug:businessSlug}),
+        customerRpc('customer_get_actionable_wallet')
       ]);
       if(!isWalletCurrent())return;
       if(error)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,error);
@@ -5527,10 +5598,10 @@ async function renderCustomerWallet(businessSlug=null){
   }
   if(!businessSlug){
     const [{data,error},bookingRequestResult,selectorMediaResult,offersResult]=await Promise.all([
-      sb.rpc('customer_get_wallet'),
-      sb.rpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
-      sb.rpc('customer_get_programme_selector_media_v96'),
-      sb.rpc('customer_get_home_offers_v167',{p_locale:'en'})
+      customerRpc('customer_get_wallet'),
+      customerRpc('customer_get_booking_requests',{p_limit:50,p_cursor:null}),
+      customerRpc('customer_get_programme_selector_media_v96'),
+      customerRpc('customer_get_home_offers_v167',{p_locale:'en'})
     ]);
     if(!isWalletCurrent())return;
     if(error)return renderCustomerWalletRetry('Your wallet is temporarily unavailable.',null,undefined,error);
@@ -5565,9 +5636,9 @@ async function renderCustomerWallet(businessSlug=null){
   }
   const args={p_business_slug:businessSlug};
   const [{data:summary,error:summaryError},{data:capabilities,error:capabilitiesError},programmeResult]=await Promise.all([
-    sb.rpc('customer_get_business_summary',args),
-    sb.rpc('customer_portal_capabilities',args),
-    sb.rpc('customer_get_wallet')
+    customerRpc('customer_get_business_summary',args),
+    customerRpc('customer_portal_capabilities',args),
+    customerRpc('customer_get_wallet')
   ]);
   if(!isWalletCurrent())return;
   if(summaryError||capabilitiesError)return renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
@@ -5740,8 +5811,8 @@ async function renderCustomerWallet(businessSlug=null){
     const host=$('walletRewards');if(!host)return;
     host.setAttribute('aria-busy','true');
     const [catalogResult,actionsResult]=await Promise.all([
-      sb.rpc('customer_get_reward_catalog',args),
-      businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId()
+      customerRpc('customer_get_reward_catalog',args),
+      businessId?customerRpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId()
     ]);
     const {data,error}=catalogResult;
     if(!isWalletSectionCurrent(host))return;
@@ -5837,7 +5908,7 @@ async function renderCustomerWallet(businessSlug=null){
   const activityState={items:[],nextCursor:null};
   const loadActivity=async(cursor=null)=>{
     const host=$('walletActivity');if(!host)return;
-    const {data,error}=await sb.rpc('customer_get_loyalty_details',{...args,p_cursor:cursor||{limit:20}});
+    const {data,error}=await customerRpc('customer_get_loyalty_details',{...args,p_cursor:cursor||{limit:20}});
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletActivity',walletRpcDenied(error)?'Loyalty activity is not available for this account.':'Activity could not be loaded.',()=>loadActivity(cursor),error);
     const next=Array.isArray(data?.items)?data.items:[];
@@ -5856,7 +5927,7 @@ async function renderCustomerWallet(businessSlug=null){
     const host=$('walletTransactions');if(!host)return;
     host.setAttribute('aria-busy','true');
     const requestedCursor=cursor||{limit:20};
-    const {data,error}=await sb.rpc('customer_get_transaction_history_v167',{
+    const {data,error}=await customerRpc('customer_get_transaction_history_v167',{
       p_business_slug:businessSlug,p_cursor:requestedCursor
     });
     if(!isWalletSectionCurrent(host))return;
@@ -5913,7 +5984,7 @@ async function renderCustomerWallet(businessSlug=null){
   const loadGiftCards=async()=>{
     const host=$('walletGiftCards');if(!host)return;
     host.setAttribute('aria-busy','true');
-    const {data,error}=await sb.rpc('customer_get_gift_cards',args);
+    const {data,error}=await customerRpc('customer_get_gift_cards',args);
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletGiftCards',walletRpcDenied(error)?'Gift cards are not available for this account.':'Gift cards could not be loaded.',loadGiftCards,error);
     const cards=Array.isArray(data?.cards)?data.cards:[];
@@ -5941,7 +6012,7 @@ async function renderCustomerWallet(businessSlug=null){
   }
   const loadPackages=async(cursor=null)=>{
     const host=$('walletPackages');if(!host)return;
-    const {data,error}=await sb.rpc('customer_get_packages',{...args,p_cursor:cursor||{limit:20}});
+    const {data,error}=await customerRpc('customer_get_packages',{...args,p_cursor:cursor||{limit:20}});
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletPackages',walletRpcDenied(error)?'Packages are not available for this account.':'Packages could not be loaded.',()=>loadPackages(cursor),error);
     const next=Array.isArray(data?.items)?data.items:[];
@@ -5956,7 +6027,7 @@ async function renderCustomerWallet(businessSlug=null){
   };
   const loadMemberships=async()=>{
     const host=$('walletMemberships');if(!host)return;
-    const {data,error}=await sb.rpc('customer_get_memberships',args);
+    const {data,error}=await customerRpc('customer_get_memberships',args);
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletMemberships',walletRpcDenied(error)?'Membership is not available for this account.':'Membership could not be loaded.',loadMemberships,error);
     const memberships=Array.isArray(data)?data:[];
@@ -5967,7 +6038,7 @@ async function renderCustomerWallet(businessSlug=null){
   const appointmentState={items:[],nextCursor:null};
   const loadAppointments=async(cursor=null)=>{
     const host=$('walletAppointments');if(!host)return;
-    const {data,error}=await sb.rpc('customer_get_appointments_page',{...args,p_cursor:cursor||{limit:20}});
+    const {data,error}=await customerRpc('customer_get_appointments_page',{...args,p_cursor:cursor||{limit:20}});
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletAppointments',walletRpcDenied(error)?'Appointments are not available for this account.':'Appointments could not be loaded.',()=>loadAppointments(cursor),error);
     const next=Array.isArray(data?.items)?data.items:[];
@@ -6011,7 +6082,7 @@ async function renderCustomerWallet(businessSlug=null){
   const loadFeedback=async(opts={})=>{
     const host=$('walletFeedback');if(!host)return;
     host.setAttribute('aria-busy','true');
-    const {data,error}=await sb.rpc('customer_list_my_feedback',{p_business_slug:businessSlug,p_limit:50});
+    const {data,error}=await customerRpc('customer_list_my_feedback',{p_business_slug:businessSlug,p_limit:50});
     if(!isWalletSectionCurrent(host))return;
     if(error)return walletSectionError('walletFeedback',walletRpcDenied(error)?'Feedback is not available for this account.':'Feedback could not be loaded.',()=>loadFeedback(),error);
     const items=Array.isArray(data?.feedback)?data.feedback:[];
@@ -8243,7 +8314,7 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'Request saved for manual review — check the private link for its current status.':'申请已保存，等待人工审核 — 请通过私人链接查看当前状态。',
     '· no table preference':'· 不指定桌位',
     'No specific tables are set up — this request will have no table preference.':'尚未设置特定桌位 — 此申请不会指定桌位。',
-    'Request cancellation':'申请取消',
+    'Request cancellation':'申请取消','Keep booking':'保留预订',
     'Send a cancellation request?':'发送取消申请吗？'
   }),
   ms:Object.freeze({
@@ -8416,7 +8487,7 @@ const WORKSPACE_COPY_V97=Object.freeze({
     'Request saved for manual review — check the private link for its current status.':'Permintaan disimpan untuk semakan manual — semak status semasa melalui pautan peribadi.',
     '· no table preference':'· tiada pilihan meja',
     'No specific tables are set up — this request will have no table preference.':'Tiada meja khusus disediakan — permintaan ini tidak akan mempunyai pilihan meja.',
-    'Request cancellation':'Minta pembatalan',
+    'Request cancellation':'Minta pembatalan','Keep booking':'Kekalkan tempahan',
     'Send a cancellation request?':'Hantar permintaan pembatalan?'
   })
 });
@@ -21787,7 +21858,13 @@ async function renderPortal(slug){
   window.mCancel=async()=>{
     manageToken=($('mtoken')?.value||manageToken).trim();
     if(!manageToken) return toast('Enter your booking management code');
-    if(!confirm('Send a cancellation request?')) return;
+    /* v177: the native browser confirmation is unstyled, untranslatable and blocked in some webviews.
+       Reuses the already-localised portal strings so no copy is lost in zh-CN or ms. */
+    const confirmed=await showCustomerDecisionDialog({title:'Cancel this booking?',
+      body:workspaceTranslationV97('Send a cancellation request?'),
+      keepLabel:workspaceTranslationV97('Keep booking'),
+      confirmLabel:workspaceTranslationV97('Request cancellation'),danger:true});
+    if(!confirmed) return;
     const key=JSON.stringify({kind:'cancel',proposed:null,note:null});
     if(!changeAttempt||changeAttempt.key!==key)changeAttempt={key,id:crypto.randomUUID()};
     let data;

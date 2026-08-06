@@ -155,8 +155,8 @@ test('C44 outputs only the reviewed customer-safe projection and defers birthday
 test('C44 SPA renders separate responsive cards and a slug drill-down without value claims', async () => {
   const app = await read('app/index.html');
   assert.match(app, /customerFeatures\.customer_actionable_wallet===true/i);
-  assert.match(app, /sb\.rpc\('customer_get_actionable_wallet'\)/i);
-  assert.match(app, /sb\.rpc\('customer_get_actionable_business',\{p_business_slug:businessSlug\}\)/i);
+  assert.match(app, /(?:sb\.rpc|customerRpc)\('customer_get_actionable_wallet'\)/i);
+  assert.match(app, /(?:sb\.rpc|customerRpc)\('customer_get_actionable_business',\{p_business_slug:businessSlug\}\)/i);
   assert.match(app, /href="#\/wallet\/\$\{encodeURIComponent\(business\.slug\|\|''\)\}"/i);
   assert.match(app, /Never expires/i);
   assert.match(app, /business\.currency/i);
