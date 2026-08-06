@@ -1551,7 +1551,14 @@ const authSecurityCopy=(locale,key)=>{
 async function mountTurnstile(siteKey,{container,status,retry,action,onToken,locale='en'}){
   const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
   const security=key=>authSecurityCopy(locale,key);
-  const message=(text,isError=false)=>{statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  /* A passed check should be invisible: red status text and a "Retry" link after
+     success read as failure. The block only surfaces while loading or on error. */
+  const setPassed=passed=>{
+    statusEl.hidden=passed;
+    const host=document.getElementById(container);
+    if(host)host.style.display=passed?'none':'';
+  };
+  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
   const clear=(text,isError=false)=>{onToken('');message(text,isError)};
   const logTurnstileError=(errorCode)=>{
     const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
@@ -1574,7 +1581,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
       removeWidget();
       if(destroyed)return;
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(destroyed)return;onToken(token);message(security('complete'));retryEl.hidden=true},
+        callback:(token)=>{if(destroyed)return;onToken(token);retryEl.hidden=true;setPassed(true)},
         'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
         'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
         'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
@@ -3180,12 +3187,30 @@ function resetCustomerRegistrationState({phone=''}={}){
     phone,channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false
   };
   try{sessionStorage.removeItem('peekaa-customer-signup-consent-v163')}catch{}
+  try{sessionStorage.removeItem('peekaa-customer-signup-profile-v174')}catch{}
 }
 function rememberCustomerSignupConsent(accepted){
   try{
     if(accepted)sessionStorage.setItem('peekaa-customer-signup-consent-v163','accepted');
     else sessionStorage.removeItem('peekaa-customer-signup-consent-v163');
   }catch{}
+}
+/* v174: name, date of birth and gender are asked on the Create-account form,
+   stashed for the OTP hop, and the post-OTP profile step completes itself from
+   the stash — one visible signup step for the normal path. */
+function rememberCustomerSignupProfile(profile){
+  try{
+    if(profile)sessionStorage.setItem('peekaa-customer-signup-profile-v174',JSON.stringify(profile));
+    else sessionStorage.removeItem('peekaa-customer-signup-profile-v174');
+  }catch{}
+}
+function customerSignupProfileStash(){
+  try{
+    const raw=sessionStorage.getItem('peekaa-customer-signup-profile-v174');
+    const profile=raw?JSON.parse(raw):null;
+    return profile&&String(profile.fullName||'').trim()&&profile.birthDate
+      &&['female','male'].includes(profile.gender)?profile:null;
+  }catch{return null}
 }
 function customerSignupConsentRecorded(){
   if(customerRegistrationState.legalAccepted&&customerRegistrationState.marketingOptedIn)return true;
@@ -3469,10 +3494,16 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
   const smsAvailable=CUSTOMER_PHONE_OTP_RUNTIME_ENABLED&&serverCapabilities.sms===true;
   const whatsappAvailable=CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED&&serverCapabilities.whatsapp===true;
   customerRegistrationShell(`<section class="card" aria-labelledby="customerOtpStartTitle">
-    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpStartTitle">${recovering?'Reset your password':'Create your account'}</h1><p class="muted small" style="margin-top:5px">${recovering?'We send one OTP to verify that you own this mobile number.':'Choose your password, then verify your mobile number with one OTP.'}</p></div></div>
+    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpStartTitle">${recovering?'Reset your password':'Create your account'}</h1><p class="muted small" style="margin-top:5px">${recovering?'We send one OTP to verify that you own this mobile number.':'Tell us about yourself, choose your password, then verify your mobile number with one OTP.'}</p></div></div>
     <label for="customerPhone">Singapore mobile number</label>
     <input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
     ${recovering?'':`<label for="customerSignupPassword">Password</label>${passwordControlHtml('customerSignupPassword',{autocomplete:'new-password',minlength:'12',describedBy:'customerSignupPasswordHelp'})}<p class="muted small" id="customerSignupPasswordHelp" style="margin-top:6px">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p><label for="customerSignupPasswordConfirm">Confirm password</label>${passwordControlHtml('customerSignupPasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
+    <label for="customerSignupFullName">Full name</label>
+    <input id="customerSignupFullName" autocomplete="name" maxlength="200" value="${esc(customerSignupProfileStash()?.fullName||'')}">
+    <label for="customerSignupDob">Date of birth</label>
+    <input id="customerSignupDob" type="date" autocomplete="bday" max="${sgDateInputValue()}" value="${esc(customerSignupProfileStash()?.birthDate||'')}">
+    <label for="customerSignupGender">Gender</label>
+    <select id="customerSignupGender" autocomplete="sex"><option value="">Select gender</option><option value="female" ${customerSignupProfileStash()?.gender==='female'?'selected':''}>Female</option><option value="male" ${customerSignupProfileStash()?.gender==='male'?'selected':''}>Male</option></select>
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Agreements</legend>
       <label class="row" for="customerSignupConsent" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerSignupConsent" type="checkbox" ${customerRegistrationState.legalAccepted&&customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I have read and agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Terms of Service</a>, acknowledge the <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Privacy Notice</a>, and agree to receive marketing from ${esc(BRAND.productName)} and selected partners. I can withdraw marketing consent at any time.</span></label>
     </fieldset>`}
@@ -3521,9 +3552,22 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       if(password!==$('customerSignupPasswordConfirm').value){
         errorHost.innerHTML='<div class="err">Passwords do not match.</div>';return;
       }
+      const signupFullName=$('customerSignupFullName').value.trim(),
+        signupBirthDate=$('customerSignupDob').value,
+        signupGender=$('customerSignupGender').value;
+      if(!signupFullName){
+        errorHost.innerHTML='<div class="err">Enter your full name.</div>';return;
+      }
+      if(!signupBirthDate||new Date(`${signupBirthDate}T00:00:00`)>new Date()){
+        errorHost.innerHTML='<div class="err">Enter a date of birth that is not in the future.</div>';return;
+      }
+      if(!['female','male'].includes(signupGender)){
+        errorHost.innerHTML='<div class="err">Select Male or Female to continue.</div>';return;
+      }
       if(!$('customerSignupConsent').checked){
         errorHost.innerHTML='<div class="err">Please agree to the Terms of Service, acknowledge the Privacy Notice, and confirm marketing consent to continue.</div>';return;
       }
+      rememberCustomerSignupProfile({fullName:signupFullName,birthDate:signupBirthDate,gender:signupGender});
     }
     send.disabled=true;
     const challenge=captchaToken;captchaToken='';
@@ -3627,6 +3671,15 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
   const register=$('customerRegister'),profileForm=$('customerProfileForm'),profileError=$('customerProfileError');
   const fullNameInput=$('customerFullName'),birthDateInput=$('customerDob'),genderInput=$('customerGender'),languageInput=$('customerLanguage');
   const isProfileCurrent=()=>isRouteCurrent()&&profileForm.isConnected&&register.isConnected;
+  /* v174: the Create-account form already asked for these. Prefill from the
+     stash and finish silently; this screen only stays visible when the stash is
+     missing (e.g. OTP finished in another tab) or the submission fails. */
+  const signupStash=customerSignupProfileStash();
+  if(signupStash){
+    fullNameInput.value=signupStash.fullName;
+    birthDateInput.value=signupStash.birthDate;
+    genderInput.value=signupStash.gender;
+  }
   register.onclick=async()=>{
     const fullName=fullNameInput.value.trim(),birthDate=birthDateInput.value,gender=genderInput.value,language=languageInput.value;
     if(!fullName||!birthDate||new Date(`${birthDate}T00:00:00`)>new Date()){
@@ -3657,6 +3710,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
       }
     });
   };
+  if(signupStash&&customerSignupConsentRecorded())register.onclick();
 }
 async function renderCustomerRegistration(isRouteCurrent=()=>true){
   globalThis.document?.documentElement?.setAttribute('lang','en');
