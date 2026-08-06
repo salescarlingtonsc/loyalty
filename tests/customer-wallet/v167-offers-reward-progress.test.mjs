@@ -29,11 +29,13 @@ test('Home offers use one bounded verified-link RPC without caller ownership ids
 test('customer Home always renders populated, empty, and retryable offer states',()=>{
   const walletRender=app.slice(app.indexOf('async function renderCustomerWallet'),app.indexOf('async function renderCustomerInAppInbox'));
   assert.match(app,/function customerHomeOffersMarkupV167/);
-  assert.match(app,/Offers for you/);
+  assert.match(app,/Limited offers/);
+  assert.doesNotMatch(app,/Offers for you/);
   assert.match(app,/No offers right now\. New offers from your businesses appear here first\./);
   assert.match(app,/Offers couldn’t load\./);
   assert.match(app,/id="customerOffersRetry"/);
-  assert.match(app,/sb\.rpc\('customer_get_home_offers_v167',\{p_locale:'en'\}\)/);
+  // v178: the only remaining offers-shelf fetch is Home's, through the timeout-guarded customerRpc.
+  assert.match(app,/customerRpc\('customer_get_home_offers_v167',\{p_locale:'en'\}\)/);
   assert.match(app,/customer-home-offers-track/);
   assert.match(app,/Ends soon/);
   assert.match(app,/if\(!cards\.length\)\{[\s\S]*customerHomeOffersMarkupV167\(offersState\)[\s\S]*customer-first-quest/);
@@ -80,16 +82,17 @@ test('reward progress is formatted, bounded, accessible, and safe for zero-cost 
   assert.match(app,/is ready to redeem/);
 });
 
+// v178: the owner struck the Next-best-action banner off Home twice. Only the
+// pending-redemption variant survives, so the old reward/package/appointment
+// priority ladder no longer exists to be ordered.
 test('fallback guidance follows only available canonical inputs and can suppress itself',()=>{
   const start=app.indexOf('function customerHomeFallbackActionV167');
   const end=app.indexOf('function renderActionableWalletHome',start);
   const block=app.slice(start,end);
   assert.ok(start>=0&&end>start);
-  assert.ok(block.indexOf('pendingRedemption')<block.indexOf('available_now'));
-  assert.ok(block.indexOf('available_now')<block.indexOf('sessions_remaining'));
-  assert.ok(block.indexOf('sessions_remaining')<block.indexOf('upcoming_appointments'));
-  assert.doesNotMatch(block,/offers\[0\]/);
-  assert.match(block,/return ''/);
+  assert.match(block,/if\(!pendingRedemption\)return ''/);
+  assert.match(block,/Complete your pending redemption/);
+  assert.doesNotMatch(block,/available_now|sessions_remaining|upcoming_appointments|offers\[0\]/);
   assert.doesNotMatch(block,/customer_get_|sb\.rpc/);
 });
 

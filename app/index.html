@@ -1268,6 +1268,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-programme-guide .cui-icon{flex:0 0 auto;color:var(--coral)}
 .customer-booking-business{padding:18px}
 .customer-booking-business .wallet-appt:last-child{border-bottom:0}
+/* v178: Bookings | Cancelled | History pills. Same shape language as .customer-primary-nav. */
+.customer-booking-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px;margin:0 0 14px;background:var(--card);border:1px solid var(--hair);border-radius:16px;box-shadow:var(--shadow)}
+.customer-booking-tab{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:44px;padding:8px 10px;border:0;border-radius:11px;background:transparent;color:var(--ink2);font-family:inherit;font-size:13px;font-weight:650;transition:background .14s var(--ease),color .14s var(--ease)}
+.customer-booking-tab:hover{background:var(--bg);color:var(--ink)}
+.customer-booking-tab[aria-selected="true"]{background:var(--tint);color:var(--coral)}
+.customer-booking-tab-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--bg);color:inherit;font-size:11px;font-weight:800}
+#customerBookingPanel:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
 .customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.55fr);gap:14px;align-items:start}
 .entry-choice-card{width:min(720px,100%);padding:30px}
 .entry-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
@@ -1310,6 +1317,18 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-offer-detail-meta{display:grid;gap:5px;margin-top:12px;padding:11px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--bg)}
 .customer-offer-detail-meta a{color:inherit;text-decoration:underline}
 .customer-offer-detail h2,.customer-offer-detail p,.customer-offer-detail summary{overflow-wrap:anywhere}
+/* v178: company-details affordance on the offer sheet, and the company sheet it opens. */
+.customer-company-row,.customer-business-offer{display:flex;align-items:center;gap:11px;width:100%;min-height:52px;margin-top:12px;padding:10px 12px;border:1px solid var(--hair);border-radius:13px;background:var(--bg);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.customer-company-row:hover,.customer-business-offer:hover{border-color:var(--coral)}
+.customer-company-row-copy,.customer-business-offer-copy{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}
+.customer-company-row-chevron{flex:0 0 auto;color:var(--coral);font-size:20px;line-height:1}
+.customer-company-logo{flex:0 0 auto;width:40px;height:40px;border-radius:12px;object-fit:cover;background:var(--tint)}
+.customer-company-logo--fallback{display:grid;place-items:center;color:var(--coral);font-weight:800;font-size:17px}
+.customer-business-detail-head{display:flex;align-items:center;gap:12px;margin-top:12px}
+.customer-business-detail-head h2{min-width:0;overflow-wrap:anywhere;font-size:clamp(1.3rem,4vw,1.6rem);letter-spacing:-.02em}
+.customer-business-detail-subhead{margin-top:18px;font-size:1rem}
+.customer-business-offer-list{display:grid;gap:0}
+.customer-business-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
 @media(max-width:520px){.wallet-reward-steps{grid-template-columns:1fr}}
 .redemption-qr{display:grid;place-items:center;min-height:220px;margin:16px auto;padding:16px;border:1px solid var(--hair);border-radius:14px;background:#fff}
 .redemption-qr img,.redemption-qr canvas{max-width:100%;height:auto}
@@ -1368,7 +1387,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   html[data-customer-surface="true"] body{background:#0F1115}
   /* The offer-detail sheet is appended to body, outside .customer-surface,
      so it must join the dark token scope explicitly. */
-  .customer-surface,.customer-offer-detail-modal .modal-card{
+  .customer-surface,.customer-offer-detail-modal .modal-card,.customer-business-detail-modal .modal-card{
     color-scheme:dark;
     --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;
     --line:#343841;--control-border:#737A86;--hair:rgba(255,255,255,.11);
@@ -1383,7 +1402,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   .customer-surface.customer-surface :is(input,select,textarea,.btn.ghost,.customer-primary-nav,.customer-home-quick a,
     .customer-home-offer,.customer-perk-card,.customer-offer-card,.customer-reward-card,
     .customer-programme-compact-head,.customer-programme-guide,.wallet-firm,.wallet-reward,
-    .customer-inbox-bell,.customer-programme-card,.customer-booking-business,.checkrow,.fb-chip,
+    .customer-inbox-bell,.customer-programme-card,.customer-booking-business,.customer-booking-tabs,.checkrow,.fb-chip,
     .customer-avatar,.customer-programme-switcher a,.customer-workspace-switch .menu){
     background:var(--card);color:var(--ink);border-color:var(--line)
   }

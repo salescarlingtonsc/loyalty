@@ -125,7 +125,11 @@ test('customer shell, deep links, and profile transitions are predictable and ac
   assert.match(shell,/href="#\/customer\/profile"/);
   assert.match(shell,/id="walletSignOut"/);
   assert.match(shell,/href="#\/customer\/messages" aria-label="\$\{esc\(ct\('notifications'\)\)\}"/);
-  assert.match(shell,/walletBack'\)\.onclick=\(\)=>nav\('#\/customer\/programmes'\)/);
+  // v178: the back control is now generic — a business page returns to My Rewards, and My
+  // Rewards itself passes backTo:'#/wallet' (the owner: "There is no back button").
+  assert.match(shell,/backHref=businessSlug\?'#\/customer\/programmes':\(backTo\|\|''\)/);
+  assert.match(shell,/walletBack'\)\.onclick=\(\)=>nav\(backHref\)/);
+  assert.match(shell,/backHref\?`<button class="btn ghost sm" id="walletBack"/);
   assert.doesNotMatch(shell,/history\.back/);
   assert.match(app,/function focusCustomerRoute\(\)\{[\s\S]*CUI\.focusRoute\(main,\{enhanceContent:true\}\)/);
 
@@ -152,7 +156,10 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/Visit the business and scan its Peekaa QR/);
   assert.match(surfaces,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
   assert.doesNotMatch(surfaces,/href="#\/claim"/);
-  assert.match(surfaces,/Active requests, confirmed appointments, and recent request outcomes stay separate/);
+  assert.match(surfaces,/Active requests and appointments, cancellations and past visits stay in separate tabs/);
+  // v178 (owner sketch): Bookings | Cancelled | History, filtered client-side.
+  assert.match(surfaces,/role="tablist" aria-label="Booking status"/);
+  assert.match(surfaces,/renderCustomerShell\(\{active:'programmes',backTo:'#\/wallet'/);
   assert.match(surfaces,/if\(context\.features\.customer_in_app_inbox!==true\)\{[\s\S]*Messages are not available[\s\S]*This feature is not available for your account right now/,
     'a manually entered disabled Messages destination must remain visible with an honest unavailable state');
   assert.match(surfaces,/await renderCustomerInAppInbox\(null,isCurrent\)/,
@@ -161,18 +168,20 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.match(surfaces,/Date of birth/);
   assert.match(surfaces,/not editable here/);
 
-  const home=section('function customerHomeNextActionMarkup','async function renderCustomerWallet');
-  assert.match(home,/ct\('chooseProgramme'\)/);
-  assert.match(home,/ct\('programmesIntro'\)/);
-  assert.match(home,/id="customerHomeScan"/);
+  // v178: the owner crossed out the Home page-head title block. "Scan to join" moved into the
+  // My Rewards section heading row, and the only surviving guidance is a pending redemption.
+  const home=section('function customerMyRewardsHeadingV156','async function renderCustomerWallet');
+  assert.doesNotMatch(home,/ct\('chooseProgramme'\)|ct\('programmesIntro'\)/);
+  assert.match(home,/id="\$\{esc\(scanId\)\}"/);
   assert.match(home,/ct\('addProgramme'\)/);
+  assert.match(home,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
   assert.match(home,/if\(!cards\.length\)\{[\s\S]*customer-first-quest/,
     'an empty actionable wallet must retain the first-programme QR journey inline');
   assert.match(home,/customerHomeGuidanceV167\(\{pendingRedemption,actionableCards:cards,legacyCards,offers:offersState\.items\}\)/,
-    'Home guidance must use the canonical V167 priority and fallback renderer');
+    'Home guidance must use the canonical V167 fallback renderer');
   assert.match(home,/Next best action/);
-  assert.match(home,/No urgent action is available right now/);
-  assert.match(home,/href="#\/wallet\/\$\{slug\}"/);
+  assert.match(home,/Complete your pending redemption/);
+  assert.doesNotMatch(home,/No urgent action is available right now/);
   assert.doesNotMatch(home,/href="#\/claim"/);
 
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');

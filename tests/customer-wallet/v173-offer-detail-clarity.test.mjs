@@ -50,7 +50,7 @@ test('business page and console agree on the six-offer cap and the join CTA is s
 });
 
 test('offer detail sheet joins the dark token scope', () => {
-  assert.match(app, /\.customer-surface,\.customer-offer-detail-modal \.modal-card\{/);
+  assert.match(app, /\.customer-surface,\.customer-offer-detail-modal \.modal-card,\.customer-business-detail-modal \.modal-card\{/);
   assert.match(app, /\.customer-offer-detail-modal \.modal-card\{width:min\(480px/);
 });
 
