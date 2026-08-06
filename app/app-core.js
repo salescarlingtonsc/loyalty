@@ -89,6 +89,18 @@ function reportClientError(event){
 }
 window.addEventListener('error',reportClientError);
 window.addEventListener('unhandledrejection',reportClientError);
+/* v177 customer RPC timeout. A PostgREST call with no client deadline can hang until the browser
+   gives up, leaving a customer-facing skeleton spinning forever with no retry affordance. Every
+   customer read below goes through this helper, which aborts at `ms` and normalises the outcome
+   into the same {data,error} shape the call sites already destructure, so an abort surfaces
+   through the EXISTING error branches (walletSectionError / renderCustomerWalletRetry) and the
+   customer gets the normal Retry button instead of an eternal spinner. */
+const customerRpcSignal=ms=>{
+  try{if(typeof AbortSignal?.timeout==='function')return AbortSignal.timeout(ms)}catch{}
+  const controller=new AbortController();
+  setTimeout(()=>{try{controller.abort()}catch{}},ms);
+  return controller.signal;
+};
 let buildIdentity=Object.freeze({available:false});
 const buildIdentityLabel=()=>buildIdentity.available
   ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';

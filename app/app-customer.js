@@ -9,18 +9,6 @@ const preAuthSb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{
   storageKey:'nestly-preauth-anon',persistSession:false,
   autoRefreshToken:false,detectSessionInUrl:false
 }});
-/* v177 customer RPC timeout. A PostgREST call with no client deadline can hang until the browser
-   gives up, leaving a customer-facing skeleton spinning forever with no retry affordance. Every
-   customer read below goes through this helper, which aborts at `ms` and normalises the outcome
-   into the same {data,error} shape the call sites already destructure, so an abort surfaces
-   through the EXISTING error branches (walletSectionError / renderCustomerWalletRetry) and the
-   customer gets the normal Retry button instead of an eternal spinner. */
-const customerRpcSignal=ms=>{
-  try{if(typeof AbortSignal?.timeout==='function')return AbortSignal.timeout(ms)}catch{}
-  const controller=new AbortController();
-  setTimeout(()=>{try{controller.abort()}catch{}},ms);
-  return controller.signal;
-};
 const customerRpc=(name,args,ms=12000)=>sb.rpc(name,args).abortSignal(customerRpcSignal(ms))
   .then(result=>result,error=>({data:null,error:{code:'timeout',
     message:`This is taking too long. ${String(error?.message||error||'Request timed out.')}`}}));
