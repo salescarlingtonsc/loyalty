@@ -3875,8 +3875,14 @@ function customerPromotionValidityV104(item={}){
   if(ends)return `Valid until ${ends}`;
   return starts?`Valid from ${starts}`:'';
 }
-function customerPromotionCardV104(item,business,bookingEnabled){
-  const image=customerMediaUrlV95(item?.image_url),
+/* V183 (owner: "Upload the image but not reflected on the right ... only after publish then is
+   able to see"). customerMediaUrlV95 is a strict allowlist of Supabase storage object paths, so
+   the blob: URL of a just-picked file resolved to '' and the card fell back to its initial
+   letter — the owner saw a big "N" instead of the photo they had chosen.
+   The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
+   already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
+function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
+  const image=previewImageUrl||customerMediaUrlV95(item?.image_url),
     validity=customerPromotionValidityV104(item),
     facts=String(item?.metadata?.offer_facts||'').trim(),
     terms=String(item?.terms||'').trim();
@@ -10712,10 +10718,18 @@ async function servicesPage(){
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
         return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td>${money(s.price_cents)}</td><td>${s.duration_min}</td>
       <td><span class="pill ${s.active?'on':'off'}">${s.active?'Active':'Inactive'}</span></td>
-      <td>${canWrite?`<button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button>`:'<span class="muted small">View only</span>'}</td></tr>`;
+      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
+        <div class="field-grid">
+          <div><label for="svcEditName">Name</label><input id="svcEditName" value="${esc(s.name||'')}"></div>
+          <div><label for="svcEditVariant">Variation (optional)</label><input id="svcEditVariant" value="${esc(s.variant_label||'')}"></div>
+          <div><label for="svcEditPrice">Price (${S.biz.currency||'SGD'})</label><input id="svcEditPrice" type="number" min="0" step="0.01" value="${((s.price_cents||0)/100).toFixed(2)}"></div>
+          <div><label for="svcEditDuration">Duration (minutes)</label><input id="svcEditDuration" type="number" min="5" step="5" value="${Number(s.duration_min)||60}"></div>
+        </div>
+        <div class="row" style="margin-top:12px"><button class="btn sm" data-svc-save="${s.id}">Save changes</button><button class="btn ghost sm" data-svc-cancel="1">Cancel</button><span class="muted small" id="svcEditStatus" role="status" aria-live="polite"></span></div></td></tr>`:''}`;
       }).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No services yet',body:'Add your first service so customers can book and staff can select it during checkout.'});
     if(canUploadCatalogueMedia)bindCataloguePhotoUploadsV158({onSaved:()=>load()});
+    bindServiceEditors();
   }
   if(canWrite)$('sadd').onclick=async()=>{
     const name=$('sn').value.trim(),variant=$('sv').value.trim()||null,
@@ -10734,6 +10748,37 @@ async function servicesPage(){
   };
   if(canWrite&&$('openServiceForm'))$('openServiceForm').onclick=()=>{$('serviceFormCard').style.display='block';$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false');$('sn')?.focus()};
   if(canWrite&&$('cancelServiceForm'))$('cancelServiceForm').onclick=()=>{$('serviceFormCard').style.display='none'};
+  /* V183 (owner: "no edit function ... what if i key wrongly, then the service how can i remove
+     the time?"). The catalogue could only be Disabled, so a typo in a price or duration was
+     permanent — the only workaround was to disable the row and re-add it, which orphans its
+     photo and its bookings. This edits the row in place. Past sales are untouched: they carry
+     their own snapshotted price, so correcting the catalogue never rewrites history. */
+  let editingServiceId=null;
+  function bindServiceEditors(){
+    document.querySelectorAll('[data-svc-edit]').forEach(b=>b.onclick=()=>{
+      editingServiceId=b.dataset.svcEdit;renderSvc();
+      document.getElementById('svcEditName')?.focus();
+    });
+    document.querySelectorAll('[data-svc-cancel]').forEach(b=>b.onclick=()=>{editingServiceId=null;renderSvc()});
+    document.querySelectorAll('[data-svc-save]').forEach(b=>b.onclick=async()=>{
+      const id=b.dataset.svcSave,status=$('svcEditStatus');
+      const name=$('svcEditName').value.trim();
+      const variant=$('svcEditVariant').value.trim()||null;
+      const price=Math.round(parseFloat($('svcEditPrice').value||'0')*100);
+      const duration=parseInt($('svcEditDuration').value||'0',10);
+      if(name.length<2){if(status)status.textContent='Give the service a name.';return}
+      if(!(price>=0)){if(status)status.textContent='Enter a price of 0 or more.';return}
+      if(!(duration>=5)){if(status)status.textContent='Enter a duration of at least 5 minutes.';return}
+      CUI.setButtonBusy(b,{busy:true,label:'Saving…'});
+      const {data,error}=await sb.from('services')
+        .update({name,variant_label:variant,price_cents:price,duration_min:duration}).eq('id',id).select().limit(1);
+      if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
+      if(error){if(status)status.textContent=ownerErrorText(error);return}
+      const row=svCache.find(x=>x.id===id);
+      if(row&&data&&data[0])Object.assign(row,data[0]);
+      editingServiceId=null;renderSvc();toast('Service updated');
+    });
+  }
   window.toggleSvc=async(id,to)=>{
     if(!canWrite)return;
     const {error}=await sb.from('services').update({active:to}).eq('id',id);
@@ -10782,7 +10827,7 @@ async function servicesPage(){
     }
     const sv2=servicesResult.data,bu=bundlesResult.data;
     if(canWrite)$('bsv').innerHTML=(sv2||[]).map(s=>`<label data-merchant-content style="display:inline-flex;gap:6px;margin:4px 10px 0 0;cursor:pointer;color:var(--ink)">
-      <input type="checkbox" style="width:auto" data-bs="${s.id}">${esc(s.name)}</label>`).join('')||'<span class="muted">add services first</span>';
+      <input type="checkbox" style="width:auto" data-bs="${s.id}">${esc(s.name)}</label>`).join('')||'<span class="muted">No active services yet — add at least two in the Services tab, then come back.</span>';
     $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th>Price</th><th>Status</th></tr>${bu.map(b=>`<tr>
       <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${b.active?'Active':'Inactive'}</span></td></tr>`).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No bundles yet',body:'Create a bundle when you want to sell several services together at one combined price.'});
@@ -10812,10 +10857,15 @@ async function servicesPage(){
       if(badd3.isConnected)CUI.setButtonBusy(badd3,{busy:false});
     }
   };
-  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');$('bundleFormCard').style.display='block';$('bnm')?.focus()};
+  /* V183 (owner: "bundle does not work"). loadBR() ran once when the page mounted, so the
+     "Included services" checkbox list was whatever existed at that moment. Add two services and
+     open Bundles in the same visit and it still said "add services first" — with no way to pick
+     anything, Save bundle could only ever answer "Pick at least 2 services". Re-read the list
+     every time the Bundles view is opened. */
+  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');$('bundleFormCard').style.display='block';loadBR();$('bnm')?.focus()};
   if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>{$('bundleFormCard').style.display='none'};
   $('servicesSeg').onclick=()=>{$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false')};
-  $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true')};
+  $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');loadBR()};
   loadBR();
   const showServiceProductDeductionV157=false;
   if(showServiceProductDeductionV157){
@@ -12552,7 +12602,10 @@ function promotionPreviewMarkupV104(item,imageUrl='',business=null){
   const preview={...item,image_url:imageUrl||item.imageUrl,metadata:{...(item.metadata||{}),
     cta:{kind:item.ctaKind,label:item.ctaLabel}}};
   const merchant=business||{name:S.biz.name,slug:S.biz.slug};
-  return customerPromotionCardV104(preview,merchant,true);
+  /* A locally-picked file is a blob: URL that the storage allowlist rejects by design. Pass it
+     as an explicit preview override so the owner sees the real photo before publishing. */
+  const localPreview=/^blob:/i.test(String(imageUrl||''))?String(imageUrl):'';
+  return customerPromotionCardV104(preview,merchant,true,localPreview);
 }
 function promotionPageCurrentV104(pageRoot,host){
   return Boolean(pageRoot?.isConnected&&host?.contains?.(pageRoot));
@@ -12658,9 +12711,33 @@ async function promotionsPage(selectedPromotionId=null){
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
-      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${item.active?'Published':'Draft'}${item.ends_at?` · ends ${esc(promotionDateTextV104(item.ends_at))}`:''}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${item.active?'Published':'Draft'}${item.ends_at?` · ends ${esc(promotionDateTextV104(item.ends_at))}`:''}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn ghost sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">${item.active?'Retire':'Delete'}</button></div></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
   </div>`;
   localizeWorkspaceSubtreeV97(host);
+  /* V183 (owner: "I can edit but i cannot delete T.T"). Offers could be created, edited and
+     published but never removed, so a typo lived in the list forever. A DRAFT is deleted
+     outright — no customer has seen it. A PUBLISHED offer is RETIRED instead: it leaves every
+     customer surface immediately, but the row survives because alert runs and attempt receipts
+     reference it and because it is a record of what was actually advertised. The button says
+     which of the two will happen, and the confirm text names the offer. */
+  host.querySelectorAll('[data-promotion-delete]').forEach(button=>button.onclick=async()=>{
+    const id=button.dataset.promotionDelete;
+    const published=!!button.dataset.promotionPublished;
+    const name=button.dataset.promotionName||'this offer';
+    const question=published
+      ? `Retire "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
+      : `Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
+    if(!confirm(question))return;
+    CUI.setButtonBusy(button,{busy:true,label:published?'Retiring…':'Deleting…'});
+    const {error}=await sb.rpc('business_delete_promotion_v183',{
+      p_business:businessId,p_promotion_id:id,p_expected_version:null});
+    if(error){
+      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+      toast(ownerErrorText(error));return;
+    }
+    toast(published?'Offer retired — customers no longer see it':'Draft deleted');
+    promotionsPage(null);
+  });
   const pageRoot=host.querySelector('.promotion-studio'),
     isPromotionCurrent=()=>S.biz?.id===businessId&&promotionPageCurrentV104(pageRoot,host);
   const field=id=>$(id);
@@ -13591,7 +13668,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       }catch(error){
         if(!modal.isConnected)return;
         busy=false;rewardAutoConfirm.disabled=false;rewardAutoConfirm.textContent='Try creating draft again';
-        status.textContent='Draft could not be created. Nothing was published. Try again.';
+        /* The idempotency key is minted once and was previously cleared ONLY on success, so
+           every retry replayed a key the server had already rejected. generate_retention_
+           recommendation raises 22023 when the same key arrives after the catalogue changed —
+           which is exactly what happens when an owner adds a service and tries again. That made
+           "Try creating draft again" permanently unwinnable without a page reload.
+           A changed-inputs conflict means the owner wants a recommendation for the NEW inputs,
+           so drop the key and let the retry mint a fresh one. */
+        const raw=String(error?.message||'');
+        if(/idempotency key conflicts with changed business inputs/i.test(raw)){
+          rewardAutoSetupRequestKey=null;
+          status.textContent='Your services or products changed since the last try. Press again to build a recommendation from your current prices.';
+        }else{
+          status.textContent=`${ownerErrorText(error)} Nothing was published.`;
+        }
       }
     }
     render();

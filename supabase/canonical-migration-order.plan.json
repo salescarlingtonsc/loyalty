@@ -1270,6 +1270,12 @@
       "version": "20260806125000",
       "name": "nestly_v182_birthday_month_and_tier_schedule",
       "sourcePath": "db/migrations/20260806_nestly_v182_birthday_month_and_tier_schedule.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806125500",
+      "name": "nestly_v183_promotion_delete",
+      "sourcePath": "db/migrations/20260806_nestly_v183_promotion_delete.sql"
     }
   ]
 }
