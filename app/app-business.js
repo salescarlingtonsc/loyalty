@@ -3585,14 +3585,30 @@ async function tillPage(){
     {data:tillStaffBranches,error:tillStaffBranchError},
     {data:merchantPaymentStatus,error:merchantPaymentStatusError}
   ]=await Promise.all([
-    sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).eq('active',true).limit(1),
+    sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
     sb.from('branches').select('id,name,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
     sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id),
     sb.rpc('get_merchant_payment_status_v142',{p_business:S.biz.id})
   ]);
   if(!isTillCurrent())return;
   if(tillStaffError||tillBranchError||tillStaffBranchError)throw tillStaffError||tillBranchError||tillStaffBranchError;
-  const tillStaffId=tillStaff?.[0]?.id||null;
+  /* V187 (owner: "under record sale - i must be able to select who is the sales staff to allocate
+     commissions"). Every sale was attributed to whoever was signed in, so at a salon the
+     receptionist ringing up a therapist's treatment took the commission. Attribution drives the
+     frozen per-sale commission snapshot, so this is money, not a label.
+     The acting user stays the DEFAULT — correct for a one-person shop and for F&B — and the
+     picker only appears when more than one teammate could have done the work, so it configures
+     itself by sector instead of needing a setting. */
+  const tillRoster=(tillStaff||[]);
+  const tillActingStaffId=tillRoster.find(person=>person.user_id===S.user.id)?.id||null;
+  const tillStaffId=tillActingStaffId;
+  let tillSaleStaffId=tillActingStaffId;
+  /* Only teammates who actually work this branch can be credited; an owner or manager may
+     attribute across branches because they legitimately cover more than one. */
+  const tillAttributableStaffFor=branchId=>tillRoster.filter(person=>
+    canSeeAllTillBranches
+    ||person.id===tillActingStaffId
+    ||(tillStaffBranches||[]).some(row=>row.staff_id===person.id&&row.branch_id===branchId));
   const canSeeAllTillBranches=S.myRole==='owner'||S.myRole==='manager';
   const tillAssignedBranchIds=new Set((tillStaffBranches||[]).filter(row=>row.staff_id===tillStaffId).map(row=>row.branch_id));
   const assignedTillBranches=(tillBranches||[]).filter(branch=>canSeeAllTillBranches||tillAssignedBranchIds.has(branch.id));
@@ -3865,6 +3881,8 @@ async function tillPage(){
     };
   }
   function drawCustomerCard(){
+    const tillAttributableStaff=tillAttributableStaffFor(tillBranchId);
+    if(!tillAttributableStaff.some(person=>person.id===tillSaleStaffId))tillSaleStaffId=tillActingStaffId;
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} records the purchase and applies points only when an active published loyalty programme makes it eligible.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card">
         <div style="text-align:center">
@@ -3876,6 +3894,9 @@ async function tillPage(){
         ${canRecordSales?`${accessibleTillBranches.length>1
           ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
           :`<p class="muted small" style="margin-bottom:12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`}
+        ${tillAttributableStaff.length>1?`<label for="tillSaleStaff">Who made this sale?</label>
+        <select id="tillSaleStaff" style="margin-bottom:12px">${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
+        <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`:''}
         <label for="tAmt">Amount paid (${S.biz.currency||'SGD'})</label>
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
         <fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
@@ -3894,6 +3915,11 @@ async function tillPage(){
       document.querySelectorAll('[data-tender]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
       CUI.announce(workspaceTemplateTextV97('itemSelected',{item:button.textContent.trim()}));
     });
+    /* Re-attributing is a different sale: drop the idempotency key so the next confirm is a
+       fresh attempt rather than a replay of the previous teammate's sale. */
+    if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
+      tillSaleStaffId=event.target.value||tillActingStaffId;saleIdem=null;
+    };
     if($('tAmt')){$('tAmt').focus();$('tAmt').oninput=()=>{saleIdem=null}};
     if($('tAmt'))$('tAmt').onkeydown=e=>{if(e.key==='Enter')$('tConfirm')?.click()};
     if($('tConfirm'))$('tConfirm').onclick=async()=>{
@@ -3906,7 +3932,7 @@ async function tillPage(){
       if(!saleIdem) saleIdem=crypto.randomUUID(); // fresh key for this sale; reused on retry
       busy=true;$('tConfirm').disabled=true;$('tConfirm').textContent='Recording…';
       const {data,error}=await sb.rpc('record_sale_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone,
-        p_amount_cents:amt,p_kind:'quick_sale',p_note:null,p_staff:tillStaffId,p_idem:saleIdem,
+        p_amount_cents:amt,p_kind:'quick_sale',p_note:null,p_staff:tillSaleStaffId||tillStaffId,p_idem:saleIdem,
         p_branch:tillBranchId,p_method:tender});
       if(!isTillCurrent())return;
       busy=false;
@@ -4573,9 +4599,11 @@ async function tillPage(){
   async function beginPaynowPaymentV142(){
     if(extraLines().length)return cartErr('PayNow QR supports the checked sale total only. Complete package or membership purchases separately.');
     let request=readPaynowRequestV142();
-    const fingerprint=[S.biz.id,tillBranchId,cust.client_id,tillStaffId,evalResult.evaluation_id].join(':');
+    /* The attributed teammate is part of the idempotency fingerprint: changing who is credited is
+       a different sale, and must not silently replay the previous attribution. */
+    const fingerprint=[S.biz.id,tillBranchId,cust.client_id,tillSaleStaffId||tillStaffId,evalResult.evaluation_id].join(':');
     if(!request||request.fingerprint!==fingerprint)request={fingerprint,idempotency_key:crypto.randomUUID(),
-      business_id:S.biz.id,branch_id:tillBranchId,client_id:cust.client_id,staff_id:tillStaffId,evaluation_id:evalResult.evaluation_id};
+      business_id:S.biz.id,branch_id:tillBranchId,client_id:cust.client_id,staff_id:tillSaleStaffId||tillStaffId,evaluation_id:evalResult.evaluation_id};
     writePaynowRequestV142(request);
     busy=true;const btn=$('tCartConfirm')||$('tPayRetry');if(btn){btn.disabled=true;btn.textContent='Creating QR…'}
     const executed=await sb.functions.invoke('stripe-connect-command',{body:{action:'create_paynow',...request}});
@@ -4638,7 +4666,7 @@ async function tillPage(){
       const finaliseKey=writeAttemptKey(FINALISE_SLOT,evalFingerprint()); // stable across retries; new only on a cart/branch change
       // p_client is null for a walk-in — record_cart_sale permits it and returns points_earned 0.
       const {data,error}=await sb.rpc('record_cart_sale',{p_business:S.biz.id,p_client:cust?cust.client_id:null,
-        p_branch:tillBranchId,p_staff:tillStaffId,p_method:tender,p_idempotency_key:finaliseKey,
+        p_branch:tillBranchId,p_staff:tillSaleStaffId||tillStaffId,p_method:tender,p_idempotency_key:finaliseKey,
         p_lines:null,p_evaluation_id:evalResult.evaluation_id,p_paid:true});
       if(!isTillCurrent())return;
       if(error){busy=false;payError=null;return handleFinaliseError(error);}
@@ -4776,7 +4804,10 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
-        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
+        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
+        ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">Reg. no. ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
@@ -4788,7 +4819,8 @@ async function tillPage(){
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
-        <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received${d.pointsTotal!=null?` · now ${d.pointsTotal} points total`:''}</p>
+        <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
+        ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
@@ -5933,6 +5965,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
   const tierRows=()=>`
     <b style="display:block;margin-top:18px">Tiers (optional)</b>
+    ${tiers.length&&!(p&&p.active)?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but this programme is not live. Nobody sees their tier, its benefits or how far they are from the next one until you publish it.</p></div>`:''}
     <label>Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}>
       <option value="visits" ${(p?.tier_basis??'visits')==='visits'?'selected':''}>Number of visits (recommended)</option>
       <option value="spend" ${p?.tier_basis==='spend'?'selected':''}>Lifetime spend ($)</option>
@@ -13720,6 +13753,12 @@ async function settingsPage(){
       <p class="muted small" id="biSectorHint" style="margin-top:4px">Set by Peekaa for your sector.</p>
       <label for="bc">Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
       <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
+      <label for="blegal">Registered company name (for receipts)</label>
+      <input id="blegal" maxlength="200" placeholder="e.g. HOUGANG ABC PTE. LTD." value="${esc(S.biz.legal_name||'')}">
+      <p class="muted small" style="margin-top:4px">Printed on every receipt. Leave blank to use your workspace name.</p>
+      <label for="buen">Business registration number / UEN</label>
+      <input id="buen" maxlength="60" placeholder="e.g. 202612345A" value="${esc(S.biz.registration_number||'')}">
+      <p class="muted small" style="margin-top:4px">Shown on receipts so customers can identify who they paid.</p>
       <label for="bru">Public review link (Google, Facebook, etc.)</label><input id="bru" type="url" inputmode="url" placeholder="https://g.page/your-business/review" value="${esc(S.biz.review_url||'')}" aria-describedby="bruHint">
       <p class="muted small" id="bruHint" style="margin-top:4px">Optional. Must start with https://. Shown to customers in their wallet — it is offered to everyone, never used to hide low ratings.</p>
       <p class="field-label">Portal link (share with customers)</p>
@@ -13910,10 +13949,16 @@ async function settingsPage(){
       $('bru').focus();return toast('Public review link must start with https:// and be under 500 characters');
     }
     const reviewUrl=reviewUrlRaw||null;
+    /* V188: legal_name and registration_number already existed on businesses but nothing ever
+       asked for them, so every receipt in production printed only a workspace nickname. They
+       ride this same UPDATE — no new call site. */
+    const legalName=($('blegal')?.value||'').trim()||null;
+    const registrationNumber=($('buen')?.value||'').trim()||null;
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
-      brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl}).eq('id',S.biz.id);
+      brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,
+      legal_name:legalName,registration_number:registrationNumber}).eq('id',S.biz.id);
     if(error)return fail(error);
-    Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl});
+    Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber});
     toast('Saved');route();
   };
   $('cfAdd').onclick=async()=>{

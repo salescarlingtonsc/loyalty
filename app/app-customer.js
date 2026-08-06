@@ -2368,6 +2368,17 @@ function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},
    business has no tiers, and never shows raw percentages without the human sentence. */
 function customerTierCardMarkupV174(tier={}){
   const current=tier.current,next=tier.next;
+  /* v189: never render silence where a tier belongs. "not_running" is the business's own state —
+     the programme is paused or was never published — and saying so beats a blank space that the
+     customer reads as "I have no tier". A fault says it is a fault, and offers a reload. */
+  if(tier.unavailable==='not_running'){
+    return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier"><h2 style="margin:0">Tiers</h2>
+      <p class="muted small" style="margin-top:6px">This business is not running a tier programme at the moment. Your points and rewards are unaffected.</p></section>`;
+  }
+  if(tier.unavailable==='error'){
+    return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier"><h2 style="margin:0">Tiers</h2>
+      <p class="muted small" style="margin-top:6px">Your tier could not be checked just now. Nothing has changed — reload to try again.</p></section>`;
+  }
   if(!current&&!next)return '';
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
@@ -2382,8 +2393,13 @@ function customerTierCardMarkupV174(tier={}){
   })();
   const nextBenefits=Array.isArray(next?.benefits)?next.benefits.filter(value=>String(value||'').trim()).slice(0,2):[];
   const currentBenefits=Array.isArray(current?.benefits)?current.benefits.filter(value=>String(value||'').trim()):[];
+  /* v189 (owner: "the required points to reach next stage — old account cannot view"). A member
+     already at the top has no NEXT stage, so the progress line had nothing to say and the card
+     went quiet exactly where the requirement belongs. State the bar they cleared instead. */
+  const currentRequirement=current&&!next?customerTierRequirementTextV189(current.threshold,basis):'';
   return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier">
     <div class="row" style="align-items:baseline;gap:10px"><h2 style="margin:0">${esc(current?.label||'Getting started')}</h2>${next?'':current?'<span class="pill ok">Top tier</span>':''}</div>
+    ${currentRequirement?`<p class="muted small" style="margin-top:6px">${esc(currentRequirement)} · you are at the highest tier.</p>`:''}
     ${next?`<div style="background:var(--line);border-radius:100px;height:8px;margin-top:12px;overflow:hidden"><div style="background:var(--grad);height:100%;width:${progress}%"></div></div>
     <p class="muted small" style="margin-top:8px">${remainingText}</p>
     ${nextBenefits.length?`<p class="small" style="margin-top:6px"><b>${esc(next.label)}</b> unlocks: ${nextBenefits.map(esc).join(' · ')}</p>`:''}`:''}
@@ -2403,13 +2419,7 @@ function customerTierLadderMarkupV186(tier={}){
   if(rungs.length<2)return '';
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
-  const requirement=threshold=>{
-    const value=Math.max(0,Number(threshold)||0);
-    if(!value)return 'From your first visit';
-    if(basis==='spend')return `From SGD ${value.toLocaleString('en-SG',{maximumFractionDigits:0})} spent`;
-    if(basis==='points_earned')return `From ${value.toLocaleString('en-SG')} points earned`;
-    return `From ${value.toLocaleString('en-SG')} visit${value===1?'':'s'}`;
-  };
+  const requirement=threshold=>customerTierRequirementTextV189(threshold,basis);
   return `<div class="customer-tier-ladder" style="margin-top:16px">
     <p class="small"><b>All tiers</b></p>
     <ol class="customer-tier-rungs" aria-label="Every tier and what it unlocks">${rungs.map(rung=>{
@@ -2430,6 +2440,15 @@ function customerTierLadderMarkupV186(tier={}){
       </li>`;
     }).join('')}</ol>
   </div>`;
+}
+/* What a rung costs, in the business's own basis. Shared by the tier card header and the ladder
+   so the two can never word the same threshold differently. */
+function customerTierRequirementTextV189(threshold,basis){
+  const value=Math.max(0,Number(threshold)||0);
+  if(!value)return 'From your first visit';
+  if(basis==='spend')return `From SGD ${value.toLocaleString('en-SG',{maximumFractionDigits:0})} spent`;
+  if(basis==='points_earned')return `From ${value.toLocaleString('en-SG')} points earned`;
+  return `From ${value.toLocaleString('en-SG')} visit${value===1?'':'s'}`;
 }
 function customerTierRemainingTextV186(remaining,basis){
   if(basis==='spend')return `SGD ${Number(remaining).toLocaleString('en-SG',{maximumFractionDigits:0})} to go`;
@@ -2754,7 +2773,13 @@ async function renderCustomerWallet(businessSlug=null){
   if(!isWalletCurrent())return;
   const businessActions=businessActionsResult.error?null:businessActionsResult.data;
   const presentation=customerProgrammePresentationV95(presentationResult.error?{}:presentationResult.data,{business:b,loyalty:actionableCard?.loyalty||loyalty});
-  presentation.tier=effectiveTierResult.error?{}:(effectiveTierResult.data?.tier||{});
+  /* v189: a failed tier lookup used to render as an empty space, which reads as "this business
+     has no tiers" — the customer cannot tell a paused programme from a broken call. Carry the
+     failure through so the card can say which it is. 42501 is the server's "not running for you"
+     (module off, or no active programme); anything else is a genuine fault. */
+  presentation.tier=effectiveTierResult.error
+    ?{unavailable:effectiveTierResult.error.code==='42501'?'not_running':'error'}
+    :(effectiveTierResult.data?.tier||{});
   const programmeOffersStatus=promotionsResult.error?'error':'ready';
   presentation.offers=promotionsResult.error
     ?[]

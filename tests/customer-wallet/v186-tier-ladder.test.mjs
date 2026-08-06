@@ -108,3 +108,41 @@ test('the contract is additive — every earlier field survives', () => {
   assert.match(migration, /verified customer link required/, 'the link check must not be lost in the rewrite');
   assert.match(migration, /authenticated customer session required/);
 });
+
+/* ------------------------------------------------- v189: never a blank where a tier belongs */
+
+test('a member at the top tier still sees the bar they cleared', () => {
+  const card = section(app, 'function customerTierCardMarkupV174', 'function customerTierLadderMarkupV186');
+  assert.match(card, /const currentRequirement=current&&!next\?customerTierRequirementTextV189\(current\.threshold,basis\):''/);
+  assert.match(card, /you are at the highest tier\./);
+});
+
+test('the header line and the ladder word a threshold identically', () => {
+  const helper = section(app, 'function customerTierRequirementTextV189', 'function customerTierRemainingTextV186');
+  const { customerTierRequirementTextV189 } = new Function(`${helper};return {customerTierRequirementTextV189};`)();
+  assert.equal(customerTierRequirementTextV189(0, 'points_earned'), 'From your first visit');
+  assert.equal(customerTierRequirementTextV189(10000, 'points_earned'), 'From 10,000 points earned');
+  assert.equal(customerTierRequirementTextV189(3000, 'spend'), 'From SGD 3,000 spent');
+  assert.equal(customerTierRequirementTextV189(1, 'visits'), 'From 1 visit');
+  assert.equal(customerTierRequirementTextV189(5, 'visits'), 'From 5 visits');
+  assert.match(app, /const requirement=threshold=>customerTierRequirementTextV189\(threshold,basis\)/,
+    'the ladder must use the same helper, so the two can never diverge');
+});
+
+test('a failed or paused tier lookup says which it is instead of rendering nothing', () => {
+  const card = section(app, 'function customerTierCardMarkupV174', 'function customerTierLadderMarkupV186');
+  assert.match(card, /tier\.unavailable==='not_running'/);
+  assert.match(card, /This business is not running a tier programme at the moment\./);
+  assert.match(card, /Your points and rewards are unaffected\./);
+  assert.match(card, /tier\.unavailable==='error'/);
+  assert.match(card, /Your tier could not be checked just now\./);
+  assert.match(app, /effectiveTierResult\.error\.code==='42501'\?'not_running':'error'/,
+    '42501 is the server saying the programme is not running for this customer');
+});
+
+test('the workspace warns when tiers are configured but nobody can see them', () => {
+  assert.match(app, /Customers cannot see these tiers/);
+  assert.match(app, /\$\{tiers\.length&&!\(p&&p\.active\)\?/,
+    'the warning fires exactly when tiers exist and the programme is not live');
+  assert.match(app, /until you publish it\./);
+});

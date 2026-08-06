@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="592b2138992f41a4515c2f413184f0cb112565159888ce3a54deac003ceb4e09"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="85604a5b95b2b7190e6524c85b353a35da89eb2c90e8ec739d4ae14f8ed52750"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1589,11 +1589,21 @@ function renderNativeBusinessCompanion(){
   $('personaChoiceSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
   function accountDeletionCardHtml(){
+  /* v189 (owner: "request closure — but hidden inside here, small button"): closing an account is
+     a real thing a person came here to do, so it gets a real action rather than a sentence with an
+     address buried in it. The button opens a pre-addressed email — Peekaa still decides, which is
+     the ruling, but the customer does not have to compose anything or find the address. */
+  const closureSubject=encodeURIComponent('Peekaa account closure request');
+  const closureBody=encodeURIComponent('I would like to close my Peekaa account.\n\nName:\nPhone or email used:\nBusiness(es) I joined:\n');
   return `<section class="card" id="accountDeletionCard" style="margin-top:14px"><h2>Account &amp; privacy</h2>
-    <p class="muted small" style="margin-top:6px">To close this account, or to ask what personal data is held, email <a href="mailto:admin.peekaa@gmail.com?subject=Peekaa%20account%20closure">admin.peekaa@gmail.com</a> or speak to your assigned consultant. Peekaa handles it for you and replies within 30 days.</p>
-    <p class="muted small" style="margin-top:8px">Legally required financial, fraud-prevention and security records may be retained after closure.</p>
+    <p class="muted small" style="margin-top:6px">Peekaa handles account closure for you and replies within 30 days. You can also speak to your assigned consultant.</p>
     <div id="accountDeletionStatus" role="status"></div>
-    <a class="btn ghost sm" href="/data-request.html" style="margin-top:16px">Make a data request</a></section>`;
+    <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
+      <a class="btn" href="mailto:admin.peekaa@gmail.com?subject=${closureSubject}&amp;body=${closureBody}">Request account closure</a>
+      <a class="btn ghost" href="/data-request.html">Ask what data is held</a>
+    </div>
+    <p class="muted small" style="margin-top:12px">Legally required financial, fraud-prevention and security records may be retained after closure.</p>
+    <p class="muted small" style="margin-top:4px">Prefer to write yourself? <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></p></section>`;
 }
 
 /* Shows an EXISTING request's state, if there is one. Never offers a new one. Silent on failure:

@@ -28,12 +28,16 @@ test('no surface offers self-service account deletion any more', () => {
   assert.doesNotMatch(app, /Delete your Peekaa account/);
 });
 
-test('the route to close an account is still obvious', () => {
+test('closing an account is a real action, not a sentence with an address in it', () => {
   const card = app.slice(app.indexOf('function accountDeletionCardHtml'), app.indexOf('async function wireAccountDeletionButton'));
-  assert.match(card, /mailto:admin\.peekaa@gmail\.com/, 'the same address the Privacy Notice gives');
+  // v189: the owner found the route "hidden inside here, small button".
+  assert.match(card, /<a class="btn" href="mailto:admin\.peekaa@gmail\.com\?subject=\$\{closureSubject\}&amp;body=\$\{closureBody\}">Request account closure<\/a>/,
+    'the primary action must be the closure request itself');
+  assert.match(card, /Peekaa account closure request/, 'the mail arrives pre-addressed and pre-titled');
+  assert.match(card, /Name:.*Phone or email used:/s, 'the body asks for what Peekaa needs to act');
+  assert.match(card, /Ask what data is held/);
   assert.match(card, /speak to your assigned consultant/);
   assert.match(card, /replies within 30 days/);
-  assert.match(card, /href="\/data-request\.html"/);
   assert.match(card, /Legally required financial, fraud-prevention and security records may be retained/);
   assert.match(app, /<a href="\/data-request\.html" id="pmDeleteAccount">/,
     'the profile menu links to the request page instead of opening a dialog');
