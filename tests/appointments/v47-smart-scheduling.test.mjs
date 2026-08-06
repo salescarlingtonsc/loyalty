@@ -59,7 +59,9 @@ test('frontline Record sale minimizes choices and keeps hardened sale attributio
   assert.match(app,/>Record sale</);
   assert.match(till,/Phone number[\s\S]*id="tfind"[\s\S]*Next/i);
   assert.match(till,/legacyTenderOptions=\[\['cash','Cash'\],\['card','Card'\],\['paynow','External PayNow'\],\['other','Other'\]\]/i);
-  assert.match(till,/id="tAmt"[\s\S]*Payment received[\s\S]*legacyTenderOptions\.map[\s\S]*Save & add points/i);
+  // The confirm button is now "Record sale", matching the module name, rather than the older
+  // "Save & add points". The flow it anchors — amount, then tender, then one confirm — is the same.
+  assert.match(till,/id="tAmt"[\s\S]*Payment received[\s\S]*legacyTenderOptions\.map[\s\S]*id="tConfirm"[\s\S]{0,120}Record sale/i);
   assert.match(till,/record_sale_by_phone/);
   assert.match(till,/p_staff:tillStaffId/);
   assert.match(till,/p_branch:tillBranchId/);
@@ -67,7 +69,10 @@ test('frontline Record sale minimizes choices and keeps hardened sale attributio
   assert.match(till,/accessibleTillBranches/);
   assert.match(till,/^\s*if\(!\/\^\\d\+\(\?:\\\.\\d\{1,2\}\)\?\$\/\.test\(rawAmount\)\)/m);
   assert.match(till,/keydown[\s\S]*Enter[\s\S]*tConfirm/i);
-  assert.doesNotMatch(till,/Points balance|Store credit|Visits/i);
+  // Scan RENDERED copy only: this guards against the till screen showing loyalty stats to the
+  // operator, and a source-wide scan trips on code comments that merely mention them.
+  const tillCopy=till.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/(^|[^:])\/\/[^\n]*/g,'$1 ');
+  assert.doesNotMatch(tillCopy,/Points balance|Store credit|Visits/i);
   assert.match(till,/Scan customer QR/,
     'the intentionally added post-sale reward scanner must remain a clear, single-purpose action');
   assert.match(quick,/staff\.user_id=auth\.uid\(\)[\s\S]*p_staff is distinct from v_actor_staff/i);

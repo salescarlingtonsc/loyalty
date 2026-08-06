@@ -54,8 +54,11 @@ test('signed-in owner chooses business, sector, cadence and capacity before Stri
   assert.match(onboard,/value="monthly"/);
   assert.match(onboard,/customerCapacity/);
   assert.match(onboard,/Continue to secure Stripe Checkout/);
-  assert.match(onboard,/Stripe auto-activates only after verified payment/);
-  assert.match(onboard,/manual-payment approval form below for Super Admin review/);
+  // The Stripe-vs-manual explanation moved into renderBusinessApplication when the application
+  // flow was split out of onboarding; assert it where it now lives.
+  const application=section('function renderBusinessApplication','function renderOnboard(){');
+  assert.match(application,/Stripe payment auto-activates after verified payment; manual payment goes to Super Admin for approve\/reject\./);
+  assert.match(application, /Super Admin reviews and approves or rejects this manual-payment application/);
   assert.match(onboard,/manualBusinessApplicationFallbackHtml\(sectors\)/);
   assert.match(onboard,/wireManualBusinessApplicationFallback\(\)/);
   assert.match(onboard,/start_self_serve_business_v130/);
