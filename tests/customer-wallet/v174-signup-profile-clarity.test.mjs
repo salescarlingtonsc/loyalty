@@ -24,3 +24,9 @@ test('a passed security check is invisible instead of red',()=>{
   assert.match(app,/onToken\(token\);retryEl\.hidden=true;setPassed\(true\)/);
   assert.doesNotMatch(app,/onToken\(token\);message\(security\('complete'\)\)/);
 });
+
+test('the retry link honours hidden and the passed challenge collapses', () => {
+  assert.match(app,/\.challenge-retry\[hidden\]\{display:none\}/);
+  assert.match(app,/\.challenge\.challenge-passed\{min-height:0/);
+  assert.match(app,/classList\.toggle\('challenge-passed',passed\)/);
+});

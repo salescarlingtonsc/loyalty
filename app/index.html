@@ -298,7 +298,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
-.challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
+.challenge-retry[hidden]{display:none}.challenge.challenge-passed{min-height:0;margin-top:0}.challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
 .logo{display:inline-flex;align-items:center;min-height:44px}
 .brand-logo{display:block;width:auto;height:50px;max-width:126px;object-fit:contain}
 .wallet-head>a.logo{display:inline-flex;align-items:center;min-height:44px}
@@ -1557,6 +1557,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
     statusEl.hidden=passed;
     const host=document.getElementById(container);
     if(host)host.style.display=passed?'none':'';
+    statusEl.closest('.challenge')?.classList.toggle('challenge-passed',passed);
   };
   const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
   const clear=(text,isError=false)=>{onToken('');message(text,isError)};
