@@ -1288,6 +1288,12 @@
       "version": "20260806125800",
       "name": "nestly_v184_product_service_sectors",
       "sourcePath": "db/migrations/20260806_nestly_v184_product_service_sectors.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806163515",
+      "name": "nestly_v186_customer_tier_ladder",
+      "sourcePath": "db/migrations/20260807_nestly_v186_customer_tier_ladder.sql"
     }
   ]
 }

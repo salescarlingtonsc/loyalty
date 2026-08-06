@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="755ef008cedb1c7c70e32d8cb4bc6b132c93c887f62b66dcd10eec1bb3602847"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="c7dc1bfb15c633d04fcc51405b0db3dac7059832f5fc4ddc6844dc6f69768971"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1227,6 +1227,16 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-balance-panel.customer-balance-panel-single{grid-template-columns:minmax(0,560px)}
 .customer-balance-value{font-size:clamp(1.85rem,5vw,2.6rem);font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
 .customer-tier-track{height:10px;margin-top:13px;border-radius:999px;background:var(--hair);overflow:hidden}.customer-tier-track span{display:block;height:100%;width:var(--tier-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral));transition:width .25s var(--ease)}
+/* v186 tier ladder. Every tier stays fully legible; the ones that are not yours are drained of
+   colour and dimmed, which reads instantly as "not mine" without hiding a single benefit. The
+   state pill carries the same meaning in words, so greyscale is never the only signal. */
+.customer-tier-ladder{border-top:1px solid var(--hair);padding-top:14px}
+.customer-tier-rungs{display:grid;gap:10px;margin-top:10px;padding:0;list-style:none;counter-reset:tier}
+.customer-tier-rung{padding:12px 14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--card);filter:grayscale(1);opacity:.62;transition:opacity var(--motion-ui) var(--ease),filter var(--motion-ui) var(--ease)}
+.customer-tier-rung.is-achieved{opacity:.78}
+.customer-tier-rung.is-current{filter:none;opacity:1;border-color:var(--merchant-accent,var(--coral));background:var(--tint);box-shadow:var(--shadow)}
+.customer-tier-rung .rec-why{margin-top:6px}
+@media(prefers-reduced-motion:reduce){.customer-tier-rung{transition:none}}
 .wallet-history-disclosure{margin-top:14px;padding:0;overflow:hidden}.wallet-history-disclosure>summary{display:flex;align-items:center;gap:10px;min-height:56px;padding:16px 18px;cursor:pointer;font-weight:750;list-style-position:inside}.wallet-history-disclosure>summary .muted{font-weight:500}.wallet-history-disclosure[open]>summary{border-bottom:1px solid var(--hair)}.wallet-history-disclosure-body{display:grid;gap:14px;padding:14px}.wallet-history-disclosure .wallet-section{margin:0;box-shadow:none}
 .customer-perks-grid,.customer-offers-grid,.customer-rewards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin-top:12px}
 .customer-perk-card,.customer-offer-card,.customer-reward-card{overflow:hidden;min-height:120px;padding:16px;border:1px solid var(--hair);border-radius:15px;background:#fff}

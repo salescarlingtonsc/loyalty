@@ -4210,7 +4210,54 @@ function customerTierCardMarkupV174(tier={}){
     <p class="muted small" style="margin-top:8px">${remainingText}</p>
     ${nextBenefits.length?`<p class="small" style="margin-top:6px"><b>${esc(next.label)}</b> unlocks: ${nextBenefits.map(esc).join(' · ')}</p>`:''}`:''}
     ${currentBenefits.length?`<p class="small" style="margin-top:${next?'12':'10'}px"><b>Your benefits now</b></p><ul class="rec-why" style="margin-top:6px">${currentBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:''}
+    ${customerTierLadderMarkupV186(tier)}
   </section>`;
+}
+/* v186 (owner: "i want to see different tiers and its benefits… mask other tiers, still can see
+   the benefits but very obvious that is not their tier"). A ladder you cannot see is not a
+   ladder — naming what the next rung unlocks is the entire reason anyone climbs. Every tier is
+   listed with its own benefits; the one the SERVER placed the customer on is in full colour, the
+   rest are desaturated and dimmed but fully readable, and each carries a word for its state so
+   the meaning survives greyscale, colour blindness and a screen reader.
+   Renders nothing for a single-tier programme, where a "ladder" would be a lie. */
+function customerTierLadderMarkupV186(tier={}){
+  const rungs=(Array.isArray(tier.tiers)?tier.tiers:[]).filter(rung=>String(rung?.label||'').trim());
+  if(rungs.length<2)return '';
+  const basis=String(tier.basis||'visits');
+  const metric=Number(tier.metric||0);
+  const requirement=threshold=>{
+    const value=Math.max(0,Number(threshold)||0);
+    if(!value)return 'From your first visit';
+    if(basis==='spend')return `From SGD ${value.toLocaleString('en-SG',{maximumFractionDigits:0})} spent`;
+    if(basis==='points_earned')return `From ${value.toLocaleString('en-SG')} points earned`;
+    return `From ${value.toLocaleString('en-SG')} visit${value===1?'':'s'}`;
+  };
+  return `<div class="customer-tier-ladder" style="margin-top:16px">
+    <p class="small"><b>All tiers</b></p>
+    <ol class="customer-tier-rungs" aria-label="Every tier and what it unlocks">${rungs.map(rung=>{
+      const isCurrent=rung.current===true;
+      const achieved=rung.achieved===true&&!isCurrent;
+      const state=isCurrent?'Your tier':achieved?'Reached':'Not yet yours';
+      const benefits=(Array.isArray(rung.benefits)?rung.benefits:[]).filter(value=>String(value||'').trim());
+      const remaining=Math.max(0,Number(rung.threshold||0)-metric);
+      return `<li class="customer-tier-rung${isCurrent?' is-current':''}${achieved?' is-achieved':''}"${isCurrent?' aria-current="true"':''}>
+        <div class="row" style="align-items:baseline;gap:8px">
+          <b>${esc(rung.label)}</b>
+          <span class="pill ${isCurrent?'ok':'off'}">${esc(state)}</span>
+        </div>
+        <p class="muted small" style="margin-top:3px">${esc(requirement(rung.threshold))}${!isCurrent&&!achieved&&remaining>0?` · ${esc(customerTierRemainingTextV186(remaining,basis))}`:''}</p>
+        ${benefits.length
+          ?`<ul class="rec-why" style="margin-top:6px">${benefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`
+          :'<p class="muted small" style="margin-top:6px">Benefits not published yet.</p>'}
+      </li>`;
+    }).join('')}</ol>
+  </div>`;
+}
+function customerTierRemainingTextV186(remaining,basis){
+  if(basis==='spend')return `SGD ${Number(remaining).toLocaleString('en-SG',{maximumFractionDigits:0})} to go`;
+  if(basis==='points_earned')return `${Math.ceil(remaining).toLocaleString('en-SG')} points to go`;
+  const visits=Math.ceil(remaining);
+  return `${visits.toLocaleString('en-SG')} visit${visits===1?'':'s'} to go`;
 }
 function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready'}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;

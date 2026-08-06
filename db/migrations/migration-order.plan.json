@@ -1287,6 +1287,12 @@
       "path": "db/migrations/20260806_nestly_v184_product_service_sectors.sql",
       "semanticVersion": "v184",
       "proposedDeployVersion": "20260806125800"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v186_customer_tier_ladder.sql",
+      "semanticVersion": "v186",
+      "proposedDeployVersion": "20260806125900"
     }
   ]
 }
