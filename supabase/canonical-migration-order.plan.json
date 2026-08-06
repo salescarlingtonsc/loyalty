@@ -1246,6 +1246,12 @@
       "version": "20260806115000",
       "name": "nestly_v179_report_insight_evidence",
       "sourcePath": "db/migrations/20260806_nestly_v179_report_insight_evidence.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806115500",
+      "name": "nestly_v176b_reward_tier_gate_read_path",
+      "sourcePath": "db/migrations/20260806_nestly_v176b_reward_tier_gate_read_path.sql"
     }
   ]
 }
