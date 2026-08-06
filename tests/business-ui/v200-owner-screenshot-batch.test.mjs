@@ -115,3 +115,45 @@ test('the strip scrolls rather than wraps', () => {
   assert.match(indexHtml, /\.section-subtabs-v200 button\{[^}]*white-space:nowrap[^}]*\}/);
   assert.match(indexHtml, /\.section-subtabs-v200\{[^}]*display:flex/);
 });
+
+/* ------------------------------------------------- 3b. the modules actually converted */
+
+/* Owner: "convert the remaining modules to tabs". Each conversion below tags real, independent
+   sub-modules and leaves everything shared pinned above the strip. Verified in the browser
+   against production CSS: every tagged section lands in a panel, nothing is orphaned, and the
+   pinned rows stay outside the panels. */
+
+const CONVERSIONS = [
+  { key: 'storedvalue', root: 'routeMain', tabs: ['Authority', 'Top-ups', 'Reconciliation', 'Pause &amp; safety', 'Cutover'] },
+  { key: 'customers', root: "$('customersView')", tabs: ['Customers', 'Visit feedback'] },
+  { key: 'giftcards', root: 'routeMain', tabs: ['Issue &amp; redeem', 'Cards on the books'] },
+];
+
+for (const { key, root, tabs } of CONVERSIONS) {
+  test(`${key} opts in, and every tab it advertises is tagged in its own template`, () => {
+    const call = new RegExp(`sectionTabsV200\\(${root.replace(/[$()']/g, '\\$&')},\\{key:'${key}'`);
+    assert.match(appJs, call, `${key} must call the helper with the root that owns its sections`);
+    for (const label of tabs) {
+      assert.ok(appJs.includes(`data-subtab="${label}"`), `${key} is missing a section tagged ${label}`);
+    }
+  });
+}
+
+test('gift cards no longer wraps its sections in the two-column split the tabs replace', () => {
+  // a .split wrapper would make the cards grandchildren, and the helper only groups direct
+  // children — it would have silently found nothing and rendered no strip at all
+  const start = appJs.indexOf("routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'Issue and redeem");
+  const end = appJs.indexOf("sectionTabsV200(routeMain,{key:'giftcards'", start);
+  assert.ok(start > 0 && end > start);
+  const template = appJs.slice(start, end);
+  assert.doesNotMatch(template, /<div class="split">/);
+  assert.match(template, /<div class="card" data-subtab="Issue &amp; redeem">\$\{giftCardWorkspace\}<\/div>/);
+});
+
+test('the shared controls each module needs from every tab stay untagged', () => {
+  // Customers: the add-customer form opens from the actions bar, so it must not live in a tab
+  assert.match(appJs, /<div class="card" id="form" style="display:none;margin-bottom:16px"><\/div>/);
+  assert.doesNotMatch(appJs, /id="form"[^>]*data-subtab/);
+  // Stored value: the live / not-live banner changes what every other tab MEANS
+  assert.doesNotMatch(appJs, /permission-banner[^>]*data-subtab/);
+});
