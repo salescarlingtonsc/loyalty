@@ -72,8 +72,11 @@ test('merchant feature groups and birthday participation render only from actual
     'authoritative wallet rewards are the only reward cards on programme detail');
   assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?/);
   assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
-  assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,2\)/);
-  assert.match(merchant,/offers\.length\?`<section class="customer-promotions-section"/);
+  // v173 raised the customer offer shelf from 2 to 6.
+  assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,6\)/);
+  // v167 moved the offers shelf into the shared customerProgrammeOffersMarkupV167 renderer
+  // (one section, one empty state) instead of an inline conditional per surface.
+  assert.match(merchant,/customerProgrammeOffersMarkupV167\(\{items:offers,status:offersStatus/);
   assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
   assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?[\s\S]*customerFeatureCardMarkupV156[\s\S]*Featured services and products will appear here after this business publishes them\./);
   assert.match(wallet,/customerFeatures\.customer_birthday_benefits&&actionableCard\?\.birthday_benefit&&actionableCard\.birthday_benefit\.status!=='unavailable'/);

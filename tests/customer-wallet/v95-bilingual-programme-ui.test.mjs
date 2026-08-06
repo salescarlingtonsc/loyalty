@@ -25,8 +25,12 @@ test('customer portal stays English-only while profile language remains communic
 test('programme selector precedes merchant detail and zero-programme state only offers issued-QR joining',()=>{
   const home=section('function renderActionableWalletHome','async function renderCustomerWallet');
   const first=section('function renderCustomerFirstProgrammeQuest','function renderActionableWalletHome');
-  assert.match(home,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
-  assert.match(home,/customerProgrammeGridMarkupV96\(cards\)/);
+  // The zero-programme guard now lives in renderCustomerProgrammes, which is where the card
+  // list is actually built; the invariant (no cards -> first-programme quest, and return) is
+  // unchanged.
+  const programmes=section('async function renderCustomerProgrammes','function renderCustomerWalletRetry');
+  assert.match(programmes,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
+  assert.match(app,/customerProgrammeGridMarkupV96\(cards\)/);
   assert.match(app,/function customerProgrammeTileMarkupV96\([\s\S]*customer-programme-card-v95/);
   assert.match(app,/function customerProgrammeTileMarkupV96\([\s\S]*href="#\/wallet\/\$\{encodeURIComponent\(business\.slug/);
   assert.match(first,/id="customerFirstScan"/);
@@ -47,7 +51,10 @@ test('merchant home consumes the v95 presentation contract with truthful capabil
   assert.doesNotMatch(presentation,/customer-merchant-hero/);
   assert.doesNotMatch(presentation,/customer-balance-panel/);
   assert.match(presentation,/customerTierHasProgressV103/);
-  assert.doesNotMatch(presentation,/role="progressbar"/);
+  // v167 deliberately added a reward progress meter with an accessible text equivalent inside
+  // this slice, so a blanket progressbar ban now contradicts v167. What v95 actually protects
+  // is that the compact head carries no BALANCE meter — asserted above via customer-balance-panel.
+  assert.doesNotMatch(presentation,/class="customer-balance-progress"/);
   assert.match(presentation,/customer-rewards-grid/);
   assert.match(presentation,/customer-perks-grid/);
   assert.match(presentation,/customer-promotions-grid/);

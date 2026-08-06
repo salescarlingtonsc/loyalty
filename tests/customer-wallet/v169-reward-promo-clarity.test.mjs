@@ -30,7 +30,9 @@ test('a reward short of points shows computed progress with an accessible text e
   assert.match(rewards,/<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:\$\{progress\}%">/);
   assert.match(rewards,/\$\{esc\(customerPointTotalV103\(gap\)\)\} more \$\{esc\(rewardUnit\)\}/);
   assert.match(rewards,/<span class="sr-only">\$\{esc\(customerPointTotalV103\(rewardBalance\)\)\} of \$\{esc\(customerPointTotalV103\(cost\)\)\}/);
-  assert.match(rewards,/\$\{esc\(availability\[r\.availability\]\|\|'Ask at counter'\)\}/,
+  // V176 put the tier-lock line first ("Reach Gold to unlock"), with the availability label
+  // remaining as the fallback — which is exactly the secondary-text role this asserts.
+  assert.match(rewards,/\$\{esc\(rewardLockLineV176\(r\)\|\|availability\[r\.availability\]\|\|'Ask at counter'\)\}/,
     'the existing availability label must remain as secondary text');
   assert.match(app,/\.wallet-reward-progress span\{[^}]*width:var\(--reward-progress,0%\)/s);
 });

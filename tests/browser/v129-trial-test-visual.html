@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e15c4765f9d970926c93038d00ff4fdfb0d136bc7a0e29a9ff95970de6aeaef6"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="1d82dc789c60b30feb2ec6d3d22ec528c778b6948d5d373db3fd371fccccc3c2"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1099,6 +1099,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .pf-choice{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}
 .pf-inlineerr{color:var(--red);font-size:13px;font-weight:600;margin-top:12px}
 .pf-inlineerr:empty{display:none}
+.v183-hours{display:grid;gap:8px}
+.v183-hours-row{display:grid;grid-template-columns:minmax(84px,1fr) auto minmax(96px,1fr) minmax(96px,1fr);align-items:center;gap:8px}
+.v183-hours-open{display:flex;align-items:center;gap:6px;margin:0;font-size:12.5px;white-space:nowrap}
+.v183-team{display:grid;gap:8px}
+.v183-team-row{display:flex;align-items:center;gap:8px;margin:0;padding:8px 10px;border:1px solid var(--hair);border-radius:12px;color:var(--ink);font-weight:500;font-size:14px}
+.v183-team-member{border:1px solid var(--hair);border-radius:12px;padding:10px}
+.v183-team-member .v183-team-row{border:0;padding:0}
+.v183-team-rota{display:flex;align-items:flex-start;gap:8px;margin:9px 0 0;color:var(--ink);font-weight:500;font-size:13px}
+.v183-staff-hours{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair)}
+.v183-staff-hours[hidden]{display:none}
+.v183-rota-pill{margin-left:auto;flex:0 0 auto}
+@media(max-width:560px){.v183-hours-row{grid-template-columns:1fr 1fr;gap:6px}}
+.pf-day-track{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.pf-day{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:0 0 auto;min-height:56px;padding:9px 13px;border:1px solid var(--control-border);border-radius:14px;background:var(--card);color:var(--ink);scroll-snap-align:start}
+.pf-day.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+.pf-day.sel .muted{color:inherit}
+.pf-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
+.pf-slot{min-height:44px;padding:10px 8px;border:1px solid var(--control-border);border-radius:12px;background:var(--card);color:var(--ink);font-weight:650}
+.pf-slot.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
@@ -1250,6 +1269,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-booking-tab[aria-selected="true"]{background:var(--tint);color:var(--coral)}
 .customer-booking-tab-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--bg);color:inherit;font-size:11px;font-weight:800}
 #customerBookingPanel:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+.customer-booking-invite{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.customer-home-offers-title{display:flex;align-items:center;gap:9px}
+.customer-home-offers-badge{display:inline-grid;place-items:center;width:32px;height:32px;flex:0 0 auto;border-radius:11px;background:var(--tint);color:var(--coral)}
+.customer-home-offer-business{display:flex;align-items:center;gap:7px;margin-top:6px;min-width:0}
+.customer-home-offer-logo{flex:0 0 auto;width:24px;height:24px;border-radius:8px;object-fit:cover;background:var(--bg)}
+.customer-home-offer-logo--fallback{display:inline-grid;place-items:center;font-size:11px;font-weight:800;color:var(--coral);background:var(--tint)}
+.customer-home-offer-countdown{margin-top:6px;font-size:13px;font-weight:750;color:var(--coral)}
+.customer-programme-holdings{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.customer-programme-holding{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--bg);color:var(--ink2);font-size:12px;font-weight:600}
+.customer-programme-holding b{color:var(--ink);font-weight:800}
+.wallet-reward-trade{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.wallet-reward-cost{color:var(--coral)}
+.wallet-reward-arrow{color:var(--ink2);font-weight:700}
 .customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.55fr);gap:14px;align-items:start}
 .entry-choice-card{width:min(720px,100%);padding:30px}
 .entry-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
@@ -1440,7 +1472,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · e15c4765f9d970926c93038d00ff4fdfb0d136bc7a0e29a9ff95970de6aeaef6</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 1d82dc789c60b30feb2ec6d3d22ec528c778b6948d5d373db3fd371fccccc3c2</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -1671,7 +1703,16 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   }
 
   let dialogHistoryId=0;
-  function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]'}={}){
+  /* v183: when one sheet opens another (offer → company details), the outgoing sheet must NOT
+     unwind its history entry. history.back() is asynchronous, so the pop landed AFTER the
+     incoming sheet had pushed its own entry and closed it again on arrival — the company sheet
+     appeared to be unclickable. Closing with {handOffHistory:true} leaves the entry in place and
+     the incoming sheet adopts it via inheritHistoryId, so one Back still closes exactly one. */
+  function currentDialogHistoryId(){
+    const id=Number(history.state?.cuiDialog||0);
+    return Number.isInteger(id)&&id>0?id:0;
+  }
+  function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]',inheritHistoryId=0}={}){
     const returnFocus=document.activeElement;
     const focusable=()=>[...dialog.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
       .filter(element=>!element.hidden&&element.getClientRects().length);
@@ -1688,20 +1729,25 @@ html[data-customer-surface="true"] body{background:var(--bg)}
        Without a history entry it exits the whole route instead. pushState keeps the SAME url, so
        hashchange — the only navigation signal the app router listens to — never fires. Back then
        pops our entry and closes the dialog through the identical path as Escape. */
-    const historyId=++dialogHistoryId;
+    const inherited=Number(inheritHistoryId)>0&&currentDialogHistoryId()===Number(inheritHistoryId);
+    const historyId=inherited?Number(inheritHistoryId):++dialogHistoryId;
     let closedByUs=false;
     const popstate=()=>{
       window.removeEventListener('popstate',popstate);
       if(closedByUs||!dialog.isConnected)return;
       onClose?.();
     };
-    try{history.pushState({...(history.state||{}),cuiDialog:historyId},'');window.addEventListener('popstate',popstate)}catch{}
+    try{
+      if(!inherited)history.pushState({...(history.state||{}),cuiDialog:historyId},'');
+      window.addEventListener('popstate',popstate);
+    }catch{}
     requestAnimationFrame(()=>{const target=dialog.querySelector(initialFocus)||focusable()[0]||dialog;target.focus()});
-    return ({restoreFocus=true}={})=>{
+    return ({restoreFocus=true,handOffHistory=false}={})=>{
       dialog.removeEventListener('keydown',keydown);
       window.removeEventListener('popstate',popstate);
       /* Only unwind our own entry, and only once — a Back-press already consumed it. */
-      if(!closedByUs&&history.state?.cuiDialog===historyId){closedByUs=true;try{history.back()}catch{}}
+      if(handOffHistory)closedByUs=true;
+      else if(!closedByUs&&history.state?.cuiDialog===historyId){closedByUs=true;try{history.back()}catch{}}
       dialog.remove();
       if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus();
     };
@@ -1727,7 +1773,8 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   global.FrenlyCustomerUI=Object.freeze({
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
     skeletonLine,skeletonCard,skeletonGrid,tableSkeleton,chartSkeleton,formSkeleton,setButtonBusy,
-    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog
+    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog,
+    currentDialogHistoryId
   });
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -3630,14 +3677,14 @@ async function tillPage(){
 	          ?`<div class="till-cart-catalog">${catalog.services.map(s=>{
 	            const qty=selectedCatalogQty('service',s.id);
 	            const image=catalogueImageUrlV158(s);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
 	          :'';
 	        const prodBtns=(catalog.products&&catalog.products.length)
 	          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>{
 	            const qty=selectedCatalogQty('product',p.id);
 	            const image=catalogueImageUrlV158(p);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
           :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
@@ -4549,6 +4596,17 @@ async function bookingsPage(){
           <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>
         <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
         <div id="setErr"></div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+        <!-- v183 (owner: "if services allow customers to choose staff please enable it… if staff
+             is not worth, allow toggle in business"). Opening hours are what turn the customer's
+             live slot grid on; without them the portal falls back to a plain time request. -->
+        <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Customer booking availability</b>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+          <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
+        <p class="muted small" style="margin-top:2px">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</p>
+        <div id="setAvailabilityBody" aria-busy="true" style="margin-top:14px"><p class="muted small">Loading opening hours…</p></div>
+        <div style="margin-top:14px"><button class="btn sm" id="setAvailabilitySave">Save availability</button></div>
+        <div id="setAvailabilityErr" role="status"></div>
       </div>
       <div class="card"><b>Import existing bookings (CSV)</b>
         <p class="muted small" style="margin:6px 0 10px">Columns recognised: <b>name</b> (required), phone, email, party_size, preferred_at, notes, table_type. Bookings import as pending for you to review.</p>
@@ -4715,6 +4773,133 @@ async function bookingsPage(){
     $('setErr').innerHTML='';
     Object.assign(S.biz,{booking_hold_minutes:hold,booking_overflow:overflow,booking_auto_confirm:autoConfirm});
     toast('Booking rules saved');
+  };
+
+  /* ---- v183 customer booking availability: opening hours + who customers may ask for ---- */
+  const V183_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  /* v183b: one weekday row, reused by the shop hours grid and by each person's own rota.
+     `scope` namespaces the data attributes so a rota row can never be mistaken for a shop row. */
+  const v183HourRowMarkup=(scope,weekday,label,row,fallback)=>`<div class="v183-hours-row">
+    <label style="margin:0" for="v183Open-${esc(scope)}-${weekday}">${esc(label)}</label>
+    <label class="v183-hours-open" for="v183Closed-${esc(scope)}-${weekday}"><input type="checkbox" id="v183Closed-${esc(scope)}-${weekday}" data-day-closed="${weekday}" data-day-scope="${esc(scope)}" style="width:auto" ${row?'':'checked'}> Closed</label>
+    <input type="time" id="v183Open-${esc(scope)}-${weekday}" data-day-opens="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.opens_at||fallback.opens).slice(0,5))}" ${row?'':'disabled'}>
+    <input type="time" id="v183Close-${esc(scope)}-${weekday}" data-day-closes="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.closes_at||fallback.closes).slice(0,5))}" ${row?'':'disabled'}>
+  </div>`;
+  const loadBookingAvailability=async()=>{
+    const host=$('setAvailabilityBody');if(!host)return;
+    const [branchResult,hoursResult,staffResult,rotaResult]=await Promise.all([
+      sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).order('is_default',{ascending:false}),
+      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id),
+      sb.from('staff').select('id,full_name,title,active,customer_bookable').eq('business_id',S.biz.id).order('full_name'),
+      sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at').eq('business_id',S.biz.id)
+    ]);
+    if(!isCurrent()||!host.isConnected)return;
+    host.setAttribute('aria-busy','false');
+    if(branchResult.error||hoursResult.error||staffResult.error||rotaResult.error){
+      host.innerHTML='<p class="err small">Opening hours and team availability could not be loaded. Nothing has been changed.</p>';
+      const save=$('setAvailabilitySave');if(save)save.disabled=true;
+      return;
+    }
+    const branches=(branchResult.data||[]).filter(branch=>branch.active!==false);
+    const branch=branches[0]||null;
+    const hours=new Map((hoursResult.data||[]).filter(row=>!branch||row.branch_id===branch.id).map(row=>[Number(row.weekday),row]));
+    const team=(staffResult.data||[]).filter(member=>member.active!==false);
+    /* A person's rota is stored as starts_at/ends_at; the shared row markup speaks
+       opens_at/closes_at, so translate once here rather than branching in the template. */
+    const rotaByStaff=new Map();
+    for(const row of rotaResult.data||[]){
+      const key=String(row.staff_id||'');
+      if(!rotaByStaff.has(key))rotaByStaff.set(key,new Map());
+      rotaByStaff.get(key).set(Number(row.weekday),{opens_at:row.starts_at,closes_at:row.ends_at});
+    }
+    host.dataset.branchId=branch?.id||'';
+    host.innerHTML=`${branch?'':'<p class="muted small">Add a branch first to publish opening hours.</p>'}
+      <p class="muted small" style="margin-bottom:8px">Opening hours${branch?` for ${esc(branch.name||'your branch')}`:''}. Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
+      <div class="v183-hours">${V183_DAYS.map((label,weekday)=>
+        v183HourRowMarkup('shop',weekday,label,hours.get(weekday),{opens:'09:00',closes:'18:00'})).join('')}</div>
+      <p class="muted small" style="margin:14px 0 6px">Who customers may ask for</p>
+      ${team.length?`<div class="v183-team">${team.map(member=>{
+        const staffId=String(member.id),rota=rotaByStaff.get(staffId)||null;
+        return `<div class="v183-team-member" data-staff-member="${esc(staffId)}">
+          <label class="v183-team-row" for="v183Staff-${esc(staffId)}"><input type="checkbox" id="v183Staff-${esc(staffId)}" data-staff-bookable="${esc(staffId)}" style="width:auto" ${member.customer_bookable===false?'':'checked'}> <span><b>${esc(member.full_name||'Team member')}</b>${member.title?` <span class="muted small">· ${esc(member.title)}</span>`:''}</span><span class="pill v183-rota-pill" data-rota-pill>${rota?'Own rota':'Shop hours'}</span></label>
+          <label class="v183-team-rota" for="v183Rota-${esc(staffId)}"><input type="checkbox" id="v183Rota-${esc(staffId)}" data-staff-rota="${esc(staffId)}" style="width:auto;margin-top:2px" ${rota?'checked':''}> <span>Works their own hours<span class="muted small" style="display:block;font-weight:400">Replaces the shop hours for this person — including days the shop is closed.</span></span></label>
+          <div class="v183-hours v183-staff-hours" data-staff-hours="${esc(staffId)}" ${rota?'':'hidden'}>${V183_DAYS.map((label,weekday)=>
+            v183HourRowMarkup(staffId,weekday,label,rota?.get(weekday),{opens:'10:00',closes:'18:00'})).join('')}</div>
+        </div>`;
+      }).join('')}</div>`
+        :'<p class="muted small">No active team members yet.</p>'}`;
+    host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
+      const scope=box.dataset.dayScope,weekday=box.dataset.dayClosed;
+      const within=box.closest('.v183-hours')||host;
+      const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+      const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+      if(opens)opens.disabled=box.checked;
+      if(closes)closes.disabled=box.checked;
+    });
+    host.querySelectorAll('[data-staff-rota]').forEach(box=>box.onchange=()=>{
+      const member=box.closest('[data-staff-member]');
+      const grid=member?.querySelector('[data-staff-hours]'),pill=member?.querySelector('[data-rota-pill]');
+      if(grid)grid.hidden=!box.checked;
+      if(pill)pill.textContent=box.checked?'Own rota':'Shop hours';
+    });
+  };
+  loadBookingAvailability();
+  $('setAvailabilitySave').onclick=async()=>{
+    const host=$('setAvailabilityBody'),save=$('setAvailabilitySave'),err=$('setAvailabilityErr');
+    const branchId=host?.dataset?.branchId||'';
+    save.disabled=true;err.innerHTML='';
+    const staffChoice=$('setStaffChoice').checked;
+    /* An open day needs a real, ordered range; anything else is recorded as closed rather
+       than half-saved. Scoped reads keep a person's rota out of the shop's own grid. */
+    const readDayGrid=(scope,within)=>{
+      const open=[],closed=[];
+      within.querySelectorAll(`[data-day-closed][data-day-scope="${CSS.escape(scope)}"]`).forEach(box=>{
+        const weekday=Number(box.dataset.dayClosed);
+        const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+        const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+        if(box.checked||!opens||!closes||closes<=opens){closed.push(weekday);return}
+        open.push({weekday,opens,closes});
+      });
+      return {open,closed};
+    };
+    const shop=readDayGrid('shop',host);
+    const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
+    const closedDays=shop.closed;
+    const bookable=[...host.querySelectorAll('[data-staff-bookable]')]
+      .map(box=>({id:box.dataset.staffBookable,customer_bookable:box.checked}));
+    const rotas=[...host.querySelectorAll('[data-staff-member]')].map(member=>{
+      const staffId=member.dataset.staffMember;
+      const wantsRota=member.querySelector('[data-staff-rota]')?.checked===true;
+      const grid=readDayGrid(staffId,member);
+      return {staffId,wantsRota,name:member.querySelector('b')?.textContent||'This person',...grid};
+    });
+    /* A rota with no working day would delete every row and silently fall back to the shop
+       hours — the opposite of what "they work different hours" means. Refuse the whole save
+       rather than write a state the owner did not ask for. */
+    const emptyRota=rotas.find(rota=>rota.wantsRota&&!rota.open.length);
+    if(emptyRota){
+      save.disabled=false;
+      err.innerHTML=`<div class="err">${esc(emptyRota.name)} works their own hours but has no open day. Add a day, or untick "Works their own hours" to follow the shop hours.</div>`;
+      return;
+    }
+    const results=await Promise.all([
+      sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id),
+      branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
+      branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
+      ...bookable.map(member=>sb.from('staff').update({customer_bookable:member.customer_bookable}).eq('id',member.id).eq('business_id',S.biz.id)),
+      ...rotas.flatMap(rota=>rota.wantsRota
+        ?[sb.from('staff_hours').upsert(rota.open.map(day=>({business_id:S.biz.id,staff_id:rota.staffId,weekday:day.weekday,starts_at:day.opens,ends_at:day.closes})),{onConflict:'staff_id,weekday'}),
+          rota.closed.length?sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.closed):Promise.resolve({error:null})]
+        /* Unticking clears the whole rota, which is what returns this person to shop hours. */
+        :[sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId)])
+    ]);
+    if(!isCurrent())return;
+    save.disabled=false;
+    const failure=results.find(result=>result?.error);
+    if(failure){err.innerHTML=`<div class="err">${esc(failure.error.message)}</div>`;return}
+    S.biz.booking_staff_choice=staffChoice;
+    toast('Customer booking availability saved');
+    loadBookingAvailability();
   };
 
   /* ---- CSV import of existing bookings (owner only) ---- */
@@ -7209,7 +7394,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         const nextAction=pendingGuideAction||action;pendingGuideAction=null;close(false);
         await mountGrowSurface(nextAction.surface,{draftOverride:growDraftVersionId,...nextAction});
       };
-      const setupButton=$('growAutoSetup');if(setupButton)setupButton.textContent='Continue rewards setup';
       $('rewardAutoReviewDraft').focus({preventScroll:true});
     };
     async function confirmDraft(){
@@ -7245,7 +7429,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           rewardAutoSetupRequestKey=null;
           status.textContent='Your services or products changed since the last try. Press again to build a recommendation from your current prices.';
         }else{
-          status.textContent=`${ownerErrorText(error)} Nothing was published.`;
+          /* Built by concatenation, not a template literal: interpolated copy assigned to
+             textContent must go through the workspace translation mechanism, and the added
+             sentence is real UI copy that has to translate with the rest of the workspace. */
+          status.textContent=ownerErrorText(error)+' '+workspaceTranslationV97('Nothing was published.');
         }
       }
     }
@@ -7255,11 +7442,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   }
   document.querySelectorAll('[data-grow-open]').forEach(button=>button.onclick=()=>mountGrowSurface(button.dataset.growOpen,{
     focusTarget:button.dataset.growFocus||null}));
-  const autoSetupButton=$('growAutoSetup');
-  if(autoSetupButton)autoSetupButton.onclick=()=>{
-    if(growDraftVersionId)return mountGrowSurface('rewards',{draftOverride:growDraftVersionId,focusTarget:'lm'});
-    openRewardsAutoSetup();
-  };
+  /* The standalone "Create recommended rewards draft" launcher was removed when Programmes was
+     simplified to one list (owner: "alot of overlapping roles ... i need it more simplified").
+     Its wiring outlived it and could never fire — openRewardsAutoSetup is now reached from the
+     programme rows themselves, which call it as the draft-creation gate when no draft exists. */
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -10354,14 +10540,14 @@ async function svRunTopupFlow({branches,state,testOnly}){
 	          ?`<div class="till-cart-catalog">${catalog.services.map(s=>{
 	            const qty=selectedCatalogQty('service',s.id);
 	            const image=catalogueImageUrlV158(s);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
 	          :'';
 	        const prodBtns=(catalog.products&&catalog.products.length)
 	          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>{
 	            const qty=selectedCatalogQty('product',p.id);
 	            const image=catalogueImageUrlV158(p);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
           :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
@@ -10989,6 +11175,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'e15c4765f9d970926c93038d00ff4fdfb0d136bc7a0e29a9ff95970de6aeaef6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'1d82dc789c60b30feb2ec6d3d22ec528c778b6948d5d373db3fd371fccccc3c2',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
