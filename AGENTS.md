@@ -106,7 +106,12 @@ byte-identical, only the file moved. Tests that grep application code read the
 CONCATENATION of `app/index.html` + `app/app.js` (see the read-site pattern in
 any customer-wallet test); new tests must do the same.
 
-**After ANY edit to `app/app.js`, run `npm run bundle-stamp`.** The script tag
+**After ANY edit to `app/app.js`, run `npm run bundle-stamp`.** As of v185 that command also
+splits the file into surface bundles — `app-core.js` (always), `app-customer.js`,
+`app-business.js`, `app-i18n.js` — which are GENERATED and must never be edited by hand. Keep
+editing `app/app.js`; the build partitions it. A symbol either surface can reach is placed in the
+core automatically, so cross-surface helpers keep working; a test fails if any chunk ends up
+referencing another chunk's symbol. The script tag
 carries a fingerprint of the bundle's bytes (`/app.js?b=<hash>`) because
 Cloudflare rewrites the browser-facing `max-age` on that file to four hours no
 matter what Vercel sends — without a changing url, a returning visitor runs the

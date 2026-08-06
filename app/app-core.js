@@ -1,0 +1,2747 @@
+/* GENERATED FILE — do not edit.
+   The shared core of app/app.js, split by scripts/quality/split-app-bundle.mjs.
+   Edit app/app.js and run: npm run bundle-stamp */
+/* Peekaa application script — extracted from index.html (startup split phase 2).
+   Served same-origin, revalidated per load (ETag), cached by the service worker
+   under CACHE_VERSION. Execution order: classic blocking deps in <head> run at
+   parse; the deferred page bundles run in document order; this file runs last
+   among the deferred scripts and boots on DOMContentLoaded. */
+
+/* ============ Peekaa app (legacy runtime/API identifiers remain compatible) ============ */
+const RUNTIME_CONFIG=(()=>{try{return window.FrenlyRuntimeConfig.require(window)}catch{
+  window.FrenlyRuntimeConfig?.renderFailure(document.getElementById('root'));
+  throw new Error('Peekaa runtime configuration is unavailable.');
+}})();
+const CUI=window.FrenlyCustomerUI;
+const BRAND=window.NestlyBrand;
+const SB_URL=RUNTIME_CONFIG.supabaseUrl;
+const SB_KEY=RUNTIME_CONFIG.supabasePublishableKey;
+/* Preconnect to the API origin as early as the runtime config allows — the
+   origin is configuration, so it must not be hardcoded in markup. */
+try{const pc=document.createElement('link');pc.rel='preconnect';pc.href=SB_URL;document.head.appendChild(pc)}catch{}
+function warmRuntimeOrigin(origin){
+  const url=new URL(origin);
+  const preconnect=document.createElement('link');preconnect.rel='preconnect';preconnect.href=url.origin;preconnect.crossOrigin='anonymous';
+  const dns=document.createElement('link');dns.rel='dns-prefetch';dns.href=`//${url.host}`;
+  document.head.append(preconnect,dns);
+}
+warmRuntimeOrigin(SB_URL);
+const optionalLibraryLoads=new Map();
+function loadOptionalLibrary({key,src,integrity,ready}){
+  if(ready())return Promise.resolve();
+  if(optionalLibraryLoads.has(key))return optionalLibraryLoads.get(key);
+  const promise=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');script.src=src;script.async=true;script.crossOrigin='anonymous';
+    if(integrity)script.integrity=integrity;
+    script.onload=()=>ready()?resolve():reject(new Error(`${key} did not initialise.`));
+    script.onerror=()=>reject(new Error(`${key} could not be loaded.`));
+    document.head.appendChild(script);
+  }).catch(error=>{optionalLibraryLoads.delete(key);throw error});
+  optionalLibraryLoads.set(key,promise);return promise;
+}
+const loadQrLibrary=()=>loadOptionalLibrary({key:'qr-code',src:'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',integrity:'sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU',ready:()=>typeof globalThis.QRCode==='function'});
+const loadScannerLibrary=()=>loadOptionalLibrary({key:'qr-scanner',src:'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',integrity:'sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx',ready:()=>typeof globalThis.jsQR==='function'});
+const loadSpreadsheetLibrary=()=>loadOptionalLibrary({key:'spreadsheet-import',src:'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',integrity:'sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT',ready:()=>typeof globalThis.XLSX==='object'});
+const publicAppUrl=(route='')=>window.NestlyNativeBridge.publicUrl(`/#/${String(route).replace(/^#?\/?/,'')}`);
+/* detectSessionInUrl:false — with it left at its (true) default, supabase-js inspects
+   window.location.hash on load and can history.replaceState the hash away on a hash-routed
+   SPA, which is why a browser refresh was silently losing the current route ("refresh does
+   nothing unless I retype the URL"). We don't use Supabase's own hash-based OAuth redirect
+   flow here, so it's safe to turn off. */
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'implicit',
+  experimental:{passkey:true}}});
+/* v177 client error reporting. Before this the app had no client-side error visibility at all:
+   a customer hitting a broken render simply saw a blank card and nobody ever knew. Sends to
+   report_client_error_v177 (anon + authenticated, capped, deduped and non-raising server-side).
+   The browser adds its own guards — 5 reports per page load and one report per distinct message
+   per session — so a looping component cannot spend the server's hourly flood budget. Every
+   failure here is swallowed: a reporter that throws would break the page it is reporting on. */
+const CLIENT_ERROR_REPORT_LIMIT=5;
+let clientErrorReportCount=0;
+const clientErrorReportSeen=new Set();
+/* Noise that is never actionable: the benign ResizeObserver notification, cross-origin script
+   errors that arrive with no stack at all, and aborts (which are our own timeouts/navigations). */
+const clientErrorIsNoise=(message,stack)=>message.includes('ResizeObserver loop')
+  ||(message.includes('Script error.')&&!stack)
+  ||message.includes('AbortError')||stack.includes('AbortError')
+  ||message.includes('signal is aborted')||message.includes('The operation was aborted');
+function clientErrorSurface(){
+  const hash=String(globalThis.location?.hash||'');
+  if(hash.startsWith('#/business')||hash.startsWith('#/platform')||hash.startsWith('#/workspace'))return 'business';
+  try{if(typeof S!=='undefined'&&S?.user)return 'customer'}catch{}
+  return 'public';
+}
+function reportClientError(event){
+  try{
+    if(clientErrorReportCount>=CLIENT_ERROR_REPORT_LIMIT)return;
+    const reason=event?.reason;
+    const message=String(event?.message||reason?.message||reason||'unknown').slice(0,500).trim();
+    const stack=String(event?.error?.stack||reason?.stack||'').slice(0,2000);
+    if(!message||clientErrorIsNoise(message,stack))return;
+    if(clientErrorReportSeen.has(message))return;
+    clientErrorReportSeen.add(message);clientErrorReportCount++;
+    let build='';try{build=String(buildIdentity?.shortSha||'')}catch{build=''}
+    Promise.resolve(sb.rpc('report_client_error_v177',{
+      p_surface:clientErrorSurface(),p_message:message,p_stack:stack,
+      p_url:String(globalThis.location?.href||'').slice(0,300),p_build:build
+    })).catch(()=>{});
+  }catch{}
+}
+window.addEventListener('error',reportClientError);
+window.addEventListener('unhandledrejection',reportClientError);
+let buildIdentity=Object.freeze({available:false});
+const buildIdentityLabel=()=>buildIdentity.available
+  ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';
+const buildIdentityHtml=()=>`<span class="build-identity" data-build-identity>${esc(buildIdentityLabel())}</span>`;
+function syncBuildIdentityLabels(){document.querySelectorAll('[data-build-identity]').forEach(element=>{element.textContent=buildIdentityLabel()})}
+async function loadBuildIdentity(){
+  try{
+    const response=await fetch('/api/build',{method:'GET',credentials:'same-origin',headers:{accept:'application/json'}});
+    const payload=await response.json();
+    const valid=response.ok&&payload?.schemaVersion===1&&payload?.service==='loyalty'&&payload?.available===true
+      &&/^[0-9a-f]{40}$/.test(payload.commitSha)&&payload.shortSha===payload.commitSha.slice(0,12)
+      &&['production','preview','development'].includes(payload.environment);
+    if(!valid)throw new Error('Build identity unavailable.');
+    buildIdentity=Object.freeze({available:true,commitSha:payload.commitSha,shortSha:payload.shortSha,environment:payload.environment});
+    window.__FRENLY_BUILD_IDENTITY__=buildIdentity;
+  }catch{buildIdentity=Object.freeze({available:false})}
+  syncBuildIdentityLabels();
+}
+const legalLinks=(locale='en')=>{
+  const copy={
+    en:{label:'Legal and privacy',privacy:'Privacy',terms:'Terms',data:'Data request'},
+    'zh-CN':{label:'法律与隐私',privacy:'隐私政策',terms:'条款',data:'数据请求'},
+    ms:{label:'Undang-undang dan privasi',privacy:'Privasi',terms:'Terma',data:'Permintaan data'}
+  }[locale]||{label:'Legal and privacy',privacy:'Privacy',terms:'Terms',data:'Data request'};
+  return `<nav class="legal-links" aria-label="${esc(copy.label)}"><a href="/privacy.html">${esc(copy.privacy)}</a><a href="/terms.html">${esc(copy.terms)}</a><a href="/data-request.html">${esc(copy.data)}</a>${buildIdentityHtml()}</nav>`;
+};
+const publicFunctionUrl=(name,query='')=>`${SB_URL}/functions/v1/${name}${query}`;
+function publicGatewayHeaders(body,accessToken=''){
+  const headers={};
+  if(body)headers['content-type']='application/json';
+  const token=String(accessToken||'').trim();
+  if(token)headers.Authorization=`Bearer ${token}`;
+  return Object.keys(headers).length?headers:undefined;
+}
+async function publicGateway(name,{method='POST',body=null,query='',accessToken='',signal}={}){
+  const response=await fetch(publicFunctionUrl(name,query),{
+    method,headers:publicGatewayHeaders(body,accessToken),
+    body:body?JSON.stringify(body):undefined,credentials:'omit',signal});
+  let payload=null;
+  try{payload=await response.json()}catch{}
+  if(!response.ok) throw new Error(payload?.error||'We could not process that request.');
+  return payload;
+}
+let turnstileLoader;
+const mountedTurnstileControls=new Set();
+function destroyMountedTurnstiles(){
+  [...mountedTurnstileControls].forEach(control=>control.destroy());
+}
+function loadTurnstile(){
+  if(window.turnstile) return Promise.resolve(window.turnstile);
+  if(turnstileLoader) return turnstileLoader;
+  turnstileLoader=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async=true;script.defer=true;
+    script.onload=()=>window.turnstile?resolve(window.turnstile):reject(new Error('Security check unavailable.'));
+    script.onerror=()=>{turnstileLoader=null;script.remove();reject(new Error('Security check unavailable.'))};
+    document.head.appendChild(script);
+  });
+  return turnstileLoader;
+}
+const authSecurityCopy=(locale,key)=>{
+  const copy={
+    en:{
+      loading:'Loading security check…',retry:'Retry security check',complete:'Security check complete.',
+      expired:'Security check expired. Please try again.',timeout:'Security check timed out. Please try again.',
+      connect:'Security check could not connect. Please retry, or check your browser and network settings.',
+      load:'Security check could not load. Check your connection and try again.',
+      continue:'Complete the security check to continue.',
+      showPassword:'Show password',hidePassword:'Hide password',
+      passkey:'Sign in with Face ID, Touch ID or passkey',passkeyTitle:'Use Face ID, Touch ID or passkey'
+    },
+    'zh-CN':{
+      loading:'正在加载安全验证…',retry:'重试安全验证',complete:'安全验证已完成。',
+      expired:'安全验证已过期，请重试。',timeout:'安全验证超时，请重试。',
+      connect:'无法连接安全验证。请重试，或检查浏览器及网络设置。',
+      load:'无法加载安全验证。请检查网络连接后重试。',
+      continue:'请完成安全验证以继续。',
+      showPassword:'显示密码',hidePassword:'隐藏密码',
+      passkey:'使用面容 ID、触控 ID 或通行密钥登录',passkeyTitle:'使用面容 ID、触控 ID 或通行密钥'
+    },
+    ms:{
+      loading:'Memuatkan semakan keselamatan…',retry:'Cuba semakan keselamatan lagi',complete:'Semakan keselamatan selesai.',
+      expired:'Semakan keselamatan telah tamat tempoh. Sila cuba lagi.',timeout:'Semakan keselamatan telah tamat masa. Sila cuba lagi.',
+      connect:'Semakan keselamatan tidak dapat disambungkan. Cuba lagi atau semak tetapan pelayar dan rangkaian anda.',
+      load:'Semakan keselamatan tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.',
+      continue:'Lengkapkan semakan keselamatan untuk meneruskan.',
+      showPassword:'Tunjukkan kata laluan',hidePassword:'Sembunyikan kata laluan',
+      passkey:'Log masuk dengan Face ID, Touch ID atau kunci laluan',passkeyTitle:'Gunakan Face ID, Touch ID atau kunci laluan'
+    }
+  };
+  return copy[locale]?.[key]||copy.en[key]||key;
+};
+async function mountTurnstile(siteKey,{container,status,retry,action,onToken,locale='en'}){
+  const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
+  const security=key=>authSecurityCopy(locale,key);
+  /* A passed check should be invisible: red status text and a "Retry" link after
+     success read as failure. The block only surfaces while loading or on error. */
+  const setPassed=passed=>{
+    statusEl.hidden=passed;
+    const host=document.getElementById(container);
+    if(host)host.style.display=passed?'none':'';
+    statusEl.closest('.challenge')?.classList.toggle('challenge-passed',passed);
+  };
+  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  const clear=(text,isError=false)=>{onToken('');message(text,isError)};
+  const logTurnstileError=(errorCode)=>{
+    const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
+    console.warn('Turnstile error code:',code);
+  };
+  const removeWidget=()=>{
+    const host=document.getElementById(container);
+    if(api&&widgetId!==undefined&&host){
+      try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
+    }
+    widgetId=undefined;
+    host?.replaceChildren();
+  };
+  const render=async()=>{
+    if(destroyed)return;
+    message(security('loading'));retryEl.hidden=true;
+    try{
+      api=await loadTurnstile();
+      if(destroyed||!document.getElementById(container)) return;
+      removeWidget();
+      if(destroyed)return;
+      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
+        callback:(token)=>{if(destroyed)return;onToken(token);retryEl.hidden=true;setPassed(true)},
+        'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
+        'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
+        'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
+    }catch{if(!destroyed){clear(security('load'),true);retryEl.hidden=false}}
+  };
+  const retryRender=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;render()};
+  const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  const destroy=()=>{
+    if(destroyed)return;
+    destroyed=true;retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
+  };
+  const control={reset,destroy};
+  mountedTurnstileControls.add(control);
+  retryEl.onclick=retryRender;
+  await render();
+  return control;
+}
+/* Supabase Auth has CAPTCHA protection enabled (Cloudflare Turnstile), so every
+   signUp / signInWithPassword / resetPasswordForEmail call must carry a captchaToken.
+   The site key is public by design (the join/booking pages already expose the same
+   widget's key); the secret lives only in Supabase Auth settings. */
+const AUTH_TURNSTILE_SITE_KEY='0x4AAAAAAD4_7rnuzB3ug-NF';
+/* The private database flags are the normal release authority. This build-time
+   switch exists only for an emergency fail-closed build; it must never enable a
+   server-disabled feature. */
+const CUSTOMER_FEATURES_EMERGENCY_DISABLED=false;
+function authChallengeHtml(locale='en'){
+  return `<div class="challenge"><div id="authTurnstile"></div>
+    <p class="challenge-status" id="authTurnstileStatus" role="status" aria-live="polite">${esc(authSecurityCopy(locale,'loading'))}</p>
+    <button class="challenge-retry" id="authTurnstileRetry" type="button" hidden>${esc(authSecurityCopy(locale,'retry'))}</button></div>`;
+}
+let passwordRecoveryActive=false,passwordRecoveryError=false;
+
+const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
+  sales:['sales','Sales'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
+  inventory:['inventory','Inventory'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
+  retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
+  giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
+  dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
+  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started']};
+/* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
+   frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
+const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
+const ROLE_CAPABILITIES={
+  owner:new Set(['create_sales','view_finance']),manager:new Set(['create_sales','view_finance']),staff:new Set(['create_sales']),
+  frontdesk:new Set(['create_sales']),bookkeeper:new Set(['view_finance'])
+};
+/* V170 re-opened both surfaces the earlier packaging decision had hidden. Inventory is the only
+   place a product can be created, so hiding it left owners unable to stock the checkout catalogue
+   at all; Customer intelligence is the only screen carrying the ranked "do this first" advice, and
+   a route-blocked recommendation surface is worse than no recommendation. The constant and both
+   consult sites (the route guard and the nav filter) stay in place so a future packaging decision
+   has one deny-list to fill instead of two hard-coded checks. */
+const HIDDEN_BUSINESS_SURFACES=new Set([]);
+const FINANCE_MODULES=new Set(['expenses','pnl','staffperf']);
+const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup']);
+const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
+  ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
+const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
+  .filter(module=>(role==='owner'||!OWNER_ONLY_MODULES.has(module))&&roleCanUseModule(role,module));
+
+/* Global top-bar action state (no localStorage in this stack — plain in-session vars). A global
+   search hands a name to Customers or a phone to Record sale via these, reusing each page's own
+   existing lookup — no new query is introduced. settingsActiveTab keeps the Settings tab in place
+   across the in-place re-renders that adding/retiring a customer field trigger. */
+let pendingCustomerSearch='';
+let pendingTillPhone='';
+let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
+/* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
+   birthday / bring-back / referral editors. Module-level because those editors live in
+   different page functions from the Programmes overview that sets it. */
+let settingsActiveTab='workspace';
+let profileOpen=false;
+let routeDispose=()=>{};
+let activeCustomerRedemptionCleanup=()=>{};
+function disposeCurrentRoute(){
+  const dispose=routeDispose;routeDispose=()=>{};
+  dispose({restoreFocus:false});
+  activeMerchantScannerCleanup();
+  activeCustomerRedemptionCleanup({restoreFocus:false});
+  activeCustomerJoinScannerCleanup({restoreFocus:false});
+  document.querySelectorAll('.appointment-detail-modal').forEach(dialog=>dialog.remove());
+}
+let rtChannel=null;       // the single realtime channel for this session
+let rtChannelBizId=null;  // which business it's currently subscribed to
+let muteAlerts=false;     // in-session-only pop-up mute for non-owners (can't persist — the
+                           // notify_new_bookings write is owner-gated by set_booking_settings)
+/* Branch filter (dashboard/daily report/P&L/reports) — consolidated vs one branch. Plain
+   JS variable only (no localStorage, per this stack's rule); shared across those pages so
+   moving between them keeps the same scope selected; reset on sign-out below. */
+let selectedBranchId=null; // null = consolidated
+let dashboardRenderEpoch=0; // invalidates pending dashboard/filter work as soon as routing starts
+let customerWalletRenderEpoch=0; // prevents an older customer-wallet RPC from repainting a new route
+let routeRenderEpoch=0; // prevents an older async route from redirecting over newer navigation
+let portalRenderEpoch=0; // prevents delayed persona/profile/session work repainting another portal/route
+const beginRouteInvocation=()=>{
+  const routeEpoch=++routeRenderEpoch;
+  return ()=>routeRenderEpoch===routeEpoch;
+};
+
+let S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
+const PRODUCT_INTERACTION_EVENTS_V100=new Set([
+  'merchant.workspace_viewed','merchant.grow_opened','merchant.grow_draft_started',
+  'merchant.counter_action_opened','merchant.counter_action_started',
+  'merchant.redemption_scan_started','customer.programme_viewed'
+]);
+const PRODUCT_INTERACTION_CONTEXT_KEYS_V100=new Set([
+  'action_key','entry_point','locale','device_class','install_mode','surface_version','outcome'
+]);
+const PRODUCT_INTERACTION_SESSION_KEY_V100='nestly.productAdoption.session.v100';
+let productInteractionSessionIdV100=null;
+const isUuidV100=value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value||''));
+function productInteractionSessionV100(){
+  if(isUuidV100(productInteractionSessionIdV100))return productInteractionSessionIdV100;
+  try{
+    const stored=sessionStorage.getItem(PRODUCT_INTERACTION_SESSION_KEY_V100);
+    if(isUuidV100(stored))return productInteractionSessionIdV100=stored;
+  }catch{}
+  productInteractionSessionIdV100=crypto.randomUUID();
+  try{sessionStorage.setItem(PRODUCT_INTERACTION_SESSION_KEY_V100,productInteractionSessionIdV100)}catch{}
+  return productInteractionSessionIdV100;
+}
+function resetProductInteractionSessionV100(){
+  productInteractionSessionIdV100=null;
+  try{sessionStorage.removeItem(PRODUCT_INTERACTION_SESSION_KEY_V100)}catch{}
+}
+function privacySafeProductContextV100(context={}){
+  const safe={};
+  for(const [key,value] of Object.entries(context||{})){
+    if(!PRODUCT_INTERACTION_CONTEXT_KEYS_V100.has(key)
+       ||!['string','number','boolean'].includes(typeof value))continue;
+    safe[key]=typeof value==='string'?value.slice(0,80):value;
+  }
+  return safe;
+}
+/* Interaction telemetry is deliberately fail-open. It records only that an allowed surface
+   was opened or started; completed and economic outcomes remain database-authored. A missing
+   migration, denied scope, or network failure must never delay or alter the user's action. */
+function recordProductInteractionV100(eventName,businessId,{branchId=null,context={}}={}){
+  if(!S.user?.id||!isUuidV100(businessId)||!PRODUCT_INTERACTION_EVENTS_V100.has(eventName))return;
+  let sessionId,idempotencyKey,occurredAt;
+  try{
+    sessionId=productInteractionSessionV100();
+    idempotencyKey=`v100:${crypto.randomUUID()}`;
+    occurredAt=new Date().toISOString();
+  }catch{return}
+  try{
+    Promise.resolve(sb.rpc('record_product_interaction_v100',{
+      p_event_name:eventName,p_business:businessId,p_branch:isUuidV100(branchId)?branchId:null,
+      p_session_id:sessionId,p_idempotency_key:idempotencyKey,p_occurred_at:occurredAt,
+      p_context:privacySafeProductContextV100(context)
+    })).catch(()=>{});
+  }catch{}
+}
+let customerFeatureCapabilities=null;
+let customerPhoneOtpCapabilities=null;
+let customerRelationshipSyncState={userId:null,attempted:false,result:null};
+let pendingCustomerInvitationToken='';
+let pendingCustomerBusinessSlug='';
+const CUSTOMER_DESTINATION_SESSION_KEY='peekaa.customer.pendingDestination.v1';
+let pendingCustomerDestination='';
+const CUSTOMER_JOIN_SESSION_KEY='nestly.customer.pendingJoinToken';
+const CUSTOMER_RECOVERY_SESSION_KEY='nestly.customer.passwordRecoveryVerified';
+let pendingCustomerJoinToken=(()=>{try{
+  const token=sessionStorage.getItem(CUSTOMER_JOIN_SESSION_KEY)||'';
+  return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
+}catch{return ''}})();
+function rememberPendingCustomerJoinToken(token){
+  pendingCustomerJoinToken=/^[A-Za-z0-9_-]{20,512}$/.test(String(token||''))?String(token):'';
+  try{
+    if(pendingCustomerJoinToken)sessionStorage.setItem(CUSTOMER_JOIN_SESSION_KEY,pendingCustomerJoinToken);
+    else sessionStorage.removeItem(CUSTOMER_JOIN_SESSION_KEY);
+  }catch{}
+}
+function customerRecoveryVerified(){
+  try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)||''}catch{return ''}
+}
+function rememberCustomerRecoveryVerified(userId){
+  try{
+    if(userId)sessionStorage.setItem(CUSTOMER_RECOVERY_SESSION_KEY,String(userId));
+    else sessionStorage.removeItem(CUSTOMER_RECOVERY_SESSION_KEY);
+  }catch{}
+}
+function customerRecoveryDisposition(recoveryUserId,sessionUserId){
+  if(!recoveryUserId)return 'none';
+  return recoveryUserId===sessionUserId?'require_password':'clear';
+}
+function normalizeCustomerBusinessIntent(value,currentUrl=location.href){
+  const raw=String(value??'').trim();
+  if(!raw)return '';
+  let candidate='';
+  const isLink=/^(?:https?:\/\/|\/|\.{1,2}\/|#\/)/i.test(raw);
+  if(!isLink){
+    candidate=raw;
+  }else{
+    try{
+      const url=new URL(raw,currentUrl);
+      const hash=url.hash||'';
+      const hashRoute=hash.split('?')[0];
+      const hashParams=new URLSearchParams(hash.split('?')[1]||'');
+      if(hashRoute.startsWith('#/b/'))candidate=hashRoute.slice(4);
+      else if(hashRoute.startsWith('#/wallet/'))candidate=hashRoute.slice(9);
+      else if(hashRoute==='#/customer'||hashRoute==='#/claim')candidate=hashParams.get('business')||'';
+      else if(/\/join(?:\.html)?$/i.test(url.pathname))candidate=url.searchParams.get('s')||'';
+      else {
+        const pathMatch=url.pathname.match(/\/(?:b|wallet)\/([^/?#]+)\/?$/i);
+        candidate=pathMatch?.[1]||'';
+      }
+    }catch{return ''}
+  }
+  try{candidate=decodeURIComponent(candidate)}catch{return ''}
+  const normalized=String(candidate).trim().toLowerCase();
+  return /^[a-z0-9][a-z0-9-]{1,62}$/.test(normalized)?normalized:'';
+}
+const CUSTOMER_DIRECT_DESTINATIONS=new Set([
+  '#/wallet',
+  '#/customer/programmes',
+  '#/customer/bookings',
+  '#/customer/messages',
+  '#/customer/profile'
+]);
+function normalizeCustomerDestination(value){
+  const route=String(value??'').trim();
+  if(CUSTOMER_DIRECT_DESTINATIONS.has(route))return route;
+  if(!route.startsWith('#/wallet/'))return '';
+  const slug=normalizeCustomerBusinessIntent(route.slice(9));
+  return slug?`#/wallet/${encodeURIComponent(slug)}`:'';
+}
+try{pendingCustomerDestination=normalizeCustomerDestination(sessionStorage.getItem(CUSTOMER_DESTINATION_SESSION_KEY)||'')}catch{}
+function rememberPendingCustomerDestination(value){
+  pendingCustomerDestination=normalizeCustomerDestination(value);
+  try{
+    if(pendingCustomerDestination)sessionStorage.setItem(CUSTOMER_DESTINATION_SESSION_KEY,pendingCustomerDestination);
+    else sessionStorage.removeItem(CUSTOMER_DESTINATION_SESSION_KEY);
+  }catch{}
+  return pendingCustomerDestination;
+}
+function resetClientSessionState({preserveInvitation=false}={}){
+  globalThis.NestlyCustomerPush?.clearSession?.();
+  invalidateBranchModuleProjectionCache();
+  const invitation=preserveInvitation?pendingCustomerInvitationToken:'';
+  const joinToken=preserveInvitation?pendingCustomerJoinToken:'';
+  const destination=preserveInvitation?pendingCustomerDestination:'';
+  if(!preserveInvitation)rememberPendingCustomerJoinToken('');
+  rememberCustomerRecoveryVerified(false);
+  S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
+  customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';settingsActiveTab='workspace';
+  resetProductInteractionSessionV100();
+  customerLocale='en';
+  workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+}
+const $=(id)=>document.getElementById(id);
+const root=$('root');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const brandWordmark=()=>{
+  const productName=String(BRAND?.productName||'Peekaa');
+  const logoPath=String(BRAND?.logoPath||'/brand/peekaa-logo.png');
+  return `<img class="brand-logo" src="${esc(logoPath)}" alt="${esc(productName)}">`;
+};
+const money=c=>(S.biz?.currency||'SGD')+' '+((c||0)/100).toFixed(2);
+const canReadModule=module=>S.myModules?.includes(module)===true&&roleCanUseModule(S.myRole,module);
+function invalidateBranchModuleProjectionCache({businessId='',branchId='',userId=''}={}){
+  // Projections are deliberately fetched fresh on every route/branch load.
+  // Keep this hook for mutation call sites and older callers, but do not store
+  // identity or permission state that another session cannot invalidate.
+  void businessId;void branchId;void userId;
+}
+let toastGeneration=0,toastTimer=null;
+const showToast=message=>{
+  const t=$('toast'),generation=++toastGeneration;
+  if(toastTimer)clearTimeout(toastTimer);
+  t.textContent=message;t.classList.add('show');
+  toastTimer=setTimeout(()=>{
+    if(generation!==toastGeneration)return;
+    t.classList.remove('show');t.textContent='';toastTimer=null;
+  },2600);
+};
+const toast=m=>{
+  const source=String(m??''),message=root.querySelector('.shell')?workspaceTranslationV97(source):source;
+  showToast(message);CUI.announce(message);
+};
+async function copyTextToClipboard(value,{button=null,success='Copied',failure='Copy was blocked. Select the text and copy it manually.'}={}){
+  if(button)button.disabled=true;
+  try{
+    if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');
+    await navigator.clipboard.writeText(String(value??''));
+    if(success)toast(success);
+    return true;
+  }catch(error){
+    console.warn('Clipboard copy failed',error);
+    if(failure){showToast(failure);CUI.announce(failure,{assertive:true})}
+    return false;
+  }finally{
+    if(button?.isConnected)button.disabled=false;
+  }
+}
+/* V170 (reworked after adversarial verification): this codebase's own RPCs raise owner-facing
+   prose that is almost always lowercase-first ("choose Cash, Card, PayNow or Other",
+   "no sessions remaining" — ~96% of the 2k+ raise-exception strings in db/migrations). A
+   "looks like a sentence" heuristic therefore CANNOT identify owner-authored text, and keyword
+   rules ("session", "unique") actively mislabel it. So the mapping is inverted: pass every
+   message through by default, and rewrite ONLY messages that match known machine-noise
+   signatures no RPC author ever writes on purpose. */
+const OWNER_ERROR_NOISE_RULES_V170=[
+  [/duplicate key value violates|violates unique constraint/i,'This already exists — no duplicate was created.'],
+  [/violates (foreign key|not-null|check) constraint|null value in column/i,"That change couldn't be saved. Check the details and try again."],
+  [/permission denied for (table|function|schema|relation)|row-level security/i,"You don't have access to do that. Ask an owner to check your permissions."],
+  [/jwt expired|invalid jwt|jwserror|auth session missing|refresh token/i,'Your session expired. Sign in again.'],
+  [/failed to fetch|networkerror|load failed|fetch failed|timed? ?out/i,'Connection problem. Check your internet and try again.'],
+  [/schema cache|pgrst\d+|syntax error at or near/i,'Something went wrong on our side. Try again, or contact Peekaa if it continues.'],
+  /* Browser-runtime TypeErrors (WebKit: "undefined is not an object (evaluating ...)",
+     Chromium: "Cannot read properties of undefined") are app bugs, never owner input errors. */
+  [/undefined is not an object|null is not an object|cannot read propert|is not a function|is not defined/i,'Something went wrong on our side. Try again, or contact Peekaa if it continues.'],
+];
+const ownerErrorText=error=>{
+  const raw=String(error?.message||(typeof error==='string'?error:'')||'').trim();
+  if(!raw)return 'Something went wrong. Nothing was changed.';
+  const probe=[raw,error?.code,error?.details].filter(Boolean).join(' ');
+  for(const rule of OWNER_ERROR_NOISE_RULES_V170)if(rule[0].test(probe))return rule[1];
+  return raw;
+};
+const fail=e=>{
+  console.error(e);
+  const source=ownerErrorText(e);
+  const translated=root.querySelector('.shell')?workspaceTranslationV97(source):source;
+  const message=root.querySelector('.shell')&&workspaceLocale!=='en'&&translated===source
+    ?workspaceTranslationV97('Something went wrong. Please try again.')
+    :translated;
+  showToast(message);CUI.announce(message,{assertive:true});
+};
+let activeMerchantScannerCleanup=()=>{};
+function campaignEntitlementDisplayV99(item){
+  const campaign=!!(item?.is_campaign_entitlement===true||item?.campaign_id);
+  const pending=campaign
+    &&item?.economic_value_posted!==true
+    &&(item?.reward_value_hidden===true
+      ||!item?.redemption_mode||item.redemption_mode==='merchant_fulfilment_pending');
+  return pending?{
+    pending:true,
+    title:String(item?.display_label||'Offer awaiting merchant fulfilment'),
+    status:'Merchant fulfilment pending',
+    detail:'No wallet value was posted. The business must fulfil this reward before it can be used.',
+    showValue:false
+  }:{
+    pending:false,
+    title:String(item?.reward_label||item?.title||'Retention reward'),
+    status:String(item?.status||''),
+    detail:String(item?.detail||''),
+    showValue:true
+  };
+}
+/* --- Idempotent write-attempt key (survives a full page re-render) -------------------------
+   Safety-remediation house pattern — the same discipline as the Quick-earn cart's `saleIdem`
+   / per-line uuid keys and retentionPage's sessionStorage retry key. One stable uuid per
+   LOGICAL write attempt: minted when an attempt's fingerprint first appears, then reused
+   VERBATIM on every retry (double-tap, timeout, lost response, route re-render, reconnect),
+   and regenerated ONLY when the user deliberately changes the inputs (the fingerprint changes)
+   or after the attempt settles — clearWriteAttempt() on success or on a same-key/different-
+   payload conflict, so the next deliberate attempt is fresh. It rides in sessionStorage — the
+   one storage primitive this stack allows (localStorage is prohibited) — so the key outlives
+   both the click closure AND a full page-function re-invocation, unlike a page-scoped `let`.
+   Button-disabling is UI polish, NOT the idempotency story; the server dedupes on this key. */
+const writeAttemptKey=(slot,fingerprint)=>{
+  let a=null;try{a=JSON.parse(sessionStorage.getItem(slot)||'null')}catch{}
+  if(!a||a.fingerprint!==fingerprint){
+    a={fingerprint,key:crypto.randomUUID()};
+    try{sessionStorage.setItem(slot,JSON.stringify(a))}catch{}
+  }
+  return a.key;
+};
+const clearWriteAttempt=slot=>{try{sessionStorage.removeItem(slot)}catch{}};
+/* Singapore-fixed-offset (UTC+8) display helper: shows a stored UTC instant as SGT wall-clock
+   text, regardless of the viewer's own browser/system timezone. Frenly is SG-first — bookings
+   are always shown in SGT so "what the customer picked is what staff see". */
+const sgt=iso=>{if(!iso) return null;const d=new Date(new Date(iso).getTime()+8*3600000);return d.toISOString().slice(0,16).replace('T',' ')};
+/* Turn a <input type=datetime-local> value (always "YYYY-MM-DDTHH:mm", locale-free) into a
+   UTC ISO string by anchoring it explicitly to Singapore time (+08:00) instead of relying on
+   the browser's ambient system timezone — avoids the local-vs-UTC mismatch bug. */
+const sgIso=v=>v?new Date(v+':00+08:00').toISOString():null;
+const sgDateInputValue=(date=new Date())=>{
+  const values={};
+  new Intl.DateTimeFormat('en-CA',{
+    timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'
+  }).formatToParts(date).forEach(part=>{if(part.type!=='literal')values[part.type]=part.value});
+  return `${values.year}-${values.month}-${values.day}`;
+};
+/* reporting-scale:end */
+function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
+function nav(h){location.hash=h}
+window.addEventListener('hashchange',route);
+/* "/" or ⌘K / Ctrl+K focuses the global customer search from anywhere in the workspace. "/"
+   is ignored while the user is typing in a field so it can't hijack normal input. The listener
+   is attached once and resolves #globalSearch at event time, so it survives every shell re-render
+   and no-ops on routes (auth, portal, wallet) where the app bar isn't present. */
+function handleGlobalSearchHotkey(e){
+  const input=document.getElementById('globalSearch');
+  if(!input)return;
+  const cmdK=(e.key==='k'||e.key==='K')&&(e.metaKey||e.ctrlKey);
+  const slash=e.key==='/'&&!e.metaKey&&!e.ctrlKey&&!e.altKey;
+  if(!cmdK&&!slash)return;
+  const t=e.target;
+  const typing=t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable);
+  if(slash&&typing)return;
+  e.preventDefault();input.focus();if(input.select)input.select();
+}
+document.addEventListener('keydown',handleGlobalSearchHotkey);
+
+const unavailableCustomerCapabilities=(loadError=false)=>({customer_identity:false,customer_claims:false,
+  customer_wallet:false,customer_actions:false,customer_notifications:false,customer_email_otp:false,
+  customer_phone_otp:false,customer_whatsapp_otp:false,customer_phone_registration:false,customer_phone_claims:false,
+  customer_actionable_wallet:false,customer_birthday_benefits:false,customer_in_app_inbox:false,_load_error:loadError});
+async function loadCustomerFeatureCapabilities({refresh=false}={}){
+  if(CUSTOMER_FEATURES_EMERGENCY_DISABLED) return unavailableCustomerCapabilities();
+  if(customerFeatureCapabilities&&!refresh) return customerFeatureCapabilities;
+  const {data,error}=await sb.rpc('get_customer_feature_capabilities');
+  if(error)return unavailableCustomerCapabilities(true);
+  customerFeatureCapabilities={...unavailableCustomerCapabilities(),...(data||{})};
+  return customerFeatureCapabilities;
+}
+
+/* v185 surface chunks. app/app.js is still the one file anybody edits; the build partitions it by
+   surface (scripts/quality/split-app-bundle.mjs) and index.html loads only the shared core. The
+   customer chunk and the workspace chunk arrive on demand, so someone opening a booking link no
+   longer downloads the till, reports, inventory and settings code. Urls come from the
+   #appSurfaceChunks manifest, which the build stamps with each chunk's own byte fingerprint. */
+const APP_SURFACE_CHUNKS_V185=(()=>{
+  try{return JSON.parse(document.getElementById('appSurfaceChunks')?.textContent||'{}')}catch{return {}}
+})();
+const appChunkPromisesV185=new Map();
+let appSurfaceRetriedV185=false;
+function loadAppChunkV185(name){
+  if(appChunkPromisesV185.has(name))return appChunkPromisesV185.get(name);
+  const src=String(APP_SURFACE_CHUNKS_V185[name]||'');
+  /* Same-origin absolute paths only — a missing or tampered manifest must never become a script
+     injection point. */
+  if(!/^\/[\w./?=-]*$/.test(src)){
+    const missing=Promise.reject(new Error(`Application chunk "${name}" is not available.`));
+    missing.catch(()=>{});appChunkPromisesV185.set(name,missing);return missing;
+  }
+  const promise=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src=src;script.async=false;
+    script.onload=()=>resolve(name);
+    script.onerror=()=>{appChunkPromisesV185.delete(name);reject(new Error('Part of the app could not be loaded. Check your connection and reload.'))};
+    document.head.appendChild(script);
+  });
+  appChunkPromisesV185.set(name,promise);
+  return promise;
+}
+/* Which chunk a route needs. The hash alone is not enough — "#/" is the customer entry for a
+   signed-out visitor and the workspace for signed-in staff — so the caller passes the session it
+   already resolved. Anything unrecognised loads the workspace, which is the historical default,
+   and a wrong guess is self-healing (see the ReferenceError branch in route). */
+const CUSTOMER_ROUTE_PREFIXES_V185=['#/b/','#/customer','#/wallet','#/claim','#/join'];
+function appSurfaceForRouteV185(hash,{signedIn=false}={}){
+  const route=String(hash||'').split('?')[0];
+  if(route.startsWith('#/platform'))return null;
+  if(CUSTOMER_ROUTE_PREFIXES_V185.some(prefix=>route===prefix.replace(/\/$/,'')||route.startsWith(prefix)))return 'customer';
+  if(route==='#/'||route==='')return signedIn?'business':'customer';
+  return 'business';
+}
+/* v184: the Peekaa admin console is ~210KB of JS + CSS that only a platform admin can use. It
+   used to be a plain <script defer> in index.html, so every customer opening a booking page paid
+   for it. Its urls live in the #platformConsoleAssets manifest (one place to bump the version);
+   this fetches them the first time a #/platform route is requested and caches the promise, so a
+   second admin navigation costs nothing. Resolves to the console module, or null when it cannot
+   be loaded — the caller already renders a recoverable error for that. */
+let platformConsoleAssetsPromiseV184=null;
+function loadPlatformConsoleAssetsV184(){
+  if(globalThis.NestlyPlatformConsole)return Promise.resolve(globalThis.NestlyPlatformConsole);
+  if(platformConsoleAssetsPromiseV184)return platformConsoleAssetsPromiseV184;
+  let assets={};
+  try{assets=JSON.parse(document.getElementById('platformConsoleAssets')?.textContent||'{}')}catch{assets={}}
+  const scriptUrl=String(assets.js||''),styleUrl=String(assets.css||'');
+  if(!scriptUrl.startsWith('/')){
+    /* A missing or tampered manifest must not become a script injection. */
+    return Promise.resolve(null);
+  }
+  platformConsoleAssetsPromiseV184=new Promise(resolve=>{
+    if(styleUrl.startsWith('/')&&!document.querySelector(`link[href="${CSS.escape(styleUrl)}"]`)){
+      const style=document.createElement('link');
+      style.rel='stylesheet';style.href=styleUrl;document.head.appendChild(style);
+    }
+    const script=document.createElement('script');
+    script.src=scriptUrl;script.defer=true;
+    script.onload=()=>resolve(globalThis.NestlyPlatformConsole||null);
+    script.onerror=()=>{platformConsoleAssetsPromiseV184=null;resolve(null)};
+    document.head.appendChild(script);
+  });
+  return platformConsoleAssetsPromiseV184;
+}
+/* ---------- routing ---------- */
+function entryRouteForLocation(pathname=location.pathname,hash=location.hash){
+  const requested=String(hash||'').trim();
+  if(requested&&requested!=='#'&&requested!=='#/')return requested;
+  const cleanPath=(String(pathname||'/').replace(/\/+$/,'')||'/').toLowerCase();
+  if(cleanPath==='/business')return '#/business';
+  if(cleanPath==='/admin')return '#/platform';
+  return '#/';
+}
+async function route(){
+  const isRouteCurrent=beginRouteInvocation();
+  dashboardRenderEpoch+=1;
+  customerWalletRenderEpoch+=1;
+  portalRenderEpoch+=1;
+  destroyMountedTurnstiles();
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  globalThis.document?.documentElement?.removeAttribute('data-customer-surface');
+  disposeCurrentRoute();
+  if(typeof customerAccountMenuCleanup==='function')customerAccountMenuCleanup();
+  /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
+     hiccup used to throw straight out of this async function with nothing rendered, which
+     read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
+  try{
+    killCharts();
+    if(passwordRecoveryError) return renderRecoveryInvalid();
+    if(passwordRecoveryActive) return renderPasswordUpdate();
+    let h=entryRouteForLocation();
+    if(h==='#/login')h='#/business';
+    if(h.startsWith('#/business?'))h='#/business';
+    if(h==='#/programmes'||h.startsWith('#/programmes/'))h=h.replace('#/programmes','#/grow');
+    const staffInviteCodeV151=businessStaffInviteCodeV151();
+    const platformRoutePath=String(h).split('?')[0].replace(/\/+$/,'');
+    const requestedPlatformRoute=platformRoutePath==='#/platform'||platformRoutePath.startsWith('#/platform/');
+    /* v184: the console is fetched only once an admin actually asks for it (see the
+       platformConsoleAssets manifest in index.html). Kicked off here, awaited at the point of
+       use, so its download overlaps the session and persona round trips instead of following
+       them. Everyone who is not an admin never pays for it at all. */
+    const platformConsolePromise=requestedPlatformRoute?loadPlatformConsoleAssetsV184():null;
+    if(requestedPlatformRoute){
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1" aria-labelledby="platformBootTitle">
+        <section class="card" style="width:420px;max-width:100%;text-align:center" role="status" aria-live="polite">
+          <div class="loader" aria-hidden="true"></div>
+          <h1 id="platformBootTitle" style="font-size:1.5rem;margin:14px 0 6px">Opening Peekaa admin</h1>
+          <p class="muted small">Checking your access and loading current work…</p>
+        </section>
+      </main>`;
+    }
+    if(h.startsWith('#/claim?')){
+      const claimRouteParams=new URLSearchParams(h.split('?')[1]||'');
+      const invite=claimRouteParams.get('invite')||'';
+      if(invite){
+        pendingCustomerInvitationToken=invite;
+        history.replaceState(null,'',`${location.pathname}${location.search}#/claim`);
+        h='#/claim';
+      }else if(claimRouteParams.has('business')){
+        pendingCustomerBusinessSlug=normalizeCustomerBusinessIntent(claimRouteParams.get('business'));
+      }
+    }
+    if(h.startsWith('#/customer?')){
+      const customerRouteParams=new URLSearchParams(h.split('?')[1]||'');
+      if(customerRouteParams.has('business')){
+        pendingCustomerBusinessSlug=normalizeCustomerBusinessIntent(customerRouteParams.get('business'));
+        rememberPendingCustomerDestination('');
+      }
+    }
+    if(h.startsWith('#/join?')){
+      const joinParams=new URLSearchParams(h.split('?')[1]||'');
+      const joinToken=String(joinParams.get('token')||'').trim();
+      rememberPendingCustomerJoinToken(joinToken);
+      history.replaceState(null,'',`${location.pathname}${location.search}#/join`);
+      h='#/join';
+    }
+    const {data:{session}}=await sb.auth.getSession();
+    if(!isRouteCurrent())return;
+    S.user=session?.user||null;
+    /* v185: bring in the surface this route renders. The session had to be resolved first, since
+       "#/" is the customer entry for a visitor and the workspace for signed-in staff. */
+    const appSurfaceV185=appSurfaceForRouteV185(h,{signedIn:!!S.user});
+    if(appSurfaceV185)await loadAppChunkV185(appSurfaceV185);
+    if(!isRouteCurrent())return;
+    globalThis.NestlyCustomerPush?.setAuthenticatedUser?.(S.user?.id||'');
+    const recoveryDisposition=customerRecoveryDisposition(customerRecoveryVerified(),S.user?.id||'');
+    if(recoveryDisposition==='clear')rememberCustomerRecoveryVerified('');
+    if(recoveryDisposition==='require_password'){
+      return renderCustomerRecoveryPasswordSetup(isRouteCurrent);
+    }
+    if(h.startsWith('#/b/')) return renderPortal(h.slice(4).split('?')[0]);
+    if(h==='#/'||h==='#/customer'||h==='#/customer/register'||h.startsWith('#/customer?')) return renderCustomerRegistration(isRouteCurrent);
+    const directCustomerDestination=normalizeCustomerDestination(h);
+    if(!S.user&&directCustomerDestination){
+      rememberPendingCustomerDestination(directCustomerDestination);
+      pendingCustomerBusinessSlug=directCustomerDestination.startsWith('#/wallet/')
+        ?normalizeCustomerBusinessIntent(directCustomerDestination.slice(9))
+        :'';
+      return renderCustomerRegistration(isRouteCurrent);
+    }
+    if(!S.user&&h==='#/join')return renderCustomerRegistration(isRouteCurrent);
+    if(!S.user&&h==='#/business'&&staffInviteCodeV151)return renderStaffInviteAuthV151('in',staffInviteCodeV151);
+    if(!S.user&&h==='#/business'&&new URLSearchParams(location.search).get('signup')==='1')return renderBusinessSignupChoice();
+    if(!S.user)return renderAuth('in',{admin:requestedPlatformRoute});
+    /* Platform routes are resolved before workspace discovery/onboarding. The platform
+       console derives the active role, module rights and sales scope from auth.uid() through
+       v89 before it renders navigation or data, so tenant ownership is not required. */
+    if(requestedPlatformRoute){
+      const platformConsole=await platformConsolePromise;
+      if(!isRouteCurrent())return;
+      if(typeof platformConsole?.isRoute!=='function'
+        ||typeof platformConsole?.render!=='function'
+        ||platformConsole.isRoute(h)!==true){
+        throw new Error('Peekaa admin could not be loaded. Reload to try again.');
+      }
+      const workspaceHash=S.biz?.slug
+        ?`#/workspace/${encodeURIComponent(S.biz.slug)}/dashboard`
+        :'#/';
+      return await platformConsole.render({
+        root,sb,CUI,brand:BRAND,hash:h,isCurrent:isRouteCurrent,workspaceHash,
+        onSignOut:async()=>{
+          killChannels();await sb.auth.signOut();resetClientSessionState();nav('#/');
+        }
+      });
+    }
+    if(h==='#/business'){
+      if(staffInviteCodeV151)return renderBusinessStaffInviteAcceptV151(staffInviteCodeV151);
+      const approvedInvite=String(location.search||'').match(/(?:^\?|&)invite=([0-9a-f]{64})(?:&|$)/i)?.[1]?.toLowerCase()||'';
+      if(/^[0-9a-f]{64}$/.test(approvedInvite))return renderApprovedBusinessActivation(approvedInvite,isRouteCurrent);
+      const {data:businessPersonas,error:businessPersonaError}=await sb.rpc('get_my_personas');
+      if(!isRouteCurrent())return;
+      if(businessPersonaError)return renderPersonaResolutionUnavailable();
+      const staff=sortStaffWorkspaces(businessPersonas?.staff||[]);
+      S.staffWorkspaces=staff;
+      if(staff.length>1)return renderPersonaChoice(businessPersonas,{includeCustomer:false});
+      if(staff.length===1){
+        const workspaceRoute=`#/workspace/${encodeURIComponent(staff[0].business_slug)}/dashboard`;
+        const preferredRoute=String(businessPersonas?.default_route||'');
+        nav(preferredRoute.startsWith('#/workspace/')?preferredRoute:workspaceRoute);
+        return;
+      }
+      return renderOnboard();
+    }
+    if(h==='#/claim'||h.startsWith('#/claim?')) return renderCustomerClaim();
+    if(h==='#/join')return renderCustomerQrJoin();
+    if(h==='#/customer/programmes')return renderCustomerProgrammes();
+    if(h==='#/customer/bookings')return renderCustomerBookings();
+    if(h==='#/customer/messages')return renderCustomerMessages();
+    if(h==='#/customer/profile')return renderCustomerProfile();
+    if(h==='#/wallet'||h.startsWith('#/wallet/')){
+      const customerCapabilities=await loadCustomerFeatureCapabilities();
+      if(!isRouteCurrent())return;
+      if(customerCapabilities._load_error)return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');
+      if(!customerCapabilities.customer_wallet) return renderCustomerWalletUnavailable();
+      return renderCustomerWallet(h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null);
+    }
+    let workspacePage=null,workspaceStaffPersona=null,resolvedWorkspaceControl=null;
+    if(h.startsWith('#/workspace/')){
+      const workspaceParts=h.slice(12).split('/');
+      const workspaceSlug=decodeURIComponent(workspaceParts[0]||'');
+      const requestedModule=decodeURIComponent(workspaceParts[1]||'dashboard');
+      const {data:personas,error:personaError}=await sb.rpc('get_my_personas');
+      if(!isRouteCurrent())return;
+      S.staffWorkspaces=sortStaffWorkspaces(personas?.staff||[]);
+      workspaceStaffPersona=!personaError&&(personas?.staff||[]).find(p=>p.business_slug===workspaceSlug);
+      if(!workspaceStaffPersona){
+        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p><button class="btn" id="workspaceHome" style="margin-top:16px">Continue</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+        $('main').focus();
+        wireAccountDeletionButton();
+        $('workspaceHome').onclick=()=>nav(personas?.default_route||'#/');return;
+      }
+      S.hasCustomerPersona=(personas?.customer||[]).length>0?true:null;
+      const {data:workspaceGate,error:workspaceGateError}=await sb.rpc(
+        'platform_get_business_control_v94',{p_business:workspaceStaffPersona.business_id}
+      );
+      if(!isRouteCurrent())return;
+      if(workspaceGateError||!workspaceGate)return renderPersonaResolutionUnavailable();
+      resolvedWorkspaceControl=workspaceGate;
+      if(workspaceGate.workspace_access!==true)return renderBusinessWorkspaceControl(workspaceGate);
+      const {data:workspace,error:workspaceError}=await sb.from('businesses').select('*').eq('slug',workspaceSlug).single();
+      if(!isRouteCurrent())return;
+      if(workspaceError||!workspace){
+        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;$('main').focus();wireAccountDeletionButton();return;
+      }
+      if(S.biz?.id!==workspace.id){
+        S.biz=workspace;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.isSA=false;S.saChecked=false;S.hasCustomerPersona=null;
+      }
+      workspacePage=requestedModule;
+    }
+    if(!S.biz){
+      const {data:personas,error:personaError}=await sb.rpc('get_my_personas');
+      if(!isRouteCurrent())return;
+      if(personaError)return renderPersonaResolutionUnavailable();
+      const staff=sortStaffWorkspaces(personas?.staff||[]);
+      S.staffWorkspaces=staff;
+      if(staff.length){
+        const defaultSlug=normalizeCustomerBusinessIntent(String(personas?.default_route||'').match(/#\/workspace\/([^/]+)/)?.[1]||'');
+        const selected=staff.find(workspace=>workspace.business_slug===defaultSlug)||staff[0];
+        const {data:b,error:businessError}=await sb.from('businesses').select('*').eq('slug',selected.business_slug).single();
+        if(!isRouteCurrent())return;
+        if(!businessError&&b)S.biz=b;
+      }
+    }
+    if(!S.biz) return renderOnboard();
+    /* Approval and subscription access are checked before any module or business data loads.
+       Pending/rejected firms and day-14 overdue owners keep an owner-readable contact screen,
+       but cannot enter a tenant route or trigger its queries. */
+    let workspaceControl=resolvedWorkspaceControl;
+    if(!workspaceControl){
+      const result=await sb.rpc('platform_get_business_control_v94',{p_business:S.biz.id});
+      if(!isRouteCurrent())return;
+      if(result.error||!result.data)return renderPersonaResolutionUnavailable();
+      workspaceControl=result.data;
+    }
+    S.biz.quick_earn_catalogue_enabled=workspaceControl.quick_earn_catalogue_enabled!==false;
+    if(workspaceControl.workspace_access!==true)return renderBusinessWorkspaceControl(workspaceControl);
+    /* Effective module permissions (v14): staff.modules===null means "inherit — sees
+       everything the firm enabled"; an explicit array is an allowlist. Owners always
+       bypass server-side. Fetched once per session, then cached on S until a Team edit
+       resets it back to null (see settingsPage's per-staff module panel). */
+    if(S.myModules===null){
+      const {data:mm,error:mmErr}=await sb.rpc('get_my_modules',{p_business:S.biz.id});
+      if(!isRouteCurrent())return;
+      if(mmErr||!mm){
+        /* A transient resolver failure must stay fail closed. A workspace route
+           already has the effective module list from get_my_personas; legacy
+           routes recompute the same v14 precedence from the caller's RLS-scoped
+           staff row and never broaden to every firm module by default. */
+        const enabled=S.biz.enabled_modules||[];S.isSA=false;
+        if(workspaceStaffPersona){
+          S.myRole=workspaceStaffPersona.role||null;
+          S.myModules=filterResolvedModulesForRole(workspaceStaffPersona.modules,S.myRole);
+          S.myModulePerms=Object.fromEntries(S.myModules.map(m=>[m,S.myRole==='owner'?'rw':'r']));
+        }else{
+          const {data:me}=await sb.from('staff').select('role,modules,module_perms')
+            .eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
+          if(!isRouteCurrent())return;
+          const staffRow=me&&me.length?me[0]:null;
+          S.myRole=staffRow?.role||null;
+          if(!staffRow){S.myModules=[];S.myModulePerms={}}
+          else if(staffRow.role==='owner'){S.myModules=filterResolvedModulesForRole(enabled,staffRow.role);S.myModulePerms=Object.fromEntries(S.myModules.map(m=>[m,'rw']))}
+          else if(staffRow.module_perms!==null){S.myModules=filterResolvedModulesForRole(enabled.filter(m=>Object.hasOwn(staffRow.module_perms||{},m)),staffRow.role);S.myModulePerms=Object.fromEntries(S.myModules.map(m=>[m,staffRow.module_perms[m]]))}
+          else if(staffRow.modules===null){S.myModules=filterResolvedModulesForRole(enabled,staffRow.role);S.myModulePerms=Object.fromEntries(S.myModules.map(m=>[m,'rw']))}
+          else {S.myModules=filterResolvedModulesForRole(enabled.filter(m=>(staffRow.modules||[]).includes(m)),staffRow.role);S.myModulePerms=Object.fromEntries(S.myModules.map(m=>[m,'rw']))}
+        }
+      }else{
+        S.myRole=mm.role||null;S.isSA=mm.is_super_admin===true;
+        S.myModules=filterResolvedModulesForRole(mm.modules,S.myRole);
+        S.myModulePerms=mm.module_perms&&typeof mm.module_perms==='object'
+          ?Object.fromEntries(S.myModules.map(m=>[m,mm.module_perms[m]])):Object.fromEntries(S.myModules.map(m=>[m,'rw']));
+      }
+    }
+    /* get_my_modules resolves staff status and super-admin status server-side. An
+       identity with neither an active staff role nor any effective modules must stop
+       here: rendering Dashboard would only issue predictable denied data requests. */
+    S.saChecked=true;
+    const hasResolvedStaffRole=typeof S.myRole==='string'&&S.myRole.length>0;
+    const hasResolvedStaffModules=Array.isArray(S.myModules)&&S.myModules.length>0;
+    if(!S.isSA&&!hasResolvedStaffRole&&!hasResolvedStaffModules){
+      S.myModules=[];S.myModulePerms={};
+      return renderWorkspaceAccessUnavailable();
+    }
+    if(S.hasCustomerPersona===null){
+      const {data:personas}=await sb.rpc('get_my_personas');
+      if(!isRouteCurrent())return;
+      S.staffWorkspaces=sortStaffWorkspaces(personas?.staff||S.staffWorkspaces);
+      S.hasCustomerPersona=!!((personas?.customer||[]).length);
+      if(!S.hasCustomerPersona){
+        const customerCapabilities=await loadCustomerFeatureCapabilities();
+        if(!isRouteCurrent())return;
+        if(customerCapabilities.customer_phone_registration===true){
+          const {data:customerProfile}=await sb.rpc('customer_get_profile');
+          if(!isRouteCurrent())return;
+          S.hasCustomerPersona=customerProfile?.profile!==null&&customerProfile?.profile!==undefined;
+        }
+      }
+    }
+    const frontlineDefault=!workspacePage&&h==='#/'&&['staff','frontdesk'].includes(S.myRole)&&S.myModules.includes('till');
+    const page=workspacePage?[workspacePage]:frontlineDefault?['till']:(h.replace('#/','')||'dashboard').split('/');
+    if(frontlineDefault)history.replaceState(null,'',`${location.pathname}${location.search}#/till`);
+    /* Route guard: a restricted employee must not reach a page by typing the URL, not
+       just by it being hidden from nav. 'client' maps to the 'clients' module key, same
+       as activeGroupKey() does for the sidebar. dashboard/setup are always reachable. */
+    const pageKey=page[0]==='client'?'clients':page[0];
+    const growModuleKeys=['loyalty','retention','referrals','memberships','giftcards'];
+    if(pageKey==='grow'&&!growModuleKeys.some(module=>canReadModule(module))){
+      toast('You don\'t have access to Grow.');
+      return nav('#/dashboard');
+    }
+    /* Settings is owner-only. Hiding the nav link is not a guard — anyone can type the
+       hash. The DB is the real boundary (every write in here is RLS/RPC owner-gated), but
+       the page also surfaces billing, the team roster and the sign-up QR, so don't render
+       it to staff at all. */
+    if(pageKey==='settings'&&S.myRole!=='owner'){
+      toast('Only the owner can open Settings.');
+      return nav('#/dashboard');
+    }
+    if(pageKey==='branches'&&S.myRole!=='owner'){
+      toast('Only the owner can manage branches.');
+      return nav('#/dashboard');
+    }
+    if(pageKey==='setup'&&S.myRole!=='owner'){
+      toast('Only the owner can open Get started.');
+      return nav('#/dashboard');
+    }
+    /* Program Studio is owner-only authoring (get_programs_overview is owner-gated). It has no
+       MODULES key — it is config authoring like the loyalty/retention editors — so the module
+       guard below never sees it; this explicit owner check fails closed for a typed #/studio. */
+    if(pageKey==='studio'&&S.myRole!=='owner'){
+      toast('Only the owner can open Program Studio.');
+      return nav('#/dashboard');
+    }
+    /* Stored value has no launch-live business authority. Keep the existing foundation and audit
+       records, but do not expose its test/cutover controls as an ordinary launch feature. */
+    if(pageKey==='storedvalue'){
+      toast('Stored value is not available for launch.');
+      return nav('#/loyalty');
+    }
+    /* Promotions are customer-facing publishing authority, not an ordinary staff module.
+       Keep the authoring surface owner-only in the client and enforce the same boundary in
+       v104 RPCs. Managers/front desk can continue operating the published programme without
+       receiving content-publishing authority. */
+    if(pageKey==='promotions'&&S.myRole!=='owner'){
+      toast('Only the owner can publish promotions.');
+      return nav('#/dashboard');
+    }
+    if(pageKey==='platform'&&!S.isSA){
+      toast('Not authorized.');
+      return nav('#/dashboard');
+    }
+    if(HIDDEN_BUSINESS_SURFACES.has(pageKey)){
+      toast('This area is not available in the business workspace.');
+      return nav('#/dashboard');
+    }
+    if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)&&pageKey!=='dashboard'
+       &&!canReadModule(pageKey)){
+      toast('You don\'t have access to that.');
+      return nav('#/dashboard');
+    }
+    if(!isRouteCurrent())return;
+    await loadWorkspaceLocaleV97(isRouteCurrent);
+    if(!isRouteCurrent())return;
+    renderShell(page);
+  }catch(e){
+    if(!isRouteCurrent())return;
+    /* v185 self-heal: if a route reached code that lives in a chunk this render did not load,
+       the symbol is simply absent. Rather than show an error for what is a build-time
+       classification miss, load both surfaces once and render again. Guarded so a genuine
+       ReferenceError inside application code still surfaces on the second pass. */
+    if(e instanceof ReferenceError&&!appSurfaceRetriedV185){
+      appSurfaceRetriedV185=true;
+      console.error('v185 surface miss — loading every surface and retrying',e);
+      await Promise.allSettled([loadAppChunkV185('customer'),loadAppChunkV185('business')]);
+      if(!isRouteCurrent())return;
+      return await route();
+    }
+    console.error(e);
+    root.innerHTML=`<div class="center-wrap"><div class="card" style="width:400px;max-width:100%;text-align:center">
+      <div style="font-size:40px">⚠️</div>
+      <h2 style="margin:12px 0 4px">Something went wrong</h2>
+      <p class="muted small">${esc(e&&e.message||String(e))}</p>
+      <button class="btn" id="routeReload" style="margin-top:18px">Reload</button>
+      </div></div>`;
+    const rb=$('routeReload');
+    if(rb) rb.onclick=()=>location.reload();
+  }
+}
+
+function passwordControlHtml(id,{autocomplete='current-password',minlength='',describedBy='',placeholder='',passkeyButtonId='',locale='en'}={}){
+  const showLabel=authSecurityCopy(locale,'showPassword'),hideLabel=authSecurityCopy(locale,'hidePassword');
+  const inputAttributes=[
+    `id="${esc(id)}"`,`type="password"`,`autocomplete="${esc(autocomplete)}"`,
+    minlength?`minlength="${esc(minlength)}"`:'',
+    describedBy?`aria-describedby="${esc(describedBy)}"`:'',
+    placeholder?`placeholder="${esc(placeholder)}"`:''
+  ].filter(Boolean).join(' ');
+  return `<div class="password-control${passkeyButtonId?' has-passkey':''}"><input ${inputAttributes}>
+    <span class="password-control-actions">
+      <button class="password-icon-button" type="button" data-password-toggle="${esc(id)}" data-password-show-label="${esc(showLabel)}" data-password-hide-label="${esc(hideLabel)}" aria-controls="${esc(id)}" aria-pressed="false" aria-label="${esc(showLabel)}" title="${esc(showLabel)}">${CUI.icon('eye',{size:20})}</button>
+      ${passkeyButtonId?`<button class="password-icon-button" id="${esc(passkeyButtonId)}" type="button" disabled aria-label="${esc(authSecurityCopy(locale,'passkey'))}" title="${esc(authSecurityCopy(locale,'passkeyTitle'))}">${CUI.icon('faceId',{size:21})}</button>`:''}
+    </span>
+  </div>`;
+}
+function bindPasswordVisibility(container=document){
+  container.querySelectorAll('[data-password-toggle]').forEach(button=>{
+    button.onclick=()=>{
+      const input=$(button.dataset.passwordToggle);
+      if(!input)return;
+      const showing=input.type==='text';
+      input.type=showing?'password':'text';
+      const label=showing?button.dataset.passwordShowLabel:button.dataset.passwordHideLabel;
+      button.setAttribute('aria-pressed',String(!showing));
+      button.setAttribute('aria-label',label);
+      button.title=label;
+      button.innerHTML=CUI.icon(showing?'eye':'eyeOff',{size:20});
+      input.focus({preventScroll:true});
+    };
+  });
+}
+function normalizeSingaporeCustomerPhone(value){
+  const digits=String(value??'').replace(/[^0-9]/g,'');
+  const local=digits.startsWith('65')&&digits.length===10?digits.slice(2):digits;
+  return /^[89][0-9]{7}$/.test(local)?`+65${local}`:null;
+}
+const CUSTOMER_LOCALES=Object.freeze(['en']);
+let customerLocale='en';
+function customerMediaUrlV95(value){
+  const raw=String(value||'').trim();
+  if(!raw)return '';
+  const publicPrefix='/storage/v1/object/public/business-public/';
+  const objectPathPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(?:logo|hero|programme|reward|product|service|benefit|offer)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:png|jpe?g|webp|gif)$/i;
+  const origin=SB_URL.replace(/\/+$/,'');
+  const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
+  if(relative&&objectPathPattern.test(relative))return origin+raw;
+  const absolutePrefix=origin+publicPrefix;
+  const absolutePath=raw.startsWith(absolutePrefix)?raw.slice(absolutePrefix.length):'';
+  if(absolutePath&&objectPathPattern.test(absolutePath))return raw;
+  return '';
+}
+let activeCustomerJoinScannerCleanup=()=>{};
+function sortStaffWorkspaces(staff){
+  return [...(Array.isArray(staff)?staff:[])].sort((a,b)=>{
+    const byName=String(a?.business_name||'').localeCompare(String(b?.business_name||''),undefined,{sensitivity:'base'});
+    return byName||String(a?.business_slug||'').localeCompare(String(b?.business_slug||''));
+  });
+}
+let customerAccountMenuCleanup=()=>{};
+async function syncVerifiedCustomerRelationshipsOnce(isCurrent=()=>true){
+  const userId=S.user?.id||null;
+  if(!userId)return {attempted:false,linked:false};
+  if(customerRelationshipSyncState.userId!==userId){
+    customerRelationshipSyncState={userId,attempted:false,result:null};
+  }
+  if(customerRelationshipSyncState.attempted){
+    const result=customerRelationshipSyncState.result;
+    return {
+      attempted:true,linked:Number(result?.linked_count||0)>0,result,
+      backendNotApplied:result?.outcome==='backend_not_applied'
+    };
+  }
+  const {data,error}=await sb.rpc('customer_sync_verified_relationships_v81',{
+    p_idempotency_key:crypto.randomUUID()
+  });
+  if(!isCurrent())return {attempted:false,linked:false,stale:true};
+  if(error){
+    // A build can safely run before v81 is applied. Missing-function responses must
+    // preserve the earlier explicit-claim wallet instead of turning it into an error.
+    if(error.code==='PGRST202'||error.code==='42883'){
+      customerRelationshipSyncState.attempted=true;
+      customerRelationshipSyncState.result={outcome:'backend_not_applied'};
+      return {attempted:true,linked:false,backendNotApplied:true};
+    }
+    // Transport, gateway and RPC failures are recoverable. Do not memoize them as
+    // a completed session attempt: the empty/destination state exposes a retry.
+    customerRelationshipSyncState.attempted=false;
+    customerRelationshipSyncState.result={outcome:'try_later'};
+    return {attempted:false,linked:false,error,retryable:true};
+  }
+  customerRelationshipSyncState.attempted=true;
+  customerRelationshipSyncState.result=data||{outcome:'synchronized',linked_count:0};
+  return {attempted:true,linked:Number(data?.linked_count||0)>0,result:data};
+}
+function walletDate(value,withTime=false){
+  if(!value)return '';
+  const date=new Date(value);if(Number.isNaN(date.getTime()))return '';
+  return date.toLocaleString('en-SG',{timeZone:'Asia/Singapore',dateStyle:'medium',...(withTime?{timeStyle:'short'}:{})});
+}
+
+function customerPromotionCtaV104(item,business,bookingEnabled){
+  const metadata=item?.metadata||{},cta=metadata.cta||{},
+    requestedKind=String(cta.kind||metadata.cta_kind||'programme'),
+    kind=requestedKind==='book'&&!bookingEnabled?'programme':requestedKind;
+  const configured=String(cta.label||metadata.cta_label||'').trim();
+  if(kind==='book'&&bookingEnabled){
+    return `<a class="btn sm" href="#/b/${encodeURIComponent(business.slug||'')}">${esc(configured||'Book now')}</a>`;
+  }
+  if(kind==='counter'){
+    return `<button class="btn sm" type="button" data-promotion-counter>${esc(configured||'Show at counter')}</button>`;
+  }
+  const label=requestedKind==='book'&&!bookingEnabled?'View details':configured||'View details';
+  return `<button class="btn sm" type="button" data-promotion-details>${esc(label)}</button>`;
+}
+function customerPromotionValidityV104(item={}){
+  const starts=promotionDateTextV104(item.starts_at),ends=promotionDateTextV104(item.ends_at);
+  if(starts&&ends)return `Valid ${starts} – ${ends}`;
+  if(ends)return `Valid until ${ends}`;
+  return starts?`Valid from ${starts}`:'';
+}
+/* V183 (owner: "Upload the image but not reflected on the right ... only after publish then is
+   able to see"). customerMediaUrlV95 is a strict allowlist of Supabase storage object paths, so
+   the blob: URL of a just-picked file resolved to '' and the card fell back to its initial
+   letter — the owner saw a big "N" instead of the photo they had chosen.
+   The allowlist must stay for everything a CUSTOMER sees, so the owner preview passes an
+   already-resolved URL through previewImageUrl instead. Customer render paths never pass it. */
+function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
+  const image=previewImageUrl||customerMediaUrlV95(item?.image_url),
+    validity=customerPromotionValidityV104(item),
+    facts=String(item?.metadata?.offer_facts||'').trim(),
+    terms=String(item?.terms||'').trim();
+  const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
+  return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
+    ${image?`<div class="customer-promotion-card-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:`<div class="customer-promotion-card-media customer-promotion-card-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
+    <div class="customer-promotion-card-copy">
+      <p class="customer-quest-kicker">Limited-time offer</p>
+      <h3>${esc(item?.name||'Latest offer')}</h3>
+      ${facts?`<p class="customer-promotion-card-facts">${esc(facts)}</p>`:''}
+      ${item?.tagline||item?.description?`<p>${esc(item.tagline||item.description)}</p>`:''}
+      ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
+      <div class="customer-promotion-card-actions">
+        ${customerPromotionCtaV104(item,business,bookingEnabled)}
+        ${terms?`<details><summary class="small">Terms</summary><p class="small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
+      </div>
+      <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>
+      <template data-promotion-details-template>
+        <p>${esc(item?.description||item?.tagline||facts||item?.name||'Latest offer')}</p>
+        <dl class="customer-promotion-detail-list">
+          ${facts?`<div><dt>Offer</dt><dd>${esc(facts)}</dd></div>`:''}
+          ${validity?`<div><dt>Validity</dt><dd>${esc(validity)}</dd></div>`:''}
+          ${terms?`<div><dt>Terms</dt><dd>${esc(terms)}</dd></div>`:''}
+        </dl>
+        <p class="muted small">Show these details to the team when you visit.</p>
+      </template>
+    </div>
+  </article>`;
+}
+async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>true){
+  const host=$('customerNotificationPreferences');if(!walletSectionStillCurrent(host,isCurrent))return;
+  const {data,error}=await sb.rpc('customer_get_notification_preferences',{p_business_slug:businessSlug});
+  if(!walletSectionStillCurrent(host,isCurrent))return;
+  if(error)return toast('Notification settings could not be saved. Please try again.');
+  const current=new Map((data||[]).map(x=>[`${x.channel}:${x.topic}`,!!x.opted_in]));
+  const choices=[['in_app','booking_updates','Booking updates'],['in_app','loyalty_updates','Loyalty updates'],['email','marketing','Offers by email']];
+  host.innerHTML=`<h2 style="margin-top:28px">Notifications</h2>${choices.map(([channel,topic,label])=>`<label class="row" style="margin-top:10px;color:var(--ink);font-weight:500">
+    <input class="walletPref" type="checkbox" style="width:auto" data-channel="${channel}" data-topic="${topic}" ${current.get(`${channel}:${topic}`)?'checked':''}>${label}</label>`).join('')}`;
+  document.querySelectorAll('.walletPref').forEach(input=>input.onchange=async()=>{
+    input.disabled=true;
+    const {error:setError}=await sb.rpc('customer_set_notification_preference',{
+      p_business_slug:businessSlug,p_channel:input.dataset.channel,p_topic:input.dataset.topic,
+      p_opted_in:input.checked,p_idempotency_key:crypto.randomUUID()});
+    if(!walletSectionStillCurrent(host,isCurrent)||!input.isConnected)return;
+    input.disabled=false;
+    if(setError){input.checked=!input.checked;return toast('Notification settings could not be saved. Please try again.')}
+    toast('Notification preference saved');
+  });
+}
+
+async function returnToNativeSignIn(){
+  if(S.user){killChannels();await sb.auth.signOut();resetClientSessionState()}
+  renderAuth('in');
+}
+
+function renderNativeBusinessCompanion(){
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="nativeBusinessTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <h1 id="nativeBusinessTitle" style="font-size:1.55rem;margin:14px 0 6px">Peekaa for existing business accounts</h1>
+    <p class="muted" style="line-height:1.6">This app is a purchase-free companion for businesses with an existing Peekaa subscription.</p>
+    <p class="muted small" style="line-height:1.6;margin-top:8px">New business accounts, subscription setup, and subscription changes are not available in this app.</p>
+    <button class="btn" id="nativeBusinessSignIn" style="width:100%;margin-top:18px">${S.user?'Sign out and return to sign in':'Back to sign in'}</button>
+    ${S.user?accountDeletionCardHtml():''}${legalLinks()}</section></main>`;
+  $('main')?.focus();
+  $('nativeBusinessSignIn').onclick=returnToNativeSignIn;
+  wireAccountDeletionButton();
+}
+
+function businessApplicationInviteToken(){
+  const token=new URLSearchParams(location.search).get('invite')||'';
+  return /^[0-9a-f]{64}$/i.test(token)?token.toLowerCase():'';
+}
+const STAFF_INVITE_STORAGE_V151='peekaa:pending-staff-invite:v151';
+function normalizeCompanyInviteCodeV151(value){
+  const code=String(value||'').replace(/[\s-]+/g,'').trim().toUpperCase();
+  return /^[A-Z0-9]{4,32}$/.test(code)?code:'';
+}
+function businessStaffInviteCodeV151(){
+  const params=new URLSearchParams(location.search||'');
+  const hashParams=new URLSearchParams(String(location.hash||'').split('?')[1]||'');
+  const query=params.get('staff_invite')||params.get('company_invite')||params.get('invite_code')||'';
+  const hash=query||hashParams.get('staff_invite')||hashParams.get('company_invite')||hashParams.get('invite_code')||'';
+  return normalizeCompanyInviteCodeV151(hash)||normalizeCompanyInviteCodeV151(sessionStorage.getItem(STAFF_INVITE_STORAGE_V151));
+}
+function rememberBusinessStaffInviteV151(code){
+  const normalized=normalizeCompanyInviteCodeV151(code);
+  if(normalized)sessionStorage.setItem(STAFF_INVITE_STORAGE_V151,normalized);
+  return normalized;
+}
+function staffInviteOAuthRedirectV158(code){
+  const url=new URL(NestlyNativeBridge.publicUrl('/business'));
+  url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
+  return url.toString();
+}
+function staffInvitePreviewMarkupV151(preview){
+  if(!preview)return '<p class="muted small">Enter a company invite code to check the business and role.</p>';
+  const role=ROLE_LABELS[preview.role]||preview.role||'Team member';
+  if(preview.status==='valid'){
+    return `<div class="ok" style="margin-top:10px;background:#E7F6EE;color:var(--green)">
+      <b>${esc(preview.business_name||'Business found')}</b>
+      <p class="small" style="margin-top:5px">Role offered: ${esc(role)}</p>
+      <p class="small" style="margin-top:5px">${preview.restricted_email?`Restricted to: ${esc(preview.restricted_email)}`:'No email restriction on this invite.'}</p>
+    </div>`;
+  }
+  const messages={
+    invalid:'This company invite code is invalid.',
+    expired:'This company invite has expired.',
+    revoked:'This company invite has been revoked.',
+    already_used:'This company invite has already been used.',
+    business_unavailable:'The business for this invite is unavailable.'
+  };
+  return `<div class="err">${esc(messages[preview.status]||'This company invite cannot be used.')}</div>`;
+}
+async function previewStaffInviteV151(code,targetId){
+  const target=$(targetId);
+  const normalized=rememberBusinessStaffInviteV151(code);
+  if(!target)return null;
+  if(!normalized){target.innerHTML=staffInvitePreviewMarkupV151(null);return null}
+  target.innerHTML='<p class="muted small">Checking company invite…</p>';
+  const {data,error}=await sb.rpc('preview_staff_invite',{p_code:normalized});
+  const preview=error?{status:'invalid'}:data;
+  target.innerHTML=staffInvitePreviewMarkupV151(preview);
+  return preview;
+}
+function renderBusinessSignupChoice(){
+  destroyMountedTurnstiles();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card entry-choice-card auth-card" aria-labelledby="businessSignupChoiceTitle">
+    <div class="logo">${brandWordmark()}</div>
+    <h1 id="businessSignupChoiceTitle" style="font-size:clamp(1.8rem,6vw,2.45rem);margin-top:18px">How would you like to use Peekaa?</h1>
+    <p class="muted" style="margin-top:7px;line-height:1.55">Choose the path that matches what you are doing now.</p>
+    <div class="entry-choice-grid">
+      <button type="button" class="entry-choice" id="requestDemoChoice"><span class="entry-choice-icon">${CUI.icon('info',{size:25})}</span><div><h2>Request a demo</h2><p class="muted">Ask Peekaa consultants to contact you. No account or workspace is created.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Request demo ${CUI.icon('forward',{size:17})}</span></button>
+      <button type="button" class="entry-choice" id="startBusinessChoice"><span class="entry-choice-icon">${CUI.icon('branch',{size:25})}</span><div><h2>Set up business</h2><p class="muted">Create a new Peekaa workspace, then choose Stripe Checkout or manual payment approval.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Continue ${CUI.icon('forward',{size:17})}</span></button>
+      <button type="button" class="entry-choice" id="joinBusinessChoice"><span class="entry-choice-icon">${CUI.icon('staff',{size:25})}</span><div><h2>Join an existing business</h2><p class="muted">Use an invitation from your business owner or manager.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Enter invite ${CUI.icon('forward',{size:17})}</span></button>
+    </div>
+    <button class="btn ghost" id="businessSignupBack" style="width:100%;margin-top:18px">Back to sign in</button>
+    ${legalLinks()}</section></main>`;
+  CUI.focusRoute($('main'),{enhanceContent:true});
+  $('requestDemoChoice').onclick=()=>renderBusinessDemoRequest();
+  $('startBusinessChoice').onclick=()=>{return renderBusinessApplication()};
+  $('joinBusinessChoice').onclick=()=>renderStaffInviteAuthV151('in',businessStaffInviteCodeV151());
+  $('businessSignupBack').onclick=()=>renderAuth('in');
+}
+function renderBusinessDemoRequest(){
+  destroyMountedTurnstiles();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessDemoRequestTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <h1 id="businessDemoRequestTitle" style="margin:14px 0 2px">Request a Peekaa demo</h1>
+    <p class="muted small" style="margin-top:6px">Demo request only. Peekaa consultants will contact you. No owner account, workspace, login, Stripe Checkout, or Super Admin approval is created from this demo request.</p>
+    <div class="grid2" style="margin-top:14px">
+      <div><label for="demoContactName">Your full name</label><input id="demoContactName" autocomplete="name"></div>
+      <div><label for="demoBusinessName">Business name</label><input id="demoBusinessName" autocomplete="organization"></div>
+      <div><label for="demoContactEmail">Email</label><input id="demoContactEmail" type="email" autocomplete="email" placeholder="you@business.com"></div>
+      <div><label for="demoContactPhone">Singapore mobile</label><input id="demoContactPhone" autocomplete="tel" inputmode="tel" placeholder="+65 8123 4567"></div>
+      <div><label for="demoBusinessSector">Business sector (optional)</label><input id="demoBusinessSector" autocomplete="off" placeholder="e.g. F&B, salon, spa"></div>
+      <div class="wide"><label for="demoNotes">What would you like to see? (optional)</label><textarea id="demoNotes" rows="3" placeholder="Tell us what you want to test or ask."></textarea></div>
+    </div>
+    <div id="businessDemoRequestError" role="alert"></div>
+    <button class="btn" id="businessDemoRequestSubmit" style="width:100%;margin-top:18px">Send demo request</button>
+    <button class="btn ghost" id="businessDemoRequestBack" style="width:100%;margin-top:10px">Back</button>
+    <p class="muted small" id="businessDemoRequestStatus" role="status" aria-live="polite" style="margin-top:8px">This opens your email app with the demo details. It does not create a Peekaa login.</p>
+    ${legalLinks()}</section></main>`;
+  CUI.focusRoute($('main'),{enhanceContent:true});
+  $('businessDemoRequestBack').onclick=()=>renderBusinessSignupChoice();
+  $('businessDemoRequestSubmit').onclick=()=>{
+    const name=String($('demoContactName')?.value||'').trim();
+    const business=String($('demoBusinessName')?.value||'').trim();
+    const email=String($('demoContactEmail')?.value||'').trim();
+    const phone=String($('demoContactPhone')?.value||'').trim();
+    const sector=String($('demoBusinessSector')?.value||'').trim();
+    const notes=String($('demoNotes')?.value||'').trim();
+    if(!name||!business||!email||!phone){
+      $('businessDemoRequestError').innerHTML='<div class="err">Enter your name, business name, email and mobile number so Peekaa can contact you.</div>';
+      return;
+    }
+    $('businessDemoRequestError').innerHTML='';
+    const subject='Peekaa demo request';
+    const body=[
+      'Please contact me for a Peekaa demo.',
+      '',
+      `Name: ${name}`,
+      `Business: ${business}`,
+      `Email: ${email}`,
+      `Mobile: ${phone}`,
+      `Sector: ${sector||'-'}`,
+      '',
+      `Notes: ${notes||'-'}`,
+      '',
+      'I understand this is a demo request only. No Peekaa account, workspace, login, Stripe Checkout, or Super Admin approval is created from this request.'
+    ].join('\n');
+    $('businessDemoRequestStatus').textContent='Opening your email app…';
+    window.location.href=`mailto:admin.peekaa@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+}
+function renderStaffInviteAuthV151(mode='in',initialCode=''){
+  destroyMountedTurnstiles();
+  const saved=rememberBusinessStaffInviteV151(initialCode)||businessStaffInviteCodeV151();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="staffInviteAuthTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <h1 id="staffInviteAuthTitle" style="margin:14px 0 2px">Join an existing business</h1>
+    <p class="muted small" style="margin-top:6px">Enter your company invite code, then sign in or create a staff account. Stripe is not required for invited staff.</p>
+    <label for="staffInviteCodeV151">Company invite code</label><input id="staffInviteCodeV151" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="e.g. 7FE22596" value="${esc(saved)}">
+    <div id="staffInvitePreviewV151" role="status" aria-live="polite" style="margin-top:8px">${staffInvitePreviewMarkupV151(null)}</div>
+    <div class="row" style="gap:8px;margin-top:14px"><button type="button" class="btn ${mode==='in'?'':'ghost'} sm" id="staffInviteSignInTab">Sign in</button><button type="button" class="btn ${mode==='up'?'':'ghost'} sm" id="staffInviteSignUpTab">Create account</button></div>
+    <label for="staffInviteEmailV151">Email</label><input id="staffInviteEmailV151" type="email" autocomplete="email" placeholder="you@business.com">
+    <label for="staffInvitePasswordV151">Password</label>${passwordControlHtml('staffInvitePasswordV151',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
+    ${mode==='up'?`<label for="staffInvitePasswordConfirmV151">Confirm password</label>${passwordControlHtml('staffInvitePasswordConfirmV151',{autocomplete:'new-password',placeholder:'••••••••'})}`:''}
+    <div id="staffInviteAuthError"></div>
+    ${businessGoogleButtonHtml('staffInviteGoogleV158')}
+    <p class="muted small" style="margin-top:8px">Google works for invited staff too. Peekaa still validates the company invite and role on the server before access is created.</p>
+    ${authChallengeHtml()}
+    <button class="btn" id="staffInviteAuthGo" style="width:100%;margin-top:18px" disabled>${mode==='in'?'Sign in and continue':'Create account and continue'}</button>
+    <button class="btn ghost" id="staffInviteBack" style="width:100%;margin-top:10px">Back</button>
+    ${legalLinks()}</section></main>`;
+  bindPasswordVisibility(root);
+  CUI.focusRoute($('main'),{enhanceContent:true});
+  $('staffInviteSignInTab').onclick=()=>renderStaffInviteAuthV151('in',$('staffInviteCodeV151').value);
+  $('staffInviteSignUpTab').onclick=()=>renderStaffInviteAuthV151('up',$('staffInviteCodeV151').value);
+  $('staffInviteBack').onclick=()=>renderBusinessSignupChoice();
+  $('staffInviteGoogleV158').onclick=async()=>{
+    const code=rememberBusinessStaffInviteV151($('staffInviteCodeV151').value);
+    if(!code){$('staffInviteAuthError').innerHTML='<div class="err">Enter a valid company invite code before continuing with Google.</div>';return}
+    const preview=await previewStaffInviteV151(code,'staffInvitePreviewV151');
+    if(preview?.status&&preview.status!=='valid'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing with Google.</div>';return}
+    $('staffInviteGoogleV158').disabled=true;
+    try{
+      const {error}=await sb.auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo:staffInviteOAuthRedirectV158(code),queryParams:{prompt:'select_account'}}
+      });
+      if(error)throw error;
+    }catch(error){
+      $('staffInviteAuthError').innerHTML=`<div class="err">${esc(error.message||'Google sign-in could not be started.')}</div>`;
+      $('staffInviteGoogleV158').disabled=false;
+    }
+  };
+  if(saved)previewStaffInviteV151(saved,'staffInvitePreviewV151');
+  $('staffInviteCodeV151').addEventListener('blur',()=>previewStaffInviteV151($('staffInviteCodeV151').value,'staffInvitePreviewV151'));
+  let authToken='',authControl=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+    retry:'authTurnstileRetry',action:'frenly_staff_invite',
+    onToken:(token)=>{authToken=token;$('staffInviteAuthGo').disabled=!token}})
+    .then(control=>authControl=control);
+  $('staffInviteAuthGo').onclick=async()=>{
+    const code=rememberBusinessStaffInviteV151($('staffInviteCodeV151').value);
+    const email=$('staffInviteEmailV151').value.trim();
+    const password=$('staffInvitePasswordV151').value;
+    if(!code){$('staffInviteAuthError').innerHTML='<div class="err">Enter a valid company invite code.</div>';return}
+    const preview=await previewStaffInviteV151(code,'staffInvitePreviewV151');
+    if(preview?.status&&preview.status!=='valid'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing.</div>';return}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$('staffInviteAuthError').innerHTML='<div class="err">Enter the email you want to use for this workspace.</div>';return}
+    if(mode==='up'&&(!validNewPassword(password)||password!==$('staffInvitePasswordConfirmV151').value)){
+      $('staffInviteAuthError').innerHTML='<div class="err">Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.</div>';return;
+    }
+    if(!authToken)return;
+    $('staffInviteAuthGo').disabled=true;
+    const captchaToken=authToken;authToken='';
+    try{
+      if(mode==='up'){
+        const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));returnUrl.searchParams.set('staff_invite',code);
+        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken,emailRedirectTo:returnUrl.toString(),data:{account_type:'business_staff_invite'}}});
+        if(error)throw error;
+        if(!data.session){
+          if(authControl)authControl.reset();
+          $('staffInviteAuthError').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Check your email to confirm your account, then return to this invite link.</div>';return;
+        }
+      }else{
+        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
+        if(error)throw error;
+      }
+      history.replaceState(null,'',`/business?staff_invite=${encodeURIComponent(code)}`);
+      resetClientSessionState({preserveInvitation:true});route();
+    }catch(error){
+      if(authControl)authControl.reset();
+      $('staffInviteAuthError').innerHTML=`<div class="err">${esc(error.message||'Invite sign-in could not be completed.')}</div>`;
+      $('staffInviteAuthGo').disabled=false;
+    }
+  };
+}
+function businessApplicationCopy(locale,key){
+  const copy={
+    en:{
+      apply:'Apply for a Peekaa business account',applyIntro:'Tell us about your business. A Peekaa super admin must approve it before an owner account can be created.',
+      contactName:'Your full name',contactEmail:'Business email',contactPhone:'Singapore mobile number',businessName:'Business name',
+      sector:'Business sector',registration:'UEN / registration number (optional)',language:'Preferred language',
+      consent:'I have read and agree to the Terms and Privacy Policy.',submit:'Submit for approval',
+      submitted:'Application received',reference:'Save this reference',await:'Peekaa will review your application. No owner account exists yet.',
+      approved:'Create your approved owner account',approvedIntro:'This invitation is bound to the approved email and can be used only once.',
+      password:'Password',confirm:'Confirm password',create:'Create owner account',signIn:'Back to sign in',
+      terms:'Terms',privacy:'Privacy',acceptLegal:'Please accept the Terms and Privacy Policy.',
+      genericError:'We could not complete this request. Please check the details and try again.',
+      passwordRule:'Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.',
+      checkEmail:'Check the approved email, confirm the account, then return through the same secure invitation.',
+      invitationUnavailable:'Invitation unavailable',invitationUnavailableIntro:'This approved invitation is invalid, expired, or already used.',
+      signOut:'Sign out',createWorkspace:'Create workspace',finalStep:'Final step: choose the workspace address. The approved invitation and signed-in email will be checked again.',
+      workspaceAddress:'Workspace address',createApprovedWorkspace:'Create approved workspace',
+      workspaceCreateError:'This workspace could not be created.'
+    },
+    'zh-CN':{
+      apply:'申请 Peekaa 商家账户',applyIntro:'请填写商家资料。超级管理员批准后，才能创建店主账户。',
+      contactName:'您的姓名',contactEmail:'商家邮箱',contactPhone:'新加坡手机号码',businessName:'商家名称',
+      sector:'行业',registration:'UEN／注册号码（选填）',language:'首选语言',
+      consent:'我已阅读并同意条款及隐私政策。',submit:'提交审核',
+      submitted:'申请已收到',reference:'请保存此申请编号',await:'Peekaa 将审核您的申请。目前尚未创建店主账户。',
+      approved:'创建已批准的店主账户',approvedIntro:'此邀请仅限已批准的邮箱使用，并且只能使用一次。',
+      password:'密码',confirm:'确认密码',create:'创建店主账户',signIn:'返回登录',
+      terms:'条款',privacy:'隐私政策',acceptLegal:'请接受条款和隐私政策。',
+      genericError:'无法完成此请求。请检查资料后重试。',
+      passwordRule:'请使用至少 12 个字符，并包含大小写字母、数字和符号；两次密码必须一致。',
+      checkEmail:'请查看已批准的邮箱并确认账户，然后通过同一个安全邀请返回。',
+      invitationUnavailable:'邀请不可用',invitationUnavailableIntro:'此批准邀请无效、已过期或已使用。',
+      signOut:'退出登录',createWorkspace:'创建工作区',finalStep:'最后一步：选择工作区地址。系统将再次核对已批准的邀请和当前登录邮箱。',
+      workspaceAddress:'工作区地址',createApprovedWorkspace:'创建已批准的工作区',
+      workspaceCreateError:'无法创建此工作区。'
+    },
+    ms:{
+      apply:'Mohon akaun perniagaan Peekaa',applyIntro:'Beritahu kami tentang perniagaan anda. Pentadbir Peekaa perlu meluluskannya sebelum akaun pemilik boleh dicipta.',
+      contactName:'Nama penuh anda',contactEmail:'E-mel perniagaan',contactPhone:'Nombor telefon Singapura',businessName:'Nama perniagaan',
+      sector:'Sektor perniagaan',registration:'UEN / nombor pendaftaran (pilihan)',language:'Bahasa pilihan',
+      consent:'Saya telah membaca dan bersetuju dengan Terma dan Dasar Privasi.',submit:'Hantar untuk kelulusan',
+      submitted:'Permohonan diterima',reference:'Simpan rujukan ini',await:'Peekaa akan menyemak permohonan anda. Akaun pemilik belum dicipta.',
+      approved:'Cipta akaun pemilik yang diluluskan',approvedIntro:'Jemputan ini terikat kepada e-mel yang diluluskan dan hanya boleh digunakan sekali.',
+      password:'Kata laluan',confirm:'Sahkan kata laluan',create:'Cipta akaun pemilik',signIn:'Kembali ke log masuk',
+      terms:'Terma',privacy:'Privasi',acceptLegal:'Sila terima Terma dan Dasar Privasi.',
+      genericError:'Permintaan ini tidak dapat diselesaikan. Semak butiran dan cuba lagi.',
+      passwordRule:'Gunakan sekurang-kurangnya 12 aksara dengan huruf besar/kecil, nombor dan simbol; kedua-dua kata laluan mesti sepadan.',
+      checkEmail:'Semak e-mel yang diluluskan, sahkan akaun, kemudian kembali melalui jemputan selamat yang sama.',
+      invitationUnavailable:'Jemputan tidak tersedia',invitationUnavailableIntro:'Jemputan yang diluluskan ini tidak sah, telah tamat tempoh atau sudah digunakan.',
+      signOut:'Log keluar',createWorkspace:'Cipta ruang kerja',finalStep:'Langkah terakhir: pilih alamat ruang kerja. Jemputan yang diluluskan dan e-mel yang sedang digunakan akan disemak sekali lagi.',
+      workspaceAddress:'Alamat ruang kerja',createApprovedWorkspace:'Cipta ruang kerja yang diluluskan',
+      workspaceCreateError:'Ruang kerja ini tidak dapat dicipta.'
+    }
+  };
+  return copy[locale]?.[key]||copy.en[key]||key;
+}
+function businessApplicationSectorLabel(locale,key,fallback){
+  const labels={
+    'zh-CN':{fnb:'餐饮／咖啡馆',salon:'美发沙龙',facial:'美容／水疗',massage:'按摩',fitness:'健身',retail:'零售',other:'其他'},
+    ms:{fnb:'Makanan & minuman / Kafe',salon:'Salun rambut',facial:'Rawatan muka / Spa',massage:'Urut',fitness:'Kecergasan',retail:'Runcit',other:'Lain-lain'}
+  };
+  return labels[locale]?.[key]||fallback;
+}
+function businessApplicationLanguage(){
+  const locale=sessionStorage.getItem('nestly-business-application-locale');
+  return WORKSPACE_LOCALES_V97.includes(locale)?locale:'en';
+}
+function businessOAuthRedirectUrl(){
+  const redirect=new URL(NestlyNativeBridge.publicUrl('/business'));
+  redirect.searchParams.set('oauth','business');
+  return redirect.toString();
+}
+function createBusinessOAuthAdmissionClient(){
+  /* OAuth provider tokens are untrusted for business access until the V138
+     server admission succeeds. Keep this session memory-only so a tab close,
+     crash, reload or second tab cannot observe an unadmitted Google identity. */
+  return window.supabase.createClient(SB_URL,SB_KEY,{auth:{
+    storageKey:'nestly-business-oauth-admission-v138',persistSession:false,
+    autoRefreshToken:false,detectSessionInUrl:false,flowType:'implicit'
+  }});
+}
+const BUSINESS_LEGAL_V138=Object.freeze({
+  terms:Object.freeze({version:'2026-08-04',sha256:'012e09a4a7b6df2a5acc9da3b6512c1cfeb42e903fd8306f6ff09866a9f1e4a5'}),
+  privacy:Object.freeze({version:'2026-08-06',sha256:'b9aa956263f0ac12d85be069ee05b4960b4130be33289c06df1e4eee59c59245'})
+});
+function businessGoogleButtonHtml(id){
+  return `<button class="btn ghost" id="${esc(id)}" type="button" style="width:100%;min-height:44px;margin-top:12px"><span aria-hidden="true" style="font-weight:800;font-size:18px">G</span><span>Continue with Google</span></button>`;
+}
+function ensureCanonicalBusinessOAuthOrigin(){
+  const canonical=new URL(NestlyNativeBridge.publicUrl('/business'));
+  if(location.origin===canonical.origin)return true;
+  location.replace(canonical.toString());
+  return false;
+}
+async function beginBusinessGoogleOAuthAttempt({intent='signin',legalAccepted=false}={}){
+  if(!['signin','signup'].includes(intent))return false;
+  if(intent==='signup'&&legalAccepted!==true)return false;
+  let attemptToken=null,idempotencyKey=null;
+  if(intent==='signup'){
+    attemptToken=crypto.randomUUID();idempotencyKey=crypto.randomUUID();
+    const {data,error}=await sb.rpc('begin_business_google_oauth_signup_v138',{
+      p_attempt_token:attemptToken,p_idempotency_key:idempotencyKey,
+      p_terms_version:BUSINESS_LEGAL_V138.terms.version,
+      p_terms_sha256:BUSINESS_LEGAL_V138.terms.sha256,
+      p_privacy_version:BUSINESS_LEGAL_V138.privacy.version,
+      p_privacy_sha256:BUSINESS_LEGAL_V138.privacy.sha256,p_accepted:true
+    });
+    if(error||data?.accepted!==true)return false;
+  }
+  try{
+    sessionStorage.setItem('nestly-business-google-oauth',JSON.stringify({
+      startedAt:Date.now(),returnPath:'/business',intent,legalAccepted:intent==='signup',
+      attemptToken
+    }));
+    return true;
+  }catch{return false}
+}
+function takeBusinessGoogleOAuthAttempt(){
+  const key='nestly-business-google-oauth',raw=sessionStorage.getItem(key);
+  sessionStorage.removeItem(key);
+  if(!raw)return false;
+  try{
+    const attempt=JSON.parse(raw),age=Date.now()-Number(attempt?.startedAt);
+    const validIntent=attempt?.intent==='signin'||(attempt?.intent==='signup'&&attempt?.legalAccepted===true);
+    const validToken=attempt?.intent==='signin'||(
+      typeof attempt?.attemptToken==='string'
+      &&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(attempt.attemptToken)
+    );
+    return attempt?.returnPath==='/business'&&validIntent&&validToken
+      &&Number.isFinite(age)&&age>=0&&age<=30*60*1000
+      ?{intent:attempt.intent,legalAccepted:attempt.legalAccepted===true,
+        attemptToken:attempt.attemptToken||null}:false;
+  }catch{return false}
+}
+async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legalAccepted=false}){
+  if(!ensureCanonicalBusinessOAuthOrigin())return;
+  const errorHost=$(errorHostId);
+  if(button)button.disabled=true;
+  if(errorHost)errorHost.innerHTML='';
+  if(await beginBusinessGoogleOAuthAttempt({intent,legalAccepted})){
+    try{
+      const {error}=await sb.auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo:businessOAuthRedirectUrl(),scopes:'openid email profile',queryParams:{prompt:'select_account'}}
+      });
+      if(!error)return;
+    }catch{}
+  }
+  sessionStorage.removeItem('nestly-business-google-oauth');
+  if(button)button.disabled=false;
+  if(errorHost)errorHost.innerHTML='<div class="err">Google sign-in could not be started. Try again or use email and password.</div>';
+}
+function renderBusinessApplication(){
+  destroyMountedTurnstiles();
+  let locale=businessApplicationLanguage();
+  globalThis.document?.documentElement?.setAttribute('lang',locale);
+  const accountCopy={
+    en:{heading:'Create your Peekaa owner account',intro:'Create a secure owner login. After email confirmation, enter business details and choose Stripe Checkout or manual payment approval. Stripe opens access only after verified payment; manual payment waits for Super Admin approve/reject.',email:'Business email',password:'Password',confirm:'Confirm password',consent:'I agree to the Terms of Service and acknowledge the Privacy Policy',consentLead:'I agree to the',terms:'Terms of Service',and:'and acknowledge the',privacy:'Privacy Policy',create:'Create owner account',back:'Back',accept:'Please agree to the Terms of Service and acknowledge the Privacy Policy.',passwordRule:'Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.',error:'We could not create this account. Check the email and password, then try again.',check:'Check your email and confirm your account. Then sign in to continue business setup. Stripe payment auto-activates after verified payment; manual payment goes to Super Admin for approve/reject.'},
+    'zh-CN':{heading:'创建 Peekaa 店主账户',intro:'请先创建安全登录。登录后，如方案已配置，Peekaa 会打开 Stripe Checkout；如 Stripe 暂不可用，则收集商家资料以便人工付款协助。',email:'商家邮箱',password:'密码',confirm:'确认密码',consent:'我同意服务条款，并知悉隐私政策',consentLead:'我同意',terms:'服务条款',and:'并知悉',privacy:'隐私政策',create:'创建店主账户',back:'返回登录',accept:'请同意服务条款并确认知悉隐私政策。',passwordRule:'请使用至少 12 个字符，并包含大小写字母、数字和符号；两次密码必须一致。',error:'无法创建此账户。请检查邮箱和密码后重试。',check:'请查看邮箱并确认账户，然后登录继续商家设置。如 Stripe 暂不可用，请提交资料以便人工付款协助。'},
+    ms:{heading:'Cipta akaun pemilik Peekaa',intro:'Cipta log masuk selamat dahulu. Selepas log masuk, Peekaa akan membuka Stripe Checkout apabila pelan telah dikonfigurasi, atau mengumpul butiran perniagaan untuk bantuan bayaran manual.',email:'E-mel perniagaan',password:'Kata laluan',confirm:'Sahkan kata laluan',consent:'Saya bersetuju dengan Terma Perkhidmatan dan mengakui Dasar Privasi',consentLead:'Saya bersetuju dengan',terms:'Terma Perkhidmatan',and:'dan mengakui',privacy:'Dasar Privasi',create:'Cipta akaun pemilik',back:'Kembali ke log masuk',accept:'Sila bersetuju dengan Terma Perkhidmatan dan akui Dasar Privasi.',passwordRule:'Gunakan sekurang-kurangnya 12 aksara dengan huruf besar/kecil, nombor dan simbol; kedua-dua kata laluan mesti sepadan.',error:'Akaun ini tidak dapat dicipta. Semak e-mel dan kata laluan, kemudian cuba lagi.',check:'Semak e-mel dan sahkan akaun, kemudian log masuk untuk meneruskan tetapan perniagaan. Jika Stripe tidak tersedia, hantar butiran untuk bantuan bayaran manual.'}
+  };
+  const a=accountCopy[locale]||accountCopy.en;
+  root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <div class="row"><h2 style="margin:14px 0 2px">${esc(a.heading)}</h2><span class="spacer"></span>
+      <select id="businessApplicationLocale" aria-label="Preferred language" style="width:auto"><option value="en"${locale==='en'?' selected':''}>English</option><option value="zh-CN"${locale==='zh-CN'?' selected':''}>中文</option><option value="ms"${locale==='ms'?' selected':''}>Bahasa Melayu</option></select></div>
+    <p class="muted small" style="margin-top:6px">${esc(a.intro)}</p>
+    <label class="checkrow" for="applicationConsent" style="margin-top:16px"><input id="applicationConsent" type="checkbox" aria-label="${esc(a.consent)}"><span>${esc(a.consentLead)} <a class="consent-document-link" href="/terms.html?return=business-signup" target="_blank" rel="noopener">${esc(a.terms)}</a> ${esc(a.and)} <a class="consent-document-link" href="/privacy.html?return=business-signup" target="_blank" rel="noopener">${esc(a.privacy)}</a>.</span></label>
+    ${businessGoogleButtonHtml('businessApplicationGoogle')}
+    <div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>
+    <label for="applicationContactEmail">${esc(a.email)}</label><input id="applicationContactEmail" type="email" autocomplete="email" placeholder="you@business.com">
+    <label for="businessOwnerPassword">${esc(a.password)}</label>${passwordControlHtml('businessOwnerPassword',{autocomplete:'new-password',locale})}
+    <label for="businessOwnerPasswordConfirm">${esc(a.confirm)}</label>${passwordControlHtml('businessOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
+    <div id="businessApplicationError"></div>
+    ${authChallengeHtml(locale)}
+    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px" disabled>${esc(a.create)}</button>
+    <button class="btn ghost" id="businessApplicationBack" style="width:100%;margin-top:10px">${esc(a.back)}</button>
+    ${legalLinks(locale)}</div></div>`;
+  bindPasswordVisibility(root);
+  $('businessApplicationLocale').onchange=event=>{
+    sessionStorage.setItem('nestly-business-application-locale',event.target.value);
+    renderBusinessApplication();
+  };
+  $('businessApplicationBack').onclick=()=>renderBusinessSignupChoice();
+  $('businessApplicationGoogle').onclick=event=>{
+    if(!$('applicationConsent').checked){
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(a.accept)}</div>`;
+      $('applicationConsent').focus();
+      return;
+    }
+    startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'businessApplicationError',intent:'signup',legalAccepted:true});
+  };
+  let token='',control=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+    retry:'authTurnstileRetry',action:'frenly_auth',locale,
+    onToken:value=>{token=value;$('businessApplicationSubmit').disabled=!value}})
+    .then(value=>control=value);
+  $('businessApplicationSubmit').onclick=async()=>{
+    const email=$('applicationContactEmail').value.trim().toLowerCase();
+    const password=$('businessOwnerPassword').value;
+    if(!$('applicationConsent').checked){
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(a.accept)}</div>`;return;
+    }
+    if(!validNewPassword(password)||password!==$('businessOwnerPasswordConfirm').value){
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(a.passwordRule)}</div>`;return;
+    }
+    $('businessApplicationSubmit').disabled=true;
+    const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));
+    returnUrl.searchParams.set('selfserve','1');
+    const {data,error}=await sb.auth.signUp({
+      email,password,options:{captchaToken:token,emailRedirectTo:returnUrl.toString(),
+        data:{account_type:'business_owner',preferred_locale:locale}}
+    });
+    token='';
+    if(error){
+      if(control)control.reset();
+      $('businessApplicationError').innerHTML=`<div class="err">${esc(a.error)}</div>`;
+      $('businessApplicationSubmit').disabled=false;return;
+    }
+    if(data.session){history.replaceState(null,'','/business');route();return}
+    $('businessApplicationError').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)">${esc(a.check)}</div>`;
+  };
+}
+async function renderApprovedBusinessInviteSignup(inviteToken){
+  destroyMountedTurnstiles();
+  let invitation;
+  try{invitation=await publicGateway('public-business-application',{method:'GET',query:`?invite=${encodeURIComponent(inviteToken)}`})}
+  catch{return renderAuth('in')}
+  const locale=WORKSPACE_LOCALES_V97.includes(invitation.preferred_locale)?invitation.preferred_locale:'en',t=key=>businessApplicationCopy(locale,key);
+  globalThis.document?.documentElement?.setAttribute('lang',locale);
+  root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><div class="logo">${brandWordmark()}</div>
+    <h2 style="margin-top:18px">${esc(t('approved'))}</h2><p class="muted small" style="margin-top:6px">${esc(t('approvedIntro'))}</p>
+    <label>${esc(t('businessName'))}</label><input value="${esc(invitation.business_name||'')}" disabled>
+    <label>${esc(t('contactEmail'))}</label><input id="approvedOwnerEmail" type="email" value="${esc(invitation.approved_email||'')}" readonly>
+    <label for="approvedOwnerPassword">${esc(t('password'))}</label>${passwordControlHtml('approvedOwnerPassword',{autocomplete:'new-password',locale})}
+    <label for="approvedOwnerPasswordConfirm">${esc(t('confirm'))}</label>${passwordControlHtml('approvedOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
+    <div id="approvedOwnerError"></div>${authChallengeHtml(locale)}
+    <button class="btn" id="approvedOwnerCreate" style="width:100%;margin-top:18px" disabled>${esc(t('create'))}</button>
+    ${legalLinks(locale)}</div></div>`;
+  bindPasswordVisibility(root);
+  let token='',control=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+    retry:'authTurnstileRetry',action:'frenly_auth',locale,
+    onToken:value=>{token=value;$('approvedOwnerCreate').disabled=!value}})
+    .then(value=>control=value);
+  $('approvedOwnerCreate').onclick=async()=>{
+    const password=$('approvedOwnerPassword').value;
+    if(!validNewPassword(password)||password!==$('approvedOwnerPasswordConfirm').value){
+      $('approvedOwnerError').innerHTML=`<div class="err">${esc(t('passwordRule'))}</div>`;return;
+    }
+    $('approvedOwnerCreate').disabled=true;
+    const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));returnUrl.searchParams.set('invite',inviteToken);
+    const {data,error}=await sb.auth.signUp({
+      email:invitation.approved_email,password,
+      options:{captchaToken:token,emailRedirectTo:returnUrl.toString()}
+    });
+    token='';
+    if(error){
+      if(control)control.reset();
+      $('approvedOwnerError').innerHTML=`<div class="err">${esc(t('genericError'))}</div>`;$('approvedOwnerCreate').disabled=false;return;
+    }
+    if(!data.session){
+      $('approvedOwnerError').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)">${esc(t('checkEmail'))}</div>`;return;
+    }
+    route();
+  };
+}
+function renderAuth(mode='in',{admin=false}={}){
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  destroyMountedTurnstiles();
+  if(!admin&&businessApplicationInviteToken())return renderApprovedBusinessInviteSignup(businessApplicationInviteToken());
+  if(!admin&&mode==='up'&&NestlyNativeBridge.isNative)return renderNativeBusinessCompanion();
+  if(!admin&&mode==='up')return renderBusinessSignupChoice();
+  if(mode==='forgot'){
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="authResetTitle">
+      <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+      <h1 id="authResetTitle" style="margin:14px 0 2px">Reset your password</h1>
+      <p class="muted small" style="margin-top:6px">Enter your account email and we will send a secure reset link.</p>
+      <label for="em">Email</label><input id="em" type="email" autocomplete="email" placeholder="you@business.com">
+      <div id="autherr"></div>
+      ${authChallengeHtml()}
+      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest" disabled>Send reset link</button>
+      <span class="spacer"></span><button class="btn ghost sm" id="backSignIn">Back to sign in</button></div>
+      ${legalLinks()}</section></main>`;
+    let authToken='',authControl=null;
+    mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+      retry:'authTurnstileRetry',action:'frenly_auth',
+      onToken:(token)=>{authToken=token;$('resetRequest').disabled=!token}})
+      .then(control=>authControl=control);
+    $('backSignIn').onclick=()=>renderAuth('in',{admin});
+    $('resetRequest').onclick=async()=>{
+      const email=$('em').value.trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        $('autherr').innerHTML='<div class="err">Enter a valid email address.</div>';return;
+      }
+      if(!authToken) return;
+      $('resetRequest').disabled=true;
+      const redirect=new URL(NestlyNativeBridge.publicUrl(admin?'/admin':'/business'));
+      redirect.searchParams.set('recovery','1');
+      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString(),captchaToken:authToken})}catch{}
+      /* Turnstile tokens are single-use: clear and reset so a retry gets a fresh challenge. */
+      authToken='';if(authControl)authControl.reset();
+      $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
+    };
+    return;
+  }
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessAuthTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
+    <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
+    <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
+    ${!admin&&!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
+    <label for="em">Email</label><input id="em" type="email" placeholder="you@business.com">
+    <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
+    <div id="autherr">${!admin&&sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
+    ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
+    ${authChallengeHtml()}
+    <div class="row" style="margin-top:18px">
+      <button class="btn" id="go" disabled>${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
+      ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
+    </div>
+    ${legalLinks()}</section></main>`;
+  bindPasswordVisibility(root);
+  if(!admin&&sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
+  if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
+    $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
+  }
+  let authToken='',authControl=null;
+  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
+    retry:'authTurnstileRetry',action:'frenly_auth',
+    onToken:(token)=>{authToken=token;$('go').disabled=!token}})
+    .then(control=>authControl=control);
+  if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
+  if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
+  if($('businessGoogleSignIn'))$('businessGoogleSignIn').onclick=event=>
+    startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'autherr',intent:'signin'});
+  $('go').onclick=async()=>{
+    const email=$('em').value.trim(),password=$('pw').value;
+    if(!authToken) return;
+    $('go').disabled=true;
+    /* Tokens are single-use: consume, then reset the widget for any follow-up attempt. */
+    const captchaToken=authToken;authToken='';
+    try{
+      if(mode==='up'){
+        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken}});
+        if(error) throw error;
+        if(!data.session){
+          if(authControl)authControl.reset();
+          $('autherr').innerHTML='<div class="err">Check your email to confirm your account, then sign in.</div>';return}
+      }else{
+        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
+        if(error) throw error;
+      }
+      resetClientSessionState({preserveInvitation:true});route();
+    }catch(e){
+      if(authControl)authControl.reset();
+      $('autherr').innerHTML=`<div class="err">${esc(e.message)}</div>`;
+    }
+  };
+}
+
+function validNewPassword(password){
+  return password.length>=12 && /[a-z]/.test(password) && /[A-Z]/.test(password)
+    && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password);
+}
+
+function accountDeletionCardHtml(){
+  return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Peekaa to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
+}
+
+function wireAccountDeletionButton(button=$('openAccountDeletion')){
+  if(button)button.onclick=()=>openAccountDeletionDialog(button);
+}
+
+async function openAccountDeletionDialog(trigger=document.activeElement){
+  $('accountDeletionModal')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="accountDeletionModal" role="dialog" aria-modal="true" aria-labelledby="accountDeletionTitle" tabindex="-1"><section class="modal-card" style="max-width:540px">
+    <div class="row"><div><h2 id="accountDeletionTitle">Delete your Peekaa account</h2><p class="muted small" style="margin-top:5px">This requests deletion; it does not erase records immediately.</p></div><span class="spacer"></span><button class="btn ghost sm" id="accountDeletionClose" type="button" aria-label="Close account deletion">Close</button></div>
+    <div id="accountDeletionBody" aria-busy="true"><p class="muted small" style="margin-top:16px">Checking for an existing request…</p></div>
+  </section></div>`);
+  const modal=$('accountDeletionModal'),body=$('accountDeletionBody');
+  let deactivate=null;
+  const close=()=>{if(deactivate){const cleanup=deactivate;deactivate=null;cleanup()}else modal.remove();trigger?.focus?.()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#accountDeletionClose'});
+  $('accountDeletionClose').onclick=close;
+  const renderPending=request=>{
+    const due=request?.response_due_at?sgt(request.response_due_at):'within 30 days';
+    body.setAttribute('aria-busy','false');
+    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request received</b><p class="small" style="margin-top:6px">Status: ${esc(request?.status||'pending')} · response due ${esc(due)}.</p></div><p class="muted small" style="margin-top:12px">We will respond within 30 days. Your subscription and any outstanding payment obligations are handled separately.</p>`;
+  };
+  const renderCompleted=request=>{
+    const outcomes={
+      deleted_where_permitted:'Deleted where permitted',
+      anonymised_where_permitted:'Anonymised where permitted',
+      retained_legal:'Retained under legal obligation',
+      request_invalid:'Request invalid after identity review'
+    };
+    const outcome=outcomes[request?.resolution_code]||'Reviewed outcome recorded';
+    const retention=request?.resolution_code==='retained_legal'&&request?.retention_until
+      ?`<p class="small" style="margin-top:6px">Retention review date: ${esc(sgt(request.retention_until))}.</p>`:'';
+    body.setAttribute('aria-busy','false');
+    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Peekaa if you need to challenge or clarify it.</p>`;
+  };
+  const renderForm=()=>{
+    body.setAttribute('aria-busy','false');
+    body.innerHTML=`<p class="muted small" style="margin-top:16px">This affects your customer and business personas that use this same login. We will respond within 30 days. Type DELETE to confirm.</p>
+      <label for="accountDeletionConfirm">Type DELETE to confirm</label><input id="accountDeletionConfirm" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div id="accountDeletionStatus" role="alert" aria-live="assertive"></div>
+      <button class="btn danger" id="accountDeletionSubmit" type="button" style="width:100%;margin-top:16px" disabled>Submit deletion request</button>`;
+    const input=$('accountDeletionConfirm'),submit=$('accountDeletionSubmit'),status=$('accountDeletionStatus');
+    input.oninput=()=>{submit.disabled=input.value.trim()!=='DELETE'};
+    submit.onclick=async()=>{
+      if(input.value.trim()!=='DELETE')return;
+      const slot='nestly:v131:account-deletion';
+      let key=sessionStorage.getItem(slot);if(!key){key=crypto.randomUUID();sessionStorage.setItem(slot,key)}
+      submit.disabled=true;status.innerHTML='<p class="muted small" style="margin-top:10px">Submitting the same safe request…</p>';
+      const {data,error}=await sb.rpc('request_account_deletion_v131',{p_confirmation:'DELETE',p_idempotency_key:key});
+      if(!modal.isConnected)return;
+      if(error||!data?.request_id){submit.disabled=false;status.innerHTML='<div class="err">We could not confirm whether the request was saved. Retry; Peekaa will reuse the same request.</div>';return}
+      sessionStorage.removeItem(slot);renderPending(data);
+    };
+    input.focus({preventScroll:true});
+  };
+  const {data,error}=await sb.rpc('get_account_deletion_request_v131');
+  if(!modal.isConnected)return;
+  if(error){body.setAttribute('aria-busy','false');body.innerHTML='<div class="err" role="alert">Deletion status could not be loaded. No request was created.</div><button class="btn ghost" id="accountDeletionRetry" style="margin-top:12px">Try again</button>';$('accountDeletionRetry').onclick=()=>{close();openAccountDeletionDialog(trigger)};return}
+  const request=Array.isArray(data)?data[0]:data;
+  if(request&&['pending','processing'].includes(request.status))renderPending(request);
+  else if(request?.status==='completed')renderCompleted(request);
+  else renderForm();
+}
+function renderPasswordUpdate(){
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="passwordUpdateTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <h1 id="passwordUpdateTitle" style="margin:14px 0 2px">Choose a new password</h1>
+    <p class="muted small" style="margin-top:6px">Use at least 12 characters with upper and lowercase letters, a number and a symbol.</p>
+    <label for="newPw">New password</label>${passwordControlHtml('newPw',{autocomplete:'new-password'})}
+    <label for="confirmPw">Confirm new password</label>${passwordControlHtml('confirmPw',{autocomplete:'new-password'})}
+    <div id="autherr"></div><button class="btn" id="savePw" style="width:100%;margin-top:18px">Update password</button>
+    ${legalLinks()}</section></main>`;
+  bindPasswordVisibility(root);
+  $('savePw').onclick=async()=>{
+    const password=$('newPw').value;
+    if(!validNewPassword(password)){
+      $('autherr').innerHTML='<div class="err">Use at least 12 characters with upper and lowercase letters, a number and a symbol.</div>';return;
+    }
+    if(password!==$('confirmPw').value){$('autherr').innerHTML='<div class="err">Passwords do not match.</div>';return}
+    $('savePw').disabled=true;
+    const {error}=await sb.auth.updateUser({password});
+    if(error){$('autherr').innerHTML='<div class="err">This reset link is invalid or expired. Request a new one.</div>';$('savePw').disabled=false;return}
+    await sb.auth.signOut();passwordRecoveryActive=false;resetClientSessionState();
+    history.replaceState(null,'',location.pathname+'#/');
+    renderAuth('in',{admin:entryRouteForLocation().startsWith('#/platform')});
+    $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Password updated. Sign in with your new password.</div>';
+  };
+}
+
+function renderRecoveryInvalid(){
+  globalThis.document?.documentElement?.setAttribute('lang','en');
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="recoveryInvalidTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <h1 id="recoveryInvalidTitle" style="margin:14px 0 2px">Reset link unavailable</h1>
+    <p class="muted small" style="margin-top:6px">This password reset link is invalid or expired. Request a new link to continue.</p>
+    <button class="btn" id="requestAnotherReset" style="width:100%;margin-top:18px">Request a new reset link</button>
+    ${legalLinks()}</section></main>`;
+  $('requestAnotherReset').onclick=()=>{passwordRecoveryError=false;renderAuth('forgot')};
+}
+
+sb.auth.onAuthStateChange((event,session)=>{
+  globalThis.NestlyCustomerPush?.setAuthenticatedUser?.(session?.user?.id||'');
+  if(event==='PASSWORD_RECOVERY'){
+    passwordRecoveryError=false;passwordRecoveryActive=true;
+    setTimeout(()=>renderPasswordUpdate(),0);
+  }
+  if(event==='SIGNED_OUT'){setTimeout(()=>route(),0)}
+});
+
+async function consumeBusinessOAuthRedirect(){
+  const search=new URLSearchParams(location.search);
+  if(search.get('oauth')!=='business')return;
+  const hash=new URLSearchParams((location.hash||'').replace(/^#/,'').replace(/^\?/,'') );
+  const providerError=search.get('error_description')||search.get('error')||hash.get('error_description')||hash.get('error');
+  const oauthAccessToken=hash.get('access_token'),oauthRefreshToken=hash.get('refresh_token');
+  /* OAuth fragments contain credentials. Remove them from browser history before
+     any network or rendering work, then establish only the Supabase session.
+     Business authority remains server-derived after route() loads the persona. */
+  history.replaceState(null,'','/business');
+  const pendingAttempt=takeBusinessGoogleOAuthAttempt();
+  if(!pendingAttempt||providerError){
+    sessionStorage.setItem('nestly-business-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  if(!oauthAccessToken||!oauthRefreshToken){
+    sessionStorage.setItem('nestly-business-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  try{
+    const admissionClient=createBusinessOAuthAdmissionClient();
+    const {error}=await admissionClient.auth.setSession({access_token:oauthAccessToken,refresh_token:oauthRefreshToken});
+    if(error)throw error;
+    const {data:admission,error:admissionError}=await admissionClient.rpc('complete_business_google_oauth_v138',{
+      p_intent:pendingAttempt.intent,p_attempt_token:pendingAttempt.attemptToken
+    });
+    if(admissionError||admission?.admitted!==true)throw admissionError||new Error('Google OAuth admission was not confirmed');
+    /* Persist only the exact provider session that the server has admitted. */
+    const {error:persistError}=await sb.auth.setSession({access_token:oauthAccessToken,refresh_token:oauthRefreshToken});
+    if(persistError)throw persistError;
+  }catch{
+    await sb.auth.signOut({scope:'local'}).catch(()=>{});
+    sessionStorage.setItem('nestly-business-oauth-notice',pendingAttempt.intent==='signin'
+      ?'No business account was found for that Google login. Choose New here? Sign up and accept the Terms and Privacy Policy first.'
+      :'Could not verify the consented Google signup. Return to signup and try again.');
+  }
+}
+
+async function consumePasswordRecoveryRedirect(){
+  const search=new URLSearchParams(location.search);
+  const hash=new URLSearchParams((location.hash||'').replace(/^#/,''));
+  if(hash.get('type')==='recovery'&&hash.get('access_token')&&hash.get('refresh_token')){
+    const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token');
+    history.replaceState(null,'',location.pathname+'?recovery=1#/recover');
+    try{
+      const {error}=await sb.auth.setSession({access_token:accessToken,refresh_token:refreshToken});
+      passwordRecoveryError=!!error;passwordRecoveryActive=!error;
+    }catch{passwordRecoveryError=true;passwordRecoveryActive=false}
+  }else if(search.get('recovery')==='1'){
+    const {data:{session}}=await sb.auth.getSession();
+    passwordRecoveryActive=!!session;passwordRecoveryError=!session;
+  }
+}
+
+/* ============================================================================
+   Universal importer — paste-from-Excel (TSV), CSV, or .xlsx upload → any module.
+   One engine, per-module config. Excel "copy cells" pastes tab-separated, so paste
+   and file share the same row/column pipeline. Inserts row-by-row (chunked) so one
+   bad/duplicate row is skipped, never failing the whole batch.
+   ============================================================================ */
+const IMPORT_CONFIGS={
+  customers:{title:'Customers',table:'clients',
+    hint:'Columns we recognise: name (required), phone, email, birthday (YYYY-MM-DD), notes. Duplicates (same phone) are skipped.',
+    fields:[
+      {key:'full_name',aliases:['name','full name','fullname','customer','client'],required:true},
+      {key:'phone',aliases:['phone','mobile','contact','hp','number','tel']},
+      {key:'email',aliases:['email','e-mail','mail']},
+      {key:'birth_date',aliases:['birthday','birth date','birth','dob']},
+      {key:'notes',aliases:['notes','note','remark','remarks']}],
+    build:o=>({business_id:S.biz.id,...o})},
+  services:{title:'Services',table:'services',
+    hint:'Columns: name (required), price (in dollars), duration/mins, category, description.',
+    fields:[
+      {key:'name',aliases:['name','service'],required:true},
+      {key:'price_cents',aliases:['price','price (sgd)','amount','cost'],money:true},
+      {key:'duration_min',aliases:['duration','mins','minutes','time','duration (minutes)'],int:true,def:60},
+      {key:'category',aliases:['category','type','group']},
+      {key:'description',aliases:['description','desc','details']}],
+    build:o=>({business_id:S.biz.id,active:true,...o})},
+  inventory:{title:'Products',table:'products',
+    hint:'Columns: name (required), sku, price/retail (in dollars), and optionally qty/stock for an opening batch.',
+    fields:[
+      {key:'name',aliases:['name','product','item'],required:true},
+      {key:'sku',aliases:['sku','code','barcode','ref']},
+      {key:'retail_price_cents',aliases:['price','retail','retail price','price (sgd)','amount','cost'],money:true},
+      {key:'opening_qty',aliases:['qty','quantity','stock','on hand','opening stock','count'],int:true,stripField:true}],
+    build:o=>({business_id:S.biz.id,...o})},
+  staff:{title:'Team members',table:'staff',
+    hint:'Columns: name (required), email, phone, title, role, calendar_color. Imported people are roster records; invite them separately if they need to sign in.',
+    fields:[
+      {key:'full_name',aliases:['name','full name','fullname','staff','employee'],required:true},
+      {key:'email',aliases:['email','e-mail','mail']},
+      {key:'phone',aliases:['phone','mobile','contact','tel']},
+      {key:'title',aliases:['title','job title','position']},
+      {key:'role',aliases:['role','access role'],def:'staff'},
+      {key:'calendar_color',aliases:['calendar color','calendar colour','color','colour'],def:'#7C9CBF'}],
+    build:o=>({business_id:S.biz.id,active:true,...o})},
+  branches:{title:'Branches',table:'branches',
+    hint:'Columns: name (required), address, phone, email, timezone. Asia/Singapore is used when timezone is blank.',
+    fields:[
+      {key:'name',aliases:['name','branch','location','outlet'],required:true},
+      {key:'address',aliases:['address','location address']},
+      {key:'phone',aliases:['phone','contact','tel']},
+      {key:'email',aliases:['email','e-mail']},
+      {key:'timezone',aliases:['timezone','time zone'],def:'Asia/Singapore'}],
+    build:o=>({business_id:S.biz.id,active:true,...o})},
+  reservations:{title:'Tables / capacity',table:'booking_tables',
+    hint:'Columns: name (required), pax/seats, quantity, sort. Use one row per table type or capacity pool.',
+    fields:[
+      {key:'name',aliases:['name','table','table type','capacity type'],required:true},
+      {key:'pax',aliases:['pax','seats','party size'],int:true},
+      {key:'quantity',aliases:['quantity','qty','count','number'],int:true,def:1},
+      {key:'sort',aliases:['sort','order','position'],int:true,def:0}],
+    build:o=>({business_id:S.biz.id,active:true,...o})},
+};
+/* Parse pasted/file text into array-of-arrays. Auto-detects tab (Excel paste) vs comma (CSV),
+   honours quoted fields + embedded newlines. */
+function parseDelimited(text){
+  const head=(text.split(/\r?\n/)[0]||'');
+  const delim=(head.split('\t').length>head.split(',').length)?'\t':',';
+  const rows=[];let cur=[''],q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cur[cur.length-1]+='"';i++} else q=false } else cur[cur.length-1]+=ch; }
+    else if(ch==='"')q=true;
+    else if(ch===delim)cur.push('');
+    else if(ch==='\n'||ch==='\r'){ if(ch==='\r'&&text[i+1]==='\n')i++; if(cur.length>1||cur[0]!==''){rows.push(cur);cur=['']} }
+    else cur[cur.length-1]+=ch;
+  }
+  if(cur.length>1||cur[0]!=='')rows.push(cur);
+  return rows;
+}
+/* rows(array-of-arrays) + config → {recs:[{payload,mapped}], skipped, total, missing} */
+function mapRows(rows,cfg){
+  if(!rows||rows.length<2) return {recs:[],skipped:0,total:0,missing:null};
+  const hdr=rows[0].map(h=>String(h||'').trim().toLowerCase());
+  const idx={};let missingReq=null;
+  for(const f of cfg.fields){
+    let i=hdr.findIndex(h=>f.aliases.includes(h));
+    if(i<0) i=hdr.findIndex(h=>h&&f.aliases.some(a=>h.includes(a)));
+    idx[f.key]=i;
+    if(f.required&&i<0) missingReq=f.aliases[0];
+  }
+  if(missingReq) return {recs:[],skipped:0,total:rows.length-1,missing:missingReq};
+  const recs=[];let skipped=0;
+  for(const r of rows.slice(1)){
+    if(r.every(c=>!String(c||'').trim())) continue; // blank line
+    const mapped={};let ok=true;
+    for(const f of cfg.fields){
+      const i=idx[f.key];let raw=i>=0?String(r[i]??'').trim():'';
+      let val=raw;
+      if(f.money) val=raw?Math.round(parseFloat(raw.replace(/[^0-9.\-]/g,''))*100):0;
+      else if(f.int) val=raw?parseInt(raw.replace(/[^0-9\-]/g,'')):(f.def??null);
+      else if(f.transform) val=raw?f.transform(raw):null;
+      else val=raw||null;
+      if(f.required&&(!val||String(val).length<2)){ok=false;break}
+      if(val!==null&&val!==undefined&&val!=='') mapped[f.key]=val;
+      else if(f.def!==undefined) mapped[f.key]=f.def;
+    }
+    if(!ok){skipped++;continue}
+    recs.push({payload:cfg.build({...mapped}),mapped});
+  }
+  return {recs,skipped,total:rows.length-1,missing:null};
+}
+async function runImport(recs,entity,idempotencyKey,onProgress){
+  if(onProgress) onProgress(0,recs.length,'Validating');
+  const {data:staged,error:stageError}=await sb.rpc('stage_import_rows',{
+    p_business:S.biz.id,p_entity:entity,p_rows:recs.map(r=>r.mapped),
+    p_idempotency_key:idempotencyKey});
+  if(stageError) return {inserted:0,failed:recs.length,errs:[stageError.message],blocked:true};
+  const rowErrors=(staged.errors||[]).map(e=>`Row ${e.row_number}: ${(e.errors||[]).join(', ')}`);
+  if(staged.invalid>0) return {inserted:0,failed:staged.invalid,errs:rowErrors,blocked:true};
+  if(onProgress) onProgress(recs.length,recs.length,'Saving');
+  const {data:done,error:commitError}=await sb.rpc('commit_import_job',{p_job:staged.job_id});
+  if(commitError) return {inserted:0,failed:recs.length,errs:[commitError.message],blocked:true};
+  return {inserted:done.imported,failed:0,errs:[],blocked:false};
+}
+/* The modal. moduleKey ∈ customers|services|inventory. onDone() re-renders the caller. */
+window.openImport=function(moduleKey,onDone){
+  const cfg=IMPORT_CONFIGS[moduleKey];if(!cfg)return;
+  let mode='paste',parsed=null,importIdem=null;
+  const wrap=document.createElement('div');wrap.className='modal';wrap.id='impModal';wrap.tabIndex=-1;
+  wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');wrap.setAttribute('aria-labelledby','impTitle');
+  document.body.appendChild(wrap);
+  let deactivateDialog;
+  const close=()=>deactivateDialog?deactivateDialog():wrap.remove();
+  function render(){
+    wrap.innerHTML=`<div class="modal-card">
+      <div class="row"><h2 id="impTitle" style="font-size:1.3rem">${CUI.icon('import',{size:21})} <span data-workspace-i18n>Import</span> <span data-workspace-i18n>${esc(cfg.title)}</span></h2><span class="spacer"></span>
+        <button class="btn ghost sm" id="impX">Close</button></div>
+      <div class="imp-note">${esc(cfg.hint)}</div>
+      <div style="margin:16px 0 6px"><div class="seg">
+        <button class="${mode==='paste'?'act':''}" data-m="paste">Paste from Excel</button>
+        <button class="${mode==='file'?'act':''}" data-m="file">Upload file</button></div></div>
+      ${mode==='paste'
+        ? `<label for="impText">Copy the cells in Excel/Sheets (including the header row) and paste here</label>
+           <textarea id="impText" rows="7" placeholder="name&#9;phone&#9;email&#10;Jane Tan&#9;9123 4567&#9;jane@mail.com" style="font-family:ui-monospace,monospace;font-size:12.5px"></textarea>
+           <div style="margin-top:12px"><button class="btn sm" id="impParse">Preview</button></div>`
+        : `<label for="impFile">Choose a .csv or .xlsx file (first row = headers)</label>
+           <input type="file" id="impFile" accept=".csv,.tsv,.xlsx,.xls,text/csv">`}
+      <div id="impResult"></div>
+    </div>`;
+    $('impX').onclick=close;
+    wrap.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;parsed=null;render()});
+    if(mode==='paste'){
+      $('impParse').onclick=()=>{ const t=$('impText').value; if(!t.trim())return toast('Paste some rows first'); preview(parseDelimited(t)); };
+    }else{
+      $('impFile').onchange=async ev=>{
+        const f=ev.target.files[0];if(!f)return;
+        try{
+          if(/\.x(lsx|ls)$/i.test(f.name)){
+            await loadSpreadsheetLibrary();
+            const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});
+            const sheet=wb.Sheets[wb.SheetNames[0]];
+            preview(XLSX.utils.sheet_to_json(sheet,{header:1,blankrows:false,raw:false}));
+          }else{ preview(parseDelimited(await f.text())); }
+        }catch(e){fail(e)}
+      };
+    }
+  }
+  function preview(rows){
+    importIdem=null;
+    parsed=mapRows(rows,cfg);
+    const R=$('impResult');
+    if(parsed.missing){R.innerHTML=`<div class="err">Couldn't find a <b>${esc(parsed.missing)}</b> column. Make sure your first row has headers.</div>`;return}
+    if(!parsed.recs.length){R.innerHTML=`<div class="err">${workspaceTemplateHtmlV97(parsed.skipped?'noValidImportRowsSkipped':'noValidImportRows',{skipped:parsed.skipped})}</div>`;return}
+    const cols=cfg.fields.filter(f=>!f.stripField).map(f=>f.key);
+    const show=parsed.recs.slice(0,4);
+    R.innerHTML=`<div class="imp-prev"><table><tr>${cols.map(c=>`<th>${esc(c.replace('_cents','').replace('_',' '))}</th>`).join('')}</tr>
+      ${show.map(rec=>`<tr>${cols.map(c=>{let v=rec.payload[c];if(c.endsWith('_cents'))v=v!=null?money(v):'';return `<td>${esc(v??'')}</td>`}).join('')}</tr>`).join('')}</table></div>
+      <p class="small muted" style="margin-top:8px">${workspaceTemplateHtmlV97(parsed.skipped?'importRowsReadySkipped':'importRowsReady',{ready:parsed.recs.length,skipped:parsed.skipped,shown:show.length})}</p>
+      <div style="margin-top:12px"><button class="btn" id="impGo"><span data-workspace-i18n>Import</span> <span data-merchant-content>${parsed.recs.length}</span> <span data-workspace-i18n>${esc(cfg.title)}</span></button></div>`;
+    $('impGo').onclick=async()=>{
+      $('impGo').disabled=true;$('impGo').textContent='Importing…';
+      if(!importIdem) importIdem=crypto.randomUUID();
+      const {inserted,failed,errs,blocked}=await runImport(parsed.recs,moduleKey,importIdem,(d,t,stage)=>{$('impGo').innerHTML=`<span data-workspace-i18n>${esc(stage)}</span>… <span data-merchant-content>${d}/${t}</span>`});
+      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:#E7F6EE;color:#1f7a4d'}">${blocked?'Nothing imported. Correct the source data, then start the import again.':`<span data-workspace-i18n>✓ Imported</span> <b data-merchant-content>${inserted}</b> <span data-workspace-i18n>${esc(cfg.title)}</span>.`}</div>
+        ${errs.length?`<p class="small muted" style="margin-top:8px"><span data-workspace-i18n>First issues:</span> <span data-merchant-content>${errs.map(e=>esc(e)).join('; ')}</span></p>`:''}
+        <div style="margin-top:14px"><button class="btn sm" id="impDone">${blocked?'Close':'Done'}</button></div>`;
+      $('impDone').onclick=()=>{close();if(onDone)onDone()};
+    };
+  }
+  render();
+  deactivateDialog=CUI.activateDialog(wrap,{onClose:close,initialFocus:'#impX'});
+};
+function killChannels(){
+  if(rtChannel){ try{sb.removeChannel(rtChannel);}catch(e){} }
+  rtChannel=null;rtChannelBizId=null;
+}
+/* v97 translates Peekaa's workspace interface only. Merchant-entered records remain
+   canonical data, and customer surfaces are intentionally English-only. */
+const WORKSPACE_LOCALES_V97=Object.freeze(['en','zh-CN','ms']);
+let workspaceLocale='en',workspaceLocaleVersion=0,workspaceLocaleLoadedFor='',workspaceLocalizationObserver=null;
+/* v185: the tables live in the lazily loaded i18n chunk. `typeof` is safe on an identifier that
+   has not been declared yet, and returning the source text is the same behaviour as English. */
+const workspaceTranslationV97=source=>workspaceLocale==='en'||typeof WORKSPACE_GENERATED_COPY_V97==='undefined'
+  ?source
+  :(WORKSPACE_COPY_V97[workspaceLocale]?.[source]??WORKSPACE_GENERATED_COPY_V97[workspaceLocale]?.[source]??source);
+const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
+  dashboardSummary:Object.freeze({en:'How {business} is doing','zh-CN':'{business} 的经营概况',ms:'Prestasi {business}'}),
+  customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
+  completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
+  completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
+  scopePeriod:Object.freeze({en:'{branch} · {from} to {to}','zh-CN':'{branch} · {from} 至 {to}',ms:'{branch} · {from} hingga {to}'}),
+  allBranchesPeriod:Object.freeze({en:'All permitted branches · {from} to {to}','zh-CN':'所有获准分店 · {from} 至 {to}',ms:'Semua cawangan yang dibenarkan · {from} hingga {to}'}),
+  scopeCustomers:Object.freeze({en:'Showing {shown} of {total} customers for this scope.','zh-CN':'此范围显示 {shown}／{total} 位顾客。',ms:'Menunjukkan {shown} daripada {total} pelanggan untuk skop ini.'}),
+  customerRecordExported:Object.freeze({en:'{count} customer record exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
+  customerRecordsExported:Object.freeze({en:'{count} customer records exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
+  customersShown:Object.freeze({en:'{count} customers shown','zh-CN':'已显示 {count} 位顾客',ms:'{count} pelanggan ditunjukkan'}),
+  importBooking:Object.freeze({en:'Import {count} booking','zh-CN':'导入 {count} 个预订',ms:'Import {count} tempahan'}),
+  importBookings:Object.freeze({en:'Import {count} bookings','zh-CN':'导入 {count} 个预订',ms:'Import {count} tempahan'}),
+  bookingsReady:Object.freeze({en:'{ready} bookings ready (of {rows} rows).','zh-CN':'{rows} 行中有 {ready} 个预订可导入。',ms:'{ready} tempahan sedia (daripada {rows} baris).'}),
+  firstBookings:Object.freeze({en:'First: {bookings}…','zh-CN':'首批：{bookings}…',ms:'Pertama: {bookings}…'}),
+  importBookingPreview:Object.freeze({en:'✓ Imported {inserted}, skipped {skipped}.','zh-CN':'✓ 已导入 {inserted} 个，跳过 {skipped} 个。',ms:'✓ {inserted} diimport, {skipped} dilangkau.'}),
+  firstImportError:Object.freeze({en:'First {count} error:','zh-CN':'首 {count} 个错误：',ms:'{count} ralat pertama:'}),
+  firstImportErrors:Object.freeze({en:'First {count} errors:','zh-CN':'前 {count} 个错误：',ms:'{count} ralat pertama:'}),
+  importedBooking:Object.freeze({en:'Imported {count} booking — review it above as pending','zh-CN':'已导入 {count} 个预订，请在上方审核待处理项目',ms:'{count} tempahan diimport — semak sebagai belum selesai di atas'}),
+  importedBookings:Object.freeze({en:'Imported {count} bookings — review them above as pending','zh-CN':'已导入 {count} 个预订，请在上方审核待处理项目',ms:'{count} tempahan diimport — semak sebagai belum selesai di atas'}),
+  importCustomers:Object.freeze({en:'Import {count} customers','zh-CN':'导入 {count} 位顾客',ms:'Import {count} pelanggan'}),
+  customersReady:Object.freeze({en:'{ready} customers ready (of {rows} rows).','zh-CN':'{rows} 行中有 {ready} 位顾客可导入。',ms:'{ready} pelanggan sedia (daripada {rows} baris).'}),
+  firstCustomers:Object.freeze({en:'First: {customers}…','zh-CN':'首批：{customers}…',ms:'Pertama: {customers}…'}),
+  noValidImportRows:Object.freeze({en:'No valid rows found.','zh-CN':'未找到有效行。',ms:'Tiada baris yang sah ditemui.'}),
+  noValidImportRowsSkipped:Object.freeze({en:'No valid rows found ({skipped} skipped — missing a name).','zh-CN':'未找到有效行（跳过 {skipped} 行——缺少姓名）。',ms:'Tiada baris yang sah ditemui ({skipped} dilangkau — nama tiada).'}),
+  importRowsReady:Object.freeze({en:'{ready} ready to import. Showing first {shown}.','zh-CN':'{ready} 行可导入。显示前 {shown} 行。',ms:'{ready} sedia untuk diimport. Menunjukkan {shown} yang pertama.'}),
+  importRowsReadySkipped:Object.freeze({en:'{ready} ready to import · {skipped} skipped (no name). Showing first {shown}.','zh-CN':'{ready} 行可导入 · 跳过 {skipped} 行（无姓名）。显示前 {shown} 行。',ms:'{ready} sedia untuk diimport · {skipped} dilangkau (tiada nama). Menunjukkan {shown} yang pertama.'}),
+  requestStatus:Object.freeze({en:'Request {status}','zh-CN':'请求状态：{status}',ms:'Status permintaan: {status}'}),
+  adjustedBalance:Object.freeze({en:'Adjusted — new balance {balance} pts (audited)','zh-CN':'已调整——新余额为 {balance} 分（已审计）',ms:'Dilaraskan — baki baharu {balance} mata (diaudit)'}),
+  itemAdded:Object.freeze({en:'{item} added','zh-CN':'已添加 {item}',ms:'{item} ditambah'}),
+  itemSelected:Object.freeze({en:'{item} selected','zh-CN':'已选择 {item}',ms:'{item} dipilih'}),
+  bookedWith:Object.freeze({en:'Booked with {staff}','zh-CN':'已预约 {staff}',ms:'Ditempah dengan {staff}'}),
+  newReturn:Object.freeze({en:'{count} new return recorded','zh-CN':'已记录 {count} 位新回流顾客',ms:'{count} pelanggan kembali baharu direkodkan'}),
+  newReturns:Object.freeze({en:'{count} new returns recorded','zh-CN':'已记录 {count} 位新回流顾客',ms:'{count} pelanggan kembali baharu direkodkan'}),
+  measurementStarted:Object.freeze({en:'Measurement started','zh-CN':'衡量已开始',ms:'Pengukuran telah bermula'}),
+  measurementStartedEnds:Object.freeze({en:'Measurement started · ends {ends}','zh-CN':'衡量已开始 · 于 {ends} 结束',ms:'Pengukuran telah bermula · tamat {ends}'}),
+  receiptConfirmationRecorded:Object.freeze({en:'{count} manual receipt confirmation recorded','zh-CN':'已记录 {count} 项手动收讫确认',ms:'{count} pengesahan penerimaan manual direkodkan'}),
+  receiptConfirmationsRecorded:Object.freeze({en:'{count} manual receipt confirmations recorded','zh-CN':'已记录 {count} 项手动收讫确认',ms:'{count} pengesahan penerimaan manual direkodkan'}),
+  receiptConfirmationFailed:Object.freeze({en:'{count} confirmation could not be recorded. Retry the same selected customer.','zh-CN':'有 {count} 项确认无法记录。请重试同一位已选顾客。',ms:'{count} pengesahan tidak dapat direkodkan. Cuba semula pelanggan terpilih yang sama.'}),
+  receiptConfirmationsFailed:Object.freeze({en:'{count} confirmations could not be recorded. Retry the same selected customers.','zh-CN':'有 {count} 项确认无法记录。请重试相同的已选顾客。',ms:'{count} pengesahan tidak dapat direkodkan. Cuba semula pelanggan terpilih yang sama.'}),
+  exposureRetryChannelLocked:Object.freeze({en:'This retry is locked to {channel} because that is the channel you originally confirmed. Choose that channel, or close and start a separate new attempt.','zh-CN':'此重试已锁定为 {channel}，因为这是您最初确认的渠道。请选择该渠道，或关闭后另行开始新的尝试。',ms:'Cubaan semula ini dikunci kepada {channel} kerana itulah saluran yang anda sahkan pada asalnya. Pilih saluran itu, atau tutup dan mulakan cubaan baharu yang berasingan.'}),
+  exposureRetryMixedChannels:Object.freeze({en:'Selected retries use different confirmed channels. Retry one channel group at a time.','zh-CN':'所选重试使用不同的已确认渠道。请每次仅重试一个渠道组。',ms:'Cubaan semula yang dipilih menggunakan saluran pengesahan yang berbeza. Cuba semula satu kumpulan saluran pada satu masa.'}),
+  packageVersionCreated:Object.freeze({en:'New package version v{version} created; prior version archived','zh-CN':'已创建配套新版本 v{version}；旧版本已归档',ms:'Versi pakej baharu v{version} dicipta; versi terdahulu diarkibkan'}),
+  packageSoldWithPoints:Object.freeze({en:'Package sold · {earned} points earned · {total} total points','zh-CN':'配套已售出 · 获得 {earned} 分 · 总积分 {total}',ms:'Pakej dijual · {earned} mata diperoleh · jumlah mata {total}'}),
+  packageSoldNoPoints:Object.freeze({en:'Package sold · 0 points earned · {total} total points','zh-CN':'配套已售出 · 获得 0 分 · 总积分 {total}',ms:'Pakej dijual · 0 mata diperoleh · jumlah mata {total}'}),
+  giftCardLoaded:Object.freeze({en:'{amount} loaded onto account 🎉','zh-CN':'已将 {amount} 存入账户 🎉',ms:'{amount} dimasukkan ke dalam akaun 🎉'}),
+  sessionUsed:Object.freeze({en:'Session used — {remaining} left. Visit counted for retention ✓','zh-CN':'已使用一次——剩余 {remaining} 次。此次到访已计入回流统计 ✓',ms:'Sesi digunakan — baki {remaining}. Lawatan dikira untuk pengekalan ✓'}),
+  catalogueEnabled:Object.freeze({en:'Catalogue-first checkout enabled','zh-CN':'已启用目录优先结账',ms:'Pembayaran katalog dahulu diaktifkan'}),
+  catalogueDisabled:Object.freeze({en:'Catalogue-first checkout disabled','zh-CN':'已停用目录优先结账',ms:'Pembayaran katalog dahulu dinyahaktifkan'}),
+  inviteCreated:Object.freeze({en:'Invite created: {code} — copied','zh-CN':'邀请已创建：{code}——已复制',ms:'Jemputan dicipta: {code} — disalin'}),
+  importPartial:Object.freeze({en:'Imported {count}, then failed: {error}','zh-CN':'已导入 {count} 个，随后失败：{error}',ms:'{count} diimport, kemudian gagal: {error}'}),
+  customersImported:Object.freeze({en:'Imported {count} customers 🎉','zh-CN':'已导入 {count} 位顾客 🎉',ms:'{count} pelanggan diimport 🎉'}),
+  customersImportPreview:Object.freeze({en:'✓ {count} imported.','zh-CN':'✓ 已导入 {count} 个。',ms:'✓ {count} diimport.'}),
+  packageHistory:Object.freeze({en:'Showing the newest {shown} of {total} accessible package-session rows (server limit {limit}).','zh-CN':'显示最新 {shown}／{total} 条可访问的配套次数记录（服务器上限 {limit}）。',ms:'Menunjukkan {shown} daripada {total} rekod sesi pakej terbaharu yang boleh diakses (had pelayan {limit}).'}),
+  packageHistoryWithOlder:Object.freeze({en:'Showing the newest {shown} of {total} accessible package-session rows (server limit {limit}) · older rows are not shown.','zh-CN':'显示最新 {shown}／{total} 条可访问的配套次数记录（服务器上限 {limit}）· 较早记录未显示。',ms:'Menunjukkan {shown} daripada {total} rekod sesi pakej terbaharu yang boleh diakses (had pelayan {limit}) · rekod lebih lama tidak dipaparkan.'}),
+  appointmentChanged:Object.freeze({en:'{result}.{confirmation}','zh-CN':'{result}。{confirmation}',ms:'{result}. {confirmation}'}),
+  appointmentStatus:Object.freeze({en:'Appointment {status}','zh-CN':'预约状态：{status}',ms:'Status janji temu: {status}'}),
+  exactSnapshotMismatch:Object.freeze({en:'The fixed snapshot expected {expected} records but returned {actual}. No partial CSV was downloaded.','zh-CN':'固定快照应有 {expected} 条记录，但只返回 {actual} 条。未下载不完整 CSV。',ms:'Syot kilat tetap menjangka {expected} rekod tetapi mengembalikan {actual}. CSV separa tidak dimuat turun.'}),
+  qrReady:Object.freeze({en:'QR ready. Download it before leaving this page.','zh-CN':'二维码已就绪。请在离开此页面前下载。',ms:'QR sedia. Muat turun sebelum meninggalkan halaman ini.'}),
+  qrReadyExpires:Object.freeze({en:'QR ready · expires {expires}. Download it before leaving this page.','zh-CN':'二维码已就绪 · {expires} 到期。请在离开此页面前下载。',ms:'QR sedia · tamat tempoh {expires}. Muat turun sebelum meninggalkan halaman ini.'}),
+  qrReadyRevoked:Object.freeze({en:'QR ready · {count} older QR revoked. Download it before leaving this page.','zh-CN':'二维码已就绪 · 已撤销 {count} 个旧二维码。请在离开此页面前下载。',ms:'QR sedia · {count} QR lama dibatalkan. Muat turun sebelum meninggalkan halaman ini.'}),
+  qrReadyQrsRevoked:Object.freeze({en:'QR ready · {count} older QRs revoked. Download it before leaving this page.','zh-CN':'二维码已就绪 · 已撤销 {count} 个旧二维码。请在离开此页面前下载。',ms:'QR sedia · {count} QR lama dibatalkan. Muat turun sebelum meninggalkan halaman ini.'}),
+  qrReadyExpiresRevoked:Object.freeze({en:'QR ready · expires {expires} · {count} older QR revoked. Download it before leaving this page.','zh-CN':'二维码已就绪 · {expires} 到期 · 已撤销 {count} 个旧二维码。请在离开此页面前下载。',ms:'QR sedia · tamat tempoh {expires} · {count} QR lama dibatalkan. Muat turun sebelum meninggalkan halaman ini.'}),
+  qrReadyExpiresQrsRevoked:Object.freeze({en:'QR ready · expires {expires} · {count} older QRs revoked. Download it before leaving this page.','zh-CN':'二维码已就绪 · {expires} 到期 · 已撤销 {count} 个旧二维码。请在离开此页面前下载。',ms:'QR sedia · tamat tempoh {expires} · {count} QR lama dibatalkan. Muat turun sebelum meninggalkan halaman ini.'}),
+  activeQrRevoked:Object.freeze({en:'{count} active QR revoked.','zh-CN':'已撤销 {count} 个有效二维码。',ms:'{count} QR aktif dibatalkan.'}),
+  activeQrsRevoked:Object.freeze({en:'{count} active QRs revoked.','zh-CN':'已撤销 {count} 个有效二维码。',ms:'{count} QR aktif dibatalkan.'}),
+  activeQrExists:Object.freeze({en:'An active QR already exists. Use your saved or printed copy. Replace it only if that copy is lost.','zh-CN':'已有有效二维码。请使用已保存或打印的副本；仅在副本遗失时更换。',ms:'QR aktif sudah wujud. Gunakan salinan yang disimpan atau dicetak. Gantikannya hanya jika salinan itu hilang.'}),
+  activeQrExistsUntil:Object.freeze({en:'An active QR already exists until {expires}. Use your saved or printed copy. Replace it only if that copy is lost.','zh-CN':'已有有效二维码，有效期至 {expires}。请使用已保存或打印的副本；仅在副本遗失时更换。',ms:'QR aktif sudah wujud sehingga {expires}. Gunakan salinan yang disimpan atau dicetak. Gantikannya hanya jika salinan itu hilang.'}),
+  wizardStepWho:Object.freeze({en:'Step {step} of {total} — Who','zh-CN':'第 {step} 步，共 {total} 步——对象',ms:'Langkah {step} daripada {total} — Sasaran'}),
+  wizardStepReward:Object.freeze({en:'Step {step} of {total} — Reward','zh-CN':'第 {step} 步，共 {total} 步——奖励',ms:'Langkah {step} daripada {total} — Ganjaran'}),
+  wizardStepSafety:Object.freeze({en:'Step {step} of {total} — Safety','zh-CN':'第 {step} 步，共 {total} 步——安全设置',ms:'Langkah {step} daripada {total} — Keselamatan'}),
+  wizardStepReview:Object.freeze({en:'Step {step} of {total} — Review','zh-CN':'第 {step} 步，共 {total} 步——审核',ms:'Langkah {step} daripada {total} — Semakan'}),
+  availableStaff:Object.freeze({en:'{staff} is the fairest available choice now. Showing {count} eligible staff member.','zh-CN':'{staff} 是目前最公平的可用选择。显示 {count} 位符合条件的员工。',ms:'{staff} ialah pilihan tersedia yang paling adil sekarang. Menunjukkan {count} kakitangan yang layak.'}),
+  availableStaffMany:Object.freeze({en:'{staff} is the fairest available choice now. Showing {count} eligible staff members.','zh-CN':'{staff} 是目前最公平的可用选择。显示 {count} 位符合条件的员工。',ms:'{staff} ialah pilihan tersedia yang paling adil sekarang. Menunjukkan {count} kakitangan yang layak.'}),
+  recentAppointments:Object.freeze({en:'{count} recent','zh-CN':'最近 {count} 个预约',ms:'{count} terkini'}),
+  reversalOf:Object.freeze({en:'Reversal of {id}','zh-CN':'冲销自 {id}',ms:'Pembalikan bagi {id}'}),
+  usedSessionReversedBy:Object.freeze({en:'Used session → reversed by {id}','zh-CN':'已用次数 → 由 {id} 冲销',ms:'Sesi digunakan → dibalikkan oleh {id}'}),
+  preparingExport:Object.freeze({en:'Preparing {current} of {total}…','zh-CN':'正在准备第 {current}／{total} 条…',ms:'Menyediakan {current} daripada {total}…'}),
+  imageCleanupPending:Object.freeze({en:'{count} previous image cleanup item is still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
+  imageCleanupsPending:Object.freeze({en:'{count} previous image cleanup items are still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
+  positiveStampCost:Object.freeze({en:'Enter a positive stamps cost','zh-CN':'请输入大于零的印章成本',ms:'Masukkan kos cop yang positif'}),
+  positivePointsCost:Object.freeze({en:'Enter a positive points cost','zh-CN':'请输入大于零的积分成本',ms:'Masukkan kos mata yang positif'}),
+  switchOtherWorkspace:Object.freeze({en:'Switch to {count} other workspace','zh-CN':'切换到另外 {count} 个工作区',ms:'Tukar kepada {count} ruang kerja lain'}),
+  switchOtherWorkspaces:Object.freeze({en:'Switch to {count} other workspaces','zh-CN':'切换到另外 {count} 个工作区',ms:'Tukar kepada {count} ruang kerja lain'}),
+  notificationsUnread:Object.freeze({en:'Notifications, {count} unread','zh-CN':'通知，{count} 条未读',ms:'Pemberitahuan, {count} belum dibaca'}),
+  phoneKeyDelete:Object.freeze({en:'Delete one digit','zh-CN':'删除一位数字',ms:'Padam satu digit'}),
+  phoneKeyClear:Object.freeze({en:'Clear phone number','zh-CN':'清除手机号码',ms:'Kosongkan nombor telefon'}),
+  phoneKeyDigit:Object.freeze({en:'Digit {digit}','zh-CN':'数字 {digit}',ms:'Digit {digit}'}),
+  openCustomer:Object.freeze({en:'Open customer {name}','zh-CN':'打开顾客 {name}',ms:'Buka pelanggan {name}'}),
+  removeItem:Object.freeze({en:'Remove {item}','zh-CN':'移除 {item}',ms:'Alih keluar {item}'}),
+  adjustLoyalty:Object.freeze({en:'+/- {unit}','zh-CN':'增加／减少{unit}',ms:'Tambah/tolak {unit}'}),
+  viewAppointmentDetails:Object.freeze({en:'View details for {customer}','zh-CN':'查看 {customer} 的预约详情',ms:'Lihat butiran janji temu untuk {customer}'}),
+  amendAppointment:Object.freeze({en:'Amend appointment for {customer}','zh-CN':'修改 {customer} 的预约',ms:'Pinda janji temu untuk {customer}'}),
+  viewAppointmentAgenda:Object.freeze({en:'View {service} for {customer}, {day}, {time}, {duration} minutes','zh-CN':'查看 {customer} 的 {service}：{day}，{time}，{duration} 分钟',ms:'Lihat {service} untuk {customer}, {day}, {time}, {duration} minit'}),
+  calendarAppointment:Object.freeze({en:'{service} for {customer}, {time}, {duration} minutes, {staff}','zh-CN':'{customer} 的 {service}，{time}，{duration} 分钟，{staff}',ms:'{service} untuk {customer}, {time}, {duration} minit, {staff}'}),
+  bookAppointmentSlot:Object.freeze({en:'Book {service} with {staff} at {time}','zh-CN':'预约 {service}：{staff}，{time}',ms:'Tempah {service} dengan {staff} pada {time}'}),
+  removeFromWaitlist:Object.freeze({en:'Remove {customer} from waitlist','zh-CN':'将 {customer} 从候补名单中移除',ms:'Alih keluar {customer} daripada senarai menunggu'}),
+  joinedAt:Object.freeze({en:'Joined {date} SGT','zh-CN':'加入时间：{date}（新加坡时间）',ms:'Menyertai pada {date} SGT'}),
+  viewDashboardMetricDetails:Object.freeze({en:'View details for {metric}','zh-CN':'查看 {metric} 的详细信息',ms:'Lihat butiran untuk {metric}'}),
+  growPublishedReward:Object.freeze({en:'{count} published reward ready for customers.','zh-CN':'已有 {count} 项已发布奖励可供顾客使用。',ms:'{count} ganjaran diterbitkan sedia untuk pelanggan.'}),
+  growPublishedRewards:Object.freeze({en:'{count} published rewards ready for customers.','zh-CN':'已有 {count} 项已发布奖励可供顾客使用。',ms:'{count} ganjaran diterbitkan sedia untuk pelanggan.'}),
+  growPublishedBringBackRule:Object.freeze({en:'{count} published bring-back rule measuring return visits.','zh-CN':'已有 {count} 条已发布回流规则正在衡量回访。',ms:'{count} peraturan pelanggan kembali yang diterbitkan sedang mengukur lawatan kembali.'}),
+  growPublishedBringBackRules:Object.freeze({en:'{count} published bring-back rules measuring return visits.','zh-CN':'已有 {count} 条已发布回流规则正在衡量回访。',ms:'{count} peraturan pelanggan kembali yang diterbitkan sedang mengukur lawatan kembali.'}),
+  growDraftReady:Object.freeze({en:'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.','zh-CN':'推荐草稿已就绪。您可编辑任何设置；发布前不会改变顾客体验。',ms:'Draf cadangan sedia. Edit mana-mana tetapan; tiada perubahan untuk pelanggan sehingga diterbitkan.'}),
+  publishImpactAction:Object.freeze({en:'{live} action starts running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
+  publishImpactActions:Object.freeze({en:'{live} actions start running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
+  publishMoneyLive:Object.freeze({en:'Money at checkout: a live rule will change totals now','zh-CN':'结账金额：一条实时规则将立即更改总额',ms:'Wang semasa pembayaran: peraturan langsung akan mengubah jumlah sekarang'}),
+  publishMoneyNone:Object.freeze({en:'Money at checkout: no live money change from this publish','zh-CN':'结账金额：此次发布不会立即更改金额',ms:'Wang semasa pembayaran: tiada perubahan wang langsung daripada penerbitan ini'}),
+  publishCustomersLive:Object.freeze({en:'Customers: can see or receive something as soon as you publish','zh-CN':'顾客：发布后可立即看到或收到内容',ms:'Pelanggan: boleh melihat atau menerima sesuatu sebaik sahaja anda menerbitkan'}),
+  publishCustomersNone:Object.freeze({en:'Customers: nothing new reaches customers from this publish','zh-CN':'顾客：此次发布不会向顾客发送任何新内容',ms:'Pelanggan: tiada perkara baharu sampai kepada pelanggan daripada penerbitan ini'}),
+  publishDraftVersion:Object.freeze({en:'Exactly what happens when you publish draft v{version}.','zh-CN':'发布草稿 v{version} 时将发生的确切变化。',ms:'Perkara tepat yang berlaku apabila anda menerbitkan draf v{version}.'}),
+  publishConfirmationSensitive:Object.freeze({en:'This turns on a live rule that affects money or customers. Type PUBLISH below to confirm you reviewed the impact.','zh-CN':'这将启用影响金额或顾客的实时规则。请在下方输入 PUBLISH，确认您已审核影响。',ms:'Ini menghidupkan peraturan langsung yang mempengaruhi wang atau pelanggan. Taip PUBLISH di bawah untuk mengesahkan anda telah menyemak kesannya.'}),
+  publishConfirmationStandard:Object.freeze({en:'Review complete. Type PUBLISH below to confirm this exact draft.','zh-CN':'审核完成。请在下方输入 PUBLISH，以确认这份确切草稿。',ms:'Semakan selesai. Taip PUBLISH di bawah untuk mengesahkan draf tepat ini.'}),
+  classicEligibleEarning:Object.freeze({en:'Eligible customer-linked sales earn points when this programme is active, published, and available at the selected branch. At {points} points, one tap converts them into {credit} of real in-store credit. Switch models above any time — balances carry over.','zh-CN':'当此方案生效、已发布且在所选分店可用时，合资格且关联顾客的销售可赚取积分。达到 {points} 积分后，只需轻点一下即可转换为 {credit} 的实际店内余额。您可随时切换上方模式，余额会保留。',ms:'Jualan layak yang dipautkan kepada pelanggan memperoleh mata apabila program ini aktif, diterbitkan dan tersedia di cawangan yang dipilih. Pada {points} mata, satu ketikan menukarkannya kepada kredit dalam kedai sebenar sebanyak {credit}. Tukar model di atas pada bila-bila masa — baki kekal.'}),
+  stampsEligibleEarning:Object.freeze({en:'Eligible customer-linked sales add stamps when this programme is active, published, and available at the selected branch. Define what each milestone is worth — a free item to hand over, or store credit.','zh-CN':'当此方案生效、已发布且在所选分店可用时，合资格且关联顾客的销售会增加印花。请定义每个里程碑的价值，例如可交付的免费商品或店内余额。',ms:'Jualan layak yang dipautkan kepada pelanggan menambah cop apabila program ini aktif, diterbitkan dan tersedia di cawangan yang dipilih. Tetapkan nilai setiap pencapaian — item percuma untuk diserahkan atau kredit kedai.'}),
+  referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
+});
+const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  'dashboardSummary','customerPagination','completedTransaction','completedTransactions',
+  'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
+  'customerRecordsExported','customersShown','importBooking','importBookings',
+  'bookingsReady','firstBookings','importBookingPreview','firstImportError','firstImportErrors',
+  'importedBooking','importedBookings','importCustomers',
+  'customersReady','firstCustomers','requestStatus','adjustedBalance','itemAdded','itemSelected',
+  'noValidImportRows','noValidImportRowsSkipped','importRowsReady','importRowsReadySkipped',
+  'bookedWith','newReturn','newReturns','measurementStarted','measurementStartedEnds',
+  'receiptConfirmationRecorded','receiptConfirmationsRecorded',
+  'receiptConfirmationFailed','receiptConfirmationsFailed',
+  'exposureRetryChannelLocked','exposureRetryMixedChannels',
+  'packageVersionCreated','packageSoldWithPoints','packageSoldNoPoints',
+  'giftCardLoaded','sessionUsed',
+  'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
+  'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
+  'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
+  'qrReadyExpires','qrReadyRevoked','qrReadyQrsRevoked','qrReadyExpiresRevoked',
+  'qrReadyExpiresQrsRevoked','activeQrRevoked',
+  'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
+  'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
+  'availableStaff','availableStaffMany','recentAppointments','reversalOf',
+  'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
+  'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
+  'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
+  'removeItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
+  'viewAppointmentAgenda','calendarAppointment','bookAppointmentSlot','removeFromWaitlist','joinedAt',
+  'viewDashboardMetricDetails',
+  'growPublishedReward','growPublishedRewards','growPublishedBringBackRule',
+  'growPublishedBringBackRules','growDraftReady','publishImpactAction',
+  'publishImpactActions','publishMoneyLive','publishMoneyNone',
+  'publishCustomersLive','publishCustomersNone','publishDraftVersion',
+  'publishConfirmationSensitive','publishConfirmationStandard',
+  'classicEligibleEarning','stampsEligibleEarning','referralEnabledOutcome'
+]);
+const workspaceTemplateInnerHtmlV97=(key,values={},locale=workspaceLocale)=>{
+  const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';
+  let cursor=0,html='';
+  for(const match of template.matchAll(/\{([a-z][a-z0-9_]*)\}/gi)){
+    html+=esc(template.slice(cursor,match.index));
+    const name=match[1];
+    html+=`<span data-workspace-value="${esc(name)}" data-merchant-content>${esc(values[name]??'')}</span>`;
+    cursor=match.index+match[0].length;
+  }
+  return html+esc(template.slice(cursor));
+};
+const workspaceTemplateHtmlV97=(key,values={})=>`<span data-workspace-template="${esc(key)}">${workspaceTemplateInnerHtmlV97(key,values)}</span>`;
+/* ---------- customers ---------- */
+function normalizeSingaporeCustomerSearch(value){
+  let digits=String(value||'').replace(/\D/g,'');
+  if(digits.length===10&&digits.startsWith('65'))digits=digits.slice(2);
+  return digits.length===8?digits:null;
+}
+function promotionDateTextV104(value){
+  if(!value)return '';
+  const instant=/^\d{4}-\d{2}-\d{2}$/.test(String(value))
+    ?new Date(`${value}T12:00:00+08:00`):new Date(value);
+  return new Intl.DateTimeFormat('en-SG',{timeZone:'Asia/Singapore',day:'numeric',month:'long',year:'numeric'}).format(instant);
+}
+/* ----- validator error-code -> human message ----- */
+const STUDIO_ERRMAP={
+  rule_not_object:'The rule is empty.',unsupported_rule_field:'The rule has a field we do not support.',
+  invalid_schema_version:'This rule uses an unsupported version.',invalid_event:'Choose when this rule should run.',
+  if_not_array:'The conditions are malformed.',too_many_conditions:'Too many conditions (up to 10).',
+  then_not_array:'The actions are malformed.',too_many_effects:'Too many actions (up to 8).',
+  condition_not_object:'A condition is malformed.',condition_unsupported_key:'A condition has an unsupported field.',
+  in_requires_array:'Choose one or more values for this condition.',between_requires_pair:'Enter both a low and a high value.',
+  effect_not_object:'An action is malformed.',effect_unsupported_key:'An action has an unsupported field.',
+  client_supplied_price:'Prices come from your catalog, not from the rule.',sql_fragment_forbidden:'That value is not allowed.',
+  effect_amount_required:'Enter an amount greater than zero.',effect_discount_pct_range:'Enter a discount between 0 and 100%.',
+  effect_points_required:'Enter a points amount greater than zero.',effect_stamps_required:'Enter a stamps amount greater than zero.',
+  effect_multiplier_range:'The multiplier must be at least 1.',effect_catalog_ref_not_found:'Choose a valid item for the free-item action.',
+  schedule_not_object:'The schedule is malformed.',schedule_unsupported_key:'The schedule has an unsupported setting.',
+  schedule_non_sgt:'The schedule must use Singapore time.',schedule_end_before_start:'The end date is before the start date.',
+  schedule_bad_date:'Check the schedule dates.',schedule_dow_not_array:'Choose valid days of the week.',
+  schedule_dow_range:'Choose valid days of the week.',schedule_bad_time:'Check the schedule times.',
+  stacking_not_object:'The stacking settings are malformed.',stacking_unsupported_key:'The stacking settings have an unsupported option.',
+  stacking_stackable_type:'The "can combine" setting is invalid.',stacking_max_stack_range:'The maximum stack must be at least 1.',
+  stacking_bad_number:'Check the stacking numbers.'
+};
+function studioErrText(code){
+  const parts=String(code||'').split(':');const base=parts[0],arg=parts[1];
+  if(base==='unknown_condition_field')return `"${esc(arg||'')}" is not a valid condition for this event.`;
+  if(base==='invalid_operator')return `"${esc(arg||'')}" is not a valid comparison.`;
+  if(base==='invalid_effect')return `"${esc(arg||'')}" is not a valid action for this event.`;
+  if(base==='catalog_ref_not_found')return `A selected ${esc(arg||'item')} could not be found.`;
+  return STUDIO_ERRMAP[base]||esc(code);
+}
+
+async function loadStudioSalesAgg(guard){
+  const {data,error}=await sb.rpc('get_studio_sales_baseline_v145',{p_business:S.biz.id});
+  if(guard&&!guard())return null;
+  return {count30:error?null:Number(data?.count30||0),avgBill:Number(data?.avg_bill_cents||0),ok:!error};
+}
+
+/* ---------------- Draft editor: Quick Start + Guided + Advanced, live-validated ---------------- */
+let studioEd=null;  // in-flight working rule for the open editor (null = editor closed)
+
+/* ============================ Stored value (PS-2A Increment D) ============================
+   The FIRST owner-only stored-value surface. Truthfulness is the whole point (STORED_VALUE_CONTRACT
+   §10 + INCREMENT_D_CONTRACT §4):
+   - authority_state and reconciliation status are rendered VERBATIM from the server; the browser
+     NEVER infers, computes or upgrades them.
+   - stored value is NEVER presented as usable while authority != 'live' — and 'live' is unreachable
+     in PS-2A, so the state is always unbuilt / shadow_testing / reconciliation_blocked / paused.
+     There is NO customer spend/top-up/grant UI here; nothing moves real value.
+   - reconciliation discrepancies are SHOWN, never hidden, with categories in plain words + cents.
+   - every dangerous action (run reconciliation, change authority, pause, lift) is explicitly
+     confirmed; the server requires a reason (>=3 chars) where noted.
+   - it FAILS CLOSED: if get_sv_authority_overview OR get_sv_reconciliation errors, an error state
+     renders and NO control is drawn — nothing is ever assumed live/clean/usable.
+   RPCs consumed: get_sv_authority_overview, get_sv_reconciliation, preview_sv_cutover (reads);
+   set_sv_authority_state, sv_pause, sv_lift_pause, run_sv_reconciliation, sv_cutover_business
+   (owner-only writes). v69: 'live' IS reachable now, for one super-admin-designated business, via
+   sv_cutover_business - so the copy on this screen is state-driven rather than asserting that
+   nothing is ever live. preview_sv_cutover.ready is a server computation; the browser renders it. */
+const SV_ASSET='stored_value';
+const SV_SCOPE_WORDS={all:'everything',earn:'top-ups & grants',redeem:'spending'};
+const SV_AUTHORITY_WORDS={
+  unbuilt:'Not built for this business yet — nothing is live.',
+  shadow_testing:'Shadow testing only — simulated. No customer can use this value.',
+  reconciliation_blocked:'Blocked by a reconciliation difference — not usable until it is cleared.',
+  ready_for_cutover:'Reconciled, awaiting a future authorized cutover — not usable yet.',
+  live:'Live.',
+  paused:'Paused — no customer can use this value right now.',
+  retired:'Retired — superseded; history is preserved.'
+};
+/* Plain-language names for the six reconciliation discrepancy categories (contract §7). The raw
+   category is also shown verbatim beside the plain words — nothing is invented or hidden. */
+const SV_DISCREPANCY_WORDS={
+  missing_in_studio:'in gift cards, not yet in stored value',
+  missing_in_legacy:'in stored value, not in gift cards',
+  amount_mismatch:'amounts differ',
+  invalid_legacy_balance:'legacy balance invalid',
+  duplicate_legacy_event:'duplicate legacy record',
+  orphan_legacy_record:'legacy record inconsistent'
+};
+const svTime=v=>v?esc(String(v).slice(0,16).replace('T',' '))+' (server time)':'';
+/* The chip LABEL is the server's authority_state VERBATIM. The browser never computes or infers
+   it — only get_sv_authority_overview.authority_state is shown. Only 'live' is ever an affirmative
+   pill, and 'live' is unreachable in PS-2A; an unknown value fails closed to a red pill and is
+   still shown as-is. Deliberately a SEPARATE function from studioStateChip/legacyStateChip so the
+   truthful-state rule stays grep-provable. */
+function svAuthorityChip(state){
+  const cls=state==='live'?'on'
+    :(state==='shadow_testing'||state==='ready_for_cutover')?'new'
+    :state==='reconciliation_blocked'?'no'
+    :['unbuilt','paused','retired'].includes(state)?'off':'no';
+  return `<span class="pill ${cls}">${esc(state==null?'unknown':String(state))}</span>`;
+}
+/* Reconciliation status rendered verbatim: clean/blocked from the latest snapshot, else not-run. */
+function svReconStatusChip(status,hasRun){
+  if(!hasRun)return `<span class="pill off">not run yet</span>`;
+  const cls=status==='clean'?'ok':status==='blocked'?'no':'off';
+  return `<span class="pill ${cls}">${esc(status==null?'unknown':String(status))}</span>`;
+}
+/* Shared confirm-with-reason modal for the stored-value owner actions. Every dangerous action is
+   explicit: the owner must confirm, and — where reasonLabel is set — type a reason (>=3 chars, to
+   match sv_apply_authority_state / sv_pause). onSubmit({reason}) performs exactly one RPC and
+   returns its {error}; a 42501 surfaces as an owner-only message. String-literal RPC names are used
+   at the call sites (not a variable) so writer-discovery audits SEE each writer surface. */
+function svOpenActionModal({title,intro,reasonLabel,reasonPlaceholder='',submitLabel,danger=false,onSubmit,onDone}){
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="svActionModal" role="dialog" aria-modal="true" aria-labelledby="svActionTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
+    <div class="row"><div><h2 id="svActionTitle">${esc(title)}</h2><p class="muted small">${esc(intro)}</p></div><span class="spacer"></span><button class="btn ghost sm" id="svActionClose" type="button">Close</button></div>
+    ${reasonLabel?`<label for="svActionReason">${esc(reasonLabel)}</label><textarea id="svActionReason" rows="3" data-workspace-i18n placeholder="${esc(reasonPlaceholder)}"></textarea>`:''}
+    <div id="svActionErr"></div>
+    <div class="row" style="margin-top:16px"><button class="btn ${danger?'danger':''}" id="svActionSubmit" type="button">${esc(submitLabel)}</button><button class="btn ghost sm" id="svActionCancel" type="button">Cancel</button></div>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('svActionModal')?.remove();};
+  deactivate=CUI.activateDialog($('svActionModal'),{onClose:close,initialFocus:reasonLabel?'#svActionReason':'#svActionSubmit'});
+  $('svActionClose').onclick=$('svActionCancel').onclick=close;
+  $('svActionSubmit').onclick=async()=>{
+    let reason=null;
+    if(reasonLabel){
+      reason=($('svActionReason').value||'').trim();
+      if(reason.length<3){$('svActionErr').innerHTML='<div class="err">Write a short reason (at least 3 characters).</div>';return;}
+    }
+    const btn=$('svActionSubmit');btn.disabled=true;btn.setAttribute('aria-busy','true');
+    let res;
+    try{res=await onSubmit({reason});}
+    catch(e){res={error:{message:e&&e.message||String(e)}};}
+    btn.removeAttribute('aria-busy');
+    const error=res&&res.error;
+    if(error){
+      btn.disabled=false;
+      if(error.code==='42501'){$('svActionErr').innerHTML='<div class="err">Only the owner can do this.</div>';return;}
+      $('svActionErr').innerHTML=`<div class="err">${esc(error.message||'Could not complete this. Try again.')}</div>`;return;
+    }
+    close();
+    if(onDone)onDone();
+  };
+}
+
+/* ============================ Stored value — staff-assisted top-up sale (v66) ============================
+   A fully SERVER-AUTHORITATIVE inline wizard rendered into #svTopupFlow. The client NEVER computes a
+   price, bonus, expiry, discount or balance: it identifies the customer (lookup_client_by_phone), lists
+   sellable plans (get_sellable_sv_topup_plans), shows a server preview (preview_sv_topup_sale), and, only
+   on explicit confirmation, records the sale (record_sv_topup_sale) with a single idempotency key. It
+   surfaces every server blocker/refusal verbatim and never says value is "available to spend" unless the
+   server's own `spendable` flag is true (only ever in `live`). In shadow_testing/ready_for_cutover the
+   only offered method is `test` and the copy states plainly that nothing real is collected or spendable. */
+async function svRunTopupFlow({branches,state,testOnly}){
+  const host=$('svTopupFlow'); if(!host)return;
+  const methodOpts=testOnly
+    ? [['test','Test (no real money)']]
+    : [['cash','Cash'],['card_terminal','Card terminal'],['paynow','PayNow'],['manual','Manual']];
+  const st={step:'customer',branchId:(branches[0]&&branches[0].id)||null,phone:'',cust:null,plans:[],
+    versionId:null,method:methodOpts[0][0],reference:'',staffConfirmed:false,preview:null,idemKey:null,
+    result:null,busy:false,err:null};
+  const alive=()=>host.isConnected&&$('svTopupFlow')===host;
+  const selPlan=()=>st.plans.find(p=>p&&p.version_id===st.versionId)||null;
+  const needsReference=()=>['card_terminal','paynow','manual'].includes(st.method);
+  const paymentObj=p=>{ // p = the plan projection whose amount/currency we must match exactly
+    const o={method:st.method,amount_cents:p?Number(p.price_cents):0,currency:(p&&p.currency)||S.biz.currency||'SGD'};
+    const ref=st.reference.trim(); if(ref)o.reference=ref;
+    o.staff_confirmed=needsReference()?!!st.staffConfirmed:true;
+    return o;
+  };
+
+  async function loadPlans(){
+    st.busy=true;st.err=null;render();
+    const {data,error}=await sb.rpc('get_sellable_sv_topup_plans',{p_business:S.biz.id,p_branch:st.branchId,p_client:st.cust.client_id});
+    if(!alive())return; st.busy=false;
+    if(error){st.err=error.message||'Plans could not be loaded.';render();return;}
+    st.plans=(data&&Array.isArray(data.plans))?data.plans:[];
+    const firstOk=st.plans.find(p=>p&&p.ok); st.versionId=firstOk?firstOk.version_id:(st.plans[0]&&st.plans[0].version_id)||null;
+    st.step='plan';render();
+  }
+  async function findCustomer(){
+    const phone=(($('svtPhone')||{}).value||'').trim();
+    if(!phone){st.err='Enter the customer mobile number.';render();return;}
+    st.phone=phone;st.busy=true;st.err=null;render();
+    const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:phone});
+    if(!alive())return; st.busy=false;
+    if(error){st.err=error.message||'Lookup failed.';render();return;}
+    if(data.status==='found'){st.cust={client_id:data.client_id,full_name:data.full_name,phone:data.phone||phone};loadPlans();return;}
+    if(data.status==='not_found'){st.cust=null;st.err='No customer with that number. A top-up needs an existing customer; add them first from Customers or Record sale.';render();return;}
+    st.err=(data&&data.message)||'Enter a valid Singapore number.';render();
+  }
+  async function doPreview(){
+    const p=selPlan(); if(!p){st.err='Choose a plan first.';render();return;}
+    if(needsReference()&&!st.reference.trim()){st.err='A payment reference is required for this method.';render();return;}
+    if(needsReference()&&!st.staffConfirmed){st.err='Tick the confirmation box before previewing this method.';render();return;}
+    st.busy=true;st.err=null;render();
+    const {data,error}=await sb.rpc('preview_sv_topup_sale',{p_business:S.biz.id,p_branch:st.branchId,p_client:st.cust.client_id,p_plan_version:st.versionId,p_payment:paymentObj(p)});
+    if(!alive())return; st.busy=false;
+    if(error){st.err=error.message||'Preview failed.';render();return;}
+    st.preview=data;st.idemKey=crypto.randomUUID();st.step='confirm';render();
+  }
+  async function doRecord(){
+    const p=selPlan(); if(!p||!st.idemKey)return;
+    st.busy=true;st.err=null;render();
+    const {data,error}=await sb.rpc('record_sv_topup_sale',{p_business:S.biz.id,p_branch:st.branchId,p_client:st.cust.client_id,p_plan_version:st.versionId,p_payment:paymentObj(p),p_idempotency_key:st.idemKey});
+    if(!alive())return; st.busy=false;
+    if(error){st.err=error.message||'The top-up could not be recorded.';render();return;}
+    if(data&&data.status&&data.status!=='ok'){st.err='The top-up was not completed: '+String(data.reason||data.status)+'.';render();return;}
+    st.result=data;st.step='done';render();
+  }
+
+  function blockersHtml(list){
+    const b=Array.isArray(list)?list:[];
+    return b.length?`<div class="muted small" style="margin-top:6px;line-height:1.6"><b>Not sellable right now:</b><ul style="margin:6px 0 0 18px">${b.map(x=>`<li>${esc(String(x))}</li>`).join('')}</ul></div>`:'';
+  }
+  function expiryWords(days){return days==null?'no expiry':days+' day'+(Number(days)===1?'':'s');}
+
+  function render(){
+    if(!alive())return;
+    const busyAttr=st.busy?' disabled aria-busy="true"':'';
+    const errHtml=st.err?`<div class="err" role="alert" style="margin-top:10px">${esc(st.err)}</div>`:'';
+    const branchPicker=branches.length>1?`<div><label for="svtBranch" class="muted small">Branch</label><br><select id="svtBranch" style="max-width:280px">${branches.map(b=>`<option value="${esc(b.id)}"${b.id===st.branchId?' selected':''}>${esc(b.name||'Branch')}</option>`).join('')}</select></div>`:'';
+    let body='';
+    if(st.step==='customer'){
+      body=`<div class="cui-card-head"><h3>Who is this top-up for?</h3></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:end">
+          ${branchPicker}
+          <div><label for="svtPhone" class="muted small">Customer mobile</label><br><input id="svtPhone" type="tel" inputmode="tel" autocomplete="off" value="${esc(st.phone)}" placeholder="e.g. 8123 4567" style="max-width:220px"></div>
+          <button class="btn sm" id="svtFind" type="button"${busyAttr}>${st.busy?'Finding…':'Find customer'}</button>
+        </div>${errHtml}`;
+    } else if(st.step==='plan'){
+      const p=selPlan();
+      const planRadios=st.plans.length?st.plans.map(pl=>{
+        const dis=!pl.ok?' disabled':'';
+        return `<label class="row" style="gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px${pl.ok?'':';opacity:.7'}">
+          <input type="radio" name="svtPlan" value="${esc(pl.version_id)}"${pl.version_id===st.versionId?' checked':''}${dis} style="margin-top:4px">
+          <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(pl.plan_name||'Plan')}</div>
+            <div class="muted small" style="margin-top:2px">Pay <b>${money(Number(pl.price_cents||0))}</b>${Number(pl.bonus_cents||0)>0?` · bonus <b>${money(Number(pl.bonus_cents))}</b>`:''} · total value <b>${money(Number(pl.total_usable_cents||0))}</b></div>
+            <div class="muted small">Paid value expiry: ${esc(expiryWords(pl.paid_expiry_days))}${Number(pl.bonus_cents||0)>0?` · bonus expiry: ${esc(expiryWords(pl.bonus_expiry_days))}`:''}</div>
+            ${blockersHtml(pl.blockers)}</div></label>`;
+      }).join(''):`<p class="muted small" style="margin-top:8px">No sellable plans for this customer at this branch. ${state==='unbuilt'?'Stored value is unbuilt.':'Publish a top-up plan first, or check the plan restrictions.'}</p>`;
+      const methodSel=`<div><label for="svtMethod" class="muted small">Payment method</label><br><select id="svtMethod" style="max-width:220px"${testOnly?' disabled':''}>${methodOpts.map(([v,l])=>`<option value="${v}"${v===st.method?' selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
+      const refField=needsReference()?`<div><label for="svtRef" class="muted small">Payment reference (required)</label><br><input id="svtRef" type="text" value="${esc(st.reference)}" placeholder="e.g. terminal approval code" style="max-width:260px"></div>`:'';
+      const confirmBox=needsReference()?`<label class="row small" style="gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="svtConfirm"${st.staffConfirmed?' checked':''} style="margin-top:3px"><span>I confirm the customer has paid${p?` ${money(Number(p.price_cents||0))}`:''}. <b>${esc(BRAND.productName)} has not verified this payment</b> — you are attesting it was received.</span></label>`:'';
+      body=`<div class="cui-card-head"><h3>${esc(st.cust.full_name||'Customer')} · ${esc(st.cust.phone||'')}</h3><p>Choose the plan and payment. Amounts are set by the plan and cannot be edited here.</p></div>
+        ${planRadios}
+        <div class="row" style="gap:10px;flex-wrap:wrap;align-items:end;margin-top:14px">${methodSel}${refField}</div>
+        ${confirmBox}${errHtml}
+        <div class="row" style="gap:8px;margin-top:14px"><button class="btn ghost sm" id="svtBack" type="button">Back</button><button class="btn sm" id="svtPreview" type="button"${(!p||!p.ok)?' disabled aria-disabled="true"':''}${busyAttr}>${st.busy?'Checking…':'Preview'}</button></div>`;
+    } else if(st.step==='confirm'){
+      const pv=st.preview||{};
+      const cash=Number(pv.price_cents||0), bonus=Number(pv.bonus_cents||0), total=Number(pv.total_usable_cents||0);
+      const cur=(pv.currency||S.biz.currency||'SGD');
+      const blocked=Array.isArray(pv.blockers)&&pv.blockers.length>0;
+      const spendable=pv.spendable===true;
+      body=`<div class="cui-card-head"><h3>Confirm this top-up</h3></div>
+        <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
+          <b>You are collecting ${esc(cur)} ${(cash/100).toFixed(2)} and issuing ${esc(cur)} ${(cash/100).toFixed(2)} paid value${bonus>0?` plus ${esc(cur)} ${(bonus/100).toFixed(2)} promotional bonus`:''}.</b>
+          <p>${spendable?'This value will be spendable by the customer.':'This is a test in this phase — the value is <b>not</b> spendable and no real money is collected.'}</p></div></aside>
+        <dl class="cui-readonly-list" style="margin-top:12px">
+          <div class="cui-readonly-row"><dt>Customer</dt><dd>${esc(st.cust.full_name||'')} · ${esc(st.cust.phone||'')}</dd></div>
+          <div class="cui-readonly-row"><dt>Plan</dt><dd>${esc(pv.plan_name||'')}</dd></div>
+          <div class="cui-readonly-row"><dt>Collect</dt><dd><b>${money(cash)}</b> · ${esc((methodOpts.find(m=>m[0]===st.method)||['',st.method])[1])}</dd></div>
+          <div class="cui-readonly-row"><dt>Paid value issued</dt><dd>${money(cash)}</dd></div>
+          ${bonus>0?`<div class="cui-readonly-row"><dt>Bonus value issued</dt><dd>${money(bonus)}</dd></div>`:''}
+          <div class="cui-readonly-row"><dt>Total value</dt><dd><b>${money(total)}</b></dd></div>
+          <div class="cui-readonly-row"><dt>Paid value expiry</dt><dd>${esc(expiryWords(pv.paid_expiry_days))}</dd></div>
+          ${bonus>0?`<div class="cui-readonly-row"><dt>Bonus value expiry</dt><dd>${esc(expiryWords(pv.bonus_expiry_days))}</dd></div>`:''}
+          ${st.reference.trim()?`<div class="cui-readonly-row"><dt>Reference</dt><dd>${esc(st.reference.trim())}</dd></div>`:''}
+          <div class="cui-readonly-row"><dt>Projected balance after</dt><dd>${money(Number(pv.projected_account_total_cents||0))}${spendable?'':' (not spendable)'}</dd></div>
+        </dl>
+        ${blockersHtml(pv.blockers)}${errHtml}
+        <div class="row" style="gap:8px;margin-top:14px"><button class="btn ghost sm" id="svtBack" type="button">Back</button><button class="btn sm" id="svtRecord" type="button"${blocked?' disabled aria-disabled="true"':''}${busyAttr}>${st.busy?'Recording…':'Confirm & record'}</button></div>`;
+    } else if(st.step==='done'){
+      const r=st.result||{};
+      const spendable=r.spendable===true;
+      body=`<div class="cui-card-head"><h3>Top-up recorded</h3></div>
+        <div class="ok" role="status" style="margin-top:6px"><b>Done.</b> ${spendable?'The value is now available to the customer.':'This was a test — the value is recorded but is <b>not</b> available to spend.'}</div>
+        <dl class="cui-readonly-list" style="margin-top:12px">
+          <div class="cui-readonly-row"><dt>Cash collected</dt><dd>${money(Number(r.cash_collected_cents||0))}</dd></div>
+          <div class="cui-readonly-row"><dt>Paid value issued</dt><dd>${money(Number(r.paid_value_issued_cents||0))}</dd></div>
+          ${Number(r.bonus_value_issued_cents||0)>0?`<div class="cui-readonly-row"><dt>Bonus value issued</dt><dd>${money(Number(r.bonus_value_issued_cents))}</dd></div>`:''}
+          <div class="cui-readonly-row"><dt>Total account value</dt><dd><b>${money(Number(r.account_total_after_cents||0))}</b>${spendable?'':' (not spendable)'}</dd></div>
+          <div class="cui-readonly-row"><dt>Spendable</dt><dd>${spendable?'Yes':'No — '+esc(String(r.authority_state||state))}</dd></div>
+          ${r.operation_id?`<div class="cui-readonly-row"><dt>Reference</dt><dd><code>${esc(String(r.operation_id))}</code></dd></div>`:''}
+        </dl>
+        <div class="row" style="gap:8px;margin-top:14px"><button class="btn sm" id="svtAgain" type="button">Record another</button></div>`;
+    }
+    host.innerHTML=`<div class="card" style="border-color:var(--line)">${body}</div>`;
+    if($('svtBranch'))$('svtBranch').onchange=e=>{st.branchId=e.target.value;};
+    if($('svtFind'))$('svtFind').onclick=findCustomer;
+    if($('svtPhone'))$('svtPhone').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();findCustomer();}};
+    host.querySelectorAll('input[name="svtPlan"]').forEach(r=>r.onchange=()=>{st.versionId=r.value;st.err=null;render();});
+    if($('svtMethod'))$('svtMethod').onchange=e=>{st.method=e.target.value;st.err=null;render();};
+    if($('svtRef'))$('svtRef').oninput=e=>{st.reference=e.target.value;};
+    if($('svtConfirm'))$('svtConfirm').onchange=e=>{st.staffConfirmed=e.target.checked;};
+    if($('svtPreview'))$('svtPreview').onclick=doPreview;
+    if($('svtRecord'))$('svtRecord').onclick=doRecord;
+    if($('svtBack'))$('svtBack').onclick=()=>{st.err=null;st.step=(st.step==='confirm')?'plan':'customer';if(st.step==='customer'){st.plans=[];}render();};
+    if($('svtAgain'))$('svtAgain').onclick=()=>{st.step='customer';st.cust=null;st.phone='';st.plans=[];st.versionId=null;st.preview=null;st.idemKey=null;st.result=null;st.reference='';st.staffConfirmed=false;st.err=null;render();};
+  }
+  render();
+}
+
+/* ---------- V142 merchant-owned customer payments ---------- */
+async function loadMerchantPaymentsV142(){
+  const wrap=$('merchantPaymentsWrapV142');if(!wrap||!S.biz?.id)return;
+  wrap.setAttribute('aria-busy','true');
+  const {data,error}=await sb.rpc('get_merchant_payment_status_v142',{p_business:S.biz.id});
+  if(!wrap.isConnected)return;
+  wrap.setAttribute('aria-busy','false');
+  if(error||!data){
+    wrap.innerHTML=CUI.errorState({title:'Customer payments unavailable',message:'Payment setup could not be loaded. No customer payment was affected.',retryId:'merchantPaymentsRetryV142'});
+    $('merchantPaymentsRetryV142').onclick=loadMerchantPaymentsV142;return;
+  }
+  const state=data.status||'not_set_up';
+  const ready=data.paynow_ready===true;
+  const stateCopy=ready
+    ?{label:'Ready',pill:'ok',title:'Ready to accept PayNow',body:'Staff can create a fixed-amount PayNow QR from Record sale. Customer money goes to this business’s connected Stripe account.'}
+    :state==='restricted'
+      ?{label:'Restricted',pill:'off',title:'Stripe needs attention',body:'Customer PayNow QR is unavailable until Stripe clears the account restriction.'}
+      :state==='more_information_needed'
+        ?{label:'More information needed',pill:'new',title:'Finish Stripe setup',body:'Continue the secure Stripe form to complete business, representative or payout-bank requirements.'}
+        :{label:'Not set up',pill:'off',title:'Accept customer payments',body:'Connect this legal business to Stripe. Branches share the same payout account unless they are separate legal merchants.'};
+  wrap.innerHTML=`<div class="row"><div><h2 style="margin:0">Customer payments</h2><p class="muted small" style="margin-top:5px">Separate from your Peekaa subscription.</p></div><span class="spacer"></span><span class="pill ${stateCopy.pill}">${stateCopy.label}</span></div>
+    <div class="imp-note" style="margin-top:16px"><b>${stateCopy.title}</b><p class="small" style="margin-top:6px">${stateCopy.body}</p></div>
+    <ol class="small" style="line-height:1.75;margin:16px 0 0;padding-left:20px"><li>Owner completes Stripe-hosted identity and bank setup.</li><li>Staff enters a sale and taps <b>PayNow QR</b>.</li><li>Customer scans the locked amount; only Stripe confirmation completes the sale and receipt.</li></ol>
+    ${ready?'<p class="muted small" style="margin-top:16px">No API keys or bank details are stored in Peekaa. Manage legal or payout changes through Stripe.</p>'
+      :`<button type="button" class="btn" id="merchantPaymentsSetupV142" style="margin-top:18px">${state==='not_set_up'?'Set up Stripe':'Continue Stripe setup'}</button>`}
+    <div id="merchantPaymentsStatusV142" role="status" aria-live="polite"></div>`;
+  const setup=$('merchantPaymentsSetupV142');if(!setup)return;
+  setup.onclick=async()=>{
+    setup.disabled=true;setup.textContent='Opening Stripe…';
+    const slot=`peekaa:v142:connect:${S.biz.id}`;
+    let key='';try{key=sessionStorage.getItem(slot)||''}catch{}
+    if(!/^[0-9a-f-]{36}$/i.test(key)){key=crypto.randomUUID();try{sessionStorage.setItem(slot,key)}catch{}}
+    const executed=await sb.functions.invoke('stripe-connect-command',{body:{
+      action:'create_onboarding_link',business_id:S.biz.id,idempotency_key:key
+    }});
+    if(!wrap.isConnected)return;
+    if(executed.error||!executed.data?.redirect_url){
+      setup.disabled=false;setup.textContent=state==='not_set_up'?'Set up Stripe':'Continue Stripe setup';
+      $('merchantPaymentsStatusV142').innerHTML='<div class="err" role="alert">Stripe setup could not open. Try again; no account will be duplicated.</div>';return;
+    }
+    try{sessionStorage.removeItem(slot)}catch{}
+    location.assign(executed.data.redirect_url);
+  };
+}
+async function boot(){
+  try{await consumeBusinessOAuthRedirect()}catch{}
+  try{await consumePasswordRecoveryRedirect()}catch{}
+  loadBuildIdentity();
+  route();
+}
+/* Startup split: the page-scoped bundles (platform console, growth, media
+   sync, native bridge, push) are deferred so the document parses and the
+   #root skeleton paints without them. Deferred scripts execute before
+   DOMContentLoaded, so booting on that event preserves the original
+   execution order exactly while removing ~1MB of JS from the parser's
+   critical path. */
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{boot()});
+else boot();
+

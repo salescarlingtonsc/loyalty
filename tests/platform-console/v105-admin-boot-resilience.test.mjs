@@ -74,6 +74,18 @@ test('a missing platform module renders a recoverable error instead of falling t
       rememberCustomerRecoveryVerified(){},
       normalizeCustomerDestination:()=>'',normalizeCustomerBusinessIntent:value=>value,
       businessStaffInviteCodeV151:()=>'',
+      /* v185: app/app.js is split by surface at build time. The router resolves which chunk a
+         route needs and awaits it; in the sandbox every symbol is already present, so the loader
+         is a no-op and the surface decision is exercised for real. */
+      appSurfaceRetriedV185:false,
+      loadAppChunkV185:async()=>null,
+      appSurfaceForRouteV185:(hash,{signedIn=false}={})=>{
+        const route=String(hash||'').split('?')[0];
+        if(route.startsWith('#/platform'))return null;
+        if(['#/b/','#/customer','#/wallet','#/claim','#/join'].some(prefix=>route===prefix.replace(/\/$/,'')||route.startsWith(prefix)))return 'customer';
+        if(route==='#/'||route==='')return signedIn?'business':'customer';
+        return 'business';
+      },
       // v184: the console is fetched on demand. "Missing module" is now a loader that resolves
       // to null — a failed script load takes exactly this path.
       loadPlatformConsoleAssetsV184:async()=>null,

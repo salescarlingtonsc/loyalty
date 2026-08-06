@@ -25,6 +25,18 @@ async function runRootRoute({
        session. These cases are all customer/recovery routing, so no invite is present; the
        stub returns none. Without it the sandbox threw ReferenceError and every case failed. */
     businessStaffInviteCodeV151:()=>'',
+    /* v185: app/app.js is split by surface at build time. The router resolves which chunk a
+       route needs and awaits it; in the sandbox every symbol is already present, so the loader
+       is a no-op and the surface decision is exercised for real. */
+    appSurfaceRetriedV185:false,
+    loadAppChunkV185:async()=>null,
+    appSurfaceForRouteV185:(hash,{signedIn=false}={})=>{
+      const route=String(hash||'').split('?')[0];
+      if(route.startsWith('#/platform'))return null;
+      if(['#/b/','#/customer','#/wallet','#/claim','#/join'].some(prefix=>route===prefix.replace(/\/$/,'')||route.startsWith(prefix)))return 'customer';
+      if(route==='#/'||route==='')return signedIn?'business':'customer';
+      return 'business';
+    },
     /* Destination memory moved behind setters that touch sessionStorage; the sandbox models
        them as plain assignments so the routing assertions still observe the same state. */
     rememberPendingCustomerDestination(value){
