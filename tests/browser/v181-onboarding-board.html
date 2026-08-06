@@ -157,6 +157,16 @@
 .platform-card-list.is-drop-target{
   outline:2px dashed rgba(194,65,53,.55);outline-offset:3px;border-radius:12px;background:rgba(194,65,53,.05)
 }
+.platform-empty-fields{margin-top:8px}
+.platform-empty-fields>summary{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;
+  background:#EFEBE5;color:var(--muted);font-size:11px;font-weight:650;cursor:pointer;list-style:none
+}
+.platform-empty-fields>summary::-webkit-details-marker{display:none}
+.platform-empty-fields>summary::before{content:'+';font-weight:750}
+.platform-empty-fields[open]>summary::before{content:'−'}
+.platform-empty-fields>summary:hover{background:var(--tint);color:var(--coral)}
+.platform-empty-fields .platform-typed-list{margin-top:8px;opacity:.75}
 .platform-prospect-table-wrap{margin-top:2px}
 .platform-prospect-table .platform-prospect-row{cursor:pointer}
 .platform-prospect-table .platform-prospect-row:hover{background:rgba(194,65,53,.05)}
@@ -674,6 +684,13 @@ h1{font-size:17px;margin:0 0 4px}h3{margin:26px 0 8px;font-size:14px}
 .cui-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--hair);border-radius:12px;overflow:hidden}
 .cui-table th,.cui-table td{padding:9px 11px;text-align:left;font-size:12px;border-bottom:1px solid var(--hair)}
 .cui-table th{background:#EFEBE5;font-size:11px}.cui-table caption{text-align:left;padding:0 0 6px;font-size:11px;color:var(--muted)}
+.card{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:16px;margin-bottom:12px}
+.platform-list-row h2{font-size:14px;margin:0 0 10px}
+.platform-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.platform-typed-list{margin:0}
+.platform-typed-list>div{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px solid var(--hair)}
+.platform-typed-list dt{color:var(--muted);font-size:12px}
+.platform-typed-list dd{margin:0;font-size:12px;font-weight:650;text-align:right}
 .muted{color:var(--muted)}.small{font-size:11px}
 #log{margin-top:14px;padding:10px;border:1px solid var(--hair);border-radius:10px;background:#fff;font-size:12px}
 </style>
@@ -769,6 +786,15 @@ h1{font-size:17px;margin:0 0 4px}h3{margin:26px 0 8px;font-size:14px}
           </tr></tbody>
       </table>
     </div>
+<h3>Detail drawer — values first, blanks collapsed</h3>
+<section class="card platform-detail-section">
+  <div class="platform-list-row"><h2>Overview</h2></div>
+  <div class="platform-detail-grid"><dl class="platform-context-list platform-typed-list"><div><dt>Stage</dt><dd>New Lead</dd></div><div><dt>Priority</dt><dd>Normal</dd></div><div><dt>Stage entered</dt><dd>3 Aug 2026, 2:26 pm</dd></div></dl><details class="platform-empty-fields"><summary>3 not recorded</summary><dl class="platform-context-list platform-typed-list"><div><dt>Region</dt><dd>—</dd></div><div><dt>Next action</dt><dd>—</dd></div><div><dt>Converted</dt><dd>—</dd></div></dl></details></div>
+</section>
+<section class="card platform-detail-section">
+  <div class="platform-list-row"><h2>Company identity and operating profile</h2></div>
+  <div class="platform-detail-grid"><dl class="platform-context-list platform-typed-list"><div><dt>Legal name</dt><dd>CARLINGTON SMITH CONSULTANCY PTE. LTD.</dd></div><div><dt>UEN / registration</dt><dd>12312312</dd></div></dl><details class="platform-empty-fields"><summary>5 not recorded</summary><dl class="platform-context-list platform-typed-list"><div><dt>Trading name</dt><dd>—</dd></div><div><dt>Industry</dt><dd>—</dd></div><div><dt>Website</dt><dd>—</dd></div><div><dt>General email</dt><dd>—</dd></div><div><dt>General phone</dt><dd>—</dd></div></dl></details><p class="muted small">Not recorded</p><details class="platform-empty-fields"><summary>8 not recorded</summary><dl class="platform-context-list platform-typed-list"><div><dt>Entity type</dt><dd>—</dd></div><div><dt>Business status</dt><dd>—</dd></div><div><dt>Incorporated</dt><dd>—</dd></div><div><dt>Registered address</dt><dd>—</dd></div><div><dt>Operating address</dt><dd>—</dd></div><div><dt>Postal code</dt><dd>—</dd></div><div><dt>Region / state</dt><dd>—</dd></div><div><dt>Verification</dt><dd>—</dd></div></dl></details></div>
+</section>
 <div id="log">Drop log: <span id="out">none yet</span></div>
 <script>
 // Mirrors the console's drag wiring so the interaction itself can be tested.

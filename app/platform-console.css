@@ -154,6 +154,16 @@
 .platform-card-list.is-drop-target{
   outline:2px dashed rgba(194,65,53,.55);outline-offset:3px;border-radius:12px;background:rgba(194,65,53,.05)
 }
+.platform-empty-fields{margin-top:8px}
+.platform-empty-fields>summary{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;
+  background:#EFEBE5;color:var(--muted);font-size:11px;font-weight:650;cursor:pointer;list-style:none
+}
+.platform-empty-fields>summary::-webkit-details-marker{display:none}
+.platform-empty-fields>summary::before{content:'+';font-weight:750}
+.platform-empty-fields[open]>summary::before{content:'−'}
+.platform-empty-fields>summary:hover{background:var(--tint);color:var(--coral)}
+.platform-empty-fields .platform-typed-list{margin-top:8px;opacity:.75}
 .platform-prospect-table-wrap{margin-top:2px}
 .platform-prospect-table .platform-prospect-row{cursor:pointer}
 .platform-prospect-table .platform-prospect-row:hover{background:rgba(194,65,53,.05)}

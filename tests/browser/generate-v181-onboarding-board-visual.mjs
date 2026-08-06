@@ -41,6 +41,29 @@ const kanban = `<div class="platform-kanban">${lanes.map(lane => `<section class
 </section>`).join('')}</div>`;
 
 const list = C.prospectListTableHtml(firms, CUI, { canWrite: true });
+
+// The detail drawer's field groups, with the same sparse data a freshly
+// captured lead has: a couple of known values and a lot of blanks.
+const identity = C.typedDetailHtml(
+  { legal_name: 'CARLINGTON SMITH CONSULTANCY PTE. LTD.', registration_number: '12312312' },
+  [['legal_name','Legal name'],['trading_name','Trading name'],['registration_number','UEN / registration'],
+   ['industry','Industry'],['website','Website'],['email','General email'],['phone','General phone']]);
+const profile = C.typedDetailHtml({}, [
+  ['entity_type','Entity type'],['business_status','Business status'],['incorporated_on','Incorporated'],
+  ['registered_address','Registered address'],['operating_address','Operating address'],
+  ['postal_code','Postal code'],['region_state','Region / state'],['verification_status','Verification']]);
+const overview = C.typedDetailHtml(
+  { current_stage_key:'New Lead', priority:'Normal', stage_entered_at:'3 Aug 2026, 2:26 pm' },
+  [['current_stage_key','Stage'],['priority','Priority'],['region','Region'],
+   ['next_action_at','Next action'],['stage_entered_at','Stage entered'],['converted_at','Converted']]);
+const drawer = `<section class="card platform-detail-section">
+  <div class="platform-list-row"><h2>Overview</h2></div>
+  <div class="platform-detail-grid">${overview}</div>
+</section>
+<section class="card platform-detail-section">
+  <div class="platform-list-row"><h2>Company identity and operating profile</h2></div>
+  <div class="platform-detail-grid">${identity}${profile}</div>
+</section>`;
 const css = await readFile(root + 'app/platform-console.css', 'utf8');
 const baseCss = await readFile(root + 'app/customer-ui.css', 'utf8').catch(() => '');
 
@@ -55,6 +78,13 @@ h1{font-size:17px;margin:0 0 4px}h3{margin:26px 0 8px;font-size:14px}
 .cui-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--hair);border-radius:12px;overflow:hidden}
 .cui-table th,.cui-table td{padding:9px 11px;text-align:left;font-size:12px;border-bottom:1px solid var(--hair)}
 .cui-table th{background:#EFEBE5;font-size:11px}.cui-table caption{text-align:left;padding:0 0 6px;font-size:11px;color:var(--muted)}
+.card{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:16px;margin-bottom:12px}
+.platform-list-row h2{font-size:14px;margin:0 0 10px}
+.platform-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.platform-typed-list{margin:0}
+.platform-typed-list>div{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px solid var(--hair)}
+.platform-typed-list dt{color:var(--muted);font-size:12px}
+.platform-typed-list dd{margin:0;font-size:12px;font-weight:650;text-align:right}
 .muted{color:var(--muted)}.small{font-size:11px}
 #log{margin-top:14px;padding:10px;border:1px solid var(--hair);border-radius:10px;background:#fff;font-size:12px}
 </style>
@@ -63,6 +93,8 @@ h1{font-size:17px;margin:0 0 4px}h3{margin:26px 0 8px;font-size:14px}
 ${kanban}
 <h3>List view</h3>
 ${list}
+<h3>Detail drawer — values first, blanks collapsed</h3>
+${drawer}
 <div id="log">Drop log: <span id="out">none yet</span></div>
 <script>
 // Mirrors the console's drag wiring so the interaction itself can be tested.

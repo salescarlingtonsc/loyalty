@@ -791,6 +791,7 @@
       'Off':'关闭','Owner / boss':'负责人 / 老板','Owner email':'负责人电邮',
       'Qualification and discovery':'资格评估与需求探索','Record commercial detail':'记录商业详情',
       'Record departure':'记录离职','Record qualification':'记录资格评估',
+      '{count} not recorded':'{count} 项未填写',
       'Refresh evidence':'刷新证据','Refresh quality':'刷新质量','Reissue owner invite':'重新发送负责人邀请',
       'Resolve every row still marked Review before committing.':'提交前请处理所有仍标为“审核”的行。',
       'Returning customers':'回头客','Review and confirm the analysed import first.':'请先审核并确认已分析的导入。',
@@ -924,6 +925,7 @@
       'Off':'Mati','Owner / boss':'Pemilik / bos','Owner email':'E-mel pemilik',
       'Qualification and discovery':'Kelayakan dan penemuan','Record commercial detail':'Rekod butiran komersial',
       'Record departure':'Rekod pemergian','Record qualification':'Rekod kelayakan',
+      '{count} not recorded':'{count} belum direkodkan',
       'Refresh evidence':'Muat semula bukti','Refresh quality':'Muat semula kualiti','Reissue owner invite':'Keluarkan semula jemputan pemilik',
       'Resolve every row still marked Review before committing.':'Selesaikan setiap baris yang masih ditanda Semak sebelum melakukan.',
       'Returning customers':'Pelanggan kembali','Review and confirm the analysed import first.':'Semak dan sahkan import yang dianalisis dahulu.',
@@ -5908,14 +5910,25 @@
     if(value&&typeof value==='object')return Object.keys(value).length?JSON.stringify(value):'—';
     return value===null||value===undefined||value===''?'—':String(value);
   }
+  // A record shows what it knows. Fields with no value are folded into one
+  // disclosure instead of printing a column of em dashes — the blanks still
+  // matter for data completeness, so they are collapsed, never dropped.
   function typedDetailHtml(value,fields,empty='Not recorded') {
     const object=asObject(value);
-    const rows=fields.map(field=>{
-      const [key,label,formatter]=field;
+    const row=(label,shown)=>`<div><dt>${escapeHtml(pt(label))}</dt><dd>${escapeHtml(shown)}</dd></div>`;
+    const filled=[],blank=[];
+    fields.forEach(([key,label,formatter])=>{
       const raw=object[key],shown=formatter?formatter(raw,object):formatDetailValue(raw);
-      return`<div><dt>${escapeHtml(pt(label))}</dt><dd>${escapeHtml(shown)}</dd></div>`;
+      (shown==='—'||shown===''?blank:filled).push(row(label,shown||'—'));
     });
-    return rows.length?`<dl class="platform-context-list platform-typed-list">${rows.join('')}</dl>`:`<p class="muted small">${escapeHtml(pt(empty))}</p>`;
+    if(!filled.length&&!blank.length)return`<p class="muted small">${escapeHtml(pt(empty))}</p>`;
+    const list=rows=>`<dl class="platform-context-list platform-typed-list">${rows.join('')}</dl>`;
+    if(!blank.length)return list(filled);
+    const hidden=`<details class="platform-empty-fields"><summary>${escapeHtml(
+      pt('{count} not recorded',{count:blank.length}))}</summary>${list(blank)}</details>`;
+    return filled.length
+      ?`${list(filled)}${hidden}`
+      :`<p class="muted small">${escapeHtml(pt(empty))}</p>${hidden}`;
   }
   const contactBase=row=>asObject(row.contact||row);
   const contactExtended=row=>asObject(row.profile);
@@ -9221,7 +9234,7 @@
     localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
     firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,prospectCompactCardHtml,prospectListTableHtml,prospectPrimaryBadge,laneMoveStages,modulePickerHtml,
     reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
-    importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
+    importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingCatalogueRows,billingFirmRows,
     commissionRosterRows,commissionAccrualRows,automationRunRows,
     subscriptionDurationHtml,subscriptionOperationsTable
   });
@@ -9241,7 +9254,7 @@
       localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
       firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,prospectCompactCardHtml,prospectListTableHtml,prospectPrimaryBadge,laneMoveStages,modulePickerHtml,
       reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
-      importReviewRowHtml,prospectDetailHtml,billingCatalogueRows,billingFirmRows,
+      importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingCatalogueRows,billingFirmRows,
       commissionRosterRows,commissionAccrualRows,automationRunRows,
       subscriptionDurationHtml,subscriptionOperationsTable
     };

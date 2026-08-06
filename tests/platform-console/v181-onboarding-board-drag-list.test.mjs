@@ -149,3 +149,38 @@ test('the board wires drop zones, keyboard moves and keeps the evidence gate', a
   assert.match(styles, /\.platform-card-list\.is-drop-target/);
   assert.match(styles, /\.platform-prospect-card-compact/);
 });
+
+test('detail fields read like a CRM: values first, blanks collapsed but kept', async () => {
+  const Console = await loadConsole();
+  const fields = [
+    ['legal_name', 'Legal name'],
+    ['trading_name', 'Trading name'],
+    ['registration_number', 'UEN / registration'],
+    ['industry', 'Industry'],
+    ['website', 'Website']
+  ];
+
+  const partial = Console.typedDetailHtml(
+    { legal_name: 'Carlington Smith Consultancy Pte. Ltd.', registration_number: '12312312' }, fields);
+  // What is known renders plainly.
+  assert.match(partial, /Legal name/);
+  assert.match(partial, /UEN \/ registration/);
+  // What is missing is folded into one disclosure, not five em-dash rows.
+  assert.match(partial, /<details class="platform-empty-fields"><summary>3 not recorded<\/summary>/);
+  const visible = partial.split('<details')[0];
+  assert.doesNotMatch(visible, /—/, 'no em-dash placeholder rows above the fold');
+  // Nothing is lost: the blank labels still exist inside the disclosure.
+  for (const label of ['Trading name', 'Industry', 'Website']) {
+    assert.match(partial, new RegExp(label));
+  }
+
+  // A fully populated group shows no disclosure at all.
+  const full = Console.typedDetailHtml(Object.fromEntries(fields.map(([key]) => [key, 'x'])), fields);
+  assert.doesNotMatch(full, /platform-empty-fields/);
+
+  // An entirely empty group says so once, and still lists what could be filled.
+  const none = Console.typedDetailHtml({}, fields);
+  assert.match(none, /Not recorded/);
+  assert.match(none, /5 not recorded/);
+  assert.equal((none.match(/<dl /g) || []).length, 1, 'only the collapsed list is rendered');
+});
