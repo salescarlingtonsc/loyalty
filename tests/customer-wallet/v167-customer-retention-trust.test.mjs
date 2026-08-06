@@ -24,7 +24,7 @@ test('standalone join is anonymous and cannot overwrite the primary customer ses
 });
 
 test('customer deep links persist through authentication and reject external destinations',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app,/CUSTOMER_DESTINATION_SESSION_KEY='peekaa\.customer\.pendingDestination\.v1'/);
   assert.match(app,/sessionStorage\.setItem\(CUSTOMER_DESTINATION_SESSION_KEY/);
   assert.match(app,/sessionStorage\.removeItem\(CUSTOMER_DESTINATION_SESSION_KEY/);
@@ -37,7 +37,7 @@ test('customer deep links persist through authentication and reject external des
 });
 
 test('disabled messages route is honest and remains on the requested route',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const messages=section(app,'async function renderCustomerMessages','async function renderCustomerProfile');
   assert.doesNotMatch(messages,/nav\('#\/wallet'\)/);
   assert.match(messages,/Messages are not available/);
@@ -45,7 +45,7 @@ test('disabled messages route is honest and remains on the requested route',asyn
 });
 
 test('redemption cancellation uses an in-app decision and always renders canonical server state',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const qr=section(app,'function showPendingRedemptionQr','function showGrowthOfferQr');
   assert.match(qr,/customer-redemption-modal/);
   assert.match(qr,/Cancel this redemption\?/);
@@ -64,7 +64,7 @@ test('redemption cancellation uses an in-app decision and always renders canonic
 });
 
 test('customer account trust controls use positioned UI and shared capability truth',async()=>{
-  const [app,push]=await Promise.all([read('app/index.html'),read('app/customer-push.js')]);
+  const [app,push]=await Promise.all([Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),read('app/customer-push.js')]);
   assert.match(app,/\.customer-account-menu \.menu\{position:absolute;top:calc\(100% \+ 8px\);right:0;z-index:/);
   assert.match(app,/customerAccountMenuDetails/);
   assert.match(app,/event\.key==='Escape'/);
@@ -78,7 +78,7 @@ test('customer account trust controls use positioned UI and shared capability tr
 });
 
 test('security readiness is explicit instead of allowing a silent sign-in no-op',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const signIn=section(app,'function renderCustomerPasswordSignIn','async function renderCustomerOtpStart');
   assert.match(signIn,/id="customerPasswordSignIn"[^>]*disabled[^>]*>[\s\S]*?<span>Checking…<\/span>/);
   assert.match(signIn,/signIn\.querySelector\('span'\)\.textContent=token\?'Sign in':'Checking…'/);
@@ -89,7 +89,7 @@ test('security readiness is explicit instead of allowing a silent sign-in no-op'
 });
 
 test('customer Home does not expose operator ranking language',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.doesNotMatch(app,/cannot safely rank an action/i);
   assert.match(app,/Choose what you’d like to do/);
   assert.match(app,/Open your rewards or bookings below/);

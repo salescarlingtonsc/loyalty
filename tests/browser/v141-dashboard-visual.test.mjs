@@ -5,7 +5,7 @@ import {buildV141DashboardVisual} from './generate-v141-dashboard-visual.mjs';
 
 test('V141 dashboard browser fixture executes the current production dashboard renderer',async()=>{
   const [app,customerUi,fixture]=await Promise.all([
-    readFile(new URL('../../app/index.html',import.meta.url),'utf8'),
+    Promise.all([readFile(new URL('../../app/index.html',import.meta.url),'utf8'),readFile(new URL('../../app/app.js',import.meta.url),'utf8')]).then(f=>f.join('\n')),
     readFile(new URL('../../app/customer-ui.js',import.meta.url),'utf8'),
     readFile(new URL('./v141-dashboard-visual.html',import.meta.url),'utf8')
   ]);

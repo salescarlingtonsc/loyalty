@@ -6,7 +6,7 @@ import {join,resolve} from 'node:path';
 import test from 'node:test';
 
 const root=resolve(import.meta.dirname,'../..');
-const app=readFileSync(join(root,'app/index.html'),'utf8');
+const app=readFileSync(join(root,'app/index.html'),'utf8')+'\n'+readFileSync(join(root,'app/app.js'),'utf8');
 const sourceMigration=join(root,'db/migrations/20260801_nestly_v131_store_publication_readiness.sql');
 const mirrorMigration=join(root,'supabase/migrations/20260801210000_nestly_v131_store_publication_readiness.sql');
 

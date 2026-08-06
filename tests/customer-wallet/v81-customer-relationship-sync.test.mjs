@@ -112,7 +112,7 @@ test('v81 history is verified-link scoped, complete, and stably paginated', asyn
 });
 
 test('customer relationship sync retries a transient failure and caches only the successful recovery', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const harness = customerSyncHarness(customerSyncUiBlock(app), [
     { data: null, error: { code: '503', message: 'temporary gateway failure' } },
     { data: { outcome: 'synchronized', linked_count: 1 }, error: null }
@@ -138,7 +138,7 @@ test('customer relationship sync retries a transient failure and caches only the
 });
 
 test('legacy relationship sync fallback remains bounded but customer surfaces never invoke it automatically', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const harness = customerSyncHarness(customerSyncUiBlock(app), [
     { data: null, error: { code: 'PGRST202', message: 'function is not in the schema cache' } }
   ]);

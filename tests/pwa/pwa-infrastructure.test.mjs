@@ -153,18 +153,25 @@ test('manifest has a stable install identity and real maskable icons', async () 
         src: '/icons/peekaa-192.png',
         sizes: '192x192',
         type: 'image/png',
-        purpose: 'any maskable'
+        purpose: 'any'
       },
       {
         src: '/icons/peekaa-512.png',
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'any maskable'
+        purpose: 'any'
+      },
+      {
+        src: '/icons/peekaa-512-maskable.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable'
       }
     ]
   );
   assert.deepEqual(await pngDimensions('icons/peekaa-192.png'), { width: 192, height: 192 });
   assert.deepEqual(await pngDimensions('icons/peekaa-512.png'), { width: 512, height: 512 });
+  assert.deepEqual(await pngDimensions('icons/peekaa-512-maskable.png'), { width: 512, height: 512 });
   assert.deepEqual(await pngDimensions('icons/apple-touch-icon.png'), { width: 180, height: 180 });
 });
 
@@ -221,6 +228,7 @@ test('service worker reloads open pages after replacing a stale auth/legal shell
       'nestly-shell-v5-20260802-v138-peekaa-convergence',
       'nestly-shell-v6-20260804-v164-auth-cache-convergence',
       'nestly-shell-v7-20260805-v167-customer-trust',
+      'nestly-shell-v8-20260806-v177-production-polish',
       'unrelated-cache'
     ]
   });
@@ -235,12 +243,13 @@ test('service worker reloads open pages after replacing a stale auth/legal shell
 
   assert.deepEqual(harness.deletedCaches, [
     'nestly-shell-v5-20260802-v138-peekaa-convergence',
-    'nestly-shell-v6-20260804-v164-auth-cache-convergence'
+    'nestly-shell-v6-20260804-v164-auth-cache-convergence',
+    'nestly-shell-v7-20260805-v167-customer-trust'
   ]);
   assert.deepEqual(JSON.parse(JSON.stringify(harness.clientMessages)), [
     {
       type: 'PEEKAA_SW_ACTIVATED',
-      cacheVersion: 'v7-20260805-v167-customer-trust'
+      cacheVersion: 'v8-20260806-v177-production-polish'
     }
   ]);
   assert.deepEqual(harness.clientNavigations, [

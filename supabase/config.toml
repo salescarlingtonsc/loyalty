@@ -34,6 +34,9 @@ verify_jwt = false
 [functions.sme-document-signer]
 verify_jwt = true
 
+# WARNING: production auth protections (CAPTCHA/Turnstile secret, leaked-password protection)
+# live ONLY in the hosted dashboard and are NOT represented here. Never `supabase config push`
+# this file against gadpooereceldfpfxsod — it would silently strip them.
 [auth]
 enabled = true
 site_url = "https://www.peekaa.asia"

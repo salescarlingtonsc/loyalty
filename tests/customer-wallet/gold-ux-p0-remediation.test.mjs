@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const app = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
+const app = ((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 
 test('customer capability and profile failures stay retryable and never masquerade as missing registration', () => {
   const registration = app.match(/async function renderCustomerRegistration\([^\n]*\)[\s\S]*?(?=const CUSTOMER_PRIMARY_NAV|async function renderCustomerClaim)/)?.[0] || '';

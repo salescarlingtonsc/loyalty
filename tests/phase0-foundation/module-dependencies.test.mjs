@@ -25,7 +25,7 @@ test('database resolves transitive dependencies for every business write', async
 });
 
 test('legacy module RPC remains owner-authorized while tenant settings are platform-controlled', async () => {
-  const [migration, app] = await Promise.all([read(migrationPath), read('app/index.html')]);
+  const [migration, app] = await Promise.all([read(migrationPath), Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'))]);
   assert.match(migration, /if not app\.is_salon_owner\(p_business\)/i);
   assert.match(migration, /revoke all on function public\.set_business_modules\(uuid, text\[\]\) from public, anon/i);
   assert.match(migration, /grant execute on function public\.set_business_modules\(uuid, text\[\]\) to authenticated/i);
@@ -38,7 +38,7 @@ test('legacy module RPC remains owner-authorized while tenant settings are platf
 });
 
 test('settings explains dependencies without presenting editable sector entitlements', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /from\('module_registry'\)\s*\.select\('module_key,requires_modules'\)/);
   assert.match(app, /uses \$\{esc\(dependencyText\(m\)\)\}/);
   assert.doesNotMatch(app, /id="msave"/);

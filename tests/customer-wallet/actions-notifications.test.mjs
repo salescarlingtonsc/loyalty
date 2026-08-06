@@ -216,7 +216,7 @@ test('legacy anonymous Turnstile gateway and opaque management tokens remain int
 });
 
 test('SPA customer actions and the dedicated in-app inbox remain capability gated', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /CUSTOMER_FEATURES_EMERGENCY_DISABLED/i,
     'customer-facing features need an emergency fail-closed build gate');
   assert.match(app, /\.rpc\(\s*['"]get_customer_feature_capabilities['"]/i,

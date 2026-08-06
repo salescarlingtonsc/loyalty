@@ -233,7 +233,7 @@ test('Terra C46: rollback fixture and self-contained sync/state concurrency harn
 });
 
 test('Terra C46: customer wallet UI has an accessible stale-guarded bell and launch-safe inbox preferences', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const inbox = app.slice(app.indexOf('async function renderCustomerInAppInbox'), app.indexOf('function renderWorkspaceAccessUnavailable'));
   assert.match(app, /customer_in_app_inbox:false/i);
   assert.match(inbox, /customer_sync_in_app_inbox/i);

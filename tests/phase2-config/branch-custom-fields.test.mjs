@@ -110,7 +110,7 @@ test('v29 denies raw anon access and keeps client field writes owner-only', asyn
 
 test('v37 replaces raw branch override writes with owner-only draft RPCs', async () => {
   const sql = await read('db/migrations/20260720_frenly_v37_branch_override_editor_rpc.sql');
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const securityMigration = await read('db/migrations/20260719_frenly_v21_security_hardening.sql');
   const securityTest = await read('db/tests/v21_security_hardening.sql');
   assert.match(sql, /drop policy if exists loyalty_branch_overrides_write/i);
@@ -142,7 +142,7 @@ test('v29 includes a rollback-only behavioral suite', async () => {
 });
 
 test('owner UI creates fields atomically and edits typed customer values', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /sb\.rpc\('create_client_field_definition'/i);
   assert.doesNotMatch(app, /from\('client_field_definitions'\)\.insert/i);
   assert.doesNotMatch(app, /from\('client_field_options'\)\.insert/i);

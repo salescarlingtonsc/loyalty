@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const between=(start,end)=>{
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
   assert.ok(from>=0&&to>from,`missing section ${start}`);
@@ -66,14 +66,16 @@ test('mobile navigation controls unique drawers and does not reset window scroll
 });
 
 test('customer home keeps a healthy server-ranked card primary and otherwise uses finite fallback guidance',()=>{
-  const home=between('function customerHomeNextActionMarkup','async function renderCustomerWallet');
-  assert.match(home,/const primary=actionableCards\[0\]/);
-  assert.match(home,/customerHomeNextActionMarkup\(primary\)/);
-  assert.match(home,/customerHomeFallbackActionV167/);
+  // v178: customerHomeNextActionMarkup is gone with the crossed-out banner. Home guidance is
+  // now exactly one case — an unfinished redemption — and the reward-ready state reads on the
+  // wallet card itself, so the section boundary moves to the surviving guidance renderer.
+  const home=between('function customerHomeFallbackActionV167','async function renderCustomerWallet');
+  assert.doesNotMatch(app,/function customerHomeNextActionMarkup/);
+  assert.match(home,/customerHomeFallbackActionV167\(\{pendingRedemption,actionableCards,legacyCards,offers\}\)/);
   assert.match(home,/Next best action/);
-  assert.match(home,/actionableWalletActionText\(card\)/);
+  assert.match(home,/Complete your pending redemption/);
   assert.match(home,/return ''/);
-  assert.match(home,/href="#\/wallet\/\$\{slug\}"/);
+  assert.doesNotMatch(home,/Use your ready reward|Use an active package session|Check your upcoming booking/);
   assert.doesNotMatch(home,/data-workspace-i18n|workspaceLocale/,
     'customer surfaces remain English-only and outside workspace localisation');
 });

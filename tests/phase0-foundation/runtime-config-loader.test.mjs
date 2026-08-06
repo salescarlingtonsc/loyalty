@@ -199,7 +199,23 @@ function bootstrapThroughClient(source) {
 
 for (const page of ['app/index.html', 'app/join.html']) {
   test(`${page} loads and validates runtime config before client or network bootstrap`, async () => {
-    const source = await read(page);
+    const markup = await read(page);
+    // The SPA now ships its application code as the deferred external bundle
+    // app/app.js. The ordering contract is unchanged, but it is expressed in two
+    // places: the blocking config/loader/supabase tags must precede the app.js
+    // tag in the markup, and the require -> createClient -> fetch order lives in
+    // the bundle. Concatenating them reproduces the original single-file order.
+    const bundle = page === 'app/index.html' ? await read('app/app.js') : '';
+    if (page === 'app/index.html') {
+      const appTag = markup.indexOf('<script src="/app.js" defer></script>');
+      assert.ok(appTag > markup.indexOf('<script src="/runtime-config-loader.js?v=2"></script>'),
+        'app.js must load after the runtime config loader');
+      assert.ok(appTag > markup.indexOf('@supabase/supabase-js'),
+        'app.js must load after the Supabase client library');
+      assert.doesNotMatch(markup.slice(0, appTag), /window\.supabase\.createClient|fetch\(/,
+        'nothing may create a client or hit the network before app.js');
+    }
+    const source = bundle ? `${markup}\n${bundle}` : markup;
     const configScript = source.indexOf('<script src="/runtime-config.js?v=2"></script>');
     const loaderScript = source.indexOf('<script src="/runtime-config-loader.js?v=2"></script>');
     const supabaseScript = source.indexOf('@supabase/supabase-js');

@@ -10,7 +10,7 @@ const section=(source,start,end)=>{
   return source.slice(from,to);
 };
 
-const app=await read('app/index.html');
+const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
 
 test('an expired sign-in is recoverable instead of reading as a permission denial',()=>{
   assert.match(app,/function walletRpcDenied\(error\)\{return error\?\.code==='42501'\}/,
@@ -86,9 +86,12 @@ test('customer copy speaks plainly instead of exposing system vocabulary',()=>{
 
 test('customer dead ends resolve: offers shelf, QR fallback, contact panel, booking send', ()=>{
   const programmes=section(app,'async function renderCustomerProgrammes','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
-  assert.match(programmes,/sb\.rpc\('customer_get_home_offers_v167',\{p_locale:'en'\}\)/,
-    'the programmes route must resolve the offers shelf instead of leaving it loading');
-  assert.match(programmes,/offersState:offersResult\.error\?\{status:'error',items:\[\]\}:\{status:'ready'/);
+  // v178: the owner removed the offers shelf from "My Rewards" entirely, so the route must
+  // no longer fetch or render it — a shelf that is never painted cannot be left loading.
+  assert.doesNotMatch(programmes,/customer_get_home_offers_v167/,
+    'the programmes route must not fetch Home offers it no longer renders');
+  assert.match(programmes,/renderActionableWalletHome\(data,\{surface:'programmes'/);
+  assert.match(app,/const cards=Array\.isArray\(payload\?\.cards\)\?payload\.cards:\[\],isHome=surface!=='programmes'/);
   assert.match(app,/id="customerRedemptionFallback"[\s\S]{0,120}Show fallback token/);
   assert.match(app,/Loading contact details…/);
   assert.match(app,/Contact details unavailable\./);

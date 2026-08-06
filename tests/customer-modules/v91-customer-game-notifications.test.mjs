@@ -19,7 +19,7 @@ test('v91 preserves consent-aware visit-triggered inbox facts with truthful urge
 });
 
 test('reward feedback is driven only by a new confirmed earn event and uses its actual unit',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app,/function customerConfirmedEarnFeedback/);
   assert.match(app,/item\?\.event_type==='earn'&&Number\(item\?\.points_delta\|\|0\)>0/);
   assert.match(app,/safeUnit=unit==='stamps'\?'stamps':'points'/);
@@ -35,7 +35,7 @@ test('reward feedback is driven only by a new confirmed earn event and uses its 
 
 test('owner QR first-use creation is one atomic locked ensure operation',async()=>{
   const [app,sql]=await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('supabase/migrations/20260727163752_nestly_v91_customer_game_notifications.sql')
   ]);
   assert.match(app,/business_ensure_customer_join_qr_v91/);
@@ -50,7 +50,7 @@ test('owner QR first-use creation is one atomic locked ensure operation',async()
 });
 
 test('scanner releases its dialog trap and restores focus unless route navigation owns focus',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app,/dialogCleanup=CUI\.activateDialog/);
   assert.match(app,/dialogCleanup\(\{restoreFocus\}\)/);
   assert.match(app,/close\(\{restoreFocus:false\}\);nav\('#\/join'\)/);

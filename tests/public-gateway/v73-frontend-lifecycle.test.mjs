@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -124,8 +124,12 @@ test('customer booking requests split active from recent terminal outcomes and H
   assert.equal(groups[0].recentRequests.length,3);
   assert.equal([{status:'pending'},{status:'declined'}].filter(isActive).length,1);
   const bookings=section('async function renderCustomerBookings(){','async function renderCustomerMessages(){');
-  assert.match(bookings,/Recent request updates/);
-  assert.match(bookings,/group\.activeRequests/);
-  assert.match(bookings,/group\.recentRequests/);
+  // v178 (owner sketch): the same composed groups are now split across Bookings | Cancelled |
+  // History tabs, so the page reads tabRequests/tabAppointments rather than the raw buckets.
+  assert.match(bookings,/Earlier request updates/);
+  assert.match(bookings,/Cancelled requests/);
+  assert.match(bookings,/group\.tabRequests/);
+  assert.match(bookings,/group\.tabAppointments/);
+  assert.match(bookings,/customerBookingTabGroupsV178\(allGroups,currentBookingTab\)/);
   assert.match(app,/bookingRequestResult\.data\.items\.filter\(isActiveCustomerBookingRequest\)\.length/);
 });

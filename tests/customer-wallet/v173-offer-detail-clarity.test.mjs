@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const app = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
+const app = ((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const section = (start, end) => {
   const from = app.indexOf(start);
   assert.notEqual(from, -1, `missing section start ${start}`);
@@ -50,7 +50,7 @@ test('business page and console agree on the six-offer cap and the join CTA is s
 });
 
 test('offer detail sheet joins the dark token scope', () => {
-  assert.match(app, /\.customer-surface,\.customer-offer-detail-modal \.modal-card\{/);
+  assert.match(app, /\.customer-surface,\.customer-offer-detail-modal \.modal-card,\.customer-business-detail-modal \.modal-card\{/);
   assert.match(app, /\.customer-offer-detail-modal \.modal-card\{width:min\(480px/);
 });
 

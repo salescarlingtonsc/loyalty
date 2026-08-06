@@ -7,7 +7,7 @@ const read = (path) => readFile(new URL(path, root), 'utf8');
 const [canonical, source, app, v163] = await Promise.all([
   read('supabase/migrations/20260721135556_frenly_c42_consumer_registration_contracts.sql'),
   read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
-  read('app/index.html'),
+  Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
   read('supabase/migrations/20260804180000_nestly_v163_signup_lead_management_consent.sql')
 ]);
 
@@ -226,7 +226,7 @@ test('wallet gates a phone-registration-enabled session on a completed private p
     /async function loadCustomerSurfaceContext\([\s\S]*?async function renderCustomerProgrammes\(/i);
   const wallet = block(app,/async function renderCustomerWallet\([\s\S]*?async function renderCustomerNotificationPreferences\(/i);
   assert.match(context, /customer_phone_registration===true/i);
-  assert.match(context, /sb\.rpc\('customer_get_profile'\)/i);
+  assert.match(context, /(?:sb\.rpc|customerRpc)\('customer_get_profile'\)/i);
   assert.match(context, /customerSurfaceQualifies\(profile,customer\)/i);
   assert.match(context, /renderNoCustomerDestination\(staff\)/i);
   assert.doesNotMatch(context, /renderCustomerRegistrationProfile\(\)/i);

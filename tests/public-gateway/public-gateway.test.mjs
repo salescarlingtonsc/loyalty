@@ -398,7 +398,7 @@ test('Origin is browser isolation rather than authentication', async () => {
 });
 
 test('public frontends contain no insecure gateway RPC calls', async () => {
-  const [app, joinPage] = await Promise.all([read('app/index.html'), read('app/join.html')]);
+  const [app, joinPage] = await Promise.all([Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')), read('app/join.html')]);
   const insecure = /\.rpc\(['"](?:join_program|get_join_page|get_business_public|request_booking|list_my_appointments|request_change)['"]/;
   assert.doesNotMatch(app, insecure);
   assert.doesNotMatch(joinPage, insecure);
@@ -409,7 +409,7 @@ test('public frontends contain no insecure gateway RPC calls', async () => {
 
 test('public write forms render and reset explicit Turnstile widgets under exact CSP origins', async () => {
   const [app, joinPage, vercel, docs] = await Promise.all([
-    read('app/index.html'), read('app/join.html'), read('app/vercel.json'), read('supabase/functions/README.md'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')), read('app/join.html'), read('app/vercel.json'), read('supabase/functions/README.md'),
   ]);
   for (const page of [app, joinPage]) {
     assert.match(page, /https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
@@ -441,7 +441,7 @@ test('public write forms render and reset explicit Turnstile widgets under exact
 });
 
 test('staff auth submit stays disabled until Turnstile returns a token', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const authStart = app.indexOf("function renderAuth(mode='in',{admin=false}={})");
   const authEnd = app.indexOf('function validNewPassword', authStart);
   const auth = app.slice(authStart, authEnd);
@@ -452,7 +452,7 @@ test('staff auth submit stays disabled until Turnstile returns a token', async (
 });
 
 test('booking capabilities are scrubbed from current history and change retries retain an intent ID', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const portalStart = app.indexOf('async function renderPortal(slug)');
   const firstAwait = app.indexOf("await publicGateway('public-booking'", portalStart);
   const scrub = app.indexOf("history.replaceState(null,'',`${location.pathname}${location.search}#/b/", portalStart);
@@ -466,7 +466,7 @@ test('booking capabilities are scrubbed from current history and change retries 
 });
 
 test('password recovery is complete and non-enumerating', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   // Supabase Auth CAPTCHA is enabled in production: every recovery request must carry a
   // single-use Turnstile captchaToken alongside the redirect (and reset the widget after use).
   assert.match(app, /resetPasswordForEmail\(email,\{redirectTo:redirect\.toString\(\),captchaToken:authToken\}\)/);
@@ -488,7 +488,7 @@ test('password recovery is complete and non-enumerating', async () => {
 });
 
 test('auth and public surfaces link to all policy pages', async () => {
-  const [app, joinPage] = await Promise.all([read('app/index.html'), read('app/join.html')]);
+  const [app, joinPage] = await Promise.all([Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')), read('app/join.html')]);
   for (const page of ['/privacy.html', '/terms.html', '/data-request.html']) {
     assert.ok(app.includes(`href="${page}"`));
     assert.ok(joinPage.includes(`href="${page}"`));

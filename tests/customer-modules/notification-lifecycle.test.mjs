@@ -5,7 +5,7 @@ import test from 'node:test';
 
 const root=new URL('../../',import.meta.url);
 const [app,ui]=await Promise.all([
-  readFile(new URL('app/index.html',root),'utf8'),
+  Promise.all([readFile(new URL('app/index.html',root),'utf8'),readFile(new URL('app/app.js',root),'utf8')]).then(f=>f.join('\n')),
   readFile(new URL('app/customer-ui.js',root),'utf8')
 ]);
 

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const start=app.indexOf('function pbResolveExposureRetryChannel');
 const end=app.indexOf('function pbOpenIssueModal',start);
 assert.ok(start>=0&&end>start,'retry-channel resolver must exist');

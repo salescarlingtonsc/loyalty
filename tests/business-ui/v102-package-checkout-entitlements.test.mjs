@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const app=fs.readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(fs.readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+fs.readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const migration=fs.readFileSync(new URL(
   '../../supabase/migrations/20260729150000_nestly_v102_package_checkout_entitlements.sql',
   import.meta.url

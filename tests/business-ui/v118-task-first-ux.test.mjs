@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const html = readFileSync(new URL('../../app/index.html', import.meta.url), 'utf8');
+const html = (readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 
 function section(start, end) {
   const from = html.indexOf(start);

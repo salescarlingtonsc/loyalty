@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
    "Suggested" strip with a one-tap prefill into the right editor. */
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const app = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
 test('the hidden attribute actually hides programme rows (tab filter is real)', () => {
   assert.match(app, /\.grow-programme-row\[hidden\]\{display:none!important\}/);
@@ -20,10 +20,14 @@ test('the hidden attribute actually hides programme rows (tab filter is real)', 
   assert.match(app, /const show=programmeView==='ongoing'\?isOngoing:!isOngoing;/);
 });
 
-test('tabs are named for what they show', () => {
-  assert.match(app, /programmeTab\('ongoing','Running'\)/);
-  assert.match(app, /programmeTab\('available','To set up'\)/);
-  assert.match(app, /Live for your customers right now\./);
+/* V180 owner instruction: the in-page tab strip was removed. The sidebar already offered
+   these same destinations, and carrying both was the duplicated navigation the owner
+   flagged. What this test protects — that each VIEW says plainly what it shows — now lives
+   on the headings the views render. */
+test('each programme view says plainly what it shows', () => {
+  assert.doesNotMatch(app, /class="programme-tabs"/);
+  assert.match(app, /'To set up':'List'/);
+  assert.match(app, /Running for your customers right now\./);
   assert.match(app, /suggested starting point you can use in one tap/);
 });
 
@@ -70,10 +74,10 @@ test('suggestion rows are queried from outerMain, not document', () => {
   assert.doesNotMatch(block, /document\.querySelectorAll\('\.grow-programme-row'\)/);
 });
 
-test('V174: two tabs only, Running is default, advanced settings stay reachable', () => {
-  assert.doesNotMatch(app, /programmeTab\('overview'/);
-  assert.doesNotMatch(app, /programmeTab\('settings'/);
-  assert.match(app, /\?String\(hashParam\):'ongoing';/, 'bare #\/grow must land on Running');
+test('V180: bare #/grow is the full list, and every old hash still resolves', () => {
+  assert.match(app, /\?String\(hashParam\):'list';/, 'bare #/grow must land on the full list');
+  assert.match(app, /\['ongoing','available','settings'\]\.includes\(String\(hashParam\|\|''\)\)/,
+    'removing a nav entry must not break its deep link');
   assert.match(app, /id="growSecondarySettings"/, 'advanced settings section must remain on-page');
   assert.match(app, /Nothing is running yet\./, 'Running must explain itself when empty');
 });

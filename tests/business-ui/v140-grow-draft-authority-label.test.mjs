@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
 
-const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const helperStart=app.indexOf('function promotionRpcErrorIsAmbiguousV104');
 const helperEnd=app.indexOf('function promotionPreviewMarkupV104',helperStart);
 assert.ok(helperStart>=0&&helperEnd>helperStart,'retry classifier must exist');

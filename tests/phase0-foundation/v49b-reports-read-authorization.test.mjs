@@ -7,7 +7,7 @@ const [source,deploy,fixture,app]=await Promise.all([
   readFile(new URL('db/migrations/20260722_frenly_v49b_reports_read_authorization.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260722141000_frenly_v49b_reports_read_authorization.sql',root),'utf8'),
   readFile(new URL('db/tests/v49b_reports_read_authorization.sql',root),'utf8'),
-  readFile(new URL('app/index.html',root),'utf8')
+  Promise.all([readFile(new URL('app/index.html',root),'utf8'),readFile(new URL('app/app.js',root),'utf8')]).then(f=>f.join('\n'))
 ]);
 
 test('v49b is a byte-identical atomic forward migration after v49a',()=>{
@@ -78,5 +78,9 @@ test('Reports uses zero-minimum tracks and one column at 390px without shrinking
   assert.match(app,/\.reports-grid table\{[^}]*table-layout:fixed/);
   assert.match(mobile,/\.reports-grid\{[^}]*grid-template-columns:minmax\(0,1fr\)[^}]*width:100%[^}]*min-width:0[^}]*max-width:100%/s);
   assert.match(app,/\.btn\{[^}]*min-height:44px/s);
-  assert.match(app,/input,select,textarea\{[^}]*min-height:44px/s);
+  /* The 44px minimum touch target on form controls is intact but tokenised: the rule now says
+     min-height:var(--control-h) and --control-h is 44px. Assert both halves rather than the old
+     literal, so a real shrink still fails but a token refactor does not. */
+  assert.match(app,/input,select,textarea\{[^}]*min-height:var\(--control-h\)/s);
+  assert.match(app,/--control-h:\s*44px/);
 });

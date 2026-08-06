@@ -53,7 +53,7 @@ test('v103 rollback-only SQL proves linked identity, cross-firm denial, outsider
 });
 
 test('customer programme RPC calls consume the UUID supplied by the repaired summary contract', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
 
   assert.match(app, /const b=summary\.business\|\|\{\}/);
   assert.match(app, /customerBusinessIdV103[\s\S]{0,400}summaryBusiness\?\.id/,

@@ -46,7 +46,7 @@ test('taxonomy rows are tenant isolated and internal triggers are not executable
 });
 
 test('retention UI uses firm labels while preserving controlled machine behavior', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /from\('firm_reward_taxonomy'\)\.select\('id,label,fulfillment_kind,active,sort'\)/i);
   assert.match(app, /data-kind="\$\{t\.fulfillment_kind\}"/i);
   assert.match(app, /reward_taxonomy_id:\$\('rt'\)\.value/i);

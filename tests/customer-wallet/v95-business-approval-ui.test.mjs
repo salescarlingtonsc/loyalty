@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 
-const app=fs.readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(fs.readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+fs.readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const platform=fs.readFileSync(new URL('../../app/platform-console.js',import.meta.url),'utf8');
 const mediaSync=fs.readFileSync(new URL('../../app/v95-media-sync.js',import.meta.url),'utf8');
 

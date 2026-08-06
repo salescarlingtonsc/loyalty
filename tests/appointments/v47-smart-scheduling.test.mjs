@@ -11,7 +11,7 @@ const migration = await readFile(path.join(
 const gatewayMigration = await readFile(path.join(
   repoRoot,'db/migrations/20260718180602_frenly_v19_public_gateway_security.sql'
 ),'utf8');
-const app = await readFile(path.join(repoRoot,'app/index.html'),'utf8');
+const app = ((await readFile(path.join(repoRoot,'app/index.html'),'utf8'))+'\n'+(await readFile(path.join(repoRoot,'app/app.js'),'utf8')));
 const concurrency = await readFile(path.join(
   repoRoot,'db/tests/v47_booking_concurrency.sh'
 ),'utf8');

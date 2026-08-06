@@ -4,7 +4,7 @@ import test from 'node:test';
 import {buildV145LaunchFreezeVisual} from './generate-v145-launch-freeze-visual.mjs';
 
 test('V145 browser fixture executes the current production Dashboard, P&L and inbox renderers',async()=>{
-  const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+  const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
   const fixture=await readFile(new URL('./v145-launch-freeze-visual.html',import.meta.url),'utf8');
   assert.equal(fixture,buildV145LaunchFreezeVisual(app));
   assert.match(fixture,/production-source-sha256/);

@@ -4,7 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const root=new URL('../../',import.meta.url);
-const app=await readFile(new URL('app/index.html',root),'utf8');
+const app=((await readFile(new URL('app/index.html',root),'utf8'))+'\n'+(await readFile(new URL('app/app.js',root),'utf8')));
 const migration=await readFile(new URL('db/migrations/20260718135940_frenly_v18_scalable_reporting.sql',root),'utf8');
 const permissionSources=(await Promise.all([
   'db/migrations/20260717_frenly_v10_1_policy_snapshot.sql',

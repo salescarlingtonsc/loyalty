@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const ui=await readFile(new URL('../../app/customer-ui.js',import.meta.url),'utf8');
 const sw=await readFile(new URL('../../app/sw.js',import.meta.url),'utf8');
 
@@ -67,5 +67,5 @@ test('global recovery guard is user-bound and precedes every authenticated route
 
 test('auth-control cache identity changes with the versioned customer UI asset',()=>{
   assert.match(app,/<script src="\/customer-ui\.js\?v=20260728-auth-controls"><\/script>/);
-  assert.match(sw,/CACHE_VERSION='v7-20260805-v167-customer-trust'/);
+  assert.match(sw,/CACHE_VERSION='v8-20260806-v177-production-polish'/);
 });

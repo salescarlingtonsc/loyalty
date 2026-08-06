@@ -7,7 +7,7 @@ const read = (path) => readFile(new URL(path, root), 'utf8');
 const [canonical, source, app] = await Promise.all([
   read('supabase/migrations/20260721135556_frenly_c42_consumer_registration_contracts.sql'),
   read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
-  read('app/index.html')
+  Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'))
 ]);
 
 function sqlBlock(name) {
@@ -206,10 +206,10 @@ test('Luna C42 remediation: completed and incomplete registration routes termina
 
   assert.match(registrationUi, /if\(profile\?\.profile!==null&&profile\?\.profile!==undefined\)\{[\s\S]*if\(!pendingCustomerBusinessSlug\)\{[\s\S]*nav\(takePendingCustomerDestination\('#\/wallet'\)\);return;\s*\}/i,
     'an already-complete customer must return to a validated customer destination, defaulting to the wallet');
-  assert.match(context, /customer_phone_registration===true\?sb\.rpc\('customer_get_profile'\)[\s\S]*customerSurfaceQualifies\(profile,customer\)/i,
+  assert.match(context, /customer_phone_registration===true\?(?:sb\.rpc|customerRpc)\('customer_get_profile'\)[\s\S]*customerSurfaceQualifies\(profile,customer\)/i,
     'qualification must resolve registration while preserving the legacy customer path');
   assert.match(context, /profileResult\.error&&!customer\.length[\s\S]*renderCustomerCapabilityRetry/i,
     'profile failure may fall back only to a real legacy customer persona');
-  assert.match(context, /features\.customer_phone_registration===true\?sb\.rpc\('customer_get_profile'\)/i,
+  assert.match(context, /features\.customer_phone_registration===true\?(?:sb\.rpc|customerRpc)\('customer_get_profile'\)/i,
     'existing email-wallet users remain on the prior wallet path while phone registration is disabled');
 });

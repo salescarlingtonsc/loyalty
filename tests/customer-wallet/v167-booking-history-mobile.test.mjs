@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const sql=await readFile(new URL('../../supabase/migrations/20260805043956_nestly_v167_customer_repeat_booking_history.sql',import.meta.url),'utf8');
 
 test('repeat booking derives a prior service only from the authenticated tenant appointment',()=>{
@@ -21,7 +21,9 @@ test('customer surfaces expose Book again only through booking-enabled paths',()
   assert.match(app,/function openCustomerRepeatBookingV167/);
   assert.match(app,/customer_get_repeat_booking_preference_v167/);
   assert.match(app,/data-repeat-booking data-business-slug/);
-  assert.match(app,/group\.bookingEnabled&&item\.status==='completed'/);
+  // v178: Book again is now offered on the Cancelled and History tabs (anything that is not a
+  // live upcoming booking), still only when the business has customer booking enabled.
+  assert.match(app,/group\.bookingEnabled&&group\.business_slug&&customerBookingAppointmentTabV178\(item\)!=='bookings'/);
   assert.match(app,/a\.status==='completed'/);
   assert.match(app,/bookingEnabled\?`<section[\s\S]*Book again/);
   assert.match(app,/repeat_service=/);

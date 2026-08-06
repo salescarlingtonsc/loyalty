@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
-const app=fs.readFileSync(path.join(root,'app/index.html'),'utf8');
+const app=(fs.readFileSync(path.join(root,'app/index.html'),'utf8')+'\n'+fs.readFileSync(path.join(root,'app/app.js'),'utf8'));
 const between=(start,end)=>app.slice(app.indexOf(start),app.indexOf(end,app.indexOf(start)));
 
 test('every mapped module and literal control passes the V123 readiness inventory',()=>{

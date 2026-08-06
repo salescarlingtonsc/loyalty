@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
    pass through by default, rewrite only machine-noise signatures. */
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const app = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
 const start = app.indexOf('const OWNER_ERROR_NOISE_RULES_V170');
 assert.ok(start > 0, 'OWNER_ERROR_NOISE_RULES_V170 must exist');

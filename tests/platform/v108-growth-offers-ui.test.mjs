@@ -316,7 +316,7 @@ test('mobile CSS uses one-column actions, 48px targets, and reduced motion',asyn
 
 test('index integrates all v108 owner and customer RPCs without changing classic QR route',async()=>{
   const [index,module]=await Promise.all([
-    read('app/index.html'),read('app/growth-offers.js')
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),read('app/growth-offers.js')
   ]);
   assert.match(index,/growth-offers\.css/);
   assert.match(index,/growth-offers\.js/);

@@ -1207,6 +1207,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260806070000",
+      "name": "nestly_v177_client_error_reports",
+      "sourcePath": "db/migrations/20260806_nestly_v177_client_error_reports.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260806085000",
       "name": "nestly_v173_pause_enforcement_gaps",
       "sourcePath": "db/migrations/20260806_nestly_v173_pause_enforcement_gaps.sql"
@@ -1258,6 +1264,12 @@
       "version": "20260806115900",
       "name": "nestly_v180_firm_directory_null_filter",
       "sourcePath": "db/migrations/20260806_nestly_v180_firm_directory_null_filter.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806125000",
+      "name": "nestly_v182_birthday_month_and_tier_schedule",
+      "sourcePath": "db/migrations/20260806_nestly_v182_birthday_month_and_tier_schedule.sql"
     }
   ]
 }

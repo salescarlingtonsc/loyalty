@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import test from 'node:test';
 
 const appPath = new URL('../../app/index.html', import.meta.url);
-const app = fs.readFileSync(appPath, 'utf8');
+const app = fs.readFileSync(appPath, 'utf8') + '\n' + fs.readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 const dbMigrationPath = new URL('../../db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql', import.meta.url);
 
 function section(start, end) {

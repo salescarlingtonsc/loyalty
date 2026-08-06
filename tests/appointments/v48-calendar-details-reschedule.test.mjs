@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../../',import.meta.url);
-const app=await readFile(new URL('app/index.html',root),'utf8');
+const app=((await readFile(new URL('app/index.html',root),'utf8'))+'\n'+(await readFile(new URL('app/app.js',root),'utf8')));
 const customerUi=await readFile(new URL('app/customer-ui.js',root),'utf8');
 const source=await readFile(new URL('db/migrations/20260722_frenly_v48_calendar_details_reschedule.sql',root),'utf8');
 const deploy=await readFile(new URL('supabase/migrations/20260722133000_frenly_v48_calendar_details_reschedule.sql',root),'utf8');

@@ -74,7 +74,7 @@ test('v39 paginates activity, packages, and appointments with bounded opaque cur
 });
 
 test('v39 capabilities are module- and data-aware and the SPA loads only relevant sections',async()=>{
-  const [sql,app]=await Promise.all([read(migrationPath),read('app/index.html')]);
+  const [sql,app]=await Promise.all([read(migrationPath),Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'))]);
   const caps=block(sql,'customer_portal_capabilities');
   for(const key of ['rewards','activity','appointments','booking_request','packages','membership']){
     assert.match(caps,new RegExp(`'${key}'`,'i'));
@@ -85,7 +85,7 @@ test('v39 capabilities are module- and data-aware and the SPA loads only relevan
   assert.match(caps,/'activity'[\s\S]*?loyalty_programs[\s\S]*?lp\.active[\s\S]*?points_ledger/i);
   assert.doesNotMatch(block(sql,'customer_get_reward_catalog'),/used_count[\s\S]{0,500}loyalty_redemption_reversals/i,
     'catalog usage limits must count the same immutable redemption rows as the authoritative claim path');
-  for(const [name] of functions)assert.match(app,new RegExp(`sb\\.rpc\\('${name}'`,'i'));
+  for(const [name] of functions)assert.match(app,new RegExp(`(?:sb\\.rpc|customerRpc)\\('${name}'`,'i'));
   assert.match(app,/capabilities\.rewards\?walletSectionShell/i);
   assert.match(app,/capabilities\.activity\?walletSectionShell/i);
   assert.match(app,/capabilities\.packages\?walletSectionShell/i);

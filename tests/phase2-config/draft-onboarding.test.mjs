@@ -24,7 +24,7 @@ test('existing loyalty configurations remain published', async () => {
 });
 
 test('the owner sees draft state and explicitly publishes it', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /Draft recommendation/);
   assert.match(app, /Nothing is earning or redeeming yet/);
   assert.match(app, /configuration_status:'published'/);

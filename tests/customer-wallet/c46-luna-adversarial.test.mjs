@@ -246,7 +246,7 @@ test('Luna C46-R1: disabled C44 authority preserves history but removes unread a
 });
 
 test('Luna C46-R1: UI sync/offline failure clears stale actions and retry repeats sync before list', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const inbox = app.slice(
     app.indexOf('async function renderCustomerInAppInbox'),
     app.indexOf('function renderCustomerNotificationPreferences')

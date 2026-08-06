@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const read=relative=>fs.readFileSync(path.join(repoRoot,relative),'utf8');
-const app=read('app/index.html');
+const app=Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'));
 const platform=read('app/platform-console.js');
 
 const between=(source,start,end)=>{

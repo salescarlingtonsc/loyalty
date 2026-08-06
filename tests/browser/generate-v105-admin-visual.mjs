@@ -3,6 +3,11 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 
 const APP_URL=new URL('../../app/index.html',import.meta.url);
+/* The application script was extracted from index.html into app.js. The .test.mjs files
+   pass both files joined; this CLI path must read the same pair or it regenerates a
+   fixture from a file that no longer contains the components. */
+const APP_SCRIPT_URL=new URL('../../app/app.js',import.meta.url);
+const readAppSource=async()=>(await Promise.all([readFile(APP_URL,'utf8'),readFile(APP_SCRIPT_URL,'utf8')])).join('\n');
 const PLATFORM_CSS_URL=new URL('../../app/platform-console.css',import.meta.url);
 const PLATFORM_JS_URL=new URL('../../app/platform-console.js',import.meta.url);
 const PEEKAA_LOGO_URL=new URL('../../app/brand/peekaa-logo.png',import.meta.url);
@@ -10,7 +15,7 @@ const FIXTURE_URL=new URL('./v105-admin-visual.html',import.meta.url);
 
 export async function buildV105AdminVisualFixture(){
   const [app,platformCss,platformJs,peekaaLogo]=await Promise.all([
-    readFile(APP_URL,'utf8'),readFile(PLATFORM_CSS_URL,'utf8'),
+    readAppSource(),readFile(PLATFORM_CSS_URL,'utf8'),
     readFile(PLATFORM_JS_URL,'utf8'),readFile(PEEKAA_LOGO_URL)
   ]);
   const baseCss=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];

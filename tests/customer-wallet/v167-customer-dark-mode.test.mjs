@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 
 test('system dark mode is scoped to customer and booking surfaces',()=>{
-  assert.match(app,/@media\(prefers-color-scheme:dark\)\{[\s\S]*\.customer-surface,\.customer-offer-detail-modal \.modal-card\{/);
+  // v178: the company-details sheet is appended to body like the offer sheet, so it joins the
+  // same dark token scope.
+  assert.match(app,/@media\(prefers-color-scheme:dark\)\{[\s\S]*\.customer-surface,\.customer-offer-detail-modal \.modal-card,\.customer-business-detail-modal \.modal-card\{/);
   assert.match(app,/wallet-shell customer-shell customer-surface/);
   assert.match(app,/portal customer-surface/);
   assert.match(app,/wallet-shell customer-surface/);

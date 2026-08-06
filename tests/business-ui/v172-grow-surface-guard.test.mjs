@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
    tabs. These assertions pin both layers of the fix. */
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const app = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
 test('mountGrowSurface refuses unknown surfaces instead of crashing', () => {
   const fn = app.slice(app.indexOf('async function mountGrowSurface'), app.indexOf('const preserveExactRoute'));

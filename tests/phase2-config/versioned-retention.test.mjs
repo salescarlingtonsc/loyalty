@@ -118,7 +118,7 @@ test('v37b RPCs are registered in both v21 authenticated allowlists', async () =
 });
 
 test('retention UI uses RPC drafts and keeps draft identities out of live reads', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /sb\.rpc\('get_retention_config_draft'/i);
   assert.match(app, /sb\.rpc\('save_retention_program_draft'/i);
   assert.match(app, /sb\.rpc\('save_reward_taxonomy'/i);

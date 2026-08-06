@@ -53,7 +53,7 @@ test('staging tables expose owner reads but no browser writes', async () => {
 });
 
 test('the shipped importer no longer inserts business records row by row', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const runImport = app.match(/async function runImport\([\s\S]*?\n}\n\/\* The modal/);
   assert.ok(runImport, 'runImport implementation not found');
   assert.match(runImport[0], /sb\.rpc\('stage_import_rows'/);
@@ -64,13 +64,13 @@ test('the shipped importer no longer inserts business records row by row', async
 });
 
 test('frontend preserves invalid source values for backend validation', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.doesNotMatch(app, /gender.*transform:/i);
   assert.doesNotMatch(app, /birth_date.*transform:/i);
 });
 
 test('staff, branch and reservation upload controls use the shared importer', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   for (const entity of ['staff', 'branches', 'reservations']) {
     assert.match(app, new RegExp(`${entity}:\\{title:`));
     assert.match(app, new RegExp(`importBtn\\('${entity}'(?:,[^)]*)?\\)`));

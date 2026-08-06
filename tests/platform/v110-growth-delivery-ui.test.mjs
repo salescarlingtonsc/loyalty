@@ -320,7 +320,7 @@ test('UI RPC names and lifecycle statuses stay aligned to the installed migratio
 test('active card stays aligned to the exact v108 briefing and governed-copy contract',async()=>{
   const [module,index,migration]=await Promise.all([
     read('app/growth-offers.js'),
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('supabase/migrations/20260729171045_nestly_v108_measured_bringback_loop.sql')
   ]);
   for(const template of ['welcome_back','member_thank_you','simple_saving']){

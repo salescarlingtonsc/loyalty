@@ -4,23 +4,33 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const indexHtml = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
+const appScript = await readFile(new URL('../../app/app.js', import.meta.url), 'utf8');
+
+// The SPA's JavaScript is whatever the browser executes at boot: any remaining
+// executable inline scripts in the shell markup, plus the deferred external
+// bundle app/app.js that now carries the application itself. Every one of them
+// must parse before browser boot.
+function executableInlineScripts(html) {
+  return [...html.matchAll(/<script(?<attrs>[^>]*)>(?<source>[\s\S]*?)<\/script>/gi)]
+    .filter(({ groups }) => !/\bsrc\s*=/i.test(groups?.attrs || ''))
+    .filter(({ groups }) => {
+      const type = (groups?.attrs || '').match(/\btype\s*=\s*["']([^"']+)["']/i)?.[1]?.toLowerCase();
+      return !type || ['text/javascript', 'application/javascript'].includes(type);
+    })
+    .map(({ groups }, index) => ({ filename: `app/index.html:inline-${index + 1}.js`, source: groups?.source || '' }));
+}
 
 test('every executable inline script in the SPA parses before browser boot', () => {
-  const scripts = [...indexHtml.matchAll(/<script(?<attrs>[^>]*)>(?<source>[\s\S]*?)<\/script>/gi)];
+  const scripts = [...indexHtml.matchAll(/<script(?<attrs>[^>]*)>/gi)];
   assert.ok(scripts.length > 0, 'index.html must contain executable scripts');
+  assert.match(indexHtml, /<script[^>]*\bsrc\s*=\s*["'][^"']*\/?app\.js["']/i,
+    'index.html must load the application bundle app/app.js');
 
-  let checked = 0;
-  scripts.forEach(({ groups }, index) => {
-    const attrs = groups?.attrs || '';
-    if (/\bsrc\s*=/i.test(attrs)) return;
-    const type = attrs.match(/\btype\s*=\s*["']([^"']+)["']/i)?.[1]?.toLowerCase();
-    if (type && !['text/javascript', 'application/javascript'].includes(type)) return;
-    checked += 1;
-    assert.doesNotThrow(
-      () => new vm.Script(groups?.source || '', { filename: `app/index.html:inline-${index + 1}.js` }),
-      `inline script ${index + 1} must be valid JavaScript`
-    );
-  });
+  const units = [...executableInlineScripts(indexHtml), { filename: 'app/app.js', source: appScript }];
+  assert.ok(units.length > 0, 'at least one executable script must be syntax-checked');
 
-  assert.ok(checked > 0, 'at least one executable inline script must be syntax-checked');
+  for (const { filename, source } of units) {
+    assert.doesNotThrow(() => new vm.Script(source, { filename }),
+      `${filename} must be valid JavaScript`);
+  }
 });

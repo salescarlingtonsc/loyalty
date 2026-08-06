@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {existsSync,readFileSync} from 'node:fs';
 import test from 'node:test';
 
-const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const migrationUrl=new URL(
   '../../supabase/migrations/20260801193000_nestly_v130_self_serve_business_onboarding.sql',
   import.meta.url

@@ -56,7 +56,7 @@ test('v21 is the single canonical post-v20 security migration', async () => {
 
 test('authenticated RPC allowlist plus every exact pending forward grant cover the shipped SPA', async () => {
   const [app, migration, plan, c42, c44, v74] = await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read(migrationPath),
     read('supabase/canonical-migration-order.plan.json').then(JSON.parse),
     read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
@@ -112,7 +112,7 @@ test('authenticated RPC allowlist plus every exact pending forward grant cover t
 
 test('v21 retains only the exact legacy manual points-expiry RPC signature', async () => {
   const [app, legacy, migration, runtimeTest] = await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('db/migrations/20260716_frenly_v3_engine.note.md'),
     read(migrationPath),
     read(sqlTestPath),

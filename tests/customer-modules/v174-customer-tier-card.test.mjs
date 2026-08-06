@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
    (progress bar, exact remaining, next-tier teaser) was computed and discarded. */
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const app = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
 const start = app.indexOf('function customerTierCardMarkupV174');
 assert.ok(start > 0, 'tier card markup fn must exist');

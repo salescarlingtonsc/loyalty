@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const app = readFileSync(new URL('../../app/index.html', import.meta.url), 'utf8');
+const app = (readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const rules = readFileSync(new URL('../../docs/insights/V153-MERCHANT-INSIGHTS-RULES.md', import.meta.url), 'utf8');
 const readiness = readFileSync(new URL('../../docs/insights/V153-MULTI-BRANCH-READINESS.md', import.meta.url), 'utf8');
 

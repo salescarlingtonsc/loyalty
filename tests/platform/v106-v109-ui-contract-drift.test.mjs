@@ -9,7 +9,7 @@ test('v106 and v107 UI requests match the migration signatures and share one non
   const [v106,v107,index,revenue]=await Promise.all([
     read('supabase/migrations/20260729171008_nestly_v106_revenue_truth_foundation.sql'),
     read('supabase/migrations/20260729171010_nestly_v107_customer_lifecycle_contract.sql'),
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/revenue-truth.js')
   ]);
   assert.match(v106,/get_revenue_truth_v106\(\s*p_business uuid,\s*p_from date,\s*p_to date,\s*p_branch uuid default null,\s*p_as_of timestamptz default clock_timestamp\(\)/s);
@@ -54,7 +54,7 @@ test('v106 and v107 UI requests match the migration signatures and share one non
 test('v108 refresh uses the exact branch-scoped RPC and every visible state is implemented',async()=>{
   const [migration,index,growth]=await Promise.all([
     read('supabase/migrations/20260729171045_nestly_v108_measured_bringback_loop.sql'),
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/growth-offers.js')
   ]);
   assert.match(migration,/refresh_growth_recommendation_v108\(\s*p_business uuid,\s*p_branch uuid default null\s*\)/s);
@@ -72,7 +72,7 @@ test('v108 refresh uses the exact branch-scoped RPC and every visible state is i
 test('v109 UI calls all migration parameters and uses the server currency without an SGD fallback',async()=>{
   const [migration,index,sector]=await Promise.all([
     read('supabase/migrations/20260729171100_nestly_v109_economics_driver_sector_policy.sql'),
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/sector-economics.js')
   ]);
   assert.match(migration,/get_period_economics_v109\(\s*p_business uuid,\s*p_from date,\s*p_to date,\s*p_branch uuid default null,\s*p_investment_cents bigint default null,\s*p_investment_reference text default null,\s*p_as_of timestamptz default statement_timestamp\(\)\s*\)/s);
@@ -93,7 +93,7 @@ test('v109 UI calls all migration parameters and uses the server currency withou
 
 test('branch and heading composition regressions fail closed',async()=>{
   const [index,revenue,sector]=await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/revenue-truth.js'),
     read('app/sector-economics.js')
   ]);

@@ -32,7 +32,7 @@ test('recommendation behavior is explicit heuristic text, not a financial rule',
   assert.match(sql,/Replace this with an item or service that fits your margins/i);
 });
 test('owner UI opens and edits the generated draft before an explicit publish',async()=>{
-  const html=await read('app/index.html');
+  const html=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(html,/Create recommended draft/i);
   assert.match(html,/generate_retention_recommendation/i);
   assert.match(html,/refreshLoyaltyPanel\(data\.model,data\.draft_config_version_id,data,'Recommended Grow draft ready\.',false,editorIntent\)/i);

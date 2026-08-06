@@ -46,7 +46,7 @@ test('branch-effective module projection is authenticated RPC-only and fail-clos
 });
 
 test('Quick Earn resolves every assigned branch before showing write controls',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const till=app.slice(
     app.indexOf('async function tillPage()'),
     app.indexOf('/* ---------- sales ---------- */')

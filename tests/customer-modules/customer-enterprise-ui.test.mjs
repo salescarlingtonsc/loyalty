@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 
 const root=new URL('../../',import.meta.url);
 const [app,ui]=await Promise.all([
-  readFile(new URL('app/index.html',root),'utf8'),
+  Promise.all([readFile(new URL('app/index.html',root),'utf8'),readFile(new URL('app/app.js',root),'utf8')]).then(f=>f.join('\n')),
   readFile(new URL('app/customer-ui.js',root),'utf8')
 ]);
 
@@ -146,7 +146,11 @@ test('targets, mobile layouts, reflowing tables, and reduced motion are explicit
   assert.match(app,/\.wallet-head>a\.logo\{[^}]*display:inline-flex[^}]*align-items:center[^}]*min-height:44px/s);
   assert.match(app,/\.challenge-retry\{[^}]*display:inline-flex[^}]*align-items:center[^}]*min-height:44px/s);
   assert.match(app,/\.skip-link\{[^}]*min-height:44px/s);
-  assert.match(app,/input,select,textarea\{[^}]*min-height:44px/s);
+  /* The 44px minimum touch target on form controls is intact but tokenised: the rule now says
+     min-height:var(--control-h) and --control-h is 44px. Assert both halves rather than the old
+     literal, so a real shrink still fails but a token refactor does not. */
+  assert.match(app,/input,select,textarea\{[^}]*min-height:var\(--control-h\)/s);
+  assert.match(app,/--control-h:\s*44px/);
   assert.match(app,/@media\(max-width:375px\)/);
   assert.match(app,/@media\(min-width:376px\) and \(max-width:768px\)/);
   assert.match(app,/@media\(max-width:767px\)[\s\S]*content:attr\(data-label\)/);
@@ -162,9 +166,20 @@ test('dashboard and customer loyalty detail preserve accessible names and one pa
 
   assert.match(dashboard,/<label class="sr-only" for="df">Dashboard start date<\/label>/);
   assert.match(dashboard,/<label class="sr-only" for="dt">Dashboard end date<\/label>/);
-  assert.match(app,/id="branchSel"[^>]*aria-label="Business branch"/);
-  for(const [id,label] of [['trName','Tier name'],['trTh','Tier threshold'],['trMul','Points earning multiplier'],['trPerk','Tier perk note']]){
-    assert.match(loyalty,new RegExp(`<label class="sr-only" for="${id}">${label}<\\/label>`));
+  /* The branch selector is now rendered into a wrapper, so the id no longer sits on the
+     <select> itself. What must not regress is its accessible name, so pin that. */
+  assert.match(app,/<select class="qbtn" aria-label="Business branch"/);
+  /* Every tier control still needs a programmatic label; V182 promoted three of them from
+     sr-only to VISIBLE labels, because an unlabelled "1.25" box was unreadable to sighted
+     owners too. The invariant is "has a <label for=>", not "has a hidden one". trPerk stays
+     sr-only: it sits inside a titled <details>, so a second visible label would be noise. */
+  for(const id of ['trName','trTh','trMul','trPerk']){
+    assert.match(loyalty,new RegExp(`<label(?: class="sr-only")? for="${id}">`),
+      `${id} must have a programmatic label`);
+  }
+  for(const id of ['trName','trTh','trMul']){
+    assert.doesNotMatch(loyalty,new RegExp(`<label class="sr-only" for="${id}">`),
+      `${id} is a primary tier field and must be visibly labelled`);
   }
   assert.doesNotMatch(walletCard,/h\$\{detail\?'1':'2'\}/);
   assert.match(walletCard,/<h2>\$\{esc\(business\.name\|\|'Business'\)\} rewards<\/h2>/);
@@ -242,10 +257,18 @@ test('progressive enhancement is scoped to approved customer routes',()=>{
 test('customer list has search, keyboard links, pagination, export/import, and latest-response safety',()=>{
   assert.match(clients,/id="clientSearch" type="search"/);
   assert.match(clients,/Search customers by name or phone/);
-  assert.match(clients,/sb\.rpc\('staff_list_customers_v129'/);
+  /* The customer directory must read through a tenant-scoped, versioned RPC rather than a raw
+     table query. The VERSION deliberately is not pinned: this reader has moved v129 -> v154 ->
+     v155 and each bump broke this assertion without anything actually regressing. What matters
+     is the shape, so that is what is asserted. */
+  assert.match(clients,/sb\.rpc\('staff_list_customers_v\d+'/);
   assert.match(clients,/const customerRpcSearch=normalizeCustomerSearchPhoneDigits\(clientSearch\)\|\|clientSearch/);
-  assert.match(clients,/const customerDirectoryPage=\(search,inactiveDays,offset\)=>sb\.rpc\('staff_list_customers_v129',[\s\S]*p_search:search\|\|null/);
-  assert.match(clients,/customerDirectoryPage\([\s\S]*customerRpcSearch,clientInactiveDays,clientPage\*CLIENT_PAGE_SIZE/);
+  assert.match(clients,/const customerDirectoryPage=[\s\S]{0,400}sb\.rpc\('staff_list_customers_v\d+',[\s\S]{0,120}p_search:search\|\|null/);
+  /* The inactivity filter must cover the WHOLE directory, not just the page on screen. It used
+     to be a server-side p_inactive_days argument; it is now a full paged fetch plus a
+     client-side bucket filter. Either is correct; filtering one page is not. */
+  assert.match(clients,/if\(clientInactiveBucket\)\{[\s\S]{0,200}await allCustomerDirectoryRows\(\)/);
+  assert.match(clients,/while\(total===null\|\|offset<total\)/);
   const normalizerLine = app.split('\n')
     .find((line) => line.startsWith('const normalizeCustomerSearchPhoneDigits='));
   assert.ok(normalizerLine, 'customer phone-search normalizer must be defined');
@@ -311,7 +334,10 @@ test('customer routes paint loading, expose retryable failures, and ignore late 
   assert.match(app,/Promise\.resolve\(pageResult\)\.catch\(error=>/);
   assert.match(app,/main\.innerHTML=CUI\.errorState\(/);
   assert.match(app,/retry\.onclick=\(\)=>renderShell\(page\)/);
-  assert.match(clients,/if\(!isCustomersCurrent\(\)\)return;[\s\S]{0,100}if\(error\)\{saveButton\.disabled=false/);
+  /* A late response must not clobber a newer one, and a failed save must re-enable the button.
+     The re-enable moved from a raw saveButton.disabled=false to the shared CUI.setButtonBusy
+     helper; the ordering guarantee is what matters. */
+  assert.match(clients,/if\(!isCustomersCurrent\(\)\)return;[\s\S]{0,120}if\(error\)\{CUI\.setButtonBusy\(saveButton,\{busy:false\}\)/);
   assert.ok((detail.match(/if\(!isClientDetailCurrent\(\)\)return/g)||[]).length>=5);
   assert.ok((till.match(/if\(!isTillCurrent\(\)\)return/g)||[]).length>=5);
   assert.ok((loyalty.match(/if\(!isLoyaltyCurrent\(\)\)return/g)||[]).length>=10);

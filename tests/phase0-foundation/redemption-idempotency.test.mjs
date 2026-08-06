@@ -29,7 +29,7 @@ test('keyless classic redemption is no longer application executable', async () 
 });
 
 test('normal merchant redemption is scanner-only in the shipped browser', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const calls = [...app.matchAll(/sb\.rpc\('(redeem_points|redeem_reward(?:_at_context)?)',\{([\s\S]*?)\}\)/g)];
   assert.equal(calls.length, 0,
     'the browser must not expose a direct redemption writer outside the branch-scoped merchant scanner');

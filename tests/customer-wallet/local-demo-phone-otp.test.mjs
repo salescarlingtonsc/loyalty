@@ -6,7 +6,7 @@ const config = await readFile(
   new URL('../../supabase/config.toml', import.meta.url),
   'utf8'
 );
-const app = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
+const app = ((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 
 test('tracked Supabase configuration cannot push a fixed OTP to a hosted project', () => {
   assert.doesNotMatch(config, /\[auth\.sms\.test_otp\]/);

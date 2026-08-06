@@ -3,6 +3,11 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 
 const APP_URL=new URL('../../app/index.html',import.meta.url);
+/* The application script was extracted from index.html into app.js. The .test.mjs files
+   pass both files joined; this CLI path must read the same pair or it regenerates a
+   fixture from a file that no longer contains the components. */
+const APP_SCRIPT_URL=new URL('../../app/app.js',import.meta.url);
+const readAppSource=async()=>(await Promise.all([readFile(APP_URL,'utf8'),readFile(APP_SCRIPT_URL,'utf8')])).join('\n');
 const CUSTOMER_UI_URL=new URL('../../app/customer-ui.js',import.meta.url);
 const FIXTURE_URL=new URL('./v129-trial-test-visual.html',import.meta.url);
 
@@ -146,7 +151,7 @@ export function buildV129TrialTestVisual(app,customerUi){
 }
 
 if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url){
-  const [app,customerUi]=await Promise.all([readFile(APP_URL,'utf8'),readFile(CUSTOMER_UI_URL,'utf8')]);
+  const [app,customerUi]=await Promise.all([readAppSource(),readFile(CUSTOMER_UI_URL,'utf8')]);
   await writeFile(FIXTURE_URL,buildV129TrialTestVisual(app,customerUi));
   process.stdout.write(`${fileURLToPath(FIXTURE_URL)}\n`);
 }

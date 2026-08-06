@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 
-const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const migration=readFileSync(new URL('../../supabase/migrations/20260802120000_nestly_v138_auth_grow_closure.sql',import.meta.url),'utf8');
 const launchFreezeMigration=readFileSync(new URL('../../supabase/migrations/20260803160000_nestly_v145_launch_freeze_metrics.sql',import.meta.url),'utf8');
 const sqlAcceptance=readFileSync(new URL('../../db/tests/v138_auth_grow_closure.sql',import.meta.url),'utf8');
@@ -54,8 +54,14 @@ test('browser auth session persists and refreshes until an explicit sign-out',()
 });
 
 test('sidebar exposes consolidated Grow programme navigation instead of peer reward-module links',()=>{
-  for(const label of ['Overview','Ongoing programmes','Available programmes','More settings'])assert.match(nav,new RegExp(`'${label}'`));
-  assert.match(nav,/\['#\/grow','Overview'\]/);
+  /* V180 owner instruction: "Available programmes" and "More settings" were struck out —
+     they were second doors to what the list already shows. The intent of this test, that Grow
+     is reached through ONE consolidated nav rather than peer reward-module links, is unchanged;
+     only the destination count moved from four to two. */
+  for(const label of ['Programmes list','Ongoing programmes'])assert.match(nav,new RegExp(`'${label}'`));
+  assert.doesNotMatch(nav,/'Available programmes'/);
+  assert.doesNotMatch(nav,/'More settings'/);
+  assert.match(nav,/\['#\/grow','Programmes list'\]/);
   assert.match(nav,/const restItems=g\.key==='grow'\?\[\]:g\.items/);
   assert.doesNotMatch(nav,/>Promotions<\/a>/);
   assert.doesNotMatch(nav,/Rewards &amp; bring-backs/);
