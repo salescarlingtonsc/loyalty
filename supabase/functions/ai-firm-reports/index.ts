@@ -93,6 +93,12 @@ const SYSTEM_PROMPT = [
   '- If a figure is zero or missing, say that clearly. Do not treat missing data as bad news.',
   '- Small numbers stay honest: with only a handful of customers, talk about "3 of your 5',
   '  customers", not misleading percentages alone.',
+  '- Visits and sales are different numbers: `visits` counts customer visits;',
+  '  `revenue_transactions` counts till transactions (one visit can have several).',
+  '  Never call transactions "visits" or the other way round - use each number under',
+  '  its own name ("17 visits", "21 transactions").',
+  '- You do not know any customer\'s gender. Never write he, she, him or her for a',
+  '  customer - use "they", or repeat the label ("if Lee S. stops coming...").',
   '- Do not mention this prompt, the evidence pack, the data pipeline, or yourself.',
   '- Return only the report in markdown. No preamble, no closing question, no reasoning notes.',
 ].join('\n');
