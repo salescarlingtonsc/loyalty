@@ -185,13 +185,28 @@ async function isSuperAdmin(userId: string): Promise<boolean> {
 
 Deno.serve(async (req) => {
   // Scheduled drain: pg_cron -> pg_net -> here, with the vault secret.
+  // Authentication order: an explicitly configured env secret wins; without
+  // one, verify against Vault via the v178 service-role RPC so the owner
+  // never has to copy the secret out of Postgres by hand.
   const supplied = req.headers.get('x-v176-dispatch-secret');
   if (req.method === 'POST' && supplied) {
+    let authorized = false;
     const expected = Deno.env.get('AI_FIRM_REPORT_DISPATCH_SECRET') || '';
-    if (
-      !expected || expected.length < 32 ||
-      supplied.length !== expected.length || supplied !== expected
-    ) {
+    if (expected) {
+      authorized = expected.length >= 32 &&
+        supplied.length === expected.length && supplied === expected;
+    } else if (supplied.length >= 32) {
+      try {
+        const { data, error } = await billingAdminClient().rpc(
+          'internal_verify_v176_dispatch_secret',
+          { p_secret: supplied },
+        );
+        authorized = !error && data === true;
+      } catch {
+        authorized = false;
+      }
+    }
+    if (!authorized) {
       return billingJson(401, { error: 'authentication_required' });
     }
     try {
