@@ -15637,6 +15637,7 @@ function studioEstimate(rule,agg){
    a half-built list diff would read as completeness. The card says where those live instead. */
 const GROW_PUBLISH_MODEL_LABEL_V170={classic:'Simple points',points_tiers:'Points, rewards and tiers',stamps:'Stamp card'};
 const GROW_PUBLISH_EXPIRY_LABEL_V170={none:'Never expire',inactivity:'Expire after inactivity',fixed:'Fixed shelf life from earn'};
+const GROW_PUBLISH_TIER_BASIS_LABEL_V175={visits:'Number of visits',spend:'Lifetime spend',points_earned:'Lifetime points earned'};
 function growPublishFieldRowsV170(live,draft){
   /* No draft programme row means publication changes none of these fields — say nothing changed
      rather than rendering every live value as "→ not set". */
@@ -15644,17 +15645,29 @@ function growPublishFieldRowsV170(live,draft){
   const num=v=>(v==null||v===''||!Number.isFinite(Number(v)))?null:Number(v);
   const text=v=>(v==null||v==='')?null:String(v);
   const plain=v=>v==null?'not set':String(v);
+  /* V175: only compare fields the PUBLISHED model actually uses. redeem_points and
+     reward_credit_cents drive redemption solely in the 'classic' model —
+     app.redeem_points_v40_internal raises "this business redeems points through its reward
+     catalog" for any other model, so under points_tiers/stamps those columns are inert and a
+     draft can carry stale values with zero customer effect. Listing them made an inert change
+     read as "Points needed to redeem 1500 → 150", which looks like a serious downgrade and
+     stops an owner from publishing a correct draft. Stamp fields are likewise classic/stamps-
+     irrelevant outside the stamps model. */
+  const model=String(draft?.loyalty_model||live?.loyalty_model||'');
+  const usesClassicRedemption=model==='classic';
+  const usesStamps=model==='stamps';
   const fields=[
     {label:'Programme status',read:p=>p?.active==null?null:(p.active===true?'Active':'Paused'),show:plain},
     {label:'Loyalty model',read:p=>text(p?.loyalty_model),show:v=>v==null?'not set':(GROW_PUBLISH_MODEL_LABEL_V170[v]||v)},
-    {label:'Points earned per $1 spent',read:p=>num(p?.earn_points_per_dollar),show:plain},
-    {label:'Points needed to redeem',read:p=>num(p?.redeem_points),show:plain},
-    {label:'Credit minted on redemption',read:p=>num(p?.reward_credit_cents),show:v=>v==null?'not set':studioMoney(v)},
-    {label:'Stamps needed for a reward',read:p=>num(p?.stamp_target),show:plain},
-    {label:'Spend per stamp',read:p=>num(p?.stamp_per_cents),show:v=>v==null?'not set':studioMoney(v)},
+    {label:'Points earned per $1 spent',read:p=>num(p?.earn_points_per_dollar),show:plain,when:!usesStamps},
+    {label:'Points needed to redeem',read:p=>num(p?.redeem_points),show:plain,when:usesClassicRedemption},
+    {label:'Credit minted on redemption',read:p=>num(p?.reward_credit_cents),show:v=>v==null?'not set':studioMoney(v),when:usesClassicRedemption},
+    {label:'Stamps needed for a reward',read:p=>num(p?.stamp_target),show:plain,when:usesStamps},
+    {label:'Spend per stamp',read:p=>num(p?.stamp_per_cents),show:v=>v==null?'not set':studioMoney(v),when:usesStamps},
+    {label:'Tier level is earned by',read:p=>text(p?.tier_basis),show:v=>v==null?'not set':(GROW_PUBLISH_TIER_BASIS_LABEL_V175[v]||v),when:model==='points_tiers'},
     {label:'Expiry',read:p=>text(p?.expiry_mode),show:v=>v==null?'not set':(GROW_PUBLISH_EXPIRY_LABEL_V170[v]||v)},
     {label:'Expiry window (days)',read:p=>num(p?.expiry_days),show:plain}
-  ];
+  ].filter(f=>f.when!==false);
   return fields.map(f=>({label:f.label,before:f.read(live),after:f.read(draft),show:f.show}))
     .filter(row=>row.before!==row.after)
     .map(row=>({label:row.label,before:row.show(row.before),after:row.show(row.after)}));
