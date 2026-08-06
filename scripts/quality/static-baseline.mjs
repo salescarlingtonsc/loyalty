@@ -86,11 +86,27 @@ function assertTagContains(source, pattern, message) {
   assert.match(source, pattern, message);
 }
 
+/* A <link rel=preconnect|dns-prefetch> names an ORIGIN to warm; it fetches no code and can carry
+   no version, so it is not a dependency url. Everything else that names a CDN still must pin an
+   exact version. */
+const CONNECTION_HINT_PATTERN = /<link\b[^>]*\brel=["'](?:preconnect|dns-prefetch)["'][^>]*>/gi;
+function connectionHintRanges(source) {
+  const ranges = [];
+  let match;
+  CONNECTION_HINT_PATTERN.lastIndex = 0;
+  while ((match = CONNECTION_HINT_PATTERN.exec(source))) {
+    ranges.push([match.index, match.index + match[0].length]);
+  }
+  return ranges;
+}
+
 function extractAttributeUrls(source) {
   const urls = [];
+  const hints = connectionHintRanges(source);
   const attrPattern = /\b(?:src|href)=["']([^"']+)["']/g;
   let match;
   while ((match = attrPattern.exec(source))) {
+    if (hints.some(([start, end]) => match.index >= start && match.index < end)) continue;
     try {
       const parsed = new URL(match[1]);
       urls.push({

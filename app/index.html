@@ -17,8 +17,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The Supabase client below is a RENDER-BLOCKING third-party script; warming the connection
+     here removes its DNS + TCP + TLS cost from the critical path on a cold mobile network. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/platform-console.css?v=20260806-v183-list-stage">
 <link rel="stylesheet" href="/pwa.css">
 <link rel="stylesheet" href="/revenue-truth.css">
 <link rel="stylesheet" href="/growth-offers.css">
@@ -1520,12 +1522,18 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 <script src="/customer-ui.js?v=20260728-auth-controls"></script>
 <script src="/grow-recommender.js" defer></script>
 <script src="/platform-crm-utils.js" defer></script>
-<script src="/platform-console.js?v=20260806-v183-list-stage" defer></script>
+<!-- v184: the platform console is ~210KB of JS+CSS that only a Peekaa admin can ever use, and it
+     was being downloaded by every customer opening a booking page. app.js fetches these two on
+     demand when a #/platform route is requested (loadPlatformConsoleAssetsV184). This element is
+     still the ONE place to bump the console's cache-busting version. -->
+<script type="application/json" id="platformConsoleAssets">
+{"js":"/platform-console.js?v=20260806-v183-list-stage","css":"/platform-console.css?v=20260806-v183-list-stage"}
+</script>
 <script src="/v95-media-sync.js?v=20260728-atomic-media" defer></script>
 <script src="/revenue-truth.js" defer></script>
 <script src="/growth-offers.js" defer></script>
 <script src="/sector-economics.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
-<script src="/app.js?b=0f3f9d619956" defer></script>
+<script src="/app.js?b=d8661cc85086" defer></script>
 </body>
 </html>

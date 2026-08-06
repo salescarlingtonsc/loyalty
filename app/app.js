@@ -1497,6 +1497,36 @@ async function loadCustomerFeatureCapabilities({refresh=false}={}){
   return customerFeatureCapabilities;
 }
 
+/* v184: the Peekaa admin console is ~210KB of JS + CSS that only a platform admin can use. It
+   used to be a plain <script defer> in index.html, so every customer opening a booking page paid
+   for it. Its urls live in the #platformConsoleAssets manifest (one place to bump the version);
+   this fetches them the first time a #/platform route is requested and caches the promise, so a
+   second admin navigation costs nothing. Resolves to the console module, or null when it cannot
+   be loaded — the caller already renders a recoverable error for that. */
+let platformConsoleAssetsPromiseV184=null;
+function loadPlatformConsoleAssetsV184(){
+  if(globalThis.NestlyPlatformConsole)return Promise.resolve(globalThis.NestlyPlatformConsole);
+  if(platformConsoleAssetsPromiseV184)return platformConsoleAssetsPromiseV184;
+  let assets={};
+  try{assets=JSON.parse(document.getElementById('platformConsoleAssets')?.textContent||'{}')}catch{assets={}}
+  const scriptUrl=String(assets.js||''),styleUrl=String(assets.css||'');
+  if(!scriptUrl.startsWith('/')){
+    /* A missing or tampered manifest must not become a script injection. */
+    return Promise.resolve(null);
+  }
+  platformConsoleAssetsPromiseV184=new Promise(resolve=>{
+    if(styleUrl.startsWith('/')&&!document.querySelector(`link[href="${CSS.escape(styleUrl)}"]`)){
+      const style=document.createElement('link');
+      style.rel='stylesheet';style.href=styleUrl;document.head.appendChild(style);
+    }
+    const script=document.createElement('script');
+    script.src=scriptUrl;script.defer=true;
+    script.onload=()=>resolve(globalThis.NestlyPlatformConsole||null);
+    script.onerror=()=>{platformConsoleAssetsPromiseV184=null;resolve(null)};
+    document.head.appendChild(script);
+  });
+  return platformConsoleAssetsPromiseV184;
+}
 /* ---------- routing ---------- */
 function entryRouteForLocation(pathname=location.pathname,hash=location.hash){
   const requested=String(hash||'').trim();
@@ -1528,9 +1558,13 @@ async function route(){
     if(h.startsWith('#/business?'))h='#/business';
     if(h==='#/programmes'||h.startsWith('#/programmes/'))h=h.replace('#/programmes','#/grow');
     const staffInviteCodeV151=businessStaffInviteCodeV151();
-    const platformConsole=globalThis.NestlyPlatformConsole;
     const platformRoutePath=String(h).split('?')[0].replace(/\/+$/,'');
     const requestedPlatformRoute=platformRoutePath==='#/platform'||platformRoutePath.startsWith('#/platform/');
+    /* v184: the console is fetched only once an admin actually asks for it (see the
+       platformConsoleAssets manifest in index.html). Kicked off here, awaited at the point of
+       use, so its download overlaps the session and persona round trips instead of following
+       them. Everyone who is not an admin never pays for it at all. */
+    const platformConsolePromise=requestedPlatformRoute?loadPlatformConsoleAssetsV184():null;
     if(requestedPlatformRoute){
       root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1" aria-labelledby="platformBootTitle">
         <section class="card" style="width:420px;max-width:100%;text-align:center" role="status" aria-live="polite">
@@ -1592,6 +1626,8 @@ async function route(){
        console derives the active role, module rights and sales scope from auth.uid() through
        v89 before it renders navigation or data, so tenant ownership is not required. */
     if(requestedPlatformRoute){
+      const platformConsole=await platformConsolePromise;
+      if(!isRouteCurrent())return;
       if(typeof platformConsole?.isRoute!=='function'
         ||typeof platformConsole?.render!=='function'
         ||platformConsole.isRoute(h)!==true){
