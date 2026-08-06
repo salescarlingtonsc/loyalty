@@ -3,6 +3,11 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 
 const APP_URL=new URL('../../app/index.html',import.meta.url);
+/* The application script was extracted from index.html into app.js. The .test.mjs files
+   pass both files joined; this CLI path must read the same pair or it regenerates a
+   fixture from a file that no longer contains the components. */
+const APP_SCRIPT_URL=new URL('../../app/app.js',import.meta.url);
+const readAppSource=async()=>(await Promise.all([readFile(APP_URL,'utf8'),readFile(APP_SCRIPT_URL,'utf8')])).join('\n');
 const FIXTURE_URL=new URL('./v104-promotions-visual.html',import.meta.url);
 
 function sourceBetween(source,start,end){
@@ -167,7 +172,7 @@ if(evidenceParams.get('evidence')==='1'){
 }
 
 export async function currentProductionVisualFixture(){
-  return buildV104PromotionVisualFixture(await readFile(APP_URL,'utf8'));
+  return buildV104PromotionVisualFixture(await readAppSource());
 }
 
 if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url){

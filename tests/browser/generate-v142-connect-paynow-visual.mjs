@@ -3,6 +3,11 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 
 const APP_URL=new URL('../../app/index.html',import.meta.url);
+/* The application script was extracted from index.html into app.js. The .test.mjs files
+   pass both files joined; this CLI path must read the same pair or it regenerates a
+   fixture from a file that no longer contains the components. */
+const APP_SCRIPT_URL=new URL('../../app/app.js',import.meta.url);
+const readAppSource=async()=>(await Promise.all([readFile(APP_URL,'utf8'),readFile(APP_SCRIPT_URL,'utf8')])).join('\n');
 const CUSTOMER_UI_URL=new URL('../../app/customer-ui.js',import.meta.url);
 const COMMAND_URL=new URL('../../supabase/functions/stripe-connect-command/index.ts',import.meta.url);
 const WEBHOOK_URL=new URL('../../supabase/functions/stripe-connect-webhook/index.ts',import.meta.url);
@@ -16,7 +21,7 @@ function between(source,start,end){
 
 export async function buildV142Visual(){
   const [app,customerUi,command,webhook]=await Promise.all([
-    readFile(APP_URL,'utf8'),readFile(CUSTOMER_UI_URL,'utf8'),
+    readAppSource(),readFile(CUSTOMER_UI_URL,'utf8'),
     readFile(COMMAND_URL,'utf8'),readFile(WEBHOOK_URL,'utf8')
   ]);
   const style=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];

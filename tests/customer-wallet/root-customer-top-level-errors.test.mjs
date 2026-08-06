@@ -21,6 +21,26 @@ async function runRootRoute({
   const calls={retry:[],onboard:0,profile:0,navigate:[],registration:[],auth:0,recoverySetup:0,recoveryClears:0};
   const context={
     beginRouteInvocation:()=>()=>true,
+    /* route() now reads a staff-invite code from the URL before deciding where to send a
+       session. These cases are all customer/recovery routing, so no invite is present; the
+       stub returns none. Without it the sandbox threw ReferenceError and every case failed. */
+    businessStaffInviteCodeV151:()=>'',
+    /* Destination memory moved behind setters that touch sessionStorage; the sandbox models
+       them as plain assignments so the routing assertions still observe the same state. */
+    rememberPendingCustomerDestination(value){
+      context.pendingCustomerDestination=context.normalizeCustomerDestination(value);
+      return context.pendingCustomerDestination;
+    },
+    takePendingCustomerDestination(){
+      const value=context.pendingCustomerDestination;
+      context.pendingCustomerDestination='';
+      return value;
+    },
+    rememberPendingCustomerBusinessSlug(value){
+      context.pendingCustomerBusinessSlug=context.normalizeCustomerBusinessIntent(value);
+      return context.pendingCustomerBusinessSlug;
+    },
+    globalThis:{NestlyPlatformConsole:null},
     dashboardRenderEpoch:0,
     customerWalletRenderEpoch:0,
     portalRenderEpoch:0,

@@ -80,7 +80,11 @@ test('V141 core dashboard copy is localized in Chinese and Malay',()=>{
 
 test('V141 customer directory exposes last-visit choice and date joined',()=>{
   assert.match(customers,/Show customers by last visit/);
-  assert.match(customers,/sb\.rpc\('staff_list_customers_v129'/);
+  /* The customer directory must read through a tenant-scoped, versioned RPC rather than a raw
+     table query. The VERSION deliberately is not pinned: this reader has moved v129 -> v154 ->
+     v155 and each bump broke this assertion without anything actually regressing. What matters
+     is the shape, so that is what is asserted. */
+  assert.match(customers,/sb\.rpc\('staff_list_customers_v\d+'/);
   assert.match(customers,/formatCustomerJoinedDateV141\(c\.created_at\)/);
   assert.match(customers,/Date joined/);
   assert.match(customers,/formatCustomerJoinedDateV141/);
