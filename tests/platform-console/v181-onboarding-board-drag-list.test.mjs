@@ -184,3 +184,15 @@ test('detail fields read like a CRM: values first, blanks collapsed but kept', a
   assert.match(none, /5 not recorded/);
   assert.equal((none.match(/<dl /g) || []).length, 1, 'only the collapsed list is rendered');
 });
+
+test('list view does not echo the lane in the stage column for website signups', async () => {
+  const Console = await loadConsole();
+  const html = Console.prospectListTableHtml([firm({
+    _has_prospect_detail: false, lane_key: 'case_won', lane_label: 'Case won',
+    source_stage_key: 'activated'
+  })], CUI, { canWrite: true });
+  const cells = html.match(/<td[^>]*>[\s\S]*?<\/td>/g).map(c => c.replace(/<[^>]+>/g, '').trim());
+  assert.equal(cells[1], 'Website signup', 'stage column names what the row is');
+  assert.equal(cells[2], 'Case won', 'operational status still carries the lane');
+  assert.notEqual(cells[1], cells[2], 'stage must not duplicate the lane column');
+});

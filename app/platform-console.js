@@ -792,6 +792,7 @@
       'Qualification and discovery':'资格评估与需求探索','Record commercial detail':'记录商业详情',
       'Record departure':'记录离职','Record qualification':'记录资格评估',
       '{count} not recorded':'{count} 项未填写',
+      'Website signup':'网站注册',
       'Refresh evidence':'刷新证据','Refresh quality':'刷新质量','Reissue owner invite':'重新发送负责人邀请',
       'Resolve every row still marked Review before committing.':'提交前请处理所有仍标为“审核”的行。',
       'Returning customers':'回头客','Review and confirm the analysed import first.':'请先审核并确认已分析的导入。',
@@ -926,6 +927,7 @@
       'Qualification and discovery':'Kelayakan dan penemuan','Record commercial detail':'Rekod butiran komersial',
       'Record departure':'Rekod pemergian','Record qualification':'Rekod kelayakan',
       '{count} not recorded':'{count} belum direkodkan',
+      'Website signup':'Pendaftaran laman web',
       'Refresh evidence':'Muat semula bukti','Refresh quality':'Muat semula kualiti','Reissue owner invite':'Keluarkan semula jemputan pemilik',
       'Resolve every row still marked Review before committing.':'Selesaikan setiap baris yang masih ditanda Semak sebelum melakukan.',
       'Returning customers':'Pelanggan kembali','Review and confirm the analysed import first.':'Semak dan sahkan import yang dianalisis dahulu.',
@@ -4731,9 +4733,11 @@
           const canOpenDetail=item._has_prospect_detail!==false;
           const lane=operationalLanes.find(option=>option.key===operationalLaneFor(item));
           const nextAction=prospectValue(item,'next_action_at','next_activity_at');
-          const stageLabel=!canOpenDetail&&lane?.key==='case_won'
-            ?(item.lane_label||'Website signup / live firm')
-            :pt(prospectStages.find(option=>option.key===stage)?.label||platformStatus(stage));
+          // A website signup has no CRM stage. Echoing its lane here would just
+          // repeat the Operational status column, so name what it actually is.
+          const stageLabel=canOpenDetail
+            ?pt(prospectStages.find(option=>option.key===stage)?.label||platformStatus(stage))
+            :pt('Website signup');
           const badge=prospectPrimaryBadge(item,CUI)||CUI.status(pt('Clean'),'ok');
           return `<tr class="platform-prospect-row" data-prospect="${escapeHtml(id)}" data-version="${prospectVersion(item)}" data-stage="${escapeHtml(stage)}" data-lane="${escapeHtml(operationalLaneFor(item))}" data-has-prospect="${canOpenDetail?'true':'false'}" data-can-move="${canWrite&&canOpenDetail?'true':'false'}" tabindex="0" role="button" aria-label="${escapeHtml(pt(canOpenDetail?'Open':'View firm record for'))} ${escapeHtml(prospectCompany(item))}">
             <td data-label="${escapeHtml(pt('Firm'))}"><b>${escapeHtml(prospectCompany(item))}</b><span class="muted small">${escapeHtml(prospectContact(item))}</span></td>
