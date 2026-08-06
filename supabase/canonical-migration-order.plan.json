@@ -1330,6 +1330,12 @@
       "version": "20260807030000",
       "name": "nestly_v195_merge_keeps_source_lineage",
       "sourcePath": "db/migrations/20260807_nestly_v195_merge_keeps_source_lineage.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807035000",
+      "name": "nestly_v197_recommendation_duplicate_root_cause",
+      "sourcePath": "db/migrations/20260807_nestly_v197_recommendation_duplicate_root_cause.sql"
     }
   ]
 }

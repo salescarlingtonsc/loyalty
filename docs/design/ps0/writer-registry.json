@@ -2198,7 +2198,7 @@
     },
     {
       "id": "browser.write:app/app.js:staff_hours:DELETE",
-      "reason": "v183 browser direct write to non-value config table staff_hours (DELETE); clearing a person's rota is what returns them to the shop opening hours. RLS-gated owner setup data — it changes which times a customer is OFFERED, never a balance, benefit or sale."
+      "reason": "v183 browser direct write to non-value config table staff_hours (DELETE); clearing a person's rota is what returns them to the shop opening hours. RLS-gated owner setup data \u2014 it changes which times a customer is OFFERED, never a balance, benefit or sale."
     },
     {
       "id": "browser.write:app/app.js:staff_hours:UPSERT",
@@ -2727,6 +2727,26 @@
     {
       "id": "db.fn:public.begin_pos_paynow_attempt_v142/8",
       "reason": "V142 PayNow attempt opener. Records the attempt and its locked amount; discovery confirms value_impact=false. Settlement is a separate curated writer."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_delete_promotion_v183",
+      "reason": "V183 promotion delete/retire. Writes marketing content only: a DRAFT offer is removed outright, a PUBLISHED one is retired (active=false, ends_at pulled back) so alert runs and attempt receipts keep referring to a real row. It mints no points, credit or stored value and reaches no value table; verified value_impact=false by discovery."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_set_sales_mix_v184",
+      "reason": "V184 owner toggle for \"do we sell services, products, or both\". Rewrites exactly two keys of businesses.enabled_modules and drops modules that hard-require a removed one; it cannot enable or disable any other module and touches no value table. The sector entitlement guard is bypassed transaction-locally and cleared immediately."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_manage_package_plan_v193",
+      "reason": "V193 rename/delete of an UNSOLD package version. Refuses the moment a single client_packages row references the plan, checked on plan_id (the real FK), so it can never remove a version a customer has bought. Writes package_plans configuration only; no ledger, no stored value."
+    },
+    {
+      "id": "browser.write:app/app.js:products:UPDATE",
+      "reason": "V191 product editor: name, SKU, retail price and cost on public.products, which is catalogue configuration rather than a value table. Past sales carry their own price snapshot, so editing a product never rewrites recorded revenue; products are disabled, never deleted, so stock and past sale references stay valid."
+    },
+    {
+      "id": "browser.write:app/app.js:staff:INSERT",
+      "reason": "V190 manual add of a roster-only teammate (user_id NULL, so no login and no billable seat). RLS restricts INSERT to the business owner. staff is an operational directory, not a value table; commission is resolved per sale from staff_id at sale time and is unaffected by adding a person."
     }
   ]
 }
