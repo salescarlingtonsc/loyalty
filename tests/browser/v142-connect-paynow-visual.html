@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="ad258df64963ba86eb2de4c41102fd85901b70aeb17ad9f417b842d051b74b31"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="26014dce60fd22677def238bd1d6d60a488e62d139b55582a434d2083214e039"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1500,7 +1500,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · ad258df64963ba86eb2de4c41102fd85901b70aeb17ad9f417b842d051b74b31</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 26014dce60fd22677def238bd1d6d60a488e62d139b55582a434d2083214e039</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -3231,6 +3231,10 @@ async function tillPage(){
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
+        ${d.walkin?'':`<div class="receipt-qr-block" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--hair)">
+          <div id="receiptWalletQr" style="display:flex;justify-content:center"></div>
+          <p class="muted small" style="margin-top:8px">Scan to open your rewards, points and past visits at ${esc(S.biz.name)}.</p>
+        </div>`}
         <button class="btn ghost no-print" id="tPrintReceiptV142" style="width:100%;margin-top:16px;padding:14px">Print receipt</button>
         <button class="btn no-print" id="tNext" style="width:100%;margin-top:10px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
@@ -3238,6 +3242,27 @@ async function tillPage(){
       businessId:S.biz.id,branchId:tillBranchId,
       saleId:d.saleId,customerName:d.name,isCurrent:isTillCurrent
     });
+    /* V196 (owner: "allow for QRcode to let user to download or view").
+       The QR points at THIS BUSINESS'S customer portal, not at a per-receipt URL. A public
+       receipt link would put a purchase record — items, amounts, staff, the customer's points
+       balance — behind nothing but an unguessable string, which is a PDPA decision rather than
+       an implementation detail. The portal shows the same customer their own receipt history
+       once they are signed in, so the scan reaches the same information without publishing it.
+       Walk-in sales get no QR: there is no customer to show anything to. */
+    const receiptQrHost=$('receiptWalletQr');
+    if(receiptQrHost&&S.biz.slug){
+      const walletUrl=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
+      void loadQrLibrary()
+        .then(()=>{
+          if(!receiptQrHost.isConnected)return;
+          new QRCode(receiptQrHost,{text:walletUrl,width:132,height:132,correctLevel:QRCode.CorrectLevel.M});
+        })
+        .catch(()=>{
+          if(!receiptQrHost.isConnected)return;
+          /* The receipt must still be complete without the CDN: print the link as text. */
+          receiptQrHost.innerHTML=`<span class="small" style="word-break:break-all">${esc(walletUrl)}</span>`;
+        });
+    }
     $('tPrintReceiptV142').onclick=()=>{document.body.classList.add('pos-receipt-print');window.addEventListener('afterprint',()=>document.body.classList.remove('pos-receipt-print'),{once:true});window.print()};
     $('tNext').onclick=resetToStart;
   }
@@ -3256,7 +3281,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'ad258df64963ba86eb2de4c41102fd85901b70aeb17ad9f417b842d051b74b31',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'26014dce60fd22677def238bd1d6d60a488e62d139b55582a434d2083214e039',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

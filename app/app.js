@@ -10872,6 +10872,10 @@ async function tillPage(){
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
+        ${d.walkin?'':`<div class="receipt-qr-block" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--hair)">
+          <div id="receiptWalletQr" style="display:flex;justify-content:center"></div>
+          <p class="muted small" style="margin-top:8px">Scan to open your rewards, points and past visits at ${esc(S.biz.name)}.</p>
+        </div>`}
         <button class="btn ghost no-print" id="tPrintReceiptV142" style="width:100%;margin-top:16px;padding:14px">Print receipt</button>
         <button class="btn no-print" id="tNext" style="width:100%;margin-top:10px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
       </div>`;
@@ -10879,6 +10883,27 @@ async function tillPage(){
       businessId:S.biz.id,branchId:tillBranchId,
       saleId:d.saleId,customerName:d.name,isCurrent:isTillCurrent
     });
+    /* V196 (owner: "allow for QRcode to let user to download or view").
+       The QR points at THIS BUSINESS'S customer portal, not at a per-receipt URL. A public
+       receipt link would put a purchase record — items, amounts, staff, the customer's points
+       balance — behind nothing but an unguessable string, which is a PDPA decision rather than
+       an implementation detail. The portal shows the same customer their own receipt history
+       once they are signed in, so the scan reaches the same information without publishing it.
+       Walk-in sales get no QR: there is no customer to show anything to. */
+    const receiptQrHost=$('receiptWalletQr');
+    if(receiptQrHost&&S.biz.slug){
+      const walletUrl=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
+      void loadQrLibrary()
+        .then(()=>{
+          if(!receiptQrHost.isConnected)return;
+          new QRCode(receiptQrHost,{text:walletUrl,width:132,height:132,correctLevel:QRCode.CorrectLevel.M});
+        })
+        .catch(()=>{
+          if(!receiptQrHost.isConnected)return;
+          /* The receipt must still be complete without the CDN: print the link as text. */
+          receiptQrHost.innerHTML=`<span class="small" style="word-break:break-all">${esc(walletUrl)}</span>`;
+        });
+    }
     $('tPrintReceiptV142').onclick=()=>{document.body.classList.add('pos-receipt-print');window.addEventListener('afterprint',()=>document.body.classList.remove('pos-receipt-print'),{once:true});window.print()};
     $('tNext').onclick=resetToStart;
   }
@@ -11250,6 +11275,54 @@ function bookingDecisionNotice(result,decision){
   if(outcome==='replayed'||result?.replayed===true)return {ok:true,text:`${verb} was already applied. Current status: ${actual}.`};
   return {ok:false,text:`${verb} could not be applied (${outcome.replaceAll('_',' ')}). Current status: ${actual}.`};
 }
+function enhanceBookingsTabsV195(root){
+  if(!root||root.dataset.bookingsTabsV195==='1')return;
+  const requests=root.querySelector('#blist');
+  if(!requests)return;
+  root.dataset.bookingsTabsV195='1';
+  const tabs=document.createElement('div');
+  tabs.className='v150-segment';
+  tabs.setAttribute('role','tablist');
+  tabs.setAttribute('aria-label','Bookings');
+  tabs.style.margin='0 0 14px';
+  tabs.innerHTML=`<button type="button" id="bookingsTabRequests" role="tab" aria-selected="true" aria-controls="bookingsRequestsPanel" aria-pressed="true">Booking requests</button>`
+    +`<button type="button" id="bookingsTabSettings" role="tab" aria-selected="false" aria-controls="bookingsSettingsPanel" aria-pressed="false">Booking settings</button>`;
+  const requestsPanel=document.createElement('div');
+  requestsPanel.id='bookingsRequestsPanel';
+  requestsPanel.setAttribute('role','tabpanel');
+  requestsPanel.setAttribute('aria-labelledby','bookingsTabRequests');
+  const settingsPanel=document.createElement('div');
+  settingsPanel.id='bookingsSettingsPanel';
+  settingsPanel.setAttribute('role','tabpanel');
+  settingsPanel.setAttribute('aria-labelledby','bookingsTabSettings');
+  settingsPanel.hidden=true;
+  /* The portal-link card stays above the tabs: it is the one thing an owner copies from either
+     view, and burying it inside a tab would make it findable only by accident. */
+  const portalCard=root.querySelector('#cp')?.closest('.card,section');
+  requests.before(tabs);
+  tabs.after(requestsPanel,settingsPanel);
+  const settingsNodes=[];
+  Array.from(root.children).forEach(child=>{
+    if(child===tabs||child===requestsPanel||child===settingsPanel)return;
+    if(child===portalCard||child.contains(tabs))return;
+    if(child===requests||child.contains(requests))return;
+    if(child.tagName==='DIV'||child.tagName==='SECTION')settingsNodes.push(child);
+  });
+  requestsPanel.appendChild(requests);
+  settingsNodes.forEach(node=>settingsPanel.appendChild(node));
+  const setTab=name=>{
+    const showRequests=name==='requests';
+    requestsPanel.hidden=!showRequests;
+    settingsPanel.hidden=showRequests;
+    tabs.querySelector('#bookingsTabRequests').setAttribute('aria-selected',String(showRequests));
+    tabs.querySelector('#bookingsTabRequests').setAttribute('aria-pressed',String(showRequests));
+    tabs.querySelector('#bookingsTabSettings').setAttribute('aria-selected',String(!showRequests));
+    tabs.querySelector('#bookingsTabSettings').setAttribute('aria-pressed',String(!showRequests));
+  };
+  tabs.querySelector('#bookingsTabRequests').onclick=()=>setTab('requests');
+  tabs.querySelector('#bookingsTabSettings').onclick=()=>setTab('settings');
+  setTab('requests');
+}
 async function bookingsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const portal=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
@@ -11314,6 +11387,13 @@ async function bookingsPage(){
         <div id="bkCsvPrev" style="margin-top:12px"></div>
       </div>
     </div>`:''}`;
+  /* V195 (owner: "below here got different tab so it's not messy" — Booking Requests vs Booking
+     Settings). The page stacked five unrelated cards: customer app actions, change requests, the
+     requests table, tables/capacity and CSV import. The thing an owner opens this page to DO —
+     act on requests — was buried in the middle of configuration they set once.
+     Split in the DOM rather than in the template: the markup is one large string shared with the
+     load paths, and every id keeps working exactly as before. Same approach the Staff page uses. */
+  enhanceBookingsTabsV195(M());
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
   if(isOwner){
     const controls=['customerBookingEnabled','customerRedemptionEnabled','customerAppointmentChangesEnabled'];
