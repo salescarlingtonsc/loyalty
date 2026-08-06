@@ -15,9 +15,10 @@ test('Promotions is an owner-only submodule reached from the consolidated Grow o
   assert.match(route,/pageKey==='promotions'&&S\.myRole!=='owner'/);
   assert.match(route,/Only the owner can publish promotions/);
   assert.match(app,/programmeRow\(\{kind:'promotions'/);
-  assert.match(app,/Customers see at most two current offers/);
+  assert.match(app,/Customers see no more than two current offers at once\./);
   assert.match(app,/href:'#\/promotions'/);
-  assert.match(app,/>Grow<\/a>/);
+  // The rail label became 'Programmes' when the owner consolidated the section.
+  assert.match(app,/>Programmes</);
   assert.match(app,/promotions:promotionsPage/);
   assert.doesNotMatch(app,/const ALLMODS=\[[^\]]*'promotions'/);
   assert.match(app,/programmeRow\(\{kind:'promotions'[\s\S]*title:'Promotions'/);
@@ -32,8 +33,8 @@ test('owner follows one factual offer, wording, photo, preview, and explicit pub
   ])assert.match(page,new RegExp(`id="${id}"`));
   assert.match(page,/1\. Offer[\s\S]*2\. Message[\s\S]*3\. Publish/);
   assert.match(page,/Drafts are never shown to customers/);
-  assert.match(page,/business_create_promotion_draft_v104/);
-  assert.match(page,/business_finalize_promotion_v104/);
+  assert.match(page,/business_create_promotion_draft_v155/);
+  assert.match(page,/business_finalize_promotion_v155/);
   assert.doesNotMatch(page,/business_save_promotion_v104/,
     'the compatibility writer cannot be used for draft edits or unpublishing');
   assert.match(page,/p_offer_facts:draft\.offerFacts/);
@@ -45,8 +46,11 @@ test('owner follows one factual offer, wording, photo, preview, and explicit pub
   assert.match(page,/p_name:draft\.name,p_tagline:null,p_description:draft\.description/);
   assert.match(page,/imageAlt:field\('promotionImageAlt'\)\.value\.trim\(\)/);
   assert.match(page,/\['promotionFacts','promotionOccasion','promotionEnd'\][\s\S]*applyAssistance\(false\)/);
-  assert.match(page,/This offer applies across the company/);
-  assert.match(page,/branch_id:null/);
+  // v154/v155 replaced the single company-wide scope with a three-way branch selector
+  // (all / current / selected), so an offer can now be targeted per branch.
+  assert.match(page,/name="promotionScopeMode" value="all"/);
+  assert.match(page,/name="promotionScopeMode" value="current"/);
+  assert.match(page,/name="promotionScopeMode" value="selected"/);
   assert.doesNotMatch(page,/id="promotionBranch"/);
   assert.match(page,/id:selected\?\.id\|\|''/);
   assert.doesNotMatch(page,/id:selected\?\.id\|\|crypto\.randomUUID/);
@@ -57,7 +61,7 @@ test('owner follows one factual offer, wording, photo, preview, and explicit pub
 });
 
 test('photo and copy finalize through one receipt-backed operation and preserve interrupted work',()=>{
-  assert.match(page,/business_finalize_promotion_v104/);
+  assert.match(page,/business_finalize_promotion_v155/);
   assert.match(page,/p_object_path:fileInfo\?\.objectPath\|\|null/);
   assert.match(page,/p_expected_target_media_version:exactTargetMediaVersion/);
   assert.match(page,/p_attempt_key:attemptKey/);
