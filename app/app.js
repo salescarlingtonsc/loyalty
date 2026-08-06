@@ -4653,7 +4653,12 @@ async function renderCustomerWallet(businessSlug=null){
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_effective_tier_v143',{p_business:businessId}):unavailableBusinessId(),
-    businessId?sb.rpc('customer_get_promotions_v155',{p_business:businessId,p_branch:selectedBranchId||null,p_locale:'en'}):unavailableBusinessId(),
+    /* V201 (owner: "customer view only have 1 company instead of multiple branch"). The customer
+       sees the FIRM, so this read is firm-wide by definition — never the workspace's selected
+       branch. selectedBranchId is workspace state; a staff member who is also a customer would
+       otherwise carry their branch scope into their own customer view and silently lose the other
+       outlets' offers. A promotion that only runs at one outlet says so in its own terms. */
+    businessId?sb.rpc('customer_get_promotions_v155',{p_business:businessId,p_branch:null,p_locale:'en'}):unavailableBusinessId(),
     promotionPromptRequest
   ]);
   if(!isWalletCurrent())return;
@@ -4961,7 +4966,7 @@ async function renderCustomerWallet(businessSlug=null){
         const lines=Array.isArray(item.line_items)?item.line_items:[];
         const packageLabel=item.is_package_session===true?'Package session used':(item.description||String(item.event_type||'Transaction').replaceAll('_',' '));
         const packageDetail=item.is_package_session===true?`${item.package_name||'Package'}${item.package_purchased_at?' · purchased '+walletDate(item.package_purchased_at):''}${item.package_reference?' · ref '+item.package_reference:''}`:'';
-        return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(packageLabel)}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.branch_name?' · '+esc(item.branch_name):''}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${packageDetail?`<p class="muted small" style="margin-top:3px">${esc(packageDetail)}</p>`:''}</div><span class="spacer"></span>${net===null||item.is_package_session===true?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
+        return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(packageLabel)}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${packageDetail?`<p class="muted small" style="margin-top:3px">${esc(packageDetail)}</p>`:''}</div><span class="spacer"></span>${net===null||item.is_package_session===true?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
           ${gross!==null&&net!==gross?`<p class="muted small" style="margin-top:5px">Original ${esc(historyMoney(gross))} · net after linked corrections ${esc(historyMoney(net))}</p>`:''}
           ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} points earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} points redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} points removed</span>`:''}</p>`:''}
           ${lines.length?`<details style="margin-top:8px"><summary class="small">${lines.length} item${lines.length===1?'':'s'}</summary><div style="margin-top:5px">${lines.map(line=>`<div class="row small"><span>${Number(line.qty||0)} × ${esc(line.description||line.item_type||'Item')}</span><span class="spacer"></span><span>${esc(historyMoney(line.line_cents))}</span></div>`).join('')}</div></details>`:''}
