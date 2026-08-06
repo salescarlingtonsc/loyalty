@@ -326,6 +326,13 @@ function configureChartDefaults(){
   Chart.defaults.animation.duration=520;
   Chart.defaults.animation.easing='easeOutQuart';
   Chart.defaults.elements.bar.borderRadius=8;
+  /* v188 (owner: "why can cross out male or female etc? what is it for?"). Chart.js makes every
+     legend clickable by default, so tapping "Male" struck it through and hid that slice — the
+     remaining wedges then silently re-proportioned and the chart read as a different business.
+     Nothing in this product wants that. A legend here is a key, not a control. */
+  Chart.defaults.plugins.legend.onClick=()=>{};
+  Chart.defaults.plugins.legend.labels.useBorderRadius=true;
+  Chart.defaults.plugins.legend.labels.borderRadius=3;
   Chart.defaults.elements.bar.borderSkipped=false;
   Chart.defaults.elements.line.borderWidth=2.5;
   Chart.defaults.elements.point.radius=0;
@@ -5937,71 +5944,46 @@ function validNewPassword(password){
     && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password);
 }
 
+/* v188 (owner ruling 2026-08-07): "do not allow firms or users to delete account — it is
+   redundant. If they want they can email in their request or speak with their assigned
+   consultant." Self-service deletion is gone from every surface; the submit RPC is revoked from
+   `authenticated` in the same version, so removing the button is not the only thing stopping it.
+   What stays is the ROUTE: the data-request page and the same address the Privacy Notice gives.
+   A request already submitted is still shown here — someone who asked before this change must
+   not be left wondering what happened to it. */
 function accountDeletionCardHtml(){
-  return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Peekaa to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
+  return `<section class="card" id="accountDeletionCard" style="margin-top:14px"><h2>Account &amp; privacy</h2>
+    <p class="muted small" style="margin-top:6px">To close this account, or to ask what personal data is held, email <a href="mailto:admin.peekaa@gmail.com?subject=Peekaa%20account%20closure">admin.peekaa@gmail.com</a> or speak to your assigned consultant. Peekaa handles it for you and replies within 30 days.</p>
+    <p class="muted small" style="margin-top:8px">Legally required financial, fraud-prevention and security records may be retained after closure.</p>
+    <div id="accountDeletionStatus" role="status"></div>
+    <a class="btn ghost sm" href="/data-request.html" style="margin-top:16px">Make a data request</a></section>`;
 }
 
-function wireAccountDeletionButton(button=$('openAccountDeletion')){
-  if(button)button.onclick=()=>openAccountDeletionDialog(button);
-}
-
-async function openAccountDeletionDialog(trigger=document.activeElement){
-  $('accountDeletionModal')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="accountDeletionModal" role="dialog" aria-modal="true" aria-labelledby="accountDeletionTitle" tabindex="-1"><section class="modal-card" style="max-width:540px">
-    <div class="row"><div><h2 id="accountDeletionTitle">Delete your Peekaa account</h2><p class="muted small" style="margin-top:5px">This requests deletion; it does not erase records immediately.</p></div><span class="spacer"></span><button class="btn ghost sm" id="accountDeletionClose" type="button" aria-label="Close account deletion">Close</button></div>
-    <div id="accountDeletionBody" aria-busy="true"><p class="muted small" style="margin-top:16px">Checking for an existing request…</p></div>
-  </section></div>`);
-  const modal=$('accountDeletionModal'),body=$('accountDeletionBody');
-  let deactivate=null;
-  const close=()=>{if(deactivate){const cleanup=deactivate;deactivate=null;cleanup()}else modal.remove();trigger?.focus?.()};
-  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#accountDeletionClose'});
-  $('accountDeletionClose').onclick=close;
-  const renderPending=request=>{
-    const due=request?.response_due_at?sgt(request.response_due_at):'within 30 days';
-    body.setAttribute('aria-busy','false');
-    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request received</b><p class="small" style="margin-top:6px">Status: ${esc(request?.status||'pending')} · response due ${esc(due)}.</p></div><p class="muted small" style="margin-top:12px">We will respond within 30 days. Your subscription and any outstanding payment obligations are handled separately.</p>`;
-  };
-  const renderCompleted=request=>{
+/* Shows an EXISTING request's state, if there is one. Never offers a new one. Silent on failure:
+   a status panel that cannot load must not imply anything about whether a request exists. */
+async function wireAccountDeletionButton(){
+  const host=$('accountDeletionStatus');
+  if(!host||!S.user)return;
+  const {data,error}=await sb.rpc('get_account_deletion_request_v131');
+  if(error||!host.isConnected)return;
+  const request=Array.isArray(data)?data[0]:data;
+  if(!request?.status)return;
+  if(['pending','processing'].includes(request.status)){
+    const due=request.response_due_at?sgt(request.response_due_at):'within 30 days';
+    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request received</b><p class="small" style="margin-top:6px">Peekaa is reviewing it and will reply by ${esc(due)}. Nothing further is needed from you.</p></div>`;
+    return;
+  }
+  if(request.status==='completed'){
     const outcomes={
       deleted_where_permitted:'Deleted where permitted',
       anonymised_where_permitted:'Anonymised where permitted',
       retained_legal:'Retained under legal obligation',
       request_invalid:'Request invalid after identity review'
     };
-    const outcome=outcomes[request?.resolution_code]||'Reviewed outcome recorded';
-    const retention=request?.resolution_code==='retained_legal'&&request?.retention_until
-      ?`<p class="small" style="margin-top:6px">Retention review date: ${esc(sgt(request.retention_until))}.</p>`:'';
-    body.setAttribute('aria-busy','false');
-    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Peekaa if you need to challenge or clarify it.</p>`;
-  };
-  const renderForm=()=>{
-    body.setAttribute('aria-busy','false');
-    body.innerHTML=`<p class="muted small" style="margin-top:16px">This affects your customer and business personas that use this same login. We will respond within 30 days. Type DELETE to confirm.</p>
-      <label for="accountDeletionConfirm">Type DELETE to confirm</label><input id="accountDeletionConfirm" autocomplete="off" autocapitalize="characters" spellcheck="false">
-      <div id="accountDeletionStatus" role="alert" aria-live="assertive"></div>
-      <button class="btn danger" id="accountDeletionSubmit" type="button" style="width:100%;margin-top:16px" disabled>Submit deletion request</button>`;
-    const input=$('accountDeletionConfirm'),submit=$('accountDeletionSubmit'),status=$('accountDeletionStatus');
-    input.oninput=()=>{submit.disabled=input.value.trim()!=='DELETE'};
-    submit.onclick=async()=>{
-      if(input.value.trim()!=='DELETE')return;
-      const slot='nestly:v131:account-deletion';
-      let key=sessionStorage.getItem(slot);if(!key){key=crypto.randomUUID();sessionStorage.setItem(slot,key)}
-      submit.disabled=true;status.innerHTML='<p class="muted small" style="margin-top:10px">Submitting the same safe request…</p>';
-      const {data,error}=await sb.rpc('request_account_deletion_v131',{p_confirmation:'DELETE',p_idempotency_key:key});
-      if(!modal.isConnected)return;
-      if(error||!data?.request_id){submit.disabled=false;status.innerHTML='<div class="err">We could not confirm whether the request was saved. Retry; Peekaa will reuse the same request.</div>';return}
-      sessionStorage.removeItem(slot);renderPending(data);
-    };
-    input.focus({preventScroll:true});
-  };
-  const {data,error}=await sb.rpc('get_account_deletion_request_v131');
-  if(!modal.isConnected)return;
-  if(error){body.setAttribute('aria-busy','false');body.innerHTML='<div class="err" role="alert">Deletion status could not be loaded. No request was created.</div><button class="btn ghost" id="accountDeletionRetry" style="margin-top:12px">Try again</button>';$('accountDeletionRetry').onclick=()=>{close();openAccountDeletionDialog(trigger)};return}
-  const request=Array.isArray(data)?data[0]:data;
-  if(request&&['pending','processing'].includes(request.status))renderPending(request);
-  else if(request?.status==='completed')renderCompleted(request);
-  else renderForm();
+    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request reviewed</b><p class="small" style="margin-top:6px">${esc(outcomes[request.resolution_code]||'Reviewed outcome recorded')}.</p></div>`;
+  }
 }
+
 function renderPasswordUpdate(){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="passwordUpdateTitle">
@@ -6811,7 +6793,7 @@ function profileHtml(){
         ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:18})}Settings</a>`:''}
         ${S.myRole==='owner'?'<a href="#/settings?tab=team" id="pmTeam">Team &amp; staff</a>':''}
         ${S.isSA?`<a href="#/platform" id="pmPlatform">${CUI.icon('platform',{size:18})}Platform</a>`:''}
-        <a href="#" id="pmDeleteAccount" style="color:var(--red)">${CUI.icon('back',{size:18})}Account &amp; privacy</a>
+        <a href="/data-request.html" id="pmDeleteAccount">${CUI.icon('back',{size:18})}Account &amp; privacy</a>
         <a href="#" id="pmSignout" style="color:var(--red)">${CUI.icon('back',{size:18})}Sign out</a>
       </div>`:''}
     </div>`;
@@ -6855,7 +6837,9 @@ function wireProfile(page){
     const pmT=$('pmTeam');if(pmT) pmT.onclick=()=>{profileOpen=false};
     const pmP=$('pmPlatform');if(pmP) pmP.onclick=()=>{profileOpen=false};
     const pmW=$('pmWallet');if(pmW) pmW.onclick=()=>{profileOpen=false};
-    const pmD=$('pmDeleteAccount');if(pmD)pmD.onclick=e=>{e.preventDefault();profileOpen=false;openAccountDeletionDialog(pmD)};
+    /* v188: the profile menu links to the data-request page instead of opening a self-service
+       deletion dialog; closing an account goes through Peekaa. */
+    const pmD=$('pmDeleteAccount');if(pmD)pmD.onclick=()=>{profileOpen=false};
     /* click-away to dismiss — expected of a native popover, and without it the menu
        could only be closed by re-clicking the chip. One-shot listener, re-armed on
        each open, so it can't stack up across renders. */

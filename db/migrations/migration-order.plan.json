@@ -1293,6 +1293,12 @@
       "path": "db/migrations/20260807_nestly_v186_customer_tier_ladder.sql",
       "semanticVersion": "v186",
       "proposedDeployVersion": "20260806125900"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v188_no_self_service_account_deletion.sql",
+      "semanticVersion": "v188",
+      "proposedDeployVersion": "20260806125930"
     }
   ]
 }

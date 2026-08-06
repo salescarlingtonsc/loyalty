@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="c7dc1bfb15c633d04fcc51405b0db3dac7059832f5fc4ddc6844dc6f69768971"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="592b2138992f41a4515c2f413184f0cb112565159888ce3a54deac003ceb4e09"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1495,7 +1495,7 @@ body{padding:16px}.v131-nav{position:fixed;z-index:300;top:8px;right:8px;display
   const pendingRequest={request_id:'00000000-0000-0000-0000-000000000131',status:'pending',requested_at:'2026-08-01T13:00:00Z',response_due_at:'2026-08-31T13:00:00Z'};
   const completedDeletedRequest={...pendingRequest,status:'completed',resolution_code:'deleted_where_permitted',retention_until:null};
   const completedRetainedRequest={...pendingRequest,status:'completed',resolution_code:'retained_legal',retention_until:'2031-08-31T13:00:00Z'};
-  const sb={auth:{signOut:async()=>{window.__signOuts+=1;return {}}},rpc:async(name,args)=>{window.__rpcCalls.push({name,args});if(name==='get_account_deletion_request_v131'){if(fixtureState==='load-error')return {data:null,error:{message:'synthetic load error'}};if(fixtureState==='pending')return {data:pendingRequest,error:null};if(fixtureState==='completed-deleted')return {data:completedDeletedRequest,error:null};if(fixtureState==='completed-retained')return {data:completedRetainedRequest,error:null};return {data:null,error:null}}if(name==='request_account_deletion_v131'){if(fixtureState==='submit-error')return {data:null,error:{message:'synthetic submit error'}};return {data:pendingRequest,error:null}}return {data:null,error:null}}};
+  const sb={auth:{signOut:async()=>{window.__signOuts+=1;return {}}},rpc:async(name,args)=>{window.__rpcCalls.push({name,args});if(name==='get_account_deletion_request_v131'){if(fixtureState==='load-error')return {data:null,error:{message:'synthetic load error'}};if(fixtureState==='pending')return {data:pendingRequest,error:null};if(fixtureState==='completed-deleted')return {data:completedDeletedRequest,error:null};if(fixtureState==='completed-retained')return {data:completedRetainedRequest,error:null};return {data:null,error:null}}return {data:null,error:null}}};
   const CUI={icon:()=>'',announce:()=>{},focusRoute:node=>node?.focus(),activateDialog(modal,{onClose,initialFocus}){const prior=document.activeElement;const close=()=>{modal.remove();prior?.focus()};modal.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}});setTimeout(()=>modal.querySelector(initialFocus)?.focus(),0);return ()=>close()}};
   function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
   setCustomerSurfaceDocumentV167();
@@ -1589,69 +1589,36 @@ function renderNativeBusinessCompanion(){
   $('personaChoiceSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
   function accountDeletionCardHtml(){
-  return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Peekaa to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
+  return `<section class="card" id="accountDeletionCard" style="margin-top:14px"><h2>Account &amp; privacy</h2>
+    <p class="muted small" style="margin-top:6px">To close this account, or to ask what personal data is held, email <a href="mailto:admin.peekaa@gmail.com?subject=Peekaa%20account%20closure">admin.peekaa@gmail.com</a> or speak to your assigned consultant. Peekaa handles it for you and replies within 30 days.</p>
+    <p class="muted small" style="margin-top:8px">Legally required financial, fraud-prevention and security records may be retained after closure.</p>
+    <div id="accountDeletionStatus" role="status"></div>
+    <a class="btn ghost sm" href="/data-request.html" style="margin-top:16px">Make a data request</a></section>`;
 }
 
-function wireAccountDeletionButton(button=$('openAccountDeletion')){
-  if(button)button.onclick=()=>openAccountDeletionDialog(button);
-}
-
-async function openAccountDeletionDialog(trigger=document.activeElement){
-  $('accountDeletionModal')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="accountDeletionModal" role="dialog" aria-modal="true" aria-labelledby="accountDeletionTitle" tabindex="-1"><section class="modal-card" style="max-width:540px">
-    <div class="row"><div><h2 id="accountDeletionTitle">Delete your Peekaa account</h2><p class="muted small" style="margin-top:5px">This requests deletion; it does not erase records immediately.</p></div><span class="spacer"></span><button class="btn ghost sm" id="accountDeletionClose" type="button" aria-label="Close account deletion">Close</button></div>
-    <div id="accountDeletionBody" aria-busy="true"><p class="muted small" style="margin-top:16px">Checking for an existing request…</p></div>
-  </section></div>`);
-  const modal=$('accountDeletionModal'),body=$('accountDeletionBody');
-  let deactivate=null;
-  const close=()=>{if(deactivate){const cleanup=deactivate;deactivate=null;cleanup()}else modal.remove();trigger?.focus?.()};
-  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#accountDeletionClose'});
-  $('accountDeletionClose').onclick=close;
-  const renderPending=request=>{
-    const due=request?.response_due_at?sgt(request.response_due_at):'within 30 days';
-    body.setAttribute('aria-busy','false');
-    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request received</b><p class="small" style="margin-top:6px">Status: ${esc(request?.status||'pending')} · response due ${esc(due)}.</p></div><p class="muted small" style="margin-top:12px">We will respond within 30 days. Your subscription and any outstanding payment obligations are handled separately.</p>`;
-  };
-  const renderCompleted=request=>{
+/* Shows an EXISTING request's state, if there is one. Never offers a new one. Silent on failure:
+   a status panel that cannot load must not imply anything about whether a request exists. */
+async function wireAccountDeletionButton(){
+  const host=$('accountDeletionStatus');
+  if(!host||!S.user)return;
+  const {data,error}=await sb.rpc('get_account_deletion_request_v131');
+  if(error||!host.isConnected)return;
+  const request=Array.isArray(data)?data[0]:data;
+  if(!request?.status)return;
+  if(['pending','processing'].includes(request.status)){
+    const due=request.response_due_at?sgt(request.response_due_at):'within 30 days';
+    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request received</b><p class="small" style="margin-top:6px">Peekaa is reviewing it and will reply by ${esc(due)}. Nothing further is needed from you.</p></div>`;
+    return;
+  }
+  if(request.status==='completed'){
     const outcomes={
       deleted_where_permitted:'Deleted where permitted',
       anonymised_where_permitted:'Anonymised where permitted',
       retained_legal:'Retained under legal obligation',
       request_invalid:'Request invalid after identity review'
     };
-    const outcome=outcomes[request?.resolution_code]||'Reviewed outcome recorded';
-    const retention=request?.resolution_code==='retained_legal'&&request?.retention_until
-      ?`<p class="small" style="margin-top:6px">Retention review date: ${esc(sgt(request.retention_until))}.</p>`:'';
-    body.setAttribute('aria-busy','false');
-    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Peekaa if you need to challenge or clarify it.</p>`;
-  };
-  const renderForm=()=>{
-    body.setAttribute('aria-busy','false');
-    body.innerHTML=`<p class="muted small" style="margin-top:16px">This affects your customer and business personas that use this same login. We will respond within 30 days. Type DELETE to confirm.</p>
-      <label for="accountDeletionConfirm">Type DELETE to confirm</label><input id="accountDeletionConfirm" autocomplete="off" autocapitalize="characters" spellcheck="false">
-      <div id="accountDeletionStatus" role="alert" aria-live="assertive"></div>
-      <button class="btn danger" id="accountDeletionSubmit" type="button" style="width:100%;margin-top:16px" disabled>Submit deletion request</button>`;
-    const input=$('accountDeletionConfirm'),submit=$('accountDeletionSubmit'),status=$('accountDeletionStatus');
-    input.oninput=()=>{submit.disabled=input.value.trim()!=='DELETE'};
-    submit.onclick=async()=>{
-      if(input.value.trim()!=='DELETE')return;
-      const slot='nestly:v131:account-deletion';
-      let key=sessionStorage.getItem(slot);if(!key){key=crypto.randomUUID();sessionStorage.setItem(slot,key)}
-      submit.disabled=true;status.innerHTML='<p class="muted small" style="margin-top:10px">Submitting the same safe request…</p>';
-      const {data,error}=await sb.rpc('request_account_deletion_v131',{p_confirmation:'DELETE',p_idempotency_key:key});
-      if(!modal.isConnected)return;
-      if(error||!data?.request_id){submit.disabled=false;status.innerHTML='<div class="err">We could not confirm whether the request was saved. Retry; Peekaa will reuse the same request.</div>';return}
-      sessionStorage.removeItem(slot);renderPending(data);
-    };
-    input.focus({preventScroll:true});
-  };
-  const {data,error}=await sb.rpc('get_account_deletion_request_v131');
-  if(!modal.isConnected)return;
-  if(error){body.setAttribute('aria-busy','false');body.innerHTML='<div class="err" role="alert">Deletion status could not be loaded. No request was created.</div><button class="btn ghost" id="accountDeletionRetry" style="margin-top:12px">Try again</button>';$('accountDeletionRetry').onclick=()=>{close();openAccountDeletionDialog(trigger)};return}
-  const request=Array.isArray(data)?data[0]:data;
-  if(request&&['pending','processing'].includes(request.status))renderPending(request);
-  else if(request?.status==='completed')renderCompleted(request);
-  else renderForm();
+    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request reviewed</b><p class="small" style="margin-top:6px">${esc(outcomes[request.resolution_code]||'Reviewed outcome recorded')}.</p></div>`;
+  }
 }
   function show(view){document.querySelectorAll('[data-view]').forEach(button=>button.className=button.dataset.view===view?'btn':'btn ghost');if(view==='native')return renderNativeBusinessCompanion();if(view==='persona')return renderPersonaChoice({staff:[{business_slug:'radiant-skin',business_name:'Radiant Skin Studio'},{business_slug:'harbour-cafe',business_name:'Harbour Café'}],customer:[{}]});if(view==='customer-unavailable')return renderCustomerWalletUnavailable();if(view==='customer-error')return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');if(view==='persona-error')return renderPersonaResolutionUnavailable();if(view==='workspace-error')return renderWorkspaceAccessUnavailable();root.innerHTML='<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card"><h1>Customer profile</h1>'+accountDeletionCardHtml()+'</section></main>';wireAccountDeletionButton()}
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>show(button.dataset.view));

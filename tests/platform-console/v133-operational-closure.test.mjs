@@ -51,10 +51,17 @@ test('V133 gives privacy operators an audited lifecycle without browser-side del
   assert.match(consoleSource,/data-deletion-review/);
   assert.match(consoleSource,/This records the reviewed outcome; it does not delete data/);
 
+  /* v188 removed self-service submission; the operator lifecycle above is untouched. What the
+     customer surface must still do is REPORT the outcome of a request they already made — the
+     copy moved from a dialog to the account & privacy card. */
   const customerSource=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
-  assert.match(customerSource,/Deletion request reviewed/);
-  assert.match(customerSource,/Outcome: \$\{esc\(outcome\)\}/);
-  assert.match(customerSource,/else if\(request\?\.status==='completed'\)renderCompleted\(request\)/);
+  assert.match(customerSource,/Closure request reviewed/);
+  assert.match(customerSource,/Closure request received/);
+  assert.match(customerSource,/outcomes\[request\.resolution_code\]/);
+  assert.match(customerSource,/deleted_where_permitted:'Deleted where permitted'/);
+  assert.match(customerSource,/retained_legal:'Retained under legal obligation'/);
+  assert.doesNotMatch(customerSource,/request_account_deletion_v131/,
+    'the browser may read the outcome but never create the request');
 });
 
 test('privacy queue makes overdue, claimed and resolved states observable',async()=>{

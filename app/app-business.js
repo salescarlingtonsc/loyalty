@@ -20,6 +20,13 @@ function configureChartDefaults(){
   Chart.defaults.animation.duration=520;
   Chart.defaults.animation.easing='easeOutQuart';
   Chart.defaults.elements.bar.borderRadius=8;
+  /* v188 (owner: "why can cross out male or female etc? what is it for?"). Chart.js makes every
+     legend clickable by default, so tapping "Male" struck it through and hid that slice — the
+     remaining wedges then silently re-proportioned and the chart read as a different business.
+     Nothing in this product wants that. A legend here is a key, not a control. */
+  Chart.defaults.plugins.legend.onClick=()=>{};
+  Chart.defaults.plugins.legend.labels.useBorderRadius=true;
+  Chart.defaults.plugins.legend.labels.borderRadius=3;
   Chart.defaults.elements.bar.borderSkipped=false;
   Chart.defaults.elements.line.borderWidth=2.5;
   Chart.defaults.elements.point.radius=0;
@@ -1283,7 +1290,7 @@ function profileHtml(){
         ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:18})}Settings</a>`:''}
         ${S.myRole==='owner'?'<a href="#/settings?tab=team" id="pmTeam">Team &amp; staff</a>':''}
         ${S.isSA?`<a href="#/platform" id="pmPlatform">${CUI.icon('platform',{size:18})}Platform</a>`:''}
-        <a href="#" id="pmDeleteAccount" style="color:var(--red)">${CUI.icon('back',{size:18})}Account &amp; privacy</a>
+        <a href="/data-request.html" id="pmDeleteAccount">${CUI.icon('back',{size:18})}Account &amp; privacy</a>
         <a href="#" id="pmSignout" style="color:var(--red)">${CUI.icon('back',{size:18})}Sign out</a>
       </div>`:''}
     </div>`;
@@ -1327,7 +1334,9 @@ function wireProfile(page){
     const pmT=$('pmTeam');if(pmT) pmT.onclick=()=>{profileOpen=false};
     const pmP=$('pmPlatform');if(pmP) pmP.onclick=()=>{profileOpen=false};
     const pmW=$('pmWallet');if(pmW) pmW.onclick=()=>{profileOpen=false};
-    const pmD=$('pmDeleteAccount');if(pmD)pmD.onclick=e=>{e.preventDefault();profileOpen=false;openAccountDeletionDialog(pmD)};
+    /* v188: the profile menu links to the data-request page instead of opening a self-service
+       deletion dialog; closing an account goes through Peekaa. */
+    const pmD=$('pmDeleteAccount');if(pmD)pmD.onclick=()=>{profileOpen=false};
     /* click-away to dismiss — expected of a native popover, and without it the menu
        could only be closed by re-clicking the chip. One-shot listener, re-armed on
        each open, so it can't stack up across renders. */
