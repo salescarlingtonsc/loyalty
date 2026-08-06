@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="793c7b42b3332bd10e5726b2bf117f633f2e69d10279e9d1587c64972b0bf721"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="ee475045d7cb3c2f3714009a923bc14df626e624949bdc76568a4f0d45246ba2"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -183,7 +183,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .insight-card h3{margin:0;font-size:1.04rem}.insight-card p{margin:0;line-height:1.45}.insight-meta{display:flex;flex-wrap:wrap;gap:6px}.insight-meta .pill{font-size:11px}
 .insight-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}.insight-actions .btn{min-height:38px}
 .business-health-list{display:grid;gap:8px}.health-row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:8px}.health-row:first-child{border-top:0;padding-top:0}.health-row b{font-size:13px}.health-row span{font-size:12px;color:var(--muted);text-align:right}
-.appointment-list-filters{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:end}
+/* V194 (owner: "alignment issue" on the From / To / Appointment status row). Each cell holds a
+   label above a control, and 'Appointment status' wraps to two lines at this column width while
+   'From' and 'To' do not — so the controls sat at different heights. Each cell is now a column
+   that pushes its control to the bottom, and the labels reserve one consistent line, so every
+   input and the Apply/Clear pair share one baseline. */
+.appointment-list-filters{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;display:grid;grid-template-columns:repeat(4,minmax(170px,1fr));gap:10px;align-items:end}
+.appointment-list-filters>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+.appointment-list-filters>div>label{margin:0 0 6px;min-height:1.15em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appointment-list-filters>div.row{flex-direction:row}
 .appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
 .appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
 .sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:stretch}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
@@ -1232,7 +1240,10 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    colour and dimmed, which reads instantly as "not mine" without hiding a single benefit. The
    state pill carries the same meaning in words, so greyscale is never the only signal. */
 .customer-tier-ladder{border-top:1px solid var(--hair);padding-top:14px}
-.customer-tier-rungs{display:grid;gap:10px;margin-top:10px;padding:0;list-style:none;counter-reset:tier}
+/* V192 (owner: tiers should read Basic -> Gold -> Diamond left to right, not stacked). Side by
+   side makes the ladder legible as a progression at a glance. auto-fit with a 200px floor so a
+   phone still stacks them rather than crushing three columns into an unreadable strip. */
+.customer-tier-rungs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px;padding:0;list-style:none;counter-reset:tier;align-items:stretch}
 .customer-tier-rung{padding:12px 14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--card);filter:grayscale(1);opacity:.62;transition:opacity var(--motion-ui) var(--ease),filter var(--motion-ui) var(--ease)}
 .customer-tier-rung.is-achieved{opacity:.78}
 .customer-tier-rung.is-current{filter:none;opacity:1;border-color:var(--merchant-accent,var(--coral));background:var(--tint);box-shadow:var(--shadow)}
@@ -1488,7 +1499,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 793c7b42b3332bd10e5726b2bf117f633f2e69d10279e9d1587c64972b0bf721</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · ee475045d7cb3c2f3714009a923bc14df626e624949bdc76568a4f0d45246ba2</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2638,7 +2649,7 @@ function pruneRewardSiblingsV139(root){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'793c7b42b3332bd10e5726b2bf117f633f2e69d10279e9d1587c64972b0bf721',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'ee475045d7cb3c2f3714009a923bc14df626e624949bdc76568a4f0d45246ba2',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

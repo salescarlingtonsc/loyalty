@@ -75,7 +75,11 @@ test('frontline Record sale minimizes choices and keeps hardened sale attributio
   assert.match(till,/keydown[\s\S]*Enter[\s\S]*tConfirm/i);
   // Scan RENDERED copy only: this guards against the till screen showing loyalty stats to the
   // operator, and a source-wide scan trips on code comments that merely mention them.
-  const tillCopy=till.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/(^|[^:])\/\/[^\n]*/g,'$1 ');
+  // V188 puts the customer's points balance on the RECEIPT at the owner's request. That is a
+  // different moment from sale ENTRY: the guard here is that the operator is not shown loyalty
+  // stats while taking money, so the receipt block is excluded rather than the rule weakened.
+  const tillCopy=till.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/(^|[^:])\/\/[^\n]*/g,'$1 ')
+    .replace(/id="posReceiptV142"[\s\S]*?id="tNext"/,' ');
   assert.doesNotMatch(tillCopy,/Points balance|Store credit|Visits/i);
   assert.match(till,/Scan customer QR/,
     'the intentionally added post-sale reward scanner must remain a clear, single-purpose action');
@@ -121,7 +125,12 @@ test('calendar UI opens day-by-team, keeps week/list secondary, and never writes
   assert.match(calendar,/<div class="day-schedule-window"[\s\S]*aria-hidden="true"><\/div>/i);
   assert.match(calendar,/<button type="button" class="day-slot-button"[\s\S]*data-day="\$\{day\}"[\s\S]*data-staff="\$\{column\.id\}"[\s\S]*data-time="\$\{minuteClock\(start\)\}"[\s\S]*data-service=/i);
   assert.match(calendar,/querySelectorAll\('\.day-slot-button'\)[\s\S]*openNewAppointmentForm\(\{[\s\S]*date:button\.dataset\.day[\s\S]*staffId:button\.dataset\.staff[\s\S]*time:button\.dataset\.time[\s\S]*serviceId:button\.dataset\.service/i);
-  assert.match(calendar,/calendarService'\)\.onchange[\s\S]*loadCalendar/i);
+  // V194 removed the calendar service picker at the owner's request: filtering the calendar to
+  // one service hid every other booking, which reads as a broken calendar. The service is chosen
+  // in New appointment instead.
+  assert.doesNotMatch(calendar,/id="calendarService"/);
+  assert.match(calendar,/let calendarServiceId=''/,
+    'the binding stays so the filter and slot-click preselection remain harmless no-ops');
   assert.match(calendar,/--calendar-hour-height:\$\{hourHeight\}px/i);
   assert.match(calendar,/height=\(to-from\)\/60\*hourHeight/i);
   assert.doesNotMatch(calendar,/from\('appointments'\)\.insert|from\('appointments'\)\.update|from\('appointments'\)\.delete/);
