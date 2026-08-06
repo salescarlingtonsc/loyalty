@@ -1221,6 +1221,12 @@
       "path": "db/migrations/20260806_nestly_v178_dispatch_secret_db_verify.sql",
       "semanticVersion": "v178",
       "proposedDeployVersion": "20260806113000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v179_report_insight_evidence.sql",
+      "semanticVersion": "v179",
+      "proposedDeployVersion": "20260806115000"
     }
   ]
 }
