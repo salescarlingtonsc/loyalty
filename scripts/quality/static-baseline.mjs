@@ -472,7 +472,10 @@ export async function checkVercelSecurityHeaders(root = repoRoot) {
   expectDirectiveValues(directives, 'object-src', ["'none'"]);
   expectDirectiveValues(directives, 'frame-ancestors', ["'none'"]);
   expectDirectiveValues(directives, 'form-action', ["'self'"]);
-  expectDirectiveValues(directives, 'script-src', ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://cdn.sheetjs.com', 'https://challenges.cloudflare.com']);
+  /* Cloudflare Web Analytics is enabled on the zone and injects its beacon into
+     every response; without these two hosts the browser logs a CSP violation on
+     every page view. Analytics-only: no other third-party scripts are admitted. */
+  expectDirectiveValues(directives, 'script-src', ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://cdn.sheetjs.com', 'https://challenges.cloudflare.com', 'https://static.cloudflareinsights.com']);
   expectDirectiveValues(directives, 'frame-src', ['https://challenges.cloudflare.com']);
   expectDirectiveValues(directives, 'style-src', ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']);
   expectDirectiveValues(directives, 'font-src', ["'self'", 'https://fonts.gstatic.com', 'data:']);
@@ -481,12 +484,14 @@ export async function checkVercelSecurityHeaders(root = repoRoot) {
     "'self'",
     singaporeSupabaseUrl,
     singaporeSupabaseWsUrl,
-    'https://challenges.cloudflare.com'
+    'https://challenges.cloudflare.com',
+    'https://cloudflareinsights.com',
+    'https://static.cloudflareinsights.com'
   ]);
   assert.deepEqual(
     directives.get('connect-src'),
-    ["'self'", singaporeSupabaseUrl, singaporeSupabaseWsUrl, 'https://challenges.cloudflare.com'],
-    'CSP connect-src must be restricted to self, the Singapore Supabase HTTPS/WSS origins, and Cloudflare Turnstile.'
+    ["'self'", singaporeSupabaseUrl, singaporeSupabaseWsUrl, 'https://challenges.cloudflare.com', 'https://cloudflareinsights.com', 'https://static.cloudflareinsights.com'],
+    'CSP connect-src must be restricted to self, the Singapore Supabase HTTPS/WSS origins, Cloudflare Turnstile, and Cloudflare Web Analytics.'
   );
   assert.ok(!csp.includes(oldSupabaseUrl), 'CSP must not include the old Supabase HTTPS origin.');
   assert.ok(!csp.includes(oldSupabaseWsUrl), 'CSP must not include the old Supabase WSS origin.');

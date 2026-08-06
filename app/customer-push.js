@@ -33,7 +33,7 @@
     const permission=globalObject.Notification?.permission||'default';
     if(!supported())return {state:'unsupported',label:'Unavailable',detail:'Push notifications are not supported in this browser.'};
     if(isIos()&&!isStandalone())return {state:'install_required',label:'Install required',detail:'On iPhone or iPad, add Peekaa to your Home Screen, open the installed app, then enable notifications here.'};
-    if(!vapidKey())return {state:'unconfigured',label:'Unavailable',detail:'Notifications are not configured for this Peekaa environment yet.'};
+    if(!vapidKey())return {state:'unconfigured',label:'Unavailable',detail:'Notifications aren’t available yet.'};
     if(permission==='denied')return {state:'blocked',label:'Blocked',detail:'Notifications are blocked in your device settings. Allow Peekaa there, then return to this page.'};
     if(!currentUserId)return {state:'signed_out',label:'Off',detail:'Sign in to manage device notifications.'};
     if(foreignSubscription.endpoint&&foreignSubscription.ownerUserId!==currentUserId){

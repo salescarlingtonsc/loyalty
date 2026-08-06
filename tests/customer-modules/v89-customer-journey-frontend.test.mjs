@@ -147,7 +147,7 @@ test('passkey sign-in and complete customer passkey management are capability ga
   assert.match(app,/Passkey rename cancelled/);
   assert.match(app,/sb\.auth\.passkey\.delete\(\{passkeyId:button\.dataset\.passkeyDelete\}\)/);
   assert.match(app,/error\?\.code==='passkey_disabled'/);
-  assert.match(app,/webauthn_credential_not_found[\s\S]*remove it, then add a new passkey/);
+  assert.match(app,/webauthn_credential_not_found[\s\S]{0,120}This passkey no longer works here\. Add it again\./);
 });
 
 test('customer booking and changes require the business v89 enablement',async()=>{

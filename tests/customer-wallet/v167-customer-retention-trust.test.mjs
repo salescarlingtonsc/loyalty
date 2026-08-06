@@ -83,8 +83,9 @@ test('security readiness is explicit instead of allowing a silent sign-in no-op'
   assert.match(signIn,/id="customerPasswordSignIn"[^>]*disabled[^>]*>[\s\S]*?<span>Checking…<\/span>/);
   assert.match(signIn,/signIn\.querySelector\('span'\)\.textContent=token\?'Sign in':'Checking…'/);
   assert.match(signIn,/if\(!captchaToken\)\{[\s\S]*Security check is still running/);
-  assert.match(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]*signIn\.disabled=true;[\s\S]*passkeyButton\.disabled=true;[\s\S]*Checking…/);
-  assert.doesNotMatch(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]{0,120}signIn\.disabled=false/);
+  // v176: a failed sign-in must leave the control usable; the captcha gate still blocks invalid submits.
+  assert.match(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]*signIn\.disabled=false;[\s\S]*passkeyButton\.disabled=!passkeySupported;[\s\S]*textContent='Sign in'/);
+  assert.doesNotMatch(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]{0,200}signIn\.disabled=true/);
 });
 
 test('customer Home does not expose operator ranking language',async()=>{
