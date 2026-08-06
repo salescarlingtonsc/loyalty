@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="cfa1ca17ea3cc97eebbad7291f554be2d4f937fa409bf0e9bead4eecf4b0960d"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="793c7b42b3332bd10e5726b2bf117f633f2e69d10279e9d1587c64972b0bf721"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1488,7 +1488,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · cfa1ca17ea3cc97eebbad7291f554be2d4f937fa409bf0e9bead4eecf4b0960d</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 793c7b42b3332bd10e5726b2bf117f633f2e69d10279e9d1587c64972b0bf721</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -1955,8 +1955,14 @@ function pruneRewardSiblingsV139(root){
     rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
   });
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
+  /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
+     loyalty_programs.active, drives availability for the earning rule AND every reward, so a
+     paused programme makes eight rows say "Programme paused" while none of them says how to fix
+     it — and publishing a config does NOT turn the programme on. Say it once, on the row that
+     owns the switch, and name the action. */
   const earningOverviewCopy=rewardJourney.earning?.availableToCustomers
-    ?rewardJourney.earning.label:`Programme paused · configured as ${rewardJourney.earning?.label||'no earning rule'}`;
+    ?rewardJourney.earning.label
+    :`Paused — customers earn nothing and no reward below is claimable. Open Edit to turn it on. Configured as ${rewardJourney.earning?.label||'no earning rule'}`;
   const milestoneOverviewCopy=(milestone,index)=>{
     const cost=milestone.estimatedCostCents?` · estimated fulfilment cost ${money(milestone.estimatedCostCents)}`:'';
     if(milestone.availableToCustomers)return `Reach ${milestone.threshold} ${milestone.unit}${index?` · ${milestone.additional} more after the previous reward`:''}${cost}`;
@@ -2632,7 +2638,7 @@ function pruneRewardSiblingsV139(root){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'cfa1ca17ea3cc97eebbad7291f554be2d4f937fa409bf0e9bead4eecf4b0960d',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'793c7b42b3332bd10e5726b2bf117f633f2e69d10279e9d1587c64972b0bf721',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

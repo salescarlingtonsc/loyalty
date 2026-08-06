@@ -13578,8 +13578,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     rewards:snapshot.rewards,birthday:snapshot.birthday,loyalty:snapshot.loyalty,asOf:snapshot.asOf
   });
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
+  /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
+     loyalty_programs.active, drives availability for the earning rule AND every reward, so a
+     paused programme makes eight rows say "Programme paused" while none of them says how to fix
+     it — and publishing a config does NOT turn the programme on. Say it once, on the row that
+     owns the switch, and name the action. */
   const earningOverviewCopy=rewardJourney.earning?.availableToCustomers
-    ?rewardJourney.earning.label:`Programme paused · configured as ${rewardJourney.earning?.label||'no earning rule'}`;
+    ?rewardJourney.earning.label
+    :`Paused — customers earn nothing and no reward below is claimable. Open Edit to turn it on. Configured as ${rewardJourney.earning?.label||'no earning rule'}`;
   const milestoneOverviewCopy=(milestone,index)=>{
     const cost=milestone.estimatedCostCents?` · estimated fulfilment cost ${money(milestone.estimatedCostCents)}`:'';
     if(milestone.availableToCustomers)return `Reach ${milestone.threshold} ${milestone.unit}${index?` · ${milestone.additional} more after the previous reward`:''}${cost}`;
@@ -17955,6 +17961,44 @@ async function inventoryPage(){
       <div><label>Expiry (optional)</label><input id="be2" type="date"></div></div>
       <div style="margin-top:14px"><button class="btn ghost" id="badd2">Receive batch</button></div></div>`:''}
     <div class="card"><b>Stock on hand</b><div id="ilist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div></div>`;
+  /* V191 (owner: "how to edit and delete pricing or edit information etc"). Products could only
+     be created — a mistyped price or name was permanent, which matters more now that a whole
+     café menu lives here. Editing never rewrites history: every sale carries its own snapshot.
+     Disable rather than delete, because product_stock, stock batches and past sale lines all
+     reference the row; disabling removes it from Record sale and the catalogue while leaving
+     every reference and every past receipt intact. */
+  let editingProductId=null;
+  function bindProductEditors(){
+    document.querySelectorAll('[data-prod-edit]').forEach(b=>b.onclick=()=>{
+      editingProductId=b.dataset.prodEdit;loadInv();
+    });
+    document.querySelectorAll('[data-prod-cancel]').forEach(b=>b.onclick=()=>{
+      editingProductId=null;loadInv();
+    });
+    document.querySelectorAll('[data-prod-toggle]').forEach(b=>b.onclick=async()=>{
+      const to=!b.dataset.prodActive;
+      const {error}=await sb.from('products').update({active:to}).eq('id',b.dataset.prodToggle);
+      if(error)return toast(ownerErrorText(error));
+      toast(to?'Product enabled':'Product disabled');loadInv();
+    });
+    document.querySelectorAll('[data-prod-save]').forEach(b=>b.onclick=async()=>{
+      const id=b.dataset.prodSave,status=$('prodEditStatus');
+      const name=$('prodEditName').value.trim();
+      const sku=$('prodEditSku').value.trim()||null;
+      const price=Math.round(parseFloat($('prodEditPrice').value||'0')*100);
+      const costRaw=$('prodEditCost').value.trim();
+      const cost=costRaw===''?null:Math.round(parseFloat(costRaw)*100);
+      if(name.length<2){if(status)status.textContent='Give the product a name.';return}
+      if(!(price>=0)){if(status)status.textContent='Enter a price of 0 or more.';return}
+      if(cost!=null&&!(cost>=0)){if(status)status.textContent='Cost must be 0 or more, or left blank.';return}
+      CUI.setButtonBusy(b,{busy:true,label:'Saving…'});
+      const {error}=await sb.from('products')
+        .update({name,sku,retail_price_cents:price,cost_cents:cost}).eq('id',id);
+      if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
+      if(error){if(status)status.textContent=ownerErrorText(error);return}
+      editingProductId=null;toast('Product updated');loadInv();
+    });
+  }
   async function loadInv(){
     const [productsResult,stockResult]=await Promise.all([
       sb.from('products').select('*').eq('business_id',S.biz.id).order('name'),
@@ -17967,10 +18011,19 @@ async function inventoryPage(){
     const pr=productsResult.data,st=stockResult.data;
     const SM=Object.fromEntries((st||[]).map(x=>[x.product_id,x.stock]));
     if(canWrite)$('bp2').innerHTML=(pr||[]).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">— add a product first —</option>';
-    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Stock on hand"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Cost</th><th>Gross profit</th><th>Stock</th></tr></thead><tbody>
+    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Stock on hand"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Cost</th><th>Gross profit</th><th>Stock</th><th></th></tr></thead><tbody>
       ${pr.map(p=>{const s=SM[p.id]||0,profit=p.cost_cents==null?null:productProfitabilityV122({priceCents:p.retail_price_cents,costCents:p.cost_cents});return `<tr><td data-label="Product"><b>${esc(p.name)}</b></td><td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
-      <td data-label="Price">${money(p.retail_price_cents)}</td><td data-label="Cost">${p.cost_cents==null?'Not set':money(p.cost_cents)}</td><td data-label="Gross profit">${profit?`${money(profit.grossProfitCents)} · ${profit.marginPct}%`:'Add cost'}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td></tr>`}).join('')}</tbody></table></div>`
+      <td data-label="Price">${money(p.retail_price_cents)}</td><td data-label="Cost">${p.cost_cents==null?'Not set':money(p.cost_cents)}</td><td data-label="Gross profit">${profit?`${money(profit.grossProfitCents)} · ${profit.marginPct}%`:'Add cost'}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td>
+      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}">${p.active?'Disable':'Enable'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingProductId===p.id?`<tr><td colspan="7"><div class="v150-soft-head"><b>Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
+        <div class="field-grid">
+          <div><label for="prodEditName">Name</label><input id="prodEditName" value="${esc(p.name||'')}"></div>
+          <div><label for="prodEditSku">SKU (optional)</label><input id="prodEditSku" value="${esc(p.sku||'')}"></div>
+          <div><label for="prodEditPrice">Price (${S.biz.currency||'SGD'})</label><input id="prodEditPrice" type="number" min="0" step="0.01" value="${((p.retail_price_cents||0)/100).toFixed(2)}"></div>
+          <div><label for="prodEditCost">Cost (optional)</label><input id="prodEditCost" type="number" min="0" step="0.01" value="${p.cost_cents==null?'':(p.cost_cents/100).toFixed(2)}"></div>
+        </div>
+        <div class="row" style="margin-top:12px"><button class="btn sm" data-prod-save="${p.id}">Save changes</button><button class="btn ghost sm" data-prod-cancel="1">Cancel</button><span class="muted small" id="prodEditStatus" role="status" aria-live="polite"></span></div></td></tr>`:''}`}).join('')}</tbody></table></div>`
       :`<div class="empty"><div class="big">📦</div>No products yet.</div>`;
+    bindProductEditors();
   }
   const paintProductProfit=()=>{
     if(!canWrite)return;
@@ -20006,6 +20059,7 @@ async function loadCustomerProgrammePresentationEditorV95(){
     <hr style="border:none;border-top:1px solid var(--line);margin:22px 0">
     <div class="split"><div><h3>Brand &amp; images</h3>
       <label for="programmeHeroColor">Programme colour</label><input id="programmeHeroColor" type="color" value="${esc(brand.hero_color||'#C43D32')}" style="height:44px;padding:4px">
+      <p class="muted small" id="programmeColourWarning" role="status" aria-live="polite" style="margin-top:6px"></p>
       <button class="btn ghost sm" id="programmeColourSave" style="margin-top:8px">Save programme colour</button>
       <label for="programmeImageEntity">Image for</label><select id="programmeImageEntity" data-merchant-content>${entityOptions.map(item=>`<option value="${esc(item.kind+'|'+item.id)}">${esc(item.name)}</option>`).join('')}</select>
       <label for="programmeImageFile">Image file</label><input id="programmeImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
@@ -20041,6 +20095,29 @@ async function loadCustomerProgrammePresentationEditorV95(){
     if(copyError){$('programmeCopySave').disabled=false;return fail(copyError)}
     toast('Customer programme overview updated');loadCustomerProgrammePresentationEditorV95();
   };
+  /* V191 (owner: "changed colour but nothing shows"). The colour DOES save — Hougang ABC stored
+     #F5EC00 — but the customer hero paints white text on it, so contrastSafeBrandColor silently
+     substitutes the brand fallback for anything under 4.5:1. The owner picked yellow, saw it
+     accepted, and their customers kept seeing coral with no explanation anywhere.
+     The substitution stays (unreadable copy is worse than a rejected colour) but it is no longer
+     silent: the editor says what customers will actually see, before and after saving. */
+  const paintProgrammeColourWarning=()=>{
+    const warning=$('programmeColourWarning'),picker=$('programmeHeroColor');
+    if(!warning||!picker)return;
+    const chosen=String(picker.value||'').toUpperCase();
+    const effective=contrastSafeBrandColor(chosen);
+    if(effective===chosen){
+      warning.textContent='Customers will see this colour behind the programme title.';
+      warning.style.color='';
+    }else{
+      warning.innerHTML=`This colour is too light for the white title text on it, so customers would not be able to read the words. Peekaa will show <b>${esc(effective)}</b> instead. Pick a darker shade to use your own colour.`;
+      warning.style.color='var(--amber)';
+    }
+  };
+  if($('programmeHeroColor')){
+    $('programmeHeroColor').oninput=paintProgrammeColourWarning;
+    paintProgrammeColourWarning();
+  }
   $('programmeColourSave').onclick=async()=>{
     $('programmeColourSave').disabled=true;
     const {error:colourError}=await sb.rpc('business_set_brand_presentation_v95',{
