@@ -23,7 +23,9 @@ function executableInlineScripts(html) {
 test('every executable inline script in the SPA parses before browser boot', () => {
   const scripts = [...indexHtml.matchAll(/<script(?<attrs>[^>]*)>/gi)];
   assert.ok(scripts.length > 0, 'index.html must contain executable scripts');
-  assert.match(indexHtml, /<script[^>]*\bsrc\s*=\s*["'][^"']*\/?app\.js["']/i,
+  // v183: the tag carries a cache-busting fingerprint (?b=<hash>), so match the path, not the
+  // whole attribute value.
+  assert.match(indexHtml, /<script[^>]*\bsrc\s*=\s*["'][^"']*\/?app\.js(?:\?b=[0-9a-f]{12})?["']/i,
     'index.html must load the application bundle app/app.js');
 
   const units = [...executableInlineScripts(indexHtml), { filename: 'app/app.js', source: appScript }];
