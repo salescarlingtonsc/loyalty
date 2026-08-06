@@ -162,7 +162,15 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-chart-head .dashboard-chart-link{color:var(--coral);font-weight:750;font-size:12px;white-space:nowrap;min-height:32px;display:inline-flex;align-items:center}
 .metric-action-label{display:inline-flex;margin-top:10px;min-height:32px;align-items:center;color:var(--coral);font-weight:800;font-size:12.5px}
 .branch-loading-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:999px;background:#FBFAF8;color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
-.dashboard-schedule-glance{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 18px;background:linear-gradient(135deg,#fff,#fff8f4);border-color:#E8D8D0}
+.dashboard-schedule-glance{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,#fff8f4);border-color:#E8D8D0}
+.dashboard-schedule-top{display:flex;justify-content:space-between;align-items:center;gap:14px}
+/* V180: today's bookings at a glance. Chips wrap rather than scroll horizontally — a hidden
+   booking is worse than a taller card on the one surface an owner checks before opening. */
+.dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
+.dashboard-schedule-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
+.dashboard-schedule-chip{display:flex;align-items:baseline;gap:7px;padding:7px 12px;background:#fff;border:1px solid #EEDFD7;border-radius:100px;font-size:13px;min-height:34px}
+.dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
+.dashboard-schedule-chip.more a{color:var(--coral);font-weight:700;display:inline-flex;align-items:center;min-height:34px}
 .dashboard-schedule-copy{display:flex;gap:12px;align-items:flex-start}.dashboard-schedule-copy>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-schedule-copy h2{font-size:1.05rem}.dashboard-schedule-copy p:not(.eyebrow){margin-top:3px;color:var(--muted)}
 .dashboard-schedule-actions{display:flex;gap:8px;flex-wrap:wrap}
 .client-summary-cards{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
@@ -221,7 +229,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
   .business-workspace-switch .who,.profile .who{max-width:156px}
   .business-workspace-switch .who span:not(.avatar),.profile .who div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
-@media(max-width:900px){.dashboard-schedule-glance{align-items:flex-start;flex-direction:column}.dashboard-schedule-actions{width:100%}.dashboard-schedule-actions .btn{flex:1}}
+@media(max-width:900px){.dashboard-schedule-top{align-items:flex-start;flex-direction:column}.dashboard-schedule-actions{width:100%}.dashboard-schedule-actions .btn{flex:1}}
 @media(max-width:700px){.staff-members-toolbar{align-items:stretch}.staff-members-tabs{width:100%;justify-content:space-between}.staff-members-tab{flex:1}.staff-members-add-top{width:100%;margin-left:0}}
 @media(min-width:761px) and (max-width:940px){
   .global-act#globalNewAppt span:not(.ic){display:none}
@@ -9251,6 +9259,60 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
 function dashboardLoyaltyRowV170(cards){
   return `<section class="dashboard-loyalty" aria-labelledby="dashboardLoyaltyTitle"><div class="dashboard-loyalty-head">${CUI.icon('loyalty',{size:20})}<div><h3 id="dashboardLoyaltyTitle">Loyalty this period</h3><p class="muted small">Programme activity for the selected dates.</p></div></div><div class="dashboard-loyalty-grid">${cards.map(card=>`<div class="dashboard-loyalty-card"><b>${esc(card.label)}</b><span class="v">${esc(card.value)}</span><span class="metric-hint">${esc(card.hint)}</span>${card.retryId?`<button type="button" class="btn ghost sm" id="${card.retryId}">Retry</button>`:''}</div>`).join('')}</div></section>`;
 }
+/* V180 (owner instruction: "I want have simple glance of calendar").
+   The Today-schedule strip announced today's bookings but showed none of them — an owner had
+   to leave the Dashboard to learn whether anyone was coming in. It now renders today's actual
+   appointments inline.
+   Deliberate choices:
+   - TODAY is fixed, independent of the Performance date range above it. The strip is titled
+     "Today schedule"; letting the 30d picker widen it would make the heading a lie.
+   - Cancelled appointments are excluded from the count but the count is of what is still ON,
+     so "3 today" always means three people are actually expected.
+   - A failure renders a plain, retryable line. It never renders "0 today", because an unread
+     schedule and an empty schedule mean opposite things to someone deciding whether to go in.
+   - Capped at 6 chips with an explicit "+N more" so nothing is silently truncated. */
+const DASHBOARD_SCHEDULE_CHIP_LIMIT_V180=6;
+async function loadDashboardScheduleGlanceV180(root,branchId=null){
+  const host=root?.querySelector('#dashboardScheduleToday');
+  const summary=root?.querySelector('#dashboardScheduleSummary');
+  if(!host)return;
+  if(!canReadModule('appointments')){host.innerHTML='';return}
+  host.innerHTML='<p class="muted small">Loading today\u2019s schedule\u2026</p>';
+  const from=sgDateBoundary(sgDateInputValue()),to=sgDateBoundary(sgDateInputValue(),1);
+  let query=sb.from('appointments')
+    .select('id,starts_at,status,clients(full_name),services!appointments_service_id_fkey(name)')
+    .eq('business_id',S.biz.id).gte('starts_at',from).lt('starts_at',to)
+    .order('starts_at').order('id').limit(50);
+  /* The applied branch scope is a closure variable inside dashboard(), so it is PASSED IN
+     rather than read here — reaching for it directly threw a ReferenceError. */
+  if(branchId)query=query.eq('branch_id',branchId);
+  const {data,error}=await query;
+  if(!root.isConnected)return;
+  if(error){
+    host.innerHTML='<p class="muted small" role="status">Today\u2019s schedule could not be loaded. <button type="button" class="btn ghost sm" id="dashboardScheduleRetry">Try again</button></p>';
+    const retry=host.querySelector('#dashboardScheduleRetry');
+    if(retry)retry.onclick=()=>loadDashboardScheduleGlanceV180(root,branchId);
+    return;
+  }
+  const rows=(data||[]).filter(row=>String(row.status||'').toLowerCase()!=='cancelled');
+  if(summary){
+    summary.textContent=rows.length
+      ?`${rows.length} ${rows.length===1?'booking':'bookings'} today.`
+      :'Nothing booked for today.';
+  }
+  if(!rows.length){
+    host.innerHTML='<p class="muted small">Nothing booked for today — a free day, or a day to fill.</p>';
+    return;
+  }
+  const shown=rows.slice(0,DASHBOARD_SCHEDULE_CHIP_LIMIT_V180);
+  const overflow=rows.length-shown.length;
+  host.innerHTML=`<ol class="dashboard-schedule-chips">${shown.map(row=>{
+    const time=sgt(row.starts_at).slice(11,16);
+    const who=row.clients?.full_name||'Walk-in';
+    const what=row.services?.name||'';
+    return `<li class="dashboard-schedule-chip"><b>${esc(time)}</b><span data-merchant-content>${esc(who)}</span>${what?`<span class="muted small" data-merchant-content>${esc(what)}</span>`:''}</li>`;
+  }).join('')}${overflow>0?`<li class="dashboard-schedule-chip more"><a href="#/appointments?view=list&preset=today">+${overflow} more</a></li>`:''}</ol>`;
+}
 async function dashboard(){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const renderEpoch=++dashboardRenderEpoch;
@@ -9267,14 +9329,17 @@ async function dashboard(){
       </div>
     </header>
     <section class="card dashboard-schedule-glance" aria-label="Today schedule glance">
-      <div class="dashboard-schedule-copy">
-        ${CUI.icon('appointments',{size:24})}
-        <div><p class="eyebrow">Today schedule</p><h2>Bookings and appointments</h2><p>See today’s bookings and appointments from the Dashboard.</p></div>
+      <div class="dashboard-schedule-top">
+        <div class="dashboard-schedule-copy">
+          ${CUI.icon('appointments',{size:24})}
+          <div><p class="eyebrow">Today schedule</p><h2>Bookings and appointments</h2><p id="dashboardScheduleSummary">See today’s bookings and appointments from the Dashboard.</p></div>
+        </div>
+        <div class="dashboard-schedule-actions">
+          <a class="btn secondary" href="#/appointments?view=list&preset=today">View bookings</a>
+          <a class="btn secondary" href="#/appointments">Open calendar</a>
+        </div>
       </div>
-      <div class="dashboard-schedule-actions">
-        <a class="btn secondary" href="#/appointments?view=list&preset=today">View bookings</a>
-        <a class="btn secondary" href="#/appointments">Open calendar</a>
-      </div>
+      <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
@@ -9337,6 +9402,7 @@ async function dashboard(){
     invalidatePerformance();
   });
   dashboardRoot.querySelector('#apply').onclick=()=>load();
+  loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
   async function load(){
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
@@ -11952,7 +12018,8 @@ async function servicesPage(){
       <label>Price (${S.biz.currency||'SGD'})</label><input id="sp" type="number" min="0" step="0.01">
       <label>Duration (minutes)</label><input id="sd" type="number" min="5" step="5" value="60">
       <div style="margin-top:16px" class="row"><button class="btn" id="sadd">Save service</button><button class="btn ghost sm" id="cancelServiceForm">Cancel</button></div></div>`:''}
-    <div class="card"><div class="v150-soft-head"><b>Services catalogue</b><p>Active services can be selected for bookings and sales.</p></div><div id="slist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div></div>`;
+    <div class="card"><div class="v150-soft-head"><b>Services catalogue</b><p>Active services can be selected for bookings and sales.</p></div><div id="slist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div>
+    <div id="commissionWrap"></div></div>`;
   /* Keep the list in memory so an add reflects INSTANTLY (one insert round-trip that
      returns the row, then local splice + re-render) instead of a second full re-fetch. */
   let svCache=[];
@@ -12009,6 +12076,9 @@ async function servicesPage(){
     });renderSvc();
   }
   load();
+  /* V180: the per-service commission override lives here now, next to the price it overrides.
+     It is owner-only and self-guards on its mount point, so a non-owner simply gets nothing. */
+  loadCommissionConfig();
   /* bundles */
   M().insertAdjacentHTML('beforeend',`<div class="services-segment-body" id="bundleSegmentBody" style="display:none">
     <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b>Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
@@ -20701,7 +20771,7 @@ async function settingsPage(){
       <p class="muted small" style="margin:4px 0 8px">Reusable module sets — save one from a staff member's "Modules" panel below, then apply it to others. Example: Staff A → Dashboard + Customers. Staff B → Inventory only.</p>
       <div id="tplList">${CUI.skeletonGrid({cards:1,lines:3})}</div>
     </div>
-    <div id="commissionWrap"></div></section>
+</section>
     <section class="settings-panel" id="setpanel-data" role="tabpanel" aria-labelledby="settab-data" tabindex="-1" hidden><div class="split"><div class="card"><b>Import customers (CSV)</b>
       <p class="muted small" id="csvHelp" style="margin:6px 0 10px">Bring your list from a spreadsheet or another system. Columns recognised: <b>name</b> (required), phone, email, birth_date (YYYY-MM-DD).</p>
       <label for="csvf">Customer CSV file</label>
@@ -21190,8 +21260,6 @@ async function settingsPage(){
       toast(workspaceTemplateTextV97('customersImported',{count:done}));$('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersImportPreview',{count:done})}</p>`;
     };
   };
-  /* commission config — owner only, % only (flat-amount commission is not built yet) */
-  loadCommissionConfig();
   /* ---------- billing (read-only) ---------- */
   /* V124 adds guarded checkout commands; billing truth remains provider-backed. */
   loadBillingConfig();
@@ -21459,24 +21527,20 @@ async function loadSignupConfig(){
   }
 }
 async function loadCommissionConfig(){
+  if(!$('commissionWrap'))return;
   const {data:me}=await sb.from('staff').select('role').eq('user_id',S.user.id).eq('business_id',S.biz.id).limit(1);
   if(!me||!me.length||me[0].role!=='owner') return; /* owner-only config */
   const pct=bps=>bps==null?'':(bps/100).toString();
   const toBps=v=>{const t=(v||'').trim();return t===''?null:Math.round(parseFloat(t)*100)};
-  const [{data:staffList,error:e1},{data:svcList,error:e2}]=await Promise.all([
-    sb.from('staff').select('id,full_name,commission_service_bps,commission_product_bps').eq('business_id',S.biz.id).order('full_name'),
-    sb.from('services').select('id,name,commission_bps').eq('business_id',S.biz.id).order('name')
-  ]);
-  if(e1||e2) return fail(e1||e2);
-  $('commissionWrap').innerHTML=`<div class="split" style="margin-top:16px">
-    <div class="card"><b>Staff commission %</b>
-      <p class="muted small" style="margin:6px 0 10px">Per-staff default commission on services and on products/retail sales. Leave blank if this firm doesn't use commission — 0% is a real setting (means "no commission"), different from blank ("not decided yet"). % only.</p>
-      ${(staffList&&staffList.length)?`<table><tr><th>Staff</th><th>Service %</th><th>Product %</th><th></th></tr>
-        ${staffList.map(s=>`<tr><td>${esc(s.full_name||'Team member')}</td>
-          <td><input data-cs="${s.id}" type="number" min="0" step="0.1" placeholder="blank = not set" value="${pct(s.commission_service_bps)}" style="max-width:110px"></td>
-          <td><input data-cp="${s.id}" type="number" min="0" step="0.1" placeholder="blank = not set" value="${pct(s.commission_product_bps)}" style="max-width:110px"></td>
-          <td><button class="btn ghost sm" data-savestaff="${s.id}">Save</button></td></tr>`).join('')}</table>`
-        :'<p class="muted small">No staff yet — add your team first.</p>'}</div>
+  if(!$('commissionWrap'))return; /* only the Services page mounts this now */
+  const {data:svcList,error:e2}=await sb.from('services')
+    .select('id,name,commission_bps').eq('business_id',S.biz.id).order('name');
+  if(e2) return fail(e2);
+  /* V180 (owner instruction): the per-STAFF commission table was removed from here — it now
+     lives on each staff member's own row in Staff Members, where the person it belongs to is.
+     The per-SERVICE override stayed behind and moved to the Services page, next to the price
+     it overrides, because it is a property of a service and not of a person. */
+  $('commissionWrap').innerHTML=`<div style="margin-top:16px">
     <div class="card"><b>Service commission override %</b>
       <p class="muted small" style="margin:6px 0 10px">Overrides the staff default for this one service. Blank = inherit staff default; 0% = explicitly no commission on this service.</p>
       ${(svcList&&svcList.length)?`<table><tr><th>Service</th><th>Override %</th><th></th></tr>
@@ -21484,13 +21548,6 @@ async function loadCommissionConfig(){
           <td><input data-cv="${s.id}" type="number" min="0" step="0.1" placeholder="blank = inherit" value="${pct(s.commission_bps)}" style="max-width:110px"></td>
           <td><button class="btn ghost sm" data-savesvc="${s.id}">Save</button></td></tr>`).join('')}</table>`
         :'<p class="muted small">No services yet.</p>'}</div></div>`;
-  document.querySelectorAll('[data-savestaff]').forEach(b=>b.onclick=async()=>{
-    const id=b.dataset.savestaff;
-    const cs=document.querySelector(`[data-cs="${id}"]`).value,cp=document.querySelector(`[data-cp="${id}"]`).value;
-    const {error}=await sb.from('staff').update({commission_service_bps:toBps(cs),commission_product_bps:toBps(cp)}).eq('id',id);
-    if(error) return fail(error);
-    toast('Staff commission saved');
-  });
   document.querySelectorAll('[data-savesvc]').forEach(b=>b.onclick=async()=>{
     const id=b.dataset.savesvc;
     const cv=document.querySelector(`[data-cv="${id}"]`).value;

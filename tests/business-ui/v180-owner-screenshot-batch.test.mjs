@@ -104,3 +104,43 @@ test('merchant insights sits outside the Performance section', () => {
   assert.ok(perf > 0 && understand > perf && insights > understand,
     'insights must render after Understand your business, not inside Performance');
 });
+
+test('today schedule glance shows real bookings and is fixed to today', () => {
+  const i = app.indexOf('async function loadDashboardScheduleGlanceV180');
+  assert.ok(i > 0, 'no schedule glance loader');
+  const src = app.slice(i, i + 2600);
+  assert.ok(src.includes("sgDateBoundary(sgDateInputValue())") && src.includes("sgDateBoundary(sgDateInputValue(),1)"),
+    'the glance must be pinned to today, not to the Performance date range');
+  assert.ok(src.includes("String(row.status||'').toLowerCase()!=='cancelled'"),
+    'cancelled bookings must not be counted as people expected today');
+  assert.ok(src.includes('dashboardScheduleRetry'),
+    'a read failure must be retryable, never rendered as an empty schedule');
+  assert.ok(!/if\(error\)[\s\S]{0,200}Nothing booked/.test(src),
+    'an unread schedule and an empty schedule mean opposite things');
+  assert.ok(src.includes('DASHBOARD_SCHEDULE_CHIP_LIMIT_V180') && src.includes('+${overflow} more'),
+    'truncation must be explicit, never silent');
+});
+
+test('the glance takes its branch scope as an argument, not from a closure it cannot see', () => {
+  // appliedDashboardScopeV141 is declared inside dashboard(); reading it from this
+  // module-level function threw a ReferenceError.
+  assert.ok(app.includes('async function loadDashboardScheduleGlanceV180(root,branchId=null)'));
+  assert.ok(app.includes('loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId)'));
+  const i = app.indexOf('async function loadDashboardScheduleGlanceV180');
+  assert.ok(!app.slice(i, i + 2600).includes('appliedDashboardScopeV141'),
+    'the loader must never reference the dashboard closure variable directly');
+});
+
+test('commission settings sit with the thing they belong to', () => {
+  // Per-staff commission moved onto the staff row; the per-service override moved to Services.
+  assert.ok(!app.includes('data-savestaff'), 'per-staff commission table should be gone');
+  assert.ok(!app.includes('<b>Staff commission %</b>'), 'per-staff commission card should be gone');
+  assert.ok(app.includes('<b>Service commission override %</b>'), 'service override must survive the move');
+  const services = app.indexOf('async function servicesPage()');
+  const mount = app.indexOf('<div id="commissionWrap"></div>');
+  const bundles = app.indexOf('id="bundleSegmentBody"', services);
+  assert.ok(services > 0 && mount > services && mount < bundles,
+    'the override must mount inside the Services page');
+  assert.ok(app.includes("if(!$('commissionWrap'))return"),
+    'the loader must no-op where it has no mount point');
+});
