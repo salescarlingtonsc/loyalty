@@ -3927,7 +3927,7 @@ async function tillPage(){
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
-    const [checkout,pkg,mem,preferences,entitlements,serviceMeta]=await Promise.all([
+    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
          reconstructs or broadens that availability rule. */
@@ -3943,7 +3943,12 @@ async function tillPage(){
         p_business:S.biz.id,p_client:cust.client_id
       }),
       sb.from('services').select('id,name,variant_label,duration_min')
-        .eq('business_id',S.biz.id)
+        .eq('business_id',S.biz.id),
+      /* v187: bundles were authorable but unsellable. Read the bundle and its member services
+         here; which of those services may actually be sold at THIS branch is still decided by
+         the checkout catalogue above, never by this list. */
+      sb.from('bundles').select('id,name,price_cents,active,bundle_items(service_id)')
+        .eq('business_id',S.biz.id).eq('active',true).order('name')
     ]);
     if(!isTillCurrent())return;
     catalogLoading=false;
@@ -3976,7 +3981,24 @@ async function tillPage(){
       memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
       customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
       customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
-      packageEarnsPoints:preferenceState.packageEarnsPoints
+      packageEarnsPoints:preferenceState.packageEarnsPoints,
+      /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
+         missing a service is not the deal the customer was quoted, so it is withheld rather than
+         quietly sold short. Prices come from the branch's own catalogue. */
+      bundles:bundleRows.error?null:(bundleRows.data||[]).map(bundle=>{
+        const catalogueById=new Map(activeItems.filter(item=>item.item_type==='service')
+          .map(item=>[item.item_id,item]));
+        const wanted=(bundle.bundle_items||[]).map(row=>row.service_id).filter(Boolean);
+        const items=wanted.map(serviceId=>{
+          const listed=catalogueById.get(serviceId);
+          if(!listed)return null;
+          return {id:serviceId,
+            name:serviceDisplayName(serviceById[serviceId]||listed),
+            unit_cents:listed.unit_cents||0};
+        });
+        return {id:bundle.id,name:bundle.name,unit_cents:bundle.price_cents||0,
+          items:items.filter(Boolean),complete:wanted.length>0&&items.every(Boolean)};
+      }).filter(bundle=>bundle.complete)
     };
     draw();
   }
@@ -3986,6 +4008,44 @@ async function tillPage(){
     if(ex){ex.qty++;}
     else cart.push({lineId:crypto.randomUUID(),type,ref:item.id,label:item.name,unit_cents:item.unit_cents,qty:1});
     CUI.announce(workspaceTemplateTextV97('itemAdded',{item:item.name}));onSaleLinesChanged();
+  }
+  /* v187 (owner: "i dont see in record sale to sell" a bundle). A bundle is several services at
+     one price, and it was authorable in Services → Bundles but unsellable at the till.
+     sale_items has no bundle type, and inventing one would put a line in the ledger that no
+     report, commission rule or staff-performance figure knows how to read. So a bundle is sold
+     as what it IS: its member services, each recorded as a normal service line, priced pro-rata
+     from their own list prices so the lines sum to EXACTLY the bundle price. Staff performance,
+     service reporting and commissions keep working; revenue is the bundle price, not the sum of
+     the parts. The remainder cent goes on the last line, so no rounding is invented or lost. */
+  function bundleLinePricesV187(items,bundleCents){
+    const rows=(Array.isArray(items)?items:[]).filter(item=>item&&item.id);
+    if(!rows.length)return [];
+    const total=Math.max(0,Math.round(Number(bundleCents)||0));
+    const listTotal=rows.reduce((sum,item)=>sum+Math.max(0,Number(item.unit_cents)||0),0);
+    let allocated=0;
+    return rows.map((item,index)=>{
+      const last=index===rows.length-1;
+      const share=last
+        ?total-allocated
+        :listTotal>0
+          ?Math.floor(total*Math.max(0,Number(item.unit_cents)||0)/listTotal)
+          :Math.floor(total/rows.length);
+      allocated+=share;
+      return {...item,unit_cents:Math.max(0,share)};
+    });
+  }
+  function addBundleLines(bundle){
+    if(cartLocked())return;
+    const priced=bundleLinePricesV187(bundle?.items,bundle?.unit_cents);
+    if(!priced.length)return toast('That bundle has no services in it yet.');
+    for(const item of priced){
+      /* Always a NEW line, never a quantity bump on an existing service: a bundled service is
+         priced differently from the same service sold on its own, and merging them would hide
+         which price the customer actually paid. */
+      cart.push({lineId:crypto.randomUUID(),type:'service',ref:item.id,
+        label:`${item.name} · ${bundle.name}`,unit_cents:item.unit_cents,qty:1});
+    }
+    CUI.announce(workspaceTemplateTextV97('itemAdded',{item:bundle.name}));onSaleLinesChanged();
   }
   // Custom "Other item": a mandatory staff reason (3..200 chars) rides with the line and is sent
   // to evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates it.
@@ -4230,6 +4290,12 @@ async function tillPage(){
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
           ?`<details class="till-sale-package-options"><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div></details>`
           :'';
+        /* v187: bundles sit right under the services they are made of — that is where a
+           counter hand looks for "the package deal" — and each says what is inside it. */
+        const bundleBtns=(catalog.bundles&&catalog.bundles.length)
+          ?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${catalog.bundles.map(bundle=>`<button type="button" class="choice-button" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span></button>`).join('')}</div>
+            <p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`
+          :'';
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
           :'';
@@ -4239,7 +4305,7 @@ async function tillPage(){
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
             ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
           :'';
-        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}`}${pkgBtns}${memBtns}
+        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
@@ -4328,6 +4394,10 @@ async function tillPage(){
     document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.add, list=type==='service'?catalog.services:catalog.products;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addCatalogLine(type,item);
+    });
+    document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
+      const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
+      if(bundle)addBundleLines(bundle);
     });
     document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
