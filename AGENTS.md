@@ -106,6 +106,14 @@ byte-identical, only the file moved. Tests that grep application code read the
 CONCATENATION of `app/index.html` + `app/app.js` (see the read-site pattern in
 any customer-wallet test); new tests must do the same.
 
+**After ANY edit to `app/app.js`, run `npm run bundle-stamp`.** The script tag
+carries a fingerprint of the bundle's bytes (`/app.js?b=<hash>`) because
+Cloudflare rewrites the browser-facing `max-age` on that file to four hours no
+matter what Vercel sends — without a changing url, a returning visitor runs the
+previous deploy's application code against the new `index.html`. Three tests in
+`tests/phase0-foundation/app-bundle-stamp.test.mjs` fail if the stamp drifts,
+and `npm run validate` checks it.
+
 ### Git and deploys
 
 - Branch from fresh `origin/main`; work in your own worktree, never in another
