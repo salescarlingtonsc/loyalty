@@ -12869,15 +12869,41 @@ function promotionScopeMediaV104(item={},branchId=null,{allowGlobalFallback=true
     global=branchId&&allowGlobalFallback?scopes.global||null:null;
   return exact||global||null;
 }
+/* V186: publishing an offer had no request timeout at all. A stalled request never settled, so
+   "Publishing…" sat forever, and because pendingFinalize is written to session storage BEFORE
+   the call, every later attempt was hijacked by the resume branch ("Confirming the previous
+   save…") — the owner could not edit or publish that offer again, in this tab or after a reload.
+   30s is generous for a finalize that normally returns in well under a second; the point is that
+   it ENDS. An abort is treated as ambiguous on purpose: the server may have committed, so the
+   receipt key is replayed rather than the uploaded photo being deleted. */
+const PROMOTION_RPC_TIMEOUT_MS_V186=30000;
 function promotionRpcErrorIsAmbiguousV104(error){
   if(!error)return false;
   const status=Number(error.status||error.statusCode||0);
   /* A gateway can time out after Postgres committed. Those responses must replay the
      same receipt key and must never trigger deletion of the newly committed photo. */
   if(status===408||status===429||status>=500)return true;
+  /* An aborted/timed-out request is ambiguous, not failed: Postgres may already have committed.
+     AbortSignal.timeout surfaces as AbortError / "signal is aborted without reason". */
+  if(error.name==='AbortError'||/abort/i.test(String(error.message||'')))return true;
   if(error.code)return false;
   return /failed to fetch|network|load failed|timeout|timed out|connection|offline/i
     .test(String(error.message||error.error||error));
+}
+/* V186 (owner: "i dont see the published marketing content - live sync"). The offer WAS
+   published — and scheduled to start two days later — but every owner-facing label said only
+   "Published", so an offer that no customer could yet see looked live. Customers were right;
+   the owner screen was not. One helper now decides the state everywhere it is shown. */
+function promotionLifecycleV186(item,now=new Date()){
+  if(!item?.active)return {state:'draft',label:'Draft',live:false};
+  const starts=item.starts_at?new Date(item.starts_at):null;
+  const ends=item.ends_at?new Date(item.ends_at):null;
+  if(starts&&starts>now)return {state:'scheduled',live:false,
+    label:`Scheduled · starts ${promotionDateTextV104(item.starts_at)}`};
+  if(ends&&ends<=now)return {state:'ended',live:false,
+    label:`Ended ${promotionDateTextV104(item.ends_at)}`};
+  return {state:'live',live:true,
+    label:ends?`Live now · ends ${promotionDateTextV104(item.ends_at)}`:'Live now'};
 }
 function promotionPreviewMarkupV104(item,imageUrl='',business=null){
   const preview={...item,image_url:imageUrl||item.imageUrl,metadata:{...(item.metadata||{}),
@@ -12988,11 +13014,11 @@ async function promotionsPage(selectedPromotionId=null){
       <div class="row" style="margin-top:18px">${initial.active?'':`<button type="button" class="btn ghost" id="promotionSave">Save draft</button>`}
         <button type="button" class="btn" id="promotionPublish" ${!canPublishThis?'disabled':''}>${initial.active?'Update published offer':'Publish offer'}</button>
         ${initial.active?'<button type="button" class="btn ghost" id="promotionUnpublish">Unpublish</button>':''}</div>
-      <p class="muted small" id="promotionSaveStatus" role="status" aria-live="polite" style="margin-top:9px">${initial.active?'Published and visible while active.':'Drafts are never shown to customers.'}</p>
+      <p class="muted small" id="promotionSaveStatus" role="status" aria-live="polite" style="margin-top:9px">${initial.active?(promotionLifecycleV186(initial).live?'Published and visible to customers now.':promotionLifecycleV186(initial).state==='scheduled'?`Published, but customers cannot see it yet — it starts ${esc(promotionDateTextV104(initial.starts_at))}.`:'Published, but the end date has passed — customers no longer see it.'):'Drafts are never shown to customers.'}</p>
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
-      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${item.active?'Published':'Draft'}${item.ends_at?` · ends ${esc(promotionDateTextV104(item.ends_at))}`:''}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn ghost sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">${item.active?'Retire':'Delete'}</button></div></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn ghost sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">${item.active?'Retire':'Delete'}</button></div></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
   </div>`;
   localizeWorkspaceSubtreeV97(host);
   /* V183 (owner: "I can edit but i cannot delete T.T"). Offers could be created, edited and
@@ -13148,9 +13174,11 @@ async function promotionsPage(selectedPromotionId=null){
   }
   const promotionReceiptRpcV104=Object.freeze({
     business_create_promotion_draft_v155:args=>
-      sb.rpc('business_create_promotion_draft_v155',args),
+      sb.rpc('business_create_promotion_draft_v155',args)
+        .abortSignal(customerRpcSignal(PROMOTION_RPC_TIMEOUT_MS_V186)),
     business_finalize_promotion_v155:args=>
       sb.rpc('business_finalize_promotion_v155',args)
+        .abortSignal(customerRpcSignal(PROMOTION_RPC_TIMEOUT_MS_V186))
   });
   const safeRpc=async(name,args)=>{
     try{
@@ -13281,9 +13309,20 @@ async function promotionsPage(selectedPromotionId=null){
       const resumed=await runPendingFinalize(pending);
       if(!isPromotionCurrent())return;
       if(resumed.error){
+        /* V186: the resume branch left every control disabled, so a stalled save locked the
+           owner out of the editor entirely — in this tab and, because pendingFinalize is
+           persisted to session storage, after a reload too. Re-enable the controls so the
+           owner can press again.
+           The pending receipt is deliberately NOT cleared here: on an ambiguous error the
+           server may already have committed, and runPendingFinalize keeps the receipt so the
+           SAME idempotent key replays. Minting a fresh attempt key instead could double-apply.
+           A definitive failure is already cleared inside runPendingFinalize.
+           `buttons` is declared further down this function, so it is NOT in scope here. */
+        [field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')]
+          .filter(Boolean).forEach(button=>{button.disabled=false});
         status.textContent=promotionRpcErrorIsAmbiguousV104(resumed.error)
-          ?'The save outcome is still unconfirmed. Check your connection, then press again.'
-          :'The previous save was not completed.';
+          ?'The save outcome is still unconfirmed. Check your connection, then press again. Your edits are safe.'
+          :'The previous save was not completed. Your edits are still here — press Publish again.';
         return promotionRpcErrorIsAmbiguousV104(resumed.error)?null:fail(resumed.error);
       }
       toast(completionMessage(pending));
