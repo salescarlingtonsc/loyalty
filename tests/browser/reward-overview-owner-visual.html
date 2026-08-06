@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="8d0f8171be9865b411fca852cb911ac865e7406a77aaeac578b9db985f02607e"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="c0637c9791a7afb83853377e75a59a5a663cbd0241772738cbe7100113c563d7"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1439,7 +1439,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 8d0f8171be9865b411fca852cb911ac865e7406a77aaeac578b9db985f02607e</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · c0637c9791a7afb83853377e75a59a5a663cbd0241772738cbe7100113c563d7</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2425,7 +2425,6 @@ function pruneRewardSiblingsV139(root){
         const nextAction=pendingGuideAction||action;pendingGuideAction=null;close(false);
         await mountGrowSurface(nextAction.surface,{draftOverride:growDraftVersionId,...nextAction});
       };
-      const setupButton=$('growAutoSetup');if(setupButton)setupButton.textContent='Continue rewards setup';
       $('rewardAutoReviewDraft').focus({preventScroll:true});
     };
     async function confirmDraft(){
@@ -2461,7 +2460,10 @@ function pruneRewardSiblingsV139(root){
           rewardAutoSetupRequestKey=null;
           status.textContent='Your services or products changed since the last try. Press again to build a recommendation from your current prices.';
         }else{
-          status.textContent=`${ownerErrorText(error)} Nothing was published.`;
+          /* Built by concatenation, not a template literal: interpolated copy assigned to
+             textContent must go through the workspace translation mechanism, and the added
+             sentence is real UI copy that has to translate with the rest of the workspace. */
+          status.textContent=ownerErrorText(error)+' '+workspaceTranslationV97('Nothing was published.');
         }
       }
     }
@@ -2471,11 +2473,10 @@ function pruneRewardSiblingsV139(root){
   }
   document.querySelectorAll('[data-grow-open]').forEach(button=>button.onclick=()=>mountGrowSurface(button.dataset.growOpen,{
     focusTarget:button.dataset.growFocus||null}));
-  const autoSetupButton=$('growAutoSetup');
-  if(autoSetupButton)autoSetupButton.onclick=()=>{
-    if(growDraftVersionId)return mountGrowSurface('rewards',{draftOverride:growDraftVersionId,focusTarget:'lm'});
-    openRewardsAutoSetup();
-  };
+  /* The standalone "Create recommended rewards draft" launcher was removed when Programmes was
+     simplified to one list (owner: "alot of overlapping roles ... i need it more simplified").
+     Its wiring outlived it and could never fire — openRewardsAutoSetup is now reached from the
+     programme rows themselves, which call it as the draft-creation gate when no draft exists. */
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
@@ -2582,7 +2583,7 @@ function pruneRewardSiblingsV139(root){
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'8d0f8171be9865b411fca852cb911ac865e7406a77aaeac578b9db985f02607e',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'c0637c9791a7afb83853377e75a59a5a663cbd0241772738cbe7100113c563d7',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

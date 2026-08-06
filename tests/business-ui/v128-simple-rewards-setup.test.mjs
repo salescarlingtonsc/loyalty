@@ -22,10 +22,11 @@ function section(start,end){
 const grow=section('async function growPage(','/* ---------- Bring-back playbooks');
 
 test('Grow presents one automatic setup start followed immediately by the complete overview',()=>{
-  assert.equal((grow.match(/id="growAutoSetup"/g)||[]).length,1);
-  assert.match(grow,/Create recommended rewards draft/);
-  assert.match(grow,/Continue rewards setup/);
-  assert.ok(grow.indexOf('id="growAutoSetup"')<grow.indexOf('id="rewardJourneyTitle"'));
+  // The standalone growAutoSetup launcher was removed when Programmes was simplified to one
+  // list; openRewardsAutoSetup is now the draft-creation GATE reached from the programme
+  // rows and the template picker. Assert that entry point rather than the retired button.
+  assert.match(grow,/openRewardsAutoSetup\(action\);return/);
+  assert.match(grow,/if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/);
   assert.ok(grow.indexOf('id="rewardJourneyTitle"')<grow.indexOf('id="growSecondarySettings"'),
     'the complete published overview must precede secondary settings');
   assert.match(grow,/<details class="grow-secondary" id="growSecondarySettings">[\s\S]*?<ol class="grow-flow"/);
@@ -53,7 +54,9 @@ test('opening and cancelling do not write while confirm creates one idempotent r
   assert.match(popup,/rewardAutoSetupRequestKey\?\?=crypto\.randomUUID\(\)/);
   assert.equal((popup.match(/sb\.rpc\('generate_retention_recommendation'/g)||[]).length,1);
   assert.doesNotMatch(popup,/publish_(?:config|loyalty)|studio_publish|publishProgram/);
-  assert.match(grow,/if\(growDraftVersionId\)return mountGrowSurface\('rewards',\{draftOverride:growDraftVersionId,focusTarget:'lm'\}\)/,
+  // Same guard, now on the programme rows: openRewardsAutoSetup is only reached when no draft
+  // exists, so an existing draft is opened rather than regenerated.
+  assert.match(grow,/if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/,
     'an existing draft must open directly instead of being replaced');
 });
 
@@ -72,7 +75,7 @@ test('failed automatic setup remains retryable and prevents duplicate submission
 
 test('only a writable owner receives the automatic setup control',()=>{
   assert.match(grow,/const canSetupGrow=isOwner&&canRewards&&canWriteModule\('loyalty'\)/);
-  assert.match(grow,/\$\{canSetupGrow\?`<button[^>]+id="growAutoSetup"/);
+  assert.match(grow,/const canSetupGrow=isOwner&&canRewards&&canWriteModule\('loyalty'\)/);
 });
 
 test('popup and primary controls retain 44px touch targets and collapse at 390px',()=>{

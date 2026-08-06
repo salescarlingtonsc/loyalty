@@ -54,7 +54,9 @@ test('the rewards draft retry cannot deadlock on a stale idempotency key', () =>
   const src = app.slice(i - 400, i + 500);
   assert.ok(src.includes('rewardAutoSetupRequestKey=null'),
     'a changed-inputs conflict must mint a fresh key on the next try');
-  assert.ok(app.includes('${ownerErrorText(error)} Nothing was published.'),
+  // Built by concatenation rather than a template literal: interpolated copy assigned to
+  // textContent must go through the workspace translation mechanism (v97 governance).
+  assert.ok(app.includes("ownerErrorText(error)+' '+workspaceTranslationV97('Nothing was published.')"),
     'other failures must show the real reason, not a generic message');
 });
 

@@ -26,11 +26,14 @@ test('new automatic setup is one truthful review sheet and one confirmation',()=
 });
 
 test('existing draft is a direct one-action continuation with zero recommendation write',()=>{
-  assert.match(grow,/Continue rewards setup/);
-  assert.match(grow,/if\(growDraftVersionId\)return mountGrowSurface\('rewards',\{draftOverride:growDraftVersionId,focusTarget:'lm'\}\)/);
-  const directHandler=grow.slice(grow.indexOf("const autoSetupButton=$('growAutoSetup')"),grow.indexOf("document.querySelectorAll('[data-rewards-overview-edit]')"));
-  assert.ok(directHandler.indexOf('if(growDraftVersionId)')<directHandler.indexOf('openRewardsAutoSetup'));
-  assert.doesNotMatch(directHandler,/generate_retention_recommendation/);
+  // The standalone launcher was retired with the Programmes simplification. The invariant it
+  // carried — an existing draft continues directly and never re-runs the recommendation writer —
+  // now lives on the programme rows, which only open the popup when there is no draft.
+  assert.match(grow,/if\(!growDraftVersionId\)\{openRewardsAutoSetup\(action\);return\}/);
+  const rowHandler=grow.slice(grow.indexOf('if(!growDraftVersionId){openRewardsAutoSetup(action);return}'),
+    grow.indexOf('if(!growDraftVersionId){openRewardsAutoSetup(action);return}')+400);
+  assert.doesNotMatch(rowHandler,/generate_retention_recommendation/,
+    'the resume path must not reach the recommendation writer');
 });
 
 test('successful creation shows a concise, truthful draft-ready handoff',()=>{

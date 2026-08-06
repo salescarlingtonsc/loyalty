@@ -3998,7 +3998,7 @@ function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=n
 function customerPointsExplainerMarkupV167(business={}){
   const key=`peekaa.customer.points-explainer.v1.${String(business.id||business.slug||'programme')}`;
   try{if(localStorage.getItem(key)==='dismissed')return ''}catch{}
-  return `<aside class="card customer-points-explainer" data-points-explainer data-points-explainer-key="${esc(key)}" role="note"><p><b>How rewards work at ${esc(business.name||'this business')}</b><br><span class="muted small">Collect points here and use them for available rewards.</span></p><button class="btn ghost sm" type="button" aria-label="Dismiss points explanation">Got it</button></aside>`;
+  return `<aside class="card customer-points-explainer" data-points-explainer data-points-explainer-key="${esc(key)}" role="note"><p><b>How rewards work at ${esc(business.name||'this business')}</b><br><span class="muted small">Collect points here and use them for available rewards.</span></p><button class="btn ghost sm" type="button" data-points-explainer-dismiss aria-label="Dismiss points explanation">Got it</button></aside>`;
 }
 function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},bookingEnabled=false}={}){
   let body='';
@@ -4389,7 +4389,7 @@ async function renderCustomerWallet(businessSlug=null){
     openCustomerPromotionDetailsV104(button.closest('[data-promotion-id]'));
   });
   document.querySelector('[data-programme-offers-retry]')?.addEventListener('click',()=>renderCustomerWallet(businessSlug));
-  document.querySelector('[data-points-explainer] button')?.addEventListener('click',event=>{
+  document.querySelector('[data-points-explainer-dismiss]')?.addEventListener('click',event=>{
     const explainer=event.currentTarget.closest('[data-points-explainer]');
     try{localStorage.setItem(explainer.dataset.pointsExplainerKey,'dismissed')}catch{}
     explainer.remove();CUI.announce('Points explanation dismissed.');
@@ -7764,8 +7764,8 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     console.error(e);
     wraps.forEach(({id,wrap})=>{
       if(!wrap.isConnected||$(id)!==wrap)return;
-      wrap.innerHTML=`<span class="err small">Branch list unavailable.</span> <button type="button" class="btn ghost sm">Retry</button>`;
-      const retry=wrap.querySelector('button');
+      wrap.innerHTML=`<span class="err small">Branch list unavailable.</span> <button type="button" class="btn ghost sm" data-branch-filter-retry>Retry</button>`;
+      const retry=wrap.querySelector('[data-branch-filter-retry]');
       if(retry)retry.onclick=()=>refreshBranchFilter(onChange,isCurrent,targetId);
     });
     return;
@@ -13644,7 +13644,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         const nextAction=pendingGuideAction||action;pendingGuideAction=null;close(false);
         await mountGrowSurface(nextAction.surface,{draftOverride:growDraftVersionId,...nextAction});
       };
-      const setupButton=$('growAutoSetup');if(setupButton)setupButton.textContent='Continue rewards setup';
       $('rewardAutoReviewDraft').focus({preventScroll:true});
     };
     async function confirmDraft(){
@@ -13693,11 +13692,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   }
   document.querySelectorAll('[data-grow-open]').forEach(button=>button.onclick=()=>mountGrowSurface(button.dataset.growOpen,{
     focusTarget:button.dataset.growFocus||null}));
-  const autoSetupButton=$('growAutoSetup');
-  if(autoSetupButton)autoSetupButton.onclick=()=>{
-    if(growDraftVersionId)return mountGrowSurface('rewards',{draftOverride:growDraftVersionId,focusTarget:'lm'});
-    openRewardsAutoSetup();
-  };
+  /* The standalone "Create recommended rewards draft" launcher was removed when Programmes was
+     simplified to one list (owner: "alot of overlapping roles ... i need it more simplified").
+     Its wiring outlived it and could never fire — openRewardsAutoSetup is now reached from the
+     programme rows themselves, which call it as the draft-creation gate when no draft exists. */
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.rewardsOverviewEdit;
     const action=kind==='bringback'
