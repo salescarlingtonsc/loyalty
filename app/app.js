@@ -19275,6 +19275,8 @@ function enhanceStaffMembersTabsV164(teamPanel){
     toolbar.appendChild(originalAdd);
   }else{
     toolbar.insertAdjacentHTML('beforeend',`<button type="button" class="btn sm staff-members-add-top" id="staffMembersAddTop">Add staff</button>`);
+    /* V190: this fallback button was created with NO handler at all — a dead control. Both it
+       and the real toolbar button now open the manual add form below. */
   }
   card.before(toolbar);
   const listPanel=document.createElement('section');
@@ -19282,7 +19284,21 @@ function enhanceStaffMembersTabsV164(teamPanel){
   listPanel.id='staffMembersListPanel';
   listPanel.setAttribute('role','tabpanel');
   listPanel.setAttribute('aria-labelledby','staffMembersTabList');
-  listPanel.innerHTML='<div><h2>Staff list</h2><p class="muted small">Active staff and roster-only teammates appear here first.</p></div>';
+  /* V190 (owner: "add staff - only import, cannot manually add staff"). The only "Add staff"
+     control was a CSV import button, and the fallback button had no handler, so a shop with one
+     new hire had to build a spreadsheet. staff.user_id has been nullable since v11a precisely so
+     a roster-only teammate — someone who appears on the rota and can be credited for a sale but
+     never signs in — is a first-class record. This adds that form. Giving them app access is
+     still a separate, deliberate act: an invite. */
+  listPanel.innerHTML=`<div><h2>Staff list</h2><p class="muted small">Active staff and roster-only teammates appear here first.</p></div>
+    <div class="card" id="staffManualAddCard" style="display:none;margin-top:12px">
+      <div class="v150-soft-head"><b>Add a teammate</b><p>They appear on the rota and can be credited for sales straight away. They do not get a login until you send an invite.</p></div>
+      <div class="field-grid">
+        <div><label for="staffAddName">Name</label><input id="staffAddName" maxlength="120" placeholder="e.g. Siti"></div>
+        <div><label for="staffAddTitle">Job title (optional)</label><input id="staffAddTitle" maxlength="80" placeholder="e.g. Senior therapist"></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn sm" id="staffAddSave">Add teammate</button><button class="btn ghost sm" id="staffAddCancel">Cancel</button><span class="muted small" id="staffAddStatus" role="status" aria-live="polite"></span></div>
+    </div>`;
   card.prepend(listPanel);
   listPanel.appendChild(teamNode);
   const invitePanel=document.createElement('section');
@@ -19309,8 +19325,50 @@ function enhanceStaffMembersTabsV164(teamPanel){
     });
   };
   toolbar.querySelectorAll('[data-staff-tab]').forEach(btn=>btn.addEventListener('click',()=>setTab(btn.dataset.staffTab)));
+  /* V190: "Add staff" used to jump to the Invites tab, so the only ways to add a teammate were
+     an invite (needs an email and a login) or a CSV import. It now opens the manual add form on
+     the Staff list, which is what an owner hiring one person actually wants. */
   const addTop=toolbar.querySelector('.staff-members-add-top');
-  if(addTop)addTop.addEventListener('click',()=>setTab('invite'));
+  const manualCard=listPanel.querySelector('#staffManualAddCard');
+  const openManualAdd=()=>{
+    setTab('list');
+    if(!manualCard)return;
+    manualCard.style.display='block';
+    listPanel.querySelector('#staffAddName')?.focus();
+  };
+  if(addTop)addTop.addEventListener('click',openManualAdd);
+  listPanel.querySelector('#staffAddCancel')?.addEventListener('click',()=>{
+    if(manualCard)manualCard.style.display='none';
+  });
+  listPanel.querySelector('#staffAddSave')?.addEventListener('click',async()=>{
+    const status=listPanel.querySelector('#staffAddStatus');
+    const nameInput=listPanel.querySelector('#staffAddName');
+    const name=(nameInput?.value||'').trim();
+    const title=(listPanel.querySelector('#staffAddTitle')?.value||'').trim()||null;
+    if(name.length<2){if(status)status.textContent='Give this teammate a name.';nameInput?.focus();return}
+    const button=listPanel.querySelector('#staffAddSave');
+    CUI.setButtonBusy(button,{busy:true,label:'Adding…'});
+    /* Roster-only: user_id stays NULL, so no seat is consumed and no login is created. */
+    const {data,error}=await sb.from('staff')
+      .insert({business_id:S.biz.id,full_name:name,role:'staff',active:true,title})
+      .select('id').limit(1);
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+    if(error){if(status)status.textContent=ownerErrorText(error);return}
+    const newStaffId=data?.[0]?.id;
+    if(newStaffId){
+      /* Assign to every active branch so they are immediately rosterable and creditable; the
+         V185 trigger then seeds their working hours from those branches' opening hours. */
+      const {data:branches}=await sb.from('branches').select('id')
+        .eq('business_id',S.biz.id).eq('active',true);
+      if(branches?.length){
+        await sb.from('staff_branches').insert(
+          branches.map(branch=>({business_id:S.biz.id,staff_id:newStaffId,branch_id:branch.id}))
+        );
+      }
+    }
+    toast('Teammate added');
+    staffMembersPage();
+  });
   setTab('list');
 }
 
