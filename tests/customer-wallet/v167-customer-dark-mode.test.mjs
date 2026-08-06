@@ -20,7 +20,7 @@ test('customer dark tokens preserve readable controls and a fixed light QR surfa
   assert.match(app,/html\[data-customer-surface="true"\] body\{background:#0F1115\}/);
   assert.match(app,/--bg:#0F1115;--card:#191C22;--ink:#F7F4EF/);
   assert.match(app,/\.customer-surface\.portal\{--coral:#FF8A7E!important;--grad:[^}]+!important\}/);
-  assert.match(app,/\.customer-surface :where\(input,select,textarea/);
+  assert.match(app,/\.customer-surface\.customer-surface :is\(input,select,textarea/);
   assert.match(app,/\.customer-surface \.btn\.ghost,\.customer-surface \.svc\{background:var\(--card\)/);
   assert.match(app,/\.customer-surface \.svc\.sel\{background:var\(--tint\)/);
   assert.match(app,/\.customer-surface \.redemption-qr\{color-scheme:light;background:#fff;color:#17161A/);

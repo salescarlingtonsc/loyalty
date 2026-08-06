@@ -41,10 +41,22 @@
     return host;
   }
 
+  // A dismissal has to stick, otherwise the prompt returns on the next route change.
+  const PWA_PROMPT_DISMISSED_KEY='peekaa-pwa-prompt-dismissed';
+  const PWA_PROMPT_DISMISS_MS=30*24*60*60*1000;
+
+  function promptDismissedRecently(){
+    try{
+      const at=Number(globalObject.localStorage?.getItem(PWA_PROMPT_DISMISSED_KEY)||0);
+      return Number.isFinite(at)&&at>0&&(Date.now()-at)<PWA_PROMPT_DISMISS_MS;
+    }catch{return false}
+  }
+
   function hidePrompt(){
     const host=promptHost();
     host.hidden=true;
     host.replaceChildren();
+    try{globalObject.localStorage?.setItem(PWA_PROMPT_DISMISSED_KEY,String(Date.now()))}catch{}
   }
 
   function showPrompt({title,body,actionLabel,onAction,dismissLabel='Not now'}){
@@ -106,6 +118,7 @@
 
   function offerInstall(){
     if(isStandalone()||isNative()||!globalObject.navigator.onLine)return;
+    if(promptDismissedRecently())return;
     if(installEvent){
       showPrompt({
         title:'Install Peekaa',

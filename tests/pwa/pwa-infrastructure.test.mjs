@@ -348,7 +348,7 @@ test('mobile form controls avoid focus zoom and preserve app-safe touch sizing',
   ]);
   assert.match(
     pwaCss,
-    /@media\(max-width:720px\)[\s\S]+input,select,textarea\{font-size:16px!important\}/
+    /@media\(max-width:760px\)[\s\S]+input,select,textarea\{font-size:16px!important\}/
   );
   assert.match(index, /input,select,textarea\{[\s\S]+min-height:44px/);
 });

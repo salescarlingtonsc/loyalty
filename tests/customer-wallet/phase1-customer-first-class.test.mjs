@@ -147,7 +147,7 @@ test('customer home and destinations reuse existing customer contracts with hone
     'customer_update_profile'
   ])assert.match(surfaces,new RegExp(`sb\\.rpc\\('${rpc}'`));
   assert.match(surfaces,/p_cursor:\{limit:20\}/);
-  assert.match(surfaces,/renderCustomerWalletRetry\('Your rewards are temporarily unavailable\.',null,\(\)=>renderCustomerProgrammes\(\)\)/);
+  assert.match(surfaces,/renderCustomerWalletRetry\('Your rewards are temporarily unavailable\.',null,\(\)=>renderCustomerProgrammes\(\),error\)/);
   assert.match(surfaces,/Your booking requests and appointments are temporarily unavailable/);
   assert.match(surfaces,/Visit the business and scan its Peekaa QR/);
   assert.match(surfaces,/if\(!cards\.length\)\{renderCustomerFirstProgrammeQuest\(\);return\}/);
