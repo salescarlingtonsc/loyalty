@@ -11,10 +11,10 @@ const section=(start,end)=>{
 const merchant=section('function customerPromotionCtaV104','function actionableWalletCardMarkup');
 const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
 
-test('customer programme makes at most two promotions primary and keeps identity/points compact',()=>{
+test('customer programme makes up to six promotions primary and keeps identity/points compact',()=>{
   assert.match(merchant,/customer-programme-compact-head/);
   assert.match(merchant,/customer-programme-compact-balance/);
-  assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,2\)/);
+  assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,6\)/);
   assert.match(merchant,/customer-promotions-section/);
   assert.match(merchant,/customer-promotions-grid/);
   assert.ok(merchant.indexOf('customer-promotions-section')<merchant.indexOf('presentation.products.length'),

@@ -83,3 +83,69 @@ Use synthetic customers and businesses in automated or local acceptance work.
 Do not place credentials, OTPs, access tokens, real customer PII, production
 exports, or temporary screenshot binaries in the repository. Never weaken RLS
 or other security controls merely to make a test pass.
+
+## Parallel Claude sessions — coordination protocol (owner directive 2026-08-06)
+
+Multiple Claude sessions work on this product concurrently. Known scopes:
+
+1. **Customer surface** — customer wallet/rewards/bookings/offers UI, customer
+   RPC readers, demo-tenant content (Cubbly `8492e8d6-…`).
+2. **Business UI/UX** — business console, dashboards, signup/Stripe flows.
+3. **Superadmin/platform console** — platform admin, RLS-pause tooling.
+
+Stay inside your scope's files and surfaces. `app/index.html` is shared by all
+three: keep edits inside your surface's regions and never reformat or move
+another surface's code.
+
+### Git and deploys
+
+- Branch from fresh `origin/main`; work in your own worktree, never in another
+  session's worktree or the (dirty) `/Users/cs/Downloads/loyalty-main` tree.
+- Immediately before any push: `git fetch origin && git rebase origin/main`,
+  then fast-forward push (`git push origin <branch>:main`). Never force-push.
+  Pushing `main` auto-deploys production; verify `/api/build` afterwards.
+- Pinned SHAs in handovers go stale within hours here — always re-verify the
+  live SHA at time of use.
+
+### Database and migrations
+
+- Production DB writes run through the Supabase MCP `execute_sql`
+  (allowlisted in `loyalty-main/.claude/settings.local.json`). Single-tenant,
+  reversible statements only; note every write in your final report.
+- Schema/function changes: apply via MCP `apply_migration`, then in the SAME
+  commit mirror the file under `db/migrations/`, register it in BOTH
+  `db/migrations/migration-order.plan.json` and
+  `supabase/canonical-migration-order.plan.json` (use the real ledger version),
+  add a `db/tests/vNNN_*.sql` rollback suite, map it in
+  `tests/phase0-foundation/pending-migration-preflight.test.mjs`, bump the
+  hardcoded counts (materialize script + canonical/manifest tests), and rerun
+  `generate-manifest.mjs --write` + `materialize-canonical-order.mjs
+  --materialize`. Never replay an already-applied migration.
+- Semantic version numbers (vNNN) are claimed by whoever registers first in
+  the plan files — check both plans for the highest number before naming.
+
+### Shared browser sessions (important)
+
+- The Claude Browser pane AND the owner's Chrome share one auth session per
+  origin. Signing in/out at peekaa.asia clobbers whichever account another
+  session (or the owner) is using. Do NOT sign out or switch accounts in a
+  shared browser without checking; assume any signed-in session is in use.
+- Preferred verification that needs no sign-in: render components in a static
+  harness (extract the `<style>` block from `app/index.html`, reproduce the
+  exact markup with fixture data, serve from the scratchpad, screenshot light
+  and dark — dark requires `html[data-customer-surface="true"]` plus a
+  `.customer-surface` wrapper). RPC-level checks can use a captured session
+  token via REST without touching localStorage.
+- Repeated automated sign-ins trigger Cloudflare Turnstile interactive mode.
+  Do not attempt to complete the challenge and do not remove or weaken
+  Turnstile — space out sign-ins and reuse sessions instead.
+
+### Cross-session channel
+
+- The shared auto-memory directory
+  (`~/.claude/projects/-Users-cs-Downloads-loyalty-main/memory/`) is visible to
+  all sessions: record scope claims, in-flight risky work (deploys, migrations,
+  account switches), and completed handoffs there, one fact per file, indexed
+  in `MEMORY.md`.
+- Before deploying or running production SQL, skim `MEMORY.md` for another
+  session's in-flight claim on the same surface.

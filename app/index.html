@@ -298,7 +298,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
-.challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
+.challenge-retry[hidden]{display:none}.challenge.challenge-passed{min-height:0;margin-top:0}.challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
 .logo{display:inline-flex;align-items:center;min-height:44px}
 .brand-logo{display:block;width:auto;height:50px;max-width:126px;object-fit:contain}
 .wallet-head>a.logo{display:inline-flex;align-items:center;min-height:44px}
@@ -641,6 +641,13 @@ input[type=range]:focus{box-shadow:none}
 .grow-programme-row:last-child{border-bottom:0}.grow-programme-row>div{min-width:0}.grow-programme-row b,.grow-programme-row p{overflow-wrap:anywhere}.grow-programme-row p{margin:3px 0 0;line-height:1.4}
 .grow-programme-row .rewards-overview-edit-label{min-height:24px;margin-top:3px}
 button.grow-programme-row,a.grow-programme-row{cursor:pointer;transition:background .16s ease,box-shadow .16s ease}
+/* V173: the Running / To-set-up tab filters set the hidden attribute, but an authored display
+   value defeats [hidden]'s UA display:none — these two rules are what make the tabs real. */
+.grow-programme-row[hidden]{display:none!important}
+.programme-category[hidden]{display:none!important}
+.programme-suggest{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px 12px 66px;background:#FFFDF9;border-top:1px dashed var(--line);font-size:13px;color:var(--muted)}
+.programme-suggest b{color:var(--ink);font-weight:600}
+.programme-suggest[hidden]{display:none!important}
 button.grow-programme-row:hover,a.grow-programme-row:hover{background:var(--tint)}
 button.grow-programme-row:focus-visible,a.grow-programme-row:focus-visible{position:relative;z-index:1;outline:3px solid rgba(201,67,51,.25);outline-offset:-3px}
 .grow-programme-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--tint);color:var(--coral);font-weight:750}
@@ -1176,10 +1183,14 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-programme-compact-balance{text-align:right;flex:0 0 auto}.customer-programme-compact-balance b{display:block;font-size:clamp(1.25rem,4vw,1.65rem);line-height:1}.customer-programme-compact-balance span{display:block;margin-top:4px;color:var(--muted);font-size:.78rem}
 .customer-promotions-section{margin-top:6px}.customer-promotions-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.customer-promotions-head h2{font-size:clamp(1.45rem,4vw,2rem)}.customer-promotions-head p{margin-top:4px}
 .customer-promotions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.customer-home-offers{margin:0 0 16px;min-width:0}.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:cover}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback span{font-size:2rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
+.customer-home-offers{margin:0 0 16px;min-width:0}.customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback span{font-size:2rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:#fff1ca;color:#71510d}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
 .customer-promotion-card{position:relative;overflow:hidden;min-height:360px;border-radius:22px;background:#17161a;color:#fff;box-shadow:0 18px 42px rgba(23,22,26,.18);display:flex;flex-direction:column}
-.customer-promotion-card-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:linear-gradient(135deg,#3b2a45,#17161a)}.customer-promotion-card-media img{display:block;width:100%;height:100%;object-fit:cover}.customer-promotion-card-media::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,13,18,0) 55%,rgba(15,13,18,.86) 100%)}
-.customer-promotion-card-media--fallback{display:grid;place-items:center}.customer-promotion-card-media--fallback span{position:relative;z-index:1;font-size:clamp(2.4rem,9vw,3.6rem);font-weight:750;letter-spacing:-.04em;color:rgba(255,255,255,.92)}
+/* Uploaded promotion artwork is the business's own marketing creative — often an
+   EDM with its words baked in. Never crop it and never paint anything over it:
+   contain at natural ratio (height-capped) with the card's copy strictly below.
+   Only the no-photo fallback keeps a fixed ratio and decorative gradient. */
+.customer-promotion-card-media{position:relative;width:100%;flex:0 0 auto;overflow:hidden;background:linear-gradient(135deg,#3b2a45,#17161a)}.customer-promotion-card-media img{display:block;width:100%;height:auto;max-height:460px;object-fit:contain;margin:0 auto}
+.customer-promotion-card-media--fallback{display:grid;place-items:center;aspect-ratio:16/9}.customer-promotion-card-media--fallback span{position:relative;z-index:1;font-size:clamp(2.4rem,9vw,3.6rem);font-weight:750;letter-spacing:-.04em;color:rgba(255,255,255,.92)}
 .customer-promotion-card-copy{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;padding:22px}
 .customer-promotion-card-copy .customer-promotion-card-facts{margin-top:7px;font-size:clamp(1.1rem,3.4vw,1.4rem);font-weight:760;line-height:1.2;letter-spacing:-.02em;color:#fff}.customer-promotion-card-copy h3{font-size:clamp(1.45rem,4vw,2.05rem);line-height:1.08;letter-spacing:-.025em;color:#fff}.customer-promotion-card-copy h3,.customer-promotion-card-copy p,.customer-promotion-card-copy summary,.customer-promotion-card-copy dd{overflow-wrap:anywhere;word-break:break-word}.customer-promotion-card-copy p{margin-top:8px;color:rgba(255,255,255,.88);line-height:1.45}
 .customer-promotion-validity{font-weight:750}.customer-promotion-detail-list{display:grid;gap:10px;margin:16px 0}.customer-promotion-detail-list>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px}.customer-promotion-detail-list dt{color:var(--muted);font-size:.78rem;font-weight:750}.customer-promotion-detail-list dd{margin:0;overflow-wrap:anywhere}
@@ -1228,6 +1239,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .wallet-reward-progress{height:8px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--hair)}
 .wallet-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--coral)}
 .wallet-reward-gap{margin-top:6px;color:var(--ink)}
+.customer-offer-detail{min-width:0;text-align:left}
+.customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
+.customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
+.customer-offer-detail-media img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;margin:0 auto}
+.customer-offer-detail-media--fallback{display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
+.customer-offer-detail-media--fallback span{font-size:2.6rem;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
+.customer-offer-detail h2{margin-top:2px;font-size:clamp(1.35rem,4vw,1.7rem);letter-spacing:-.02em}
+.customer-offer-detail-facts{margin-top:6px;font-size:clamp(1.05rem,3.2vw,1.25rem);font-weight:760;letter-spacing:-.015em;color:var(--ink)}
+.customer-offer-detail-meta{display:grid;gap:5px;margin-top:12px;padding:11px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--bg)}
+.customer-offer-detail-meta a{color:inherit;text-decoration:underline}
+.customer-offer-detail h2,.customer-offer-detail p,.customer-offer-detail summary{overflow-wrap:anywhere}
 @media(max-width:520px){.wallet-reward-steps{grid-template-columns:1fr}}
 .redemption-qr{display:grid;place-items:center;min-height:220px;margin:16px auto;padding:16px;border:1px solid var(--hair);border-radius:14px;background:#fff}
 .redemption-qr img,.redemption-qr canvas{max-width:100%;height:auto}
@@ -1281,7 +1303,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 html[data-customer-surface="true"] body{background:var(--bg)}
 @media(prefers-color-scheme:dark){
   html[data-customer-surface="true"] body{background:#0F1115}
-  .customer-surface{
+  /* The offer-detail sheet is appended to body, outside .customer-surface,
+     so it must join the dark token scope explicitly. */
+  .customer-surface,.customer-offer-detail-modal .modal-card{
     color-scheme:dark;
     --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;
     --line:#343841;--control-border:#737A86;--hair:rgba(255,255,255,.11);
@@ -1527,7 +1551,15 @@ const authSecurityCopy=(locale,key)=>{
 async function mountTurnstile(siteKey,{container,status,retry,action,onToken,locale='en'}){
   const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
   const security=key=>authSecurityCopy(locale,key);
-  const message=(text,isError=false)=>{statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  /* A passed check should be invisible: red status text and a "Retry" link after
+     success read as failure. The block only surfaces while loading or on error. */
+  const setPassed=passed=>{
+    statusEl.hidden=passed;
+    const host=document.getElementById(container);
+    if(host)host.style.display=passed?'none':'';
+    statusEl.closest('.challenge')?.classList.toggle('challenge-passed',passed);
+  };
+  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
   const clear=(text,isError=false)=>{onToken('');message(text,isError)};
   const logTurnstileError=(errorCode)=>{
     const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
@@ -1550,7 +1582,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
       removeWidget();
       if(destroyed)return;
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(destroyed)return;onToken(token);message(security('complete'));retryEl.hidden=true},
+        callback:(token)=>{if(destroyed)return;onToken(token);retryEl.hidden=true;setPassed(true)},
         'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
         'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
         'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
@@ -1712,6 +1744,10 @@ let pendingCustomerInactivity=null;
 let pendingTillPhone='';
 let pendingTillRedemptionScan=false;
 let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
+/* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
+   birthday / bring-back / referral editors. Module-level because those editors live in
+   different page functions from the Programmes overview that sets it. */
+let pendingProgrammeSuggestV172=null;
 let settingsActiveTab='workspace';
 let profileOpen=false;
 let customerUiObserver=null;
@@ -3152,12 +3188,30 @@ function resetCustomerRegistrationState({phone=''}={}){
     phone,channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false
   };
   try{sessionStorage.removeItem('peekaa-customer-signup-consent-v163')}catch{}
+  try{sessionStorage.removeItem('peekaa-customer-signup-profile-v174')}catch{}
 }
 function rememberCustomerSignupConsent(accepted){
   try{
     if(accepted)sessionStorage.setItem('peekaa-customer-signup-consent-v163','accepted');
     else sessionStorage.removeItem('peekaa-customer-signup-consent-v163');
   }catch{}
+}
+/* v174: name, date of birth and gender are asked on the Create-account form,
+   stashed for the OTP hop, and the post-OTP profile step completes itself from
+   the stash — one visible signup step for the normal path. */
+function rememberCustomerSignupProfile(profile){
+  try{
+    if(profile)sessionStorage.setItem('peekaa-customer-signup-profile-v174',JSON.stringify(profile));
+    else sessionStorage.removeItem('peekaa-customer-signup-profile-v174');
+  }catch{}
+}
+function customerSignupProfileStash(){
+  try{
+    const raw=sessionStorage.getItem('peekaa-customer-signup-profile-v174');
+    const profile=raw?JSON.parse(raw):null;
+    return profile&&String(profile.fullName||'').trim()&&profile.birthDate
+      &&['female','male'].includes(profile.gender)?profile:null;
+  }catch{return null}
 }
 function customerSignupConsentRecorded(){
   if(customerRegistrationState.legalAccepted&&customerRegistrationState.marketingOptedIn)return true;
@@ -3441,10 +3495,16 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
   const smsAvailable=CUSTOMER_PHONE_OTP_RUNTIME_ENABLED&&serverCapabilities.sms===true;
   const whatsappAvailable=CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED&&serverCapabilities.whatsapp===true;
   customerRegistrationShell(`<section class="card" aria-labelledby="customerOtpStartTitle">
-    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpStartTitle">${recovering?'Reset your password':'Create your account'}</h1><p class="muted small" style="margin-top:5px">${recovering?'We send one OTP to verify that you own this mobile number.':'Choose your password, then verify your mobile number with one OTP.'}</p></div></div>
+    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerOtpStartTitle">${recovering?'Reset your password':'Create your account'}</h1><p class="muted small" style="margin-top:5px">${recovering?'We send one OTP to verify that you own this mobile number.':'Tell us about yourself, choose your password, then verify your mobile number with one OTP.'}</p></div></div>
     <label for="customerPhone">Singapore mobile number</label>
     <input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
     ${recovering?'':`<label for="customerSignupPassword">Password</label>${passwordControlHtml('customerSignupPassword',{autocomplete:'new-password',minlength:'12',describedBy:'customerSignupPasswordHelp'})}<p class="muted small" id="customerSignupPasswordHelp" style="margin-top:6px">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p><label for="customerSignupPasswordConfirm">Confirm password</label>${passwordControlHtml('customerSignupPasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
+    <label for="customerSignupFullName">Full name</label>
+    <input id="customerSignupFullName" autocomplete="name" maxlength="200" value="${esc(customerSignupProfileStash()?.fullName||'')}">
+    <label for="customerSignupDob">Date of birth</label>
+    <input id="customerSignupDob" type="date" autocomplete="bday" max="${sgDateInputValue()}" value="${esc(customerSignupProfileStash()?.birthDate||'')}">
+    <label for="customerSignupGender">Gender</label>
+    <select id="customerSignupGender" autocomplete="sex"><option value="">Select gender</option><option value="female" ${customerSignupProfileStash()?.gender==='female'?'selected':''}>Female</option><option value="male" ${customerSignupProfileStash()?.gender==='male'?'selected':''}>Male</option></select>
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Agreements</legend>
       <label class="row" for="customerSignupConsent" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerSignupConsent" type="checkbox" ${customerRegistrationState.legalAccepted&&customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I have read and agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Terms of Service</a>, acknowledge the <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Privacy Notice</a>, and agree to receive marketing from ${esc(BRAND.productName)} and selected partners. I can withdraw marketing consent at any time.</span></label>
     </fieldset>`}
@@ -3493,9 +3553,22 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       if(password!==$('customerSignupPasswordConfirm').value){
         errorHost.innerHTML='<div class="err">Passwords do not match.</div>';return;
       }
+      const signupFullName=$('customerSignupFullName').value.trim(),
+        signupBirthDate=$('customerSignupDob').value,
+        signupGender=$('customerSignupGender').value;
+      if(!signupFullName){
+        errorHost.innerHTML='<div class="err">Enter your full name.</div>';return;
+      }
+      if(!signupBirthDate||new Date(`${signupBirthDate}T00:00:00`)>new Date()){
+        errorHost.innerHTML='<div class="err">Enter a date of birth that is not in the future.</div>';return;
+      }
+      if(!['female','male'].includes(signupGender)){
+        errorHost.innerHTML='<div class="err">Select Male or Female to continue.</div>';return;
+      }
       if(!$('customerSignupConsent').checked){
         errorHost.innerHTML='<div class="err">Please agree to the Terms of Service, acknowledge the Privacy Notice, and confirm marketing consent to continue.</div>';return;
       }
+      rememberCustomerSignupProfile({fullName:signupFullName,birthDate:signupBirthDate,gender:signupGender});
     }
     send.disabled=true;
     const challenge=captchaToken;captchaToken='';
@@ -3599,6 +3672,15 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
   const register=$('customerRegister'),profileForm=$('customerProfileForm'),profileError=$('customerProfileError');
   const fullNameInput=$('customerFullName'),birthDateInput=$('customerDob'),genderInput=$('customerGender'),languageInput=$('customerLanguage');
   const isProfileCurrent=()=>isRouteCurrent()&&profileForm.isConnected&&register.isConnected;
+  /* v174: the Create-account form already asked for these. Prefill from the
+     stash and finish silently; this screen only stays visible when the stash is
+     missing (e.g. OTP finished in another tab) or the submission fails. */
+  const signupStash=customerSignupProfileStash();
+  if(signupStash){
+    fullNameInput.value=signupStash.fullName;
+    birthDateInput.value=signupStash.birthDate;
+    genderInput.value=signupStash.gender;
+  }
   register.onclick=async()=>{
     const fullName=fullNameInput.value.trim(),birthDate=birthDateInput.value,gender=genderInput.value,language=languageInput.value;
     if(!fullName||!birthDate||new Date(`${birthDate}T00:00:00`)>new Date()){
@@ -3629,6 +3711,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
       }
     });
   };
+  if(signupStash&&customerSignupConsentRecorded())register.onclick();
 }
 async function renderCustomerRegistration(isRouteCurrent=()=>true){
   globalThis.document?.documentElement?.setAttribute('lang','en');
@@ -3691,7 +3774,7 @@ const CUSTOMER_COPY=Object.freeze({
     language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
     chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
     programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
-    addProgramme:'Add rewards',openProgramme:'Open {business} rewards',localBusiness:'Local business',
+    addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
     rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your rewards home to see what is next.',
     firstQuest:'Your first rewards',scanLoyaltyQr:'Scan a loyalty QR',
     firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified business becomes your first reward account.',
@@ -4772,8 +4855,27 @@ function customerHomeOfferMarkupV167(item,seen){
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3><p class="muted small" style="margin-top:4px">${esc(business.name||'Your business')}</p>${validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
+/* v173: with many linked businesses each posting offers, a plain ends-soonest
+   list can let one business monopolise the front of the shelf. Round-robin by
+   business (preserving each business's own ends-soonest order) so every
+   business's strongest offer surfaces before anyone's second one. */
+function interleaveCustomerOffersV173(items){
+  const rows=Array.isArray(items)?items:[],order=[],byBusiness=new Map();
+  for(const item of rows){
+    const key=String(item?.business?.slug||item?.business?.id||'');
+    if(!byBusiness.has(key)){byBusiness.set(key,[]);order.push(key)}
+    byBusiness.get(key).push(item);
+  }
+  if(order.length<2)return rows;
+  const out=[];
+  for(let round=0;out.length<rows.length;round+=1)
+    for(const key of order){const bucket=byBusiness.get(key);if(round<bucket.length)out.push(bucket[round])}
+  return out;
+}
+let customerHomeOfferIndexV173=new Map();
 function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
-  const items=Array.isArray(state.items)?state.items:[];
+  const items=interleaveCustomerOffersV173(state.items);
+  customerHomeOfferIndexV173=new Map(items.map(item=>[String(item?.id||''),item]));
   let body='<div class="card customer-home-offers-state"><p class="muted small">Loading offers…</p></div>';
   if(state.status==='ready'){
     const seen=customerSeenOfferVersionsV167();
@@ -4785,10 +4887,60 @@ function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   }
   return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><div><p class="customer-quest-kicker">Worth coming back for</p><h2 id="customerHomeOffersTitle">Offers for you</h2></div></div>${body}</section>`;
 }
+function showCustomerOfferDetailV173(item){
+  const business=item?.business||{},image=customerMediaUrlV95(item?.image_url),
+    facts=String(item?.metadata?.offer_facts||'').trim(),
+    validity=customerPromotionValidityV104(item),
+    availability=String(item?.availability_label||'').trim(),
+    terms=String(item?.terms||'').trim(),
+    cta=item?.metadata?.cta||{},slug=encodeURIComponent(business.slug||''),
+    initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase(),
+    ctaLabel=String(cta.label||'').trim();
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-offer-detail-modal';overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerOfferDetailTitle');
+  overlay.innerHTML=`<section class="modal-card customer-offer-detail" style="width:480px">
+    <div class="row"><p class="customer-quest-kicker">Limited-time offer · ${esc(business.name||'Your business')}</p><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:18})}</button></div>
+    ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
+    <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
+    ${facts?`<p class="customer-offer-detail-facts">${esc(facts)}</p>`:''}
+    ${item?.tagline?`<p class="muted" style="margin-top:6px">${esc(item.tagline)}</p>`:''}
+    ${item?.description?`<p class="muted small" style="margin-top:8px">${esc(item.description)}</p>`:''}
+    <div class="customer-offer-detail-meta">
+      ${validity?`<p class="small"><b>${esc(validity)}</b></p>`:''}
+      ${availability?`<p class="muted small">${esc(availability)}</p>`:''}
+      <div data-offer-contact></div>
+    </div>
+    ${terms?`<details style="margin-top:10px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:6px">${esc(terms)}</p></details>`:''}
+    <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
+      ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`:''}
+      <a class="btn ghost" href="#/wallet/${slug}" data-offer-detail-nav>${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}</a>
+    </div></section>`;
+  document.body.appendChild(overlay);
+  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerOfferDetailClose'});
+  overlay.querySelector('#customerOfferDetailClose').onclick=()=>deactivate({restoreFocus:true});
+  overlay.querySelectorAll('[data-offer-detail-nav]').forEach(link=>link.addEventListener('click',()=>deactivate({restoreFocus:false})));
+  if(business.id){
+    Promise.resolve(sb.rpc('customer_get_offer_business_contact_v173',{p_business:business.id}))
+      .then(({data,error})=>{
+        if(error||!overlay.isConnected)return;
+        const branch=data?.branch||{},host=overlay.querySelector('[data-offer-contact]');
+        if(!host)return;
+        const lines=[
+          branch.address?`<p class="muted small">${CUI.icon('bookings',{size:14})} ${esc(branch.address)}</p>`:'',
+          branch.phone?`<p class="muted small"><a href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${esc(branch.phone)}</a></p>`:'',
+          branch.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
+        ].filter(Boolean).join('');
+        if(lines)host.innerHTML=lines;
+      }).catch(()=>{});
+  }
+}
 function wireCustomerHomeOffersV167(rerender){
-  document.querySelectorAll('[data-home-offer]').forEach(link=>link.addEventListener('click',()=>{
+  document.querySelectorAll('[data-home-offer]').forEach(link=>link.addEventListener('click',event=>{
     rememberCustomerOfferV167(link.dataset.offerVersion);
     customerOfferFocusV167=link.dataset.offerId||null;
+    const item=customerHomeOfferIndexV173.get(String(link.dataset.offerId||''));
+    if(item){event.preventDefault();showCustomerOfferDetailV173(item)}
   }));
   const retry=$('customerOffersRetry');if(retry)retry.onclick=rerender;
 }
@@ -4968,6 +5120,34 @@ function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},
   else body='<div class="card customer-home-offers-state"><p class="muted small">No offers right now. New offers from this business appear here first.</p></div>';
   return `<section class="customer-promotions-section" aria-labelledby="latestOffersTitle"><div class="customer-promotions-head"><div><p class="customer-quest-kicker">From ${esc(business.name||ct('localBusiness'))}</p><h2 id="latestOffersTitle">Latest offers</h2></div></div>${body}</section>`;
 }
+/* V174 customer tier card. One compact card, CHAGEE-style: where I am, how close the next
+   tier is (exact remaining in the business's own basis — visits, spend or points), what the
+   next tier unlocks (two-item teaser), then my current benefits. Renders nothing when the
+   business has no tiers, and never shows raw percentages without the human sentence. */
+function customerTierCardMarkupV174(tier={}){
+  const current=tier.current,next=tier.next;
+  if(!current&&!next)return '';
+  const basis=String(tier.basis||'visits');
+  const metric=Number(tier.metric||0);
+  const progress=Math.max(0,Math.min(100,Number(tier.progress_percent||0)));
+  const remainingText=(()=>{
+    if(!next)return '';
+    const remaining=Math.max(0,Number(next.threshold||0)-metric);
+    if(basis==='spend')return `Spend SGD ${remaining.toLocaleString('en-SG',{maximumFractionDigits:0})} more to reach ${esc(next.label)}`;
+    if(basis==='points_earned')return `Earn ${Math.ceil(remaining).toLocaleString('en-SG')} more points to reach ${esc(next.label)}`;
+    const visits=Math.ceil(remaining);
+    return `${visits.toLocaleString('en-SG')} more visit${visits===1?'':'s'} to reach ${esc(next.label)}`;
+  })();
+  const nextBenefits=Array.isArray(next?.benefits)?next.benefits.filter(value=>String(value||'').trim()).slice(0,2):[];
+  const currentBenefits=Array.isArray(current?.benefits)?current.benefits.filter(value=>String(value||'').trim()):[];
+  return `<section class="card customer-tier-card" style="margin-top:14px" aria-label="Your tier">
+    <div class="row" style="align-items:baseline;gap:10px"><h2 style="margin:0">${esc(current?.label||'Getting started')}</h2>${next?'':current?'<span class="pill ok">Top tier</span>':''}</div>
+    ${next?`<div style="background:var(--line);border-radius:100px;height:8px;margin-top:12px;overflow:hidden"><div style="background:var(--grad);height:100%;width:${progress}%"></div></div>
+    <p class="muted small" style="margin-top:8px">${remainingText}</p>
+    ${nextBenefits.length?`<p class="small" style="margin-top:6px"><b>${esc(next.label)}</b> unlocks: ${nextBenefits.map(esc).join(' · ')}</p>`:''}`:''}
+    ${currentBenefits.length?`<p class="small" style="margin-top:${next?'12':'10'}px"><b>Your benefits now</b></p><ul class="rec-why" style="margin-top:6px">${currentBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul>`:''}
+  </section>`;
+}
 function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready'}){
   const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
@@ -4977,7 +5157,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ?tier.current.benefits.filter(value=>String(value||'').trim()).map(value=>String(value).trim()):[];
   const unitLabel=ct(presentation.unit);
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
-  const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,2);
+  const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,6);
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
     <header class="customer-programme-compact-head" style="--merchant-accent:${esc(presentation.heroColor)}">
       <div class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</div>
@@ -4986,7 +5166,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       <div class="customer-programme-compact-balance"><b>${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}</b><span>${esc(unitLabel)}</span></div>
     </header>
     ${customerPointsExplainerMarkupV167(business)}
-    ${currentTierBenefits.length?`<section class="card" style="margin-top:14px"><h2>${esc(currentTierLabel||'Current tier')} benefits</h2><ul class="rec-why" style="margin-top:10px">${currentTierBenefits.map(benefit=>`<li>${esc(benefit)}</li>`).join('')}</ul></section>`:''}
+    ${customerTierCardMarkupV174(tier)}
     ${customerProgrammeOffersMarkupV167({items:offers,status:offersStatus,business,bookingEnabled})}
     ${bookingEnabled?`<section class="card customer-home-nba" style="margin-top:14px"><div class="row"><div><p class="customer-home-eyebrow">${CUI.icon('bookings',{size:17})}<span>${esc(ct('bookings'))}</span></p><h2 style="margin-top:8px">${esc(ct('requestVisit',{business:business.name||ct('localBusiness')}))}</h2></div><span class="spacer"></span><button class="btn" type="button" data-repeat-booking data-business-slug="${esc(business.slug)}">Book again</button></div></section>`:''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
@@ -5313,7 +5493,7 @@ async function renderCustomerWallet(businessSlug=null){
   const programmeOffersStatus=promotionsResult.error?'error':'ready';
   presentation.offers=promotionsResult.error
     ?[]
-    :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,2);
+    :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,6);
   const bookingEnabled=businessActions?.booking?.enabled===true&&presentation.capabilities.booking_enabled!==false;
   const appointmentChangesEnabled=businessActions?.appointment_changes?.enabled===true;
   const currency=b.currency||'SGD';
@@ -9613,7 +9793,10 @@ async function clientDetail(id){
     canReadAppointments?fetchAllRowsResult(()=>sb.from('appointments').select('*, services!appointments_service_id_fkey(name)',{count:'exact'}).eq('client_id',id).order('starts_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
     (canReadSales||canReadAppointments)?fetchAllRowsResult(()=>sb.from('staff').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('id')):Promise.resolve({data:[]}),
     S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_definitions').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('created_at').order('id')):Promise.resolve({data:[]}),
-    S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_values').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('id')):Promise.resolve({data:[]}),
+    /* V172: this table has NO id column (key: business_id, client_id, field_definition_id).
+       .order('id') made PostgREST 400 (42703), which rejected this whole Promise.all and
+       rendered "Customer profile unavailable" for EVERY owner on EVERY customer. */
+    S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_values').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('field_definition_id')):Promise.resolve({data:[]}),
     S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_options').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('sort_order').order('id')):Promise.resolve({data:[]}),
     birthdayBenefitsEnabled
       ?sb.rpc('staff_get_customer_birthday_benefit',{p_business_id:S.biz.id,p_client_id:id})
@@ -13060,6 +13243,15 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     const setRewardInput=()=>{const kind=$('rt').selectedOptions[0]?.dataset.kind;$('rvl').textContent=kind==='discount_pct'?'Discount %':kind==='credit'?`Credit amount (${S.biz.currency||'SGD'})`:'Item or benefit';$('rv').type=kind==='free_item'?'text':'number';if(editing){$('rv').value=kind==='discount_pct'?(editing.discount_percent||''):kind==='credit'?((editing.credit_cents||0)/100).toFixed(2):(editing.manual_item||'')}else $('rv').value=kind==='free_item'?'Free drink':'10'};
     if(rewardTypes.length){$('rt').onchange=setRewardInput;setRewardInput()}
     document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const t=JSON.parse(b.dataset.t),type=rewardTypes.find(x=>x.fulfillment_kind===t.rt);if(!type)return toast('Add this reward type first');$('rn').value=t.name;$('rg').value=t.g;$('rp').value=t.p;$('rt').value=type.id;setRewardInput();$('rv').value=t.rt==='free_item'?(t.ri||'Free item'):t.rt==='credit'?(t.rv/100):t.rv});
+    /* V173: one-shot prefill from the Programmes overview "Use suggestion" strip. Mirrors the
+       quick-template fill above; the owner reviews every number before saving. */
+    if(pendingProgrammeSuggestV172?.kind==='bringback'&&$('rn')){
+      const suggest=pendingProgrammeSuggestV172;pendingProgrammeSuggestV172=null;
+      $('rn').value=suggest.name;$('rg').value=String(suggest.goalVisits);$('rp').value=String(suggest.withinDays);
+      const creditOption=[...($('rt')?.options||[])].find(option=>option.dataset?.kind==='credit');
+      if(creditOption){$('rt').value=creditOption.value;setRewardInput();$('rv').value=String(suggest.value)}
+      toast('Suggestion loaded — review the numbers, then save');
+    }
     $('saveRetentionProgram').onclick=async()=>{const kind=$('rt').selectedOptions[0]?.dataset.kind,name=$('rn').value.trim();if(name.length<1)return toast('Name your program');const payload={name,active:$('ra').checked,goal_visits:parseInt($('rg').value),period_days:parseInt($('rp').value),starts_on:$('rs').value,reward_taxonomy_id:$('rt').value,customer_description:$('rcd').value.trim()||null,staff_description:$('rsi').value.trim()||null};if(kind==='discount_pct')payload.discount_percent=parseFloat($('rv').value||'0');if(kind==='credit')payload.credit_cents=Math.round(parseFloat($('rv').value||'0')*100);if(kind==='free_item')payload.manual_item=$('rv').value.trim();const programId=editing?.program_id||sessionStorage.getItem(newProgramRetryKey)||crypto.randomUUID();if(!editing)sessionStorage.setItem(newProgramRetryKey,programId);const saveButton=$('saveRetentionProgram');saveButton.disabled=true;const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:programId,p_program:payload,p_expected_snapshot_hash:snapshotHash});if(!isRetentionCurrent())return;if(error){saveButton.disabled=false;return fail(error)}if(!editing)sessionStorage.removeItem(newProgramRetryKey);toast('Draft retention rule saved');refreshRetentionPanel(draftVersionId,null,'Bring-back rule saved.',false)};
     if($('cancelRetentionEdit'))$('cancelRetentionEdit').onclick=()=>refreshRetentionPanel(draftVersionId,null,'Editing cancelled.',false);
     document.querySelectorAll('.retentionEdit').forEach(b=>b.onclick=()=>refreshRetentionPanel(draftVersionId,b.dataset.id,'Bring-back rule opened.',false));
@@ -13365,7 +13557,7 @@ async function promotionsPage(selectedPromotionId=null){
     quotaProgress=max?Math.min(100,Math.round((quotaUsed/max)*100)):100;
   host.innerHTML=`<div class="promotion-studio" data-workspace-i18n>
     ${CUI.pageHeader({title:'Promotions',subtitle:'Turn one factual offer and photo into clear customer-ready marketing.',iconName:'loyalty',actions:growBackActionHtmlV138(),canWrite:true,moduleLabel:'Customer programme'})}
-    ${customerVisibleCount===0?'<aside class="notice warn" role="status"><b>0 published — your customers currently see an empty offers shelf.</b><p class="muted small" style="margin-top:5px">Publish a current offer with a customer-visible image to fill it.</p></aside>':customerVisibleCount===null?'<aside class="notice warn" role="status"><b>Customer-visible offer status could not be confirmed.</b><p class="muted small" style="margin-top:5px">Refresh before relying on the offers shelf status.</p></aside>':''}
+    ${customerVisibleCount===0?'<aside class="notice warn" role="status"><b>Customers currently see no offers.</b><p class="muted small" style="margin-top:5px">An offer only shows to customers while its dates are current and it has a photo. Publish one, or check the dates and photo on an existing promotion below.</p></aside>':customerVisibleCount===null?'<aside class="notice warn" role="status"><b>Customer-visible offer status could not be confirmed.</b><p class="muted small" style="margin-top:5px">Refresh before relying on the offers shelf status.</p></aside>':''}
     <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} launch offer slots used</b>
       <p class="muted small" style="margin-top:4px">${published} currently published. Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}. Customers see no more than two current offers at once.</p></div>
       <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} launch offer slots used" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
@@ -13402,6 +13594,7 @@ async function promotionsPage(selectedPromotionId=null){
         <option value="counter" ${initial.ctaKind==='counter'?'selected':''}>Show at counter</option></select></div>
         <div><label for="promotionCtaLabel">Button wording</label><input id="promotionCtaLabel" maxlength="40" value="${esc(initial.ctaLabel)}"></div></div>
       <label for="promotionImage">Promotion photo</label><input id="promotionImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+      <p class="muted small" style="margin-top:6px">Your photo is always shown whole — never cropped or covered. Landscape 16:9 fills the card best; tall poster designs (4:5) also work.</p>
       <label for="promotionImageAlt">Photo description</label><input id="promotionImageAlt" maxlength="240" value="${esc(initial.imageAlt)}" placeholder="Describe the image for customers who cannot see it">
       <p class="muted small" id="promotionImageStatus" role="status" style="margin-top:7px">${initial.imageUrl?(initial.active&&initial.imageCustomerVisible?'Current photo is published. Choose another only to replace it.':'Draft photo saved. It is not shown in your customer programme until you publish.'):'Choose the customer-facing photo now. A saved draft is not shown in your customer programme until you publish.'}</p>
       <div class="row" style="margin-top:18px">${initial.active?'':`<button type="button" class="btn ghost" id="promotionSave">Save draft</button>`}
@@ -13884,7 +14077,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     if(focus==='bringback'||focus==='new')return {surface:'winback',focusTarget:'rn',editProgramId:null};
     return null;
   })();
-  const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'overview';
+  /* V174: two owner-facing views. "Running" is the default landing (what customers can use
+     right now); "To set up" is everything else, each with a one-tap suggestion. The old
+     Overview duplicated Running+To set up in one list, and "More settings" moves from a tab
+     to a quiet advanced link — its #/grow/settings hash keeps working. */
+  const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'ongoing';
   const programmeTab=(key,label)=>`<a class="${programmeView===key?'act':''}" href="#/grow${key==='overview'?'':'/'+key}">${esc(label)}</a>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
@@ -13892,9 +14089,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         <p class="muted">Create and manage rewards, promotions and customer programmes.</p></div>
       <div class="v150-title-actions"></div>
     </header>
-    <nav class="programme-tabs" aria-label="Programme views">${programmeTab('overview','Overview')}${programmeTab('ongoing','Ongoing programmes')}${programmeTab('available','Available programmes')}${programmeTab('settings','More settings')}</nav>
+    <nav class="programme-tabs" aria-label="Programme views">${programmeTab('ongoing','Running')}${programmeTab('available','To set up')}</nav>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Available programmes':'Programme overview'}</h2><p class="muted small">Choose one row to view or edit that programme.</p></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'Programme overview'}</h2><p class="muted small">${programmeView==='ongoing'?'Live for your customers right now.':programmeView==='available'?'Not running yet — each comes with a suggested starting point you can use in one tap.':'Choose one row to view or edit that programme.'}</p></div></div>
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       <div class="programme-category"><div class="programme-category-title">Loyalty & rewards</div><div class="grow-programme-list">
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Earning',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
@@ -13920,7 +14117,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
       <div class="programme-category"><div class="programme-category-title">Promotions & growth</div><div class="grow-programme-list">
-        ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see at most two current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
+        ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see up to six current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
       </div></div>
       <div class="programme-category"><div class="programme-category-title">Recurring value</div><div class="grow-programme-list">
@@ -13976,6 +14173,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
   if(['ongoing','available'].includes(programmeView)){
+    let visibleCategories=0;
     outerMain.querySelectorAll('.programme-category').forEach(category=>{
       let visible=0;
       category.querySelectorAll('.grow-programme-row').forEach(row=>{
@@ -13986,12 +14184,51 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         if(show)visible++;
       });
       category.hidden=visible===0;
+      if(visible)visibleCategories++;
     });
+    /* V174: a brand-new business lands on Running with nothing live yet — say so and point
+       at the tab that gets them started, instead of showing a bare heading. */
+    if(programmeView==='ongoing'&&visibleCategories===0){
+      const lastCategory=[...outerMain.querySelectorAll('.programme-category')].pop();
+      lastCategory?.insertAdjacentHTML('afterend',`<div class="empty" role="status" style="margin-top:14px"><b>Nothing is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow/available">To set up</a> — every programme there comes with a suggested starting point you can use in one tap.</p></div>`);
+    }
   }else if(programmeView==='settings'){
     const overviewSection=outerMain.querySelector('.reward-journey-v122');
     if(overviewSection)overviewSection.hidden=true;
     const settingsDetails=$('growSecondarySettings');
     if(settingsDetails)settingsDetails.open=true;
+  }
+  /* V173: every not-set-up programme row gets a concrete "Suggested" strip with a one-tap
+     "Use suggestion" that opens the right editor prefilled. Suggestions are plain sector
+     defaults an owner can change — never auto-published. Strips are siblings, not children,
+     because the rows themselves are <button>/<a> elements (no nested interactive controls). */
+  if(canSetupGrow){
+    const suggestions={
+      birthday:{text:'<b>10% off</b> during their birthday month',
+        prefill:{kind:'birthday',label:'Birthday treat',description:'10% off any visit during your birthday month.',discount:10}},
+      bringback:{text:'<b>S$10 off</b> when they return within <b>30 days</b>',
+        prefill:{kind:'bringback',name:'We miss you — S$10 off',goalVisits:1,withinDays:30,value:10}},
+      referrals:{text:'friend spends <b>S$30+</b>, referrer gets <b>S$10</b> credit',
+        prefill:{kind:'referral',minSpend:30,reward:10}}
+    };
+    /* Scope to outerMain, exactly like the tab filter above: growPage renders into its own
+       main node, and a document-wide query can run against the previous page's DOM (this is
+       why the first attempt inserted nothing at all in production). */
+    outerMain.querySelectorAll('.grow-programme-row').forEach(row=>{
+      const kind=row.dataset.programmeKind;
+      const suggestion=suggestions[kind];
+      if(!suggestion)return;
+      const pill=String(row.querySelector('.pill')?.textContent||'').toLowerCase();
+      if(!pill.includes('not set up')||row.hidden)return;
+      if(row.nextElementSibling?.classList?.contains('programme-suggest'))return;
+      row.insertAdjacentHTML('afterend',`<div class="programme-suggest" data-suggest-kind="${esc(kind)}"><span>✨ Suggested: ${suggestion.text}</span><button type="button" class="btn sm" data-suggest-use="${esc(kind)}">Use suggestion</button></div>`);
+      row.parentElement.querySelector(`[data-suggest-use="${kind}"]`).onclick=()=>{
+        pendingProgrammeSuggestV172=suggestion.prefill;
+        if(kind==='referrals'){nav('#/referrals');return}
+        /* Reuse the row's own click path (draft creation / auto-setup / surface mount). */
+        if(row.matches('button'))row.click();else if(row.getAttribute('href'))nav(row.getAttribute('href'));
+      };
+    });
   }
   document.querySelectorAll('[data-product-cost-save]').forEach(button=>button.onclick=async()=>{
     const productId=button.dataset.productCostSave;
@@ -14164,6 +14401,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       toast(`Template loaded — review the numbers, then publish`);
       return true;
     };
+    /* V173: birthday branch of the overview "Use suggestion" strip. */
+    const applyPendingBirthdaySuggestV173=()=>{
+      if(surface!=='rewards'||pendingProgrammeSuggestV172?.kind!=='birthday')return false;
+      const label=$('birthdayLabel');
+      if(!label)return false;
+      const suggest=pendingProgrammeSuggestV172;pendingProgrammeSuggestV172=null;
+      label.value=suggest.label;
+      const description=$('birthdayDescription');if(description)description.value=suggest.description;
+      const kindField=$('birthdayKind');
+      if(kindField&&[...kindField.options].some(option=>option.value==='discount_pct')){
+        kindField.value='discount_pct';kindField.dispatchEvent(new Event('change',{bubbles:true}));
+        const discount=$('birthdayDiscount');if(discount)discount.value=String(suggest.discount);
+      }
+      toast('Suggestion loaded — review, then publish');
+      return true;
+    };
     if(activeSurface===surface){
       preserveExactRoute();
       if(surface==='winback'&&focusTarget==='rn'){
@@ -14176,7 +14429,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         await loyaltyPage(undefined,draft,null,false,editorIntent);
       }
       if(!await openExactReward()&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
-      applyPendingRewardEstimate();applyPendingRewardTemplateV172();
+      applyPendingRewardEstimate();applyPendingRewardTemplateV172();applyPendingBirthdaySuggestV173();
       return;
     }
     if((surface==='rewards'&&!canRewards)||(surface==='winback'&&!canWinback))return;
@@ -14204,7 +14457,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     const exactRewardOpened=await openExactReward();
     if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
-    applyPendingRewardEstimate();applyPendingRewardTemplateV172();
+    applyPendingRewardEstimate();applyPendingRewardTemplateV172();applyPendingBirthdaySuggestV173();
   }
   function openRewardsAutoSetup(action={surface:'rewards',focusTarget:'lm',activateTarget:false}){
     if(!canSetupGrow)return;
@@ -15384,6 +15637,7 @@ function studioEstimate(rule,agg){
    a half-built list diff would read as completeness. The card says where those live instead. */
 const GROW_PUBLISH_MODEL_LABEL_V170={classic:'Simple points',points_tiers:'Points, rewards and tiers',stamps:'Stamp card'};
 const GROW_PUBLISH_EXPIRY_LABEL_V170={none:'Never expire',inactivity:'Expire after inactivity',fixed:'Fixed shelf life from earn'};
+const GROW_PUBLISH_TIER_BASIS_LABEL_V175={visits:'Number of visits',spend:'Lifetime spend',points_earned:'Lifetime points earned'};
 function growPublishFieldRowsV170(live,draft){
   /* No draft programme row means publication changes none of these fields — say nothing changed
      rather than rendering every live value as "→ not set". */
@@ -15391,17 +15645,29 @@ function growPublishFieldRowsV170(live,draft){
   const num=v=>(v==null||v===''||!Number.isFinite(Number(v)))?null:Number(v);
   const text=v=>(v==null||v==='')?null:String(v);
   const plain=v=>v==null?'not set':String(v);
+  /* V175: only compare fields the PUBLISHED model actually uses. redeem_points and
+     reward_credit_cents drive redemption solely in the 'classic' model —
+     app.redeem_points_v40_internal raises "this business redeems points through its reward
+     catalog" for any other model, so under points_tiers/stamps those columns are inert and a
+     draft can carry stale values with zero customer effect. Listing them made an inert change
+     read as "Points needed to redeem 1500 → 150", which looks like a serious downgrade and
+     stops an owner from publishing a correct draft. Stamp fields are likewise classic/stamps-
+     irrelevant outside the stamps model. */
+  const model=String(draft?.loyalty_model||live?.loyalty_model||'');
+  const usesClassicRedemption=model==='classic';
+  const usesStamps=model==='stamps';
   const fields=[
     {label:'Programme status',read:p=>p?.active==null?null:(p.active===true?'Active':'Paused'),show:plain},
     {label:'Loyalty model',read:p=>text(p?.loyalty_model),show:v=>v==null?'not set':(GROW_PUBLISH_MODEL_LABEL_V170[v]||v)},
-    {label:'Points earned per $1 spent',read:p=>num(p?.earn_points_per_dollar),show:plain},
-    {label:'Points needed to redeem',read:p=>num(p?.redeem_points),show:plain},
-    {label:'Credit minted on redemption',read:p=>num(p?.reward_credit_cents),show:v=>v==null?'not set':studioMoney(v)},
-    {label:'Stamps needed for a reward',read:p=>num(p?.stamp_target),show:plain},
-    {label:'Spend per stamp',read:p=>num(p?.stamp_per_cents),show:v=>v==null?'not set':studioMoney(v)},
+    {label:'Points earned per $1 spent',read:p=>num(p?.earn_points_per_dollar),show:plain,when:!usesStamps},
+    {label:'Points needed to redeem',read:p=>num(p?.redeem_points),show:plain,when:usesClassicRedemption},
+    {label:'Credit minted on redemption',read:p=>num(p?.reward_credit_cents),show:v=>v==null?'not set':studioMoney(v),when:usesClassicRedemption},
+    {label:'Stamps needed for a reward',read:p=>num(p?.stamp_target),show:plain,when:usesStamps},
+    {label:'Spend per stamp',read:p=>num(p?.stamp_per_cents),show:v=>v==null?'not set':studioMoney(v),when:usesStamps},
+    {label:'Tier level is earned by',read:p=>text(p?.tier_basis),show:v=>v==null?'not set':(GROW_PUBLISH_TIER_BASIS_LABEL_V175[v]||v),when:model==='points_tiers'},
     {label:'Expiry',read:p=>text(p?.expiry_mode),show:v=>v==null?'not set':(GROW_PUBLISH_EXPIRY_LABEL_V170[v]||v)},
     {label:'Expiry window (days)',read:p=>num(p?.expiry_days),show:plain}
-  ];
+  ].filter(f=>f.when!==false);
   return fields.map(f=>({label:f.label,before:f.read(live),after:f.read(draft),show:f.show}))
     .filter(row=>row.before!==row.after)
     .map(row=>({label:row.label,before:row.show(row.before),after:row.show(row.after)}));
@@ -16680,6 +16946,14 @@ async function referralsPage(){
         ?workspaceTemplateHtmlV97('referralEnabledOutcome',{amount:money(p?.reward_cents??1000)})
         :'The programme is Off. A linked referral stays pending; no reward is paid unless the programme is Enabled when a qualifying sale is recorded.'}</p></div></div>
     <div class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Referral activity</h2></div><div id="flist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div>`;
+  /* V173: one-shot prefill from the Programmes overview "Use suggestion" strip. */
+  if(pendingProgrammeSuggestV172?.kind==='referral'&&$('fm')){
+    const suggest=pendingProgrammeSuggestV172;pendingProgrammeSuggestV172=null;
+    $('fm').value=suggest.minSpend.toFixed(2);
+    if($('fr'))$('fr').value=suggest.reward.toFixed(2);
+    if($('fe'))$('fe').value='true';
+    toast('Suggestion loaded — review, then save');
+  }
   if($('fsave'))$('fsave').onclick=async()=>{
     const saveButton=$('fsave');saveButton.disabled=true;
     const {error}=await sb.rpc('save_referral_program',{p_business:S.biz.id,

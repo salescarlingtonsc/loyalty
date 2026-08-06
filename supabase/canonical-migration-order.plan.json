@@ -1171,6 +1171,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260805200910",
+      "name": "nestly_v173_offer_detail_parity",
+      "sourcePath": "db/migrations/20260806_nestly_v173_offer_detail_parity.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260805213000",
       "name": "nestly_v169_activate_stranded_approved_applications",
       "sourcePath": "db/migrations/20260805_nestly_v169_activate_stranded_approved_applications.sql"
