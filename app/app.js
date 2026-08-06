@@ -10065,14 +10065,14 @@ async function tillPage(){
 	          ?`<div class="till-cart-catalog">${catalog.services.map(s=>{
 	            const qty=selectedCatalogQty('service',s.id);
 	            const image=catalogueImageUrlV158(s);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
 	          :'';
 	        const prodBtns=(catalog.products&&catalog.products.length)
 	          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>{
 	            const qty=selectedCatalogQty('product',p.id);
 	            const image=catalogueImageUrlV158(p);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
           :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
@@ -13680,7 +13680,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           rewardAutoSetupRequestKey=null;
           status.textContent='Your services or products changed since the last try. Press again to build a recommendation from your current prices.';
         }else{
-          status.textContent=`${ownerErrorText(error)} Nothing was published.`;
+          /* Built by concatenation, not a template literal: interpolated copy assigned to
+             textContent must go through the workspace translation mechanism, and the added
+             sentence is real UI copy that has to translate with the rest of the workspace. */
+          status.textContent=ownerErrorText(error)+' '+workspaceTranslationV97('Nothing was published.');
         }
       }
     }
@@ -17080,7 +17083,7 @@ async function appointmentsPage(){
     const total=Math.max(0,Number(count||0)),pages=Math.max(1,Math.ceil(total/APPOINTMENT_LIST_PAGE_SIZE));
     if(listPage>=pages&&listPage>0){listPage=pages-1;loadList();return}
     $('alist').innerHTML=calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>Date & time</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-      ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
+      ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" data-merchant-content title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}">${esc(a.status.replace('_',' '))}</span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
       :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`;
     wireAppointmentActions();
     if($('appointmentPrev'))$('appointmentPrev').onclick=()=>{if(listPage>0){listPage--;loadList()}};
@@ -18687,7 +18690,7 @@ async function staffPerfPage(drillId){
        with the two money cards beside it and reads as a third, contradictory ranking. The count
        is still in the table below, where it belongs as traceability rather than a headline. */
     $('staffRankSummary').innerHTML=`${winnerCard('revenue','Highest attributed revenue')}${winnerCard('commission','Highest signed commission')}`;
-    $('staffRankBasis').textContent=`Ranked by ${selectedSort.label}`;
+    $('staffRankBasis').textContent=workspaceTranslationV97('Ranked by')+' '+selectedSort.label;
     if(!displayKeys.length){$('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No matching staff records',body:'Clear the staff search or adjust the selected range.'});return}
     $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Rank</th><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th>Signed revenue attributed</th><th>Signed commission</th></tr>
       ${displayKeys.map((k,index)=>`<tr><td>${k==='__unattributed'?'—':index+1}</td><td><a href="#/staffperf/${k==='__unattributed'?'unattributed':encodeURIComponent(k)}"><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></a></td>
@@ -19247,7 +19250,7 @@ async function loadCatalogueMediaVersionsV158(){
 }
 function cataloguePhotoInputHtmlV158({assetKind,entityId,label='Attach photo'}={}){
   if(!assetKind||!entityId)return '';
-  return `<label class="btn ghost sm service-photo-uploader-v158">${esc(label)}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-catalogue-photo-kind-v158="${esc(assetKind)}" data-catalogue-photo-id-v158="${esc(entityId)}" aria-label="${esc(label)}"></label>`;
+  return `<label class="btn ghost sm service-photo-uploader-v158">${esc(label)}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-catalogue-photo-kind-v158="${esc(assetKind)}" data-catalogue-photo-id-v158="${esc(entityId)}" data-workspace-i18n aria-label="${esc(label)}"></label>`;
 }
 async function uploadCatalogueMediaV158({assetKind,entityId,file,altText=''}) {
   if(!S.biz?.id) throw new Error('Business context is required.');
@@ -19941,7 +19944,7 @@ async function settingsPage(){
         :`<span class="muted small">Svc ${esc(pct(s.commission_service_bps))} · Prod ${esc(pct(s.commission_product_bps))}</span>`;
       return `<div class="team-member-card">
         <div class="row staff-row-line">
-          <button type="button" class="staff-row-open" onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}" aria-label="Open profile for ${esc(s.full_name||'this teammate')}">
+          <button type="button" class="staff-row-open" data-merchant-content onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}" aria-label="Open profile for ${esc(s.full_name||'this teammate')}">
             <b data-merchant-content>${esc(s.full_name||'Member')}</b>
             <span class="muted small" data-merchant-content>${esc(s.email||'No email')}</span>
             <span class="muted small" data-merchant-content>${esc(s.phone||'No phone')}</span>
