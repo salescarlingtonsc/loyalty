@@ -180,6 +180,47 @@ test('a signed-in customer sees their own bookings instead of being asked for a 
 
 /* --------------------------------------------------------------- business side */
 
+test('each person can work their own rota, and unticking returns them to shop hours',()=>{
+  const load=section(app,'const loadBookingAvailability=async','loadBookingAvailability();');
+  assert.match(load,/sb\.from\('staff_hours'\)\.select\('staff_id,weekday,starts_at,ends_at'\)/);
+  assert.match(load,/rotaResult\.error/,'a failed rota read must not render a half-truthful editor');
+  assert.match(load,/\{opens_at:row\.starts_at,closes_at:row\.ends_at\}/,'rota columns are translated once');
+  assert.match(load,/data-staff-rota="\$\{esc\(staffId\)\}"[^>]*\$\{rota\?'checked':''\}/);
+  assert.match(load,/data-staff-hours="\$\{esc\(staffId\)\}" \$\{rota\?'':'hidden'\}/);
+  assert.match(load,/Replaces the shop hours for this person — including days the shop is closed\./,
+    'the copy states the engine’s actual rule rather than implying an intersection');
+  assert.match(load,/pill\.textContent=box\.checked\?'Own rota':'Shop hours'/);
+  // one row template, namespaced so a rota row can never be read as a shop row
+  const row=section(app,'const v183HourRowMarkup=','const loadBookingAvailability=async');
+  assert.match(row,/data-day-scope="\$\{esc\(scope\)\}"/);
+  assert.match(row,/id="v183Open-\$\{esc\(scope\)\}-\$\{weekday\}"/,'ids stay unique across every grid on the page');
+});
+
+test('a rota save is scoped, ordered and refuses to publish an empty rota',()=>{
+  const save=section(app,"$('setAvailabilitySave').onclick=",'/* ---- CSV import of existing bookings');
+  assert.match(save,/\[data-day-closed\]\[data-day-scope="\$\{CSS\.escape\(scope\)\}"\]/);
+  assert.match(save,/const shop=readDayGrid\('shop',host\)/);
+  assert.match(save,/readDayGrid\(staffId,member\)/);
+  assert.match(save,/box\.checked\|\|!opens\|\|!closes\|\|closes<=opens/,'an inverted or blank range is closed, never saved');
+  assert.match(save,/const emptyRota=rotas\.find\(rota=>rota\.wantsRota&&!rota\.open\.length\)/);
+  assert.match(save,/works their own hours but has no open day/);
+  assert.match(save,/return;\s*\}\s*const results=await Promise\.all/,'the guard aborts before ANY write');
+  assert.match(save,/sb\.from\('staff_hours'\)\.upsert\([\s\S]{0,220}\{onConflict:'staff_id,weekday'\}\)/);
+  assert.match(save,/sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\)\.in\('weekday',rota\.closed\)/);
+  assert.match(save,/:\[sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\)\]/,
+    'unticking clears the whole rota — that is what restores shop hours');
+});
+
+test('the availability engine prefers a rota over shop hours and offers nothing on an unrostered day',()=>{
+  const windows=section(migration,'), windows as (','), slots as (');
+  assert.match(windows,/coalesce\(own\.starts_at, branch\.opens_at\) as starts_at/);
+  assert.match(windows,/on own\.business_id = v_business\.id[\s\S]{0,200}own\.weekday = extract\(dow from calendar\.day\)::smallint/);
+  assert.match(windows,/\) branch on not exists \(\s*select 1 from public\.staff_hours any_row/,
+    'branch hours are joined ONLY for a person with no rota at all');
+  assert.match(windows,/where coalesce\(own\.starts_at, branch\.opens_at\) is not null/,
+    'a rostered person with no row for that weekday simply has no window');
+});
+
 test('the business owns the switch, the opening hours and who is bookable',()=>{
   assert.match(app,/id="setStaffChoice"[^>]*\$\{S\.biz\.booking_staff_choice\?'checked':''\}/);
   assert.match(app,/Let customers choose a team member/);

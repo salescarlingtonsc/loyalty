@@ -6,6 +6,8 @@
 --   2. staff choice ON exposes only bookable, active staff, and reports honestly whether
 --      the business has published any hours at all;
 --   3. a rota produces real slots, and blocked time removes them;
+--   3b. a rota REPLACES the shop hours, an unrostered weekday offers nothing, and clearing
+--      the rota returns the person to the shop hours (the contract the Settings editor uses);
 --   4. the submit path re-validates the requested person server-side.
 
 begin;
@@ -21,6 +23,8 @@ declare
   v_actor uuid;
   v_out jsonb;
   v_slots integer;
+  v_probe date;
+  v_first timestamptz;
 begin
   select business.id, business.slug into v_biz, v_slug
     from public.businesses business
@@ -85,6 +89,38 @@ begin
   select coalesce(sum(jsonb_array_length(day->'slots')), 0) into v_slots
     from jsonb_array_elements(v_out->'days') day;
   assert v_slots = 0, 'a full-day block must remove every slot for that day';
+
+  -- 3b. a rota REPLACES the shop hours, and an unrostered weekday offers nothing.
+  -- This is the contract the Settings rota editor is built on, so pin it here.
+  delete from public.staff_blocked_times where business_id = v_biz and staff_id = v_staff;
+  delete from public.staff_hours where business_id = v_biz and staff_id = v_staff;
+  insert into public.branch_hours (business_id, branch_id, weekday, opens_at, closes_at)
+  select v_biz, v_branch, weekday, time '09:00', time '18:00' from generate_series(0, 6) weekday
+  on conflict (branch_id, weekday) do update set opens_at = excluded.opens_at, closes_at = excluded.closes_at;
+  v_probe := ((statement_timestamp() at time zone 'Asia/Singapore')::date + 2)::date;
+  -- rostered on the probe day only, and later than the shop opens
+  insert into public.staff_hours (business_id, staff_id, weekday, starts_at, ends_at)
+  values (v_biz, v_staff, extract(dow from v_probe)::smallint, time '14:00', time '18:00');
+  v_out := public.internal_public_booking_availability(v_slug, v_service, v_staff, v_probe, 1);
+  select min((slot->>'at')::timestamptz) into v_first
+    from jsonb_array_elements(v_out->'days') day,
+         jsonb_array_elements(day->'slots') slot;
+  assert v_first is not null, 'the rostered day must still offer slots';
+  assert (v_first at time zone 'Asia/Singapore')::time = time '14:00',
+    'the rota start must win over the shop opening time';
+
+  v_out := public.internal_public_booking_availability(v_slug, v_service, v_staff, (v_probe + 1)::date, 1);
+  select coalesce(sum(jsonb_array_length(day->'slots')), 0) into v_slots
+    from jsonb_array_elements(v_out->'days') day;
+  assert v_slots = 0,
+    'a person with a rota is unavailable on a weekday they are not rostered, even when the shop is open';
+
+  -- clearing the rota is what returns the person to the shop hours
+  delete from public.staff_hours where business_id = v_biz and staff_id = v_staff;
+  v_out := public.internal_public_booking_availability(v_slug, v_service, v_staff, (v_probe + 1)::date, 1);
+  select coalesce(sum(jsonb_array_length(day->'slots')), 0) into v_slots
+    from jsonb_array_elements(v_out->'days') day;
+  assert v_slots > 0, 'with no rota the person must follow the shop opening hours again';
 
   -- a person the business hid is never offered, even when asked for by id
   update public.staff set customer_bookable = false where id = v_staff;

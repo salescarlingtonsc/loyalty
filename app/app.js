@@ -11200,16 +11200,25 @@ async function bookingsPage(){
 
   /* ---- v183 customer booking availability: opening hours + who customers may ask for ---- */
   const V183_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  /* v183b: one weekday row, reused by the shop hours grid and by each person's own rota.
+     `scope` namespaces the data attributes so a rota row can never be mistaken for a shop row. */
+  const v183HourRowMarkup=(scope,weekday,label,row,fallback)=>`<div class="v183-hours-row">
+    <label style="margin:0" for="v183Open-${esc(scope)}-${weekday}">${esc(label)}</label>
+    <label class="v183-hours-open" for="v183Closed-${esc(scope)}-${weekday}"><input type="checkbox" id="v183Closed-${esc(scope)}-${weekday}" data-day-closed="${weekday}" data-day-scope="${esc(scope)}" style="width:auto" ${row?'':'checked'}> Closed</label>
+    <input type="time" id="v183Open-${esc(scope)}-${weekday}" data-day-opens="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.opens_at||fallback.opens).slice(0,5))}" ${row?'':'disabled'}>
+    <input type="time" id="v183Close-${esc(scope)}-${weekday}" data-day-closes="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.closes_at||fallback.closes).slice(0,5))}" ${row?'':'disabled'}>
+  </div>`;
   const loadBookingAvailability=async()=>{
     const host=$('setAvailabilityBody');if(!host)return;
-    const [branchResult,hoursResult,staffResult]=await Promise.all([
+    const [branchResult,hoursResult,staffResult,rotaResult]=await Promise.all([
       sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).order('is_default',{ascending:false}),
       sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id),
-      sb.from('staff').select('id,full_name,title,active,customer_bookable').eq('business_id',S.biz.id).order('full_name')
+      sb.from('staff').select('id,full_name,title,active,customer_bookable').eq('business_id',S.biz.id).order('full_name'),
+      sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at').eq('business_id',S.biz.id)
     ]);
     if(!isCurrent()||!host.isConnected)return;
     host.setAttribute('aria-busy','false');
-    if(branchResult.error||hoursResult.error||staffResult.error){
+    if(branchResult.error||hoursResult.error||staffResult.error||rotaResult.error){
       host.innerHTML='<p class="err small">Opening hours and team availability could not be loaded. Nothing has been changed.</p>';
       const save=$('setAvailabilitySave');if(save)save.disabled=true;
       return;
@@ -11218,25 +11227,43 @@ async function bookingsPage(){
     const branch=branches[0]||null;
     const hours=new Map((hoursResult.data||[]).filter(row=>!branch||row.branch_id===branch.id).map(row=>[Number(row.weekday),row]));
     const team=(staffResult.data||[]).filter(member=>member.active!==false);
+    /* A person's rota is stored as starts_at/ends_at; the shared row markup speaks
+       opens_at/closes_at, so translate once here rather than branching in the template. */
+    const rotaByStaff=new Map();
+    for(const row of rotaResult.data||[]){
+      const key=String(row.staff_id||'');
+      if(!rotaByStaff.has(key))rotaByStaff.set(key,new Map());
+      rotaByStaff.get(key).set(Number(row.weekday),{opens_at:row.starts_at,closes_at:row.ends_at});
+    }
     host.dataset.branchId=branch?.id||'';
     host.innerHTML=`${branch?'':'<p class="muted small">Add a branch first to publish opening hours.</p>'}
       <p class="muted small" style="margin-bottom:8px">Opening hours${branch?` for ${esc(branch.name||'your branch')}`:''}. Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
-      <div class="v183-hours">${V183_DAYS.map((label,weekday)=>{
-        const row=hours.get(weekday);
-        return `<div class="v183-hours-row"><label style="margin:0" for="v183Open-${weekday}">${esc(label)}</label>
-          <label class="v183-hours-open" for="v183Closed-${weekday}"><input type="checkbox" id="v183Closed-${weekday}" data-day-closed="${weekday}" style="width:auto" ${row?'':'checked'}> Closed</label>
-          <input type="time" id="v183Open-${weekday}" data-day-opens="${weekday}" value="${esc(String(row?.opens_at||'09:00').slice(0,5))}" ${row?'':'disabled'}>
-          <input type="time" id="v183Close-${weekday}" data-day-closes="${weekday}" value="${esc(String(row?.closes_at||'18:00').slice(0,5))}" ${row?'':'disabled'}>
-        </div>`;
-      }).join('')}</div>
+      <div class="v183-hours">${V183_DAYS.map((label,weekday)=>
+        v183HourRowMarkup('shop',weekday,label,hours.get(weekday),{opens:'09:00',closes:'18:00'})).join('')}</div>
       <p class="muted small" style="margin:14px 0 6px">Who customers may ask for</p>
-      ${team.length?`<div class="v183-team">${team.map(member=>`<label class="v183-team-row" for="v183Staff-${esc(member.id)}"><input type="checkbox" id="v183Staff-${esc(member.id)}" data-staff-bookable="${esc(member.id)}" style="width:auto" ${member.customer_bookable===false?'':'checked'}> <span><b>${esc(member.full_name||'Team member')}</b>${member.title?` <span class="muted small">· ${esc(member.title)}</span>`:''}</span></label>`).join('')}</div>`
+      ${team.length?`<div class="v183-team">${team.map(member=>{
+        const staffId=String(member.id),rota=rotaByStaff.get(staffId)||null;
+        return `<div class="v183-team-member" data-staff-member="${esc(staffId)}">
+          <label class="v183-team-row" for="v183Staff-${esc(staffId)}"><input type="checkbox" id="v183Staff-${esc(staffId)}" data-staff-bookable="${esc(staffId)}" style="width:auto" ${member.customer_bookable===false?'':'checked'}> <span><b>${esc(member.full_name||'Team member')}</b>${member.title?` <span class="muted small">· ${esc(member.title)}</span>`:''}</span><span class="pill v183-rota-pill" data-rota-pill>${rota?'Own rota':'Shop hours'}</span></label>
+          <label class="v183-team-rota" for="v183Rota-${esc(staffId)}"><input type="checkbox" id="v183Rota-${esc(staffId)}" data-staff-rota="${esc(staffId)}" style="width:auto;margin-top:2px" ${rota?'checked':''}> <span>Works their own hours<span class="muted small" style="display:block;font-weight:400">Replaces the shop hours for this person — including days the shop is closed.</span></span></label>
+          <div class="v183-hours v183-staff-hours" data-staff-hours="${esc(staffId)}" ${rota?'':'hidden'}>${V183_DAYS.map((label,weekday)=>
+            v183HourRowMarkup(staffId,weekday,label,rota?.get(weekday),{opens:'10:00',closes:'18:00'})).join('')}</div>
+        </div>`;
+      }).join('')}</div>`
         :'<p class="muted small">No active team members yet.</p>'}`;
     host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
-      const weekday=box.dataset.dayClosed;
-      const opens=host.querySelector(`[data-day-opens="${weekday}"]`),closes=host.querySelector(`[data-day-closes="${weekday}"]`);
+      const scope=box.dataset.dayScope,weekday=box.dataset.dayClosed;
+      const within=box.closest('.v183-hours')||host;
+      const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+      const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
       if(opens)opens.disabled=box.checked;
       if(closes)closes.disabled=box.checked;
+    });
+    host.querySelectorAll('[data-staff-rota]').forEach(box=>box.onchange=()=>{
+      const member=box.closest('[data-staff-member]');
+      const grid=member?.querySelector('[data-staff-hours]'),pill=member?.querySelector('[data-rota-pill]');
+      if(grid)grid.hidden=!box.checked;
+      if(pill)pill.textContent=box.checked?'Own rota':'Shop hours';
     });
   };
   loadBookingAvailability();
@@ -11245,22 +11272,49 @@ async function bookingsPage(){
     const branchId=host?.dataset?.branchId||'';
     save.disabled=true;err.innerHTML='';
     const staffChoice=$('setStaffChoice').checked;
-    const rows=[],closedDays=[];
-    host.querySelectorAll('[data-day-closed]').forEach(box=>{
-      const weekday=Number(box.dataset.dayClosed);
-      if(box.checked){closedDays.push(weekday);return}
-      const opens=host.querySelector(`[data-day-opens="${weekday}"]`)?.value||'';
-      const closes=host.querySelector(`[data-day-closes="${weekday}"]`)?.value||'';
-      if(!opens||!closes||closes<=opens){closedDays.push(weekday);return}
-      rows.push({business_id:S.biz.id,branch_id:branchId,weekday,opens_at:opens,closes_at:closes});
-    });
+    /* An open day needs a real, ordered range; anything else is recorded as closed rather
+       than half-saved. Scoped reads keep a person's rota out of the shop's own grid. */
+    const readDayGrid=(scope,within)=>{
+      const open=[],closed=[];
+      within.querySelectorAll(`[data-day-closed][data-day-scope="${CSS.escape(scope)}"]`).forEach(box=>{
+        const weekday=Number(box.dataset.dayClosed);
+        const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+        const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+        if(box.checked||!opens||!closes||closes<=opens){closed.push(weekday);return}
+        open.push({weekday,opens,closes});
+      });
+      return {open,closed};
+    };
+    const shop=readDayGrid('shop',host);
+    const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
+    const closedDays=shop.closed;
     const bookable=[...host.querySelectorAll('[data-staff-bookable]')]
       .map(box=>({id:box.dataset.staffBookable,customer_bookable:box.checked}));
+    const rotas=[...host.querySelectorAll('[data-staff-member]')].map(member=>{
+      const staffId=member.dataset.staffMember;
+      const wantsRota=member.querySelector('[data-staff-rota]')?.checked===true;
+      const grid=readDayGrid(staffId,member);
+      return {staffId,wantsRota,name:member.querySelector('b')?.textContent||'This person',...grid};
+    });
+    /* A rota with no working day would delete every row and silently fall back to the shop
+       hours — the opposite of what "they work different hours" means. Refuse the whole save
+       rather than write a state the owner did not ask for. */
+    const emptyRota=rotas.find(rota=>rota.wantsRota&&!rota.open.length);
+    if(emptyRota){
+      save.disabled=false;
+      err.innerHTML=`<div class="err">${esc(emptyRota.name)} works their own hours but has no open day. Add a day, or untick "Works their own hours" to follow the shop hours.</div>`;
+      return;
+    }
     const results=await Promise.all([
       sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id),
       branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
       branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
-      ...bookable.map(member=>sb.from('staff').update({customer_bookable:member.customer_bookable}).eq('id',member.id).eq('business_id',S.biz.id))
+      ...bookable.map(member=>sb.from('staff').update({customer_bookable:member.customer_bookable}).eq('id',member.id).eq('business_id',S.biz.id)),
+      ...rotas.flatMap(rota=>rota.wantsRota
+        ?[sb.from('staff_hours').upsert(rota.open.map(day=>({business_id:S.biz.id,staff_id:rota.staffId,weekday:day.weekday,starts_at:day.opens,ends_at:day.closes})),{onConflict:'staff_id,weekday'}),
+          rota.closed.length?sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.closed):Promise.resolve({error:null})]
+        /* Unticking clears the whole rota, which is what returns this person to shop hours. */
+        :[sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId)])
     ]);
     if(!isCurrent())return;
     save.disabled=false;
