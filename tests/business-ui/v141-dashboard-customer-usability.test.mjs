@@ -26,7 +26,7 @@ test('V141 dashboard removes duplicate launchers and keeps branch-scoped perform
   assert.match(dashboard,/id="dashboardReportingScopeWrap"/);
   assert.match(dashboard,/renderReportingScopeSelectorV155\([^\n]+dashboardReportingScopeWrap/);
   assert.match(dashboard,/data-d="1"[^>]*>Today</);
-  assert.match(dashboard,/class="performance-heading"[\s\S]*CUI\.icon\('reports'/);
+  assert.match(dashboard,/class="performance-heading ux154-collapsible-head"[\s\S]*CUI\.icon\('reports'/);
   assert.doesNotMatch(dashboard,/performance-panel>summary|<summary>Performance/);
 });
 

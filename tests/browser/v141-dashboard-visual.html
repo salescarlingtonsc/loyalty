@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5129ee0d96713ec41565a73f767a1cec73bdcd7c3d4dc29deb83ca869d198416"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="7e0aadbfc9ba8e4dbf290b457ef109c6f8c38b5f56d36fdf981c004a035d44b5"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -152,6 +152,13 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .bday-mode-row input{margin-top:2px;flex:none}
 .sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
 .sales-mix-row input{margin-top:3px;flex:none}
+/* V185: blocked time in the WEEK grid. Narrower columns than the day view, so it sits behind
+   events (lower z-index), drops the 44px min-height that would swamp a short block, and never
+   carries a Remove control — removal stays in the Day view where the row is big enough to be
+   sure what you are deleting. */
+.week-blocked-window{left:2px;right:2px;z-index:1;min-height:0;padding:2px 5px;font-size:11px;line-height:1.25}
+.week-blocked-window span{display:flex;flex-direction:column;gap:0;overflow:hidden}
+.week-blocked-window b{font-variant-numeric:tabular-nums}
 /* V180: today's bookings at a glance. Chips wrap rather than scroll horizontally — a hidden
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
@@ -1100,6 +1107,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .pf-choice{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}
 .pf-inlineerr{color:var(--red);font-size:13px;font-weight:600;margin-top:12px}
 .pf-inlineerr:empty{display:none}
+.v183-hours{display:grid;gap:8px}
+.v183-hours-row{display:grid;grid-template-columns:minmax(84px,1fr) auto minmax(96px,1fr) minmax(96px,1fr);align-items:center;gap:8px}
+.v183-hours-open{display:flex;align-items:center;gap:6px;margin:0;font-size:12.5px;white-space:nowrap}
+.v183-team{display:grid;gap:8px}
+.v183-team-row{display:flex;align-items:center;gap:8px;margin:0;padding:8px 10px;border:1px solid var(--hair);border-radius:12px;color:var(--ink);font-weight:500;font-size:14px}
+.v183-team-member{border:1px solid var(--hair);border-radius:12px;padding:10px}
+.v183-team-member .v183-team-row{border:0;padding:0}
+.v183-team-rota{display:flex;align-items:flex-start;gap:8px;margin:9px 0 0;color:var(--ink);font-weight:500;font-size:13px}
+.v183-staff-hours{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair)}
+.v183-staff-hours[hidden]{display:none}
+.v183-rota-pill{margin-left:auto;flex:0 0 auto}
+@media(max-width:560px){.v183-hours-row{grid-template-columns:1fr 1fr;gap:6px}}
+.pf-day-track{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.pf-day{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:0 0 auto;min-height:56px;padding:9px 13px;border:1px solid var(--control-border);border-radius:14px;background:var(--card);color:var(--ink);scroll-snap-align:start}
+.pf-day.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+.pf-day.sel .muted{color:inherit}
+.pf-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
+.pf-slot{min-height:44px;padding:10px 8px;border:1px solid var(--control-border);border-radius:12px;background:var(--card);color:var(--ink);font-weight:650}
+.pf-slot.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
@@ -1203,6 +1229,16 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-balance-panel.customer-balance-panel-single{grid-template-columns:minmax(0,560px)}
 .customer-balance-value{font-size:clamp(1.85rem,5vw,2.6rem);font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
 .customer-tier-track{height:10px;margin-top:13px;border-radius:999px;background:var(--hair);overflow:hidden}.customer-tier-track span{display:block;height:100%;width:var(--tier-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral));transition:width .25s var(--ease)}
+/* v186 tier ladder. Every tier stays fully legible; the ones that are not yours are drained of
+   colour and dimmed, which reads instantly as "not mine" without hiding a single benefit. The
+   state pill carries the same meaning in words, so greyscale is never the only signal. */
+.customer-tier-ladder{border-top:1px solid var(--hair);padding-top:14px}
+.customer-tier-rungs{display:grid;gap:10px;margin-top:10px;padding:0;list-style:none;counter-reset:tier}
+.customer-tier-rung{padding:12px 14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--card);filter:grayscale(1);opacity:.62;transition:opacity var(--motion-ui) var(--ease),filter var(--motion-ui) var(--ease)}
+.customer-tier-rung.is-achieved{opacity:.78}
+.customer-tier-rung.is-current{filter:none;opacity:1;border-color:var(--merchant-accent,var(--coral));background:var(--tint);box-shadow:var(--shadow)}
+.customer-tier-rung .rec-why{margin-top:6px}
+@media(prefers-reduced-motion:reduce){.customer-tier-rung{transition:none}}
 .wallet-history-disclosure{margin-top:14px;padding:0;overflow:hidden}.wallet-history-disclosure>summary{display:flex;align-items:center;gap:10px;min-height:56px;padding:16px 18px;cursor:pointer;font-weight:750;list-style-position:inside}.wallet-history-disclosure>summary .muted{font-weight:500}.wallet-history-disclosure[open]>summary{border-bottom:1px solid var(--hair)}.wallet-history-disclosure-body{display:grid;gap:14px;padding:14px}.wallet-history-disclosure .wallet-section{margin:0;box-shadow:none}
 .customer-perks-grid,.customer-offers-grid,.customer-rewards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin-top:12px}
 .customer-perk-card,.customer-offer-card,.customer-reward-card{overflow:hidden;min-height:120px;padding:16px;border:1px solid var(--hair);border-radius:15px;background:#fff}
@@ -1251,6 +1287,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-booking-tab[aria-selected="true"]{background:var(--tint);color:var(--coral)}
 .customer-booking-tab-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--bg);color:inherit;font-size:11px;font-weight:800}
 #customerBookingPanel:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+.customer-booking-invite{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.customer-home-offers-title{display:flex;align-items:center;gap:9px}
+.customer-home-offers-badge{display:inline-grid;place-items:center;width:32px;height:32px;flex:0 0 auto;border-radius:11px;background:var(--tint);color:var(--coral)}
+.customer-home-offer-business{display:flex;align-items:center;gap:7px;margin-top:6px;min-width:0}
+.customer-home-offer-logo{flex:0 0 auto;width:24px;height:24px;border-radius:8px;object-fit:cover;background:var(--bg)}
+.customer-home-offer-logo--fallback{display:inline-grid;place-items:center;font-size:11px;font-weight:800;color:var(--coral);background:var(--tint)}
+.customer-home-offer-countdown{margin-top:6px;font-size:13px;font-weight:750;color:var(--coral)}
+.customer-programme-holdings{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.customer-programme-holding{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--bg);color:var(--ink2);font-size:12px;font-weight:600}
+.customer-programme-holding b{color:var(--ink);font-weight:800}
+.wallet-reward-trade{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.wallet-reward-cost{color:var(--coral)}
+.wallet-reward-arrow{color:var(--ink2);font-weight:700}
 .customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.55fr);gap:14px;align-items:start}
 .entry-choice-card{width:min(720px,100%);padding:30px}
 .entry-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
@@ -1670,7 +1719,16 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   }
 
   let dialogHistoryId=0;
-  function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]'}={}){
+  /* v183: when one sheet opens another (offer → company details), the outgoing sheet must NOT
+     unwind its history entry. history.back() is asynchronous, so the pop landed AFTER the
+     incoming sheet had pushed its own entry and closed it again on arrival — the company sheet
+     appeared to be unclickable. Closing with {handOffHistory:true} leaves the entry in place and
+     the incoming sheet adopts it via inheritHistoryId, so one Back still closes exactly one. */
+  function currentDialogHistoryId(){
+    const id=Number(history.state?.cuiDialog||0);
+    return Number.isInteger(id)&&id>0?id:0;
+  }
+  function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]',inheritHistoryId=0}={}){
     const returnFocus=document.activeElement;
     const focusable=()=>[...dialog.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
       .filter(element=>!element.hidden&&element.getClientRects().length);
@@ -1687,20 +1745,25 @@ html[data-customer-surface="true"] body{background:var(--bg)}
        Without a history entry it exits the whole route instead. pushState keeps the SAME url, so
        hashchange — the only navigation signal the app router listens to — never fires. Back then
        pops our entry and closes the dialog through the identical path as Escape. */
-    const historyId=++dialogHistoryId;
+    const inherited=Number(inheritHistoryId)>0&&currentDialogHistoryId()===Number(inheritHistoryId);
+    const historyId=inherited?Number(inheritHistoryId):++dialogHistoryId;
     let closedByUs=false;
     const popstate=()=>{
       window.removeEventListener('popstate',popstate);
       if(closedByUs||!dialog.isConnected)return;
       onClose?.();
     };
-    try{history.pushState({...(history.state||{}),cuiDialog:historyId},'');window.addEventListener('popstate',popstate)}catch{}
+    try{
+      if(!inherited)history.pushState({...(history.state||{}),cuiDialog:historyId},'');
+      window.addEventListener('popstate',popstate);
+    }catch{}
     requestAnimationFrame(()=>{const target=dialog.querySelector(initialFocus)||focusable()[0]||dialog;target.focus()});
-    return ({restoreFocus=true}={})=>{
+    return ({restoreFocus=true,handOffHistory=false}={})=>{
       dialog.removeEventListener('keydown',keydown);
       window.removeEventListener('popstate',popstate);
       /* Only unwind our own entry, and only once — a Back-press already consumed it. */
-      if(!closedByUs&&history.state?.cuiDialog===historyId){closedByUs=true;try{history.back()}catch{}}
+      if(handOffHistory)closedByUs=true;
+      else if(!closedByUs&&history.state?.cuiDialog===historyId){closedByUs=true;try{history.back()}catch{}}
       dialog.remove();
       if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus();
     };
@@ -1726,7 +1789,8 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   global.FrenlyCustomerUI=Object.freeze({
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
     skeletonLine,skeletonCard,skeletonGrid,tableSkeleton,chartSkeleton,formSkeleton,setButtonBusy,
-    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog
+    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog,
+    currentDialogHistoryId
   });
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -1776,7 +1840,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
       if(fixtureParams.get('report_error')==='1'&&window.__dashboardReportReads===1)return {data:null,error:{message:'Injected report interruption'}};
       return {data:{visits:22,revenue_cents:173730,unique_customers:3,new_customers:4,points_issued:75831,credit_liability_cents:0,visits_by_weekday:[1,3,9,2,1,1,5],revenue_by_day:[{day:'20 Jul',amount_cents:10000},{day:'22 Jul',amount_cents:40000},{day:'29 Jul',amount_cents:63500},{day:'31 Jul',amount_cents:50230}],age_counts:{under_25:1,age_25_34:2,age_35_44:0,age_45_54:0,age_55_plus:0,unknown:1},gender_counts:{female:2,male:1,other:0,unknown:1}},error:null};
     }
-    if(name==='staff_list_customers_v129'){
+    if(name==='staff_list_customers_v155'){
       window.__inactiveReads++;
       if(fixtureParams.get('inactive_error')==='1'&&window.__inactiveReads===1)return {data:null,error:{message:'Injected inactivity interruption'}};
       return {data:{total:2,customers:[]},error:null};
@@ -1814,8 +1878,8 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     console.error(e);
     wraps.forEach(({id,wrap})=>{
       if(!wrap.isConnected||$(id)!==wrap)return;
-      wrap.innerHTML=`<span class="err small">Branch list unavailable.</span> <button type="button" class="btn ghost sm">Retry</button>`;
-      const retry=wrap.querySelector('button');
+      wrap.innerHTML=`<span class="err small">Branch list unavailable.</span> <button type="button" class="btn ghost sm" data-branch-filter-retry>Retry</button>`;
+      const retry=wrap.querySelector('[data-branch-filter-retry]');
       if(retry)retry.onclick=()=>refreshBranchFilter(onChange,isCurrent,targetId);
     });
     return;
@@ -2171,6 +2235,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'5129ee0d96713ec41565a73f767a1cec73bdcd7c3d4dc29deb83ca869d198416',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'7e0aadbfc9ba8e4dbf290b457ef109c6f8c38b5f56d36fdf981c004a035d44b5',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -68,6 +68,9 @@ test('V167 manual payment remains authenticated Super Admin approve or reject fl
   assert.match(manualFallback, /Sending this manual-payment application to the Peekaa admin queue/);
   assert.match(manualFallback, /approve or reject it after payment is verified/);
   assert.doesNotMatch(manualFallback, /Request demo|product demo|manual help|within 48 hours/i);
-  assert.match(onboard, /Stripe auto-activates only after verified payment/);
-  assert.match(onboard, /manual-payment approval form below for Super Admin review/);
+  // The Stripe-vs-manual explanation moved into renderBusinessApplication when the application
+  // flow was split out of onboarding; assert it where it now lives.
+  const application=section('function renderBusinessApplication','function renderOnboard(){');
+  assert.match(application, /Stripe payment auto-activates after verified payment; manual payment goes to Super Admin for approve\/reject\./);
+  assert.match(application, /Super Admin reviews and approves or rejects this manual-payment application/);
 });

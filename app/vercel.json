@@ -100,11 +100,11 @@
       ]
     },
     {
-      "source": "/app.js",
+      "source": "/app-:chunk.js",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-cache, must-revalidate"
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     },

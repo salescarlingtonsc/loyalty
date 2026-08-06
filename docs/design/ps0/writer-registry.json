@@ -2190,11 +2190,19 @@
     },
     {
       "id": "browser.write:app/app.js:branch_hours:DELETE",
-      "reason": "v183 browser direct write to non-value config table branch_hours (DELETE); unchecking a day removes that weekday's opening hours. RLS-gated owner setup data — it changes which times a customer is OFFERED, never a balance, benefit or sale."
+      "reason": "v183 browser direct write to non-value config table branch_hours (DELETE); unchecking a day removes that weekday's opening hours. RLS-gated owner setup data \u2014 it changes which times a customer is OFFERED, never a balance, benefit or sale."
     },
     {
       "id": "browser.write:app/app.js:branch_hours:UPSERT",
       "reason": "v183 browser direct write to non-value config table branch_hours (UPSERT); the owner's weekly opening hours, keyed (branch_id, weekday). RLS-gated owner setup data, not customer value."
+    },
+    {
+      "id": "browser.write:app/app.js:staff_hours:DELETE",
+      "reason": "v183 browser direct write to non-value config table staff_hours (DELETE); clearing a person's rota is what returns them to the shop opening hours. RLS-gated owner setup data — it changes which times a customer is OFFERED, never a balance, benefit or sale."
+    },
+    {
+      "id": "browser.write:app/app.js:staff_hours:UPSERT",
+      "reason": "v183 browser direct write to non-value config table staff_hours (UPSERT); a team member's own weekly working hours, keyed (staff_id, weekday). RLS-gated owner setup data, not customer value."
     },
     {
       "id": "browser.write:app/app.js:branches:INSERT",
@@ -2619,10 +2627,6 @@
     {
       "id": "browser.rpc:app/app.js:get_account_deletion_request_v131",
       "reason": "V131 authenticated subject-only read projection of the caller's latest account-deletion request. It performs no DML, exposes no email, phone, tenant, payment, or customer-value data, and cannot read another identity's request."
-    },
-    {
-      "id": "browser.rpc:app/app.js:request_account_deletion_v131",
-      "reason": "V131 idempotent privacy-operations intake. It appends one non-economic pending deletion request after explicit confirmation and does not immediately delete or mutate identities, tenant records, sales, payments, points, rewards, packages, gift cards, stored value, or any customer-value ledger."
     },
     {
       "id": "browser.rpc:app/app.js:get_merchant_payment_status_v142",

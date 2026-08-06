@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 
@@ -32,8 +33,16 @@ test('Google sign-in cannot become implicit signup and consented signup records 
   assert.match(app,/storageKey:'nestly-business-oauth-admission-v138',persistSession:false/);
   assert.match(app,/autoRefreshToken:false,detectSessionInUrl:false/);
   assert.ok(callback.indexOf("admissionClient.rpc('complete_business_google_oauth_v138'")<callback.indexOf('await sb.auth.setSession('));
-  assert.match(app,/terms:Object\.freeze\(\{version:'2026-08-03',sha256:'1c7437280e9ba8386b5ef3998a919fefcdeca8e06cc497b31621633ae23dab04'/);
-  assert.match(app,/privacy:Object\.freeze\(\{version:'2026-08-03',sha256:'8e152d208b271da5a1f71630b17c5c82e8b7bd930c5508da8b4d95597c0a1568'/);
+  // Legal digests are derived from the documents themselves rather than pinned by hand. A
+  // hardcoded pair silently rots the moment a policy is edited — which is exactly what happened:
+  // v175 rewrote app/privacy.html and updated the DB manifest, but the frontend kept stamping
+  // consent records with the previous digest, so a customer's acceptance no longer matched the
+  // document they were shown. Computing it here means that can never pass unnoticed again.
+  for(const doc of ['terms','privacy']){
+    const digest=createHash('sha256').update(readFileSync(new URL(`../../app/${doc}.html`,import.meta.url))).digest('hex');
+    assert.match(app,new RegExp(`${doc}:Object\\.freeze\\(\\{version:'\\d{4}-\\d{2}-\\d{2}',sha256:'${digest}'`),
+      `${doc} digest recorded in the app must equal sha256(app/${doc}.html)`);
+  }
   assert.match(migration,/create table app\.business_google_oauth_attempts_v138/);
   assert.match(migration,/create table app\.business_account_legal_acceptances_v138/);
   assert.match(migration,/where staff_row\.user_id=v_actor and staff_row\.active/);

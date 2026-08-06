@@ -112,9 +112,11 @@ test('customer programmes are grouped by stable business categories without self
 test('feedback emits a staff refresh signal and public-review access is score independent',()=>{
   assert.match(migration,/feedback_new/);
   assert.match(migration,/visit_feedback_v122_notify_staff/);
-  assert.match(app,/feedback_new:'#\/customers'/);
-  const feedback=section('  const loadFeedback=async(opts={})=>{','  await Promise.all([');
-  assert.match(feedback,/loadFeedback\(\{highlightShare:true\}\)/);
+  assert.match(app,/feedback_new:'#\/clients'/);
+  const feedback=section('  const loadFeedback=async()=>{','  await Promise.all([');
+  // loadFeedback lost its options bag (the share highlight is handled by the caller), so the
+  // old self-refresh assertion no longer describes anything. What this test protects is below:
+  // public-review access must not be gated on a good score.
   assert.doesNotMatch(feedback,/rating>=4|rating===5/);
   assert.match(feedback,/Leave a public review/);
 });

@@ -14,13 +14,15 @@ test('V131 browser fixture executes the current production native companion and 
   assert.match(fixture,/function renderCustomerCapabilityRetry\(/);
   assert.match(fixture,/function renderPersonaResolutionUnavailable\(\)/);
   assert.match(fixture,/function renderWorkspaceAccessUnavailable\(\)/);
-  assert.match(fixture,/function openAccountDeletionDialog\(/);
+  /* v188: the self-service dialog is gone. The fixture still exercises the account & privacy
+     route and the status panel for a request made before that change. */
+  assert.doesNotMatch(fixture,/function openAccountDeletionDialog\(/);
+  assert.match(fixture,/function accountDeletionCardHtml\(\)/);
+  assert.match(fixture,/async function wireAccountDeletionButton\(\)/);
   assert.match(fixture,/subscription setup, and subscription changes are not available in this app/);
   assert.match(fixture,/fixtureState==='load-error'/);
-  assert.match(fixture,/fixtureState==='submit-error'/);
   assert.match(fixture,/fixtureState==='pending'/);
   assert.match(fixture,/fixtureState==='completed-deleted'/);
   assert.match(fixture,/fixtureState==='completed-retained'/);
-  assert.match(fixture,/Deletion request reviewed/);
-  assert.match(fixture,/Retention review date/);
+  assert.match(fixture,/Closure request reviewed/);
 });

@@ -33,8 +33,16 @@ test('localized platform UI works with the real frozen helper contract',async()=
 test('admin route exposes a loading state and awaits the async platform renderer',async()=>{
   const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const route=source.slice(source.indexOf('async function route(){'),source.indexOf('\n/* ---------- customer wallet ---------- */'));
-  assert.match(source,/<link rel="stylesheet" href="\/platform-console\.css\?v=[0-9a-zA-Z-]+">/);
-  assert.match(source,/<script src="\/platform-console\.js\?v=[0-9a-zA-Z-]+"[^>]*><\/script>/);
+  /* v184: the console is no longer an eager <script>/<link> in index.html — a customer opening a
+     booking page was downloading ~210KB of admin code. The urls live in a JSON manifest that
+     app.js fetches on demand for a #/platform route. Both facts are asserted: the manifest is
+     present and versioned, and nothing loads the console eagerly. */
+  assert.match(source,/<script type="application\/json" id="platformConsoleAssets">/);
+  assert.match(source,/"js":"\/platform-console\.js\?v=[0-9a-zA-Z-]+"/);
+  assert.match(source,/"css":"\/platform-console\.css\?v=[0-9a-zA-Z-]+"/);
+  assert.doesNotMatch(source,/<script src="\/platform-console\.js[^"]*"[^>]*><\/script>/);
+  assert.doesNotMatch(source,/<link rel="stylesheet" href="\/platform-console\.css[^"]*">/);
+  assert.match(source,/function loadPlatformConsoleAssetsV184\(\)/);
   assert.match(route,/Opening Peekaa admin/);
   assert.match(route,/role="status"/);
   assert.match(route,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
@@ -66,6 +74,21 @@ test('a missing platform module renders a recoverable error instead of falling t
       rememberCustomerRecoveryVerified(){},
       normalizeCustomerDestination:()=>'',normalizeCustomerBusinessIntent:value=>value,
       businessStaffInviteCodeV151:()=>'',
+      /* v185: app/app.js is split by surface at build time. The router resolves which chunk a
+         route needs and awaits it; in the sandbox every symbol is already present, so the loader
+         is a no-op and the surface decision is exercised for real. */
+      appSurfaceRetriedV185:false,
+      loadAppChunkV185:async()=>null,
+      appSurfaceForRouteV185:(hash,{signedIn=false}={})=>{
+        const route=String(hash||'').split('?')[0];
+        if(route.startsWith('#/platform'))return null;
+        if(['#/b/','#/customer','#/wallet','#/claim','#/join'].some(prefix=>route===prefix.replace(/\/$/,'')||route.startsWith(prefix)))return 'customer';
+        if(route==='#/'||route==='')return signedIn?'business':'customer';
+        return 'business';
+      },
+      // v184: the console is fetched on demand. "Missing module" is now a loader that resolves
+      // to null — a failed script load takes exactly this path.
+      loadPlatformConsoleAssetsV184:async()=>null,
       renderCustomerRegistration(){},renderAuth(){},
       esc:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'),
       $:id=>id==='routeReload'?{onclick:null}:null

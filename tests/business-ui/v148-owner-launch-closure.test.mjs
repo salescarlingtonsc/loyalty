@@ -96,7 +96,7 @@ test('published tier benefits cross from owner drafts into the verified customer
     read('db/migrations/20260803_nestly_v148_owner_launch_closure.sql')
   ]);
   assert.match(source,/customer_get_effective_tier_v143/);
-  assert.match(source,/presentation\.tier=effectiveTierResult\.error\?\{\}/);
+  assert.match(source,/presentation\.tier=effectiveTierResult\.error\s*\n?\s*\?\{unavailable:/);
   /* V174: the flat "Current tier benefits" section became the customerTierCardMarkupV174
      card (progress + exact remaining + next-tier teaser + current benefits). The invariant
      this test protects — published tier benefits reaching the verified wallet — now renders

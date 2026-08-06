@@ -65,7 +65,10 @@ test('merchant warning uses the same current visibility conditions instead of a 
   assert.match(sql,/create or replace function public\.business_get_visible_promotion_count_v167/);
   assert.match(sql,/if not app\.is_salon_owner\(p_business\)/);
   assert.match(sql,/content\.active[\s\S]*content\.starts_at<=statement_timestamp\(\)[\s\S]*content\.ends_at>statement_timestamp\(\)[\s\S]*asset\.customer_visible/);
-  assert.match(app,/0 published — your customers currently see an empty offers shelf\./);
+  // Reworded to plainer English; the warning still fires off the v167 visible count asserted
+  // on the next line, not a raw active count.
+  assert.match(app,/Customers currently see no offers\./);
+  assert.match(app,/customerVisibleCount===0\?/);
   assert.match(app,/business_get_visible_promotion_count_v167/);
 });
 

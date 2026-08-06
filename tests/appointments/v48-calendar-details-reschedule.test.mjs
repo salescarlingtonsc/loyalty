@@ -141,8 +141,13 @@ test('route changes dispose loaded and pending appointment dialogs without PII, 
   assert.match(app,/function renderShell\(page\)\{[\s\S]{0,160}disposeCurrentRoute\(\)/);
   assert.match(calendar,/async function appointmentsPage\(\)\{\s*disposeCurrentRoute\(\);\s*const routeMain=M\(\)/,
     'realtime direct page refresh must dispose the previous appointment route before registering a new owner');
-  assert.match(calendar,/routeDispose=\(\)=>\{closeAppointmentDetails\(\);closeBlockedTimeDialog\(\{restoreFocus:false\}\)\}/);
-  assert.match(customerUi,/return \(\{restoreFocus=true\}=\{\}\)=>\{[\s\S]*if\(restoreFocus&&returnFocus\?\.isConnected\)returnFocus\.focus\(\)/);
+  // The dispose also clears the calendar minute timer now. Require both dialog closes (and the
+  // timer cleanup) without pinning the exact composition, so adding another teardown step is
+  // not a test failure.
+  assert.match(calendar,/routeDispose=\(\)=>\{[^}]*clearInterval\(calendarMinuteTimer\);closeAppointmentDetails\(\);closeBlockedTimeDialog\(\{restoreFocus:false\}\)\}/);
+  // The closer gained a handOffHistory option for back-button handling; the focus-restore
+  // contract under test is unchanged.
+  assert.match(customerUi,/return \(\{restoreFocus=true[^}]*\}=\{\}\)=>\{[\s\S]*if\(restoreFocus&&returnFocus\?\.isConnected\)returnFocus\.focus\(\)/);
   assert.match(calendar,/if\(!stillCurrent\(\)\|\|!loading\.isConnected\)\{removeLoading\(\{restoreFocus:false\}\);return\}[\s\S]*removeLoading\(\);renderAppointmentDetails\(data,\{startEditing\}\)/,
     'only stale/route disposal may suppress focus restoration; a successful detail transition must preserve the calendar trigger');
 });

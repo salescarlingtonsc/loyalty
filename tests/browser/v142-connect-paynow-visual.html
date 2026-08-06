@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="8759241238054e9931c4c46e27eeeb2cd11055ee63dcbf8f944eab7cf2739020"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="b9dbe9c815c8d7b94adfb15de7db83c9f2644fa9091663d3f1fea12a2c9c4edf"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -151,6 +151,13 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .bday-mode-row input{margin-top:2px;flex:none}
 .sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
 .sales-mix-row input{margin-top:3px;flex:none}
+/* V185: blocked time in the WEEK grid. Narrower columns than the day view, so it sits behind
+   events (lower z-index), drops the 44px min-height that would swamp a short block, and never
+   carries a Remove control — removal stays in the Day view where the row is big enough to be
+   sure what you are deleting. */
+.week-blocked-window{left:2px;right:2px;z-index:1;min-height:0;padding:2px 5px;font-size:11px;line-height:1.25}
+.week-blocked-window span{display:flex;flex-direction:column;gap:0;overflow:hidden}
+.week-blocked-window b{font-variant-numeric:tabular-nums}
 /* V180: today's bookings at a glance. Chips wrap rather than scroll horizontally — a hidden
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
@@ -1099,6 +1106,25 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .pf-choice{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}
 .pf-inlineerr{color:var(--red);font-size:13px;font-weight:600;margin-top:12px}
 .pf-inlineerr:empty{display:none}
+.v183-hours{display:grid;gap:8px}
+.v183-hours-row{display:grid;grid-template-columns:minmax(84px,1fr) auto minmax(96px,1fr) minmax(96px,1fr);align-items:center;gap:8px}
+.v183-hours-open{display:flex;align-items:center;gap:6px;margin:0;font-size:12.5px;white-space:nowrap}
+.v183-team{display:grid;gap:8px}
+.v183-team-row{display:flex;align-items:center;gap:8px;margin:0;padding:8px 10px;border:1px solid var(--hair);border-radius:12px;color:var(--ink);font-weight:500;font-size:14px}
+.v183-team-member{border:1px solid var(--hair);border-radius:12px;padding:10px}
+.v183-team-member .v183-team-row{border:0;padding:0}
+.v183-team-rota{display:flex;align-items:flex-start;gap:8px;margin:9px 0 0;color:var(--ink);font-weight:500;font-size:13px}
+.v183-staff-hours{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair)}
+.v183-staff-hours[hidden]{display:none}
+.v183-rota-pill{margin-left:auto;flex:0 0 auto}
+@media(max-width:560px){.v183-hours-row{grid-template-columns:1fr 1fr;gap:6px}}
+.pf-day-track{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.pf-day{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:0 0 auto;min-height:56px;padding:9px 13px;border:1px solid var(--control-border);border-radius:14px;background:var(--card);color:var(--ink);scroll-snap-align:start}
+.pf-day.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+.pf-day.sel .muted{color:inherit}
+.pf-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
+.pf-slot{min-height:44px;padding:10px 8px;border:1px solid var(--control-border);border-radius:12px;background:var(--card);color:var(--ink);font-weight:650}
+.pf-slot.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
@@ -1202,6 +1228,16 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-balance-panel.customer-balance-panel-single{grid-template-columns:minmax(0,560px)}
 .customer-balance-value{font-size:clamp(1.85rem,5vw,2.6rem);font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
 .customer-tier-track{height:10px;margin-top:13px;border-radius:999px;background:var(--hair);overflow:hidden}.customer-tier-track span{display:block;height:100%;width:var(--tier-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral));transition:width .25s var(--ease)}
+/* v186 tier ladder. Every tier stays fully legible; the ones that are not yours are drained of
+   colour and dimmed, which reads instantly as "not mine" without hiding a single benefit. The
+   state pill carries the same meaning in words, so greyscale is never the only signal. */
+.customer-tier-ladder{border-top:1px solid var(--hair);padding-top:14px}
+.customer-tier-rungs{display:grid;gap:10px;margin-top:10px;padding:0;list-style:none;counter-reset:tier}
+.customer-tier-rung{padding:12px 14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--card);filter:grayscale(1);opacity:.62;transition:opacity var(--motion-ui) var(--ease),filter var(--motion-ui) var(--ease)}
+.customer-tier-rung.is-achieved{opacity:.78}
+.customer-tier-rung.is-current{filter:none;opacity:1;border-color:var(--merchant-accent,var(--coral));background:var(--tint);box-shadow:var(--shadow)}
+.customer-tier-rung .rec-why{margin-top:6px}
+@media(prefers-reduced-motion:reduce){.customer-tier-rung{transition:none}}
 .wallet-history-disclosure{margin-top:14px;padding:0;overflow:hidden}.wallet-history-disclosure>summary{display:flex;align-items:center;gap:10px;min-height:56px;padding:16px 18px;cursor:pointer;font-weight:750;list-style-position:inside}.wallet-history-disclosure>summary .muted{font-weight:500}.wallet-history-disclosure[open]>summary{border-bottom:1px solid var(--hair)}.wallet-history-disclosure-body{display:grid;gap:14px;padding:14px}.wallet-history-disclosure .wallet-section{margin:0;box-shadow:none}
 .customer-perks-grid,.customer-offers-grid,.customer-rewards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin-top:12px}
 .customer-perk-card,.customer-offer-card,.customer-reward-card{overflow:hidden;min-height:120px;padding:16px;border:1px solid var(--hair);border-radius:15px;background:#fff}
@@ -1250,6 +1286,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-booking-tab[aria-selected="true"]{background:var(--tint);color:var(--coral)}
 .customer-booking-tab-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--bg);color:inherit;font-size:11px;font-weight:800}
 #customerBookingPanel:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+.customer-booking-invite{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.customer-home-offers-title{display:flex;align-items:center;gap:9px}
+.customer-home-offers-badge{display:inline-grid;place-items:center;width:32px;height:32px;flex:0 0 auto;border-radius:11px;background:var(--tint);color:var(--coral)}
+.customer-home-offer-business{display:flex;align-items:center;gap:7px;margin-top:6px;min-width:0}
+.customer-home-offer-logo{flex:0 0 auto;width:24px;height:24px;border-radius:8px;object-fit:cover;background:var(--bg)}
+.customer-home-offer-logo--fallback{display:inline-grid;place-items:center;font-size:11px;font-weight:800;color:var(--coral);background:var(--tint)}
+.customer-home-offer-countdown{margin-top:6px;font-size:13px;font-weight:750;color:var(--coral)}
+.customer-programme-holdings{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.customer-programme-holding{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--bg);color:var(--ink2);font-size:12px;font-weight:600}
+.customer-programme-holding b{color:var(--ink);font-weight:800}
+.wallet-reward-trade{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.wallet-reward-cost{color:var(--coral)}
+.wallet-reward-arrow{color:var(--ink2);font-weight:700}
 .customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.55fr);gap:14px;align-items:start}
 .entry-choice-card{width:min(720px,100%);padding:30px}
 .entry-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
@@ -1440,7 +1489,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 8759241238054e9931c4c46e27eeeb2cd11055ee63dcbf8f944eab7cf2739020</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · b9dbe9c815c8d7b94adfb15de7db83c9f2644fa9091663d3f1fea12a2c9c4edf</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -1669,7 +1718,16 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   }
 
   let dialogHistoryId=0;
-  function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]'}={}){
+  /* v183: when one sheet opens another (offer → company details), the outgoing sheet must NOT
+     unwind its history entry. history.back() is asynchronous, so the pop landed AFTER the
+     incoming sheet had pushed its own entry and closed it again on arrival — the company sheet
+     appeared to be unclickable. Closing with {handOffHistory:true} leaves the entry in place and
+     the incoming sheet adopts it via inheritHistoryId, so one Back still closes exactly one. */
+  function currentDialogHistoryId(){
+    const id=Number(history.state?.cuiDialog||0);
+    return Number.isInteger(id)&&id>0?id:0;
+  }
+  function activateDialog(dialog,{onClose,initialFocus='button,input,select,textarea,[href]',inheritHistoryId=0}={}){
     const returnFocus=document.activeElement;
     const focusable=()=>[...dialog.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
       .filter(element=>!element.hidden&&element.getClientRects().length);
@@ -1686,20 +1744,25 @@ html[data-customer-surface="true"] body{background:var(--bg)}
        Without a history entry it exits the whole route instead. pushState keeps the SAME url, so
        hashchange — the only navigation signal the app router listens to — never fires. Back then
        pops our entry and closes the dialog through the identical path as Escape. */
-    const historyId=++dialogHistoryId;
+    const inherited=Number(inheritHistoryId)>0&&currentDialogHistoryId()===Number(inheritHistoryId);
+    const historyId=inherited?Number(inheritHistoryId):++dialogHistoryId;
     let closedByUs=false;
     const popstate=()=>{
       window.removeEventListener('popstate',popstate);
       if(closedByUs||!dialog.isConnected)return;
       onClose?.();
     };
-    try{history.pushState({...(history.state||{}),cuiDialog:historyId},'');window.addEventListener('popstate',popstate)}catch{}
+    try{
+      if(!inherited)history.pushState({...(history.state||{}),cuiDialog:historyId},'');
+      window.addEventListener('popstate',popstate);
+    }catch{}
     requestAnimationFrame(()=>{const target=dialog.querySelector(initialFocus)||focusable()[0]||dialog;target.focus()});
-    return ({restoreFocus=true}={})=>{
+    return ({restoreFocus=true,handOffHistory=false}={})=>{
       dialog.removeEventListener('keydown',keydown);
       window.removeEventListener('popstate',popstate);
       /* Only unwind our own entry, and only once — a Back-press already consumed it. */
-      if(!closedByUs&&history.state?.cuiDialog===historyId){closedByUs=true;try{history.back()}catch{}}
+      if(handOffHistory)closedByUs=true;
+      else if(!closedByUs&&history.state?.cuiDialog===historyId){closedByUs=true;try{history.back()}catch{}}
       dialog.remove();
       if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus();
     };
@@ -1725,7 +1788,8 @@ html[data-customer-surface="true"] body{background:var(--bg)}
   global.FrenlyCustomerUI=Object.freeze({
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
     skeletonLine,skeletonCard,skeletonGrid,tableSkeleton,chartSkeleton,formSkeleton,setButtonBusy,
-    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog
+    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog,
+    currentDialogHistoryId
   });
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -1917,14 +1981,30 @@ async function tillPage(){
     {data:tillStaffBranches,error:tillStaffBranchError},
     {data:merchantPaymentStatus,error:merchantPaymentStatusError}
   ]=await Promise.all([
-    sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).eq('active',true).limit(1),
+    sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
     sb.from('branches').select('id,name,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
     sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id),
     sb.rpc('get_merchant_payment_status_v142',{p_business:S.biz.id})
   ]);
   if(!isTillCurrent())return;
   if(tillStaffError||tillBranchError||tillStaffBranchError)throw tillStaffError||tillBranchError||tillStaffBranchError;
-  const tillStaffId=tillStaff?.[0]?.id||null;
+  /* V187 (owner: "under record sale - i must be able to select who is the sales staff to allocate
+     commissions"). Every sale was attributed to whoever was signed in, so at a salon the
+     receptionist ringing up a therapist's treatment took the commission. Attribution drives the
+     frozen per-sale commission snapshot, so this is money, not a label.
+     The acting user stays the DEFAULT — correct for a one-person shop and for F&B — and the
+     picker only appears when more than one teammate could have done the work, so it configures
+     itself by sector instead of needing a setting. */
+  const tillRoster=(tillStaff||[]);
+  const tillActingStaffId=tillRoster.find(person=>person.user_id===S.user.id)?.id||null;
+  const tillStaffId=tillActingStaffId;
+  let tillSaleStaffId=tillActingStaffId;
+  /* Only teammates who actually work this branch can be credited; an owner or manager may
+     attribute across branches because they legitimately cover more than one. */
+  const tillAttributableStaffFor=branchId=>tillRoster.filter(person=>
+    canSeeAllTillBranches
+    ||person.id===tillActingStaffId
+    ||(tillStaffBranches||[]).some(row=>row.staff_id===person.id&&row.branch_id===branchId));
   const canSeeAllTillBranches=S.myRole==='owner'||S.myRole==='manager';
   const tillAssignedBranchIds=new Set((tillStaffBranches||[]).filter(row=>row.staff_id===tillStaffId).map(row=>row.branch_id));
   const assignedTillBranches=(tillBranches||[]).filter(branch=>canSeeAllTillBranches||tillAssignedBranchIds.has(branch.id));
@@ -2197,6 +2277,8 @@ async function tillPage(){
     };
   }
   function drawCustomerCard(){
+    const tillAttributableStaff=tillAttributableStaffFor(tillBranchId);
+    if(!tillAttributableStaff.some(person=>person.id===tillSaleStaffId))tillSaleStaffId=tillActingStaffId;
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} records the purchase and applies points only when an active published loyalty programme makes it eligible.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card">
         <div style="text-align:center">
@@ -2208,6 +2290,9 @@ async function tillPage(){
         ${canRecordSales?`${accessibleTillBranches.length>1
           ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
           :`<p class="muted small" style="margin-bottom:12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`}
+        ${tillAttributableStaff.length>1?`<label for="tillSaleStaff">Who made this sale?</label>
+        <select id="tillSaleStaff" style="margin-bottom:12px">${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
+        <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`:''}
         <label for="tAmt">Amount paid (${S.biz.currency||'SGD'})</label>
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
         <fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
@@ -2226,6 +2311,11 @@ async function tillPage(){
       document.querySelectorAll('[data-tender]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
       CUI.announce(workspaceTemplateTextV97('itemSelected',{item:button.textContent.trim()}));
     });
+    /* Re-attributing is a different sale: drop the idempotency key so the next confirm is a
+       fresh attempt rather than a replay of the previous teammate's sale. */
+    if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
+      tillSaleStaffId=event.target.value||tillActingStaffId;saleIdem=null;
+    };
     if($('tAmt')){$('tAmt').focus();$('tAmt').oninput=()=>{saleIdem=null}};
     if($('tAmt'))$('tAmt').onkeydown=e=>{if(e.key==='Enter')$('tConfirm')?.click()};
     if($('tConfirm'))$('tConfirm').onclick=async()=>{
@@ -2238,7 +2328,7 @@ async function tillPage(){
       if(!saleIdem) saleIdem=crypto.randomUUID(); // fresh key for this sale; reused on retry
       busy=true;$('tConfirm').disabled=true;$('tConfirm').textContent='Recording…';
       const {data,error}=await sb.rpc('record_sale_by_phone',{p_business:S.biz.id,p_phone:cust.phone||phone,
-        p_amount_cents:amt,p_kind:'quick_sale',p_note:null,p_staff:tillStaffId,p_idem:saleIdem,
+        p_amount_cents:amt,p_kind:'quick_sale',p_note:null,p_staff:tillSaleStaffId||tillStaffId,p_idem:saleIdem,
         p_branch:tillBranchId,p_method:tender});
       if(!isTillCurrent())return;
       busy=false;
@@ -2268,7 +2358,7 @@ async function tillPage(){
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
-    const [checkout,pkg,mem,preferences,entitlements,serviceMeta]=await Promise.all([
+    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
          reconstructs or broadens that availability rule. */
@@ -2284,7 +2374,12 @@ async function tillPage(){
         p_business:S.biz.id,p_client:cust.client_id
       }),
       sb.from('services').select('id,name,variant_label,duration_min')
-        .eq('business_id',S.biz.id)
+        .eq('business_id',S.biz.id),
+      /* v187: bundles were authorable but unsellable. Read the bundle and its member services
+         here; which of those services may actually be sold at THIS branch is still decided by
+         the checkout catalogue above, never by this list. */
+      sb.from('bundles').select('id,name,price_cents,active,bundle_items(service_id)')
+        .eq('business_id',S.biz.id).eq('active',true).order('name')
     ]);
     if(!isTillCurrent())return;
     catalogLoading=false;
@@ -2317,7 +2412,24 @@ async function tillPage(){
       memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
       customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
       customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
-      packageEarnsPoints:preferenceState.packageEarnsPoints
+      packageEarnsPoints:preferenceState.packageEarnsPoints,
+      /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
+         missing a service is not the deal the customer was quoted, so it is withheld rather than
+         quietly sold short. Prices come from the branch's own catalogue. */
+      bundles:bundleRows.error?null:(bundleRows.data||[]).map(bundle=>{
+        const catalogueById=new Map(activeItems.filter(item=>item.item_type==='service')
+          .map(item=>[item.item_id,item]));
+        const wanted=(bundle.bundle_items||[]).map(row=>row.service_id).filter(Boolean);
+        const items=wanted.map(serviceId=>{
+          const listed=catalogueById.get(serviceId);
+          if(!listed)return null;
+          return {id:serviceId,
+            name:serviceDisplayName(serviceById[serviceId]||listed),
+            unit_cents:listed.unit_cents||0};
+        });
+        return {id:bundle.id,name:bundle.name,unit_cents:bundle.price_cents||0,
+          items:items.filter(Boolean),complete:wanted.length>0&&items.every(Boolean)};
+      }).filter(bundle=>bundle.complete)
     };
     draw();
   }
@@ -2327,6 +2439,44 @@ async function tillPage(){
     if(ex){ex.qty++;}
     else cart.push({lineId:crypto.randomUUID(),type,ref:item.id,label:item.name,unit_cents:item.unit_cents,qty:1});
     CUI.announce(workspaceTemplateTextV97('itemAdded',{item:item.name}));onSaleLinesChanged();
+  }
+  /* v187 (owner: "i dont see in record sale to sell" a bundle). A bundle is several services at
+     one price, and it was authorable in Services → Bundles but unsellable at the till.
+     sale_items has no bundle type, and inventing one would put a line in the ledger that no
+     report, commission rule or staff-performance figure knows how to read. So a bundle is sold
+     as what it IS: its member services, each recorded as a normal service line, priced pro-rata
+     from their own list prices so the lines sum to EXACTLY the bundle price. Staff performance,
+     service reporting and commissions keep working; revenue is the bundle price, not the sum of
+     the parts. The remainder cent goes on the last line, so no rounding is invented or lost. */
+  function bundleLinePricesV187(items,bundleCents){
+    const rows=(Array.isArray(items)?items:[]).filter(item=>item&&item.id);
+    if(!rows.length)return [];
+    const total=Math.max(0,Math.round(Number(bundleCents)||0));
+    const listTotal=rows.reduce((sum,item)=>sum+Math.max(0,Number(item.unit_cents)||0),0);
+    let allocated=0;
+    return rows.map((item,index)=>{
+      const last=index===rows.length-1;
+      const share=last
+        ?total-allocated
+        :listTotal>0
+          ?Math.floor(total*Math.max(0,Number(item.unit_cents)||0)/listTotal)
+          :Math.floor(total/rows.length);
+      allocated+=share;
+      return {...item,unit_cents:Math.max(0,share)};
+    });
+  }
+  function addBundleLines(bundle){
+    if(cartLocked())return;
+    const priced=bundleLinePricesV187(bundle?.items,bundle?.unit_cents);
+    if(!priced.length)return toast('That bundle has no services in it yet.');
+    for(const item of priced){
+      /* Always a NEW line, never a quantity bump on an existing service: a bundled service is
+         priced differently from the same service sold on its own, and merging them would hide
+         which price the customer actually paid. */
+      cart.push({lineId:crypto.randomUUID(),type:'service',ref:item.id,
+        label:`${item.name} · ${bundle.name}`,unit_cents:item.unit_cents,qty:1});
+    }
+    CUI.announce(workspaceTemplateTextV97('itemAdded',{item:bundle.name}));onSaleLinesChanged();
   }
   // Custom "Other item": a mandatory staff reason (3..200 chars) rides with the line and is sent
   // to evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates it.
@@ -2558,18 +2708,24 @@ async function tillPage(){
 	          ?`<div class="till-cart-catalog">${catalog.services.map(s=>{
 	            const qty=selectedCatalogQty('service',s.id);
 	            const image=catalogueImageUrlV158(s);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
 	          :'';
 	        const prodBtns=(catalog.products&&catalog.products.length)
 	          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>{
 	            const qty=selectedCatalogQty('product',p.id);
 	            const image=catalogueImageUrlV158(p);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
 	          }).join('')}</div>`
           :'';
         const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
           ?`<details class="till-sale-package-options"><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>`<button type="button" class="choice-button" data-plan="package" data-id="${p.id}"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div></details>`
+          :'';
+        /* v187: bundles sit right under the services they are made of — that is where a
+           counter hand looks for "the package deal" — and each says what is inside it. */
+        const bundleBtns=(catalog.bundles&&catalog.bundles.length)
+          ?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${catalog.bundles.map(bundle=>`<button type="button" class="choice-button" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span></button>`).join('')}</div>
+            <p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`
           :'';
         const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
           ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
@@ -2580,7 +2736,7 @@ async function tillPage(){
             ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
             ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
           :'';
-        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${prodBtns}`}${pkgBtns}${memBtns}
+        picker=`${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`<b class="small" style="display:block">Services</b>${svcBtns}${bundleBtns}${prodBtns}`}${pkgBtns}${memBtns}
           ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
             <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
           ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
@@ -2669,6 +2825,10 @@ async function tillPage(){
     document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.add, list=type==='service'?catalog.services:catalog.products;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addCatalogLine(type,item);
+    });
+    document.querySelectorAll('[data-add-bundle]').forEach(b=>b.onclick=()=>{
+      const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
+      if(bundle)addBundleLines(bundle);
     });
     document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
@@ -2835,9 +2995,11 @@ async function tillPage(){
   async function beginPaynowPaymentV142(){
     if(extraLines().length)return cartErr('PayNow QR supports the checked sale total only. Complete package or membership purchases separately.');
     let request=readPaynowRequestV142();
-    const fingerprint=[S.biz.id,tillBranchId,cust.client_id,tillStaffId,evalResult.evaluation_id].join(':');
+    /* The attributed teammate is part of the idempotency fingerprint: changing who is credited is
+       a different sale, and must not silently replay the previous attribution. */
+    const fingerprint=[S.biz.id,tillBranchId,cust.client_id,tillSaleStaffId||tillStaffId,evalResult.evaluation_id].join(':');
     if(!request||request.fingerprint!==fingerprint)request={fingerprint,idempotency_key:crypto.randomUUID(),
-      business_id:S.biz.id,branch_id:tillBranchId,client_id:cust.client_id,staff_id:tillStaffId,evaluation_id:evalResult.evaluation_id};
+      business_id:S.biz.id,branch_id:tillBranchId,client_id:cust.client_id,staff_id:tillSaleStaffId||tillStaffId,evaluation_id:evalResult.evaluation_id};
     writePaynowRequestV142(request);
     busy=true;const btn=$('tCartConfirm')||$('tPayRetry');if(btn){btn.disabled=true;btn.textContent='Creating QR…'}
     const executed=await sb.functions.invoke('stripe-connect-command',{body:{action:'create_paynow',...request}});
@@ -2900,7 +3062,7 @@ async function tillPage(){
       const finaliseKey=writeAttemptKey(FINALISE_SLOT,evalFingerprint()); // stable across retries; new only on a cart/branch change
       // p_client is null for a walk-in — record_cart_sale permits it and returns points_earned 0.
       const {data,error}=await sb.rpc('record_cart_sale',{p_business:S.biz.id,p_client:cust?cust.client_id:null,
-        p_branch:tillBranchId,p_staff:tillStaffId,p_method:tender,p_idempotency_key:finaliseKey,
+        p_branch:tillBranchId,p_staff:tillSaleStaffId||tillStaffId,p_method:tender,p_idempotency_key:finaliseKey,
         p_lines:null,p_evaluation_id:evalResult.evaluation_id,p_paid:true});
       if(!isTillCurrent())return;
       if(error){busy=false;payError=null;return handleFinaliseError(error);}
@@ -3038,7 +3200,10 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
-        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
+        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
+        ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">Reg. no. ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
@@ -3050,7 +3215,8 @@ async function tillPage(){
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
-        <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received${d.pointsTotal!=null?` · now ${d.pointsTotal} points total`:''}</p>
+        <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
+        ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
@@ -3079,7 +3245,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'8759241238054e9931c4c46e27eeeb2cd11055ee63dcbf8f944eab7cf2739020',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'b9dbe9c815c8d7b94adfb15de7db83c9f2644fa9091663d3f1fea12a2c9c4edf',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

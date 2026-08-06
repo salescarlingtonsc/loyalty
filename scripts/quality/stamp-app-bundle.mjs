@@ -1,61 +1,93 @@
 #!/usr/bin/env node
 /**
- * Stamp app/index.html's <script src="/app.js"> with a fingerprint of the bundle's own bytes.
+ * Build the surface bundles from app/app.js and stamp app/index.html with their fingerprints.
  *
- * Why this exists: peekaa.asia is fronted by Cloudflare, whose Browser Cache TTL rewrites the
- * browser-facing max-age on any cacheable asset regardless of what the origin sends — a deployed
- * `no-cache, must-revalidate` still arrived as `max-age=14400`. A returning visitor therefore ran
- * yesterday's application code against today's index.html for up to four hours. Cloudflare keys
- * its cache on the FULL url, so changing the query whenever the bytes change is the one lever we
- * hold without touching the Cloudflare dashboard.
+ *   npm run bundle-stamp          # after ANY edit to app/app.js
+ *   npm run bundle-stamp:check    # enforced by the test suite and npm run validate
  *
- *   node scripts/quality/stamp-app-bundle.mjs --write   # after any app/app.js edit
- *   node scripts/quality/stamp-app-bundle.mjs --check    # enforced by the test suite
+ * Two things happen here, and both must stay in step with app/app.js:
+ *
+ * 1. app/app.js is partitioned by surface (see split-app-bundle.mjs). index.html loads only the
+ *    shared core; the customer and workspace chunks arrive on demand, and the translation tables
+ *    only for a non-English locale.
+ * 2. Every url carries a fingerprint of that chunk's own bytes. peekaa.asia is fronted by
+ *    Cloudflare, whose Browser Cache TTL rewrites the browser-facing max-age no matter what the
+ *    origin sends, so a stable url would let a visitor run the previous deploy's code against the
+ *    new index.html. A changed chunk is a new url; an unchanged one stays cached.
  */
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { OUTPUTS, renderChunks } from './split-app-bundle.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const BUNDLE = 'app/app.js';
 const DOCUMENT = 'app/index.html';
-const TAG = /<script src="\/app\.js(?:\?b=[0-9a-f]{12})?" defer><\/script>/;
+const CORE_TAG = /<script src="\/app-core\.js(?:\?b=[0-9a-f]{12})?" defer><\/script>/;
+const MANIFEST_BLOCK = /<script type="application\/json" id="appSurfaceChunks">\n[\s\S]*?\n<\/script>/;
 
-export function bundleFingerprint(bytes) {
-  return createHash('sha256').update(bytes).digest('hex').slice(0, 12);
+export function fingerprint(text) {
+  return createHash('sha256').update(text).digest('hex').slice(0, 12);
 }
 
-export function stampedTag(fingerprint) {
-  return `<script src="/app.js?b=${fingerprint}" defer></script>`;
+export function chunkUrls(chunks) {
+  const urls = {};
+  for (const [surface, target] of Object.entries(OUTPUTS)) {
+    urls[surface] = `/${path.basename(target)}?b=${fingerprint(chunks[surface])}`;
+  }
+  return urls;
 }
 
-export async function stamp(root = repoRoot) {
-  const bundle = await readFile(path.join(root, BUNDLE));
+export function stampDocument(document, chunks) {
+  const urls = chunkUrls(chunks);
+  if (!CORE_TAG.test(document)) throw new Error(`${DOCUMENT} does not contain the /app-core.js script tag`);
+  if (!MANIFEST_BLOCK.test(document)) throw new Error(`${DOCUMENT} does not contain the #appSurfaceChunks manifest`);
+  const manifest = JSON.stringify({
+    customer: urls.customer,
+    business: urls.business,
+    i18n: urls.i18n
+  });
+  return document
+    .replace(CORE_TAG, `<script src="${urls.core}" defer></script>`)
+    .replace(MANIFEST_BLOCK, `<script type="application/json" id="appSurfaceChunks">\n${manifest}\n</script>`);
+}
+
+export async function build(root = repoRoot) {
+  const source = await readFile(path.join(root, 'app/app.js'), 'utf8');
+  const chunks = renderChunks(source);
   const document = await readFile(path.join(root, DOCUMENT), 'utf8');
-  const match = document.match(TAG);
-  if (!match) throw new Error(`${DOCUMENT} does not contain the expected /app.js script tag`);
-  const expected = stampedTag(bundleFingerprint(bundle));
-  return { document, current: match[0], expected, next: document.replace(TAG, expected) };
+  return { chunks, document, stamped: stampDocument(document, chunks) };
 }
 
 async function main() {
   const check = process.argv.includes('--check');
   const write = process.argv.includes('--write');
   if (check === write) throw new Error('Usage: node scripts/quality/stamp-app-bundle.mjs --write|--check');
-  const { current, expected, next } = await stamp();
-  if (current === expected) {
-    if (check) console.log(`app.js bundle stamp is current (${expected}).`);
-    return;
+  const { chunks, document, stamped } = await build();
+  const stale = [];
+  for (const [surface, target] of Object.entries(OUTPUTS)) {
+    const current = await readFile(path.join(repoRoot, target), 'utf8').catch(() => null);
+    if (current === chunks[surface]) continue;
+    stale.push(target);
+    if (write) await writeFile(path.join(repoRoot, target), chunks[surface]);
   }
+  if (document !== stamped) {
+    stale.push(DOCUMENT);
+    if (write) await writeFile(path.join(repoRoot, DOCUMENT), stamped);
+  }
+  const sizes = Object.entries(chunks)
+    .map(([surface, text]) => `${surface} ${(text.length / 1024).toFixed(0)}KB`).join(' · ');
   if (check) {
-    console.error(`app/index.html points at "${current}" but app/app.js hashes to "${expected}".`);
-    console.error('Run: node scripts/quality/stamp-app-bundle.mjs --write');
-    process.exitCode = 1;
+    if (stale.length) {
+      console.error(`Stale: ${stale.join(', ')}`);
+      console.error('Run: npm run bundle-stamp');
+      process.exitCode = 1;
+      return;
+    }
+    console.log(`Surface bundles and stamps are current (${sizes}).`);
     return;
   }
-  await writeFile(path.join(repoRoot, DOCUMENT), next);
-  console.log(`Stamped ${DOCUMENT} -> ${expected}`);
+  console.log(stale.length ? `Rebuilt: ${stale.join(', ')} (${sizes})` : `Already current (${sizes})`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

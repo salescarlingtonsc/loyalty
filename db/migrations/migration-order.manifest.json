@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 213,
-  "executableCount": 199,
+  "itemCount": 217,
+  "executableCount": 203,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -318,6 +318,17 @@
         "db/migrations/20260806_nestly_v183_customer_staff_choice_and_live_availability.sql",
         "db/migrations/20260806_nestly_v183_promotion_delete.sql",
         "db/migrations/20260806_nestly_v184_product_service_sectors.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260807",
+      "count": 5,
+      "paths": [
+        "db/migrations/20260807_nestly_v185_prospect_archive_merge_erase.sql",
+        "db/migrations/20260807_nestly_v186_customer_tier_ladder.sql",
+        "db/migrations/20260807_nestly_v188_no_self_service_account_deletion.sql",
+        "db/migrations/20260807_nestly_v188_v189_data_repairs.sql",
+        "db/migrations/20260807_nestly_v193_manage_unsold_package_plan.sql"
       ]
     }
   ],
@@ -2020,6 +2031,38 @@
     },
     {
       "order": 213,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v186_customer_tier_ladder.sql",
+      "semanticVersion": "v186",
+      "proposedDeployVersion": "20260806125900",
+      "sha256": "90aa5481fe760d79433b0a4bd032bd2b26123d96dd6f2d1a9c9a57726b76151f"
+    },
+    {
+      "order": 214,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v188_no_self_service_account_deletion.sql",
+      "semanticVersion": "v188",
+      "proposedDeployVersion": "20260806125930",
+      "sha256": "b2103f5f40038d9223b59310fd0a54a46c6c2db7399e3387eff8511851ddc3ac"
+    },
+    {
+      "order": 215,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v188_v189_data_repairs.sql",
+      "semanticVersion": "v188",
+      "proposedDeployVersion": "20260806125940",
+      "sha256": "ad8cf198976ddd166ea81e04c415485044befb70a2529f6037440010f886f50d"
+    },
+    {
+      "order": 216,
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v193_manage_unsold_package_plan.sql",
+      "semanticVersion": "v193",
+      "proposedDeployVersion": "20260806125950",
+      "sha256": "babb1a6bce26c5be4f0a29f6c1190eb4a2e6e8f98d727545c0b0fd7997d550d4"
+    },
+    {
+      "order": 217,
       "kind": "executable",
       "path": "db/migrations/20260807_nestly_v185_prospect_archive_merge_erase.sql",
       "semanticVersion": "v185",

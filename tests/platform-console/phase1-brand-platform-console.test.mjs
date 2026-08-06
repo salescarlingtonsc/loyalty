@@ -99,17 +99,29 @@ test('platform console is routed before workspace onboarding and uses versioned 
     read('app/platform-console.js'),
     read('app/platform-console.css')
   ]);
-  const platformBinding = index.indexOf('const platformConsole=globalThis.NestlyPlatformConsole');
+  // v184: the module is fetched on demand rather than bound from a global at boot, but the
+  // ordering guarantee is unchanged — the console is resolved BEFORE the platform route runs,
+  // and both still precede the workspace onboarding fallback.
+  const platformBinding = index.indexOf('const platformConsolePromise=requestedPlatformRoute?loadPlatformConsoleAssetsV184()');
   const platformRoute = index.indexOf('if(requestedPlatformRoute)');
   const onboardingFallback = index.indexOf('if(!S.biz) return renderOnboard()');
 
   assert.ok(platformBinding > 0&&platformBinding < platformRoute);
+  assert.match(index,/const platformConsole=await platformConsolePromise;/);
   assert.ok(platformRoute > 0);
   assert.ok(onboardingFallback > platformRoute);
   assert.match(index,/const platformRoutePath=String\(h\)\.split\('\?'\)\[0\]\.replace\(\/\\\/\+\$\/,''\)/);
   assert.match(index,/if\(requestedPlatformRoute\)\{[\s\S]*return await platformConsole\.render\(/);
-  assert.match(index,/<link rel="stylesheet" href="\/platform-console\.css\?v=[0-9a-zA-Z-]+">/);
-  assert.match(index,/<script src="\/platform-console\.js\?v=[0-9a-zA-Z-]+"[^>]*><\/script>/);
+  /* v184: the console is no longer an eager <script>/<link> in index.html — a customer opening a
+     booking page was downloading ~210KB of admin code. The urls live in a JSON manifest that
+     app.js fetches on demand for a #/platform route. Both facts are asserted: the manifest is
+     present and versioned, and nothing loads the console eagerly. */
+  assert.match(index,/<script type="application\/json" id="platformConsoleAssets">/);
+  assert.match(index,/"js":"\/platform-console\.js\?v=[0-9a-zA-Z-]+"/);
+  assert.match(index,/"css":"\/platform-console\.css\?v=[0-9a-zA-Z-]+"/);
+  assert.doesNotMatch(index,/<script src="\/platform-console\.js[^"]*"[^>]*><\/script>/);
+  assert.doesNotMatch(index,/<link rel="stylesheet" href="\/platform-console\.css[^"]*">/);
+  assert.match(index,/function loadPlatformConsoleAssetsV184\(\)/);
   assert.match(consoleSource,/sb\.rpc\('super_admin_list_businesses'\)/);
   assert.match(consoleSource,/platform_list_firm_onboarding_v88/);
   assert.match(consoleSource,/platform_list_prospects_v76/);

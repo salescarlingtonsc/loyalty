@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 170,
-  "itemCount": 215,
+  "pendingCount": 174,
+  "itemCount": 219,
   "items": [
     {
       "order": 1,
@@ -2151,6 +2151,46 @@
     },
     {
       "order": 215,
+      "kind": "pending",
+      "version": "20260806163515",
+      "name": "nestly_v186_customer_tier_ladder",
+      "path": "supabase/migrations/20260806163515_nestly_v186_customer_tier_ladder.sql",
+      "octetLength": 5992,
+      "sha256": "90aa5481fe760d79433b0a4bd032bd2b26123d96dd6f2d1a9c9a57726b76151f",
+      "provenance": "local-source"
+    },
+    {
+      "order": 216,
+      "kind": "pending",
+      "version": "20260806170357",
+      "name": "nestly_v188_no_self_service_account_deletion",
+      "path": "supabase/migrations/20260806170357_nestly_v188_no_self_service_account_deletion.sql",
+      "octetLength": 1542,
+      "sha256": "b2103f5f40038d9223b59310fd0a54a46c6c2db7399e3387eff8511851ddc3ac",
+      "provenance": "local-source"
+    },
+    {
+      "order": 217,
+      "kind": "pending",
+      "version": "20260806170400",
+      "name": "nestly_v188_v189_data_repairs",
+      "path": "supabase/migrations/20260806170400_nestly_v188_v189_data_repairs.sql",
+      "octetLength": 3475,
+      "sha256": "ad8cf198976ddd166ea81e04c415485044befb70a2529f6037440010f886f50d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 218,
+      "kind": "pending",
+      "version": "20260806170500",
+      "name": "nestly_v193_manage_unsold_package_plan",
+      "path": "supabase/migrations/20260806170500_nestly_v193_manage_unsold_package_plan.sql",
+      "octetLength": 3190,
+      "sha256": "babb1a6bce26c5be4f0a29f6c1190eb4a2e6e8f98d727545c0b0fd7997d550d4",
+      "provenance": "local-source"
+    },
+    {
+      "order": 219,
       "kind": "pending",
       "version": "20260807010000",
       "name": "nestly_v185_prospect_archive_merge_erase",

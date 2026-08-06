@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="31eb35ee8627c3b2136f7a4a782dd46268fd8f81c75d6352a8a7881e7cd0f011"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="56dfb073172f7f3c22e490423d252353a7e9e1d3c3e10d211b5f9281165667f5"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -150,6 +150,13 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .bday-mode-row input{margin-top:2px;flex:none}
 .sales-mix-row{align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;color:var(--ink)}
 .sales-mix-row input{margin-top:3px;flex:none}
+/* V185: blocked time in the WEEK grid. Narrower columns than the day view, so it sits behind
+   events (lower z-index), drops the 44px min-height that would swamp a short block, and never
+   carries a Remove control — removal stays in the Day view where the row is big enough to be
+   sure what you are deleting. */
+.week-blocked-window{left:2px;right:2px;z-index:1;min-height:0;padding:2px 5px;font-size:11px;line-height:1.25}
+.week-blocked-window span{display:flex;flex-direction:column;gap:0;overflow:hidden}
+.week-blocked-window b{font-variant-numeric:tabular-nums}
 /* V180: today's bookings at a glance. Chips wrap rather than scroll horizontally — a hidden
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
@@ -1220,6 +1227,16 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .customer-balance-panel.customer-balance-panel-single{grid-template-columns:minmax(0,560px)}
 .customer-balance-value{font-size:clamp(1.85rem,5vw,2.6rem);font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
 .customer-tier-track{height:10px;margin-top:13px;border-radius:999px;background:var(--hair);overflow:hidden}.customer-tier-track span{display:block;height:100%;width:var(--tier-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral));transition:width .25s var(--ease)}
+/* v186 tier ladder. Every tier stays fully legible; the ones that are not yours are drained of
+   colour and dimmed, which reads instantly as "not mine" without hiding a single benefit. The
+   state pill carries the same meaning in words, so greyscale is never the only signal. */
+.customer-tier-ladder{border-top:1px solid var(--hair);padding-top:14px}
+.customer-tier-rungs{display:grid;gap:10px;margin-top:10px;padding:0;list-style:none;counter-reset:tier}
+.customer-tier-rung{padding:12px 14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--card);filter:grayscale(1);opacity:.62;transition:opacity var(--motion-ui) var(--ease),filter var(--motion-ui) var(--ease)}
+.customer-tier-rung.is-achieved{opacity:.78}
+.customer-tier-rung.is-current{filter:none;opacity:1;border-color:var(--merchant-accent,var(--coral));background:var(--tint);box-shadow:var(--shadow)}
+.customer-tier-rung .rec-why{margin-top:6px}
+@media(prefers-reduced-motion:reduce){.customer-tier-rung{transition:none}}
 .wallet-history-disclosure{margin-top:14px;padding:0;overflow:hidden}.wallet-history-disclosure>summary{display:flex;align-items:center;gap:10px;min-height:56px;padding:16px 18px;cursor:pointer;font-weight:750;list-style-position:inside}.wallet-history-disclosure>summary .muted{font-weight:500}.wallet-history-disclosure[open]>summary{border-bottom:1px solid var(--hair)}.wallet-history-disclosure-body{display:grid;gap:14px;padding:14px}.wallet-history-disclosure .wallet-section{margin:0;box-shadow:none}
 .customer-perks-grid,.customer-offers-grid,.customer-rewards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin-top:12px}
 .customer-perk-card,.customer-offer-card,.customer-reward-card{overflow:hidden;min-height:120px;padding:16px;border:1px solid var(--hair);border-radius:15px;background:#fff}
@@ -1506,7 +1523,7 @@ function createBusinessOAuthAdmissionClient(){
 }
 const BUSINESS_LEGAL_V138=Object.freeze({
   terms:Object.freeze({version:'2026-08-04',sha256:'012e09a4a7b6df2a5acc9da3b6512c1cfeb42e903fd8306f6ff09866a9f1e4a5'}),
-  privacy:Object.freeze({version:'2026-08-03',sha256:'8e152d208b271da5a1f71630b17c5c82e8b7bd930c5508da8b4d95597c0a1568'})
+  privacy:Object.freeze({version:'2026-08-06',sha256:'b9aa956263f0ac12d85be069ee05b4960b4130be33289c06df1e4eee59c59245'})
 });
 function businessGoogleButtonHtml(id){
   return `<button class="btn ghost" id="${esc(id)}" type="button" style="width:100%;min-height:44px;margin-top:12px"><span aria-hidden="true" style="font-weight:800;font-size:18px">G</span><span>Continue with Google</span></button>`;
@@ -1777,69 +1794,46 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
   }
 }
   function accountDeletionCardHtml(){
-  return `<section class="card" id="accountDeletionCard" style="margin-top:14px;border-color:#D9A29C"><h2>Account &amp; privacy</h2><p class="muted small" style="margin-top:6px">You can ask Peekaa to delete this account and associated personal data. Legally required financial, fraud-prevention, and security records may be retained.</p><button class="btn danger" id="openAccountDeletion" type="button" style="margin-top:16px">Request account deletion</button></section>`;
+  /* v189 (owner: "request closure — but hidden inside here, small button"): closing an account is
+     a real thing a person came here to do, so it gets a real action rather than a sentence with an
+     address buried in it. The button opens a pre-addressed email — Peekaa still decides, which is
+     the ruling, but the customer does not have to compose anything or find the address. */
+  const closureSubject=encodeURIComponent('Peekaa account closure request');
+  const closureBody=encodeURIComponent('I would like to close my Peekaa account.\n\nName:\nPhone or email used:\nBusiness(es) I joined:\n');
+  return `<section class="card" id="accountDeletionCard" style="margin-top:14px"><h2>Account &amp; privacy</h2>
+    <p class="muted small" style="margin-top:6px">Peekaa handles account closure for you and replies within 30 days. You can also speak to your assigned consultant.</p>
+    <div id="accountDeletionStatus" role="status"></div>
+    <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
+      <a class="btn" href="mailto:admin.peekaa@gmail.com?subject=${closureSubject}&amp;body=${closureBody}">Request account closure</a>
+      <a class="btn ghost" href="/data-request.html">Ask what data is held</a>
+    </div>
+    <p class="muted small" style="margin-top:12px">Legally required financial, fraud-prevention and security records may be retained after closure.</p>
+    <p class="muted small" style="margin-top:4px">Prefer to write yourself? <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></p></section>`;
 }
 
-function wireAccountDeletionButton(button=$('openAccountDeletion')){
-  if(button)button.onclick=()=>openAccountDeletionDialog(button);
-}
-
-async function openAccountDeletionDialog(trigger=document.activeElement){
-  $('accountDeletionModal')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="accountDeletionModal" role="dialog" aria-modal="true" aria-labelledby="accountDeletionTitle" tabindex="-1"><section class="modal-card" style="max-width:540px">
-    <div class="row"><div><h2 id="accountDeletionTitle">Delete your Peekaa account</h2><p class="muted small" style="margin-top:5px">This requests deletion; it does not erase records immediately.</p></div><span class="spacer"></span><button class="btn ghost sm" id="accountDeletionClose" type="button" aria-label="Close account deletion">Close</button></div>
-    <div id="accountDeletionBody" aria-busy="true"><p class="muted small" style="margin-top:16px">Checking for an existing request…</p></div>
-  </section></div>`);
-  const modal=$('accountDeletionModal'),body=$('accountDeletionBody');
-  let deactivate=null;
-  const close=()=>{if(deactivate){const cleanup=deactivate;deactivate=null;cleanup()}else modal.remove();trigger?.focus?.()};
-  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#accountDeletionClose'});
-  $('accountDeletionClose').onclick=close;
-  const renderPending=request=>{
-    const due=request?.response_due_at?sgt(request.response_due_at):'within 30 days';
-    body.setAttribute('aria-busy','false');
-    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request received</b><p class="small" style="margin-top:6px">Status: ${esc(request?.status||'pending')} · response due ${esc(due)}.</p></div><p class="muted small" style="margin-top:12px">We will respond within 30 days. Your subscription and any outstanding payment obligations are handled separately.</p>`;
-  };
-  const renderCompleted=request=>{
+/* Shows an EXISTING request's state, if there is one. Never offers a new one. Silent on failure:
+   a status panel that cannot load must not imply anything about whether a request exists. */
+async function wireAccountDeletionButton(){
+  const host=$('accountDeletionStatus');
+  if(!host||!S.user)return;
+  const {data,error}=await sb.rpc('get_account_deletion_request_v131');
+  if(error||!host.isConnected)return;
+  const request=Array.isArray(data)?data[0]:data;
+  if(!request?.status)return;
+  if(['pending','processing'].includes(request.status)){
+    const due=request.response_due_at?sgt(request.response_due_at):'within 30 days';
+    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request received</b><p class="small" style="margin-top:6px">Peekaa is reviewing it and will reply by ${esc(due)}. Nothing further is needed from you.</p></div>`;
+    return;
+  }
+  if(request.status==='completed'){
     const outcomes={
       deleted_where_permitted:'Deleted where permitted',
       anonymised_where_permitted:'Anonymised where permitted',
       retained_legal:'Retained under legal obligation',
       request_invalid:'Request invalid after identity review'
     };
-    const outcome=outcomes[request?.resolution_code]||'Reviewed outcome recorded';
-    const retention=request?.resolution_code==='retained_legal'&&request?.retention_until
-      ?`<p class="small" style="margin-top:6px">Retention review date: ${esc(sgt(request.retention_until))}.</p>`:'';
-    body.setAttribute('aria-busy','false');
-    body.innerHTML=`<div class="imp-note" role="status" style="margin-top:16px"><b>Deletion request reviewed</b><p class="small" style="margin-top:6px">Outcome: ${esc(outcome)}.</p>${retention}</div><p class="muted small" style="margin-top:12px">This is the latest reviewed privacy outcome for this account. Contact Peekaa if you need to challenge or clarify it.</p>`;
-  };
-  const renderForm=()=>{
-    body.setAttribute('aria-busy','false');
-    body.innerHTML=`<p class="muted small" style="margin-top:16px">This affects your customer and business personas that use this same login. We will respond within 30 days. Type DELETE to confirm.</p>
-      <label for="accountDeletionConfirm">Type DELETE to confirm</label><input id="accountDeletionConfirm" autocomplete="off" autocapitalize="characters" spellcheck="false">
-      <div id="accountDeletionStatus" role="alert" aria-live="assertive"></div>
-      <button class="btn danger" id="accountDeletionSubmit" type="button" style="width:100%;margin-top:16px" disabled>Submit deletion request</button>`;
-    const input=$('accountDeletionConfirm'),submit=$('accountDeletionSubmit'),status=$('accountDeletionStatus');
-    input.oninput=()=>{submit.disabled=input.value.trim()!=='DELETE'};
-    submit.onclick=async()=>{
-      if(input.value.trim()!=='DELETE')return;
-      const slot='nestly:v131:account-deletion';
-      let key=sessionStorage.getItem(slot);if(!key){key=crypto.randomUUID();sessionStorage.setItem(slot,key)}
-      submit.disabled=true;status.innerHTML='<p class="muted small" style="margin-top:10px">Submitting the same safe request…</p>';
-      const {data,error}=await sb.rpc('request_account_deletion_v131',{p_confirmation:'DELETE',p_idempotency_key:key});
-      if(!modal.isConnected)return;
-      if(error||!data?.request_id){submit.disabled=false;status.innerHTML='<div class="err">We could not confirm whether the request was saved. Retry; Peekaa will reuse the same request.</div>';return}
-      sessionStorage.removeItem(slot);renderPending(data);
-    };
-    input.focus({preventScroll:true});
-  };
-  const {data,error}=await sb.rpc('get_account_deletion_request_v131');
-  if(!modal.isConnected)return;
-  if(error){body.setAttribute('aria-busy','false');body.innerHTML='<div class="err" role="alert">Deletion status could not be loaded. No request was created.</div><button class="btn ghost" id="accountDeletionRetry" style="margin-top:12px">Try again</button>';$('accountDeletionRetry').onclick=()=>{close();openAccountDeletionDialog(trigger)};return}
-  const request=Array.isArray(data)?data[0]:data;
-  if(request&&['pending','processing'].includes(request.status))renderPending(request);
-  else if(request?.status==='completed')renderCompleted(request);
-  else renderForm();
+    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request reviewed</b><p class="small" style="margin-top:6px">${esc(outcomes[request.resolution_code]||'Reviewed outcome recorded')}.</p></div>`;
+  }
 }
   function renderOnboard(){
   const setupEpoch=++businessSetupRenderEpoch;

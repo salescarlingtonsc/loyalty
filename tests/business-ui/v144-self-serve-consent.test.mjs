@@ -68,5 +68,8 @@ test('missing catalogue state is actionable and separates Stripe from manual app
   assert.match(onboard,/Contact Peekaa support/);
   assert.match(onboard,/No workspace or charge was created/);
   assert.doesNotMatch(onboard,/Submit for approval|management approval/i);
-  assert.match(onboard,/manual-payment approval form below for Super Admin review/);
+  // The Stripe-vs-manual explanation moved into renderBusinessApplication when the application
+  // flow was split out of onboarding; assert it where it now lives.
+  const application=section(app,'function renderBusinessApplication','function renderOnboard(){');
+  assert.match(application, /Super Admin reviews and approves or rejects this manual-payment application/);
 });

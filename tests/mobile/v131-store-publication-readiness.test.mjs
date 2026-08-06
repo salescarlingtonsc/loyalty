@@ -16,9 +16,15 @@ function between(source,start,end){
   return source.slice(from,to);
 }
 
+/* v188 (owner ruling 2026-08-07): self-service deletion was removed — "do not allow firms or
+   users to delete account… they can email in their request or speak with their assigned
+   consultant". What every signed-in surface must still carry is the ROUTE to close an account,
+   which is what this now checks. ⚖️ The native iOS build is the exposure: App Store guideline
+   5.1.1(v) expects deletion to be INITIATED in-app, and an email address may not satisfy a
+   reviewer. Recorded here because this is the store-readiness suite. */
 function assertDeletionControl(source,label){
-  assert.match(source,/accountDeletionCardHtml\(\)/,`${label} must render account deletion`);
-  assert.match(source,/wireAccountDeletionButton\(\)/,`${label} must wire account deletion`);
+  assert.match(source,/accountDeletionCardHtml\(\)/,`${label} must render the account & privacy route`);
+  assert.match(source,/wireAccountDeletionButton\(\)/,`${label} must show an existing request's status`);
 }
 
 test('native business access is purchase-free and a signed-in return completes sign-out',async()=>{
@@ -42,11 +48,15 @@ test('native business access is purchase-free and a signed-in return completes s
   assert.deepEqual(events,['channels','sign-out','reset','auth:in']);
 });
 
-test('every signed-in persona can initiate an idempotent in-app deletion request',()=>{
-  assert.match(app,/request_account_deletion_v131/);
-  assert.match(app,/get_account_deletion_request_v131/);
-  assert.match(app,/Type DELETE to confirm/);
-  assert.match(app,/We will respond within 30 days/);
+test('every signed-in persona is shown how to close the account, and can never do it itself',()=>{
+  assert.doesNotMatch(app,/request_account_deletion_v131/,
+    'v188: the browser must not be able to submit a deletion request');
+  assert.doesNotMatch(app,/Type DELETE to confirm/);
+  assert.match(app,/get_account_deletion_request_v131/,
+    'an already-submitted request must still be visible to the person who made it');
+  assert.match(app,/mailto:admin\.peekaa@gmail\.com/);
+  assert.match(app,/speak to your assigned consultant/);
+  assert.match(app,/replies within 30 days/);
   const workspaceRoute=between(app,"if(h.startsWith('#/workspace/')){",'if(!S.biz){');
   assertDeletionControl(between(workspaceRoute,'if(!workspaceStaffPersona){','S.hasCustomerPersona='),'missing direct workspace persona');
   assertDeletionControl(between(workspaceRoute,'if(workspaceError||!workspace){','if(S.biz?.id'),'missing direct workspace record');
@@ -76,7 +86,11 @@ test('every signed-in persona can initiate an idempotent in-app deletion request
   assert.match(sql,/if coalesce\(p_confirmation,''\)<>'DELETE' then/);
   assert.doesNotMatch(sql,/upper\(btrim\(coalesce\(p_confirmation/);
   assert.match(sql,/revoke all on table public\.account_deletion_requests from public, anon, authenticated/);
+  /* v131 granted it; v188 revokes it. Both are true of the deployed database, and the v131
+     migration text must not be rewritten to pretend otherwise. */
   assert.match(sql,/grant execute on function public\.request_account_deletion_v131\(text,text\) to authenticated/);
+  const revoke=readFileSync(join(root,'db/migrations/20260807_nestly_v188_no_self_service_account_deletion.sql'),'utf8');
+  assert.match(revoke,/revoke execute on function public\.request_account_deletion_v131\(text, text\) from authenticated;/);
 });
 
 test('store association generator fails closed and emits exact real identifiers',()=>{

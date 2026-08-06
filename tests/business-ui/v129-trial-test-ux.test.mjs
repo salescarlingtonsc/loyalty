@@ -70,10 +70,17 @@ test('all business-workspace sale entry points say Record sale while retaining t
 test('Customers exposes exact all, 30, 60 and 90 day inactivity filters backed by one reader',()=>{
   assert.match(customers,/id="clientInactivity"/);
   assert.match(customers,/<option value="">All customers<\/option>/);
-  for(const days of [30,60,90])assert.match(customers,new RegExp(`<option value="${days}">Inactive ${days}\\+ days<\\/option>`));
-  assert.match(customers,/sb\.rpc\('staff_list_customers_v129'/);
-  assert.match(customers,/const customerDirectoryPage=\(search,inactiveDays,offset\)=>sb\.rpc\('staff_list_customers_v129',[\s\S]*p_inactive_days:inactiveDays/);
-  assert.match(customers,/customerDirectoryPage\([\s\S]*customerRpcSearch,clientInactiveDays,clientPage\*CLIENT_PAGE_SIZE/);
+  // The cumulative 30+/60+/90+ options became non-overlapping bucket cards, so a customer is
+  // counted in exactly one band instead of in every band at or below their gap.
+  for(const bucket of ['30_59','60_89','90_plus'])
+    assert.match(customers,new RegExp(`data-inactive-bucket="${bucket}"`));
+  assert.match(customers,/Inactive 30–59 days/);
+  assert.match(customers,/sb\.rpc\('staff_list_customers_v155'/);
+  // Bucket model: an explicit non-overlapping bucket key (p_inactive_bucket) instead of a
+  // cumulative day count, and the helper is async.
+  assert.match(customers,/const customerDirectoryPage=async\(search,inactiveBucket,offset\)=>/);
+  assert.match(customers,/p_inactive_bucket:inactiveBucket/);
+  assert.match(customers,/customerDirectoryPage\(customerRpcSearch,[\s\S]{0,40}clientPage\*CLIENT_PAGE_SIZE/);
   assert.match(customers,/Never visited/);
   assert.match(customers,/Last visit/);
   assert.match(migration,/create or replace function public\.staff_list_customers_v129/);

@@ -87,7 +87,7 @@ test('v94 catalogue and consolidated reports fail closed for partial branch scop
 });
 
 test('catalogue and workspace controls retain mobile touch sizing and responsive placement',()=>{
-  assert.match(app,/\.till-cart-catalog \.btn\{min-height:64px/);
+  assert.match(app,/\.till-cart-catalog \.btn,\.till-cart-catalog \.choice-button\{min-height:64px/);
   assert.match(app,/\.business-workspace-switch \.menu a,[\s\S]*min-height:44px/);
   assert.match(app,/\.checkout-catalogue-item\{[\s\S]*min-height:64px/);
   assert.match(app,/\.checkout-catalogue-item \.btn\{min-height:44px/);
