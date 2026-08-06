@@ -60,7 +60,13 @@ test('opening and cancelling do not write while confirm creates one idempotent r
 test('failed automatic setup remains retryable and prevents duplicate submission',()=>{
   assert.match(grow,/rewardAutoConfirm\.disabled=true/);
   assert.match(grow,/rewardAutoConfirm\.disabled=false/);
-  assert.match(grow,/Draft could not be created\. Nothing was published\. Try again\./);
+  // V183 replaced the single generic sentence with the real reason. What must hold is that a
+  // failure still says nothing was published and stays retryable — not that it uses one exact
+  // string. A changed-inputs conflict additionally mints a fresh idempotency key, because
+  // replaying the rejected one could never succeed.
+  assert.match(grow,/Nothing was published\./);
+  assert.match(grow,/rewardAutoSetupRequestKey=null/);
+  assert.match(grow,/Try creating draft again/);
   assert.match(grow,/aria-live="polite"/);
 });
 

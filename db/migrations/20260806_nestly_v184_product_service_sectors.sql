@@ -76,4 +76,67 @@ begin
 end
 $function$;
 
+-- The owner-facing override. Exactly two toggles; the sector entitlement still governs every
+-- other module. Hard dependents are dropped in the same write because
+-- app.business_modules_dependency_guard would otherwise re-add what was removed.
+create or replace function public.business_set_sales_mix_v184(
+  p_business uuid, p_sells_services boolean, p_sells_products boolean
+)
+returns json
+language plpgsql security definer
+set search_path to 'pg_catalog','public','app','pg_temp'
+as $$
+declare v_role text; v_modules text[]; v_removed text[] := '{}'; v_dependent text;
+begin
+  select s.role into v_role from public.staff s
+   where s.business_id=p_business and s.user_id=auth.uid() and s.active
+   order by case when s.role='owner' then 0 else 1 end, s.created_at limit 1;
+  if v_role is distinct from 'owner' then
+    raise exception 'only an owner can change what this business sells' using errcode='42501';
+  end if;
+  if not coalesce(p_sells_services,false) and not coalesce(p_sells_products,false) then
+    raise exception 'a business must sell services, products, or both' using errcode='22023';
+  end if;
+  select coalesce(enabled_modules,'{}'::text[]) into v_modules
+    from public.businesses where id=p_business for update;
+  if not found then raise exception 'business not found' using errcode='42704'; end if;
+
+  if p_sells_services then
+    if not ('services'=any(v_modules)) then v_modules := v_modules || array['services']; end if;
+  else
+    for v_dependent in select r.module_key from public.module_registry r
+      where 'services'=any(r.requires_modules) and r.module_key=any(v_modules)
+    loop v_modules := array_remove(v_modules,v_dependent); v_removed := v_removed || v_dependent; end loop;
+    v_modules := array_remove(v_modules,'services');
+  end if;
+  if p_sells_products then
+    if not ('inventory'=any(v_modules)) then v_modules := v_modules || array['inventory']; end if;
+  else
+    for v_dependent in select r.module_key from public.module_registry r
+      where 'inventory'=any(r.requires_modules) and r.module_key=any(v_modules)
+    loop v_modules := array_remove(v_modules,v_dependent); v_removed := v_removed || v_dependent; end loop;
+    v_modules := array_remove(v_modules,'inventory');
+  end if;
+
+  perform set_config('app.sector_entitlement_sync', p_business::text, true);
+  update public.businesses set enabled_modules=v_modules where id=p_business;
+  perform set_config('app.sector_entitlement_sync','',true);
+
+  select coalesce(enabled_modules,'{}'::text[]) into v_modules
+    from public.businesses where id=p_business;
+
+  insert into public.audit_log(business_id, actor, action, entity, entity_id, meta)
+  values (p_business, auth.uid(), 'business.sales_mix_changed', 'business', p_business,
+          jsonb_build_object('sells_services',p_sells_services,'sells_products',p_sells_products,
+                             'also_disabled',to_jsonb(v_removed)));
+
+  return json_build_object('status','ok',
+    'sells_services',('services'=any(v_modules)),
+    'sells_products',('inventory'=any(v_modules)),
+    'also_disabled',to_json(v_removed));
+end $$;
+
+revoke all on function public.business_set_sales_mix_v184(uuid,boolean,boolean) from public, anon;
+grant execute on function public.business_set_sales_mix_v184(uuid,boolean,boolean) to authenticated;
+
 commit;
