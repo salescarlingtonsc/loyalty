@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const html=fs.readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const html=(fs.readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+fs.readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 function expressionBetween(start,end){
   const from=html.indexOf(start),to=html.indexOf(end,from+start.length);
   assert.ok(from>=0&&to>from,`missing expression ${start}`);

@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const customerUi=await readFile(new URL('../../app/customer-ui.js',import.meta.url),'utf8');
 const routeSource=app.match(/async function route\(\)\{[\s\S]*?\n\}\n\n\/\* ---------- customer wallet ---------- \*\//)?.[0];
 assert.ok(routeSource,'root route must be extractable');

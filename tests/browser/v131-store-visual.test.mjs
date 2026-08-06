@@ -4,7 +4,7 @@ import test from 'node:test';
 import {buildV131StoreVisual} from './generate-v131-store-visual.mjs';
 
 test('V131 browser fixture executes the current production native companion and deletion flow',async()=>{
-  const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+  const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
   const fixture=await readFile(new URL('./v131-store-visual.html',import.meta.url),'utf8');
   assert.equal(fixture,buildV131StoreVisual(app));
   assert.match(fixture,/production-source-sha256/);

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 
-const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const migration=readFileSync(new URL('../../db/migrations/20260802_nestly_v142_connect_paynow_pos.sql',import.meta.url),'utf8');
 const canonical=readFileSync(new URL('../../supabase/migrations/20260802134128_nestly_v142_connect_paynow_pos.sql',import.meta.url),'utf8');
 const command=readFileSync(new URL('../../supabase/functions/stripe-connect-command/index.ts',import.meta.url),'utf8');

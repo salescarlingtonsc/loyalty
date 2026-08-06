@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
    Each assertion pins the specific way its change can silently rot. */
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const app = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
 test('renaming the programme badge cannot empty the Running view', () => {
   // The row filter used to match the badge TEXT for "live". Renaming the badge to "Ongoing"

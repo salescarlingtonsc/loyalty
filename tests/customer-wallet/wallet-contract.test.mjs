@@ -189,7 +189,7 @@ test('v32 rollback suite covers isolation, authorization, output privacy, and no
 });
 
 test('the SPA has a gated customer wallet route before staff onboarding and keeps its shell independent', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const routeStart = app.search(/async\s+function\s+route\s*\(/i);
   assert.ok(routeStart >= 0, 'route function is required');
   const route = app.slice(routeStart);
@@ -223,7 +223,7 @@ test('v38 adds server-side personas, claim route, and private customer gates', a
   const [migration, suite, app, v21Migration, v21Suite] = await Promise.all([
     read('db/migrations/20260720_frenly_v38_customer_personas_and_gates.sql'),
     read('db/tests/v38_customer_personas_and_gates.sql'),
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('db/migrations/20260719_frenly_v21_security_hardening.sql'),
     read('db/tests/v21_security_hardening.sql')
   ]);

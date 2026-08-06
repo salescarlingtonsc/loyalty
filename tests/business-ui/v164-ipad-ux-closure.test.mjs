@@ -5,7 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const appHtml = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+const appHtml = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 const customerUi = readFileSync(resolve(repoRoot, 'app/customer-ui.js'), 'utf8');
 
 test('V164 sidebar terminology is merchant-facing', () => {

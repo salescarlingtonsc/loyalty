@@ -116,7 +116,7 @@ test('responsive pipeline keeps a mobile list and accessible dialogs', async () 
   const [source,styles,index] = await Promise.all([
     read('app/platform-console.js'),
     read('app/platform-console.css'),
-    read('app/index.html')
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'))
   ]);
   assert.match(source, /aria-modal/);
   // v181 (owner request 2026-08-06): the board drags again, so aria-grabbed is

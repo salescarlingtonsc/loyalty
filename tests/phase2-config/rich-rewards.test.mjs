@@ -26,7 +26,7 @@ test('shared reward snapshot trigger safely handles each table row type', async 
 });
 
 test('reward editor exposes simple customer-facing fields and progressive disclosure', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   for (const field of [
     'Reward name customers see',
     'What the customer gets',
@@ -45,7 +45,7 @@ test('reward editor exposes simple customer-facing fields and progressive disclo
 });
 
 test('fulfilment choices are controlled and preserve the existing credit contract', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /value="manual_item"[^>]*>Manual item or benefit/i);
   assert.match(app, /value="credit"[^>]*>Store credit/i);
   assert.match(app, /fulfillment_kind:kind/i);
@@ -54,7 +54,7 @@ test('fulfilment choices are controlled and preserve the existing credit contrac
 });
 
 test('saving a reward uses the allowlisted version workflow and never deletes reward history', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /sb\.rpc\('create_loyalty_config_draft'/i);
   assert.match(app, /sb\.rpc\('save_loyalty_config_draft'/i);
   assert.match(app, /p_expected_snapshot_hash:draftSnapshotHash\|\|null/i);
@@ -70,7 +70,7 @@ test('saving a reward uses the allowlisted version workflow and never deletes re
 });
 
 test('eligibility uses relational table reads and empty selections mean all', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /sb\.rpc\('get_loyalty_reward_draft'/i);
   assert.match(app, /draft\?\.rewards\|\|\[\]/);
   assert.match(app, /flatMap\(r=>\(r\.eligibility\?\.branches\|\|\[\]\)/);
@@ -102,7 +102,7 @@ test('v36 isolates draft reward reads and removes browser access to stale two-ar
 });
 
 test('customer reward labels remain visible while merchant completion is QR-only', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /r\.customer_name\|\|r\.name/);
   assert.doesNotMatch(app, /sb\.rpc\('redeem_reward_at_context'/i);
   assert.match(app, /Open Quick Earn scanner/);

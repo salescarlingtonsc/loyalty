@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../../',import.meta.url);
-const app=await readFile(new URL('app/index.html',root),'utf8');
+const app=((await readFile(new URL('app/index.html',root),'utf8'))+'\n'+(await readFile(new URL('app/app.js',root),'utf8')));
 
 const section=(start,end)=>{
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);

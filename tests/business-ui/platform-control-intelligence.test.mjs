@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const [app,migration]=await Promise.all([
-  readFile(new URL('../../app/index.html',import.meta.url),'utf8'),
+  Promise.all([readFile(new URL('../../app/index.html',import.meta.url),'utf8'),readFile(new URL('../../app/app.js',import.meta.url),'utf8')]).then(f=>f.join('\n')),
   readFile(new URL('../../db/migrations/20260728_nestly_v94_platform_control_intelligence.sql',import.meta.url),'utf8')
 ]);
 

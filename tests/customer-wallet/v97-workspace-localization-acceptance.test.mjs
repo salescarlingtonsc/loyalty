@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const appIndexHtml=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const appBundle=readFileSync(new URL('../../app/app.js',import.meta.url),'utf8');
+const app=(appIndexHtml+'\n'+appBundle);
 const migration=readFileSync(new URL('../../db/migrations/20260729_nestly_v97_workspace_interface_localization.sql',import.meta.url),'utf8');
 
 function expressionBetween(start,end){
@@ -207,8 +209,10 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
 });
 
 test('ordinary JavaScript strings in the application can never contain inert template interpolation',()=>{
-  const scripts=executableInlineScripts(app);
-  assert.ok(scripts.length>0,'application must expose executable inline JavaScript to audit');
+  // The application's JavaScript now lives in the external bundle app/app.js
+  // plus whatever small inline scripts remain in the shell markup. Audit both.
+  const scripts=[...executableInlineScripts(appIndexHtml),appBundle];
+  assert.ok(scripts.length>0,'application must expose executable JavaScript to audit');
   const hits=scripts.flatMap((source,scriptIndex)=>
     ordinaryStringsContainingInterpolation(source)
       .map(hit=>({...hit,script:scriptIndex+1})));

@@ -4,7 +4,7 @@ import test from 'node:test';
 import {buildV130SelfServeVisual} from './generate-v130-self-serve-visual.mjs';
 
 test('V130 browser fixture executes current production signup, setup and payment-control renderers',async()=>{
-  const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+  const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
   const fixture=await readFile(new URL('./v130-self-serve-visual.html',import.meta.url),'utf8');
   assert.equal(fixture,buildV130SelfServeVisual(app));
   assert.match(fixture,/production-source-sha256/);

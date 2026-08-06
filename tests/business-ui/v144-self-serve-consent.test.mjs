@@ -3,7 +3,7 @@ import {existsSync,readFileSync} from 'node:fs';
 import test from 'node:test';
 
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
-const app=read('../../app/index.html');
+const app=read('../../app/index.html')+'\n'+read('../../app/app.js');
 const terms=read('../../app/terms.html');
 const privacy=read('../../app/privacy.html');
 const migrationUrl=new URL(

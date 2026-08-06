@@ -65,7 +65,7 @@ test('Luna C44: visit promises depend on the active version and immutable sale s
 });
 
 test('Luna C44: 101/100 truncation is value-first, home firms stay separate, and C44 only augments the v39 detail readers', async () => {
-  const [sql, app] = await Promise.all([read(sourcePath), read('app/index.html')]);
+  const [sql, app] = await Promise.all([read(sourcePath), Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'))]);
   const wallet = functionBlock(sql, 'customer_get_actionable_wallet');
   const route = app.slice(app.indexOf('async function renderCustomerWallet'), app.indexOf('async function renderCustomerNotificationPreferences'));
 
@@ -85,7 +85,7 @@ test('Luna C44: 101/100 truncation is value-first, home firms stay separate, and
 });
 
 test('Luna C44: every awaited v39 detail loader and capability refresh rejects a stale A route before it can paint B', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const route = app.slice(app.indexOf('async function renderCustomerWallet'), app.indexOf('async function renderCustomerNotificationPreferences'));
 
   assert.match(app, /function walletSectionStillCurrent\(host,isCurrent\)[\s\S]*host\.isConnected[\s\S]*\$\(host\.id\)===host/i);
@@ -140,7 +140,7 @@ test('Luna C44: controlled deferred A→B route harness cannot let A overwrite B
 });
 
 test('Luna C44: notification fetch and preference mutation also reject a stale or replaced wallet host', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const notifications = app.slice(
     app.indexOf('async function renderCustomerNotificationPreferences'),
     app.indexOf('function renderWorkspaceAccessUnavailable')

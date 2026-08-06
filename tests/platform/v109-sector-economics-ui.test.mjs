@@ -584,7 +584,7 @@ test('375px CSS has no horizontal overflow, one-column forms, 48px targets and r
 
 test('customer intelligence integrates the exact migration RPC signatures and branch scope',async()=>{
   const [index,module]=await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/sector-economics.js')
   ]);
   assert.match(index,/sector-economics\.css/);
@@ -613,7 +613,7 @@ test('customer intelligence integrates the exact migration RPC signatures and br
 
 test('customer intelligence owns the only page h1 and embedded evidence modules use h2',async()=>{
   const [index,revenue,sector]=await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/revenue-truth.js'),
     read('app/sector-economics.js')
   ]);

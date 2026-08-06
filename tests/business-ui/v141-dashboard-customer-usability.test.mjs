@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const repo=path.resolve(here,'../..');
-const app=fs.readFileSync(path.join(repo,'app/index.html'),'utf8');
+const app=(fs.readFileSync(path.join(repo,'app/index.html'),'utf8')+'\n'+fs.readFileSync(path.join(repo,'app/app.js'),'utf8'));
 
 function section(start,end){
   const from=app.indexOf(start);

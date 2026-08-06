@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
    writers, canSetupGrow gating, and the same add-reward path "+ Add reward" uses. */
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const app = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
 test('template row renders only for grow-capable owners', () => {
   const row = app.indexOf('id="growTemplatesOpen"');

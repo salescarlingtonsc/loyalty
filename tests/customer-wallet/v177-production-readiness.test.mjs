@@ -11,7 +11,7 @@ const section=(source,start,end)=>{
 };
 
 const [app,customerUi,sw,manifest,supabaseConfig]=await Promise.all([
-  read('app/index.html'),
+  Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
   read('app/customer-ui.js'),
   read('app/sw.js'),
   read('app/manifest.webmanifest'),

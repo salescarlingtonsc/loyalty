@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
    a block that landed inside the wrong helper and silently never ran. */
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const app = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
 test('the tier picker lives in the reward editor, and only when tiers exist', () => {
   const editor = app.indexOf('function openRewardEditor(reward)');

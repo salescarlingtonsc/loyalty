@@ -284,9 +284,13 @@ export async function checkSupabaseClientContract(root = repoRoot) {
   assert.doesNotMatch(runtimeArtifact, /sb_secret_|service_role/i,
     'Generated browser runtime config must never contain a secret/service-role credential.');
 
-  const clientFiles = ['app/index.html', 'app/join.html'];
-  for (const file of clientFiles) {
-    const source = await readText(root, file);
+  // The app client is now two files: app/index.html carries the blocking config
+  // tags and markup, app/app.js carries the bootstrap. Scan the pair as one
+  // client so every contract below still covers the whole surface.
+  const clientFiles = [['app/index.html', 'app/app.js'], ['app/join.html']];
+  for (const parts of clientFiles) {
+    const file = parts.join(' + ');
+    const source = (await Promise.all(parts.map((part) => readText(root, part)))).join('\n');
     assert.match(
       source,
       /<script src="\/runtime-config\.js\?v=2"><\/script>[\s\S]*?<script src="\/runtime-config-loader\.js\?v=2"><\/script>/,
@@ -376,7 +380,9 @@ export async function checkPublicPageForms(root = repoRoot) {
   assertTagContains(join, /<button\b[^>]*id=["']submitBtn["'][^>]*type=["']submit["'][^>]*disabled[^>]*>/, 'join page must retain a disabled-by-default submit button.');
   assertTagContains(join, /\^\[3689\]\\d\{7\}\$/, 'join page must retain Singapore mobile-number validation.');
 
-  const index = await readText(root, 'app/index.html');
+  // App templates and controls now live in app/app.js; scan it together with the
+  // shell markup so the required-control contract still covers the whole page.
+  const index = (await readText(root, 'app/index.html')) + '\n' + (await readText(root, 'app/app.js'));
   assertTagContains(index, /<input\b[^>]*id=["']em["'][^>]*type=["']email["'][^>]*>/, 'app auth page must retain email input.');
   assertTagContains(
     index,

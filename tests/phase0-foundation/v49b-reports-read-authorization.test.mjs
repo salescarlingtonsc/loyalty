@@ -7,7 +7,7 @@ const [source,deploy,fixture,app]=await Promise.all([
   readFile(new URL('db/migrations/20260722_frenly_v49b_reports_read_authorization.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260722141000_frenly_v49b_reports_read_authorization.sql',root),'utf8'),
   readFile(new URL('db/tests/v49b_reports_read_authorization.sql',root),'utf8'),
-  readFile(new URL('app/index.html',root),'utf8')
+  Promise.all([readFile(new URL('app/index.html',root),'utf8'),readFile(new URL('app/app.js',root),'utf8')]).then(f=>f.join('\n'))
 ]);
 
 test('v49b is a byte-identical atomic forward migration after v49a',()=>{

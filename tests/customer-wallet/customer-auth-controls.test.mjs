@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const ui=await readFile(new URL('../../app/customer-ui.js',import.meta.url),'utf8');
 const sw=await readFile(new URL('../../app/sw.js',import.meta.url),'utf8');
 

@@ -202,7 +202,7 @@ test('service worker accepts only six customer-safe event types and routes click
 });
 
 test('customer account and profile controls are touch-sized, accessible, private, and mobile responsive',async()=>{
-  const html=await read('app/index.html');
+  const html=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(html,/id="customerPushMenuControl"[^>]*aria-pressed="false"/);
   assert.match(html,/id="customerPushProfileControl"[^>]*aria-pressed="false"/);
   assert.match(html,/data-push-status role="status" aria-live="polite"/);

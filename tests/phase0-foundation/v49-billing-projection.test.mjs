@@ -7,7 +7,7 @@ const [source,deploy,fixture,app]=await Promise.all([
   readFile(new URL('db/migrations/20260722_frenly_v49_billing_projection_rpc.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260722134000_frenly_v49_billing_projection_rpc.sql',root),'utf8'),
   readFile(new URL('db/tests/v49_billing_projection.sql',root),'utf8'),
-  readFile(new URL('app/index.html',root),'utf8')
+  Promise.all([readFile(new URL('app/index.html',root),'utf8'),readFile(new URL('app/app.js',root),'utf8')]).then(f=>f.join('\n'))
 ]);
 
 const section=(start,end)=>{

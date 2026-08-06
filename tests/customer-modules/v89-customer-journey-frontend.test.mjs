@@ -12,7 +12,7 @@ const section=(source,start,end)=>{
 };
 
 test('customer programmes are QR-joined only and automatic global matching is not run',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const context=section(app,'async function loadCustomerSurfaceContext','async function renderCustomerProgrammes');
   assert.doesNotMatch(context,/syncVerifiedCustomerRelationshipsOnce|customer_sync_verified_relationships_v81/);
   const programmes=section(app,'async function renderCustomerProgrammes','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
@@ -25,7 +25,7 @@ test('customer programmes are QR-joined only and automatic global matching is no
 
 test('opaque QR join survives refresh and has no typed slug authority',async()=>{
   const [app,join,gateway,validation]=await Promise.all([
-    read('app/index.html'),read('app/join.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),read('app/join.html'),
     read('supabase/functions/public-join/index.ts'),
     read('supabase/functions/_shared/validation.ts')
   ]);
@@ -44,7 +44,7 @@ test('opaque QR join survives refresh and has no typed slug authority',async()=>
 });
 
 test('customer can scan a business-issued QR from first use and from persistent navigation',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const scanner=section(app,'function customerJoinTokenFromQr','function sortStaffWorkspaces');
   assert.match(scanner,/openCustomerJoinScanner/);
   assert.match(scanner,/getUserMedia\(\{video:\{facingMode:\{ideal:'environment'\}\}/);
@@ -58,7 +58,7 @@ test('customer can scan a business-issued QR from first use and from persistent 
 });
 
 test('customer can switch linked programmes without returning to the programme index',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const helperSource=app.match(/function customerProgrammeSwitcherMarkup\(cards=\[\],activeSlug=''\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(helperSource,'missing programme switcher helper');
   const switcher=vm.runInNewContext(`(()=>{
@@ -82,7 +82,7 @@ test('customer can switch linked programmes without returning to the programme i
 });
 
 test('customer Home keeps programme guidance primary and exposes one header notification action',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const home=section(app,'function renderActionableWalletHome','async function renderCustomerWallet');
   assert.match(home,/customerHomeGuidanceV167\(\{pendingRedemption,actionableCards:cards,legacyCards,offers:offersState\.items\}\)/);
   assert.match(home,/customerProgrammeGridMarkupV96\(cards\)/);
@@ -106,7 +106,7 @@ test('customer Home keeps programme guidance primary and exposes one header noti
 });
 
 test('scanned QR waits for a completed profile, then outranks wallet destinations and is consumed',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const prioritySource=app.match(/function customerRegistrationDestinationPriority\(joinToken,businessSlug\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(prioritySource,'missing post-auth customer destination priority helper');
   const priority=new Function(`${prioritySource};return customerRegistrationDestinationPriority;`)();
@@ -128,7 +128,7 @@ test('scanned QR waits for a completed profile, then outranks wallet destination
 });
 
 test('passkey sign-in and complete customer passkey management are capability gated',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app,/experimental:\{passkey:true\}/);
   assert.match(app,/function customerPasskeySupported\(\{management=false\}=\{\}\)/);
   assert.match(app,/async function maybeOfferCustomerPasskeySetup\(\{isCurrent=\(\)=>true\}=\{\}\)/);
@@ -151,7 +151,7 @@ test('passkey sign-in and complete customer passkey management are capability ga
 });
 
 test('customer booking and changes require the business v89 enablement',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const wallet=section(app,'async function renderCustomerWallet','async function renderCustomerInAppInbox');
   assert.match(wallet,/customer_get_business_actions_v89/);
   assert.match(wallet,/capabilities\.booking_request&&bookingEnabled/);
@@ -165,7 +165,7 @@ test('customer booking and changes require the business v89 enablement',async()=
 });
 
 test('Bookings shows enabled zero-history firms and hides only disabled firms without history',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const composeSource=app.match(/const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES=[\s\S]*?function composeCustomerBookingGroups\([^\n]*\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(composeSource,'missing customer booking grouping contract');
   const compose=vm.runInNewContext(`(()=>{${composeSource};return composeCustomerBookingGroups})()`);
@@ -192,7 +192,7 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
 });
 
 test('loyalty owner can enable customer QR redemption without a bookings module',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const loyalty=section(app,'async function loyaltyPage','async function retentionPage');
   assert.match(loyalty,/const canWriteLoyalty=canWriteModule\('loyalty'\)/);
   assert.match(loyalty,/const canManageLoyalty=S\.myRole==='owner'&&canWriteLoyalty/);
@@ -224,7 +224,7 @@ test('loyalty owner can enable customer QR redemption without a bookings module'
 });
 
 test('redemption is pending until merchant scan and scanner supports iPhone camera and image fallback',async()=>{
-  const [app,vercel]=await Promise.all([read('app/index.html'),read('app/vercel.json')]);
+  const [app,vercel]=await Promise.all([Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),read('app/vercel.json')]);
   assert.match(app,/customer_create_redemption_intent_v89/);
   assert.match(app,/Pending merchant scan/);
   assert.match(app,/points are not redeemed until the business scans and confirms/i);
@@ -256,7 +256,7 @@ test('redemption is pending until merchant scan and scanner supports iPhone came
 });
 
 test('Quick Earn scanner follows front-desk and manager loyalty-write assignments',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const helperSource=app.match(/function canScanCustomerRedemption\(\{createSales,clientsReadable,loyaltyWritable\}=\{\}\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(helperSource,'missing Quick Earn redemption scan access projection');
   const canScan=vm.runInNewContext(`(${helperSource})`);
@@ -275,7 +275,7 @@ test('Quick Earn scanner follows front-desk and manager loyalty-write assignment
 });
 
 test('classic and catalog rewards share the v89 availability enum and produce truthful intent arguments',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const wallet=section(app,'async function renderCustomerWallet','async function renderCustomerInAppInbox');
   assert.match(wallet,/available_at_counter:'Available at counter'/);
   assert.match(wallet,/disabled:'Unavailable for redemption'/);
@@ -312,7 +312,7 @@ test('classic and catalog rewards share the v89 availability enum and produce tr
 });
 
 test('merchant scan success remains visible as a classic or catalog fulfilment receipt',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const viewSource=app.match(/function merchantRedemptionReceiptView\(data=\{\}\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(viewSource,'missing merchant redemption receipt projection');
   const view=vm.runInNewContext(`(${viewSource})`,{money:cents=>`SGD ${(cents/100).toFixed(2)}`});
@@ -341,7 +341,7 @@ test('merchant scan success remains visible as a classic or catalog fulfilment r
 });
 
 test('unlinked public booking remains guest-capable but programme joining is QR-only',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const portal=section(app,'async function renderPortal','async function boot');
   const unlinked=section(portal,'Booking as an unlinked guest','  }).catch(()=>{});');
   assert.match(unlinked,/booking can still be submitted safely/i);

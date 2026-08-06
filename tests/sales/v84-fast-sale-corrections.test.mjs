@@ -8,7 +8,7 @@ const read=file=>readFile(path.join(root,file),'utf8');
 const sourcePath='db/migrations/20260726_nestly_v84_fast_sale_corrections.sql';
 const canonicalPath='supabase/migrations/20260726190000_nestly_v84_fast_sale_corrections.sql';
 const [sql,canonical,app,fixture]=await Promise.all([
-  read(sourcePath),read(canonicalPath),read('app/index.html'),read('db/tests/v84_fast_sale_corrections.sql')
+  read(sourcePath),read(canonicalPath),Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),read('db/tests/v84_fast_sale_corrections.sql')
 ]);
 const functionBlock=name=>sql.match(new RegExp(
   `create or replace function public\\.${name}\\([\\s\\S]+?\\n(?:end\\n)?\\$\\$;`,'i'

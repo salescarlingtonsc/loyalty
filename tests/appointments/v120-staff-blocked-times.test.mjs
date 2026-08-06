@@ -4,7 +4,7 @@ import test from 'node:test';
 
 const root=new URL('../..',import.meta.url);
 const [app,migration,mirror,sqlFixture,concurrencyFixture,visual,ledger,trace,fixtures]=await Promise.all([
-  readFile(new URL('app/index.html',root),'utf8'),
+  Promise.all([readFile(new URL('app/index.html',root),'utf8'),readFile(new URL('app/app.js',root),'utf8')]).then(f=>f.join('\n')),
   readFile(new URL('db/migrations/20260731_nestly_v120_staff_blocked_times.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260731120000_nestly_v120_staff_blocked_times.sql',root),'utf8'),
   readFile(new URL('db/tests/v120_staff_blocked_times.sql',root),'utf8'),

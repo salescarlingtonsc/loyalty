@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 
-const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const migration=readFileSync(new URL('../../supabase/migrations/20260802120000_nestly_v138_auth_grow_closure.sql',import.meta.url),'utf8');
 const launchFreezeMigration=readFileSync(new URL('../../supabase/migrations/20260803160000_nestly_v145_launch_freeze_metrics.sql',import.meta.url),'utf8');
 const sqlAcceptance=readFileSync(new URL('../../db/tests/v138_auth_grow_closure.sql',import.meta.url),'utf8');

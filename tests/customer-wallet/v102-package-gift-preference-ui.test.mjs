@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const helperStart=app.indexOf('function giftCardAbilitiesV102');
 const helperEnd=app.indexOf('function serviceDisplayName',helperStart);
 assert.ok(helperStart>=0&&helperEnd>helperStart,'v102 UI contract helpers must exist');

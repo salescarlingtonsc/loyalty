@@ -31,7 +31,7 @@ test('localized platform UI works with the real frozen helper contract',async()=
 });
 
 test('admin route exposes a loading state and awaits the async platform renderer',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const route=source.slice(source.indexOf('async function route(){'),source.indexOf('\n/* ---------- customer wallet ---------- */'));
   assert.match(source,/<link rel="stylesheet" href="\/platform-console\.css\?v=20260802-v134">/);
   assert.match(source,/<script src="\/platform-console\.js\?v=20260802-v134"><\/script>/);
@@ -43,7 +43,7 @@ test('admin route exposes a loading state and awaits the async platform renderer
 });
 
 test('a missing platform module renders a recoverable error instead of falling through',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const routeSource=source.slice(
     source.indexOf('async function route(){'),
     source.indexOf('\n/* ---------- customer wallet ---------- */')
@@ -84,7 +84,7 @@ test('a missing platform module renders a recoverable error instead of falling t
 });
 
 test('admin async failures remain inside the existing recoverable route boundary',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const route=source.slice(source.indexOf('async function route(){'),source.indexOf('\n/* ---------- customer wallet ---------- */'));
   assert.match(route,/try\{/);
   assert.match(route,/catch\(e\)\{/);

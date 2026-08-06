@@ -146,7 +146,7 @@ test('C45 forward-wraps C44 without changing its source and ranks only actionabl
 });
 
 test('C45 wallet UI has a truthful separate consent seam, no DOB disclosure, accessible counter actions, and stale guards', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const wallet = app.slice(app.indexOf('async function renderCustomerWallet'), app.indexOf('async function renderCustomerNotificationPreferences'));
   assert.match(app, /customer_birthday_benefits:false/i);
   assert.match(app, /customerFeatures\.customer_birthday_benefits/i);

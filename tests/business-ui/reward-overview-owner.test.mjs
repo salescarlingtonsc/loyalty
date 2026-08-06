@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const birthdayReaderMigration=readFileSync(new URL('../../db/migrations/20260801_nestly_v127_rewards_overview_birthday_reader.sql',import.meta.url),'utf8');
 
 function section(start,end){

@@ -9,7 +9,7 @@ const [migration,suite,concurrency,app,v21,v21suite]=await Promise.all([
   readFile(path.join(root,'db/migrations/20260721_frenly_v40_staff_reversal_workflows.sql'),'utf8'),
   readFile(path.join(root,'db/tests/v40_staff_reversal_workflows.sql'),'utf8'),
   readFile(path.join(root,'db/tests/v40_reversal_credit_concurrency.sh'),'utf8'),
-  readFile(path.join(root,'app/index.html'),'utf8'),
+  Promise.all([readFile(path.join(root,'app/index.html'),'utf8'),readFile(path.join(root,'app/app.js'),'utf8')]).then(([a,b])=>a+'\n'+b),
   readFile(path.join(root,'db/migrations/20260719_frenly_v21_security_hardening.sql'),'utf8'),
   readFile(path.join(root,'db/tests/v21_security_hardening.sql'),'utf8')
 ]);

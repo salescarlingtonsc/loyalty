@@ -51,7 +51,7 @@ test('V133 gives privacy operators an audited lifecycle without browser-side del
   assert.match(consoleSource,/data-deletion-review/);
   assert.match(consoleSource,/This records the reviewed outcome; it does not delete data/);
 
-  const customerSource=await read('app/index.html');
+  const customerSource=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(customerSource,/Deletion request reviewed/);
   assert.match(customerSource,/Outcome: \$\{esc\(outcome\)\}/);
   assert.match(customerSource,/else if\(request\?\.status==='completed'\)renderCompleted\(request\)/);

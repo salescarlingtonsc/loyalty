@@ -49,7 +49,7 @@ test('invalid locked value or expiry fails without producing plausible copy',()=
 
 test('owner surface accepts only server-governed templates and still requires approval review',async()=>{
   const [module,index]=await Promise.all([
-    read('app/growth-offers.js'),read('app/index.html')
+    read('app/growth-offers.js'),Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'))
   ]);
   assert.match(module,/welcome_back:'Warm welcome back'/);
   assert.match(module,/member_thank_you:'Member thank-you'/);

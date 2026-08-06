@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
    "Suggested" strip with a one-tap prefill into the right editor. */
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const app = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
+const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
 test('the hidden attribute actually hides programme rows (tab filter is real)', () => {
   assert.match(app, /\.grow-programme-row\[hidden\]\{display:none!important\}/);

@@ -59,7 +59,7 @@ test('draft, save and publication are owner-scoped with immutable published rows
 });
 
 test('new-business programs get draft v1 and the editor publishes through RPCs', async () => {
-  const [sql, app] = await Promise.all([read(migrationPath), read('app/index.html')]);
+  const [sql, app] = await Promise.all([read(migrationPath), Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'))]);
   assert.match(sql, /create trigger trg_seed_loyalty_config_version/i);
   assert.match(sql, /after insert on public\.loyalty_programs/i);
   assert.match(app, /sb\.rpc\('create_loyalty_config_draft'/);
@@ -83,7 +83,7 @@ test('live loyalty projection cannot bypass draft publication', async () => {
 });
 
 test('tier multipliers are immutable configuration, not direct browser writes', async () => {
-  const [sql, app] = await Promise.all([read(migrationPath), read('app/index.html')]);
+  const [sql, app] = await Promise.all([read(migrationPath), Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'))]);
   assert.match(sql, /create table public\.loyalty_tier_versions/i);
   assert.match(sql, /revoke insert,update,delete,truncate on table public\.loyalty_tiers[\s\S]*from public,anon,authenticated/i);
   assert.match(sql, /insert into public\.loyalty_tier_versions[\s\S]*where config_version_id=v_base/i);

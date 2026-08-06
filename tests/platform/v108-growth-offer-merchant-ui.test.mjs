@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const source=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const source=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 
 test('merchant scanner preserves classic reward redemption and distinguishes growth offers',()=>{
   assert.match(source,/function redemptionPayloadFromQr\(value,currentUrl=location\.href\)/);

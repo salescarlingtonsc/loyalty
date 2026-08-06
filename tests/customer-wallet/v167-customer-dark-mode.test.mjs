@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 
 test('system dark mode is scoped to customer and booking surfaces',()=>{
   assert.match(app,/@media\(prefers-color-scheme:dark\)\{[\s\S]*\.customer-surface,\.customer-offer-detail-modal \.modal-card\{/);

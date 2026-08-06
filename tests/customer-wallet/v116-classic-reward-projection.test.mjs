@@ -33,7 +33,7 @@ test('classic reward capability comes from the active programme without a catalo
 });
 
 test('customer wallet merges the v89 classic action and renders a direct redeem control',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const rewards=app.slice(
     app.indexOf('const loadRewards=async()=>'),
     app.indexOf('const loadPackages=async')

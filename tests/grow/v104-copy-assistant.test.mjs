@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
-const app=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const from=app.indexOf('const PROMOTION_COPY_POLICY_V104');
 const to=app.indexOf('function promotionEditorItemV104',from);
 assert.ok(from>=0&&to>from,'v104 copy assistant source must exist');

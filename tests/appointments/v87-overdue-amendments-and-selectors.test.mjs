@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../../',import.meta.url);
-const app=await readFile(new URL('app/index.html',root),'utf8');
+const app=((await readFile(new URL('app/index.html',root),'utf8'))+'\n'+(await readFile(new URL('app/app.js',root),'utf8')));
 const source=await readFile(new URL('db/migrations/20260726_nestly_v87_overdue_appointment_amendments.sql',root),'utf8');
 const deploy=await readFile(new URL('supabase/migrations/20260726220000_nestly_v87_overdue_appointment_amendments.sql',root),'utf8');
 const fixture=await readFile(new URL('db/tests/v87_overdue_appointment_amendments.sql',root),'utf8');

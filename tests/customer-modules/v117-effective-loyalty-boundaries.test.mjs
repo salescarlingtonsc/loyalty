@@ -124,7 +124,7 @@ test('gift issuance is branch-aware while existing liability redemption uses Til
 });
 
 test('merchant UI keeps gift-card writers in the dedicated workspace only',async()=>{
-  const app=await read('app/index.html');
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const till=app.slice(
     app.indexOf('async function tillPage(){'),
     app.indexOf('async function salesPage(){')

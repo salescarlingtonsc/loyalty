@@ -29,7 +29,7 @@ test('v93 merchant scan requires an active visible branch and preserves canonica
 });
 
 test('Quick Earn sends the selected accessible till branch to the current scanner', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const scanner = app.slice(
     app.indexOf('function openMerchantRedemptionScanner'),
     app.indexOf('function renderMerchantRedemptionComplete', app.indexOf('function openMerchantRedemptionScanner')),
@@ -70,7 +70,7 @@ test('Quick Earn sends the selected accessible till branch to the current scanne
 });
 
 test('completed-sale receipt scanners preserve branch scope and missing branch fails before RPC', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const scanner = app.slice(
     app.indexOf('function openMerchantRedemptionScanner'),
     app.indexOf('function renderMerchantRedemptionComplete', app.indexOf('function openMerchantRedemptionScanner')),

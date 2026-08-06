@@ -93,9 +93,18 @@ Multiple Claude sessions work on this product concurrently. Known scopes:
 2. **Business UI/UX** — business console, dashboards, signup/Stripe flows.
 3. **Superadmin/platform console** — platform admin, RLS-pause tooling.
 
-Stay inside your scope's files and surfaces. `app/index.html` is shared by all
-three: keep edits inside your surface's regions and never reformat or move
-another surface's code.
+Stay inside your scope's files and surfaces. The application script is shared
+by all three sessions: keep edits inside your surface's regions and never
+reformat or move another surface's code.
+
+**Startup split (2026-08-06):** the former inline megascript now lives in
+`app/app.js` (index.html keeps only markup, styles, and the small blocking
+config scripts, and loads `/app.js` deferred; `boot()` runs on
+DOMContentLoaded). If your in-flight branch still edits the inline script in
+`index.html`, rebase and re-apply those edits to `app/app.js` — the code is
+byte-identical, only the file moved. Tests that grep application code read the
+CONCATENATION of `app/index.html` + `app/app.js` (see the read-site pattern in
+any customer-wallet test); new tests must do the same.
 
 ### Git and deploys
 

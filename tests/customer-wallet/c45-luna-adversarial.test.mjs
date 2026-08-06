@@ -45,7 +45,7 @@ test('Luna C45: disabling birthday benefits closes every public operational path
 
 test('Luna C45: expiry is derived, and the staff projection cannot disclose calendar or free-form customer details', async () => {
   const [sql, app, suite, harness] = await Promise.all([
-    read(sourcePath), read('app/index.html'), read('db/tests/v45_birthday_benefits.sql'), read('db/tests/v45_birthday_benefits_concurrency.sh')
+    read(sourcePath), Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')), read('db/tests/v45_birthday_benefits.sql'), read('db/tests/v45_birthday_benefits_concurrency.sh')
   ]);
   const customerSafe = functionBlock(sql, 'c45_safe_birthday_entitlement');
   const staffSafe = functionBlock(sql, 'c45_staff_safe_birthday_entitlement');

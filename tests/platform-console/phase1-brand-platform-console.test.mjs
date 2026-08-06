@@ -30,7 +30,7 @@ test('visible Peekaa brand configuration is immutable and canonical', async () =
 
 test('deployable public surfaces use Peekaa while compatibility identifiers remain intact', async () => {
   const [index,join,terms,privacy,dataRequest,customerUi,runtimeLoader] = await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/join.html'),
     read('app/terms.html'),
     read('app/privacy.html'),
@@ -95,7 +95,7 @@ test('platform console exposes the required namespaced routes', async () => {
 
 test('platform console is routed before workspace onboarding and uses versioned platform contracts', async () => {
   const [index,consoleSource,styles] = await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/platform-console.js'),
     read('app/platform-console.css')
   ]);

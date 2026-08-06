@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const join=await readFile(path.join(repoRoot,'app/join.html'),'utf8');
-const app=await readFile(path.join(repoRoot,'app/index.html'),'utf8');
+const app=((await readFile(path.join(repoRoot,'app/index.html'),'utf8'))+'\n'+(await readFile(path.join(repoRoot,'app/app.js'),'utf8')));
 const brand=await readFile(path.join(repoRoot,'app/brand-config.js'),'utf8');
 
 function extractedCustomerHandoffUrl(){

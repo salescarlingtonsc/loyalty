@@ -261,7 +261,7 @@ test('mobile CSS collapses all dense grids and preserves large touch actions',as
 });
 
 test('index integrates v106, v107 and v108 through the modular truth renderer',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(source,/revenue-truth\.css/);
   assert.match(source,/revenue-truth\.js/);
   assert.match(source,/get_revenue_truth_v106/);

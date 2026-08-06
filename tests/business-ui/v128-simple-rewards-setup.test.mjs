@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 
-const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const migration=readFileSync(new URL('../../db/migrations/20260801_nestly_v128_simple_rewards_recommender.sql',import.meta.url),'utf8');
 const browserFixture=readFileSync(new URL('../browser/reward-overview-owner-visual.html',import.meta.url),'utf8');
 const evidence=readFileSync(new URL('../../docs/qa/evidence/V128-SIMPLE-REWARDS-SETUP.md',import.meta.url),'utf8');

@@ -5,7 +5,7 @@ import {buildV129TrialTestVisual} from './generate-v129-trial-test-visual.mjs';
 
 test('V129 browser fixture executes the current production customer, profile, appointment and Record sale renderers',async()=>{
   const [app,customerUi]=await Promise.all([
-    readFile(new URL('../../app/index.html',import.meta.url),'utf8'),
+    Promise.all([readFile(new URL('../../app/index.html',import.meta.url),'utf8'),readFile(new URL('../../app/app.js',import.meta.url),'utf8')]).then(f=>f.join('\n')),
     readFile(new URL('../../app/customer-ui.js',import.meta.url),'utf8')
   ]);
   const fixture=await readFile(new URL('./v129-trial-test-visual.html',import.meta.url),'utf8');

@@ -110,7 +110,7 @@ test('money-back windows are scoped to the matching V124 provider subscription a
 });
 
 test('owner checkout defaults annual and explains price, capacity, modules, staff and the current refund policy', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /get_business_billing_v125/);
   assert.match(app, /value="annual"[^>]+checked/);
   assert.match(app, /SGD 1,188/);

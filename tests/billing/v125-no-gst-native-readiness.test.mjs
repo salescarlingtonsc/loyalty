@@ -138,7 +138,7 @@ test('existing Stripe subscription tax is cleared and cannot satisfy recovery', 
 
 test('owner and platform billing say GST is not charged and preserve the provider total', async () => {
   const [owner, platform] = await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/platform-console.js'),
   ]);
   assert.match(owner, /GST not charged[^<]*SGD 0\.00/i);
@@ -212,7 +212,7 @@ test('native origins are exact, Turnstile-bound, and outbound links stay on the 
 });
 
 test('bundled WebView has a restrictive CSP and no shared customer link uses the local origin', async () => {
-  const [app, join] = await Promise.all([read('app/index.html'), read('app/join.html')]);
+  const [app, join] = await Promise.all([Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')), read('app/join.html')]);
   assert.match(app, /<meta http-equiv="Content-Security-Policy"[^>]+default-src 'self'/i);
   assert.match(join, /<meta http-equiv="Content-Security-Policy"[^>]+default-src 'self'/i);
   assert.match(app, /connect-src 'self' https:\/\/\*\.supabase\.co wss:\/\/\*\.supabase\.co/i);

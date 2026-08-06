@@ -5,7 +5,7 @@ import test from 'node:test';
 const read=path=>readFile(new URL(`../../${path}`,import.meta.url),'utf8');
 
 test('team access is discoverable and distinguishes roster-only from signed-in access',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(source,/href="#\/settings\?tab=team"[^>]*>[^<]*(?:Team|Staff)/);
   assert.match(source,/Add staff without app access/);
   assert.match(source,/No app access/);
@@ -17,7 +17,7 @@ test('team access is discoverable and distinguishes roster-only from signed-in a
 });
 
 test('workspace sessions persist on the canonical origin and local sign-out is explicit',async()=>{
-  const [source,bridge,vercelRaw]=await Promise.all([read('app/index.html'),read('app/native-bridge.js'),read('app/vercel.json')]);
+  const [source,bridge,vercelRaw]=await Promise.all([Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),read('app/native-bridge.js'),read('app/vercel.json')]);
   const vercel=JSON.parse(vercelRaw);
   assert.match(source,/persistSession:true/);
   assert.match(source,/autoRefreshToken:true/);
@@ -31,7 +31,7 @@ test('workspace sessions persist on the canonical origin and local sign-out is e
 });
 
 test('owner customer preview renders published programme without customer authentication',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const editor=source.match(/async function loadCustomerProgrammePresentationEditorV95[\s\S]+?\nasync function settingsPage/)?.[0]||'';
   assert.match(editor,/id="previewCustomerProgramme"/);
   assert.match(editor,/openCustomerProgrammePreview/);
@@ -41,7 +41,7 @@ test('owner customer preview renders published programme without customer authen
 });
 
 test('Grow overview exposes the existing promotions workflow and customer projection stays capped at two',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const grow=source.match(/async function growPage[\s\S]+?\nasync function retentionPage/)?.[0]||source.match(/async function growPage[\s\S]+?\/\* ----------/)?.[0]||'';
   assert.match(grow,/programmeRow\(\{kind:'promotions'/);
   assert.match(grow,/href:'#\/promotions'/);
@@ -50,7 +50,7 @@ test('Grow overview exposes the existing promotions workflow and customer projec
 });
 
 test('reward editor can start from a product or service and shows business economics',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(source,/Reward name customers see/);
   assert.match(source,/Start from a product or service/);
   assert.match(source,/rwCatalogueSource/);
@@ -61,7 +61,7 @@ test('reward editor can start from a product or service and shows business econo
 });
 
 test('reward and tier editors preserve effective boundaries and show truthful states',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(source,/id="rwFrom" type="datetime-local"/);
   assert.match(source,/id="rwUntil" type="datetime-local"/);
   assert.match(source,/claim_available_from:boundaryInstant\(\$\('rwFrom'\)\.value\)/);
@@ -77,7 +77,7 @@ test('reward and tier editors preserve effective boundaries and show truthful st
 
 test('recommended tier setup creates Gold Platinum and Diamond drafts idempotently',async()=>{
   const [source,migration]=await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('db/migrations/20260803_nestly_v148_owner_launch_closure.sql')
   ]);
   assert.match(source,/Add recommended tiers/);
@@ -92,7 +92,7 @@ test('recommended tier setup creates Gold Platinum and Diamond drafts idempotent
 
 test('published tier benefits cross from owner drafts into the verified customer wallet',async()=>{
   const [source,migration]=await Promise.all([
-    read('app/index.html'),
+    Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('db/migrations/20260803_nestly_v148_owner_launch_closure.sql')
   ]);
   assert.match(source,/customer_get_effective_tier_v143/);
@@ -110,7 +110,7 @@ test('published tier benefits cross from owner drafts into the verified customer
 });
 
 test('public booking exits its skeleton on timeout and offers retry',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const portal=source.match(/async function renderPortal[\s\S]+?\nasync function boot/)?.[0]||'';
   assert.match(portal,/AbortController/);
   assert.match(portal,/portalLoadTimeout/);
@@ -119,7 +119,7 @@ test('public booking exits its skeleton on timeout and offers retry',async()=>{
 });
 
 test('heavy optional browser libraries are loaded only by the workflows that need them',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(source,/warmRuntimeOrigin\(SB_URL\)/);
   assert.doesNotMatch(source,/<script[^>]+chart\.umd\.min\.js/);
   assert.doesNotMatch(source,/<script[^>]+qrcode\.min\.js/);

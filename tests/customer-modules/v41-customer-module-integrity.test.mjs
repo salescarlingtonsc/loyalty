@@ -311,7 +311,7 @@ test('referral and membership writes are confined to permissioned RPCs', async (
 });
 
 test('v41 app uses the atomic RPCs and preserves one issuance key across retries', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /sb\.rpc\('staff_create_client'/i);
   assert.match(app, /sb\.rpc\('staff_set_marketing_consent'/i);
   assert.doesNotMatch(app, /sb\.from\('consents'\)\.insert/i);

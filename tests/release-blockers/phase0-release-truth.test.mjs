@@ -5,7 +5,7 @@ import test from 'node:test';
 
 const require=createRequire(import.meta.url);
 const root=new URL('../../',import.meta.url);
-const app=await readFile(new URL('app/index.html',root),'utf8');
+const app=((await readFile(new URL('app/index.html',root),'utf8'))+'\n'+(await readFile(new URL('app/app.js',root),'utf8')));
 const migration=await readFile(new URL('db/migrations/20260721_frenly_v41_customer_module_hardening.sql',root),'utf8');
 const v145Migration=await readFile(new URL('db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql',root),'utf8');
 const buildHandler=require('../../app/api/build.js');

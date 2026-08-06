@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 const repoRoot=fileURLToPath(new URL('../..',import.meta.url));
-const app=await readFile(path.join(repoRoot,'app/index.html'),'utf8');
+const app=((await readFile(path.join(repoRoot,'app/index.html'),'utf8'))+'\n'+(await readFile(path.join(repoRoot,'app/app.js'),'utf8')));
 
 const sliceFunction=(name,nextName)=>{
   const start=app.indexOf(name);

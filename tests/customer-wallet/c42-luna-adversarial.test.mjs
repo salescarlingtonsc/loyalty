@@ -7,7 +7,7 @@ const read = (path) => readFile(new URL(path, root), 'utf8');
 const [canonical, source, app] = await Promise.all([
   read('supabase/migrations/20260721135556_frenly_c42_consumer_registration_contracts.sql'),
   read('db/migrations/20260721_frenly_v42_consumer_registration_contracts.sql'),
-  read('app/index.html')
+  Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n'))
 ]);
 
 function sqlBlock(name) {

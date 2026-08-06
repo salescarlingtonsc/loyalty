@@ -10,7 +10,7 @@ const canonical=readFileSync(
   new URL('../../supabase/migrations/20260729110000_nestly_v96_customer_programme_selector_media.sql',import.meta.url),
   'utf8'
 );
-const app=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
+const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const rollback=readFileSync(
   new URL('../../db/tests/v96_customer_programme_selector_media.sql',import.meta.url),
   'utf8'

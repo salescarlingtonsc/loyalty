@@ -5,7 +5,7 @@ import test from 'node:test';
 const read=path=>readFile(new URL(`../../${path}`,import.meta.url),'utf8');
 
 test('authenticated business setup identifies the current email and signs out only this browser',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const onboarding=source.match(/\/\* ---------- onboarding ---------- \*\/[\s\S]+?\/\* ={20,}/)?.[0]||'';
   assert.match(onboarding,/function businessSetupAccountHtml/);
   assert.match(onboarding,/Signed in as/);
@@ -16,7 +16,7 @@ test('authenticated business setup identifies the current email and signs out on
 });
 
 test('admin platform console ships a current cache-busting asset key for both files',async()=>{
-  const source=await read('app/index.html');
+  const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   // The key must move whenever platform-console.js or .css changes, or a
   // returning super admin keeps the cached bundle. Pinning one historical
   // value went stale the first time another release bumped it, so assert the

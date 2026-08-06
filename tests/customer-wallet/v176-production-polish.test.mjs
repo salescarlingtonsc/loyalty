@@ -10,7 +10,7 @@ const section=(source,start,end)=>{
   return source.slice(from,to);
 };
 
-const app=await read('app/index.html');
+const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
 
 test('an expired sign-in is recoverable instead of reading as a permission denial',()=>{
   assert.match(app,/function walletRpcDenied\(error\)\{return error\?\.code==='42501'\}/,

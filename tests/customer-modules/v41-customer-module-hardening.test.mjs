@@ -108,7 +108,7 @@ test('gift issuance records one immutable card/sale relationship and hides beare
 });
 
 test('the SPA has no raw customer-module writes and carries stable retry keys', async () => {
-  const app = await read('app/index.html');
+  const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.doesNotMatch(app, /sb\.from\('(clients|consents|referrals|referral_programs|gift_cards|membership_plans|memberships)'\)\.(insert|update|delete|upsert)/i);
   for (const rpc of [
     'staff_create_client', 'staff_set_marketing_consent', 'issue_gift_card_at_branch_v117',

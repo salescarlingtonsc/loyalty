@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const root=new URL('../..',import.meta.url);
 
 test('customer directory normalizes common Singapore phone formats to phone_norm',async()=>{
-  const app=await readFile(new URL('app/index.html',root),'utf8');
+  const app=((await readFile(new URL('app/index.html',root),'utf8'))+'\n'+(await readFile(new URL('app/app.js',root),'utf8')));
   const source=app.match(/function normalizeSingaporeCustomerSearch\(value\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(source,'missing Singapore customer-search normalizer');
   const normalize=vm.runInNewContext(`(()=>{${source};return normalizeSingaporeCustomerSearch})()`);
@@ -19,7 +19,7 @@ test('customer directory normalizes common Singapore phone formats to phone_norm
 });
 
 test('clients-only customer search uses the tenant-scoped V129 reader without Till access',async()=>{
-  const app=await readFile(new URL('app/index.html',root),'utf8');
+  const app=((await readFile(new URL('app/index.html',root),'utf8'))+'\n'+(await readFile(new URL('app/app.js',root),'utf8')));
   const start=app.indexOf('async function clientsPage()');
   const end=app.indexOf('async function clientDetail(',start);
   const clients=app.slice(start,end);
