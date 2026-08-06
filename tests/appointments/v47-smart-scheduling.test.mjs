@@ -63,7 +63,11 @@ test('frontline Record sale minimizes choices and keeps hardened sale attributio
   // "Save & add points". The flow it anchors — amount, then tender, then one confirm — is the same.
   assert.match(till,/id="tAmt"[\s\S]*Payment received[\s\S]*legacyTenderOptions\.map[\s\S]*id="tConfirm"[\s\S]{0,120}Record sale/i);
   assert.match(till,/record_sale_by_phone/);
-  assert.match(till,/p_staff:tillStaffId/);
+  // V187: a sale is credited to the teammate who performed it, defaulting to the signed-in
+  // user. Auto-attributing to the operator was NOT 'hardened' — at a salon the receptionist
+  // ringing up a therapist's treatment silently took their commission, because
+  // on_sale_commission_snapshot freezes the rate from sales.staff_id.
+  assert.match(till,/p_staff:tillSaleStaffId\|\|tillStaffId/);
   assert.match(till,/p_branch:tillBranchId/);
   assert.match(till,/p_method:tender/);
   assert.match(till,/accessibleTillBranches/);
