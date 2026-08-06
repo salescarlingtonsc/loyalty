@@ -2480,7 +2480,7 @@
   const platformWriteSelector=[
     '#platformNewProspect','#platformImportProspects','#platformScopedNewProspect',
     '[data-move]','[data-move-select]','[data-edit-prospect]','[data-assign-prospect]','[data-scoped-assign]',
-    '[data-add-note]','[data-add-npu]','[data-add-activity]','[data-add-task]',
+    '[data-add-note]','[data-add-npu]','[data-archive-prospect]','[data-merge-prospect]','[data-add-activity]','[data-add-task]',
     '[data-add-contact]','[data-edit-contact-profile]','[data-edit-company-profile]',
     '[data-edit-qualification]','[data-edit-commercial-detail]','[data-edit-conversion-config]',
     '[data-refresh-quality]','[data-upload-document]','[data-lost]','[data-convert]',
@@ -6063,6 +6063,8 @@
           <button type="button" class="btn ghost sm" data-add-task>${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt("Add follow-up task"))}</span></button>
           <button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload document"))}</span></button>
           <button type="button" class="btn ghost sm" data-add-npu>${escapeHtml(pt("Record not proceeding"))}</button>
+          ${isSuperAdmin&&!converted?`<button type="button" class="btn ghost sm" data-merge-prospect>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Merge into another firm"))}</span></button>
+          <button type="button" class="btn ghost sm" data-archive-prospect>${CUI.icon('empty',{size:16})}<span>${escapeHtml(pt("Archive this record"))}</span></button>`:''}
           ${prospectLifecycleActionsHtml({converted,stage,termsAccepted},CUI)}
         </div>
       </details>
@@ -6194,6 +6196,8 @@
     on('[data-assign-prospect]',()=>assignProspectModal(prospect,context));
     on('[data-add-note]',()=>activityModal(prospect,'note',context));
     on('[data-add-npu]',()=>activityModal(prospect,'npu',context));
+    on('[data-archive-prospect]',()=>archiveProspectModal(prospect,context));
+    on('[data-merge-prospect]',()=>mergeProspectModal(prospect,context));
     overlay.querySelectorAll('[data-add-activity]').forEach(button=>button.onclick=()=>activityModal(prospect,button.dataset.addActivity,context));
     on('[data-add-task]',()=>taskModal(prospect,context));
     on('[data-add-contact]',()=>contactModal(detail,null,context));
@@ -6465,6 +6469,60 @@
       await rpc(sb,'platform_record_conversion_configuration_v86',{p_prospect:prospect.id,p_configuration:profile});
       await refreshAfterProspectMutation(prospect.id,controls,context,'Account configuration saved.');
     }});
+  }
+  // Archive and merge are the CRM's only destructive verbs, so both state the
+  // consequence up front, require a written reason (the RPC rejects a blank
+  // one) and land in the audit log. Neither deletes a row.
+  function archiveProspectModal(prospect,context) {
+    const {CUI,sb}=context;
+    modal({
+      title:'Archive this record',submitLabel:'Archive record',CUI,
+      body:`<p class="small">${escapeHtml(pt('{name} is removed from the board, the list and every count. Nothing is deleted — its history and audit trail are kept, and a super admin can restore it.',{name:prospectCompany(prospect)}))}</p>
+        ${CUI.field({id:'archiveReason',label:'Why is this being archived?',control:'textarea',required:true,attributes:'name="reason" rows="3"',hint:'Recorded in the audit log.'})}`,
+      onSubmit:async(form,controls)=>{
+        await rpc(sb,'platform_archive_prospect_v184',{
+          p_prospect:prospect.id,p_reason:String(form.get('reason')||'')
+        });
+        controls.close();
+        context.markBoardDirty?.();
+        context.close?.();
+        CUI.announce(pt('{name} archived.',{name:prospectCompany(prospect)}));
+      }
+    });
+  }
+  async function mergeProspectModal(prospect,context) {
+    const {CUI,sb}=context;
+    // Offer every other live firm that still has a prospect record; a firm
+    // that already owns a workspace cannot be merged away.
+    const directory=await fetchFirmDirectoryPageV88(sb,defaultOnboardingFilters(),{required:true,limit:250})
+      .catch(()=>null);
+    const options=asArray(directory?.items)
+      .filter(row=>row.prospect_id&&String(row.prospect_id)!==String(prospect.id))
+      .map(row=>({value:String(row.prospect_id),label:prospectCompany(row)}))
+      .sort((a,b)=>a.label.localeCompare(b.label));
+    if(!options.length){
+      CUI.announce(pt('There is no other firm record to merge into.'),{assertive:true});
+      return;
+    }
+    modal({
+      title:'Merge into another firm',submitLabel:'Merge records',CUI,
+      body:`<p class="small">${escapeHtml(pt('Contacts, activities, tasks, documents and tags move to the firm you choose. {name} is then archived and cannot be restored on its own. Stage history and evidence stay with {name}, so the audit trail is not rewritten.',{name:prospectCompany(prospect)}))}</p>
+        ${CUI.field({id:'mergeTarget',label:'Keep this firm',control:'select',required:true,attributes:'name="target"',options})}
+        ${CUI.field({id:'mergeReason',label:'Why are these the same firm?',control:'textarea',required:true,attributes:'name="reason" rows="3"',hint:'Recorded in the audit log.'})}`,
+      onSubmit:async(form,controls)=>{
+        const result=asObject(await rpc(sb,'platform_merge_prospects_v184',{
+          p_source:prospect.id,p_target:String(form.get('target')||''),
+          p_reason:String(form.get('reason')||'')
+        }));
+        controls.close();
+        context.markBoardDirty?.();
+        context.close?.();
+        const moved=asObject(result.moved);
+        CUI.announce(pt('Merged. {contacts} contacts and {activities} activities moved to the surviving firm.',{
+          contacts:Number(moved.contacts||0),activities:Number(moved.activities||0)
+        }));
+      }
+    });
   }
   async function refreshProspectQuality(prospect,context) {
     const button=context.overlay.querySelector('[data-refresh-quality]');

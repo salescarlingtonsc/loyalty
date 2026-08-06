@@ -25,7 +25,7 @@ test('admin platform console ships a current cache-busting asset key for both fi
   const css=source.match(/\/platform-console\.css\?v=([0-9]{8}-[a-z0-9-]+)/)?.[1];
   assert.ok(js,'platform-console.js must carry a version key');
   assert.equal(css,js,'both console assets must share one cache key');
-  assert.ok(js>='20260806-v183','the console asset key must not regress');
+  assert.ok(js>='20260807-v184','the console asset key must not regress');
   assert.doesNotMatch(source,/\/platform-console\.(js|css)\?v=20260802-v134/);
 });
 

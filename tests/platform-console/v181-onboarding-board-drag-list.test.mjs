@@ -196,3 +196,31 @@ test('list view does not echo the lane in the stage column for website signups',
   assert.equal(cells[2], 'Case won', 'operational status still carries the lane');
   assert.notEqual(cells[1], cells[2], 'stage must not duplicate the lane column');
 });
+
+test('v184 archive and merge are offered only to a super admin, and only pre-workspace', async () => {
+  const source = await read('app/platform-console.js');
+
+  // Both actions are gated on super admin AND on the firm not being converted.
+  assert.match(source, /\$\{isSuperAdmin&&!converted\?`<button type="button" class="btn ghost sm" data-merge-prospect>/);
+  assert.match(source, /data-archive-prospect>/);
+  assert.match(source, /on\('\[data-archive-prospect\]',\(\)=>archiveProspectModal\(prospect,context\)\)/);
+  assert.match(source, /on\('\[data-merge-prospect\]',\(\)=>mergeProspectModal\(prospect,context\)\)/);
+
+  // Card-action selectors must include the new buttons or a click would fall
+  // through to "open the drawer" instead of firing the action.
+  assert.match(source, /'\[data-archive-prospect\]','\[data-merge-prospect\]'/);
+
+  // Both call the v184 RPCs and both demand a reason field.
+  assert.match(source, /platform_archive_prospect_v184',\{[\s\S]{0,120}p_reason/);
+  assert.match(source, /platform_merge_prospects_v184',\{[\s\S]{0,200}p_reason/);
+  assert.match(source, /id:'archiveReason'[^}]*required:true/);
+  assert.match(source, /id:'mergeReason'[^}]*required:true/);
+
+  // The merge picker never offers the record being merged away, and skips
+  // firms that have no prospect record at all.
+  assert.match(source, /row\.prospect_id&&String\(row\.prospect_id\)!==String\(prospect\.id\)/);
+
+  // The copy must be honest about what survives.
+  assert.match(source, /Nothing is deleted/);
+  assert.match(source, /cannot be restored on its own/);
+});
