@@ -1317,6 +1317,18 @@
       "path": "db/migrations/20260807_nestly_v185_prospect_archive_merge_erase.sql",
       "semanticVersion": "v185",
       "proposedDeployVersion": "20260807010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v194_merge_contact_dedupe.sql",
+      "semanticVersion": "v194",
+      "proposedDeployVersion": "20260807020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v195_merge_keeps_source_lineage.sql",
+      "semanticVersion": "v195",
+      "proposedDeployVersion": "20260807030000"
     }
   ]
 }

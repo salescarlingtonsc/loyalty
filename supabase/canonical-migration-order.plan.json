@@ -1318,6 +1318,18 @@
       "version": "20260807010000",
       "name": "nestly_v185_prospect_archive_merge_erase",
       "sourcePath": "db/migrations/20260807_nestly_v185_prospect_archive_merge_erase.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807020000",
+      "name": "nestly_v194_merge_contact_dedupe",
+      "sourcePath": "db/migrations/20260807_nestly_v194_merge_contact_dedupe.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807030000",
+      "name": "nestly_v195_merge_keeps_source_lineage",
+      "sourcePath": "db/migrations/20260807_nestly_v195_merge_keeps_source_lineage.sql"
     }
   ]
 }
