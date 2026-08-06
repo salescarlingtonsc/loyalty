@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9740aa67a56c8bd222b9a0864df6a9a0a54a22bc45cd7a41fe976c20db22da32"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="3d1603e64ae2983237a1b231eb9dbc065c5f995a911eaac8a67d2a93e927cf45"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -106,6 +106,13 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .v150-segment{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:var(--shadow)}
 .v150-segment button{min-height:44px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px}
 .v150-segment button[aria-pressed="true"]{background:var(--ink);color:#fff}
+/* V200 sub-module tabs. The strip scrolls horizontally rather than wrapping: a wrapped pill strip
+   changes height as tabs re-flow, which shifts the whole page under the owner's thumb on the exact
+   tap they were aiming at. `flex` on the buttons is off so labels keep their natural width. */
+.section-subtabs-v200{display:flex;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.section-subtabs-v200::-webkit-scrollbar{display:none}
+.section-subtabs-v200 button{flex:0 0 auto;white-space:nowrap}
+@media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
 .v150-kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:750}
@@ -155,9 +162,6 @@ tr[aria-selected="true"] td{background:var(--tint)}
    events (lower z-index), drops the 44px min-height that would swamp a short block, and never
    carries a Remove control — removal stays in the Day view where the row is big enough to be
    sure what you are deleting. */
-.week-blocked-window{left:2px;right:2px;z-index:1;min-height:0;padding:2px 5px;font-size:11px;line-height:1.25}
-.week-blocked-window span{display:flex;flex-direction:column;gap:0;overflow:hidden}
-.week-blocked-window b{font-variant-numeric:tabular-nums}
 /* V180: today's bookings at a glance. Chips wrap rather than scroll horizontally — a hidden
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
@@ -873,9 +877,6 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
 .dashboard-metric .metric-value-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .metric-delta{flex:0 0 auto;letter-spacing:0;text-transform:none}
-.dashboard-headline:empty{display:none}
-.dashboard-headline-line{font-size:1.16rem;line-height:1.45}.dashboard-headline-line b{font-weight:750}
-.dashboard-headline-compare{margin-top:4px;color:var(--muted);font-size:12.5px;line-height:1.4}
 .dashboard-loyalty{margin-top:16px;padding:16px;border:1px solid var(--hair);border-radius:var(--r);background:#FBF8F5}
 .dashboard-loyalty-head{display:flex;align-items:flex-start;gap:10px}
 .dashboard-loyalty-head>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-loyalty-head h3{font-size:1rem}.dashboard-loyalty-head p{margin-top:3px}
@@ -920,6 +921,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .day-no-slots{position:absolute;left:10px;right:10px;z-index:2;padding:8px;border-radius:7px;background:#fff9;color:var(--muted);font-size:11px;text-align:center}
 .day-break-window{position:absolute;left:3px;right:3px;z-index:3;display:grid;place-items:center;border-block:1px dashed #D3A87D;background:repeating-linear-gradient(135deg,#FFF3E6,#FFF3E6 8px,#FCE8D3 8px,#FCE8D3 16px);color:#79512D;font-size:11px;font-weight:700;pointer-events:none}
 .day-blocked-window{position:absolute;left:5px;right:5px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;overflow:hidden;padding:5px 7px;border:1px solid #C9B9B5;border-left:4px solid #7B6D69;border-radius:7px;background:repeating-linear-gradient(135deg,#F2EFED,#F2EFED 8px,#E7E1DE 8px,#E7E1DE 16px);color:#403936;font-size:10.5px;line-height:1.2}.day-blocked-window b,.day-blocked-window span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.day-blocked-window button{flex:0 0 auto;min-width:44px;min-height:44px;border:0;background:transparent;color:var(--red);font-weight:750;cursor:pointer}
+/* V200 (owner: "not able to click in the specific appointments"). These three rules used to live
+   ~760 lines EARLIER in this sheet. `.week-blocked-window` and `.day-blocked-window` are both
+   single-class selectors, so specificity ties and source order decides — every one of these
+   declarations was silently losing to the base rule above. The week view therefore inherited
+   z-index:4 (above .calendar-event at 2/3) and min-height:44px, so a blocked window painted over
+   the appointments beside it and swallowed their clicks. Ordering IS the fix; keep them here.
+   pointer-events:none makes it structural rather than a stacking coincidence: the week variant
+   renders no Remove control, so it has nothing to receive a click for. */
+.week-blocked-window{left:2px;right:2px;z-index:1;min-height:0;padding:2px 5px;font-size:11px;line-height:1.25;pointer-events:none}
+.week-blocked-window span{display:flex;flex-direction:column;gap:0;overflow:hidden}
+.week-blocked-window b{font-variant-numeric:tabular-nums}
 .day-track-state{position:absolute;inset:16px;display:grid;place-content:center;gap:4px;text-align:center;color:var(--muted)}.day-track-state span{font-size:12px}
 .day-now-line{position:absolute;left:0;right:0;height:2px;background:#D72F43;z-index:5;pointer-events:none}.day-now-line::before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#D72F43}.day-now-line span{position:absolute;left:8px;top:-13px;background:#D72F43;color:#fff;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:800;box-shadow:0 4px 12px rgba(215,47,67,.18)}
 .day-timeline-event{position:absolute;z-index:6;min-height:44px;overflow:hidden;padding:5px 8px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 14%,#fff);color:var(--ink);text-align:left;line-height:1.15}.day-timeline-event:hover,.day-timeline-event:focus-visible{z-index:9;box-shadow:var(--shadow)}.day-timeline-event span,.day-timeline-event b,.day-timeline-event small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.day-timeline-event span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums}.day-timeline-event small{margin-top:1px;color:var(--muted)}
@@ -1500,7 +1512,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 9740aa67a56c8bd222b9a0864df6a9a0a54a22bc45cd7a41fe976c20db22da32</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 3d1603e64ae2983237a1b231eb9dbc065c5f995a911eaac8a67d2a93e927cf45</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2090,7 +2102,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     </section>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
-      <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="dashboard-headline" id="dashboardHeadline" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
+      <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
     </section>
     <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
   wireLocalCollapseV154('dashboardPerformanceToggle','dashboardPerformanceBody','peekaa.v164.dashboard.performance.open');
@@ -2132,9 +2144,8 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   }
   const invalidatePerformance=()=>{
     requestGate.invalidate();killCharts();
-    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),headline=dashboardRoot.querySelector('#dashboardHeadline'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     if(status)status.innerHTML='';
-    if(headline)headline.innerHTML='';
     if(kpis)kpis.innerHTML=`<div class="card" style="grid-column:1/-1">${CUI.emptyState({iconName:'reports',title:'Date range changed',body:'Apply the new range to refresh these figures.'})}</div>`;
     if(loyalty)loyalty.innerHTML='';
     if(insights)insights.innerHTML='';
@@ -2154,7 +2165,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
     const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value;
-    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),headline=dashboardRoot.querySelector('#dashboardHeadline'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     const showLoadError=(message,retryId)=>{
       if(!status)return;
       kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');insights?.setAttribute('aria-busy','false');headline?.setAttribute('aria-busy','false');loyalty?.setAttribute('aria-busy','false');
@@ -2167,7 +2178,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     if(!from||!to||from>to){showLoadError('Choose a valid dashboard date range.','dashboardReportRetry');return}
     killCharts();
     status.innerHTML='';
-    if(headline)headline.innerHTML='<p class="dashboard-headline-line muted">Working out this period…</p>';
     if(loyalty)loyalty.innerHTML='';
     if(kpis)kpis.innerHTML=Array.from({length:4},()=>CUI.skeletonCard({lines:3,className:'v150-kpi'})).join('');
     if(insights)insights.innerHTML=`<section class="merchant-insights"><div class="merchant-insights-head"><div><h2>Merchant insights</h2><p class="muted small">Loading recommendations…</p></div></div><div class="merchant-insights-grid">${Array.from({length:3},()=>CUI.skeletonCard({lines:4})).join('')}</div></section>`;
@@ -2214,10 +2224,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const revenueChange=percentageChangeV153(d.revenue_cents,previousSummary?.revenue_cents);
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
     const newCustomersChange=customerMetricsAvailable&&previousSummary?.availability?.clients!==false?percentageChangeV153(d.new_customers,previousSummary?.new_customers):null;
-    if(headline){
-      headline.innerHTML=dashboardHeadlineHtmlV170({revenueCents:d.revenue_cents,visits:d.visits,from,to,change:revenueChange,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo});
-      headline.setAttribute('aria-busy','false');
-    }
     const metrics=[
       {key:'visits',value:String(d.visits||0),hint:`Valid original visits · ${scopeLabel}`,delta:visitsChange},
       {key:'revenue',value:money(d.revenue_cents||0),hint:`Net sales · ${scopeLabel}`,delta:revenueChange},
@@ -3773,7 +3779,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'9740aa67a56c8bd222b9a0864df6a9a0a54a22bc45cd7a41fe976c20db22da32',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'3d1603e64ae2983237a1b231eb9dbc065c5f995a911eaac8a67d2a93e927cf45',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

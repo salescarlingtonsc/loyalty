@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="26014dce60fd22677def238bd1d6d60a488e62d139b55582a434d2083214e039"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="b7557b9e5a93b248aa215b177de44a48667a1a9bb5d10be9481c4c81a1369aa6"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -106,6 +106,13 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .v150-segment{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:var(--shadow)}
 .v150-segment button{min-height:44px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px}
 .v150-segment button[aria-pressed="true"]{background:var(--ink);color:#fff}
+/* V200 sub-module tabs. The strip scrolls horizontally rather than wrapping: a wrapped pill strip
+   changes height as tabs re-flow, which shifts the whole page under the owner's thumb on the exact
+   tap they were aiming at. `flex` on the buttons is off so labels keep their natural width. */
+.section-subtabs-v200{display:flex;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.section-subtabs-v200::-webkit-scrollbar{display:none}
+.section-subtabs-v200 button{flex:0 0 auto;white-space:nowrap}
+@media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
 .v150-kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:750}
@@ -155,9 +162,6 @@ tr[aria-selected="true"] td{background:var(--tint)}
    events (lower z-index), drops the 44px min-height that would swamp a short block, and never
    carries a Remove control — removal stays in the Day view where the row is big enough to be
    sure what you are deleting. */
-.week-blocked-window{left:2px;right:2px;z-index:1;min-height:0;padding:2px 5px;font-size:11px;line-height:1.25}
-.week-blocked-window span{display:flex;flex-direction:column;gap:0;overflow:hidden}
-.week-blocked-window b{font-variant-numeric:tabular-nums}
 /* V180: today's bookings at a glance. Chips wrap rather than scroll horizontally — a hidden
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
@@ -873,9 +877,6 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
 .dashboard-metric .metric-value-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .metric-delta{flex:0 0 auto;letter-spacing:0;text-transform:none}
-.dashboard-headline:empty{display:none}
-.dashboard-headline-line{font-size:1.16rem;line-height:1.45}.dashboard-headline-line b{font-weight:750}
-.dashboard-headline-compare{margin-top:4px;color:var(--muted);font-size:12.5px;line-height:1.4}
 .dashboard-loyalty{margin-top:16px;padding:16px;border:1px solid var(--hair);border-radius:var(--r);background:#FBF8F5}
 .dashboard-loyalty-head{display:flex;align-items:flex-start;gap:10px}
 .dashboard-loyalty-head>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-loyalty-head h3{font-size:1rem}.dashboard-loyalty-head p{margin-top:3px}
@@ -920,6 +921,17 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .day-no-slots{position:absolute;left:10px;right:10px;z-index:2;padding:8px;border-radius:7px;background:#fff9;color:var(--muted);font-size:11px;text-align:center}
 .day-break-window{position:absolute;left:3px;right:3px;z-index:3;display:grid;place-items:center;border-block:1px dashed #D3A87D;background:repeating-linear-gradient(135deg,#FFF3E6,#FFF3E6 8px,#FCE8D3 8px,#FCE8D3 16px);color:#79512D;font-size:11px;font-weight:700;pointer-events:none}
 .day-blocked-window{position:absolute;left:5px;right:5px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;overflow:hidden;padding:5px 7px;border:1px solid #C9B9B5;border-left:4px solid #7B6D69;border-radius:7px;background:repeating-linear-gradient(135deg,#F2EFED,#F2EFED 8px,#E7E1DE 8px,#E7E1DE 16px);color:#403936;font-size:10.5px;line-height:1.2}.day-blocked-window b,.day-blocked-window span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.day-blocked-window button{flex:0 0 auto;min-width:44px;min-height:44px;border:0;background:transparent;color:var(--red);font-weight:750;cursor:pointer}
+/* V200 (owner: "not able to click in the specific appointments"). These three rules used to live
+   ~760 lines EARLIER in this sheet. `.week-blocked-window` and `.day-blocked-window` are both
+   single-class selectors, so specificity ties and source order decides — every one of these
+   declarations was silently losing to the base rule above. The week view therefore inherited
+   z-index:4 (above .calendar-event at 2/3) and min-height:44px, so a blocked window painted over
+   the appointments beside it and swallowed their clicks. Ordering IS the fix; keep them here.
+   pointer-events:none makes it structural rather than a stacking coincidence: the week variant
+   renders no Remove control, so it has nothing to receive a click for. */
+.week-blocked-window{left:2px;right:2px;z-index:1;min-height:0;padding:2px 5px;font-size:11px;line-height:1.25;pointer-events:none}
+.week-blocked-window span{display:flex;flex-direction:column;gap:0;overflow:hidden}
+.week-blocked-window b{font-variant-numeric:tabular-nums}
 .day-track-state{position:absolute;inset:16px;display:grid;place-content:center;gap:4px;text-align:center;color:var(--muted)}.day-track-state span{font-size:12px}
 .day-now-line{position:absolute;left:0;right:0;height:2px;background:#D72F43;z-index:5;pointer-events:none}.day-now-line::before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#D72F43}.day-now-line span{position:absolute;left:8px;top:-13px;background:#D72F43;color:#fff;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:800;box-shadow:0 4px 12px rgba(215,47,67,.18)}
 .day-timeline-event{position:absolute;z-index:6;min-height:44px;overflow:hidden;padding:5px 8px;border:1px solid color-mix(in srgb,var(--event-color) 72%,#0000);border-left:4px solid var(--event-color);border-radius:7px;background:color-mix(in srgb,var(--event-color) 14%,#fff);color:var(--ink);text-align:left;line-height:1.15}.day-timeline-event:hover,.day-timeline-event:focus-visible{z-index:9;box-shadow:var(--shadow)}.day-timeline-event span,.day-timeline-event b,.day-timeline-event small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.day-timeline-event span{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums}.day-timeline-event small{margin-top:1px;color:var(--muted)}
@@ -1500,7 +1512,7 @@ html[data-customer-surface="true"] body{background:var(--bg)}
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 26014dce60fd22677def238bd1d6d60a488e62d139b55582a434d2083214e039</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · b7557b9e5a93b248aa215b177de44a48667a1a9bb5d10be9481c4c81a1369aa6</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -3281,7 +3293,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'26014dce60fd22677def238bd1d6d60a488e62d139b55582a434d2083214e039',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'b7557b9e5a93b248aa215b177de44a48667a1a9bb5d10be9481c4c81a1369aa6',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

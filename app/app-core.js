@@ -2390,6 +2390,104 @@ function normalizeSingaporeCustomerSearch(value){
   if(digits.length===10&&digits.startsWith('65'))digits=digits.slice(2);
   return digits.length===8?digits:null;
 }
+/* V200 (owner: "in all the modules i need you to simplify the sub modules ... just tab the sub
+   modules and can view easily instead of long scrolling"). ONE mechanism for every module,
+   matching the Bookings pill strip the owner pointed at.
+
+   A page opts in declaratively: tag a top-level section with data-subtab="Group". Anything
+   UNTAGGED stays pinned above the strip, which is what keeps a module's title, date filters and
+   primary action reachable from every tab instead of hiding inside whichever one happens to be
+   open. Tabs appear in the order their group is first seen, so the strip is the page's own
+   reading order rather than a second list to keep in sync — add a section, it lands in the right
+   tab with no wiring.
+
+   The chosen tab is remembered per module, because an owner who lives in one sub-module should
+   not re-select it on every visit. It is remembered in sessionStorage, not localStorage: a tab is
+   a "where was I just now", and restoring last week's choice would hide the section they came
+   for. Fewer than two groups means no strip at all — a one-section page keeps scrolling. */
+function revealSectionTabV200(node){
+  const panel=node?.closest?.('[data-subtab-panel]');
+  if(!panel||!panel.hidden)return false;
+  const tab=panel.getRootNode()?.getElementById?.(panel.getAttribute('aria-labelledby'))
+    ||document.getElementById(panel.getAttribute('aria-labelledby'));
+  if(!tab)return false;
+  tab.click();
+  return true;
+}
+function sectionTabsV200(root,{key='',label='Sections'}={}){
+  if(!root||root.dataset.sectionTabsV200==='1')return null;
+  const tagged=Array.from(root.children).filter(node=>node.dataset&&node.dataset.subtab);
+  const groups=[];
+  tagged.forEach(node=>{
+    const name=String(node.dataset.subtab||'').trim();
+    if(!name)return;
+    let group=groups.find(item=>item.name===name);
+    if(!group){group={name,nodes:[]};groups.push(group)}
+    group.nodes.push(node);
+  });
+  if(groups.length<2)return null;
+  root.dataset.sectionTabsV200='1';
+  const slug=text=>String(text).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'group';
+  const idBase=`subtab-${slug(key||label)}`;
+  const strip=document.createElement('div');
+  strip.className='v150-segment section-subtabs-v200';
+  strip.setAttribute('role','tablist');
+  strip.setAttribute('aria-label',label);
+  const panels=groups.map((group,index)=>{
+    const panel=document.createElement('div');
+    panel.id=`${idBase}-panel-${index}`;
+    panel.setAttribute('role','tabpanel');
+    panel.setAttribute('aria-labelledby',`${idBase}-tab-${index}`);
+    panel.setAttribute('data-subtab-panel',group.name);
+    panel.hidden=true;
+    return panel;
+  });
+  groups.forEach((group,index)=>{
+    const tab=document.createElement('button');
+    tab.type='button';
+    tab.id=`${idBase}-tab-${index}`;
+    tab.setAttribute('role','tab');
+    tab.setAttribute('aria-controls',panels[index].id);
+    tab.textContent=group.name;
+    strip.appendChild(tab);
+  });
+  /* Insert where the first tagged section sits, so the pinned header keeps its position. */
+  groups[0].nodes[0].before(strip);
+  strip.after(...panels);
+  groups.forEach((group,index)=>group.nodes.forEach(node=>panels[index].appendChild(node)));
+  const storageKey=key?`nestly:subtab:${key}`:'';
+  const tabs=Array.from(strip.children);
+  const setTab=(index,{focus=false,remember=true}={})=>{
+    tabs.forEach((tab,position)=>{
+      const active=position===index;
+      tab.setAttribute('aria-selected',String(active));
+      tab.setAttribute('aria-pressed',String(active));
+      /* Only the selected tab stays in the tab order — a tablist is one stop, then arrow keys. */
+      tab.tabIndex=active?0:-1;
+      panels[position].hidden=!active;
+    });
+    if(focus)tabs[index].focus();
+    if(remember&&storageKey){try{sessionStorage.setItem(storageKey,groups[index].name)}catch(error){}}
+  };
+  tabs.forEach((tab,index)=>{
+    tab.onclick=()=>setTab(index);
+    tab.onkeydown=event=>{
+      const step={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[event.key];
+      if(step){event.preventDefault();setTab((index+step+tabs.length)%tabs.length,{focus:true});return}
+      if(event.key==='Home'){event.preventDefault();setTab(0,{focus:true})}
+      if(event.key==='End'){event.preventDefault();setTab(tabs.length-1,{focus:true})}
+    };
+  });
+  let initial=0;
+  if(storageKey){
+    try{
+      const remembered=groups.findIndex(group=>group.name===sessionStorage.getItem(storageKey));
+      if(remembered>=0)initial=remembered;
+    }catch(error){}
+  }
+  setTab(initial,{remember:false});
+  return {strip,panels,setTab};
+}
 function promotionDateTextV104(value){
   if(!value)return '';
   const instant=/^\d{4}-\d{2}-\d{2}$/.test(String(value))

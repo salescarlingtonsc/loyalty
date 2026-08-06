@@ -2076,16 +2076,10 @@ function dashboardRangeLabelV170(from,to){
   if(from!==to)return `${from} – ${to}`;
   return from===sgDateInputValue()?'today':`on ${from}`;
 }
-function dashboardComparisonSentenceV170(change,previousFrom,previousTo){
-  if(change===null||!Number.isFinite(change))return 'No earlier period to compare yet.';
-  const previousWindow=`${previousFrom} – ${previousTo}`;
-  if(change===0)return `Level with ${previousWindow}.`;
-  return `${change>0?'Up':'Down'} ${Math.abs(change)}% vs ${previousWindow}.`;
-}
-function dashboardHeadlineHtmlV170({revenueCents,visits,from,to,change,previousFrom,previousTo}){
-  const visitCount=Number(visits)||0;
-  return `<p class="dashboard-headline-line"><b>${esc(money(revenueCents||0))}</b> taken across <b>${esc(visitCount.toLocaleString('en-SG'))} ${visitCount===1?'visit':'visits'}</b> ${esc(dashboardRangeLabelV170(from,to))}</p><p class="dashboard-headline-compare">${esc(dashboardComparisonSentenceV170(change,previousFrom,previousTo))}</p>`;
-}
+/* V200 (owner: "remove this redundant line"). The V170 headline restated the Revenue and Visits
+   tiles that sit directly beneath it, and its comparison sentence restated the per-tile delta
+   chips. Two readings of the same two numbers, one above the other. The tiles carry the figure,
+   the range and the delta, so the headline was pure duplication and is gone. */
 function dashboardDeltaChipV170(change,previousFrom,previousTo){
   if(change===null||change===undefined||!Number.isFinite(change))return '';
   const word=change>0?'up':change<0?'down':'level';
@@ -2197,7 +2191,7 @@ async function dashboard(){
     </section>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
-      <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="dashboard-headline" id="dashboardHeadline" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
+      <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
     </section>
     <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
   wireLocalCollapseV154('dashboardPerformanceToggle','dashboardPerformanceBody','peekaa.v164.dashboard.performance.open');
@@ -2239,9 +2233,8 @@ async function dashboard(){
   }
   const invalidatePerformance=()=>{
     requestGate.invalidate();killCharts();
-    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),headline=dashboardRoot.querySelector('#dashboardHeadline'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     if(status)status.innerHTML='';
-    if(headline)headline.innerHTML='';
     if(kpis)kpis.innerHTML=`<div class="card" style="grid-column:1/-1">${CUI.emptyState({iconName:'reports',title:'Date range changed',body:'Apply the new range to refresh these figures.'})}</div>`;
     if(loyalty)loyalty.innerHTML='';
     if(insights)insights.innerHTML='';
@@ -2261,7 +2254,7 @@ async function dashboard(){
     const isCurrent=requestGate.begin();
     if(!isCurrent())return;
     const from=dashboardRoot.querySelector('#df').value,to=dashboardRoot.querySelector('#dt').value;
-    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),headline=dashboardRoot.querySelector('#dashboardHeadline'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
+    const status=dashboardRoot.querySelector('#dashboardStatus'),kpis=dashboardRoot.querySelector('#kpis'),charts=dashboardRoot.querySelector('#charts'),insights=dashboardRoot.querySelector('#dashboardInsights'),loyalty=dashboardRoot.querySelector('#dashboardLoyalty');
     const showLoadError=(message,retryId)=>{
       if(!status)return;
       kpis?.setAttribute('aria-busy','false');charts?.setAttribute('aria-busy','false');insights?.setAttribute('aria-busy','false');headline?.setAttribute('aria-busy','false');loyalty?.setAttribute('aria-busy','false');
@@ -2274,7 +2267,6 @@ async function dashboard(){
     if(!from||!to||from>to){showLoadError('Choose a valid dashboard date range.','dashboardReportRetry');return}
     killCharts();
     status.innerHTML='';
-    if(headline)headline.innerHTML='<p class="dashboard-headline-line muted">Working out this period…</p>';
     if(loyalty)loyalty.innerHTML='';
     if(kpis)kpis.innerHTML=Array.from({length:4},()=>CUI.skeletonCard({lines:3,className:'v150-kpi'})).join('');
     if(insights)insights.innerHTML=`<section class="merchant-insights"><div class="merchant-insights-head"><div><h2>Merchant insights</h2><p class="muted small">Loading recommendations…</p></div></div><div class="merchant-insights-grid">${Array.from({length:3},()=>CUI.skeletonCard({lines:4})).join('')}</div></section>`;
@@ -2321,10 +2313,6 @@ async function dashboard(){
     const revenueChange=percentageChangeV153(d.revenue_cents,previousSummary?.revenue_cents);
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
     const newCustomersChange=customerMetricsAvailable&&previousSummary?.availability?.clients!==false?percentageChangeV153(d.new_customers,previousSummary?.new_customers):null;
-    if(headline){
-      headline.innerHTML=dashboardHeadlineHtmlV170({revenueCents:d.revenue_cents,visits:d.visits,from,to,change:revenueChange,previousFrom:previousRange.previousFrom,previousTo:previousRange.previousTo});
-      headline.setAttribute('aria-busy','false');
-    }
     const metrics=[
       {key:'visits',value:String(d.visits||0),hint:`Valid original visits · ${scopeLabel}`,delta:visitsChange},
       {key:'revenue',value:money(d.revenue_cents||0),hint:`Net sales · ${scopeLabel}`,delta:revenueChange},
