@@ -57,3 +57,19 @@ test('the rewards draft retry cannot deadlock on a stale idempotency key', () =>
   assert.ok(app.includes('${ownerErrorText(error)} Nothing was published.'),
     'other failures must show the real reason, not a generic message');
 });
+
+test('an owner can say whether the business sells services, products or both', () => {
+  // Owner: "some business is products only no services ... some have mix like salon
+  // (so we can have default for the sectors but able to off or on if needed to)"
+  assert.match(app, /id="sellsServices"/);
+  assert.match(app, /id="sellsProducts"/);
+  assert.match(app, /business_set_sales_mix_v184/);
+  const i = app.indexOf("salesMixSave')");
+  const src = app.slice(i, i + 1600);
+  assert.ok(src.includes('Pick at least one'),
+    'a business that sells neither has nothing to record a sale against');
+  assert.ok(src.includes('also_disabled'),
+    'the owner must be told what else was switched off, not discover it later');
+  // The rest of the entitlement stays with the sector.
+  assert.match(app, /Everything else is set by Peekaa for your sector/);
+});

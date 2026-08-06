@@ -1275,6 +1275,12 @@
       "path": "db/migrations/20260806_nestly_v183_promotion_delete.sql",
       "semanticVersion": "v183",
       "proposedDeployVersion": "20260806125500"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v184_product_service_sectors.sql",
+      "semanticVersion": "v184",
+      "proposedDeployVersion": "20260806125800"
     }
   ]
 }

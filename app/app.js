@@ -19614,7 +19614,12 @@ async function settingsPage(){
     ${S.myRole==='owner'?`<section class="settings-panel" id="setpanel-programme" role="tabpanel" aria-labelledby="settab-programme" tabindex="-1" hidden>
       <div class="card" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>
     </section>`:''}
-    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1" hidden><div class="split"><div class="card"><b>Modules</b><p class="muted small" style="margin:6px 0 10px">Set by Peekaa for your sector. Contact Peekaa if your business needs a different module entitlement.</p>
+    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1" hidden><div class="split"><div class="card">${S.myRole==='owner'?`<b>What do you sell?</b>
+      <p class="muted small" style="margin:6px 0 10px">Your sector sets a sensible default — a cafe starts with products only, a massage shop with services only, a salon with both. Change it here if your shop is different.</p>
+      <label class="row sales-mix-row"><input type="checkbox" id="sellsServices" style="width:auto" ${(S.biz.enabled_modules||[]).includes('services')?'checked':''}> <span><b>Services</b><br><span class="muted small">Bookable treatments, classes or appointments.</span></span></label>
+      <label class="row sales-mix-row"><input type="checkbox" id="sellsProducts" style="width:auto" ${(S.biz.enabled_modules||[]).includes('inventory')?'checked':''}> <span><b>Products</b><br><span class="muted small">Physical items you stock and sell.</span></span></label>
+      <div class="row" style="margin-top:12px"><button class="btn sm" id="salesMixSave">Save</button><span class="muted small" id="salesMixStatus" role="status" aria-live="polite"></span></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">`:''}<b>Modules</b><p class="muted small" style="margin:6px 0 10px">Everything else is set by Peekaa for your sector. Contact Peekaa if your business needs a different module entitlement.</p>
       <div class="platform-module-list" aria-label="Enabled modules">${mods.filter(m=>(S.biz.enabled_modules||[]).includes(m)).map(m=>`<span class="chip on">${CUI.icon(MODULES[m][0],{size:16})} ${MODULES[m][1]}${dependencyText(m)?` · uses ${esc(dependencyText(m))}`:''}</span>`).join('')||'<span class="muted small">No optional modules are assigned.</span>'}</div></div>
       <div class="card" id="billingWrap">${CUI.skeletonGrid({cards:2,lines:3})}</div></div></section>
     <section class="settings-panel" id="setpanel-catalogue" role="tabpanel" aria-labelledby="settab-catalogue" tabindex="-1" hidden>
@@ -20126,6 +20131,31 @@ async function settingsPage(){
   };
   /* ---------- billing (read-only) ---------- */
   /* V124 adds guarded checkout commands; billing truth remains provider-backed. */
+  /* V184 (owner: "we can have default for the sectors but able to off or on if needed to").
+     Two toggles, and only these two — the sector entitlement still governs every other module.
+     Turning services off also removes modules that hard-require it (packages), because the
+     dependency resolver rewrites enabled_modules on every write and would otherwise put
+     services straight back, making the toggle look broken. The server reports what else it
+     switched off and we say so plainly rather than letting the owner discover it later. */
+  const salesMixSave=$('salesMixSave');
+  if(salesMixSave)salesMixSave.onclick=async()=>{
+    const status=$('salesMixStatus');
+    const sellsServices=$('sellsServices').checked,sellsProducts=$('sellsProducts').checked;
+    if(!sellsServices&&!sellsProducts){
+      if(status)status.textContent='Pick at least one — a business has to sell something.';return;
+    }
+    CUI.setButtonBusy(salesMixSave,{busy:true,label:'Saving…'});
+    const {data,error}=await sb.rpc('business_set_sales_mix_v184',{
+      p_business:S.biz.id,p_sells_services:sellsServices,p_sells_products:sellsProducts});
+    if(salesMixSave.isConnected)CUI.setButtonBusy(salesMixSave,{busy:false});
+    if(error){if(status)status.textContent=ownerErrorText(error);return}
+    const alsoOff=Array.isArray(data?.also_disabled)?data.also_disabled:[];
+    S.biz.enabled_modules=[...(S.biz.enabled_modules||[])];
+    if(status)status.textContent=alsoOff.length
+      ?`Saved. ${alsoOff.map(m=>MODULES[m]?MODULES[m][1]:m).join(' and ')} turned off too — it needs what you just removed.`
+      :'Saved. Reloading the menu…';
+    setTimeout(()=>location.reload(),alsoOff.length?2200:600);
+  };
   loadBillingConfig();
   loadSignupConfig();
 }
