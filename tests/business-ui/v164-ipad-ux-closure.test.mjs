@@ -14,7 +14,9 @@ test('V164 sidebar terminology is merchant-facing', () => {
   assert.match(appHtml, /\{key:'grow',icon:'star',label:'Programmes'/);
   /* V170 owner decision: Daily report (today's takings) was fully built and routed but
      absent from every nav group, so owners could not reach it. It now leads the money group. */
-  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['dailyreport','sales','reports','customerintel','pnl','expenses','staffperf'\]\}/);
+  /* V180 owner instruction: Expenses moved ahead of Business Insights (money in, money out,
+     result, then why). The merchant-facing terminology this test guards is unchanged. */
+  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf'\]\}/);
 });
 
 test('V164 Dashboard adds schedule glance and in-card KPI action labels', () => {

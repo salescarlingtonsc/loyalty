@@ -184,11 +184,19 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .appointment-list-filters{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:end}
 .appointment-list-filters[hidden]{display:none!important}.appointment-filter-with-icon{position:relative}.appointment-filter-with-icon select{padding-left:38px}.appointment-filter-icon{position:absolute;left:12px;bottom:13px;color:var(--muted);pointer-events:none}
 .appointment-list-date{font-variant-numeric:tabular-nums;white-space:nowrap}.appointment-staff-name{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
-.sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:end}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
+.sales-filter-panel{display:grid;gap:10px;margin-bottom:14px}.sales-filter-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:stretch}.sales-filter-row.secondary{grid-template-columns:repeat(4,minmax(150px,1fr))}
+/* V180: the filter labels used to sit at different heights. Cause was the global
+   label{margin:16px 0 6px} inheriting into cells that were bottom-aligned (align-items:end):
+   any cell whose control was a different height floated its label out of line. Each cell is now
+   its own bottom-aligned column with a normalised label margin, so labels share one baseline
+   and controls share another regardless of control type. */
+.sales-filter-row>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+.sales-filter-row>div>label{margin:0 0 6px}
+.sales-filter-row>.btn{align-self:end}
 .sales-date-v154{display:grid;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums}.sales-date-v154 span:last-child{color:var(--muted);font-size:12px}
 .record-status{font-weight:750;color:var(--ink)}.sales-audit-details{margin-top:4px}.sales-audit-details summary{color:var(--muted);font-size:12px;cursor:pointer}
 .staff-performance-filterbar{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;align-items:end;margin:14px 0;padding:14px;border:1px solid #E7DAD2;background:#FFF8F4;border-radius:var(--r);box-shadow:var(--shadow)}
-.staff-rank-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+.staff-rank-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
 .staff-rank-card{position:relative;overflow:hidden;min-height:112px;padding:16px 18px;border-color:#E9D8D2;background:linear-gradient(145deg,#fff,#fff8f5)}
 .staff-rank-card::after{content:'';position:absolute;right:-22px;top:-22px;width:74px;height:74px;border-radius:50%;background:rgba(202,62,50,.08)}
 .staff-rank-card .rank-visual{display:flex;gap:4px;margin-bottom:10px;align-items:flex-end}.staff-rank-card .rank-visual i{display:block;width:9px;border-radius:999px;background:#E9B6AA}.staff-rank-card .rank-visual i:nth-child(1){height:12px}.staff-rank-card .rank-visual i:nth-child(2){height:22px;background:var(--coral)}.staff-rank-card .rank-visual i:nth-child(3){height:16px}
@@ -546,6 +554,17 @@ input[type=range]:focus{box-shadow:none}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
 .topbar h1{font-size:1.85rem;font-weight:700}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:14px}
+/* V180: the four waitlist counters are one funnel — waiting → added → booked → removed — but
+   rendered as four unrelated cards nobody read as a sequence. Chevrons sit in the grid gaps to
+   make the steps explicit. The column count is pinned rather than auto-fit so the arrow can
+   never point at a wrapped line break, and it flips to point downward once the cards stack. */
+.wl-flow{grid-template-columns:1fr}
+.wl-flow>*{position:relative}
+.wl-flow>*:not(:last-child)::after{content:'\203A';position:absolute;z-index:1;color:var(--coral);font-size:28px;font-weight:700;line-height:1;pointer-events:none;top:auto;bottom:-14px;right:50%;transform:translate(50%,50%) rotate(90deg)}
+@media(min-width:900px){
+  .wl-flow{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .wl-flow>*:not(:last-child)::after{top:50%;bottom:auto;right:-14px;transform:translate(50%,-50%) rotate(0)}
+}
 .kpi{transition:transform .24s var(--spring),box-shadow .24s var(--ease)}
 .kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 /* Tabular figures stop KPI numbers from jittering as they update */
@@ -821,6 +840,24 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .performance-body{padding:20px}
 .dashboard-kpis{margin-top:16px}
 .dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
+/* V180 (owner instruction): the four dashboard counters were four identical white cards, so
+   nothing told money apart from people at a glance. Each now carries a tinted wash and a
+   coloured rail keyed to WHAT THE NUMBER MEANS, not to its position — permissions can hide
+   any one of these (see metrics[].filter(Boolean)), and a position-based palette would
+   recolour the survivors. Inactive deliberately uses slate, not red: zero inactive customers
+   is a good result and must not render as an alarm. */
+/* V180: one readable line per teammate. Wraps rather than truncating, because an owner
+   scanning for a phone number must never be shown a clipped one. */
+.staff-row-line{align-items:center;gap:10px;flex-wrap:wrap}
+.staff-row-open{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;flex:1 1 320px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
+.staff-row-open:hover{background:var(--tint)}
+.staff-row-open>b{overflow-wrap:anywhere}
+.staff-profile-panel .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.dashboard-metric{border-left:4px solid transparent}
+.dashboard-metric[data-dashboard-metric="visits"]{background:#F2F9F5;border-left-color:var(--green)}
+.dashboard-metric[data-dashboard-metric="revenue"]{background:#FFF4F1;border-left-color:var(--coral)}
+.dashboard-metric[data-dashboard-metric="new"]{background:#FDF7EC;border-left-color:var(--amber)}
+.dashboard-metric[data-dashboard-metric="inactive"]{background:#F4F4F7;border-left-color:#6B6673}
 .dashboard-metric:hover,.dashboard-metric:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:#DDB9AE}
 .dashboard-metric .metric-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.dashboard-metric .metric-arrow{color:var(--coral)}
 .dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
@@ -1750,7 +1787,7 @@ const NAVGROUPS=[
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
   {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
   {key:'grow',icon:'star',label:'Programmes',items:['loyalty','retention','referrals','memberships','giftcards']},
-  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','reports','customerintel','pnl','expenses','staffperf']},
+  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf']},
   {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages']}
 ];
 let navOpen={};
@@ -7582,15 +7619,19 @@ function growNavItemHtml(items,activeKey){
   if(!items.length)return '';
   const onGrowSurface=['grow','loyalty','retention','studio','storedvalue','promotions','referrals','memberships','giftcards'].includes(activeKey);
   const currentHash=(location.hash||'#/dashboard').split('?')[0];
+  /* V180 (owner instruction): four nav rows collapsed to two. "Available programmes" and
+     "More settings" were struck out because they duplicated what the list already shows —
+     the list carries every programme with its own Set up / Add / Edit action, so a separate
+     "available" destination was a second door to the same room, which is what made this
+     module feel like it had overlapping roles. Both hashes still resolve (see growPage), so
+     existing links and the quiet advanced settings link keep working. */
   const links=[
-    ['#/grow','Overview'],
-    ['#/grow/ongoing','Ongoing programmes'],
-    ['#/grow/available','Available programmes'],
-    ['#/grow/settings','More settings']
+    ['#/grow','Programmes list'],
+    ['#/grow/ongoing','Ongoing programmes']
   ];
-  return links.map(([href,label],index)=>{
+  return links.map(([href,label])=>{
     const isAct=onGrowSurface&&(currentHash===href||(href==='#/grow'&&!currentHash.startsWith('#/grow/')));
-    return `<a href="${href}" class="${isAct?'act':''}"${isAct?' aria-current="page"':''}><span class="ic">${CUI.icon(index===3?'settings':'loyalty',{size:18})}</span>${label}</a>`;
+    return `<a href="${href}" class="${isAct?'act':''}"${isAct?' aria-current="page"':''}><span class="ic">${CUI.icon('loyalty',{size:18})}</span>${label}</a>`;
   }).join('');
 }
 function waitlistBadgeHtml(){
@@ -9166,9 +9207,9 @@ async function dashboard(){
     </section>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2></div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
-      <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="dashboard-headline" id="dashboardHeadline" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div><div id="dashboardInsights" aria-live="polite"></div></div>
+      <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="dashboard-headline" id="dashboardHeadline" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
     </section>
-    <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section></section>`;
+    <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
   wireLocalCollapseV154('dashboardPerformanceToggle','dashboardPerformanceBody','peekaa.v164.dashboard.performance.open');
   wireLocalCollapseV154('dashboardUnderstandToggle','dashboardUnderstandBody','peekaa.v164.dashboard.understand.open');
   const dashboardRoot=$('dashboardView');
@@ -14141,7 +14182,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     if(!isOwner||!available||!growDraftVersionId)return '';
     return `<button type="button" class="btn ghost sm" data-grow-open="${surface}" data-grow-focus="${esc(target||'')}">${esc(label)}</button>`;
   };
-  const programmeStatus=(label,tone='off')=>`<span class="pill ${esc(tone)}">${esc(label)}</span>`;
+  /* V180: owners read "Live" as a broadcast/streaming word, not as "this programme is running".
+     The nav calls the same thing "Ongoing programmes", so the badge said one word and the menu
+     another for one state. Mapped at the single render point rather than at the ~8 call sites,
+     so the STATUS value stays 'Live' everywhere it is compared against (see bringBackCount). */
+  const PROGRAMME_STATUS_LABEL_V180={Live:'Ongoing'};
+  const programmeStatus=(label,tone='off')=>`<span class="pill ${esc(tone)}">${esc(PROGRAMME_STATUS_LABEL_V180[label]||label)}</span>`;
   const programmeAction=({canWrite,kind,href=null,editKind=null,rewardId=null,programId=null,label})=>{
     if(!canWrite)return '';
     if(href)return `<a class="grow-programme-row" data-programme-kind="${esc(kind)}" href="${esc(href)}">`;
@@ -14179,17 +14225,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      right now); "To set up" is everything else, each with a one-tap suggestion. The old
      Overview duplicated Running+To set up in one list, and "More settings" moves from a tab
      to a quiet advanced link — its #/grow/settings hash keeps working. */
-  const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'ongoing';
-  const programmeTab=(key,label)=>`<a class="${programmeView===key?'act':''}" href="#/grow${key==='overview'?'':'/'+key}">${esc(label)}</a>`;
+  /* V180 (owner instruction): the default #/grow landing is now the full LIST of every
+     programme with its own action, and "Ongoing programmes" is the one filtered view. The
+     in-page tab strip is gone because the sidebar already offers exactly these two
+     destinations — having both was the duplicated navigation the owner flagged. The
+     'available' and 'settings' hashes still resolve so existing links do not break. */
+  const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'list';
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
       <div class="cui-page-title"><h1 id="growTitle">Programmes</h1>
         <p class="muted">Create and manage rewards, promotions and customer programmes.</p></div>
       <div class="v150-title-actions"></div>
     </header>
-    <nav class="programme-tabs" aria-label="Programme views">${programmeTab('ongoing','Running')}${programmeTab('available','To set up')}</nav>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'Programme overview'}</h2><p class="muted small">${programmeView==='ongoing'?'Live for your customers right now.':programmeView==='available'?'Not running yet — each comes with a suggested starting point you can use in one tap.':'Choose one row to view or edit that programme.'}</p></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2><p class="muted small">${programmeView==='ongoing'?'Running for your customers right now.':programmeView==='available'?'Not running yet — each comes with a suggested starting point you can use in one tap.':'Every programme you can run. Choose one row to set it up, view it or edit it.'}</p></div></div>
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       <div class="programme-category"><div class="programme-category-title">Loyalty & rewards</div><div class="grow-programme-list">
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Earning',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
@@ -14275,8 +14324,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     outerMain.querySelectorAll('.programme-category').forEach(category=>{
       let visible=0;
       category.querySelectorAll('.grow-programme-row').forEach(row=>{
-        const status=String(row.querySelector('.pill')?.textContent||'').toLowerCase();
-        const isOngoing=status.includes('live')||status.includes('active');
+        /* V180: this used to match the badge TEXT for "live". Renaming the badge to "Ongoing"
+           would have silently emptied the Running view — the filter would have found no row
+           whose pill said "live" and hidden everything. The tone class is the actual status
+           signal (programmeStatus passes 'on' only for a running programme), so match that
+           first and keep the text check as a fallback for any row built outside that helper. */
+        const pill=row.querySelector('.pill');
+        const status=String(pill?.textContent||'').toLowerCase();
+        const isOngoing=pill?.classList.contains('on')||status.includes('ongoing')||status.includes('live')||status.includes('active');
         const show=programmeView==='ongoing'?isOngoing:!isOngoing;
         row.hidden=!show;
         if(show)visible++;
@@ -14288,7 +14343,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
        at the tab that gets them started, instead of showing a bare heading. */
     if(programmeView==='ongoing'&&visibleCategories===0){
       const lastCategory=[...outerMain.querySelectorAll('.programme-category')].pop();
-      lastCategory?.insertAdjacentHTML('afterend',`<div class="empty" role="status" style="margin-top:14px"><b>Nothing is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow/available">To set up</a> — every programme there comes with a suggested starting point you can use in one tap.</p></div>`);
+      lastCategory?.insertAdjacentHTML('afterend',`<div class="empty" role="status" style="margin-top:14px"><b>Nothing is running yet.</b><p class="muted small" style="margin-top:6px">Open the <a href="#/grow">Programmes list</a> — every programme there comes with a suggested starting point you can use in one tap.</p></div>`);
     }
   }else if(programmeView==='settings'){
     const overviewSection=outerMain.querySelector('.reward-journey-v122');
@@ -18239,7 +18294,7 @@ async function waitlistPage(){
 
   routeMain.innerHTML=
     CUI.pageHeader({title:'Waitlist',subtitle:"Catch demand you can't seat now — win it back when a spot frees up.",iconName:'waitlist',canWrite,moduleLabel:'Waitlist'})
-    +`<div class="kpis" id="wlkpis" style="margin-bottom:18px">${Array.from({length:4},()=>CUI.skeletonCard({lines:2,className:'v150-kpi'})).join('')}</div>`
+    +`<div class="kpis wl-flow" id="wlkpis" style="margin-bottom:18px">${Array.from({length:4},()=>CUI.skeletonCard({lines:2,className:'v150-kpi'})).join('')}</div>`
     +(canWrite?`<section class="card"><div class="cui-card-head"><h2>Add walk-in</h2><p>Fully booked? Add them here and seat them the moment a spot opens.</p></div>
         <div class="wl-add-grid">
           <div class="wl-fld" style="flex:1 1 180px"><label for="wn">Name</label><input id="wn" autocomplete="off"></div>
@@ -19622,7 +19677,11 @@ async function staffPerfPage(drillId){
       const label=winners.length>1?`Tie: ${winners.map(k=>names[k]||'Team member').join(', ')}`:(names[winners[0]]||'Team member');
       return `<article class="card staff-rank-card">${winnerVisual}<span class="muted small">${esc(title)}</span><b data-merchant-content>${esc(label)}</b><p class="muted small">${esc(formatter(top))}</p></article>`;
     };
-    $('staffRankSummary').innerHTML=`${winnerCard('revenue','Highest attributed revenue')}${winnerCard('commission','Highest signed commission')}${winnerCard('revenueRecords','Most revenue-qualified records',value=>`${value} record${value===1?'':'s'}`)}`;
+    /* V180: "Most revenue-qualified records" was dropped on owner instruction. Counting records
+       rewards whoever rang up the most transactions, not whoever earned the most — it competes
+       with the two money cards beside it and reads as a third, contradictory ranking. The count
+       is still in the table below, where it belongs as traceability rather than a headline. */
+    $('staffRankSummary').innerHTML=`${winnerCard('revenue','Highest attributed revenue')}${winnerCard('commission','Highest signed commission')}`;
     $('staffRankBasis').textContent=`Ranked by ${selectedSort.label}`;
     if(!displayKeys.length){$('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No matching staff records',body:'Clear the staff search or adjust the selected range.'});return}
     $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Rank</th><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th>Signed revenue attributed</th><th>Signed commission</th></tr>
@@ -20757,6 +20816,7 @@ async function settingsPage(){
   });
   /* team + per-staff module permissions (v74) */
   let openModId=null;   // staff.id whose "Modules" panel is expanded, or null
+  let openProfileId=null; // V180: staff.id whose editable profile is expanded, or null
   const panelSel={};    // staff.id -> {mode:'inherit'|'explicit', perms:{module:'r'|'rw'}}
                          // panel edits kept in JS state (not read back from the DOM) so they
                          // survive the loadTeam() redraws other actions trigger.
@@ -20802,6 +20862,28 @@ async function settingsPage(){
       </div>`;
     }).join('');
   }
+  /* V180: the editable profile behind a staff row. Role stays on the existing
+     set_staff_role_v74 RPC (it re-derives module permissions as a side effect, so a plain
+     column UPDATE here would silently skip that); the plain identity and commission columns
+     go through one staff UPDATE. Blank commission is preserved as NULL rather than coerced to
+     0 — the page's own copy says 0% ("no commission") is a different, deliberate setting from
+     blank ("not decided yet"), and collapsing the two would quietly start paying nobody. */
+  function staffProfilePanelHtml(s){
+    const pctValue=bps=>bps===null||bps===undefined?'':String(Number(bps)/100);
+    return `<div class="card staff-profile-panel" style="margin-top:8px;background:#FBFAF7">
+      <div class="field-grid">
+        <div><label for="sp-name-${s.id}">Name</label><input id="sp-name-${s.id}" value="${esc(s.full_name||'')}" placeholder="Full name"></div>
+        <div><label for="sp-email-${s.id}">Email</label><input id="sp-email-${s.id}" type="email" value="${esc(s.email||'')}" placeholder="name@example.com"></div>
+        <div><label for="sp-phone-${s.id}">Phone</label><input id="sp-phone-${s.id}" type="tel" value="${esc(s.phone||'')}" placeholder="+65"></div>
+        <div><label for="sp-title-${s.id}">Job title</label><input id="sp-title-${s.id}" value="${esc(s.title||'')}" placeholder="e.g. Senior therapist"></div>
+        ${s.role!=='owner'?`<div><label for="sp-role-${s.id}">Team role</label><select id="sp-role-${s.id}">${['manager','staff','frontdesk','bookkeeper'].map(r=>`<option value="${r}" ${s.role===r?'selected':''}>${ROLE_LABELS[r]}</option>`).join('')}</select></div>`:''}
+        <div><label for="sp-svc-${s.id}">Service commission %</label><input id="sp-svc-${s.id}" type="number" min="0" max="100" step="0.01" value="${esc(pctValue(s.commission_service_bps))}" placeholder="blank = not set"></div>
+        <div><label for="sp-prod-${s.id}">Product commission %</label><input id="sp-prod-${s.id}" type="number" min="0" max="100" step="0.01" value="${esc(pctValue(s.commission_product_bps))}" placeholder="blank = not set"></div>
+      </div>
+      <p class="muted small help">Leave a commission blank if it is not decided. 0% is a real setting and means no commission on that kind of sale.</p>
+      <div class="row" style="margin-top:12px"><button class="btn sm" onclick="saveStaffProfile('${s.id}',this)">Save profile</button><span class="spacer"></span><button class="btn ghost sm" onclick="toggleStaffProfile('${s.id}')">Cancel</button></div>
+    </div>`;
+  }
   function modPanelHtml(s){
     initPanelSel(s);
     const sel=panelSel[s.id];
@@ -20837,15 +20919,30 @@ async function settingsPage(){
       const explicitCount=s.module_perms&&typeof s.module_perms==='object'?Object.keys(s.module_perms).length:0;
       const modPill=s.role==='owner'?'':(s.module_perms===null?'<span class="pill on">Inherits enabled modules</span>':`<span class="pill off">${explicitCount} explicit module${explicitCount===1?'':'s'}</span>`);
       const accessPill=s.user_id?'<span class="pill ok">App access active</span>':'<span class="pill off">No app access</span>';
+      /* V180 (owner instruction): one line per teammate — name, email, phone, team and
+         commission — and the row itself opens an editable profile. Previously the row showed
+         only a name while email, phone and commission lived in separate cards further down
+         the page, so an owner had to read three places to answer "who is this and what do
+         they earn". The commission columns are the staff's own defaults; the per-SERVICE
+         override stays in its own card because it belongs to a service, not to a person. */
+      const pct=bps=>bps===null||bps===undefined?'—':`${(Number(bps)/100).toFixed(Number(bps)%100?2:0)}%`;
+      const commissionSummary=s.commission_service_bps==null&&s.commission_product_bps==null
+        ?'<span class="muted small">Commission not set</span>'
+        :`<span class="muted small">Svc ${esc(pct(s.commission_service_bps))} · Prod ${esc(pct(s.commission_product_bps))}</span>`;
       return `<div class="team-member-card">
-        <div class="row">
-          <span class="team-member-main"><b data-merchant-content>${esc(s.full_name||'Member')}</b></span><span class="pill ${s.role==='owner'?'ok':'off'}">${esc(ROLE_LABELS[s.role]||s.role)}</span>
+        <div class="row staff-row-line">
+          <button type="button" class="staff-row-open" onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}" aria-label="Open profile for ${esc(s.full_name||'this teammate')}">
+            <b data-merchant-content>${esc(s.full_name||'Member')}</b>
+            <span class="muted small" data-merchant-content>${esc(s.email||'No email')}</span>
+            <span class="muted small" data-merchant-content>${esc(s.phone||'No phone')}</span>
+            <span class="pill ${s.role==='owner'?'ok':'off'}">${esc(ROLE_LABELS[s.role]||s.role)}</span>
+            ${commissionSummary}
+          </button>
           ${accessPill}${modPill}<span class="spacer"></span>
           ${s.role!=='owner'?`<button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
-          <select onchange="chRole('${s.id}',this.value)" style="max-width:140px;padding:6px 10px">
-            ${['manager','staff','frontdesk','bookkeeper'].map(r=>`<option value="${r}" ${s.role===r?'selected':''}>${ROLE_LABELS[r]}</option>`).join('')}</select>
           <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Remove</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
         </div>
+        ${openProfileId===s.id?staffProfilePanelHtml(s):''}
         ${(s.role!=='owner'&&openModId===s.id)?modPanelHtml(s):''}
       </div>`;
     }).join(''):'<p class="muted small">No teammates yet — invite one below.</p>';
@@ -20885,6 +20982,29 @@ async function settingsPage(){
   window.cpInv=async(c)=>copyTextToClipboard(c,{success:'Code copied — send it to your teammate'});
   window.cpInvLink=async(c)=>copyTextToClipboard(staffInviteLinkV151(c),{success:'Invite link copied — send it to your teammate'});
   window.rvInv=async(id)=>{const {error}=await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);if(error)return fail(error);toast('Invite revoked');loadTeam();};
+  window.toggleStaffProfile=(staffId)=>{openProfileId=(openProfileId===staffId)?null:staffId;loadTeam();};
+  window.saveStaffProfile=async(staffId,btn)=>{
+    const row=teamRowsById.get(staffId);if(!row)return;
+    const read=id=>document.getElementById(`${id}-${staffId}`);
+    /* Blank stays NULL ("not decided"); 0 stays 0 ("no commission"). See panel comment. */
+    const toBps=el=>{const raw=String(el?.value??'').trim();if(raw==='')return null;
+      const n=Number(raw);return Number.isFinite(n)&&n>=0&&n<=100?Math.round(n*100):undefined;};
+    const svc=toBps(read('sp-svc')),prod=toBps(read('sp-prod'));
+    if(svc===undefined||prod===undefined)return toast('Commission must be a percentage between 0 and 100');
+    const patch={
+      full_name:String(read('sp-name')?.value||'').trim()||null,
+      email:String(read('sp-email')?.value||'').trim()||null,
+      phone:String(read('sp-phone')?.value||'').trim()||null,
+      title:String(read('sp-title')?.value||'').trim()||null,
+      commission_service_bps:svc,commission_product_bps:prod};
+    if(btn){btn.disabled=true;btn.textContent='Saving…';}
+    const {error}=await sb.from('staff').update(patch).eq('id',staffId);
+    if(error){if(btn){btn.disabled=false;btn.textContent='Save profile';}return fail(error)}
+    /* Role travels through the RPC so module permissions are re-derived with it. */
+    const nextRole=read('sp-role')?.value;
+    if(nextRole&&nextRole!==row.role){await window.chRole(staffId,nextRole);return}
+    toast('Profile saved');openProfileId=null;await loadTeam();
+  };
   window.toggleModPanel=(staffId)=>{openModId=(openModId===staffId)?null:staffId;loadTeam();};
   window.setModulePermissionV74=(staffId,module,value)=>{
     const sel=panelSel[staffId];if(!sel)return;

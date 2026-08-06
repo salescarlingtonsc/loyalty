@@ -26,10 +26,9 @@ const pnlBlock = sliceBetween('async function pnlPage()', '/* ---------- setting
 
 test('V150 sidebar keeps operational actions separate from money history', () => {
   assert.match(navBlock, /items:\['till','appointments','bookings','waitlist'\]/);
-  /* V170 owner decision: Daily report joins the money group (it was built, routed and
-     entitled but linked from nowhere). The original intent of this test — operational
-     actions stay separate from money history — is unchanged. */
-  assert.match(navBlock, /items:\['dailyreport','sales','reports','customerintel','pnl','expenses','staffperf'\]/);
+  /* V180 owner instruction: Business Insights and Expenses swapped so the money group reads
+     as money in -> money out -> result -> why. The separation this test guards is unchanged. */
+  assert.match(navBlock, /items:\['dailyreport','sales','expenses','pnl','reports','customerintel','staffperf'\]/);
 });
 
 test('V150 dashboard removes launch banner and keeps the requested KPI and chart structure', () => {

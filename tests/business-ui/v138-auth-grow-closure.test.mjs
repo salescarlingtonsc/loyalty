@@ -54,8 +54,14 @@ test('browser auth session persists and refreshes until an explicit sign-out',()
 });
 
 test('sidebar exposes consolidated Grow programme navigation instead of peer reward-module links',()=>{
-  for(const label of ['Overview','Ongoing programmes','Available programmes','More settings'])assert.match(nav,new RegExp(`'${label}'`));
-  assert.match(nav,/\['#\/grow','Overview'\]/);
+  /* V180 owner instruction: "Available programmes" and "More settings" were struck out —
+     they were second doors to what the list already shows. The intent of this test, that Grow
+     is reached through ONE consolidated nav rather than peer reward-module links, is unchanged;
+     only the destination count moved from four to two. */
+  for(const label of ['Programmes list','Ongoing programmes'])assert.match(nav,new RegExp(`'${label}'`));
+  assert.doesNotMatch(nav,/'Available programmes'/);
+  assert.doesNotMatch(nav,/'More settings'/);
+  assert.match(nav,/\['#\/grow','Programmes list'\]/);
   assert.match(nav,/const restItems=g\.key==='grow'\?\[\]:g\.items/);
   assert.doesNotMatch(nav,/>Promotions<\/a>/);
   assert.doesNotMatch(nav,/Rewards &amp; bring-backs/);
