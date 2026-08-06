@@ -1194,6 +1194,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v175_marketing_consent_scope_v2.sql",
+      "semanticVersion": "v175",
+      "proposedDeployVersion": "20260806050000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260806_nestly_v173_pause_enforcement_gaps.sql",
       "semanticVersion": "v173",
       "proposedDeployVersion": "20260806085000"

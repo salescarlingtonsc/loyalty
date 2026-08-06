@@ -1195,6 +1195,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260806050000",
+      "name": "nestly_v175_marketing_consent_scope_v2",
+      "sourcePath": "db/migrations/20260806_nestly_v175_marketing_consent_scope_v2.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260806085000",
       "name": "nestly_v173_pause_enforcement_gaps",
       "sourcePath": "db/migrations/20260806_nestly_v173_pause_enforcement_gaps.sql"
