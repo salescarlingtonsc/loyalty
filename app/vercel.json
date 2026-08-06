@@ -100,7 +100,7 @@
       ]
     },
     {
-      "source": "/app.js",
+      "source": "/app-:chunk.js",
       "headers": [
         {
           "key": "Cache-Control",
