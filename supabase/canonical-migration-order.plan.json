@@ -1198,6 +1198,12 @@
       "version": "20260806050000",
       "name": "nestly_v175_marketing_consent_scope_v2",
       "sourcePath": "db/migrations/20260806_nestly_v175_marketing_consent_scope_v2.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260806060000",
+      "name": "nestly_v176_reward_tier_gate",
+      "sourcePath": "db/migrations/20260806_nestly_v176_reward_tier_gate.sql"
     }
   ]
 }
