@@ -1263,6 +1263,12 @@
       "path": "db/migrations/20260806_nestly_v177_client_error_reports.sql",
       "semanticVersion": "v177",
       "proposedDeployVersion": "20260806120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260806_nestly_v182_birthday_month_and_tier_schedule.sql",
+      "semanticVersion": "v182",
+      "proposedDeployVersion": "20260806125000"
     }
   ]
 }

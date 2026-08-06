@@ -164,6 +164,18 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .branch-loading-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:999px;background:#FBFAF8;color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
 .dashboard-schedule-glance{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,#fff8f4);border-color:#E8D8D0}
 .dashboard-schedule-top{display:flex;justify-content:space-between;align-items:center;gap:14px}
+/* V182 tier editor: numbered steps and tick-box benefits, so setting up a tier reads as a
+   short form rather than a grid of unlabelled boxes. */
+.tier-editor-step{color:var(--ink);font-size:14px}
+.tier-benefit-picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px}
+.tier-benefit-pick{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:#fff;font-size:13.5px;color:var(--ink);min-height:44px}
+.tier-benefit-pick:hover{border-color:var(--coral);background:#FFFBF9}
+.tier-benefit-pick input{width:auto;margin:0;flex:none}
+.tier-benefit-pick:has(input:checked){border-color:var(--coral);background:#FFF4F1}
+.tier-editor-advanced>summary{cursor:pointer;font-weight:650;font-size:13.5px;color:var(--muted);padding:6px 0}
+.tier-editor-advanced>summary:hover{color:var(--coral)}
+.bday-mode-row{align-items:flex-start;gap:9px;padding:9px 0;cursor:pointer}
+.bday-mode-row input{margin-top:2px;flex:none}
 /* V180: today's bookings at a glance. Chips wrap rather than scroll horizontally — a hidden
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}

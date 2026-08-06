@@ -7867,6 +7867,24 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null){
     return `<li class="dashboard-schedule-chip"><b>${esc(time)}</b><span data-merchant-content>${esc(who)}</span>${what?`<span class="muted small" data-merchant-content>${esc(what)}</span>`:''}</li>`;
   }).join('')}${overflow>0?`<li class="dashboard-schedule-chip more"><a href="#/appointments?view=list&preset=today">+${overflow} more</a></li>`:''}</ol>`;
 }
+/* V182: the benefits SMEs actually offer, in customer-facing words. */
+const TIER_BENEFIT_PRESETS_V182=Object.freeze([
+  {label:'Birthday treat every year',text:'Birthday treat every year'},
+  {label:'5% off every visit',text:'5% off every visit'},
+  {label:'10% off every visit',text:'10% off every visit'},
+  {label:'Priority booking',text:'Priority booking'},
+  {label:'First access to new services',text:'First access to new services'},
+  {label:'Free add-on with every visit',text:'Free add-on with every visit'},
+  {label:'A welcome gift when they reach this tier',text:'A welcome gift when you reach this tier'}
+]);
+/* The threshold means different things per firm, so the help text must follow tier_basis
+   rather than hardcode "points" — a spend-based ladder saying "points" is simply wrong. */
+function tierBasisHelpV182(program){
+  const basis=program?.tier_basis||'visits';
+  if(basis==='spend')return 'Total amount this customer has spent with you, in dollars.';
+  if(basis==='points_earned')return 'Total points this customer has earned, all time.';
+  return 'Number of visits this customer has made.';
+}
 async function dashboard(){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const renderEpoch=++dashboardRenderEpoch;
@@ -11399,15 +11417,36 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <button class="btn ghost sm trDel" aria-label="Pause tier" data-id="${t.tier_id||t.id}">✕</button>`:''}</div></div>`}).join('')
       :`<p class="muted small" style="margin-top:6px">No tiers yet — customers all earn at 1×.</p>`}
     ${canManageLoyalty&&!tiers.length?'<button class="btn ghost sm" id="trDefaults" type="button" style="margin-top:10px">Add recommended tiers · Gold, Platinum &amp; Diamond</button><p class="muted small" id="trDefaultsStatus" role="status" aria-live="polite" style="margin-top:6px">Creates three editable tier drafts. Nothing is published.</p>':''}
-    ${canManageLoyalty?`<div class="field-grid" style="margin-top:12px">
-      <label class="sr-only" for="trName">Tier name</label><input id="trName" placeholder="e.g. Gold" style="flex:1;min-width:100px">
-      <label class="sr-only" for="trTh">Tier threshold</label><input id="trTh" type="number" min="0" placeholder="from" style="max-width:80px">
-      <label class="sr-only" for="trMul">Points earning multiplier</label><input id="trMul" type="number" min="1" step="0.5" placeholder="× earn" style="max-width:90px">
-      <div class="full"><label class="sr-only" for="trPerk">Tier perk note</label><p id="trBenefitsLabel" style="margin-bottom:6px"><b>Tier benefits</b></p><textarea id="trPerk" aria-describedby="trBenefitsLabel" rows="3" placeholder="One customer benefit per line"></textarea>
-        ${rewards.length?`<div class="row" style="margin-top:8px;flex-wrap:wrap"><span class="muted small">Add an existing reward:</span>${rewards.filter(reward=>reward.active!==false).map(reward=>`<button type="button" class="btn ghost sm trBenefitReward" data-benefit="${esc(`${rewardLabel(reward)} (${reward.cost_points} ${unit})`)}">${esc(rewardLabel(reward))} · ${reward.cost_points}</button>`).join('')}</div>`:'<p class="muted small" style="margin-top:6px">Create a reward first, or type a custom benefit above.</p>'}</div>
-      <div><label for="trFrom">Effective from (Singapore time)</label><input id="trFrom" type="datetime-local"></div>
-      <div><label for="trUntil">Ends at (Singapore time)</label><input id="trUntil" type="datetime-local"></div>
-      <div class="full"><button class="btn sm" id="trAdd">Add tier</button></div></div>`:''}`;
+    ${canManageLoyalty?`<div class="tier-editor" style="margin-top:12px">
+      <p class="tier-editor-step"><b>1. Name it and set who reaches it</b></p>
+      <div class="field-grid">
+        <div><label for="trName">Tier name</label><input id="trName" placeholder="e.g. Gold">
+          <p class="muted small" style="margin-top:5px">Customers see this name.</p></div>
+        <div><label for="trTh">Reach it at</label><input id="trTh" type="number" min="0" placeholder="e.g. 3000">
+          <p class="muted small" style="margin-top:5px">${esc(tierBasisHelpV182(p))}</p></div>
+        <div><label for="trMul">Points earning speed</label><input id="trMul" type="number" min="1" step="0.25" placeholder="1">
+          <p class="muted small" style="margin-top:5px">1 = normal. 1.5 = they earn 50% more points on every spend.</p></div>
+      </div>
+      <p class="tier-editor-step" style="margin-top:16px"><b>2. Tick what they get</b></p>
+      <div class="tier-benefit-picks" id="trBenefitPicks">
+        ${TIER_BENEFIT_PRESETS_V182.map((preset,index)=>`<label class="tier-benefit-pick"><input type="checkbox" data-tier-benefit="${esc(preset.text)}" id="trBenefitPick${index}"><span>${esc(preset.label)}</span></label>`).join('')}
+      </div>
+      ${rewards.filter(reward=>reward.active!==false).length?`<div class="row" style="margin-top:10px;flex-wrap:wrap;align-items:center"><span class="muted small">Or add one of your rewards:</span>${rewards.filter(reward=>reward.active!==false).map(reward=>`<button type="button" class="btn ghost sm trBenefitReward" data-benefit="${esc(`${rewardLabel(reward)} (${reward.cost_points} ${unit})`)}">${esc(rewardLabel(reward))} · ${reward.cost_points}</button>`).join('')}</div>`:''}
+      <details class="tier-editor-advanced" style="margin-top:12px">
+        <summary>Write the benefits myself</summary>
+        <label class="sr-only" for="trPerk">Tier benefits, one per line</label>
+        <textarea id="trPerk" rows="3" placeholder="One customer benefit per line" style="margin-top:8px"></textarea>
+        <p class="muted small" style="margin-top:5px">Ticking a box above adds a line here. Edit or add your own freely.</p>
+      </details>
+      <details class="tier-editor-advanced" style="margin-top:10px">
+        <summary>Run this tier only between certain dates</summary>
+        <p class="muted small" style="margin-top:8px">Leave both empty and the tier runs from the moment you publish, with no end date.</p>
+        <div class="field-grid" style="margin-top:8px">
+          <div><label for="trFrom">Starts (Singapore time)</label><input id="trFrom" type="datetime-local"></div>
+          <div><label for="trUntil">Ends (Singapore time)</label><input id="trUntil" type="datetime-local"></div>
+        </div>
+      </details>
+      <div style="margin-top:14px"><button class="btn sm" id="trAdd">Add tier</button></div></div>`:''}`;
   const firmExpiryMode=p?.expiry_mode??'none';
   const firmExpiryDays=positiveExpiryDays(p?.expiry_days)||365;
   const firmExpiryNeedsDays=expiryModeRequiresDays(firmExpiryMode);
@@ -11418,7 +11457,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const birthdayEditor=canManageLoyalty
     ?!draftVersionId?`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><b>Birthday benefit</b><p class="muted small" style="margin-top:6px">Customer participation is separately opt-in and birthday details are never shared with your team.</p>${publishedBirthdaySummary}<button class="btn ghost sm" id="birthdayStartDraft" style="margin-top:12px">${publishedBirthdayProgram?'Create change draft':'Configure birthday benefit'}</button></div>`
     :`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><div class="row"><div><b>Birthday benefit</b><p class="muted small" style="margin-top:5px">One programme per configuration version. A new programme starts blank and paused; no customer promise exists until you complete, explicitly enable, and publish it.</p></div><span class="spacer"></span><span class="pill">Draft</span></div>
-      <div class="field-grid" style="margin-top:10px"><div class="full"><label for="birthdayLabel">Customer-facing label</label><input id="birthdayLabel" value="${esc(birthdayProgram?.customer_label||'')}"></div><div class="full"><label for="birthdayDescription">Customer description</label><textarea id="birthdayDescription" rows="2">${esc(birthdayProgram?.customer_description||'')}</textarea></div><div class="full"><label for="birthdayTerms">Terms</label><textarea id="birthdayTerms" rows="2">${esc(birthdayProgram?.customer_terms||'')}</textarea></div><div><label for="birthdayKind">Benefit type</label><select id="birthdayKind"><option value="" ${birthdayProgram?.fulfillment_kind?'':'selected'}>Choose a benefit type</option><option value="discount_pct" ${birthdayProgram?.fulfillment_kind==='discount_pct'?'selected':''}>Percentage discount</option><option value="free_item" ${birthdayProgram?.fulfillment_kind==='free_item'?'selected':''}>Free item / manual benefit</option></select></div><div id="birthdayDiscountField"><label for="birthdayDiscount">Discount percentage</label><input id="birthdayDiscount" type="number" min="0.01" max="100" step="0.01" value="${birthdayProgram?.discount_percent??''}"></div><div id="birthdayItemField"><label for="birthdayItem">Free item / benefit</label><input id="birthdayItem" value="${esc(birthdayProgram?.manual_item||'')}"></div><div><label for="birthdayBefore">Days before birthday</label><input id="birthdayBefore" type="number" min="0" max="182" value="${birthdayProgram?.window_days_before??0}"></div><div><label for="birthdayAfter">Days after birthday</label><input id="birthdayAfter" type="number" min="0" max="182" value="${birthdayProgram?.window_days_after??0}"></div></div><label class="row" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="birthdayActive" type="checkbox" style="width:auto" ${birthdayProgram?.active===true?'checked':''}> I explicitly enable this benefit for eligible customers after publication</label><div class="row" style="margin-top:14px"><button class="btn sm" id="birthdaySaveDraft">Save birthday benefit draft</button><p id="birthdayDraftStatus" class="muted small" role="status" aria-live="polite"></p></div></div>`
+      <div class="field-grid" style="margin-top:10px"><div class="full"><label for="birthdayLabel">Customer-facing label</label><input id="birthdayLabel" value="${esc(birthdayProgram?.customer_label||'')}"></div><div class="full"><label for="birthdayDescription">Customer description</label><textarea id="birthdayDescription" rows="2">${esc(birthdayProgram?.customer_description||'')}</textarea></div><div class="full"><label for="birthdayTerms">Terms</label><textarea id="birthdayTerms" rows="2" required aria-describedby="birthdayTermsHelp">${esc(birthdayProgram?.customer_terms||'')}</textarea><div class="row" style="margin-top:6px;align-items:center;gap:8px"><button type="button" class="btn ghost sm" id="birthdayTermsSuggest">Use suggested wording</button><span class="muted small" id="birthdayTermsHelp">Required. Writes plain terms from the benefit you chose — edit freely.</span></div></div><div><label for="birthdayKind">Benefit type</label><select id="birthdayKind"><option value="" ${birthdayProgram?.fulfillment_kind?'':'selected'}>Choose a benefit type</option><option value="discount_pct" ${birthdayProgram?.fulfillment_kind==='discount_pct'?'selected':''}>Percentage discount</option><option value="free_item" ${birthdayProgram?.fulfillment_kind==='free_item'?'selected':''}>Free item / manual benefit</option></select></div><div id="birthdayDiscountField"><label for="birthdayDiscount">Discount percentage</label><input id="birthdayDiscount" type="number" min="0.01" max="100" step="0.01" value="${birthdayProgram?.discount_percent??''}"></div><div id="birthdayItemField"><label for="birthdayItem">Free item / benefit</label><input id="birthdayItem" value="${esc(birthdayProgram?.manual_item||'')}"></div><div class="full"><p style="margin-bottom:6px"><b>When can they use it?</b></p><label class="row bday-mode-row" style="color:var(--ink);font-weight:500"><input type="radio" name="birthdayWindowMode" value="month" style="width:auto" ${(birthdayProgram?.window_mode||'month')==='month'?'checked':''}> <span>Their whole birthday month <span class="muted small">— simplest, and what most customers expect</span></span></label><label class="row bday-mode-row" style="color:var(--ink);font-weight:500"><input type="radio" name="birthdayWindowMode" value="days" style="width:auto" ${(birthdayProgram?.window_mode||'month')==='days'?'checked':''}> <span>A window around the exact date</span></label></div><div id="birthdayDaysFields" class="full"><div class="field-grid"><div><label for="birthdayBefore">Days before birthday</label><input id="birthdayBefore" type="number" min="0" max="182" value="${birthdayProgram?.window_days_before??0}"></div><div><label for="birthdayAfter">Days after birthday</label><input id="birthdayAfter" type="number" min="0" max="182" value="${birthdayProgram?.window_days_after??0}"></div></div><p class="muted small" style="margin-top:6px">0 and 0 means the birthday itself only.</p></div></div><label class="row" style="margin-top:12px;color:var(--ink);font-weight:500"><input id="birthdayActive" type="checkbox" style="width:auto" ${birthdayProgram?.active===true?'checked':''}> I explicitly enable this benefit for eligible customers after publication</label><div class="row" style="margin-top:14px"><button class="btn sm" id="birthdaySaveDraft">Save birthday benefit draft</button><p id="birthdayDraftStatus" class="muted small" role="status" aria-live="polite"></p></div></div>`
     :'';
   routeMain.innerHTML=`${CUI.pageHeader({title:'Loyalty',subtitle:canManageLoyalty?'Choose the model and publish deliberate, versioned changes.':'Review the current program, rewards, tiers, and branch settings.',iconName:'loyalty',actions:`${growBackActionHtmlV138()}${loyaltyActions}`,canWrite:canManageLoyalty,moduleLabel:'Loyalty configuration'})}
     ${draftVersionId?`<div class="imp-note" id="growDraftBarV170" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span>You have unpublished changes — customers still see the old programme.</span><span class="spacer"></span><button class="btn sm" id="growDraftBarPublishV170" type="button">Review &amp; publish</button></div></div>`:''}
@@ -11636,12 +11675,52 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       $('birthdayDiscountField').hidden=!isDiscount;$('birthdayItemField').hidden=isDiscount;
     };
     $('birthdayKind').onchange=syncBirthdayKind;syncBirthdayKind();
+    /* V182: month vs days. The engine only understood a +/-N day window, so owners who meant
+       "your birthday month" wrote that in the description and left the window at 0/0 — which
+       grants it on the birthday DAY only. Month is now a real mode and the default for new
+       programmes, because it is what the copy almost always promises. */
+    const birthdayModeInputs=[...document.querySelectorAll('input[name="birthdayWindowMode"]')];
+    const birthdayMode=()=>birthdayModeInputs.find(input=>input.checked)?.value||'month';
+    const syncBirthdayMode=()=>{
+      const daysFields=$('birthdayDaysFields');
+      if(daysFields)daysFields.style.display=birthdayMode()==='days'?'':'none';
+    };
+    birthdayModeInputs.forEach(input=>{input.onchange=syncBirthdayMode});
+    syncBirthdayMode();
+    /* Terms are NOT optional — the column carries a length>=1 CHECK, so a blank box fails the
+       save with a raw constraint error. This writes honest terms from what was actually
+       chosen; it never invents a restriction the owner did not set. */
+    const birthdayTermsSuggest=$('birthdayTermsSuggest');
+    if(birthdayTermsSuggest)birthdayTermsSuggest.onclick=()=>{
+      const kind=$('birthdayKind').value;
+      const benefit=kind==='discount_pct'
+        ?`${Number($('birthdayDiscount').value)||0}% off your visit`
+        :($('birthdayItem').value.trim()||'the birthday benefit');
+      const when=birthdayMode()==='month'
+        ?'during your birthday month'
+        :(()=>{
+          const before=Number($('birthdayBefore').value)||0,after=Number($('birthdayAfter').value)||0;
+          if(!before&&!after)return 'on your birthday';
+          if(before&&after)return `from ${before} day${before===1?'':'s'} before to ${after} day${after===1?'':'s'} after your birthday`;
+          return before?`in the ${before} day${before===1?'':'s'} before your birthday`:`within ${after} day${after===1?'':'s'} after your birthday`;
+        })();
+      $('birthdayTerms').value=[
+        `Get ${benefit} ${when}.`,
+        'Available once per customer each year.',
+        'Your date of birth must be on your customer profile before the visit.',
+        'Cannot be exchanged for cash and cannot be combined with other offers.'
+      ].join(' ');
+      const status=$('birthdayDraftStatus');
+      if(status)status.textContent='Suggested terms filled in — edit them to match how you actually run it.';
+    };
     birthdaySaveDraft.onclick=async()=>{
       const kind=$('birthdayKind').value;
       const label=$('birthdayLabel').value.trim(),description=$('birthdayDescription').value.trim(),terms=$('birthdayTerms').value.trim();
       const draftStatus=$('birthdayDraftStatus');
       if(!label||!description||!terms||!['discount_pct','free_item'].includes(kind)){
-        if(draftStatus)draftStatus.textContent='Complete the customer copy and choose a benefit type before saving.';
+        if(draftStatus)draftStatus.textContent=!terms
+          ?'Terms are required. Press "Use suggested wording" to fill them in, then edit.'
+          :'Complete the customer copy and choose a benefit type before saving.';
         return;
       }
       if(kind==='discount_pct'&&!(Number($('birthdayDiscount').value)>0&&Number($('birthdayDiscount').value)<=100)){
@@ -11652,7 +11731,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         if(draftStatus)draftStatus.textContent='Describe the free item or manual benefit before saving.';
         return;
       }
-      const payload={active:$('birthdayActive').checked,customer_label:label,customer_description:description,customer_terms:terms,fulfillment_kind:kind,window_days_before:Number($('birthdayBefore').value),window_days_after:Number($('birthdayAfter').value),sort:0};
+      const mode=birthdayMode();
+      const payload={active:$('birthdayActive').checked,customer_label:label,customer_description:description,customer_terms:terms,fulfillment_kind:kind,window_mode:mode,window_days_before:mode==='days'?Number($('birthdayBefore').value):0,window_days_after:mode==='days'?Number($('birthdayAfter').value):0,sort:0};
       if(kind==='discount_pct')payload.discount_percent=Number($('birthdayDiscount').value);else payload.manual_item=$('birthdayItem').value.trim();
       birthdaySaveDraft.disabled=true;
       const {data,error}=await sb.rpc('save_birthday_program_draft',{p_config_version:draftVersionId,p_program_id:birthdayProgramId,p_program:payload,p_expected_snapshot_hash:draftSnapshotHash});
@@ -11878,7 +11958,22 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     $('trTh').value=tier?.threshold??'';$('trMul').value=tier?.points_multiplier??'';
     $('trPerk').value=tierBenefitLines(tier).join('\n');
     $('trFrom').value=boundaryInputValue(tier?.effective_from);$('trUntil').value=boundaryInputValue(tier?.expires_at);
+    /* V182: reflect the tier being edited back into the tick boxes, so opening an existing tier
+       shows what it already gives instead of an empty set of boxes beside a full textarea.
+       A benefit that is not one of the presets simply stays as a line in the textarea. */
+    syncTierBenefitPicksV182();
+    /* Open the schedule section only when this tier actually uses one — otherwise a rarely-used
+       control would be the first thing an owner sees. */
+    const schedule=$('trFrom')?.closest('details');
+    if(schedule)schedule.open=!!(tier?.effective_from||tier?.expires_at);
     $('trAdd').textContent=tier?'Save tier':'Add tier'};
+  function syncTierBenefitPicksV182(){
+    const textarea=$('trPerk');if(!textarea)return;
+    const lines=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
+    document.querySelectorAll('[data-tier-benefit]').forEach(box=>{
+      box.checked=lines.includes(box.dataset.tierBenefit||'');
+    });
+  }
   async function saveTier(tier){
     let versionId=draftVersionId;
     if(!versionId){
@@ -11899,6 +11994,22 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     refreshLoyaltyPanel(model,draftVersionId,recommendation,'Tier draft saved.',true,editorIntent);
     return data;
   }
+  /* V182 (owner: "can i make it easier to just check the box - then can attach the benefits
+     under the tiering" / "this tiering edit page is so confusing").
+     Tier benefits were a bare textarea, so every owner had to invent both the wording and the
+     idea. These are the benefits SMEs actually run, phrased the way a customer reads them.
+     Ticking a box writes its line into the same textarea that has always been the source of
+     truth (perk_note), so nothing about storage, publish or the customer card changes — the
+     checkboxes are an input method, not a new data model. Unticking removes exactly that line
+     and leaves anything hand-written untouched. */
+  document.querySelectorAll('[data-tier-benefit]').forEach(box=>box.onchange=()=>{
+    const textarea=$('trPerk');if(!textarea)return;
+    const benefit=box.dataset.tierBenefit||'';
+    const lines=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
+    if(box.checked){ if(!lines.includes(benefit))lines.push(benefit); }
+    else { const at=lines.indexOf(benefit); if(at>=0)lines.splice(at,1); }
+    textarea.value=lines.join('\n');
+  });
   document.querySelectorAll('.trBenefitReward').forEach(button=>button.onclick=()=>{
     const textarea=$('trPerk'),benefit=button.dataset.benefit||'';
     const existing=String(textarea.value||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);

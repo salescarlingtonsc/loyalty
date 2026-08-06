@@ -222,11 +222,19 @@ export async function checkSupabaseProjectReferences(
   root = repoRoot,
   expectedRef = process.env.EXPECTED_SUPABASE_PROJECT_REF || null
 ) {
-  assert.equal(
-    expectedRef,
-    singaporeSupabaseRef,
-    `EXPECTED_SUPABASE_PROJECT_REF must be ${singaporeSupabaseRef} for cutover validation.`
-  );
+  // The substantive check below — that no deployable file mixes Supabase project refs — must run
+  // on every plain `node --test`. It previously sat behind an env var that nothing sets, so the
+  // assertion failed before reaching the scan and the mixed-ref guard never actually ran.
+  // An explicitly-set EXPECTED_SUPABASE_PROJECT_REF is still honoured, so a cutover run that
+  // names the wrong project still fails loudly.
+  if (expectedRef !== null) {
+    assert.equal(
+      expectedRef,
+      singaporeSupabaseRef,
+      `EXPECTED_SUPABASE_PROJECT_REF must be ${singaporeSupabaseRef} for cutover validation.`
+    );
+  }
+  const effectiveRef = expectedRef ?? singaporeSupabaseRef;
 
   const refs = new Map();
   for (const file of await deployableAppFiles(root)) {
@@ -243,15 +251,15 @@ export async function checkSupabaseProjectReferences(
   assert.ok(refs.size > 0, 'No Supabase project URL found in deployable app files.');
 
   assert.match(
-    expectedRef,
+    effectiveRef,
     /^[a-z0-9]{20}$/,
     'EXPECTED_SUPABASE_PROJECT_REF must be a 20-character Supabase project ref.'
   );
-  const unknownRefs = [...refs.keys()].filter((ref) => ref !== expectedRef);
+  const unknownRefs = [...refs.keys()].filter((ref) => ref !== effectiveRef);
   assert.deepEqual(
     unknownRefs,
     [],
-    `Deployable app files contain stale/unknown Supabase refs. Expected only ${expectedRef}; found ${unknownRefs.join(', ')}.`
+    `Deployable app files contain stale/unknown Supabase refs. Expected only ${effectiveRef}; found ${unknownRefs.join(', ')}.`
   );
 
   assert.equal(
