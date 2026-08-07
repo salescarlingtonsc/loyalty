@@ -73,10 +73,10 @@ test('manifest covers every executable SQL file with raw-byte SHA-256 and a comp
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.status, 'planning_only_not_deployable');
   assert.equal(manifest.hashAlgorithm, 'sha256-raw-bytes');
-  assert.equal(manifest.itemCount, 241);
-  assert.equal(manifest.executableCount, 227);
+  assert.equal(manifest.itemCount, 242);
+  assert.equal(manifest.executableCount, 228);
   assert.equal(manifest.reservationCount, 14);
-  assert.equal(sqlItems.length, 227);
+  assert.equal(sqlItems.length, 228);
   assert.equal(reservations.length, 14);
   assert.equal(manifest.sourceCollisionsResolved, false);
 
@@ -142,7 +142,11 @@ test('an additional same-prefix migration updates collision reporting determinis
     kind: 'executable',
     path: migrationPath,
     semanticVersion: 'v48',
-    proposedDeployVersion: '20260808000000'
+    // Far-future on purpose. This fixture only needs to sort LAST so the
+    // generator's monotonic check passes; pinning it near the real plan's tail
+    // meant every genuinely new migration overtook it and failed this test for
+    // reasons that had nothing to do with collision reporting.
+    proposedDeployVersion: '20991231000000'
   });
   await writeFile(path.join(root, migrationPath), 'select 42;\n');
   await writePlan(root, plan);

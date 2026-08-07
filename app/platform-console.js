@@ -820,6 +820,39 @@
       'More companies exist':'还有更多公司',
       'Narrow the search or a filter to see the rest.':'请缩小搜索或筛选范围以查看其余部分。',
       'Companies unavailable':'无法加载公司',
+      'Company detail':'公司详情',
+      'Company detail unavailable':'无法加载公司详情',
+      'Loading subscription, payments and contacts…':'正在加载订阅、付款与联系人…',
+      'Company summary':'公司概览',
+      'No subscription':'无订阅',
+      'What this firm is on, and when the next payment lands.':'该公司的订阅方案，以及下次付款的时间。',
+      'This firm has no subscription yet.':'该公司尚无订阅。',
+      'This firm owes money':'该公司有欠款',
+      'Chase the oldest invoice first — the balance below is the total still unpaid.':'请先催收最早的发票；下方余额为尚未支付的总额。',
+      'Billing cadence':'计费周期',
+      'Period price':'本期价格',
+      'Subscription start':'订阅开始',
+      'Subscription end':'订阅结束',
+      'Trial ends':'试用结束',
+      'Cancels at period end':'到期后取消',
+      'Days outstanding':'欠款天数',
+      'Paid logins':'付费登录账号',
+      'Contacts':'联系人',
+      'Call or message the people who answer for this firm.':'致电或发信息给该公司的负责人。',
+      'No contacts recorded. This firm did not come through the CRM.':'没有联系人记录。该公司并非通过 CRM 进入。',
+      'Payment history':'付款记录',
+      'Every invoice and receipt, newest first, with the state of its proof.':'所有发票与收据，最新在前，并显示凭证状态。',
+      'Nothing has been billed to this firm yet.':'尚未向该公司开具任何账单。',
+      'Older documents exist':'还有更早的单据',
+      'Only the most recent documents are shown here.':'此处仅显示最近的单据。',
+      'Document':'单据',
+      'Issued':'开具日期',
+      'Due':'到期日',
+      'Balance':'余额',
+      'Settled':'已结清',
+      'Awaiting verification':'待核实',
+      'Proof verified':'凭证已核实',
+      'Proof rejected':'凭证被拒',
       'Scan a receipt':'扫描收据',
       'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.':'在此拍摄收据即可直接进入支出账簿。在您于现金损益表确认金额之前，不会入账。',
       'Receipt saved. Confirm the amounts in Cash P&L to post it.':'收据已保存。请在现金损益表中确认金额以完成入账。',
@@ -1098,6 +1131,39 @@
       'More companies exist':'Terdapat lebih banyak syarikat',
       'Narrow the search or a filter to see the rest.':'Perincikan carian atau penapis untuk melihat selebihnya.',
       'Companies unavailable':'Syarikat tidak tersedia',
+      'Company detail':'Butiran syarikat',
+      'Company detail unavailable':'Butiran syarikat tidak tersedia',
+      'Loading subscription, payments and contacts…':'Memuatkan langganan, pembayaran dan kenalan…',
+      'Company summary':'Ringkasan syarikat',
+      'No subscription':'Tiada langganan',
+      'What this firm is on, and when the next payment lands.':'Pelan firma ini, dan bila bayaran seterusnya masuk.',
+      'This firm has no subscription yet.':'Firma ini belum mempunyai langganan.',
+      'This firm owes money':'Firma ini mempunyai hutang',
+      'Chase the oldest invoice first — the balance below is the total still unpaid.':'Kejar invois paling lama dahulu — baki di bawah ialah jumlah yang masih belum dibayar.',
+      'Billing cadence':'Kekerapan bil',
+      'Period price':'Harga tempoh',
+      'Subscription start':'Mula langganan',
+      'Subscription end':'Tamat langganan',
+      'Trial ends':'Percubaan tamat',
+      'Cancels at period end':'Dibatalkan pada hujung tempoh',
+      'Days outstanding':'Hari tertunggak',
+      'Paid logins':'Log masuk berbayar',
+      'Contacts':'Kenalan',
+      'Call or message the people who answer for this firm.':'Hubungi atau mesej orang yang bertanggungjawab bagi firma ini.',
+      'No contacts recorded. This firm did not come through the CRM.':'Tiada kenalan direkodkan. Firma ini tidak datang melalui CRM.',
+      'Payment history':'Sejarah pembayaran',
+      'Every invoice and receipt, newest first, with the state of its proof.':'Setiap invois dan resit, terbaharu dahulu, berserta status buktinya.',
+      'Nothing has been billed to this firm yet.':'Belum ada apa-apa dibilkan kepada firma ini.',
+      'Older documents exist':'Terdapat dokumen lebih lama',
+      'Only the most recent documents are shown here.':'Hanya dokumen terkini dipaparkan di sini.',
+      'Document':'Dokumen',
+      'Issued':'Dikeluarkan',
+      'Due':'Tarikh akhir',
+      'Balance':'Baki',
+      'Settled':'Selesai dibayar',
+      'Awaiting verification':'Menunggu pengesahan',
+      'Proof verified':'Bukti disahkan',
+      'Proof rejected':'Bukti ditolak',
       'Scan a receipt':'Imbas resit',
       'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.':'Ambil gambar resit di sini dan ia terus masuk ke buku perbelanjaan. Tiada apa-apa dipos sehingga anda mengesahkan angka dalam Untung Rugi Tunai.',
       'Receipt saved. Confirm the amounts in Cash P&L to post it.':'Resit disimpan. Sahkan jumlahnya dalam Untung Rugi Tunai untuk mengeposnya.',
@@ -7968,12 +8034,14 @@
   }
   // A phone number is only actionable if we can dial it, so the buttons appear
   // exactly when there is a number and are absent otherwise — never dead.
+  //
+  // normalizePlatformPhone returns a {tel,wa,display} record, NOT a string.
+  // platformContactActions is the one helper that knows that; building the
+  // anchors by hand here threw a TypeError for every company that actually had
+  // a number, which no live row happened to exercise.
   function companyContactActions(company,CUI) {
-    const phone=normalizePlatformPhone(company.contact_phone||'');
-    if(!phone)return `<span class="muted small">${escapeHtml(pt('No contact number'))}</span>`;
-    const digits=phone.replace(/[^0-9]/g,'');
-    return `<a class="btn ghost sm" href="tel:${escapeHtml(phone)}">${escapeHtml(pt('Call'))}</a>
-      <a class="btn ghost sm" href="https://wa.me/${escapeHtml(digits)}" target="_blank" rel="noopener noreferrer">${escapeHtml(pt('WhatsApp'))}</a>`;
+    return platformContactActions(company.contact_phone||'',CUI)
+      ||`<span class="muted small">${escapeHtml(pt('No contact number'))}</span>`;
   }
   function companyRows(companies,CUI) {
     return companies.map(company=>{
@@ -7982,7 +8050,7 @@
       const period=[company.current_period_start,company.current_period_end]
         .map(value=>value?String(value).slice(0,10):'—').join(' → ');
       return [
-        `<b>${escapeHtml(company.name||'—')}</b><br><span class="muted small">${escapeHtml(platformStatus(company.sector||'unclassified'))}</span>`,
+        `<button type="button" class="btn ghost sm" data-company-open="${escapeHtml(company.id||'')}"><b>${escapeHtml(company.name||'—')}</b></button><br><span class="muted small">${escapeHtml(platformStatus(company.sector||'unclassified'))}</span>`,
         escapeHtml(platformStatus(company.status||'none')),
         company.collection_mode==='auto'
           ? `<span class="platform-chip">${escapeHtml(pt('Auto-collect'))}</span>`
@@ -7992,6 +8060,121 @@
         companyContactActions(company,CUI)
       ];
     });
+  }
+  // Company detail drawer. Everything the operator needs before picking up the
+  // phone, on one surface: who they are, what they are on, what they owe, how
+  // they have paid before, and who to call.
+  function companyDetailFactRows(pairs) {
+    return pairs.filter(([,value])=>value!==null&&value!==undefined&&value!=='')
+      .map(([label,value])=>`<div><dt class="muted small">${escapeHtml(pt(label))}</dt><dd>${value}</dd></div>`).join('');
+  }
+  function companyDetailContactRows(contacts,CUI) {
+    return asArray(contacts).map(contact=>[
+      `<b>${escapeHtml(contact.full_name||'—')}</b>${contact.is_primary?` <span class="platform-chip">${escapeHtml(pt('Primary'))}</span>`:''}`,
+      escapeHtml(contact.title||'—'),
+      escapeHtml(contact.email||'—'),
+      platformContactActions(contact.phone||'',CUI)
+        ||`<span class="muted small">${escapeHtml(pt('No contact number'))}</span>`
+    ]);
+  }
+  // Proof state travels with the invoice it belongs to. "Awaiting verification"
+  // is deliberately distinct from "Paid": the money is claimed, not confirmed.
+  function companyPaymentProofLabel(payment) {
+    if(!payment.manual_status)return payment.balance_due_cents>0?pt('Unpaid'):pt('Settled');
+    if(payment.manual_status==='verified')return pt('Proof verified');
+    if(payment.manual_status==='rejected')return pt('Proof rejected');
+    return pt('Awaiting verification');
+  }
+  function companyPaymentRows(payments) {
+    return asArray(payments).map(payment=>[
+      `<b>${escapeHtml(payment.document_number||'—')}</b><br><span class="muted small">${escapeHtml(platformStatus(payment.document_type||''))}</span>`,
+      escapeHtml(payment.issue_date?String(payment.issue_date).slice(0,10):'—'),
+      escapeHtml(payment.due_date?String(payment.due_date).slice(0,10):'—'),
+      escapeHtml(currency(payment.total_cents,payment.currency||'SGD')),
+      escapeHtml(currency(payment.balance_due_cents,payment.currency||'SGD')),
+      `${escapeHtml(companyPaymentProofLabel(payment))}${payment.manual_reference?`<br><span class="muted small">${escapeHtml(payment.manual_reference)}</span>`:''}`
+    ]);
+  }
+  function companyDetailHtml(detail,CUI) {
+    const company=asObject(detail.company),subscription=asObject(detail.subscription);
+    const outstanding=asObject(detail.outstanding),consultant=asObject(detail.consultant);
+    const contacts=asArray(detail.contacts),payments=asArray(detail.payments);
+    const days=subscription.days_until_due;
+    const overdue=Number.isFinite(Number(days))&&Number(days)<0;
+    const hasSubscription=Boolean(subscription.status);
+    const money=cents=>currency(cents,outstanding.currency||company.currency||'SGD');
+    // The fourth field marks a value that is a phrase rather than a figure, so
+    // it is sized to fit its words instead of being broken mid-word.
+    const tiles=[
+      [pt('Subscription'),hasSubscription?platformStatus(subscription.status):pt('No subscription'),'branch',false],
+      [pt('Collection'),subscription.collection_mode==='auto'?pt('Auto-collect'):pt('Chase'),'check',false],
+      [pt('Payment due'),companyDueLabel(days),overdue?'retention':'reports',true],
+      [pt('Outstanding'),money(outstanding.balance_due_cents),'reports',false]
+    ];
+    return `<section class="platform-kpis" aria-label="${escapeHtml(pt('Company summary'))}">${tiles.map(([label,value,icon,phrase])=>
+        `<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(label)}</span></div><div class="platform-kpi-value${phrase?' platform-kpi-phrase':''}">${escapeHtml(value)}</div></article>`).join('')}</section>
+      ${Number(outstanding.open_invoice_count||0)>0
+        ? localizedRouteNoteHtml('This firm owes money','Chase the oldest invoice first — the balance below is the total still unpaid.')
+        : ''}
+      ${CUI.card({title:'Subscription',description:'What this firm is on, and when the next payment lands.',body:`<dl class="platform-form-grid">${
+        hasSubscription
+          ? companyDetailFactRows([
+              ['Status',escapeHtml(platformStatus(subscription.status))],
+              ['Payment status',subscription.payment_status?escapeHtml(platformStatus(subscription.payment_status)):null],
+              ['Collection',escapeHtml(subscription.collection_mode==='auto'?pt('Auto-collect'):pt('Chase'))],
+              ['Billing cadence',subscription.billing_cadence?escapeHtml(platformStatus(subscription.billing_cadence)):null],
+              ['Plan',subscription.plan_code?escapeHtml(subscription.plan_code):null],
+              ['Period price',subscription.period_total_cents?escapeHtml(money(subscription.period_total_cents)):null],
+              ['Subscription start',subscription.current_period_start?escapeHtml(dateTime(subscription.current_period_start)):null],
+              ['Subscription end',subscription.current_period_end?escapeHtml(dateTime(subscription.current_period_end)):null],
+              ['Trial ends',subscription.trial_ends_at?escapeHtml(dateTime(subscription.trial_ends_at)):null],
+              ['Next payment',subscription.next_payment_at?escapeHtml(dateTime(subscription.next_payment_at)):null],
+              ['Last paid',subscription.last_paid_at?escapeHtml(dateTime(subscription.last_paid_at)):null],
+              ['Cancels at period end',subscription.cancel_at_period_end?escapeHtml(pt('Yes')):null],
+              ['Days outstanding',outstanding.days_outstanding!==null&&outstanding.days_outstanding!==undefined
+                ?escapeHtml(String(outstanding.days_outstanding)):null],
+              ['Branches',escapeHtml(String(company.branch_count??0))],
+              ['Paid logins',escapeHtml(String(company.seat_count??0))],
+              ['Sector',escapeHtml(platformStatus(company.sector||'unclassified'))],
+              ['Consultant',consultant.display_name?escapeHtml(consultant.display_name):null]
+            ])
+          : `<div class="wide">${localizedEmptyHtml('This firm has no subscription yet.')}</div>`
+      }</dl>`})}
+      ${CUI.card({title:'Contacts',description:'Call or message the people who answer for this firm.',
+        body:contacts.length
+          ? CUI.table({caption:'Contacts',headers:['Name','Role','Email','Contact'],rows:companyDetailContactRows(contacts,CUI)})
+          : localizedEmptyHtml('No contacts recorded. This firm did not come through the CRM.')})}
+      ${CUI.card({title:'Payment history',description:'Every invoice and receipt, newest first, with the state of its proof.',
+        body:payments.length
+          ? CUI.table({caption:'Payment history',headers:['Document','Issued','Due','Total','Balance','State'],rows:companyPaymentRows(payments)})
+          : localizedEmptyHtml('Nothing has been billed to this firm yet.')})}
+      ${detail.payments_truncated?localizedRouteNoteHtml('Older documents exist','Only the most recent documents are shown here.'):''}`;
+  }
+  async function openCompanyDetail(company,context) {
+    const {CUI,sb}=context,id=company.id;
+    const overlay=document.createElement('div');
+    overlay.className='platform-drawer';overlay.tabIndex=-1;
+    overlay.innerHTML=`<section class="platform-drawer-panel" aria-labelledby="companyDetailTitle">
+      <div class="platform-drawer-head">
+        <div><h1 id="companyDetailTitle" style="font-size:1.45rem">${escapeHtml(company.name||'—')}</h1>
+          <p class="muted small">${escapeHtml(platformStatus(company.sector||'unclassified'))}</p></div>
+        <div class="platform-actions">${platformContactActions(company.contact_phone||'',CUI)}
+          <button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div>
+      </div>
+      <div data-detail>${CUI.loadingState({title:'Company detail',body:'Loading subscription, payments and contacts…',iconName:'branch'})}</div></section>`;
+    document.body.appendChild(overlay);
+    let deactivate,closed=false;
+    const close=()=>{if(closed)return;closed=true;closeOverlay(overlay,deactivate)};
+    overlay.querySelector('.platform-drawer-close').onclick=close;
+    deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
+    try{
+      const detail=asObject(await rpc(sb,'platform_company_detail_v225',{p_business:id}));
+      overlay.querySelector('[data-detail]').innerHTML=companyDetailHtml(detail,CUI);
+    }catch(error){
+      overlay.querySelector('[data-detail]').innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'Company detail')
+        :CUI.errorState({title:'Company detail unavailable',message:platformErrorMessage(error,'Please try again.')});
+    }
   }
   async function renderCompanies(context,filters=null) {
     const {main,CUI,sb,hash}=context;
@@ -8044,6 +8227,10 @@
       };
       main.querySelectorAll('[data-company-filter]').forEach(button=>button.onclick=()=>{
         renderCompanies(context,{...active,[button.dataset.companyFilter==='collection'?'collection':button.dataset.companyFilter]:button.dataset.companyValue});
+      });
+      main.querySelectorAll('[data-company-open]').forEach(button=>button.onclick=()=>{
+        const company=companies.find(entry=>String(entry.id)===button.dataset.companyOpen);
+        if(company)openCompanyDetail(company,context);
       });
       CUI.focusRoute(main);
     }catch(error){
@@ -9927,7 +10114,8 @@
     reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
     importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingCatalogueRows,billingFirmRows,
     commissionRosterRows,commissionAccrualRows,automationRunRows,
-    subscriptionDurationHtml,subscriptionOperationsTable
+    subscriptionDurationHtml,subscriptionOperationsTable,
+    companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -9947,7 +10135,8 @@
       reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
       importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingCatalogueRows,billingFirmRows,
       commissionRosterRows,commissionAccrualRows,automationRunRows,
-      subscriptionDurationHtml,subscriptionOperationsTable
+      subscriptionDurationHtml,subscriptionOperationsTable,
+      companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

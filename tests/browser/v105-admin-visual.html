@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="2428558d0bec570698762db0892717f5aa82d09cbe585ec8ac4f6c842aeb2201">
+<meta name="v105-production-component-sha256" content="d3fb3d22b2e44cd147f6151eef2e34cd433c3e59d549a3920d2538c8bf6991cd">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1711,6 +1711,15 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   margin-top:9px;font-size:clamp(1.55rem,3vw,2.2rem);font-weight:750;
   letter-spacing:-.04em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere
 }
+/* Most KPI values are a number, where the display size is the point and
+   `anywhere` is what stops a long unbroken token overflowing the tile. A few
+   are short PHRASES ("5 days overdue"). At display size a word like "overdue"
+   is wider than the tile, so it gets split mid-word however it is wrapped —
+   the fix is a size the phrase actually fits at, plus breaking on spaces
+   first. Opt-in, so numeric tiles keep their weight. */
+.platform-kpi-value.platform-kpi-phrase{
+  font-size:clamp(1.15rem,1.9vw,1.5rem);overflow-wrap:break-word
+}
 .platform-section-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.7fr);gap:16px}
 .platform-context-list{display:grid;gap:0}
 .platform-context-list div{
@@ -2316,7 +2325,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 2428558d0bec</span>
+<span class="v105-provenance">v105 production-component harness · d3fb3d22b2e4</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2441,7 +2450,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'2428558d0bec570698762db0892717f5aa82d09cbe585ec8ac4f6c842aeb2201',
+  sourceHash:'d3fb3d22b2e44cd147f6151eef2e34cd433c3e59d549a3920d2538c8bf6991cd',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
