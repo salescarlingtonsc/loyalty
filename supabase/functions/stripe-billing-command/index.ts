@@ -158,12 +158,31 @@ Deno.serve(async (req) => {
       ? String(data.provider_subscription_id)
       : undefined;
     redirectUrl = `${origin}/#/settings`;
+
+    /* V202 — an extra branch costs exactly what a firm costs (owner ruling 2026-08-07:
+       "same price $99/month billed annually (same as normal)"), so it is billed as another
+       UNIT OF THE BASE PLAN rather than as a new Stripe price. Counting here, from the
+       service-role client, keeps claim_billing_command_v130 untouched — that RPC is on the
+       live payment path for every existing command type and is not worth reshaping for this.
+       Grandfathered branches are 'included' and deliberately excluded: the owner already had
+       them, so they are never back-charged. */
+    let planUnits = 1;
+    {
+      const { count, error: branchError } = await admin
+        .from('branches')
+        .select('id', { count: 'exact', head: true })
+        .eq('business_id', businessId)
+        .in('billing_state', ['pending_payment', 'active']);
+      /* Fail closed on an unreadable count: bill the base unit only. Over-charging a firm
+         because a SELECT failed is the one outcome that must not happen. */
+      if (!branchError && typeof count === 'number') planUnits = 1 + count;
+    }
     let providerResolved = false;
     let providerConfirmationPending = false;
 
     if (
       data.pricing_model === 'v124_customer_capacity' &&
-      ['create_checkout', 'change_cadence', 'change_capacity'].includes(commandType)
+      ['create_checkout', 'change_cadence', 'change_capacity', 'change_branches'].includes(commandType)
     ) {
       providerCallStarted = true;
       await validateV124Prices(stripe, data);
@@ -180,8 +199,8 @@ Deno.serve(async (req) => {
       providerCallStarted = true;
       try {
         if (
-          ['change_cadence', 'change_capacity', 'cancel_at_period_end', 'resume']
-            .includes(commandType)
+          ['change_cadence', 'change_capacity', 'change_branches',
+            'cancel_at_period_end', 'resume'].includes(commandType)
         ) {
           await enforceProviderNoTaxV125(
             stripe,
@@ -208,7 +227,7 @@ Deno.serve(async (req) => {
 
     if (!providerResolved && commandType === 'create_checkout') {
       const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
-        { price: String(data.provider_base_price_id), quantity: 1 },
+        { price: String(data.provider_base_price_id), quantity: planUnits },
       ];
       const capacityModel = data.pricing_model === 'v124_customer_capacity';
       const extraItemQuantity = Number(
@@ -274,7 +293,7 @@ Deno.serve(async (req) => {
       redirectUrl = session.url;
     } else if (
       !providerResolved &&
-      ['change_cadence', 'change_capacity'].includes(commandType)
+      ['change_cadence', 'change_capacity', 'change_branches'].includes(commandType)
     ) {
       if (!subscriptionId || !data.provider_base_item_id) {
         throw new Error('Stripe subscription items are not linked');
@@ -299,7 +318,7 @@ Deno.serve(async (req) => {
       itemsById.set(String(data.provider_base_item_id), {
           id: String(data.provider_base_item_id),
           price: String(data.provider_base_price_id),
-          quantity: 1,
+          quantity: planUnits,
         });
       if (extraItemId) {
         itemsById.set(
