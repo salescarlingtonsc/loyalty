@@ -95,7 +95,10 @@ test('customer secondary routes are namespaced and cannot intercept merchant Boo
 
 test('customer navigation keeps destinations focused while notifications and profile live in the header',()=>{
   const nav=section('const CUSTOMER_PRIMARY_NAV=Object.freeze([','function customerPrimaryNavigation(');
-  assert.equal((nav.match(/\{key:/g)||[]).length,4);
+  /* v195 (owner circled Scan QR and drew it up to the header): scanning is an action, not a
+     destination — it opens the camera and comes straight back. The nav is now three real pages,
+     and the scanner is a header control available from every one of them. */
+  assert.equal((nav.match(/\{key:/g)||[]).length,3);
   for(const [key,href,copy] of [
     ['home','#/wallet','home'],
     ['programmes','#/customer/programmes','programmes'],
@@ -103,7 +106,10 @@ test('customer navigation keeps destinations focused while notifications and pro
   ]){
     assert.match(nav,new RegExp(`key:'${key}',href:'${href.replaceAll('/','\\/')}'[^\\n]*copy:'${copy}'`));
   }
-  assert.match(nav,/key:'scan',icon:'scan',copy:'scanQr'/);
+  assert.doesNotMatch(nav,/key:'scan'/);
+  assert.match(app,/<button class="customer-head-scan" id="customerNavScan" type="button" aria-label="\$\{esc\(ct\('scanQr'\)\)\}"/,
+    'the scanner must stay reachable, and stay wired through the same id');
+  assert.match(app,/if\(\$\('customerNavScan'\)\)\$\('customerNavScan'\)\.onclick=openCustomerJoinScanner/);
   assert.doesNotMatch(nav,/key:'messages'|key:'profile'/);
   const navMarkup=section('function customerPrimaryNavigation(active','function renderCustomerShell');
   assert.match(navMarkup,/<nav class="customer-primary-nav" aria-label="\$\{esc\(BRAND\.customerLabel\)\}">/);
@@ -111,7 +117,7 @@ test('customer navigation keeps destinations focused while notifications and pro
   assert.match(navMarkup,/CUI\.icon\(item\.icon/);
   assert.match(navMarkup,/<span>\$\{esc\(ct\(item\.copy\)\)\}<\/span>/);
 
-  assert.match(app,/\.customer-primary-nav\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/s);
+  assert.match(app,/\.customer-primary-nav\{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/s);
   assert.match(app,/\.customer-primary-nav a,\.customer-primary-nav button\{[^}]*min-height:48px/s);
   assert.match(app,/@media\(max-width:720px\)\{[\s\S]*\.customer-primary-nav\{position:fixed[^}]*bottom:/);
 });

@@ -1,6 +1,6 @@
 {
   "desktop1440": {
-    "sourceHash": "7866c8415801ae7e1305755cc509d7222ae3bd59a533cae66303d10266e97b3a",
+    "sourceHash": "87ab52c08807e5dbe5d1f4336a73ec702b6379ea6cc4b05042c405825db1acf0",
     "viewport": {
       "clientWidth": 1440,
       "scrollWidth": 1440
@@ -46,18 +46,11 @@
             "scrollHeight": 26
           },
           {
-            "text": "30% off Spa Ritual 60",
+            "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier.",
             "clientWidth": 481,
             "scrollWidth": 481,
-            "clientHeight": 22,
-            "scrollHeight": 22
-          },
-          {
-            "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.",
-            "clientWidth": 481,
-            "scrollWidth": 481,
-            "clientHeight": 42,
-            "scrollHeight": 42
+            "clientHeight": 21,
+            "scrollHeight": 21
           },
           {
             "text": "Valid 1 August 2026 – 30 August 2026",
@@ -226,7 +219,7 @@
     }
   },
   "mobile390": {
-    "sourceHash": "7866c8415801ae7e1305755cc509d7222ae3bd59a533cae66303d10266e97b3a",
+    "sourceHash": "87ab52c08807e5dbe5d1f4336a73ec702b6379ea6cc4b05042c405825db1acf0",
     "viewport": {
       "clientWidth": 390,
       "scrollWidth": 390
@@ -237,10 +230,10 @@
           "x": 14,
           "y": 225,
           "width": 362,
-          "height": 452.453125,
+          "height": 427.84375,
           "top": 225,
           "right": 376,
-          "bottom": 677.453125,
+          "bottom": 652.84375,
           "left": 14
         },
         "validity": "Valid 1 August 2026 – 30 August 2026",
@@ -272,14 +265,7 @@
             "scrollHeight": 21
           },
           {
-            "text": "30% off Spa Ritual 60",
-            "clientWidth": 330,
-            "scrollWidth": 330,
-            "clientHeight": 20,
-            "scrollHeight": 20
-          },
-          {
-            "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.",
+            "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier.",
             "clientWidth": 330,
             "scrollWidth": 330,
             "clientHeight": 42,
@@ -318,12 +304,12 @@
       {
         "rect": {
           "x": 14,
-          "y": 691.453125,
+          "y": 666.84375,
           "width": 362,
           "height": 586.921875,
-          "top": 691.453125,
+          "top": 666.84375,
           "right": 376,
-          "bottom": 1278.375,
+          "bottom": 1253.765625,
           "left": 14
         },
         "validity": "Valid 15 August 2026 – 15 September 2026",
@@ -403,7 +389,7 @@
     "modal": null
   },
   "mobile412": {
-    "sourceHash": "7866c8415801ae7e1305755cc509d7222ae3bd59a533cae66303d10266e97b3a",
+    "sourceHash": "87ab52c08807e5dbe5d1f4336a73ec702b6379ea6cc4b05042c405825db1acf0",
     "viewport": {
       "clientWidth": 412,
       "scrollWidth": 412
@@ -414,10 +400,10 @@
           "x": 14,
           "y": 225,
           "width": 384,
-          "height": 385.28125,
+          "height": 360.671875,
           "top": 225,
           "right": 398,
-          "bottom": 610.28125,
+          "bottom": 585.671875,
           "left": 14
         },
         "validity": "Valid 1 August 2026 – 30 August 2026",
@@ -449,14 +435,7 @@
             "scrollHeight": 21
           },
           {
-            "text": "30% off Spa Ritual 60",
-            "clientWidth": 352,
-            "scrollWidth": 352,
-            "clientHeight": 20,
-            "scrollHeight": 20
-          },
-          {
-            "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.",
+            "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier.",
             "clientWidth": 352,
             "scrollWidth": 352,
             "clientHeight": 42,
@@ -495,12 +474,12 @@
       {
         "rect": {
           "x": 14,
-          "y": 624.28125,
+          "y": 599.671875,
           "width": 384,
           "height": 689.015625,
-          "top": 624.28125,
+          "top": 599.671875,
           "right": 398,
-          "bottom": 1313.296875,
+          "bottom": 1288.6875,
           "left": 14
         },
         "validity": "Valid 15 August 2026 – 15 September 2026",

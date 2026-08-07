@@ -86,7 +86,12 @@ test('v39 capabilities are module- and data-aware and the SPA loads only relevan
   assert.doesNotMatch(block(sql,'customer_get_reward_catalog'),/used_count[\s\S]{0,500}loyalty_redemption_reversals/i,
     'catalog usage limits must count the same immutable redemption rows as the authoritative claim path');
   for(const [name] of functions)assert.match(app,new RegExp(`(?:sb\\.rpc|customerRpc)\\('${name}'`,'i'));
-  assert.match(app,/capabilities\.rewards\?walletSectionShell/i);
+  /* v195 (owner crossed the standalone Rewards card out): the reward list moved INTO the Reward
+     points tab, so its host is declared there instead of in the wallet-sections column. The
+     capability gate is unchanged — no rewards capability, no reward host. */
+  assert.match(app,/rewardsHost:capabilities\.rewards===true/);
+  assert.match(app,/\$\{rewardsHost\?'<div id="walletRewards"/);
+  assert.doesNotMatch(app,/capabilities\.rewards\?walletSectionShell/i);
   assert.match(app,/capabilities\.activity\?walletSectionShell/i);
   assert.match(app,/capabilities\.packages\?walletSectionShell/i);
   assert.match(app,/capabilities\.membership\?walletSectionShell/i);
@@ -98,7 +103,8 @@ test('v39 capabilities are module- and data-aware and the SPA loads only relevan
   assert.match(app,/walletSections/i);
   assert.match(app,/Nothing to show yet/i);
   assert.match(app,/Load more/i);
-  assert.match(app,/Choose an eligible reward and show its QR at the counter/i);
+  // v195: the same instruction, on the reward list itself rather than on a card wrapping it.
+  assert.match(app,/Pick a reward, then show its QR at the counter/i);
   assert.match(app,/>Show QR at counter<\/span>/i);
   assert.doesNotMatch(app,/sb\.rpc\(['"](?:redeem_reward|redeem_points)['"][\s\S]{0,200}wallet/i);
 });

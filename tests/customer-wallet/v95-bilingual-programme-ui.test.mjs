@@ -24,7 +24,7 @@ test('customer portal stays English-only while profile language remains communic
 
 test('programme selector precedes merchant detail and zero-programme state only offers issued-QR joining',()=>{
   const home=section('function renderActionableWalletHome','async function renderCustomerWallet');
-  const first=section('function renderCustomerFirstProgrammeQuest','function renderActionableWalletHome');
+  const first=section('function renderCustomerFirstProgrammeQuest','function customerProgrammeGridMarkupV96');
   // The zero-programme guard now lives in renderCustomerProgrammes, which is where the card
   // list is actually built; the invariant (no cards -> first-programme quest, and return) is
   // unchanged.
@@ -35,7 +35,11 @@ test('programme selector precedes merchant detail and zero-programme state only 
   assert.match(app,/function customerProgrammeTileMarkupV96\([\s\S]*href="#\/wallet\/\$\{encodeURIComponent\(business\.slug/);
   assert.match(first,/id="customerFirstScan"/);
   assert.match(first,/ct\('qrOnlyHelp'\)/);
+  // v195 added a company search to My Rewards; the ban belongs to the FIRST-PROGRAMME quest,
+  // where there is by definition nothing to search, and that is the slice asserted here.
   assert.doesNotMatch(first,/customerRelationshipCheck|href="#\/claim"|type="search"/);
+  assert.match(app,/id="customerProgrammeSearch" type="search"/,
+    'the search the owner asked for lives on My Rewards, not on the empty state');
 });
 
 test('merchant home consumes the v95 presentation contract with truthful capability gating and resilient fallback',()=>{

@@ -1263,6 +1263,35 @@ function walletDate(value,withTime=false){
   return date.toLocaleString('en-SG',{timeZone:'Asia/Singapore',dateStyle:'medium',...(withTime?{timeStyle:'short'}:{})});
 }
 
+/* v194 (owner struck the second line out as "redundant", and asked what the "Terms" toggle was
+   for): a tagline that only repeats the offer name is noise, and terms hidden behind a bare word
+   read as a control with no purpose. The tagline is dropped when it echoes the title — compared on
+   letters and digits, so "50% off first prata" is recognised inside "National Day: 50% off first
+   prata" — and the terms are shown as plain small text rather than a mystery disclosure. */
+function customerOfferTaglineV194(name,tagline){
+  const clean=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+  const title=clean(name),line=clean(tagline);
+  if(!line)return '';
+  if(!title)return String(tagline).trim();
+  return title.includes(line)||line.includes(title)?'':String(tagline).trim();
+}
+/* v195 (owner struck the repeated line on the CARD too, and struck the tail of the description):
+   both are copy this app generated, not copy a merchant wrote. promotionCopyAssistV104 builds the
+   description as "<facts> at <business>. Available until <date>. <call to action>", and the sheet
+   already prints the validity as its own row and the action as a button — so the tail says the
+   same thing three times. Only OUR generated sentences are removed, matched exactly; a merchant's
+   own words, including their own dates, are never touched. */
+const PROMOTION_GENERATED_TAIL_V195=Object.freeze([
+  /\s*Book now to enjoy this offer\.\s*$/i,
+  /\s*View the offer and plan your visit\.\s*$/i,
+  /\s*Show this offer at the counter when you visit\.\s*$/i,
+  /\s*Available until [^.]{3,40}\.\s*$/i
+]);
+function customerOfferDescriptionV195(description){
+  let text=String(description||'').trim();
+  for(const pattern of PROMOTION_GENERATED_TAIL_V195)text=text.replace(pattern,'').trim();
+  return text;
+}
 function customerPromotionCtaV104(item,business,bookingEnabled){
   const metadata=item?.metadata||{},cta=metadata.cta||{},
     requestedKind=String(cta.kind||metadata.cta_kind||'programme'),
@@ -1292,7 +1321,8 @@ function customerPromotionValidityV104(item={}){
 function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
   const image=previewImageUrl||customerMediaUrlV95(item?.image_url),
     validity=customerPromotionValidityV104(item),
-    facts=String(item?.metadata?.offer_facts||'').trim(),
+    facts=customerOfferTaglineV194(item?.name,String(item?.metadata?.offer_facts||'')),
+    description=customerOfferDescriptionV195(item?.description),
     terms=String(item?.terms||'').trim();
   const initial=(String(item?.name||'Offer').trim()[0]||'O').toUpperCase();
   return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
@@ -1301,7 +1331,7 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
       <p class="customer-quest-kicker">Limited-time offer</p>
       <h3>${esc(item?.name||'Latest offer')}</h3>
       ${facts?`<p class="customer-promotion-card-facts">${esc(facts)}</p>`:''}
-      ${item?.tagline||item?.description?`<p>${esc(item.tagline||item.description)}</p>`:''}
+      ${customerOfferTaglineV194(item?.name,item?.tagline)||description?`<p>${esc(customerOfferTaglineV194(item?.name,item?.tagline)||description)}</p>`:''}
       ${validity?`<p class="customer-promotion-validity">${esc(validity)}</p>`:''}
       <div class="customer-promotion-card-actions">
         ${customerPromotionCtaV104(item,business,bookingEnabled)}
@@ -1309,7 +1339,7 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
       </div>
       <p class="small" data-promotion-status role="status" aria-live="polite" style="margin-top:8px"></p>
       <template data-promotion-details-template>
-        <p>${esc(item?.description||item?.tagline||facts||item?.name||'Latest offer')}</p>
+        <p>${esc(description||item?.tagline||facts||item?.name||'Latest offer')}</p>
         <dl class="customer-promotion-detail-list">
           ${facts?`<div><dt>Offer</dt><dd>${esc(facts)}</dd></div>`:''}
           ${validity?`<div><dt>Validity</dt><dd>${esc(validity)}</dd></div>`:''}
