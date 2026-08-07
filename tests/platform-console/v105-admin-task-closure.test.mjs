@@ -477,7 +477,10 @@ test('onboarding filters, sort and the open firm survive refresh through one can
     nextAction:'next_7_days',
     health:'at_risk',
     sort:'priority',
-    view:'kanban'
+    view:'kanban',
+    // The sub-module split added a tab. It round-trips like any other filter,
+    // and an absent tab restores to the pipeline.
+    tab:'pipeline'
   };
   const hash=Console.onboardingHash(filters,{prospect:'prospect-spa-001'});
   const restored=Console.onboardingStateFromHash(hash);

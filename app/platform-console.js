@@ -821,6 +821,11 @@
       'Narrow the search or a filter to see the rest.':'请缩小搜索或筛选范围以查看其余部分。',
       'Companies unavailable':'无法加载公司',
       'CRM':'客户关系管理',
+      'Onboarding sections':'入驻分区',
+      'Pipeline':'管道',
+      'Signups':'注册申请',
+      'People who created an account. Decide who becomes a workspace.':'已创建账号的用户。决定谁可以开通工作区。',
+      'Businesses that applied. Approve one to start its workspace.':'已提交申请的商户。批准后即可开通其工作区。',
       'CRM unavailable':'无法加载客户关系管理',
       'The firms you are working, by stage.':'您正在跟进的公司，按阶段排列。',
       'Loading your assigned firms…':'正在加载分配给您的公司…',
@@ -1155,6 +1160,11 @@
       'Narrow the search or a filter to see the rest.':'Perincikan carian atau penapis untuk melihat selebihnya.',
       'Companies unavailable':'Syarikat tidak tersedia',
       'CRM':'CRM',
+      'Onboarding sections':'Bahagian onboarding',
+      'Pipeline':'Saluran',
+      'Signups':'Pendaftaran',
+      'People who created an account. Decide who becomes a workspace.':'Orang yang telah membuka akaun. Tentukan siapa yang menjadi ruang kerja.',
+      'Businesses that applied. Approve one to start its workspace.':'Perniagaan yang memohon. Luluskan satu untuk memulakan ruang kerjanya.',
       'CRM unavailable':'CRM tidak tersedia',
       'The firms you are working, by stage.':'Firma yang anda uruskan, mengikut peringkat.',
       'Loading your assigned firms…':'Memuatkan firma yang ditugaskan kepada anda…',
@@ -5498,7 +5508,7 @@
     return `<div class="platform-active-filters" aria-label="${escapeHtml(pt('Active filters'))}">${CUI.icon('search',{size:16})}<span>${escapeHtml(pt("Active:"))}</span>${active.map(([key,label])=>`<span class="chip">${escapeHtml(pt(label))} · ${escapeHtml(key==='attention'?attentionFilterLabel(filters[key]):platformStatus(filters[key]))}</span>`).join('')}</div>`;
   }
   function onboardingHtml({
-    items,CUI,filters,attentionSummary={},canWrite=true,pagination={}
+    items,CUI,filters,attentionSummary={},canWrite=true,pagination={},tabStrip=''
   }) {
     const view=filters.view==='list'?'list':'kanban';
     const filtered=sortProspects(items.filter(item=>prospectMatchesFilters(item,filters)),filters.sort);
@@ -5524,7 +5534,7 @@
       subtitle:'Move from first contact to activation with evidence-backed onboarding gates and an auditable launch decision.',
       iconName:'setup',
       actions:`<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Onboarding view'))}"><button type="button" class="btn ghost" data-onboarding-view="kanban" aria-pressed="${view==='kanban'}">${escapeHtml(pt('Kanban'))}</button><button type="button" class="btn ghost" data-onboarding-view="list" aria-pressed="${view==='list'}">${escapeHtml(pt('List'))}</button></div>${canWrite?`<button type="button" class="btn ghost" id="platformImportProspects">${CUI.icon('import',{size:17})}<span>${escapeHtml(pt('Import prospects'))}</span></button><button type="button" class="btn" id="platformNewProspect">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New prospect'))}</span></button>`:''}`
-    })}
+    })}${tabStrip}
       <section class="platform-attention-summary" aria-label="${escapeHtml(pt('Onboarding attention queue'))}">
         ${[
           ['due','Due now','no'],['critical','Critical','no'],['warning','Warning','new'],
@@ -5585,7 +5595,33 @@
 
   function defaultOnboardingFilters(){
     return{search:'',lane:'',attention:'',consultant:'',stage:'',source:'',region:'',segment:'',priority:'',
-      qualification:'',nextAction:'',health:'',sort:'next_action',view:'kanban'};
+      qualification:'',nextAction:'',health:'',sort:'next_action',view:'kanban',tab:'pipeline'};
+  }
+  /* Onboarding used to stack four unrelated jobs on one page: the account
+     signup queue, the payment-managed signups, the business applications, and
+     the firm pipeline with its own filter panel. Each is a different decision
+     made at a different time, so each gets its own sub-module. They stay under
+     one route because they share one fetch and one set of filters — splitting
+     the route would mean loading the same data three times.
+     Signups and applications are super-admin work, so those tabs only exist
+     for a super admin; everyone else sees the pipeline alone and no tab strip. */
+  const onboardingTabs=Object.freeze([
+    Object.freeze({key:'pipeline',label:'Pipeline'}),
+    Object.freeze({key:'signups',label:'Signups',superAdminOnly:true}),
+    Object.freeze({key:'applications',label:'Applications',superAdminOnly:true})
+  ]);
+  function onboardingTabsFor(isSuperAdmin){
+    return onboardingTabs.filter(tab=>!tab.superAdminOnly||isSuperAdmin);
+  }
+  function onboardingTabStripHtml(active,isSuperAdmin,counts={}){
+    const tabs=onboardingTabsFor(isSuperAdmin);
+    if(tabs.length<2)return'';
+    return `<nav class="platform-actions platform-subnav" aria-label="${escapeHtml(pt('Onboarding sections'))}">${
+      tabs.map(tab=>{
+        const count=counts[tab.key];
+        const label=Number.isFinite(Number(count))?`${pt(tab.label)} (${count})`:pt(tab.label);
+        return `<button type="button" class="btn ${tab.key===active?'':'ghost'} sm" data-onboarding-tab="${escapeHtml(tab.key)}" aria-pressed="${tab.key===active}">${escapeHtml(label)}</button>`;
+      }).join('')}</nav>`;
   }
   function onboardingHash(filters=defaultOnboardingFilters(),{prospect='',application=''}={}) {
     const defaults=defaultOnboardingFilters(),entries=[];
@@ -5605,11 +5641,19 @@
       if(params.has(key))filters[key]=String(params.get(key)||'').trim();
     });
     filters.view=filters.view==='list'?'list':'kanban';
-    return{
-      filters,
-      prospect:String(params.get('prospect')||'').trim(),
-      application:String(params.get('application')||'').trim()
-    };
+    const prospect=String(params.get('prospect')||'').trim();
+    const application=String(params.get('application')||'').trim();
+    /* Links minted before the split carry no tab at all, so the default cannot
+       be applied first and then corrected — 'pipeline' is itself a valid tab,
+       and the correction would never run. Read what the URL actually said, and
+       only when it said nothing let the record it names choose the sub-module.
+       That keeps an existing ?application= link landing where that application
+       is shown. */
+    const namedTab=params.has('tab')?String(params.get('tab')||'').trim():'';
+    filters.tab=onboardingTabs.some(tab=>tab.key===namedTab)
+      ?namedTab
+      :(application?'applications':'pipeline');
+    return{filters,prospect,application};
   }
   function replaceOnboardingState(context,filters,{prospect='',application=''}={}) {
     const hash=onboardingHash(filters,{prospect,application});
@@ -5667,22 +5711,40 @@
       };
       const pagination={shown:directoryItems.length,total,hasMore:directoryItems.length<total};
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
-      main.innerHTML=onboardingHtml({
-        items,CUI,filters,
-        attentionSummary:prior?.attentionSummary||directory.attention_summary,
-        canWrite:context.canWrite,pagination
+      const isSuperAdmin=context.access?.role==='super_admin';
+      const tab=onboardingTabsFor(isSuperAdmin).some(entry=>entry.key===filters.tab)
+        ?filters.tab:'pipeline';
+      const tabStrip=onboardingTabStripHtml(tab,isSuperAdmin,{
+        pipeline:Number(pagination.total||items.length),
+        signups:asArray(accountSignupQueue,['items']).length
+          +paymentManagedSignupItems(items).length,
+        applications:asArray(applicationQueue,['applications']).length
       });
-      pageState.attentionSummary=prior?.attentionSummary||directory.attention_summary;
-      if(context.access?.role==='super_admin'){
-        main.insertAdjacentHTML('afterbegin',
-          accountSignupQueueHtml(accountSignupQueue,CUI)
-          +paymentManagedSignupQueueHtml(items,CUI)
-          +businessApplicationQueueHtml(applicationQueue,CUI,items)
-        );
-        wireAccountSignupQueue({...context,filters});
-        wireBusinessApplicationQueue({...context,applicationQueue,filters});
+      if(tab==='pipeline'){
+        main.innerHTML=onboardingHtml({
+          items,CUI,filters,tabStrip,
+          attentionSummary:prior?.attentionSummary||directory.attention_summary,
+          canWrite:context.canWrite,pagination
+        });
+        wireOnboarding({...context,items,filters,onboardingPage:pageState,onboardingLoadMore:false});
+      }else{
+        main.innerHTML=`${CUI.pageHeader({
+          title:'Onboarding',
+          subtitle:tab==='signups'
+            ?'People who created an account. Decide who becomes a workspace.'
+            :'Businesses that applied. Approve one to start its workspace.',
+          iconName:'setup'
+        })}${tabStrip}${tab==='signups'
+          ?accountSignupQueueHtml(accountSignupQueue,CUI)+paymentManagedSignupQueueHtml(items,CUI)
+          :businessApplicationQueueHtml(applicationQueue,CUI,items)}`;
+        if(tab==='signups')wireAccountSignupQueue({...context,filters});
+        else wireBusinessApplicationQueue({...context,applicationQueue,filters});
       }
-      wireOnboarding({...context,items,filters,onboardingPage:pageState,onboardingLoadMore:false});
+      pageState.attentionSummary=prior?.attentionSummary||directory.attention_summary;
+      main.querySelectorAll('[data-onboarding-tab]').forEach(button=>button.onclick=()=>{
+        const next={...filters,tab:button.dataset.onboardingTab};
+        renderOnboarding(replaceOnboardingState(context,next),next);
+      });
       if(prior){
         globalObject.requestAnimationFrame?.(()=>globalObject.scrollTo?.(0,previousScroll));
         const firstNew=directory.items[0];
@@ -5691,8 +5753,11 @@
           card?.focus?.({preventScroll:true});
         }
       }else CUI.focusRoute(main);
-      const requestedProspect=onboardingStateFromHash(context.hash).prospect;
-      const requestedApplication=onboardingStateFromHash(context.hash).application;
+      /* A deep link names a record that lives on one sub-module, so honour it
+         only while that sub-module is the one on screen. Scrolling to a card
+         that was never rendered would silently do nothing. */
+      const requestedProspect=tab==='pipeline'?onboardingStateFromHash(context.hash).prospect:'';
+      const requestedApplication=tab==='applications'?onboardingStateFromHash(context.hash).application:'';
       if(requestedApplication){
         const card=main.querySelector(`[data-business-application="${globalObject.CSS?.escape?.(requestedApplication)||requestedApplication.replace(/"/g,'\\"')}"]`);
         card?.scrollIntoView?.({behavior:'smooth',block:'center'});
@@ -10295,7 +10360,7 @@
     moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
     safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
     accountDeletionQueueHtml,privacyOperationAttempt,accountSignupQueueHtml,
-    onboardingHash,onboardingStateFromHash,
+    onboardingHash,onboardingStateFromHash,onboardingTabs,onboardingTabsFor,onboardingTabStripHtml,
     platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
     setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
     localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
@@ -10316,7 +10381,7 @@
       buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
       moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
       safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
-      onboardingHash,onboardingStateFromHash,accountSignupQueueHtml,
+      onboardingHash,onboardingStateFromHash,onboardingTabs,onboardingTabsFor,onboardingTabStripHtml,accountSignupQueueHtml,
       platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
       setPlatformLocaleForTest,localizedPlatformCUI,sectorLabel,sectorModuleChipsHtml,
       localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
