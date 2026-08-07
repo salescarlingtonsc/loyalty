@@ -792,6 +792,9 @@
       'Qualification and discovery':'资格评估与需求探索','Record commercial detail':'记录商业详情',
       'Record departure':'记录离职','Record qualification':'记录资格评估',
       '{count} not recorded':'{count} 项未填写',
+      'Scan a receipt':'扫描收据',
+      'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.':'在此拍摄收据即可直接进入支出账簿。在您于现金损益表确认金额之前，不会入账。',
+      'Receipt saved. Confirm the amounts in Cash P&L to post it.':'收据已保存。请在现金损益表中确认金额以完成入账。',
       'Receipts to post':'待入账收据',
       'Photograph or upload a receipt and it is read for you. Nothing reaches the books until you confirm the figures.':'拍照或上传收据，系统会为您读取。在您确认金额之前，不会记入账簿。',
       'Add a receipt':'添加收据',
@@ -1039,6 +1042,9 @@
       'Qualification and discovery':'Kelayakan dan penemuan','Record commercial detail':'Rekod butiran komersial',
       'Record departure':'Rekod pemergian','Record qualification':'Rekod kelayakan',
       '{count} not recorded':'{count} belum direkodkan',
+      'Scan a receipt':'Imbas resit',
+      'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.':'Ambil gambar resit di sini dan ia terus masuk ke buku perbelanjaan. Tiada apa-apa dipos sehingga anda mengesahkan angka dalam Untung Rugi Tunai.',
+      'Receipt saved. Confirm the amounts in Cash P&L to post it.':'Resit disimpan. Sahkan jumlahnya dalam Untung Rugi Tunai untuk mengeposnya.',
       'Receipts to post':'Resit untuk dipos',
       'Photograph or upload a receipt and it is read for you. Nothing reaches the books until you confirm the figures.':'Ambil gambar atau muat naik resit dan ia akan dibaca untuk anda. Tiada apa-apa masuk ke akaun sehingga anda mengesahkan angkanya.',
       'Add a receipt':'Tambah resit',
@@ -8716,7 +8722,30 @@
         const domain=coverageByKey.get(key);
         return `<article class="card platform-kpi" data-kpi-coverage-state="${escapeHtml(domain?.state||'unknown')}"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(platformTodayMetric(metric,domain,{exact}))}</div></article>`;
       }).join('')}</section>
+      ${CUI.card({title:'Scan a receipt',description:'Snap a receipt here and it goes straight to the expense books. Nothing posts until you confirm the figures in Cash P&L.',body:`
+        <div class="cui-field"><label for="todayReceiptFile">${escapeHtml(pt('Add a receipt'))}</label><input id="todayReceiptFile" type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" capture="environment"><p class="muted small">${escapeHtml(pt('Photo or PDF, up to 20 MB. A PDF is stored as evidence but has to be keyed in.'))}</p></div>
+        <div data-today-receipt-progress aria-live="polite"></div>`})}
       <div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt("Today stays operational"))}</b><p class="small">${escapeHtml(pt("Firm browsing, report generation, pricing and platform configuration stay in their dedicated work areas so this page remains a short decision queue."))}</p></div></div>`;
+    // Capture is deliberately one step here: the receipt is stored and read, and
+    // the confirm-and-post decision stays in Cash P&L where the books are.
+    const todayReceipt=main.querySelector('#todayReceiptFile'),todayProgress=main.querySelector('[data-today-receipt-progress]');
+    if(todayReceipt)todayReceipt.onchange=async event=>{
+      const file=event.currentTarget.files?.[0];
+      if(!file)return;
+      todayReceipt.disabled=true;
+      todayProgress.innerHTML=`<p class="muted small">${escapeHtml(pt('Uploading and reading the receipt…'))}</p>`;
+      try{
+        const registered=await uploadReceipt(file,context);
+        todayProgress.innerHTML=`<p class="platform-route-note">${escapeHtml(registered.duplicate
+          ?pt('That receipt was already captured.')
+          :pt('Receipt saved. Confirm the amounts in Cash P&L to post it.'))}</p>`;
+        CUI.announce(registered.duplicate?pt('That receipt was already captured.'):pt('Receipt uploaded and being read.'));
+        todayReceipt.value='';todayReceipt.disabled=false;
+      }catch(error){
+        todayReceipt.disabled=false;
+        todayProgress.innerHTML=`<p class="platform-route-note">${escapeHtml(platformErrorMessage(error,pt('The receipt could not be uploaded.')))}</p>`;
+      }
+    };
     CUI.focusRoute(main);
   }
 
