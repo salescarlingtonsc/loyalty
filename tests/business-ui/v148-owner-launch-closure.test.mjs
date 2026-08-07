@@ -6,7 +6,11 @@ const read=path=>readFile(new URL(`../../${path}`,import.meta.url),'utf8');
 
 test('team access is discoverable and distinguishes roster-only from signed-in access',async()=>{
   const source=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
-  assert.match(source,/href="#\/settings\?tab=team"[^>]*>[^<]*(?:Team|Staff)/);
+  /* V209 (owner annotation "remove this"): the profile menu no longer links to the team page.
+     Staff Members is in the sidebar, and two doors to one page is the duplicated navigation the
+     owner flagged at V180. What this test protects — that team access is REACHABLE and that the
+     two kinds of teammate are told apart — still holds, on the sidebar route. */
+  assert.match(source,/items:\['staffmembers','branches','services','inventory','packages'\]/);
   assert.match(source,/Add staff without app access/);
   assert.match(source,/No app access/);
   assert.match(source,/Invite pending/);

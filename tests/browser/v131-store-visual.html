@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="bd44c34455d922737481526b90b626667a15b00442f59a7e867fd5ed869e1ffb"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="b38ffe492e2812bd2c57c1d8e83e11df553882b4caadb4d35d5fff838740efb4"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -111,6 +111,14 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .section-subtabs-v200{display:flex;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .section-subtabs-v200::-webkit-scrollbar{display:none}
 .section-subtabs-v200 button{flex:0 0 auto;white-space:nowrap}
+/* V209 staff list groups. The heading carries the count so an owner can see "3 roster only" at a
+   glance; the subtitle says what the group MEANS, because "roster only" is jargon until someone
+   tells you it means no login and no seat. */
+.staff-group-v209+.staff-group-v209{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.staff-group-head-v209{margin-bottom:10px}
+.staff-group-head-v209 h3{font-size:1rem;display:flex;align-items:center;gap:8px}
+.staff-group-count-v209{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--tint);color:var(--coral);font-size:12px;font-weight:750}
+.staff-group-head-v209 p{margin-top:3px}
 /* V206: the row a notification sent you to. A brief tint, not a permanent one — it is a "here it
    is", and a highlight that never fades becomes noise on the next render. Respects reduced
    motion by simply not animating; the tint still lands. */
