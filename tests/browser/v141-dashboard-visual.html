@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="a7af3cdae48a32733e7257210f795218bb522d88dc12607e2df1272a1aef2f61"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="06ed8a3651cc78c92512136fd287742ef5fab75b87ff8cf20d6dea14c4d8a62e"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -213,9 +213,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* The teammate the owner actually chose is marked in the availability list, so the panel and the
    Assign-to field visibly agree. */
 .suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
-/* A branch withheld from the reporting scope is stated, not silently missing. */
-.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
-@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
+
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -2276,7 +2274,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        reporting scope), so only redemptions need fetching. Redeem rows carry no sale and no
        branch, so this one extra read is business-scoped and each loyalty card states which
        scope it belongs to rather than implying they share one. */
-    const loyaltyVisibleV170=canReadModule('loyalty');
+    /* V224: the owner struck out the whole "Loyalty this period" strip. Members joined
+       duplicates the New customer members tile above it, and points earned / rewards redeemed
+       belong in Programmes, where they can be acted on. */
+    const loyaltyVisibleV170=false;
     let response,previousResponse={data:null,error:null},inactiveResponse={data:null,error:null},inactive60Response={data:null,error:null},redeemedResponse={data:null,error:null};
     try{[response,previousResponse,inactiveResponse,inactive60Response,redeemedResponse]=await Promise.all([
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:from,p_to:to,...scopePayload}),
@@ -2307,15 +2308,17 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
     const newCustomersChange=customerMetricsAvailable&&previousSummary?.availability?.clients!==false?percentageChangeV153(d.new_customers,previousSummary?.new_customers):null;
     const metrics=[
-      {key:'visits',value:String(d.visits||0),hint:`Valid original visits · ${scopeLabel}`,delta:visitsChange},
-      {key:'revenue',value:money(d.revenue_cents||0),hint:`Net sales · ${scopeLabel}`,delta:revenueChange},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:d.metric_labels?.new_customers||'Joined during the selected period.',delta:newCustomersChange}
+      /* V224: the owner struck out every KPI hint line. The scope is already stated once in the
+         top bar, and repeating it under four tiles is the noise, not the information. */
+      {key:'visits',value:String(d.visits||0),hint:'',delta:visitsChange},
+      {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange},
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
       const inactiveTotal=inactiveResponse.error||inactive60Response.error?'Unavailable':String((Number(inactiveResponse.data?.total)||0)+(Number(inactive60Response.data?.matching_customers)||0));
-      metrics.push({key:'inactive',value:inactiveTotal,hint:`Inactive in this branch scope · ${scopeLabel}`});
+      metrics.push({key:'inactive',value:inactiveTotal,hint:''});
     }
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span><span class="metric-hint">${esc(metric.hint)}</span><span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
@@ -2391,6 +2394,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'a7af3cdae48a32733e7257210f795218bb522d88dc12607e2df1272a1aef2f61',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'06ed8a3651cc78c92512136fd287742ef5fab75b87ff8cf20d6dea14c4d8a62e',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

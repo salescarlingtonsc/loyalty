@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5b3d741b442ba5c8ecc75b6dadcec4a8889b82aab8166f464a7c1a561faffc51"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d0c0b0af794d46afdedbb4f16d6c2d37c7e50db31cd51a3d2d02071b96d38fac"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -212,9 +212,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* The teammate the owner actually chose is marked in the availability list, so the panel and the
    Assign-to field visibly agree. */
 .suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
-/* A branch withheld from the reporting scope is stated, not silently missing. */
-.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
-@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
+
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -1603,7 +1601,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 5b3d741b442ba5c8ecc75b6dadcec4a8889b82aab8166f464a7c1a561faffc51</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · d0c0b0af794d46afdedbb4f16d6c2d37c7e50db31cd51a3d2d02071b96d38fac</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2325,7 +2323,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        reporting scope), so only redemptions need fetching. Redeem rows carry no sale and no
        branch, so this one extra read is business-scoped and each loyalty card states which
        scope it belongs to rather than implying they share one. */
-    const loyaltyVisibleV170=canReadModule('loyalty');
+    /* V224: the owner struck out the whole "Loyalty this period" strip. Members joined
+       duplicates the New customer members tile above it, and points earned / rewards redeemed
+       belong in Programmes, where they can be acted on. */
+    const loyaltyVisibleV170=false;
     let response,previousResponse={data:null,error:null},inactiveResponse={data:null,error:null},inactive60Response={data:null,error:null},redeemedResponse={data:null,error:null};
     try{[response,previousResponse,inactiveResponse,inactive60Response,redeemedResponse]=await Promise.all([
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:from,p_to:to,...scopePayload}),
@@ -2356,15 +2357,17 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
     const newCustomersChange=customerMetricsAvailable&&previousSummary?.availability?.clients!==false?percentageChangeV153(d.new_customers,previousSummary?.new_customers):null;
     const metrics=[
-      {key:'visits',value:String(d.visits||0),hint:`Valid original visits · ${scopeLabel}`,delta:visitsChange},
-      {key:'revenue',value:money(d.revenue_cents||0),hint:`Net sales · ${scopeLabel}`,delta:revenueChange},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:d.metric_labels?.new_customers||'Joined during the selected period.',delta:newCustomersChange}
+      /* V224: the owner struck out every KPI hint line. The scope is already stated once in the
+         top bar, and repeating it under four tiles is the noise, not the information. */
+      {key:'visits',value:String(d.visits||0),hint:'',delta:visitsChange},
+      {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange},
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
       const inactiveTotal=inactiveResponse.error||inactive60Response.error?'Unavailable':String((Number(inactiveResponse.data?.total)||0)+(Number(inactive60Response.data?.matching_customers)||0));
-      metrics.push({key:'inactive',value:inactiveTotal,hint:`Inactive in this branch scope · ${scopeLabel}`});
+      metrics.push({key:'inactive',value:inactiveTotal,hint:''});
     }
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span><span class="metric-hint">${esc(metric.hint)}</span><span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
@@ -3918,7 +3921,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'5b3d741b442ba5c8ecc75b6dadcec4a8889b82aab8166f464a7c1a561faffc51',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'d0c0b0af794d46afdedbb4f16d6c2d37c7e50db31cd51a3d2d02071b96d38fac',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="0f13302a6a5676196ad8f6a0bbdfa0c726afe412233adde0080cccce46043e4d">
+<meta name="v105-production-component-sha256" content="12c1430c2db865db8c32fd937594cbcd70bf840a17bea40221b0cfbd6ad4ab1e">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -218,9 +218,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* The teammate the owner actually chose is marked in the availability list, so the panel and the
    Assign-to field visibly agree. */
 .suggestionStaff.is-selected-v217{border-color:var(--coral);background:var(--tint);font-weight:700}
-/* A branch withheld from the reporting scope is stated, not silently missing. */
-.topbar-branch-withheld-v217{font-size:.72rem;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
-@media (max-width:900px){.topbar-branch-withheld-v217{display:none}}
+
 .merchant-insights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .insight-card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);padding:16px;display:grid;gap:10px;min-width:0}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
@@ -2300,7 +2298,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 0f13302a6a56</span>
+<span class="v105-provenance">v105 production-component harness · 12c1430c2db8</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -2425,7 +2423,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'0f13302a6a5676196ad8f6a0bbdfa0c726afe412233adde0080cccce46043e4d',
+  sourceHash:'12c1430c2db865db8c32fd937594cbcd70bf840a17bea40221b0cfbd6ad4ab1e',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

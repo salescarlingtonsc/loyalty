@@ -7086,10 +7086,9 @@ async function hydrateProfileBranchSelectorV158(page){
     if(!$('profileBranchScopeV158'))return;
     /* V217: only an ACTIVE branch can be a reporting scope — the server refuses any other, so
        offering one here produced a workspace that could not load its own dashboard or customer
-       list. A branch held back for payment is named below the picker instead of hidden without
-       explanation, so the owner can see it exists and why it is not selectable yet. */
+       list. V224 removed the "awaiting payment" pill the owner struck out of the top bar; the
+       branch and its reason are still stated on the Branches page, which is where it is acted on. */
     const allowed=activeBranchesForScopeV217(branches);
-    const withheld=(branches||[]).filter(branch=>branch.active===false);
     if(selectedBranchId&&!allowed.some(branch=>branch.id===selectedBranchId)){
       selectedBranchId=isAdmin?null:(allowed[0]?.id||null);
     }
@@ -7099,9 +7098,7 @@ async function hydrateProfileBranchSelectorV158(page){
           ${isAdmin?'<option value="">All branches</option>':''}
           ${allowed.map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}
         </select>
-        ${withheld.length?`<span class="topbar-branch-withheld-v217">${esc(withheld.length===1
-          ?`${withheld[0].name}: ${withheld[0].billing_state==='pending_payment'?'awaiting payment':'switched off'}`
-          :`${withheld.length} branches unavailable`)}</span>`:''}`
+        `
       :'<span class="muted small">No branch assigned</span>';
     const select=$('profileBranchScopeSelectV158');
     if(select){
@@ -8719,7 +8716,10 @@ async function dashboard(){
        reporting scope), so only redemptions need fetching. Redeem rows carry no sale and no
        branch, so this one extra read is business-scoped and each loyalty card states which
        scope it belongs to rather than implying they share one. */
-    const loyaltyVisibleV170=canReadModule('loyalty');
+    /* V224: the owner struck out the whole "Loyalty this period" strip. Members joined
+       duplicates the New customer members tile above it, and points earned / rewards redeemed
+       belong in Programmes, where they can be acted on. */
+    const loyaltyVisibleV170=false;
     let response,previousResponse={data:null,error:null},inactiveResponse={data:null,error:null},inactive60Response={data:null,error:null},redeemedResponse={data:null,error:null};
     try{[response,previousResponse,inactiveResponse,inactive60Response,redeemedResponse]=await Promise.all([
       sb.rpc('get_dashboard_summary_v155',{p_business:S.biz.id,p_from:from,p_to:to,...scopePayload}),
@@ -8750,15 +8750,17 @@ async function dashboard(){
     const visitsChange=percentageChangeV153(d.visits,previousSummary?.visits);
     const newCustomersChange=customerMetricsAvailable&&previousSummary?.availability?.clients!==false?percentageChangeV153(d.new_customers,previousSummary?.new_customers):null;
     const metrics=[
-      {key:'visits',value:String(d.visits||0),hint:`Valid original visits · ${scopeLabel}`,delta:visitsChange},
-      {key:'revenue',value:money(d.revenue_cents||0),hint:`Net sales · ${scopeLabel}`,delta:revenueChange},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:d.metric_labels?.new_customers||'Joined during the selected period.',delta:newCustomersChange}
+      /* V224: the owner struck out every KPI hint line. The scope is already stated once in the
+         top bar, and repeating it under four tiles is the noise, not the information. */
+      {key:'visits',value:String(d.visits||0),hint:'',delta:visitsChange},
+      {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange},
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
       const inactiveTotal=inactiveResponse.error||inactive60Response.error?'Unavailable':String((Number(inactiveResponse.data?.total)||0)+(Number(inactive60Response.data?.matching_customers)||0));
-      metrics.push({key:'inactive',value:inactiveTotal,hint:`Inactive in this branch scope · ${scopeLabel}`});
+      metrics.push({key:'inactive',value:inactiveTotal,hint:''});
     }
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span><span class="metric-hint">${esc(metric.hint)}</span><span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('');
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
       openDashboardMetricDetailV141(key,button.querySelector('.v')?.textContent||'—',{});
@@ -9016,7 +9018,7 @@ async function clientsPage(){
     (canWrite?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView">
     <header class="v150-titlebar" data-workspace-i18n>
-      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1><p>Find customers, manage consent, and follow up with people who have not visited recently.</p></div></div>
+      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1></div></div>
       <div class="client-summary-cards" id="inactiveCards" aria-label="Inactive customer shortcuts">
         <button type="button" class="client-summary-card" data-inactive-bucket="30_59" aria-pressed="false"><b>—</b><span>Inactive 30–59 days</span></button>
         <button type="button" class="client-summary-card" data-inactive-bucket="60_89" aria-pressed="false"><b>—</b><span>Inactive 60–89 days</span></button>
@@ -10247,7 +10249,7 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
-        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="8186 3833" value="${esc(phone)}">
+        <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
         <div id="tErr"></div>
         <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:19})} Next</button>
         <div class="grid frontline-keypad" id="tKeys" aria-label="Phone keypad">
@@ -14569,15 +14571,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2><p class="muted small">${programmeView==='ongoing'?'Running for your customers right now.':programmeView==='available'?'Not running yet — each comes with a suggested starting point you can use in one tap.':'Every programme you can run. Choose one row to set it up, view it or edit it.'}</p></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2></div></div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
       <div class="programme-category"><div class="programme-category-title">Loyalty & rewards</div><div class="grow-programme-list">
-        ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Earning',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
-          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Earn':'Earning paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
-          :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Earning</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
+        ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
+          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
+          :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
@@ -17954,7 +17956,7 @@ async function appointmentsPage(){
   const staffOpts=(sel,id)=>`${canSeeAll?`<option value="all" ${sel==='all'?'selected':''}>Everyone</option>`:''}`+
     branchStaff(id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${esc(staffLabel(s))}${myStaff&&myStaff.id===s.id?' (me)':''}</option>`).join('');
   const apptHeaderActions=canWrite?`<button class="btn ghost" id="openBlockTime">${CUI.icon('staff',{size:18})} Block time</button><button class="btn" id="openAppointmentForm">${CUI.icon('appointments',{size:18})} New appointment</button>`:'';
-  routeMain.innerHTML=`<div data-workspace-i18n>${CUI.pageHeader({title:'Appointments',subtitle:'See today’s appointments by team member and add a booking in a few taps.',iconName:'appointments',actions:apptHeaderActions,canWrite,moduleLabel:'Appointment scheduling'})}</div>
+  routeMain.innerHTML=`<div data-workspace-i18n>${CUI.pageHeader({title:'Appointments',subtitle:'',iconName:'appointments',actions:apptHeaderActions,canWrite,moduleLabel:'Appointment scheduling'})}</div>
     ${!visibleBranches.length?CUI.card({title:'No appointment access',description:'This account has no active branch where Appointments is enabled.'}):`
     <div class="appointment-layout" id="appointmentLayout">
       ${canWrite?`<section class="card appointment-form-card" id="appointmentFormCard" aria-labelledby="newAppointmentTitle" hidden><div class="row"><h2 id="newAppointmentTitle" style="font-size:17px">New appointment</h2><span class="spacer"></span><button class="btn ghost sm" type="button" id="closeAppointmentForm">Close</button></div>
@@ -19371,7 +19373,7 @@ async function packagesPage(){
    branch is "default" is wired into the v11a BEFORE INSERT trigger that backfills
    sales.branch_id for the 5 unmodified sales writers, so flipping it isn't a cosmetic choice. */
 async function branchesPage(){
-  M().innerHTML=`<div class="topbar"><div><h1>Branches</h1><p class="muted small">Manage your locations. Staff assigned to a branch see only that branch's data — owners and managers always see every branch.</p></div>
+  M().innerHTML=`<div class="topbar"><div><h1>Branches</h1></div>
     <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
     <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
     <div id="brList">${CUI.skeletonGrid({cards:3,lines:3})}</div>`;
@@ -20468,7 +20470,7 @@ function enhanceStaffMembersTabsV164(teamPanel){
      a roster-only teammate — someone who appears on the rota and can be credited for a sale but
      never signs in — is a first-class record. This adds that form. Giving them app access is
      still a separate, deliberate act: an invite. */
-  listPanel.innerHTML=`<div><h2>Staff list</h2><p class="muted small">Active staff and roster-only teammates appear here first.</p></div>
+  listPanel.innerHTML=`<div><h2>Staff list</h2></div>
     <div class="card" id="staffManualAddCard" style="display:none;margin-top:12px">
       <div class="v150-soft-head"><b>Add a teammate</b><p>They appear on the rota and can be credited for sales straight away. They do not get a login until you send an invite.</p></div>
       <!-- V207 (owner: "add staff > then add details later (wrong) — supposed to be during adding
@@ -20612,7 +20614,7 @@ async function staffMembersPage(){
   }
   const topbar=M().querySelector('.topbar');
   if(topbar){
-    topbar.innerHTML=`<div><h1>Staff Members</h1><p class="muted small">Manage staff access, invitations, roles and module permissions.</p></div>`;
+    topbar.innerHTML=`<div><h1>Staff Members</h1></div>`;
   }
   const teamTab=$('settab-team');
   if(teamTab)teamTab.textContent='Staff Members';

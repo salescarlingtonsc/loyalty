@@ -37,12 +37,16 @@ test('V217 neither branch picker offers a branch the server will refuse', () => 
   assert.equal((app.match(/activeBranchesForScopeV217\(branches\)/g) || []).length >= 3, true);
   // ...and neither still renders the old "(inactive)" option, which was the selectable trap.
   assert.doesNotMatch(app, /\(inactive\)/, 'an inactive branch must not be a selectable option');
-  // The branch is named rather than silently vanishing.
-  assert.match(app, /topbar-branch-withheld-v217/);
-  assert.match(shell, /\.topbar-branch-withheld-v217\{/);
+  /* V224: the owner struck the "abc: awaiting payment" pill out of the top bar. The branch and
+     its reason are still stated on the Branches page, which is where it is acted on, so the
+     information is not lost — only the repetition in the header is. The reason helper stays,
+     because the page-level filter still explains a withheld branch there. */
+  assert.doesNotMatch(app, /topbar-branch-withheld-v217/);
+  assert.doesNotMatch(shell, /topbar-branch-withheld-v217/);
   const reason = fn('branchScopeUnavailableReasonV217');
   assert.match(reason, /waiting for payment/);
   assert.match(reason, /switched off/);
+  assert.match(app, /branchScopeUnavailableReasonV217\)\.join\(' '\)/, 'still explained on the page filter');
 });
 
 test('V217 a failed dashboard load stops looking like a load in progress', () => {
