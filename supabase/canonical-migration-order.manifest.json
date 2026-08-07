@@ -2392,9 +2392,9 @@
     {
       "order": 239,
       "kind": "pending",
-      "version": "20260807210000",
+      "version": "20260807195000",
       "name": "nestly_v217_recent_window_and_staff_reference_code",
-      "path": "supabase/migrations/20260807210000_nestly_v217_recent_window_and_staff_reference_code.sql",
+      "path": "supabase/migrations/20260807195000_nestly_v217_recent_window_and_staff_reference_code.sql",
       "octetLength": 7962,
       "sha256": "1b8ad9ee599567071e9aaf32fa75538ae615971dc5d08a0f2d087096fdef4f11",
       "provenance": "local-source"
