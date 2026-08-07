@@ -81,7 +81,7 @@ test('security readiness is explicit instead of allowing a silent sign-in no-op'
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const signIn=section(app,'function renderCustomerPasswordSignIn','async function renderCustomerOtpStart');
   assert.match(signIn,/id="customerPasswordSignIn"[^>]*disabled[^>]*>[\s\S]*?<span>Checking…<\/span>/);
-  assert.match(signIn,/signIn\.querySelector\('span'\)\.textContent=token\?'Sign in':'Checking…'/);
+  assert.match(signIn,/signIn\.querySelector\('span'\)\.textContent=token\?'Sign in':'Waiting for security check…'/);
   assert.match(signIn,/if\(!captchaToken\)\{[\s\S]*Security check is still running/);
   // v176: a failed sign-in must leave the control usable; the captcha gate still blocks invalid submits.
   assert.match(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]*signIn\.disabled=false;[\s\S]*passkeyButton\.disabled=!passkeySupported;[\s\S]*textContent='Sign in'/);

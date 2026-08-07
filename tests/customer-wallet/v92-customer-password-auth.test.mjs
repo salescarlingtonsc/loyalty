@@ -12,7 +12,7 @@ const section=(start,end)=>{
 
 test('normal customer login uses phone and password without touching OTP transport',()=>{
   const login=section('function renderCustomerPasswordSignIn','async function renderCustomerOtpStart');
-  assert.match(login,/passwordControlHtml\('customerPassword',\{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn'\}\)/);
+  assert.match(login,/passwordControlHtml\('customerPassword',\{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn',name:'password'\}\)/);
   assert.match(login,/sb\.auth\.signInWithPassword\(\{phone,password,options:\{captchaToken:challenge\}\}\)/);
   assert.match(login,/Normal sign-in does not send an OTP/);
   assert.doesNotMatch(login,/signInWithOtp|signUp|auth\.resend|verifyOtp|loadCustomerPhoneOtpCapabilities|customerPhoneOtpAvailable/);

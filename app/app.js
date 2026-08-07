@@ -211,6 +211,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Security check could not connect. Please retry, or check your browser and network settings.',
       load:'Security check could not load. Check your connection and try again.',
       continue:'Complete the security check to continue.',
+      interactive:'Tick “Verify you are human” above to continue.',
       showPassword:'Show password',hidePassword:'Hide password',
       passkey:'Sign in with Face ID, Touch ID or passkey',passkeyTitle:'Use Face ID, Touch ID or passkey'
     },
@@ -220,6 +221,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'无法连接安全验证。请重试，或检查浏览器及网络设置。',
       load:'无法加载安全验证。请检查网络连接后重试。',
       continue:'请完成安全验证以继续。',
+      interactive:'请勾选上方的“确认您是真人”以继续。',
       showPassword:'显示密码',hidePassword:'隐藏密码',
       passkey:'使用面容 ID、触控 ID 或通行密钥登录',passkeyTitle:'使用面容 ID、触控 ID 或通行密钥'
     },
@@ -229,6 +231,7 @@ const authSecurityCopy=(locale,key)=>{
       connect:'Semakan keselamatan tidak dapat disambungkan. Cuba lagi atau semak tetapan pelayar dan rangkaian anda.',
       load:'Semakan keselamatan tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.',
       continue:'Lengkapkan semakan keselamatan untuk meneruskan.',
+      interactive:'Tandakan “Verify you are human” di atas untuk meneruskan.',
       showPassword:'Tunjukkan kata laluan',hidePassword:'Sembunyikan kata laluan',
       passkey:'Log masuk dengan Face ID, Touch ID atau kunci laluan',passkeyTitle:'Gunakan Face ID, Touch ID atau kunci laluan'
     }
@@ -270,6 +273,11 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
       if(destroyed)return;
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
         callback:(token)=>{if(destroyed)return;onToken(token);retryEl.hidden=true;setPassed(true)},
+        /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
+           security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
+           and the passkey button looked broken while the app was simply waiting for a tick. */
+        'before-interactive-callback':()=>{if(destroyed)return;message(security('interactive'))},
+        'after-interactive-callback':()=>{if(destroyed)return;message(security('loading'))},
         'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
         'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
         'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
@@ -2000,10 +2008,14 @@ let customerRegistrationState={
   phone:'',channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false
 };
 let customerAutomaticPasskeyAttempted=false;
-function passwordControlHtml(id,{autocomplete='current-password',minlength='',describedBy='',placeholder='',passkeyButtonId='',locale='en'}={}){
+function passwordControlHtml(id,{autocomplete='current-password',minlength='',describedBy='',placeholder='',passkeyButtonId='',locale='en',name=''}={}){
   const showLabel=authSecurityCopy(locale,'showPassword'),hideLabel=authSecurityCopy(locale,'hidePassword');
   const inputAttributes=[
     `id="${esc(id)}"`,`type="password"`,`autocomplete="${esc(autocomplete)}"`,
+    /* v193: a password manager pairs a credential from the FIELD NAMES inside a form. Without
+       name="password" next to name="username", Chrome and Safari see two anonymous inputs and
+       never offer to save. */
+    name?`name="${esc(name)}"`:'',
     minlength?`minlength="${esc(minlength)}"`:'',
     describedBy?`aria-describedby="${esc(describedBy)}"`:'',
     placeholder?`placeholder="${esc(placeholder)}"`:''
@@ -2297,17 +2309,24 @@ function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
     renderCustomerPasswordSignIn(isRouteCurrent,{notice:'Password updated. Sign in with your mobile number and new password.'});
   };
 }
+/* v193 (owner: "save password not working"). A password manager offers to save on a real FORM
+   SUBMIT, from fields it can name: username + password. This screen was two loose inputs and a
+   type="button", so Chrome and Safari had nothing to recognise and never prompted. The phone field
+   also carried autocomplete="tel", which is not the username hint a manager pairs a credential to
+   — and "username webauthn" is the documented pairing for passkey autofill as well. */
 function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeTone='success'}={}){
   if(!isRouteCurrent())return;
   customerRegistrationShell(`<section class="card" aria-labelledby="customerPasswordTitle">
     <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerPasswordTitle">Welcome to ${esc(BRAND.productName)}</h1><p class="muted small" style="margin-top:5px">Sign in with your mobile number and password. Normal sign-in does not send an OTP.</p></div></div>
+    <form id="customerPasswordForm" novalidate>
     <label for="customerPasswordPhone">Singapore mobile number</label>
-    <input id="customerPasswordPhone" type="tel" inputmode="tel" autocomplete="tel webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
+    <input id="customerPasswordPhone" name="username" type="tel" inputmode="tel" autocomplete="username webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
     <label for="customerPassword">Password</label>
-    ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn'})}
+    ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn',name:'password'})}
     <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px${noticeTone==='success'?';color:var(--green)':''}">${esc(notice)}</p>`:''}</div>
     <div style="margin-top:14px">${authChallengeHtml()}</div>
-    <button class="btn" id="customerPasswordSignIn" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
+    <button class="btn" id="customerPasswordSignIn" type="submit" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
+    </form>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
     <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
   </section>`);
@@ -2329,7 +2348,9 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     onToken:(token)=>{
       if(!isRouteCurrent()||!signIn.isConnected)return;
       captchaToken=token;signIn.disabled=!token;passkeyButton.disabled=!passkeySupported||!token;
-      signIn.querySelector('span').textContent=token?'Sign in':'Checking…';
+      /* v193: "Checking…" claimed the APP was busy. Until a token arrives the app is waiting for
+         the security check — and if that check is a checkbox, for the person. */
+      signIn.querySelector('span').textContent=token?'Sign in':'Waiting for security check…';
       if(installedApp&&passkeySupported&&!customerAutomaticPasskeyAttempted){
         customerAutomaticPasskeyAttempted=true;
         runPasskeySignIn({automatic:true});
@@ -2338,7 +2359,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
       if(!isRouteCurrent()||!signIn.isConnected){control?.destroy();return}
       captchaControl=control;
     });
-  signIn.onclick=async()=>{
+  const submitSignIn=async()=>{
     const phone=normalizeSingaporeCustomerPhone(phoneInput.value),password=passwordInput.value;
     if(!phone||!password){
       errorHost.innerHTML='<div class="err">Enter your Singapore mobile number and password.</div>';return;
@@ -2361,13 +2382,29 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
       signIn.querySelector('span').textContent='Sign in';
       errorHost.innerHTML='<div class="err">The mobile number or password is incorrect.</div>';return;
     }
+    /* Offer the credential to the browser's own manager. The form submit is what makes Chrome and
+       Safari prompt; this is the explicit path for browsers that implement it, and a no-op
+       everywhere else. Peekaa itself never stores the password. */
+    try{
+      if(globalThis.PasswordCredential&&navigator.credentials?.store){
+        await navigator.credentials.store(new globalThis.PasswordCredential({id:phone,password,name:phone}));
+      }
+    }catch{}
     resetCustomerRegistrationState({phone});
     resetClientSessionState({preserveInvitation:true});
     route();
   };
+  /* A real submit — Enter in either field, or the button — is what a password manager listens for. */
+  const signInForm=$('customerPasswordForm');
+  if(signInForm)signInForm.onsubmit=event=>{event.preventDefault();submitSignIn()};
+  else signIn.onclick=submitSignIn;
   const runPasskeySignIn=async({automatic=false}={})=>{
     if(!passkeySupported||!captchaToken){
-      if(!automatic)passkeyStatus.textContent='Complete the security check before using Face ID, Touch ID or your passkey.';
+      if(!automatic){
+        passkeyStatus.textContent=passkeySupported
+          ?'Complete the security check above first — then Face ID, Touch ID or your passkey.'
+          :'Passkeys are not supported in this browser. Sign in with your password.';
+      }
       return;
     }
     const challenge=captchaToken;captchaToken='';passkeyButton.disabled=true;signIn.disabled=true;
