@@ -78,12 +78,15 @@ test('product cost produces plain-language margin and safe reward budget guidanc
     priceCents:6800,costCents:2400,grossProfitCents:4400,marginPct:64.7,
     rewardCostCents:1200,profitAfterRewardCents:3200,profitableAfterReward:true
   });
-  const inventory=section('async function inventoryPage(){','/* ---------- packages ---------- */');
-  /* V221 renamed the field to the owner's own words ("costs you"). The intent here — the page
-     asks for cost and turns it into margin guidance — is unchanged and asserted below. */
-  assert.match(inventory,/<label for="pc2">Costs you/);
-  assert.match(inventory,/Gross profit/);
-  assert.match(inventory,/cost_cents/);
+  /* V222 (owner: "scrap the cost - just put selling price for products - if not will be
+     complex"). Cost has left the Products page entirely — it was not optional there, adding a
+     product refused without it. The capability this test protects, product cost feeding reward
+     budget guidance, is unchanged and lives in Programmes, asserted below. Products is asserted
+     to stay free of it, because re-adding it there is the regression. */
+  const inventory=section('async function inventoryPage(){','/* ---------- packages ---------- */')
+    .replace(/\/\*[\s\S]*?\*\//g,' ');
+  assert.doesNotMatch(inventory,/cost/i);
+  assert.doesNotMatch(inventory,/profit/i);
   const grow=section('async function growPage(','/* ---------- Bring-back playbooks');
   assert.match(grow,/data-product-cost-save/);
   assert.match(grow,/owner_set_product_cost_v122/);

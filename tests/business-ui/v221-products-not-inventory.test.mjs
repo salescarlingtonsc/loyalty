@@ -24,22 +24,27 @@ const page = app
 
 test('V221 the page presents itself as Products, not Inventory', () => {
   assert.match(page, /<h1>Products<\/h1>/);
-  assert.match(page, /What you sell, what you charge and what it costs you\. Stock keeping is optional\./);
+  assert.match(page, /What you sell and what you charge for it\. Stock keeping is optional\./);
   // The batch/expiry/FEFO framing is gone from the heading.
   assert.doesNotMatch(page, /Stock in batches with expiry/);
   assert.doesNotMatch(page, /FEFO/);
   assert.doesNotMatch(page, /<h1>Inventory<\/h1>/);
 });
 
-test('V221 the form asks in the owner\'s own words and shows the margin', () => {
+test('V222 the form asks only what you sell it for', () => {
   assert.match(page, /<label for="pp2">Sell for/);
-  assert.match(page, /<label for="pc2">Costs you/);
-  // The owner's own example, as placeholders.
   assert.match(page, /placeholder="5\.00"/);
-  assert.match(page, /placeholder="2\.00"/);
-  // Gross profit is already computed from the two, and must stay.
-  assert.match(page, /productProfitPreview/);
-  assert.match(page, /Gross profit/);
+  /* Owner: "scrap the cost - just put selling price for products - if not will be complex".
+     Cost was not optional here — adding a product refused without it — so a hawker could not
+     enter chicken rice without first answering a question about margin. */
+  assert.doesNotMatch(page, /cost/i, 'the Products page must not ask about cost');
+  assert.doesNotMatch(page, /profit/i);
+  // Adding a product must not require anything beyond a name.
+  const add = page.slice(page.indexOf("$('padd2').onclick"), page.indexOf("$('badd2').onclick"));
+  assert.match(add, /if\(\$\('pn2'\)\.value\.trim\(\)\.length<2\) return toast\('Name required'\);/);
+  assert.doesNotMatch(add, /return toast\('Add the product cost/);
+  // And it must not write a cost, so no zero masquerades as a real figure.
+  assert.doesNotMatch(add, /cost_cents/);
 });
 
 test('V221 stock keeping is optional and says so', () => {
@@ -57,6 +62,7 @@ test('V221 stock keeping is optional and says so', () => {
 
 test('V221 empty and error states speak about products', () => {
   assert.match(page, /No products yet\. Add what you sell — for example chicken rice at/);
+  assert.doesNotMatch(page, /that costs you/);
   assert.match(page, /Products could not be loaded/);
   assert.doesNotMatch(page, /Inventory could not be loaded/);
   assert.match(page, /Read-only product access/);
