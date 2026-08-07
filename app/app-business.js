@@ -607,187 +607,11 @@ function businessWorkspaceSwitchHtml(staffWorkspaces=[],currentBusinessSlug='',h
       ${otherWorkspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${CUI.icon('branch',{size:17})}<span data-merchant-content>${esc(workspace.business_name||workspace.business_slug)}</span></a>`).join('')}
     </div></details>`;
 }
-function renderPersonaResolutionUnavailable(){
-  globalThis.document?.documentElement?.setAttribute('lang','en');
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="accountAccessTitle">
-    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    <h1 id="accountAccessTitle" style="font-size:1.5rem;margin:14px 0 6px">We couldn't load your account</h1>
-    <p class="muted" style="line-height:1.6">Your account is still signed in. Retry to open the correct business or customer view.</p>
-    <button class="btn" id="accountAccessRetry" style="width:100%;margin-top:18px">Retry</button>
-    <button class="btn ghost" id="accountAccessSignOut" style="width:100%;margin-top:10px">Sign out</button>
-    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-  const main=$('main');main.focus();
-  CUI.announce('Account access could not be loaded.',{assertive:true});
-  $('accountAccessRetry').onclick=route;
-  $('accountAccessSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-  wireAccountDeletionButton();
-}
-
-function renderWorkspaceAccessUnavailable(){
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="workspaceAccessTitle">
-    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    <h1 id="workspaceAccessTitle" style="font-size:1.5rem;margin:14px 0 6px">Workspace access unavailable</h1>
-    <p class="muted" style="line-height:1.6">Your staff access is inactive or no longer assigned. Ask the workspace owner to reactivate your access before trying again.</p>
-    <button class="btn ghost" id="workspaceAccessSignOut" style="width:100%;margin-top:18px">Sign out</button>
-    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-  const main=$('main');main.focus();
-  CUI.announce('Workspace access is inactive or unavailable.',{assertive:true});
-  $('workspaceAccessSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-  wireAccountDeletionButton();
-}
-
-function renderBusinessWorkspaceControl(control={}){
-  const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
-  const approvalStatus=approval.status||'pending';
-  if(approvalStatus==='pending'&&control._selfServeChecked!==true){
-    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" style="text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.5rem;margin-top:18px">Checking payment status…</h1></section></main>`;
-    sb.rpc('get_self_serve_checkout_v130',{p_business:control.business_id}).then(({data})=>{
-      const onboarding=data?.onboarding;
-      if(!onboarding||onboarding.status!=='payment_pending'){
-        renderBusinessWorkspaceControl({...control,_selfServeChecked:true});return;
-      }
-      if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle"><div class="logo">${brandWordmark()}</div><h1 id="businessControlTitle" style="font-size:1.65rem;margin-top:18px">Payment confirmation pending</h1><p class="muted" style="line-height:1.6;margin-top:7px">This workspace is saved but locked. Complete secure payment through Stripe; Peekaa opens access only after a matching paid invoice is confirmed.</p><div class="card" style="margin-top:16px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence)} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged</p></div><button class="btn" id="businessControlPay" style="width:100%;margin-top:18px">Complete secure payment</button><p class="muted small" id="businessControlPayStatus" role="status" aria-live="polite" style="margin-top:8px">Returning from Checkout does not unlock this workspace until Stripe confirms payment.</p><button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:10px">Check again</button><button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-      $('businessControlPay').onclick=async()=>{
-        const button=$('businessControlPay'),status=$('businessControlPayStatus');button.disabled=true;status.textContent='Opening secure Stripe Checkout…';
-        const storageKey=`nestly-self-serve-checkout-${onboarding.business_id}`;let key=sessionStorage.getItem(storageKey);if(!key){key=crypto.randomUUID();sessionStorage.setItem(storageKey,key)}
-        const requested=await sb.rpc('request_self_serve_checkout_v130',{p_business:onboarding.business_id,p_cadence:onboarding.cadence,p_customer_capacity:onboarding.customer_capacity,p_idempotency_key:key});
-        if(requested.error||!requested.data?.command_id){button.disabled=false;status.textContent='We could not recover the saved checkout. Retry the same payment step.';return}
-        const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.data.command_id}});
-        if(executed.data?.redirect_url){sessionStorage.removeItem(storageKey);location.assign(executed.data.redirect_url);return}
-        button.disabled=false;status.textContent='Stripe is still processing this payment. Check again after payment is confirmed.';
-      };
-      $('businessControlRetry').onclick=route;
-      $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-      wireAccountDeletionButton();
-    });
-    return;
-  }
-  const paused=subscription.workspace_paused===true;
-  const rejected=approvalStatus==='rejected';
-  const title=paused?'Business access paused':rejected?'Application not approved':'Approval pending';
-  const message=paused
-    ?`Payment is ${Number(subscription.overdue_day||14)} days overdue. Business-owner access is paused until provider payment is confirmed.`
-    :rejected
-      ?'This business application was not approved. Contact your assigned Peekaa representative if the information should be reviewed.'
-      :'Your business application has been received. A Peekaa super admin must approve it before any business information or functions are available.';
-  const rawPhone=String(representative.hotline_phone||'').replace(/[^\d+]/g,'');
-  const phoneDigits=rawPhone.replace(/\D/g,'');
-  const hotline=/^\+?\d{8,15}$/.test(rawPhone)
-    ?(rawPhone.startsWith('+')?rawPhone:phoneDigits.startsWith('65')?`+${phoneDigits}`:`+65${phoneDigits}`)
-    :'';
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessControlTitle">
-    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    <div class="entry-choice-icon" style="margin-top:18px">${CUI.icon(paused?'info':'branch',{size:25})}</div>
-    <h1 id="businessControlTitle" style="font-size:1.65rem;margin:14px 0 6px">${esc(title)}</h1>
-    <p class="muted" style="line-height:1.6">${esc(message)}</p>
-    ${representative.display_name||hotline?`<section class="workspace-control-contact" style="margin-top:16px"><b>Assigned representative</b><p class="muted small" style="margin-top:4px">${esc(representative.display_name||'Peekaa support')}</p>${hotline?`<a class="btn" href="tel:${esc(hotline)}" style="width:100%;margin-top:12px">${CUI.icon('till',{size:17})}<span>Call ${esc(hotline)}</span></a>`:''}</section>`:''}
-    <button class="btn ghost" id="businessControlRetry" style="width:100%;margin-top:12px">Check again</button>
-    ${S.hasCustomerPersona?'<a class="btn ghost" href="#/wallet" style="width:100%;margin-top:10px">Open customer view</a>':''}
-    <button class="btn ghost" id="businessControlSignOut" style="width:100%;margin-top:10px">Sign out</button>
-    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-  $('main').focus();
-  CUI.announce(title+'.',{assertive:true});
-  $('businessControlRetry').onclick=route;
-  $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-  wireAccountDeletionButton();
-}
-
-/* ---------- auth ---------- */
-function renderPersonaChoice(personas,{includeCustomer=true}={}){
-  const staff=sortStaffWorkspaces(personas?.staff);
-  const hasCustomer=includeCustomer&&((personas?.customer||[]).length>0||personas?.registered_customer_profile===true);
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card entry-choice-card" aria-labelledby="personaChoiceTitle">
-    <div class="logo">${brandWordmark()}</div>
-    <h1 id="personaChoiceTitle" style="font-size:clamp(1.8rem,5vw,2.5rem);margin-top:18px">Where would you like to go?</h1>
-    <p class="muted" style="margin-top:7px;line-height:1.55">${hasCustomer?'This account has business and customer access.':'This account has more than one business workspace.'} Choose a destination for this visit.</p>
-    <div class="entry-choice-grid">
-      <section class="entry-choice" aria-labelledby="personaWorkspacesTitle"><span class="entry-choice-icon">${CUI.icon('branch',{size:25})}</span><div><h2 id="personaWorkspacesTitle">Business workspaces</h2><p class="muted">Choose an authorized workspace. Direct workspace links remain available.</p><div class="row" style="margin-top:12px">${staff.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div></section>
-      ${hasCustomer?`<a class="entry-choice" href="#/wallet"><span class="entry-choice-icon">${CUI.icon('customers',{size:25})}</span><div><h2>${esc(BRAND.customerLabel)}</h2><p class="muted">See your customer programmes, rewards, value, visits, bookings, and messages.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Open ${esc(BRAND.customerLabel)} ${CUI.icon('forward',{size:17})}</span></a>`:''}
-    </div>
-    <button class="btn ghost sm" id="personaChoiceSignOut" type="button" style="margin-top:18px">${CUI.icon('back',{size:17})}<span>Sign out</span></button>
-    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-  CUI.focusRoute($('main'),{enhanceContent:true});
-  wireAccountDeletionButton();
-  $('personaChoiceSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
-}
-
 function staffInviteLinkV151(code){
   const url=new URL(NestlyNativeBridge.publicUrl('/business'));
   url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
   return url.toString();
 }
-function renderBusinessStaffInviteAcceptV151(code){
-  const normalized=rememberBusinessStaffInviteV151(code);
-  if(!normalized)return renderStaffInviteAuthV151('in','');
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="staffInviteAcceptTitle">
-    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    <h1 id="staffInviteAcceptTitle" style="margin:14px 0 2px">Join business workspace</h1>
-    <p class="muted small" style="margin-top:6px">Peekaa will validate this invite on the server. The company, role, module access, expiry, and reuse rules come from the invitation record.</p>
-    <section class="card" style="margin-top:16px;background:var(--sand);text-align:left"><span class="muted small">Company invite code</span><p class="staff-invite-code" style="font-size:1.15rem;margin-top:6px">${esc(normalized)}</p><p class="muted small" style="margin-top:8px;overflow-wrap:anywhere">Signed in as ${esc(S.user?.email||'Email unavailable')}</p></section>
-    <div id="staffInviteAcceptPreviewV151" role="status" aria-live="polite" style="margin-top:10px">${staffInvitePreviewMarkupV151(null)}</div>
-    <div id="staffInviteAcceptStatus" role="alert" aria-live="assertive"></div>
-    <button class="btn" id="staffInviteAcceptGo" style="width:100%;margin-top:18px">Join business</button>
-    <button class="btn ghost" id="staffInviteAcceptSignOut" style="width:100%;margin-top:10px">Use a different account</button>
-    ${legalLinks()}</section></main>`;
-  CUI.focusRoute($('main'),{enhanceContent:true});
-  previewStaffInviteV151(normalized,'staffInviteAcceptPreviewV151');
-  $('staffInviteAcceptGo').onclick=async()=>{
-    $('staffInviteAcceptGo').disabled=true;
-    $('staffInviteAcceptStatus').innerHTML='<p class="muted small" style="margin-top:10px">Checking invite and creating membership…</p>';
-    const preview=await previewStaffInviteV151(normalized,'staffInviteAcceptPreviewV151');
-    if(preview?.status&&preview.status!=='valid'){
-      $('staffInviteAcceptStatus').innerHTML='<div class="err">This invite is not active. Ask the business owner for a new company invite link.</div>';
-      $('staffInviteAcceptGo').disabled=false;return;
-    }
-    const {data,error}=await sb.rpc('accept_invite',{p_code:normalized});
-    if(error){
-      $('staffInviteAcceptStatus').innerHTML=`<div class="err">${esc(error.message||'This invite could not be accepted. It may be invalid, expired, revoked, already used, or restricted to another email.')}</div>`;
-      $('staffInviteAcceptGo').disabled=false;return;
-    }
-    sessionStorage.removeItem(STAFF_INVITE_STORAGE_V151);
-    S.biz=data;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.staffWorkspaces=[];
-    const slug=data?.slug||data?.business_slug||'';
-    toast('Welcome to the team');
-    if(slug)nav(`#/workspace/${encodeURIComponent(slug)}/dashboard`);else nav('#/dashboard');
-  };
-  $('staffInviteAcceptSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();renderStaffInviteAuthV151('in',normalized)};
-}
-async function renderApprovedBusinessActivation(inviteToken,isCurrent=()=>true){
-  let invitation;
-  try{invitation=await publicGateway('public-business-application',{method:'GET',query:`?invite=${encodeURIComponent(inviteToken)}`})}
-  catch{
-    const locale=businessApplicationLanguage(),t=key=>businessApplicationCopy(locale,key);
-    globalThis.document?.documentElement?.setAttribute('lang',locale);
-    root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><h2>${esc(t('invitationUnavailable'))}</h2><p class="muted" style="margin-top:7px">${esc(t('invitationUnavailableIntro'))}</p><button class="btn ghost" id="invalidInviteOut" style="width:100%;margin-top:18px">${esc(t('signOut'))}</button>${legalLinks(locale)}</div></div>`;
-    $('invalidInviteOut').onclick=async()=>{await sb.auth.signOut();history.replaceState(null,'','/business');route()};return;
-  }
-  if(!isCurrent())return;
-  const locale=WORKSPACE_LOCALES_V97.includes(invitation.preferred_locale)?invitation.preferred_locale:'en',t=key=>businessApplicationCopy(locale,key);
-  globalThis.document?.documentElement?.setAttribute('lang',locale);
-  const base=String(invitation.business_name||'business').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'business';
-  root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><div class="logo">${brandWordmark()}</div><h2 style="margin-top:18px">${esc(t('createWorkspace'))}: ${esc(invitation.business_name)}</h2>
-    <p class="muted small" style="margin-top:6px">${esc(t('finalStep'))}</p>
-    <label for="approvedBusinessSlug">${esc(t('workspaceAddress'))}</label><div class="row"><span class="muted">peekaa.asia/business/</span><input id="approvedBusinessSlug" value="${esc(base)}"></div>
-    <div id="approvedActivationError"></div><button class="btn" id="approvedActivationSubmit" style="width:100%;margin-top:18px">${esc(t('createApprovedWorkspace'))}</button>${legalLinks(locale)}</div></div>`;
-  $('approvedActivationSubmit').onclick=async()=>{
-    const slug=$('approvedBusinessSlug').value.trim().toLowerCase();
-    $('approvedActivationSubmit').disabled=true;
-    const activationKey=sessionStorage.getItem(`nestly-activation-${inviteToken}`)||crypto.randomUUID();
-    sessionStorage.setItem(`nestly-activation-${inviteToken}`,activationKey);
-    const {data,error}=await sb.rpc('activate_approved_business_application_v95',{
-      p_invitation_token:inviteToken,p_business_slug:slug,p_idempotency_key:activationKey
-    });
-    if(error||data?.workspace_created!==true){
-      $('approvedActivationError').innerHTML=`<div class="err">${esc(t('workspaceCreateError'))}</div>`;
-      $('approvedActivationSubmit').disabled=false;return;
-    }
-    sessionStorage.removeItem(`nestly-activation-${inviteToken}`);
-    history.replaceState(null,'','/business');
-    nav(`#/workspace/${encodeURIComponent(data.business_slug||slug)}/dashboard`);
-  };
-}
-
 /* ---------- onboarding ---------- */
 let businessSetupRenderEpoch=0;
 function businessSetupAccountHtml(signOutId='out'){
@@ -6350,6 +6174,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     return r.min_tier_threshold==null?'':`${r.min_tier_threshold}+ ${unit}`;
   };
   const rewardRows=(label)=>`
+    ${S.biz.points_mode==='tiers'?`<div class="imp-note" style="margin-top:18px"><b>Redemption is off</b><p class="small" style="margin-top:5px">Points count toward tier membership, so customers cannot claim these rewards. Switch in Programmes → Point system.</p></div>`:''}
     <b style="display:block;margin-top:18px">${label}</b>
     <div class="reward-list" id="rwList">
     ${rewards.length?rewards.map(r=>{const state=rewardBoundary(r);return `<div class="reward-item">
@@ -6364,6 +6189,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     <div id="rwEditor" aria-live="polite"></div>
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
   const tierRows=()=>`
+    ${S.biz.points_mode==='redeem'?`<div class="imp-note" style="margin-top:18px"><b>Tier membership is off</b><p class="small" style="margin-top:5px">This business redeems points for rewards. Tiers edited here stay saved and are not the story customers see. Switch in Programmes → Point system.</p></div>`:''}
     <b style="display:block;margin-top:18px">Tiers (optional)</b>
     ${tiers.length&&!(p&&p.active)?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but this programme is not live. Nobody sees their tier, its benefits or how far they are from the next one until you publish it.</p></div>`:''}
     <label>Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}>
@@ -8076,6 +7902,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     ?await sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
     :null;
   if(!isGrowCurrent())return;
+  /* V229: the Tiered membership tile needs the ladder, and the whole page needs the firm's
+     one choice for what points are FOR. tier_basis measures LIFETIME earn, so redemption never
+     mechanically drops a tier — the choice exists because telling customers "spend your points"
+     and "your points make you Gold" at the same time is two stories, and the owner wants one. */
+  const loyaltyTiersV229=canRewards
+    ?await sb.from('loyalty_tiers').select('id,name,threshold').eq('business_id',S.biz.id).order('threshold')
+      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
+    :[];
+  if(!isGrowCurrent())return;
+  const pointsModeV229=S.biz.points_mode||null;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
@@ -8181,6 +8017,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      destinations — having both was the duplicated navigation the owner flagged. The
      'available' and 'settings' hashes still resolve so existing links do not break. */
   const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'list';
+  /* V229: the Ongoing / To set up views are flat lists; a drilled topic only makes sense from
+     the tile overview, so arriving via those views clears it. */
+  if(programmeView!=='list')growTopicV229='';
   /* V198 (owner: "edited name inside but not shown"). This list is deliberately the PUBLISHED
      programme — it answers "what can my customers use right now", so a reward renamed in an open
      draft must keep its live name here or the list would promise something no customer can see.
@@ -8190,6 +8029,57 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const growUnpublishedMarkerV198=growDraftPendingId&&canRewards
     ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
+  /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
+     Reward milestones live INSIDE Point system — the overview never floods. */
+  const bringBackLiveV229=(snapshot.retention||[]).filter(program=>program?.active!==false).length;
+  const lifestyleLiveV229=(welcomeOfferStatusV215?.active?1:0)+(rewardJourney.birthday?.active?1:0)+bringBackLiveV229;
+  const growTopicDefsV229=[
+    {key:'points',icon:'till',title:'Point system',blurb:'Earning, and what points are for.',
+      status:!canRewards?['Not included','off']:loyaltyLive?['Live','on']:(rewardJourney.earning?['Paused','off']:['Not set up','off']),
+      summary:pointsModeV229==='tiers'?'Points build tier membership'
+        :rewardCount?`${rewardCount} reward${rewardCount===1?'':'s'} customers can reach`:'Set the earning rate and rewards'},
+    {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
+      status:!canRewards?['Not included','off']
+        :pointsModeV229==='redeem'?['Off','off']
+        :(loyaltyTiersV229&&loyaltyTiersV229.length?[pointsModeV229==='tiers'?'Live':'Configured',pointsModeV229==='tiers'?'on':'off']:['Not set up','off']),
+      summary:pointsModeV229==='redeem'?'Points are redeemed for rewards instead'
+        :loyaltyTiersV229===null?'Tier details could not be loaded'
+        :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
+        :'Create the ladder customers climb'},
+    {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
+      status:lifestyleLiveV229?['Live','on']:['Not set up','off'],
+      summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
+    {key:'promotions',icon:'loyalty',title:'Promotions',blurb:'Offers customers see in their programme.',
+      status:publishedPromotions?['Live','on']:promotionDrafts?['Draft','new']:['Not set up','off'],
+      summary:publishedPromotions?`${publishedPromotions} published promotion${publishedPromotions===1?'':'s'}`
+        :promotionDrafts?`${promotionDrafts} saved draft${promotionDrafts===1?'':'s'}`:'Create an offer customers can see'},
+    {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Customers earn for introductions.',
+      status:!modules.includes('referrals')?['Not included','off']:referralLive?['Live','on']:referralConfigured?['Paused','off']:['Not set up','off'],
+      summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
+    {key:'recurring',icon:'memberships',title:'Memberships & gift cards',blurb:'Recurring plans and prepaid value.',
+      status:(activeMembershipCount||giftCardsLive)?['Live','on']:['Not set up','off'],
+      summary:[activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:'',giftCardsLive?'gift cards on':''].filter(Boolean).join(' · ')||'Plans and gift cards'},
+  ];
+  const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
+  const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
+  const topicOnV229=key=>growActiveTopicV229?growActiveTopicV229.key===key:!growTilesModeV229;
+  const growTilesHtmlV229=growTopicDefsV229.map(topic=>`<button type="button" class="grow-topic-tile-v229" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(topic.summary)}</span><span class="grow-topic-tile-open-v229">View →</span></button>`).join('');
+  /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
+  const growPointsModeChooserV229=(()=>{
+    if(!canRewards)return '';
+    const locked=!canSetupGrow;
+    if(!pointsModeV229)return `<div class="points-mode-chooser-v229" role="group" aria-label="How customers use points">
+      <p class="points-mode-lead-v229"><b>Choose how customers use their points</b><br><span class="muted small">One model at a time keeps the customer story clear. You can change this later.</span></p>
+      <div class="points-mode-cards-v229">
+        <button type="button" class="points-mode-card-v229" data-points-mode-v229="redeem" ${locked?'disabled':''}><b>Redeem rewards</b><span class="muted small">Points are spent on discounts, vouchers and free items.</span></button>
+        <button type="button" class="points-mode-card-v229" data-points-mode-v229="tiers" ${locked?'disabled':''}><b>Tier membership</b><span class="muted small">Points build a tier — Basic, Gold, Diamond — and each tier carries its own benefits.</span></button>
+      </div></div>`;
+    const currentLabel=pointsModeV229==='tiers'?'Tier membership':'Redeem rewards';
+    const nextMode=pointsModeV229==='tiers'?'redeem':'tiers';
+    const nextLabel=pointsModeV229==='tiers'?'redeeming rewards':'tier membership';
+    return `<div class="points-mode-chosen-v229"><span class="pill on">Points are used for: ${currentLabel}</span>${locked?'':`<button type="button" class="btn ghost sm" data-points-mode-v229="${nextMode}">Switch to ${esc(nextLabel)}</button>`}</div>`;
+  })();
+  const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
       <div class="cui-page-title"><h1 id="growTitle">Programmes</h1>
@@ -8197,9 +8087,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
+      ${growTilesModeV229?`<div class="grow-topic-tiles-v229">${growTilesHtmlV229}</div>`:''}
+      ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
            rewards, Add another reward and Start from a template onto the Point system row).
            Everything that is earned and spent in POINTS now sits together under one heading,
@@ -8207,11 +8099,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
            points balance — the welcome offer for a first visit, a birthday benefit, a
            bring-back for someone who has drifted — are their own group. -->
       <div class="programme-category"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
+        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>`:''}
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
           <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
+        ${pointsModeV229==='tiers'?growTiersModeNoteV229:`
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
@@ -8222,8 +8116,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${!snapshot.overviewErrors?.rewards&&canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="template" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Start from a template</b><p class="muted small">Ready-made rewards for your business — pick one, tweak the numbers, publish.</p></div><span class="grow-programme-meta">${programmeStatus('Templates','new')}</span></button>
         <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
+        `}
       </div></div>
-      <div class="programme-category"><div class="programme-category-title">Other rewards</div><div class="grow-programme-list">
+      `:''}
+      ${growActiveTopicV229?.key==='tiers'?`<div class="programme-category"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
+        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>
+        ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
+          :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0} · lifetime, so redeeming never drops a tier</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
+          :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
+        ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229&&loyaltyTiersV229.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
+      </div></div>`:''}
+      ${topicOnV229('lifestyle')?`
+      <div class="programme-category"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
         ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
           <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
@@ -8232,15 +8136,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">${canRewards?'No birthday benefit is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
-      <div class="programme-category"><div class="programme-category-title">Promotions & growth</div><div class="grow-programme-list">
+      `:''}
+      ${topicOnV229('promotions')?`
+      <div class="programme-category"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
         ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see up to six current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
+      </div></div>
+      `:''}
+      ${topicOnV229('referrals')?`
+      <div class="programme-category"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
       </div></div>
-      <div class="programme-category"><div class="programme-category-title">Recurring value</div><div class="grow-programme-list">
+      `:''}
+      ${topicOnV229('recurring')?`
+      <div class="programme-category"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
         ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
-      </div></div>
+      </div></div>      `:''}
     </section>
+    ${(growActiveTopicV229?.key==='points'||(!growTilesModeV229&&!growActiveTopicV229)||routedSurface==='studio')?`
     <details class="grow-secondary" id="growSecondarySettings">
       <summary>More reward settings</summary><div class="grow-secondary-body">
       <div class="grow-secondary-intro"><h2>How the programme fits together</h2><p class="muted small">Open these controls only when you want to fine-tune the automatic draft or review reward economics.</p></div>
@@ -8284,7 +8197,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${canWinback?'<button type="button" class="btn ghost" data-grow-open="winback">Bring-back rules and taxonomy</button>':''}
       </div></details>`:''}
       </div>
-    </details>
+    </details>`:''}
     <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
@@ -8675,6 +8588,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      programme rows themselves, which call it as the draft-creation gate when no draft exists. */
   /* v215: re-render the Programmes list after a save so the row reflects the new state
      immediately — an owner who just switched the offer on must not still see "Not set up". */
+  /* V229: tiles drill in, Back returns, and the mode switch is one confirmed write. */
+  outerMain.querySelectorAll('[data-grow-topic-v229]').forEach(tile=>tile.onclick=()=>{
+    growTopicV229=tile.dataset.growTopicV229;
+    growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  });
+  const growTopicBack=$('growTopicBackV229');
+  if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
+  outerMain.querySelectorAll('[data-points-mode-v229]').forEach(button=>button.onclick=async()=>{
+    const next=button.dataset.pointsModeV229;
+    /* Switching away from a chosen model changes what customers can do; first-time choice needs
+       no confirm. The tiers warning states the concrete consequence the server enforces. */
+    if(S.biz.points_mode&&!confirm(next==='tiers'
+      ?'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.'
+      :'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.'))return;
+    button.disabled=true;
+    const {error}=await sb.from('businesses').update({points_mode:next}).eq('id',S.biz.id);
+    if(error){button.disabled=false;return fail(error)}
+    S.biz.points_mode=next;
+    toast(next==='tiers'?'Points now build tier membership':'Points are now redeemed for rewards');
+    growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  });
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="a78929ee8f64cc93ea6d0fdc6b7e2746f804a8b7a3078c749e102ba7d22d3f87"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="93602b9fd7b1266e0cdd8ec5ad1186c366d701c019f2300c97de48a0a87db57a"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -910,6 +910,23 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
+/* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
+   grid of topic tiles; each drills into its own detail list. */
+.grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
+.grow-topic-tile-v229{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
+.grow-topic-tile-v229:hover{background:var(--tint);border-color:var(--coral)}
+.grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em}
+.grow-topic-tile-icon-v229{width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--coral);display:grid;place-items:center}
+.grow-topic-tile-open-v229{margin-top:auto;color:var(--coral);font-weight:600;font-size:.85rem}
+/* The one choice for what points are FOR — two selectable cards, then a compact chosen state. */
+.points-mode-chooser-v229{width:100%}
+.points-mode-lead-v229{margin:0 0 10px}
+.points-mode-cards-v229{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;width:100%}
+.points-mode-card-v229{display:flex;flex-direction:column;gap:6px;text-align:left;border:1.5px solid var(--line);border-radius:14px;background:#fff;padding:14px;cursor:pointer;color:inherit}
+.points-mode-card-v229:hover{border-color:var(--coral);background:var(--tint)}
+.points-mode-card-v229:disabled{opacity:.6;cursor:default}
+.points-mode-chosen-v229{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
+.points-mode-row-v229{cursor:default;flex-wrap:wrap}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1646,7 +1663,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · a78929ee8f64cc93ea6d0fdc6b7e2746f804a8b7a3078c749e102ba7d22d3f87</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 93602b9fd7b1266e0cdd8ec5ad1186c366d701c019f2300c97de48a0a87db57a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -3529,7 +3546,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'a78929ee8f64cc93ea6d0fdc6b7e2746f804a8b7a3078c749e102ba7d22d3f87',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'93602b9fd7b1266e0cdd8ec5ad1186c366d701c019f2300c97de48a0a87db57a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

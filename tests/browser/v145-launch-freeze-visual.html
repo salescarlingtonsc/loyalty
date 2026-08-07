@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="d114b5d20fdde1cb5ed9a67b41ebdc3a8d54a4acd473c654e35d42354adef3ea"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="bf77ceab7e62b10ea76a43f5bf1fd321b8a757fa75500d617dad12da5ffc0832"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -910,6 +910,23 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;flex:1 1 460px;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
+/* V229 (owner: "square boxes for each topics then press in"). The Programmes overview is a
+   grid of topic tiles; each drills into its own detail list. */
+.grow-topic-tiles-v229{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
+.grow-topic-tile-v229{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-height:158px;cursor:pointer;color:inherit}
+.grow-topic-tile-v229:hover{background:var(--tint);border-color:var(--coral)}
+.grow-topic-tile-v229>b{font-size:1.02rem;letter-spacing:-.01em}
+.grow-topic-tile-icon-v229{width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--coral);display:grid;place-items:center}
+.grow-topic-tile-open-v229{margin-top:auto;color:var(--coral);font-weight:600;font-size:.85rem}
+/* The one choice for what points are FOR — two selectable cards, then a compact chosen state. */
+.points-mode-chooser-v229{width:100%}
+.points-mode-lead-v229{margin:0 0 10px}
+.points-mode-cards-v229{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;width:100%}
+.points-mode-card-v229{display:flex;flex-direction:column;gap:6px;text-align:left;border:1.5px solid var(--line);border-radius:14px;background:#fff;padding:14px;cursor:pointer;color:inherit}
+.points-mode-card-v229:hover{border-color:var(--coral);background:var(--tint)}
+.points-mode-card-v229:disabled{opacity:.6;cursor:default}
+.points-mode-chosen-v229{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
+.points-mode-row-v229{cursor:default;flex-wrap:wrap}
 @media (max-width:900px){
   .staff-row-open{grid-template-columns:1fr}
   .staff-col-head-v226{display:none}
@@ -1646,7 +1663,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · d114b5d20fdde1cb5ed9a67b41ebdc3a8d54a4acd473c654e35d42354adef3ea</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · bf77ceab7e62b10ea76a43f5bf1fd321b8a757fa75500d617dad12da5ffc0832</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -4002,7 +4019,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'d114b5d20fdde1cb5ed9a67b41ebdc3a8d54a4acd473c654e35d42354adef3ea',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'bf77ceab7e62b10ea76a43f5bf1fd321b8a757fa75500d617dad12da5ffc0832',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

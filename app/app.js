@@ -190,15 +190,50 @@ const mountedTurnstileControls=new Set();
 function destroyMountedTurnstiles(){
   [...mountedTurnstileControls].forEach(control=>control.destroy());
 }
+/* V206: Turnstile must never be able to strand the sign-in form.
+   Two failure shapes were reaching users on iPadOS/WebKit:
+   (1) the api.js request hangs with NEITHER onload NOR onerror — a content blocker, a captive
+       portal, or a stalled TLS handshake to challenges.cloudflare.com. The promise never settled,
+       so `await loadTurnstile()` never returned, the status stayed on "Loading security check…"
+       with the Retry button hidden, and Sign in stayed disabled forever.
+   (2) the loader promise was CACHED after it rejected, so once the first attempt failed every
+       later Retry re-awaited the same rejected promise and could never recover.
+   Both are fixed here: a hard deadline settles the promise, and every failure path drops the
+   cached promise so a Retry genuinely re-requests the script. */
+const TURNSTILE_SCRIPT_TIMEOUT_MS=8000;
+/* How long a rendered widget may sit with no callback of any kind before the UI declares it
+   wedged. Cloudflare's own interactive flows can legitimately take a while once the checkbox is
+   SHOWN, which is why the stall timer is disarmed the moment before-interactive fires. */
+const TURNSTILE_SOLVE_TIMEOUT_MS=20000;
+const turnstileApiReady=()=>(window.turnstile&&typeof window.turnstile.render==='function')?window.turnstile:null;
 function loadTurnstile(){
-  if(window.turnstile) return Promise.resolve(window.turnstile);
+  const ready=turnstileApiReady();
+  if(ready) return Promise.resolve(ready);
   if(turnstileLoader) return turnstileLoader;
   turnstileLoader=new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
     script.async=true;script.defer=true;
-    script.onload=()=>window.turnstile?resolve(window.turnstile):reject(new Error('Security check unavailable.'));
-    script.onerror=()=>{turnstileLoader=null;script.remove();reject(new Error('Security check unavailable.'))};
+    let settled=false;
+    const fail=(message,{remove=true}={})=>{
+      if(settled)return;
+      settled=true;clearTimeout(deadline);turnstileLoader=null;
+      if(remove)script.remove();
+      reject(new Error(message));
+    };
+    const succeed=()=>{
+      if(settled)return;
+      const api=turnstileApiReady();
+      /* onload fired but the global is absent: the response was not the real api.js (a captive
+         portal or an interception proxy). Treat it as a load failure, not as success. */
+      if(!api)return fail('Security check unavailable.');
+      settled=true;clearTimeout(deadline);resolve(api);
+    };
+    /* The script element is deliberately LEFT in place on timeout: a slow-but-alive request may
+       still define window.turnstile, and the next Retry then resolves instantly from the global. */
+    const deadline=setTimeout(()=>fail('Security check timed out.',{remove:false}),TURNSTILE_SCRIPT_TIMEOUT_MS);
+    script.onload=succeed;
+    script.onerror=()=>fail('Security check unavailable.');
     document.head.appendChild(script);
   });
   return turnstileLoader;
@@ -263,31 +298,58 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
     widgetId=undefined;
     host?.replaceChildren();
   };
+  /* Every render attempt gets a generation. A widget torn down by a Retry (or by a re-render of
+     the screen) can still invoke its callbacks afterwards on WebKit; without this, a stale
+     challenge could write its token into the CURRENT form — or blank a token the user had
+     already earned. A callback from an older generation is ignored outright. */
+  let generation=0;
+  let stall=null;
+  const stopStall=()=>{clearTimeout(stall);stall=null};
+  /* The widget rendered but nothing came back: no token, no checkbox prompt, no error callback.
+     Turnstile has no client-side guarantee that any of its callbacks ever fire, so this is the
+     backstop that converts "silently wedged" into an actionable failure with a Retry. */
+  const armStall=(mine)=>{
+    stopStall();
+    stall=setTimeout(()=>{
+      if(destroyed||mine!==generation)return;
+      clear(security('timeout'),true);retryEl.hidden=false;
+    },TURNSTILE_SOLVE_TIMEOUT_MS);
+  };
   const render=async()=>{
     if(destroyed)return;
+    generation+=1;
+    const mine=generation;
+    const live=()=>!destroyed&&mine===generation;
     message(security('loading'));retryEl.hidden=true;
+    armStall(mine);
     try{
       api=await loadTurnstile();
-      if(destroyed||!document.getElementById(container)) return;
+      if(!live()||!document.getElementById(container)){stopStall();return}
       removeWidget();
-      if(destroyed)return;
+      if(!live()){stopStall();return}
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(destroyed)return;onToken(token);retryEl.hidden=true;setPassed(true)},
+        callback:(token)=>{if(!live())return;stopStall();onToken(token);retryEl.hidden=true;setPassed(true)},
         /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
            security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
            and the passkey button looked broken while the app was simply waiting for a tick. */
-        'before-interactive-callback':()=>{if(destroyed)return;message(security('interactive'))},
-        'after-interactive-callback':()=>{if(destroyed)return;message(security('loading'))},
-        'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
-        'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
-        'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
-    }catch{if(!destroyed){clear(security('load'),true);retryEl.hidden=false}}
+        'before-interactive-callback':()=>{if(!live())return;stopStall();message(security('interactive'))},
+        'after-interactive-callback':()=>{if(!live())return;armStall(mine);message(security('loading'))},
+        'expired-callback':()=>{if(!live())return;stopStall();clear(security('expired'),true);retryEl.hidden=false},
+        'timeout-callback':()=>{if(!live())return;stopStall();clear(security('timeout'),true);retryEl.hidden=false},
+        'error-callback':(errorCode)=>{if(!live())return true;stopStall();logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
+    }catch{
+      stopStall();
+      /* The one guarantee this whole block exists to make: on ANY failure the user sees what
+         happened and gets a Retry. Never a hidden button under a permanent "Loading…". */
+      if(live()){clear(security('load'),true);retryEl.hidden=false}
+    }
   };
   const retryRender=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;render()};
   const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
   const destroy=()=>{
     if(destroyed)return;
-    destroyed=true;retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
+    destroyed=true;generation+=1;stopStall();
+    retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
   };
   const control={reset,destroy};
   mountedTurnstileControls.add(control);
@@ -464,6 +526,9 @@ let pendingApptClientId=''; // Customer 360 → New appointment: prefills the ex
    behind its own button — so a control labelled "New appointment" produced a calendar and no
    form. This flag is consumed once by the appointments page, exactly like pendingApptClientId. */
 let pendingOpenApptFormV217=false;
+/* V229 (owner: "i need a clean overview before zooming in"). Which Programmes topic is drilled
+   into, '' = the tile overview. In-session only, consumed by growPage. */
+let growTopicV229='';
 /* V173: "Use suggestion" on a not-set-up programme row carries a one-shot prefill into the
    birthday / bring-back / referral editors. Module-level because those editors live in
    different page functions from the Programmes overview that sets it. */
@@ -668,7 +733,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';growTopicV229='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -1562,8 +1627,51 @@ async function loadCustomerFeatureCapabilities({refresh=false}={}){
 const APP_SURFACE_CHUNKS_V185=(()=>{
   try{return JSON.parse(document.getElementById('appSurfaceChunks')?.textContent||'{}')}catch{return {}}
 })();
+/* V200 surface assets. grow-recommender.js, v95-media-sync.js, revenue-truth.js, growth-offers.js
+   and sector-economics.js (plus their stylesheets) were plain <script defer>/<link> tags in
+   index.html, so every visitor — including a customer opening a booking link — downloaded, parsed
+   and ran all of them before first paint, for globals only a workspace page or the customer offer
+   strip ever touches. Every consumption site sits inside a function, so they can arrive with the
+   surface that needs them. They are injected BEFORE the surface chunk and with async=false, which
+   means that even if a future edit does read one of these globals at chunk load time, the global is
+   already there. A failure resolves rather than rejects: a missing enhancement must not stop the
+   surface from rendering, exactly as a failed <script defer> did not stop boot. */
+const APP_SURFACE_ASSETS_V200=(()=>{
+  try{return JSON.parse(document.getElementById('appSurfaceAssets')?.textContent||'{}')}catch{return {}}
+})();
+const surfaceAssetPromisesV200=new Map();
+/* Same-origin absolute paths only, and each url is fetched once however many surfaces list it —
+   growth-offers is shared by the customer and the workspace surfaces. */
+function loadSurfaceAssetV200(url,kind){
+  const src=String(url||'');
+  if(!/^\/[\w./?=-]*$/.test(src))return Promise.resolve('');
+  if(surfaceAssetPromisesV200.has(src))return surfaceAssetPromisesV200.get(src);
+  const promise=new Promise(resolve=>{
+    const node=document.createElement(kind==='css'?'link':'script');
+    if(kind==='css'){node.rel='stylesheet';node.href=src}
+    else {node.src=src;node.async=false}
+    node.onload=()=>resolve(src);
+    node.onerror=()=>{console.error(`Surface asset failed to load: ${src}`);resolve('')};
+    document.head.appendChild(node);
+  });
+  surfaceAssetPromisesV200.set(src,promise);
+  return promise;
+}
+function loadSurfaceAssetsV200(name){
+  const entry=APP_SURFACE_ASSETS_V200[name]||{};
+  const css=Array.isArray(entry.css)?entry.css:[];
+  const js=Array.isArray(entry.js)?entry.js:[];
+  return Promise.all([...css.map(url=>loadSurfaceAssetV200(url,'css')),...js.map(url=>loadSurfaceAssetV200(url,'js'))]);
+}
 const appChunkPromisesV185=new Map();
 let appSurfaceRetriedV185=false;
+/* v200: surfaces that cannot stand alone. The workspace chunk is built on the assumption that the
+   auth chunk is already there — a persona chooser, a suspended-workspace card and the invite
+   acceptance screen are reached both signed out AND from inside the workspace, so they live in the
+   small chunk and the big one declares the dependency instead of duplicating them or pushing them
+   back into the always-loaded core. Mirrors SURFACE_PREREQUISITES in
+   scripts/quality/split-app-bundle.mjs, which refuses to build a chunk that breaks the rule. */
+const APP_SURFACE_PREREQUISITES_V185={business:['auth']};
 function loadAppChunkV185(name){
   if(appChunkPromisesV185.has(name))return appChunkPromisesV185.get(name);
   const src=String(APP_SURFACE_CHUNKS_V185[name]||'');
@@ -1573,6 +1681,12 @@ function loadAppChunkV185(name){
     const missing=Promise.reject(new Error(`Application chunk "${name}" is not available.`));
     missing.catch(()=>{});appChunkPromisesV185.set(name,missing);return missing;
   }
+  /* The prerequisite chunk and this surface's assets are injected FIRST. Every tag carries
+     async=false, so the browser downloads them in parallel but executes them in insertion order —
+     whatever the chunk depends on is defined before its first line runs, without serialising the
+     round trips. */
+  const prerequisites=(APP_SURFACE_PREREQUISITES_V185[name]||[]).map(dependency=>loadAppChunkV185(dependency));
+  prerequisites.push(loadSurfaceAssetsV200(name));
   const promise=new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src=src;script.async=false;
@@ -1580,8 +1694,12 @@ function loadAppChunkV185(name){
     script.onerror=()=>{appChunkPromisesV185.delete(name);reject(new Error('Part of the app could not be loaded. Check your connection and reload.'))};
     document.head.appendChild(script);
   });
-  appChunkPromisesV185.set(name,promise);
-  return promise;
+  /* A rejection drops the cache entry too, so a retry genuinely re-requests instead of re-awaiting
+     the failure. */
+  const ready=Promise.all([...prerequisites,promise])
+    .then(()=>name,error=>{appChunkPromisesV185.delete(name);throw error});
+  appChunkPromisesV185.set(name,ready);
+  return ready;
 }
 /* Which chunk a route needs. The hash alone is not enough — "#/" is the customer entry for a
    signed-out visitor and the workspace for signed-in staff — so the caller passes the session it
@@ -1600,7 +1718,12 @@ function appSurfaceForRouteV185(hash,{signedIn=false}={}){
      downloading EVERY surface — the self-heal worked, so it only ever showed up as wasted
      bandwidth on the most-hit route. */
   if(route==='#/'||route==='')return 'customer';
-  return 'business';
+  /* V200: a signed-out merchant on /business is shown one card — sign in, sign up, accept an
+     invite, or activate an approved business. That used to cost the entire 1.2MB workspace chunk
+     before the form could be typed into. Those screens are their own ~17KB chunk now; the
+     workspace only downloads once there IS a session to open it with (and it pulls the auth chunk
+     along with it, so the signed-in persona/suspension screens are still present). */
+  return signedIn?'business':'auth';
 }
 /* The zh-CN / ms lookup tables are ~200KB of source and are consulted only when the active locale
    is not English, so they ship as their own chunk. Until it arrives, translation returns the
@@ -1621,7 +1744,7 @@ function loadPlatformConsoleAssetsV184(){
   if(platformConsoleAssetsPromiseV184)return platformConsoleAssetsPromiseV184;
   let assets={};
   try{assets=JSON.parse(document.getElementById('platformConsoleAssets')?.textContent||'{}')}catch{assets={}}
-  const scriptUrl=String(assets.js||''),styleUrl=String(assets.css||'');
+  const scriptUrl=String(assets.js||''),styleUrl=String(assets.css||''),crmUrl=String(assets.crm||'');
   if(!scriptUrl.startsWith('/')){
     /* A missing or tampered manifest must not become a script injection. */
     return Promise.resolve(null);
@@ -1631,8 +1754,19 @@ function loadPlatformConsoleAssetsV184(){
       const style=document.createElement('link');
       style.rel='stylesheet';style.href=styleUrl;document.head.appendChild(style);
     }
+    /* V200: NestlyPlatformCRMUtils has exactly one consumer — platform-console.js — so it moved off
+       the initial page load and onto this path. Injected before the console and with async=false,
+       so it is defined by the time the console's first line runs. */
+    if(crmUrl.startsWith('/')){
+      const crm=document.createElement('script');
+      crm.src=crmUrl;crm.async=false;document.head.appendChild(crm);
+    }
     const script=document.createElement('script');
-    script.src=scriptUrl;script.defer=true;
+    /* async=false, not defer: `defer` is ignored on a dynamically created script, which would leave
+       this racing the CRM helper above — and platform-console.js reads NestlyPlatformCRMUtils at
+       ITS load time (`const CRM=globalObject.NestlyPlatformCRMUtils||null`). async=false is the
+       only flag that guarantees the two execute in insertion order. */
+    script.src=scriptUrl;script.async=false;
     script.onload=()=>resolve(globalThis.NestlyPlatformConsole||null);
     script.onerror=()=>{platformConsoleAssetsPromiseV184=null;resolve(null)};
     document.head.appendChild(script);
@@ -12914,6 +13048,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     return r.min_tier_threshold==null?'':`${r.min_tier_threshold}+ ${unit}`;
   };
   const rewardRows=(label)=>`
+    ${S.biz.points_mode==='tiers'?`<div class="imp-note" style="margin-top:18px"><b>Redemption is off</b><p class="small" style="margin-top:5px">Points count toward tier membership, so customers cannot claim these rewards. Switch in Programmes → Point system.</p></div>`:''}
     <b style="display:block;margin-top:18px">${label}</b>
     <div class="reward-list" id="rwList">
     ${rewards.length?rewards.map(r=>{const state=rewardBoundary(r);return `<div class="reward-item">
@@ -12928,6 +13063,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     <div id="rwEditor" aria-live="polite"></div>
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}`;
   const tierRows=()=>`
+    ${S.biz.points_mode==='redeem'?`<div class="imp-note" style="margin-top:18px"><b>Tier membership is off</b><p class="small" style="margin-top:5px">This business redeems points for rewards. Tiers edited here stay saved and are not the story customers see. Switch in Programmes → Point system.</p></div>`:''}
     <b style="display:block;margin-top:18px">Tiers (optional)</b>
     ${tiers.length&&!(p&&p.active)?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but this programme is not live. Nobody sees their tier, its benefits or how far they are from the next one until you publish it.</p></div>`:''}
     <label>Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}>
@@ -14646,6 +14782,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
     ?await sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
     :null;
   if(!isGrowCurrent())return;
+  /* V229: the Tiered membership tile needs the ladder, and the whole page needs the firm's
+     one choice for what points are FOR. tier_basis measures LIFETIME earn, so redemption never
+     mechanically drops a tier — the choice exists because telling customers "spend your points"
+     and "your points make you Gold" at the same time is two stories, and the owner wants one. */
+  const loyaltyTiersV229=canRewards
+    ?await sb.from('loyalty_tiers').select('id,name,threshold').eq('business_id',S.biz.id).order('threshold')
+      .then(r=>r.error?null:(r.data||[])).catch(()=>null)
+    :[];
+  if(!isGrowCurrent())return;
+  const pointsModeV229=S.biz.points_mode||null;
   const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
@@ -14751,6 +14897,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      destinations — having both was the duplicated navigation the owner flagged. The
      'available' and 'settings' hashes still resolve so existing links do not break. */
   const programmeView=['ongoing','available','settings'].includes(String(hashParam||''))?String(hashParam):'list';
+  /* V229: the Ongoing / To set up views are flat lists; a drilled topic only makes sense from
+     the tile overview, so arriving via those views clears it. */
+  if(programmeView!=='list')growTopicV229='';
   /* V198 (owner: "edited name inside but not shown"). This list is deliberately the PUBLISHED
      programme — it answers "what can my customers use right now", so a reward renamed in an open
      draft must keep its live name here or the list would promise something no customer can see.
@@ -14760,6 +14909,57 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
   const growUnpublishedMarkerV198=growDraftPendingId&&canRewards
     ?`<div class="imp-note" id="growOverviewDraftBarV198" role="status" style="margin-top:14px"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><span>You have unpublished changes. The names and numbers below are what customers see today — your edits go live when you publish.</span><span class="spacer"></span>${canSetupGrow?'<button class="btn sm" id="growOverviewDraftPublishV198" type="button">Review &amp; publish</button>':''}</div></div>`
     :'';
+  /* V229 tiles. Each is one topic with a status and a one-line summary; pressing one drills in.
+     Reward milestones live INSIDE Point system — the overview never floods. */
+  const bringBackLiveV229=(snapshot.retention||[]).filter(program=>program?.active!==false).length;
+  const lifestyleLiveV229=(welcomeOfferStatusV215?.active?1:0)+(rewardJourney.birthday?.active?1:0)+bringBackLiveV229;
+  const growTopicDefsV229=[
+    {key:'points',icon:'till',title:'Point system',blurb:'Earning, and what points are for.',
+      status:!canRewards?['Not included','off']:loyaltyLive?['Live','on']:(rewardJourney.earning?['Paused','off']:['Not set up','off']),
+      summary:pointsModeV229==='tiers'?'Points build tier membership'
+        :rewardCount?`${rewardCount} reward${rewardCount===1?'':'s'} customers can reach`:'Set the earning rate and rewards'},
+    {key:'tiers',icon:'star',title:'Tiered membership',blurb:'Basic, Gold, Diamond — benefits by tier.',
+      status:!canRewards?['Not included','off']
+        :pointsModeV229==='redeem'?['Off','off']
+        :(loyaltyTiersV229&&loyaltyTiersV229.length?[pointsModeV229==='tiers'?'Live':'Configured',pointsModeV229==='tiers'?'on':'off']:['Not set up','off']),
+      summary:pointsModeV229==='redeem'?'Points are redeemed for rewards instead'
+        :loyaltyTiersV229===null?'Tier details could not be loaded'
+        :loyaltyTiersV229.length?`${loyaltyTiersV229.length} tier${loyaltyTiersV229.length===1?'':'s'}: ${loyaltyTiersV229.slice(0,3).map(tier=>tier.name).join(', ')}`
+        :'Create the ladder customers climb'},
+    {key:'lifestyle',icon:'giftcard',title:'Lifestyle rewards',blurb:'Rewards that are not about a points balance.',
+      status:lifestyleLiveV229?['Live','on']:['Not set up','off'],
+      summary:lifestyleLiveV229?`${lifestyleLiveV229} running`:'Welcome offer, birthday benefit, bring-back'},
+    {key:'promotions',icon:'loyalty',title:'Promotions',blurb:'Offers customers see in their programme.',
+      status:publishedPromotions?['Live','on']:promotionDrafts?['Draft','new']:['Not set up','off'],
+      summary:publishedPromotions?`${publishedPromotions} published promotion${publishedPromotions===1?'':'s'}`
+        :promotionDrafts?`${promotionDrafts} saved draft${promotionDrafts===1?'':'s'}`:'Create an offer customers can see'},
+    {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Customers earn for introductions.',
+      status:!modules.includes('referrals')?['Not included','off']:referralLive?['Live','on']:referralConfigured?['Paused','off']:['Not set up','off'],
+      summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
+    {key:'recurring',icon:'memberships',title:'Memberships & gift cards',blurb:'Recurring plans and prepaid value.',
+      status:(activeMembershipCount||giftCardsLive)?['Live','on']:['Not set up','off'],
+      summary:[activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:'',giftCardsLive?'gift cards on':''].filter(Boolean).join(' · ')||'Plans and gift cards'},
+  ];
+  const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
+  const growTilesModeV229=programmeView==='list'&&!growActiveTopicV229;
+  const topicOnV229=key=>growActiveTopicV229?growActiveTopicV229.key===key:!growTilesModeV229;
+  const growTilesHtmlV229=growTopicDefsV229.map(topic=>`<button type="button" class="grow-topic-tile-v229" data-grow-topic-v229="${topic.key}"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:22})}</span><span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span><b>${esc(topic.title)}</b><span class="muted small">${esc(topic.summary)}</span><span class="grow-topic-tile-open-v229">View →</span></button>`).join('');
+  /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
+  const growPointsModeChooserV229=(()=>{
+    if(!canRewards)return '';
+    const locked=!canSetupGrow;
+    if(!pointsModeV229)return `<div class="points-mode-chooser-v229" role="group" aria-label="How customers use points">
+      <p class="points-mode-lead-v229"><b>Choose how customers use their points</b><br><span class="muted small">One model at a time keeps the customer story clear. You can change this later.</span></p>
+      <div class="points-mode-cards-v229">
+        <button type="button" class="points-mode-card-v229" data-points-mode-v229="redeem" ${locked?'disabled':''}><b>Redeem rewards</b><span class="muted small">Points are spent on discounts, vouchers and free items.</span></button>
+        <button type="button" class="points-mode-card-v229" data-points-mode-v229="tiers" ${locked?'disabled':''}><b>Tier membership</b><span class="muted small">Points build a tier — Basic, Gold, Diamond — and each tier carries its own benefits.</span></button>
+      </div></div>`;
+    const currentLabel=pointsModeV229==='tiers'?'Tier membership':'Redeem rewards';
+    const nextMode=pointsModeV229==='tiers'?'redeem':'tiers';
+    const nextLabel=pointsModeV229==='tiers'?'redeeming rewards':'tier membership';
+    return `<div class="points-mode-chosen-v229"><span class="pill on">Points are used for: ${currentLabel}</span>${locked?'':`<button type="button" class="btn ghost sm" data-points-mode-v229="${nextMode}">Switch to ${esc(nextLabel)}</button>`}</div>`;
+  })();
+  const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
       <div class="cui-page-title"><h1 id="growTitle">Programmes</h1>
@@ -14767,9 +14967,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
       <div class="v150-title-actions"></div>
     </header>
     <section class="card reward-journey-v122" aria-labelledby="rewardJourneyTitle" aria-label="Rewards overview">
-      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List'}</h2></div></div>
+      <div class="grow-section-heading"><div><p class="customer-quest-kicker">Programmes</p><h2 id="rewardJourneyTitle">${growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='ongoing'?'Running':programmeView==='available'?'To set up':'List')}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div>${growActiveTopicV229?`<button type="button" class="btn ghost sm" id="growTopicBackV229">${CUI.icon('back',{size:16})}<span>All programmes</span></button>`:''}</div>
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
+      ${growTilesModeV229?`<div class="grow-topic-tiles-v229">${growTilesHtmlV229}</div>`:''}
+      ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
            rewards, Add another reward and Start from a template onto the Point system row).
            Everything that is earned and spent in POINTS now sits together under one heading,
@@ -14777,11 +14979,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
            points balance — the welcome offer for a first visit, a birthday benefit, a
            bring-back for someone who has drifted — are their own group. -->
       <div class="programme-category"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
+        ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>`:''}
         ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
           <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>${rewardJourney.earning.availableToCustomers?'Point system':'Point system paused'}</b><p class="muted small">${esc(earningOverviewCopy)}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
           :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
+        ${pointsModeV229==='tiers'?growTiersModeNoteV229:`
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.classicReward?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="redeemable" data-rewards-overview-edit="classic">
           <span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
           :`<article class="grow-programme-row" data-programme-kind="redeemable"><span class="reward-milestone-number">1</span><div><b data-merchant-content>${esc(rewardJourney.classicReward.name)}</b><p class="muted small">${rewardJourney.classicReward.availableToCustomers?`Reach ${rewardJourney.classicReward.threshold} points · unlock ${esc(rewardJourney.classicReward.value)}`:`Programme paused · configured at ${rewardJourney.classicReward.threshold} points for ${esc(rewardJourney.classicReward.value)}`}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.classicReward.availableToCustomers?'Live':'Paused',rewardJourney.classicReward.availableToCustomers?'on':'off')}<span class="grow-programme-access">Read only</span></span></article>`):''}
@@ -14792,8 +14996,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${!snapshot.overviewErrors?.rewards&&canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="template" id="growTemplatesOpen" aria-expanded="false" aria-controls="growTemplatesPanel"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Start from a template</b><p class="muted small">Ready-made rewards for your business — pick one, tweak the numbers, publish.</p></div><span class="grow-programme-meta">${programmeStatus('Templates','new')}</span></button>
         <div id="growTemplatesPanel" hidden style="padding:4px 14px 14px"></div>`:''}
         ${snapshot.overviewErrors?.rewards?'':rewardJourney.archivedRewards.map(reward=>programmeRow({kind:'redeemable',icon:CUI.icon('retention',{size:16}),title:reward.name,copy:`${reward.threshold} ${reward.unit} · not available to customers`,status:'Paused',statusTone:'off',canWrite:canSetupGrow,readOnly:canRewards&&!canSetupGrow,editKind:'catalogue',rewardId:reward.id,actionLabel:'Review',merchant:true})).join('')}
+        `}
       </div></div>
-      <div class="programme-category"><div class="programme-category-title">Other rewards</div><div class="grow-programme-list">
+      `:''}
+      ${growActiveTopicV229?.key==='tiers'?`<div class="programme-category"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
+        <div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229}</div>
+        ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
+          :(loyaltyTiersV229&&loyaltyTiersV229.length?loyaltyTiersV229.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0} · lifetime, so redeeming never drops a tier</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'?'on':'off'}">${pointsModeV229==='tiers'?'Live':'Saved'}</span></span></div>`).join('')
+          :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
+        ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',loyaltyTiersV229&&loyaltyTiersV229.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
+      </div></div>`:''}
+      ${topicOnV229('lifestyle')?`
+      <div class="programme-category"><div class="programme-category-title">Lifestyle rewards</div><div class="grow-programme-list">
         ${welcomeOfferRowV215(welcomeOfferStatusV215,canSetupGrow,canRewards)}
         ${snapshot.overviewErrors?.birthday?programmeRow({kind:'birthday',icon:CUI.icon('loyalty',{size:18}),title:'Birthday benefit',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.birthday?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="birthday" data-rewards-overview-edit="birthday" data-birthday-id="${esc(rewardJourney.birthday.id)}">
           <span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b data-merchant-content>${esc(rewardJourney.birthday.name)}</b><p class="muted small" data-merchant-content>${esc(rewardJourney.birthday.value)} · ${esc(rewardJourney.birthday.description)}${rewardJourney.birthday.active?'':' · Paused'}</p></div><span class="grow-programme-meta">${programmeStatus(rewardJourney.birthday.active?'Live':'Paused',rewardJourney.birthday.active?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
@@ -14802,15 +15016,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
           :`<article class="grow-programme-row" data-programme-kind="birthday"><span class="reward-milestone-number">${CUI.icon('loyalty',{size:18})}</span><div><b>Birthday benefit</b><p class="muted small">${canRewards?'No birthday benefit is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${!canWinback?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Retention is not included in this workspace.',status:'Not included'}):snapshot.overviewErrors?.retention?programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):snapshot.retention.length?snapshot.retention.map(program=>{const state=retentionOverviewState(program);return programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:program.name||'Bring-back reward',copy:`${state.prefix}${Math.max(0,Number(program.goal_visits||0))} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days||0))} days.`,status:state.status,statusTone:state.tone,canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',programId:program.id,actionLabel:'Edit',merchant:true})}).join(''):programmeRow({kind:'bringback',icon:CUI.icon('retention',{size:18}),title:'Bring-back rewards',copy:canSetupWinback?'Invite inactive customers back with a clear reward.':'You can review Bring-back status but need owner edit access to configure it.',status:'Not set up',canWrite:canSetupWinback,readOnly:!canSetupWinback,editKind:'bringback',actionLabel:'Set up'})}
       </div></div>
-      <div class="programme-category"><div class="programme-category-title">Promotions & growth</div><div class="grow-programme-list">
+      `:''}
+      ${topicOnV229('promotions')?`
+      <div class="programme-category"><div class="programme-category-title">Promotions</div><div class="grow-programme-list">
         ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:snapshot.overviewErrors?.promotions?'Status could not be confirmed.':publishedPromotions?`${publishedPromotions} published ${publishedPromotions===1?'promotion':'promotions'}. Customers see up to six current offers.`:promotionDrafts?`${promotionDrafts} saved ${promotionDrafts===1?'draft':'drafts'}; none are visible to customers yet.`:'Create a promotion customers can see in their programme.',status:snapshot.overviewErrors?.promotions?'Unavailable':publishedPromotions?'Live':promotionDrafts?'Draft':'Not set up',statusTone:publishedPromotions?'on':promotionDrafts?'new':'off',canWrite:isOwner&&canRewards&&!snapshot.overviewErrors?.promotions,readOnly:canRewards&&!isOwner,href:'#/promotions',actionLabel:(publishedPromotions||promotionDrafts)?'Manage':'Set up'})}
+      </div></div>
+      `:''}
+      ${topicOnV229('referrals')?`
+      <div class="programme-category"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),href:'#/referrals/fe',actionLabel:referralConfigured?'Edit':'Set up'})}
       </div></div>
-      <div class="programme-category"><div class="programme-category-title">Recurring value</div><div class="grow-programme-list">
+      `:''}
+      ${topicOnV229('recurring')?`
+      <div class="programme-category"><div class="programme-category-title">Memberships & gift cards</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
         ${programmeRow({kind:'giftcards',icon:CUI.icon('giftcard',{size:18}),title:'Gift cards',copy:!modules.includes('giftcards')?'Gift cards are not included in this workspace.':snapshot.overviewErrors?.giftcards?'Status could not be confirmed.':giftCardsLive?'Customers can buy new gift cards.':'New gift-card sales are off; existing balances stay safe.',status:!modules.includes('giftcards')?'Not included':snapshot.overviewErrors?.giftcards?'Unavailable':giftCardsLive?'Live':'Off',statusTone:giftCardsLive?'on':'off',canWrite:isOwner&&modules.includes('giftcards')&&canWriteModule('giftcards')&&!snapshot.overviewErrors?.giftcards,readOnly:modules.includes('giftcards')&&!(isOwner&&canWriteModule('giftcards')),href:'#/giftcards/giftCardEnabled',actionLabel:'Edit'})}
-      </div></div>
+      </div></div>      `:''}
     </section>
+    ${(growActiveTopicV229?.key==='points'||(!growTilesModeV229&&!growActiveTopicV229)||routedSurface==='studio')?`
     <details class="grow-secondary" id="growSecondarySettings">
       <summary>More reward settings</summary><div class="grow-secondary-body">
       <div class="grow-secondary-intro"><h2>How the programme fits together</h2><p class="muted small">Open these controls only when you want to fine-tune the automatic draft or review reward economics.</p></div>
@@ -14854,7 +15077,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
         ${canWinback?'<button type="button" class="btn ghost" data-grow-open="winback">Bring-back rules and taxonomy</button>':''}
       </div></details>`:''}
       </div>
-    </details>
+    </details>`:''}
     <section class="grow-panel-shell" id="growpanelhost" aria-live="polite"></section>
   </div>`;
   localizeWorkspaceSubtreeV97(outerMain);
@@ -15245,6 +15468,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null){
      programme rows themselves, which call it as the draft-creation gate when no draft exists. */
   /* v215: re-render the Programmes list after a save so the row reflects the new state
      immediately — an owner who just switched the offer on must not still see "Not set up". */
+  /* V229: tiles drill in, Back returns, and the mode switch is one confirmed write. */
+  outerMain.querySelectorAll('[data-grow-topic-v229]').forEach(tile=>tile.onclick=()=>{
+    growTopicV229=tile.dataset.growTopicV229;
+    growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  });
+  const growTopicBack=$('growTopicBackV229');
+  if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
+  outerMain.querySelectorAll('[data-points-mode-v229]').forEach(button=>button.onclick=async()=>{
+    const next=button.dataset.pointsModeV229;
+    /* Switching away from a chosen model changes what customers can do; first-time choice needs
+       no confirm. The tiers warning states the concrete consequence the server enforces. */
+    if(S.biz.points_mode&&!confirm(next==='tiers'
+      ?'Switch points to tier membership? Customers will not be able to claim point rewards until you switch back.'
+      :'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.'))return;
+    button.disabled=true;
+    const {error}=await sb.from('businesses').update({points_mode:next}).eq('id',S.biz.id);
+    if(error){button.disabled=false;return fail(error)}
+    S.biz.points_mode=next;
+    toast(next==='tiers'?'Points now build tier membership':'Points are now redeemed for rewards');
+    growPage(routedSurface,hashParam,routedFocus).catch(fail);
+  });
   document.querySelectorAll('[data-welcome-offer-edit-v215]').forEach(button=>button.onclick=()=>
     openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
       ()=>growPage(routedSurface,hashParam,routedFocus)));

@@ -164,15 +164,50 @@ const mountedTurnstileControls=new Set();
 function destroyMountedTurnstiles(){
   [...mountedTurnstileControls].forEach(control=>control.destroy());
 }
+/* V206: Turnstile must never be able to strand the sign-in form.
+   Two failure shapes were reaching users on iPadOS/WebKit:
+   (1) the api.js request hangs with NEITHER onload NOR onerror — a content blocker, a captive
+       portal, or a stalled TLS handshake to challenges.cloudflare.com. The promise never settled,
+       so `await loadTurnstile()` never returned, the status stayed on "Loading security check…"
+       with the Retry button hidden, and Sign in stayed disabled forever.
+   (2) the loader promise was CACHED after it rejected, so once the first attempt failed every
+       later Retry re-awaited the same rejected promise and could never recover.
+   Both are fixed here: a hard deadline settles the promise, and every failure path drops the
+   cached promise so a Retry genuinely re-requests the script. */
+const TURNSTILE_SCRIPT_TIMEOUT_MS=8000;
+/* How long a rendered widget may sit with no callback of any kind before the UI declares it
+   wedged. Cloudflare's own interactive flows can legitimately take a while once the checkbox is
+   SHOWN, which is why the stall timer is disarmed the moment before-interactive fires. */
+const TURNSTILE_SOLVE_TIMEOUT_MS=20000;
+const turnstileApiReady=()=>(window.turnstile&&typeof window.turnstile.render==='function')?window.turnstile:null;
 function loadTurnstile(){
-  if(window.turnstile) return Promise.resolve(window.turnstile);
+  const ready=turnstileApiReady();
+  if(ready) return Promise.resolve(ready);
   if(turnstileLoader) return turnstileLoader;
   turnstileLoader=new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
     script.async=true;script.defer=true;
-    script.onload=()=>window.turnstile?resolve(window.turnstile):reject(new Error('Security check unavailable.'));
-    script.onerror=()=>{turnstileLoader=null;script.remove();reject(new Error('Security check unavailable.'))};
+    let settled=false;
+    const fail=(message,{remove=true}={})=>{
+      if(settled)return;
+      settled=true;clearTimeout(deadline);turnstileLoader=null;
+      if(remove)script.remove();
+      reject(new Error(message));
+    };
+    const succeed=()=>{
+      if(settled)return;
+      const api=turnstileApiReady();
+      /* onload fired but the global is absent: the response was not the real api.js (a captive
+         portal or an interception proxy). Treat it as a load failure, not as success. */
+      if(!api)return fail('Security check unavailable.');
+      settled=true;clearTimeout(deadline);resolve(api);
+    };
+    /* The script element is deliberately LEFT in place on timeout: a slow-but-alive request may
+       still define window.turnstile, and the next Retry then resolves instantly from the global. */
+    const deadline=setTimeout(()=>fail('Security check timed out.',{remove:false}),TURNSTILE_SCRIPT_TIMEOUT_MS);
+    script.onload=succeed;
+    script.onerror=()=>fail('Security check unavailable.');
     document.head.appendChild(script);
   });
   return turnstileLoader;
@@ -237,31 +272,58 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
     widgetId=undefined;
     host?.replaceChildren();
   };
+  /* Every render attempt gets a generation. A widget torn down by a Retry (or by a re-render of
+     the screen) can still invoke its callbacks afterwards on WebKit; without this, a stale
+     challenge could write its token into the CURRENT form — or blank a token the user had
+     already earned. A callback from an older generation is ignored outright. */
+  let generation=0;
+  let stall=null;
+  const stopStall=()=>{clearTimeout(stall);stall=null};
+  /* The widget rendered but nothing came back: no token, no checkbox prompt, no error callback.
+     Turnstile has no client-side guarantee that any of its callbacks ever fire, so this is the
+     backstop that converts "silently wedged" into an actionable failure with a Retry. */
+  const armStall=(mine)=>{
+    stopStall();
+    stall=setTimeout(()=>{
+      if(destroyed||mine!==generation)return;
+      clear(security('timeout'),true);retryEl.hidden=false;
+    },TURNSTILE_SOLVE_TIMEOUT_MS);
+  };
   const render=async()=>{
     if(destroyed)return;
+    generation+=1;
+    const mine=generation;
+    const live=()=>!destroyed&&mine===generation;
     message(security('loading'));retryEl.hidden=true;
+    armStall(mine);
     try{
       api=await loadTurnstile();
-      if(destroyed||!document.getElementById(container)) return;
+      if(!live()||!document.getElementById(container)){stopStall();return}
       removeWidget();
-      if(destroyed)return;
+      if(!live()){stopStall();return}
       widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(destroyed)return;onToken(token);retryEl.hidden=true;setPassed(true)},
+        callback:(token)=>{if(!live())return;stopStall();onToken(token);retryEl.hidden=true;setPassed(true)},
         /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
            security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
            and the passkey button looked broken while the app was simply waiting for a tick. */
-        'before-interactive-callback':()=>{if(destroyed)return;message(security('interactive'))},
-        'after-interactive-callback':()=>{if(destroyed)return;message(security('loading'))},
-        'expired-callback':()=>{if(destroyed)return;clear(security('expired'),true);retryEl.hidden=false},
-        'timeout-callback':()=>{if(destroyed)return;clear(security('timeout'),true);retryEl.hidden=false},
-        'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
-    }catch{if(!destroyed){clear(security('load'),true);retryEl.hidden=false}}
+        'before-interactive-callback':()=>{if(!live())return;stopStall();message(security('interactive'))},
+        'after-interactive-callback':()=>{if(!live())return;armStall(mine);message(security('loading'))},
+        'expired-callback':()=>{if(!live())return;stopStall();clear(security('expired'),true);retryEl.hidden=false},
+        'timeout-callback':()=>{if(!live())return;stopStall();clear(security('timeout'),true);retryEl.hidden=false},
+        'error-callback':(errorCode)=>{if(!live())return true;stopStall();logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
+    }catch{
+      stopStall();
+      /* The one guarantee this whole block exists to make: on ANY failure the user sees what
+         happened and gets a Retry. Never a hidden button under a permanent "Loading…". */
+      if(live()){clear(security('load'),true);retryEl.hidden=false}
+    }
   };
   const retryRender=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;render()};
   const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
   const destroy=()=>{
     if(destroyed)return;
-    destroyed=true;retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
+    destroyed=true;generation+=1;stopStall();
+    retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
   };
   const control={reset,destroy};
   mountedTurnstileControls.add(control);
@@ -325,6 +387,9 @@ let pendingApptClientId=''; // Customer 360 → New appointment: prefills the ex
    behind its own button — so a control labelled "New appointment" produced a calendar and no
    form. This flag is consumed once by the appointments page, exactly like pendingApptClientId. */
 let pendingOpenApptFormV217=false;
+/* V229 (owner: "i need a clean overview before zooming in"). Which Programmes topic is drilled
+   into, '' = the tile overview. In-session only, consumed by growPage. */
+let growTopicV229='';
 let settingsActiveTab='workspace';
 let profileOpen=false;
 let routeDispose=()=>{};
@@ -501,7 +566,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   rememberCustomerRecoveryVerified(false);
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='workspace';growTopicV229='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -693,8 +758,51 @@ async function loadCustomerFeatureCapabilities({refresh=false}={}){
 const APP_SURFACE_CHUNKS_V185=(()=>{
   try{return JSON.parse(document.getElementById('appSurfaceChunks')?.textContent||'{}')}catch{return {}}
 })();
+/* V200 surface assets. grow-recommender.js, v95-media-sync.js, revenue-truth.js, growth-offers.js
+   and sector-economics.js (plus their stylesheets) were plain <script defer>/<link> tags in
+   index.html, so every visitor — including a customer opening a booking link — downloaded, parsed
+   and ran all of them before first paint, for globals only a workspace page or the customer offer
+   strip ever touches. Every consumption site sits inside a function, so they can arrive with the
+   surface that needs them. They are injected BEFORE the surface chunk and with async=false, which
+   means that even if a future edit does read one of these globals at chunk load time, the global is
+   already there. A failure resolves rather than rejects: a missing enhancement must not stop the
+   surface from rendering, exactly as a failed <script defer> did not stop boot. */
+const APP_SURFACE_ASSETS_V200=(()=>{
+  try{return JSON.parse(document.getElementById('appSurfaceAssets')?.textContent||'{}')}catch{return {}}
+})();
+const surfaceAssetPromisesV200=new Map();
+/* Same-origin absolute paths only, and each url is fetched once however many surfaces list it —
+   growth-offers is shared by the customer and the workspace surfaces. */
+function loadSurfaceAssetV200(url,kind){
+  const src=String(url||'');
+  if(!/^\/[\w./?=-]*$/.test(src))return Promise.resolve('');
+  if(surfaceAssetPromisesV200.has(src))return surfaceAssetPromisesV200.get(src);
+  const promise=new Promise(resolve=>{
+    const node=document.createElement(kind==='css'?'link':'script');
+    if(kind==='css'){node.rel='stylesheet';node.href=src}
+    else {node.src=src;node.async=false}
+    node.onload=()=>resolve(src);
+    node.onerror=()=>{console.error(`Surface asset failed to load: ${src}`);resolve('')};
+    document.head.appendChild(node);
+  });
+  surfaceAssetPromisesV200.set(src,promise);
+  return promise;
+}
+function loadSurfaceAssetsV200(name){
+  const entry=APP_SURFACE_ASSETS_V200[name]||{};
+  const css=Array.isArray(entry.css)?entry.css:[];
+  const js=Array.isArray(entry.js)?entry.js:[];
+  return Promise.all([...css.map(url=>loadSurfaceAssetV200(url,'css')),...js.map(url=>loadSurfaceAssetV200(url,'js'))]);
+}
 const appChunkPromisesV185=new Map();
 let appSurfaceRetriedV185=false;
+/* v200: surfaces that cannot stand alone. The workspace chunk is built on the assumption that the
+   auth chunk is already there — a persona chooser, a suspended-workspace card and the invite
+   acceptance screen are reached both signed out AND from inside the workspace, so they live in the
+   small chunk and the big one declares the dependency instead of duplicating them or pushing them
+   back into the always-loaded core. Mirrors SURFACE_PREREQUISITES in
+   scripts/quality/split-app-bundle.mjs, which refuses to build a chunk that breaks the rule. */
+const APP_SURFACE_PREREQUISITES_V185={business:['auth']};
 function loadAppChunkV185(name){
   if(appChunkPromisesV185.has(name))return appChunkPromisesV185.get(name);
   const src=String(APP_SURFACE_CHUNKS_V185[name]||'');
@@ -704,6 +812,12 @@ function loadAppChunkV185(name){
     const missing=Promise.reject(new Error(`Application chunk "${name}" is not available.`));
     missing.catch(()=>{});appChunkPromisesV185.set(name,missing);return missing;
   }
+  /* The prerequisite chunk and this surface's assets are injected FIRST. Every tag carries
+     async=false, so the browser downloads them in parallel but executes them in insertion order —
+     whatever the chunk depends on is defined before its first line runs, without serialising the
+     round trips. */
+  const prerequisites=(APP_SURFACE_PREREQUISITES_V185[name]||[]).map(dependency=>loadAppChunkV185(dependency));
+  prerequisites.push(loadSurfaceAssetsV200(name));
   const promise=new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src=src;script.async=false;
@@ -711,8 +825,12 @@ function loadAppChunkV185(name){
     script.onerror=()=>{appChunkPromisesV185.delete(name);reject(new Error('Part of the app could not be loaded. Check your connection and reload.'))};
     document.head.appendChild(script);
   });
-  appChunkPromisesV185.set(name,promise);
-  return promise;
+  /* A rejection drops the cache entry too, so a retry genuinely re-requests instead of re-awaiting
+     the failure. */
+  const ready=Promise.all([...prerequisites,promise])
+    .then(()=>name,error=>{appChunkPromisesV185.delete(name);throw error});
+  appChunkPromisesV185.set(name,ready);
+  return ready;
 }
 /* Which chunk a route needs. The hash alone is not enough — "#/" is the customer entry for a
    signed-out visitor and the workspace for signed-in staff — so the caller passes the session it
@@ -731,7 +849,12 @@ function appSurfaceForRouteV185(hash,{signedIn=false}={}){
      downloading EVERY surface — the self-heal worked, so it only ever showed up as wasted
      bandwidth on the most-hit route. */
   if(route==='#/'||route==='')return 'customer';
-  return 'business';
+  /* V200: a signed-out merchant on /business is shown one card — sign in, sign up, accept an
+     invite, or activate an approved business. That used to cost the entire 1.2MB workspace chunk
+     before the form could be typed into. Those screens are their own ~17KB chunk now; the
+     workspace only downloads once there IS a session to open it with (and it pulls the auth chunk
+     along with it, so the signed-in persona/suspension screens are still present). */
+  return signedIn?'business':'auth';
 }
 /* v184: the Peekaa admin console is ~210KB of JS + CSS that only a platform admin can use. It
    used to be a plain <script defer> in index.html, so every customer opening a booking page paid
@@ -745,7 +868,7 @@ function loadPlatformConsoleAssetsV184(){
   if(platformConsoleAssetsPromiseV184)return platformConsoleAssetsPromiseV184;
   let assets={};
   try{assets=JSON.parse(document.getElementById('platformConsoleAssets')?.textContent||'{}')}catch{assets={}}
-  const scriptUrl=String(assets.js||''),styleUrl=String(assets.css||'');
+  const scriptUrl=String(assets.js||''),styleUrl=String(assets.css||''),crmUrl=String(assets.crm||'');
   if(!scriptUrl.startsWith('/')){
     /* A missing or tampered manifest must not become a script injection. */
     return Promise.resolve(null);
@@ -755,8 +878,19 @@ function loadPlatformConsoleAssetsV184(){
       const style=document.createElement('link');
       style.rel='stylesheet';style.href=styleUrl;document.head.appendChild(style);
     }
+    /* V200: NestlyPlatformCRMUtils has exactly one consumer — platform-console.js — so it moved off
+       the initial page load and onto this path. Injected before the console and with async=false,
+       so it is defined by the time the console's first line runs. */
+    if(crmUrl.startsWith('/')){
+      const crm=document.createElement('script');
+      crm.src=crmUrl;crm.async=false;document.head.appendChild(crm);
+    }
     const script=document.createElement('script');
-    script.src=scriptUrl;script.defer=true;
+    /* async=false, not defer: `defer` is ignored on a dynamically created script, which would leave
+       this racing the CRM helper above — and platform-console.js reads NestlyPlatformCRMUtils at
+       ITS load time (`const CRM=globalObject.NestlyPlatformCRMUtils||null`). async=false is the
+       only flag that guarantees the two execute in insertion order. */
+    script.src=scriptUrl;script.async=false;
     script.onload=()=>resolve(globalThis.NestlyPlatformConsole||null);
     script.onerror=()=>{platformConsoleAssetsPromiseV184=null;resolve(null)};
     document.head.appendChild(script);

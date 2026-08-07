@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { buildGraph } from '../../scripts/quality/app-surface-graph.mjs';
 import {
-  CUSTOMER_ENTRIES, BUSINESS_ENTRIES, I18N_TABLES, I18N_READER, OUTPUTS,
-  crossChunkViolations, partition, renderChunks
+  CUSTOMER_ENTRIES, AUTH_ENTRIES, BUSINESS_ENTRIES, I18N_TABLES, I18N_READER, OUTPUTS,
+  SURFACE_PREREQUISITES, crossChunkViolations, partition, renderChunks
 } from '../../scripts/quality/split-app-bundle.mjs';
 import { build, chunkUrls } from '../../scripts/quality/stamp-app-bundle.mjs';
 
@@ -28,7 +28,7 @@ test('index.html is stamped for the bytes of the chunks it ships with', async ()
   assert.equal(document, stamped, 'app/index.html is stale. Run: npm run bundle-stamp');
   const urls = chunkUrls(renderChunks(source));
   assert.match(indexHtml, new RegExp(`<script src="${urls.core.replace('?', '\\?')}" defer></script>`));
-  for (const surface of ['customer', 'business', 'i18n']) {
+  for (const surface of ['auth', 'customer', 'business', 'i18n']) {
     assert.ok(indexHtml.includes(`"${surface}":"${urls[surface]}"`),
       `the manifest must point at the current ${surface} bytes`);
   }
@@ -51,7 +51,7 @@ test('every top-level symbol lands in exactly one chunk', () => {
     assert.equal(seen.has(block.name), false, `${block.name} is declared twice`);
     seen.set(block.name, placement.get(block));
   }
-  const counts = { core: 0, customer: 0, business: 0, i18n: 0 };
+  const counts = { core: 0, auth: 0, customer: 0, business: 0, i18n: 0 };
   for (const surface of seen.values()) counts[surface] += 1;
   for (const [surface, count] of Object.entries(counts)) {
     assert.ok(count > 0, `${surface} chunk must not be empty`);
@@ -66,19 +66,56 @@ test('no chunk references a symbol that lives in another independently loaded ch
     violations.map((item) => `${item.from}:${item.block} -> ${item.to}:${item.ref}`).join('\n'));
 });
 
-test('a symbol either surface can reach is shared, never surface-only', () => {
-  const { customer, business, blocks, placement } = partition(source);
+test('a symbol two independently loaded surfaces can reach is shared, never surface-only', () => {
+  const { customer, auth, business, blocks, placement } = partition(source);
   const home = new Map();
   for (const block of blocks) if (block.name) home.set(block.name, placement.get(block));
-  for (const name of customer) {
-    if (!business.has(name)) continue;
-    const where = home.get(name);
-    /* The translation tables are the one sanctioned exception: both surfaces can reach them, but
-       their single reader guards with typeof, so they ship separately. */
-    if (I18N_TABLES.includes(name)) { assert.equal(where, 'i18n'); continue; }
-    assert.ok(where === 'core' || where === undefined,
-      `${name} is reachable from both surfaces so it must be shared, not ${where}`);
+  /* The customer surface loads neither merchant chunk, so both of these pairs are independent.
+     'auth' and 'business' are NOT a pair: the workspace chunk lists auth as a prerequisite, which
+     is what lets the persona/suspension screens ship in the small chunk (see the next test). */
+  const pairs = [['customer', customer, 'auth', auth], ['customer', customer, 'business', business]];
+  for (const [leftName, left, rightName, right] of pairs) {
+    for (const name of left) {
+      if (!right.has(name)) continue;
+      const where = home.get(name);
+      /* The translation tables are the one sanctioned exception: both surfaces can reach them, but
+         their single reader guards with typeof, so they ship separately. */
+      if (I18N_TABLES.includes(name)) { assert.equal(where, 'i18n'); continue; }
+      assert.ok(where === 'core' || where === undefined,
+        `${name} is reachable from both ${leftName} and ${rightName} so it must be shared, not ${where}`);
+    }
   }
+});
+
+/* V200. The auth chunk is the merchant's front door: sign in / sign up, pick a persona, accept a
+   staff invite, activate an approved business, and the two "you cannot go further" cards. It must
+   stand entirely on its own, because it is the ONLY chunk a signed-out visitor to /business gets. */
+test('the auth chunk never reaches into the workspace chunk', () => {
+  const { auth, blocks, placement } = partition(source);
+  const home = new Map();
+  for (const block of blocks) if (block.name) home.set(block.name, placement.get(block));
+  for (const name of auth) {
+    const where = home.get(name);
+    assert.ok(where !== 'business' && where !== 'customer',
+      `${name} is reachable from the sign-in screens but ships in the ${where} chunk`);
+  }
+  assert.deepEqual(SURFACE_PREREQUISITES, { business: ['auth'] },
+    'the build and the runtime must agree on which chunk depends on which');
+  assert.match(source, /const APP_SURFACE_PREREQUISITES_V185=\{business:\['auth'\]\}/,
+    'app.js must declare the same dependency the split assumes');
+  assert.match(source, /prerequisites=\(APP_SURFACE_PREREQUISITES_V185\[name\]\|\|\[\]\)\.map/);
+});
+
+test('a signed-out merchant gets the sign-in chunk, not the workspace', () => {
+  assert.match(source, /return signedIn\?'business':'auth';/,
+    'appSurfaceForRouteV185 must not hand a signed-out visitor the workspace bundle');
+  const chunks = renderChunks(source);
+  assert.ok(chunks.auth.length < chunks.business.length * 0.05,
+    `the sign-in chunk must stay tiny (got ${(chunks.auth.length / 1024).toFixed(0)}KB against `
+    + `${(chunks.business.length / 1024).toFixed(0)}KB of workspace)`);
+  /* The preloader cannot see the session, so it must guess the CHEAP side — and auth is needed
+     either way, since the workspace chunk pulls it in. */
+  assert.match(indexHtml, /link\.href=manifest\[customer\?'customer':'auth'\]/);
 });
 
 test('markup handlers ship with the page that renders them', () => {
@@ -154,6 +191,85 @@ test('only the core is loaded eagerly', () => {
   assert.doesNotMatch(indexHtml, /<script src="\/app\.js/, 'the unsplit bundle must not be shipped');
 });
 
+/* ------------------------------------------------------- V200: the aux scripts follow the surface */
+
+/* These five modules and their three stylesheets were <script defer>/<link> tags in index.html, so
+   every visitor paid for all of them before first paint — including a customer opening a booking
+   link, for globals only a workspace page ever touches. They now arrive with the surface chunk that
+   consumes them. The pairing below is the contract: whichever chunk mentions a global must be the
+   chunk whose asset list carries that global's file. */
+const SURFACE_ASSET_GLOBALS = {
+  'grow-recommender.js': 'FrenlyGrowRec',
+  'v95-media-sync.js': 'NestlyMediaSyncV95',
+  'revenue-truth.js': 'RevenueTruthUI',
+  'growth-offers.js': 'NestlyGrowthOffers',
+  'sector-economics.js': 'NestlySectorEconomics'
+};
+
+test('the deferred aux bundles no longer load on every first paint', () => {
+  for (const file of Object.keys(SURFACE_ASSET_GLOBALS)) {
+    assert.doesNotMatch(indexHtml, new RegExp(`<script src="/${file.replace('.', '\\.')}`),
+      `${file} must load with its surface, not on every page load`);
+  }
+  for (const style of ['revenue-truth.css', 'growth-offers.css', 'sector-economics.css']) {
+    assert.doesNotMatch(indexHtml, new RegExp(`<link rel="stylesheet" href="/${style.replace('.', '\\.')}`),
+      `${style} styles a surface that has not loaded yet`);
+  }
+  /* platform-crm-utils.js has exactly one consumer, platform-console.js, so it moved onto the
+     console's own on-demand path instead of a surface list. */
+  assert.doesNotMatch(indexHtml, /<script src="\/platform-crm-utils\.js/);
+  assert.match(indexHtml, /"crm":"\/platform-crm-utils\.js/,
+    'it must still be reachable — through the platform console manifest');
+  /* What is left in the initial load runs at load time and must stay. */
+  for (const kept of ['native-bridge.js', 'pwa.js', 'customer-push.js', 'brand-config.js',
+    'runtime-config.js', 'runtime-config-loader.js', 'customer-ui.js']) {
+    assert.match(indexHtml, new RegExp(`<script src="/${kept.replace('.', '\\.')}`),
+      `${kept} runs at load time and must not be deferred to a surface`);
+  }
+});
+
+test('every surface asset is listed for exactly the chunks that consume its global', async () => {
+  const manifest = JSON.parse(indexHtml.match(
+    /<script type="application\/json" id="appSurfaceAssets">\n([\s\S]*?)\n<\/script>/)[1]);
+  const chunks = renderChunks(source);
+  for (const [file, global] of Object.entries(SURFACE_ASSET_GLOBALS)) {
+    for (const surface of ['auth', 'customer', 'business']) {
+      const listed = (manifest[surface]?.js || []).some((url) => url.startsWith(`/${file}`));
+      const used = chunks[surface].includes(global);
+      assert.equal(listed, used,
+        `${file} is ${listed ? '' : 'not '}listed for the ${surface} chunk but that chunk does `
+        + `${used ? '' : 'not '}use ${global}`);
+    }
+    /* A load-time reference would run before the chunk that owns it — and the core is what loads
+       first, so the core must never touch one of these globals at all. */
+    assert.equal(chunks.core.includes(global), false,
+      `${global} is referenced from the always-loaded core, which now loads before its script`);
+  }
+  /* Same-origin paths only: this manifest is injected as <script src>. */
+  for (const entry of Object.values(manifest)) {
+    for (const url of [...(entry.js || []), ...(entry.css || [])]) {
+      assert.match(url, /^\/[\w./?=-]*$/, `${url} must be a same-origin absolute path`);
+      await readFile(new URL(`app${url.split('?')[0]}`, root), 'utf8');
+    }
+  }
+});
+
+test('surface assets are injected before the chunk that needs them, and never block it', () => {
+  assert.match(source, /const APP_SURFACE_ASSETS_V200=\(\(\)=>\{/);
+  assert.match(source, /document\.getElementById\('appSurfaceAssets'\)/);
+  assert.match(source, /prerequisites\.push\(loadSurfaceAssetsV200\(name\)\)/,
+    'the chunk must not execute before its assets');
+  /* Insertion order under async=false is the whole guarantee: even a future load-time read of one
+     of these globals resolves, because the asset tag was appended first. */
+  const loader = source.slice(source.indexOf('function loadSurfaceAssetV200('));
+  assert.match(loader.slice(0, loader.indexOf('function loadSurfaceAssetsV200')), /node\.async=false/);
+  assert.match(source, /node\.onerror=\(\)=>\{console\.error\(`Surface asset failed to load/,
+    'a missing enhancement must not stop the surface from rendering');
+  /* `defer` is ignored on a dynamically created script; only async=false orders it after the CRM
+     helper that platform-console.js reads at ITS load time. */
+  assert.match(source, /script\.src=scriptUrl;script\.async=false;/);
+});
+
 /* ---------------------------------------------------------------------------- the i18n chunk */
 
 test('the translation tables have exactly one reader and it degrades to English', () => {
@@ -184,7 +300,7 @@ test('the customer downloads a fraction of the workspace bundle', () => {
 });
 
 test('the surface entry lists still match the router', () => {
-  for (const name of [...CUSTOMER_ENTRIES, ...BUSINESS_ENTRIES]) {
+  for (const name of [...CUSTOMER_ENTRIES, ...AUTH_ENTRIES, ...BUSINESS_ENTRIES]) {
     assert.ok(source.includes(`function ${name}(`), `${name} no longer exists in app/app.js`);
     assert.ok(source.includes(name), `${name} must still be dispatched by the router`);
   }
