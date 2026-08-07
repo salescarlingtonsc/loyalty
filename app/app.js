@@ -18013,7 +18013,12 @@ async function appointmentsPage(){
     /* Customer 360 deep-link: a customer handed in via pendingApptClientId (captured above as
        apptPrefillClient) pre-selects that customer in the existing #ac dropdown — same select,
        no new query. The form is then brought into view so staff land ready to pick a time. */
-    if(apptOpenFormV217&&!apptPrefillClient)openNewAppointmentForm({date:addDays(todaySg,dayOffset)});
+    /* V218: opens with the date already on the form (todaySg, set when #ad was rendered).
+       V217 called addDays(todaySg,dayOffset) here, but addDays is a `const` declared further
+       down this function — this line runs during the synchronous render, before that binding
+       exists, so it threw "Cannot access 'addDays' before initialization" and took the whole
+       Appointments page down. Passing no date leaves #ad's own value untouched. */
+    if(apptOpenFormV217&&!apptPrefillClient)openNewAppointmentForm({});
     if(apptPrefillClient){
       openNewAppointmentForm({date:todaySg});
       const clientSelect=$('ac');
