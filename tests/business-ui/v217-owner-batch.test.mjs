@@ -138,7 +138,10 @@ test('V217 the header New appointment button opens the booking form', () => {
   assert.match(wire, /nav\('#\/appointments'\)/);
   // Landing on the page already opens the form, and the flag is consumed once.
   assert.match(app, /const apptOpenFormV217=pendingOpenApptFormV217;pendingOpenApptFormV217=false;/);
-  assert.match(app, /if\(apptOpenFormV217&&!apptPrefillClient\)openNewAppointmentForm\(\{date:addDays\(todaySg,dayOffset\)\}\)/);
+  /* V218 corrected this: addDays is a const declared later in appointmentsPage, so computing a
+     date here threw during the render and took the page down. No date is passed — #ad already
+     carries todaySg. See tests/business-ui/v218-appointments-tdz.test.mjs. */
+  assert.match(app, /if\(apptOpenFormV217&&!apptPrefillClient\)openNewAppointmentForm\(\{\}\)/);
   // Reset alongside the other consume-once deep-link vars.
   assert.match(app, /pendingApptClientId='';pendingOpenApptFormV217=false;/);
 });
