@@ -13,59 +13,58 @@ function section(source, start, end) {
   return source.slice(from, to);
 }
 
-const pricing = section(app, 'function bundleLinePricesV187', 'function addBundleLines');
-const { bundleLinePricesV187 } = new Function(`${pricing};return {bundleLinePricesV187};`)();
+const migration = await read('db/migrations/20260807_nestly_v204_bundle_priced_by_the_server.sql');
 
-const ITEMS = [
-  { id: 'a', name: 'Active acne', unit_cents: 20000 },
-  { id: 'b', name: 'Face lifting', unit_cents: 300000 },
-  { id: 'c', name: 'Pigmentation', unit_cents: 45000 },
-  { id: 'd', name: 'Glow', unit_cents: 88800 }
-];
-
-test('the lines always sum to exactly the bundle price', () => {
-  for (const price of [588800, 1, 99, 100000, 7, 0]) {
-    const lines = bundleLinePricesV187(ITEMS, price);
-    assert.equal(lines.reduce((total, line) => total + line.unit_cents, 0), price,
-      `bundle priced ${price} must not gain or lose a cent`);
-  }
+/* V204 moved this allocation out of the browser and into app.ps1c_bundle_lines_v204, so the
+   arithmetic properties the old JS tests proved now belong to the SQL. They are asserted on the
+   SQL's shape here and PROVEN against real bundles in db/tests/v204_bundle_priced_by_the_server.sql,
+   which runs the function over every bundle in the database and checks the parts sum to the whole. */
+test('the allocation is anchored to the bundle price, not to the parts', () => {
+  assert.match(migration, /v_total := v_price::bigint \* p_qty;/,
+    'the total to allocate is the BUNDLE price, which is the whole point');
+  assert.match(migration, /v_share := \(v_total - v_alloc\)::int;/,
+    'the last line takes the remainder, which is what makes the parts sum exactly');
+  assert.match(migration, /floor\(v_total \* r\.list \/ v_list\)::int/,
+    'the share follows each service’s own list price');
+  assert.match(migration, /floor\(v_total \/ v_rows\)::int/,
+    'services with no list price split it evenly');
 });
 
-test('the split follows each service’s own list price', () => {
-  const lines = bundleLinePricesV187(ITEMS, 588800);
-  const byId = Object.fromEntries(lines.map((line) => [line.id, line.unit_cents]));
-  assert.ok(byId.b > byId.c && byId.c > byId.a, 'a dearer service must carry a bigger share');
-  // 300000 of 453800 list ≈ 66%
-  assert.ok(Math.abs(byId.b / 588800 - 300000 / 453800) < 0.01);
+test('a bundle cannot become a side door for retired services or an unpriced sale', () => {
+  assert.match(migration, /and s\.active/, 'only sellable services are expanded');
+  assert.match(migration, /'inactive_bundle'/);
+  assert.match(migration, /'unpriced_bundle'/);
+  assert.match(migration, /'empty_bundle'/);
+  assert.match(migration, /b\.business_id = p_business/, 'a bundle is tenant-scoped');
 });
 
-test('services with no list price split the bundle evenly, and the remainder is never dropped', () => {
-  const free = [{ id: 'x', name: 'X', unit_cents: 0 }, { id: 'y', name: 'Y', unit_cents: 0 }, { id: 'z', name: 'Z', unit_cents: 0 }];
-  const lines = bundleLinePricesV187(free, 1000);
-  assert.equal(lines.reduce((total, line) => total + line.unit_cents, 0), 1000);
-  assert.deepEqual(lines.map((line) => line.unit_cents), [333, 333, 334],
-    'the remainder cent lands on the last line rather than vanishing');
+test('the pricing helper is not reachable by the browser', () => {
+  assert.match(migration,
+    /revoke all on function app\.ps1c_bundle_lines_v204\(uuid,uuid,int\) from public, anon, authenticated;/);
 });
 
-test('no line is ever negative and an empty bundle prices nothing', () => {
-  assert.deepEqual(bundleLinePricesV187([], 5000), []);
-  assert.deepEqual(bundleLinePricesV187(null, 5000), []);
-  assert.ok(bundleLinePricesV187(ITEMS, 100).every((line) => line.unit_cents >= 0));
-  assert.deepEqual(bundleLinePricesV187([{ id: 'a', name: 'A', unit_cents: 5000 }], 12345)
-    .map((line) => line.unit_cents), [12345]);
-});
-
-test('a bundle is sold as its member services, never as an invented line type', () => {
+test('a bundle is one cart line the SERVER prices and expands', () => {
   const add = section(app, 'function addBundleLines', '// Custom "Other item"');
-  assert.match(add, /type:'service'/, 'sale_items has no bundle type; the parts are what the ledger records');
-  assert.doesNotMatch(add, /type:'custom'|type:'bundle'/);
-  assert.match(add, /label:`\$\{item\.name\} · \$\{bundle\.name\}`/, 'the receipt must name the bundle it came from');
-  assert.match(add, /cart\.push/);
-  assert.doesNotMatch(add, /ex\.qty\+\+/,
-    'a bundled service is priced differently from the same service sold alone — never merge them');
+  assert.match(add, /type:'bundle',ref:bundle\.id/,
+    'the till sends the bundle itself, not a guess at what its parts cost');
+  assert.doesNotMatch(add, /unit_cents:item\.unit_cents/,
+    'a browser-computed per-service price is exactly what never reached the server');
   assert.match(add, /if\(cartLocked\(\)\)return/);
   assert.match(add, /That bundle has no services in it yet\./);
-  assert.match(add, /onSaleLinesChanged\(\)/, 'the kernel must re-evaluate after the lines are added');
+  assert.match(add, /onSaleLinesChanged\(\)/, 'the kernel must re-evaluate after the line is added');
+});
+
+test('tapping the same bundle twice is quantity 2, not two mystery lines', () => {
+  // owner: "showing a 1 when click once on the item - not as if they clicked 2 items"
+  const add = section(app, 'function addBundleLines', '// Custom "Other item"');
+  assert.match(add, /const existing=cart\.find\(line=>line\.type==='bundle'&&line\.ref===bundle\.id\)/);
+  assert.match(add, /existing\.qty\+=1/);
+});
+
+test('the bundle line carries no price to the server, and the server owns the split', () => {
+  assert.match(app, /if\(l\.type==='bundle'\)return \{catalog_kind:'bundle',catalog_id:l\.ref,qty:l\.qty\}/);
+  // the ledger still records real services, so commission and reporting still attribute
+  assert.match(app, /isCartSaleLine=l=>[^;]*l\.type==='bundle'/);
 });
 
 test('a bundle is only offered when every service in it is sellable at this branch', () => {

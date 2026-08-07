@@ -1365,6 +1365,12 @@
       "path": "db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql",
       "semanticVersion": "v202b",
       "proposedDeployVersion": "20260807062000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260807_nestly_v204_bundle_priced_by_the_server.sql",
+      "semanticVersion": "v204",
+      "proposedDeployVersion": "20260807070000"
     }
   ]
 }

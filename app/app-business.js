@@ -3705,7 +3705,7 @@ async function tillPage(){
   const cartLocked=()=>!!(checkoutError||staleConfirm||payError||paynowAttempt);
   // A cart-sale line (service/product/custom) is priced by evaluate_checkout and finalised by ONE record_cart_sale;
   // everything else (package/membership) is an "extra" line with its own idempotency key + RPC.
-  const isCartSaleLine=l=>l.type==='service'||l.type==='product'||l.type==='custom';
+  const isCartSaleLine=l=>l.type==='service'||l.type==='product'||l.type==='custom'||l.type==='bundle';
   // Backend not yet on the kernel: evaluate_checkout / record_cart_sale absent (undefined_function
   // 42883, or PostgREST 404 / PGRST202). Detect so checkout can say "update needed", never fall back.
   const isBackendMissing=err=>!!err&&(err.code==='42883'||err.code==='PGRST202'||err.status===404
@@ -4043,33 +4043,20 @@ async function tillPage(){
      from their own list prices so the lines sum to EXACTLY the bundle price. Staff performance,
      service reporting and commissions keep working; revenue is the bundle price, not the sum of
      the parts. The remainder cent goes on the last line, so no rounding is invented or lost. */
-  function bundleLinePricesV187(items,bundleCents){
-    const rows=(Array.isArray(items)?items:[]).filter(item=>item&&item.id);
-    if(!rows.length)return [];
-    const total=Math.max(0,Math.round(Number(bundleCents)||0));
-    const listTotal=rows.reduce((sum,item)=>sum+Math.max(0,Number(item.unit_cents)||0),0);
-    let allocated=0;
-    return rows.map((item,index)=>{
-      const last=index===rows.length-1;
-      const share=last
-        ?total-allocated
-        :listTotal>0
-          ?Math.floor(total*Math.max(0,Number(item.unit_cents)||0)/listTotal)
-          :Math.floor(total/rows.length);
-      allocated+=share;
-      return {...item,unit_cents:Math.max(0,share)};
-    });
-  }
+  /* V204 removed bundleLinePricesV187. It split a bundle's price across its services in the
+     browser — a calculation whose result the server was never willing to accept, which is how
+     the till came to show one number and charge another. app.ps1c_bundle_lines_v204 does the
+     same allocation where the price actually lives. */
   function addBundleLines(bundle){
     if(cartLocked())return;
-    const priced=bundleLinePricesV187(bundle?.items,bundle?.unit_cents);
-    if(!priced.length)return toast('That bundle has no services in it yet.');
-    for(const item of priced){
-      /* Always a NEW line, never a quantity bump on an existing service: a bundled service is
-         priced differently from the same service sold on its own, and merging them would hide
-         which price the customer actually paid. */
-      cart.push({lineId:crypto.randomUUID(),type:'service',ref:item.id,
-        label:`${item.name} · ${bundle.name}`,unit_cents:item.unit_cents,qty:1});
+    if(!Array.isArray(bundle?.items)||!bundle.items.length){
+      return toast('That bundle has no services in it yet.');
+    }
+    const existing=cart.find(line=>line.type==='bundle'&&line.ref===bundle.id);
+    if(existing){existing.qty+=1}
+    else{
+      cart.push({lineId:crypto.randomUUID(),type:'bundle',ref:bundle.id,
+        label:bundle.name,unit_cents:bundle.unit_cents,qty:1});
     }
     CUI.announce(workspaceTemplateTextV97('itemAdded',{item:bundle.name}));onSaleLinesChanged();
   }
@@ -4137,6 +4124,12 @@ async function tillPage(){
   function buildEvalLines(){
     return cartSaleLines().map(l=>{
       if(l.type==='custom')return {catalog_kind:'custom',description:l.label,amount_cents:l.unit_cents*l.qty,reason:l.reason||''};
+      /* V204: a bundle is its own catalogue kind. We send the bundle id and quantity and
+         NOTHING else — the server reads bundles.price_cents and expands it into one priced
+         line per service. Sending a price here would be rejected ('client_priced'), which is
+         exactly the guard that hid this bug: the old client split the bundle price locally,
+         the split never left the browser, and the customer was charged the sum of the parts. */
+      if(l.type==='bundle')return {catalog_kind:'bundle',catalog_id:l.ref,qty:l.qty};
       return {catalog_kind:l.type==='product'?'product':'service',catalog_id:l.ref,qty:l.qty};
     });
   }

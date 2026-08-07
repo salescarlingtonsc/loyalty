@@ -1366,6 +1366,12 @@
       "version": "20260807062000",
       "name": "nestly_v202b_branch_insert_only_via_paid_rpc",
       "sourcePath": "db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260807070000",
+      "name": "nestly_v204_bundle_priced_by_the_server",
+      "sourcePath": "db/migrations/20260807_nestly_v204_bundle_priced_by_the_server.sql"
     }
   ]
 }
